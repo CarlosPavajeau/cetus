@@ -5,7 +5,7 @@ import * as css from '@/styles/index.css?url'
 
 const RootComponent = () => {
   return (
-    <div>
+    <div className='container mx-auto'>
       <Outlet />
       <TanStackRouterDevtools />
     </div>
