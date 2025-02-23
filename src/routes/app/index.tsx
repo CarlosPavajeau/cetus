@@ -1,4 +1,3 @@
-import { AppNav } from '@/components/app-nav'
 import { Button } from '@/components/ui/button'
 import { useCategories } from '@/hooks/use-categories'
 import { Protect } from '@clerk/clerk-react'
@@ -21,26 +20,22 @@ function RouteComponent() {
 
   return (
     <section>
-      <AppNav />
-
-      <div className="container mx-auto">
-        <Protect>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-bold text-3xl">Categorias</h1>
-            </div>
-
-            <div>
-              <Button>Agregar categoria</Button>
-            </div>
+      <Protect>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-bold text-3xl">Categorias</h1>
           </div>
-          <ul>
-            {categories?.map((category) => (
-              <li key={category.id}>{category.name}</li>
-            ))}
-          </ul>
-        </Protect>
-      </div>
+
+          <div>
+            <Button>Agregar categoria</Button>
+          </div>
+        </div>
+        <ul>
+          {categories?.map((category) => (
+            <li key={category.id}>{category.name}</li>
+          ))}
+        </ul>
+      </Protect>
     </section>
   )
 }
