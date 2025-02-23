@@ -5,10 +5,10 @@ import * as css from '@/styles/index.css?url'
 
 const RootComponent = () => {
   return (
-    <div className="container mx-auto">
+    <main className="min-h-screen bg-background font-sans antialiased">
       <Outlet />
       <TanStackRouterDevtools />
-    </div>
+    </main>
   )
 }
 
