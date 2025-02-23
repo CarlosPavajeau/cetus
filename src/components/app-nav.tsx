@@ -7,20 +7,18 @@ import {
 
 export const AppNav = () => {
   return (
-    <header>
-      <div className="bg-gray-800 text-white">
-        <div className="container mx-auto flex items-center justify-between p-4">
-          <div>
-            <h1 className="font-bold text-3xl">App</h1>
-          </div>
-          <div>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-            <SignedOut>
-              <RedirectToSignIn />
-            </SignedOut>
-          </div>
+    <header className="mb-10 items-center border-border border-b">
+      <div className="container mx-auto flex items-center justify-between p-4">
+        <div>
+          <h1 className="font-bold text-xl">Cetus</h1>
+        </div>
+        <div>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+          <SignedOut>
+            <RedirectToSignIn />
+          </SignedOut>
         </div>
       </div>
     </header>
