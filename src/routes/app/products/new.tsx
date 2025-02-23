@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -7,6 +8,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Protect } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute } from '@tanstack/react-router'
@@ -19,9 +21,16 @@ export const Route = createFileRoute('/app/products/new')({
 
 const createProductSchema = z.object({
   name: z.string(),
-  description: z.string().optional(),
-  price: z.number(),
-  stock: z.number(),
+  description: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (value?.length === 0) return undefined
+
+      return value
+    }),
+  price: z.coerce.number(),
+  stock: z.coerce.number(),
 })
 
 type FormValues = TypeOf<typeof createProductSchema>
@@ -54,6 +63,73 @@ function RouteComponent() {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descripción</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Precio</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          className="peer ps-6 pe-12"
+                          placeholder="0.00"
+                          type="text"
+                          {...field}
+                        />
+                        <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
+                          $
+                        </span>
+                        <span className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground text-sm peer-disabled:opacity-50">
+                          COP
+                        </span>
+                      </div>
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="stock"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="tabular-nums"
+                        placeholder="0.00"
+                        type="text"
+                        {...field}
+                      />
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Button type="submit">Crear producto</Button>
           </form>
         </Form>
       </div>
