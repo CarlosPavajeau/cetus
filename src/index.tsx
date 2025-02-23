@@ -3,6 +3,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 
 import { ClerkProvider } from '@clerk/clerk-react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { routeTree } from './routeTree.gen'
 
 const router = createRouter({ routeTree })
@@ -14,12 +16,18 @@ if (!PUBLISHABLE_KEY) {
 }
 
 const rootElement = document.getElementById('root')
+
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement)
+  const queryClient = new QueryClient()
+
   root.render(
     <React.StrictMode>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <RouterProvider router={router} />
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
       </ClerkProvider>
     </React.StrictMode>,
   )
