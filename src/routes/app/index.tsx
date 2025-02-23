@@ -27,7 +27,7 @@ function RouteComponent() {
           </div>
 
           <div>
-            <Button>Agregar categoria</Button>
+            <Button variant="outline">Agregar categoria</Button>
           </div>
         </div>
         <ul>
