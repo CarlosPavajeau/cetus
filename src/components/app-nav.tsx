@@ -27,9 +27,9 @@ export const AppNav = () => {
               Inicio
             </span>
           </Link>
-          <Link to="/app/products/new" className="flex items-center gap-2">
+          <Link to="/app/products" className="flex items-center gap-2">
             <span className="inline-flex gap-0.5 text-sm hover:underline">
-              Crear producto
+              Productos
             </span>
           </Link>
 
