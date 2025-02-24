@@ -1,7 +1,8 @@
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { useProducts } from '@/hooks/use-products'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { DollarSignIcon, PackageIcon } from 'lucide-react'
+import { DollarSignIcon, PackageIcon, ShoppingCartIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
   component: IndexPage,
@@ -62,24 +63,34 @@ function IndexPage() {
                       </p>
                     )}
 
-                    <div className="flex items-center space-x-2">
-                      <Badge>
-                        <DollarSignIcon
-                          className="-ms-0.5 opacity-60"
-                          size={12}
-                          aria-hidden="true"
-                        />
-                        {product.price}
-                      </Badge>
+                    <div className="w-full">
+                      <div className="flex items-center space-x-2">
+                        <Badge>
+                          <DollarSignIcon
+                            className="-ms-0.5 opacity-60"
+                            size={12}
+                            aria-hidden="true"
+                          />
+                          {product.price}
+                        </Badge>
 
-                      <Badge>
-                        <PackageIcon
-                          className="-ms-0.5 opacity-60"
-                          size={12}
+                        <Badge>
+                          <PackageIcon
+                            className="-ms-0.5 opacity-60"
+                            size={12}
+                            aria-hidden="true"
+                          />
+                          {product.stock}
+                        </Badge>
+                      </div>
+                      <Button className="mt-4 w-full">
+                        <ShoppingCartIcon
+                          className="-ms-1 opacity-60"
+                          size={16}
                           aria-hidden="true"
                         />
-                        {product.stock}
-                      </Badge>
+                        Agregar al carrito
+                      </Button>
                     </div>
                   </div>
                 </div>
