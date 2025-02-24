@@ -148,7 +148,7 @@ function RouteComponent() {
                     className={cn(
                       'peer min-w-60 ps-9',
                       Boolean(table.getColumn('name')?.getFilterValue()) &&
-                      'pe-9',
+                        'pe-9',
                     )}
                     value={
                       (table.getColumn('name')?.getFilterValue() ??
@@ -209,9 +209,9 @@ function RouteComponent() {
                             {header.isPlaceholder
                               ? null
                               : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
                           </TableHead>
                         )
                       })}
