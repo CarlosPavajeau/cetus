@@ -6,6 +6,7 @@ export type Product = {
   description?: string
   price: number
   stock: number
+  categoryId: string
   createdAt: string
   updatedAt: string
 }
@@ -20,7 +21,7 @@ export const fetchProducts = async () => {
 
 export type CreateProductRequest = Pick<
   Product,
-  'name' | 'description' | 'price' | 'stock'
+  'name' | 'description' | 'price' | 'stock' | 'categoryId'
 >
 
 export const createProduct = async (product: CreateProductRequest) => {

@@ -1,3 +1,4 @@
+import { createProduct } from '@/api/products'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -8,10 +9,20 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useCategories } from '@/hooks/use-categories'
 import { Protect } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
 
@@ -31,18 +42,32 @@ const createProductSchema = z.object({
     }),
   price: z.coerce.number(),
   stock: z.coerce.number(),
+  categoryId: z.string(),
 })
 
 type FormValues = TypeOf<typeof createProductSchema>
 
 function RouteComponent() {
+  const { categories } = useCategories()
+
   const form = useForm<FormValues>({
     resolver: zodResolver(createProductSchema),
   })
 
-  const onSubmit = form.handleSubmit((values) => {
-    console.log(values)
+  const createProductMutation = useMutation({
+    mutationKey: ['products', 'create'],
+    mutationFn: createProduct,
   })
+
+  const onSubmit = form.handleSubmit((values) => {
+    createProductMutation.mutate(values)
+  })
+
+  useEffect(() => {
+    if (createProductMutation.isSuccess) {
+      form.reset()
+    }
+  }, [form, createProductMutation.isSuccess])
 
   return (
     <Protect>
@@ -129,7 +154,35 @@ function RouteComponent() {
               />
             </div>
 
-            <Button type="submit">Crear producto</Button>
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Categoría</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione una categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" disabled={createProductMutation.isPending}>
+              Crear producto
+            </Button>
           </form>
         </Form>
       </div>
