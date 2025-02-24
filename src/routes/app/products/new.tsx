@@ -21,7 +21,7 @@ import { useCategories } from '@/hooks/use-categories'
 import { Protect } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
@@ -63,11 +63,23 @@ function RouteComponent() {
     createProductMutation.mutate(values)
   })
 
+  const navigate = useNavigate()
   useEffect(() => {
     if (createProductMutation.isSuccess) {
-      form.reset()
+      form.reset({
+        name: '',
+        description: undefined,
+        price: 0,
+        stock: 0,
+        categoryId: '',
+      })
+
+      navigate({
+        to: '/app/products',
+        replace: true,
+      })
     }
-  }, [form, createProductMutation.isSuccess])
+  }, [form, createProductMutation.isSuccess, navigate])
 
   return (
     <Protect>
