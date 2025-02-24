@@ -1,5 +1,3 @@
-import { Button } from '@/components/ui/button'
-import { useCategories } from '@/hooks/use-categories'
 import { Protect } from '@clerk/clerk-react'
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -8,33 +6,34 @@ export const Route = createFileRoute('/app/')({
 })
 
 function RouteComponent() {
-  const { categories, isLoading, error } = useCategories()
-
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>
-  }
-
   return (
-    <section>
+    <section className="space-y-4">
       <Protect>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-bold text-3xl">Categorias</h1>
-          </div>
+            <h1 className="font-bold font-heading text-2xl text-foreground">
+              Pedidos
+            </h1>
 
-          <div>
-            <Button variant="outline">Agregar categoria</Button>
+            <span className="text-muted-foreground text-sm">
+              Aquí puedes ver los pedidos de tus clientes.
+            </span>
           </div>
         </div>
-        <ul>
-          {categories?.map((category) => (
-            <li key={category.id}>{category.name}</li>
-          ))}
-        </ul>
+
+        <div className="rounded-lg border bg-background p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-bold font-heading text-2xl text-foreground">
+                En construcción
+              </h1>
+
+              <span className="text-muted-foreground text-sm">
+                Esta página está en construcción.
+              </span>
+            </div>
+          </div>
+        </div>
       </Protect>
     </section>
   )
