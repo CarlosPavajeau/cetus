@@ -11,13 +11,21 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as CartImport } from './routes/cart'
 import { Route as AppImport } from './routes/app'
 import { Route as IndexImport } from './routes/index'
+import { Route as CartIndexImport } from './routes/cart/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
 import { Route as AppProductsNewImport } from './routes/app/products/new'
 
 // Create/Update Routes
+
+const CartRoute = CartImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const AppRoute = AppImport.update({
   id: '/app',
@@ -29,6 +37,12 @@ const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
+} as any)
+
+const CartIndexRoute = CartIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CartRoute,
 } as any)
 
 const AppIndexRoute = AppIndexImport.update({
@@ -67,12 +81,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppImport
       parentRoute: typeof rootRoute
     }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartImport
+      parentRoute: typeof rootRoute
+    }
     '/app/': {
       id: '/app/'
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexImport
       parentRoute: typeof AppImport
+    }
+    '/cart/': {
+      id: '/cart/'
+      path: '/'
+      fullPath: '/cart/'
+      preLoaderRoute: typeof CartIndexImport
+      parentRoute: typeof CartImport
     }
     '/app/products/new': {
       id: '/app/products/new'
@@ -107,10 +135,22 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface CartRouteChildren {
+  CartIndexRoute: typeof CartIndexRoute
+}
+
+const CartRouteChildren: CartRouteChildren = {
+  CartIndexRoute: CartIndexRoute,
+}
+
+const CartRouteWithChildren = CartRoute._addFileChildren(CartRouteChildren)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/cart': typeof CartRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/cart/': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/app/products': typeof AppProductsIndexRoute
 }
@@ -118,6 +158,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppIndexRoute
+  '/cart': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/app/products': typeof AppProductsIndexRoute
 }
@@ -126,21 +167,32 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/cart': typeof CartRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/cart/': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/' | '/app/products/new' | '/app/products'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/cart'
+    | '/app/'
+    | '/cart/'
+    | '/app/products/new'
+    | '/app/products'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/app/products/new' | '/app/products'
+  to: '/' | '/app' | '/cart' | '/app/products/new' | '/app/products'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/cart'
     | '/app/'
+    | '/cart/'
     | '/app/products/new'
     | '/app/products/'
   fileRoutesById: FileRoutesById
@@ -149,11 +201,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  CartRoute: typeof CartRouteWithChildren
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  CartRoute: CartRouteWithChildren,
 }
 
 export const routeTree = rootRoute
@@ -167,7 +221,8 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/app"
+        "/app",
+        "/cart"
       ]
     },
     "/": {
@@ -181,9 +236,19 @@ export const routeTree = rootRoute
         "/app/products/"
       ]
     },
+    "/cart": {
+      "filePath": "cart.tsx",
+      "children": [
+        "/cart/"
+      ]
+    },
     "/app/": {
       "filePath": "app/index.tsx",
       "parent": "/app"
+    },
+    "/cart/": {
+      "filePath": "cart/index.tsx",
+      "parent": "/cart"
     },
     "/app/products/new": {
       "filePath": "app/products/new.tsx",

@@ -1,6 +1,8 @@
+import { CartButton } from '@/components/cart-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useProducts } from '@/hooks/use-products'
+import { useCart } from '@/store/cart'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { DollarSignIcon, PackageIcon, ShoppingCartIcon } from 'lucide-react'
 
@@ -10,6 +12,7 @@ export const Route = createFileRoute('/')({
 
 function IndexPage() {
   const { products, isLoading } = useProducts()
+  const cart = useCart()
 
   return (
     <>
@@ -27,11 +30,7 @@ function IndexPage() {
           </Link>
 
           <div className="flex items-center gap-4 sm:gap-8">
-            <Link to="/app" className="flex items-center gap-2">
-              <span className="inline-flex gap-0.5 text-sm hover:underline">
-                Aplicación
-              </span>
-            </Link>
+            <CartButton />
           </div>
         </div>
       </header>
@@ -83,7 +82,10 @@ function IndexPage() {
                           {product.stock}
                         </Badge>
                       </div>
-                      <Button className="mt-4 w-full">
+                      <Button
+                        className="mt-4 w-full"
+                        onClick={() => cart.add(product)}
+                      >
                         <ShoppingCartIcon
                           className="-ms-1 opacity-60"
                           size={16}
