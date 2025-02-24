@@ -1,5 +1,15 @@
 import { createProduct } from '@/api/products'
+import { CreateCategoryDialog } from '@/components/create-category.dialog'
 import { Button } from '@/components/ui/button'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/ui/command'
 import {
   Form,
   FormControl,
@@ -9,20 +19,17 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Popover, PopoverContent } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
 import { useCategories } from '@/hooks/use-categories'
+import { cn } from '@/shared/cn'
 import { Protect } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { PopoverTrigger } from '@radix-ui/react-popover'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
 
@@ -30,7 +37,7 @@ export const Route = createFileRoute('/app/products/new')({
   component: RouteComponent,
 })
 
-const createProductSchema = z.object({
+export const createProductSchema = z.object({
   name: z.string(),
   description: z
     .string()
@@ -45,7 +52,7 @@ const createProductSchema = z.object({
   categoryId: z.string(),
 })
 
-type FormValues = TypeOf<typeof createProductSchema>
+export type FormValues = TypeOf<typeof createProductSchema>
 
 function RouteComponent() {
   const { categories } = useCategories()
@@ -81,9 +88,18 @@ function RouteComponent() {
     }
   }, [form, createProductMutation.isSuccess, navigate])
 
+  const [openCategorySelect, setOpenCategorySelect] = useState(false)
+  const [openCreateCategoryDialog, setOpenCreateCategoryDialog] =
+    useState(false)
+
   return (
     <Protect>
       <div className="flex min-h-[calc(100vh-20rem)] w-full flex-col space-y-4">
+        <CreateCategoryDialog
+          open={openCreateCategoryDialog}
+          onOpenChange={setOpenCreateCategoryDialog}
+        />
+
         <Form {...form}>
           <form onSubmit={onSubmit} className="flex flex-col space-y-4">
             <FormField
@@ -173,18 +189,88 @@ function RouteComponent() {
                 <FormItem>
                   <FormLabel>Categoría</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione una categoría" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories?.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover
+                      open={openCategorySelect}
+                      onOpenChange={setOpenCategorySelect}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCategorySelect}
+                          className="w-full justify-between border-input bg-background px-3 font-normal outline-none outline-offset-0 hover:bg-background focus-visible:outline-[3px]"
+                        >
+                          <span
+                            className={cn(
+                              'truncate',
+                              !field.value && 'text-muted-foreground',
+                            )}
+                          >
+                            {field.value
+                              ? categories?.find(
+                                  (category) => category.id === field.value,
+                                )?.name
+                              : 'Seleccionar una categoria'}
+                          </span>
+                          <ChevronDownIcon
+                            size={16}
+                            className="shrink-0 text-muted-foreground/80"
+                            aria-hidden="true"
+                          />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-full min-w-[var(--radix-popper-anchor-width)] border-input p-0"
+                        align="start"
+                      >
+                        <Command>
+                          <CommandInput placeholder="Buscar categorias" />
+                          <CommandList>
+                            <CommandEmpty>
+                              No se encontraron categorias.
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {categories?.map((category) => (
+                                <CommandItem
+                                  key={category.id}
+                                  value={category.id}
+                                  onSelect={(currentValue) => {
+                                    field.onChange(
+                                      currentValue === field.value
+                                        ? ''
+                                        : currentValue,
+                                    )
+                                    setOpenCategorySelect(false)
+                                  }}
+                                >
+                                  {category.name}
+                                  {field.value === category.id && (
+                                    <CheckIcon size={16} className="ml-auto" />
+                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            <CommandSeparator />
+                            <CommandGroup>
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start font-normal"
+                                onClick={() =>
+                                  setOpenCreateCategoryDialog(true)
+                                }
+                              >
+                                <PlusIcon
+                                  size={16}
+                                  className="-ms-2 opacity-60"
+                                  aria-hidden="true"
+                                />
+                                Agregar categoria
+                              </Button>
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </FormControl>
 
                   <FormMessage />
