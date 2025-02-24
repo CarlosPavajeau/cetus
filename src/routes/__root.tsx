@@ -5,7 +5,7 @@ import * as css from '@/styles/index.css?url'
 
 const RootComponent = () => {
   return (
-    <main className="min-h-screen bg-background font-sans antialiased">
+    <main className="min-h-screen">
       <Outlet />
       <TanStackRouterDevtools />
     </main>
