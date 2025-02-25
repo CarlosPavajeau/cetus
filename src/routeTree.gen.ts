@@ -11,15 +11,23 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as OrdersImport } from './routes/orders'
 import { Route as CartImport } from './routes/cart'
 import { Route as AppImport } from './routes/app'
 import { Route as IndexImport } from './routes/index'
 import { Route as CartIndexImport } from './routes/cart/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
+import { Route as OrdersOrderIdCheckoutImport } from './routes/orders/$orderId.checkout'
 import { Route as AppProductsNewImport } from './routes/app/products/new'
 
 // Create/Update Routes
+
+const OrdersRoute = OrdersImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const CartRoute = CartImport.update({
   id: '/cart',
@@ -57,6 +65,12 @@ const AppProductsIndexRoute = AppProductsIndexImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
+const OrdersOrderIdCheckoutRoute = OrdersOrderIdCheckoutImport.update({
+  id: '/$orderId/checkout',
+  path: '/$orderId/checkout',
+  getParentRoute: () => OrdersRoute,
+} as any)
+
 const AppProductsNewRoute = AppProductsNewImport.update({
   id: '/products/new',
   path: '/products/new',
@@ -88,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartImport
       parentRoute: typeof rootRoute
     }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersImport
+      parentRoute: typeof rootRoute
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -108,6 +129,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/products/new'
       preLoaderRoute: typeof AppProductsNewImport
       parentRoute: typeof AppImport
+    }
+    '/orders/$orderId/checkout': {
+      id: '/orders/$orderId/checkout'
+      path: '/$orderId/checkout'
+      fullPath: '/orders/$orderId/checkout'
+      preLoaderRoute: typeof OrdersOrderIdCheckoutImport
+      parentRoute: typeof OrdersImport
     }
     '/app/products/': {
       id: '/app/products/'
@@ -145,21 +173,36 @@ const CartRouteChildren: CartRouteChildren = {
 
 const CartRouteWithChildren = CartRoute._addFileChildren(CartRouteChildren)
 
+interface OrdersRouteChildren {
+  OrdersOrderIdCheckoutRoute: typeof OrdersOrderIdCheckoutRoute
+}
+
+const OrdersRouteChildren: OrdersRouteChildren = {
+  OrdersOrderIdCheckoutRoute: OrdersOrderIdCheckoutRoute,
+}
+
+const OrdersRouteWithChildren =
+  OrdersRoute._addFileChildren(OrdersRouteChildren)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/cart': typeof CartRouteWithChildren
+  '/orders': typeof OrdersRouteWithChildren
   '/app/': typeof AppIndexRoute
   '/cart/': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
+  '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
   '/app/products': typeof AppProductsIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/orders': typeof OrdersRouteWithChildren
   '/app': typeof AppIndexRoute
   '/cart': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
+  '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
   '/app/products': typeof AppProductsIndexRoute
 }
 
@@ -168,9 +211,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/cart': typeof CartRouteWithChildren
+  '/orders': typeof OrdersRouteWithChildren
   '/app/': typeof AppIndexRoute
   '/cart/': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
+  '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
 
@@ -180,20 +225,31 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/cart'
+    | '/orders'
     | '/app/'
     | '/cart/'
     | '/app/products/new'
+    | '/orders/$orderId/checkout'
     | '/app/products'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/cart' | '/app/products/new' | '/app/products'
+  to:
+    | '/'
+    | '/orders'
+    | '/app'
+    | '/cart'
+    | '/app/products/new'
+    | '/orders/$orderId/checkout'
+    | '/app/products'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/cart'
+    | '/orders'
     | '/app/'
     | '/cart/'
     | '/app/products/new'
+    | '/orders/$orderId/checkout'
     | '/app/products/'
   fileRoutesById: FileRoutesById
 }
@@ -202,12 +258,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   CartRoute: typeof CartRouteWithChildren
+  OrdersRoute: typeof OrdersRouteWithChildren
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   CartRoute: CartRouteWithChildren,
+  OrdersRoute: OrdersRouteWithChildren,
 }
 
 export const routeTree = rootRoute
@@ -222,7 +280,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/app",
-        "/cart"
+        "/cart",
+        "/orders"
       ]
     },
     "/": {
@@ -242,6 +301,12 @@ export const routeTree = rootRoute
         "/cart/"
       ]
     },
+    "/orders": {
+      "filePath": "orders.tsx",
+      "children": [
+        "/orders/$orderId/checkout"
+      ]
+    },
     "/app/": {
       "filePath": "app/index.tsx",
       "parent": "/app"
@@ -253,6 +318,10 @@ export const routeTree = rootRoute
     "/app/products/new": {
       "filePath": "app/products/new.tsx",
       "parent": "/app"
+    },
+    "/orders/$orderId/checkout": {
+      "filePath": "orders/$orderId.checkout.tsx",
+      "parent": "/orders"
     },
     "/app/products/": {
       "filePath": "app/products/index.tsx",
