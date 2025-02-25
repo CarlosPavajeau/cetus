@@ -7,6 +7,20 @@ export enum OrderStatus {
   Canceled,
 }
 
+export const OrderStatusText = {
+  [OrderStatus.Pending]: 'Pendiente',
+  [OrderStatus.Paid]: 'Pagada',
+  [OrderStatus.Delivered]: 'Enviada',
+  [OrderStatus.Canceled]: 'Cancelada',
+}
+
+export const OrderStatusColor = {
+  [OrderStatus.Pending]: 'bg-amber-500',
+  [OrderStatus.Paid]: 'bg-emerald-500',
+  [OrderStatus.Delivered]: 'bg-emerald-500',
+  [OrderStatus.Canceled]: 'bg-red-500',
+}
+
 export type Order = {
   id: string
   address: string
@@ -56,6 +70,22 @@ export const createOrder = async (order: CreateOrderRequest) => {
   const response = await axios.post<string>(
     `${import.meta.env.PUBLIC_API_URL}/orders`,
     order,
+  )
+
+  return response.data
+}
+
+export type SimpleOrder = {
+  id: string
+  address: string
+  total: number
+  status: OrderStatus
+  createdAt: string
+}
+
+export const fetchOrders = async () => {
+  const response = await axios.get<SimpleOrder[]>(
+    `${import.meta.env.PUBLIC_API_URL}/orders`,
   )
 
   return response.data
