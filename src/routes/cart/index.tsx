@@ -78,27 +78,9 @@ function RouteComponent() {
               </div>
 
               <div className="flex flex-col justify-between space-y-8 md:pl-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <h2 className="font-medium text-2xl text-muted-foreground">
-                      Total
-                    </h2>
-                    <h2 className="font-bold text-2xl text-foreground">
-                      <Currency value={total} currency="COP" />
-                    </h2>
-                  </div>
+                <div className="space-y-2"></div>
 
-                  <div className="flex justify-between">
-                    <h2 className="font-medium text-2xl text-muted-foreground">
-                      Productos
-                    </h2>
-                    <h2 className="font-bold text-2xl text-foreground">
-                      {count}
-                    </h2>
-                  </div>
-                </div>
-
-                <div>
+                <div className="space-y-4">
                   <div className="my-4 rounded-lg border bg-background p-4">
                     <h2 className="font-medium text-lg">En construcción</h2>
                     <p className="text-muted-foreground">
@@ -107,6 +89,25 @@ function RouteComponent() {
                       rápida.
                     </p>
                   </div>
+
+                  <div>
+                    <div className="flex justify-between">
+                      <h2 className="font-medium text-muted-foreground">
+                        Total
+                      </h2>
+                      <h2 className="font-bold text-foreground">
+                        <Currency value={total} currency="COP" />
+                      </h2>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <h2 className="font-medium text-muted-foreground">
+                        Productos
+                      </h2>
+                      <h2 className="font-bold text-foreground">{count}</h2>
+                    </div>
+                  </div>
+
                   <Button className="group w-full">
                     Continuar con el pago
                     <ArrowRightIcon
