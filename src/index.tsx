@@ -1,5 +1,6 @@
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import React from 'react'
+import { I18nProvider } from 'react-aria'
 import ReactDOM from 'react-dom/client'
 
 import { ClerkProvider } from '@clerk/clerk-react'
@@ -23,12 +24,14 @@ if (rootElement) {
 
   root.render(
     <React.StrictMode>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </ClerkProvider>
+      <I18nProvider locale="es-CO">
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </QueryClientProvider>
+        </ClerkProvider>
+      </I18nProvider>
     </React.StrictMode>,
   )
 }
