@@ -1,4 +1,6 @@
 import type { Product } from '@/api/products'
+import { Currency } from '@/components/currency'
+import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -63,7 +65,11 @@ const columns: ColumnDef<Product>[] = [
     id: 'price',
     accessorKey: 'price',
     header: 'Precio',
-    cell: ({ row }) => <div>{row.getValue('price')}</div>,
+    cell: ({ row }) => (
+      <div>
+        <Currency value={row.getValue('price')} currency="COP" />
+      </div>
+    ),
   },
   {
     id: 'stock',
@@ -75,7 +81,11 @@ const columns: ColumnDef<Product>[] = [
     id: 'createdAt',
     accessorKey: 'createdAt',
     header: 'Creado',
-    cell: ({ row }) => <div>{row.getValue('createdAt')}</div>,
+    cell: ({ row }) => (
+      <div>
+        <FormattedDate date={new Date(row.getValue('createdAt'))} />
+      </div>
+    ),
   },
 ]
 

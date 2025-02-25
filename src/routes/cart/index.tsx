@@ -1,3 +1,4 @@
+import { Currency } from '@/components/currency'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/store/cart'
 import { Link, createFileRoute } from '@tanstack/react-router'
@@ -9,6 +10,11 @@ export const Route = createFileRoute('/cart/')({
 
 function RouteComponent() {
   const { count, items } = useCart()
+
+  const total = items.reduce(
+    (acc, item) => acc + item.product.price * item.quantity,
+    0,
+  )
 
   return (
     <>
@@ -62,7 +68,8 @@ function RouteComponent() {
 
                       <div className="mt-4 flex items-center justify-between">
                         <p className="font-bold text-base text-foreground">
-                          ${item.product.price} x {item.quantity}
+                          <Currency value={item.product.price} currency="COP" />{' '}
+                          x {item.quantity}
                         </p>
                       </div>
                     </div>
@@ -77,11 +84,7 @@ function RouteComponent() {
                       Total
                     </h2>
                     <h2 className="font-bold text-2xl text-foreground">
-                      $
-                      {items.reduce(
-                        (acc, item) => acc + item.product.price * item.quantity,
-                        0,
-                      )}
+                      <Currency value={total} currency="COP" />
                     </h2>
                   </div>
 
