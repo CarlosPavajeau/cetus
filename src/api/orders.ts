@@ -17,7 +17,7 @@ export type Order = {
     productName: string
     quantity: number
     price: number
-  }
+  }[]
   customer: {
     name: string
     email: string
