@@ -44,9 +44,11 @@ export type CreateOrderRequest = {
     price: number
   }[]
   customer: {
+    id: string
     name: string
     email: string
     phone: string
+    address: string
   }
 }
 
