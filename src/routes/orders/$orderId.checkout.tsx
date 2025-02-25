@@ -1,5 +1,9 @@
+import { Currency } from '@/components/currency'
+import { FormattedDate } from '@/components/formatted-date'
+import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/use-order'
 import { createFileRoute } from '@tanstack/react-router'
+import { ArrowRightIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/orders/$orderId/checkout')({
   component: RouteComponent,
@@ -34,12 +38,91 @@ function RouteComponent() {
             </div>
           </div>
 
-          <div className="my-4 rounded-lg border bg-background p-4">
-            <h2 className="font-medium text-lg">En construcción</h2>
-            <p className="text-muted-foreground">
-              Actualmente estamos trabajando en la integración de pagos para que
-              puedas realizar tus pedidos de forma segura y rápida.
-            </p>
+          <div className="relative my-16">
+            <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2">
+              <div className="grid gap-4 md:border-border md:border-r md:pr-4">
+                {order.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-md border border-border bg-white p-4"
+                  >
+                    <div className="flex h-full flex-col justify-between *:not-first:mt-4">
+                      <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        {item.productName}
+                      </h2>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <p className="font-bold text-base text-foreground">
+                          <Currency value={item.price} currency="COP" /> x{' '}
+                          {item.quantity}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col justify-between space-y-8 md:pl-4">
+                <div className="space-y-2">
+                  <h2 className="font-medium text-lg">Resumen de tu pedido</h2>
+
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cliente</span>
+                    <span>
+                      <span className="font-medium">{order.customer.name}</span>
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Dirección</span>
+                    <span>
+                      <span className="font-medium">{order.address}</span>
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Teléfono</span>
+                    <span>
+                      <span className="font-medium">
+                        {order.customer.phone}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">
+                        Fecha
+                      </span>
+                      <span>
+                        <span className="text-sm">
+                          <FormattedDate date={new Date(order.createdAt)} />
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <h2 className="font-medium text-muted-foreground">
+                        Total
+                      </h2>
+                      <h2 className="font-bold text-foreground">
+                        <Currency value={order.total} currency="COP" />
+                      </h2>
+                    </div>
+                  </div>
+
+                  <Button className="group w-full">
+                    Ir a pagar
+                    <ArrowRightIcon
+                      className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
+                      size={16}
+                      aria-hidden="true"
+                    />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
