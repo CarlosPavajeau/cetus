@@ -90,3 +90,17 @@ export const fetchOrders = async () => {
 
   return response.data
 }
+
+export type UpdateOrderRequest = {
+  id: string
+  status: OrderStatus
+}
+
+export const updateOrder = async (order: UpdateOrderRequest) => {
+  const response = await axios.put<SimpleOrder>(
+    `${import.meta.env.PUBLIC_API_URL}/orders/${order.id}`,
+    order,
+  )
+
+  return response.data
+}
