@@ -9,9 +9,9 @@ export enum OrderStatus {
 
 export const OrderStatusText = {
   [OrderStatus.Pending]: 'Pendiente',
-  [OrderStatus.Paid]: 'Pagada',
-  [OrderStatus.Delivered]: 'Enviada',
-  [OrderStatus.Canceled]: 'Cancelada',
+  [OrderStatus.Paid]: 'Pagado',
+  [OrderStatus.Delivered]: 'Enviado',
+  [OrderStatus.Canceled]: 'Cancelado',
 }
 
 export const OrderStatusColor = {
