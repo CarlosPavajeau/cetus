@@ -34,7 +34,7 @@ import { useOrders } from '@/hooks/user-orders'
 import { cn } from '@/shared/cn'
 import { Protect } from '@clerk/clerk-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
   type ColumnDef,
   type PaginationState,
@@ -52,11 +52,6 @@ export const Route = createFileRoute('/app/')({
 })
 
 const columns: ColumnDef<SimpleOrder>[] = [
-  {
-    id: 'id',
-    accessorKey: 'id',
-    header: 'ID',
-  },
   {
     id: 'address',
     accessorKey: 'address',
@@ -137,6 +132,14 @@ function RouteComponent() {
     })
   }
 
+  const navigate = useNavigate()
+
+  const goToOrder = (orderId: string) => {
+    navigate({
+      to: `/app/orders/${orderId}`,
+    })
+  }
+
   return (
     <section className="space-y-4">
       <Protect>
@@ -181,7 +184,7 @@ function RouteComponent() {
               </div>
             </div>
             <div className="overflow-hidden rounded-md border bg-background">
-              <Table className="table-fixed">
+              <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow
@@ -210,6 +213,8 @@ function RouteComponent() {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && 'selected'}
+                        onClick={() => goToOrder(row.original.id)}
+                        className="cursor-pointer"
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>
