@@ -18,6 +18,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as CartIndexImport } from './routes/cart/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
+import { Route as OrdersOrderIdConfirmationImport } from './routes/orders/$orderId.confirmation'
 import { Route as OrdersOrderIdCheckoutImport } from './routes/orders/$orderId.checkout'
 import { Route as AppProductsNewImport } from './routes/app/products/new'
 
@@ -63,6 +64,12 @@ const AppProductsIndexRoute = AppProductsIndexImport.update({
   id: '/products/',
   path: '/products/',
   getParentRoute: () => AppRoute,
+} as any)
+
+const OrdersOrderIdConfirmationRoute = OrdersOrderIdConfirmationImport.update({
+  id: '/$orderId/confirmation',
+  path: '/$orderId/confirmation',
+  getParentRoute: () => OrdersRoute,
 } as any)
 
 const OrdersOrderIdCheckoutRoute = OrdersOrderIdCheckoutImport.update({
@@ -137,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersOrderIdCheckoutImport
       parentRoute: typeof OrdersImport
     }
+    '/orders/$orderId/confirmation': {
+      id: '/orders/$orderId/confirmation'
+      path: '/$orderId/confirmation'
+      fullPath: '/orders/$orderId/confirmation'
+      preLoaderRoute: typeof OrdersOrderIdConfirmationImport
+      parentRoute: typeof OrdersImport
+    }
     '/app/products/': {
       id: '/app/products/'
       path: '/products'
@@ -175,10 +189,12 @@ const CartRouteWithChildren = CartRoute._addFileChildren(CartRouteChildren)
 
 interface OrdersRouteChildren {
   OrdersOrderIdCheckoutRoute: typeof OrdersOrderIdCheckoutRoute
+  OrdersOrderIdConfirmationRoute: typeof OrdersOrderIdConfirmationRoute
 }
 
 const OrdersRouteChildren: OrdersRouteChildren = {
   OrdersOrderIdCheckoutRoute: OrdersOrderIdCheckoutRoute,
+  OrdersOrderIdConfirmationRoute: OrdersOrderIdConfirmationRoute,
 }
 
 const OrdersRouteWithChildren =
@@ -193,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/cart/': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
+  '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/app/products': typeof AppProductsIndexRoute
 }
 
@@ -203,6 +220,7 @@ export interface FileRoutesByTo {
   '/cart': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
+  '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/app/products': typeof AppProductsIndexRoute
 }
 
@@ -216,6 +234,7 @@ export interface FileRoutesById {
   '/cart/': typeof CartIndexRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
+  '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
 
@@ -230,6 +249,7 @@ export interface FileRouteTypes {
     | '/cart/'
     | '/app/products/new'
     | '/orders/$orderId/checkout'
+    | '/orders/$orderId/confirmation'
     | '/app/products'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -239,6 +259,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/app/products/new'
     | '/orders/$orderId/checkout'
+    | '/orders/$orderId/confirmation'
     | '/app/products'
   id:
     | '__root__'
@@ -250,6 +271,7 @@ export interface FileRouteTypes {
     | '/cart/'
     | '/app/products/new'
     | '/orders/$orderId/checkout'
+    | '/orders/$orderId/confirmation'
     | '/app/products/'
   fileRoutesById: FileRoutesById
 }
@@ -304,7 +326,8 @@ export const routeTree = rootRoute
     "/orders": {
       "filePath": "orders.tsx",
       "children": [
-        "/orders/$orderId/checkout"
+        "/orders/$orderId/checkout",
+        "/orders/$orderId/confirmation"
       ]
     },
     "/app/": {
@@ -321,6 +344,10 @@ export const routeTree = rootRoute
     },
     "/orders/$orderId/checkout": {
       "filePath": "orders/$orderId.checkout.tsx",
+      "parent": "/orders"
+    },
+    "/orders/$orderId/confirmation": {
+      "filePath": "orders/$orderId.confirmation.tsx",
       "parent": "/orders"
     },
     "/app/products/": {
