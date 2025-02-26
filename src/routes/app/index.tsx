@@ -33,6 +33,7 @@ import { usePagination } from '@/hooks/use-pagination'
 import { useOrders } from '@/hooks/user-orders'
 import { cn } from '@/shared/cn'
 import { Protect } from '@clerk/clerk-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -43,7 +44,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, RefreshCwIcon } from 'lucide-react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/app/')({
@@ -128,6 +129,14 @@ function RouteComponent() {
     paginationItemsToDisplay: 5,
   })
 
+  const queryClient = useQueryClient()
+
+  const refresh = () => {
+    queryClient.invalidateQueries({
+      queryKey: ['orders'],
+    })
+  }
+
   return (
     <section className="space-y-4">
       <Protect>
@@ -157,6 +166,20 @@ function RouteComponent() {
 
         {!isLoading && orders && (
           <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div></div>
+
+              <div>
+                <Button variant="outline" onClick={refresh}>
+                  <RefreshCwIcon
+                    className="-ms-1 opacity-60"
+                    size={16}
+                    aria-hidden="true"
+                  />
+                  Recargar
+                </Button>
+              </div>
+            </div>
             <div className="overflow-hidden rounded-md border bg-background">
               <Table className="table-fixed">
                 <TableHeader>
