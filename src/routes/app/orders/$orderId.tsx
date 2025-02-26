@@ -1,12 +1,19 @@
-import { OrderStatus, OrderStatusColor, OrderStatusText } from '@/api/orders'
+import {
+  OrderStatus,
+  OrderStatusColor,
+  OrderStatusText,
+  updateOrder,
+} from '@/api/orders'
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/use-order'
 import { cn } from '@/shared/cn'
-import { createFileRoute } from '@tanstack/react-router'
-import { ArrowRightIcon } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/app/orders/$orderId')({
   component: RouteComponent,
@@ -17,6 +24,25 @@ function RouteComponent() {
   const orderId = params.orderId
 
   const { order, isLoading } = useOrder(orderId)
+
+  const updateOrderMutation = useMutation({
+    mutationKey: ['orders', 'update'],
+    mutationFn: () =>
+      updateOrder({ id: orderId, status: OrderStatus.Delivered }),
+  })
+
+  const handleCompleteOrder = () => {
+    updateOrderMutation.mutate()
+  }
+
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (updateOrderMutation.isSuccess) {
+      navigate({
+        to: '/app',
+      })
+    }
+  }, [updateOrderMutation.isSuccess, navigate])
 
   return (
     <main className="grow">
@@ -144,8 +170,19 @@ function RouteComponent() {
                     <Button
                       type="submit"
                       className="group w-full"
-                      disabled={order.status !== OrderStatus.Paid}
+                      onClick={handleCompleteOrder}
+                      disabled={
+                        order.status !== OrderStatus.Paid ||
+                        updateOrderMutation.isPending
+                      }
                     >
+                      {updateOrderMutation.isPending && (
+                        <LoaderCircleIcon
+                          className="animate-spin"
+                          size={16}
+                          aria-hidden="true"
+                        />
+                      )}
                       Completar pedido
                       <ArrowRightIcon
                         className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
