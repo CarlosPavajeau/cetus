@@ -14,7 +14,7 @@ import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { ArrowRightIcon } from 'lucide-react'
+import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
@@ -145,33 +145,35 @@ function RouteComponent() {
 
               <div className="relative my-16">
                 <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2">
-                  <div className="grid gap-4 md:border-border md:border-r md:pr-4">
-                    {items.map((item) => (
-                      <div
-                        key={item.product.id}
-                        className="rounded-md border border-border bg-white p-4"
-                      >
-                        <div className="flex h-full flex-col justify-between *:not-first:mt-4">
-                          <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            {item.product.name}
-                          </h2>
+                  <div>
+                    <div className="grid gap-4 md:border-border md:border-r md:pr-4">
+                      {items.map((item) => (
+                        <div
+                          key={item.product.id}
+                          className="rounded-md border border-border bg-white p-4"
+                        >
+                          <div className="flex h-full flex-col justify-between *:not-first:mt-4">
+                            <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                              {item.product.name}
+                            </h2>
 
-                          <p className="text-[13px] text-muted-foreground">
-                            {item.product.description}
-                          </p>
-
-                          <div className="mt-4 flex items-center justify-between">
-                            <p className="font-bold text-base text-foreground">
-                              <Currency
-                                value={item.product.price}
-                                currency="COP"
-                              />{' '}
-                              x {item.quantity}
+                            <p className="text-[13px] text-muted-foreground">
+                              {item.product.description}
                             </p>
+
+                            <div className="mt-4 flex items-center justify-between">
+                              <p className="font-bold text-base text-foreground">
+                                <Currency
+                                  value={item.product.price}
+                                  currency="COP"
+                                />{' '}
+                                x {item.quantity}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex flex-col justify-between space-y-8 md:pl-4">
@@ -277,7 +279,17 @@ function RouteComponent() {
                         </div>
                       </div>
 
-                      <Button className="group w-full">
+                      <Button
+                        className="group w-full"
+                        disabled={createOrderMutation.isPending}
+                      >
+                        {createOrderMutation.isPending && (
+                          <LoaderCircleIcon
+                            className="animate-spin"
+                            size={16}
+                            aria-hidden="true"
+                          />
+                        )}
                         Continuar con el pago
                         <ArrowRightIcon
                           className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"

@@ -40,26 +40,28 @@ function RouteComponent() {
 
           <div className="relative my-16">
             <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2">
-              <div className="grid gap-4 md:border-border md:border-r md:pr-4">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-md border border-border bg-white p-4"
-                  >
-                    <div className="flex h-full flex-col justify-between *:not-first:mt-4">
-                      <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        {item.productName}
-                      </h2>
+              <div>
+                <div className="grid gap-4 md:border-border md:border-r md:pr-4">
+                  {order.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-md border border-border bg-white p-4"
+                    >
+                      <div className="flex h-full flex-col justify-between *:not-first:mt-4">
+                        <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          {item.productName}
+                        </h2>
 
-                      <div className="mt-4 flex items-center justify-between">
-                        <p className="font-bold text-base text-foreground">
-                          <Currency value={item.price} currency="COP" /> x{' '}
-                          {item.quantity}
-                        </p>
+                        <div className="mt-4 flex items-center justify-between">
+                          <p className="font-bold text-base text-foreground">
+                            <Currency value={item.price} currency="COP" /> x{' '}
+                            {item.quantity}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               <div className="flex flex-col justify-between space-y-8 md:pl-4">
