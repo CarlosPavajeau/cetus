@@ -1,9 +1,8 @@
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
-import { Button } from '@/components/ui/button'
+import { WonpiPaymentButton } from '@/components/wompi-payment-button'
 import { useOrder } from '@/hooks/use-order'
 import { createFileRoute } from '@tanstack/react-router'
-import { ArrowRightIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/orders/$orderId/checkout')({
   component: RouteComponent,
@@ -114,14 +113,7 @@ function RouteComponent() {
                     </div>
                   </div>
 
-                  <Button className="group w-full">
-                    Ir a pagar
-                    <ArrowRightIcon
-                      className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-                      size={16}
-                      aria-hidden="true"
-                    />
-                  </Button>
+                  <WonpiPaymentButton order={order} />
                 </div>
               </div>
             </div>
