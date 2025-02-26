@@ -1,3 +1,4 @@
+import { useCart } from '@/store/cart'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/orders/$orderId/confirmation')({
@@ -5,6 +6,10 @@ export const Route = createFileRoute('/orders/$orderId/confirmation')({
 })
 
 function RouteComponent() {
+  const { clear } = useCart()
+
+  clear()
+
   return (
     <main className="grow">
       <div>
