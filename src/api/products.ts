@@ -32,3 +32,19 @@ export const createProduct = async (product: CreateProductRequest) => {
 
   return response.data
 }
+
+export type UpdateProductRequest = Omit<
+  Product,
+  'createdAt' | 'updatedAt' | 'categoryId'
+> & {
+  enabled: boolean
+}
+
+export const updateProduct = async (product: UpdateProductRequest) => {
+  const response = await axios.put<Product>(
+    `${import.meta.env.PUBLIC_API_URL}/products/${product.id}`,
+    product,
+  )
+
+  return response.data
+}
