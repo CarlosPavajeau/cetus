@@ -15,8 +15,6 @@ const TanStackRouterDevtools = import.meta.env.PROD
     )
 
 const RootComponent = () => {
-  console.log(import.meta.env.DEV)
-
   return (
     <div className="before:-left-12 after:-right-12 relative mx-auto w-full max-w-6xl before:absolute before:inset-y-0 before:w-px before:bg-[linear-gradient(to_bottom,--theme(--color-border/.3),--theme(--color-border)_200px,--theme(--color-border)_calc(100%-200px),--theme(--color-border/.3))] after:absolute after:inset-y-0 after:w-px after:bg-[linear-gradient(to_bottom,--theme(--color-border/.3),--theme(--color-border)_200px,--theme(--color-border)_calc(100%-200px),--theme(--color-border/.3))]">
       <div className="relative flex min-h-screen flex-col">

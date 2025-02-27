@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom/client'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { AuthInterceptor } from './components/auth-interceptor'
 import { routeTree } from './routeTree.gen'
 
 const router = createRouter({ routeTree })
@@ -29,6 +30,7 @@ if (rootElement) {
           <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />
             <ReactQueryDevtools initialIsOpen={false} />
+            <AuthInterceptor />
           </QueryClientProvider>
         </ClerkProvider>
       </I18nProvider>
