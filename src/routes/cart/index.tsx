@@ -14,7 +14,7 @@ import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
+import { ArrowRightIcon, LoaderCircleIcon, Trash2Icon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
@@ -46,7 +46,8 @@ const createOrderSchema = z.object({
 type FormValues = TypeOf<typeof createOrderSchema>
 
 function RouteComponent() {
-  const { count, items } = useCart()
+  const cart = useCart()
+  const { items, count } = cart
 
   const total = items.reduce(
     (acc, item) => acc + item.product.price * item.quantity,
@@ -144,36 +145,86 @@ function RouteComponent() {
               </div>
 
               <div className="relative my-16">
-                <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2">
-                  <div>
-                    <div className="grid gap-4 md:border-border md:border-r md:pr-4">
-                      {items.map((item) => (
+                <div className="grid gap-8 lg:grid-cols-2">
+                  <div className="space-y-4">
+                    {items.length > 0 &&
+                      items.map((item) => (
                         <div
                           key={item.product.id}
-                          className="rounded-md border border-border bg-white p-4"
+                          className="rounded-lg border bg-card p-4 text-card-foreground"
                         >
-                          <div className="flex h-full flex-col justify-between *:not-first:mt-4">
-                            <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                              {item.product.name}
-                            </h2>
+                          <div className="flex gap-4">
+                            <div className="relative h-24 w-24">
+                              <img
+                                src="/placeholder.svg"
+                                alt={item.product.name}
+                                className="rounded-md object-cover"
+                              />
+                            </div>
 
-                            <p className="text-[13px] text-muted-foreground">
-                              {item.product.description}
-                            </p>
+                            <div className="flex-1 space-y-2">
+                              <div className="flex justify-between">
+                                <h3 className="font-medium">
+                                  {item.product.name}
+                                </h3>
 
-                            <div className="mt-4 flex items-center justify-between">
-                              <p className="font-bold text-base text-foreground">
-                                <Currency
-                                  value={item.product.price}
-                                  currency="COP"
-                                />{' '}
-                                x {item.quantity}
-                              </p>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive/80"
+                                  type="button"
+                                  onClick={() => cart.remove(item.product)}
+                                >
+                                  <Trash2Icon className="h-4 w-4" />
+                                </Button>
+                              </div>
+
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    type="button"
+                                    onClick={() => cart.reduce(item.product)}
+                                  >
+                                    -
+                                  </Button>
+                                  <span className="w-8 text-center">
+                                    {item.quantity}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    type="button"
+                                    onClick={() => cart.add(item.product)}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                                <div className="ml-auto font-medium">
+                                  <Currency
+                                    value={item.product.price}
+                                    currency="COP"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
                       ))}
-                    </div>
+
+                    {items.length === 0 && (
+                      <div className="py-8 text-center">
+                        <h2 className="mb-2 font-medium text-xl">
+                          Tu carrito está vacío
+                        </h2>
+                        <p className="text-muted-foreground">
+                          ¡Agrega productos para continuar con tu pedido!
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col justify-between space-y-8 md:pl-4">
@@ -261,27 +312,24 @@ function RouteComponent() {
                     </div>
 
                     <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between">
-                          <h2 className="font-medium text-muted-foreground">
-                            Total
-                          </h2>
-                          <h2 className="font-bold text-foreground">
-                            <Currency value={total} currency="COP" />
-                          </h2>
-                        </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Productos</span>
+                        <span>{count}</span>
+                      </div>
 
-                        <div className="flex justify-between">
-                          <h2 className="font-medium text-muted-foreground">
-                            Productos
-                          </h2>
-                          <h2 className="font-bold text-foreground">{count}</h2>
-                        </div>
+                      <div className="flex justify-between font-semibold text-lg">
+                        <span>Total</span>
+                        <span>
+                          <Currency value={total} currency="COP" />
+                        </span>
                       </div>
 
                       <Button
                         className="group w-full"
-                        disabled={createOrderMutation.isPending}
+                        size="lg"
+                        disabled={
+                          createOrderMutation.isPending || items.length === 0
+                        }
                       >
                         {createOrderMutation.isPending && (
                           <LoaderCircleIcon
