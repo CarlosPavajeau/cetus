@@ -63,6 +63,7 @@ const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => (
       <div className="font-medium">{row.getValue('name')}</div>
     ),
+    size: 180,
   },
   {
     id: 'price',
@@ -73,12 +74,14 @@ const columns: ColumnDef<Product>[] = [
         <Currency value={row.getValue('price')} currency="COP" />
       </div>
     ),
+    size: 120,
   },
   {
     id: 'stock',
     accessorKey: 'stock',
     header: 'Stock',
     cell: ({ row }) => <div>{row.getValue('stock')}</div>,
+    size: 80,
   },
   {
     id: 'enabled',
