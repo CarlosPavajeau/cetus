@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import type { Product } from '@/api/products'
+import type { ProductForSale } from '@/api/products'
 
 type CartItem = {
-  product: Product
+  product: ProductForSale
   quantity: number
 }
 
@@ -12,9 +12,9 @@ type CartStore = {
   items: CartItem[]
   count: number
 
-  add: (product: Product) => void
-  reduce: (product: Product) => void
-  remove: (product: Product) => void
+  add: (product: ProductForSale) => void
+  reduce: (product: ProductForSale) => void
+  remove: (product: ProductForSale) => void
 
   clear: () => void
 }

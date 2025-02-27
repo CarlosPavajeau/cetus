@@ -2,7 +2,7 @@ import { CartButton } from '@/components/cart-button'
 import { Currency } from '@/components/currency'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useProducts } from '@/hooks/use-products'
+import { useProductsForSale } from '@/hooks/use-products-for-sale'
 import { useCart } from '@/store/cart'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { PackageIcon, ShoppingCartIcon } from 'lucide-react'
@@ -12,7 +12,7 @@ export const Route = createFileRoute('/')({
 })
 
 function IndexPage() {
-  const { products, isLoading } = useProducts()
+  const { products, isLoading } = useProductsForSale()
   const cart = useCart()
 
   return (
