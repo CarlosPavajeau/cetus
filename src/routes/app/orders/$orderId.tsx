@@ -66,33 +66,47 @@ function RouteComponent() {
           </div>
 
           <div className="relative my-16">
-            <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2">
-              <div>
-                <div className="grid gap-4 md:border-border md:border-r md:pr-4">
-                  {order.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-md border border-border bg-white p-4"
-                    >
-                      <div className="flex h-full flex-col justify-between *:not-first:mt-4">
-                        <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          {item.productName}
-                        </h2>
+            <div className="grid gap-8 lg:grid-cols-2">
+              <div className="space-y-4">
+                {order.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-lg border bg-card p-4 text-card-foreground"
+                  >
+                    <div className="flex gap-4">
+                      <div className="relative h-24 w-24">
+                        <img
+                          src="/placeholder.svg"
+                          alt={item.productName}
+                          className="rounded-md object-cover"
+                        />
+                      </div>
 
-                        <div className="mt-4 flex items-center justify-between">
-                          <p className="font-bold text-base text-foreground">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex justify-between">
+                          <h3 className="font-medium">{item.productName}</h3>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
                             <Currency value={item.price} currency="COP" /> x{' '}
                             {item.quantity}
-                          </p>
+                          </div>
+                          <div className="ml-auto font-medium">
+                            <Currency
+                              value={item.price * item.quantity}
+                              currency="COP"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="flex flex-col justify-between space-y-8 md:pl-4">
-                <div className="space-y-2">
+              <div>
+                <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h2 className="font-medium text-lg">Resumen del pedido</h2>
 
@@ -108,68 +122,58 @@ function RouteComponent() {
                     </Badge>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cliente</span>
-                    <span>
-                      <span className="font-medium">{order.customer.name}</span>
-                    </span>
-                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Cliente</span>
+                      <span>{order.customer.name}</span>
+                    </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Dirección</span>
-                    <span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Dirección</span>
                       <span className="font-medium">{order.address}</span>
-                    </span>
-                  </div>
+                    </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Teléfono</span>
-                    <span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Teléfono</span>
                       <span className="font-medium">
                         {order.customer.phone}
                       </span>
-                    </span>
-                  </div>
-                </div>
+                    </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground text-sm">
                         Fecha
                       </span>
                       <span>
-                        <span className="text-sm">
-                          <FormattedDate date={new Date(order.createdAt)} />
-                        </span>
+                        <FormattedDate date={new Date(order.createdAt)} />
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <h2 className="font-medium text-muted-foreground">
-                        Total
-                      </h2>
-                      <h2 className="font-bold text-foreground">
+
+                    <div className="flex justify-between font-semibold text-lg">
+                      <span>Total</span>
+                      <span>
                         <Currency value={order.total} currency="COP" />
-                      </h2>
+                      </span>
                     </div>
+
+                    {order.status === OrderStatus.Pending && (
+                      <div className="rounded-lg border bg-background p-4">
+                        <h2 className="font-medium text-lg">
+                          Pago pendiente por confirmar
+                        </h2>
+
+                        <p className="text-muted-foreground text-sm">
+                          El pago de este pedido aún no ha sido confirmado.
+                        </p>
+                      </div>
+                    )}
                   </div>
-
-                  {order.status === OrderStatus.Pending && (
-                    <div className="my-4 rounded-lg border bg-background p-4">
-                      <h2 className="font-medium">
-                        Pago pendiente por confirmar
-                      </h2>
-
-                      <p className="text-muted-foreground text-sm">
-                        El pago de este pedido aún no ha sido confirmado.
-                      </p>
-                    </div>
-                  )}
 
                   {order.status === OrderStatus.Paid && (
                     <Button
                       type="submit"
                       className="group w-full"
+                      size="lg"
                       onClick={handleCompleteOrder}
                       disabled={
                         order.status !== OrderStatus.Paid ||
