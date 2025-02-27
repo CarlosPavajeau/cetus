@@ -20,6 +20,14 @@ export const fetchProducts = async () => {
   return response.data
 }
 
+export const fetchProduct = async (id: string) => {
+  const response = await axios.get<Product>(
+    `${import.meta.env.PUBLIC_API_URL}/products/${id}`,
+  )
+
+  return response.data
+}
+
 export type ProductForSale = Omit<
   Product,
   'categoryId' | 'createdAt' | 'updatedAt' | 'enabled'
