@@ -60,3 +60,7 @@ export const updateProduct = async (product: UpdateProductRequest) => {
 
   return response.data
 }
+
+export const deleteProduct = async (id: string) => {
+  await axios.delete(`${import.meta.env.PUBLIC_API_URL}/products/${id}`)
+}
