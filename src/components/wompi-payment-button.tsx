@@ -63,7 +63,12 @@ export const WonpiPaymentButton = ({ order }: Props) => {
       <input type="hidden" name="shipping-address:city" value="Valledupar" />
       <input type="hidden" name="shipping-address:region" value="Cesar" />
 
-      <Button type="submit" className="group w-full" disabled={isLoading}>
+      <Button
+        type="submit"
+        size="lg"
+        className="group w-full"
+        disabled={isLoading}
+      >
         Ir a pagar
         <ArrowRightIcon
           className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
