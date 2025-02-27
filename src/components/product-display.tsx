@@ -145,7 +145,7 @@ export const ProductDisplay = ({ product }: Props) => {
 
             <div className="flex flex-col gap-4 sm:flex-row">
               <Button
-                className="flex-1 bg-black text-white hover:bg-gray-800"
+                className="w-full"
                 size="lg"
                 onClick={() => cart.add(product, quantity)}
               >
