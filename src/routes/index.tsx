@@ -1,11 +1,17 @@
 import { CartButton } from '@/components/cart-button'
-import { Currency } from '@/components/currency'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ProductGrid } from '@/components/product-grid'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useCategories } from '@/hooks/use-categories'
 import { useProductsForSale } from '@/hooks/use-products-for-sale'
-import { useCart } from '@/store/cart'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { PackageIcon, ShoppingCartIcon } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
   component: IndexPage,
@@ -13,7 +19,8 @@ export const Route = createFileRoute('/')({
 
 function IndexPage() {
   const { products, isLoading } = useProductsForSale()
-  const cart = useCart()
+
+  const { categories, isLoading: isLoadingCategories } = useCategories()
 
   return (
     <>
@@ -40,60 +47,38 @@ function IndexPage() {
         <div data-home="true">
           <div className="max-w-3xl max-sm:text-center">
             <h1 className="mb-4 font-bold font-heading text-4xl/[1.1] text-foreground tracking-tight md:text-5xl/[1.1]">
-              Selecciona un producto para iniciar tu pedido
+              Nuestros productos
             </h1>
           </div>
 
-          <div className="relative my-16">
-            <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {isLoading && <p>Cargando...</p>}
-              {products?.map((product) => (
-                <div
-                  key={product.id}
-                  className="max-w-sm rounded-md border border-border bg-white p-4"
-                >
-                  <div className="flex h-full flex-col justify-between *:not-first:mt-4">
-                    <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      {product.name}
-                    </h2>
+          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {!isLoadingCategories && categories && (
+              <div className="*:not-first:mt-2">
+                <Label htmlFor="category">Categoria</Label>
+                <Select>
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Seleccionar categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las categorias</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
 
-                    {product.description && (
-                      <p className="text-[13px] text-muted-foreground">
-                        {product.description}
-                      </p>
-                    )}
-
-                    <div className="w-full">
-                      <div className="flex items-center space-x-2">
-                        <Badge>
-                          <Currency value={product.price} currency="COP" />
-                        </Badge>
-
-                        <Badge>
-                          <PackageIcon
-                            className="-ms-0.5 opacity-60"
-                            size={12}
-                            aria-hidden="true"
-                          />
-                          {product.stock}
-                        </Badge>
-                      </div>
-                      <Button
-                        className="mt-4 w-full"
-                        onClick={() => cart.add(product)}
-                      >
-                        <ShoppingCartIcon
-                          className="-ms-1 opacity-60"
-                          size={16}
-                          aria-hidden="true"
-                        />
-                        Agregar al carrito
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="relative my-8">
+            {isLoading && (
+              <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            )}
+            {products && <ProductGrid products={products} />}
           </div>
         </div>
       </main>
