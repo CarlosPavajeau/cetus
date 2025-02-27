@@ -1,4 +1,5 @@
 import type { Product } from '@/api/products'
+import { ConfirmDeleteProductDialog } from '@/components/confirm-delete-product-dialog'
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
@@ -6,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -433,7 +433,7 @@ function RowActions({ row }: { row: Row<Product> }) {
       <DropdownMenuContent align="end">
         <UpdateProductDialog product={row.original} />
 
-        <DropdownMenuItem disabled>Eliminar</DropdownMenuItem>
+        <ConfirmDeleteProductDialog product={row.original} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
