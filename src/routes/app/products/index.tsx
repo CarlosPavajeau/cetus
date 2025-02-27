@@ -1,6 +1,7 @@
 import type { Product } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -78,6 +79,22 @@ const columns: ColumnDef<Product>[] = [
     accessorKey: 'stock',
     header: 'Stock',
     cell: ({ row }) => <div>{row.getValue('stock')}</div>,
+  },
+  {
+    id: 'enabled',
+    accessorKey: 'enabled',
+    header: 'Estado',
+    cell: ({ row }) => (
+      <Badge
+        className={cn(
+          !row.getValue('enabled') &&
+            'bg-muted-foreground/60 text-primary-foreground',
+        )}
+      >
+        {row.getValue('enabled') ? 'Activo' : 'Inactivo'}
+      </Badge>
+    ),
+    size: 100,
   },
   {
     id: 'createdAt',

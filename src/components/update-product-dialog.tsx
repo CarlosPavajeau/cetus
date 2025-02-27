@@ -7,19 +7,19 @@ import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
 import { Button } from './ui/button'
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from './ui/dialog'
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
 import { Switch } from './ui/switch'
@@ -48,7 +48,6 @@ export const UpdateProductDialog = ({ product }: Props) => {
     defaultValues: {
       ...product,
       description: product.description ?? undefined,
-      enabled: true,
     },
   })
 

@@ -6,6 +6,7 @@ export type Product = {
   description?: string
   price: number
   stock: number
+  enabled: boolean
   categoryId: string
   createdAt: string
   updatedAt: string
@@ -36,9 +37,7 @@ export const createProduct = async (product: CreateProductRequest) => {
 export type UpdateProductRequest = Omit<
   Product,
   'createdAt' | 'updatedAt' | 'categoryId'
-> & {
-  enabled: boolean
-}
+>
 
 export const updateProduct = async (product: UpdateProductRequest) => {
   const response = await axios.put<Product>(
