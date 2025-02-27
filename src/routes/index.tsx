@@ -1,5 +1,6 @@
 import { CartButton } from '@/components/cart-button'
 import { ProductGrid } from '@/components/product-grid'
+import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -11,7 +12,8 @@ import {
 import { useCategories } from '@/hooks/use-categories'
 import { useProductsForSale } from '@/hooks/use-products-for-sale'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Loader2 } from 'lucide-react'
+import { Loader2, XIcon } from 'lucide-react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/')({
   component: IndexPage,
@@ -21,6 +23,7 @@ function IndexPage() {
   const { products, isLoading } = useProductsForSale()
 
   const { categories, isLoading: isLoadingCategories } = useCategories()
+  const [selectedCategory, setSelectedCategory] = useState('all')
 
   return (
     <>
@@ -55,7 +58,10 @@ function IndexPage() {
             {!isLoadingCategories && categories && (
               <div className="*:not-first:mt-2">
                 <Label htmlFor="category">Categoria</Label>
-                <Select>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Seleccionar categoria" />
                   </SelectTrigger>
@@ -71,6 +77,22 @@ function IndexPage() {
               </div>
             )}
           </div>
+
+          {selectedCategory !== 'all' && (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <Badge className="gap-0">
+                Categoria:{' '}
+                {
+                  categories?.find(
+                    (category) => category.id === selectedCategory,
+                  )?.name
+                }
+                <button className="-my-px -ms-px -me-1.5 inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-[inherit] p-0 text-primary-foreground/60 outline-none transition-[color,box-shadow] hover:text-primary-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                  <XIcon size={12} aria-hidden="true" />
+                </button>
+              </Badge>
+            </div>
+          )}
 
           <div className="relative my-8">
             {isLoading && (
