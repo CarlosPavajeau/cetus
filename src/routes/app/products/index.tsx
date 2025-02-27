@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { UpdateProductDialog } from '@/components/update-product-dialog'
 import { usePagination } from '@/hooks/use-pagination'
 import { useProducts } from '@/hooks/use-products'
 import { cn } from '@/shared/cn'
@@ -33,6 +34,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
+  type Row,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -86,6 +88,13 @@ const columns: ColumnDef<Product>[] = [
         <FormattedDate date={new Date(row.getValue('createdAt'))} />
       </div>
     ),
+  },
+  {
+    id: 'actions',
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ({ row }) => <RowActions row={row} />,
+    size: 60,
+    enableHiding: false,
   },
 ]
 
@@ -215,7 +224,11 @@ function RouteComponent() {
                     >
                       {headerGroup.headers.map((header) => {
                         return (
-                          <TableHead key={header.id}>
+                          <TableHead
+                            key={header.id}
+                            style={{ width: `${header.getSize()}px` }}
+                            className="h-11"
+                          >
                             {header.isPlaceholder
                               ? null
                               : flexRender(
@@ -237,7 +250,7 @@ function RouteComponent() {
                         data-state={row.getIsSelected() && 'selected'}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
+                          <TableCell key={cell.id} className="last:py-0">
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
@@ -372,4 +385,8 @@ function RouteComponent() {
       </Protect>
     </section>
   )
+}
+
+function RowActions({ row }: { row: Row<Product> }) {
+  return <UpdateProductDialog product={row.original} />
 }
