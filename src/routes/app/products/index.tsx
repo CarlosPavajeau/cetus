@@ -3,6 +3,12 @@ import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
   Pagination,
@@ -46,6 +52,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleXIcon,
+  EllipsisIcon,
   ListFilterIcon,
   PlusIcon,
 } from 'lucide-react'
@@ -408,5 +415,26 @@ function RouteComponent() {
 }
 
 function RowActions({ row }: { row: Row<Product> }) {
-  return <UpdateProductDialog product={row.original} />
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <div className="flex justify-end">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="shadow-none"
+            aria-label="Edit item"
+          >
+            <EllipsisIcon size={16} aria-hidden="true" />
+          </Button>
+        </div>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end">
+        <UpdateProductDialog product={row.original} />
+
+        <DropdownMenuItem disabled>Eliminar</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }

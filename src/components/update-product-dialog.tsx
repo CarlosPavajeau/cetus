@@ -1,7 +1,6 @@
 import { type Product, updateProduct } from '@/api/products'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { SquarePenIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
@@ -13,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog'
+import { DropdownMenuItem } from './ui/dropdown-menu'
 import {
   Form,
   FormControl,
@@ -73,14 +73,12 @@ export const UpdateProductDialog = ({ product }: Props) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="shadow-none"
+        <DropdownMenuItem
+          onSelect={(e) => e.preventDefault()}
           aria-label="Edit product"
         >
-          <SquarePenIcon size={16} aria-hidden="true" />
-        </Button>
+          <span>Editar</span>
+        </DropdownMenuItem>
       </DialogTrigger>
 
       <DialogContent>
