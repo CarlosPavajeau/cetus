@@ -1,5 +1,6 @@
 import { createOrder } from '@/api/orders'
 import { Currency } from '@/components/currency'
+import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -108,6 +109,10 @@ function RouteComponent() {
     }
   }, [createOrderMutation, navigate])
 
+  const cdnUrl = import.meta.env.PUBLIC_CDN_URL
+
+  const getImageUrl = (image: string) => `${cdnUrl}/${image}`
+
   return (
     <>
       <header className="before:-inset-x-32 relative mb-14 before:absolute before:bottom-0 before:h-px before:bg-[linear-gradient(to_right,--theme(--color-border/.3),--theme(--color-border)_200px,--theme(--color-border)_calc(100%-200px),--theme(--color-border/.3))]">
@@ -154,10 +159,13 @@ function RouteComponent() {
                           className="rounded-lg border bg-card p-4 text-card-foreground"
                         >
                           <div className="flex gap-4">
-                            <div className="relative h-24 w-24">
-                              <img
-                                src="/placeholder.svg"
+                            <div className="relative h-24 w-24 rounded-md">
+                              <Image
+                                src={getImageUrl(
+                                  item.product.imageUrl || 'placeholder.svg',
+                                )}
                                 alt={item.product.name}
+                                layout="fill"
                                 className="rounded-md object-cover"
                               />
                             </div>

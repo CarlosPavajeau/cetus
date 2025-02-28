@@ -3,6 +3,7 @@ import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
 import { PackageIcon, ShoppingCart } from 'lucide-react'
 import { Currency } from './currency'
+import { Image } from './image'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 
@@ -26,9 +27,10 @@ export const ProductGrid = ({ products }: Props) => {
         >
           <div className="relative aspect-square">
             <Link to={`/products/${product.id}`}>
-              <img
+              <Image
                 src={getImageUrl(product.imageUrl || 'placeholder.svg')}
                 alt={product.name}
+                layout="fill"
                 className="object-cover transition-transform hover:scale-105"
               />
             </Link>
