@@ -6,6 +6,7 @@ export type Product = {
   description?: string
   price: number
   stock: number
+  imageUrl?: string
   enabled: boolean
   categoryId: string
   createdAt: string
@@ -44,7 +45,7 @@ export const fetchProductsForSale = async () => {
 export type CreateProductRequest = Pick<
   Product,
   'name' | 'description' | 'price' | 'stock' | 'categoryId'
->
+> & { imageUrl: string }
 
 export const createProduct = async (product: CreateProductRequest) => {
   const response = await axios.post<Product>(
@@ -57,7 +58,7 @@ export const createProduct = async (product: CreateProductRequest) => {
 
 export type UpdateProductRequest = Omit<
   Product,
-  'createdAt' | 'updatedAt' | 'categoryId'
+  'createdAt' | 'updatedAt' | 'categoryId' | 'imageUrl'
 >
 
 export const updateProduct = async (product: UpdateProductRequest) => {
