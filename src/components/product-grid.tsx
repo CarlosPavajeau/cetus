@@ -13,14 +13,21 @@ type Props = {
 export const ProductGrid = ({ products }: Props) => {
   const cart = useCart()
 
+  const cdnUrl = import.meta.env.PUBLIC_CDN_URL
+  const image = '/placeholder.svg'
+  const imageUrl = `${cdnUrl}${image}`
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
       {products.map((product) => (
-        <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground">
+        <div
+          key={product.id}
+          className="flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground"
+        >
           <div className="relative aspect-square">
             <Link to={`/products/${product.id}`}>
               <img
-                src="/placeholder.svg"
+                src={imageUrl}
                 alt={product.name}
                 className="object-cover transition-transform hover:scale-105"
               />
