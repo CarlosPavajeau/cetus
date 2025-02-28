@@ -14,8 +14,8 @@ export const ProductGrid = ({ products }: Props) => {
   const cart = useCart()
 
   const cdnUrl = import.meta.env.PUBLIC_CDN_URL
-  const image = '/placeholder.svg'
-  const imageUrl = `${cdnUrl}${image}`
+
+  const getImageUrl = (image: string) => `${cdnUrl}/${image}`
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
@@ -27,7 +27,7 @@ export const ProductGrid = ({ products }: Props) => {
           <div className="relative aspect-square">
             <Link to={`/products/${product.id}`}>
               <img
-                src={imageUrl}
+                src={getImageUrl(product.imageUrl || 'placeholder.svg')}
                 alt={product.name}
                 className="object-cover transition-transform hover:scale-105"
               />
