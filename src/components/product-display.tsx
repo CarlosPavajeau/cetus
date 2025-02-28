@@ -25,6 +25,10 @@ export const ProductDisplay = ({ product }: Props) => {
     '/placeholder.svg?height=500&width=500',
   ]
 
+  const cdnUrl = import.meta.env.PUBLIC_CDN_URL
+
+  const imageUrls = images.map((image) => `${cdnUrl}${image}`)
+
   const nextImage = () => {
     setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
   }
@@ -55,7 +59,7 @@ export const ProductDisplay = ({ product }: Props) => {
           <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
             <div className="absolute inset-0 flex items-center justify-center">
               <img
-                src={images[currentImage] || '/placeholder.svg'}
+                src={imageUrls[currentImage] || '/placeholder.svg'}
                 alt={product.name}
                 className="object-contain"
               />
@@ -80,7 +84,7 @@ export const ProductDisplay = ({ product }: Props) => {
             </Button>
           </div>
           <div className="flex space-x-2 overflow-x-auto p-2">
-            {images.map((image, index) => (
+            {imageUrls.map((image, index) => (
               <button
                 key={index}
                 className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border ${
