@@ -6,7 +6,6 @@ export const AuthInterceptor = () => {
   const { getToken } = useAuth()
 
   useEffect(() => {
-    console.log('AuthInterceptor')
     axios.interceptors.request.use(async (config) => {
       const token = await getToken()
 
