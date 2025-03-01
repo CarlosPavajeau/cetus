@@ -150,135 +150,111 @@ function RouteComponent() {
 
               <div className="relative my-16">
                 <div className="grid gap-8 lg:grid-cols-2">
-                  <div className="space-y-4">
-                    {items.length > 0 &&
-                      items.map((item) => (
-                        <div
-                          key={item.product.id}
-                          className="rounded-lg border bg-card p-4 text-card-foreground"
-                        >
-                          <div className="flex gap-4">
-                            <div className="relative h-24 w-24 rounded-md">
-                              <Image
-                                src={getImageUrl(
-                                  item.product.imageUrl || 'placeholder.svg',
-                                )}
-                                alt={item.product.name}
-                                layout="fill"
-                                className="rounded-md object-cover"
-                              />
-                            </div>
+                  <div className="space-y-6">
+                    <h2 className="font-medium text-lg">
+                      Productos en tu carrito
+                    </h2>
 
-                            <div className="flex-1 space-y-2">
-                              <div className="flex justify-between">
-                                <h3 className="font-medium">
-                                  {item.product.name}
-                                </h3>
-
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="text-destructive hover:text-destructive/80"
-                                  type="button"
-                                  onClick={() => cart.remove(item.product)}
-                                >
-                                  <Trash2Icon className="h-4 w-4" />
-                                </Button>
+                    <div className="space-y-4">
+                      {items.length > 0 &&
+                        items.map((item) => (
+                          <div
+                            key={item.product.id}
+                            className="rounded-lg border bg-card p-4 text-card-foreground"
+                          >
+                            <div className="flex gap-4">
+                              <div className="relative h-24 w-24 rounded-md">
+                                <Image
+                                  src={getImageUrl(
+                                    item.product.imageUrl || 'placeholder.svg',
+                                  )}
+                                  alt={item.product.name}
+                                  layout="fill"
+                                  className="rounded-md object-cover"
+                                />
                               </div>
 
-                              <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
+                              <div className="flex-1 space-y-2">
+                                <div className="flex justify-between">
+                                  <h3 className="font-medium">
+                                    {item.product.name}
+                                  </h3>
+
                                   <Button
-                                    variant="outline"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    variant="ghost"
+                                    className="text-destructive hover:text-destructive/80"
                                     type="button"
-                                    onClick={() => cart.reduce(item.product)}
+                                    onClick={() => cart.remove(item.product)}
                                   >
-                                    -
-                                  </Button>
-                                  <span className="w-8 text-center">
-                                    {item.quantity}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    type="button"
-                                    onClick={() => cart.add(item.product)}
-                                  >
-                                    +
+                                    <Trash2Icon className="h-4 w-4" />
                                   </Button>
                                 </div>
-                                <div className="ml-auto font-medium">
-                                  <Currency
-                                    value={item.product.price}
-                                    currency="COP"
-                                  />
+
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      type="button"
+                                      onClick={() => cart.reduce(item.product)}
+                                    >
+                                      -
+                                    </Button>
+                                    <span className="w-8 text-center">
+                                      {item.quantity}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      type="button"
+                                      onClick={() => cart.add(item.product)}
+                                    >
+                                      +
+                                    </Button>
+                                  </div>
+                                  <div className="ml-auto font-medium">
+                                    <Currency
+                                      value={item.product.price}
+                                      currency="COP"
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
 
-                    {items.length === 0 && (
-                      <div className="py-8 text-center">
-                        <h2 className="mb-2 font-medium text-xl">
-                          Tu carrito está vacío
-                        </h2>
-                        <p className="text-muted-foreground">
-                          ¡Agrega productos para continuar con tu pedido!
-                        </p>
-                      </div>
-                    )}
+                      {items.length === 0 && (
+                        <div className="py-8 text-center">
+                          <h2 className="mb-2 font-medium text-xl">
+                            Tu carrito está vacío
+                          </h2>
+                          <p className="text-muted-foreground">
+                            ¡Agrega productos para continuar con tu pedido!
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex flex-col justify-between space-y-8 md:pl-4">
-                    <div className="space-y-1.5">
+                    <div className="space-y-6">
                       <h2 className="font-medium text-lg">
                         Datos de envío y contacto
                       </h2>
 
-                      <FormField
-                        control={form.control}
-                        name="customer.id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Identificación</FormLabel>
-                            <FormControl>
-                              <Input type="text" autoFocus {...field} />
-                            </FormControl>
-
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="customer.name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nombre</FormLabel>
-                            <FormControl>
-                              <Input type="text" {...field} />
-                            </FormControl>
-
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="space-y-4">
                         <FormField
                           control={form.control}
-                          name="customer.email"
+                          name="customer.id"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Correo electrónico</FormLabel>
+                              <FormLabel>Identificación</FormLabel>
                               <FormControl>
-                                <Input type="email" {...field} />
+                                <Input type="text" autoFocus {...field} />
                               </FormControl>
 
                               <FormMessage />
@@ -288,12 +264,59 @@ function RouteComponent() {
 
                         <FormField
                           control={form.control}
-                          name="customer.phone"
+                          name="customer.name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Teléfono</FormLabel>
+                              <FormLabel>Nombre</FormLabel>
                               <FormControl>
-                                <Input type="tel" {...field} />
+                                <Input type="text" {...field} />
+                              </FormControl>
+
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name="customer.email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Correo electrónico</FormLabel>
+                                <FormControl>
+                                  <Input type="email" {...field} />
+                                </FormControl>
+
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="customer.phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Teléfono</FormLabel>
+                                <FormControl>
+                                  <Input type="tel" {...field} />
+                                </FormControl>
+
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Dirección</FormLabel>
+                              <FormControl>
+                                <Input type="text" {...field} />
                               </FormControl>
 
                               <FormMessage />
@@ -302,33 +325,20 @@ function RouteComponent() {
                         />
                       </div>
 
-                      <FormField
-                        control={form.control}
-                        name="address"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Dirección</FormLabel>
-                            <FormControl>
-                              <Input type="text" {...field} />
-                            </FormControl>
+                      <div className="space-y-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Productos
+                          </span>
+                          <span>{count}</span>
+                        </div>
 
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Productos</span>
-                        <span>{count}</span>
-                      </div>
-
-                      <div className="flex justify-between font-semibold text-lg">
-                        <span>Total</span>
-                        <span>
-                          <Currency value={total} currency="COP" />
-                        </span>
+                        <div className="flex justify-between font-semibold text-lg">
+                          <span>Total</span>
+                          <span>
+                            <Currency value={total} currency="COP" />
+                          </span>
+                        </div>
                       </div>
 
                       <Button
