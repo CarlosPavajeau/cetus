@@ -1,7 +1,7 @@
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
 import { Image } from '@/components/image'
-import { WonpiPaymentButton } from '@/components/wompi-payment-button'
+import { PaymentOptions } from '@/components/payment-options'
 import { useOrder } from '@/hooks/use-order'
 import { getImageUrl } from '@/shared/cdn'
 import { createFileRoute } from '@tanstack/react-router'
@@ -121,9 +121,11 @@ function RouteComponent() {
                         <Currency value={order.total} currency="COP" />
                       </span>
                     </div>
-
-                    <WonpiPaymentButton order={order} />
                   </div>
+
+                  <h2 className="font-medium text-lg">Método de pago</h2>
+
+                  <PaymentOptions order={order} />
                 </div>
               </div>
             </div>
