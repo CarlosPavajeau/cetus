@@ -24,25 +24,25 @@ function RouteComponent() {
         </div>
       )}
       {order && (
-        <div>
-          <div data-home="true">
-            <div className="max-w-3xl max-sm:text-center">
-              <h1 className="mb-4 font-bold font-heading text-4xl/[1.1] text-foreground tracking-tight md:text-5xl/[1.1]">
-                Ya casi estás listo
-              </h1>
+        <div data-home="true">
+          <div className="max-w-3xl max-sm:text-center">
+            <h1 className="mb-4 font-bold font-heading text-4xl/[1.1] text-foreground tracking-tight md:text-5xl/[1.1]">
+              Ya casi estás listo
+            </h1>
 
-              <p className="text-muted-foreground">
-                <span className="font-medium">{order.customer.name}</span> estás
-                a punto de realizar tu pedido. Por favor, revisa los detalles de
-                tu compra y completa el proceso de pago.
-              </p>
-            </div>
+            <p className="text-muted-foreground">
+              <span className="font-medium">{order.customer.name}</span> estás a
+              punto de realizar tu pedido. Por favor, revisa los detalles de tu
+              compra y completa el proceso de pago.
+            </p>
           </div>
 
           <div className="relative my-16">
             <div className="grid gap-8 lg:grid-cols-2">
-              <div className="space-y-4">
-                <div className="grid gap-4 md:border-border md:border-r md:pr-4">
+              <div className="space-y-6">
+                <h2 className="font-medium text-lg">Productos en tu pedido</h2>
+
+                <div className="space-y-4">
                   {order.items.map((item) => (
                     <div
                       key={item.id}
@@ -84,7 +84,7 @@ function RouteComponent() {
                 </div>
               </div>
 
-              <div>
+              <div className="flex flex-col justify-between space-y-8 md:pl-4">
                 <div className="space-y-6">
                   <h2 className="font-medium text-lg">Resumen de tu pedido</h2>
 
