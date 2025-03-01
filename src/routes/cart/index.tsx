@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -30,6 +31,7 @@ const createOrderSchema = z.object({
   items: z.array(
     z.object({
       productName: z.string(),
+      imageUrl: z.string().optional(),
       productId: z.string(),
       quantity: z.coerce.number(),
       price: z.coerce.number(),
@@ -80,6 +82,7 @@ function RouteComponent() {
       'items',
       items.map((item) => ({
         productName: item.product.name,
+        imageUrl: item.product.imageUrl,
         productId: item.product.id,
         quantity: item.quantity,
         price: item.product.price,
@@ -108,10 +111,6 @@ function RouteComponent() {
       })
     }
   }, [createOrderMutation, navigate])
-
-  const cdnUrl = import.meta.env.PUBLIC_CDN_URL
-
-  const getImageUrl = (image: string) => `${cdnUrl}/${image}`
 
   return (
     <>
