@@ -1,4 +1,5 @@
 import type { ProductForSale } from '@/api/products'
+import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
 import { PackageIcon, ShoppingCart } from 'lucide-react'
@@ -13,10 +14,6 @@ type Props = {
 
 export const ProductGrid = ({ products }: Props) => {
   const cart = useCart()
-
-  const cdnUrl = import.meta.env.PUBLIC_CDN_URL
-
-  const getImageUrl = (image: string) => `${cdnUrl}/${image}`
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
