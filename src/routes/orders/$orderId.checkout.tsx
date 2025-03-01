@@ -1,7 +1,9 @@
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
+import { Image } from '@/components/image'
 import { WonpiPaymentButton } from '@/components/wompi-payment-button'
 import { useOrder } from '@/hooks/use-order'
+import { getImageUrl } from '@/shared/cdn'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/orders/$orderId/checkout')({
@@ -48,9 +50,12 @@ function RouteComponent() {
                     >
                       <div className="flex gap-4">
                         <div className="relative h-24 w-24">
-                          <img
-                            src="/placeholder.svg"
+                          <Image
+                            src={getImageUrl(
+                              item.imageUrl || 'placeholder.svg',
+                            )}
                             alt={item.productName}
+                            layout="fill"
                             className="rounded-md object-cover"
                           />
                         </div>

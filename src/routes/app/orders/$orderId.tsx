@@ -6,9 +6,11 @@ import {
 } from '@/api/orders'
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
+import { Image } from '@/components/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/use-order'
+import { getImageUrl } from '@/shared/cdn'
 import { cn } from '@/shared/cn'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -75,9 +77,10 @@ function RouteComponent() {
                   >
                     <div className="flex gap-4">
                       <div className="relative h-24 w-24">
-                        <img
-                          src="/placeholder.svg"
+                        <Image
+                          src={getImageUrl(item.imageUrl || 'placeholder.svg')}
                           alt={item.productName}
+                          layout="fill"
                           className="rounded-md object-cover"
                         />
                       </div>
