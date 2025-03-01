@@ -29,6 +29,7 @@ export type Order = {
   items: {
     id: string
     productName: string
+    imageUrl?: string
     quantity: number
     price: number
   }[]
@@ -53,6 +54,7 @@ export type CreateOrderRequest = {
   total: number
   items: {
     productName: string
+    imageUrl?: string
     productId: string
     quantity: number
     price: number
