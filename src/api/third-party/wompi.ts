@@ -133,7 +133,7 @@ export const createBancolombiaTransfer = async (
   let retries = 0
 
   while (payment && !payment.extra?.async_payment_url && retries < maxRetries) {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 2000))
 
     transaction = await getTransaction(transaction.data.id)
     payment = transaction.data.payment_method
@@ -203,7 +203,7 @@ export const createPSETransaction = async (data: CreateTransactionRequest) => {
   let retries = 0
 
   while (payment && !payment.extra?.async_payment_url && retries < maxRetries) {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 2000))
 
     transaction = await getTransaction(transaction.data.id)
     payment = transaction.data.payment_method
