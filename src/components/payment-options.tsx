@@ -3,16 +3,12 @@ import { useMerchant } from '@/hooks/wompi/use-merchant'
 import { type PaymentFormValues, paymentSchema } from '@/schemas/payments'
 import { cn } from '@/shared/cn'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  CreditCardIcon,
-  EuroIcon,
-  LandmarkIcon,
-  SmartphoneIcon,
-} from 'lucide-react'
+import { CreditCardIcon, SmartphoneIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { BancolombiaPayment } from './bancolombia-payment'
 import { CardPaymentForm } from './card-payment-form'
+import { BancolombiaLogo, PSELogo } from './icons'
 import { NequiPaymentForm } from './nequi-payment-form'
 import { PsePaymentForm } from './pse-payment-form'
 import { Form } from './ui/form'
@@ -31,12 +27,12 @@ const PAYMENT_METHODS = [
   {
     id: 'BANCOLOMBIA_TRANSFER',
     label: 'Bancolombia',
-    PaymentIcon: LandmarkIcon,
+    PaymentIcon: BancolombiaLogo,
   },
   {
     id: 'PSE',
     label: 'PSE',
-    PaymentIcon: EuroIcon,
+    PaymentIcon: PSELogo,
   },
   {
     id: 'NEQUI',
@@ -94,11 +90,7 @@ export function PaymentOptions({ order }: Props) {
               )}
             >
               <RadioGroupItem id={id} value={id} className="sr-only" />
-              <PaymentIcon
-                className="opacity-60"
-                size={20}
-                aria-hidden="true"
-              />
+              <PaymentIcon className="size-6" size={20} aria-hidden="true" />
               <label
                 htmlFor={id}
                 className={cn(
