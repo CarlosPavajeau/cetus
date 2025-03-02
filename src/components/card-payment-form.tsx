@@ -1,8 +1,8 @@
 import type { Order } from '@/api/orders'
 import {
-    type CreateTransactionRequest,
-    createCardToken,
-    createTransaction,
+  type CreateTransactionRequest,
+  createCardToken,
+  createTransaction,
 } from '@/api/third-party/wompi'
 import { valueToCents } from '@/shared/currency'
 import { useGenerateIntegritySignature } from '@/shared/wompi'
@@ -17,11 +17,11 @@ import { PaymentConsent } from './payment-consent'
 import type { PaymentFormValues } from './payment-options'
 import { Button } from './ui/button'
 import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
 
