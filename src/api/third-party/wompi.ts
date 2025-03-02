@@ -168,3 +168,52 @@ export const createCardToken = async (data: CreateCardTokenRequest) => {
 
   return response.data
 }
+
+export type FinancialInstitution = {
+  financial_institution_code: string
+  financial_institution_name: string
+}
+
+export type FinancialInstitutions = FinancialInstitution[]
+
+export type GetFinancialInstitutionsResponse = {
+  data: FinancialInstitutions
+}
+
+export const getFinancialInstitutions = async () => {
+  const response = await wompi.get<GetFinancialInstitutionsResponse>(
+    '/pse/financial_institutions',
+  )
+
+  return response.data
+}
+
+export const createPSETransaction = async (data: CreateTransactionRequest) => {
+  if (data.payment_method.type !== 'PSE') {
+    throw new Error('Invalid payment method')
+  }
+
+  const response = await wompi.post<Transaction>('/transactions', data)
+
+  let transaction = response.data
+  let payment = transaction.data.payment_method
+
+  // Perform long polling to check if the transaction has async payment URL
+  const maxRetries = 5
+  let retries = 0
+
+  while (payment && !payment.extra?.async_payment_url && retries < maxRetries) {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    transaction = await getTransaction(transaction.data.id)
+    payment = transaction.data.payment_method
+
+    retries++
+  }
+
+  if (!payment?.extra?.async_payment_url) {
+    throw new Error('Transaction has no async payment URL')
+  }
+
+  return payment.extra.async_payment_url
+}
