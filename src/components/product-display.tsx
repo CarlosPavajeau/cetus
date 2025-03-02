@@ -1,14 +1,10 @@
 import type { ProductForSale } from '@/api/products'
+import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  MinusIcon,
-  PlusIcon,
-  ShoppingCartIcon,
-} from 'lucide-react'
+import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Currency } from './currency'
+import { Image } from './image'
 import { Button } from './ui/button'
 
 type Props = {
@@ -16,31 +12,6 @@ type Props = {
 }
 
 export const ProductDisplay = ({ product }: Props) => {
-  const [currentImage, setCurrentImage] = useState(0)
-
-  const images = [
-    '/placeholder.svg?height=500&width=500',
-    '/placeholder.svg?height=500&width=500',
-    '/placeholder.svg?height=500&width=500',
-    '/placeholder.svg?height=500&width=500',
-  ]
-
-  const cdnUrl = import.meta.env.PUBLIC_CDN_URL
-
-  const imageUrls = images.map((image) => `${cdnUrl}${image}`)
-
-  const nextImage = () => {
-    setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-  }
-
-  const prevImage = () => {
-    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-  }
-
-  const selectImage = (index: number) => {
-    setCurrentImage(index)
-  }
-
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
 
@@ -58,47 +29,13 @@ export const ProductDisplay = ({ product }: Props) => {
         <div className="space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
             <div className="absolute inset-0 flex items-center justify-center">
-              <img
-                src={imageUrls[currentImage] || '/placeholder.svg'}
+              <Image
+                src={getImageUrl(product.imageUrl || 'placeholder.svg')}
                 alt={product.name}
+                layout="fill"
                 className="object-contain"
               />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="-translate-y-1/2 absolute top-1/2 left-2 bg-background/80 hover:bg-background/90"
-              onClick={prevImage}
-              aria-label="Previous image"
-            >
-              <ChevronLeftIcon className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="-translate-y-1/2 absolute top-1/2 right-2 bg-background/80 hover:bg-background/90"
-              onClick={nextImage}
-              aria-label="Next image"
-            >
-              <ChevronRightIcon className="h-6 w-6" />
-            </Button>
-          </div>
-          <div className="flex space-x-2 overflow-x-auto p-2">
-            {imageUrls.map((image, index) => (
-              <button
-                key={index}
-                className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border ${
-                  currentImage === index ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() => selectImage(index)}
-              >
-                <img
-                  src={image || '/placeholder.svg'}
-                  alt={`${product.name} thumbnail ${index + 1}`}
-                  className="object-cover"
-                />
-              </button>
-            ))}
           </div>
         </div>
 
