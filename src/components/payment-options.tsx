@@ -14,6 +14,7 @@ import { type TypeOf, z } from 'zod'
 import { BancolombiaPayment } from './bancolombia-payment'
 import { CardPaymentForm } from './card-payment-form'
 import { NequiPaymentForm } from './nequi-payment-form'
+import { PsePaymentForm } from './pse-payment-form'
 import { Form } from './ui/form'
 import { RadioGroup, RadioGroupItem } from './ui/radio-group'
 
@@ -66,6 +67,10 @@ const bancolombiaPaymentSchema = z.object({
 
 const psePaymentSchema = z.object({
   type: z.literal('PSE'),
+  user_type: z.string(),
+  user_legal_id_type: z.string(),
+  user_legal_id: z.string(),
+  financial_institution_code: z.string(),
 
   presigned_acceptance: z.boolean(),
   presigned_personal_data_auth: z.boolean(),
@@ -152,6 +157,8 @@ export function PaymentOptions({ order }: Props) {
         {paymentMethod === 'BANCOLOMBIA_TRANSFER' && (
           <BancolombiaPayment order={order} />
         )}
+
+        {paymentMethod === 'PSE' && <PsePaymentForm order={order} />}
 
         {paymentMethod === 'NEQUI' && <NequiPaymentForm order={order} />}
       </div>
