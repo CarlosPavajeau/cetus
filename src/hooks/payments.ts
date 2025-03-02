@@ -10,6 +10,8 @@ import type { PaymentFormValues } from '@/schemas/payments'
 import { valueToCents } from '@/shared/currency'
 import { useGenerateIntegritySignature } from '@/shared/wompi'
 import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
 export const usePaymentSignature = (order: Order) => {
   const amount = valueToCents(order.total)
@@ -114,6 +116,25 @@ export const useCreateTransaction = (order: Order) => {
     mutationKey: ['create-transaction', order.id],
     mutationFn: createPaymentTransaction,
   })
+
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (createTransactionMutation.isSuccess) {
+      const data = createTransactionMutation.data
+
+      if (typeof data === 'string') {
+        window.open(data, '_self')
+      } else {
+        navigate({
+          to: `/orders/${order.id}/confirmation`,
+          search: {
+            id: data.data.id,
+          },
+        })
+      }
+    }
+  }, [createTransactionMutation, order, navigate])
 
   return createTransactionMutation
 }

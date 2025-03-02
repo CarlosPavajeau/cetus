@@ -22,7 +22,7 @@ type Props = {
   order: Order
 }
 
-const paymentMethods = [
+const PAYMENT_METHODS = [
   {
     id: 'CARD',
     label: 'Tarjeta',
@@ -45,6 +45,13 @@ const paymentMethods = [
   },
 ] as const
 
+const PAYMENT_FORMS = {
+  CARD: CardPaymentForm,
+  BANCOLOMBIA_TRANSFER: BancolombiaPayment,
+  PSE: PsePaymentForm,
+  NEQUI: NequiPaymentForm,
+} as const
+
 export function PaymentOptions({ order }: Props) {
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
@@ -66,6 +73,8 @@ export function PaymentOptions({ order }: Props) {
     }
   }, [merchant, form])
 
+  const PaymentForm = paymentMethod ? PAYMENT_FORMS[paymentMethod] : null
+
   return (
     <Form {...form}>
       <div className="space-y-6">
@@ -74,7 +83,7 @@ export function PaymentOptions({ order }: Props) {
           value={paymentMethod}
           onValueChange={setPaymentMethod}
         >
-          {paymentMethods.map(({ id, label, PaymentIcon }) => (
+          {PAYMENT_METHODS.map(({ id, label, PaymentIcon }) => (
             <div
               key={id}
               className={cn(
@@ -102,15 +111,7 @@ export function PaymentOptions({ order }: Props) {
           ))}
         </RadioGroup>
 
-        {paymentMethod === 'CARD' && <CardPaymentForm order={order} />}
-
-        {paymentMethod === 'BANCOLOMBIA_TRANSFER' && (
-          <BancolombiaPayment order={order} />
-        )}
-
-        {paymentMethod === 'PSE' && <PsePaymentForm order={order} />}
-
-        {paymentMethod === 'NEQUI' && <NequiPaymentForm order={order} />}
+        {PaymentForm && <PaymentForm order={order} />}
       </div>
     </Form>
   )

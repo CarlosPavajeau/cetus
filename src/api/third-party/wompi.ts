@@ -1,20 +1,11 @@
 import axios from 'axios'
 
-// Environment variables type
-type WompiEnv = {
-  PUBLIC_WONPI_API_URL: string
-  PUBLIC_WOMPI_KEY: string
-}
-
-// Create typed environment access
-const env = import.meta.env as unknown as WompiEnv
-
 // Base client setup
 const createWompiClient = () => {
   return axios.create({
-    baseURL: env.PUBLIC_WONPI_API_URL,
+    baseURL: import.meta.env.PUBLIC_WOMPI_API_URL,
     headers: {
-      Authorization: `Bearer ${env.PUBLIC_WOMPI_KEY}`,
+      Authorization: `Bearer ${import.meta.env.PUBLIC_WOMPI_KEY}`,
     },
   })
 }
@@ -154,7 +145,7 @@ export type GetFinancialInstitutionsResponse = {
 // API Functions
 export const getMerchant = async () => {
   const response = await wompi.get<Merchant>(
-    `/merchants/${env.PUBLIC_WOMPI_KEY}`,
+    `/merchants/${import.meta.env.PUBLIC_WOMPI_KEY}`,
   )
   return response.data
 }
