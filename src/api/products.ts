@@ -31,7 +31,7 @@ export const fetchProduct = async (id: string) => {
 
 export type ProductForSale = Omit<
   Product,
-  'categoryId' | 'createdAt' | 'updatedAt' | 'enabled'
+  'createdAt' | 'updatedAt' | 'enabled'
 >
 
 export const fetchProductsForSale = async () => {

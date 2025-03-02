@@ -13,7 +13,7 @@ import { useCategories } from '@/hooks/use-categories'
 import { useProductsForSale } from '@/hooks/use-products-for-sale'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Loader2, XIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/')({
   component: IndexPage,
@@ -24,6 +24,18 @@ function IndexPage() {
 
   const { categories, isLoading: isLoadingCategories } = useCategories()
   const [selectedCategory, setSelectedCategory] = useState('all')
+
+  const filteredProducts = useMemo(() => {
+    if (!products) {
+      return []
+    }
+
+    if (selectedCategory === 'all') {
+      return products
+    }
+
+    return products.filter((product) => product.categoryId === selectedCategory)
+  }, [products, selectedCategory])
 
   return (
     <>
@@ -103,7 +115,7 @@ function IndexPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             )}
-            {products && <ProductGrid products={products} />}
+            {products && <ProductGrid products={filteredProducts} />}
           </div>
         </div>
       </main>
