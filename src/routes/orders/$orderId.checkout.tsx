@@ -1,4 +1,5 @@
 import { Currency } from '@/components/currency'
+import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Image } from '@/components/image'
 import { PaymentOptions } from '@/components/payment-options'
@@ -18,11 +19,7 @@ function RouteComponent() {
 
   return (
     <main className="grow">
-      {isLoading && (
-        <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-          <span>Cargando...</span>
-        </div>
-      )}
+      {isLoading && <DefaultLoader />}
       {order && (
         <div data-home="true">
           <div className="max-w-3xl max-sm:text-center">

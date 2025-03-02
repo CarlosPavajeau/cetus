@@ -1,6 +1,7 @@
 import type { Product } from '@/api/products'
 import { ConfirmDeleteProductDialog } from '@/components/confirm-delete-product-dialog'
 import { Currency } from '@/components/currency'
+import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -171,17 +172,7 @@ function RouteComponent() {
           </div>
         </div>
 
-        {isLoading && (
-          <div className="rounded-lg border bg-background p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-bold font-heading text-2xl text-foreground">
-                  Cargando...
-                </h1>
-              </div>
-            </div>
-          </div>
-        )}
+        {isLoading && <DefaultLoader />}
 
         {!isLoading && (
           <div className="space-y-4">

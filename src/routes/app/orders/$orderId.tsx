@@ -5,6 +5,7 @@ import {
   updateOrder,
 } from '@/api/orders'
 import { Currency } from '@/components/currency'
+import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Image } from '@/components/image'
 import { Badge } from '@/components/ui/badge'
@@ -48,11 +49,7 @@ function RouteComponent() {
 
   return (
     <main className="grow">
-      {isLoading && (
-        <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-          <span>Cargando...</span>
-        </div>
-      )}
+      {isLoading && <DefaultLoader />}
 
       {order && (
         <div>
