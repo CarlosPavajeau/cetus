@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import { type TypeOf, z } from 'zod'
 import { BancolombiaPayment } from './bancolombia-payment'
 import { CardPaymentForm } from './card-payment-form'
+import { NequiPaymentForm } from './nequi-payment-form'
 import { Form } from './ui/form'
 import { RadioGroup, RadioGroupItem } from './ui/radio-group'
 
@@ -151,6 +152,8 @@ export function PaymentOptions({ order }: Props) {
         {paymentMethod === 'BANCOLOMBIA_TRANSFER' && (
           <BancolombiaPayment order={order} />
         )}
+
+        {paymentMethod === 'NEQUI' && <NequiPaymentForm order={order} />}
       </div>
     </Form>
   )
