@@ -1,5 +1,6 @@
 import type { Order } from '@/api/orders'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
+import { type PaymentFormValues, paymentSchema } from '@/schemas/payments'
 import { cn } from '@/shared/cn'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -10,7 +11,6 @@ import {
 } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { type TypeOf, z } from 'zod'
 import { BancolombiaPayment } from './bancolombia-payment'
 import { CardPaymentForm } from './card-payment-form'
 import { NequiPaymentForm } from './nequi-payment-form'
@@ -43,57 +43,7 @@ const paymentMethods = [
     label: 'Nequi',
     PaymentIcon: SmartphoneIcon,
   },
-]
-
-const cardPaymentSchema = z.object({
-  type: z.literal('CARD'),
-  card_number: z.string(),
-  card_holder: z.string(),
-  card_cvc: z.string(),
-  card_expiration_date: z.string(),
-
-  presigned_acceptance: z.boolean(),
-  presigned_personal_data_auth: z.boolean(),
-  acceptance_token: z.string(),
-})
-
-const bancolombiaPaymentSchema = z.object({
-  type: z.literal('BANCOLOMBIA_TRANSFER'),
-
-  presigned_acceptance: z.boolean(),
-  presigned_personal_data_auth: z.boolean(),
-  acceptance_token: z.string(),
-})
-
-const psePaymentSchema = z.object({
-  type: z.literal('PSE'),
-  user_type: z.enum(['0', '1']),
-  user_legal_id_type: z.enum(['CC', 'NIT']),
-  user_legal_id: z.string(),
-  financial_institution_code: z.string(),
-
-  presigned_acceptance: z.boolean(),
-  presigned_personal_data_auth: z.boolean(),
-  acceptance_token: z.string(),
-})
-
-const nequiPaymentSchema = z.object({
-  type: z.literal('NEQUI'),
-  phone_number: z.string(),
-
-  presigned_acceptance: z.boolean(),
-  presigned_personal_data_auth: z.boolean(),
-  acceptance_token: z.string(),
-})
-
-const paymentSchema = z.discriminatedUnion('type', [
-  cardPaymentSchema,
-  bancolombiaPaymentSchema,
-  psePaymentSchema,
-  nequiPaymentSchema,
-])
-
-export type PaymentFormValues = TypeOf<typeof paymentSchema>
+] as const
 
 export function PaymentOptions({ order }: Props) {
   const form = useForm<PaymentFormValues>({

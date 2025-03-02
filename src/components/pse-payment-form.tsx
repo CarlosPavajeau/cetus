@@ -4,6 +4,7 @@ import {
   createPSETransaction,
 } from '@/api/third-party/wompi'
 import { useFinancialInstitutions } from '@/hooks/use-financial-institutions'
+import type { PaymentFormValues } from '@/schemas/payments'
 import { valueToCents } from '@/shared/currency'
 import { useGenerateIntegritySignature } from '@/shared/wompi'
 import { useMutation } from '@tanstack/react-query'
@@ -11,7 +12,6 @@ import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { PaymentConsent } from './payment-consent'
-import type { PaymentFormValues } from './payment-options'
 import { Button } from './ui/button'
 import {
   FormControl,
