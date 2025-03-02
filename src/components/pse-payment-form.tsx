@@ -1,7 +1,7 @@
 import type { Order } from '@/api/orders'
 import {
-    type CreateTransactionRequest,
-    createPSETransaction,
+  type CreateTransactionRequest,
+  createPSETransaction,
 } from '@/api/third-party/wompi'
 import { useFinancialInstitutions } from '@/hooks/use-financial-institutions'
 import { valueToCents } from '@/shared/currency'
@@ -14,19 +14,19 @@ import { PaymentConsent } from './payment-consent'
 import type { PaymentFormValues } from './payment-options'
 import { Button } from './ui/button'
 import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from './ui/select'
 
 type Props = {

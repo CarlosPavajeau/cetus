@@ -67,8 +67,8 @@ const bancolombiaPaymentSchema = z.object({
 
 const psePaymentSchema = z.object({
   type: z.literal('PSE'),
-  user_type: z.string(),
-  user_legal_id_type: z.string(),
+  user_type: z.enum(['0', '1']),
+  user_legal_id_type: z.enum(['CC', 'NIT']),
   user_legal_id: z.string(),
   financial_institution_code: z.string(),
 
@@ -86,7 +86,7 @@ const nequiPaymentSchema = z.object({
   acceptance_token: z.string(),
 })
 
-const paymentSchema = z.union([
+const paymentSchema = z.discriminatedUnion('type', [
   cardPaymentSchema,
   bancolombiaPaymentSchema,
   psePaymentSchema,
