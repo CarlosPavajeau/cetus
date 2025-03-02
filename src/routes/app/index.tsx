@@ -1,19 +1,27 @@
 import {
-  type OrderStatus,
+  OrderStatus,
   OrderStatusColor,
   OrderStatusText,
   type SimpleOrder,
 } from '@/api/orders'
 import { Currency } from '@/components/currency'
+import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
 } from '@/components/ui/pagination'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -37,19 +45,37 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
   type ColumnDef,
+  type ColumnFiltersState,
+  type FilterFn,
   type PaginationState,
   flexRender,
   getCoreRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ChevronLeftIcon, ChevronRightIcon, RefreshCwIcon } from 'lucide-react'
-import { useState } from 'react'
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  FilterIcon,
+  RefreshCwIcon,
+} from 'lucide-react'
+import { useId, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
 })
+
+const statusFilterFn: FilterFn<SimpleOrder> = (
+  row,
+  columnId,
+  filterValue: string[],
+) => {
+  if (!filterValue?.length) return true
+  const status = row.getValue(columnId) as string
+  return filterValue.includes(status)
+}
 
 const columns: ColumnDef<SimpleOrder>[] = [
   {
@@ -83,6 +109,7 @@ const columns: ColumnDef<SimpleOrder>[] = [
         {OrderStatusText[row.getValue('status') as OrderStatus]}
       </Badge>
     ),
+    filterFn: statusFilterFn,
   },
   {
     id: 'createdAt',
@@ -99,8 +126,14 @@ const columns: ColumnDef<SimpleOrder>[] = [
 function RouteComponent() {
   const { orders, isLoading } = useOrders()
 
-  const pageSize = 5
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
+    {
+      id: 'status',
+      value: [OrderStatus.Pending, OrderStatus.Paid],
+    },
+  ])
 
+  const pageSize = 5
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: pageSize,
@@ -112,11 +145,55 @@ function RouteComponent() {
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     onPaginationChange: setPagination,
+    onColumnFiltersChange: setColumnFilters,
     state: {
       pagination,
+      columnFilters,
     },
   })
+
+  // Get unique status values
+  const uniqueStatusValues = useMemo(() => {
+    const statusColumn = table.getColumn('status')
+
+    if (!statusColumn) return []
+
+    const values = Array.from(statusColumn.getFacetedUniqueValues().keys())
+
+    return values.sort()
+  }, [table.getColumn('status')?.getFacetedUniqueValues()])
+
+  // Get counts for each status
+  const statusCounts = useMemo(() => {
+    const statusColumn = table.getColumn('status')
+    if (!statusColumn) return new Map()
+    return statusColumn.getFacetedUniqueValues()
+  }, [table.getColumn('status')?.getFacetedUniqueValues()])
+
+  const selectedStatuses = useMemo(() => {
+    const filterValue = table.getColumn('status')?.getFilterValue() as string[]
+    return filterValue ?? []
+  }, [table.getColumn('status')?.getFilterValue()])
+
+  const handleStatusChange = (checked: boolean, value: string) => {
+    const filterValue = table.getColumn('status')?.getFilterValue() as string[]
+    const newFilterValue = filterValue ? [...filterValue] : []
+
+    if (checked) {
+      newFilterValue.push(value)
+    } else {
+      const index = newFilterValue.indexOf(value)
+      if (index > -1) {
+        newFilterValue.splice(index, 1)
+      }
+    }
+
+    table
+      .getColumn('status')
+      ?.setFilterValue(newFilterValue.length ? newFilterValue : undefined)
+  }
 
   const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
     currentPage: table.getState().pagination.pageIndex + 1,
@@ -125,7 +202,6 @@ function RouteComponent() {
   })
 
   const queryClient = useQueryClient()
-
   const refresh = () => {
     queryClient.invalidateQueries({
       queryKey: ['orders'],
@@ -139,6 +215,8 @@ function RouteComponent() {
       to: `/app/orders/${orderId}`,
     })
   }
+
+  const id = useId()
 
   return (
     <section className="space-y-4">
@@ -155,22 +233,59 @@ function RouteComponent() {
           </div>
         </div>
 
-        {isLoading && (
-          <div className="rounded-lg border bg-background p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-bold font-heading text-2xl text-foreground">
-                  Cargando...
-                </h1>
-              </div>
-            </div>
-          </div>
-        )}
+        {isLoading && <DefaultLoader />}
 
         {!isLoading && orders && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div></div>
+              <div className="flex items-center gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline">
+                      <FilterIcon
+                        className="-ms-1 opacity-60"
+                        size={16}
+                        aria-hidden="true"
+                      />
+                      Estado
+                      {selectedStatuses.length > 0 && (
+                        <span className="-me-1 inline-flex h-5 max-h-full items-center rounded border bg-background px-1 font-[inherit] font-medium text-[0.625rem] text-muted-foreground/70">
+                          {selectedStatuses.length}
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto min-w-36 p-3" align="start">
+                    <div className="space-y-3">
+                      <div className="font-medium text-muted-foreground text-xs">
+                        Filtrar por estado
+                      </div>
+                      <div className="space-y-3">
+                        {uniqueStatusValues.map((value, i) => (
+                          <div key={value} className="flex items-center gap-2">
+                            <Checkbox
+                              id={`${id}-status-${i}`}
+                              checked={selectedStatuses.includes(value)}
+                              onCheckedChange={(checked: boolean) =>
+                                handleStatusChange(checked, value)
+                              }
+                            />
+                            <Label
+                              htmlFor={`${id}-status-${i}`}
+                              className="flex grow justify-between gap-2 font-normal"
+                            >
+                              {OrderStatusText[value as OrderStatus]}{' '}
+                              <span className="ms-2 text-muted-foreground text-xs">
+                                {statusCounts.get(value)}
+                              </span>
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
 
               <div>
                 <Button variant="outline" onClick={refresh}>
