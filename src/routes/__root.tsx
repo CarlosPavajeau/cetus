@@ -1,6 +1,5 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router'
 
-import * as css from '@/styles/index.css?url'
 import React, { Suspense } from 'react'
 
 const TanStackRouterDevtools = import.meta.env.PROD
@@ -44,7 +43,6 @@ export const Route = createRootRoute({
         title: 'cetus',
       },
     ],
-    link: [{ rel: 'stylesheet', href: css }],
   }),
   component: RootComponent,
 })

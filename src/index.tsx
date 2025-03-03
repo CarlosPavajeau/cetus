@@ -11,13 +11,9 @@ import { ClerkProvider } from './components/clerk-provider'
 import { Toaster } from './components/ui/sonner'
 import { routeTree } from './routeTree.gen'
 
+import './styles/index.css'
+
 const router = createRouter({ routeTree })
-
-const PUBLISHABLE_KEY = import.meta.env.PUBLIC_CLERK_PUBLISHABLE_KEY
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error('Missing Publishable Key')
-}
 
 const rootElement = document.getElementById('root')
 
@@ -27,12 +23,7 @@ if (rootElement) {
 
   root.render(
     <React.StrictMode>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <I18nProvider locale="es-CO">
           <ClerkProvider>
             <QueryClientProvider client={queryClient}>
