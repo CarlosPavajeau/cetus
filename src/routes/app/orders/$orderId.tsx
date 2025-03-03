@@ -3,6 +3,7 @@ import { AccessDenied } from '@/components/access-denied'
 import { ContentLayout } from '@/components/content-layout'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
+import { OrderCompletedNotification } from '@/components/order-completed-notification'
 import { OrderItems } from '@/components/order-items'
 import { OrderSummary } from '@/components/order-summary'
 import { PageHeader } from '@/components/page-header'
@@ -13,6 +14,7 @@ import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/app/orders/$orderId')({
   component: OrderDetailsComponent,
@@ -40,8 +42,15 @@ function OrderDetailsComponent() {
       navigate({
         to: '/app',
       })
+
+      toast.custom((t) => (
+        <OrderCompletedNotification
+          orderId={order!.id}
+          onClose={() => toast.dismiss(t)}
+        />
+      ))
     }
-  }, [updateOrderMutation.isSuccess, navigate])
+  }, [updateOrderMutation.isSuccess, navigate, order])
 
   if (isLoading) {
     return (
