@@ -4,10 +4,10 @@ import React from 'react'
 import { I18nProvider } from 'react-aria'
 import ReactDOM from 'react-dom/client'
 
-import { ClerkProvider } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthInterceptor } from './components/auth-interceptor'
+import { ClerkProvider } from './components/clerk-provider'
 import { Toaster } from './components/ui/sonner'
 import { routeTree } from './routeTree.gen'
 
@@ -34,7 +34,7 @@ if (rootElement) {
         disableTransitionOnChange
       >
         <I18nProvider locale="es-CO">
-          <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          <ClerkProvider>
             <QueryClientProvider client={queryClient}>
               <RouterProvider router={router} />
               <ReactQueryDevtools initialIsOpen={false} />

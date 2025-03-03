@@ -7,6 +7,7 @@ import {
 } from '@clerk/clerk-react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { ThemeSwitch } from './theme-switch'
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 
 const TABS = [
@@ -46,6 +47,10 @@ export const AppNav = () => {
         <div className="flex items-center gap-4 sm:gap-8">
           <SignedIn>
             <div className="flex items-center gap-4">
+              <ThemeSwitch />
+
+              <hr className="h-6 w-[1px] bg-foreground/10" />
+
               <UserButton />
 
               <hr className="h-6 w-[1px] bg-foreground/10" />
