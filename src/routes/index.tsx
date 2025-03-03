@@ -3,6 +3,7 @@ import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product-grid'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -14,8 +15,8 @@ import {
 import { useCategories } from '@/hooks/use-categories'
 import { useProductsForSale } from '@/hooks/use-products-for-sale'
 import { createFileRoute } from '@tanstack/react-router'
-import { XIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { CircleXIcon, SearchIcon, XIcon } from 'lucide-react'
+import { useId, useMemo, useRef, useState } from 'react'
 
 export const Route = createFileRoute('/')({
   component: IndexPage,
@@ -27,17 +28,46 @@ function IndexPage() {
   const { categories, isLoading: isLoadingCategories } = useCategories()
   const [selectedCategory, setSelectedCategory] = useState('all')
 
+  const id = useId()
+  const [searchInput, setSearchInput] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleClearSearch = () => {
+    setSearchInput('')
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }
+
   const filteredProducts = useMemo(() => {
     if (!products) {
       return []
     }
 
-    if (selectedCategory === 'all') {
-      return products
-    }
+    return products.filter((product) => {
+      if (
+        selectedCategory !== 'all' &&
+        product.categoryId !== selectedCategory
+      ) {
+        return false
+      }
 
-    return products.filter((product) => product.categoryId === selectedCategory)
-  }, [products, selectedCategory])
+      if (searchInput) {
+        const searchInputLower = searchInput.toLowerCase()
+        const productNameLower = product.name.toLowerCase()
+        const productDescriptionLower = product.description?.toLowerCase() ?? ''
+
+        if (
+          !productNameLower.includes(searchInputLower) &&
+          !productDescriptionLower.includes(searchInputLower)
+        ) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [products, selectedCategory, searchInput])
 
   if (isLoadingCategories || isLoading) {
     return (
@@ -60,7 +90,7 @@ function IndexPage() {
       <PageHeader title="Nuestros productos" />
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {!isLoadingCategories && categories && (
+        {categories && (
           <div className="*:not-first:mt-2">
             <Label htmlFor="category">Categoria</Label>
             <Select
@@ -81,6 +111,32 @@ function IndexPage() {
             </Select>
           </div>
         )}
+
+        <div className="*:not-first:mt-2">
+          <Label htmlFor={id}>Buscar productos</Label>
+          <div className="relative">
+            <Input
+              id={id}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="peer ps-9 pe-9"
+              placeholder="Buscar productos"
+              type="search"
+            />
+            <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+              <SearchIcon size={16} />
+            </div>
+            {searchInput && (
+              <button
+                className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Clear input"
+                onClick={handleClearSearch}
+              >
+                <CircleXIcon size={16} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {selectedCategory !== 'all' && (
