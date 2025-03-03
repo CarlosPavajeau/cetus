@@ -3,8 +3,10 @@ import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
 import { PackageIcon, ShoppingCart } from 'lucide-react'
+import { toast } from 'sonner'
 import { Currency } from './currency'
 import { Image } from './image'
+import { ProductAddedNotification } from './product-added-notification'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 
@@ -12,8 +14,19 @@ type Props = {
   products: ProductForSale[]
 }
 
-export const ProductGrid = ({ products }: Props) => {
+export function ProductGrid({ products }: Props) {
   const cart = useCart()
+
+  const handleAddToCart = (product: ProductForSale) => {
+    cart.add(product)
+
+    toast.custom((t) => (
+      <ProductAddedNotification
+        productName={product.name}
+        onClose={() => toast.dismiss(t)}
+      />
+    ))
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
@@ -58,7 +71,7 @@ export const ProductGrid = ({ products }: Props) => {
             <div className="font-semibold">
               <Currency value={product.price} currency="COP" />
             </div>
-            <Button size="icon" onClick={() => cart.add(product)}>
+            <Button size="icon" onClick={() => handleAddToCart(product)}>
               <ShoppingCart className="h-4 w-4" />
             </Button>
           </div>

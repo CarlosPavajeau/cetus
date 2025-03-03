@@ -3,8 +3,10 @@ import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Currency } from './currency'
 import { Image } from './image'
+import { ProductAddedNotification } from './product-added-notification'
 import { Button } from './ui/button'
 
 type Props = {
@@ -21,6 +23,17 @@ export const ProductDisplay = ({ product }: Props) => {
 
   const decrementQuantity = () => {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1))
+  }
+
+  const handleAddToCart = (product: ProductForSale) => {
+    cart.add(product, quantity)
+
+    toast.custom((t) => (
+      <ProductAddedNotification
+        productName={product.name}
+        onClose={() => toast.dismiss(t)}
+      />
+    ))
   }
 
   return (
@@ -88,7 +101,7 @@ export const ProductDisplay = ({ product }: Props) => {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => cart.add(product, quantity)}
+                onClick={() => handleAddToCart(product)}
               >
                 <ShoppingCartIcon className="mr-2 h-5 w-5" />
                 Agregar al carrito
