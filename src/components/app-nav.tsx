@@ -1,4 +1,5 @@
 import {
+  OrganizationSwitcher,
   RedirectToSignIn,
   SignedIn,
   SignedOut,
@@ -33,8 +34,13 @@ export const AppNav = () => {
             </span>
           </Link>
 
+          <hr className="h-6 w-[1px] bg-foreground/10" />
+
           <SignedIn>
-            <UserButton />
+            <div className="flex items-center gap-4">
+              <UserButton />
+              <OrganizationSwitcher />
+            </div>
           </SignedIn>
           <SignedOut>
             <RedirectToSignIn />
