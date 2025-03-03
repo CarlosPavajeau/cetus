@@ -4,6 +4,7 @@ import {
   OrderStatusText,
   type SimpleOrder,
 } from '@/api/orders'
+import { AccessDenied } from '@/components/access-denied'
 import { Currency } from '@/components/currency'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
@@ -220,7 +221,7 @@ function RouteComponent() {
 
   return (
     <section className="space-y-4">
-      <Protect>
+      <Protect permission="org:app:access" fallback={<AccessDenied />}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-bold font-heading text-2xl text-foreground">

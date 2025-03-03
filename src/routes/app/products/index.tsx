@@ -1,4 +1,5 @@
 import type { Product } from '@/api/products'
+import { AccessDenied } from '@/components/access-denied'
 import { ConfirmDeleteProductDialog } from '@/components/confirm-delete-product-dialog'
 import { Currency } from '@/components/currency'
 import { DefaultLoader } from '@/components/default-loader'
@@ -163,7 +164,7 @@ function RouteComponent() {
 
   return (
     <section className="space-y-4">
-      <Protect>
+      <Protect permission="org:app:access" fallback={<AccessDenied />}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-bold font-heading text-2xl text-foreground">

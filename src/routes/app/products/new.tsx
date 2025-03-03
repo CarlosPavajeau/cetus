@@ -1,5 +1,6 @@
 import { uploadFileToS3 } from '@/api/aws'
 import { createProduct } from '@/api/products'
+import { AccessDenied } from '@/components/access-denied'
 import { CreateCategoryDialog } from '@/components/create-category.dialog'
 import { Button } from '@/components/ui/button'
 import {
@@ -151,7 +152,7 @@ function RouteComponent() {
     useState(false)
 
   return (
-    <Protect>
+    <Protect permission="org:app:access" fallback={<AccessDenied />}>
       <div className="flex min-h-[calc(100vh-20rem)] w-full flex-col space-y-4">
         <CreateCategoryDialog
           open={openCreateCategoryDialog}
