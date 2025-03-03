@@ -2,50 +2,38 @@
 
 import { MoonIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useId, useState } from 'react'
+import { useId } from 'react'
+import { Label } from './ui/label'
 import { Switch } from './ui/switch'
 
 export function ThemeSwitch() {
   const id = useId()
   const { theme, setTheme } = useTheme()
-  const [checked, setChecked] = useState(theme === 'light')
 
-  const toggleSwitch = () => {
-    setChecked((prev) => {
-      const newChecked = !prev
-      setTheme(newChecked ? 'light' : 'dark')
-      return newChecked
-    })
+  const checked = theme === 'light'
+  const setChecked = (checked: boolean) => {
+    setTheme(checked ? 'light' : 'dark')
   }
 
   return (
-    <div
-      className="group inline-flex items-center gap-2"
-      data-state={checked ? 'checked' : 'unchecked'}
-    >
-      <span
-        id={`${id}-off`}
-        className="flex-1 cursor-pointer text-right font-medium text-sm group-data-[state=checked]:text-muted-foreground/70"
-        aria-controls={id}
-        onClick={() => setChecked(false)}
-      >
-        <MoonIcon size={16} aria-hidden="true" />
-      </span>
-      <Switch
-        id={id}
-        checked={checked}
-        onCheckedChange={toggleSwitch}
-        aria-labelledby={`${id}-off ${id}-on`}
-        aria-label="Toggle between dark and light mode"
-      />
-      <span
-        id={`${id}-on`}
-        className="flex-1 cursor-pointer text-left font-medium text-sm group-data-[state=unchecked]:text-muted-foreground/70"
-        aria-controls={id}
-        onClick={() => setChecked(true)}
-      >
-        <SunIcon size={16} aria-hidden="true" />
-      </span>
+    <div>
+      <div className="relative inline-grid h-9 grid-cols-[1fr_1fr] items-center font-medium text-sm">
+        <Switch
+          id={id}
+          checked={checked}
+          onCheckedChange={setChecked}
+          className="peer [&_span]:data-[state=checked]:rtl:-translate-x-full absolute inset-0 h-[inherit] w-auto data-[state=checked]:bg-input/50 data-[state=unchecked]:bg-input/50 [&_span]:h-full [&_span]:w-1/2 [&_span]:transition-transform [&_span]:duration-300 [&_span]:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] [&_span]:data-[state=checked]:translate-x-full"
+        />
+        <span className="pointer-events-none relative ms-0.5 flex min-w-8 items-center justify-center text-center peer-data-[state=checked]:text-muted-foreground/70">
+          <MoonIcon size={16} aria-hidden="true" />
+        </span>
+        <span className="pointer-events-none relative me-0.5 flex min-w-8 items-center justify-center text-center peer-data-[state=unchecked]:text-muted-foreground/70">
+          <SunIcon size={16} aria-hidden="true" />
+        </span>
+      </div>
+      <Label htmlFor={id} className="sr-only">
+        Cambiar tema
+      </Label>
     </div>
   )
 }
