@@ -5,10 +5,30 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/clerk-react'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 
+const TABS = [
+  {
+    label: 'Pedidos',
+    href: '/app',
+  },
+  {
+    label: 'Productos',
+    href: '/app/products',
+  },
+] as const
+
 export const AppNav = () => {
+  const [currentTab, setCurrentTab] = useState('/app')
+
+  const route = useRouterState()
+
+  useEffect(() => {
+    setCurrentTab(route.location.pathname)
+  }, [route])
+
   return (
     <header className="before:-inset-x-32 relative mb-14 before:absolute before:bottom-0 before:h-px before:bg-[linear-gradient(to_right,--theme(--color-border/.3),--theme(--color-border)_200px,--theme(--color-border)_calc(100%-200px),--theme(--color-border/.3))]">
       <div
@@ -41,22 +61,18 @@ export const AppNav = () => {
       </div>
 
       <SignedIn>
-        <Tabs defaultValue="app">
+        <Tabs value={currentTab} onValueChange={setCurrentTab}>
           <TabsList className="h-auto gap-2 rounded-none border-b bg-transparent px-0 py-1 text-foreground">
-            <TabsTrigger
-              value="app"
-              className="after:-mb-1 relative after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 hover:bg-accent hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:hover:bg-accent data-[state=active]:after:bg-primary"
-              asChild
-            >
-              <Link to="/app">Pedidos</Link>
-            </TabsTrigger>
-            <TabsTrigger
-              value="products"
-              className="after:-mb-1 relative after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 hover:bg-accent hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:hover:bg-accent data-[state=active]:after:bg-primary"
-              asChild
-            >
-              <Link to="/app/products">Productos</Link>
-            </TabsTrigger>
+            {TABS.map((tab) => (
+              <TabsTrigger
+                key={tab.href}
+                value={tab.href}
+                className="after:-mb-1 relative after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 hover:bg-accent hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:hover:bg-accent data-[state=active]:after:bg-primary"
+                asChild
+              >
+                <Link to={tab.href}>{tab.label}</Link>
+              </TabsTrigger>
+            ))}
           </TabsList>
         </Tabs>
       </SignedIn>
