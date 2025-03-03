@@ -1,4 +1,5 @@
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { ThemeProvider } from 'next-themes'
 import React from 'react'
 import { I18nProvider } from 'react-aria'
 import ReactDOM from 'react-dom/client'
@@ -25,15 +26,22 @@ if (rootElement) {
 
   root.render(
     <React.StrictMode>
-      <I18nProvider locale="es-CO">
-        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-          <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
-            <ReactQueryDevtools initialIsOpen={false} />
-            <AuthInterceptor />
-          </QueryClientProvider>
-        </ClerkProvider>
-      </I18nProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <I18nProvider locale="es-CO">
+          <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+            <QueryClientProvider client={queryClient}>
+              <RouterProvider router={router} />
+              <ReactQueryDevtools initialIsOpen={false} />
+              <AuthInterceptor />
+            </QueryClientProvider>
+          </ClerkProvider>
+        </I18nProvider>
+      </ThemeProvider>
     </React.StrictMode>,
   )
 }
