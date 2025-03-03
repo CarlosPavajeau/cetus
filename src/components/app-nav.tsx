@@ -55,7 +55,7 @@ export const AppNav = () => {
 
               <hr className="h-6 w-[1px] bg-foreground/10" />
 
-              <OrganizationSwitcher />
+              <OrganizationSwitcher hidePersonal />
             </div>
           </SignedIn>
 
