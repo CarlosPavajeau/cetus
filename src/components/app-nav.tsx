@@ -6,6 +6,7 @@ import {
   UserButton,
 } from '@clerk/clerk-react'
 import { Link } from '@tanstack/react-router'
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 
 export const AppNav = () => {
   return (
@@ -23,30 +24,42 @@ export const AppNav = () => {
         </Link>
 
         <div className="flex items-center gap-4 sm:gap-8">
-          <Link to="/app" className="flex items-center gap-2">
-            <span className="inline-flex gap-0.5 text-sm hover:underline">
-              Inicio
-            </span>
-          </Link>
-          <Link to="/app/products" className="flex items-center gap-2">
-            <span className="inline-flex gap-0.5 text-sm hover:underline">
-              Productos
-            </span>
-          </Link>
-
-          <hr className="h-6 w-[1px] bg-foreground/10" />
-
           <SignedIn>
             <div className="flex items-center gap-4">
               <UserButton />
+
+              <hr className="h-6 w-[1px] bg-foreground/10" />
+
               <OrganizationSwitcher />
             </div>
           </SignedIn>
+
           <SignedOut>
             <RedirectToSignIn />
           </SignedOut>
         </div>
       </div>
+
+      <SignedIn>
+        <Tabs defaultValue="app">
+          <TabsList className="h-auto gap-2 rounded-none border-b bg-transparent px-0 py-1 text-foreground">
+            <TabsTrigger
+              value="app"
+              className="after:-mb-1 relative after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 hover:bg-accent hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:hover:bg-accent data-[state=active]:after:bg-primary"
+              asChild
+            >
+              <Link to="/app">Pedidos</Link>
+            </TabsTrigger>
+            <TabsTrigger
+              value="products"
+              className="after:-mb-1 relative after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 hover:bg-accent hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:hover:bg-accent data-[state=active]:after:bg-primary"
+              asChild
+            >
+              <Link to="/app/products">Productos</Link>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </SignedIn>
     </header>
   )
 }
