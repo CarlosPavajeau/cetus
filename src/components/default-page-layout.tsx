@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { CartButton } from './cart-button'
+import { ThemeSwitch } from './theme-switch'
 
 type Props = {
   children: ReactNode
@@ -29,21 +30,27 @@ export function DefaultPageLayout({
               </h1>
             </Link>
 
-            {!showCart && (
-              <div className="flex items-center gap-4 sm:gap-8">
-                <Link to="/" className="flex items-center gap-2">
-                  <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Inicio
-                  </h2>
-                </Link>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              <ThemeSwitch />
 
-            {showCart && (
-              <div className="flex items-center gap-4 sm:gap-8">
-                <CartButton />
-              </div>
-            )}
+              <hr className="h-6 w-[1px] bg-border" />
+
+              {!showCart && (
+                <div className="flex items-center gap-4 sm:gap-8">
+                  <Link to="/" className="flex items-center gap-2">
+                    <h2 className="font-medium text-base leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Inicio
+                    </h2>
+                  </Link>
+                </div>
+              )}
+
+              {showCart && (
+                <div className="flex items-center gap-4 sm:gap-8">
+                  <CartButton />
+                </div>
+              )}
+            </div>
           </div>
         </header>
       )}
