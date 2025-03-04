@@ -7,6 +7,7 @@ import { OrderCompletedNotification } from '@/components/order-completed-notific
 import { OrderItems } from '@/components/order-items'
 import { OrderSummary } from '@/components/order-summary'
 import { PageHeader } from '@/components/page-header'
+import { TransactionSummary } from '@/components/transaction-summary'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/use-order'
 import { Protect } from '@clerk/clerk-react'
@@ -90,6 +91,10 @@ function OrderDetailsComponent() {
           <div>
             <div className="space-y-6">
               <OrderSummary order={order} showStatus={true} />
+
+              {order.transactionId !== undefined && (
+                <TransactionSummary id={order.transactionId} />
+              )}
 
               {order.status === OrderStatus.Pending && (
                 <div className="rounded-lg border bg-background p-4">
