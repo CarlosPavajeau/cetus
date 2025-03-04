@@ -5,6 +5,7 @@ import {
 } from '@/api/third-party/wompi'
 import { useTransaction } from '@/hooks/wompi/use-transaction'
 import { cn } from '@/shared/cn'
+import { Currency } from './currency'
 import { DefaultLoader } from './default-loader'
 import { FormattedDate } from './formatted-date'
 import { Badge } from './ui/badge'
@@ -56,7 +57,12 @@ export function TransactionSummary({ id }: Props) {
 
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Monto</span>
-          <span>{transaction.data.amount_in_cents / 100}</span>
+          <span>
+            <Currency
+              value={transaction.data.amount_in_cents / 100}
+              currency="COP"
+            />
+          </span>
         </div>
 
         <div className="flex justify-between text-sm">
