@@ -27,7 +27,7 @@ export type Merchant = {
   }
 }
 
-export type TransactionStatus = 'PENDING' | 'APPROVED' | 'DECLINED'
+export type TransactionStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'ERROR'
 
 export type PaymentMethodType =
   | 'CARD'
