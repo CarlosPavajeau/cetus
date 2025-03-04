@@ -92,7 +92,7 @@ function OrderDetailsComponent() {
             <div className="space-y-6">
               <OrderSummary order={order} showStatus={true} />
 
-              {order.transactionId !== undefined && (
+              {order.transactionId && (
                 <TransactionSummary id={order.transactionId} />
               )}
 
