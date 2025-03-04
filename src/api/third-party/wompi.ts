@@ -29,6 +29,20 @@ export type Merchant = {
 
 export type TransactionStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'ERROR'
 
+export const TransactionStatusText = {
+  PENDING: 'Pendiente',
+  APPROVED: 'Aprobado',
+  DECLINED: 'Rechazado',
+  ERROR: 'Error',
+}
+
+export const TransactionStatusColor = {
+  PENDING: 'bg-amber-500',
+  APPROVED: 'bg-emerald-500',
+  DECLINED: 'bg-red-500',
+  ERROR: 'bg-red-500',
+}
+
 export type PaymentMethodType =
   | 'CARD'
   | 'NEQUI'
@@ -81,6 +95,13 @@ export type TransactionPaymentMethod =
   | NequiPaymentMethod
   | BancolombiaTransferPaymentMethod
   | PSEPaymentMethod
+
+export const TransactionPaymentMethodText = {
+  CARD: 'Tarjeta de crédito',
+  NEQUI: 'Nequi',
+  BANCOLOMBIA_TRANSFER: 'Transferencia Bancolombia',
+  PSE: 'PSE',
+}
 
 export type CustomerData = {
   phone_number: string
