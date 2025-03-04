@@ -31,8 +31,8 @@ export type TransactionStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'ERROR'
 
 export const TransactionStatusText = {
   PENDING: 'Pendiente',
-  APPROVED: 'Aprobado',
-  DECLINED: 'Rechazado',
+  APPROVED: 'Aprobada',
+  DECLINED: 'Rechazada',
   ERROR: 'Error',
 }
 
