@@ -6,26 +6,38 @@ import { OrderItems } from '@/components/order-items'
 import { OrderSummary } from '@/components/order-summary'
 import { PageHeader } from '@/components/page-header'
 import { useOrder } from '@/hooks/use-order'
+import { useTransaction } from '@/hooks/wompi/use-transaction'
 import { useCart } from '@/store/cart'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { z } from 'zod'
 
-export const Route = createFileRoute('/orders/$orderId/confirmation')({
-  component: RouteComponent,
+const orderConfirmationSearchSchema = z.object({
+  id: z.string(),
 })
 
-function RouteComponent() {
-  const params = Route.useParams()
-  const orderId = params.orderId
+export const Route = createFileRoute('/orders/$orderId/confirmation')({
+  component: OrderConfirmatioComponent,
+  validateSearch: orderConfirmationSearchSchema,
+})
+
+function OrderConfirmatioComponent() {
+  const { orderId } = Route.useParams()
+  const { id } = Route.useSearch()
 
   const { order, isLoading } = useOrder(orderId)
+  const { transaction, isLoading: isLoadingTransaction } = useTransaction(id)
+
   const { clear } = useCart()
-
   useEffect(() => {
-    clear()
-  }, [clear])
+    if (!transaction || !order) return
 
-  if (isLoading) {
+    if (transaction.data.status === 'APPROVED') {
+      clear()
+    }
+  }, [clear, transaction, order])
+
+  if (isLoading || isLoadingTransaction) {
     return (
       <DefaultPageLayout showHeader={false}>
         <DefaultLoader />
@@ -39,6 +51,62 @@ function RouteComponent() {
         <PageHeader
           title="Pedido no encontrado"
           subtitle="No se pudo encontrar el pedido solicitado."
+        />
+      </DefaultPageLayout>
+    )
+  }
+
+  if (!transaction) {
+    return (
+      <DefaultPageLayout showHeader={false}>
+        <PageHeader
+          title="Transacción no encontrada"
+          subtitle={
+            <>
+              No se pudo encontrar la transacción de pago asociada a este
+              pedido. Por favor, ponte en contacto con nosotros para resolver
+              este problema. El código de transacción es{' '}
+              <span className="font-medium">{id}</span> y el código de pedido es{' '}
+              <span className="font-medium">{orderId}</span>.
+            </>
+          }
+        />
+      </DefaultPageLayout>
+    )
+  }
+
+  if (transaction.data.status === 'DECLINED') {
+    return (
+      <DefaultPageLayout showHeader={false}>
+        <PageHeader
+          title="Tu pago ha sido rechazado"
+          subtitle={
+            <>
+              El pago de tu pedido ha sido rechazado. Por favor, ponte en
+              contacto con nosotros para resolver este problema. El código de
+              transacción es <span className="font-medium">{id}</span> y el
+              código de pedido es <span className="font-medium">{orderId}</span>
+              .
+            </>
+          }
+        />
+      </DefaultPageLayout>
+    )
+  }
+
+  if (transaction.data.status === 'ERROR') {
+    return (
+      <DefaultPageLayout showHeader={false}>
+        <PageHeader
+          title="Ha ocurrido un error con tu pago"
+          subtitle={
+            <>
+              Ha ocurrido un error con tu pago. Por favor, ponte en contacto con
+              nosotros para resolver este problema. El código de transacción es{' '}
+              <span className="font-medium">{id}</span> y el código de pedido es{' '}
+              <span className="font-medium">{orderId}</span>.
+            </>
+          }
         />
       </DefaultPageLayout>
     )
