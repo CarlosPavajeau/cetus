@@ -30,7 +30,11 @@ function OrderDetailsComponent() {
   const updateOrderMutation = useMutation({
     mutationKey: ['orders', 'update'],
     mutationFn: () =>
-      updateOrder({ id: orderId, status: OrderStatus.Delivered }),
+      updateOrder({
+        id: orderId,
+        status: OrderStatus.Delivered,
+        transactionId: order?.transactionId!,
+      }),
   })
 
   const handleCompleteOrder = () => {

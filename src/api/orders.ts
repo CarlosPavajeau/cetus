@@ -98,6 +98,7 @@ export const fetchOrders = async () => {
 export type UpdateOrderRequest = {
   id: string
   status: OrderStatus
+  transactionId: string
 }
 
 export const updateOrder = async (order: UpdateOrderRequest) => {
