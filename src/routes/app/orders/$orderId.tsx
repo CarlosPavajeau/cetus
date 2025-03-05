@@ -9,9 +9,10 @@ import { OrderSummary } from '@/components/order-summary'
 import { PageHeader } from '@/components/page-header'
 import { TransactionSummary } from '@/components/transaction-summary'
 import { Button } from '@/components/ui/button'
+import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
 import { useOrder } from '@/hooks/use-order'
 import { Protect } from '@clerk/clerk-react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import { useEffect } from 'react'
@@ -26,6 +27,18 @@ function OrderDetailsComponent() {
   const orderId = params.orderId
 
   const { order, isLoading } = useOrder(orderId)
+
+  const url = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
+  const { connection } = useHub(url)
+
+  useHubGroup(connection, 'JoinOrderGroup', orderId)
+
+  const queryClient = useQueryClient()
+  useClientMethod(connection, 'ReceiveUpdatedOrder', () => {
+    queryClient.invalidateQueries({
+      queryKey: ['orders', orderId],
+    })
+  })
 
   const updateOrderMutation = useMutation({
     mutationKey: ['orders', 'update'],

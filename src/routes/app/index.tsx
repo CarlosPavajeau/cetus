@@ -38,6 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useClientMethod, useHub } from '@/hooks/realtime/use-hub'
 import { usePagination } from '@/hooks/use-pagination'
 import { useOrders } from '@/hooks/user-orders'
 import { cn } from '@/shared/cn'
@@ -133,6 +134,14 @@ function RouteComponent() {
       value: [OrderStatus.Pending, OrderStatus.Paid],
     },
   ])
+
+  const url = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
+  const { connection } = useHub(url)
+  useClientMethod(connection, 'ReceiveCreatedOrder', () => {
+    queryClient.invalidateQueries({
+      queryKey: ['orders'],
+    })
+  })
 
   const pageSize = 5
   const [pagination, setPagination] = useState<PaginationState>({
