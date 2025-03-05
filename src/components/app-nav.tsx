@@ -38,7 +38,7 @@ export const AppNav = () => {
       ></div>
 
       <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center justify-between gap-3">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="hidden items-center gap-2 md:flex">
           <h1 className="font-bold font-heading text-2xl text-foreground">
             Cetus
           </h1>
