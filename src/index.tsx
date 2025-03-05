@@ -8,7 +8,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthInterceptor } from './components/auth-interceptor'
 import { ClerkProvider } from './components/clerk-provider'
-import { Toaster } from './components/ui/sonner'
 import { routeTree } from './routeTree.gen'
 
 import './styles/index.css'
@@ -30,7 +29,6 @@ if (rootElement) {
               <RouterProvider router={router} />
               <ReactQueryDevtools initialIsOpen={false} />
               <AuthInterceptor />
-              <Toaster />
             </QueryClientProvider>
           </ClerkProvider>
         </I18nProvider>

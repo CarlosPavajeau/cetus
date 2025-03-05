@@ -1,3 +1,4 @@
+import { Toaster } from '@/components/ui/sonner'
 import { Outlet, createRootRoute } from '@tanstack/react-router'
 
 import React, { Suspense } from 'react'
@@ -22,6 +23,7 @@ const RootComponent = () => {
           content="cetus, ecommerce, store, shop, products"
         />
         <Outlet />
+        <Toaster />
         <Suspense>
           <TanStackRouterDevtools />
         </Suspense>

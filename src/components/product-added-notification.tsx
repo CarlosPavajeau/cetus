@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { CircleCheckIcon, XIcon } from 'lucide-react'
 import { Button } from './ui/button'
 
@@ -16,13 +17,21 @@ export function ProductAddedNotification({ productName, onClose }: Props) {
             size={16}
             aria-hidden="true"
           />
+
           <div className="flex grow justify-between gap-12">
             <p className="text-sm">
               <span className="font-medium">{productName}</span> ha sido añadido
               al carrito
             </p>
+
+            <div className="whitespace-nowrap text-sm">
+              <Link to="/cart" className="font-medium text-sm hover:underline">
+                Ver
+              </Link>
+            </div>
           </div>
         </div>
+
         <Button
           variant="ghost"
           className="group -my-1.5 -me-2 size-8 shrink-0 p-0 hover:bg-transparent"
