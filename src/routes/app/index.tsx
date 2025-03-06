@@ -297,19 +297,19 @@ function RouteComponent() {
                   {Boolean(
                     table.getColumn('orderNumber')?.getFilterValue(),
                   ) && (
-                      <button
-                        className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label="Clear filter"
-                        onClick={() => {
-                          table.getColumn('orderNumber')?.setFilterValue('')
-                          if (inputRef.current) {
-                            inputRef.current.focus()
-                          }
-                        }}
-                      >
-                        <CircleXIcon size={16} aria-hidden="true" />
-                      </button>
-                    )}
+                    <button
+                      className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Clear filter"
+                      onClick={() => {
+                        table.getColumn('orderNumber')?.setFilterValue('')
+                        if (inputRef.current) {
+                          inputRef.current.focus()
+                        }
+                      }}
+                    >
+                      <CircleXIcon size={16} aria-hidden="true" />
+                    </button>
+                  )}
                 </div>
 
                 <Popover>
@@ -385,9 +385,9 @@ function RouteComponent() {
                             {header.isPlaceholder
                               ? null
                               : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
                           </TableHead>
                         )
                       })}
