@@ -23,6 +23,7 @@ export const OrderStatusColor = {
 
 export type Order = {
   id: string
+  orderNumber: number
   address: string
   deliveryFee?: number
   total: number
@@ -83,6 +84,7 @@ export const createOrder = async (order: CreateOrderRequest) => {
 
 export type SimpleOrder = {
   id: string
+  orderNumber: number
   address: string
   total: number
   status: OrderStatus
