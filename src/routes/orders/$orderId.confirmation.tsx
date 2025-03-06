@@ -120,7 +120,8 @@ function OrderConfirmatioComponent() {
           <>
             <span className="font-medium">{order.customer.name}</span> tu pedido
             ha sido confirmado. En breve recibirás un correo con los detalles de
-            tu compra.
+            tu compra. Recueda que debes cancelar el costo del envío al recibir
+            tu pedido.
           </>
         }
       />
