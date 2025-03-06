@@ -46,6 +46,11 @@ export function OrderSummary({ order, showStatus = false }: Props) {
 
       <div className="space-y-4">
         <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Id</span>
+          <span>{order.id}</span>
+        </div>
+
+        <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Cliente</span>
           <span>{order.customer.name}</span>
         </div>
@@ -69,7 +74,7 @@ export function OrderSummary({ order, showStatus = false }: Props) {
           </div>
         )}
 
-        {order.deliveryFee && (
+        {order.deliveryFee !== undefined && (
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground text-sm">
               Costo de envío
