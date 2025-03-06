@@ -1,4 +1,5 @@
 import { createOrder } from '@/api/orders'
+import { AddressFields } from '@/components/address-fields'
 import { ContentLayout } from '@/components/content-layout'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
@@ -14,6 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { type CreateOrderFormValues, createOrderSchema } from '@/schemas/orders'
 import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -21,34 +23,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { type TypeOf, z } from 'zod'
 
 export const Route = createFileRoute('/cart/')({
   component: RouteComponent,
 })
-
-const createOrderSchema = z.object({
-  address: z.string(),
-  total: z.coerce.number(),
-  items: z.array(
-    z.object({
-      productName: z.string(),
-      imageUrl: z.string().optional(),
-      productId: z.string(),
-      quantity: z.coerce.number(),
-      price: z.coerce.number(),
-    }),
-  ),
-  customer: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string(),
-    phone: z.string(),
-    address: z.string(),
-  }),
-})
-
-type FormValues = TypeOf<typeof createOrderSchema>
 
 function RouteComponent() {
   const cart = useCart()
@@ -59,7 +37,7 @@ function RouteComponent() {
     0,
   )
 
-  const form = useForm<FormValues>({
+  const form = useForm<CreateOrderFormValues>({
     resolver: zodResolver(createOrderSchema),
     defaultValues: {
       address: '',
@@ -219,20 +197,7 @@ function RouteComponent() {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dirección</FormLabel>
-                        <FormControl>
-                          <Input type="text" {...field} />
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <AddressFields />
                 </div>
 
                 <div className="space-y-4">
@@ -241,12 +206,35 @@ function RouteComponent() {
                     <span>{count}</span>
                   </div>
 
+                  {form.watch('cityId') && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Costo de envío
+                      </span>
+                      <span>
+                        {form.watch('cityId') ===
+                        'f97957e9-d820-4858-ac26-b5d03d658370' ? (
+                          <Currency value={5000} currency="COP" />
+                        ) : (
+                          <Currency value={15000} currency="COP" />
+                        )}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
                     <span>
                       <Currency value={total} currency="COP" />
                     </span>
                   </div>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground text-xs">
+                    El costo del envio es cancelado al momento de la entrega de
+                    los productos.
+                  </span>
                 </div>
 
                 <Button
