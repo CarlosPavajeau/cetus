@@ -24,6 +24,7 @@ export const OrderStatusColor = {
 export type Order = {
   id: string
   address: string
+  deliveryFee?: number
   total: number
   status: OrderStatus
   items: {
@@ -53,6 +54,7 @@ export const fetchOrder = async (id: string) => {
 
 export type CreateOrderRequest = {
   address: string
+  cityId: string
   total: number
   items: {
     productName: string
