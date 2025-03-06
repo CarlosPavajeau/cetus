@@ -92,15 +92,7 @@ function OrderDetailsComponent() {
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
       <DefaultPageLayout showHeader={false}>
-        <PageHeader
-          title="Procesamiento del pedido"
-          subtitle={
-            <>
-              Pedido #{order.id} de{' '}
-              <span className="font-medium">{order.customer.name}</span>.
-            </>
-          }
-        />
+        <PageHeader title="Procesamiento del pedido" />
 
         <ContentLayout>
           <OrderItems items={order.items} />
