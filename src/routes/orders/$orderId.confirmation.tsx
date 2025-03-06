@@ -66,8 +66,8 @@ function OrderConfirmatioComponent() {
               No se pudo encontrar la transacción de pago asociada a este
               pedido. Por favor, ponte en contacto con nosotros para resolver
               este problema. El código de transacción es{' '}
-              <span className="font-medium">{id}</span> y el código de pedido es{' '}
-              <span className="font-medium">{orderId}</span>.
+              <span className="font-medium">{id}</span> y el código de pedido es
+              #<span className="font-medium">{order.orderNumber}</span>.
             </>
           }
         />
@@ -85,8 +85,8 @@ function OrderConfirmatioComponent() {
               El pago de tu pedido ha sido rechazado. Por favor, ponte en
               contacto con nosotros para resolver este problema. El código de
               transacción es <span className="font-medium">{id}</span> y el
-              código de pedido es <span className="font-medium">{orderId}</span>
-              .
+              código de pedido es #
+              <span className="font-medium">{order.orderNumber}</span>.
             </>
           }
         />
@@ -103,8 +103,8 @@ function OrderConfirmatioComponent() {
             <>
               Ha ocurrido un error con tu pago. Por favor, ponte en contacto con
               nosotros para resolver este problema. El código de transacción es{' '}
-              <span className="font-medium">{id}</span> y el código de pedido es{' '}
-              <span className="font-medium">{orderId}</span>.
+              <span className="font-medium">{id}</span> y el código de pedido es
+              #<span className="font-medium">{order.orderNumber}</span>.
             </>
           }
         />
@@ -115,15 +115,23 @@ function OrderConfirmatioComponent() {
   return (
     <DefaultPageLayout showHeader={false}>
       <PageHeader
-        title="¡Gracias por tu compra!"
+        title={`Pedido #${order.orderNumber} confirmado`}
         subtitle={
           <>
             <span className="font-medium">{order.customer.name}</span> tu pedido
             ha sido confirmado. Recueda que debes cancelar el costo del envío al
             recibir tu pedido. Si tienes alguna duda, por favor, ponte en
             contacto con nosotros. El código de transacción es{' '}
-            <span className="font-medium">{id}</span> y el código de pedido es{' '}
-            <span className="font-medium">{orderId}</span>.
+            <span className="font-medium">{id}</span> y el código de pedido es #
+            <span className="font-medium">{order.orderNumber}</span>.
+
+            <hr className='my-4 border-0' />
+
+            <span>
+              Tu pago puede estar pendiente de confirmación. Por favor, espera
+              unos minutos y revisa tu correo electrónico para confirmar que tu
+              pago ha sido procesado correctamente.
+            </span>
           </>
         }
       />
