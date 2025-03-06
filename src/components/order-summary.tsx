@@ -17,6 +17,7 @@ type Props = {
     }
     address: string
     total: number
+    deliveryFee?: number
     createdAt?: string
     status?: OrderStatus
   }
@@ -64,6 +65,17 @@ export function OrderSummary({ order, showStatus = false }: Props) {
             <span className="text-muted-foreground text-sm">Fecha</span>
             <span>
               <FormattedDate date={new Date(order.createdAt)} />
+            </span>
+          </div>
+        )}
+
+        {order.deliveryFee && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground text-sm">
+              Costo de envío
+            </span>
+            <span>
+              <Currency value={order.deliveryFee} currency="COP" />
             </span>
           </div>
         )}
