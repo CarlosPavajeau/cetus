@@ -11,6 +11,7 @@ import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Pagination,
@@ -60,10 +61,12 @@ import {
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  CircleXIcon,
   FilterIcon,
+  ListFilterIcon,
   RefreshCwIcon,
 } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
@@ -80,6 +83,10 @@ const statusFilterFn: FilterFn<SimpleOrder> = (
 }
 
 const columns: ColumnDef<SimpleOrder>[] = [
+  {
+    id: 'id',
+    accessorKey: 'id',
+  },
   {
     id: 'address',
     accessorKey: 'address',
@@ -162,6 +169,11 @@ function RouteComponent() {
       pagination,
       columnFilters,
     },
+    initialState: {
+      columnVisibility: {
+        id: false,
+      },
+    },
   })
 
   // Get unique status values
@@ -227,6 +239,7 @@ function RouteComponent() {
   }
 
   const id = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   return (
     <section className="space-y-4">
@@ -249,6 +262,44 @@ function RouteComponent() {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Input
+                    id={`${id}-input`}
+                    ref={inputRef}
+                    className={cn(
+                      'peer min-w-60 ps-9',
+                      Boolean(table.getColumn('id')?.getFilterValue()) &&
+                        'pe-9',
+                    )}
+                    value={
+                      (table.getColumn('id')?.getFilterValue() ?? '') as string
+                    }
+                    onChange={(e) =>
+                      table.getColumn('id')?.setFilterValue(e.target.value)
+                    }
+                    placeholder="Buscar por id..."
+                    type="text"
+                    aria-label="Buscar por id"
+                  />
+                  <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+                    <ListFilterIcon size={16} aria-hidden="true" />
+                  </div>
+                  {Boolean(table.getColumn('id')?.getFilterValue()) && (
+                    <button
+                      className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Clear filter"
+                      onClick={() => {
+                        table.getColumn('id')?.setFilterValue('')
+                        if (inputRef.current) {
+                          inputRef.current.focus()
+                        }
+                      }}
+                    >
+                      <CircleXIcon size={16} aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline">
