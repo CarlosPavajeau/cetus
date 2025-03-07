@@ -2,11 +2,11 @@ import { CircleCheckIcon, XIcon } from 'lucide-react'
 import { Button } from './ui/button'
 
 type Props = {
-  orderId: string
+  orderNumber: number
   onClose: () => void
 }
 
-export function OrderCompletedNotification({ orderId, onClose }: Props) {
+export function OrderCompletedNotification({ orderNumber, onClose }: Props) {
   return (
     <div className="w-full rounded-md border bg-background px-4 py-3 text-foreground shadow-lg sm:w-[var(--width)]">
       <div className="flex gap-2">
@@ -18,7 +18,7 @@ export function OrderCompletedNotification({ orderId, onClose }: Props) {
           />
           <div className="flex grow justify-between gap-12">
             <p className="text-sm">
-              Orden #<span className="font-medium">{orderId}</span> completada.
+              Orden #<span className="font-medium">{orderNumber}</span> completada.
             </p>
           </div>
         </div>

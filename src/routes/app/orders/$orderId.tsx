@@ -61,12 +61,14 @@ function OrderDetailsComponent() {
         to: '/app',
       })
 
-      toast.custom((t) => (
-        <OrderCompletedNotification
-          orderId={order!.id}
-          onClose={() => toast.dismiss(t)}
-        />
-      ))
+      if (order) {
+        toast.custom((t) => (
+          <OrderCompletedNotification
+            orderNumber={order.orderNumber}
+            onClose={() => toast.dismiss(t)}
+          />
+        ))
+      }
     }
   }, [updateOrderMutation.isSuccess, navigate, order])
 
