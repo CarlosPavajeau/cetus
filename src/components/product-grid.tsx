@@ -44,6 +44,12 @@ export function ProductGrid({ products }: Props) {
                 className="object-cover transition-transform hover:scale-105"
               />
             </Link>
+
+            {product.stock < 10 && product.stock > 0 && (
+              <div className="absolute top-2 left-2">
+                <Badge variant="destructive">¡Pocas unidades!</Badge>
+              </div>
+            )}
           </div>
 
           <div className="flex-grow p-6 pt-4">
