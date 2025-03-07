@@ -18,7 +18,8 @@ export function OrderCompletedNotification({ orderNumber, onClose }: Props) {
           />
           <div className="flex grow justify-between gap-12">
             <p className="text-sm">
-              Orden #<span className="font-medium">{orderNumber}</span> completada.
+              Orden #<span className="font-medium">{orderNumber}</span>{' '}
+              completada.
             </p>
           </div>
         </div>
