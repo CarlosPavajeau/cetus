@@ -3,6 +3,7 @@ import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product-grid'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -161,10 +162,25 @@ function IndexPage() {
         {products && <ProductGrid products={filteredProducts} />}
 
         {filteredProducts.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-muted-foreground">
-              No se encontraron productos.
+          <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border bg-muted/30 p-6 text-center">
+            <div className="mb-4 rounded-full bg-muted p-3">
+              <SearchIcon size={24} className="text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 font-medium text-lg">
+              No se encontraron productos
+            </h3>
+            <p className="mb-4 text-muted-foreground">
+              Intenta cambiar los filtros o busca con otros términos.
             </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchInput('')
+                setSelectedCategory('all')
+              }}
+            >
+              Borrar filtros
+            </Button>
           </div>
         )}
       </div>
