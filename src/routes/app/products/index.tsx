@@ -83,14 +83,23 @@ const columns: ColumnDef<Product>[] = [
         <Currency value={row.getValue('price')} currency="COP" />
       </div>
     ),
-    size: 120,
+    size: 90,
   },
   {
     id: 'stock',
     accessorKey: 'stock',
     header: 'Stock',
-    cell: ({ row }) => <div>{row.getValue('stock')}</div>,
-    size: 80,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1.5">
+        {row.getValue('stock')}
+        {row.getValue<number>('stock') < 10 && (
+          <Badge variant="destructive" className="rounded">
+            Bajo stock
+          </Badge>
+        )}
+      </div>
+    ),
+    size: 120,
   },
   {
     id: 'enabled',
