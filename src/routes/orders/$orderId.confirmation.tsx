@@ -124,9 +124,7 @@ function OrderConfirmatioComponent() {
             contacto con nosotros. El código de transacción es{' '}
             <span className="font-medium">{id}</span> y el código de pedido es #
             <span className="font-medium">{order.orderNumber}</span>.
-
-            <hr className='my-4 border-0' />
-
+            <hr className="my-4 border-0" />
             <span>
               Tu pago puede estar pendiente de confirmación. Por favor, espera
               unos minutos y revisa tu correo electrónico para confirmar que tu
