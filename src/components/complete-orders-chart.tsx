@@ -1,4 +1,7 @@
+import { OrderStatus } from '@/api/orders'
+import { useOrders } from '@/hooks/user-orders'
 import { useId } from 'react'
+import { useDateFormatter } from 'react-aria'
 import {
   CartesianGrid,
   Line,
@@ -8,32 +11,14 @@ import {
   YAxis,
 } from 'recharts'
 import { CustomTooltipContent } from './charts-extra'
+import { DefaultLoader } from './default-loader'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { type ChartConfig, ChartContainer, ChartTooltip } from './ui/chart'
 
-const chartData = [
-  { month: 'Jan 2025', actual: 5000, projected: 2000 },
-  { month: 'Feb 2025', actual: 10000, projected: 8000 },
-  { month: 'Mar 2025', actual: 15000, projected: 22000 },
-  { month: 'Apr 2025', actual: 22000, projected: 15000 },
-  { month: 'May 2025', actual: 20000, projected: 25000 },
-  { month: 'Jun 2025', actual: 35000, projected: 45000 },
-  { month: 'Jul 2025', actual: 30000, projected: 25000 },
-  { month: 'Aug 2025', actual: 60000, projected: 70000 },
-  { month: 'Sep 2025', actual: 65000, projected: 75000 },
-  { month: 'Oct 2025', actual: 60000, projected: 80000 },
-  { month: 'Nov 2025', actual: 70000, projected: 65000 },
-  { month: 'Dec 2025', actual: 78000, projected: 75000 },
-]
-
 const chartConfig = {
   actual: {
-    label: 'Actual',
+    label: 'Ordenes completadas',
     color: 'var(--chart-1)',
-  },
-  projected: {
-    label: 'Projected',
-    color: 'var(--chart-3)',
   },
 } satisfies ChartConfig
 
@@ -80,14 +65,60 @@ function CustomCursor(props: CustomCursorProps) {
 }
 
 export function CompleteOrdersChart() {
+  const { isLoading, orders } = useOrders()
   const id = useId()
+
+  const formatter = useDateFormatter({
+    month: 'short',
+    day: 'numeric',
+  })
+
+  if (isLoading) {
+    return <DefaultLoader />
+  }
+
+  if (!orders) {
+    return null
+  }
+
+  const completeOrders = orders.filter(
+    (order) => order.status === OrderStatus.Delivered,
+  )
+
+  // Group orders by date and count them
+  const chartData = completeOrders
+    .reduce(
+      (acc, order) => {
+        const date = new Date(order.createdAt).toLocaleDateString()
+        const existing = acc.find((item) => item.createdAt === date)
+
+        if (existing) {
+          existing.count += 1
+        } else {
+          acc.push({
+            createdAt: date,
+            count: 1,
+          })
+        }
+
+        return acc
+      },
+      [] as Array<{ createdAt: string; count: number }>,
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )
+
   return (
     <Card className="gap-4">
       <CardHeader>
         <div className="space-y-0.5">
           <CardTitle>Ordenes completadas</CardTitle>
           <div className="flex items-start gap-2">
-            <div className="font-semibold text-2xl">142,869</div>
+            <div className="font-semibold text-2xl">
+              {completeOrders.length}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -113,33 +144,30 @@ export function CompleteOrdersChart() {
               stroke="var(--border)"
             />
             <XAxis
-              dataKey="month"
+              dataKey="createdAt"
               tickLine={false}
               tickMargin={12}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => formatter.format(new Date(value))}
               stroke="var(--border)"
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value) => {
-                if (value === 0) return '$0'
-                return `${value / 1000}k`
-              }}
               interval="preserveStartEnd"
             />
 
             <ChartTooltip
               content={
                 <CustomTooltipContent
+                  labelFormatter={(label) => formatter.format(new Date(label))}
                   colorMap={{
-                    actual: 'var(--chart-1)',
+                    count: 'var(--chart-1)',
                     projected: 'var(--chart-3)',
                   }}
                   labelMap={{
-                    actual: 'Actual',
+                    count: 'Ordenes',
                   }}
-                  dataKeys={['actual']}
+                  dataKeys={['count']}
                   valueFormatter={(value) => `${value.toLocaleString()}`}
                 />
               }
@@ -148,7 +176,7 @@ export function CompleteOrdersChart() {
 
             <Line
               type="linear"
-              dataKey="actual"
+              dataKey="count"
               stroke={`url(#${id}-gradient)`}
               strokeWidth={2}
               dot={false}
