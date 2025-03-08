@@ -19,6 +19,10 @@ const TABS = [
     label: 'Productos',
     href: '/app/products',
   },
+  {
+    label: 'Panel',
+    href: '/app/dashboard',
+  },
 ] as const
 
 export const AppNav = () => {
