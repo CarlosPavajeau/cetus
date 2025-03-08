@@ -17,9 +17,7 @@ function RouteComponent() {
             Panel de control
           </h1>
 
-          <div>
-            
-          </div>
+          <div></div>
         </div>
 
         <div className="overflow-hidden">

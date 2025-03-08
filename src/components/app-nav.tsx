@@ -8,20 +8,24 @@ import {
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { ThemeSwitch } from './theme-switch'
+import { Badge } from './ui/badge'
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 
 const TABS = [
   {
     label: 'Pedidos',
     href: '/app',
+    isNew: false,
   },
   {
     label: 'Productos',
     href: '/app/products',
+    isNew: false,
   },
   {
     label: 'Panel',
     href: '/app/dashboard',
+    isNew: true,
   },
 ] as const
 
@@ -79,7 +83,10 @@ export const AppNav = () => {
                 className="after:-mb-1 relative after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 hover:bg-accent hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:hover:bg-accent data-[state=active]:after:bg-primary"
                 asChild
               >
-                <Link to={tab.href}>{tab.label}</Link>
+                <Link to={tab.href}>
+                  {tab.label}
+                  {tab.isNew && <Badge className="ml-2">¡Nuevo!</Badge>}
+                </Link>
               </TabsTrigger>
             ))}
           </TabsList>
