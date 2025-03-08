@@ -16,7 +16,8 @@ export function CustomTooltipContent({
   colorMap = {},
   labelMap = {},
   dataKeys, // If provided, will be used to order the items
-  valueFormatter = (value) => `$${value.toLocaleString()}`,
+  labelFormatter,
+  valueFormatter = (value) => `${value.toLocaleString()}`,
 }: CustomTooltipContentProps) {
   if (!active || !payload || !payload.length) {
     return null
@@ -41,7 +42,9 @@ export function CustomTooltipContent({
 
   return (
     <div className="grid min-w-32 items-start gap-1.5 rounded-lg border bg-popover px-3 py-1.5 text-popover-foreground text-xs">
-      <div className="font-medium">{label}</div>
+      <div className="font-medium">
+        {labelFormatter ? labelFormatter(label, orderedPayload) : label}
+      </div>
       <div className="grid gap-1.5">
         {orderedPayload.map((entry, index) => {
           // Skip undefined entries
