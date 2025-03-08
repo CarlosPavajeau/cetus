@@ -20,6 +20,7 @@ import { Route as CartIndexImport } from './routes/cart/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as ProductsIdImport } from './routes/products/$id'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
+import { Route as AppDashboardIndexImport } from './routes/app/dashboard/index'
 import { Route as OrdersOrderIdConfirmationImport } from './routes/orders/$orderId.confirmation'
 import { Route as OrdersOrderIdCheckoutImport } from './routes/orders/$orderId.checkout'
 import { Route as AppProductsNewImport } from './routes/app/products/new'
@@ -78,6 +79,12 @@ const ProductsIdRoute = ProductsIdImport.update({
 const AppProductsIndexRoute = AppProductsIndexImport.update({
   id: '/products/',
   path: '/products/',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppDashboardIndexRoute = AppDashboardIndexImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -193,6 +200,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersOrderIdConfirmationImport
       parentRoute: typeof OrdersImport
     }
+    '/app/dashboard/': {
+      id: '/app/dashboard/'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardIndexImport
+      parentRoute: typeof AppImport
+    }
     '/app/products/': {
       id: '/app/products/'
       path: '/products'
@@ -209,6 +223,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
+  AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
 }
 
@@ -216,6 +231,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppProductsNewRoute: AppProductsNewRoute,
+  AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
 }
 
@@ -269,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
 
@@ -283,6 +300,7 @@ export interface FileRoutesByTo {
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
 
@@ -300,6 +318,7 @@ export interface FileRoutesById {
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app/dashboard/': typeof AppDashboardIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
 
@@ -318,6 +337,7 @@ export interface FileRouteTypes {
     | '/app/products/new'
     | '/orders/$orderId/checkout'
     | '/orders/$orderId/confirmation'
+    | '/app/dashboard'
     | '/app/products'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -331,6 +351,7 @@ export interface FileRouteTypes {
     | '/app/products/new'
     | '/orders/$orderId/checkout'
     | '/orders/$orderId/confirmation'
+    | '/app/dashboard'
     | '/app/products'
   id:
     | '__root__'
@@ -346,6 +367,7 @@ export interface FileRouteTypes {
     | '/app/products/new'
     | '/orders/$orderId/checkout'
     | '/orders/$orderId/confirmation'
+    | '/app/dashboard/'
     | '/app/products/'
   fileRoutesById: FileRoutesById
 }
@@ -392,6 +414,7 @@ export const routeTree = rootRoute
         "/app/",
         "/app/orders/$orderId",
         "/app/products/new",
+        "/app/dashboard/",
         "/app/products/"
       ]
     },
@@ -441,6 +464,10 @@ export const routeTree = rootRoute
     "/orders/$orderId/confirmation": {
       "filePath": "orders/$orderId.confirmation.tsx",
       "parent": "/orders"
+    },
+    "/app/dashboard/": {
+      "filePath": "app/dashboard/index.tsx",
+      "parent": "/app"
     },
     "/app/products/": {
       "filePath": "app/products/index.tsx",
