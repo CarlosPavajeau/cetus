@@ -2,11 +2,11 @@ import { AccessDenied } from '@/components/access-denied'
 import { CompleteOrdersChart } from '@/components/complete-orders-chart'
 import { NewOrdersSummary } from '@/components/new-orders-summary'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
 import { Protect } from '@clerk/clerk-react'
 import { createFileRoute } from '@tanstack/react-router'
