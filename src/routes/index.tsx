@@ -72,7 +72,7 @@ function IndexPage() {
 
   if (isLoadingCategories || isLoading) {
     return (
-      <DefaultPageLayout>
+      <DefaultPageLayout showCart>
         <DefaultLoader />
       </DefaultPageLayout>
     )
@@ -80,7 +80,7 @@ function IndexPage() {
 
   if (!products) {
     return (
-      <DefaultPageLayout>
+      <DefaultPageLayout showCart>
         <PageHeader title="No se encontraron productos" />
       </DefaultPageLayout>
     )
@@ -159,7 +159,9 @@ function IndexPage() {
       )}
 
       <div className="relative my-8">
-        {products && <ProductGrid products={filteredProducts} />}
+        {filteredProducts.length > 0 && (
+          <ProductGrid products={filteredProducts} />
+        )}
 
         {filteredProducts.length === 0 && (
           <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border bg-muted/30 p-6 text-center">
