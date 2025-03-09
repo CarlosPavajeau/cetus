@@ -46,7 +46,6 @@ function OrderDetailsComponent() {
       updateOrder({
         id: orderId,
         status: OrderStatus.Delivered,
-        transactionId: order?.transactionId!,
       }),
   })
 
