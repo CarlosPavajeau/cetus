@@ -17,9 +17,5 @@ function RouteComponent() {
     return <DefaultLoader />
   }
 
-  return (
-    <div>
-      {product && <ProductDisplay product={product} />}
-    </div>
-  )
+  return <div>{product && <ProductDisplay product={product} />}</div>
 }

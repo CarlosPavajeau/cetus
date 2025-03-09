@@ -4,7 +4,9 @@ import { useCart } from '@/store/cart'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { ContentLayout } from './content-layout'
 import { Currency } from './currency'
+import { DefaultPageLayout } from './default-page-layout'
 import { Image } from './image'
 import { ProductAddedNotification } from './product-added-notification'
 import { Button } from './ui/button'
@@ -37,8 +39,8 @@ export const ProductDisplay = ({ product }: Props) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+    <DefaultPageLayout showCart>
+      <ContentLayout>
         <div className="space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
             <div className="absolute inset-0 flex items-center justify-center">
@@ -109,7 +111,7 @@ export const ProductDisplay = ({ product }: Props) => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </ContentLayout>
+    </DefaultPageLayout>
   )
 }

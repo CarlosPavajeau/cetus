@@ -1,4 +1,3 @@
-import { DefaultPageLayout } from '@/components/default-page-layout'
 import { Outlet, createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/products')({
@@ -6,9 +5,5 @@ export const Route = createFileRoute('/products')({
 })
 
 function RouteComponent() {
-  return (
-    <DefaultPageLayout showCart>
-      <Outlet />
-    </DefaultPageLayout>
-  )
+  return <Outlet />
 }

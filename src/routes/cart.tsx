@@ -5,11 +5,5 @@ export const Route = createFileRoute('/cart')({
 })
 
 function RouteComponent() {
-  return (
-    <section>
-      <div className="container mx-auto">
-        <Outlet />
-      </div>
-    </section>
-  )
+  return <Outlet />
 }
