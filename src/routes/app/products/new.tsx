@@ -207,7 +207,7 @@ function ImageUploader({
               type="button"
               variant="destructive"
               size="icon"
-              className='absolute top-2 right-2'
+              className="absolute top-2 right-2"
               onClick={(e) => {
                 e.stopPropagation()
                 removeImage()
@@ -222,10 +222,10 @@ function ImageUploader({
               <UploadIcon className="size-8 text-muted-foreground" />
             </div>
             <div className="space-y-1">
-              <p className='font-medium text-sm'>
+              <p className="font-medium text-sm">
                 Arrastra y suelta o haz clic para seleccionar
               </p>
-              <p className='text-muted-foreground text-xs'>
+              <p className="text-muted-foreground text-xs">
                 JPG, PNG, WEBP (max. 5MB)
               </p>
             </div>
@@ -274,8 +274,8 @@ function CategorySelector({
                 >
                   {field.value
                     ? categories?.find(
-                      (category) => category.id === field.value,
-                    )?.name
+                        (category) => category.id === field.value,
+                      )?.name
                     : 'Selecciona una categoría'}
                   <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -377,9 +377,8 @@ function RouteComponent() {
       try {
         await createProductMutation.mutateAsync(values)
       } catch (error) {
-        const errorMessage = error instanceof Error
-          ? error.message
-          : 'Error desconocido';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Error desconocido'
         toast.error(`Error al crear el producto: ${errorMessage}`)
       }
     },
@@ -396,10 +395,7 @@ function RouteComponent() {
         </div>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-4">
                 <FormField
