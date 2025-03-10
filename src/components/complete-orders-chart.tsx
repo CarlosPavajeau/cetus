@@ -1,6 +1,6 @@
 import { OrderStatus } from '@/api/orders'
 import { useOrders } from '@/hooks/user-orders'
-import { useId } from 'react'
+import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {
   CartesianGrid,
@@ -15,6 +15,9 @@ import { DefaultLoader } from './default-loader'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { type ChartConfig, ChartContainer, ChartTooltip } from './ui/chart'
 
+/**
+ * Chart configuration for complete orders
+ */
 const chartConfig = {
   actual: {
     label: 'Ordenes completadas',
@@ -22,6 +25,9 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+/**
+ * Props for the CustomCursor component
+ */
 interface CustomCursorProps {
   fill?: string
   pointerEvents?: string
@@ -30,6 +36,9 @@ interface CustomCursorProps {
   className?: string
 }
 
+/**
+ * Custom cursor component for the chart tooltip
+ */
 function CustomCursor(props: CustomCursorProps) {
   const { fill, pointerEvents, height, points, className } = props
 
@@ -64,14 +73,56 @@ function CustomCursor(props: CustomCursorProps) {
   )
 }
 
+/**
+ * Chart component for displaying completed orders
+ */
 export function CompleteOrdersChart() {
   const { isLoading, orders } = useOrders()
-  const id = useId()
-
   const formatter = useDateFormatter({
     month: 'short',
     day: 'numeric',
   })
+
+  // Process chart data only when orders change
+  const { chartData, completeOrdersCount } = useMemo(() => {
+    if (!orders) {
+      return { chartData: [], completeOrdersCount: 0 }
+    }
+
+    const completeOrders = orders.filter(
+      (order) => order.status === OrderStatus.Delivered,
+    )
+
+    // Group orders by date and count them
+    const data = completeOrders
+      .reduce(
+        (acc, order) => {
+          const date = new Date(order.createdAt).toLocaleDateString()
+          const existing = acc.find((item) => item.createdAt === date)
+
+          if (existing) {
+            existing.count += 1
+          } else {
+            acc.push({
+              createdAt: date,
+              count: 1,
+            })
+          }
+
+          return acc
+        },
+        [] as Array<{ createdAt: string; count: number }>,
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      )
+
+    return {
+      chartData: data,
+      completeOrdersCount: completeOrders.length,
+    }
+  }, [orders])
 
   if (isLoading) {
     return <DefaultLoader />
@@ -81,44 +132,13 @@ export function CompleteOrdersChart() {
     return null
   }
 
-  const completeOrders = orders.filter(
-    (order) => order.status === OrderStatus.Delivered,
-  )
-
-  // Group orders by date and count them
-  const chartData = completeOrders
-    .reduce(
-      (acc, order) => {
-        const date = new Date(order.createdAt).toLocaleDateString()
-        const existing = acc.find((item) => item.createdAt === date)
-
-        if (existing) {
-          existing.count += 1
-        } else {
-          acc.push({
-            createdAt: date,
-            count: 1,
-          })
-        }
-
-        return acc
-      },
-      [] as Array<{ createdAt: string; count: number }>,
-    )
-    .sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    )
-
   return (
     <Card className="gap-4">
       <CardHeader>
         <div className="space-y-0.5">
           <CardTitle>Ordenes completadas</CardTitle>
           <div className="flex items-start gap-2">
-            <div className="font-semibold text-2xl">
-              {completeOrders.length}
-            </div>
+            <div className="font-semibold text-2xl">{completeOrdersCount}</div>
           </div>
         </div>
       </CardHeader>
@@ -133,7 +153,7 @@ export function CompleteOrdersChart() {
             margin={{ left: -12, right: 12, top: 12 }}
           >
             <defs>
-              <linearGradient id={`${id}-gradient`} x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id="chart-gradient" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="var(--chart-2)" />
                 <stop offset="100%" stopColor="var(--chart-1)" />
               </linearGradient>
@@ -177,7 +197,7 @@ export function CompleteOrdersChart() {
             <Line
               type="linear"
               dataKey="count"
-              stroke={`url(#${id}-gradient)`}
+              stroke="url(#chart-gradient)"
               strokeWidth={2}
               dot={false}
               activeDot={{
