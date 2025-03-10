@@ -5,25 +5,37 @@ import * as RechartsPrimitive from 'recharts'
 
 import { cn } from '@/shared/cn'
 
-// Format: { THEME_NAME: CSS_SELECTOR }
+// Theme configuration for light/dark mode
 const THEMES = { light: '', dark: '.dark' } as const
+type ThemeKey = keyof typeof THEMES
 
+/**
+ * Configuration type for chart elements
+ */
 export type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode
     icon?: React.ComponentType
   } & (
     | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
+    | { color?: never; theme: Record<ThemeKey, string> }
   )
 }
 
+/**
+ * Chart context props type
+ */
 type ChartContextProps = {
   config: ChartConfig
 }
 
+// Create context for chart configuration
 const ChartContext = React.createContext<ChartContextProps | null>(null)
 
+/**
+ * Hook to access chart context
+ * @returns Chart context
+ */
 function useChart() {
   const context = React.useContext(ChartContext)
 
@@ -34,6 +46,9 @@ function useChart() {
   return context
 }
 
+/**
+ * Main container for charts
+ */
 function ChartContainer({
   id,
   className,
@@ -69,6 +84,9 @@ function ChartContainer({
   )
 }
 
+/**
+ * Component to generate CSS styles for chart colors
+ */
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
     ([, config]) => config.theme || config.color,
@@ -87,11 +105,10 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
+    const color = itemConfig.theme?.[theme as ThemeKey] || itemConfig.color
     return color ? `  --color-${key}: ${color};` : null
   })
+  .filter(Boolean)
   .join('\n')}
 }
 `,
@@ -102,8 +119,12 @@ ${colorConfig
   )
 }
 
+// Re-export Recharts Tooltip
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+/**
+ * Custom tooltip content component
+ */
 function ChartTooltipContent({
   active,
   payload,
@@ -128,6 +149,7 @@ function ChartTooltipContent({
   }) {
   const { config } = useChart()
 
+  // Memoize tooltip label to avoid unnecessary re-renders
   const tooltipLabel = React.useMemo(() => {
     if (hideLabel || !payload?.length) {
       return null
@@ -248,8 +270,12 @@ function ChartTooltipContent({
   )
 }
 
+// Re-export Recharts Legend
 const ChartLegend = RechartsPrimitive.Legend
 
+/**
+ * Custom legend content component
+ */
 function ChartLegendContent({
   className,
   hideIcon = false,
@@ -304,7 +330,13 @@ function ChartLegendContent({
   )
 }
 
-// Helper to extract item config from a payload.
+/**
+ * Helper to extract item config from a payload
+ * @param config Chart configuration
+ * @param payload Payload object
+ * @param key Key to extract
+ * @returns Configuration for the payload item
+ */
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
@@ -349,5 +381,6 @@ export {
   ChartLegendContent,
   ChartStyle,
   ChartTooltip,
-  ChartTooltipContent,
+  ChartTooltipContent
 }
+
