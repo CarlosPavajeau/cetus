@@ -1,6 +1,9 @@
 import { type CSSProperties, useEffect, useRef, useState } from 'react'
 
 // Define TypeScript interfaces
+type ImageLayout = 'fill' | 'fixed' | 'responsive' | 'intrinsic'
+type ImageObjectFit = 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'
+
 type Props = {
   /**
    * Source URL of the image
@@ -25,12 +28,12 @@ type Props = {
   /**
    * Layout mode for the image
    */
-  layout?: 'fill' | 'fixed' | 'responsive' | 'intrinsic'
+  layout?: ImageLayout
 
   /**
    * CSS object-fit property for the image
    */
-  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'
+  objectFit?: ImageObjectFit
 
   /**
    * Quality of the image (1-100)
@@ -67,6 +70,11 @@ type Props = {
    */
   [key: string]: unknown
 }
+
+// Default low-quality placeholder SVG
+const DEFAULT_PLACEHOLDER =
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgNDAwIDMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmNmY2ZjYiLz48L3N2Zz4='
+
 export const Image = ({
   src,
   alt,
@@ -87,63 +95,52 @@ export const Image = ({
   const imgRef = useRef<HTMLImageElement | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
-  // Default low-quality placeholder if none provided
-  const defaultPlaceholder =
-    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgNDAwIDMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmNmY2ZjYiLz48L3N2Zz4='
-
   // Set up lazy loading with IntersectionObserver
   useEffect(() => {
-    if (!priority && imgRef.current && 'IntersectionObserver' in window) {
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
-
-      observerRef.current = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const img = entry.target as HTMLImageElement
-              const dataSrc = img.getAttribute('data-src')
-
-              // Trigger load if image is in viewport and data-src exists
-              if (dataSrc) {
-                img.setAttribute('src', dataSrc)
-              }
-
-              observerRef.current?.unobserve(img)
-            }
-          })
-        },
-        {
-          rootMargin: '200px 0px', // Start loading before image is in viewport
-        },
-      )
-
-      observerRef.current.observe(imgRef.current)
+    // Skip observer setup if priority is true or browser doesn't support IntersectionObserver
+    if (priority || !imgRef.current || !('IntersectionObserver' in window)) {
+      return
     }
 
+    // Clean up previous observer if it exists
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    // Create new observer
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement
+            const dataSrc = img.getAttribute('data-src')
+
+            // Trigger load if image is in viewport and data-src exists
+            if (dataSrc) {
+              img.setAttribute('src', dataSrc)
+            }
+
+            // Stop observing once the image is in view
+            observerRef.current?.unobserve(img)
+          }
+        }
+      },
+      {
+        rootMargin: '200px 0px', // Start loading before image is in viewport
+      },
+    )
+
+    observerRef.current.observe(imgRef.current)
+
+    // Cleanup function
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
+      observerRef.current?.disconnect()
     }
   }, [priority, src])
 
-  // Handle image loading completion
-  const handleImageLoad = (): void => {
-    setIsLoaded(true)
-  }
-
-  // Handle image loading error
-  const handleImageError = (): void => {
-    setError(true)
-  }
-
-  // Prepare image styles based on layout
+  // Get image styles based on layout
   const getImageStyle = (): CSSProperties => {
-    const baseStyle: CSSProperties = {
-      objectFit,
-    }
+    const baseStyle: CSSProperties = { objectFit }
 
     switch (layout) {
       case 'fill':
@@ -179,7 +176,7 @@ export const Image = ({
     }
   }
 
-  // Add blur effect styles when applicable
+  // Get blur effect styles when applicable
   const getLoadingStyle = (): CSSProperties => {
     if (blurEffect && !isLoaded && !error) {
       return {
@@ -192,7 +189,7 @@ export const Image = ({
     return {}
   }
 
-  // Combine computed styles with user-provided styles and loading styles
+  // Combine computed styles
   const computedStyle = {
     ...getImageStyle(),
     ...getLoadingStyle(),
@@ -224,7 +221,7 @@ export const Image = ({
     )
   }
 
-  // Pick out props that shouldn't be passed to the img
+  // Filter out props that shouldn't be passed to the img element
   const {
     quality: _,
     blurEffect: __,
@@ -235,15 +232,13 @@ export const Image = ({
   return (
     <img
       ref={imgRef}
-      src={
-        priority ? src : isLoaded ? src : placeholderSrc || defaultPlaceholder
-      }
+      src={priority ? src : placeholderSrc || DEFAULT_PLACEHOLDER}
       data-src={!priority ? src : undefined}
       alt={alt}
       className={className}
       style={computedStyle}
-      onLoad={handleImageLoad}
-      onError={handleImageError}
+      onLoad={() => setIsLoaded(true)}
+      onError={() => setError(true)}
       loading={priority ? 'eager' : 'lazy'}
       width={width}
       height={height}
