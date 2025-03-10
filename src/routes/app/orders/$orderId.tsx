@@ -15,31 +15,48 @@ import { Protect } from '@clerk/clerk-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
-import { useEffect } from 'react'
+import { useCallback } from 'react'
 import { toast } from 'sonner'
+
+const REALTIME_URL = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
 
 export const Route = createFileRoute('/app/orders/$orderId')({
   component: OrderDetailsComponent,
 })
 
-function OrderDetailsComponent() {
-  const params = Route.useParams()
-  const orderId = params.orderId
+type CompleteOrderButtonProps = {
+  orderId: string
+  onSuccess: () => void
+}
 
-  const { order, isLoading } = useOrder(orderId)
-
-  const url = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
-  const { connection } = useHub(url)
+function useRealtimeOrderUpdates(orderId: string) {
+  const { connection } = useHub(REALTIME_URL)
+  const queryClient = useQueryClient()
 
   useHubGroup(connection, 'JoinOrderGroup', orderId)
 
-  const queryClient = useQueryClient()
   useClientMethod(connection, 'ReceiveUpdatedOrder', () => {
     queryClient.invalidateQueries({
       queryKey: ['orders', orderId],
     })
   })
 
+  return connection
+}
+
+const PendingPaymentStatus = () => (
+  <div className="rounded-lg border bg-background p-4">
+    <h2 className="font-medium text-lg">Pago pendiente por confirmar</h2>
+    <p className="text-muted-foreground text-sm">
+      El pago de este pedido aún no ha sido confirmado.
+    </p>
+  </div>
+)
+
+const CompleteOrderButton = ({
+  orderId,
+  onSuccess,
+}: CompleteOrderButtonProps) => {
   const updateOrderMutation = useMutation({
     mutationKey: ['orders', 'update'],
     mutationFn: () =>
@@ -47,29 +64,57 @@ function OrderDetailsComponent() {
         id: orderId,
         status: OrderStatus.Delivered,
       }),
+    onSuccess,
   })
 
-  const handleCompleteOrder = () => {
+  const handleCompleteOrder = useCallback(() => {
     updateOrderMutation.mutate()
-  }
+  }, [updateOrderMutation])
 
+  return (
+    <Button
+      type="submit"
+      className="group w-full"
+      size="lg"
+      onClick={handleCompleteOrder}
+      disabled={updateOrderMutation.isPending}
+    >
+      {updateOrderMutation.isPending && (
+        <LoaderCircleIcon
+          className="animate-spin"
+          size={16}
+          aria-hidden="true"
+        />
+      )}
+      Completar pedido
+      <ArrowRightIcon
+        className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
+        size={16}
+        aria-hidden="true"
+      />
+    </Button>
+  )
+}
+
+function OrderDetailsComponent() {
+  const { orderId } = Route.useParams()
   const navigate = useNavigate()
-  useEffect(() => {
-    if (updateOrderMutation.isSuccess) {
-      navigate({
-        to: '/app',
-      })
+  const { order, isLoading } = useOrder(orderId)
 
-      if (order) {
-        toast.custom((t) => (
-          <OrderCompletedNotification
-            orderNumber={order.orderNumber}
-            onClose={() => toast.dismiss(t)}
-          />
-        ))
-      }
+  useRealtimeOrderUpdates(orderId)
+
+  const handleOrderSuccess = useCallback(() => {
+    navigate({ to: '/app' })
+
+    if (order) {
+      toast.custom((t) => (
+        <OrderCompletedNotification
+          orderNumber={order.orderNumber}
+          onClose={() => toast.dismiss(t)}
+        />
+      ))
     }
-  }, [updateOrderMutation.isSuccess, navigate, order])
+  }, [navigate, order])
 
   if (isLoading) {
     return (
@@ -106,43 +151,13 @@ function OrderDetailsComponent() {
                 <TransactionSummary id={order.transactionId} />
               )}
 
-              {order.status === OrderStatus.Pending && (
-                <div className="rounded-lg border bg-background p-4">
-                  <h2 className="font-medium text-lg">
-                    Pago pendiente por confirmar
-                  </h2>
-
-                  <p className="text-muted-foreground text-sm">
-                    El pago de este pedido aún no ha sido confirmado.
-                  </p>
-                </div>
-              )}
+              {order.status === OrderStatus.Pending && <PendingPaymentStatus />}
 
               {order.status === OrderStatus.Paid && (
-                <Button
-                  type="submit"
-                  className="group w-full"
-                  size="lg"
-                  onClick={handleCompleteOrder}
-                  disabled={
-                    order.status !== OrderStatus.Paid ||
-                    updateOrderMutation.isPending
-                  }
-                >
-                  {updateOrderMutation.isPending && (
-                    <LoaderCircleIcon
-                      className="animate-spin"
-                      size={16}
-                      aria-hidden="true"
-                    />
-                  )}
-                  Completar pedido
-                  <ArrowRightIcon
-                    className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-                    size={16}
-                    aria-hidden="true"
-                  />
-                </Button>
+                <CompleteOrderButton
+                  orderId={orderId}
+                  onSuccess={handleOrderSuccess}
+                />
               )}
             </div>
           </div>
