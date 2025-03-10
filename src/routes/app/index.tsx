@@ -66,12 +66,15 @@ import {
   ListFilterIcon,
   RefreshCwIcon,
 } from 'lucide-react'
-import { useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
 })
 
+/**
+ * Filter function for order status
+ */
 const statusFilterFn: FilterFn<SimpleOrder> = (
   row,
   columnId,
@@ -82,6 +85,9 @@ const statusFilterFn: FilterFn<SimpleOrder> = (
   return filterValue.includes(status)
 }
 
+/**
+ * Filter function for order number
+ */
 const orderNumberFilterFn: FilterFn<SimpleOrder> = (
   row,
   columnId,
@@ -91,6 +97,9 @@ const orderNumberFilterFn: FilterFn<SimpleOrder> = (
   return String(value).includes(filterValue)
 }
 
+/**
+ * Table column definitions
+ */
 const columns: ColumnDef<SimpleOrder>[] = [
   {
     id: 'orderNumber',
@@ -143,9 +152,280 @@ const columns: ColumnDef<SimpleOrder>[] = [
   },
 ]
 
+/**
+ * Search input component for order number filtering
+ */
+type SearchInputProps = {
+  table: ReturnType<typeof useReactTable<SimpleOrder>>
+  id: string
+}
+
+function SearchInput({ table, id }: SearchInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const orderNumberColumn = table.getColumn('orderNumber')
+  const filterValue = orderNumberColumn?.getFilterValue() as string
+
+  const handleClearFilter = useCallback(() => {
+    orderNumberColumn?.setFilterValue('')
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [orderNumberColumn])
+
+  return (
+    <div className="relative">
+      <Input
+        id={`${id}-input`}
+        ref={inputRef}
+        className={cn('peer min-w-60 ps-9', Boolean(filterValue) && 'pe-9')}
+        value={filterValue ?? ''}
+        onChange={(e) => orderNumberColumn?.setFilterValue(e.target.value)}
+        placeholder="Buscar por número de orden..."
+        type="text"
+        aria-label="Buscar por número de orden"
+      />
+      <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+        <ListFilterIcon size={16} aria-hidden="true" />
+      </div>
+      {Boolean(filterValue) && (
+        <button
+          className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Clear filter"
+          onClick={handleClearFilter}
+        >
+          <CircleXIcon size={16} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Status filter component
+ */
+type StatusFilterProps = {
+  table: ReturnType<typeof useReactTable<SimpleOrder>>
+  id: string
+  uniqueStatusValues: string[]
+  selectedStatuses: string[]
+  statusCounts: Map<string, number>
+}
+
+function StatusFilter({
+  table,
+  id,
+  uniqueStatusValues,
+  selectedStatuses,
+  statusCounts,
+}: StatusFilterProps) {
+  const handleStatusChange = useCallback(
+    (checked: boolean, value: string) => {
+      const filterValue = table
+        .getColumn('status')
+        ?.getFilterValue() as string[]
+      const newFilterValue = filterValue ? [...filterValue] : []
+
+      if (checked) {
+        newFilterValue.push(value)
+      } else {
+        const index = newFilterValue.indexOf(value)
+        if (index > -1) {
+          newFilterValue.splice(index, 1)
+        }
+      }
+
+      table
+        .getColumn('status')
+        ?.setFilterValue(newFilterValue.length ? newFilterValue : undefined)
+    },
+    [table],
+  )
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">
+          <FilterIcon
+            className="-ms-1 opacity-60"
+            size={16}
+            aria-hidden="true"
+          />
+          Estado
+          {selectedStatuses.length > 0 && (
+            <span className="-me-1 inline-flex h-5 max-h-full items-center rounded border bg-background px-1 font-[inherit] font-medium text-[0.625rem] text-muted-foreground/70">
+              {selectedStatuses.length}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto min-w-36 p-3" align="start">
+        <div className="space-y-3">
+          <div className="font-medium text-muted-foreground text-xs">
+            Filtrar por estado
+          </div>
+          <div className="space-y-3">
+            {uniqueStatusValues.map((value, i) => (
+              <div key={value} className="flex items-center gap-2">
+                <Checkbox
+                  id={`${id}-status-${i}`}
+                  checked={selectedStatuses.includes(value)}
+                  onCheckedChange={(checked) =>
+                    handleStatusChange(checked as boolean, value)
+                  }
+                />
+                <Label
+                  htmlFor={`${id}-status-${i}`}
+                  className="flex grow justify-between gap-2 font-normal"
+                >
+                  {OrderStatusText[value as unknown as OrderStatus]}{' '}
+                  <span className="ms-2 text-muted-foreground text-xs">
+                    {statusCounts.get(value)}
+                  </span>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+/**
+ * Table pagination component
+ */
+type TablePaginationProps = {
+  table: ReturnType<typeof useReactTable<SimpleOrder>>
+  pages: number[]
+  showLeftEllipsis: boolean
+  showRightEllipsis: boolean
+}
+
+function TablePagination({
+  table,
+  pages,
+  showLeftEllipsis,
+  showRightEllipsis,
+}: TablePaginationProps) {
+  return (
+    <div className="flex items-center justify-between gap-3 max-sm:flex-col">
+      {/* Page number information */}
+      <p
+        className="flex-1 whitespace-nowrap text-muted-foreground text-sm"
+        aria-live="polite"
+      >
+        Página{' '}
+        <span className="text-foreground">
+          {table.getState().pagination.pageIndex + 1}
+        </span>{' '}
+        de <span className="text-foreground">{table.getPageCount()}</span>
+      </p>
+
+      {/* Pagination buttons */}
+      <div className="grow">
+        <Pagination>
+          <PaginationContent>
+            {/* Previous page button */}
+            <PaginationItem>
+              <Button
+                size="icon"
+                variant="outline"
+                className="disabled:pointer-events-none disabled:opacity-50"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                aria-label="Go to previous page"
+              >
+                <ChevronLeftIcon size={16} aria-hidden="true" />
+              </Button>
+            </PaginationItem>
+
+            {/* Left ellipsis (...) */}
+            {showLeftEllipsis && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+
+            {/* Page number buttons */}
+            {pages.map((page) => {
+              const isActive =
+                page === table.getState().pagination.pageIndex + 1
+              return (
+                <PaginationItem key={page}>
+                  <Button
+                    size="icon"
+                    variant={isActive ? 'outline' : 'ghost'}
+                    onClick={() => table.setPageIndex(page - 1)}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {page}
+                  </Button>
+                </PaginationItem>
+              )
+            })}
+
+            {/* Right ellipsis (...) */}
+            {showRightEllipsis && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+
+            {/* Next page button */}
+            <PaginationItem>
+              <Button
+                size="icon"
+                variant="outline"
+                className="disabled:pointer-events-none disabled:opacity-50"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                aria-label="Go to next page"
+              >
+                <ChevronRightIcon size={16} aria-hidden="true" />
+              </Button>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+
+      {/* Results per page */}
+      <div className="flex flex-1 justify-end">
+        <Select
+          value={table.getState().pagination.pageSize.toString()}
+          onValueChange={(value) => {
+            table.setPageSize(Number(value))
+          }}
+          aria-label="Results per page"
+        >
+          <SelectTrigger
+            id="results-per-page"
+            className="w-fit whitespace-nowrap"
+          >
+            <SelectValue placeholder="Select number of results" />
+          </SelectTrigger>
+          <SelectContent>
+            {[5, 10, 25, 50].map((pageSize) => (
+              <SelectItem key={pageSize} value={pageSize.toString()}>
+                {pageSize} / página
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Main route component
+ */
 function RouteComponent() {
   const { orders, isLoading } = useOrders()
+  const id = useId()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
+  // Set up initial column filters
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
     {
       id: 'status',
@@ -153,6 +433,7 @@ function RouteComponent() {
     },
   ])
 
+  // Set up real-time updates
   const url = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
   const { connection } = useHub(url)
   useClientMethod(connection, 'ReceiveCreatedOrder', () => {
@@ -161,12 +442,14 @@ function RouteComponent() {
     })
   })
 
+  // Set up pagination
   const pageSize = 5
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: pageSize,
   })
 
+  // Set up table
   const table = useReactTable({
     data: orders ?? [],
     columns,
@@ -185,11 +468,8 @@ function RouteComponent() {
   // Get unique status values
   const uniqueStatusValues = useMemo(() => {
     const statusColumn = table.getColumn('status')
-
     if (!statusColumn) return []
-
     const values = Array.from(statusColumn.getFacetedUniqueValues().keys())
-
     return values.sort()
   }, [table.getColumn('status')?.getFacetedUniqueValues()])
 
@@ -200,52 +480,34 @@ function RouteComponent() {
     return statusColumn.getFacetedUniqueValues()
   }, [table.getColumn('status')?.getFacetedUniqueValues()])
 
+  // Get selected statuses
   const selectedStatuses = useMemo(() => {
     const filterValue = table.getColumn('status')?.getFilterValue() as string[]
     return filterValue ?? []
   }, [table.getColumn('status')?.getFilterValue()])
 
-  const handleStatusChange = (checked: boolean, value: string) => {
-    const filterValue = table.getColumn('status')?.getFilterValue() as string[]
-    const newFilterValue = filterValue ? [...filterValue] : []
-
-    if (checked) {
-      newFilterValue.push(value)
-    } else {
-      const index = newFilterValue.indexOf(value)
-      if (index > -1) {
-        newFilterValue.splice(index, 1)
-      }
-    }
-
-    table
-      .getColumn('status')
-      ?.setFilterValue(newFilterValue.length ? newFilterValue : undefined)
-  }
-
+  // Get pagination info
   const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
     currentPage: table.getState().pagination.pageIndex + 1,
     totalPages: table.getPageCount(),
     paginationItemsToDisplay: 5,
   })
 
-  const queryClient = useQueryClient()
-  const refresh = () => {
+  // Handlers
+  const refresh = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: ['orders'],
     })
-  }
+  }, [queryClient])
 
-  const navigate = useNavigate()
-
-  const goToOrder = (orderId: string) => {
-    navigate({
-      to: `/app/orders/${orderId}`,
-    })
-  }
-
-  const id = useId()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const goToOrder = useCallback(
+    (orderId: string) => {
+      navigate({
+        to: `/app/orders/${orderId}`,
+      })
+    },
+    [navigate],
+  )
 
   return (
     <section className="space-y-4">
@@ -255,7 +517,6 @@ function RouteComponent() {
             <h1 className="font-bold font-heading text-2xl text-foreground">
               Pedidos
             </h1>
-
             <span className="text-muted-foreground text-sm">
               Aquí puedes ver los pedidos de tus clientes.
             </span>
@@ -268,96 +529,14 @@ function RouteComponent() {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Input
-                    id={`${id}-input`}
-                    ref={inputRef}
-                    className={cn(
-                      'peer min-w-60 ps-9',
-                      Boolean(
-                        table.getColumn('orderNumber')?.getFilterValue(),
-                      ) && 'pe-9',
-                    )}
-                    value={
-                      (table.getColumn('orderNumber')?.getFilterValue() ??
-                        '') as string
-                    }
-                    onChange={(e) =>
-                      table
-                        .getColumn('orderNumber')
-                        ?.setFilterValue(e.target.value)
-                    }
-                    placeholder="Buscar por número de orden..."
-                    type="text"
-                    aria-label="Buscar por número de orden"
-                  />
-                  <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
-                    <ListFilterIcon size={16} aria-hidden="true" />
-                  </div>
-                  {Boolean(
-                    table.getColumn('orderNumber')?.getFilterValue(),
-                  ) && (
-                    <button
-                      className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="Clear filter"
-                      onClick={() => {
-                        table.getColumn('orderNumber')?.setFilterValue('')
-                        if (inputRef.current) {
-                          inputRef.current.focus()
-                        }
-                      }}
-                    >
-                      <CircleXIcon size={16} aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline">
-                      <FilterIcon
-                        className="-ms-1 opacity-60"
-                        size={16}
-                        aria-hidden="true"
-                      />
-                      Estado
-                      {selectedStatuses.length > 0 && (
-                        <span className="-me-1 inline-flex h-5 max-h-full items-center rounded border bg-background px-1 font-[inherit] font-medium text-[0.625rem] text-muted-foreground/70">
-                          {selectedStatuses.length}
-                        </span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto min-w-36 p-3" align="start">
-                    <div className="space-y-3">
-                      <div className="font-medium text-muted-foreground text-xs">
-                        Filtrar por estado
-                      </div>
-                      <div className="space-y-3">
-                        {uniqueStatusValues.map((value, i) => (
-                          <div key={value} className="flex items-center gap-2">
-                            <Checkbox
-                              id={`${id}-status-${i}`}
-                              checked={selectedStatuses.includes(value)}
-                              onCheckedChange={(checked: boolean) =>
-                                handleStatusChange(checked, value)
-                              }
-                            />
-                            <Label
-                              htmlFor={`${id}-status-${i}`}
-                              className="flex grow justify-between gap-2 font-normal"
-                            >
-                              {OrderStatusText[value as OrderStatus]}{' '}
-                              <span className="ms-2 text-muted-foreground text-xs">
-                                {statusCounts.get(value)}
-                              </span>
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <SearchInput table={table} id={id} />
+                <StatusFilter
+                  table={table}
+                  id={id}
+                  uniqueStatusValues={uniqueStatusValues}
+                  selectedStatuses={selectedStatuses}
+                  statusCounts={statusCounts}
+                />
               </div>
 
               <div>
@@ -371,6 +550,7 @@ function RouteComponent() {
                 </Button>
               </div>
             </div>
+
             <div className="overflow-hidden rounded-md border bg-background">
               <Table>
                 <TableHeader>
@@ -379,18 +559,16 @@ function RouteComponent() {
                       key={headerGroup.id}
                       className="hover:bg-transparent"
                     >
-                      {headerGroup.headers.map((header) => {
-                        return (
-                          <TableHead key={header.id}>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
-                          </TableHead>
-                        )
-                      })}
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                        </TableHead>
+                      ))}
                     </TableRow>
                   ))}
                 </TableHeader>
@@ -427,113 +605,13 @@ function RouteComponent() {
                 </TableBody>
               </Table>
             </div>
-            {/* Pagination */}
-            <div className="flex items-center justify-between gap-3 max-sm:flex-col">
-              {/* Page number information */}
-              <p
-                className="flex-1 whitespace-nowrap text-muted-foreground text-sm"
-                aria-live="polite"
-              >
-                Página{' '}
-                <span className="text-foreground">
-                  {table.getState().pagination.pageIndex + 1}
-                </span>{' '}
-                de{' '}
-                <span className="text-foreground">{table.getPageCount()}</span>
-              </p>
 
-              {/* Pagination buttons */}
-              <div className="grow">
-                <Pagination>
-                  <PaginationContent>
-                    {/* Previous page button */}
-                    <PaginationItem>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="disabled:pointer-events-none disabled:opacity-50"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                        aria-label="Go to previous page"
-                      >
-                        <ChevronLeftIcon size={16} aria-hidden="true" />
-                      </Button>
-                    </PaginationItem>
-
-                    {/* Left ellipsis (...) */}
-                    {showLeftEllipsis && (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )}
-
-                    {/* Page number buttons */}
-                    {pages.map((page) => {
-                      const isActive =
-                        page === table.getState().pagination.pageIndex + 1
-                      return (
-                        <PaginationItem key={page}>
-                          <Button
-                            size="icon"
-                            variant={`${isActive ? 'outline' : 'ghost'}`}
-                            onClick={() => table.setPageIndex(page - 1)}
-                            aria-current={isActive ? 'page' : undefined}
-                          >
-                            {page}
-                          </Button>
-                        </PaginationItem>
-                      )
-                    })}
-
-                    {/* Right ellipsis (...) */}
-                    {showRightEllipsis && (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )}
-
-                    {/* Next page button */}
-                    <PaginationItem>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="disabled:pointer-events-none disabled:opacity-50"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                        aria-label="Go to next page"
-                      >
-                        <ChevronRightIcon size={16} aria-hidden="true" />
-                      </Button>
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-
-              {/* Results per page */}
-              <div className="flex flex-1 justify-end">
-                <Select
-                  value={table.getState().pagination.pageSize.toString()}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value))
-                  }}
-                  aria-label="Results per page"
-                >
-                  <SelectTrigger
-                    id="results-per-page"
-                    className="w-fit whitespace-nowrap"
-                  >
-                    <SelectValue placeholder="Select number of results" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[5, 10, 25, 50].map((pageSize) => (
-                      <SelectItem key={pageSize} value={pageSize.toString()}>
-                        {pageSize} / página
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <TablePagination
+              table={table}
+              pages={pages}
+              showLeftEllipsis={showLeftEllipsis}
+              showRightEllipsis={showRightEllipsis}
+            />
           </div>
         )}
       </Protect>
