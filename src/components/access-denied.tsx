@@ -1,12 +1,21 @@
+import { CircleAlertIcon } from 'lucide-react'
+
 export function AccessDenied() {
   return (
-    <>
-      <h1 className="font-bold font-heading text-2xl text-foreground">
-        Acceso denegado
-      </h1>
-      <span className="text-muted-foreground text-sm">
-        No tienes permisos para acceder a esta página.
-      </span>
-    </>
+    <div className="rounded-md border px-4 py-3">
+      <div className="flex gap-3">
+        <CircleAlertIcon
+          className="mt-0.5 shrink-0 text-red-500"
+          size={16}
+          aria-hidden="true"
+        />
+        <div className="grow space-y-1">
+          <p className="font-medium text-sm">Acceso denegado</p>
+          <ul className="list-inside list-disc text-muted-foreground text-sm">
+            <li>No tienes permisos para acceder a esta página.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   )
 }
