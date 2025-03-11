@@ -30,7 +30,7 @@ const RouteComponent = memo(function RouteComponent() {
 
   if (isLoading) {
     return (
-      <DefaultPageLayout showHeader={true} showCart>
+      <DefaultPageLayout showCart>
         <DefaultLoader />
       </DefaultPageLayout>
     )
@@ -38,7 +38,7 @@ const RouteComponent = memo(function RouteComponent() {
 
   if (error) {
     return (
-      <DefaultPageLayout showHeader={true} showCart>
+      <DefaultPageLayout showCart>
         <div className="container my-12 flex flex-col items-center justify-center px-4">
           <div className="mb-6 rounded-md border px-4 py-3">
             <div className="flex gap-3">
@@ -68,7 +68,7 @@ const RouteComponent = memo(function RouteComponent() {
 
   if (!product) {
     return (
-      <DefaultPageLayout showHeader={true} showCart>
+      <DefaultPageLayout showCart>
         <div className="container my-12 flex flex-col items-center justify-center px-4">
           <div className="mx-auto mb-6 max-w-lg rounded-lg border bg-muted p-4">
             <h2 className="mb-2 font-semibold text-lg">

@@ -182,134 +182,132 @@ export const ProductDisplay = memo(({ product }: Props) => {
   return (
     <DefaultPageLayout showCart>
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
-      <div>
-        <nav className="mb-6 flex items-center space-x-1 text-muted-foreground text-sm">
-          <Link to="/" className="flex items-center hover:text-foreground">
-            <ArrowLeftIcon size={14} className="mr-1" />
-            Volver a productos
-          </Link>
-        </nav>
+      <nav className="mb-6 flex items-center space-x-1 text-muted-foreground text-sm">
+        <Link to="/" className="flex items-center hover:text-foreground">
+          <ArrowLeftIcon size={14} className="mr-1" />
+          Volver a productos
+        </Link>
+      </nav>
 
-        <AnimatePresence mode="wait">
-          <ContentLayout>
-            <motion.div
-              className="space-y-4"
-              key={`image-${product.id}`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="sticky top-4">
-                <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted/50">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Image
-                      src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-                      alt={product.name}
-                      layout="fill"
-                      className="object-contain"
-                      priority
-                    />
-                  </div>
-                </div>
-
-                {/* Display stock indicator on mobile */}
-                <div className="mt-4 flex lg:hidden">
-                  <div className="flex w-full items-center justify-between">
-                    <StockIndicator stock={product.stock} />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="space-y-6"
-              key={`details-${product.id}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <h1 className="font-bold text-3xl tracking-tight">
-                    {product.name}
-                  </h1>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="font-bold text-3xl">
-                    <Currency value={product.price} currency="COP" />
-                  </p>
-                  <div className="hidden lg:block">
-                    <StockIndicator stock={product.stock} />
-                  </div>
+      <AnimatePresence mode="wait">
+        <ContentLayout>
+          <motion.div
+            className="space-y-4"
+            key={`image-${product.id}`}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="sticky top-4">
+              <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted/50">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Image
+                    src={getImageUrl(product.imageUrl || 'placeholder.svg')}
+                    alt={product.name}
+                    layout="fill"
+                    className="object-contain"
+                    priority
+                  />
                 </div>
               </div>
 
-              {product.description && (
-                <div className="mt-6 space-y-4">
-                  <h2 className="font-medium text-lg">Descripción</h2>
-                  <p className="text-muted-foreground">{product.description}</p>
+              {/* Display stock indicator on mobile */}
+              <div className="mt-4 flex lg:hidden">
+                <div className="flex w-full items-center justify-between">
+                  <StockIndicator stock={product.stock} />
                 </div>
-              )}
-
-              {/* Mobile controls at the end */}
-              <div className="mt-auto">
-                <MobileControls />
               </div>
+            </div>
+          </motion.div>
 
-              {/* Desktop product actions */}
-              <div className="hidden lg:block">
-                <div className="my-6 h-px w-full bg-border"></div>
+          <motion.div
+            className="space-y-6"
+            key={`details-${product.id}`}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div>
+              <div className="flex items-center justify-between">
+                <h1 className="font-bold text-3xl tracking-tight">
+                  {product.name}
+                </h1>
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <p className="font-bold text-3xl">
+                  <Currency value={product.price} currency="COP" />
+                </p>
+                <div className="hidden lg:block">
+                  <StockIndicator stock={product.stock} />
+                </div>
+              </div>
+            </div>
 
-                <AnimatePresence>
-                  {!isOutOfStock && (
-                    <motion.div
-                      className="space-y-6"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <span className="font-medium">Cantidad:</span>
-                        <QuantitySelector
-                          quantity={quantity}
-                          onIncrement={incrementQuantity}
-                          onDecrement={decrementQuantity}
-                          max={maxQuantity}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {product.description && (
+              <div className="mt-6 space-y-4">
+                <h2 className="font-medium text-lg">Descripción</h2>
+                <p className="text-muted-foreground">{product.description}</p>
+              </div>
+            )}
 
-                <div className="mt-6 flex flex-col gap-4 sm:flex-row">
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={handleAddToCart}
-                    disabled={isOutOfStock || isAddingToCart}
+            {/* Mobile controls at the end */}
+            <div className="mt-auto">
+              <MobileControls />
+            </div>
+
+            {/* Desktop product actions */}
+            <div className="hidden lg:block">
+              <div className="my-6 h-px w-full bg-border"></div>
+
+              <AnimatePresence>
+                {!isOutOfStock && (
+                  <motion.div
+                    className="space-y-6"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
                   >
-                    {isAddingToCart ? (
-                      <div className="flex items-center">
-                        <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                        Agregando...
-                      </div>
-                    ) : (
-                      <>
-                        <ShoppingCartIcon className="mr-2 h-5 w-5" />
-                        {isOutOfStock
-                          ? 'Producto agotado'
-                          : 'Agregar al carrito'}
-                      </>
-                    )}
-                  </Button>
-                </div>
+                    <div className="flex items-center space-x-4">
+                      <span className="font-medium">Cantidad:</span>
+                      <QuantitySelector
+                        quantity={quantity}
+                        onIncrement={incrementQuantity}
+                        onDecrement={decrementQuantity}
+                        max={maxQuantity}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock || isAddingToCart}
+                >
+                  {isAddingToCart ? (
+                    <div className="flex items-center">
+                      <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                      Agregando...
+                    </div>
+                  ) : (
+                    <>
+                      <ShoppingCartIcon className="mr-2 h-5 w-5" />
+                      {isOutOfStock
+                        ? 'Producto agotado'
+                        : 'Agregar al carrito'}
+                    </>
+                  )}
+                </Button>
               </div>
-            </motion.div>
-          </ContentLayout>
-        </AnimatePresence>
-      </div>
+            </div>
+          </motion.div>
+        </ContentLayout>
+      </AnimatePresence>
     </DefaultPageLayout>
   )
 })
