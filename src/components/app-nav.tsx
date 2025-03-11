@@ -25,7 +25,7 @@ const TABS = [
   {
     label: 'Panel',
     href: '/app/dashboard',
-    isNew: true,
+    isNew: false,
   },
 ] as const
 
