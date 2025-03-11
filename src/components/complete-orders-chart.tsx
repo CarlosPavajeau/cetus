@@ -15,9 +15,6 @@ import { DefaultLoader } from './default-loader'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { type ChartConfig, ChartContainer, ChartTooltip } from './ui/chart'
 
-/**
- * Chart configuration for complete orders
- */
 const chartConfig = {
   actual: {
     label: 'Ordenes completadas',
@@ -25,9 +22,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-/**
- * Props for the CustomCursor component
- */
 interface CustomCursorProps {
   fill?: string
   pointerEvents?: string
@@ -36,9 +30,6 @@ interface CustomCursorProps {
   className?: string
 }
 
-/**
- * Custom cursor component for the chart tooltip
- */
 function CustomCursor(props: CustomCursorProps) {
   const { fill, pointerEvents, height, points, className } = props
 
@@ -73,9 +64,6 @@ function CustomCursor(props: CustomCursorProps) {
   )
 }
 
-/**
- * Chart component for displaying completed orders
- */
 export function CompleteOrdersChart() {
   const { isLoading, orders } = useOrders()
   const formatter = useDateFormatter({
@@ -83,7 +71,6 @@ export function CompleteOrdersChart() {
     day: 'numeric',
   })
 
-  // Process chart data only when orders change
   const { chartData, completeOrdersCount } = useMemo(() => {
     if (!orders) {
       return { chartData: [], completeOrdersCount: 0 }
@@ -93,7 +80,6 @@ export function CompleteOrdersChart() {
       (order) => order.status === OrderStatus.Delivered,
     )
 
-    // Group orders by date and count them
     const data = completeOrders
       .reduce(
         (acc, order) => {
