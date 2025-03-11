@@ -22,9 +22,14 @@ type Props = {
     status?: OrderStatus
   }
   showStatus?: boolean
+  showId?: boolean
 }
 
-export function OrderSummary({ order, showStatus = false }: Props) {
+export function OrderSummary({
+  order,
+  showStatus = false,
+  showId = false,
+}: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -45,17 +50,19 @@ export function OrderSummary({ order, showStatus = false }: Props) {
       </div>
 
       <div className="space-y-4">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Id</span>
-          <span>{order.id}</span>
-        </div>
+        {showId && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Id</span>
+            <span>{order.id}</span>
+          </div>
+        )}
 
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Cliente</span>
           <span>{order.customer.name}</span>
         </div>
 
-        <div className="flex justify-between text-sm">
+        <div className="flex flex-wrap justify-between text-sm">
           <span className="text-muted-foreground">Dirección</span>
           <span className="font-medium">{order.address}</span>
         </div>
