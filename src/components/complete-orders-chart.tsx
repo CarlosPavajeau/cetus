@@ -1,6 +1,5 @@
 import { OrderStatus } from '@/api/orders'
 import { useOrders } from '@/hooks/user-orders'
-import { ReceiptIcon, TrendingUpIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {
@@ -12,9 +11,8 @@ import {
   YAxis,
 } from 'recharts'
 import { CustomTooltipContent } from './charts-extra'
-import { Currency } from './currency'
 import { DefaultLoader } from './default-loader'
-import { Badge } from './ui/badge'
+import { OrdersInsights } from './orders-insights'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
 import { type ChartConfig, ChartContainer, ChartTooltip } from './ui/chart'
 
@@ -24,8 +22,6 @@ const chartConfig = {
     color: 'var(--chart-1)',
   },
 } satisfies ChartConfig
-
-const COST_PER_ORDER = 2000
 
 interface CustomCursorProps {
   fill?: string
@@ -76,42 +72,17 @@ export function CompleteOrdersChart() {
     day: 'numeric',
   })
 
-  const {
-    chartData,
-    completeOrdersCount,
-    currentMonthTotalCost,
-    currentMonthTotal,
-  } = useMemo(() => {
+  const { chartData, completeOrdersCount } = useMemo(() => {
     if (!orders) {
       return {
         chartData: [],
         completeOrdersCount: 0,
-        currentMonthTotalCost: 0,
-        currentMonthTotal: 0,
       }
     }
 
     const completeOrders = orders.filter(
       (order) => order.status === OrderStatus.Delivered,
     )
-
-    const now = new Date()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
-
-    const currentMonthCompleteOrders = completeOrders.filter((order) => {
-      const orderDate = new Date(order.createdAt)
-      return (
-        orderDate.getMonth() === currentMonth &&
-        orderDate.getFullYear() === currentYear
-      )
-    })
-
-    const totalMonth = currentMonthCompleteOrders.reduce((acc, order) => {
-      return acc + order.total
-    }, 0)
-
-    const totalCost = currentMonthCompleteOrders.length * COST_PER_ORDER
 
     const data = completeOrders
       .reduce(
@@ -140,8 +111,6 @@ export function CompleteOrdersChart() {
     return {
       chartData: data,
       completeOrdersCount: completeOrders.length,
-      currentMonthTotal: totalMonth,
-      currentMonthTotalCost: totalCost,
     }
   }, [orders])
 
@@ -203,7 +172,6 @@ export function CompleteOrdersChart() {
                   labelFormatter={(label) => formatter.format(new Date(label))}
                   colorMap={{
                     count: 'var(--chart-1)',
-                    projected: 'var(--chart-3)',
                   }}
                   labelMap={{
                     count: 'Ordenes',
@@ -233,24 +201,7 @@ export function CompleteOrdersChart() {
       </CardContent>
 
       <CardFooter className="mt-4 flex flex-wrap items-center gap-2">
-        <Badge variant="outline">
-          <TrendingUpIcon
-            className="-ms-0.5 opacity-60"
-            size={12}
-            aria-hidden="true"
-          />
-          Ingresos del mes actual:{' '}
-          <Currency value={currentMonthTotal} currency="COP" />
-        </Badge>
-        <Badge variant="outline">
-          <ReceiptIcon
-            className="-ms-0.5 opacity-60"
-            size={12}
-            aria-hidden="true"
-          />
-          Costo del mes actual:{' '}
-          <Currency value={currentMonthTotalCost} currency="COP" />
-        </Badge>
+        <OrdersInsights />
       </CardFooter>
     </Card>
   )
