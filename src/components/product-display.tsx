@@ -297,9 +297,7 @@ export const ProductDisplay = memo(({ product }: Props) => {
                   ) : (
                     <>
                       <ShoppingCartIcon className="mr-2 h-5 w-5" />
-                      {isOutOfStock
-                        ? 'Producto agotado'
-                        : 'Agregar al carrito'}
+                      {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
                     </>
                   )}
                 </Button>
