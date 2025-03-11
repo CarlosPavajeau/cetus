@@ -79,20 +79,22 @@ export function AddressFields() {
         />
       </div>
 
-      <FormField
-        control={form.control}
-        name="address"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Dirección</FormLabel>
-            <FormControl>
-              <Input type="text" {...field} />
-            </FormControl>
+      <div className="mt-4">
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dirección</FormLabel>
+              <FormControl>
+                <Input type="text" {...field} />
+              </FormControl>
 
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </>
   )
 }
