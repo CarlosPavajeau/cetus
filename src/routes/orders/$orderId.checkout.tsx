@@ -16,7 +16,7 @@ export const Route = createFileRoute('/orders/$orderId/checkout')({
 })
 
 const CheckoutErrorFallback = memo(({ error }: { error: Error }) => (
-  <DefaultPageLayout showHeader={false}>
+  <DefaultPageLayout>
     <PageHeader
       title="Error"
       subtitle={`Lo sentimos, ha ocurrido un error: ${error.message || 'Error desconocido'}`}
@@ -26,14 +26,14 @@ const CheckoutErrorFallback = memo(({ error }: { error: Error }) => (
 CheckoutErrorFallback.displayName = 'CheckoutErrorFallback'
 
 const LoadingState = memo(() => (
-  <DefaultPageLayout showHeader={false}>
+  <DefaultPageLayout>
     <DefaultLoader />
   </DefaultPageLayout>
 ))
 LoadingState.displayName = 'LoadingState'
 
 const OrderNotFound = memo(() => (
-  <DefaultPageLayout showHeader={false}>
+  <DefaultPageLayout>
     <PageHeader
       title="Pedido no encontrado"
       subtitle="No se pudo encontrar el pedido solicitado."
@@ -43,7 +43,7 @@ const OrderNotFound = memo(() => (
 OrderNotFound.displayName = 'OrderNotFound'
 
 const CheckoutContent = memo(({ order }: { order: Order }) => (
-  <DefaultPageLayout showHeader={false}>
+  <DefaultPageLayout>
     <PageHeader
       title="Ya casi estás listo"
       subtitle={

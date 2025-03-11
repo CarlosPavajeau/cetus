@@ -20,7 +20,7 @@ const RootComponent = () => {
       <div className="relative flex min-h-screen flex-col">
         <meta
           name="keywords"
-          content="cetus, ecommerce, store, shop, products"
+          content="TELEDIGITAL JYA, ecommerce, store, shop, products"
         />
         <Outlet />
         <Toaster />
@@ -39,10 +39,10 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       {
         name: 'keywords',
-        content: 'cetus, ecommerce, store, shop, products',
+        content: 'TELEDIGITAL JYA, ecommerce, store, shop, products',
       },
       {
-        title: 'cetus',
+        title: 'TELEDIGITAL JYA',
       },
     ],
   }),

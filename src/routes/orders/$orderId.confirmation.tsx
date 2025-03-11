@@ -47,7 +47,7 @@ function OrderConfirmatioComponent() {
 
   if (!order) {
     return (
-      <DefaultPageLayout showHeader={false}>
+      <DefaultPageLayout>
         <PageHeader
           title="Pedido no encontrado"
           subtitle="No se pudo encontrar el pedido solicitado."
@@ -58,7 +58,7 @@ function OrderConfirmatioComponent() {
 
   if (!transaction) {
     return (
-      <DefaultPageLayout showHeader={false}>
+      <DefaultPageLayout>
         <PageHeader
           title="Transacción no encontrada"
           subtitle={
@@ -77,7 +77,7 @@ function OrderConfirmatioComponent() {
 
   if (transaction.data.status === 'DECLINED') {
     return (
-      <DefaultPageLayout showHeader={false}>
+      <DefaultPageLayout>
         <PageHeader
           title="Tu pago ha sido rechazado"
           subtitle={
@@ -96,7 +96,7 @@ function OrderConfirmatioComponent() {
 
   if (transaction.data.status === 'ERROR') {
     return (
-      <DefaultPageLayout showHeader={false}>
+      <DefaultPageLayout>
         <PageHeader
           title="Ha ocurrido un error con tu pago"
           subtitle={
@@ -113,7 +113,7 @@ function OrderConfirmatioComponent() {
   }
 
   return (
-    <DefaultPageLayout showHeader={false}>
+    <DefaultPageLayout>
       <PageHeader
         title={`Pedido #${order.orderNumber} confirmado`}
         subtitle={

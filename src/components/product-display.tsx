@@ -181,7 +181,7 @@ export const ProductDisplay = memo(({ product }: Props) => {
 
   return (
     <DefaultPageLayout showCart>
-      <title>{`${product.name} | Cetus`}</title>
+      <title>{`${product.name} | TELEDIGITAL JYA`}</title>
       <div>
         <nav className="mb-6 flex items-center space-x-1 text-muted-foreground text-sm">
           <Link to="/" className="flex items-center hover:text-foreground">
