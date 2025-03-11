@@ -112,3 +112,16 @@ export const updateOrder = async (order: UpdateOrderRequest) => {
 
   return response.data
 }
+
+export type OrderInsights = {
+  currentMonthTotal: number
+  currentMonthCost: number
+}
+
+export const fetchOrderInsights = async () => {
+  const response = await axios.get<OrderInsights>(
+    `${import.meta.env.PUBLIC_API_URL}/orders/insights`,
+  )
+
+  return response.data
+}
