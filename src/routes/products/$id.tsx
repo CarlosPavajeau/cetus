@@ -20,7 +20,6 @@ const RouteComponent = memo(function RouteComponent() {
   const { id } = Route.useParams()
   const { product, isLoading, error } = useProduct(id)
 
-  // Show error toast when there's an API error
   useEffect(() => {
     if (error) {
       toast.error('Error al cargar el producto', {
@@ -30,7 +29,11 @@ const RouteComponent = memo(function RouteComponent() {
   }, [error])
 
   if (isLoading) {
-    return <DefaultLoader />
+    return (
+      <DefaultPageLayout showHeader={true} showCart>
+        <DefaultLoader />
+      </DefaultPageLayout>
+    )
   }
 
   if (error) {
@@ -86,5 +89,5 @@ const RouteComponent = memo(function RouteComponent() {
     )
   }
 
-  return <ProductDisplay product={product} />
+  return <ProductDisplay key={product.id} product={product} />
 })
