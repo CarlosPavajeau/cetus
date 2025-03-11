@@ -1,3 +1,4 @@
+import type { Order } from '@/api/orders'
 import { ContentLayout } from '@/components/content-layout'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
@@ -7,61 +8,97 @@ import { PageHeader } from '@/components/page-header'
 import { PaymentOptions } from '@/components/payment-options'
 import { useOrder } from '@/hooks/use-order'
 import { createFileRoute } from '@tanstack/react-router'
+import { AnimatePresence, motion } from 'framer-motion'
+import { memo } from 'react'
 
 export const Route = createFileRoute('/orders/$orderId/checkout')({
   component: CheckoutComponent,
 })
 
-function CheckoutComponent() {
-  const params = Route.useParams()
-  const orderId = params.orderId
+const CheckoutErrorFallback = memo(({ error }: { error: Error }) => (
+  <DefaultPageLayout showHeader={false}>
+    <PageHeader
+      title="Error"
+      subtitle={`Lo sentimos, ha ocurrido un error: ${error.message || 'Error desconocido'}`}
+    />
+  </DefaultPageLayout>
+))
+CheckoutErrorFallback.displayName = 'CheckoutErrorFallback'
 
-  const { order, isLoading } = useOrder(orderId)
+const LoadingState = memo(() => (
+  <DefaultPageLayout showHeader={false}>
+    <DefaultLoader />
+  </DefaultPageLayout>
+))
+LoadingState.displayName = 'LoadingState'
 
-  if (isLoading) {
-    return (
-      <DefaultPageLayout showHeader={false}>
-        <DefaultLoader />
-      </DefaultPageLayout>
-    )
-  }
+const OrderNotFound = memo(() => (
+  <DefaultPageLayout showHeader={false}>
+    <PageHeader
+      title="Pedido no encontrado"
+      subtitle="No se pudo encontrar el pedido solicitado."
+    />
+  </DefaultPageLayout>
+))
+OrderNotFound.displayName = 'OrderNotFound'
 
-  if (!order) {
-    return (
-      <DefaultPageLayout showHeader={false}>
-        <PageHeader
-          title="Pedido no encontrado"
-          subtitle="No se pudo encontrar el pedido solicitado."
-        />
-      </DefaultPageLayout>
-    )
-  }
+const CheckoutContent = memo(({ order }: { order: Order }) => (
+  <DefaultPageLayout showHeader={false}>
+    <PageHeader
+      title="Ya casi estás listo"
+      subtitle={
+        <>
+          <span className="font-medium">{order.customer.name}</span> estás a
+          punto de realizar tu pedido. Por favor, revisa los detalles de tu
+          compra y completa el proceso de pago.
+        </>
+      }
+    />
 
-  return (
-    <DefaultPageLayout showHeader={false}>
-      <PageHeader
-        title="Ya casi estás listo"
-        subtitle={
-          <>
-            <span className="font-medium">{order.customer.name}</span> estás a
-            punto de realizar tu pedido. Por favor, revisa los detalles de tu
-            compra y completa el proceso de pago.
-          </>
-        }
-      />
-
-      <ContentLayout>
-        <OrderItems items={order.items} title="Productos en tu pedido" />
-
-        <div className="flex flex-col justify-between space-y-8 md:pl-4">
+    <AnimatePresence mode="wait">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <ContentLayout>
           <div className="space-y-6">
-            <OrderSummary order={order} />
+            <OrderItems items={order.items} title="Productos en tu pedido" />
 
+            <OrderSummary order={order} />
+          </div>
+
+          <div className="space-y-6">
             <h2 className="font-medium text-lg">Método de pago</h2>
             <PaymentOptions order={order} />
           </div>
-        </div>
-      </ContentLayout>
-    </DefaultPageLayout>
-  )
+        </ContentLayout>
+      </motion.div>
+    </AnimatePresence>
+  </DefaultPageLayout>
+))
+CheckoutContent.displayName = 'CheckoutContent'
+
+function CheckoutComponent() {
+  const { orderId } = Route.useParams()
+
+  const { order, isLoading, error } = useOrder(orderId)
+
+  if (error) {
+    return (
+      <CheckoutErrorFallback
+        error={error instanceof Error ? error : new Error('Error desconocido')}
+      />
+    )
+  }
+
+  if (isLoading) {
+    return <LoadingState />
+  }
+
+  if (!order) {
+    return <OrderNotFound />
+  }
+
+  return <CheckoutContent order={order} />
 }
