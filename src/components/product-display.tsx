@@ -129,8 +129,13 @@ export const ProductDisplay = memo(({ product }: Props) => {
 
     // Simulate a small delay for better UX
     setTimeout(() => {
-      cart.add(product, quantity)
+      const success = cart.add(product, quantity)
       setIsAddingToCart(false)
+
+      if (!success) {
+        toast.error('No hay suficiente stock')
+        return
+      }
 
       toast.custom((t) => (
         <ProductAddedNotification

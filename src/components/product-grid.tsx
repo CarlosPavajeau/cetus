@@ -127,7 +127,12 @@ export function ProductGrid({ products }: Props) {
 
   const handleAddToCart = useCallback(
     (product: ProductForSale) => {
-      cart.add(product)
+      const success = cart.add(product)
+
+      if (!success) {
+        toast.error('No hay suficiente stock')
+        return
+      }
 
       toast.custom((t) => (
         <ProductAddedNotification

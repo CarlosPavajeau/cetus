@@ -12,7 +12,7 @@ type CartStore = {
   items: CartItem[]
   count: number
 
-  add: (product: ProductForSale, quantity?: number) => void
+  add: (product: ProductForSale, quantity?: number) => boolean
   reduce: (product: ProductForSale) => void
   remove: (product: ProductForSale) => void
 
@@ -31,6 +31,10 @@ export const useCart = create<CartStore>()(
         const quantityToAdd = quantity ?? 1
 
         if (item) {
+          if (item.quantity + quantityToAdd > product.stock) {
+            return false
+          }
+
           set((state) => ({
             items: state.items.map((item) =>
               item.product.id === product.id
@@ -48,6 +52,8 @@ export const useCart = create<CartStore>()(
             count: state.count + quantityToAdd,
           }))
         }
+
+        return true
       },
       remove: (product) => {
         const { items } = get()
