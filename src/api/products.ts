@@ -58,7 +58,7 @@ export const createProduct = async (product: CreateProductRequest) => {
 
 export type UpdateProductRequest = Omit<
   Product,
-  'createdAt' | 'updatedAt' | 'categoryId' | 'imageUrl'
+  'createdAt' | 'updatedAt' | 'categoryId'
 >
 
 export const updateProduct = async (product: UpdateProductRequest) => {
