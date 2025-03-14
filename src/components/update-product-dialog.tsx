@@ -1,18 +1,14 @@
-import { type Product, updateProduct } from '@/api/products'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { type TypeOf, z } from 'zod'
-import { Button } from './ui/button'
+import type { Product } from '@/api/products'
+import { ImageUploader, useImageUpload } from '@/components/product/image-uploader'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './ui/dialog'
-import { DropdownMenuItem } from './ui/dropdown-menu'
+} from '@/components/ui/dialog'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import {
   Form,
   FormControl,
@@ -20,55 +16,52 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
-import { Switch } from './ui/switch'
-import { Textarea } from './ui/textarea'
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import { useUpdateProduct } from '@/hooks/products'
+import {
+  type UpdateProductFormValues,
+  updateProductSchema,
+} from '@/schemas/product'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 
 type Props = {
   product: Product
 }
 
-const updateProductSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  price: z.coerce.number(),
-  stock: z.coerce.number(),
-  enabled: z.boolean().default(true),
-})
-
-type FormValues = TypeOf<typeof updateProductSchema>
-
 export const UpdateProductDialog = ({ product }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const form = useForm<FormValues>({
+  const form = useForm<UpdateProductFormValues>({
     resolver: zodResolver(updateProductSchema),
     defaultValues: {
       ...product,
       description: product.description ?? undefined,
+      imageUrl: product.imageUrl ?? '',
     },
   })
 
-  const updateProductMutation = useMutation({
-    mutationKey: ['products', 'update'],
-    mutationFn: updateProduct,
-  })
+  const {
+    mainImage,
+    mainImageUrl,
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    removeImage,
+    hasImageChanged,
+  } = useImageUpload(form, product.imageUrl)
 
-  const onSubmit = form.handleSubmit((values) => {
-    updateProductMutation.mutate(values)
-  })
-
-  const queryClient = useQueryClient()
-  useEffect(() => {
-    if (updateProductMutation.isSuccess) {
+  const updateProductMutation = useUpdateProduct(
+    mainImage,
+    hasImageChanged,
+    () => {
       setIsOpen(false)
-      queryClient.invalidateQueries({
-        queryKey: ['products'],
-      })
-    }
-  }, [updateProductMutation.isSuccess, queryClient])
+    },
+  )
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -81,7 +74,7 @@ export const UpdateProductDialog = ({ product }: Props) => {
         </DropdownMenuItem>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-2xl'>
         <DialogHeader>
           <DialogTitle className="sm:text-center">
             Actualizar producto
@@ -89,92 +82,99 @@ export const UpdateProductDialog = ({ product }: Props) => {
         </DialogHeader>
 
         <Form {...form}>
-          <form className="space-y-5" onSubmit={onSubmit}>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input type="text" autoFocus {...field} />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <form
+            className="space-y-5"
+            onSubmit={form.handleSubmit((values) =>
+              updateProductMutation.mutate(values),
+            )}
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="price"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Precio</FormLabel>
+                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
-                        <div className="relative">
+                        <Input type="text" autoFocus {...field} />
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} value={field.value || ''} />
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Precio</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              className="peer ps-6 pe-12"
+                              placeholder="0.00"
+                              type="text"
+                              {...field}
+                            />
+                            <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
+                              $
+                            </span>
+                            <span className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground text-sm peer-disabled:opacity-50">
+                              COP
+                            </span>
+                          </div>
+                        </FormControl>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="stock"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stock</FormLabel>
+                        <FormControl>
                           <Input
-                            className="peer ps-6 pe-12"
+                            className="tabular-nums"
                             placeholder="0.00"
                             type="text"
                             {...field}
                           />
-                          <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
-                            $
-                          </span>
-                          <span className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground text-sm peer-disabled:opacity-50">
-                            COP
-                          </span>
-                        </div>
-                      </FormControl>
+                        </FormControl>
 
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="tabular-nums"
-                          placeholder="0.00"
-                          type="text"
-                          {...field}
-                        />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
                   name="enabled"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className='*:not-first:ml-2'>
                       <FormLabel>Estado</FormLabel>
                       <FormControl>
                         <div
@@ -211,6 +211,26 @@ export const UpdateProductDialog = ({ product }: Props) => {
                   )}
                 />
               </div>
+
+              <div>
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={() => (
+                    <FormItem>
+                      <ImageUploader
+                        form={form}
+                        mainImage={mainImage}
+                        mainImageUrl={mainImageUrl}
+                        getRootProps={getRootProps}
+                        getInputProps={getInputProps}
+                        isDragActive={isDragActive}
+                        removeImage={removeImage}
+                      />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <Button
@@ -218,7 +238,9 @@ export const UpdateProductDialog = ({ product }: Props) => {
               className="w-full"
               disabled={updateProductMutation.isPending}
             >
-              Actualizar
+              {updateProductMutation.isPending
+                ? 'Actualizando...'
+                : 'Actualizar'}
             </Button>
           </form>
         </Form>
