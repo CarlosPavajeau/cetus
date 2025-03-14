@@ -47,8 +47,8 @@ export function DefaultPageLayout({
           }`}
           role="banner"
         >
-          <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center justify-between gap-3 px-4 md:px-6">
-            <Link to="/" className="flex items-center gap-2 rounded-md">
+          <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center justify-between gap-3">
+            <Link to="/" className="flex items-center gap-2">
               <h1 className="font-bold font-heading text-foreground text-xl sm:text-2xl">
                 TELEDIGITAL JYA
               </h1>
