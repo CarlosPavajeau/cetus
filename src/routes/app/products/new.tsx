@@ -230,13 +230,8 @@ function ProductCreateForm() {
                           <div className="relative">
                             <Input
                               type="number"
-                              placeholder="0"
                               className="peer ps-6 pe-12"
                               {...field}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                field.onChange(value === '' ? 0 : Number(value))
-                              }}
                             />
                             <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
                               $
@@ -260,13 +255,8 @@ function ProductCreateForm() {
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="0"
                             className="tabular-nums"
                             {...field}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              field.onChange(value === '' ? 0 : Number(value))
-                            }}
                           />
                         </FormControl>
                         <FormMessage />
