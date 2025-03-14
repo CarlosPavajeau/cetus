@@ -1,5 +1,8 @@
 import type { Product } from '@/api/products'
-import { ImageUploader, useImageUpload } from '@/components/product/image-uploader'
+import {
+  ImageUploader,
+  useImageUpload,
+} from '@/components/product/image-uploader'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -74,7 +77,7 @@ export const UpdateProductDialog = ({ product }: Props) => {
         </DropdownMenuItem>
       </DialogTrigger>
 
-      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-2xl'>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="sm:text-center">
             Actualizar producto
@@ -174,7 +177,7 @@ export const UpdateProductDialog = ({ product }: Props) => {
                   control={form.control}
                   name="enabled"
                   render={({ field }) => (
-                    <FormItem className='*:not-first:ml-2'>
+                    <FormItem className="*:not-first:ml-2">
                       <FormLabel>Estado</FormLabel>
                       <FormControl>
                         <div

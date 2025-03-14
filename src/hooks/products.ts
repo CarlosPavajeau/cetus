@@ -1,8 +1,8 @@
 import { uploadFileToS3 } from '@/api/aws'
 import { createProduct, updateProduct } from '@/api/products'
 import type {
-    CreateProductFormValues,
-    UpdateProductFormValues,
+  CreateProductFormValues,
+  UpdateProductFormValues,
 } from '@/schemas/product'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
