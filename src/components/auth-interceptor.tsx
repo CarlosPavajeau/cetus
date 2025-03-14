@@ -14,5 +14,5 @@ export const AuthInterceptor = () => {
     })
   }, [getToken])
 
-  return <div />
+  return null
 }
