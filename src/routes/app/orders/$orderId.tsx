@@ -1,4 +1,4 @@
-import { OrderStatus, updateOrder } from '@/api/orders'
+import { OrderStatus, deliverOrder } from '@/api/orders'
 import { AccessDenied } from '@/components/access-denied'
 import { ContentLayout } from '@/components/content-layout'
 import { DefaultLoader } from '@/components/default-loader'
@@ -57,19 +57,15 @@ const CompleteOrderButton = ({
   orderId,
   onSuccess,
 }: CompleteOrderButtonProps) => {
-  const updateOrderMutation = useMutation({
-    mutationKey: ['orders', 'update'],
-    mutationFn: () =>
-      updateOrder({
-        id: orderId,
-        status: OrderStatus.Delivered,
-      }),
+  const deliverOrderMutation = useMutation({
+    mutationKey: ['orders', 'deliver'],
+    mutationFn: () => deliverOrder(orderId),
     onSuccess,
   })
 
   const handleCompleteOrder = useCallback(() => {
-    updateOrderMutation.mutate()
-  }, [updateOrderMutation])
+    deliverOrderMutation.mutate()
+  }, [deliverOrderMutation])
 
   return (
     <Button
@@ -77,9 +73,9 @@ const CompleteOrderButton = ({
       className="group w-full"
       size="lg"
       onClick={handleCompleteOrder}
-      disabled={updateOrderMutation.isPending}
+      disabled={deliverOrderMutation.isPending}
     >
-      {updateOrderMutation.isPending && (
+      {deliverOrderMutation.isPending && (
         <LoaderCircleIcon
           className="animate-spin"
           size={16}
