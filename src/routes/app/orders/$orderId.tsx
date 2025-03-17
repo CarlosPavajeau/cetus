@@ -1,5 +1,6 @@
 import { OrderStatus, deliverOrder } from '@/api/orders'
 import { AccessDenied } from '@/components/access-denied'
+import { CancelOrderButton } from '@/components/cancel-order-button'
 import { ContentLayout } from '@/components/content-layout'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
@@ -15,7 +16,7 @@ import { Protect } from '@clerk/clerk-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 
 const REALTIME_URL = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
@@ -112,6 +113,14 @@ function OrderDetailsComponent() {
     }
   }, [navigate, order])
 
+  const isCancelable = useMemo(() => {
+    if (!order) return false
+
+    if (order.status === OrderStatus.Pending) return true
+
+    return false
+  }, [order])
+
   if (isLoading) {
     return (
       <DefaultPageLayout showHeader={false}>
@@ -148,6 +157,8 @@ function OrderDetailsComponent() {
               )}
 
               {order.status === OrderStatus.Pending && <PendingPaymentStatus />}
+
+              {isCancelable && <CancelOrderButton orderId={orderId} />}
 
               {order.status === OrderStatus.Paid && (
                 <CompleteOrderButton

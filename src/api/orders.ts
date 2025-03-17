@@ -107,6 +107,14 @@ export const deliverOrder = async (orderId: string) => {
   return response.data
 }
 
+export const cancelOrder = async (orderId: string) => {
+  const response = await axios.post<SimpleOrder>(
+    `${import.meta.env.PUBLIC_API_URL}/orders/${orderId}/cancel`,
+  )
+
+  return response.data
+}
+
 export type OrderInsights = {
   currentMonthTotal: number
   currentMonthCost: number
