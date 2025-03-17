@@ -1,4 +1,5 @@
 import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { Outlet, createRootRoute } from '@tanstack/react-router'
 
 import React, { Suspense } from 'react'
@@ -22,11 +23,13 @@ const RootComponent = () => {
           name="keywords"
           content="TELEDIGITAL JYA, ecommerce, store, shop, products"
         />
-        <Outlet />
-        <Toaster />
-        <Suspense>
-          <TanStackRouterDevtools />
-        </Suspense>
+        <TooltipProvider>
+          <Outlet />
+          <Toaster />
+          <Suspense>
+            <TanStackRouterDevtools />
+          </Suspense>
+        </TooltipProvider>
       </div>
     </div>
   )
