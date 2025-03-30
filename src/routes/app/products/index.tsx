@@ -114,7 +114,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
           <Badge
             className={cn(
               !row.getValue('enabled') &&
-              'bg-muted-foreground/60 text-primary-foreground',
+                'bg-muted-foreground/60 text-primary-foreground',
             )}
           >
             {row.getValue('enabled') ? 'Activo' : 'Inactivo'}
@@ -400,9 +400,9 @@ function RouteComponent() {
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
                       </TableHead>
                     ))}
                   </TableRow>

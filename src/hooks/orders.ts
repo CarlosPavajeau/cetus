@@ -1,4 +1,4 @@
-import { fetchOrderInsights } from '@/api/orders'
+import { fetchOrder, fetchOrderInsights } from '@/api/orders'
 import { useQuery } from '@tanstack/react-query'
 
 export function useOrderInsights() {
@@ -10,5 +10,18 @@ export function useOrderInsights() {
   return {
     insights: data,
     isLoading,
+  }
+}
+
+export function useOrder(id: string) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['orders', id],
+    queryFn: () => fetchOrder(id),
+  })
+
+  return {
+    order: data,
+    isLoading,
+    error,
   }
 }
