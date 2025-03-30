@@ -41,7 +41,6 @@ interface ProductFilteringResult {
   isFiltering: boolean
 }
 
-// Custom hooks
 function useProductFiltering(
   products: ProductForSale[] | undefined,
   categories: Category[] | undefined,
@@ -76,7 +75,6 @@ function useProductFiltering(
     }
 
     return products.filter((product) => {
-      // Filter by category
       if (
         selectedCategory !== 'all' &&
         product.categoryId !== selectedCategory
@@ -84,7 +82,6 @@ function useProductFiltering(
         return false
       }
 
-      // Filter by search term
       if (searchInput) {
         const searchInputLower = searchInput.toLowerCase()
         const productNameLower = product.name.toLowerCase()
@@ -156,7 +153,7 @@ interface SearchBarProps {
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onClear: () => void
-  inputRef: React.MutableRefObject<HTMLInputElement | null>
+  inputRef: React.RefObject<HTMLInputElement | null>
 }
 
 const SearchBar = ({
