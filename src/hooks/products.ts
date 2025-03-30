@@ -1,10 +1,16 @@
 import { uploadFileToS3 } from '@/api/aws'
-import { createProduct, updateProduct } from '@/api/products'
+import {
+  createProduct,
+  fetchProduct,
+  fetchProducts,
+  fetchProductsForSale,
+  updateProduct,
+} from '@/api/products'
 import type {
   CreateProductFormValues,
   UpdateProductFormValues,
 } from '@/schemas/product'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
@@ -79,4 +85,43 @@ export function useUpdateProduct(
       }
     },
   })
+}
+
+export function useProduct(id: string) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => fetchProduct(id),
+  })
+
+  return {
+    product: data,
+    isLoading,
+    error,
+  }
+}
+
+export function useProductsForSale() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products', 'for-sale'],
+    queryFn: fetchProductsForSale,
+  })
+
+  return {
+    products: data,
+    isLoading,
+    error,
+  }
+}
+
+export function useProducts() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts,
+  })
+
+  return {
+    products: data,
+    isLoading,
+    error,
+  }
 }

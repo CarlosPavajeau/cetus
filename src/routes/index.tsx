@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useProductsForSale } from '@/hooks/products'
 import { useCategories } from '@/hooks/use-categories'
-import { useProductsForSale } from '@/hooks/use-products-for-sale'
 import { createFileRoute } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CircleXIcon, FilterIcon, SearchIcon, XIcon } from 'lucide-react'
