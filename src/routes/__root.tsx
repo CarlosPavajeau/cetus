@@ -1,19 +1,9 @@
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { HeadContent, Outlet, createRootRoute } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import React, { Suspense } from 'react'
-
-const TanStackRouterDevtools = import.meta.env.PROD
-  ? () => null // Render nothing in production
-  : React.lazy(() =>
-      // Lazy load in development
-      import('@tanstack/router-devtools').then((res) => ({
-        default: res.TanStackRouterDevtools,
-        // For Embedded Mode
-        // default: res.TanStackRouterDevtoolsPanel
-      })),
-    )
+import { Suspense } from 'react'
 
 const RootComponent = () => {
   return (
@@ -35,7 +25,7 @@ const RootComponent = () => {
 export const Route = createRootRoute({
   head: () => ({
     meta: [
-      { charset: 'utf-8' },
+      { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       {
         name: 'keywords',
