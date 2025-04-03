@@ -2,6 +2,8 @@ import type { Product } from '@/api/products'
 import { AccessDenied } from '@/components/access-denied'
 import { ConfirmDeleteProductDialog } from '@/components/confirm-delete-product-dialog'
 import { Currency } from '@/components/currency'
+import { TablePagination } from '@/components/data-table/pagination'
+import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
@@ -12,27 +14,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-} from '@/components/ui/pagination'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { UpdateProductDialog } from '@/components/update-product-dialog'
 import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
@@ -44,15 +25,12 @@ import {
   type ColumnFiltersState,
   type PaginationState,
   type Row,
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table'
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   CircleXIcon,
   EllipsisIcon,
   ListFilterIcon,
@@ -64,7 +42,7 @@ export const Route = createFileRoute('/app/products/')({
   component: RouteComponent,
 })
 
-const DEFAULT_PAGE_SIZE = 5
+export const DEFAULT_PAGE_SIZE = 5
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50]
 
 const useProductColumns = (): ColumnDef<Product>[] => {
@@ -225,123 +203,6 @@ function SearchInput({ table, id }: SearchInputProps) {
   )
 }
 
-type TablePaginationProps = {
-  table: ReturnType<typeof useReactTable<Product>>
-  paginationInfo: ReturnType<typeof usePagination>
-}
-
-function TablePagination({ table, paginationInfo }: TablePaginationProps) {
-  const { pages, showLeftEllipsis, showRightEllipsis } = paginationInfo
-
-  return (
-    <div className="flex items-center justify-between gap-3 max-sm:flex-col">
-      {/* Page number information */}
-      <p
-        className="flex-1 whitespace-nowrap text-muted-foreground text-sm"
-        aria-live="polite"
-      >
-        Página{' '}
-        <span className="text-foreground">
-          {table.getState().pagination.pageIndex + 1}
-        </span>{' '}
-        de <span className="text-foreground">{table.getPageCount()}</span>
-      </p>
-
-      {/* Pagination buttons */}
-      <div className="grow">
-        <Pagination>
-          <PaginationContent>
-            {/* Previous page button */}
-            <PaginationItem>
-              <Button
-                size="icon"
-                variant="outline"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                aria-label="Go to previous page"
-              >
-                <ChevronLeftIcon size={16} aria-hidden="true" />
-              </Button>
-            </PaginationItem>
-
-            {/* Left ellipsis (...) */}
-            {showLeftEllipsis && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-
-            {/* Page number buttons */}
-            {pages.map((page) => {
-              const isActive =
-                page === table.getState().pagination.pageIndex + 1
-              return (
-                <PaginationItem key={page}>
-                  <Button
-                    size="icon"
-                    variant={isActive ? 'outline' : 'ghost'}
-                    onClick={() => table.setPageIndex(page - 1)}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    {page}
-                  </Button>
-                </PaginationItem>
-              )
-            })}
-
-            {/* Right ellipsis (...) */}
-            {showRightEllipsis && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-
-            {/* Next page button */}
-            <PaginationItem>
-              <Button
-                size="icon"
-                variant="outline"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                aria-label="Go to next page"
-              >
-                <ChevronRightIcon size={16} aria-hidden="true" />
-              </Button>
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
-
-      {/* Results per page */}
-      <div className="flex flex-1 justify-end">
-        <Select
-          value={table.getState().pagination.pageSize.toString()}
-          onValueChange={(value) => {
-            table.setPageSize(Number(value))
-          }}
-          aria-label="Results per page"
-        >
-          <SelectTrigger
-            id="results-per-page"
-            className="w-fit whitespace-nowrap"
-          >
-            <SelectValue placeholder="Select number of results" />
-          </SelectTrigger>
-          <SelectContent>
-            {PAGE_SIZE_OPTIONS.map((pageSize) => (
-              <SelectItem key={pageSize} value={pageSize.toString()}>
-                {pageSize} / página
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  )
-}
-
 function RouteComponent() {
   const { products, isLoading } = useProducts()
   const id = useId()
@@ -384,60 +245,7 @@ function RouteComponent() {
           </div>
 
           <div className="overflow-hidden rounded-md border bg-background">
-            <Table className="table-fixed">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="hover:bg-transparent"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        style={{ width: `${header.getSize()}px` }}
-                        className="h-11"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && 'selected'}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="last:py-0">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={table.getAllColumns().length}
-                      className="h-24 text-center"
-                    >
-                      Sin resultados.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+            <DataTable table={table} />
           </div>
 
           <TablePagination table={table} paginationInfo={paginationInfo} />
