@@ -1,5 +1,6 @@
 import type { Category } from '@/api/categories'
 import { AccessDenied } from '@/components/access-denied'
+import { CreateCategoryDialog } from '@/components/create-category.dialog'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
@@ -83,6 +84,8 @@ function RouteComponent() {
   const { categories, isLoading } = useCategories()
   const { table, paginationInfo } = useCategoryTable(categories)
 
+  const [isOpenCreateCategory, setIsOpenCreateCategory] = useState(false)
+
   if (isLoading) {
     return <DefaultLoader />
   }
@@ -90,6 +93,11 @@ function RouteComponent() {
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
       <section className="space-y-4">
+        <CreateCategoryDialog
+          open={isOpenCreateCategory}
+          onOpenChange={setIsOpenCreateCategory}
+        />
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-bold font-heading text-2xl text-foreground">
@@ -98,7 +106,10 @@ function RouteComponent() {
           </div>
 
           <div>
-            <Button className="ml-auto">
+            <Button
+              className="ml-auto"
+              onClick={() => setIsOpenCreateCategory(true)}
+            >
               <PlusIcon
                 className="-ms-1 opacity-60"
                 size={16}
