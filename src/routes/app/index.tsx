@@ -6,6 +6,8 @@ import {
 } from '@/api/orders'
 import { AccessDenied } from '@/components/access-denied'
 import { Currency } from '@/components/currency'
+import { TablePagination } from '@/components/data-table/pagination'
+import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
@@ -14,31 +16,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-} from '@/components/ui/pagination'
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { useClientMethod, useHub } from '@/hooks/realtime/use-hub'
 import { usePagination } from '@/hooks/use-pagination'
 import { useOrders } from '@/hooks/user-orders'
@@ -51,7 +32,6 @@ import {
   type ColumnFiltersState,
   type FilterFn,
   type PaginationState,
-  flexRender,
   getCoreRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
@@ -59,8 +39,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   CircleXIcon,
   FilterIcon,
   ListFilterIcon,
@@ -72,9 +50,6 @@ export const Route = createFileRoute('/app/')({
   component: RouteComponent,
 })
 
-/**
- * Filter function for order status
- */
 const statusFilterFn: FilterFn<SimpleOrder> = (
   row,
   columnId,
@@ -85,9 +60,6 @@ const statusFilterFn: FilterFn<SimpleOrder> = (
   return filterValue.includes(status)
 }
 
-/**
- * Filter function for order number
- */
 const orderNumberFilterFn: FilterFn<SimpleOrder> = (
   row,
   columnId,
@@ -97,9 +69,6 @@ const orderNumberFilterFn: FilterFn<SimpleOrder> = (
   return String(value).includes(filterValue)
 }
 
-/**
- * Table column definitions
- */
 const columns: ColumnDef<SimpleOrder>[] = [
   {
     id: 'orderNumber',
@@ -152,9 +121,6 @@ const columns: ColumnDef<SimpleOrder>[] = [
   },
 ]
 
-/**
- * Search input component for order number filtering
- */
 type SearchInputProps = {
   table: ReturnType<typeof useReactTable<SimpleOrder>>
   id: string
@@ -200,9 +166,6 @@ function SearchInput({ table, id }: SearchInputProps) {
   )
 }
 
-/**
- * Status filter component
- */
 type StatusFilterProps = {
   table: ReturnType<typeof useReactTable<SimpleOrder>>
   id: string
@@ -291,134 +254,6 @@ function StatusFilter({
   )
 }
 
-/**
- * Table pagination component
- */
-type TablePaginationProps = {
-  table: ReturnType<typeof useReactTable<SimpleOrder>>
-  pages: number[]
-  showLeftEllipsis: boolean
-  showRightEllipsis: boolean
-}
-
-function TablePagination({
-  table,
-  pages,
-  showLeftEllipsis,
-  showRightEllipsis,
-}: TablePaginationProps) {
-  return (
-    <div className="flex items-center justify-between gap-3 max-sm:flex-col">
-      {/* Page number information */}
-      <p
-        className="flex-1 whitespace-nowrap text-muted-foreground text-sm"
-        aria-live="polite"
-      >
-        Página{' '}
-        <span className="text-foreground">
-          {table.getState().pagination.pageIndex + 1}
-        </span>{' '}
-        de <span className="text-foreground">{table.getPageCount()}</span>
-      </p>
-
-      {/* Pagination buttons */}
-      <div className="grow">
-        <Pagination>
-          <PaginationContent>
-            {/* Previous page button */}
-            <PaginationItem>
-              <Button
-                size="icon"
-                variant="outline"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                aria-label="Go to previous page"
-              >
-                <ChevronLeftIcon size={16} aria-hidden="true" />
-              </Button>
-            </PaginationItem>
-
-            {/* Left ellipsis (...) */}
-            {showLeftEllipsis && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-
-            {/* Page number buttons */}
-            {pages.map((page) => {
-              const isActive =
-                page === table.getState().pagination.pageIndex + 1
-              return (
-                <PaginationItem key={page}>
-                  <Button
-                    size="icon"
-                    variant={isActive ? 'outline' : 'ghost'}
-                    onClick={() => table.setPageIndex(page - 1)}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    {page}
-                  </Button>
-                </PaginationItem>
-              )
-            })}
-
-            {/* Right ellipsis (...) */}
-            {showRightEllipsis && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-
-            {/* Next page button */}
-            <PaginationItem>
-              <Button
-                size="icon"
-                variant="outline"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                aria-label="Go to next page"
-              >
-                <ChevronRightIcon size={16} aria-hidden="true" />
-              </Button>
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
-
-      {/* Results per page */}
-      <div className="flex flex-1 justify-end">
-        <Select
-          value={table.getState().pagination.pageSize.toString()}
-          onValueChange={(value) => {
-            table.setPageSize(Number(value))
-          }}
-          aria-label="Results per page"
-        >
-          <SelectTrigger
-            id="results-per-page"
-            className="w-fit whitespace-nowrap"
-          >
-            <SelectValue placeholder="Select number of results" />
-          </SelectTrigger>
-          <SelectContent>
-            {[5, 10, 25, 50].map((pageSize) => (
-              <SelectItem key={pageSize} value={pageSize.toString()}>
-                {pageSize} / página
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  )
-}
-
-/**
- * Main route component
- */
 function RouteComponent() {
   const { orders, isLoading } = useOrders()
   const id = useId()
@@ -487,7 +322,7 @@ function RouteComponent() {
   }, [table.getColumn('status')?.getFilterValue()])
 
   // Get pagination info
-  const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
+  const paginationInfo = usePagination({
     currentPage: table.getState().pagination.pageIndex + 1,
     totalPages: table.getPageCount(),
     paginationItemsToDisplay: 5,
@@ -501,9 +336,9 @@ function RouteComponent() {
   }, [queryClient])
 
   const goToOrder = useCallback(
-    (orderId: string) => {
+    (order: SimpleOrder) => {
       navigate({
-        to: `/app/orders/${orderId}`,
+        to: `/app/orders/${order.id}`,
       })
     },
     [navigate],
@@ -552,66 +387,10 @@ function RouteComponent() {
             </div>
 
             <div className="overflow-hidden rounded-md border bg-background">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow
-                      key={headerGroup.id}
-                      className="hover:bg-transparent"
-                    >
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && 'selected'}
-                        onClick={() => goToOrder(row.original.id)}
-                        className="cursor-pointer"
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        Sin resultados.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <DataTable table={table} onRowClick={goToOrder} />
             </div>
 
-            <TablePagination
-              table={table}
-              pages={pages}
-              showLeftEllipsis={showLeftEllipsis}
-              showRightEllipsis={showRightEllipsis}
-            />
+            <TablePagination paginationInfo={paginationInfo} table={table} />
           </div>
         )}
       </Protect>
