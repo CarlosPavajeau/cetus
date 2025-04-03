@@ -6,13 +6,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { cn } from '@/shared/cn'
 import { flexRender, type useReactTable } from '@tanstack/react-table'
 
 type Props<T = unknown> = {
   table: ReturnType<typeof useReactTable<T>>
+
+  onRowClick?: (row: T) => void
 }
 
-export function DataTable<T = unknown>({ table }: Props<T>) {
+export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
   return (
     <Table className="table-fixed">
       <TableHeader>
@@ -42,6 +45,15 @@ export function DataTable<T = unknown>({ table }: Props<T>) {
             <TableRow
               key={row.id}
               data-state={row.getIsSelected() && 'selected'}
+              className={cn(
+                onRowClick &&
+                  'cursor-pointer transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted/50',
+              )}
+              onClick={() => {
+                if (onRowClick) {
+                  onRowClick(row.original)
+                }
+              }}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id} className="last:py-0">
