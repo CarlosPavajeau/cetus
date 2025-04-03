@@ -43,7 +43,6 @@ export const Route = createFileRoute('/app/products/')({
 })
 
 export const DEFAULT_PAGE_SIZE = 5
-const PAGE_SIZE_OPTIONS = [5, 10, 25, 50]
 
 const useProductColumns = (): ColumnDef<Product>[] => {
   return useMemo(
