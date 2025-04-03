@@ -23,6 +23,11 @@ const TABS = [
     isNew: false,
   },
   {
+    label: 'Categorias',
+    href: '/app/categories',
+    isNew: false,
+  },
+  {
     label: 'Panel',
     href: '/app/dashboard',
     isNew: false,

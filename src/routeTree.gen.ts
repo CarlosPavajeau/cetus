@@ -19,6 +19,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as CartIndexImport } from './routes/cart/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as ProductsIdImport } from './routes/products/$id'
+import { Route as AppCategoriesImport } from './routes/app/categories'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
 import { Route as AppDashboardIndexImport } from './routes/app/dashboard/index'
 import { Route as OrdersOrderIdConfirmationImport } from './routes/orders/$orderId.confirmation'
@@ -74,6 +75,12 @@ const ProductsIdRoute = ProductsIdImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ProductsRoute,
+} as any)
+
+const AppCategoriesRoute = AppCategoriesImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AppRoute,
 } as any)
 
 const AppProductsIndexRoute = AppProductsIndexImport.update({
@@ -151,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsImport
       parentRoute: typeof rootRoute
     }
+    '/app/categories': {
+      id: '/app/categories'
+      path: '/categories'
+      fullPath: '/app/categories'
+      preLoaderRoute: typeof AppCategoriesImport
+      parentRoute: typeof AppImport
+    }
     '/products/$id': {
       id: '/products/$id'
       path: '/$id'
@@ -220,6 +234,7 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AppRouteChildren {
+  AppCategoriesRoute: typeof AppCategoriesRoute
   AppIndexRoute: typeof AppIndexRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
@@ -228,6 +243,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCategoriesRoute: AppCategoriesRoute,
   AppIndexRoute: AppIndexRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppProductsNewRoute: AppProductsNewRoute,
@@ -278,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
+  '/app/categories': typeof AppCategoriesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
   '/cart/': typeof CartIndexRoute
@@ -293,6 +310,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
+  '/app/categories': typeof AppCategoriesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app': typeof AppIndexRoute
   '/cart': typeof CartIndexRoute
@@ -311,6 +329,7 @@ export interface FileRoutesById {
   '/cart': typeof CartRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
+  '/app/categories': typeof AppCategoriesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
   '/cart/': typeof CartIndexRoute
@@ -330,6 +349,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/orders'
     | '/products'
+    | '/app/categories'
     | '/products/$id'
     | '/app/'
     | '/cart/'
@@ -344,6 +364,7 @@ export interface FileRouteTypes {
     | '/'
     | '/orders'
     | '/products'
+    | '/app/categories'
     | '/products/$id'
     | '/app'
     | '/cart'
@@ -360,6 +381,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/orders'
     | '/products'
+    | '/app/categories'
     | '/products/$id'
     | '/app/'
     | '/cart/'
@@ -411,6 +433,7 @@ export const routeTree = rootRoute
     "/app": {
       "filePath": "app.tsx",
       "children": [
+        "/app/categories",
         "/app/",
         "/app/orders/$orderId",
         "/app/products/new",
@@ -436,6 +459,10 @@ export const routeTree = rootRoute
       "children": [
         "/products/$id"
       ]
+    },
+    "/app/categories": {
+      "filePath": "app/categories.tsx",
+      "parent": "/app"
     },
     "/products/$id": {
       "filePath": "products/$id.tsx",
