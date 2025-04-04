@@ -1,6 +1,12 @@
 import { AccessDenied } from '@/components/access-denied'
 import { AppNav } from '@/components/app-nav'
-import { Protect } from '@clerk/clerk-react'
+import {
+  ClerkLoaded,
+  Protect,
+  RedirectToSignIn,
+  SignedIn,
+  SignedOut,
+} from '@clerk/clerk-react'
 import { Outlet, createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app')({
@@ -9,14 +15,22 @@ export const Route = createFileRoute('/app')({
 
 function RouteComponent() {
   return (
-    <section>
-      <AppNav />
+    <ClerkLoaded>
+      <Protect permission="org:app:access" fallback={<AccessDenied />}>
+        <SignedIn>
+          <section>
+            <AppNav />
 
-      <div className="container mx-auto">
-        <Protect permission="org:app:access" fallback={<AccessDenied />}>
-          <Outlet />
-        </Protect>
-      </div>
-    </section>
+            <div className="container mx-auto">
+              <Outlet />
+            </div>
+          </section>
+        </SignedIn>
+
+        <SignedOut>
+          <RedirectToSignIn />
+        </SignedOut>
+      </Protect>
+    </ClerkLoaded>
   )
 }
