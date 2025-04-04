@@ -1,5 +1,5 @@
 import { AccessDenied } from '@/components/access-denied'
-import { CreateCategoryDialog } from '@/components/create-category.dialog'
+import { CreateCategoryDialog } from '@/components/category/create-category.dialog'
 import {
   ImageUploader,
   useImageUpload,

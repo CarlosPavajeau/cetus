@@ -1,7 +1,4 @@
 import { type Category, deleteCategory } from '@/api/categories'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LoaderCircleIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -11,9 +8,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from './ui/alert-dialog'
-import { Button } from './ui/button'
-import { DropdownMenuItem } from './ui/dropdown-menu'
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { LoaderCircleIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 type Props = {
   category: Category
