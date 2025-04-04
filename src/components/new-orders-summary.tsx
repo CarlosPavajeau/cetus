@@ -1,5 +1,5 @@
 import { OrderStatus } from '@/api/orders'
-import { useOrders } from '@/hooks/user-orders'
+import { useOrders } from '@/hooks/orders'
 import { DefaultLoader } from './default-loader'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 

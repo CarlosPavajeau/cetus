@@ -1,4 +1,8 @@
-import { type Category, type UpdateCategoryRequest, updateCategory } from '@/api/categories'
+import {
+  type Category,
+  type UpdateCategoryRequest,
+  updateCategory,
+} from '@/api/categories'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -30,7 +34,7 @@ type FormValues = TypeOf<typeof editCategorySchema>
 
 export const EditCategoryDialog = ({ category }: Props) => {
   const [open, setOpen] = useState(false)
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(editCategorySchema),
     defaultValues: {
@@ -51,7 +55,8 @@ export const EditCategoryDialog = ({ category }: Props) => {
 
   const updateCategoryMutation = useMutation({
     mutationKey: ['categories', 'update', category.id],
-    mutationFn: (data: UpdateCategoryRequest) => updateCategory(category.id, data),
+    mutationFn: (data: UpdateCategoryRequest) =>
+      updateCategory(category.id, data),
   })
 
   const onSubmit = form.handleSubmit((values) => {
@@ -77,7 +82,7 @@ export const EditCategoryDialog = ({ category }: Props) => {
       >
         Editar
       </DropdownMenuItem>
-      
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -102,7 +107,9 @@ export const EditCategoryDialog = ({ category }: Props) => {
                 )}
               />
               <Button type="submit" disabled={updateCategoryMutation.isPending}>
-                {updateCategoryMutation.isPending ? "Actualizando..." : "Actualizar"}
+                {updateCategoryMutation.isPending
+                  ? 'Actualizando...'
+                  : 'Actualizar'}
               </Button>
             </form>
           </Form>

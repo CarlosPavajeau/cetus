@@ -1,5 +1,5 @@
 import { OrderStatus } from '@/api/orders'
-import { useOrders } from '@/hooks/user-orders'
+import { useOrders } from '@/hooks/orders'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {

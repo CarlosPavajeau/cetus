@@ -27,7 +27,10 @@ export const createCategory = async (category: CreateCategoryRequest) => {
   return response.data
 }
 
-export const updateCategory = async (id: string, category: UpdateCategoryRequest) => {
+export const updateCategory = async (
+  id: string,
+  category: UpdateCategoryRequest,
+) => {
   const response = await axios.put<Category>(
     `${import.meta.env.PUBLIC_API_URL}/categories/${id}`,
     category,

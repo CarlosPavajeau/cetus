@@ -20,9 +20,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { useOrders } from '@/hooks/orders'
 import { useClientMethod, useHub } from '@/hooks/realtime/use-hub'
 import { usePagination } from '@/hooks/use-pagination'
-import { useOrders } from '@/hooks/user-orders'
 import { cn } from '@/shared/cn'
 import { Protect } from '@clerk/clerk-react'
 import { useQueryClient } from '@tanstack/react-query'
