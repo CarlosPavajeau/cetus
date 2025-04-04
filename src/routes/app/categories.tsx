@@ -1,11 +1,18 @@
 import type { Category } from '@/api/categories'
 import { AccessDenied } from '@/components/access-denied'
+import { ConfirmDeleteCategoryDialog } from '@/components/confirm-delete-category-dialog'
 import { CreateCategoryDialog } from '@/components/create-category.dialog'
+import { EditCategoryDialog } from '@/components/edit-category-dialog'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu.tsx'
 import { useCategories } from '@/hooks/use-categories'
 import { usePagination } from '@/hooks/use-pagination'
 import { Protect } from '@clerk/clerk-react'
@@ -13,11 +20,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
   type PaginationState,
+  type Row,
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { PlusIcon } from 'lucide-react'
+import { EllipsisIcon, PlusIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/categories')({
@@ -43,6 +51,13 @@ function useCategoryColumns(): ColumnDef<Category>[] {
             <FormattedDate date={new Date(row.getValue('createdAt'))} />
           </div>
         ),
+      },
+      {
+        id: 'actions',
+        header: () => <span className="sr-only">Actions</span>,
+        cell: ({ row }) => <RowActions row={row} />,
+        size: 60,
+        enableHiding: false,
       },
     ],
     [],
@@ -129,5 +144,31 @@ function RouteComponent() {
         </div>
       </section>
     </Protect>
+  )
+}
+
+function RowActions({ row }: { row: Row<Category> }) {
+  const category = row.original
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <div className="flex justify-end">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="shadow-none"
+            aria-label="Edit item"
+          >
+            <EllipsisIcon size={16} aria-hidden={true} />
+          </Button>
+        </div>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end">
+        <EditCategoryDialog category={category} />
+        <ConfirmDeleteCategoryDialog category={category} />
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

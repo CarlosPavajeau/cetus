@@ -16,11 +16,29 @@ export const fetchCategories = async () => {
 }
 
 export type CreateCategoryRequest = Pick<Category, 'name'>
+export type UpdateCategoryRequest = Pick<Category, 'name' | 'id'>
 
 export const createCategory = async (category: CreateCategoryRequest) => {
   const response = await axios.post<Category>(
     `${import.meta.env.PUBLIC_API_URL}/categories`,
     category,
+  )
+
+  return response.data
+}
+
+export const updateCategory = async (id: string, category: UpdateCategoryRequest) => {
+  const response = await axios.put<Category>(
+    `${import.meta.env.PUBLIC_API_URL}/categories/${id}`,
+    category,
+  )
+
+  return response.data
+}
+
+export const deleteCategory = async (id: string) => {
+  const response = await axios.delete(
+    `${import.meta.env.PUBLIC_API_URL}/categories/${id}`,
   )
 
   return response.data
