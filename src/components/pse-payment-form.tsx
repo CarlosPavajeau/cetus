@@ -1,5 +1,5 @@
 import type { Order } from '@/api/orders'
-import { useFinancialInstitutions } from '@/hooks/use-financial-institutions'
+import { useFinancialInstitutions } from '@/hooks/wompi/use-financial-institutions'
 import type { PaymentFormValues } from '@/schemas/payments'
 import { useFormContext } from 'react-hook-form'
 import { BasePaymentForm } from './base-payment-form'
