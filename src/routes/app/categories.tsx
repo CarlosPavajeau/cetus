@@ -2,10 +2,10 @@ import type { Category } from '@/api/categories'
 import { AccessDenied } from '@/components/access-denied'
 import { ConfirmDeleteCategoryDialog } from '@/components/confirm-delete-category-dialog'
 import { CreateCategoryDialog } from '@/components/create-category.dialog'
-import { EditCategoryDialog } from '@/components/edit-category-dialog'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
+import { EditCategoryDialog } from '@/components/edit-category-dialog'
 import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,7 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx'
-import { useCategories } from '@/hooks/use-categories'
+import { useCategories } from '@/hooks/categories'
 import { usePagination } from '@/hooks/use-pagination'
 import { Protect } from '@clerk/clerk-react'
 import { createFileRoute } from '@tanstack/react-router'

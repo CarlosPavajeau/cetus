@@ -25,8 +25,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
+import { useCategories } from '@/hooks/categories'
 import { useCreateProduct } from '@/hooks/products'
-import { useCategories } from '@/hooks/use-categories'
 import {
   type CreateProductFormValues,
   createProductSchema,
@@ -78,8 +78,8 @@ function CategorySelector({
                 >
                   {field.value
                     ? categories?.find(
-                        (category) => category.id === field.value,
-                      )?.name
+                      (category) => category.id === field.value,
+                    )?.name
                     : 'Selecciona una categoría'}
                   <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
