@@ -1,15 +1,15 @@
 import type { Order } from '@/api/orders'
-import type { PaymentFormValues } from '@/schemas/payments'
-import { useFormContext } from 'react-hook-form'
-import { BasePaymentForm } from './base-payment-form'
+import { BasePaymentForm } from '@/components/payment/base-payment-form'
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import type { PaymentFormValues } from '@/schemas/payments'
+import { useFormContext } from 'react-hook-form'
 
 type Props = {
   order: Order

@@ -1,18 +1,18 @@
 import type { Order } from '@/api/orders'
-import type { PaymentFormValues } from '@/schemas/payments'
-import { CreditCardIcon } from 'lucide-react'
-import { useFormContext } from 'react-hook-form'
-import { usePaymentInputs } from 'react-payment-inputs'
-import images, { type CardImages } from 'react-payment-inputs/images'
-import { BasePaymentForm } from './base-payment-form'
+import { BasePaymentForm } from '@/components/payment/base-payment-form'
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import type { PaymentFormValues } from '@/schemas/payments'
+import { CreditCardIcon } from 'lucide-react'
+import { useFormContext } from 'react-hook-form'
+import { usePaymentInputs } from 'react-payment-inputs'
+import images, { type CardImages } from 'react-payment-inputs/images'
 
 type Props = {
   order: Order

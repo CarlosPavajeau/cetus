@@ -1,10 +1,10 @@
+import { Checkbox } from '@/components/ui/checkbox'
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Label } from '@/components/ui/label'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
 import type { PaymentFormValues } from '@/schemas/payments'
 import { ShieldCheckIcon } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
-import { Checkbox } from './ui/checkbox'
-import { FormField, FormItem, FormMessage } from './ui/form'
-import { Label } from './ui/label'
 
 export const PaymentConsent = () => {
   const { merchant } = useMerchant()

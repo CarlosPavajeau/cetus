@@ -1,11 +1,11 @@
 import type { Order } from '@/api/orders'
+import { PaymentConsent } from '@/components/payment/payment-consent'
+import { Button } from '@/components/ui/button'
 import { useCreateTransaction } from '@/hooks/payments'
 import type { PaymentFormValues } from '@/schemas/payments'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { PaymentConsent } from './payment-consent'
-import { Button } from './ui/button'
 
 type Props = {
   order: Order

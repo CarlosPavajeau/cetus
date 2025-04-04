@@ -1,6 +1,6 @@
 import type { Order } from '@/api/orders'
-import { BasePaymentForm } from './base-payment-form'
-import { BancolombiaLogo } from './icons'
+import { BancolombiaLogo } from '@/components/icons'
+import { BasePaymentForm } from '@/components/payment/base-payment-form'
 
 type Props = {
   order: Order

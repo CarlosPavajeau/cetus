@@ -1,23 +1,23 @@
 import type { Order } from '@/api/orders'
-import { useFinancialInstitutions } from '@/hooks/wompi/use-financial-institutions'
-import type { PaymentFormValues } from '@/schemas/payments'
-import { useFormContext } from 'react-hook-form'
-import { BasePaymentForm } from './base-payment-form'
+import { BasePaymentForm } from '@/components/payment/base-payment-form'
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select'
+} from '@/components/ui/select'
+import { useFinancialInstitutions } from '@/hooks/wompi/use-financial-institutions'
+import type { PaymentFormValues } from '@/schemas/payments'
+import { useFormContext } from 'react-hook-form'
 
 type Props = {
   order: Order
