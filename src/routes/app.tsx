@@ -16,8 +16,8 @@ export const Route = createFileRoute('/app')({
 function RouteComponent() {
   return (
     <ClerkLoaded>
-      <Protect permission="org:app:access" fallback={<AccessDenied />}>
-        <SignedIn>
+      <SignedIn>
+        <Protect permission="org:app:access" fallback={<AccessDenied />}>
           <section>
             <AppNav />
 
@@ -25,12 +25,12 @@ function RouteComponent() {
               <Outlet />
             </div>
           </section>
-        </SignedIn>
+        </Protect>
+      </SignedIn>
 
-        <SignedOut>
-          <RedirectToSignIn />
-        </SignedOut>
-      </Protect>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
     </ClerkLoaded>
   )
 }
