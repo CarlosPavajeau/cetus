@@ -1,19 +1,11 @@
 import { AccessDenied } from '@/components/access-denied'
+import { CategorySelector } from '@/components/category/category-selector'
 import { CreateCategoryDialog } from '@/components/category/create-category.dialog'
 import {
   ImageUploader,
   useImageUpload,
 } from '@/components/product/image-uploader'
 import { Button } from '@/components/ui/button'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command'
 import {
   Form,
   FormControl,
@@ -23,20 +15,15 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Popover, PopoverContent } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
-import { useCategories } from '@/hooks/categories'
 import { useCreateProduct } from '@/hooks/products'
 import {
   type CreateProductFormValues,
   createProductSchema,
 } from '@/schemas/product'
-import { cn } from '@/shared/cn'
 import { Protect } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { PopoverTrigger } from '@radix-ui/react-popover'
 import { createFileRoute } from '@tanstack/react-router'
-import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -44,102 +31,7 @@ export const Route = createFileRoute('/app/products/new')({
   component: ProductCreateForm,
 })
 
-type CategorySelectorProps = {
-  form: ReturnType<typeof useForm<CreateProductFormValues>>
-  categories: Array<{ id: string; name: string }> | undefined
-  openCategoryDialog: () => void
-}
-
-function CategorySelector({
-  form,
-  categories,
-  openCategoryDialog,
-}: CategorySelectorProps) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <FormField
-      control={form.control}
-      name="categoryId"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Categoría</FormLabel>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <FormControl>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className={cn(
-                    'w-full justify-between',
-                    !field.value && 'text-muted-foreground',
-                  )}
-                >
-                  {field.value
-                    ? categories?.find(
-                        (category) => category.id === field.value,
-                      )?.name
-                    : 'Selecciona una categoría'}
-                  <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </FormControl>
-            </PopoverTrigger>
-            <PopoverContent className="w-full min-w-[var(--radix-popper-anchor-width)] border-input p-0">
-              <Command>
-                <CommandInput
-                  placeholder="Buscar categoría..."
-                  className="h-9"
-                />
-                <CommandList>
-                  <CommandEmpty>No se encontraron categorías.</CommandEmpty>
-                  <CommandGroup>
-                    {categories?.map((category) => (
-                      <CommandItem
-                        value={category.name}
-                        key={category.id}
-                        onSelect={() => {
-                          form.setValue('categoryId', category.id)
-                          setOpen(false)
-                        }}
-                      >
-                        {category.name}
-                        <CheckIcon
-                          className={cn(
-                            'ml-auto h-4 w-4',
-                            category.id === field.value
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                  <CommandSeparator />
-                  <CommandGroup>
-                    <CommandItem
-                      onSelect={() => {
-                        openCategoryDialog()
-                        setOpen(false)
-                      }}
-                    >
-                      <PlusIcon className="mr-2 h-4 w-4" />
-                      <span>Agregar categoría</span>
-                    </CommandItem>
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  )
-}
-
 function ProductCreateForm() {
-  const { categories } = useCategories()
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
 
   const form = useForm<CreateProductFormValues>({
@@ -265,11 +157,7 @@ function ProductCreateForm() {
                   />
                 </div>
 
-                <CategorySelector
-                  form={form}
-                  categories={categories}
-                  openCategoryDialog={openCategoryDialog}
-                />
+                <CategorySelector onSelectCreateCategory={openCategoryDialog} />
               </div>
 
               <div>
