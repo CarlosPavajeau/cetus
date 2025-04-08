@@ -21,6 +21,7 @@ export const updateProductSchema = z.object({
   id: z.string(),
   enabled: z.boolean().default(true),
   imageUrl: z.string().optional().default(''),
+  categoryId: z.string().min(1, 'La categoría es requerida'),
 })
 
 export type CreateProductFormValues = TypeOf<typeof createProductSchema>
