@@ -31,6 +31,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { CategorySelector } from './category/category-selector'
 
 type Props = {
   product: Product
@@ -172,6 +173,8 @@ export const UpdateProductDialog = ({ product }: Props) => {
                     )}
                   />
                 </div>
+
+                <CategorySelector />
 
                 <FormField
                   control={form.control}
