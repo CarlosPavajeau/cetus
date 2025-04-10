@@ -1,7 +1,7 @@
 import { type TypeOf, z } from 'zod'
 
 export const createOrderSchema = z.object({
-  address: z.string(),
+  address: z.string().min(1, 'La dirección es obligatoria'),
   cityId: z.string(),
   total: z.coerce.number(),
   items: z.array(
@@ -14,11 +14,11 @@ export const createOrderSchema = z.object({
     }),
   ),
   customer: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string(),
-    phone: z.string(),
-    address: z.string(),
+    id: z.string().min(1, 'El id es obligatorio'),
+    name: z.string().min(1, 'El nombre es obligatorio'),
+    email: z.string().min(1, 'El email es obligatorio'),
+    phone: z.string().min(1, 'El teléfono es obligatorio'),
+    address: z.string().min(1, 'La dirección es obligatoria'),
   }),
 })
 
