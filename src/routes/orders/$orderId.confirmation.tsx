@@ -1,4 +1,3 @@
-import { OrderStatus } from '@/api/orders'
 import { ContentLayout } from '@/components/content-layout'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
@@ -124,37 +123,29 @@ function OrderConfirmatioComponent() {
             contacto con nosotros. El código de transacción es{' '}
             <span className="font-medium">{id}</span> y el código de pedido es #
             <span className="font-medium">{order.orderNumber}</span>.
-            <hr className="my-4 border-0" />
-            <span>
-              Tu pago puede estar pendiente de confirmación. Por favor, espera
-              unos minutos y revisa tu correo electrónico para confirmar que tu
-              pago ha sido procesado correctamente.
-            </span>
           </>
         }
       />
 
-      <ContentLayout>
-        <OrderItems items={order.items} title="Productos en tu pedido" />
+      <div className="mt-8 space-y-6">
+        <ContentLayout>
+          <OrderItems items={order.items} title="Productos en tu pedido" />
+
+          <div>
+            <div className="space-y-6">
+              <OrderSummary order={order} showStatus />
+            </div>
+          </div>
+        </ContentLayout>
 
         <div>
-          <div className="space-y-6">
-            <OrderSummary order={order} showStatus />
-
-            {order.status === OrderStatus.Pending && (
-              <div className="rounded-lg border bg-background p-4">
-                <h2 className="font-medium text-lg">
-                  Pago pendiente por confirmar
-                </h2>
-
-                <p className="text-muted-foreground text-sm">
-                  El pago de este pedido aún no ha sido confirmado.
-                </p>
-              </div>
-            )}
-          </div>
+          <span className="text-muted-foreground text-xs">
+            Tu pago puede estar pendiente de confirmación. Por favor, espera
+            unos minutos y revisa tu correo electrónico para confirmar que tu
+            pago ha sido procesado correctamente.
+          </span>
         </div>
-      </ContentLayout>
+      </div>
     </DefaultPageLayout>
   )
 }
