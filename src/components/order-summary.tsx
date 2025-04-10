@@ -49,7 +49,7 @@ export function OrderSummary({
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 rounded-lg border bg-card p-4 text-card-foreground">
         {showId && (
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Id</span>
