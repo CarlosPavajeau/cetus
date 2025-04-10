@@ -45,7 +45,7 @@ export const AppNav = () => {
 
   return (
     <header className="before:-inset-x-32 relative mb-14 before:absolute before:bottom-0 before:h-px before:bg-[linear-gradient(to_right,--theme(--color-border/.3),--theme(--color-border)_200px,--theme(--color-border)_calc(100%-200px),--theme(--color-border/.3))]">
-      <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center justify-between gap-3">
+      <div className="flex h-[72px] w-full items-center justify-between gap-3">
         <Link to="/" className="hidden items-center gap-2 md:flex">
           <h1 className="font-bold font-heading text-foreground text-xl sm:text-2xl">
             TELEDIGITAL JYA
