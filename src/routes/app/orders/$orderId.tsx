@@ -45,15 +45,6 @@ function useRealtimeOrderUpdates(orderId: string) {
   return connection
 }
 
-const PendingPaymentStatus = () => (
-  <div className="rounded-lg border bg-background p-4">
-    <h2 className="font-medium text-lg">Pago pendiente por confirmar</h2>
-    <p className="text-muted-foreground text-sm">
-      El pago de este pedido aún no ha sido confirmado.
-    </p>
-  </div>
-)
-
 const CompleteOrderButton = ({
   orderId,
   onSuccess,
@@ -145,30 +136,30 @@ function OrderDetailsComponent() {
       <DefaultPageLayout showHeader={false}>
         <PageHeader title={`Procesamiento del pedido #${order.orderNumber}`} />
 
-        <ContentLayout>
-          <OrderItems items={order.items} />
+        <div className="my-6">
+          <ContentLayout>
+            <OrderItems items={order.items} />
 
-          <div>
-            <div className="space-y-6">
-              <OrderSummary order={order} showStatus={true} />
+            <div>
+              <div className="space-y-6">
+                <OrderSummary order={order} showStatus={true} />
 
-              {order.transactionId && (
-                <TransactionSummary id={order.transactionId} />
-              )}
+                {order.transactionId && (
+                  <TransactionSummary id={order.transactionId} />
+                )}
 
-              {order.status === OrderStatus.Pending && <PendingPaymentStatus />}
+                {isCancelable && <CancelOrderButton orderId={orderId} />}
 
-              {isCancelable && <CancelOrderButton orderId={orderId} />}
-
-              {order.status === OrderStatus.Paid && (
-                <CompleteOrderButton
-                  orderId={orderId}
-                  onSuccess={handleOrderSuccess}
-                />
-              )}
+                {order.status === OrderStatus.Paid && (
+                  <CompleteOrderButton
+                    orderId={orderId}
+                    onSuccess={handleOrderSuccess}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        </ContentLayout>
+          </ContentLayout>
+        </div>
       </DefaultPageLayout>
     </Protect>
   )
