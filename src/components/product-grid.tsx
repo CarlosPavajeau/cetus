@@ -52,7 +52,11 @@ const ProductCard = memo(function ProductCard({
       className="flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground"
     >
       <div className="relative aspect-square overflow-hidden">
-        <Link to="/products/$id" params={{ id: product.id }} className="block h-full w-full">
+        <Link
+          to="/products/$id"
+          params={{ id: product.id }}
+          className="block h-full w-full"
+        >
           <Image
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
             alt={product.name}
@@ -81,7 +85,11 @@ const ProductCard = memo(function ProductCard({
           </Badge>
         </div>
 
-        <Link to="/products/$id" params={{ id: product.id }} className="hover:underline">
+        <Link
+          to="/products/$id"
+          params={{ id: product.id }}
+          className="hover:underline"
+        >
           <h3 className="line-clamp-1 font-medium text-lg">{product.name}</h3>
         </Link>
 
