@@ -1,4 +1,11 @@
 import type { ProductForSale } from '@/api/products'
+import { ContentLayout } from '@/components/content-layout'
+import { Currency } from '@/components/currency'
+import { DefaultPageLayout } from '@/components/default-page-layout'
+import { Image } from '@/components/image'
+import { ProductAddedNotification } from '@/components/product/product-added-notification'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
@@ -12,13 +19,6 @@ import {
 } from 'lucide-react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { ContentLayout } from './content-layout'
-import { Currency } from './currency'
-import { DefaultPageLayout } from './default-page-layout'
-import { Image } from './image'
-import { ProductAddedNotification } from './product-added-notification'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
 
 type Props = {
   product: ProductForSale

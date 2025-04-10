@@ -1,4 +1,19 @@
 import { OrderStatus } from '@/api/orders'
+import { CustomTooltipContent } from '@/components/charts-extra'
+import { DefaultLoader } from '@/components/default-loader'
+import { OrdersInsights } from '@/components/order/orders-insights'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+} from '@/components/ui/chart'
 import { useOrders } from '@/hooks/orders'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
@@ -10,11 +25,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { CustomTooltipContent } from './charts-extra'
-import { DefaultLoader } from './default-loader'
-import { OrdersInsights } from './orders-insights'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
-import { type ChartConfig, ChartContainer, ChartTooltip } from './ui/chart'
 
 const chartConfig = {
   actual: {

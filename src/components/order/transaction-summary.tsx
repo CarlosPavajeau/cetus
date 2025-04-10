@@ -3,12 +3,12 @@ import {
   TransactionStatusColor,
   TransactionStatusText,
 } from '@/api/third-party/wompi'
+import { Currency } from '@/components/currency'
+import { DefaultLoader } from '@/components/default-loader'
+import { FormattedDate } from '@/components/formatted-date'
+import { Badge } from '@/components/ui/badge'
 import { useTransaction } from '@/hooks/wompi/use-transaction'
 import { cn } from '@/shared/cn'
-import { Currency } from './currency'
-import { DefaultLoader } from './default-loader'
-import { FormattedDate } from './formatted-date'
-import { Badge } from './ui/badge'
 
 type Props = {
   id: string

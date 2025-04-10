@@ -1,4 +1,5 @@
 import type { Product } from '@/api/products'
+import { CategorySelector } from '@/components/category/category-selector'
 import {
   ImageUploader,
   useImageUpload,
@@ -31,7 +32,6 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { CategorySelector } from './category/category-selector'
 
 type Props = {
   product: Product

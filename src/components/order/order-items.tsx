@@ -1,8 +1,8 @@
+import { Currency } from '@/components/currency'
+import { Image } from '@/components/image'
+import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { Trash2Icon } from 'lucide-react'
-import { Currency } from './currency'
-import { Image } from './image'
-import { Button } from './ui/button'
 
 type OrderItem = {
   id?: string

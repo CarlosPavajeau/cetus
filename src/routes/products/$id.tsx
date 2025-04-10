@@ -1,6 +1,6 @@
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import { ProductDisplay } from '@/components/product-display'
+import { ProductDisplay } from '@/components/product/product-display'
 import { Button } from '@/components/ui/button'
 import { useProduct } from '@/hooks/products'
 import { Link, createFileRoute } from '@tanstack/react-router'

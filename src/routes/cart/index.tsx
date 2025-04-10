@@ -3,7 +3,7 @@ import { AddressFields } from '@/components/address-fields'
 import { ContentLayout } from '@/components/content-layout'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import { OrderItems } from '@/components/order-items'
+import { OrderItems } from '@/components/order/order-items'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import {

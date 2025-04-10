@@ -1,11 +1,12 @@
 import type { Product } from '@/api/products'
 import { AccessDenied } from '@/components/access-denied'
-import { ConfirmDeleteProductDialog } from '@/components/confirm-delete-product-dialog'
 import { Currency } from '@/components/currency'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
+import { ConfirmDeleteProductDialog } from '@/components/product/confirm-delete-product-dialog'
+import { UpdateProductDialog } from '@/components/product/update-product-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { UpdateProductDialog } from '@/components/update-product-dialog'
 import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/shared/cn'
@@ -91,7 +91,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
           <Badge
             className={cn(
               !row.getValue('enabled') &&
-                'bg-muted-foreground/60 text-primary-foreground',
+              'bg-muted-foreground/60 text-primary-foreground',
             )}
           >
             {row.getValue('enabled') ? 'Activo' : 'Inactivo'}

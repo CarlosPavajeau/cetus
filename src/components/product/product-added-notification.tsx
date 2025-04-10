@@ -1,6 +1,6 @@
+import { Button } from '@/components/ui/button'
 import { Link } from '@tanstack/react-router'
 import { ArrowRightIcon, CircleCheckIcon, XIcon } from 'lucide-react'
-import { Button } from './ui/button'
 
 type Props = {
   productName: string

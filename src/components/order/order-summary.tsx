@@ -3,10 +3,10 @@ import {
   OrderStatusColor,
   OrderStatusText,
 } from '@/api/orders'
+import { Currency } from '@/components/currency'
+import { FormattedDate } from '@/components/formatted-date'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/shared/cn'
-import { Currency } from './currency'
-import { FormattedDate } from './formatted-date'
-import { Badge } from './ui/badge'
 
 type Props = {
   order: {

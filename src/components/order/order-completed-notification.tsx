@@ -1,5 +1,5 @@
+import { Button } from '@/components/ui/button'
 import { CircleCheckIcon, XIcon } from 'lucide-react'
-import { Button } from './ui/button'
 
 type Props = {
   orderNumber: number

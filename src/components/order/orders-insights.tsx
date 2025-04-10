@@ -1,8 +1,8 @@
+import { Currency } from '@/components/currency'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderInsights } from '@/hooks/orders'
 import { ReceiptIcon, TrendingUpIcon } from 'lucide-react'
-import { Currency } from './currency'
-import { Badge } from './ui/badge'
-import { Skeleton } from './ui/skeleton'
 
 export function OrdersInsights() {
   const { insights, isLoading } = useOrderInsights()

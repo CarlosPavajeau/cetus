@@ -1,7 +1,4 @@
 import { cancelOrder } from '@/api/orders'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LoaderCircleIcon, TrashIcon } from 'lucide-react'
-import { useState } from 'react'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -11,8 +8,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from './ui/alert-dialog'
-import { Button } from './ui/button'
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { LoaderCircleIcon, TrashIcon } from 'lucide-react'
+import { useState } from 'react'
 
 type Props = {
   orderId: string

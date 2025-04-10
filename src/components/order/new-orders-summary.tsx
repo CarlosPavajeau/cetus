@@ -1,7 +1,7 @@
 import { OrderStatus } from '@/api/orders'
+import { DefaultLoader } from '@/components/default-loader'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useOrders } from '@/hooks/orders'
-import { DefaultLoader } from './default-loader'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 export function NewOrdersSummary() {
   const { isLoading, orders } = useOrders()

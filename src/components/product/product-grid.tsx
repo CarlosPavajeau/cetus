@@ -1,4 +1,9 @@
 import type { ProductForSale } from '@/api/products'
+import { Currency } from '@/components/currency'
+import { Image } from '@/components/image'
+import { ProductAddedNotification } from '@/components/product/product-added-notification'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
@@ -6,11 +11,6 @@ import { motion } from 'framer-motion'
 import { PackageIcon, ShoppingCart } from 'lucide-react'
 import { memo, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Currency } from './currency'
-import { Image } from './image'
-import { ProductAddedNotification } from './product-added-notification'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
 
 type ProductCardProps = {
   product: ProductForSale
