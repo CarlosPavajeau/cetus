@@ -14,6 +14,16 @@ export const OrderStatusText = {
   [OrderStatus.Canceled]: 'Cancelado',
 }
 
+export const ORDER_STATUS_OPTIONS = [
+  { value: OrderStatus.Pending, label: OrderStatusText[OrderStatus.Pending] },
+  { value: OrderStatus.Paid, label: OrderStatusText[OrderStatus.Paid] },
+  {
+    value: OrderStatus.Delivered,
+    label: OrderStatusText[OrderStatus.Delivered],
+  },
+  { value: OrderStatus.Canceled, label: OrderStatusText[OrderStatus.Canceled] },
+]
+
 export const OrderStatusColor = {
   [OrderStatus.Pending]: 'bg-amber-500',
   [OrderStatus.Paid]: 'bg-emerald-500',
