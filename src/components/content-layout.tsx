@@ -6,7 +6,7 @@ type Props = {
 
 export function ContentLayout({ children }: Props) {
   return (
-    <div className="relative my-16">
+    <div className="relative">
       <div className="grid gap-8 lg:grid-cols-2">{children}</div>
     </div>
   )
