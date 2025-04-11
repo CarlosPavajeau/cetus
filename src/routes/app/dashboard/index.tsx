@@ -1,6 +1,7 @@
 import { AccessDenied } from '@/components/access-denied'
 import { CompleteOrdersChart } from '@/components/order/complete-orders-chart'
 import { NewOrdersSummary } from '@/components/order/new-orders-summary'
+import { OrdersInsights } from '@/components/order/orders-insights'
 import { Protect } from '@clerk/clerk-react'
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -20,12 +21,12 @@ function RouteComponent() {
           <div></div>
         </div>
 
-        <div className="overflow-hidden">
-          <div className="*:-ms-px *:-mt-px -m-px grid auto-rows-min @2xl:grid-cols-2">
-            <CompleteOrdersChart />
+        <OrdersInsights />
 
-            <NewOrdersSummary />
-          </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <CompleteOrdersChart />
+
+          <NewOrdersSummary />
         </div>
       </div>
     </Protect>

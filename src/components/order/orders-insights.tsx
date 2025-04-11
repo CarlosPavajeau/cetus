@@ -1,40 +1,95 @@
+import { OrderStatus } from '@/api/orders'
 import { Currency } from '@/components/currency'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useOrderInsights } from '@/hooks/orders'
-import { ReceiptIcon, TrendingUpIcon } from 'lucide-react'
+import { useOrderInsights, useOrders } from '@/hooks/orders'
+import {
+  DollarSignIcon,
+  PackageIcon,
+  ReceiptIcon,
+  ShoppingCartIcon,
+} from 'lucide-react'
 
 export function OrdersInsights() {
   const { insights, isLoading } = useOrderInsights()
+  const { orders, isLoading: isLoadingOrders } = useOrders()
 
-  if (isLoading) {
+  const totalOrders = orders?.length || 0
+  const completedOrders =
+    orders?.filter((order) => order.status === OrderStatus.Delivered).length ||
+    0
+
+  if (isLoading || isLoadingOrders) {
     return <Skeleton className="h-[20px] w-[300px]" />
   }
 
-  if (!insights) {
+  if (!insights || !orders) {
     return null
   }
 
   return (
-    <>
-      <Badge variant="outline">
-        <TrendingUpIcon
-          className="-ms-0.5 opacity-60"
-          size={12}
-          aria-hidden="true"
-        />
-        Ingresos del mes actual:{' '}
-        <Currency value={insights.currentMonthTotal} currency="COP" />
-      </Badge>
-      <Badge variant="outline">
-        <ReceiptIcon
-          className="-ms-0.5 opacity-60"
-          size={12}
-          aria-hidden="true"
-        />
-        Costo del mes actual:{' '}
-        <Currency value={insights.currentMonthCost} currency="COP" />
-      </Badge>
-    </>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card className="overflow-hidden rounded-md py-0">
+        <CardContent className="flex items-center gap-4 p-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <PackageIcon className="h-6 w-6 text-primary" />
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground text-sm">Pedidos</p>
+            <p className="font-semibold text-2xl">{totalOrders}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden rounded-md py-0">
+        <CardContent className="flex items-center gap-4 p-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <ShoppingCartIcon className="h-6 w-6 text-primary" />
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground text-sm">
+              Pedidos completados
+            </p>
+            <p className="font-semibold text-2xl">{completedOrders}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden rounded-md py-0">
+        <CardContent className="flex items-center gap-4 p-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <DollarSignIcon className="h-6 w-6 text-primary" />
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground text-sm">
+              Ingresos del mes
+            </p>
+            <p className="font-semibold text-2xl">
+              <Currency value={insights.currentMonthTotal} currency="COP" />
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden rounded-md py-0">
+        <CardContent className="flex items-center gap-4 p-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <ReceiptIcon className="h-6 w-6 text-primary" />
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground text-sm">
+              Costo del mes
+            </p>
+            <p className="font-semibold text-2xl">
+              <Currency value={insights.currentMonthCost} currency="COP" />
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

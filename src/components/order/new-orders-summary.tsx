@@ -1,7 +1,14 @@
-import { OrderStatus } from '@/api/orders'
+import { OrderStatus, OrderStatusText } from '@/api/orders'
 import { DefaultLoader } from '@/components/default-loader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useOrders } from '@/hooks/orders'
+
+type StatusInsight = {
+  label: string
+  color: string
+  percentage: number
+  total: number
+}
 
 export function NewOrdersSummary() {
   const { isLoading, orders } = useOrders()
@@ -33,122 +40,84 @@ export function NewOrdersSummary() {
   const shippedOrdersPercentage = (shippedOrders / ordersCount) * 100
   const canceledOrdersPercentage = (canceledOrders / ordersCount) * 100
 
-  return (
-    <Card className="gap-5">
-      <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <CardTitle>Nuevas ordenes</CardTitle>
-            <div className="flex items-start gap-2">
-              <div className="font-semibold text-2xl">{orders.length}</div>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div
-                aria-hidden="true"
-                className="size-1.5 shrink-0 rounded-xs bg-amber-500"
-              ></div>
-              <div className="text-[13px]/3 text-muted-foreground/50">
-                Pendiente
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                aria-hidden="true"
-                className="size-1.5 shrink-0 rounded-xs bg-emerald-500"
-              ></div>
-              <div className="text-[13px]/3 text-muted-foreground/50">
-                Pagada
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                aria-hidden="true"
-                className="size-1.5 shrink-0 rounded-xs bg-emerald-700"
-              ></div>
-              <div className="text-[13px]/3 text-muted-foreground/50">
-                Enviada
-              </div>
-            </div>
+  const statusInsights: StatusInsight[] = [
+    {
+      label: OrderStatusText[OrderStatus.Pending],
+      color: 'bg-amber-500',
+      percentage: pendingOrdersPercentage,
+      total: pendingOrders,
+    },
+    {
+      label: OrderStatusText[OrderStatus.Paid],
+      color: 'bg-emerald-500',
+      percentage: paidOrdersPercentage,
+      total: paidOrders,
+    },
+    {
+      label: OrderStatusText[OrderStatus.Delivered],
+      color: 'bg-emerald-700',
+      percentage: shippedOrdersPercentage,
+      total: shippedOrders,
+    },
+    {
+      label: OrderStatusText[OrderStatus.Canceled],
+      color: 'bg-destructive',
+      percentage: canceledOrdersPercentage,
+      total: canceledOrders,
+    },
+  ]
 
-            <div className="flex items-center gap-2">
-              <div
-                aria-hidden="true"
-                className="size-1.5 shrink-0 rounded-xs bg-destructive"
-              ></div>
-              <div className="text-[13px]/3 text-muted-foreground/50">
-                Cancelada
+  return (
+    <Card className="col-span-4 overflow-hidden rounded-md py-0 lg:col-span-3">
+      <CardHeader className="px-6 pt-6 pb-0">
+        <CardTitle>Pedidos</CardTitle>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            {statusInsights.map((status, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div
+                  aria-hidden="true"
+                  className={`size-1.5 shrink-0 rounded-xs ${status.color}`}
+                ></div>
+                <div className="text-[13px]/3 text-muted-foreground/50">
+                  {status.label}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         <div className="flex h-5 gap-1">
-          <div
-            className="h-full bg-amber-500"
-            style={{ width: `${pendingOrdersPercentage}%` }}
-          ></div>
-          <div
-            className="h-full bg-emerald-500"
-            style={{ width: `${paidOrdersPercentage}%` }}
-          ></div>
-          <div
-            className="h-full bg-emerald-700"
-            style={{ width: `${shippedOrdersPercentage}%` }}
-          ></div>
-          <div
-            className="h-full bg-destructive"
-            style={{ width: `${canceledOrdersPercentage}%` }}
-          ></div>
+          {statusInsights.map((status, index) => (
+            <div
+              key={index}
+              className={`h-full ${status.color}`}
+              style={{ width: `${status.percentage}%` }}
+            ></div>
+          ))}
         </div>
 
         <div>
           <div className="mb-3 text-[13px]/3 text-muted-foreground/50">
-            Estado de las ordenes
+            Estado de los pedidos
           </div>
           <ul className="divide-y divide-border text-sm">
-            <li className="flex items-center gap-2 py-2">
-              <span
-                className="size-2 shrink-0 rounded-full bg-amber-500"
-                aria-hidden="true"
-              ></span>
-              <span className="grow text-muted-foreground">Pendiente</span>
-              <span className="font-medium text-[13px]/3 text-foreground/70">
-                {pendingOrders}
-              </span>
-            </li>
-            <li className="flex items-center gap-2 py-2">
-              <span
-                className="size-2 shrink-0 rounded-full bg-emerald-500"
-                aria-hidden="true"
-              ></span>
-              <span className="grow text-muted-foreground">Pagada</span>
-              <span className="font-medium text-[13px]/3 text-foreground/70">
-                {paidOrders}
-              </span>
-            </li>
-            <li className="flex items-center gap-2 py-2">
-              <span
-                className="size-2 shrink-0 rounded-full bg-emerald-700"
-                aria-hidden="true"
-              ></span>
-              <span className="grow text-muted-foreground">Enviada</span>
-              <span className="font-medium text-[13px]/3 text-foreground/70">
-                {shippedOrders}
-              </span>
-            </li>
-            <li className="flex items-center gap-2 py-2">
-              <span
-                className="size-2 shrink-0 rounded-full bg-destructive"
-                aria-hidden="true"
-              ></span>
-              <span className="grow text-muted-foreground">Cancelada</span>
-              <span className="font-medium text-[13px]/3 text-foreground/70">
-                {canceledOrders}
-              </span>
-            </li>
+            {statusInsights.map((status, index) => (
+              <li key={index} className="flex items-center gap-2 py-2">
+                <span
+                  className={`size-2 shrink-0 rounded-full ${status.color}`}
+                  aria-hidden="true"
+                ></span>
+                <span className="grow text-muted-foreground">
+                  {status.label}
+                </span>
+                <span className="font-medium text-[13px]/3 text-foreground/70">
+                  {status.total}
+                </span>
+              </li>
+            ))}
           </ul>
         </div>
       </CardContent>

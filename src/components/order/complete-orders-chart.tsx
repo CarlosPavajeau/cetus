@@ -1,14 +1,7 @@
 import { OrderStatus } from '@/api/orders'
 import { CustomTooltipContent } from '@/components/charts-extra'
 import { DefaultLoader } from '@/components/default-loader'
-import { OrdersInsights } from '@/components/order/orders-insights'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   type ChartConfig,
   ChartContainer,
@@ -82,11 +75,10 @@ export function CompleteOrdersChart() {
     day: 'numeric',
   })
 
-  const { chartData, completeOrdersCount } = useMemo(() => {
+  const { chartData } = useMemo(() => {
     if (!orders) {
       return {
         chartData: [],
-        completeOrdersCount: 0,
       }
     }
 
@@ -120,7 +112,6 @@ export function CompleteOrdersChart() {
 
     return {
       chartData: data,
-      completeOrdersCount: completeOrders.length,
     }
   }, [orders])
 
@@ -133,19 +124,14 @@ export function CompleteOrdersChart() {
   }
 
   return (
-    <Card className="gap-4">
-      <CardHeader>
-        <div className="space-y-0.5">
-          <CardTitle>Ordenes completadas</CardTitle>
-          <div className="flex items-start gap-2">
-            <div className="font-semibold text-2xl">{completeOrdersCount}</div>
-          </div>
-        </div>
+    <Card className="col-span-4 overflow-hidden rounded-md py-0">
+      <CardHeader className="px-6 pt-6 pb-0">
+        <CardTitle>Pedidos completados</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-6">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-60 w-full [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-(--chart-1)/15 [&_.recharts-rectangle.recharts-tooltip-inner-cursor]:fill-white/20"
+          className="aspect-auto h-full min-h-72 w-full [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-(--chart-1)/15 [&_.recharts-rectangle.recharts-tooltip-inner-cursor]:fill-white/20"
         >
           <LineChart
             accessibilityLayer
@@ -209,10 +195,6 @@ export function CompleteOrdersChart() {
           </LineChart>
         </ChartContainer>
       </CardContent>
-
-      <CardFooter className="mt-4 flex flex-wrap items-center gap-2">
-        <OrdersInsights />
-      </CardFooter>
     </Card>
   )
 }
