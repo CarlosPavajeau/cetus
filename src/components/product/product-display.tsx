@@ -170,6 +170,7 @@ export const ProductDisplay = memo(({ product }: Props) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
+            className="max-h-2xl max-w-2xl"
           >
             <div className="relative">
               <div className="relative aspect-square overflow-hidden rounded-lg bg-background">
