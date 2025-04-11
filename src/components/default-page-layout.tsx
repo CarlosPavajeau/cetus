@@ -87,9 +87,7 @@ export function DefaultPageLayout({
           </div>
         </header>
       )}
-      <main className="mx-auto max-w-7xl grow px-4 sm:px-6 lg:px-8">
-        <div>{children}</div>
-      </main>
+      <main className="container mx-auto px-4 py-8">{children}</main>
     </>
   )
 }
