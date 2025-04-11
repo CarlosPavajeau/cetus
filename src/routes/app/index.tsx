@@ -239,7 +239,7 @@ function RouteComponent() {
         {!isLoading && orders && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <SearchInput table={table} id={id} />
 
                 {table.getColumn('status') && (
