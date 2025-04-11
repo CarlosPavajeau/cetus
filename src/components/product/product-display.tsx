@@ -152,6 +152,7 @@ export const ProductDisplay = memo(({ product }: Props) => {
   return (
     <DefaultPageLayout showCart>
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
+
       <div className="mb-6">
         <Button asChild variant="ghost" className="text-muted-foreground">
           <Link to="/">
@@ -164,24 +165,22 @@ export const ProductDisplay = memo(({ product }: Props) => {
       <AnimatePresence mode="wait">
         <ContentLayout>
           <motion.div
-            className="space-y-4"
             key={`image-${product.id}`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="sticky top-4">
-              <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted/50">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Image
-                    src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-                    alt={product.name}
-                    layout="fill"
-                    className="object-contain"
-                    priority
-                  />
-                </div>
+            <div className="relative">
+              <div className="relative aspect-square overflow-hidden rounded-lg bg-background">
+                <Image
+                  src={getImageUrl(product.imageUrl || 'placeholder.svg')}
+                  objectFit="cover"
+                  alt={product.name}
+                  layout="fill"
+                  className="object-cover"
+                  priority
+                />
               </div>
             </div>
           </motion.div>
