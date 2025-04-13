@@ -1,6 +1,6 @@
 import { OrderStatus, OrderStatusText } from '@/api/orders'
-import { DefaultLoader } from '@/components/default-loader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useOrders } from '@/hooks/orders'
 
 type StatusInsight = {
@@ -14,7 +14,11 @@ export function NewOrdersSummary() {
   const { isLoading, orders } = useOrders()
 
   if (isLoading) {
-    return <DefaultLoader />
+    return (
+      <div className="col-span-4 lg:col-span-3">
+        <Skeleton className="h-72 w-full" />
+      </div>
+    )
   }
 
   if (!orders) {

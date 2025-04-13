@@ -1,12 +1,12 @@
 import { OrderStatus } from '@/api/orders'
 import { CustomTooltipContent } from '@/components/charts-extra'
-import { DefaultLoader } from '@/components/default-loader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
 } from '@/components/ui/chart'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useOrders } from '@/hooks/orders'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
@@ -116,7 +116,11 @@ export function CompleteOrdersChart() {
   }, [orders])
 
   if (isLoading) {
-    return <DefaultLoader />
+    return (
+      <div className="col-span-4">
+        <Skeleton className="h-72 w-full" />
+      </div>
+    )
   }
 
   if (!orders) {

@@ -20,7 +20,14 @@ export function OrdersInsights() {
     0
 
   if (isLoading || isLoadingOrders) {
-    return <Skeleton className="h-[20px] w-[300px]" />
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-[100px] w-full" />
+        <Skeleton className="h-[100px] w-full" />
+        <Skeleton className="h-[100px] w-full" />
+        <Skeleton className="h-[100px] w-full" />
+      </div>
+    )
   }
 
   if (!insights || !orders) {
