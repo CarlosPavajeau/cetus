@@ -69,7 +69,7 @@ const CheckoutContent = memo(({ order }: { order: Order }) => (
             <OrderSummary order={order} />
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 rounded-md border bg-card p-6">
             <h2 className="font-medium text-lg">Método de pago</h2>
             <PaymentOptions order={order} />
           </div>

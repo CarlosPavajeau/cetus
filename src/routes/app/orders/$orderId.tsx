@@ -142,7 +142,7 @@ function OrderDetailsComponent() {
 
             <div>
               <div className="space-y-6">
-                <OrderSummary order={order} showStatus={true} />
+                <OrderSummary order={order} showStatus showId />
 
                 {order.transactionId && (
                   <TransactionSummary id={order.transactionId} />

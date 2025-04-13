@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import { type CreateOrderFormValues, createOrderSchema } from '@/schemas/orders'
 import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -199,7 +200,7 @@ function OrderSummary({
   return (
     <div className="flex flex-col justify-between space-y-8">
       <div className="sticky top-4 space-y-6">
-        <div className="rounded-lg border bg-card p-6">
+        <div className="rounded-md border bg-card p-6">
           <h2 className="mb-4 font-medium text-lg">Resumen del pedido</h2>
 
           <div className="space-y-3">
@@ -221,7 +222,7 @@ function OrderSummary({
               </>
             )}
 
-            <div className="my-2 h-px w-full bg-border"></div>
+            <Separator className="my-2" />
 
             <div className="flex justify-between font-semibold text-lg">
               <span>Total</span>
@@ -276,9 +277,9 @@ function CustomerInfoFields({
   form,
 }: { form: ReturnType<typeof useForm<CreateOrderFormValues>> }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 rounded-md border bg-card p-6">
       <div>
-        <h2 className="mb-4 font-medium text-lg">Información personal</h2>
+        <h2 className="mb-6 font-medium text-lg">Información personal</h2>
 
         <div className="space-y-4">
           <FormField
@@ -342,7 +343,7 @@ function CustomerInfoFields({
       </div>
 
       <div>
-        <h2 className="mb-4 font-medium text-lg">Información de envío</h2>
+        <h2 className="mb-6 font-medium text-lg">Información de envío</h2>
         <AddressFields />
       </div>
     </div>
@@ -394,7 +395,7 @@ function CartPage() {
                           quantity: item.quantity,
                         }))}
                         title="Productos en tu carrito"
-                        editable={true}
+                        editable
                         onRemove={handleRemoveItem}
                         onQuantityChange={handleQuantityChange}
                       />
