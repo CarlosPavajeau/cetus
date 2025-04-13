@@ -43,6 +43,7 @@ export const Route = createFileRoute('/app/products/')({
 })
 
 export const DEFAULT_PAGE_SIZE = 5
+const MINIMUM_STOCK = 3
 
 const useProductColumns = (): ColumnDef<Product>[] => {
   return useMemo(
@@ -74,7 +75,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
             {row.getValue('stock')}
-            {row.getValue<number>('stock') < 10 && (
+            {row.getValue<number>('stock') < MINIMUM_STOCK && (
               <Badge variant="destructive" className="rounded">
                 Bajo stock
               </Badge>
@@ -91,7 +92,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
           <Badge
             className={cn(
               !row.getValue('enabled') &&
-                'bg-muted-foreground/60 text-primary-foreground',
+              'bg-muted-foreground/60 text-primary-foreground',
             )}
           >
             {row.getValue('enabled') ? 'Activo' : 'Inactivo'}
