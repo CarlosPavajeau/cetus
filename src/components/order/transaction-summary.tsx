@@ -26,8 +26,8 @@ export function TransactionSummary({ id }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="rounded-md border bg-card p-6">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="font-medium text-lg">Resumen de la transacción</h2>
 
         <Badge variant="outline">
@@ -42,20 +42,20 @@ export function TransactionSummary({ id }: Props) {
         </Badge>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between text-sm">
+      <div className="space-y-3">
+        <div className="flex flex-wrap justify-between text-sm">
           <span className="text-muted-foreground">Id</span>
           <span>{transaction.data.id}</span>
         </div>
 
-        <div className="flex justify-between text-sm">
+        <div className="flex flex-wrap justify-between text-sm">
           <span className="text-muted-foreground">Método de pago</span>
           <span>
             {TransactionPaymentMethodText[transaction.data.payment_method_type]}
           </span>
         </div>
 
-        <div className="flex justify-between text-sm">
+        <div className="flex flex-wrap justify-between text-sm">
           <span className="text-muted-foreground">Monto</span>
           <span>
             <Currency
@@ -65,7 +65,7 @@ export function TransactionSummary({ id }: Props) {
           </span>
         </div>
 
-        <div className="flex justify-between text-sm">
+        <div className="flex flex-wrap justify-between text-sm">
           <span className="text-muted-foreground">Fecha</span>
           <span>
             <FormattedDate date={new Date(transaction.data.created_at)} />
