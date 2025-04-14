@@ -1,4 +1,9 @@
-import { fetchOrder, fetchOrderInsights, fetchOrders } from '@/api/orders'
+import {
+  fetchOrder,
+  fetchOrderInsights,
+  fetchOrders,
+  fetchOrdersSummary,
+} from '@/api/orders'
 import { useQuery } from '@tanstack/react-query'
 
 export function useOrderInsights(month: string) {
@@ -36,5 +41,17 @@ export function useOrders() {
     orders: data,
     isLoading,
     error,
+  }
+}
+
+export function useOrdersSummary(month: string) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['orders-summary', month],
+    queryFn: () => fetchOrdersSummary(month),
+  })
+
+  return {
+    summary: data,
+    isLoading,
   }
 }
