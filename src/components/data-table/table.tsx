@@ -17,15 +17,18 @@ type Props<T = unknown> = {
 
 export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
   return (
-    <Table className="table-fixed">
+    <Table className="border-separate border-spacing-0 px-6 [&_tr_td]:border-border [&_tr_td]:border-b">
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id} className="hover:bg-transparent">
+          <TableRow
+            key={headerGroup.id}
+            className="border-0 hover:bg-transparent"
+          >
             {headerGroup.headers.map((header) => (
               <TableHead
                 key={header.id}
                 style={{ width: `${header.getSize()}px` }}
-                className="h-11"
+                className="relative h-8 select-none border-0 bg-muted font-normal first:rounded-l-lg last:rounded-r-lg"
               >
                 {header.isPlaceholder
                   ? null
@@ -46,8 +49,8 @@ export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
               key={row.id}
               data-state={row.getIsSelected() && 'selected'}
               className={cn(
-                onRowClick &&
-                  'cursor-pointer transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted/50',
+                'hover:bg-transparent',
+                onRowClick && 'cursor-pointer',
               )}
               onClick={() => {
                 if (onRowClick) {
