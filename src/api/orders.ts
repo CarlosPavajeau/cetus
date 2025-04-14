@@ -128,6 +128,8 @@ export const cancelOrder = async (orderId: string) => {
 export type OrderInsights = {
   currentMonthTotal: number
   currentMonthCost: number
+  allOrdersCount: number
+  completedOrdersCount: number
 }
 
 export const fetchOrderInsights = async (month: string) => {

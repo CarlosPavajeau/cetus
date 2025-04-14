@@ -1,8 +1,7 @@
-import { OrderStatus } from '@/api/orders'
 import { Currency } from '@/components/currency'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useOrderInsights, useOrders } from '@/hooks/orders'
+import { useOrderInsights } from '@/hooks/orders'
 import { useSearch } from '@tanstack/react-router'
 import {
   DollarSignIcon,
@@ -17,14 +16,8 @@ export function OrdersInsights() {
   })
 
   const { insights, isLoading } = useOrderInsights(month)
-  const { orders, isLoading: isLoadingOrders } = useOrders()
 
-  const totalOrders = orders?.length || 0
-  const completedOrders =
-    orders?.filter((order) => order.status === OrderStatus.Delivered).length ||
-    0
-
-  if (isLoading || isLoadingOrders) {
+  if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Skeleton className="h-[100px] w-full" />
@@ -35,7 +28,7 @@ export function OrdersInsights() {
     )
   }
 
-  if (!insights || !orders) {
+  if (!insights) {
     return null
   }
 
@@ -49,7 +42,7 @@ export function OrdersInsights() {
 
           <div>
             <p className="font-medium text-muted-foreground text-sm">Pedidos</p>
-            <p className="font-semibold text-2xl">{totalOrders}</p>
+            <p className="font-semibold text-2xl">{insights.allOrdersCount}</p>
           </div>
         </CardContent>
       </Card>
@@ -64,7 +57,9 @@ export function OrdersInsights() {
             <p className="font-medium text-muted-foreground text-sm">
               Pedidos completados
             </p>
-            <p className="font-semibold text-2xl">{completedOrders}</p>
+            <p className="font-semibold text-2xl">
+              {insights.completedOrdersCount}
+            </p>
           </div>
         </CardContent>
       </Card>
