@@ -8,6 +8,7 @@ import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,20 +108,18 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <section className="space-y-4">
-        <CreateCategoryDialog
-          open={isOpenCreateCategory}
-          onOpenChange={setIsOpenCreateCategory}
-        />
-
-        <div className="flex items-center justify-between">
-          <div>
+      <Card className="my-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
             <h1 className="font-bold font-heading text-2xl text-foreground">
               Categorias
             </h1>
-          </div>
 
-          <div>
+            <CreateCategoryDialog
+              open={isOpenCreateCategory}
+              onOpenChange={setIsOpenCreateCategory}
+            />
+
             <Button
               className="ml-auto"
               onClick={() => setIsOpenCreateCategory(true)}
@@ -133,16 +132,15 @@ function RouteComponent() {
               Crear categoria
             </Button>
           </div>
-        </div>
+        </CardHeader>
 
-        <div className="space-y-2">
-          <div className="overflow-hidden rounded-md border bg-background">
-            <DataTable table={table} />
+        <CardContent className="px-0">
+          <DataTable table={table} />
+          <div className="mt-5 px-6">
+            <TablePagination table={table} paginationInfo={paginationInfo} />
           </div>
-
-          <TablePagination table={table} paginationInfo={paginationInfo} />
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </Protect>
   )
 }

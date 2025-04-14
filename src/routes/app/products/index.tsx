@@ -9,6 +9,7 @@ import { ConfirmDeleteProductDialog } from '@/components/product/confirm-delete-
 import { UpdateProductDialog } from '@/components/product/update-product-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,17 +215,13 @@ function RouteComponent() {
   }
 
   return (
-    <section className="space-y-4">
-      <Protect permission="org:app:access" fallback={<AccessDenied />}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-bold font-heading text-2xl text-foreground">
-              Productos
-            </h1>
-          </div>
-        </div>
+    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+      <Card className="my-6">
+        <CardHeader className="gap-4">
+          <h1 className="font-bold font-heading text-2xl text-foreground">
+            Productos
+          </h1>
 
-        <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <SearchInput table={table} id={id} />
@@ -243,15 +240,16 @@ function RouteComponent() {
               </Button>
             </div>
           </div>
+        </CardHeader>
 
-          <div className="overflow-hidden rounded-md border bg-background">
-            <DataTable table={table} />
+        <CardContent className="px-0">
+          <DataTable table={table} />
+          <div className="mt-5 px-6">
+            <TablePagination table={table} paginationInfo={paginationInfo} />
           </div>
-
-          <TablePagination table={table} paginationInfo={paginationInfo} />
-        </div>
-      </Protect>
-    </section>
+        </CardContent>
+      </Card>
+    </Protect>
   )
 }
 
