@@ -3,6 +3,7 @@ import { Currency } from '@/components/currency'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderInsights, useOrders } from '@/hooks/orders'
+import { useSearch } from '@tanstack/react-router'
 import {
   DollarSignIcon,
   PackageIcon,
@@ -11,7 +12,11 @@ import {
 } from 'lucide-react'
 
 export function OrdersInsights() {
-  const { insights, isLoading } = useOrderInsights()
+  const { month } = useSearch({
+    from: '/app/dashboard/',
+  })
+
+  const { insights, isLoading } = useOrderInsights(month)
   const { orders, isLoading: isLoadingOrders } = useOrders()
 
   const totalOrders = orders?.length || 0
