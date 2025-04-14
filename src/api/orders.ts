@@ -139,3 +139,17 @@ export const fetchOrderInsights = async (month: string) => {
 
   return response.data
 }
+
+export type OrderSummary = {
+  id: string
+  status: OrderStatus
+  createdAt: string
+}
+
+export const fetchOrdersSummary = async (month: string) => {
+  const response = await axios.get<OrderSummary[]>(
+    `${import.meta.env.PUBLIC_API_URL}/orders/summary?month=${month}`,
+  )
+
+  return response.data
+}
