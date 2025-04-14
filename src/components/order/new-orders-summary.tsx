@@ -1,7 +1,8 @@
 import { OrderStatus, OrderStatusText } from '@/api/orders'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useOrders } from '@/hooks/orders'
+import { useOrdersSummary } from '@/hooks/orders'
+import { useSearch } from '@tanstack/react-router'
 
 type StatusInsight = {
   label: string
@@ -11,7 +12,10 @@ type StatusInsight = {
 }
 
 export function NewOrdersSummary() {
-  const { isLoading, orders } = useOrders()
+  const { month } = useSearch({
+    from: '/app/dashboard/',
+  })
+  const { isLoading, summary } = useOrdersSummary(month)
 
   if (isLoading) {
     return (
@@ -21,21 +25,34 @@ export function NewOrdersSummary() {
     )
   }
 
-  if (!orders) {
+  if (!summary) {
     return null
   }
 
-  const ordersCount = orders.length
-  const pendingOrders = orders.filter(
+  if (summary.length === 0) {
+    return (
+      <Card className="col-span-4 overflow-hidden rounded-md py-0 lg:col-span-3">
+        <CardHeader className="px-6 pt-6 pb-0">
+          <CardTitle>Pedidos</CardTitle>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <p className="text-muted-foreground">No hay datos disponibles</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const ordersCount = summary.length
+  const pendingOrders = summary.filter(
     (order) => order.status === OrderStatus.Pending,
   ).length
-  const paidOrders = orders.filter(
+  const paidOrders = summary.filter(
     (order) => order.status === OrderStatus.Paid,
   ).length
-  const shippedOrders = orders.filter(
+  const shippedOrders = summary.filter(
     (order) => order.status === OrderStatus.Delivered,
   ).length
-  const canceledOrders = orders.filter(
+  const canceledOrders = summary.filter(
     (order) => order.status === OrderStatus.Canceled,
   ).length
 

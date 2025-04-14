@@ -7,7 +7,8 @@ import {
   ChartTooltip,
 } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useOrders } from '@/hooks/orders'
+import { useOrdersSummary } from '@/hooks/orders'
+import { useSearch } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {
@@ -69,20 +70,23 @@ function CustomCursor(props: CustomCursorProps) {
 }
 
 export function CompleteOrdersChart() {
-  const { isLoading, orders } = useOrders()
+  const { month } = useSearch({
+    from: '/app/dashboard/',
+  })
+  const { isLoading, summary } = useOrdersSummary(month)
   const formatter = useDateFormatter({
     month: 'short',
     day: 'numeric',
   })
 
   const { chartData } = useMemo(() => {
-    if (!orders) {
+    if (!summary) {
       return {
         chartData: [],
       }
     }
 
-    const completeOrders = orders.filter(
+    const completeOrders = summary.filter(
       (order) => order.status === OrderStatus.Delivered,
     )
 
@@ -113,7 +117,7 @@ export function CompleteOrdersChart() {
     return {
       chartData: data,
     }
-  }, [orders])
+  }, [summary])
 
   if (isLoading) {
     return (
@@ -123,8 +127,21 @@ export function CompleteOrdersChart() {
     )
   }
 
-  if (!orders) {
+  if (!summary) {
     return null
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <Card className="col-span-4 overflow-hidden rounded-md py-0">
+        <CardHeader className="px-6 pt-6 pb-0">
+          <CardTitle>Pedidos completados</CardTitle>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <p className="text-muted-foreground">No hay datos disponibles</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
