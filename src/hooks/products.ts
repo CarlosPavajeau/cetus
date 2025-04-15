@@ -58,12 +58,10 @@ export function useUpdateProduct(
         }
 
         return updateProduct({
-          id: values.id,
-          name: values.name,
-          description: values.description,
-          price: values.price,
-          stock: values.stock,
-          enabled: values.enabled,
+          ...values,
+          // If the image has not changed, we don't want to update the imageUrl
+          // in the database, so we only include it if it has changed
+          // and the imageUrl is not empty
           ...(hasImageChanged ? { imageUrl: values.imageUrl } : {}),
         })
       } catch (error) {

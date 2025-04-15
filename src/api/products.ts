@@ -56,10 +56,7 @@ export const createProduct = async (product: CreateProductRequest) => {
   return response.data
 }
 
-export type UpdateProductRequest = Omit<
-  Product,
-  'createdAt' | 'updatedAt' | 'categoryId'
->
+export type UpdateProductRequest = Omit<Product, 'createdAt' | 'updatedAt'>
 
 export const updateProduct = async (product: UpdateProductRequest) => {
   const response = await axios.put<Product>(
