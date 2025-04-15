@@ -4,10 +4,12 @@ import { DefaultPageLayout } from '@/components/default-page-layout'
 import { OrderItems } from '@/components/order/order-items'
 import { OrderSummary } from '@/components/order/order-summary'
 import { PageHeader } from '@/components/page-header'
+import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
 import { useTransaction } from '@/hooks/wompi/use-transaction'
 import { useCart } from '@/store/cart'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { HomeIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { z } from 'zod'
 
@@ -137,6 +139,13 @@ function OrderConfirmatioComponent() {
             </div>
           </div>
         </ContentLayout>
+
+        <Button asChild>
+          <Link to="/">
+            <HomeIcon className="h-4 w-4" />
+            Volver al inicio
+          </Link>
+        </Button>
 
         <div>
           <span className="text-muted-foreground text-xs">
