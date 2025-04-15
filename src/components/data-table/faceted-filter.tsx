@@ -27,6 +27,7 @@ type Option<TValue extends React.Key> = {
 type Props<TData, TValue extends React.Key> = {
   column?: Column<TData, TValue>
   title?: string
+  width?: number
 
   options: ReadonlyArray<Option<TValue>>
 }
@@ -35,6 +36,7 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
   column,
   title,
   options,
+  width = 200,
 }: Props<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues()
   const selectedValues = new Set(column?.getFilterValue() as TValue[])
@@ -61,7 +63,7 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValues.size} selected
+                    {selectedValues.size} seleccionados
                   </Badge>
                 ) : (
                   options
@@ -81,7 +83,7 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent className={`w-[${width}px] p-0`} align="start">
         <Command>
           <CommandInput placeholder={title} />
 
