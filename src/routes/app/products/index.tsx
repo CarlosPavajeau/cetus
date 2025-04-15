@@ -1,6 +1,7 @@
 import type { Product } from '@/api/products'
 import { AccessDenied } from '@/components/access-denied'
 import { Currency } from '@/components/currency'
+import { TableFacetedFilter } from '@/components/data-table/faceted-filter'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
@@ -16,17 +17,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/shared/cn'
 import { Protect } from '@clerk/clerk-react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import {
+  type Column,
   type ColumnDef,
   type ColumnFiltersState,
+  type FilterFn,
   type PaginationState,
   type Row,
   getCoreRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
@@ -37,7 +42,7 @@ import {
   ListFilterIcon,
   PlusIcon,
 } from 'lucide-react'
-import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import { type Key, useCallback, useId, useMemo, useRef, useState } from 'react'
 
 export const Route = createFileRoute('/app/products/')({
   component: RouteComponent,
@@ -45,6 +50,18 @@ export const Route = createFileRoute('/app/products/')({
 
 export const DEFAULT_PAGE_SIZE = 5
 const MINIMUM_STOCK = 3
+
+const categoryFilterFn: FilterFn<Product> = (
+  row,
+  columnId,
+  filterValue: string[],
+) => {
+  if (!filterValue?.length) return true
+
+  const categoryId = row.getValue(columnId) as string
+
+  return filterValue.includes(categoryId)
+}
 
 const useProductColumns = (): ColumnDef<Product>[] => {
   return useMemo(
@@ -83,7 +100,14 @@ const useProductColumns = (): ColumnDef<Product>[] => {
             )}
           </div>
         ),
-        size: 120,
+        size: 60,
+      },
+      {
+        id: 'categoryId',
+        accessorKey: 'categoryId',
+        size: 100,
+        enableHiding: true,
+        filterFn: categoryFilterFn,
       },
       {
         id: 'enabled',
@@ -99,7 +123,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
             {row.getValue('enabled') ? 'Activo' : 'Inactivo'}
           </Badge>
         ),
-        size: 100,
+        size: 70,
       },
       {
         id: 'createdAt',
@@ -139,11 +163,15 @@ function useProductTable(products: Product[] | undefined) {
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
     state: {
       columnFilters,
       pagination,
+      columnVisibility: {
+        categoryId: false,
+      },
     },
   })
 
@@ -204,6 +232,37 @@ function SearchInput({ table, id }: SearchInputProps) {
   )
 }
 
+type CategoryFilterProps = {
+  table: ReturnType<typeof useReactTable<Product>>
+}
+
+function CategoryFilter({ table }: CategoryFilterProps) {
+  const categoryColumn = table.getColumn('categoryId') as Column<Product, Key>
+  const { isLoading, categories } = useCategories()
+
+  if (!categoryColumn || isLoading) {
+    return null
+  }
+
+  if (!categories) {
+    return null
+  }
+
+  const options = categories.map((category) => ({
+    value: category.id,
+    label: category.name,
+  }))
+
+  return (
+    <TableFacetedFilter
+      column={categoryColumn}
+      title="Categoría"
+      options={options}
+      width={350}
+    />
+  )
+}
+
 function RouteComponent() {
   const { products, isLoading } = useProducts()
   const id = useId()
@@ -223,8 +282,10 @@ function RouteComponent() {
           </h1>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <SearchInput table={table} id={id} />
+
+              <CategoryFilter table={table} />
             </div>
 
             <div className="flex items-center gap-3">
