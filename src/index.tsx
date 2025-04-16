@@ -1,8 +1,10 @@
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { ThemeProvider } from 'next-themes'
+import { PostHogProvider } from 'posthog-js/react'
 import React from 'react'
 import { I18nProvider } from 'react-aria'
 import ReactDOM from 'react-dom/client'
+
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -20,6 +22,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
+const options = {
+  api_host: import.meta.env.PUBLIC_POSTHOG_HOST,
+}
+
 const rootElement = document.getElementById('root')
 
 if (rootElement) {
@@ -28,17 +34,19 @@ if (rootElement) {
 
   root.render(
     <React.StrictMode>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <I18nProvider locale="es-CO">
-          <ClerkProvider>
-            <QueryClientProvider client={queryClient}>
-              <RouterProvider router={router} />
-              <ReactQueryDevtools initialIsOpen={false} />
-              <AuthInterceptor />
-            </QueryClientProvider>
-          </ClerkProvider>
-        </I18nProvider>
-      </ThemeProvider>
+      <PostHogProvider apiKey={import.meta.env.PUBLIC_POSTHOG_KEY} options={options}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <I18nProvider locale="es-CO">
+            <ClerkProvider>
+              <QueryClientProvider client={queryClient}>
+                <RouterProvider router={router} />
+                <ReactQueryDevtools initialIsOpen={false} />
+                <AuthInterceptor />
+              </QueryClientProvider>
+            </ClerkProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </PostHogProvider>
     </React.StrictMode>,
   )
 }
