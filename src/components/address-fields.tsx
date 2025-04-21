@@ -1,18 +1,23 @@
-import { useCities, useStates } from '@/hooks/use-state'
-import type { CreateOrderFormValues } from '@/schemas/orders'
-import { SelectValue } from '@radix-ui/react-select'
-import { useEffect, useState } from 'react'
-import { useFormContext } from 'react-hook-form'
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select'
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select'
+import { useCities, useStates } from '@/hooks/use-state'
+import type { CreateOrderFormValues } from '@/schemas/orders'
+import { SelectValue } from '@radix-ui/react-select'
+import { useState } from 'react'
+import { useFormContext } from 'react-hook-form'
 
 export function AddressFields() {
   const form = useFormContext<CreateOrderFormValues>()
@@ -21,9 +26,10 @@ export function AddressFields() {
   const [currentState, setCurrentState] = useState<string | undefined>()
   const { cities, isLoading: isLoadingCities } = useCities(currentState)
 
-  useEffect(() => {
-    form.resetField('cityId')
-  }, [currentState])
+  const handleStateChange = (value: string) => {
+    setCurrentState(value)
+    form.resetField('cityId', { defaultValue: '' })
+  }
 
   return (
     <>
@@ -32,7 +38,7 @@ export function AddressFields() {
           <Label htmlFor="state">Departamento</Label>
           <Select
             value={currentState}
-            onValueChange={setCurrentState}
+            onValueChange={handleStateChange}
             disabled={isLoading || isLoadingCities}
           >
             <SelectTrigger>
