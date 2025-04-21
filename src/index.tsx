@@ -5,7 +5,6 @@ import React from 'react'
 import { I18nProvider } from 'react-aria'
 import ReactDOM from 'react-dom/client'
 
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthInterceptor } from './components/auth-interceptor'
@@ -34,7 +33,10 @@ if (rootElement) {
 
   root.render(
     <React.StrictMode>
-      <PostHogProvider apiKey={import.meta.env.PUBLIC_POSTHOG_KEY} options={options}>
+      <PostHogProvider
+        apiKey={import.meta.env.PUBLIC_POSTHOG_KEY}
+        options={options}
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <I18nProvider locale="es-CO">
             <ClerkProvider>
