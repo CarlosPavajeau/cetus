@@ -34,7 +34,10 @@ export function OrderItems({
 
       <div className="space-y-4">
         {items.map((item) => (
-          <div key={item.id || item.productId} className='rounded-md border p-4'>
+          <div
+            key={item.id || item.productId}
+            className="rounded-md border p-4"
+          >
             <div className="flex gap-4">
               <div className="relative h-24 w-24 rounded-md">
                 <Image
