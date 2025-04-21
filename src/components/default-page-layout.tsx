@@ -1,10 +1,12 @@
+import { CartButton } from '@/components/cart-button'
+import { ThemeSwitch } from '@/components/theme-switch'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { SignedIn } from '@clerk/clerk-react'
 import { Link } from '@tanstack/react-router'
-import { HomeIcon } from 'lucide-react'
+import { HomeIcon, LayoutDashboardIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { CartButton } from './cart-button'
-import { ThemeSwitch } from './theme-switch'
-import { Button } from './ui/button'
 
 type Props = {
   children: ReactNode
@@ -54,10 +56,24 @@ export function DefaultPageLayout({
               </h1>
             </Link>
 
-            <div className="flex items-center gap-4">
+            <div className="flex h-9 items-center gap-4">
               <ThemeSwitch />
 
-              <hr className="h-6 w-[1px] bg-border" />
+              <Separator orientation="vertical" />
+
+              <SignedIn>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="relative"
+                  aria-label="start"
+                  asChild
+                >
+                  <Link to="/app">
+                    <LayoutDashboardIcon />
+                  </Link>
+                </Button>
+              </SignedIn>
 
               {!showCart && (
                 <nav
