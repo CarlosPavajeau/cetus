@@ -65,13 +65,14 @@
     "@rsbuild/core": "1.2.19",
     "@rsbuild/plugin-react": "^1.1.1",
     "@rsdoctor/rspack-plugin": "^1.0.1",
-    "@tailwindcss/postcss": "^4.0.17",
+    "@tailwindcss/postcss": "^4",
     "@tanstack/react-router-devtools": "^1.114.29",
     "@tanstack/router-plugin": "^1.114.30",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "@types/react-payment-inputs": "^1.1.4",
-    "tailwindcss": "^4.0.17",
+    "tailwindcss": "^4",
+    "tw-animate-css": "^1.2.8",
     "typescript": "^5.8.2"
   },
   "packageManager": "pnpm@10.9.0"
