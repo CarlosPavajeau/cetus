@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/shared/cn'
-import { LayoutPanelLeftIcon } from 'lucide-react'
+import { PanelLeftIcon } from 'lucide-react'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state'
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -249,7 +249,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <LayoutPanelLeftIcon className="size-5.5" size={22} aria-hidden="true" />
+      <PanelLeftIcon className="size-5.5" size={22} aria-hidden="true" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
