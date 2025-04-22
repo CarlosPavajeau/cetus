@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { cn } from '@/shared/cn'
 import { flexRender, type useReactTable } from '@tanstack/react-table'
 
 type Props<T = unknown> = {
@@ -17,7 +16,7 @@ type Props<T = unknown> = {
 
 export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
   return (
-    <Table className="border-separate border-spacing-0 px-6 [&_tr_td]:border-border [&_tr_td]:border-b">
+    <Table className="table-fixed border-separate border-spacing-0 [&_tr:not(:last-child)_td]:border-b">
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow
@@ -28,7 +27,7 @@ export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
               <TableHead
                 key={header.id}
                 style={{ width: `${header.getSize()}px` }}
-                className="relative h-8 select-none border-0 bg-muted font-normal first:rounded-l-lg last:rounded-r-lg"
+                className="relative h-9 select-none border-border border-y bg-sidebar first:rounded-l-lg first:border-l last:rounded-r-lg last:border-r"
               >
                 {header.isPlaceholder
                   ? null
@@ -48,10 +47,7 @@ export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
             <TableRow
               key={row.id}
               data-state={row.getIsSelected() && 'selected'}
-              className={cn(
-                'hover:bg-transparent',
-                onRowClick && 'cursor-pointer',
-              )}
+              className="h-px border-0 hover:bg-accent/50 [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
               onClick={() => {
                 if (onRowClick) {
                   onRowClick(row.original)
@@ -59,7 +55,7 @@ export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
               }}
             >
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id} className="last:py-0">
+                <TableCell key={cell.id} className="h-[inherit] last:py-0">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}
