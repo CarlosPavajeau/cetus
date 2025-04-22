@@ -35,7 +35,7 @@ export function DefaultPageLayout({
   }, [stickyHeader])
 
   return (
-    <>
+    <main className="overflow-hidden px-4 supports-[overflow:clip]:overflow-clip sm:px-6">
       {showHeader && (
         <header
           className={`before:-inset-x-32 relative mb-14 before:absolute before:bottom-0 before:h-px before:bg-[linear-gradient(to_right,--theme(--color-border/.3),--theme(--color-border)_200px,--theme(--color-border)_calc(100%-200px),--theme(--color-border/.3))] ${
@@ -104,6 +104,6 @@ export function DefaultPageLayout({
         </header>
       )}
       <main className="container mx-auto">{children}</main>
-    </>
+    </main>
   )
 }
