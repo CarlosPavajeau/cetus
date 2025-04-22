@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Badge } from './ui/badge'
@@ -39,6 +40,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouterState()
   const currentPath = router.location.pathname
 
+  const sidebar = useSidebar()
+  const closeSidebar = () => {
+    if (sidebar.isMobile) {
+      sidebar.setOpenMobile(false)
+    }
+  }
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -63,6 +71,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuButton
                     className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
                     isActive={currentPath === tab.href}
+                    onClick={closeSidebar}
                     asChild
                   >
                     <Link to={tab.href}>
