@@ -14,7 +14,6 @@ import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useOrders } from '@/hooks/orders'
 import { useClientMethod, useHub } from '@/hooks/realtime/use-hub'
@@ -227,45 +226,37 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <Card className="my-6">
-        <CardHeader className="gap-4">
-          <h1 className="font-bold font-heading text-2xl text-foreground">
-            Pedidos
-          </h1>
+      <h1 className="font-heading font-semibold text-2xl">Pedidos</h1>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <SearchInput table={table} id={id} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput table={table} id={id} />
 
-              {table.getColumn('status') && (
-                <TableFacetedFilter
-                  column={table.getColumn('status') as Column<SimpleOrder, Key>}
-                  title="Estado"
-                  options={ORDER_STATUS_OPTIONS}
-                />
-              )}
-            </div>
+          {table.getColumn('status') && (
+            <TableFacetedFilter
+              column={table.getColumn('status') as Column<SimpleOrder, Key>}
+              title="Estado"
+              options={ORDER_STATUS_OPTIONS}
+            />
+          )}
+        </div>
 
-            <div>
-              <Button variant="outline" onClick={refresh}>
-                <RefreshCwIcon
-                  className="-ms-1 opacity-60"
-                  size={16}
-                  aria-hidden="true"
-                />
-                Recargar
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+        <div>
+          <Button variant="outline" onClick={refresh}>
+            <RefreshCwIcon
+              className="-ms-1 opacity-60"
+              size={16}
+              aria-hidden="true"
+            />
+            Recargar
+          </Button>
+        </div>
+      </div>
 
-        <CardContent className="px-0">
-          <DataTable table={table} onRowClick={goToOrder} />
-          <div className="mt-5 px-6">
-            <TablePagination paginationInfo={paginationInfo} table={table} />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-[100vh] flex-1 space-y-4 md:min-h-min">
+        <DataTable table={table} onRowClick={goToOrder} />
+        <TablePagination paginationInfo={paginationInfo} table={table} />
+      </div>
     </Protect>
   )
 }

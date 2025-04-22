@@ -10,7 +10,6 @@ import { ConfirmDeleteProductDialog } from '@/components/product/confirm-delete-
 import { UpdateProductDialog } from '@/components/product/update-product-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -275,41 +274,33 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <Card className="my-6">
-        <CardHeader className="gap-4">
-          <h1 className="font-bold font-heading text-2xl text-foreground">
-            Productos
-          </h1>
+      <h1 className="font-heading font-semibold text-2xl">Productos</h1>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <SearchInput table={table} id={id} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput table={table} id={id} />
 
-              <CategoryFilter table={table} />
-            </div>
+          <CategoryFilter table={table} />
+        </div>
 
-            <div className="flex items-center gap-3">
-              <Button className="ml-auto" asChild>
-                <Link to="/app/products/new">
-                  <PlusIcon
-                    className="-ms-1 opacity-60"
-                    size={16}
-                    aria-hidden="true"
-                  />
-                  Crear producto
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+        <div className="flex items-center gap-3">
+          <Button className="ml-auto" asChild>
+            <Link to="/app/products/new">
+              <PlusIcon
+                className="-ms-1 opacity-60"
+                size={16}
+                aria-hidden="true"
+              />
+              Crear producto
+            </Link>
+          </Button>
+        </div>
+      </div>
 
-        <CardContent className="px-0">
-          <DataTable table={table} />
-          <div className="mt-5 px-6">
-            <TablePagination table={table} paginationInfo={paginationInfo} />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-[100vh] flex-1 space-y-4 md:min-h-min">
+        <DataTable table={table} />
+        <TablePagination table={table} paginationInfo={paginationInfo} />
+      </div>
     </Protect>
   )
 }

@@ -133,34 +133,32 @@ function OrderDetailsComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <DefaultPageLayout showHeader={false}>
-        <PageHeader title={`Procesamiento del pedido #${order.orderNumber}`} />
+      <h1 className="font-heading font-semibold text-2xl">
+        Procesamiento del pedido #{order.orderNumber}
+      </h1>
 
-        <div className="my-6">
-          <ContentLayout>
-            <OrderItems items={order.items} />
+      <ContentLayout>
+        <OrderItems items={order.items} title="Productos del pedido" />
 
-            <div>
-              <div className="space-y-6">
-                <OrderSummary order={order} showStatus showId />
+        <div>
+          <div className="space-y-6">
+            <OrderSummary order={order} showStatus showId />
 
-                {order.transactionId && (
-                  <TransactionSummary id={order.transactionId} />
-                )}
+            {order.transactionId && (
+              <TransactionSummary id={order.transactionId} />
+            )}
 
-                {isCancelable && <CancelOrderButton orderId={orderId} />}
+            {isCancelable && <CancelOrderButton orderId={orderId} />}
 
-                {order.status === OrderStatus.Paid && (
-                  <CompleteOrderButton
-                    orderId={orderId}
-                    onSuccess={handleOrderSuccess}
-                  />
-                )}
-              </div>
-            </div>
-          </ContentLayout>
+            {order.status === OrderStatus.Paid && (
+              <CompleteOrderButton
+                orderId={orderId}
+                onSuccess={handleOrderSuccess}
+              />
+            )}
+          </div>
         </div>
-      </DefaultPageLayout>
+      </ContentLayout>
     </Protect>
   )
 }

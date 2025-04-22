@@ -55,43 +55,41 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="font-bold font-heading text-2xl text-foreground">
-            Panel de control
-          </h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-heading font-semibold text-2xl">
+          Panel de control
+        </h1>
 
-          <div>
-            <Select
-              onValueChange={handleMonthChange}
-              defaultValue={month}
-              value={month}
-            >
-              <SelectTrigger className="h-7 text-xs">
-                <SelectValue placeholder="Selecciona un mes" />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((month) => (
-                  <SelectItem
-                    key={month.value}
-                    value={month.value}
-                    className="text-xs"
-                  >
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <Select
+            onValueChange={handleMonthChange}
+            defaultValue={month}
+            value={month}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue placeholder="Selecciona un mes" />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((month) => (
+                <SelectItem
+                  key={month.value}
+                  value={month.value}
+                  className="pe-8 text-xs"
+                >
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+      </div>
 
-        <OrdersInsights />
+      <OrdersInsights />
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <CompleteOrdersChart />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <CompleteOrdersChart />
 
-          <NewOrdersSummary />
-        </div>
+        <NewOrdersSummary />
       </div>
     </Protect>
   )
