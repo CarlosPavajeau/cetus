@@ -66,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     asChild
                   >
                     <Link to={tab.href}>
-                      {tab.label}
+                      <span>{tab.label}</span>
                       {tab.isNew && (
                         <Badge>
                           <span className="text-xs">Nuevo</span>
