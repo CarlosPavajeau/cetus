@@ -1,5 +1,7 @@
 import { AccessDenied } from '@/components/access-denied'
 import { AppNav } from '@/components/app-nav'
+import { AppSidebar } from '@/components/app-sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import {
   ClerkLoaded,
   Protect,
@@ -18,13 +20,17 @@ function RouteComponent() {
     <ClerkLoaded>
       <SignedIn>
         <Protect permission="org:app:access" fallback={<AccessDenied />}>
-          <section>
-            <AppNav />
+          <SidebarProvider>
+            <AppSidebar />
 
-            <div className="container mx-auto">
-              <Outlet />
-            </div>
-          </section>
+            <SidebarInset className="overflow-hidden px-4 md:px-6 lg:px-8">
+              <AppNav />
+
+              <div className="flex flex-1 flex-col gap-4 py-4 lg:gap-6 lg:py-6">
+                <Outlet />
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
         </Protect>
       </SignedIn>
 
