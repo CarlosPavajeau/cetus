@@ -19,12 +19,16 @@ export function ThemeSwitch() {
           onClick={toggleTheme}
           variant="ghost"
           size="icon"
-          className='text-muted-foreground/60 hover:text-foreground'
+          className="text-muted-foreground/60 hover:text-foreground"
           aria-label={
             theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
           }
         >
-          {theme === 'dark' ? <SunIcon className='size-5' /> : <MoonIcon className='size-5' />}
+          {theme === 'dark' ? (
+            <SunIcon className="size-5" />
+          ) : (
+            <MoonIcon className="size-5" />
+          )}
         </Button>
       </TooltipTrigger>
 
