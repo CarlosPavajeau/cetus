@@ -153,3 +153,16 @@ export const fetchOrdersSummary = async (month: string) => {
 
   return response.data
 }
+
+export type DeliveryFee = {
+  id: string
+  fee: number
+}
+
+export async function fetchDeliveryFee(cityId: string) {
+  const response = await axios.get<DeliveryFee>(
+    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fee/${cityId}`,
+  )
+
+  return response.data
+}
