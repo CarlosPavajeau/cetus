@@ -1,4 +1,4 @@
-import { createOrder } from '@/api/orders'
+import { type DeliveryFee, createOrder } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
 import { ContentLayout } from '@/components/content-layout'
 import { Currency } from '@/components/currency'
@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrderFormValues, createOrderSchema } from '@/schemas/orders'
 import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -31,12 +33,6 @@ import {
 import { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 
-const LOCAL_SHIPPING_COST = 5000
-const NATIONAL_SHIPPING_COST = 15000
-const LOCAL_CITY_ID = 'f97957e9-d820-4858-ac26-b5d03d658370'
-const LOCAL_DELIVERY_DAYS = '1-2'
-const NATIONAL_DELIVERY_DAYS = '3-5'
-
 export const Route = createFileRoute('/cart/')({
   component: CartPage,
 })
@@ -44,8 +40,6 @@ export const Route = createFileRoute('/cart/')({
 function useCartCheckout() {
   const cart = useCart()
   const { items, count } = cart
-  const navigate = useNavigate()
-
   const total = useMemo(
     () =>
       items.reduce((acc, item) => acc + item.product.price * item.quantity, 0),
@@ -85,9 +79,21 @@ function useCartCheckout() {
     )
   }, [form, items, total])
 
+  const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
+    form.watch('cityId'),
+  )
+
+  const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
     mutationFn: createOrder,
+    onSuccess: (data) => {
+      const orderId = data
+      navigate({
+        to: `/orders/${orderId}/checkout`,
+        replace: true,
+      })
+    },
   })
 
   const onSubmit = useCallback(
@@ -96,25 +102,6 @@ function useCartCheckout() {
     }),
     [form, createOrderMutation],
   )
-
-  useEffect(() => {
-    if (createOrderMutation.isSuccess) {
-      const orderId = createOrderMutation.data
-      navigate({
-        to: `/orders/${orderId}/checkout`,
-        replace: true,
-      })
-    }
-  }, [createOrderMutation.isSuccess, createOrderMutation.data, navigate])
-
-  const shippingInfo = useMemo(() => {
-    const cityId = form.watch('cityId')
-    if (!cityId) return { cost: 0, days: '' }
-
-    return cityId === LOCAL_CITY_ID
-      ? { cost: LOCAL_SHIPPING_COST, days: LOCAL_DELIVERY_DAYS }
-      : { cost: NATIONAL_SHIPPING_COST, days: NATIONAL_DELIVERY_DAYS }
-  }, [form.watch('cityId')])
 
   const handleRemoveItem = useCallback(
     (productId: string) => {
@@ -146,7 +133,8 @@ function useCartCheckout() {
     count,
     total,
     onSubmit,
-    shippingInfo,
+    deliveryFee,
+    isLoadingDeliveryFee,
     handleRemoveItem,
     handleQuantityChange,
     isSubmitting: createOrderMutation.isPending,
@@ -179,22 +167,25 @@ function EmptyCart() {
   )
 }
 
-function OrderSummary({
-  count,
-  total,
-  shippingInfo,
-  isSubmitting,
-  isEmpty,
-  form,
-}: {
+type OrderSummaryProps = {
   count: number
   total: number
-  shippingInfo: { cost: number; days: string }
+  deliveryFee?: DeliveryFee
+  isLoadingDeliveryFee: boolean
   isSubmitting: boolean
   isEmpty: boolean
   form: ReturnType<typeof useForm<CreateOrderFormValues>>
-}) {
-  const cityId = form.watch('cityId')
+}
+
+function OrderSummary({
+  count,
+  total,
+  deliveryFee,
+  isLoadingDeliveryFee,
+  isSubmitting,
+  isEmpty,
+  form,
+}: OrderSummaryProps) {
   const allFieldsValid = !isEmpty && form.formState.isValid
 
   return (
@@ -211,16 +202,25 @@ function OrderSummary({
               </span>
             </div>
 
-            {cityId && (
+            {isLoadingDeliveryFee && <Skeleton className="h-5 w-full" />}
+
+            {deliveryFee && (
               <>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Costo de envío</span>
                   <span>
-                    <Currency value={shippingInfo.cost} currency="COP" />
+                    <Currency value={deliveryFee.fee} currency="COP" />
                   </span>
                 </div>
               </>
             )}
+
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>
+                <Currency value={total} currency="COP" />
+              </span>
+            </div>
 
             <Separator className="my-2" />
 
@@ -228,7 +228,7 @@ function OrderSummary({
               <span>Total</span>
               <span>
                 <Currency
-                  value={total + (cityId ? shippingInfo.cost : 0)}
+                  value={total + (deliveryFee ? deliveryFee.fee : 0)}
                   currency="COP"
                 />
               </span>
@@ -357,7 +357,8 @@ function CartPage() {
     count,
     total,
     onSubmit,
-    shippingInfo,
+    deliveryFee,
+    isLoadingDeliveryFee,
     handleRemoveItem,
     handleQuantityChange,
     isSubmitting,
@@ -404,7 +405,8 @@ function CartPage() {
                     <OrderSummary
                       count={count}
                       total={total}
-                      shippingInfo={shippingInfo}
+                      deliveryFee={deliveryFee}
+                      isLoadingDeliveryFee={isLoadingDeliveryFee}
                       isSubmitting={isSubmitting}
                       isEmpty={isEmpty}
                       form={form}
