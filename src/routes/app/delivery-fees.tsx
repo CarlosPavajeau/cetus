@@ -4,6 +4,7 @@ import { Currency } from '@/components/currency'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
+import { CreateDeliveryFeeDialog } from '@/components/order/delivery-fee/create-delivery-fee.dialog'
 import { Badge } from '@/components/ui/badge'
 import { useDeliveryFees } from '@/hooks/orders'
 import { usePagination } from '@/hooks/use-pagination'
@@ -103,6 +104,8 @@ function RouteComponent() {
             <span className="text-xs">En construcción</span>
           </Badge>
         </div>
+
+        <CreateDeliveryFeeDialog />
       </div>
 
       <div className="min-h-[100vh] flex-1 space-y-4 md:min-h-min">
