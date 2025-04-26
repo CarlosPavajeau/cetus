@@ -19,6 +19,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as CartIndexImport } from './routes/cart/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as ProductsIdImport } from './routes/products/$id'
+import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesImport } from './routes/app/categories'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
 import { Route as AppDashboardIndexImport } from './routes/app/dashboard/index'
@@ -75,6 +76,12 @@ const ProductsIdRoute = ProductsIdImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ProductsRoute,
+} as any)
+
+const AppDeliveryFeesRoute = AppDeliveryFeesImport.update({
+  id: '/delivery-fees',
+  path: '/delivery-fees',
+  getParentRoute: () => AppRoute,
 } as any)
 
 const AppCategoriesRoute = AppCategoriesImport.update({
@@ -165,6 +172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriesImport
       parentRoute: typeof AppImport
     }
+    '/app/delivery-fees': {
+      id: '/app/delivery-fees'
+      path: '/delivery-fees'
+      fullPath: '/app/delivery-fees'
+      preLoaderRoute: typeof AppDeliveryFeesImport
+      parentRoute: typeof AppImport
+    }
     '/products/$id': {
       id: '/products/$id'
       path: '/$id'
@@ -235,6 +249,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCategoriesRoute: typeof AppCategoriesRoute
+  AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
   AppIndexRoute: typeof AppIndexRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
@@ -244,6 +259,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriesRoute: AppCategoriesRoute,
+  AppDeliveryFeesRoute: AppDeliveryFeesRoute,
   AppIndexRoute: AppIndexRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppProductsNewRoute: AppProductsNewRoute,
@@ -295,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
+  '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
   '/cart/': typeof CartIndexRoute
@@ -311,6 +328,7 @@ export interface FileRoutesByTo {
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
+  '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app': typeof AppIndexRoute
   '/cart': typeof CartIndexRoute
@@ -330,6 +348,7 @@ export interface FileRoutesById {
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
+  '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
   '/cart/': typeof CartIndexRoute
@@ -350,6 +369,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/app/categories'
+    | '/app/delivery-fees'
     | '/products/$id'
     | '/app/'
     | '/cart/'
@@ -365,6 +385,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/app/categories'
+    | '/app/delivery-fees'
     | '/products/$id'
     | '/app'
     | '/cart'
@@ -382,6 +403,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/app/categories'
+    | '/app/delivery-fees'
     | '/products/$id'
     | '/app/'
     | '/cart/'
@@ -434,6 +456,7 @@ export const routeTree = rootRoute
       "filePath": "app.tsx",
       "children": [
         "/app/categories",
+        "/app/delivery-fees",
         "/app/",
         "/app/orders/$orderId",
         "/app/products/new",
@@ -462,6 +485,10 @@ export const routeTree = rootRoute
     },
     "/app/categories": {
       "filePath": "app/categories.tsx",
+      "parent": "/app"
+    },
+    "/app/delivery-fees": {
+      "filePath": "app/delivery-fees.tsx",
       "parent": "/app"
     },
     "/products/$id": {

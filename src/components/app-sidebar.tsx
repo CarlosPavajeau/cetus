@@ -88,6 +88,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarGroup key="config">
+          <SidebarGroupLabel className="text-muted-foreground uppercase">
+            Configuraciones
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="px-2">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
+                  isActive={currentPath === '/app/delivery-fees'}
+                  onClick={closeSidebar}
+                  asChild
+                >
+                  <Link to="/app/delivery-fees">
+                    <span>Costos de envio</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   )
