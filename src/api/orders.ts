@@ -166,3 +166,11 @@ export async function fetchDeliveryFee(cityId: string) {
 
   return response.data
 }
+
+export async function fetchDeliveryFees() {
+  const response = await axios.get<DeliveryFee[]>(
+    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees`,
+  )
+
+  return response.data
+}

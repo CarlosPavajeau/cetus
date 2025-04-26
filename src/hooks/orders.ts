@@ -1,5 +1,6 @@
 import {
   fetchDeliveryFee,
+  fetchDeliveryFees,
   fetchOrder,
   fetchOrderInsights,
   fetchOrders,
@@ -66,6 +67,18 @@ export function useDeliveryFee(cityId?: string) {
 
   return {
     deliveryFee: data,
+    isLoading,
+  }
+}
+
+export function useDeliveryFees() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['delivery-fees'],
+    queryFn: fetchDeliveryFees,
+  })
+
+  return {
+    deliveryFees: data,
     isLoading,
   }
 }
