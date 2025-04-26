@@ -81,38 +81,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        {
-          MENU.map((group) => (
-            <SidebarGroup key={group.id}>
-              <SidebarGroupLabel className="text-muted-foreground uppercase">
-                {group.title}
-              </SidebarGroupLabel>
-              <SidebarGroupContent className="px-2">
-                <SidebarMenu>
-                  {group.items.map((tab) => (
-                    <SidebarMenuItem key={tab.href}>
-                      <SidebarMenuButton
-                        className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
-                        isActive={currentPath === tab.href}
-                        onClick={closeSidebar}
-                        asChild
-                      >
-                        <Link to={tab.href}>
-                          <span>{tab.label}</span>
-                          {tab.isNew && (
-                            <Badge>
-                              <span className="text-xs">Nuevo</span>
-                            </Badge>
-                          )}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))
-        }
+        {MENU.map((group) => (
+          <SidebarGroup key={group.id}>
+            <SidebarGroupLabel className="text-muted-foreground uppercase">
+              {group.title}
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="px-2">
+              <SidebarMenu>
+                {group.items.map((tab) => (
+                  <SidebarMenuItem key={tab.href}>
+                    <SidebarMenuButton
+                      className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
+                      isActive={currentPath === tab.href}
+                      onClick={closeSidebar}
+                      asChild
+                    >
+                      <Link to={tab.href}>
+                        <span>{tab.label}</span>
+                        {tab.isNew && (
+                          <Badge>
+                            <span className="text-xs">Nuevo</span>
+                          </Badge>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   )
