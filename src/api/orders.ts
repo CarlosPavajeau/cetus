@@ -161,7 +161,7 @@ export type DeliveryFee = {
 
 export async function fetchDeliveryFee(cityId: string) {
   const response = await axios.get<DeliveryFee>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fee/${cityId}`,
+    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees/${cityId}`,
   )
 
   return response.data
