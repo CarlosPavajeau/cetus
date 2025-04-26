@@ -13,7 +13,7 @@ import {
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Badge } from './ui/badge'
 
-const TABS = [
+const MAIN_MENU = [
   {
     label: 'Pedidos',
     href: '/app',
@@ -35,6 +35,27 @@ const TABS = [
     isNew: false,
   },
 ] as const
+
+const CONFIGURATIONS_MENU = [
+  {
+    label: 'Costos de envio',
+    href: '/app/delivery-fees',
+    isNew: false,
+  },
+] as const
+
+const MENU = [
+  {
+    id: 'main',
+    title: 'Principal',
+    items: MAIN_MENU,
+  },
+  {
+    id: 'config',
+    title: 'Configuraciones',
+    items: CONFIGURATIONS_MENU,
+  },
+]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouterState()
@@ -60,56 +81,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup key="main">
-          <SidebarGroupLabel className="text-muted-foreground uppercase">
-            Principal
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
-            <SidebarMenu>
-              {TABS.map((tab) => (
-                <SidebarMenuItem key={tab.href}>
-                  <SidebarMenuButton
-                    className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
-                    isActive={currentPath === tab.href}
-                    onClick={closeSidebar}
-                    asChild
-                  >
-                    <Link to={tab.href}>
-                      <span>{tab.label}</span>
-                      {tab.isNew && (
-                        <Badge>
-                          <span className="text-xs">Nuevo</span>
-                        </Badge>
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup key="config">
-          <SidebarGroupLabel className="text-muted-foreground uppercase">
-            Configuraciones
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
-                  isActive={currentPath === '/app/delivery-fees'}
-                  onClick={closeSidebar}
-                  asChild
-                >
-                  <Link to="/app/delivery-fees">
-                    <span>Costos de envio</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {
+          MENU.map((group) => (
+            <SidebarGroup key={group.id}>
+              <SidebarGroupLabel className="text-muted-foreground uppercase">
+                {group.title}
+              </SidebarGroupLabel>
+              <SidebarGroupContent className="px-2">
+                <SidebarMenu>
+                  {group.items.map((tab) => (
+                    <SidebarMenuItem key={tab.href}>
+                      <SidebarMenuButton
+                        className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
+                        isActive={currentPath === tab.href}
+                        onClick={closeSidebar}
+                        asChild
+                      >
+                        <Link to={tab.href}>
+                          <span>{tab.label}</span>
+                          {tab.isNew && (
+                            <Badge>
+                              <span className="text-xs">Nuevo</span>
+                            </Badge>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))
+        }
       </SidebarContent>
     </Sidebar>
   )
