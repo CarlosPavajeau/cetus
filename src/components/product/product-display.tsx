@@ -178,9 +178,11 @@ function ProductInfo({ product }: Props) {
 
         <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
 
-        <div className="mt-1 flex items-center text-muted-foreground text-sm">
-          <span>Categoría: {product.categoryId}</span>
-        </div>
+        {product.category && (
+          <div className="mt-1 flex items-center text-muted-foreground text-sm">
+            <span>Categoría: {product.category}</span>
+          </div>
+        )}
       </div>
 
       <div className="mb-6">

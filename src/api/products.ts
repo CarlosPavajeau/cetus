@@ -8,6 +8,7 @@ export type Product = {
   stock: number
   imageUrl?: string
   enabled: boolean
+  category?: string
   categoryId: string
   createdAt: string
   updatedAt: string
