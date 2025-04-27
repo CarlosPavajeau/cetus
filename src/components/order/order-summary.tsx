@@ -84,6 +84,13 @@ export function OrderSummary({
               </div>
             )}
 
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>
+                <Currency value={order.total} currency="COP" />
+              </span>
+            </div>
+
             {order.deliveryFee !== undefined && (
               <div className="flex flex-wrap justify-between text-sm">
                 <span className="text-muted-foreground text-sm">
@@ -100,9 +107,21 @@ export function OrderSummary({
             <div className="flex justify-between font-semibold text-lg">
               <span>Total</span>
               <span>
-                <Currency value={order.total} currency="COP" />
+                <Currency
+                  value={
+                    order.total + (order.deliveryFee ? order.deliveryFee : 0)
+                  }
+                  currency="COP"
+                />
               </span>
             </div>
+          </div>
+
+          <div className="mt-6 text-muted-foreground text-xs">
+            <p>
+              El costo del envio es cancelado al momento de la entrega de los
+              productos.
+            </p>
           </div>
         </div>
       </div>
