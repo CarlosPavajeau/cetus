@@ -120,9 +120,12 @@ function OrderConfirmatioComponent() {
         subtitle={
           <>
             <span className="font-medium">{order.customer.name}</span> tu pedido
-            ha sido confirmado. Recueda que debes cancelar el costo del envío al
-            recibir tu pedido. Si tienes alguna duda, por favor, ponte en
-            contacto con nosotros. El código de transacción es{' '}
+            ha sido confirmado.{' '}
+            <span className="font-medium">
+              Recueda que debes cancelar el costo del envío al recibir tu pedido
+            </span>
+            . Si tienes alguna duda, por favor, ponte en contacto con nosotros.
+            El código de transacción es{' '}
             <span className="font-medium">{id}</span> y el código de pedido es #
             <span className="font-medium">{order.orderNumber}</span>.
           </>
