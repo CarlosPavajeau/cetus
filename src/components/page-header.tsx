@@ -7,11 +7,11 @@ type Props = {
 
 export function PageHeader({ title, subtitle }: Props) {
   return (
-    <div className="max-w-3xl max-sm:text-center">
-      <h1 className="mb-4 font-bold font-heading text-4xl/[1.1] text-foreground tracking-tight md:text-5xl/[1.1]">
+    <div className="mb-6 max-w-3xl space-y-2 max-sm:text-center">
+      <h1 className="font-heading font-semibold text-2xl sm:text-3xl">
         {title}
       </h1>
-      {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+      {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
     </div>
   )
 }
