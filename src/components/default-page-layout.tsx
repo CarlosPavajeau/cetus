@@ -39,7 +39,7 @@ function NavBar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full border border-b transition-all duration-300 ${isScrolled ? 'bg-card shadow-md' : 'bg-card/90 backdrop-blur-sm'}`}
+      className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${isScrolled ? 'bg-card shadow-md' : 'bg-card/90 backdrop-blur-sm'}`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
