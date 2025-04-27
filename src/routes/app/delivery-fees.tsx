@@ -5,7 +5,6 @@ import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { CreateDeliveryFeeDialog } from '@/components/order/delivery-fee/create-delivery-fee.dialog'
-import { Badge } from '@/components/ui/badge'
 import { useDeliveryFees } from '@/hooks/orders'
 import { usePagination } from '@/hooks/use-pagination'
 import { Protect } from '@clerk/clerk-react'
@@ -94,16 +93,8 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <h1 className="font-heading font-semibold text-2xl">
-            Costos de envío
-          </h1>
-
-          <Badge>
-            <span className="text-xs">En construcción</span>
-          </Badge>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-heading font-semibold text-2xl">Costos de envío</h1>
 
         <CreateDeliveryFeeDialog />
       </div>

@@ -1,3 +1,4 @@
+import { createDeliveryFee } from '@/api/orders'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/select'
 import { useCities, useStates } from '@/hooks/use-state'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -93,11 +95,25 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
     form.resetField('cityId', { defaultValue: '' })
   }
 
+  const queryClient = useQueryClient()
+  const createDeliveryFeeMutation = useMutation({
+    mutationKey: ['delivery-fees', 'create'],
+    mutationFn: createDeliveryFee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['delivery-fees'],
+      })
+      if (onSuccess) {
+        onSuccess()
+      }
+    },
+  })
+
   const onSubmit = form.handleSubmit((values) => {
-    console.log(values)
-    if (onSuccess) {
-      onSuccess()
-    }
+    createDeliveryFeeMutation.mutate({
+      cityId: values.cityId,
+      fee: values.fee,
+    })
   })
 
   return (
@@ -167,7 +183,11 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
           )}
         />
 
-        <Button className="w-full" type="submit">
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={createDeliveryFeeMutation.isPending}
+        >
           Agregar
         </Button>
       </form>
