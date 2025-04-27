@@ -150,7 +150,7 @@ export const ProductDisplay = memo(({ product }: Props) => {
   const maxQuantity = product.stock
 
   return (
-    <DefaultPageLayout showCart>
+    <DefaultPageLayout>
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
 
       <div className="mb-6">

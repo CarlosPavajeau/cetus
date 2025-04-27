@@ -114,7 +114,7 @@ function OrderDetailsComponent() {
 
   if (isLoading) {
     return (
-      <DefaultPageLayout showHeader={false}>
+      <DefaultPageLayout>
         <DefaultLoader />
       </DefaultPageLayout>
     )
@@ -122,7 +122,7 @@ function OrderDetailsComponent() {
 
   if (!order) {
     return (
-      <DefaultPageLayout showHeader={false}>
+      <DefaultPageLayout>
         <PageHeader
           title="Pedido no encontrado"
           subtitle="No se pudo encontrar el pedido solicitado."

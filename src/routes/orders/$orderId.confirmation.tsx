@@ -40,7 +40,7 @@ function OrderConfirmatioComponent() {
 
   if (isLoading || isLoadingTransaction) {
     return (
-      <DefaultPageLayout showHeader={false}>
+      <DefaultPageLayout>
         <DefaultLoader />
       </DefaultPageLayout>
     )
