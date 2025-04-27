@@ -1,7 +1,5 @@
 import type { ProductForSale } from '@/api/products'
-import { ContentLayout } from '@/components/content-layout'
 import { Currency } from '@/components/currency'
-import { DefaultPageLayout } from '@/components/default-page-layout'
 import { Image } from '@/components/image'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
-import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowLeftIcon,
   MinusIcon,
@@ -111,7 +108,30 @@ const StockIndicator = memo(({ stock }: StockIndicatorProps) => {
 
 StockIndicator.displayName = 'StockIndicator'
 
-export const ProductDisplay = memo(({ product }: Props) => {
+function ProductGallery({ product }: Props) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="relative aspect-square overflow-hidden rounded-lg bg-background"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <Image
+          src={getImageUrl(product.imageUrl || 'placeholder.svg')}
+          objectFit="cover"
+          alt={product.name}
+          layout="fill"
+          className={`h-full w-full object-cover transition-transform duration-500 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
+          priority
+        />
+      </div>
+    </div>
+  )
+}
+
+function ProductInfo({ product }: Props) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -150,7 +170,65 @@ export const ProductDisplay = memo(({ product }: Props) => {
   const maxQuantity = product.stock
 
   return (
-    <DefaultPageLayout>
+    <div className="flex h-full flex-col">
+      <div className="mb-4">
+        <div className="mb-2">
+          <StockIndicator stock={product.stock} />
+        </div>
+
+        <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
+
+        <div className="mt-1 flex items-center text-muted-foreground text-sm">
+          <span>Categoría: {product.categoryId}</span>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex items-center">
+          <span className="font-bold text-3xl">
+            <Currency value={product.price} currency="COP" />
+          </span>
+        </div>
+      </div>
+
+      <p className="mb-6 text-muted-foreground">{product.description}</p>
+
+      <div className="mb-6">
+        <QuantitySelector
+          quantity={quantity}
+          onIncrement={incrementQuantity}
+          onDecrement={decrementQuantity}
+          max={maxQuantity}
+        />
+      </div>
+
+      <div className="mb-6">
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={handleAddToCart}
+          disabled={isOutOfStock || isAddingToCart}
+        >
+          {isAddingToCart ? (
+            <div className="flex items-center">
+              <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
+              Agregando...
+            </div>
+          ) : (
+            <>
+              <ShoppingCartIcon className="mr-2 h-5 w-5" />
+              {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export const ProductDisplay = memo(({ product }: Props) => {
+  return (
+    <div>
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
 
       <div className="mb-6">
@@ -162,103 +240,16 @@ export const ProductDisplay = memo(({ product }: Props) => {
         </Button>
       </div>
 
-      <AnimatePresence mode="wait">
-        <ContentLayout>
-          <motion.div
-            key={`image-${product.id}`}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="max-h-2xl max-w-2xl"
-          >
-            <div className="relative">
-              <div className="relative aspect-square overflow-hidden rounded-lg bg-background">
-                <Image
-                  src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-                  objectFit="cover"
-                  alt={product.name}
-                  layout="fill"
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            </div>
-          </motion.div>
+      <div className="mt-8 lg:grid lg:grid-cols-2 lg:gap-x-8">
+        <div className="lg:col-span-1">
+          <ProductGallery product={product} />
+        </div>
 
-          <motion.div
-            className="mb-6 space-y-4"
-            key={`details-${product.id}`}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <StockIndicator stock={product.stock} />
-
-            <div>
-              <h1 className="mt-2 font-bold text-2xl sm:text-3xl">
-                {product.name}
-              </h1>
-
-              <p className="mt-2 font-bold text-2xl">
-                <Currency value={product.price} currency="COP" />
-              </p>
-            </div>
-
-            {product.description && (
-              <div className="mt-4">
-                <p className="text-muted-foreground">{product.description}</p>
-              </div>
-            )}
-
-            {/* Desktop product actions */}
-            <div className="mt-12 space-y-6">
-              <AnimatePresence>
-                {!isOutOfStock && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <span className="font-medium">Cantidad:</span>
-                      <QuantitySelector
-                        quantity={quantity}
-                        onIncrement={incrementQuantity}
-                        onDecrement={decrementQuantity}
-                        max={maxQuantity}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex flex-col gap-4 sm:flex-row">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock || isAddingToCart}
-                >
-                  {isAddingToCart ? (
-                    <div className="flex items-center">
-                      <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                      Agregando...
-                    </div>
-                  ) : (
-                    <>
-                      <ShoppingCartIcon className="mr-2 h-5 w-5" />
-                      {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        </ContentLayout>
-      </AnimatePresence>
-    </DefaultPageLayout>
+        <div className="mt-10 px-4 sm:px-0 lg:col-span-1 lg:mt-0">
+          <ProductInfo product={product} />
+        </div>
+      </div>
+    </div>
   )
 })
 
