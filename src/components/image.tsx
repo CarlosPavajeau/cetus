@@ -1,248 +1,181 @@
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+'use client'
 
-// Define TypeScript interfaces
-type ImageLayout = 'fill' | 'fixed' | 'responsive' | 'intrinsic'
-type ImageObjectFit = 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'
+import type React from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-type Props = {
-  /**
-   * Source URL of the image
-   */
+export interface ImageProps {
   src: string
-
-  /**
-   * Alternative text for the image
-   */
   alt: string
-
-  /**
-   * Width of the image in pixels
-   */
   width?: number
-
-  /**
-   * Height of the image in pixels
-   */
   height?: number
-
-  /**
-   * Layout mode for the image
-   */
-  layout?: ImageLayout
-
-  /**
-   * CSS object-fit property for the image
-   */
-  objectFit?: ImageObjectFit
-
-  /**
-   * Quality of the image (1-100)
-   */
+  fill?: boolean
+  sizes?: string
   quality?: number
-
-  /**
-   * Whether to show blur effect while loading
-   */
-  blurEffect?: boolean
-
-  /**
-   * Base64 encoded small image for the blur effect
-   */
-  placeholderSrc?: string
-
-  /**
-   * Whether to load the image with higher priority
-   */
   priority?: boolean
-
-  /**
-   * Additional CSS class for the image
-   */
+  placeholder?: 'blur' | 'empty'
+  blurDataURL?: string
+  style?: React.CSSProperties
   className?: string
-
-  /**
-   * Style object for the image
-   */
-  style?: CSSProperties
-
-  /**
-   * Any additional props to pass to the image
-   */
-  [key: string]: unknown
+  onLoad?: () => void
+  onError?: () => void
+  unoptimized?: boolean
 }
 
-// Default low-quality placeholder SVG
-const DEFAULT_PLACEHOLDER =
-  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgNDAwIDMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmNmY2ZjYiLz48L3N2Zz4='
-
-export const Image = ({
+export const Image: React.FC<ImageProps> = ({
   src,
   alt,
   width,
   height,
-  layout = 'responsive',
-  objectFit = 'cover',
+  fill = false,
+  sizes = '100vw',
   quality = 75,
-  blurEffect = true,
-  placeholderSrc,
   priority = false,
+  placeholder = 'empty',
+  blurDataURL,
+  style,
   className = '',
-  style = {},
-  ...restProps
-}: Props) => {
-  const [isLoaded, setIsLoaded] = useState<boolean>(false)
-  const [error, setError] = useState<boolean>(false)
-  const imgRef = useRef<HTMLImageElement | null>(null)
+  onLoad,
+  onError,
+  unoptimized = false,
+}) => {
+  const [isLoading, setIsLoading] = useState(true)
+  const [_, setError] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
-  // Set up lazy loading with IntersectionObserver
+  // Generate srcSet for responsive images
+  const generateSrcSet = () => {
+    if (unoptimized) return undefined
+
+    // For remote images, create a basic srcSet with 1x, 2x
+    const widths = [1, 2]
+    return widths
+      .map((factor) => {
+        const w = width ? width * factor : undefined
+        const h = height ? height * factor : undefined
+        const url = optimizeImageUrl(src, w, h, quality)
+        return `${url} ${factor}x`
+      })
+      .join(', ')
+  }
+
+  // Simple client-side image URL optimization function
+  // In a real implementation, you might use a third-party service
+  const optimizeImageUrl = (
+    url: string,
+    w?: number,
+    h?: number,
+    q?: number,
+  ): string => {
+    if (unoptimized) return url
+
+    // If it's a remote URL that supports image optimization (like Cloudinary, Imgix)
+    if (url.includes('cloudinary.com')) {
+      const params = []
+      if (w) params.push(`w_${w}`)
+      if (h) params.push(`h_${h}`)
+      if (q) params.push(`q_${q}`)
+
+      // Insert optimization parameters into Cloudinary URL
+      return url.replace('/upload/', `/upload/${params.join(',')}/`)
+    }
+
+    // For other URLs, return as is (no optimization)
+    return url
+  }
+
+  // Handle image loading
+  const handleLoad = () => {
+    setIsLoading(false)
+    onLoad?.()
+  }
+
+  // Handle image error
+  const handleError = () => {
+    setIsLoading(false)
+    setError(true)
+    onError?.()
+  }
+
+  // Set up intersection observer for lazy loading
   useEffect(() => {
-    // Skip observer setup if priority is true or browser doesn't support IntersectionObserver
-    if (priority || !imgRef.current || !('IntersectionObserver' in window)) {
-      return
-    }
+    if (priority || !imgRef.current) return
 
-    // Clean up previous observer if it exists
-    if (observerRef.current) {
-      observerRef.current.disconnect()
-    }
-
-    // Create new observer
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const img = entry.target as HTMLImageElement
-            const dataSrc = img.getAttribute('data-src')
-
-            // Trigger load if image is in viewport and data-src exists
-            if (dataSrc) {
-              img.setAttribute('src', dataSrc)
-            }
-
-            // Stop observing once the image is in view
-            observerRef.current?.unobserve(img)
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // Load the image when it enters the viewport
+          const img = entry.target as HTMLImageElement
+          if (img.dataset.src) {
+            img.src = img.dataset.src
           }
+          if (img.dataset.srcset) {
+            img.srcset = img.dataset.srcset
+          }
+          observerRef.current?.unobserve(img)
         }
-      },
-      {
-        rootMargin: '200px 0px', // Start loading before image is in viewport
-      },
-    )
+      })
+    })
 
     observerRef.current.observe(imgRef.current)
 
-    // Cleanup function
     return () => {
       observerRef.current?.disconnect()
     }
-  }, [priority, src])
+  }, [priority])
 
-  // Get image styles based on layout
-  const getImageStyle = (): CSSProperties => {
-    const baseStyle: CSSProperties = { objectFit }
-
-    switch (layout) {
-      case 'fill':
-        return {
-          ...baseStyle,
-          width: '100%',
-          height: '100%',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-        }
-      case 'fixed':
-        return {
-          ...baseStyle,
-          width: width ? `${width}px` : 'auto',
-          height: height ? `${height}px` : 'auto',
-        }
-      case 'intrinsic':
-        return {
-          ...baseStyle,
-          width: '100%',
-          height: 'auto',
-          maxWidth: width ? `${width}px` : '100%',
-        }
-      case 'responsive':
-      default:
-        return {
-          ...baseStyle,
-          width: '100%',
-          height: 'auto',
-          maxWidth: '100%',
-        }
-    }
-  }
-
-  // Get blur effect styles when applicable
-  const getLoadingStyle = (): CSSProperties => {
-    if (blurEffect && !isLoaded && !error) {
-      return {
-        filter: 'blur(20px)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        transition: 'filter 0.5s ease-in-out',
-      }
-    }
-    return {}
-  }
-
-  // Combine computed styles
-  const computedStyle = {
-    ...getImageStyle(),
-    ...getLoadingStyle(),
+  // Compute styles
+  const computedStyle: React.CSSProperties = {
     ...style,
   }
 
-  // If there's an error, return an error placeholder
-  if (error) {
-    return (
-      <div
-        className={`image-error ${className}`}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#f3f3f3',
-          color: '#666',
-          padding: '20px',
-          fontSize: '14px',
-          textAlign: 'center',
-          width: width ? `${width}px` : '100%',
-          height: height ? `${height}px` : 'auto',
-          ...style,
-        }}
-        {...restProps}
-      >
-        {alt || 'Image failed to load'}
-      </div>
-    )
+  if (fill) {
+    computedStyle.position = 'absolute'
+    computedStyle.height = '100%'
+    computedStyle.width = '100%'
+    computedStyle.inset = '0'
+    computedStyle.objectFit = style?.objectFit || 'cover'
   }
 
-  // Filter out props that shouldn't be passed to the img element
-  const {
-    quality: _,
-    blurEffect: __,
-    placeholderSrc: ___,
-    ...imgProps
-  } = restProps
+  // Blur placeholder style
+  const blurStyle: React.CSSProperties =
+    placeholder === 'blur' && isLoading && blurDataURL
+      ? {
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundImage: `url(${blurDataURL})`,
+          filter: 'blur(20px)',
+        }
+      : {}
 
-  return (
-    <img
-      ref={imgRef}
-      src={priority ? src : placeholderSrc || DEFAULT_PLACEHOLDER}
-      data-src={!priority ? src : undefined}
-      alt={alt}
-      className={className}
-      style={computedStyle}
-      onLoad={() => setIsLoaded(true)}
-      onError={() => setError(true)}
-      loading={priority ? 'eager' : 'lazy'}
-      width={width}
-      height={height}
-      {...imgProps}
-    />
-  )
+  // Combine all styles
+  const finalStyle = {
+    ...computedStyle,
+    ...blurStyle,
+  }
+
+  // Prepare image attributes
+  const imgAttributes: React.ImgHTMLAttributes<HTMLImageElement> = {
+    src: priority ? src : undefined,
+    // @ts-ignore define data-src for lazy loading
+    'data-src': !priority ? src : undefined,
+    srcSet: priority ? generateSrcSet() : undefined,
+    'data-srcset': !priority ? generateSrcSet() : undefined,
+    sizes,
+    width: !fill ? width : undefined,
+    height: !fill ? height : undefined,
+    loading: priority ? 'eager' : 'lazy',
+    decoding: 'async',
+    style: finalStyle,
+    className: `custom-image ${className} ${isLoading ? 'loading' : 'loaded'}`,
+    alt,
+    onLoad: handleLoad,
+    onError: handleError,
+    ref: imgRef,
+  }
+
+  return <img {...imgAttributes} />
 }
+
+export default Image
