@@ -8,13 +8,14 @@ import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
 import {
+  AlertCircle,
   ArrowLeftIcon,
+  Check,
   MinusIcon,
-  PackageIcon,
   PlusIcon,
   ShoppingCartIcon,
 } from 'lucide-react'
-import { memo, useCallback, useMemo, useState } from 'react'
+import { Fragment, memo, useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
 type Props = {
@@ -67,71 +68,7 @@ const QuantitySelector = memo(
   },
 )
 
-QuantitySelector.displayName = 'QuantitySelector'
-
-interface StockIndicatorProps {
-  stock: number
-}
-
-const StockIndicator = memo(({ stock }: StockIndicatorProps) => {
-  const stockStatus = useMemo(() => {
-    if (stock <= 0)
-      return { label: 'Agotado', variant: 'destructive' as const, icon: false }
-    if (stock < 10)
-      return {
-        label: 'Pocas unidades',
-        variant: 'destructive' as const,
-        icon: true,
-      }
-    return { label: 'En existencia', variant: 'default' as const, icon: true }
-  }, [stock])
-
-  return (
-    <div className="flex items-center space-x-2">
-      <Badge
-        variant={stockStatus.variant}
-        className={!stockStatus.icon ? 'opacity-80' : ''}
-      >
-        {stockStatus.icon && (
-          <PackageIcon size={12} className="mr-1 opacity-80" />
-        )}
-        {stockStatus.label}
-      </Badge>
-      {stock > 0 && (
-        <span className="text-muted-foreground text-sm">
-          ({stock} {stock === 1 ? 'unidad' : 'unidades'})
-        </span>
-      )}
-    </div>
-  )
-})
-
-StockIndicator.displayName = 'StockIndicator'
-
-function ProductGallery({ product }: Props) {
-  const [isHovered, setIsHovered] = useState(false)
-
-  return (
-    <div className="space-y-4">
-      <div
-        className="relative aspect-square overflow-hidden rounded-lg bg-background"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <Image
-          src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-          objectFit="cover"
-          alt={product.name}
-          layout="fill"
-          className={`h-full w-full object-cover transition-transform duration-500 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
-          priority
-        />
-      </div>
-    </div>
-  )
-}
-
-function ProductInfo({ product }: Props) {
+function ProductDisplayComponent({ product }: Props) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -167,62 +104,89 @@ function ProductInfo({ product }: Props) {
   }, [cart, product, quantity])
 
   const isOutOfStock = product.stock <= 0
-  const maxQuantity = product.stock
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-4">
-        <div className="mb-2">
-          <StockIndicator stock={product.stock} />
-        </div>
-
-        <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
-
-        {product.category && (
-          <div className="mt-1 flex items-center text-muted-foreground text-sm">
-            <span>Categoría: {product.category}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="mb-6">
-        <div className="flex items-center">
-          <span className="font-bold text-3xl">
-            <Currency value={product.price} currency="COP" />
-          </span>
-        </div>
-      </div>
-
-      <p className="mb-6 text-muted-foreground">{product.description}</p>
-
-      <div className="mb-6">
-        <QuantitySelector
-          quantity={quantity}
-          onIncrement={incrementQuantity}
-          onDecrement={decrementQuantity}
-          max={maxQuantity}
+    <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
+      <div className="relative aspect-square overflow-hidden rounded-lg border">
+        <Image
+          src={getImageUrl(product.imageUrl || 'placeholder.svg')}
+          alt={product.name}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 50vw"
+          priority
         />
       </div>
 
-      <div className="mb-6">
-        <Button
-          className="w-full"
-          size="lg"
-          onClick={handleAddToCart}
-          disabled={isOutOfStock || isAddingToCart}
-        >
-          {isAddingToCart ? (
-            <div className="flex items-center">
-              <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
-              Agregando...
+      <div className="flex flex-col">
+        <div className="mb-2">
+          <Badge variant="outline" className="mb-2">
+            {product.category}
+          </Badge>
+          <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
+        </div>
+
+        <div className="mb-4 font-bold text-2xl">
+          <Currency value={product.price} currency="COP" />
+        </div>
+
+        <div className="mb-4 flex items-center">
+          {product.stock > 2 ? (
+            <div className="flex items-center text-green-600">
+              <Check className="mr-1 h-4 w-4" />
+              <span>
+                En Stock
+                <span className="text-muted-foreground text-sm">
+                  {' '}
+                  ({product.stock} unidades restantes)
+                </span>
+              </span>
             </div>
           ) : (
-            <>
-              <ShoppingCartIcon className="mr-2 h-5 w-5" />
-              {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
-            </>
+            <div className="flex items-center text-red-500">
+              <AlertCircle className="mr-1 h-4 w-4" />
+              <span>
+                Agotado
+                <span className="text-muted-foreground text-sm">
+                  {' '}
+                  ({product.stock} unidades restantes)
+                </span>
+              </span>
+            </div>
           )}
-        </Button>
+        </div>
+
+        <div className="prose prose-sm mb-6">
+          <p>{product.description}</p>
+        </div>
+
+        <div className="mt-auto flex flex-col space-y-4">
+          <QuantitySelector
+            quantity={quantity}
+            onIncrement={incrementQuantity}
+            onDecrement={decrementQuantity}
+            max={product.stock}
+          />
+
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || isAddingToCart}
+          >
+            {isAddingToCart ? (
+              <div className="flex items-center">
+                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                Agregando...
+              </div>
+            ) : (
+              <>
+                <ShoppingCartIcon className="mr-2 h-5 w-5" />
+                {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -230,7 +194,7 @@ function ProductInfo({ product }: Props) {
 
 export const ProductDisplay = memo(({ product }: Props) => {
   return (
-    <div>
+    <Fragment>
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
 
       <div className="mb-6">
@@ -242,17 +206,7 @@ export const ProductDisplay = memo(({ product }: Props) => {
         </Button>
       </div>
 
-      <div className="mt-8 lg:grid lg:grid-cols-2 lg:gap-x-8">
-        <div className="lg:col-span-1">
-          <ProductGallery product={product} />
-        </div>
-
-        <div className="mt-10 px-4 sm:px-0 lg:col-span-1 lg:mt-0">
-          <ProductInfo product={product} />
-        </div>
-      </div>
-    </div>
+      <ProductDisplayComponent product={product} />
+    </Fragment>
   )
 })
-
-ProductDisplay.displayName = 'ProductDisplay'
