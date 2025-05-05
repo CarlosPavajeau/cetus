@@ -62,7 +62,6 @@ const ProductCard = memo(function ProductCard({
             alt={product.name}
             layout="fill"
             className="object-cover transition-transform hover:scale-105"
-            priority
           />
         </Link>
 
