@@ -2,9 +2,10 @@ import { uploadFileToS3 } from '@/api/aws'
 import {
   createProduct,
   fetchProduct,
+  fetchProductSuggestions,
   fetchProducts,
   fetchProductsForSale,
-  updateProduct,
+  updateProduct
 } from '@/api/products'
 import type {
   CreateProductFormValues,
@@ -119,6 +120,19 @@ export function useProducts() {
 
   return {
     products: data,
+    isLoading,
+    error,
+  }
+}
+
+export function useProductSuggestions(productId: string) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products', 'suggestions', productId],
+    queryFn: () => fetchProductSuggestions(productId),
+  })
+
+  return {
+    suggestions: data,
     isLoading,
     error,
   }

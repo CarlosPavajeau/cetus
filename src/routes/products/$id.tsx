@@ -2,8 +2,9 @@ import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductDisplay } from '@/components/product/product-display'
+import { SuggestedProducts } from '@/components/product/suggested-product'
 import { Button } from '@/components/ui/button'
-import { useProduct } from '@/hooks/products'
+import { useProduct, useProductSuggestions } from '@/hooks/products'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
 import { memo, useEffect } from 'react'
@@ -20,6 +21,8 @@ function ProductDetailsPage() {
 const RouteComponent = memo(function RouteComponent() {
   const { id } = Route.useParams()
   const { product, isLoading, error } = useProduct(id)
+
+  const { suggestions } = useProductSuggestions(id)
 
   useEffect(() => {
     if (error) {
@@ -76,6 +79,8 @@ const RouteComponent = memo(function RouteComponent() {
   return (
     <DefaultPageLayout>
       <ProductDisplay key={product.id} product={product} />
+
+      <SuggestedProducts products={suggestions ?? []} />
     </DefaultPageLayout>
   )
 })

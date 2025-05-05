@@ -57,6 +57,14 @@ export const createProduct = async (product: CreateProductRequest) => {
   return response.data
 }
 
+export async function fetchProductSuggestions(productId: string) {
+  const response = await axios.get<ProductForSale[]>(
+    `${import.meta.env.PUBLIC_API_URL}/products/suggestions?productId=${productId}`,
+  )
+
+  return response.data
+}
+
 export type UpdateProductRequest = Omit<Product, 'createdAt' | 'updatedAt'>
 
 export const updateProduct = async (product: UpdateProductRequest) => {
