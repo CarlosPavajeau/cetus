@@ -43,8 +43,9 @@ export function OrderItems({
                 <Image
                   src={getImageUrl(item.imageUrl || 'placeholder.svg')}
                   alt={item.productName}
-                  layout="fill"
-                  className="rounded-md object-cover"
+                  fill
+                  className="rounded-sm object-cover"
+                  priority
                 />
               </div>
 
