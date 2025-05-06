@@ -20,9 +20,13 @@ function ProductDetailsPage() {
 
 const RouteComponent = memo(function RouteComponent() {
   const { id } = Route.useParams()
-  const { product, isLoading, error } = useProduct(id)
 
+  const { product, isLoading, error } = useProduct(id)
   const { suggestions } = useProductSuggestions(id)
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [id])
 
   useEffect(() => {
     if (error) {
