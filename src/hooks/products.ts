@@ -5,7 +5,7 @@ import {
   fetchProductSuggestions,
   fetchProducts,
   fetchProductsForSale,
-  updateProduct
+  updateProduct,
 } from '@/api/products'
 import type {
   CreateProductFormValues,
