@@ -109,7 +109,7 @@ export function NewOrdersSummary() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5">
+      <CardContent className="flex flex-col gap-5 pb-6">
         <div className="flex h-5 gap-1">
           {statusInsights.map((status, index) => (
             <div

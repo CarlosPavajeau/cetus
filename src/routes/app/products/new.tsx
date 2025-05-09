@@ -63,7 +63,9 @@ function ProductCreateForm() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <h1 className="font-heading font-semibold text-2xl">Crear producto</h1>
+      <h1 className="mb-6 font-heading font-semibold text-2xl">
+        Crear producto
+      </h1>
 
       <Form {...form}>
         <form

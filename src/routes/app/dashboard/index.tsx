@@ -55,7 +55,7 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
           Panel de control
         </h1>
@@ -86,7 +86,7 @@ function RouteComponent() {
 
       <OrdersInsights />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <CompleteOrdersChart />
 
         <NewOrdersSummary />

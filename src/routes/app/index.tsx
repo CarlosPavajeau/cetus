@@ -226,9 +226,9 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <h1 className="font-heading font-semibold text-2xl">Pedidos</h1>
+      <h1 className="mb-6 font-heading font-semibold text-2xl">Pedidos</h1>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <SearchInput table={table} id={id} />
 
