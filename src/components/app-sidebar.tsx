@@ -73,7 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <div className="flex items-center justify-center px-4 py-6">
           <div className="grid flex-1 text-center">
-            <span className="text-lg font-semibold tracking-tight text-primary">
+            <span className="font-semibold text-lg text-primary tracking-tight">
               TELEDIGITAL JYA
             </span>
           </div>
@@ -85,7 +85,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         {MENU.map((group) => (
           <SidebarGroup key={group.id}>
-            <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+            <SidebarGroupLabel className="px-4 font-medium text-muted-foreground/70 text-xs uppercase tracking-wider">
               {group.title}
             </SidebarGroupLabel>
             <SidebarGroupContent className="px-2">
@@ -93,7 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {group.items.map((tab) => (
                   <SidebarMenuItem key={tab.href}>
                     <SidebarMenuButton
-                      className="group/menu-button h-10 gap-3 font-medium transition-colors group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto hover:bg-accent/50"
+                      className="group/menu-button h-10 gap-3 font-medium transition-colors hover:bg-accent/50 group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
                       isActive={currentPath === tab.href}
                       onClick={closeSidebar}
                       asChild
