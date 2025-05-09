@@ -23,12 +23,14 @@ function RouteComponent() {
           <SidebarProvider>
             <AppSidebar />
 
-            <SidebarInset className="overflow-hidden px-4 md:px-6 lg:px-8">
+            <SidebarInset className="flex min-h-screen flex-col overflow-hidden">
               <AppNav />
 
-              <div className="flex flex-1 flex-col gap-4 py-4 lg:gap-6 lg:py-6">
-                <Outlet />
-              </div>
+              <main className="flex-1 overflow-auto">
+                <div className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
+                  <Outlet />
+                </div>
+              </main>
             </SidebarInset>
           </SidebarProvider>
         </Protect>

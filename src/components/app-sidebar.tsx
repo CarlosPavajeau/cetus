@@ -71,19 +71,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <div className="flex items-center justify-center px-2 py-3">
-          <div className="grid flex-1 text-center text-base leading-tight">
-            <span className="truncate font-medium">TELEDIGITAL JYA</span>
+        <div className="flex items-center justify-center px-4 py-6">
+          <div className="grid flex-1 text-center">
+            <span className="text-lg font-semibold tracking-tight text-primary">
+              TELEDIGITAL JYA
+            </span>
           </div>
         </div>
 
-        <hr className="-mt-px mx-2 border-border border-t" />
+        <hr className="mx-4 border-border/40" />
       </SidebarHeader>
 
       <SidebarContent>
         {MENU.map((group) => (
           <SidebarGroup key={group.id}>
-            <SidebarGroupLabel className="text-muted-foreground uppercase">
+            <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
               {group.title}
             </SidebarGroupLabel>
             <SidebarGroupContent className="px-2">
@@ -91,15 +93,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {group.items.map((tab) => (
                   <SidebarMenuItem key={tab.href}>
                     <SidebarMenuButton
-                      className="group/menu-button h-9 gap-3 font-medium group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
+                      className="group/menu-button h-10 gap-3 font-medium transition-colors group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto hover:bg-accent/50"
                       isActive={currentPath === tab.href}
                       onClick={closeSidebar}
                       asChild
                     >
                       <Link to={tab.href}>
-                        <span>{tab.label}</span>
+                        <span className="text-sm">{tab.label}</span>
                         {tab.isNew && (
-                          <Badge>
+                          <Badge variant="secondary" className="ml-auto">
                             <span className="text-xs">Nuevo</span>
                           </Badge>
                         )}
