@@ -12,9 +12,9 @@ import { useSearch } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   Rectangle,
   XAxis,
   YAxis,
@@ -74,7 +74,10 @@ export function CompleteOrdersChart() {
     from: '/app/dashboard/',
   })
   const { isLoading, summary } = useOrdersSummary(month)
-  const formatter = useDateFormatter({
+  const dayFormmatter = useDateFormatter({
+    day: 'numeric',
+  })
+  const monthFormatter = useDateFormatter({
     month: 'short',
     day: 'numeric',
   })
@@ -154,15 +157,19 @@ export function CompleteOrdersChart() {
           config={chartConfig}
           className="aspect-auto h-full min-h-72 w-full [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-(--chart-1)/15 [&_.recharts-rectangle.recharts-tooltip-inner-cursor]:fill-white/20"
         >
-          <LineChart
+          <AreaChart
             accessibilityLayer
             data={chartData}
             margin={{ left: -12, right: 12, top: 12 }}
           >
             <defs>
-              <linearGradient id="chart-gradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--chart-2)" />
-                <stop offset="100%" stopColor="var(--chart-1)" />
+              <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--chart-1)"
+                  stopOpacity={0.8}
+                />
+                <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -174,7 +181,7 @@ export function CompleteOrdersChart() {
               dataKey="createdAt"
               tickLine={false}
               tickMargin={12}
-              tickFormatter={(value) => formatter.format(new Date(value))}
+              tickFormatter={(value) => dayFormmatter.format(new Date(value))}
               stroke="var(--border)"
             />
             <YAxis
@@ -186,7 +193,9 @@ export function CompleteOrdersChart() {
             <ChartTooltip
               content={
                 <CustomTooltipContent
-                  labelFormatter={(label) => formatter.format(new Date(label))}
+                  labelFormatter={(label) =>
+                    monthFormatter.format(new Date(label))
+                  }
                   colorMap={{
                     count: 'var(--chart-1)',
                   }}
@@ -200,10 +209,12 @@ export function CompleteOrdersChart() {
               cursor={<CustomCursor fill="var(--chart-1)" />}
             />
 
-            <Line
-              type="linear"
+            <Area
+              type="monotone"
               dataKey="count"
-              stroke="url(#chart-gradient)"
+              stroke="var(--chart-1)"
+              fillOpacity={1}
+              fill="url(#colorGradient)"
               strokeWidth={2}
               dot={false}
               activeDot={{
@@ -213,7 +224,7 @@ export function CompleteOrdersChart() {
                 strokeWidth: 2,
               }}
             />
-          </LineChart>
+          </AreaChart>
         </ChartContainer>
       </CardContent>
     </Card>
