@@ -73,7 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <div className="flex items-center justify-center px-4 py-6">
           <div className="grid flex-1 text-center">
-            <span className="font-semibold text-lg text-primary tracking-tight">
+            <span className="font-semibold text-lg text-primary tracking-tight dark:text-primary-foreground">
               TELEDIGITAL JYA
             </span>
           </div>
