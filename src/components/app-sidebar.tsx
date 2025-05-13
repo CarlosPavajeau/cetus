@@ -11,7 +11,13 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { LayoutDashboardIcon, PackageIcon, ShoppingBasketIcon, TagIcon, TruckIcon } from 'lucide-react'
+import {
+  LayoutDashboardIcon,
+  PackageIcon,
+  ShoppingBasketIcon,
+  TagIcon,
+  TruckIcon,
+} from 'lucide-react'
 import { Badge } from './ui/badge'
 
 type SidebarMenuItem = {
@@ -26,25 +32,25 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuItem> = [
     label: 'Pedidos',
     href: '/app',
     isNew: false,
-    icon: PackageIcon
+    icon: PackageIcon,
   },
   {
     label: 'Productos',
     href: '/app/products',
     isNew: false,
-    icon: ShoppingBasketIcon
+    icon: ShoppingBasketIcon,
   },
   {
     label: 'Categorias',
     href: '/app/categories',
     isNew: false,
-    icon: TagIcon
+    icon: TagIcon,
   },
   {
     label: 'Panel',
     href: '/app/dashboard',
     isNew: false,
-    icon: LayoutDashboardIcon
+    icon: LayoutDashboardIcon,
   },
 ] as const
 
@@ -53,7 +59,7 @@ const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuItem> = [
     label: 'Costos de envio',
     href: '/app/delivery-fees',
     isNew: false,
-    icon: TruckIcon
+    icon: TruckIcon,
   },
 ] as const
 
@@ -83,8 +89,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader className='h-16 border-b'>
-        <div className='flex h-full items-center justify-center text-center'>
+      <SidebarHeader className="h-16 border-b">
+        <div className="flex h-full items-center justify-center text-center">
           <span className="font-semibold text-md text-primary tracking-tight dark:text-primary-foreground">
             TELEDIGITAL JYA
           </span>
@@ -94,9 +100,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         {MENU.map((group) => (
           <SidebarGroup key={group.id}>
-            <SidebarGroupLabel>
-              {group.title}
-            </SidebarGroupLabel>
+            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((tab) => (
@@ -108,8 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       asChild
                     >
                       <Link to={tab.href}>
-                        {tab.icon && (
-                          <tab.icon />)}
+                        {tab.icon && <tab.icon />}
                         <span className="text-sm">{tab.label}</span>
                         {tab.isNew && (
                           <Badge variant="secondary" className="ml-auto">

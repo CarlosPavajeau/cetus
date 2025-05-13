@@ -27,14 +27,14 @@ export function DataTable<T = unknown>({ table, onRowClick }: Props<T>) {
               <TableHead
                 key={header.id}
                 style={{ width: `${header.getSize()}px` }}
-                className="relative h-9 select-none border-border border-y bg-sidebar first:rounded-l-lg first:border-l last:rounded-r-lg last:border-r"
+                className="relative h-9 select-none border-border border-y bg-muted first:rounded-l-lg first:border-l last:rounded-r-lg last:border-r"
               >
                 {header.isPlaceholder
                   ? null
                   : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
+                    header.column.columnDef.header,
+                    header.getContext(),
+                  )}
               </TableHead>
             ))}
           </TableRow>

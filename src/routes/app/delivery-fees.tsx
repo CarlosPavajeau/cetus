@@ -93,7 +93,7 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Costos de envío</h1>
 
         <CreateDeliveryFeeDialog />
