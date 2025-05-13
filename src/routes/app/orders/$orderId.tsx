@@ -133,7 +133,7 @@ function OrderDetailsComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <h1 className="font-heading font-semibold text-2xl">
+      <h1 className='mb-6 font-heading font-semibold text-2xl'>
         Procesamiento del pedido #{order.orderNumber}
       </h1>
 
