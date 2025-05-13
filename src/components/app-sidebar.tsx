@@ -11,36 +11,49 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Link, useRouterState } from '@tanstack/react-router'
+import { LayoutDashboardIcon, PackageIcon, ShoppingBasketIcon, TagIcon, TruckIcon } from 'lucide-react'
 import { Badge } from './ui/badge'
 
-const MAIN_MENU = [
+type SidebarMenuItem = {
+  label: string
+  href: string
+  isNew: boolean
+  icon?: React.ComponentType
+}
+
+const MAIN_MENU: ReadonlyArray<SidebarMenuItem> = [
   {
     label: 'Pedidos',
     href: '/app',
     isNew: false,
+    icon: PackageIcon
   },
   {
     label: 'Productos',
     href: '/app/products',
     isNew: false,
+    icon: ShoppingBasketIcon
   },
   {
     label: 'Categorias',
     href: '/app/categories',
     isNew: false,
+    icon: TagIcon
   },
   {
     label: 'Panel',
     href: '/app/dashboard',
     isNew: false,
+    icon: LayoutDashboardIcon
   },
 ] as const
 
-const CONFIGURATIONS_MENU = [
+const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuItem> = [
   {
     label: 'Costos de envio',
     href: '/app/delivery-fees',
     isNew: false,
+    icon: TruckIcon
   },
 ] as const
 
@@ -70,35 +83,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
-        <div className="flex items-center justify-center px-4 py-6">
-          <div className="grid flex-1 text-center">
-            <span className="font-semibold text-lg text-primary tracking-tight dark:text-primary-foreground">
-              TELEDIGITAL JYA
-            </span>
-          </div>
+      <SidebarHeader className='h-16 border-b'>
+        <div className='flex h-full items-center justify-center text-center'>
+          <span className="font-semibold text-md text-primary tracking-tight dark:text-primary-foreground">
+            TELEDIGITAL JYA
+          </span>
         </div>
-
-        <hr className="mx-4 border-border/40" />
       </SidebarHeader>
 
       <SidebarContent>
         {MENU.map((group) => (
           <SidebarGroup key={group.id}>
-            <SidebarGroupLabel className="px-4 font-medium text-muted-foreground/70 text-xs uppercase tracking-wider">
+            <SidebarGroupLabel>
               {group.title}
             </SidebarGroupLabel>
-            <SidebarGroupContent className="px-2">
+            <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((tab) => (
                   <SidebarMenuItem key={tab.href}>
                     <SidebarMenuButton
-                      className="group/menu-button h-10 gap-3 font-medium transition-colors hover:bg-accent/50 group-data-[collapsible=icon]:px-[5px]! [&>svg]:size-auto"
                       isActive={currentPath === tab.href}
                       onClick={closeSidebar}
+                      tooltip={tab.label}
                       asChild
                     >
                       <Link to={tab.href}>
+                        {tab.icon && (
+                          <tab.icon />)}
                         <span className="text-sm">{tab.label}</span>
                         {tab.isNew && (
                           <Badge variant="secondary" className="ml-auto">
