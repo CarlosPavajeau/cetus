@@ -23,7 +23,7 @@ function RouteComponent() {
           <SidebarProvider>
             <AppSidebar />
 
-            <SidebarInset className="flex min-h-screen flex-col overflow-hidden">
+            <SidebarInset className="flex min-h-screen flex-col">
               <AppNav />
 
               <main className="flex-1 overflow-auto">

@@ -150,13 +150,7 @@ function RouteComponent() {
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="font-heading font-semibold text-2xl">Pedidos</h1>
-
-          <Badge variant="secondary" className="rounded-sm px-1 font-normal">
-            En contrucción
-          </Badge>
-        </div>
+        <h1 className="font-heading font-semibold text-2xl">Pedidos</h1>
 
         <div>
           <Button variant="outline" onClick={refresh}>
