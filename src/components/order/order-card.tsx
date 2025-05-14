@@ -1,5 +1,4 @@
 import {
-  OrderStatus,
   OrderStatusColor,
   OrderStatusText,
   type SimpleOrder,
@@ -11,13 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/shared/cn'
 import { Link } from '@tanstack/react-router'
-import {
-  ClockIcon,
-  EyeIcon,
-  MapPinIcon,
-  PackageIcon,
-  XIcon,
-} from 'lucide-react'
+import { ClockIcon, EyeIcon, MapPinIcon } from 'lucide-react'
 
 type Props = {
   order: SimpleOrder
@@ -61,7 +54,7 @@ export function OrderCard({ order }: Props) {
           </div>
 
           {/* Action buttons */}
-          <div className="mt-2 flex justify-end border-t pt-2">
+          <div className="mt-4 flex justify-end border-t pt-4">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -70,34 +63,10 @@ export function OrderCard({ order }: Props) {
                 asChild
               >
                 <Link to="/app/orders/$orderId" params={{ orderId: order.id }}>
-                  <EyeIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Ver detalles</span>
+                  <EyeIcon />
+                  <span>Ver detalles</span>
                 </Link>
               </Button>
-
-              {order.status === OrderStatus.Paid && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 border-emerald-200 bg-emerald-50 font-normal text-emerald-700 hover:bg-emerald-100"
-                >
-                  <PackageIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Marcar como enviado</span>
-                </Button>
-              )}
-
-              {order.status === OrderStatus.Pending && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 border-red-200 bg-red-50 font-normal text-red-700 hover:bg-red-100"
-                  >
-                    <XIcon className="h-4 w-4" />
-                    <span className="hidden sm:inline">Cancelar</span>
-                  </Button>
-                </>
-              )}
             </div>
           </div>
         </div>
