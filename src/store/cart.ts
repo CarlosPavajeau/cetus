@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 import type { ProductForSale } from '@/api/products'
 
-type CartItem = {
+export type CartItem = {
   product: ProductForSale
   quantity: number
 }
