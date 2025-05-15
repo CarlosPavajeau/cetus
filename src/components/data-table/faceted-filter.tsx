@@ -44,11 +44,11 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="border-dashed">
-          <FilterIcon />
+        <Button variant="outline" className="gap-2 border-dashed">
+          <FilterIcon size={16} aria-hidden="true" />
           {title}
 
-          {selectedValues?.size > 0 && (
+          {selectedValues && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
@@ -58,7 +58,7 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
                 {selectedValues.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
+                {selectedValues.size > 2 || selectedValues.size === 0 ? (
                   <Badge
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
