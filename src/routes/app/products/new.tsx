@@ -65,9 +65,7 @@ function ProductCreateForm() {
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
       <div className="space-y-4">
-        <h1 className="font-heading font-semibold text-2xl">
-          Crear producto
-        </h1>
+        <h1 className="font-heading font-semibold text-2xl">Crear producto</h1>
 
         <ReturnButton />
 
@@ -76,7 +74,7 @@ function ProductCreateForm() {
             onSubmit={form.handleSubmit((values) =>
               createProductMutation.mutate(values),
             )}
-            className='space-y-8 rounded-md border border-muted bg-card p-4 md:p-8'
+            className="space-y-8 rounded-md border border-muted bg-card p-4 md:p-8"
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-4">
