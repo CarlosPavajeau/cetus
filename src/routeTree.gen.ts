@@ -16,7 +16,6 @@ import { Route as OrdersImport } from './routes/orders'
 import { Route as CartImport } from './routes/cart'
 import { Route as AppImport } from './routes/app'
 import { Route as IndexImport } from './routes/index'
-import { Route as CartIndexImport } from './routes/cart/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as ProductsIdImport } from './routes/products/$id'
 import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
@@ -58,12 +57,6 @@ const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
-} as any)
-
-const CartIndexRoute = CartIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => CartRoute,
 } as any)
 
 const AppIndexRoute = AppIndexImport.update({
@@ -193,13 +186,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexImport
       parentRoute: typeof AppImport
     }
-    '/cart/': {
-      id: '/cart/'
-      path: '/'
-      fullPath: '/cart/'
-      preLoaderRoute: typeof CartIndexImport
-      parentRoute: typeof CartImport
-    }
     '/app/orders/$orderId': {
       id: '/app/orders/$orderId'
       path: '/orders/$orderId'
@@ -269,16 +255,6 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
-interface CartRouteChildren {
-  CartIndexRoute: typeof CartIndexRoute
-}
-
-const CartRouteChildren: CartRouteChildren = {
-  CartIndexRoute: CartIndexRoute,
-}
-
-const CartRouteWithChildren = CartRoute._addFileChildren(CartRouteChildren)
-
 interface OrdersRouteChildren {
   OrdersOrderIdCheckoutRoute: typeof OrdersOrderIdCheckoutRoute
   OrdersOrderIdConfirmationRoute: typeof OrdersOrderIdConfirmationRoute
@@ -307,14 +283,13 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/cart': typeof CartRouteWithChildren
+  '/cart': typeof CartRoute
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
-  '/cart/': typeof CartIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
@@ -325,13 +300,13 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cart': typeof CartRoute
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app': typeof AppIndexRoute
-  '/cart': typeof CartIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
@@ -344,14 +319,13 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/cart': typeof CartRouteWithChildren
+  '/cart': typeof CartRoute
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
-  '/cart/': typeof CartIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/checkout': typeof OrdersOrderIdCheckoutRoute
@@ -372,7 +346,6 @@ export interface FileRouteTypes {
     | '/app/delivery-fees'
     | '/products/$id'
     | '/app/'
-    | '/cart/'
     | '/app/orders/$orderId'
     | '/app/products/new'
     | '/orders/$orderId/checkout'
@@ -382,13 +355,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cart'
     | '/orders'
     | '/products'
     | '/app/categories'
     | '/app/delivery-fees'
     | '/products/$id'
     | '/app'
-    | '/cart'
     | '/app/orders/$orderId'
     | '/app/products/new'
     | '/orders/$orderId/checkout'
@@ -406,7 +379,6 @@ export interface FileRouteTypes {
     | '/app/delivery-fees'
     | '/products/$id'
     | '/app/'
-    | '/cart/'
     | '/app/orders/$orderId'
     | '/app/products/new'
     | '/orders/$orderId/checkout'
@@ -419,7 +391,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  CartRoute: typeof CartRouteWithChildren
+  CartRoute: typeof CartRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   ProductsRoute: typeof ProductsRouteWithChildren
 }
@@ -427,7 +399,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  CartRoute: CartRouteWithChildren,
+  CartRoute: CartRoute,
   OrdersRoute: OrdersRouteWithChildren,
   ProductsRoute: ProductsRouteWithChildren,
 }
@@ -465,10 +437,7 @@ export const routeTree = rootRoute
       ]
     },
     "/cart": {
-      "filePath": "cart.tsx",
-      "children": [
-        "/cart/"
-      ]
+      "filePath": "cart.tsx"
     },
     "/orders": {
       "filePath": "orders.tsx",
@@ -498,10 +467,6 @@ export const routeTree = rootRoute
     "/app/": {
       "filePath": "app/index.tsx",
       "parent": "/app"
-    },
-    "/cart/": {
-      "filePath": "cart/index.tsx",
-      "parent": "/cart"
     },
     "/app/orders/$orderId": {
       "filePath": "app/orders/$orderId.tsx",
