@@ -124,7 +124,7 @@ function RouteComponent() {
         </Button>
       </div>
 
-      <div className="min-h-[100vh] flex-1 space-y-4 md:min-h-min">
+      <div className="grid gap-4 overflow-hidden">
         <DataTable table={table} />
         <TablePagination table={table} paginationInfo={paginationInfo} />
       </div>
