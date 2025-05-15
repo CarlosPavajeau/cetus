@@ -88,7 +88,7 @@ function useCartCheckout() {
   )
 
   const search = Route.useSearch()
-  const [orderId] = useState<string | undefined>(search.id)
+  const [orderId, setOrderId] = useState<string | undefined>(search.id)
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
@@ -99,6 +99,7 @@ function useCartCheckout() {
         to: '/checkout',
         search: { id: orderId },
       })
+      setOrderId(orderId)
     },
   })
 
