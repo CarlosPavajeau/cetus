@@ -204,11 +204,14 @@ function SearchInput({ table, id }: SearchInputProps) {
   }, [nameColumn])
 
   return (
-    <div className="relative">
+    <div className="relative flex-1">
       <Input
         id={`${id}-input`}
         ref={inputRef}
-        className={cn('peer min-w-60 ps-9', Boolean(filterValue) && 'pe-9')}
+        className={cn(
+          'peer min-w-60 flex-1 ps-9',
+          Boolean(filterValue) && 'pe-9',
+        )}
         value={filterValue ?? ''}
         onChange={(e) => nameColumn?.setFilterValue(e.target.value)}
         placeholder="Buscar por nombre..."
@@ -257,7 +260,7 @@ function CategoryFilter({ table }: CategoryFilterProps) {
       column={categoryColumn}
       title="Categoría"
       options={options}
-      width={350}
+      width={300}
     />
   )
 }
@@ -274,16 +277,9 @@ function RouteComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <h1 className="mb-6 font-heading font-semibold text-2xl">Productos</h1>
-
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <SearchInput table={table} id={id} />
-
-          <CategoryFilter table={table} />
-        </div>
-
-        <div className="flex items-center gap-3">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-heading font-semibold text-2xl">Productos</h1>
+        <div>
           <Button className="ml-auto" asChild>
             <Link to="/app/products/new">
               <PlusIcon
@@ -297,7 +293,13 @@ function RouteComponent() {
         </div>
       </div>
 
-      <div className="min-h-[100vh] flex-1 space-y-4 md:min-h-min">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <SearchInput table={table} id={id} />
+
+        <CategoryFilter table={table} />
+      </div>
+
+      <div className="grid gap-4 overflow-hidden">
         <DataTable table={table} />
         <TablePagination table={table} paginationInfo={paginationInfo} />
       </div>
