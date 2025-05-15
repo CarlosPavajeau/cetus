@@ -7,7 +7,7 @@ import { useTransaction } from '@/hooks/wompi/use-transaction'
 import { useCart } from '@/store/cart'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { CheckCircleIcon, ShoppingBagIcon, XIcon } from 'lucide-react'
+import { ArrowRightIcon, CheckCircleIcon, ShoppingBagIcon, XIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { z } from 'zod'
 
@@ -186,8 +186,15 @@ function OrderConfirmatioComponent() {
         </p>
 
         <div className="w-full max-w-xs space-y-3">
-          <Button className="w-full" disabled>
-            Ver pedido
+          <Button className='group w-full' asChild>
+            <Link to="/orders/$id" params={{ id: order.id }}>
+              Ver detalles del pedido
+              <ArrowRightIcon
+                className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
+                size={16}
+                aria-hidden="true"
+              />
+            </Link>
           </Button>
 
           <Button asChild variant="outline" className="w-full">
