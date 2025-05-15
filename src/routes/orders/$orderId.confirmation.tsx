@@ -103,6 +103,13 @@ function OrderConfirmatioComponent() {
             <Button className="w-full" disabled>
               Contactar soporte
             </Button>
+
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/">
+                <ShoppingBagIcon className="mr-2" />
+                Volver a la tienda
+              </Link>
+            </Button>
           </div>
         </motion.div>
       </DefaultPageLayout>
@@ -174,6 +181,13 @@ function OrderConfirmatioComponent() {
           <div className="w-full max-w-xs space-y-3">
             <Button className="w-full" disabled>
               Contactar soporte
+            </Button>
+
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/">
+                <ShoppingBagIcon className="mr-2" />
+                Volver a la tienda
+              </Link>
             </Button>
           </div>
         </motion.div>
