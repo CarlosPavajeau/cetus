@@ -1,15 +1,12 @@
-import { ContentLayout } from '@/components/content-layout'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import { OrderItems } from '@/components/order/order-items'
-import { OrderSummary } from '@/components/order/order-summary'
-import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
 import { useTransaction } from '@/hooks/wompi/use-transaction'
 import { useCart } from '@/store/cart'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { HomeIcon } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { CheckCircleIcon, ShoppingBagIcon, XIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { z } from 'zod'
 
@@ -49,10 +46,31 @@ function OrderConfirmatioComponent() {
   if (!order) {
     return (
       <DefaultPageLayout>
-        <PageHeader
-          title="Pedido no encontrado"
-          subtitle="No se pudo encontrar el pedido solicitado."
-        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-8 text-center"
+        >
+          <div className="mb-4 rounded-full bg-red-100 p-6">
+            <XIcon size={32} className="text-red-600" />
+          </div>
+          <h2 className="mb-2 font-semibold text-xl">¡Pedido no encontrado!</h2>
+          <p className="mb-2 text-muted-foreground">
+            Tu número de pedido es #
+            <span className="font-medium">{orderId}</span>.
+          </p>
+
+          <p className="mb-6 max-w-md text-muted-foreground">
+            No se pudo encontrar el pedido asociado a tu número. Por favor,
+            contacta al soporte para más ayuda.
+          </p>
+
+          <div className="w-full max-w-xs space-y-3">
+            <Button className="w-full" disabled>
+              Contactar soporte
+            </Button>
+          </div>
+        </motion.div>
       </DefaultPageLayout>
     )
   }
@@ -60,18 +78,33 @@ function OrderConfirmatioComponent() {
   if (!transaction) {
     return (
       <DefaultPageLayout>
-        <PageHeader
-          title="Transacción no encontrada"
-          subtitle={
-            <>
-              No se pudo encontrar la transacción de pago asociada a este
-              pedido. Por favor, ponte en contacto con nosotros para resolver
-              este problema. El código de transacción es{' '}
-              <span className="font-medium">{id}</span> y el código de pedido es
-              #<span className="font-medium">{order.orderNumber}</span>.
-            </>
-          }
-        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-8 text-center"
+        >
+          <div className="mb-4 rounded-full bg-red-100 p-6">
+            <XIcon size={32} className="text-red-600" />
+          </div>
+          <h2 className="mb-2 font-semibold text-xl">
+            ¡Transaccion no encontrada!
+          </h2>
+          <p className="mb-2 text-muted-foreground">
+            Tu número de pedido es #
+            <span className="font-medium">{order.orderNumber}</span>.
+          </p>
+
+          <p className="mb-6 max-w-md text-muted-foreground">
+            No se pudo encontrar la transacción asociada a tu pedido. Por favor,
+            contacta al soporte para más ayuda.
+          </p>
+
+          <div className="w-full max-w-xs space-y-3">
+            <Button className="w-full" disabled>
+              Contactar soporte
+            </Button>
+          </div>
+        </motion.div>
       </DefaultPageLayout>
     )
   }
@@ -79,18 +112,37 @@ function OrderConfirmatioComponent() {
   if (transaction.data.status === 'DECLINED') {
     return (
       <DefaultPageLayout>
-        <PageHeader
-          title="Tu pago ha sido rechazado"
-          subtitle={
-            <>
-              El pago de tu pedido ha sido rechazado. Por favor, ponte en
-              contacto con nosotros para resolver este problema. El código de
-              transacción es <span className="font-medium">{id}</span> y el
-              código de pedido es #
-              <span className="font-medium">{order.orderNumber}</span>.
-            </>
-          }
-        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-8 text-center"
+        >
+          <div className="mb-4 rounded-full bg-red-100 p-6">
+            <XIcon size={32} className="text-red-600" />
+          </div>
+          <h2 className="mb-2 font-semibold text-xl">
+            ¡Tu pago ha sido rechazado!
+          </h2>
+          <p className="mb-2 text-muted-foreground">
+            Tu número de pedido es #
+            <span className="font-medium">{order.orderNumber}</span>.
+          </p>
+
+          <p className="mb-6 max-w-md text-muted-foreground">
+            Tu pago ha sido rechazado. Por favor, revisa los detalles de tu
+            tarjeta o método de pago y vuelve a intentarlo. Si el problema
+            persiste, ponte en contacto con nosotros para resolverlo.
+          </p>
+
+          <div className="w-full max-w-xs space-y-3">
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/">
+                <ShoppingBagIcon className="mr-2" />
+                Volver a la tienda
+              </Link>
+            </Button>
+          </div>
+        </motion.div>
       </DefaultPageLayout>
     )
   }
@@ -98,66 +150,71 @@ function OrderConfirmatioComponent() {
   if (transaction.data.status === 'ERROR') {
     return (
       <DefaultPageLayout>
-        <PageHeader
-          title="Ha ocurrido un error con tu pago"
-          subtitle={
-            <>
-              Ha ocurrido un error con tu pago. Por favor, ponte en contacto con
-              nosotros para resolver este problema. El código de transacción es{' '}
-              <span className="font-medium">{id}</span> y el código de pedido es
-              #<span className="font-medium">{order.orderNumber}</span>.
-            </>
-          }
-        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-8 text-center"
+        >
+          <div className="mb-4 rounded-full bg-red-100 p-6">
+            <XIcon size={32} className="text-red-600" />
+          </div>
+          <h2 className="mb-2 font-semibold text-xl">
+            ¡Ha ocurrido un error con tu pago!
+          </h2>
+          <p className="mb-2 text-muted-foreground">
+            Tu número de pedido es #
+            <span className="font-medium">{order.orderNumber}</span>.
+          </p>
+
+          <p className="mb-6 max-w-md text-muted-foreground">
+            Ha ocurrido un error con tu pago. Por favor, ponte en contacto con
+            nosotros para resolver este problema.
+          </p>
+
+          <div className="w-full max-w-xs space-y-3">
+            <Button className="w-full" disabled>
+              Contactar soporte
+            </Button>
+          </div>
+        </motion.div>
       </DefaultPageLayout>
     )
   }
 
   return (
     <DefaultPageLayout>
-      <PageHeader
-        title={`Pedido #${order.orderNumber} confirmado`}
-        subtitle={
-          <>
-            <span className="font-medium">{order.customer.name}</span> tu pedido
-            ha sido confirmado.{' '}
-            <span className="font-medium">
-              Recueda que debes cancelar el costo del envío al recibir tu pedido
-            </span>
-            . Si tienes alguna duda, por favor, ponte en contacto con nosotros.
-            El código de transacción es{' '}
-            <span className="font-medium">{id}</span> y el código de pedido es #
-            <span className="font-medium">{order.orderNumber}</span>.
-          </>
-        }
-      />
-
-      <div className="mt-8 space-y-6">
-        <ContentLayout>
-          <OrderItems items={order.items} title="Productos en tu pedido" />
-
-          <div>
-            <div className="space-y-6">
-              <OrderSummary order={order} showStatus />
-            </div>
-          </div>
-        </ContentLayout>
-
-        <Button asChild>
-          <Link to="/">
-            <HomeIcon className="h-4 w-4" />
-            Volver al inicio
-          </Link>
-        </Button>
-
-        <div>
-          <span className="text-muted-foreground text-xs">
-            Tu pago puede estar pendiente de confirmación. Por favor, espera
-            unos minutos y revisa tu correo electrónico para confirmar que tu
-            pago ha sido procesado correctamente.
-          </span>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-8 text-center"
+      >
+        <div className="mb-4 rounded-full bg-emerald-100 p-6">
+          <CheckCircleIcon size={32} className="text-emerald-600" />
         </div>
-      </div>
+        <h2 className="mb-2 font-semibold text-xl">¡Pedido completado!</h2>
+        <p className="mb-2 text-muted-foreground">
+          Tu número de pedido es #
+          <span className="font-medium">{order.orderNumber}</span>.
+        </p>
+
+        <p className="mb-6 max-w-md text-muted-foreground">
+          Enviaremos un correo electrónico con los detalles de tu compra.
+          Gracias por tu preferencia.
+        </p>
+
+        <div className="w-full max-w-xs space-y-3">
+          <Button className="w-full" disabled>
+            Ver pedido
+          </Button>
+
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/">
+              <ShoppingBagIcon className="mr-2" />
+              Seguir comprando
+            </Link>
+          </Button>
+        </div>
+      </motion.div>
     </DefaultPageLayout>
   )
 }
