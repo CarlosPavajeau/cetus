@@ -26,37 +26,44 @@ export function TransactionSummary({ id }: Props) {
   }
 
   return (
-    <div className="rounded-md border bg-card p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-medium text-lg">Resumen de la transacción</h2>
+    <div className="space-y-3 rounded-md border bg-card p-4">
+      <h3 className="font-medium">Resumen de la transacción</h3>
 
-        <Badge variant="outline">
-          <span
-            className={cn(
-              'size-1.5 rounded-full',
-              TransactionStatusColor[transaction.data.status],
-            )}
-            aria-hidden="true"
-          ></span>
-          {TransactionStatusText[transaction.data.status]}
-        </Badge>
-      </div>
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Estado</span>
 
-      <div className="space-y-3">
-        <div className="flex flex-wrap justify-between text-sm">
+          <span>
+            <Badge variant="outline">
+              <span
+                className={cn(
+                  'size-1.5 rounded-full',
+                  TransactionStatusColor[transaction.data.status],
+                )}
+                aria-hidden="true"
+              ></span>
+              {TransactionStatusText[transaction.data.status]}
+            </Badge>
+          </span>
+        </div>
+
+        <div className="flex justify-between">
           <span className="text-muted-foreground">Id</span>
+
           <span>{transaction.data.id}</span>
         </div>
 
-        <div className="flex flex-wrap justify-between text-sm">
+        <div className="flex justify-between">
           <span className="text-muted-foreground">Método de pago</span>
+
           <span>
             {TransactionPaymentMethodText[transaction.data.payment_method_type]}
           </span>
         </div>
 
-        <div className="flex flex-wrap justify-between text-sm">
+        <div className="flex justify-between">
           <span className="text-muted-foreground">Monto</span>
+
           <span>
             <Currency
               value={transaction.data.amount_in_cents / 100}
@@ -65,8 +72,9 @@ export function TransactionSummary({ id }: Props) {
           </span>
         </div>
 
-        <div className="flex flex-wrap justify-between text-sm">
+        <div className="flex justify-between">
           <span className="text-muted-foreground">Fecha</span>
+
           <span>
             <FormattedDate date={new Date(transaction.data.created_at)} />
           </span>
