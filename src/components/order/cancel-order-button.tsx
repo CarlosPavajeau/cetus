@@ -59,7 +59,7 @@ export function CancelOrderButton({ orderId }: Props) {
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>No, no quiero cancelar</AlertDialogCancel>
 
           <Button
             variant="destructive"
