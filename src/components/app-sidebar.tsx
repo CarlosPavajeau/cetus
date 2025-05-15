@@ -4,7 +4,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -89,14 +88,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader className="h-16 border-b">
-        <div className="flex h-full items-center justify-center text-center">
-          <span className="font-semibold text-md text-primary tracking-tight dark:text-primary-foreground">
-            TELEDIGITAL JYA
-          </span>
-        </div>
-      </SidebarHeader>
-
       <SidebarContent>
         {MENU.map((group) => (
           <SidebarGroup key={group.id}>

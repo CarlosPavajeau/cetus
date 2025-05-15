@@ -14,7 +14,7 @@ export const AppNav = () => {
         <ThemeSwitch />
       </div>
 
-      <div className="ml-auto flex items-center gap-4 px-4">
+      <div className="ml-auto flex h-4 items-center gap-4 px-6">
         <OrganizationSwitcher
           hidePersonal
           appearance={{
@@ -25,7 +25,7 @@ export const AppNav = () => {
           }}
         />
 
-        <Separator orientation="vertical" className="h-6 bg-border/40" />
+        <Separator orientation="vertical" className="mr-2 ml-2 h-4" />
 
         <UserButton
           appearance={{

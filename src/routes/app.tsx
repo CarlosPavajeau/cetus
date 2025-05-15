@@ -26,10 +26,8 @@ function RouteComponent() {
             <SidebarInset className="flex min-h-screen flex-col">
               <AppNav />
 
-              <main className="flex-1 overflow-auto">
-                <div className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
-                  <Outlet />
-                </div>
+              <main className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
+                <Outlet />
               </main>
             </SidebarInset>
           </SidebarProvider>
