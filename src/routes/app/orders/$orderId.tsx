@@ -9,6 +9,7 @@ import { OrderItems } from '@/components/order/order-items'
 import { OrderSummary } from '@/components/order/order-summary'
 import { TransactionSummary } from '@/components/order/transaction-summary'
 import { PageHeader } from '@/components/page-header'
+import { ReturnButton } from '@/components/return-button'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
 import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
@@ -133,32 +134,36 @@ function OrderDetailsComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <h1 className="mb-6 font-heading font-semibold text-2xl">
-        Procesamiento del pedido #{order.orderNumber}
-      </h1>
+      <div className="space-y-4">
+        <h1 className="font-heading font-semibold text-2xl">
+          Procesamiento del pedido #{order.orderNumber}
+        </h1>
 
-      <ContentLayout>
-        <div>
-          <div className="space-y-6">
-            <OrderSummary order={order} showStatus showId />
+        <ReturnButton />
 
-            {order.transactionId && (
-              <TransactionSummary id={order.transactionId} />
-            )}
+        <ContentLayout>
+          <div>
+            <div className="space-y-6">
+              <OrderSummary order={order} showStatus showId />
 
-            {isCancelable && <CancelOrderButton orderId={orderId} />}
+              {order.transactionId && (
+                <TransactionSummary id={order.transactionId} />
+              )}
 
-            {order.status === OrderStatus.Paid && (
-              <CompleteOrderButton
-                orderId={orderId}
-                onSuccess={handleOrderSuccess}
-              />
-            )}
+              {isCancelable && <CancelOrderButton orderId={orderId} />}
+
+              {order.status === OrderStatus.Paid && (
+                <CompleteOrderButton
+                  orderId={orderId}
+                  onSuccess={handleOrderSuccess}
+                />
+              )}
+            </div>
           </div>
-        </div>
 
-        <OrderItems items={order.items} title="Productos del pedido" />
-      </ContentLayout>
+          <OrderItems items={order.items} title="Productos del pedido" />
+        </ContentLayout>
+      </div>
     </Protect>
   )
 }
