@@ -1,11 +1,9 @@
 import { OrderStatus, deliverOrder } from '@/api/orders'
 import { AccessDenied } from '@/components/access-denied'
-import { ContentLayout } from '@/components/content-layout'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { CancelOrderButton } from '@/components/order/cancel-order-button'
 import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
-import { OrderItems } from '@/components/order/order-items'
 import { OrderSummary } from '@/components/order/order-summary'
 import { TransactionSummary } from '@/components/order/transaction-summary'
 import { PageHeader } from '@/components/page-header'
@@ -134,35 +132,28 @@ function OrderDetailsComponent() {
 
   return (
     <Protect permission="org:app:access" fallback={<AccessDenied />}>
-      <div className="space-y-4">
-        <h1 className="font-heading font-semibold text-2xl">
-          Procesamiento del pedido #{order.orderNumber}
-        </h1>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <ReturnButton />
+          <h2 className="font-medium">
+            Procesamiento del pedido #{order.orderNumber}
+          </h2>
+        </div>
 
-        <ReturnButton />
+        <OrderSummary order={order} showId />
 
-        <ContentLayout>
-          <div>
-            <div className="space-y-6">
-              <OrderSummary order={order} showStatus showId />
+        {order.transactionId && <TransactionSummary id={order.transactionId} />}
 
-              {order.transactionId && (
-                <TransactionSummary id={order.transactionId} />
-              )}
+        <div className="space-y-3">
+          {order.status === OrderStatus.Paid && (
+            <CompleteOrderButton
+              orderId={order.id}
+              onSuccess={handleOrderSuccess}
+            />
+          )}
 
-              {isCancelable && <CancelOrderButton orderId={orderId} />}
-
-              {order.status === OrderStatus.Paid && (
-                <CompleteOrderButton
-                  orderId={orderId}
-                  onSuccess={handleOrderSuccess}
-                />
-              )}
-            </div>
-          </div>
-
-          <OrderItems items={order.items} title="Productos del pedido" />
-        </ContentLayout>
+          {isCancelable && <CancelOrderButton orderId={order.id} />}
+        </div>
       </div>
     </Protect>
   )
