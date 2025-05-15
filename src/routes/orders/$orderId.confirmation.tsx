@@ -1,5 +1,6 @@
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
+import { SupportButton } from '@/components/support-button'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
 import { useTransaction } from '@/hooks/wompi/use-transaction'
@@ -66,9 +67,9 @@ function OrderConfirmatioComponent() {
           </p>
 
           <div className="w-full max-w-xs space-y-3">
-            <Button className="w-full" disabled>
-              Contactar soporte
-            </Button>
+            <SupportButton
+              message={`Hola, he tenido un problema con mi pedido. El número de mi pedido es ${orderId}`}
+            />
           </div>
         </motion.div>
       </DefaultPageLayout>
@@ -100,9 +101,9 @@ function OrderConfirmatioComponent() {
           </p>
 
           <div className="w-full max-w-xs space-y-3">
-            <Button className="w-full" disabled>
-              Contactar soporte
-            </Button>
+            <SupportButton
+              message={`Hola, he tenido un problema con el pago de mi pedido. El número de mi pedido es ${order.orderNumber}`}
+            />
 
             <Button asChild variant="outline" className="w-full">
               <Link to="/">
@@ -142,46 +143,9 @@ function OrderConfirmatioComponent() {
           </p>
 
           <div className="w-full max-w-xs space-y-3">
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/">
-                <ShoppingBagIcon className="mr-2" />
-                Volver a la tienda
-              </Link>
-            </Button>
-          </div>
-        </motion.div>
-      </DefaultPageLayout>
-    )
-  }
-
-  if (transaction.data.status === 'ERROR') {
-    return (
-      <DefaultPageLayout>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-8 text-center"
-        >
-          <div className="mb-4 rounded-full bg-red-100 p-6">
-            <XIcon size={32} className="text-red-600" />
-          </div>
-          <h2 className="mb-2 font-semibold text-xl">
-            ¡Ha ocurrido un error con tu pago!
-          </h2>
-          <p className="mb-2 text-muted-foreground">
-            Tu número de pedido es #
-            <span className="font-medium">{order.orderNumber}</span>.
-          </p>
-
-          <p className="mb-6 max-w-md text-muted-foreground">
-            Ha ocurrido un error con tu pago. Por favor, ponte en contacto con
-            nosotros para resolver este problema.
-          </p>
-
-          <div className="w-full max-w-xs space-y-3">
-            <Button className="w-full" disabled>
-              Contactar soporte
-            </Button>
+            <SupportButton
+              message={`Hola, he tenido un problema con el pago de mi pedido. El número de mi pedido es ${order.orderNumber}`}
+            />
 
             <Button asChild variant="outline" className="w-full">
               <Link to="/">
@@ -216,6 +180,11 @@ function OrderConfirmatioComponent() {
           Gracias por tu preferencia.
         </p>
 
+        <p className="mb-6 max-w-md text-muted-foreground">
+          Recuerda que debes cancelar el costo del envío al momento de recibir
+          tu pedido.
+        </p>
+
         <div className="w-full max-w-xs space-y-3">
           <Button className="w-full" disabled>
             Ver pedido
@@ -227,6 +196,17 @@ function OrderConfirmatioComponent() {
               Seguir comprando
             </Link>
           </Button>
+        </div>
+
+        <small className="mt-4 text-muted-foreground text-xs">
+          Recuerda que tu pago puede tardar unos minutos en reflejarse
+          correctamente. Si tienes alguna duda, no dudes en contactarnos.
+        </small>
+
+        <div className="mt-6 w-full max-w-xs">
+          <SupportButton
+            message={`Hola, me gustaría saber más sobre mi pedido #${order.orderNumber}`}
+          />
         </div>
       </motion.div>
     </DefaultPageLayout>
