@@ -19,6 +19,7 @@ import { Route as AppImport } from './routes/app'
 import { Route as IndexImport } from './routes/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as ProductsIdImport } from './routes/products/$id'
+import { Route as OrdersIdImport } from './routes/orders/$id'
 import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesImport } from './routes/app/categories'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
@@ -75,6 +76,12 @@ const ProductsIdRoute = ProductsIdImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ProductsRoute,
+} as any)
+
+const OrdersIdRoute = OrdersIdImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => OrdersRoute,
 } as any)
 
 const AppDeliveryFeesRoute = AppDeliveryFeesImport.update({
@@ -179,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDeliveryFeesImport
       parentRoute: typeof AppImport
     }
+    '/orders/$id': {
+      id: '/orders/$id'
+      path: '/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof OrdersIdImport
+      parentRoute: typeof OrdersImport
+    }
     '/products/$id': {
       id: '/products/$id'
       path: '/$id'
@@ -256,10 +270,12 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface OrdersRouteChildren {
+  OrdersIdRoute: typeof OrdersIdRoute
   OrdersOrderIdConfirmationRoute: typeof OrdersOrderIdConfirmationRoute
 }
 
 const OrdersRouteChildren: OrdersRouteChildren = {
+  OrdersIdRoute: OrdersIdRoute,
   OrdersOrderIdConfirmationRoute: OrdersOrderIdConfirmationRoute,
 }
 
@@ -287,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -304,6 +321,7 @@ export interface FileRoutesByTo {
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/products/$id': typeof ProductsIdRoute
   '/app': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -323,6 +341,7 @@ export interface FileRoutesById {
   '/products': typeof ProductsRouteWithChildren
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/products/$id': typeof ProductsIdRoute
   '/app/': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -343,6 +362,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/orders/$id'
     | '/products/$id'
     | '/app/'
     | '/app/orders/$orderId'
@@ -359,6 +379,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/orders/$id'
     | '/products/$id'
     | '/app'
     | '/app/orders/$orderId'
@@ -376,6 +397,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/orders/$id'
     | '/products/$id'
     | '/app/'
     | '/app/orders/$orderId'
@@ -446,6 +468,7 @@ export const routeTree = rootRoute
     "/orders": {
       "filePath": "orders.tsx",
       "children": [
+        "/orders/$id",
         "/orders/$orderId/confirmation"
       ]
     },
@@ -462,6 +485,10 @@ export const routeTree = rootRoute
     "/app/delivery-fees": {
       "filePath": "app/delivery-fees.tsx",
       "parent": "/app"
+    },
+    "/orders/$id": {
+      "filePath": "orders/$id.tsx",
+      "parent": "/orders"
     },
     "/products/$id": {
       "filePath": "products/$id.tsx",
