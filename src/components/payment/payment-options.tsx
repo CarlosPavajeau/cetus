@@ -1,4 +1,3 @@
-import type { Order } from '@/api/orders'
 import { BancolombiaLogo, PSELogo } from '@/components/icons'
 import { BancolombiaPayment } from '@/components/payment/bancolombia-payment'
 import { CardPaymentForm } from '@/components/payment/card-payment-form'
@@ -6,6 +5,7 @@ import { NequiPaymentForm } from '@/components/payment/nequi-payment-form'
 import { PsePaymentForm } from '@/components/payment/pse-payment-form'
 import { Form } from '@/components/ui/form'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { useOrder } from '@/hooks/orders'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
 import { type PaymentFormValues, paymentSchema } from '@/schemas/payments'
 import { cn } from '@/shared/cn'
@@ -23,7 +23,7 @@ interface PaymentMethod {
 }
 
 interface PaymentOptionsProps {
-  order: Order
+  orderId: string
 }
 
 const PAYMENT_METHODS: readonly PaymentMethod[] = [
@@ -87,7 +87,7 @@ const PaymentMethodItem = memo(function PaymentMethodItem({
   )
 })
 
-export function PaymentOptions({ order }: PaymentOptionsProps) {
+export function PaymentOptions({ orderId }: PaymentOptionsProps) {
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -95,6 +95,7 @@ export function PaymentOptions({ order }: PaymentOptionsProps) {
       acceptance_token: '',
     },
   })
+  const { order, isLoading } = useOrder(orderId)
 
   const paymentMethod = form.watch('type')
 
@@ -121,6 +122,10 @@ export function PaymentOptions({ order }: PaymentOptionsProps) {
     () => (paymentMethod ? PAYMENT_FORMS[paymentMethod] : null),
     [paymentMethod],
   )
+
+  if (isLoading || !order) {
+    return null
+  }
 
   return (
     <Form {...form}>
