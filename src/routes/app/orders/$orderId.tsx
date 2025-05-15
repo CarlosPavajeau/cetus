@@ -138,8 +138,6 @@ function OrderDetailsComponent() {
       </h1>
 
       <ContentLayout>
-        <OrderItems items={order.items} title="Productos del pedido" />
-
         <div>
           <div className="space-y-6">
             <OrderSummary order={order} showStatus showId />
@@ -158,6 +156,8 @@ function OrderDetailsComponent() {
             )}
           </div>
         </div>
+
+        <OrderItems items={order.items} title="Productos del pedido" />
       </ContentLayout>
     </Protect>
   )
