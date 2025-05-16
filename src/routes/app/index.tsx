@@ -1,4 +1,8 @@
-import { ORDER_STATUS_OPTIONS, OrderStatus } from '@/api/orders'
+import {
+  ORDER_STATUS_OPTIONS,
+  OrderStatus,
+  type SimpleOrder,
+} from '@/api/orders'
 import { AccessDenied } from '@/components/access-denied'
 import { DefaultLoader } from '@/components/default-loader'
 import { OrderCard } from '@/components/order/order-card'
@@ -90,9 +94,11 @@ function RouteComponent() {
 
   const url = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
   const { connection } = useHub(url)
-  useClientMethod(connection, 'ReceiveCreatedOrder', () => {
-    queryClient.invalidateQueries({
-      queryKey: ['orders'],
+  useClientMethod(connection, 'ReceiveCreatedOrder', (order: SimpleOrder) => {
+    queryClient.setQueryData<SimpleOrder[]>(['orders'], (oldOrders) => {
+      if (!oldOrders) return [order]
+
+      return [...oldOrders, order]
     })
   })
 
