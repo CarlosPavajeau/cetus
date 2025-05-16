@@ -121,7 +121,9 @@ function ProductDisplayComponent({ product }: Props) {
       <div className="space-y-6">
         <div>
           <div className="space-y-2">
-            <Badge variant="outline">{product.category}</Badge>
+            <Badge variant="outline" className="gap-0 rounded-md px-2 py-1">
+              {product.category}
+            </Badge>
             <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
           </div>
           <div className="mt-4 font-bold text-2xl">
