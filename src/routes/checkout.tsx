@@ -94,7 +94,7 @@ function useCartCheckout() {
     mutationKey: ['orders', 'create'],
     mutationFn: createOrder,
     onSuccess: (data) => {
-      const orderId = data
+      const orderId = data.id
       navigate({
         to: '/checkout',
         search: { id: orderId },
