@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LoaderCircleIcon, TrashIcon } from 'lucide-react'
+import { AlertTriangleIcon, LoaderCircleIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 
 type Props = {
@@ -50,16 +50,18 @@ export function CancelOrderButton({ orderId }: Props) {
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            ¿Estás seguro de que deseas cancelar el pedido?
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangleIcon className="h-5 w-5 text-red-500" />
+            Confirmar acción
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Una vez cancelado, no podrás recuperar este pedido
+            ¿Estás seguro de que deseas cancelar el pedido? Esta acción no se
+            puede deshacer.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>No, no quiero cancelar</AlertDialogCancel>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
 
           <Button
             variant="destructive"
@@ -73,7 +75,7 @@ export function CancelOrderButton({ orderId }: Props) {
                 aria-hidden="true"
               />
             )}
-            Sí, cancelar pedido
+            Confirmar
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
