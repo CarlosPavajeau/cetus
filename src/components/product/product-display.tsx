@@ -4,13 +4,12 @@ import { Image } from '@/components/image'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
 import {
-  AlertCircle,
   ArrowLeftIcon,
-  Check,
   MinusIcon,
   PlusIcon,
   ShoppingCartIcon,
@@ -40,29 +39,30 @@ const QuantitySelector = memo(
 
     return (
       <div className="flex items-center">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 rounded-r-none border-r-0"
-          disabled={quantity <= 1}
-          onClick={onDecrement}
-          aria-label="Reducir cantidad"
-        >
-          <MinusIcon className="h-4 w-4" />
-        </Button>
-        <div className="flex h-9 w-12 items-center justify-center border">
-          <span className="font-medium">{quantity}</span>
+        <span className="mr-4 font-medium text-sm">Cantidad:</span>
+        <div className="flex items-center rounded-md border">
+          <button
+            className="p-2 text-muted-foreground"
+            onClick={onDecrement}
+            disabled={quantity <= 1}
+          >
+            <MinusIcon className="h-4 w-4" />
+          </button>
+          <span className="px-4">{quantity}</span>
+          <button
+            className="p-2 text-muted-foreground"
+            onClick={onIncrement}
+            disabled={isMaxReached}
+          >
+            <PlusIcon className="h-4 w-4" />
+          </button>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 rounded-l-none border-l-0"
-          aria-label="Aumentar cantidad"
-          onClick={onIncrement}
-          disabled={isMaxReached}
-        >
-          <PlusIcon className="h-4 w-4" />
-        </Button>
+
+        {isMaxReached && (
+          <span className="ml-4 text-red-500 text-sm">
+            Máximo: {max} unidades
+          </span>
+        )}
       </div>
     )
   },
@@ -118,41 +118,44 @@ function ProductDisplayComponent({ product }: Props) {
         />
       </div>
 
-      <div className="flex flex-col">
-        <div className="mb-2">
-          <Badge variant="outline" className="mb-2">
-            {product.category}
-          </Badge>
-          <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
+      <div className="space-y-6">
+        <div>
+          <div className="space-y-2">
+            <Badge variant="outline">{product.category}</Badge>
+            <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
+          </div>
+          <div className="mt-4 font-bold text-2xl">
+            <Currency value={product.price} currency="COP" />
+          </div>
         </div>
 
-        <div className="mb-4 font-bold text-2xl">
-          <Currency value={product.price} currency="COP" />
-        </div>
+        <Separator />
 
-        <div className="mb-4 flex items-center">
+        <div className="flex items-center gap-2">
           {product.stock > 2 ? (
-            <div className="flex items-center text-green-600">
-              <Check className="mr-1 h-4 w-4" />
-              <span>
-                En Stock
-                <span className="text-muted-foreground text-sm">
-                  {' '}
-                  ({product.stock} unidades restantes)
-                </span>
+            <>
+              <Badge
+                variant="outline"
+                className="border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900 dark:text-green-200"
+              >
+                En stock
+              </Badge>
+              <span className="text-muted-foreground text-sm">
+                ({product.stock} unidades restantes)
               </span>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center text-red-500">
-              <AlertCircle className="mr-1 h-4 w-4" />
-              <span>
-                Agotado
-                <span className="text-muted-foreground text-sm">
-                  {' '}
-                  ({product.stock} unidades restantes)
-                </span>
+            <>
+              <Badge
+                variant="outline"
+                className="border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+              >
+                Pocas unidades
+              </Badge>
+              <span className="text-muted-foreground text-sm">
+                ({product.stock} unidades restantes)
               </span>
-            </div>
+            </>
           )}
         </div>
 
