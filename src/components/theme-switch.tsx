@@ -14,7 +14,7 @@ export function ThemeSwitch() {
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <Button
           onClick={toggleTheme}
           variant="ghost"
