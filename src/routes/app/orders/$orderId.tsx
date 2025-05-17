@@ -1,7 +1,6 @@
 import { OrderStatus, deliverOrder } from '@/api/orders'
 import { AccessDenied } from '@/components/access-denied'
 import { DefaultLoader } from '@/components/default-loader'
-import { DefaultPageLayout } from '@/components/default-page-layout'
 import { CancelOrderButton } from '@/components/order/cancel-order-button'
 import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
 import { OrderSummary } from '@/components/order/order-summary'
@@ -112,21 +111,15 @@ function OrderDetailsComponent() {
   }, [order])
 
   if (isLoading) {
-    return (
-      <DefaultPageLayout showHeader={false}>
-        <DefaultLoader />
-      </DefaultPageLayout>
-    )
+    return <DefaultLoader />
   }
 
   if (!order) {
     return (
-      <DefaultPageLayout showHeader={false}>
-        <PageHeader
-          title="Pedido no encontrado"
-          subtitle="No se pudo encontrar el pedido solicitado."
-        />
-      </DefaultPageLayout>
+      <PageHeader
+        title="Pedido no encontrado"
+        subtitle="No se pudo encontrar el pedido solicitado."
+      />
     )
   }
 
