@@ -1,12 +1,13 @@
+import { CartButton } from '@/components/cart-button'
+import { Footer } from '@/components/footer'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SignedIn } from '@clerk/clerk-react'
 import { Link } from '@tanstack/react-router'
 import { LayoutDashboardIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { CartButton } from './cart-button'
-import { Button } from './ui/button'
 
 type Props = {
   children: ReactNode
@@ -21,6 +22,8 @@ export function DefaultPageLayout({ children, showHeader = true }: Props) {
       <main className="container mx-auto bg-background px-4 pt-6 pb-16 sm:px-6 lg:px-8">
         {children}
       </main>
+
+      <Footer />
     </div>
   )
 }
