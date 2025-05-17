@@ -11,8 +11,12 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as TermsImport } from './routes/terms'
+import { Route as ReturnsImport } from './routes/returns'
 import { Route as ProductsImport } from './routes/products'
+import { Route as PrivacyImport } from './routes/privacy'
 import { Route as OrdersImport } from './routes/orders'
+import { Route as FaqImport } from './routes/faq'
 import { Route as CheckoutImport } from './routes/checkout'
 import { Route as CartImport } from './routes/cart'
 import { Route as AppImport } from './routes/app'
@@ -30,15 +34,39 @@ import { Route as AppOrdersOrderIdImport } from './routes/app/orders/$orderId'
 
 // Create/Update Routes
 
+const TermsRoute = TermsImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ReturnsRoute = ReturnsImport.update({
+  id: '/returns',
+  path: '/returns',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const ProductsRoute = ProductsImport.update({
   id: '/products',
   path: '/products',
   getParentRoute: () => rootRoute,
 } as any)
 
+const PrivacyRoute = PrivacyImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const OrdersRoute = OrdersImport.update({
   id: '/orders',
   path: '/orders',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const FaqRoute = FaqImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -158,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutImport
       parentRoute: typeof rootRoute
     }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqImport
+      parentRoute: typeof rootRoute
+    }
     '/orders': {
       id: '/orders'
       path: '/orders'
@@ -165,11 +200,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersImport
       parentRoute: typeof rootRoute
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyImport
+      parentRoute: typeof rootRoute
+    }
     '/products': {
       id: '/products'
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsImport
+      parentRoute: typeof rootRoute
+    }
+    '/returns': {
+      id: '/returns'
+      path: '/returns'
+      fullPath: '/returns'
+      preLoaderRoute: typeof ReturnsImport
+      parentRoute: typeof rootRoute
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsImport
       parentRoute: typeof rootRoute
     }
     '/app/categories': {
@@ -299,8 +355,12 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
+  '/returns': typeof ReturnsRoute
+  '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -317,8 +377,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
+  '/returns': typeof ReturnsRoute
+  '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -337,8 +401,12 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
+  '/returns': typeof ReturnsRoute
+  '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -358,8 +426,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/cart'
     | '/checkout'
+    | '/faq'
     | '/orders'
+    | '/privacy'
     | '/products'
+    | '/returns'
+    | '/terms'
     | '/app/categories'
     | '/app/delivery-fees'
     | '/orders/$id'
@@ -375,8 +447,12 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/checkout'
+    | '/faq'
     | '/orders'
+    | '/privacy'
     | '/products'
+    | '/returns'
+    | '/terms'
     | '/app/categories'
     | '/app/delivery-fees'
     | '/orders/$id'
@@ -393,8 +469,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/cart'
     | '/checkout'
+    | '/faq'
     | '/orders'
+    | '/privacy'
     | '/products'
+    | '/returns'
+    | '/terms'
     | '/app/categories'
     | '/app/delivery-fees'
     | '/orders/$id'
@@ -413,8 +493,12 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  FaqRoute: typeof FaqRoute
   OrdersRoute: typeof OrdersRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
   ProductsRoute: typeof ProductsRouteWithChildren
+  ReturnsRoute: typeof ReturnsRoute
+  TermsRoute: typeof TermsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -422,8 +506,12 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  FaqRoute: FaqRoute,
   OrdersRoute: OrdersRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
   ProductsRoute: ProductsRouteWithChildren,
+  ReturnsRoute: ReturnsRoute,
+  TermsRoute: TermsRoute,
 }
 
 export const routeTree = rootRoute
@@ -440,8 +528,12 @@ export const routeTree = rootRoute
         "/app",
         "/cart",
         "/checkout",
+        "/faq",
         "/orders",
-        "/products"
+        "/privacy",
+        "/products",
+        "/returns",
+        "/terms"
       ]
     },
     "/": {
@@ -465,6 +557,9 @@ export const routeTree = rootRoute
     "/checkout": {
       "filePath": "checkout.tsx"
     },
+    "/faq": {
+      "filePath": "faq.tsx"
+    },
     "/orders": {
       "filePath": "orders.tsx",
       "children": [
@@ -472,11 +567,20 @@ export const routeTree = rootRoute
         "/orders/$orderId/confirmation"
       ]
     },
+    "/privacy": {
+      "filePath": "privacy.tsx"
+    },
     "/products": {
       "filePath": "products.tsx",
       "children": [
         "/products/$id"
       ]
+    },
+    "/returns": {
+      "filePath": "returns.tsx"
+    },
+    "/terms": {
+      "filePath": "terms.tsx"
     },
     "/app/categories": {
       "filePath": "app/categories.tsx",
