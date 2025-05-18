@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
-import { memo } from 'react'
+import { LoaderCircleIcon } from 'lucide-react'
+import { memo, useState } from 'react'
+import { toast } from 'sonner'
+import { ProductAddedNotification } from './product-added-notification'
 
 type Props = {
   product: ProductForSale
@@ -13,9 +16,28 @@ type Props = {
 
 function ProductCardComponent({ product }: Props) {
   const cart = useCart()
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
 
   const handleAddToCart = () => {
-    cart.add(product)
+    setIsAddingToCart(true)
+
+    // Simulate a small delay for better UX
+    setTimeout(() => {
+      const success = cart.add(product)
+      setIsAddingToCart(false)
+
+      if (!success) {
+        toast.error('No hay suficiente stock')
+        return
+      }
+
+      toast.custom((t) => (
+        <ProductAddedNotification
+          productName={product.name}
+          onClose={() => toast.dismiss(t)}
+        />
+      ))
+    }, 300)
   }
 
   return (
@@ -46,8 +68,19 @@ function ProductCardComponent({ product }: Props) {
             <Currency value={product.price} currency="COP" />
           </span>
         </div>
-        <Button className="mt-4 w-full" onClick={handleAddToCart}>
-          Añadir al carrito
+        <Button
+          className="mt-4 w-full"
+          onClick={handleAddToCart}
+          disabled={isAddingToCart}
+        >
+          {isAddingToCart ? (
+            <>
+              <LoaderCircleIcon className="animate-spin" aria-hidden="true" />
+              Agregando...
+            </>
+          ) : (
+            'Añadir al carrito'
+          )}
         </Button>
       </div>
     </div>
