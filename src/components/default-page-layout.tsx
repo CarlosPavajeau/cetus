@@ -19,7 +19,7 @@ export function DefaultPageLayout({ children, showHeader = true }: Props) {
     <div className="min-h-screen">
       {showHeader && <NavBar />}
 
-      <main className="container mx-auto bg-background px-4 pt-6 pb-16 sm:px-6 lg:px-8">
+      <main className="container mx-auto min-h-screen bg-background px-4 pt-6 pb-16 sm:px-6 lg:px-8">
         {children}
       </main>
 
