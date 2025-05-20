@@ -13,7 +13,11 @@ import { routeTree } from './routeTree.gen'
 
 import './styles/index.css'
 
-const router = createRouter({ routeTree, scrollRestoration: true })
+const router = createRouter({
+  routeTree,
+  scrollRestoration: true,
+  scrollRestorationBehavior: 'smooth',
+})
 
 declare module '@tanstack/react-router' {
   interface Register {
