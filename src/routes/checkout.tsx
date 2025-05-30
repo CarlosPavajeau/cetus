@@ -21,12 +21,14 @@ import {
   StepperTitle,
   StepperTrigger,
 } from '@/components/ui/stepper'
+import { useCustomer } from '@/hooks/customers.ts'
 import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrderFormValues, createOrderSchema } from '@/schemas/orders'
 import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useDebounce } from '@uidotdev/usehooks'
 import { ArrowRightIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -124,9 +126,24 @@ function useCartCheckout() {
   }
 }
 
+const CUSTOMER_ID_DELAY = 750 // milliseconds
+
 function CustomerInfoFields({
   form,
 }: { form: ReturnType<typeof useForm<CreateOrderFormValues>> }) {
+  const formCustomerId = form.watch('customer.id')
+  const customerId = useDebounce(formCustomerId, CUSTOMER_ID_DELAY)
+
+  const { customer, isLoading } = useCustomer(customerId)
+
+  useEffect(() => {
+    if (customer) {
+      form.setValue('customer.name', customer.name)
+      form.setValue('customer.email', customer.email)
+      form.setValue('customer.phone', customer.phone)
+    }
+  }, [customer, form])
+
   return (
     <div className="space-y-6 rounded-md border bg-card p-6">
       <div>
@@ -154,7 +171,7 @@ function CustomerInfoFields({
               <FormItem>
                 <FormLabel>Nombre completo</FormLabel>
                 <FormControl>
-                  <Input type="text" {...field} />
+                  <Input type="text" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -169,7 +186,7 @@ function CustomerInfoFields({
                 <FormItem>
                   <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input type="email" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -183,7 +200,7 @@ function CustomerInfoFields({
                 <FormItem>
                   <FormLabel>Teléfono</FormLabel>
                   <FormControl>
-                    <Input type="tel" {...field} />
+                    <Input type="tel" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
