@@ -162,16 +162,6 @@ export function CompleteOrdersChart() {
             data={chartData}
             margin={{ left: -12, right: 12, top: 12 }}
           >
-            <defs>
-              <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--chart-1)"
-                  stopOpacity={0.8}
-                />
-                <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
             <CartesianGrid
               vertical={false}
               strokeDasharray="2 2"
@@ -210,13 +200,11 @@ export function CompleteOrdersChart() {
             />
 
             <Area
-              type="monotone"
+              type="natural"
               dataKey="count"
               stroke="var(--chart-1)"
-              fillOpacity={1}
-              fill="url(#colorGradient)"
-              strokeWidth={2}
-              dot={false}
+              fill="var(--chart-1)"
+              fillOpacity={0.1}
               activeDot={{
                 r: 5,
                 fill: 'var(--chart-1)',
