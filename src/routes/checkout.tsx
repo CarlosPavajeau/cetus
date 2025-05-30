@@ -1,5 +1,6 @@
-import { createOrder } from '@/api/orders'
+import { type DeliveryFee, createOrder } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
+import { Currency } from '@/components/currency.tsx'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { PaymentOptions } from '@/components/payment/payment-options'
@@ -217,6 +218,36 @@ function CustomerInfoFields({
   )
 }
 
+type DeliveryFeeInfoProps = {
+  deliveryFee?: DeliveryFee
+  isLoadingDeliveryFee: boolean
+}
+
+function DeliveryFeeInfo({
+  deliveryFee,
+  isLoadingDeliveryFee,
+}: DeliveryFeeInfoProps) {
+  return (
+    <div>
+      <small className="text-muted-foreground text-xs">
+        Recuerda que el costo del envío es cancelado al momento de la entrega de
+        los productos.{' '}
+        {!isLoadingDeliveryFee && deliveryFee !== undefined ? (
+          <>
+            El costo del envío es de{' '}
+            <span className="font-medium">
+              <Currency value={deliveryFee.fee} currency="COP" />
+            </span>
+            .
+          </>
+        ) : (
+          'Debes seleccionar una ciudad para calcular el costo del envío.'
+        )}
+      </small>
+    </div>
+  )
+}
+
 const steps = [
   {
     step: 1,
@@ -229,7 +260,15 @@ const steps = [
 ]
 
 function RouteComponent() {
-  const { isEmpty, form, onSubmit, isSubmitting, orderId } = useCartCheckout()
+  const {
+    isEmpty,
+    form,
+    onSubmit,
+    isSubmitting,
+    orderId,
+    deliveryFee,
+    isLoadingDeliveryFee,
+  } = useCartCheckout()
   const [currentStep, setCurrentStep] = useState(1)
 
   useEffect(() => {
@@ -277,6 +316,11 @@ function RouteComponent() {
             <form onSubmit={onSubmit} className="space-y-6">
               <CustomerInfoFields form={form} />
 
+              <DeliveryFeeInfo
+                deliveryFee={deliveryFee}
+                isLoadingDeliveryFee={isLoadingDeliveryFee}
+              />
+
               <Button
                 type="submit"
                 className="group w-full"
@@ -296,6 +340,11 @@ function RouteComponent() {
         {currentStep === 2 && orderId && (
           <div className="space-y-6">
             <PaymentOptions orderId={orderId} />
+
+            <DeliveryFeeInfo
+              deliveryFee={deliveryFee}
+              isLoadingDeliveryFee={isLoadingDeliveryFee}
+            />
           </div>
         )}
       </div>
