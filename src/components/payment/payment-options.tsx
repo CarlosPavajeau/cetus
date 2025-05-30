@@ -91,7 +91,7 @@ export function PaymentOptions({ orderId }: PaymentOptionsProps) {
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      type: undefined,
+      type: 'CARD',
       acceptance_token: '',
     },
   })
