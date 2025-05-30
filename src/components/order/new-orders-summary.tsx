@@ -1,8 +1,11 @@
 import { OrderStatus, OrderStatusText } from '@/api/orders'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
+import { cn } from '@/shared/cn'
 import { useSearch } from '@tanstack/react-router'
+import { useNumberFormatter } from 'react-aria'
 
 type StatusInsight = {
   label: string
@@ -16,6 +19,13 @@ export function NewOrdersSummary() {
     from: '/app/dashboard/',
   })
   const { isLoading, summary } = useOrdersSummary(month)
+
+  const percentageFormatter = useNumberFormatter({
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+    signDisplay: 'auto',
+  })
 
   if (isLoading) {
     return (
@@ -88,55 +98,82 @@ export function NewOrdersSummary() {
     },
   ]
 
-  return (
-    <Card className="col-span-4 overflow-hidden rounded-md py-0 lg:col-span-3">
-      <CardHeader className="px-6 pt-6 pb-0">
-        <CardTitle>Pedidos</CardTitle>
+  const mainStatPercentage = paidOrdersPercentage / 100
+  const percentageChange = -0.004
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-4">
-            {statusInsights.map((status, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div
-                  aria-hidden="true"
-                  className={`size-1.5 shrink-0 rounded-xs ${status.color}`}
-                ></div>
-                <div className="text-[13px]/3 text-muted-foreground/50">
-                  {status.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+  return (
+    <Card className="col-span-4 gap-2 overflow-hidden bg-card py-0 lg:col-span-3">
+      <CardHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-0">
+        <CardTitle>Pedidos</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5 pb-6">
-        <div className="flex h-5 gap-1">
+      <CardContent className="flex flex-col gap-4 pb-6">
+        <div>
+          <div className="flex items-end gap-2">
+            <span className="font-bold text-4xl text-foreground">
+              {percentageFormatter.format(mainStatPercentage)}
+            </span>
+            <Badge
+              variant="default"
+              className={cn(
+                percentageChange > 0
+                  ? 'bg-emerald-100 text-emerald-600'
+                  : 'bg-destructive/10 text-destructive',
+              )}
+            >
+              {percentageFormatter.format(percentageChange)}
+            </Badge>
+          </div>
+
+          <small className="text-muted-foreground text-xs">
+            Porcentaje de pedidos completados.
+          </small>
+        </div>
+
+        <div className="flex gap-1 overflow-hidden">
           {statusInsights.map((status, index) => (
             <div
               key={index}
-              className={`h-full ${status.color}`}
-              style={{ width: `${status.percentage}%` }}
+              className={`${status.color} h-2 rounded-sm`}
+              style={{
+                width: `${status.percentage}%`,
+                display: status.percentage > 0 ? 'block' : 'none',
+              }}
             ></div>
           ))}
         </div>
-
-        <div>
-          <div className="mb-3 text-[13px]/3 text-muted-foreground/50">
-            Estado de los pedidos
+        <div className="mb-2 flex items-center gap-6">
+          {statusInsights.map((status, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <span
+                className={`size-2 rounded-full ${status.color}`}
+                aria-hidden="true"
+              ></span>
+              <span className="text-muted-foreground text-xs">
+                {status.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg bg-muted/30 p-4">
+          <div className="mb-2 flex font-semibold text-muted-foreground text-xs">
+            <div className="w-1/2">Estado</div>
+            <div className="w-1/4 text-right">Porcentaje</div>
+            <div className="w-1/4 text-right">Total</div>
           </div>
-          <ul className="divide-y divide-border text-sm">
+          <ul>
             {statusInsights.map((status, index) => (
-              <li key={index} className="flex items-center gap-2 py-2">
-                <span
-                  className={`size-2 shrink-0 rounded-full ${status.color}`}
-                  aria-hidden="true"
-                ></span>
-                <span className="grow text-muted-foreground">
-                  {status.label}
-                </span>
-                <span className="font-medium text-[13px]/3 text-foreground/70">
-                  {status.total}
-                </span>
+              <li key={index} className="flex items-center py-1 text-sm">
+                <div className="flex w-1/2 items-center gap-2">
+                  <span
+                    className={`size-2 rounded-full ${status.color}`}
+                    aria-hidden="true"
+                  ></span>
+                  <span>{status.label}</span>
+                </div>
+                <div className="w-1/4 text-right">
+                  {percentageFormatter.format(status.percentage / 100)}
+                </div>
+                <div className="w-1/4 text-right">{status.total}</div>
               </li>
             ))}
           </ul>
