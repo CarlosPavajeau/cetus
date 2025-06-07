@@ -117,7 +117,7 @@ export function NewOrdersSummary() {
               variant="default"
               className={cn(
                 percentageChange > 0
-                  ? 'bg-success-lighter text-success-base'
+                  ? 'bg-success-light text-success-dark'
                   : 'bg-destructive/10 text-destructive',
               )}
             >
