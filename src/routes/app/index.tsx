@@ -182,7 +182,7 @@ function RouteComponent() {
                 <>
                   <Separator orientation="vertical" className="mx-2 h-4" />
                   <Badge
-                    variant="default"
+                    variant="secondary"
                     className="rounded-sm px-1 font-normal lg:hidden"
                   >
                     {statuses.length}
@@ -190,7 +190,7 @@ function RouteComponent() {
                   <div className="hidden space-x-1 lg:flex">
                     {statuses.length > 2 ? (
                       <Badge
-                        variant="default"
+                        variant="secondary"
                         className="rounded-sm px-1 font-normal"
                       >
                         {statuses.length} seleccionados
@@ -200,7 +200,7 @@ function RouteComponent() {
                         statuses.includes(option.value),
                       ).map((option) => (
                         <Badge
-                          variant="default"
+                          variant="secondary"
                           key={option.value}
                           className="rounded-sm px-1 font-normal"
                         >
