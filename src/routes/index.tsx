@@ -16,7 +16,7 @@ function IndexPage() {
   const { products, isLoading } = useProductsForSale()
   const { categories, isLoading: isLoadingCategories } = useCategories()
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
   const filteredProducts = useMemo(() => {
     if (!products) return []
@@ -26,11 +26,12 @@ function IndexPage() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
       const matchesCategory =
-        selectedCategory === 'All' || product.categoryId === selectedCategory
+        selectedCategories.length === 0 ||
+        selectedCategories.includes(product.categoryId)
 
       return matchesSearch && matchesCategory
     })
-  }, [searchTerm, selectedCategory, products])
+  }, [searchTerm, selectedCategories, products])
 
   if (isLoadingCategories || isLoading) {
     return (
@@ -55,8 +56,8 @@ function IndexPage() {
       <FilterSection
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
         categories={categories}
       />
 
