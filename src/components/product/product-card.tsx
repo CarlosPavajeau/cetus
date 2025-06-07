@@ -42,7 +42,11 @@ function ProductCardComponent({ product }: Props) {
 
   return (
     <div className="overflow-hidden rounded-lg border transition-shadow hover:shadow-md">
-      <Link to="/products/$slug" params={{ slug: product.slug }} className="block">
+      <Link
+        to="/products/$slug"
+        params={{ slug: product.slug }}
+        className="block"
+      >
         <div className="relative aspect-square">
           <Image
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
@@ -55,7 +59,11 @@ function ProductCardComponent({ product }: Props) {
         </div>
       </Link>
       <div className="p-4">
-        <Link to="/products/$slug" params={{ slug: product.slug }} className="block">
+        <Link
+          to="/products/$slug"
+          params={{ slug: product.slug }}
+          className="block"
+        >
           <h3 className="line-clamp-1 font-medium hover:underline">
             {product.name}
           </h3>
