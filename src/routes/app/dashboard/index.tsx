@@ -2,6 +2,7 @@ import { AccessDenied } from '@/components/access-denied'
 import { CompleteOrdersChart } from '@/components/order/complete-orders-chart'
 import { NewOrdersSummary } from '@/components/order/new-orders-summary'
 import { OrdersInsights } from '@/components/order/orders-insights'
+import { TopSellingProducts } from '@/components/product/top-selling-products'
 import {
   Select,
   SelectContent,
@@ -90,6 +91,8 @@ function RouteComponent() {
         <CompleteOrdersChart />
 
         <NewOrdersSummary />
+
+        <TopSellingProducts />
       </div>
     </Protect>
   )
