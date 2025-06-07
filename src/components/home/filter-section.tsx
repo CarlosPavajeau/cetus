@@ -103,7 +103,7 @@ function CategoryFilter({
       >
         <Badge
           variant={selectedCategories.length === 0 ? 'default' : 'outline'}
-          className="shrink-0 cursor-pointer rounded px-2 py-1"
+          className="shrink-0 cursor-pointer rounded px-2 py-1 transition-colors duration-200"
           onClick={() => setSelectedCategories([])}
         >
           Todas
@@ -114,7 +114,7 @@ function CategoryFilter({
             variant={
               selectedCategories.includes(category.id) ? 'default' : 'outline'
             }
-            className="shrink-0 cursor-pointer rounded px-2 py-1"
+            className="shrink-0 cursor-pointer rounded px-2 py-1 transition-colors duration-200"
             onClick={() => toggleCategory(category.id)}
           >
             {category.name}
