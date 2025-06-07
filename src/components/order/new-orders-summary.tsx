@@ -100,7 +100,7 @@ export function NewOrdersSummary() {
   ]
 
   const mainStatPercentage = shippedOrdersPercentage / 100
-  const percentageChange = 0.004
+  const percentageChange = -0.004
 
   return (
     <Card className="col-span-4 gap-0 overflow-hidden py-0 lg:col-span-3">
@@ -118,7 +118,7 @@ export function NewOrdersSummary() {
               className={cn(
                 percentageChange > 0
                   ? 'bg-success-light text-success-dark'
-                  : 'bg-destructive/10 text-destructive',
+                  : 'bg-error-light text-error-dark',
               )}
             >
               {percentageFormatter.format(percentageChange)}
