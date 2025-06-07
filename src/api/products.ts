@@ -3,6 +3,7 @@ import axios from 'axios'
 export type Product = {
   id: string
   name: string
+  slug: string
   description?: string
   price: number
   stock: number
@@ -65,7 +66,10 @@ export async function fetchProductSuggestions(productId: string) {
   return response.data
 }
 
-export type UpdateProductRequest = Omit<Product, 'createdAt' | 'updatedAt'>
+export type UpdateProductRequest = Omit<
+  Product,
+  'createdAt' | 'updatedAt' | 'slug'
+>
 
 export const updateProduct = async (product: UpdateProductRequest) => {
   const response = await axios.put<Product>(
@@ -91,6 +95,14 @@ export type TopSellingProduct = {
 export async function fetchTopSellingProducts() {
   const response = await axios.get<TopSellingProduct[]>(
     `${import.meta.env.PUBLIC_API_URL}/products/top-selling`,
+  )
+
+  return response.data
+}
+
+export async function fetchProductBySlug(slug: string) {
+  const response = await axios.get<ProductForSale>(
+    `${import.meta.env.PUBLIC_API_URL}/products/slug/${slug}`,
   )
 
   return response.data

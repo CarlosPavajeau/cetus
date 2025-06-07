@@ -2,6 +2,7 @@ import { uploadFileToS3 } from '@/api/aws'
 import {
   createProduct,
   fetchProduct,
+  fetchProductBySlug,
   fetchProductSuggestions,
   fetchProducts,
   fetchProductsForSale,
@@ -126,10 +127,11 @@ export function useProducts() {
   }
 }
 
-export function useProductSuggestions(productId: string) {
+export function useProductSuggestions(productId?: string) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['products', 'suggestions', productId],
-    queryFn: () => fetchProductSuggestions(productId),
+    queryFn: () => fetchProductSuggestions(productId!),
+    enabled: Boolean(productId),
   })
 
   return {
@@ -147,6 +149,19 @@ export function useTopSellingProducts() {
 
   return {
     products: data,
+    isLoading,
+    error,
+  }
+}
+
+export function useProductBySlug(slug: string) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products', 'slug', slug],
+    queryFn: () => fetchProductBySlug(slug),
+  })
+
+  return {
+    product: data,
     isLoading,
     error,
   }
