@@ -86,7 +86,7 @@ function CategoryFilter({
         variant="ghost"
         size="sm"
         className={cn(
-          'absolute left-0 z-10 h-8 w-8 rounded-full bg-card shadow-md transition-opacity duration-200 hover:bg-gray-50',
+          'absolute -left-1.5 z-10 h-8 w-8 rounded bg-card',
           showLeftArrow ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={() => scroll('left')}
@@ -126,7 +126,7 @@ function CategoryFilter({
         variant="ghost"
         size="sm"
         className={cn(
-          'absolute right-0 z-10 h-8 w-8 rounded-full bg-card shadow-md transition-opacity duration-200 hover:bg-gray-50',
+          'absolute -right-1.5 z-10 h-8 w-8 rounded bg-card',
           showRightArrow ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={() => scroll('right')}
