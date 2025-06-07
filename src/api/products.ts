@@ -80,8 +80,16 @@ export const deleteProduct = async (id: string) => {
   await axios.delete(`${import.meta.env.PUBLIC_API_URL}/products/${id}`)
 }
 
+export type TopSellingProduct = {
+  id: string
+  name: string
+  imageUrl?: string
+  category?: string
+  salesCount: number
+}
+
 export async function fetchTopSellingProducts() {
-  const response = await axios.get<ProductForSale[]>(
+  const response = await axios.get<TopSellingProduct[]>(
     `${import.meta.env.PUBLIC_API_URL}/products/top-selling`,
   )
 
