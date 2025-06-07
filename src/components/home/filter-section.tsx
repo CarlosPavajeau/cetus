@@ -169,9 +169,9 @@ function FilterSectionComponent({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="peer ps-9 pe-9 transition-all duration-200"
-            placeholder="Buscar un producto"
+            placeholder="Buscar productos..."
             type="search"
-            aria-label="Buscar un producto"
+            aria-label="Buscar productos..."
           />
           <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
             <SearchIcon size={16} />
