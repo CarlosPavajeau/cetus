@@ -82,7 +82,7 @@ export function CompleteOrdersChart() {
     day: 'numeric',
   })
 
-  const { chartData } = useMemo(() => {
+  const { chartData, totalOrders } = useMemo(() => {
     if (!summary) {
       return {
         chartData: [],
@@ -119,6 +119,7 @@ export function CompleteOrdersChart() {
 
     return {
       chartData: data,
+      totalOrders: completeOrders.length,
     }
   }, [summary])
 
@@ -148,11 +149,18 @@ export function CompleteOrdersChart() {
   }
 
   return (
-    <Card className="col-span-4 overflow-hidden rounded-md py-0">
-      <CardHeader className="px-6 pt-6 pb-0">
+    <Card className="col-span-4 gap-0 overflow-hidden py-0">
+      <CardHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-0">
         <CardTitle>Pedidos completados</CardTitle>
       </CardHeader>
-      <CardContent className="px-6 pb-6">
+      <CardContent className="flex flex-col gap-5 pb-6">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-end gap-2">
+            <span className="font-medium text-2xl text-foreground">
+              {totalOrders}
+            </span>
+          </div>
+        </div>
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-full min-h-72 w-full [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-(--chart-1)/15 [&_.recharts-rectangle.recharts-tooltip-inner-cursor]:fill-white/20"
