@@ -9,7 +9,9 @@ import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
 import {
+  AlertTriangleIcon,
   ArrowLeftIcon,
+  CheckIcon,
   MinusIcon,
   PlusIcon,
   ShoppingCartIcon,
@@ -121,7 +123,7 @@ function ProductDisplayComponent({ product }: Props) {
       <div className="space-y-6">
         <div>
           <div className="space-y-2">
-            <Badge variant="outline" className="gap-0 rounded-md px-2 py-1">
+            <Badge variant="secondary" className="gap-0 rounded">
               {product.category}
             </Badge>
             <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
@@ -136,25 +138,32 @@ function ProductDisplayComponent({ product }: Props) {
         <div className="flex items-center gap-2">
           {product.stock > 2 ? (
             <>
-              <Badge
-                variant="outline"
-                className="border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900 dark:text-green-200"
-              >
+              <Badge variant="outline" className="gap-1 rounded">
+                <CheckIcon
+                  className="text-success-base"
+                  size={12}
+                  aria-hidden="true"
+                />
                 En stock
               </Badge>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-xs">
                 ({product.stock} unidades restantes)
               </span>
             </>
           ) : (
             <>
               <Badge
-                variant="outline"
-                className="border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                variant="secondary"
+                className="h-6 gap-1.5 rounded bg-warning-lighter px-2 text-warning-base"
               >
+                <AlertTriangleIcon
+                  className="text-warning-base"
+                  size={12}
+                  aria-hidden="true"
+                />
                 Pocas unidades
               </Badge>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-xs">
                 ({product.stock} unidades restantes)
               </span>
             </>
