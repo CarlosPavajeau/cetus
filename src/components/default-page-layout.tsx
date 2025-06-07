@@ -7,7 +7,6 @@ import { SignedIn } from '@clerk/clerk-react'
 import { Link } from '@tanstack/react-router'
 import { LayoutDashboardIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
 
 type Props = {
   children: ReactNode
@@ -29,21 +28,8 @@ export function DefaultPageLayout({ children, showHeader = true }: Props) {
 }
 
 function NavBar() {
-  const [isScrolled, setIsScrolled] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
   return (
-    <header
-      className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${isScrolled ? 'bg-card shadow-md' : 'bg-card/90 backdrop-blur-sm'}`}
-    >
+    <header className="sticky top-0 z-50 w-full border-b bg-card">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex flex-shrink-0 items-center">
