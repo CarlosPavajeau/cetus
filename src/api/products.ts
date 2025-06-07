@@ -79,3 +79,11 @@ export const updateProduct = async (product: UpdateProductRequest) => {
 export const deleteProduct = async (id: string) => {
   await axios.delete(`${import.meta.env.PUBLIC_API_URL}/products/${id}`)
 }
+
+export async function fetchTopSellingProducts() {
+  const response = await axios.get<ProductForSale[]>(
+    `${import.meta.env.PUBLIC_API_URL}/products/top-selling`,
+  )
+
+  return response.data
+}

@@ -5,6 +5,7 @@ import {
   fetchProductSuggestions,
   fetchProducts,
   fetchProductsForSale,
+  fetchTopSellingProducts,
   updateProduct,
 } from '@/api/products'
 import type {
@@ -133,6 +134,19 @@ export function useProductSuggestions(productId: string) {
 
   return {
     suggestions: data,
+    isLoading,
+    error,
+  }
+}
+
+export function useTopSellingProducts() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products', 'top-selling'],
+    queryFn: fetchTopSellingProducts,
+  })
+
+  return {
+    products: data,
     isLoading,
     error,
   }
