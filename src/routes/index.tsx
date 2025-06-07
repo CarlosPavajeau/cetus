@@ -51,8 +51,6 @@ function IndexPage() {
 
   return (
     <DefaultPageLayout>
-      <PageHeader title="Nuestros productos" />
-
       <FilterSection
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
