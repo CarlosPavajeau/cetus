@@ -4,13 +4,13 @@ import { PageHeader } from '@/components/page-header'
 import { ProductDisplay } from '@/components/product/product-display'
 import { SuggestedProducts } from '@/components/product/suggested-product'
 import { Button } from '@/components/ui/button'
-import { useProduct, useProductSuggestions } from '@/hooks/products'
+import { useProductBySlug, useProductSuggestions } from '@/hooks/products'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
 import { memo, useEffect } from 'react'
 import { toast } from 'sonner'
 
-export const Route = createFileRoute('/products/$id')({
+export const Route = createFileRoute('/products/$slug')({
   component: ProductDetailsPage,
 })
 
@@ -19,14 +19,10 @@ function ProductDetailsPage() {
 }
 
 const RouteComponent = memo(function RouteComponent() {
-  const { id } = Route.useParams()
+  const { slug } = Route.useParams()
 
-  const { product, isLoading, error } = useProduct(id)
-  const { suggestions } = useProductSuggestions(id)
-
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [id])
+  const { product, isLoading, error } = useProductBySlug(slug)
+  const { suggestions } = useProductSuggestions(product?.id)
 
   useEffect(() => {
     if (error) {

@@ -22,7 +22,7 @@ import { Route as CartImport } from './routes/cart'
 import { Route as AppImport } from './routes/app'
 import { Route as IndexImport } from './routes/index'
 import { Route as AppIndexImport } from './routes/app/index'
-import { Route as ProductsIdImport } from './routes/products/$id'
+import { Route as ProductsSlugImport } from './routes/products/$slug'
 import { Route as OrdersIdImport } from './routes/orders/$id'
 import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesImport } from './routes/app/categories'
@@ -100,9 +100,9 @@ const AppIndexRoute = AppIndexImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
-const ProductsIdRoute = ProductsIdImport.update({
-  id: '/$id',
-  path: '/$id',
+const ProductsSlugRoute = ProductsSlugImport.update({
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => ProductsRoute,
 } as any)
 
@@ -249,11 +249,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersIdImport
       parentRoute: typeof OrdersImport
     }
-    '/products/$id': {
-      id: '/products/$id'
-      path: '/$id'
-      fullPath: '/products/$id'
-      preLoaderRoute: typeof ProductsIdImport
+    '/products/$slug': {
+      id: '/products/$slug'
+      path: '/$slug'
+      fullPath: '/products/$slug'
+      preLoaderRoute: typeof ProductsSlugImport
       parentRoute: typeof ProductsImport
     }
     '/app/': {
@@ -339,11 +339,11 @@ const OrdersRouteWithChildren =
   OrdersRoute._addFileChildren(OrdersRouteChildren)
 
 interface ProductsRouteChildren {
-  ProductsIdRoute: typeof ProductsIdRoute
+  ProductsSlugRoute: typeof ProductsSlugRoute
 }
 
 const ProductsRouteChildren: ProductsRouteChildren = {
-  ProductsIdRoute: ProductsIdRoute,
+  ProductsSlugRoute: ProductsSlugRoute,
 }
 
 const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
@@ -364,7 +364,7 @@ export interface FileRoutesByFullPath {
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/$id': typeof ProductsIdRoute
+  '/products/$slug': typeof ProductsSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -386,7 +386,7 @@ export interface FileRoutesByTo {
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/$id': typeof ProductsIdRoute
+  '/products/$slug': typeof ProductsSlugRoute
   '/app': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -410,7 +410,7 @@ export interface FileRoutesById {
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/$id': typeof ProductsIdRoute
+  '/products/$slug': typeof ProductsSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -435,7 +435,7 @@ export interface FileRouteTypes {
     | '/app/categories'
     | '/app/delivery-fees'
     | '/orders/$id'
-    | '/products/$id'
+    | '/products/$slug'
     | '/app/'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -456,7 +456,7 @@ export interface FileRouteTypes {
     | '/app/categories'
     | '/app/delivery-fees'
     | '/orders/$id'
-    | '/products/$id'
+    | '/products/$slug'
     | '/app'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -478,7 +478,7 @@ export interface FileRouteTypes {
     | '/app/categories'
     | '/app/delivery-fees'
     | '/orders/$id'
-    | '/products/$id'
+    | '/products/$slug'
     | '/app/'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -573,7 +573,7 @@ export const routeTree = rootRoute
     "/products": {
       "filePath": "products.tsx",
       "children": [
-        "/products/$id"
+        "/products/$slug"
       ]
     },
     "/returns": {
@@ -594,8 +594,8 @@ export const routeTree = rootRoute
       "filePath": "orders/$id.tsx",
       "parent": "/orders"
     },
-    "/products/$id": {
-      "filePath": "products/$id.tsx",
+    "/products/$slug": {
+      "filePath": "products/$slug.tsx",
       "parent": "/products"
     },
     "/app/": {
