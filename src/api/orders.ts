@@ -25,10 +25,10 @@ export const ORDER_STATUS_OPTIONS = [
 ]
 
 export const OrderStatusColor = {
-  [OrderStatus.Pending]: 'bg-amber-500',
+  [OrderStatus.Pending]: 'bg-warning-base',
   [OrderStatus.Paid]: 'bg-success-base',
   [OrderStatus.Delivered]: 'bg-success-base',
-  [OrderStatus.Canceled]: 'text-destructive',
+  [OrderStatus.Canceled]: 'bg-destructive',
 }
 
 export type Order = {
