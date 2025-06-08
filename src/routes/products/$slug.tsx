@@ -2,6 +2,7 @@ import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductDisplay } from '@/components/product/product-display'
+import { ProductTabs } from '@/components/product/product-tabs'
 import { SuggestedProducts } from '@/components/product/suggested-product'
 import { Button } from '@/components/ui/button'
 import { useProductBySlug, useProductSuggestions } from '@/hooks/products'
@@ -17,6 +18,8 @@ export const Route = createFileRoute('/products/$slug')({
 function ProductDetailsPage() {
   return <RouteComponent />
 }
+
+const SHOW_TABS = false
 
 const RouteComponent = memo(function RouteComponent() {
   const { slug } = Route.useParams()
@@ -79,7 +82,7 @@ const RouteComponent = memo(function RouteComponent() {
   return (
     <DefaultPageLayout>
       <ProductDisplay key={product.id} product={product} />
-
+      {SHOW_TABS && <ProductTabs description={product.description ?? ''} />}
       <SuggestedProducts products={suggestions ?? []} />
     </DefaultPageLayout>
   )

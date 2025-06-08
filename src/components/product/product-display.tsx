@@ -2,8 +2,11 @@ import type { ProductForSale } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { Image } from '@/components/image'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
+import { ProductRating } from '@/components/product/product-rating'
+import { ProductShare } from '@/components/product/product-share'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
@@ -19,11 +22,7 @@ import {
 import { Fragment, memo, useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
-type Props = {
-  product: ProductForSale
-}
-
-interface QuantitySelectorProps {
+type QuantitySelectorProps = {
   quantity: number
   onIncrement: () => void
   onDecrement: () => void
@@ -41,8 +40,8 @@ const QuantitySelector = memo(
 
     return (
       <div className="flex items-center">
-        <span className="mr-4 font-medium text-sm">Cantidad:</span>
-        <div className="flex items-center rounded-md border">
+        <Label className="mr-2">Cantidad:</Label>
+        <div className="flex items-center rounded-md border border-input">
           <button
             className="p-2 text-muted-foreground"
             onClick={onDecrement}
@@ -70,7 +69,12 @@ const QuantitySelector = memo(
   },
 )
 
-function ProductDisplayComponent({ product }: Props) {
+type Props = {
+  product: ProductForSale
+  showReviews?: boolean
+}
+
+function ProductDisplayComponent({ product, showReviews }: Props) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -120,15 +124,19 @@ function ProductDisplayComponent({ product }: Props) {
         />
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <div className="space-y-2">
-            <Badge variant="secondary" className="gap-0 rounded">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Badge variant="secondary" className="mb-0 gap-0 rounded">
               {product.category}
             </Badge>
-            <h1 className="font-bold text-2xl md:text-3xl">{product.name}</h1>
+            <h1 className="mb-0 font-medium text-2xl md:text-3xl">
+              {product.name}
+            </h1>
+
+            {showReviews && <ProductRating rating={4} reviewsCount={24} />}
           </div>
-          <div className="mt-4 font-bold text-2xl">
+          <div className="font-bold text-2xl">
             <Currency value={product.price} currency="COP" />
           </div>
         </div>
@@ -170,11 +178,11 @@ function ProductDisplayComponent({ product }: Props) {
           )}
         </div>
 
-        <div className="prose prose-sm mb-6">
+        <div className="prose prose-sm">
           <p>{product.description}</p>
         </div>
 
-        <div className="mt-auto flex flex-col space-y-4">
+        <div className="flex flex-1 flex-col gap-6">
           <QuantitySelector
             quantity={quantity}
             onIncrement={incrementQuantity}
@@ -182,24 +190,31 @@ function ProductDisplayComponent({ product }: Props) {
             max={product.stock}
           />
 
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleAddToCart}
-            disabled={isOutOfStock || isAddingToCart}
-          >
-            {isAddingToCart ? (
-              <div className="flex items-center">
-                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                Agregando...
-              </div>
-            ) : (
-              <>
-                <ShoppingCartIcon className="mr-2 h-5 w-5" />
-                {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleAddToCart}
+              disabled={isOutOfStock || isAddingToCart}
+            >
+              {isAddingToCart ? (
+                <div className="flex items-center">
+                  <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Agregando...
+                </div>
+              ) : (
+                <>
+                  <ShoppingCartIcon className="mr-2 h-5 w-5" />
+                  {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
+                </>
+              )}
+            </Button>
+
+            <ProductShare
+              productName={product.name}
+              productUrl={window.location.href}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -211,7 +226,7 @@ export const ProductDisplay = memo(({ product }: Props) => {
     <Fragment>
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
 
-      <div className="mb-6">
+      <div className="mb-2">
         <Button asChild variant="ghost" className="text-muted-foreground">
           <Link to="/">
             <ArrowLeftIcon size={14} />
