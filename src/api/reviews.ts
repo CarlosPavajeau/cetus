@@ -42,20 +42,29 @@ export async function createProductReview(request: CreateProductReviewRequest) {
   return response.data
 }
 
+export type PendingForApprovalProductReview = {
+  id: string
+  comment: string
+  rating: number
+  customer: string
+  product: ReviewRequestProduct
+  createdAt: string
+}
+
+export async function fetchPendingForApprovalProductReviews() {
+  const response = await axios.get<PendingForApprovalProductReview[]>(
+    `${import.meta.env.PUBLIC_API_URL}/reviews/products/pending`,
+  )
+
+  return response.data
+}
+
 export type ProductReview = {
   id: string
   comment: string
   rating: number
   customer: string
   createdAt: string
-}
-
-export async function fetchPendingForApprovalProductReviews() {
-  const response = await axios.get<ProductReview[]>(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/products/pending`,
-  )
-
-  return response.data
 }
 
 export async function fetchProductReviews(productId: string) {
