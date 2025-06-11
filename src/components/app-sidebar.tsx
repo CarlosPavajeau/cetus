@@ -14,6 +14,7 @@ import {
   LayoutDashboardIcon,
   PackageIcon,
   ShoppingBasketIcon,
+  StarIcon,
   TagIcon,
   TruckIcon,
 } from 'lucide-react'
@@ -50,6 +51,12 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuItem> = [
     href: '/app/dashboard',
     isNew: false,
     icon: LayoutDashboardIcon,
+  },
+  {
+    label: 'Reseñas',
+    href: '/app/reviews',
+    isNew: false,
+    icon: StarIcon,
   },
 ] as const
 
