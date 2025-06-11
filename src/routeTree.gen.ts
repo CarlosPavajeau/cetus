@@ -22,6 +22,7 @@ import { Route as CartImport } from './routes/cart'
 import { Route as AppImport } from './routes/app'
 import { Route as IndexImport } from './routes/index'
 import { Route as AppIndexImport } from './routes/app/index'
+import { Route as ReviewsNewImport } from './routes/reviews.new'
 import { Route as ProductsSlugImport } from './routes/products/$slug'
 import { Route as OrdersIdImport } from './routes/orders/$id'
 import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
@@ -98,6 +99,12 @@ const AppIndexRoute = AppIndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+
+const ReviewsNewRoute = ReviewsNewImport.update({
+  id: '/reviews/new',
+  path: '/reviews/new',
+  getParentRoute: () => rootRoute,
 } as any)
 
 const ProductsSlugRoute = ProductsSlugImport.update({
@@ -256,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsSlugImport
       parentRoute: typeof ProductsImport
     }
+    '/reviews/new': {
+      id: '/reviews/new'
+      path: '/reviews/new'
+      fullPath: '/reviews/new'
+      preLoaderRoute: typeof ReviewsNewImport
+      parentRoute: typeof rootRoute
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -365,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -387,6 +402,7 @@ export interface FileRoutesByTo {
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -411,6 +427,7 @@ export interface FileRoutesById {
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -436,6 +453,7 @@ export interface FileRouteTypes {
     | '/app/delivery-fees'
     | '/orders/$id'
     | '/products/$slug'
+    | '/reviews/new'
     | '/app/'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -457,6 +475,7 @@ export interface FileRouteTypes {
     | '/app/delivery-fees'
     | '/orders/$id'
     | '/products/$slug'
+    | '/reviews/new'
     | '/app'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -479,6 +498,7 @@ export interface FileRouteTypes {
     | '/app/delivery-fees'
     | '/orders/$id'
     | '/products/$slug'
+    | '/reviews/new'
     | '/app/'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -499,6 +519,7 @@ export interface RootRouteChildren {
   ProductsRoute: typeof ProductsRouteWithChildren
   ReturnsRoute: typeof ReturnsRoute
   TermsRoute: typeof TermsRoute
+  ReviewsNewRoute: typeof ReviewsNewRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -512,6 +533,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRoute: ProductsRouteWithChildren,
   ReturnsRoute: ReturnsRoute,
   TermsRoute: TermsRoute,
+  ReviewsNewRoute: ReviewsNewRoute,
 }
 
 export const routeTree = rootRoute
@@ -533,7 +555,8 @@ export const routeTree = rootRoute
         "/privacy",
         "/products",
         "/returns",
-        "/terms"
+        "/terms",
+        "/reviews/new"
       ]
     },
     "/": {
@@ -597,6 +620,9 @@ export const routeTree = rootRoute
     "/products/$slug": {
       "filePath": "products/$slug.tsx",
       "parent": "/products"
+    },
+    "/reviews/new": {
+      "filePath": "reviews.new.tsx"
     },
     "/app/": {
       "filePath": "app/index.tsx",
