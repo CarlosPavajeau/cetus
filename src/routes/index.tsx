@@ -1,8 +1,9 @@
-import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { FilterSection } from '@/components/home/filter-section'
+import { FilterSectionSkeleton } from '@/components/home/filter-section-skeleton'
 import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product/product-grid'
+import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
 import { useCategories } from '@/hooks/categories'
 import { useProductsForSale } from '@/hooks/products'
 import { createFileRoute } from '@tanstack/react-router'
@@ -36,7 +37,8 @@ function IndexPage() {
   if (isLoadingCategories || isLoading) {
     return (
       <DefaultPageLayout>
-        <DefaultLoader />
+        <FilterSectionSkeleton />
+        <ProductGridSkeleton />
       </DefaultPageLayout>
     )
   }
