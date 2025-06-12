@@ -28,7 +28,7 @@ export function ProductRating({
         ))}
       </div>
       <span className="text-muted-foreground text-xs">
-        ({reviewsCount} reseñas)
+        ({reviewsCount} {reviewsCount === 1 ? 'reseña' : 'reseñas'})
       </span>
     </div>
   )
