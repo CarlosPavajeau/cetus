@@ -10,7 +10,7 @@ type Props = {
 }
 
 export function ProductTabs({ id }: Props) {
-  const { productReviews, isLoading, error } = useProductReviews(id)
+  const { productReviews, isLoading } = useProductReviews(id)
 
   if (isLoading) {
     return (
