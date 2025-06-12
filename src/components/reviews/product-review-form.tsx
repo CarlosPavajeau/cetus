@@ -1,21 +1,22 @@
 import { Button } from '@/components/ui/button'
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateProductReview } from '@/hooks/reviews'
 import {
-    type CreateProductReviewFormValues,
-    createProductReviewSchema,
+  type CreateProductReviewFormValues,
+  createProductReviewSchema,
 } from '@/schemas/reviews'
 import { cn } from '@/shared/cn'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { StarIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -41,10 +42,13 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
     },
   })
 
+  const queryClient = useQueryClient()
+
   const onSubmit = async (values: CreateProductReviewFormValues) => {
     try {
       await createReviewMutation.mutateAsync(values)
       toast.success('¡Gracias por tu reseña!')
+      queryClient.invalidateQueries({ queryKey: ['reviews'] })
       navigate({ to: '/' })
     } catch (error) {
       toast.error(
