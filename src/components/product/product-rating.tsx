@@ -1,4 +1,4 @@
-import { StarIcon } from 'lucide-react'
+import { StarRating } from './star-rating'
 
 type Props = {
   rating: number
@@ -15,18 +15,7 @@ export function ProductRating({
 }: Props) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex">
-        {[...Array(maxRating)].map((_, i) => (
-          <StarIcon
-            key={i}
-            className={`h-4 w-4 ${
-              i < rating
-                ? 'fill-warning-base text-warning-base'
-                : 'text-muted-foreground'
-            }`}
-          />
-        ))}
-      </div>
+      <StarRating rating={rating} maxRating={maxRating} />
       <span className="text-muted-foreground text-xs">
         ({reviewsCount} {reviewsCount === 1 ? 'reseña' : 'reseñas'})
       </span>
