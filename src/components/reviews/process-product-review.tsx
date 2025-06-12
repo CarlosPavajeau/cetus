@@ -18,9 +18,10 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { getImageUrl } from '@/shared/cdn'
 import { useQueryClient } from '@tanstack/react-query'
-import { CheckIcon, FileSearchIcon, StarIcon, XIcon } from 'lucide-react'
+import { CheckIcon, FileSearchIcon, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { StarRating } from '../product/star-rating'
 
 type Props = {
   review: PendingForApprovalProductReview
@@ -110,18 +111,7 @@ export function ProcessProductReview({ review }: Props) {
           <div className="grid gap-4">
             <div className="grid gap-2">
               <p className="font-medium text-sm">Calificación:</p>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <StarIcon
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < review.rating
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
+              <StarRating rating={review.rating} className="gap-1" />
             </div>
             <div className="grid gap-2">
               <p className="font-medium text-sm">Comentario:</p>
