@@ -1,23 +1,23 @@
 import { Button } from '@/components/ui/button'
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateProductReview } from '@/hooks/reviews'
 import {
-  type CreateProductReviewFormValues,
-  createProductReviewSchema,
+    type CreateProductReviewFormValues,
+    createProductReviewSchema,
 } from '@/schemas/reviews'
 import { cn } from '@/shared/cn'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { RiStarFill } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
+import { StarIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -80,12 +80,12 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
                           value={value}
                           className="sr-only"
                         />
-                        <RiStarFill
+                        <StarIcon
                           size={24}
                           className={cn(
                             'h-8 w-8 transition-all group-hover:scale-110',
                             (hoverRating || field.value) >= value
-                              ? 'text-amber-500'
+                              ? 'fill-warning-base text-warning-base'
                               : 'text-input',
                           )}
                         />
