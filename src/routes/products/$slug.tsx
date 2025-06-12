@@ -19,8 +19,6 @@ function ProductDetailsPage() {
   return <RouteComponent />
 }
 
-const SHOW_TABS = false
-
 const RouteComponent = memo(function RouteComponent() {
   const { slug } = Route.useParams()
 
@@ -81,9 +79,15 @@ const RouteComponent = memo(function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <ProductDisplay key={product.id} product={product} />
-      {SHOW_TABS && <ProductTabs description={product.description ?? ''} />}
-      <SuggestedProducts products={suggestions ?? []} />
+      <div className="flex flex-col gap-8">
+        <ProductDisplay key={product.id} product={product} />
+
+        <div>
+          <ProductTabs id={product.id} />
+        </div>
+
+        <SuggestedProducts products={suggestions ?? []} />
+      </div>
     </DefaultPageLayout>
   )
 })

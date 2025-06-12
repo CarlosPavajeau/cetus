@@ -19,7 +19,7 @@ import {
   PlusIcon,
   ShoppingCartIcon,
 } from 'lucide-react'
-import { Fragment, memo, useCallback, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
 type QuantitySelectorProps = {
@@ -225,7 +225,7 @@ function ProductDisplayComponent({ product }: Props) {
 
 export const ProductDisplay = memo(({ product }: Props) => {
   return (
-    <Fragment>
+    <div className="flex flex-col gap-2">
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
 
       <div className="mb-2">
@@ -238,6 +238,6 @@ export const ProductDisplay = memo(({ product }: Props) => {
       </div>
 
       <ProductDisplayComponent product={product} />
-    </Fragment>
+    </div>
   )
 })
