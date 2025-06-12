@@ -71,10 +71,9 @@ const QuantitySelector = memo(
 
 type Props = {
   product: ProductForSale
-  showReviews?: boolean
 }
 
-function ProductDisplayComponent({ product, showReviews }: Props) {
+function ProductDisplayComponent({ product }: Props) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -134,7 +133,10 @@ function ProductDisplayComponent({ product, showReviews }: Props) {
               {product.name}
             </h1>
 
-            {showReviews && <ProductRating rating={4} reviewsCount={24} />}
+            <ProductRating
+              rating={product.rating}
+              reviewsCount={product.reviewsCount}
+            />
           </div>
           <div className="font-bold text-2xl">
             <Currency value={product.price} currency="COP" />
