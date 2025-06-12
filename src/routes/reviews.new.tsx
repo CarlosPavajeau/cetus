@@ -1,3 +1,4 @@
+import { ReviewRequestStatus } from '@/api/reviews'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import Image from '@/components/image'
@@ -7,7 +8,12 @@ import { Button } from '@/components/ui/button'
 import { useReviewRequest } from '@/hooks/reviews'
 import { getImageUrl } from '@/shared/cdn'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Home } from 'lucide-react'
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  Home,
+  ShoppingBagIcon,
+} from 'lucide-react'
 import { z } from 'zod'
 
 const reviewRequestSearchSchema = z.object({
@@ -46,6 +52,59 @@ function RouteComponent() {
             Volver al inicio
           </Link>
         </Button>
+      </DefaultPageLayout>
+    )
+  }
+
+  if (reviewRequest.status === ReviewRequestStatus.Completed) {
+    return (
+      <DefaultPageLayout>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="mb-4 rounded-full bg-success-lighter p-6">
+            <CheckCircleIcon size={32} className="text-success-base" />
+          </div>
+
+          <PageHeader title="¡Reseña enviada!" />
+          <p className="mb-2 text-muted-foreground">
+            Tu reseña ha sido enviada y se encuentra en revisión.
+          </p>
+
+          <p className="mb-6 max-w-md text-muted-foreground">
+            Gracias por tu preferencia.
+          </p>
+
+          <Button asChild className="w-full max-w-xs">
+            <Link to="/">
+              <ShoppingBagIcon />
+              Seguir comprando
+            </Link>
+          </Button>
+        </div>
+      </DefaultPageLayout>
+    )
+  }
+
+  if (reviewRequest.status === ReviewRequestStatus.Expired) {
+    return (
+      <DefaultPageLayout>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="mb-4 rounded-full bg-warning-lighter p-6">
+            <AlertTriangleIcon size={32} className="text-warning-base" />
+          </div>
+
+          <PageHeader title="Reseña expirada" />
+
+          <p className="mb-6 max-w-md text-muted-foreground">
+            Tu solicitud de reseña ha expirado.
+          </p>
+
+          <Button asChild className="w-full max-w-xs">
+            <Link to="/">
+              <ShoppingBagIcon />
+              Seguir comprando
+            </Link>
+          </Button>
+        </div>
       </DefaultPageLayout>
     )
   }
