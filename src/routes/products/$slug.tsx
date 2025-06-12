@@ -1,10 +1,10 @@
-import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductDisplay } from '@/components/product/product-display'
 import { ProductTabs } from '@/components/product/product-tabs'
 import { SuggestedProducts } from '@/components/product/suggested-product'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useProductBySlug, useProductSuggestions } from '@/hooks/products'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
@@ -36,7 +36,7 @@ const RouteComponent = memo(function RouteComponent() {
   if (isLoading) {
     return (
       <DefaultPageLayout>
-        <DefaultLoader />
+        <ProductDisplaySkeleton />
       </DefaultPageLayout>
     )
   }
@@ -91,3 +91,55 @@ const RouteComponent = memo(function RouteComponent() {
     </DefaultPageLayout>
   )
 })
+
+function ProductDisplaySkeleton() {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="mb-2">
+        <Skeleton className="h-9 w-24" />
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
+        <div className="relative aspect-square overflow-hidden rounded-lg border">
+          <Skeleton className="h-full w-full" />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-5 w-32" />
+            </div>
+            <Skeleton className="h-8 w-32" />
+          </div>
+
+          <div className="h-px w-full bg-border" />
+
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+
+          <div className="prose prose-sm">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+
+          <div className="flex flex-1 flex-col gap-6">
+            <div className="flex items-center">
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="ml-2 h-9 w-32" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-11 w-full" />
+              <Skeleton className="h-11 w-11" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
