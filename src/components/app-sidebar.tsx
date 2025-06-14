@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
+  BadgePercentIcon,
   LayoutDashboardIcon,
   PackageIcon,
   ShoppingBasketIcon,
@@ -55,8 +56,14 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuItem> = [
   {
     label: 'Reseñas',
     href: '/app/reviews',
-    isNew: false,
+    isNew: true,
     icon: StarIcon,
+  },
+  {
+    label: 'Cupones',
+    href: '/app/coupons',
+    isNew: true,
+    icon: BadgePercentIcon,
   },
 ] as const
 
@@ -113,7 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         {tab.icon && <tab.icon />}
                         <span className="text-sm">{tab.label}</span>
                         {tab.isNew && (
-                          <Badge variant="secondary" className="ml-auto">
+                          <Badge className="ml-auto rounded">
                             <span className="text-xs">Nuevo</span>
                           </Badge>
                         )}

@@ -27,6 +27,7 @@ import { Route as ProductsSlugImport } from './routes/products/$slug'
 import { Route as OrdersIdImport } from './routes/orders/$id'
 import { Route as AppReviewsImport } from './routes/app/reviews'
 import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
+import { Route as AppCouponsImport } from './routes/app/coupons'
 import { Route as AppCategoriesImport } from './routes/app/categories'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
 import { Route as AppDashboardIndexImport } from './routes/app/dashboard/index'
@@ -129,6 +130,12 @@ const AppReviewsRoute = AppReviewsImport.update({
 const AppDeliveryFeesRoute = AppDeliveryFeesImport.update({
   id: '/delivery-fees',
   path: '/delivery-fees',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppCouponsRoute = AppCouponsImport.update({
+  id: '/coupons',
+  path: '/coupons',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -249,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriesImport
       parentRoute: typeof AppImport
     }
+    '/app/coupons': {
+      id: '/app/coupons'
+      path: '/coupons'
+      fullPath: '/app/coupons'
+      preLoaderRoute: typeof AppCouponsImport
+      parentRoute: typeof AppImport
+    }
     '/app/delivery-fees': {
       id: '/app/delivery-fees'
       path: '/delivery-fees'
@@ -333,6 +347,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCategoriesRoute: typeof AppCategoriesRoute
+  AppCouponsRoute: typeof AppCouponsRoute
   AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
   AppReviewsRoute: typeof AppReviewsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -344,6 +359,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriesRoute: AppCategoriesRoute,
+  AppCouponsRoute: AppCouponsRoute,
   AppDeliveryFeesRoute: AppDeliveryFeesRoute,
   AppReviewsRoute: AppReviewsRoute,
   AppIndexRoute: AppIndexRoute,
@@ -392,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/returns': typeof ReturnsRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
+  '/app/coupons': typeof AppCouponsRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -416,6 +433,7 @@ export interface FileRoutesByTo {
   '/returns': typeof ReturnsRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
+  '/app/coupons': typeof AppCouponsRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -442,6 +460,7 @@ export interface FileRoutesById {
   '/returns': typeof ReturnsRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
+  '/app/coupons': typeof AppCouponsRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -469,6 +488,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/terms'
     | '/app/categories'
+    | '/app/coupons'
     | '/app/delivery-fees'
     | '/app/reviews'
     | '/orders/$id'
@@ -492,6 +512,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/terms'
     | '/app/categories'
+    | '/app/coupons'
     | '/app/delivery-fees'
     | '/app/reviews'
     | '/orders/$id'
@@ -516,6 +537,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/terms'
     | '/app/categories'
+    | '/app/coupons'
     | '/app/delivery-fees'
     | '/app/reviews'
     | '/orders/$id'
@@ -588,6 +610,7 @@ export const routeTree = rootRoute
       "filePath": "app.tsx",
       "children": [
         "/app/categories",
+        "/app/coupons",
         "/app/delivery-fees",
         "/app/reviews",
         "/app/",
@@ -630,6 +653,10 @@ export const routeTree = rootRoute
     },
     "/app/categories": {
       "filePath": "app/categories.tsx",
+      "parent": "/app"
+    },
+    "/app/coupons": {
+      "filePath": "app/coupons.tsx",
       "parent": "/app"
     },
     "/app/delivery-fees": {
