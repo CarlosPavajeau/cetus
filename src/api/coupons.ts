@@ -6,6 +6,12 @@ export enum CouponDiscountType {
   FreeShipping,
 }
 
+export const CouponDiscountTypeText = {
+  [CouponDiscountType.Percentage]: 'Porcentaje',
+  [CouponDiscountType.FixedAmount]: 'Monto fijo',
+  [CouponDiscountType.FreeShipping]: 'Envío gratis',
+}
+
 export type Coupon = {
   id: number
   code: string
@@ -34,6 +40,13 @@ export enum CouponRuleType {
   SpecificProduct,
   SpecificCategory,
   OnePerCustomer,
+}
+
+export const CouponRuleTypeText = {
+  [CouponRuleType.MinPurchaseAmount]: 'Monto mínimo de compra',
+  [CouponRuleType.SpecificProduct]: 'Producto específico',
+  [CouponRuleType.SpecificCategory]: 'Categoría específica',
+  [CouponRuleType.OnePerCustomer]: 'Un cupón por cliente',
 }
 
 export type CreateCouponRule = {
