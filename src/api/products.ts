@@ -70,7 +70,7 @@ export async function fetchProductSuggestions(productId: string) {
 
 export type UpdateProductRequest = Omit<
   Product,
-  'createdAt' | 'updatedAt' | 'slug'
+  'createdAt' | 'updatedAt' | 'slug' | 'rating' | 'reviewsCount'
 >
 
 export const updateProduct = async (product: UpdateProductRequest) => {
