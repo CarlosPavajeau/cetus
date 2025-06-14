@@ -26,8 +26,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useUpdateProduct } from '@/hooks/products'
 import {
-  type UpdateProductFormValues,
-  updateProductSchema,
+  updateProductSchema
 } from '@/schemas/product'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
@@ -40,12 +39,12 @@ type Props = {
 export const UpdateProductDialog = ({ product }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const form = useForm<UpdateProductFormValues>({
+  const form = useForm({
     resolver: zodResolver(updateProductSchema),
     defaultValues: {
       ...product,
-      description: product.description ?? undefined,
-      imageUrl: product.imageUrl ?? '',
+      description: product.description,
+      imageUrl: product.imageUrl,
     },
   })
 
