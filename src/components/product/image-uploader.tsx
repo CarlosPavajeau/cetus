@@ -17,7 +17,7 @@ export const ACCEPTED_FILE_TYPES = {
 export const MAX_FILE_SIZE = 5 * 1024 * 1024
 
 export type FormWithImageUrl = {
-  imageUrl: string
+  imageUrl?: string
 }
 
 export function useImageUpload<T extends FormWithImageUrl>(
