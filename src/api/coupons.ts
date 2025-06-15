@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 export enum CouponDiscountType {
-  Percentage,
-  FixedAmount,
-  FreeShipping,
+  Percentage = 0,
+  FixedAmount = 1,
+  FreeShipping = 2,
 }
 
 export const CouponDiscountTypeText = {
@@ -11,6 +11,21 @@ export const CouponDiscountTypeText = {
   [CouponDiscountType.FixedAmount]: 'Monto fijo',
   [CouponDiscountType.FreeShipping]: 'Envío gratis',
 }
+
+export const COUPON_DISCOUNT_TYPE_OPTIONS = [
+  {
+    value: CouponDiscountType.Percentage,
+    label: CouponDiscountTypeText[CouponDiscountType.Percentage],
+  },
+  {
+    value: CouponDiscountType.FixedAmount,
+    label: CouponDiscountTypeText[CouponDiscountType.FixedAmount],
+  },
+  {
+    value: CouponDiscountType.FreeShipping,
+    label: CouponDiscountTypeText[CouponDiscountType.FreeShipping],
+  },
+]
 
 export type Coupon = {
   id: number
@@ -36,10 +51,10 @@ export async function fetchCoupons() {
 }
 
 export enum CouponRuleType {
-  MinPurchaseAmount,
-  SpecificProduct,
-  SpecificCategory,
-  OnePerCustomer,
+  MinPurchaseAmount = 0,
+  SpecificProduct = 1,
+  SpecificCategory = 2,
+  OnePerCustomer = 3,
 }
 
 export const CouponRuleTypeText = {
@@ -48,6 +63,25 @@ export const CouponRuleTypeText = {
   [CouponRuleType.SpecificCategory]: 'Categoría específica',
   [CouponRuleType.OnePerCustomer]: 'Un cupón por cliente',
 }
+
+export const COUPON_RULE_TYPE_OPTIONS = [
+  {
+    value: CouponRuleType.MinPurchaseAmount,
+    label: CouponRuleTypeText[CouponRuleType.MinPurchaseAmount],
+  },
+  {
+    value: CouponRuleType.SpecificProduct,
+    label: CouponRuleTypeText[CouponRuleType.SpecificProduct],
+  },
+  {
+    value: CouponRuleType.SpecificCategory,
+    label: CouponRuleTypeText[CouponRuleType.SpecificCategory],
+  },
+  {
+    value: CouponRuleType.OnePerCustomer,
+    label: CouponRuleTypeText[CouponRuleType.OnePerCustomer],
+  },
+]
 
 export type CreateCouponRule = {
   ruleType: CouponRuleType
