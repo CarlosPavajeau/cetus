@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useCoupons } from '@/hooks/coupons'
 import { usePagination } from '@/hooks/use-pagination'
 import { Protect } from '@clerk/clerk-react'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
   type PaginationState,
@@ -19,7 +19,7 @@ import {
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/app/coupons')({
+export const Route = createFileRoute('/app/coupons/')({
   component: RouteComponent,
 })
 
@@ -110,9 +110,11 @@ function RouteComponent() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Cupones</h1>
 
-        <Button disabled>
-          <PlusIcon />
-          Crear cupón
+        <Button asChild>
+          <Link to="/app/coupons/new">
+            <PlusIcon />
+            Crear cupón
+          </Link>
         </Button>
       </div>
 

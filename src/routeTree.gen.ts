@@ -27,13 +27,14 @@ import { Route as ProductsSlugImport } from './routes/products/$slug'
 import { Route as OrdersIdImport } from './routes/orders/$id'
 import { Route as AppReviewsImport } from './routes/app/reviews'
 import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
-import { Route as AppCouponsImport } from './routes/app/coupons'
 import { Route as AppCategoriesImport } from './routes/app/categories'
 import { Route as AppProductsIndexImport } from './routes/app/products/index'
 import { Route as AppDashboardIndexImport } from './routes/app/dashboard/index'
+import { Route as AppCouponsIndexImport } from './routes/app/coupons/index'
 import { Route as OrdersOrderIdConfirmationImport } from './routes/orders/$orderId.confirmation'
 import { Route as AppProductsNewImport } from './routes/app/products/new'
 import { Route as AppOrdersOrderIdImport } from './routes/app/orders/$orderId'
+import { Route as AppCouponsNewImport } from './routes/app/coupons/new'
 
 // Create/Update Routes
 
@@ -133,12 +134,6 @@ const AppDeliveryFeesRoute = AppDeliveryFeesImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
-const AppCouponsRoute = AppCouponsImport.update({
-  id: '/coupons',
-  path: '/coupons',
-  getParentRoute: () => AppRoute,
-} as any)
-
 const AppCategoriesRoute = AppCategoriesImport.update({
   id: '/categories',
   path: '/categories',
@@ -157,6 +152,12 @@ const AppDashboardIndexRoute = AppDashboardIndexImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
+const AppCouponsIndexRoute = AppCouponsIndexImport.update({
+  id: '/coupons/',
+  path: '/coupons/',
+  getParentRoute: () => AppRoute,
+} as any)
+
 const OrdersOrderIdConfirmationRoute = OrdersOrderIdConfirmationImport.update({
   id: '/$orderId/confirmation',
   path: '/$orderId/confirmation',
@@ -172,6 +173,12 @@ const AppProductsNewRoute = AppProductsNewImport.update({
 const AppOrdersOrderIdRoute = AppOrdersOrderIdImport.update({
   id: '/orders/$orderId',
   path: '/orders/$orderId',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppCouponsNewRoute = AppCouponsNewImport.update({
+  id: '/coupons/new',
+  path: '/coupons/new',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -256,13 +263,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriesImport
       parentRoute: typeof AppImport
     }
-    '/app/coupons': {
-      id: '/app/coupons'
-      path: '/coupons'
-      fullPath: '/app/coupons'
-      preLoaderRoute: typeof AppCouponsImport
-      parentRoute: typeof AppImport
-    }
     '/app/delivery-fees': {
       id: '/app/delivery-fees'
       path: '/delivery-fees'
@@ -305,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexImport
       parentRoute: typeof AppImport
     }
+    '/app/coupons/new': {
+      id: '/app/coupons/new'
+      path: '/coupons/new'
+      fullPath: '/app/coupons/new'
+      preLoaderRoute: typeof AppCouponsNewImport
+      parentRoute: typeof AppImport
+    }
     '/app/orders/$orderId': {
       id: '/app/orders/$orderId'
       path: '/orders/$orderId'
@@ -325,6 +332,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/orders/$orderId/confirmation'
       preLoaderRoute: typeof OrdersOrderIdConfirmationImport
       parentRoute: typeof OrdersImport
+    }
+    '/app/coupons/': {
+      id: '/app/coupons/'
+      path: '/coupons'
+      fullPath: '/app/coupons'
+      preLoaderRoute: typeof AppCouponsIndexImport
+      parentRoute: typeof AppImport
     }
     '/app/dashboard/': {
       id: '/app/dashboard/'
@@ -347,24 +361,26 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCategoriesRoute: typeof AppCategoriesRoute
-  AppCouponsRoute: typeof AppCouponsRoute
   AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
   AppReviewsRoute: typeof AppReviewsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppCouponsNewRoute: typeof AppCouponsNewRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
+  AppCouponsIndexRoute: typeof AppCouponsIndexRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriesRoute: AppCategoriesRoute,
-  AppCouponsRoute: AppCouponsRoute,
   AppDeliveryFeesRoute: AppDeliveryFeesRoute,
   AppReviewsRoute: AppReviewsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppCouponsNewRoute: AppCouponsNewRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppProductsNewRoute: AppProductsNewRoute,
+  AppCouponsIndexRoute: AppCouponsIndexRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
 }
@@ -408,16 +424,17 @@ export interface FileRoutesByFullPath {
   '/returns': typeof ReturnsRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
-  '/app/coupons': typeof AppCouponsRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
+  '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
@@ -433,16 +450,17 @@ export interface FileRoutesByTo {
   '/returns': typeof ReturnsRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
-  '/app/coupons': typeof AppCouponsRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
+  '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
@@ -460,16 +478,17 @@ export interface FileRoutesById {
   '/returns': typeof ReturnsRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
-  '/app/coupons': typeof AppCouponsRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
+  '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app/coupons/': typeof AppCouponsIndexRoute
   '/app/dashboard/': typeof AppDashboardIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
@@ -488,16 +507,17 @@ export interface FileRouteTypes {
     | '/returns'
     | '/terms'
     | '/app/categories'
-    | '/app/coupons'
     | '/app/delivery-fees'
     | '/app/reviews'
     | '/orders/$id'
     | '/products/$slug'
     | '/reviews/new'
     | '/app/'
+    | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
     | '/orders/$orderId/confirmation'
+    | '/app/coupons'
     | '/app/dashboard'
     | '/app/products'
   fileRoutesByTo: FileRoutesByTo
@@ -512,16 +532,17 @@ export interface FileRouteTypes {
     | '/returns'
     | '/terms'
     | '/app/categories'
-    | '/app/coupons'
     | '/app/delivery-fees'
     | '/app/reviews'
     | '/orders/$id'
     | '/products/$slug'
     | '/reviews/new'
     | '/app'
+    | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
     | '/orders/$orderId/confirmation'
+    | '/app/coupons'
     | '/app/dashboard'
     | '/app/products'
   id:
@@ -537,16 +558,17 @@ export interface FileRouteTypes {
     | '/returns'
     | '/terms'
     | '/app/categories'
-    | '/app/coupons'
     | '/app/delivery-fees'
     | '/app/reviews'
     | '/orders/$id'
     | '/products/$slug'
     | '/reviews/new'
     | '/app/'
+    | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
     | '/orders/$orderId/confirmation'
+    | '/app/coupons/'
     | '/app/dashboard/'
     | '/app/products/'
   fileRoutesById: FileRoutesById
@@ -610,12 +632,13 @@ export const routeTree = rootRoute
       "filePath": "app.tsx",
       "children": [
         "/app/categories",
-        "/app/coupons",
         "/app/delivery-fees",
         "/app/reviews",
         "/app/",
+        "/app/coupons/new",
         "/app/orders/$orderId",
         "/app/products/new",
+        "/app/coupons/",
         "/app/dashboard/",
         "/app/products/"
       ]
@@ -655,10 +678,6 @@ export const routeTree = rootRoute
       "filePath": "app/categories.tsx",
       "parent": "/app"
     },
-    "/app/coupons": {
-      "filePath": "app/coupons.tsx",
-      "parent": "/app"
-    },
     "/app/delivery-fees": {
       "filePath": "app/delivery-fees.tsx",
       "parent": "/app"
@@ -682,6 +701,10 @@ export const routeTree = rootRoute
       "filePath": "app/index.tsx",
       "parent": "/app"
     },
+    "/app/coupons/new": {
+      "filePath": "app/coupons/new.tsx",
+      "parent": "/app"
+    },
     "/app/orders/$orderId": {
       "filePath": "app/orders/$orderId.tsx",
       "parent": "/app"
@@ -693,6 +716,10 @@ export const routeTree = rootRoute
     "/orders/$orderId/confirmation": {
       "filePath": "orders/$orderId.confirmation.tsx",
       "parent": "/orders"
+    },
+    "/app/coupons/": {
+      "filePath": "app/coupons/index.tsx",
+      "parent": "/app"
     },
     "/app/dashboard/": {
       "filePath": "app/dashboard/index.tsx",
