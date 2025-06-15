@@ -51,7 +51,7 @@ export const CouponRuleTypeText = {
 
 export type CreateCouponRule = {
   ruleType: CouponRuleType
-  value: number
+  value: string
 }
 
 export type CreateCouponRequest = {
@@ -60,8 +60,8 @@ export type CreateCouponRequest = {
   discountType: CouponDiscountType
   discountValue: number
   usageLimit?: number
-  startDate?: string
-  endDate?: string
+  startDate?: Date
+  endDate?: Date
   rules: CreateCouponRule[]
 }
 
