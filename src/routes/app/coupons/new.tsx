@@ -1,10 +1,6 @@
-import {
-  COUPON_DISCOUNT_TYPE_OPTIONS,
-  COUPON_RULE_TYPE_OPTIONS,
-  type CouponDiscountType,
-  CouponRuleType,
-} from '@/api/coupons'
+import { COUPON_DISCOUNT_TYPE_OPTIONS } from '@/api/coupons'
 import { AccessDenied } from '@/components/access-denied'
+import { CouponRulesForm } from '@/components/coupons/coupon-rules.form'
 import { ReturnButton } from '@/components/return-button'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,7 +26,7 @@ import { generateCouponCode } from '@/shared/coupons'
 import { Protect } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute } from '@tanstack/react-router'
-import { Loader2Icon, PlusIcon, RefreshCcwIcon, TrashIcon } from 'lucide-react'
+import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 
 export const Route = createFileRoute('/app/coupons/new')({
@@ -48,7 +44,8 @@ function RouteComponent() {
   const createCouponMutation = useCreateCoupon()
 
   const onSubmit = form.handleSubmit((data) => {
-    createCouponMutation.mutate(data)
+    // createCouponMutation.mutate(data)
+    alert(JSON.stringify(data, null, 2))
   })
 
   const generateCode = () => {
@@ -60,23 +57,8 @@ function RouteComponent() {
     form.setValue('code', code)
   }
 
-  const rules = form.watch('rules')
-
-  const addRule = () => {
-    form.setValue('rules', [
-      ...rules,
-      {
-        ruleType: CouponRuleType.MinPurchaseAmount,
-        value: '0',
-      },
-    ])
-  }
-
-  const removeRule = (index: number) => {
-    form.setValue(
-      'rules',
-      rules.filter((_, i) => i !== index),
-    )
+  const onDiscountTypeChange = (value: string) => {
+    form.setValue('discountType', Number(value))
   }
 
   return (
@@ -144,11 +126,7 @@ function RouteComponent() {
                       <FormLabel>Tipo de descuento</FormLabel>
                       <FormControl>
                         <Select
-                          onValueChange={(value) =>
-                            field.onChange(
-                              value as unknown as CouponDiscountType,
-                            )
-                          }
+                          onValueChange={onDiscountTypeChange}
                           defaultValue={field.value?.toString()}
                         >
                           <SelectTrigger>
@@ -208,87 +186,10 @@ function RouteComponent() {
                 />
               </div>
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-heading font-semibold text-lg">
-                      Reglas
-                    </h2>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={addRule}
-                    >
-                      <PlusIcon />
-                      Agregar regla
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-col gap-4">
-                    {rules?.map((_, index) => (
-                      <div key={index} className="grid gap-4 md:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name={`rules.${index}.ruleType`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Tipo de regla</FormLabel>
-                              <FormControl>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value?.toString()}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona un tipo de regla" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {COUPON_RULE_TYPE_OPTIONS.map((option) => (
-                                      <SelectItem
-                                        key={option.value}
-                                        value={option.value.toString()}
-                                      >
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`rules.${index}.value`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Valor</FormLabel>
-                              <FormControl>
-                                <div className="flex items-center gap-2">
-                                  <Input placeholder="Valor" {...field} />
-                                  <Button
-                                    variant="outline"
-                                    type="button"
-                                    size="icon"
-                                    onClick={() => removeRule(index)}
-                                  >
-                                    <TrashIcon className="size-4" />
-                                  </Button>
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <CouponRulesForm />
 
                 <div className="w-full">
-                  <Button type="submit" className="w-full" disabled>
+                  <Button type="submit" className="w-full">
                     {createCouponMutation.isPending ? (
                       <Loader2Icon className="size-4 animate-spin" />
                     ) : (
