@@ -75,7 +75,7 @@ export function AddCouponRule({ onSuccess }: Props) {
         </Button>
       </SheetTrigger>
 
-      <SheetContent>
+      <SheetContent className="sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Agregar regla</SheetTitle>
         </SheetHeader>
