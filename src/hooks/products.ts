@@ -118,6 +118,7 @@ export function useProducts() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
+    refetchOnMount: false,
   })
 
   return {
