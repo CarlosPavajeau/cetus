@@ -1,10 +1,10 @@
 import { CouponRuleTypeText, type CreateCouponRule } from '@/api/coupons'
+import { AddCouponRule } from '@/components/coupons/add-coupon-rule'
 import { Button } from '@/components/ui/button'
 import type { createCouponSchema } from '@/schemas/coupons'
 import { TrashIcon } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 import type { TypeOf } from 'zod'
-import { AddCouponRule } from './add-coupon-rule'
 
 export function CouponRulesForm() {
   const form = useFormContext<TypeOf<typeof createCouponSchema>>()
