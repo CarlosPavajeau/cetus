@@ -45,7 +45,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "framer-motion": "^12.6.2",
-    "lucide-react": "^0.515.0",
+    "lucide-react": "^0.516.0",
     "next-themes": "^0.4.6",
     "posthog-js": "^1.236.1",
     "react": "^19.1.0",
@@ -63,7 +63,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.0.0",
     "@rsbuild/core": "1.2.19",
     "@rsbuild/plugin-react": "^1.1.1",
     "@rsdoctor/rspack-plugin": "^1.0.1",
