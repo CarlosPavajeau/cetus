@@ -14,9 +14,14 @@ export function useCoupons() {
   }
 }
 
-export function useCreateCoupon() {
+type UseCreateCouponProps = {
+  onSuccess?: () => void
+}
+
+export function useCreateCoupon({ onSuccess }: UseCreateCouponProps) {
   return useMutation({
     mutationKey: ['create-coupon'],
     mutationFn: createCoupon,
+    onSuccess,
   })
 }

@@ -25,15 +25,17 @@ import { createCouponSchema } from '@/schemas/coupons'
 import { generateCouponCode } from '@/shared/coupons'
 import { Protect } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/app/coupons/new')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const navigate = useNavigate({ from: '/app/coupons/new' })
   const form = useForm({
     resolver: zodResolver(createCouponSchema),
     defaultValues: {
@@ -41,11 +43,16 @@ function RouteComponent() {
     },
   })
 
-  const createCouponMutation = useCreateCoupon()
+  const createCouponMutation = useCreateCoupon({
+    onSuccess: () => {
+      toast.success('Cupón creado correctamente')
+      navigate({ to: '/app/coupons' })
+      form.reset()
+    },
+  })
 
   const onSubmit = form.handleSubmit((data) => {
-    // createCouponMutation.mutate(data)
-    alert(JSON.stringify(data, null, 2))
+    createCouponMutation.mutate(data)
   })
 
   const generateCode = () => {
