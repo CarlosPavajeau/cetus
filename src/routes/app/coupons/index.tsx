@@ -1,5 +1,6 @@
 import { type Coupon, CouponDiscountTypeText } from '@/api/coupons'
 import { AccessDenied } from '@/components/access-denied'
+import { CouponDetails } from '@/components/coupons/coupon-details'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
@@ -65,6 +66,11 @@ const columns: ColumnDef<Coupon>[] = [
     cell: ({ row }) => (
       <FormattedDate date={new Date(row.original.createdAt)} />
     ),
+  },
+  {
+    id: 'actions',
+    header: 'Acciones',
+    cell: ({ row }) => <CouponDetails coupon={row.original} />,
   },
 ]
 
