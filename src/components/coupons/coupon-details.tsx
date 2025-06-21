@@ -1,7 +1,7 @@
 import {
-    type Coupon,
-    CouponDiscountType,
-    CouponDiscountTypeText,
+  type Coupon,
+  CouponDiscountType,
+  CouponDiscountTypeText,
 } from '@/api/coupons'
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
@@ -9,13 +9,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from '@/components/ui/sheet'
 import { cn } from '@/shared/cn'
 import { CheckIcon, CopyIcon, EyeIcon } from 'lucide-react'
