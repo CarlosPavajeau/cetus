@@ -1,5 +1,6 @@
 import { type Coupon, CouponDiscountTypeText } from '@/api/coupons'
 import { CouponDiscountValue } from '@/components/coupons/coupon-discount-value'
+import { CouponRulesDetails } from '@/components/coupons/coupon-rules-details'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -182,11 +183,7 @@ export function CouponDetails({ coupon }: Props) {
           <div className="space-y-3">
             <h2 className="font-semibold text-foreground">Reglas</h2>
 
-            <div className="space-y-2">
-              <Badge variant="outline" className="rounded">
-                En construcción
-              </Badge>
-            </div>
+            <CouponRulesDetails couponId={coupon.id} />
           </div>
         </div>
 
