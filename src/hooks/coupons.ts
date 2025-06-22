@@ -1,4 +1,4 @@
-import { createCoupon, fetchCoupons } from '@/api/coupons'
+import { createCoupon, fetchCouponRules, fetchCoupons } from '@/api/coupons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 export function useCoupons() {
@@ -24,4 +24,17 @@ export function useCreateCoupon({ onSuccess }: UseCreateCouponProps) {
     mutationFn: createCoupon,
     onSuccess,
   })
+}
+
+export function useCouponRules(id: number) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['coupon-rules', id],
+    queryFn: () => fetchCouponRules(id),
+  })
+
+  return {
+    couponRules: data,
+    isLoading,
+    error,
+  }
 }

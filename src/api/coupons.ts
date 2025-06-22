@@ -107,3 +107,17 @@ export async function createCoupon(coupon: CreateCouponRequest) {
 
   return response.data
 }
+
+export type CouponRule = {
+  id: number
+  ruleType: CouponRuleType
+  value: string
+}
+
+export async function fetchCouponRules(id: number) {
+  const response = await axios.get<CouponRule[]>(
+    `${import.meta.env.PUBLIC_API_URL}/coupons/${id}/rules`,
+  )
+
+  return response.data
+}
