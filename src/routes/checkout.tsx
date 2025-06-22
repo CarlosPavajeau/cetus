@@ -1,6 +1,7 @@
 import { type DeliveryFee, createOrder } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
-import { Currency } from '@/components/currency.tsx'
+import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
+import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { PaymentOptions } from '@/components/payment/payment-options'
@@ -339,6 +340,7 @@ function RouteComponent() {
 
         {currentStep === 2 && orderId && (
           <div className="space-y-6">
+            <RedeemCoupon />
             <PaymentOptions orderId={orderId} />
 
             <DeliveryFeeInfo
