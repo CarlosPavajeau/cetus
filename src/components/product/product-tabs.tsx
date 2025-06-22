@@ -76,7 +76,7 @@ export function ProductTabs({ id }: Props) {
           value="reviews"
           className="data-[state=active]:fade-in h-72 max-h-72 min-h-72 overflow-y-auto rounded border bg-card p-4 data-[state=active]:animate-in data-[state=active]:duration-300 data-[state=active]:ease-in"
         >
-          <div>
+          <div className="flex flex-col gap-2 p-2">
             {productReviews.map((review) => (
               <ProductReview key={review.id} review={review} />
             ))}

@@ -15,8 +15,8 @@ type Props = {
 
 export function ProductReview({ review }: Props) {
   return (
-    <Card className="w-full rounded-none border-0 border-b bg-transparent py-4 shadow-none last:border-b-0">
-      <CardContent className="flex flex-col gap-2">
+    <Card className="w-full rounded-none border-0 border-b bg-transparent p-0 shadow-none last:border-b-0">
+      <CardContent className="flex flex-col gap-2 p-0">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex flex-col gap-1">
