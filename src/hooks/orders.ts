@@ -24,6 +24,7 @@ export function useOrder(id: string) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['orders', id],
     queryFn: () => fetchOrder(id),
+    refetchOnMount: false,
   })
 
   return {
