@@ -340,7 +340,7 @@ function RouteComponent() {
 
         {currentStep === 2 && orderId && (
           <div className="space-y-6">
-            <RedeemCoupon />
+            <RedeemCoupon orderId={orderId} />
             <PaymentOptions orderId={orderId} />
 
             <DeliveryFeeInfo

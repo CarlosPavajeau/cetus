@@ -1,25 +1,78 @@
+import { Currency } from '@/components/currency'
 import { Button } from '@/components/ui/button'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useOrder } from '@/hooks/orders'
+import { redeemCouponSchema } from '@/schemas/coupons'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
 
-export function RedeemCoupon() {
+type Props = {
+  orderId: string
+}
+
+export function RedeemCoupon({ orderId }: Props) {
+  const { order, isLoading } = useOrder(orderId)
+  const form = useForm({
+    resolver: zodResolver(redeemCouponSchema),
+    defaultValues: {
+      couponCode: '',
+      orderId,
+    },
+  })
+
+  const onSubmit = form.handleSubmit((data) => {
+    console.log(data)
+  })
+
+  if (isLoading) return <Skeleton className="h-10 w-full" />
+
+  if (!order) return null
+
   return (
     <div className="flex flex-col gap-4 rounded-lg border bg-card p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-0.5">
-          <h3 className="font-medium text-sm">Cupón de descuento</h3>
-          <p className="text-muted-foreground text-xs">
-            Ingresa un código para obtener descuentos
-          </p>
-        </div>
+      <div className="flex flex-col gap-0.5 font-medium">
+        <span className="text-muted-foreground text-sm">Total a pagar</span>
+        <span>
+          <Currency value={order.total} currency="COP" />
+        </span>
       </div>
-      <div>
-        <Input placeholder="Código del cupón" />
-      </div>
-      <div>
-        <Button variant="outline" size="sm">
-          Aplicar
-        </Button>
-      </div>
+
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="grid gap-4">
+          <FormField
+            control={form.control}
+            name="couponCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Código del cupón</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+                <FormDescription>
+                  Ingresa un código para obtener descuentos
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+
+          <div className="flex justify-end">
+            <Button type="submit" size="sm" variant="outline">
+              Aplicar cupón
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   )
 }
