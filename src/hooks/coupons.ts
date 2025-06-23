@@ -1,4 +1,9 @@
-import { createCoupon, fetchCouponRules, fetchCoupons } from '@/api/coupons'
+import {
+  createCoupon,
+  fetchCouponRules,
+  fetchCoupons,
+  redeemCoupon,
+} from '@/api/coupons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 export function useCoupons() {
@@ -37,4 +42,16 @@ export function useCouponRules(id: number) {
     isLoading,
     error,
   }
+}
+
+type UseRedeemCouponProps = {
+  onSuccess?: () => void
+}
+
+export function useRedeemCoupon({ onSuccess }: UseRedeemCouponProps) {
+  return useMutation({
+    mutationKey: ['redeem-coupon'],
+    mutationFn: redeemCoupon,
+    onSuccess,
+  })
 }

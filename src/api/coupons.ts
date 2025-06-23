@@ -121,3 +121,17 @@ export async function fetchCouponRules(id: number) {
 
   return response.data
 }
+
+export type RedeemCouponRequest = {
+  couponCode: string
+  orderId: string
+}
+
+export async function redeemCoupon(coupon: RedeemCouponRequest) {
+  const response = await axios.post<Coupon>(
+    `${import.meta.env.PUBLIC_API_URL}/coupons/redeem`,
+    coupon,
+  )
+
+  return response.data
+}
