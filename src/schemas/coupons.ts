@@ -28,3 +28,8 @@ export const createCouponSchema = z.object({
   endDate: z.date().optional(),
   rules: z.array(createCouponRuleSchema),
 })
+
+export const redeemCouponSchema = z.object({
+  couponCode: z.string().min(1, 'El código es requerido'),
+  orderId: z.string().min(1, 'El ID del pedido es requerido'),
+})
