@@ -5,6 +5,7 @@ import { NequiPaymentForm } from '@/components/payment/nequi-payment-form'
 import { PsePaymentForm } from '@/components/payment/pse-payment-form'
 import { Form } from '@/components/ui/form'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useOrder } from '@/hooks/orders'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
 import { type PaymentFormValues, paymentSchema } from '@/schemas/payments'
@@ -123,7 +124,11 @@ export function PaymentOptions({ orderId }: PaymentOptionsProps) {
     [paymentMethod],
   )
 
-  if (isLoading || !order) {
+  if (isLoading) {
+    return <Skeleton className="h-10 w-full" />
+  }
+
+  if (!order) {
     return null
   }
 
