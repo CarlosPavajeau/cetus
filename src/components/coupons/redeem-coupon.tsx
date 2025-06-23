@@ -11,9 +11,12 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useRedeemCoupon } from '@/hooks/coupons'
 import { useOrder } from '@/hooks/orders'
 import { redeemCouponSchema } from '@/schemas/coupons'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
+import { Loader2Icon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 
 type Props = {
@@ -30,8 +33,16 @@ export function RedeemCoupon({ orderId }: Props) {
     },
   })
 
+  const queryClient = useQueryClient()
+  const onRedeemCouponSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['orders', orderId] })
+  }
+  const { mutate: redeemCoupon, isPending } = useRedeemCoupon({
+    onSuccess: onRedeemCouponSuccess,
+  })
+
   const onSubmit = form.handleSubmit((data) => {
-    console.log(data)
+    redeemCoupon(data)
   })
 
   if (isLoading) return <Skeleton className="h-10 w-full" />
@@ -67,7 +78,15 @@ export function RedeemCoupon({ orderId }: Props) {
           />
 
           <div className="flex justify-end">
-            <Button type="submit" size="sm" variant="outline">
+            <Button
+              type="submit"
+              size="sm"
+              variant="outline"
+              disabled={isPending}
+            >
+              {isPending && (
+                <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Aplicar cupón
             </Button>
           </div>
