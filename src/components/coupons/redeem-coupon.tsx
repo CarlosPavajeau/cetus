@@ -14,9 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useRedeemCoupon } from '@/hooks/coupons'
 import { useOrder } from '@/hooks/orders'
 import { redeemCouponSchema } from '@/schemas/coupons'
+import { extractErrorDetail } from '@/shared/error'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { AxiosError } from 'axios'
 import { Loader2Icon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
@@ -50,14 +50,10 @@ export function RedeemCoupon({ orderId }: Props) {
   useEffect(() => {
     if (!error) return
 
-    if (error instanceof AxiosError && error.response) {
-      const data = error.response?.data
-
-      form.setError('couponCode', {
-        type: 'manual',
-        message: data.detail,
-      })
-    }
+    form.setError('couponCode', {
+      type: 'manual',
+      message: extractErrorDetail(error),
+    })
   }, [error, form])
 
   const onSubmit = form.handleSubmit((data) => {
