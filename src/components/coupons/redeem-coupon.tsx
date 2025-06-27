@@ -16,7 +16,9 @@ import { useOrder } from '@/hooks/orders'
 import { redeemCouponSchema } from '@/schemas/coupons'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
+import { AxiosError } from 'axios'
 import { Loader2Icon } from 'lucide-react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 
 type Props = {
@@ -37,9 +39,26 @@ export function RedeemCoupon({ orderId }: Props) {
   const onRedeemCouponSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['orders', orderId] })
   }
-  const { mutate: redeemCoupon, isPending } = useRedeemCoupon({
+  const {
+    mutate: redeemCoupon,
+    isPending,
+    error,
+  } = useRedeemCoupon({
     onSuccess: onRedeemCouponSuccess,
   })
+
+  useEffect(() => {
+    if (!error) return
+
+    if (error instanceof AxiosError && error.response) {
+      const data = error.response?.data
+
+      form.setError('couponCode', {
+        type: 'manual',
+        message: data.detail,
+      })
+    }
+  }, [error, form])
 
   const onSubmit = form.handleSubmit((data) => {
     redeemCoupon(data)
