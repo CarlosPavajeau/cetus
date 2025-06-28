@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.8.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -8,19 +8,20 @@
     "lineEnding": "lf",
     "lineWidth": 80,
     "attributePosition": "auto",
-    "ignore": [
-      "bun.lock",
-      "dist/**",
-      "build/**",
-      "coverage/**",
-      "node_modules/**",
-      "out/**",
-      "public/**",
-      "tmp/**",
-      "vendor/**"
+    "includes": [
+      "**",
+      "!**/bun.lock",
+      "!**/dist/**",
+      "!**/build/**",
+      "!**/coverage/**",
+      "!**/node_modules/**",
+      "!**/out/**",
+      "!**/public/**",
+      "!**/tmp/**",
+      "!**/vendor/**"
     ]
   },
-  "organizeImports": { "enabled": true },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -35,7 +36,6 @@
       "correctness": {
         "noPrecisionLoss": "error",
         "noUnusedVariables": "off",
-        "useArrayLiterals": "off",
         "useExhaustiveDependencies": "warn"
       },
       "style": {
@@ -45,7 +45,8 @@
         "useConsistentArrayType": "off",
         "useForOf": "error",
         "useImportType": "warn",
-        "useShorthandFunctionType": "error"
+        "useShorthandFunctionType": "error",
+        "useArrayLiterals": "off"
       },
       "suspicious": {
         "noEmptyBlockStatements": "error",
@@ -61,7 +62,7 @@
         "useSortedClasses": "warn"
       }
     },
-    "ignore": ["**/pnpm-lock.yaml", ".next/**"]
+    "includes": ["**", "!**/pnpm-lock.yaml", "!**/.next/**"]
   },
   "javascript": {
     "formatter": {
