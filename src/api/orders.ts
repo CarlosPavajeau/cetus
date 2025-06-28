@@ -35,6 +35,8 @@ export type Order = {
   id: string
   orderNumber: number
   address: string
+  subtotal: number
+  discount: number
   deliveryFee?: number
   total: number
   status: OrderStatus
