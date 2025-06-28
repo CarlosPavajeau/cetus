@@ -87,6 +87,18 @@ export function OrderSummary({ order, showId = false }: Props) {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
             <span>
+              <Currency value={order.subtotal} currency="COP" />
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Descuento</span>
+            <span className="text-destructive">
+              - <Currency value={order.discount} currency="COP" />
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Total a pagar</span>
+            <span>
               <Currency value={order.total} currency="COP" />
             </span>
           </div>
