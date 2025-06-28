@@ -100,7 +100,7 @@ export function NewOrdersSummary() {
   ]
 
   const mainStatPercentage = shippedOrdersPercentage / 100
-  const percentageChange = -0.004
+  const percentageChange = Math.random() * 0.1 - 0.05
 
   return (
     <Card className="col-span-4 gap-0 overflow-hidden py-0 lg:col-span-3">
