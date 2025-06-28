@@ -102,7 +102,7 @@ function CategoryFilter({
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         <Badge
-          variant={selectedCategories.length === 0 ? 'default' : 'outline'}
+          variant={selectedCategories.length === 0 ? 'default' : 'secondary'}
           className="shrink-0 cursor-pointer rounded px-2 py-1 transition-colors duration-200"
           onClick={() => setSelectedCategories([])}
         >
@@ -112,7 +112,7 @@ function CategoryFilter({
           <Badge
             key={category.id}
             variant={
-              selectedCategories.includes(category.id) ? 'default' : 'outline'
+              selectedCategories.includes(category.id) ? 'default' : 'secondary'
             }
             className="shrink-0 cursor-pointer rounded px-2 py-1 transition-colors duration-200"
             onClick={() => toggleCategory(category.id)}
