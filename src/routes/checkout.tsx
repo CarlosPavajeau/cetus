@@ -1,4 +1,4 @@
-import { type DeliveryFee, createOrder } from '@/api/orders'
+import { createOrder, type DeliveryFee } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
@@ -130,9 +130,11 @@ function useCartCheckout() {
 
 const CUSTOMER_ID_DELAY = 750 // milliseconds
 
-function CustomerInfoFields({
-  form,
-}: { form: ReturnType<typeof useForm<CreateOrderFormValues>> }) {
+type CustomerInfoFieldsProps = {
+  form: ReturnType<typeof useForm<CreateOrderFormValues>>
+}
+
+function CustomerInfoFields({ form }: CustomerInfoFieldsProps) {
   const formCustomerId = form.watch('customer.id')
   const customerId = useDebounce(formCustomerId, CUSTOMER_ID_DELAY)
 
