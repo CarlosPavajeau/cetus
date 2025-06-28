@@ -56,13 +56,13 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuItem> = [
   {
     label: 'Reseñas',
     href: '/app/reviews',
-    isNew: true,
+    isNew: false,
     icon: StarIcon,
   },
   {
     label: 'Cupones',
     href: '/app/coupons',
-    isNew: true,
+    isNew: false,
     icon: BadgePercentIcon,
   },
 ] as const
