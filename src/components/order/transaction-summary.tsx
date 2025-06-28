@@ -27,26 +27,22 @@ export function TransactionSummary({ id }: Props) {
 
   return (
     <div className="space-y-3 rounded-md border bg-card p-4">
-      <h3 className="font-medium">Resumen de la transacción</h3>
+      <div className="flex justify-between">
+        <h3 className="font-medium">Estado de la transacción</h3>
+
+        <Badge variant="outline">
+          <span
+            className={cn(
+              'size-1.5 rounded-full',
+              TransactionStatusColor[transaction.data.status],
+            )}
+            aria-hidden="true"
+          ></span>
+          {TransactionStatusText[transaction.data.status]}
+        </Badge>
+      </div>
 
       <div className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Estado</span>
-
-          <span>
-            <Badge variant="outline">
-              <span
-                className={cn(
-                  'size-1.5 rounded-full',
-                  TransactionStatusColor[transaction.data.status],
-                )}
-                aria-hidden="true"
-              ></span>
-              {TransactionStatusText[transaction.data.status]}
-            </Badge>
-          </span>
-        </div>
-
         <div className="flex justify-between">
           <span className="text-muted-foreground">Id</span>
 
