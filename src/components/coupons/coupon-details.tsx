@@ -17,6 +17,7 @@ import {
 import { cn } from '@/shared/cn'
 import { CheckIcon, CopyIcon, EyeIcon } from 'lucide-react'
 import { useState } from 'react'
+import { Progress } from '../ui/progress'
 
 type Props = {
   coupon: Coupon
@@ -140,16 +141,21 @@ export function CouponDetails({ coupon }: Props) {
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="space-y-1">
             <h3 className="line-clamp-1 font-medium text-sm">Límite de uso</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Usados</span>
-                <span>
+            <div className="space-y-1.5">
+              <div className="flex justify-between gap-1.5">
+                <span className="text-muted-foreground text-sm">Usos</span>
+                <span className="text-sm">
                   {coupon.usageCount}
                   {coupon.usageLimit && ` / ${coupon.usageLimit}`}
                 </span>
               </div>
+              {coupon.usageLimit && (
+                <Progress
+                  value={(coupon.usageCount / coupon.usageLimit) * 100 || 0}
+                />
+              )}
             </div>
           </div>
 
