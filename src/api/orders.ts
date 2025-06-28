@@ -132,6 +132,8 @@ export type OrderInsights = {
   currentMonthCost: number
   allOrdersCount: number
   completedOrdersCount: number
+  revenuePercentageChange: number
+  ordersCountPercentageChange: number
 }
 
 export const fetchOrderInsights = async (month: string) => {
