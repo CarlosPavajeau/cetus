@@ -10,10 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
-import { Link } from '@tanstack/react-router'
 import {
   AlertTriangleIcon,
-  ArrowLeftIcon,
   CheckIcon,
   MinusIcon,
   PlusIcon,
@@ -227,16 +225,6 @@ export const ProductDisplay = memo(({ product }: Props) => {
   return (
     <div className="flex flex-col gap-2">
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
-
-      <div className="mb-2">
-        <Button asChild variant="ghost" className="text-muted-foreground">
-          <Link to="/">
-            <ArrowLeftIcon size={14} />
-            Volver
-          </Link>
-        </Button>
-      </div>
-
       <ProductDisplayComponent product={product} />
     </div>
   )
