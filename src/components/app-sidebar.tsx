@@ -4,11 +4,13 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { useOrganization } from '@clerk/clerk-react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   BadgePercentIcon,
@@ -16,6 +18,7 @@ import {
   PackageIcon,
   ShoppingBasketIcon,
   StarIcon,
+  StoreIcon,
   TagIcon,
   TruckIcon,
 } from 'lucide-react'
@@ -100,8 +103,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }
 
+  const org = useOrganization()
+
   return (
     <Sidebar {...props}>
+      <SidebarHeader className="flex h-16 items-center justify-center gap-2 border-b">
+        <div className="flex h-4 items-center justify-center gap-2">
+          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
+            <StoreIcon className="size-4" />
+          </div>
+          <h1 className="line-clamp-1 font-medium text-md">
+            {org.organization?.name}
+          </h1>
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         {MENU.map((group) => (
           <SidebarGroup key={group.id}>
