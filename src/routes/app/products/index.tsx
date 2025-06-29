@@ -21,18 +21,18 @@ import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/shared/cn'
 import { Protect } from '@clerk/clerk-react'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type Column,
   type ColumnDef,
   type ColumnFiltersState,
   type FilterFn,
-  type PaginationState,
-  type Row,
   getCoreRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
+  type PaginationState,
+  type Row,
   useReactTable,
 } from '@tanstack/react-table'
 import {

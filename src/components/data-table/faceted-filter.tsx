@@ -44,7 +44,7 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-2 border-dashed">
+        <Button variant="outline" className="gap-2 border">
           <FilterIcon size={16} aria-hidden="true" />
           {title}
 
