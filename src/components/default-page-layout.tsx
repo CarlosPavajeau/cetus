@@ -30,7 +30,7 @@ export function DefaultPageLayout({ children, showHeader = true }: Props) {
 function NavBar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto container px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex flex-shrink-0 items-center">
             <Link to="/" className="flex items-center gap-2">
@@ -41,24 +41,22 @@ function NavBar() {
           </div>
 
           <div className="flex h-6 items-center space-x-6">
-            <ThemeSwitch />
+            <div className="flex items-center space-x-4">
+              <ThemeSwitch />
 
-            <Separator orientation="vertical" className="h-6" />
+              <CartButton />
+            </div>
+
             <SignedIn>
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative"
-                aria-label="start"
-                asChild
-              >
+              <Separator orientation="vertical" className="h-6" />
+
+              <Button size="sm" className="relative" aria-label="start" asChild>
                 <Link to="/app">
                   <LayoutDashboardIcon />
+                  <span className="hidden sm:block">Ir al panel</span>
                 </Link>
               </Button>
             </SignedIn>
-
-            <CartButton />
           </div>
         </div>
       </div>

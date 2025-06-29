@@ -18,7 +18,7 @@ export const CartButton = () => {
       <Link to="/cart">
         <ShoppingCartIcon size={16} aria-hidden="true" />
         {count > 0 && (
-          <Badge className="-top-2 -translate-x-1/2 absolute left-full min-w-5 px-1">
+          <Badge className="-top-2 -translate-x-1/2 absolute left-full min-w-5 rounded-full px-1">
             {count > 99 ? '99+' : count}
           </Badge>
         )}
