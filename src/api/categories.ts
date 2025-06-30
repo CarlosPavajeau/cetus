@@ -18,9 +18,12 @@ export const fetchCategories = async (storeSlug?: string) => {
 export type CreateCategoryRequest = Pick<Category, 'name'>
 export type UpdateCategoryRequest = Pick<Category, 'name' | 'id'>
 
-export const createCategory = async (category: CreateCategoryRequest) => {
+export const createCategory = async (
+  category: CreateCategoryRequest,
+  storeSlug?: string,
+) => {
   const response = await axios.post<Category>(
-    `${import.meta.env.PUBLIC_API_URL}/categories`,
+    `${import.meta.env.PUBLIC_API_URL}/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
     category,
   )
 

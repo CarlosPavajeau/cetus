@@ -1,4 +1,4 @@
-import { createCategory } from '@/api/categories'
+import { createCategory, CreateCategoryRequest } from '@/api/categories'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { useOrganization } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -33,13 +34,15 @@ const createCategorySchema = z.object({
 type FormValues = TypeOf<typeof createCategorySchema>
 
 export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
+  const org = useOrganization()
   const form = useForm<FormValues>({
     resolver: zodResolver(createCategorySchema),
   })
 
   const createCategoryMutation = useMutation({
     mutationKey: ['categories', 'create'],
-    mutationFn: createCategory,
+    mutationFn: (category: CreateCategoryRequest) =>
+      createCategory(category, org.organization?.slug ?? undefined),
   })
 
   const onSubmit = form.handleSubmit((values) => {
