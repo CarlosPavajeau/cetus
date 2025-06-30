@@ -17,9 +17,9 @@ export type Product = {
   updatedAt: string
 }
 
-export const fetchProducts = async () => {
+export const fetchProducts = async (storeSlug?: string) => {
   const response = await axios.get<Product[]>(
-    `${import.meta.env.PUBLIC_API_URL}/products`,
+    `${import.meta.env.PUBLIC_API_URL}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data

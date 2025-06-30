@@ -20,7 +20,7 @@ import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/shared/cn'
-import { Protect } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/clerk-react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type Column,
@@ -266,7 +266,10 @@ function CategoryFilter({ table }: CategoryFilterProps) {
 }
 
 function RouteComponent() {
-  const { products, isLoading } = useProducts()
+  const org = useOrganization()
+  const { products, isLoading } = useProducts(
+    org.organization?.slug ?? undefined,
+  )
   const id = useId()
 
   const { table, paginationInfo } = useProductTable(products)

@@ -114,10 +114,10 @@ export function useProductsForSale(storeSlug?: string) {
   }
 }
 
-export function useProducts() {
+export function useProducts(storeSlug?: string) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchProducts,
+    queryKey: ['products', storeSlug],
+    queryFn: () => fetchProducts(storeSlug),
     refetchOnMount: false,
   })
 
