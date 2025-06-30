@@ -1,4 +1,4 @@
-import { createDeliveryFee } from '@/api/orders'
+import { type CreateDeliveryFeeRequest, createDeliveryFee } from '@/api/orders'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useCities, useStates } from '@/hooks/use-state'
+import { useOrganization } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PlusIcon } from 'lucide-react'
@@ -96,9 +97,11 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
   }
 
   const queryClient = useQueryClient()
+  const org = useOrganization()
   const createDeliveryFeeMutation = useMutation({
     mutationKey: ['delivery-fees', 'create'],
-    mutationFn: createDeliveryFee,
+    mutationFn: (values: CreateDeliveryFeeRequest) =>
+      createDeliveryFee(values, org.organization?.slug ?? undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['delivery-fees'],

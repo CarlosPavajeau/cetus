@@ -186,9 +186,12 @@ export type CreateDeliveryFeeRequest = {
   fee: number
 }
 
-export async function createDeliveryFee(deliveryFee: CreateDeliveryFeeRequest) {
+export async function createDeliveryFee(
+  deliveryFee: CreateDeliveryFeeRequest,
+  storeSlug?: string,
+) {
   const response = await axios.post<DeliveryFee>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees`,
+    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
     deliveryFee,
   )
 
