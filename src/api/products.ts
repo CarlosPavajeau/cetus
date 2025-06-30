@@ -51,9 +51,12 @@ export type CreateProductRequest = Pick<
   'name' | 'description' | 'price' | 'stock' | 'categoryId'
 > & { imageUrl: string }
 
-export const createProduct = async (product: CreateProductRequest) => {
+export const createProduct = async (
+  product: CreateProductRequest,
+  storeSlug?: string,
+) => {
   const response = await axios.post<Product>(
-    `${import.meta.env.PUBLIC_API_URL}/products`,
+    `${import.meta.env.PUBLIC_API_URL}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
     product,
   )
 

@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-export function useCreateProduct(mainImage: File | null) {
+export function useCreateProduct(mainImage: File | null, storeSlug?: string) {
   const navigate = useNavigate()
 
   return useMutation({
@@ -27,7 +27,7 @@ export function useCreateProduct(mainImage: File | null) {
         if (mainImage) {
           await uploadFileToS3({ fileName: values.imageUrl, file: mainImage })
         }
-        return createProduct(values)
+        return createProduct(values, storeSlug)
       } catch (error) {
         console.error('Failed to create product:', error)
         throw error

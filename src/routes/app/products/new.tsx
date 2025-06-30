@@ -22,7 +22,7 @@ import {
   type CreateProductFormValues,
   createProductSchema,
 } from '@/schemas/product'
-import { Protect } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
@@ -56,7 +56,12 @@ function ProductCreateForm() {
     removeImage,
   } = useImageUpload(form)
 
-  const createProductMutation = useCreateProduct(mainImage)
+  const org = useOrganization()
+
+  const createProductMutation = useCreateProduct(
+    mainImage,
+    org.organization?.slug ?? undefined,
+  )
 
   const openCategoryDialog = useCallback(() => {
     setIsCategoryDialogOpen(true)
