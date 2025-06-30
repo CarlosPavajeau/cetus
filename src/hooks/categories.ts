@@ -1,10 +1,10 @@
 import { type Category, fetchCategories } from '@/api/categories'
 import { useQuery } from '@tanstack/react-query'
 
-export const useCategories = () => {
+export const useCategories = (storeSlug?: string) => {
   const { data, isLoading, error } = useQuery<Category[]>({
-    queryKey: ['categories'],
-    queryFn: fetchCategories,
+    queryKey: ['categories', storeSlug],
+    queryFn: () => fetchCategories(storeSlug),
     refetchOnMount: false,
   })
 

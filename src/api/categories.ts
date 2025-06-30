@@ -7,9 +7,9 @@ export type Category = {
   updatedAt: string
 }
 
-export const fetchCategories = async () => {
+export const fetchCategories = async (storeSlug?: string) => {
   const response = await axios.get<Category[]>(
-    `${import.meta.env.PUBLIC_API_URL}/categories`,
+    `${import.meta.env.PUBLIC_API_URL}/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
