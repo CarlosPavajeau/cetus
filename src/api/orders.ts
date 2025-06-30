@@ -98,14 +98,16 @@ export type SimpleOrder = {
   id: string
   orderNumber: number
   address: string
+  subtotal: number
+  discount: number
   total: number
   status: OrderStatus
   createdAt: string
 }
 
-export const fetchOrders = async () => {
+export const fetchOrders = async (storeSlug?: string) => {
   const response = await axios.get<SimpleOrder[]>(
-    `${import.meta.env.PUBLIC_API_URL}/orders`,
+    `${import.meta.env.PUBLIC_API_URL}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data

@@ -34,10 +34,10 @@ export function useOrder(id: string) {
   }
 }
 
-export function useOrders() {
+export function useOrders(storeSlug?: string) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['orders'],
-    queryFn: fetchOrders,
+    queryKey: ['orders', storeSlug],
+    queryFn: () => fetchOrders(storeSlug),
   })
 
   return {

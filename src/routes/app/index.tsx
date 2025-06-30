@@ -17,9 +17,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { useOrders } from '@/hooks/orders'
-import { useClientMethod, useHub } from '@/hooks/realtime/use-hub'
+import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
 import { cn } from '@/shared/cn'
-import { Protect } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/clerk-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { CircleXIcon, ListFilterIcon, RefreshCwIcon } from 'lucide-react'
@@ -88,12 +88,17 @@ function SearchInput({
   )
 }
 
+const HUB_URL = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
+
 function RouteComponent() {
-  const { orders, isLoading } = useOrders()
+  const org = useOrganization()
+  const { orders, isLoading } = useOrders(org.organization?.slug ?? undefined)
   const queryClient = useQueryClient()
 
-  const url = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
-  const { connection } = useHub(url)
+  const { connection } = useHub(HUB_URL)
+
+  useHubGroup(connection, 'JoinStoreGroup', org.organization?.slug ?? undefined)
+
   useClientMethod(connection, 'ReceiveCreatedOrder', (order: SimpleOrder) => {
     queryClient.setQueryData<SimpleOrder[]>(['orders'], (oldOrders) => {
       if (!oldOrders) return [order]
