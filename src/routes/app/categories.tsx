@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu.tsx'
 import { useCategories } from '@/hooks/categories'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/clerk-react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -96,7 +96,10 @@ function useCategoryTable(categories: Category[] | undefined) {
 }
 
 function RouteComponent() {
-  const { categories, isLoading } = useCategories()
+  const org = useOrganization()
+  const { categories, isLoading } = useCategories(
+    org.organization?.slug ?? undefined,
+  )
   const { table, paginationInfo } = useCategoryTable(categories)
 
   const [isOpenCreateCategory, setIsOpenCreateCategory] = useState(false)
