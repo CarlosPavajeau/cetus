@@ -16,7 +16,7 @@ export const Route = createFileRoute('/$store')({
 function RouteComponent() {
   const { store } = Route.useParams()
   const { categories, isLoading: isLoadingCategories } = useCategories(store)
-  const { products, isLoading } = useProductsForSale()
+  const { products, isLoading } = useProductsForSale(store)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])

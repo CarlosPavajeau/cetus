@@ -101,10 +101,10 @@ export function useProduct(id: string) {
   }
 }
 
-export function useProductsForSale() {
+export function useProductsForSale(storeSlug?: string) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['products', 'for-sale'],
-    queryFn: fetchProductsForSale,
+    queryKey: ['products', 'for-sale', storeSlug],
+    queryFn: () => fetchProductsForSale(storeSlug),
   })
 
   return {

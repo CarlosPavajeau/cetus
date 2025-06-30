@@ -38,9 +38,9 @@ export type ProductForSale = Omit<
   'createdAt' | 'updatedAt' | 'enabled'
 >
 
-export const fetchProductsForSale = async () => {
+export const fetchProductsForSale = async (storeSlug?: string) => {
   const response = await axios.get<ProductForSale[]>(
-    `${import.meta.env.PUBLIC_API_URL}/products/for-sale`,
+    `${import.meta.env.PUBLIC_API_URL}/products/for-sale${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
