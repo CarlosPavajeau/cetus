@@ -7,13 +7,13 @@ import { DefaultLoader } from '@/components/default-loader'
 import { CreateDeliveryFeeDialog } from '@/components/order/delivery-fee/create-delivery-fee.dialog'
 import { useDeliveryFees } from '@/hooks/orders'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/clerk-react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
-  type PaginationState,
   getCoreRowModel,
   getPaginationRowModel,
+  type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
@@ -84,7 +84,10 @@ function useDeliveryFeesTable(deliveryFees: DeliveryFee[] | undefined) {
 }
 
 function RouteComponent() {
-  const { deliveryFees, isLoading } = useDeliveryFees()
+  const org = useOrganization()
+  const { deliveryFees, isLoading } = useDeliveryFees(
+    org.organization?.slug ?? undefined,
+  )
   const { table, paginationInfo } = useDeliveryFeesTable(deliveryFees)
 
   if (isLoading) {

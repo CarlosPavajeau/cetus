@@ -165,17 +165,17 @@ export type DeliveryFee = {
   fee: number
 }
 
-export async function fetchDeliveryFee(cityId: string) {
+export async function fetchDeliveryFee(cityId: string, storeSlug?: string) {
   const response = await axios.get<DeliveryFee>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees/${cityId}`,
+    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees/${cityId}${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
-export async function fetchDeliveryFees() {
+export async function fetchDeliveryFees(storeSlug?: string) {
   const response = await axios.get<DeliveryFee[]>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees`,
+    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
