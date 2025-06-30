@@ -20,6 +20,7 @@ import { Route as FaqImport } from './routes/faq'
 import { Route as CheckoutImport } from './routes/checkout'
 import { Route as CartImport } from './routes/cart'
 import { Route as AppImport } from './routes/app'
+import { Route as StoreImport } from './routes/$store'
 import { Route as IndexImport } from './routes/index'
 import { Route as AppIndexImport } from './routes/app/index'
 import { Route as ReviewsNewImport } from './routes/reviews.new'
@@ -89,6 +90,12 @@ const CartRoute = CartImport.update({
 const AppRoute = AppImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const StoreRoute = StoreImport.update({
+  id: '/$store',
+  path: '/$store',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -191,6 +198,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/$store': {
+      id: '/$store'
+      path: '/$store'
+      fullPath: '/$store'
+      preLoaderRoute: typeof StoreImport
       parentRoute: typeof rootRoute
     }
     '/app': {
@@ -414,6 +428,7 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$store': typeof StoreRoute
   '/app': typeof AppRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -441,6 +456,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$store': typeof StoreRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
@@ -468,6 +484,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/$store': typeof StoreRoute
   '/app': typeof AppRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -497,6 +514,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$store'
     | '/app'
     | '/cart'
     | '/checkout'
@@ -523,6 +541,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$store'
     | '/cart'
     | '/checkout'
     | '/faq'
@@ -548,6 +567,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$store'
     | '/app'
     | '/cart'
     | '/checkout'
@@ -576,6 +596,7 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  StoreRoute: typeof StoreRoute
   AppRoute: typeof AppRouteWithChildren
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
@@ -590,6 +611,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  StoreRoute: StoreRoute,
   AppRoute: AppRouteWithChildren,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
@@ -613,6 +635,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/$store",
         "/app",
         "/cart",
         "/checkout",
@@ -627,6 +650,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/$store": {
+      "filePath": "$store.tsx"
     },
     "/app": {
       "filePath": "app.tsx",
