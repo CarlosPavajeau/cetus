@@ -206,7 +206,8 @@ function SelectRuleValueSpecificCategory() {
 
 function SelectRuleValueSpecificProduct() {
   const form = useFormContext<TypeOf<typeof createCouponRuleSchema>>()
-  const { products } = useProducts()
+  const org = useOrganization()
+  const { products } = useProducts(org.organization?.slug ?? undefined)
 
   return (
     <FormField

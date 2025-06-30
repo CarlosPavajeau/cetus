@@ -90,7 +90,8 @@ type CouponRuleValueSpecificProductProps = {
 function CouponRuleValueSpecificProduct({
   rule,
 }: CouponRuleValueSpecificProductProps) {
-  const { products } = useProducts()
+  const org = useOrganization()
+  const { products } = useProducts(org.organization?.slug ?? undefined)
 
   if (!products) return null
 
