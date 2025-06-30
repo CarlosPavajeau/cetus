@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/popover'
 import { useCategories } from '@/hooks/categories'
 import { cn } from '@/shared/cn'
+import { useOrganization } from '@clerk/clerk-react'
 import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { type FieldValues, useFormContext } from 'react-hook-form'
@@ -35,7 +36,10 @@ type Props = {
 }
 
 export function CategorySelector({ onSelectCreateCategory }: Props) {
-  const { categories, isLoading } = useCategories()
+  const org = useOrganization()
+  const { categories, isLoading } = useCategories(
+    org.organization?.slug ?? undefined,
+  )
   const form = useFormContext<FormWithCategory>()
   const [open, setOpen] = useState(false)
 
