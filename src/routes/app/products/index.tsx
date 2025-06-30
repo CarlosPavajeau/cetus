@@ -240,7 +240,10 @@ type CategoryFilterProps = {
 
 function CategoryFilter({ table }: CategoryFilterProps) {
   const categoryColumn = table.getColumn('categoryId') as Column<Product, Key>
-  const { isLoading, categories } = useCategories()
+  const org = useOrganization()
+  const { isLoading, categories } = useCategories(
+    org.organization?.slug ?? undefined,
+  )
 
   if (!categoryColumn || isLoading) {
     return null

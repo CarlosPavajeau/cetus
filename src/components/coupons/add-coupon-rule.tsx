@@ -30,6 +30,7 @@ import {
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import { createCouponRuleSchema } from '@/schemas/coupons'
+import { useOrganization } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -169,7 +170,8 @@ function SelectRuleValue({ ruleType }: SelectRuleValueProps) {
 
 function SelectRuleValueSpecificCategory() {
   const form = useFormContext<TypeOf<typeof createCouponRuleSchema>>()
-  const { categories } = useCategories()
+  const org = useOrganization()
+  const { categories } = useCategories(org.organization?.slug ?? undefined)
 
   return (
     <FormField

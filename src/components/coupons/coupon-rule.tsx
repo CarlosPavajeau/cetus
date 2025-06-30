@@ -6,6 +6,7 @@ import {
 import { Currency } from '@/components/currency'
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
+import { useOrganization } from '@clerk/clerk-react'
 import { TrashIcon } from 'lucide-react'
 
 type Props = {
@@ -70,7 +71,8 @@ type CouponRuleValueSpecificCategoryProps = {
 function CouponRuleValueSpecificCategory({
   rule,
 }: CouponRuleValueSpecificCategoryProps) {
-  const { categories } = useCategories()
+  const org = useOrganization()
+  const { categories } = useCategories(org.organization?.slug ?? undefined)
 
   if (!categories) return null
 
