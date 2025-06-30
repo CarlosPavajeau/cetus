@@ -2,6 +2,7 @@ import { Currency } from '@/components/currency'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderInsights } from '@/hooks/orders'
 import { cn } from '@/shared/cn'
+import { useOrganization } from '@clerk/clerk-react'
 import { useSearch } from '@tanstack/react-router'
 import { useNumberFormatter } from 'react-aria'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -52,8 +53,12 @@ export function OrdersInsights() {
   const { month } = useSearch({
     from: '/app/dashboard/',
   })
+  const org = useOrganization()
 
-  const { insights, isLoading } = useOrderInsights(month)
+  const { insights, isLoading } = useOrderInsights(
+    month,
+    org.organization?.slug ?? undefined,
+  )
 
   if (isLoading) {
     return (

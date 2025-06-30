@@ -138,9 +138,9 @@ export type OrderInsights = {
   ordersCountPercentageChange: number
 }
 
-export const fetchOrderInsights = async (month: string) => {
+export const fetchOrderInsights = async (month: string, storeSlug?: string) => {
   const response = await axios.get<OrderInsights>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/insights?month=${month}`,
+    `${import.meta.env.PUBLIC_API_URL}/orders/insights?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
   )
 
   return response.data

@@ -8,10 +8,10 @@ import {
 } from '@/api/orders'
 import { useQuery } from '@tanstack/react-query'
 
-export function useOrderInsights(month: string) {
+export function useOrderInsights(month: string, storeSlug?: string) {
   const { data, isLoading } = useQuery({
-    queryKey: ['order-insights', month],
-    queryFn: () => fetchOrderInsights(month),
+    queryKey: ['order-insights', month, storeSlug],
+    queryFn: () => fetchOrderInsights(month, storeSlug),
   })
 
   return {
