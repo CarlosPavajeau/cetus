@@ -152,9 +152,9 @@ export type OrderSummary = {
   createdAt: string
 }
 
-export const fetchOrdersSummary = async (month: string) => {
+export const fetchOrdersSummary = async (month: string, storeSlug?: string) => {
   const response = await axios.get<OrderSummary[]>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/summary?month=${month}`,
+    `${import.meta.env.PUBLIC_API_URL}/orders/summary?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
   )
 
   return response.data

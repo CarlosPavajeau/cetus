@@ -47,10 +47,10 @@ export function useOrders(storeSlug?: string) {
   }
 }
 
-export function useOrdersSummary(month: string) {
+export function useOrdersSummary(month: string, storeSlug?: string) {
   const { data, isLoading } = useQuery({
-    queryKey: ['orders-summary', month],
-    queryFn: () => fetchOrdersSummary(month),
+    queryKey: ['orders-summary', month, storeSlug],
+    queryFn: () => fetchOrdersSummary(month, storeSlug),
   })
 
   return {
