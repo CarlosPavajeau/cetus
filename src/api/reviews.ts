@@ -51,9 +51,11 @@ export type PendingForApprovalProductReview = {
   createdAt: string
 }
 
-export async function fetchPendingForApprovalProductReviews() {
+export async function fetchPendingForApprovalProductReviews(
+  storeSlug?: string,
+) {
   const response = await axios.get<PendingForApprovalProductReview[]>(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/products/pending`,
+    `${import.meta.env.PUBLIC_API_URL}/reviews/products/pending${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data

@@ -7,13 +7,13 @@ import { FormattedDate } from '@/components/formatted-date'
 import { ProcessProductReview } from '@/components/reviews/process-product-review'
 import { usePendingForApprovalProductReviews } from '@/hooks/reviews'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/clerk-react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
-  type PaginationState,
   getCoreRowModel,
   getPaginationRowModel,
+  type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
 import { useState } from 'react'
@@ -86,8 +86,9 @@ function useReviewsTable(
 }
 
 function RouteComponent() {
+  const org = useOrganization()
   const { pendingForApprovalProductReviews, isLoading } =
-    usePendingForApprovalProductReviews()
+    usePendingForApprovalProductReviews(org.organization?.slug ?? undefined)
   const { table, paginationInfo } = useReviewsTable(
     pendingForApprovalProductReviews,
   )
