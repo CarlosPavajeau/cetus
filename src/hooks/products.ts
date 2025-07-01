@@ -142,10 +142,10 @@ export function useProductSuggestions(productId?: string) {
   }
 }
 
-export function useTopSellingProducts() {
+export function useTopSellingProducts(storeSlug?: string) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['products', 'top-selling'],
-    queryFn: fetchTopSellingProducts,
+    queryKey: ['products', 'top-selling', storeSlug],
+    queryFn: () => fetchTopSellingProducts(storeSlug),
   })
 
   return {

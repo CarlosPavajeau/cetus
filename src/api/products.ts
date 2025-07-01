@@ -97,9 +97,9 @@ export type TopSellingProduct = {
   salesCount: number
 }
 
-export async function fetchTopSellingProducts() {
+export async function fetchTopSellingProducts(storeSlug?: string) {
   const response = await axios.get<TopSellingProduct[]>(
-    `${import.meta.env.PUBLIC_API_URL}/products/top-selling`,
+    `${import.meta.env.PUBLIC_API_URL}/products/top-selling${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
