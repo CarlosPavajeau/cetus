@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCreateCoupon } from '@/hooks/coupons'
 import { createCouponSchema } from '@/schemas/coupons'
 import { generateCouponCode } from '@/shared/coupons'
-import { Protect } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/clerk-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
@@ -43,12 +43,14 @@ function RouteComponent() {
     },
   })
 
+  const org = useOrganization()
   const createCouponMutation = useCreateCoupon({
     onSuccess: () => {
       toast.success('Cupón creado correctamente')
       navigate({ to: '/app/coupons' })
       form.reset()
     },
+    storeSlug: org.organization?.slug ?? undefined,
   })
 
   const onSubmit = form.handleSubmit((data) => {

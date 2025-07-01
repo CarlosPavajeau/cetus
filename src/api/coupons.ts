@@ -42,9 +42,9 @@ export type Coupon = {
   updatedAt: string
 }
 
-export async function fetchCoupons() {
+export async function fetchCoupons(storeSlug?: string) {
   const response = await axios.get<Coupon[]>(
-    `${import.meta.env.PUBLIC_API_URL}/coupons`,
+    `${import.meta.env.PUBLIC_API_URL}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -99,9 +99,12 @@ export type CreateCouponRequest = {
   rules: CreateCouponRule[]
 }
 
-export async function createCoupon(coupon: CreateCouponRequest) {
+export async function createCoupon(
+  coupon: CreateCouponRequest,
+  storeSlug?: string,
+) {
   const response = await axios.post<Coupon>(
-    `${import.meta.env.PUBLIC_API_URL}/coupons`,
+    `${import.meta.env.PUBLIC_API_URL}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
     coupon,
   )
 

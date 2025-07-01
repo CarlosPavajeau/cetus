@@ -8,13 +8,13 @@ import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
 import { useCoupons } from '@/hooks/coupons'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect } from '@clerk/clerk-react'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Protect, useOrganization } from '@clerk/clerk-react'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type ColumnDef,
-  type PaginationState,
   getCoreRowModel,
   getPaginationRowModel,
+  type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
 import { PlusIcon } from 'lucide-react'
@@ -104,7 +104,8 @@ function useCouponsTable(coupons: Coupon[] | undefined) {
 }
 
 function RouteComponent() {
-  const { coupons, isLoading } = useCoupons()
+  const org = useOrganization()
+  const { coupons, isLoading } = useCoupons(org.organization?.slug ?? undefined)
   const { table, paginationInfo } = useCouponsTable(coupons)
 
   if (isLoading) {
