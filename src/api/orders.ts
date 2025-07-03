@@ -85,9 +85,12 @@ export type CreateOrderRequest = {
   }
 }
 
-export const createOrder = async (order: CreateOrderRequest) => {
+export const createOrder = async (
+  order: CreateOrderRequest,
+  storeSlug?: string,
+) => {
   const response = await axios.post<SimpleOrder>(
-    `${import.meta.env.PUBLIC_API_URL}/orders`,
+    `${import.meta.env.PUBLIC_API_URL}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
     order,
   )
 

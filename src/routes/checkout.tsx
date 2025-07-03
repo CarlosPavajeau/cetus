@@ -1,4 +1,8 @@
-import { createOrder, type DeliveryFee } from '@/api/orders'
+import {
+  createOrder,
+  type CreateOrderRequest,
+  type DeliveryFee,
+} from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
@@ -26,6 +30,7 @@ import {
 import { useCustomer } from '@/hooks/customers.ts'
 import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrderFormValues, createOrderSchema } from '@/schemas/orders'
+import { useAppStore } from '@/store/app'
 import { useCart } from '@/store/cart'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -93,10 +98,13 @@ function useCartCheckout() {
 
   const search = Route.useSearch()
   const [orderId, setOrderId] = useState<string | undefined>(search.id)
+  const appStore = useAppStore()
+
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
-    mutationFn: createOrder,
+    mutationFn: (values: CreateOrderRequest) =>
+      createOrder(values, appStore.currentStore?.slug),
     onSuccess: (data) => {
       const orderId = data.id
       navigate({
