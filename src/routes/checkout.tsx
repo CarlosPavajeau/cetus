@@ -51,8 +51,8 @@ export const Route = createFileRoute('/checkout')({
 })
 
 function useCartCheckout() {
-  const cart = useCart()
-  const { items, count } = cart
+  const appStore = useAppStore()
+  const { items, count } = useCart()
   const total = useMemo(
     () =>
       items.reduce((acc, item) => acc + item.product.price * item.quantity, 0),
@@ -94,11 +94,11 @@ function useCartCheckout() {
 
   const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
     form.watch('cityId'),
+    appStore.currentStore?.slug,
   )
 
   const search = Route.useSearch()
   const [orderId, setOrderId] = useState<string | undefined>(search.id)
-  const appStore = useAppStore()
 
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
