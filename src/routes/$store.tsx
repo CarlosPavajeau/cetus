@@ -6,17 +6,24 @@ import { ProductGrid } from '@/components/product/product-grid'
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
 import { useCategories } from '@/hooks/categories'
 import { useProductsForSale } from '@/hooks/products'
+import { useStoreBySlug } from '@/hooks/stores'
+import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/$store')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { store } = Route.useParams()
-  const { categories, isLoading: isLoadingCategories } = useCategories(store)
-  const { products, isLoading } = useProductsForSale(store)
+  const { store: storeSlug } = Route.useParams()
+
+  const { store, isLoading: isLoadingStore } = useStoreBySlug(storeSlug)
+  const appStore = useAppStore()
+
+  const { categories, isLoading: isLoadingCategories } =
+    useCategories(storeSlug)
+  const { products, isLoading } = useProductsForSale(storeSlug)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -35,6 +42,14 @@ function RouteComponent() {
       return matchesSearch && matchesCategory
     })
   }, [searchTerm, selectedCategories, products])
+
+  useEffect(() => {
+    if (isLoadingStore) return
+
+    if (!store) return
+
+    appStore.setCurrentStore(store)
+  }, [store, isLoadingStore])
 
   if (isLoadingCategories || isLoading) {
     return (
