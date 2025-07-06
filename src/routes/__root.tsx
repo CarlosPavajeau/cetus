@@ -3,6 +3,7 @@ import { ClerkProvider } from '@/components/clerk-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import appCss from '@/styles/index.css?url'
+import { getAuth } from '@clerk/tanstack-react-start/server'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
@@ -12,14 +13,31 @@ import {
   Scripts,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import { createServerFn } from '@tanstack/react-start'
+import { getWebRequest } from '@tanstack/react-start/server'
 import { ThemeProvider } from 'next-themes'
 import { PostHogProvider } from 'posthog-js/react'
 import type { ReactNode } from 'react'
 import { I18nProvider } from 'react-aria'
 
+const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
+  const { userId, orgId, orgSlug } = await getAuth(getWebRequest()!)
+
+  return {
+    userId,
+    orgId,
+    orgSlug,
+  }
+})
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
+  beforeLoad: async () => {
+    const user = await fetchClerkAuth()
+
+    return user
+  },
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
