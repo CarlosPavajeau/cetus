@@ -3,8 +3,10 @@ import { fetchProductsForSale } from '@/api/products'
 import { fetchStoreBySlug } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { FilterSection } from '@/components/home/filter-section'
+import { FilterSectionSkeleton } from '@/components/home/filter-section-skeleton'
 import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product/product-grid'
+import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
 import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
@@ -24,6 +26,14 @@ export const Route = createFileRoute('/$store')({
     }
   },
   component: RouteComponent,
+  pendingComponent: () => {
+    return (
+      <DefaultPageLayout>
+        <FilterSectionSkeleton />
+        <ProductGridSkeleton />
+      </DefaultPageLayout>
+    )
+  },
 })
 
 function RouteComponent() {
