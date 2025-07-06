@@ -7,6 +7,8 @@
 # Dist
 node_modules
 dist
+.nitro
+.tanstack
 
 # IDE
 .vscode/*
