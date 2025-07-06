@@ -1,29 +1,39 @@
+import { fetchCategories } from '@/api/categories'
+import { fetchProductsForSale } from '@/api/products'
+import { fetchStoreByDomain } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { FilterSection } from '@/components/home/filter-section'
-import { FilterSectionSkeleton } from '@/components/home/filter-section-skeleton'
 import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product/product-grid'
-import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
-import { useCategories } from '@/hooks/categories'
-import { useProductsForSale } from '@/hooks/products'
-import { useStoreByDomain } from '@/hooks/stores'
 import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/')({
+  loader: async (context) => {
+    const domain = context.context.host
+    const store = await fetchStoreByDomain(domain)
+
+    const products = await fetchProductsForSale(store.slug)
+    const categories = await fetchCategories(store.slug)
+
+    return {
+      store,
+      products,
+      categories,
+    }
+  },
   component: IndexPage,
-  ssr: false,
 })
 
 function IndexPage() {
-  const { store, isLoading: isLoadingStore } = useStoreByDomain(
-    window.location.hostname,
-  )
+  const { store, products, categories } = Route.useLoaderData()
   const appStore = useAppStore()
 
-  const { products, isLoading } = useProductsForSale()
-  const { categories, isLoading: isLoadingCategories } = useCategories()
+  useEffect(() => {
+    appStore.setCurrentStore(store)
+  }, [])
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
@@ -41,23 +51,6 @@ function IndexPage() {
       return matchesSearch && matchesCategory
     })
   }, [searchTerm, selectedCategories, products])
-
-  useEffect(() => {
-    if (isLoadingStore) return
-
-    if (!store) return
-
-    appStore.setCurrentStore(store)
-  }, [store, isLoadingStore])
-
-  if (isLoadingCategories || isLoading) {
-    return (
-      <DefaultPageLayout>
-        <FilterSectionSkeleton />
-        <ProductGridSkeleton />
-      </DefaultPageLayout>
-    )
-  }
 
   if (!products || !categories) {
     return (
