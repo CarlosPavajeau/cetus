@@ -4,6 +4,7 @@ import { NotFound } from '@/components/not-found'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import appCss from '@/styles/index.css?url'
+import { getAuth } from '@clerk/tanstack-react-start/server'
 import type { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
@@ -13,14 +14,31 @@ import {
   Scripts,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import { createServerFn } from '@tanstack/react-start'
+import { getWebRequest } from '@tanstack/react-start/server'
 import { ThemeProvider } from 'next-themes'
 import { PostHogProvider } from 'posthog-js/react'
 import type { ReactNode } from 'react'
 import { I18nProvider } from 'react-aria'
 
+const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
+  const { userId } = await getAuth(getWebRequest()!)
+
+  return {
+    userId,
+  }
+})
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
+  beforeLoad: async () => {
+    const { userId } = await fetchClerkAuth()
+
+    return {
+      userId,
+    }
+  },
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -63,21 +81,21 @@ const options = {
 
 function RootComponent() {
   return (
-    <RootDocument>
-      <PostHogProvider apiKey={postHogKey} options={options}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <PostHogProvider apiKey={postHogKey} options={options}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ClerkProvider>
           <I18nProvider locale="es-CO">
-            <ClerkProvider>
-              <TooltipProvider>
+            <TooltipProvider>
+              <RootDocument>
                 <Outlet />
-                <Toaster />
-                <AuthInterceptor />
-              </TooltipProvider>
-            </ClerkProvider>
+              </RootDocument>
+              <Toaster />
+              <AuthInterceptor />
+            </TooltipProvider>
           </I18nProvider>
-        </ThemeProvider>
-      </PostHogProvider>
-    </RootDocument>
+        </ClerkProvider>
+      </ThemeProvider>
+    </PostHogProvider>
   )
 }
 
