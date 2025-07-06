@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
 import { cn } from '@/shared/cn'
-import { useOrganization } from '@clerk/clerk-react'
+import { useOrganization } from '@clerk/tanstack-react-start'
 import { useSearch } from '@tanstack/react-router'
 import { useNumberFormatter } from 'react-aria'
 

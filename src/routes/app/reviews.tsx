@@ -7,7 +7,7 @@ import { FormattedDate } from '@/components/formatted-date'
 import { ProcessProductReview } from '@/components/reviews/process-product-review'
 import { usePendingForApprovalProductReviews } from '@/hooks/reviews'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/tanstack-react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,

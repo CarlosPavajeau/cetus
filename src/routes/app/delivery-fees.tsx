@@ -7,7 +7,7 @@ import { DefaultLoader } from '@/components/default-loader'
 import { CreateDeliveryFeeDialog } from '@/components/order/delivery-fee/create-delivery-fee.dialog'
 import { useDeliveryFees } from '@/hooks/orders'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/tanstack-react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,

@@ -4,6 +4,7 @@ import { fetchStoreByDomain } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { FilterSection } from '@/components/home/filter-section'
 import { FilterSectionSkeleton } from '@/components/home/filter-section-skeleton'
+import { NotFound } from '@/components/not-found'
 import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product/product-grid'
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
@@ -13,7 +14,8 @@ import { useEffect, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/')({
   loader: async (context) => {
-    const domain = context.context.host
+    const domain = 'localhost:3000'
+
     const store = await fetchStoreByDomain(domain)
 
     const products = await fetchProductsForSale(store.slug)
@@ -34,6 +36,9 @@ export const Route = createFileRoute('/')({
       </DefaultPageLayout>
     )
   },
+  notFoundComponent: () => {
+    return <NotFound />
+  },
 })
 
 function IndexPage() {
@@ -41,7 +46,9 @@ function IndexPage() {
   const appStore = useAppStore()
 
   useEffect(() => {
-    appStore.setCurrentStore(store)
+    if (store) {
+      appStore.setCurrentStore(store)
+    }
   }, [])
 
   const [searchTerm, setSearchTerm] = useState('')

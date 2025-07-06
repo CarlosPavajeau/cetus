@@ -22,7 +22,7 @@ import {
   type CreateProductFormValues,
   createProductSchema,
 } from '@/schemas/product'
-import { Protect, useOrganization } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/tanstack-react-start'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'

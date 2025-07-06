@@ -6,7 +6,7 @@ import {
 import { Currency } from '@/components/currency'
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
-import { useOrganization } from '@clerk/clerk-react'
+import { useOrganization } from '@clerk/tanstack-react-start'
 import { TrashIcon } from 'lucide-react'
 
 type Props = {

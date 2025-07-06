@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { useOrganization } from '@clerk/clerk-react'
+import { useOrganization } from '@clerk/tanstack-react-start'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   BadgePercentIcon,

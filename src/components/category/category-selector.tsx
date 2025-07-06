@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/popover'
 import { useCategories } from '@/hooks/categories'
 import { cn } from '@/shared/cn'
-import { useOrganization } from '@clerk/clerk-react'
+import { useOrganization } from '@clerk/tanstack-react-start'
 import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { type FieldValues, useFormContext } from 'react-hook-form'

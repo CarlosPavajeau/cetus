@@ -12,17 +12,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.tsx'
+} from '@/components/ui/dropdown-menu'
 import { useCategories } from '@/hooks/categories'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/tanstack-react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
-  type PaginationState,
-  type Row,
   getCoreRowModel,
   getPaginationRowModel,
+  type PaginationState,
+  type Row,
   useReactTable,
 } from '@tanstack/react-table'
 import { EllipsisIcon, PlusIcon } from 'lucide-react'

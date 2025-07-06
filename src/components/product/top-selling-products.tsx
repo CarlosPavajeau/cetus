@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTopSellingProducts } from '@/hooks/products'
 import { getImageUrl } from '@/shared/cdn'
-import { useOrganization } from '@clerk/clerk-react'
+import { useOrganization } from '@clerk/tanstack-react-start'
 import { Badge } from '../ui/badge'
 
 export function TopSellingProducts() {

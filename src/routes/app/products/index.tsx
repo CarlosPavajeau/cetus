@@ -20,7 +20,7 @@ import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/shared/cn'
-import { Protect, useOrganization } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/tanstack-react-start'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type Column,

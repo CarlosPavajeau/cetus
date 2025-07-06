@@ -1,11 +1,11 @@
 import { Currency } from '@/components/currency'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderInsights } from '@/hooks/orders'
 import { cn } from '@/shared/cn'
-import { useOrganization } from '@clerk/clerk-react'
+import { useOrganization } from '@clerk/tanstack-react-start'
 import { useSearch } from '@tanstack/react-router'
 import { useNumberFormatter } from 'react-aria'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 
 type InsightCardProps = {
   title: string

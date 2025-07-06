@@ -1,7 +1,7 @@
 import { ThemeSwitch } from '@/components/theme-switch'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { OrganizationSwitcher, UserButton } from '@clerk/clerk-react'
+import { OrganizationSwitcher, UserButton } from '@clerk/tanstack-react-start'
 
 export const AppNav = () => {
   return (

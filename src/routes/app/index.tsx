@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator'
 import { useOrders } from '@/hooks/orders'
 import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
 import { cn } from '@/shared/cn'
-import { Protect, useOrganization } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/tanstack-react-start'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { CircleXIcon, ListFilterIcon, RefreshCwIcon } from 'lucide-react'
@@ -88,7 +88,7 @@ function SearchInput({
   )
 }
 
-const HUB_URL = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
+const HUB_URL = `${import.meta.env.VITE_API_URL}/realtime/orders`
 
 function RouteComponent() {
   const org = useOrganization()

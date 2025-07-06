@@ -8,7 +8,7 @@ import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
 import { useCoupons } from '@/hooks/coupons'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/clerk-react'
+import { Protect, useOrganization } from '@clerk/tanstack-react-start'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type ColumnDef,

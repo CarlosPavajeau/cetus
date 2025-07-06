@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
-import { useOrganization } from '@clerk/clerk-react'
+import { useOrganization } from '@clerk/tanstack-react-start'
 import { useSearch } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
