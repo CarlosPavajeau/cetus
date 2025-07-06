@@ -22,12 +22,16 @@ import type { ReactNode } from 'react'
 import { I18nProvider } from 'react-aria'
 
 const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
-  const { userId, orgId, orgSlug } = await getAuth(getWebRequest()!)
+  const req = getWebRequest()!
+  const { userId, orgId, orgSlug } = await getAuth(req)
+
+  const host = req.headers.get('host')!
 
   return {
     userId,
     orgId,
     orgSlug,
+    host,
   }
 })
 
