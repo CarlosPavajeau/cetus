@@ -118,6 +118,7 @@ function ProductDisplayComponent({ product }: Props) {
           className="object-cover"
           sizes="(max-width: 768px) 100vw, 50vw"
           priority
+          quality={80}
         />
       </div>
 
@@ -210,10 +211,7 @@ function ProductDisplayComponent({ product }: Props) {
               )}
             </Button>
 
-            <ProductShare
-              productName={product.name}
-              productUrl={window.location.href}
-            />
+            <ProductShare productName={product.name} />
           </div>
         </div>
       </div>

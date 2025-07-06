@@ -1,3 +1,4 @@
+import { fetchProductBySlug, fetchProductSuggestions } from '@/api/products'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductDisplay } from '@/components/product/product-display'
@@ -5,61 +6,22 @@ import { ProductTabs } from '@/components/product/product-tabs'
 import { SuggestedProducts } from '@/components/product/suggested-product'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useProductBySlug, useProductSuggestions } from '@/hooks/products'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
-import { memo, useEffect } from 'react'
-import { toast } from 'sonner'
 
 export const Route = createFileRoute('/products/$slug')({
-  component: ProductDetailsPage,
-})
+  loader: async (context) => {
+    const slug = context.params.slug
+    const product = await fetchProductBySlug(slug)
+    const suggestions = await fetchProductSuggestions(product.id)
 
-function ProductDetailsPage() {
-  return <RouteComponent />
-}
-
-const RouteComponent = memo(function RouteComponent() {
-  const { slug } = Route.useParams()
-
-  const { product, isLoading, error } = useProductBySlug(slug)
-  const { suggestions } = useProductSuggestions(product?.id)
-
-  useEffect(() => {
-    if (error) {
-      toast.error('Error al cargar el producto', {
-        description: 'Por favor, inténtalo de nuevo más tarde.',
-      })
+    return {
+      product,
+      suggestions,
     }
-  }, [error])
-
-  if (isLoading) {
-    return (
-      <DefaultPageLayout>
-        <ProductDisplaySkeleton />
-      </DefaultPageLayout>
-    )
-  }
-
-  if (error) {
-    return (
-      <DefaultPageLayout>
-        <PageHeader
-          title="Error al cargar el producto"
-          subtitle="Por favor, inténtalo de nuevo más tarde."
-        />
-
-        <Button asChild>
-          <Link to="/">
-            <Home className="mr-2 h-4 w-4" />
-            Volver al inicio
-          </Link>
-        </Button>
-      </DefaultPageLayout>
-    )
-  }
-
-  if (!product) {
+  },
+  component: ProductDetailsPage,
+  notFoundComponent: () => {
     return (
       <DefaultPageLayout>
         <PageHeader
@@ -75,7 +37,18 @@ const RouteComponent = memo(function RouteComponent() {
         </Button>
       </DefaultPageLayout>
     )
-  }
+  },
+  pendingComponent: () => {
+    return (
+      <DefaultPageLayout>
+        <ProductDisplaySkeleton />
+      </DefaultPageLayout>
+    )
+  },
+})
+
+function ProductDetailsPage() {
+  const { product, suggestions } = Route.useLoaderData()
 
   return (
     <DefaultPageLayout>
@@ -86,19 +59,15 @@ const RouteComponent = memo(function RouteComponent() {
           <ProductTabs id={product.id} />
         </div>
 
-        <SuggestedProducts products={suggestions ?? []} />
+        <SuggestedProducts products={suggestions} />
       </div>
     </DefaultPageLayout>
   )
-})
+}
 
 function ProductDisplaySkeleton() {
   return (
     <div className="flex flex-col gap-2">
-      <div className="mb-2">
-        <Skeleton className="h-9 w-24" />
-      </div>
-
       <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
         <div className="relative aspect-square overflow-hidden rounded-lg border">
           <Skeleton className="h-full w-full" />

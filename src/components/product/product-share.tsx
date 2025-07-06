@@ -10,20 +10,22 @@ import {
   RiInstagramLine,
   RiWhatsappLine,
 } from '@remixicon/react'
+import { useRouteContext, useRouterState } from '@tanstack/react-router'
 import { Share2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Props = {
   productName: string
-  productUrl: string
   className?: string
 }
 
-export function ProductShare({
-  productName,
-  productUrl,
-  className = '',
-}: Props) {
+export function ProductShare({ productName, className = '' }: Props) {
+  const context = useRouteContext({
+    from: '/products/$slug',
+  })
+  const location = useRouterState({ select: (s) => s.location })
+  const productUrl = `${context.host}${location.href}`
+
   const shareUrls = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}&t=${encodeURIComponent(productName)}`,
     whatsapp: `https://wa.me/?text=${encodeURIComponent(`${productName} - ${productUrl}`)}`,
