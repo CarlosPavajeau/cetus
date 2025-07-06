@@ -1,5 +1,6 @@
 import { AuthInterceptor } from '@/components/auth-interceptor'
 import { ClerkProvider } from '@/components/clerk-provider'
+import { NotFound } from '@/components/not-found'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import appCss from '@/styles/index.css?url'
@@ -68,6 +69,7 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
+  notFoundComponent: () => <NotFound />,
   component: RootComponent,
 })
 
