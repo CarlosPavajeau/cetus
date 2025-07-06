@@ -3,9 +3,9 @@ import axios from 'axios'
 // Base client setup
 const createWompiClient = () => {
   return axios.create({
-    baseURL: import.meta.env.PUBLIC_WOMPI_API_URL,
+    baseURL: import.meta.env.VITE_WOMPI_API_URL,
     headers: {
-      Authorization: `Bearer ${import.meta.env.PUBLIC_WOMPI_KEY}`,
+      Authorization: `Bearer ${import.meta.env.VITE_WOMPI_KEY}`,
     },
   })
 }
@@ -166,7 +166,7 @@ export type GetFinancialInstitutionsResponse = {
 // API Functions
 export const getMerchant = async () => {
   const response = await wompi.get<Merchant>(
-    `/merchants/${import.meta.env.PUBLIC_WOMPI_KEY}`,
+    `/merchants/${import.meta.env.VITE_WOMPI_KEY}`,
   )
   return response.data
 }

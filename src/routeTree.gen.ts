@@ -8,423 +8,159 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ReturnsRouteImport } from './routes/returns'
+import { Route as ProductsRouteImport } from './routes/products'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as StoreRouteImport } from './routes/$store'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
+import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
+import { Route as OrdersIdRouteImport } from './routes/orders/$id'
+import { Route as AppReviewsRouteImport } from './routes/app/reviews'
+import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
+import { Route as AppCategoriesRouteImport } from './routes/app/categories'
+import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
+import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
+import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
+import { Route as OrdersOrderIdConfirmationRouteImport } from './routes/orders/$orderId.confirmation'
+import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
+import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
+import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as TermsImport } from './routes/terms'
-import { Route as ReturnsImport } from './routes/returns'
-import { Route as ProductsImport } from './routes/products'
-import { Route as PrivacyImport } from './routes/privacy'
-import { Route as OrdersImport } from './routes/orders'
-import { Route as FaqImport } from './routes/faq'
-import { Route as CheckoutImport } from './routes/checkout'
-import { Route as CartImport } from './routes/cart'
-import { Route as AppImport } from './routes/app'
-import { Route as StoreImport } from './routes/$store'
-import { Route as IndexImport } from './routes/index'
-import { Route as AppIndexImport } from './routes/app/index'
-import { Route as ReviewsNewImport } from './routes/reviews.new'
-import { Route as ProductsSlugImport } from './routes/products/$slug'
-import { Route as OrdersIdImport } from './routes/orders/$id'
-import { Route as AppReviewsImport } from './routes/app/reviews'
-import { Route as AppDeliveryFeesImport } from './routes/app/delivery-fees'
-import { Route as AppCategoriesImport } from './routes/app/categories'
-import { Route as AppProductsIndexImport } from './routes/app/products/index'
-import { Route as AppDashboardIndexImport } from './routes/app/dashboard/index'
-import { Route as AppCouponsIndexImport } from './routes/app/coupons/index'
-import { Route as OrdersOrderIdConfirmationImport } from './routes/orders/$orderId.confirmation'
-import { Route as AppProductsNewImport } from './routes/app/products/new'
-import { Route as AppOrdersOrderIdImport } from './routes/app/orders/$orderId'
-import { Route as AppCouponsNewImport } from './routes/app/coupons/new'
-
-// Create/Update Routes
-
-const TermsRoute = TermsImport.update({
+const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ReturnsRoute = ReturnsImport.update({
+const ReturnsRoute = ReturnsRouteImport.update({
   id: '/returns',
   path: '/returns',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProductsRoute = ProductsImport.update({
+const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const PrivacyRoute = PrivacyImport.update({
+const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const OrdersRoute = OrdersImport.update({
+const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const FaqRoute = FaqImport.update({
+const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const CheckoutRoute = CheckoutImport.update({
+const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const CartRoute = CartImport.update({
+const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AppRoute = AppImport.update({
+const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const StoreRoute = StoreImport.update({
+const StoreRoute = StoreRouteImport.update({
   id: '/$store',
   path: '/$store',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AppIndexRoute = AppIndexImport.update({
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-
-const ReviewsNewRoute = ReviewsNewImport.update({
+const ReviewsNewRoute = ReviewsNewRouteImport.update({
   id: '/reviews/new',
   path: '/reviews/new',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProductsSlugRoute = ProductsSlugImport.update({
+const ProductsSlugRoute = ProductsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => ProductsRoute,
 } as any)
-
-const OrdersIdRoute = OrdersIdImport.update({
+const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => OrdersRoute,
 } as any)
-
-const AppReviewsRoute = AppReviewsImport.update({
+const AppReviewsRoute = AppReviewsRouteImport.update({
   id: '/reviews',
   path: '/reviews',
   getParentRoute: () => AppRoute,
 } as any)
-
-const AppDeliveryFeesRoute = AppDeliveryFeesImport.update({
+const AppDeliveryFeesRoute = AppDeliveryFeesRouteImport.update({
   id: '/delivery-fees',
   path: '/delivery-fees',
   getParentRoute: () => AppRoute,
 } as any)
-
-const AppCategoriesRoute = AppCategoriesImport.update({
+const AppCategoriesRoute = AppCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
   getParentRoute: () => AppRoute,
 } as any)
-
-const AppProductsIndexRoute = AppProductsIndexImport.update({
+const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
   getParentRoute: () => AppRoute,
 } as any)
-
-const AppDashboardIndexRoute = AppDashboardIndexImport.update({
+const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
   getParentRoute: () => AppRoute,
 } as any)
-
-const AppCouponsIndexRoute = AppCouponsIndexImport.update({
+const AppCouponsIndexRoute = AppCouponsIndexRouteImport.update({
   id: '/coupons/',
   path: '/coupons/',
   getParentRoute: () => AppRoute,
 } as any)
-
-const OrdersOrderIdConfirmationRoute = OrdersOrderIdConfirmationImport.update({
-  id: '/$orderId/confirmation',
-  path: '/$orderId/confirmation',
-  getParentRoute: () => OrdersRoute,
-} as any)
-
-const AppProductsNewRoute = AppProductsNewImport.update({
+const OrdersOrderIdConfirmationRoute =
+  OrdersOrderIdConfirmationRouteImport.update({
+    id: '/$orderId/confirmation',
+    path: '/$orderId/confirmation',
+    getParentRoute: () => OrdersRoute,
+  } as any)
+const AppProductsNewRoute = AppProductsNewRouteImport.update({
   id: '/products/new',
   path: '/products/new',
   getParentRoute: () => AppRoute,
 } as any)
-
-const AppOrdersOrderIdRoute = AppOrdersOrderIdImport.update({
+const AppOrdersOrderIdRoute = AppOrdersOrderIdRouteImport.update({
   id: '/orders/$orderId',
   path: '/orders/$orderId',
   getParentRoute: () => AppRoute,
 } as any)
-
-const AppCouponsNewRoute = AppCouponsNewImport.update({
+const AppCouponsNewRoute = AppCouponsNewRouteImport.update({
   id: '/coupons/new',
   path: '/coupons/new',
   getParentRoute: () => AppRoute,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/$store': {
-      id: '/$store'
-      path: '/$store'
-      fullPath: '/$store'
-      preLoaderRoute: typeof StoreImport
-      parentRoute: typeof rootRoute
-    }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppImport
-      parentRoute: typeof rootRoute
-    }
-    '/cart': {
-      id: '/cart'
-      path: '/cart'
-      fullPath: '/cart'
-      preLoaderRoute: typeof CartImport
-      parentRoute: typeof rootRoute
-    }
-    '/checkout': {
-      id: '/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof CheckoutImport
-      parentRoute: typeof rootRoute
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqImport
-      parentRoute: typeof rootRoute
-    }
-    '/orders': {
-      id: '/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof OrdersImport
-      parentRoute: typeof rootRoute
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyImport
-      parentRoute: typeof rootRoute
-    }
-    '/products': {
-      id: '/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProductsImport
-      parentRoute: typeof rootRoute
-    }
-    '/returns': {
-      id: '/returns'
-      path: '/returns'
-      fullPath: '/returns'
-      preLoaderRoute: typeof ReturnsImport
-      parentRoute: typeof rootRoute
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsImport
-      parentRoute: typeof rootRoute
-    }
-    '/app/categories': {
-      id: '/app/categories'
-      path: '/categories'
-      fullPath: '/app/categories'
-      preLoaderRoute: typeof AppCategoriesImport
-      parentRoute: typeof AppImport
-    }
-    '/app/delivery-fees': {
-      id: '/app/delivery-fees'
-      path: '/delivery-fees'
-      fullPath: '/app/delivery-fees'
-      preLoaderRoute: typeof AppDeliveryFeesImport
-      parentRoute: typeof AppImport
-    }
-    '/app/reviews': {
-      id: '/app/reviews'
-      path: '/reviews'
-      fullPath: '/app/reviews'
-      preLoaderRoute: typeof AppReviewsImport
-      parentRoute: typeof AppImport
-    }
-    '/orders/$id': {
-      id: '/orders/$id'
-      path: '/$id'
-      fullPath: '/orders/$id'
-      preLoaderRoute: typeof OrdersIdImport
-      parentRoute: typeof OrdersImport
-    }
-    '/products/$slug': {
-      id: '/products/$slug'
-      path: '/$slug'
-      fullPath: '/products/$slug'
-      preLoaderRoute: typeof ProductsSlugImport
-      parentRoute: typeof ProductsImport
-    }
-    '/reviews/new': {
-      id: '/reviews/new'
-      path: '/reviews/new'
-      fullPath: '/reviews/new'
-      preLoaderRoute: typeof ReviewsNewImport
-      parentRoute: typeof rootRoute
-    }
-    '/app/': {
-      id: '/app/'
-      path: '/'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AppIndexImport
-      parentRoute: typeof AppImport
-    }
-    '/app/coupons/new': {
-      id: '/app/coupons/new'
-      path: '/coupons/new'
-      fullPath: '/app/coupons/new'
-      preLoaderRoute: typeof AppCouponsNewImport
-      parentRoute: typeof AppImport
-    }
-    '/app/orders/$orderId': {
-      id: '/app/orders/$orderId'
-      path: '/orders/$orderId'
-      fullPath: '/app/orders/$orderId'
-      preLoaderRoute: typeof AppOrdersOrderIdImport
-      parentRoute: typeof AppImport
-    }
-    '/app/products/new': {
-      id: '/app/products/new'
-      path: '/products/new'
-      fullPath: '/app/products/new'
-      preLoaderRoute: typeof AppProductsNewImport
-      parentRoute: typeof AppImport
-    }
-    '/orders/$orderId/confirmation': {
-      id: '/orders/$orderId/confirmation'
-      path: '/$orderId/confirmation'
-      fullPath: '/orders/$orderId/confirmation'
-      preLoaderRoute: typeof OrdersOrderIdConfirmationImport
-      parentRoute: typeof OrdersImport
-    }
-    '/app/coupons/': {
-      id: '/app/coupons/'
-      path: '/coupons'
-      fullPath: '/app/coupons'
-      preLoaderRoute: typeof AppCouponsIndexImport
-      parentRoute: typeof AppImport
-    }
-    '/app/dashboard/': {
-      id: '/app/dashboard/'
-      path: '/dashboard'
-      fullPath: '/app/dashboard'
-      preLoaderRoute: typeof AppDashboardIndexImport
-      parentRoute: typeof AppImport
-    }
-    '/app/products/': {
-      id: '/app/products/'
-      path: '/products'
-      fullPath: '/app/products'
-      preLoaderRoute: typeof AppProductsIndexImport
-      parentRoute: typeof AppImport
-    }
-  }
-}
-
-// Create and export the route tree
-
-interface AppRouteChildren {
-  AppCategoriesRoute: typeof AppCategoriesRoute
-  AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
-  AppReviewsRoute: typeof AppReviewsRoute
-  AppIndexRoute: typeof AppIndexRoute
-  AppCouponsNewRoute: typeof AppCouponsNewRoute
-  AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
-  AppProductsNewRoute: typeof AppProductsNewRoute
-  AppCouponsIndexRoute: typeof AppCouponsIndexRoute
-  AppDashboardIndexRoute: typeof AppDashboardIndexRoute
-  AppProductsIndexRoute: typeof AppProductsIndexRoute
-}
-
-const AppRouteChildren: AppRouteChildren = {
-  AppCategoriesRoute: AppCategoriesRoute,
-  AppDeliveryFeesRoute: AppDeliveryFeesRoute,
-  AppReviewsRoute: AppReviewsRoute,
-  AppIndexRoute: AppIndexRoute,
-  AppCouponsNewRoute: AppCouponsNewRoute,
-  AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
-  AppProductsNewRoute: AppProductsNewRoute,
-  AppCouponsIndexRoute: AppCouponsIndexRoute,
-  AppDashboardIndexRoute: AppDashboardIndexRoute,
-  AppProductsIndexRoute: AppProductsIndexRoute,
-}
-
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
-
-interface OrdersRouteChildren {
-  OrdersIdRoute: typeof OrdersIdRoute
-  OrdersOrderIdConfirmationRoute: typeof OrdersOrderIdConfirmationRoute
-}
-
-const OrdersRouteChildren: OrdersRouteChildren = {
-  OrdersIdRoute: OrdersIdRoute,
-  OrdersOrderIdConfirmationRoute: OrdersOrderIdConfirmationRoute,
-}
-
-const OrdersRouteWithChildren =
-  OrdersRoute._addFileChildren(OrdersRouteChildren)
-
-interface ProductsRouteChildren {
-  ProductsSlugRoute: typeof ProductsSlugRoute
-}
-
-const ProductsRouteChildren: ProductsRouteChildren = {
-  ProductsSlugRoute: ProductsSlugRoute,
-}
-
-const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
-  ProductsRouteChildren,
-)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -453,7 +189,6 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$store': typeof StoreRoute
@@ -480,9 +215,8 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$store': typeof StoreRoute
   '/app': typeof AppRouteWithChildren
@@ -509,7 +243,6 @@ export interface FileRoutesById {
   '/app/dashboard/': typeof AppDashboardIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -593,7 +326,6 @@ export interface FileRouteTypes {
     | '/app/products/'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   StoreRoute: typeof StoreRoute
@@ -609,6 +341,239 @@ export interface RootRouteChildren {
   ReviewsNewRoute: typeof ReviewsNewRoute
 }
 
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/returns': {
+      id: '/returns'
+      path: '/returns'
+      fullPath: '/returns'
+      preLoaderRoute: typeof ReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$store': {
+      id: '/$store'
+      path: '/$store'
+      fullPath: '/$store'
+      preLoaderRoute: typeof StoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/reviews/new': {
+      id: '/reviews/new'
+      path: '/reviews/new'
+      fullPath: '/reviews/new'
+      preLoaderRoute: typeof ReviewsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products/$slug': {
+      id: '/products/$slug'
+      path: '/$slug'
+      fullPath: '/products/$slug'
+      preLoaderRoute: typeof ProductsSlugRouteImport
+      parentRoute: typeof ProductsRoute
+    }
+    '/orders/$id': {
+      id: '/orders/$id'
+      path: '/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof OrdersIdRouteImport
+      parentRoute: typeof OrdersRoute
+    }
+    '/app/reviews': {
+      id: '/app/reviews'
+      path: '/reviews'
+      fullPath: '/app/reviews'
+      preLoaderRoute: typeof AppReviewsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/delivery-fees': {
+      id: '/app/delivery-fees'
+      path: '/delivery-fees'
+      fullPath: '/app/delivery-fees'
+      preLoaderRoute: typeof AppDeliveryFeesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/categories': {
+      id: '/app/categories'
+      path: '/categories'
+      fullPath: '/app/categories'
+      preLoaderRoute: typeof AppCategoriesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/products/': {
+      id: '/app/products/'
+      path: '/products'
+      fullPath: '/app/products'
+      preLoaderRoute: typeof AppProductsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dashboard/': {
+      id: '/app/dashboard/'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/coupons/': {
+      id: '/app/coupons/'
+      path: '/coupons'
+      fullPath: '/app/coupons'
+      preLoaderRoute: typeof AppCouponsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/orders/$orderId/confirmation': {
+      id: '/orders/$orderId/confirmation'
+      path: '/$orderId/confirmation'
+      fullPath: '/orders/$orderId/confirmation'
+      preLoaderRoute: typeof OrdersOrderIdConfirmationRouteImport
+      parentRoute: typeof OrdersRoute
+    }
+    '/app/products/new': {
+      id: '/app/products/new'
+      path: '/products/new'
+      fullPath: '/app/products/new'
+      preLoaderRoute: typeof AppProductsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/orders/$orderId': {
+      id: '/app/orders/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/app/orders/$orderId'
+      preLoaderRoute: typeof AppOrdersOrderIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/coupons/new': {
+      id: '/app/coupons/new'
+      path: '/coupons/new'
+      fullPath: '/app/coupons/new'
+      preLoaderRoute: typeof AppCouponsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+  }
+}
+
+interface AppRouteChildren {
+  AppCategoriesRoute: typeof AppCategoriesRoute
+  AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
+  AppReviewsRoute: typeof AppReviewsRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppCouponsNewRoute: typeof AppCouponsNewRoute
+  AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
+  AppProductsNewRoute: typeof AppProductsNewRoute
+  AppCouponsIndexRoute: typeof AppCouponsIndexRoute
+  AppDashboardIndexRoute: typeof AppDashboardIndexRoute
+  AppProductsIndexRoute: typeof AppProductsIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCategoriesRoute: AppCategoriesRoute,
+  AppDeliveryFeesRoute: AppDeliveryFeesRoute,
+  AppReviewsRoute: AppReviewsRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppCouponsNewRoute: AppCouponsNewRoute,
+  AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
+  AppProductsNewRoute: AppProductsNewRoute,
+  AppCouponsIndexRoute: AppCouponsIndexRoute,
+  AppDashboardIndexRoute: AppDashboardIndexRoute,
+  AppProductsIndexRoute: AppProductsIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface OrdersRouteChildren {
+  OrdersIdRoute: typeof OrdersIdRoute
+  OrdersOrderIdConfirmationRoute: typeof OrdersOrderIdConfirmationRoute
+}
+
+const OrdersRouteChildren: OrdersRouteChildren = {
+  OrdersIdRoute: OrdersIdRoute,
+  OrdersOrderIdConfirmationRoute: OrdersOrderIdConfirmationRoute,
+}
+
+const OrdersRouteWithChildren =
+  OrdersRoute._addFileChildren(OrdersRouteChildren)
+
+interface ProductsRouteChildren {
+  ProductsSlugRoute: typeof ProductsSlugRoute
+}
+
+const ProductsRouteChildren: ProductsRouteChildren = {
+  ProductsSlugRoute: ProductsSlugRoute,
+}
+
+const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
+  ProductsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   StoreRoute: StoreRoute,
@@ -623,138 +588,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ReviewsNewRoute: ReviewsNewRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/$store",
-        "/app",
-        "/cart",
-        "/checkout",
-        "/faq",
-        "/orders",
-        "/privacy",
-        "/products",
-        "/returns",
-        "/terms",
-        "/reviews/new"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/$store": {
-      "filePath": "$store.tsx"
-    },
-    "/app": {
-      "filePath": "app.tsx",
-      "children": [
-        "/app/categories",
-        "/app/delivery-fees",
-        "/app/reviews",
-        "/app/",
-        "/app/coupons/new",
-        "/app/orders/$orderId",
-        "/app/products/new",
-        "/app/coupons/",
-        "/app/dashboard/",
-        "/app/products/"
-      ]
-    },
-    "/cart": {
-      "filePath": "cart.tsx"
-    },
-    "/checkout": {
-      "filePath": "checkout.tsx"
-    },
-    "/faq": {
-      "filePath": "faq.tsx"
-    },
-    "/orders": {
-      "filePath": "orders.tsx",
-      "children": [
-        "/orders/$id",
-        "/orders/$orderId/confirmation"
-      ]
-    },
-    "/privacy": {
-      "filePath": "privacy.tsx"
-    },
-    "/products": {
-      "filePath": "products.tsx",
-      "children": [
-        "/products/$slug"
-      ]
-    },
-    "/returns": {
-      "filePath": "returns.tsx"
-    },
-    "/terms": {
-      "filePath": "terms.tsx"
-    },
-    "/app/categories": {
-      "filePath": "app/categories.tsx",
-      "parent": "/app"
-    },
-    "/app/delivery-fees": {
-      "filePath": "app/delivery-fees.tsx",
-      "parent": "/app"
-    },
-    "/app/reviews": {
-      "filePath": "app/reviews.tsx",
-      "parent": "/app"
-    },
-    "/orders/$id": {
-      "filePath": "orders/$id.tsx",
-      "parent": "/orders"
-    },
-    "/products/$slug": {
-      "filePath": "products/$slug.tsx",
-      "parent": "/products"
-    },
-    "/reviews/new": {
-      "filePath": "reviews.new.tsx"
-    },
-    "/app/": {
-      "filePath": "app/index.tsx",
-      "parent": "/app"
-    },
-    "/app/coupons/new": {
-      "filePath": "app/coupons/new.tsx",
-      "parent": "/app"
-    },
-    "/app/orders/$orderId": {
-      "filePath": "app/orders/$orderId.tsx",
-      "parent": "/app"
-    },
-    "/app/products/new": {
-      "filePath": "app/products/new.tsx",
-      "parent": "/app"
-    },
-    "/orders/$orderId/confirmation": {
-      "filePath": "orders/$orderId.confirmation.tsx",
-      "parent": "/orders"
-    },
-    "/app/coupons/": {
-      "filePath": "app/coupons/index.tsx",
-      "parent": "/app"
-    },
-    "/app/dashboard/": {
-      "filePath": "app/dashboard/index.tsx",
-      "parent": "/app"
-    },
-    "/app/products/": {
-      "filePath": "app/products/index.tsx",
-      "parent": "/app"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

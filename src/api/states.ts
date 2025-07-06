@@ -1,3 +1,4 @@
+import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
 export type State = {
@@ -6,9 +7,7 @@ export type State = {
 }
 
 export const fetchStates = async () => {
-  const response = await axios.get<State[]>(
-    `${import.meta.env.PUBLIC_API_URL}/states`,
-  )
+  const response = await axios.get<State[]>(`${API_ENDPOINT}/states`)
 
   return response.data
 }
@@ -20,7 +19,7 @@ export type City = {
 
 export const fetchCities = async (stateId: string) => {
   const response = await axios.get<City[]>(
-    `${import.meta.env.PUBLIC_API_URL}/states/${stateId}/cities`,
+    `${API_ENDPOINT}/states/${stateId}/cities`,
   )
 
   return response.data

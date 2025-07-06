@@ -16,7 +16,7 @@ import { useEffect } from 'react'
 export const usePaymentSignature = (order: Order) => {
   const amount = valueToCents(order.total)
   const reference = order.id
-  const integritySecret = import.meta.env.PUBLIC_WOMPI_INTEGRITY_SECRET
+  const integritySecret = import.meta.env.VITE_WOMPI_INTEGRITY_SECRET
 
   return useGenerateIntegritySignature(reference, amount, integritySecret)
 }

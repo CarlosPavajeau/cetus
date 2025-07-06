@@ -1,3 +1,4 @@
+import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
 export type CreateSignedUrlRequest = {
@@ -10,7 +11,7 @@ export type CreateSignedUrlResponse = {
 
 export const createSignedUrl = async (request: CreateSignedUrlRequest) => {
   const response = await axios.post<CreateSignedUrlResponse>(
-    `${import.meta.env.PUBLIC_API_URL}/aws/s3/presigned-url`,
+    `${API_ENDPOINT}/aws/s3/presigned-url`,
     request,
   )
 

@@ -3,7 +3,7 @@ import { Footer } from '@/components/footer'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { SignedIn } from '@clerk/clerk-react'
+import { SignedIn } from '@clerk/tanstack-react-start'
 import { Link } from '@tanstack/react-router'
 import { LayoutDashboardIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -30,7 +30,7 @@ export function DefaultPageLayout({ children, showHeader = true }: Props) {
 function NavBar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card">
-      <div className="mx-auto container px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex flex-shrink-0 items-center">
             <Link to="/" className="flex items-center gap-2">

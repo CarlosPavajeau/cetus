@@ -1,3 +1,4 @@
+import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
 export type Category = {
@@ -9,7 +10,7 @@ export type Category = {
 
 export const fetchCategories = async (storeSlug?: string) => {
   const response = await axios.get<Category[]>(
-    `${import.meta.env.PUBLIC_API_URL}/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -23,7 +24,7 @@ export const createCategory = async (
   storeSlug?: string,
 ) => {
   const response = await axios.post<Category>(
-    `${import.meta.env.PUBLIC_API_URL}/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
     category,
   )
 
@@ -35,7 +36,7 @@ export const updateCategory = async (
   category: UpdateCategoryRequest,
 ) => {
   const response = await axios.put<Category>(
-    `${import.meta.env.PUBLIC_API_URL}/categories/${id}`,
+    `${API_ENDPOINT}/categories/${id}`,
     category,
   )
 
@@ -43,9 +44,7 @@ export const updateCategory = async (
 }
 
 export const deleteCategory = async (id: string) => {
-  const response = await axios.delete(
-    `${import.meta.env.PUBLIC_API_URL}/categories/${id}`,
-  )
+  const response = await axios.delete(`${API_ENDPOINT}/categories/${id}`)
 
   return response.data
 }

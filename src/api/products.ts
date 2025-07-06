@@ -1,3 +1,4 @@
+import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
 export type Product = {
@@ -19,16 +20,14 @@ export type Product = {
 
 export const fetchProducts = async (storeSlug?: string) => {
   const response = await axios.get<Product[]>(
-    `${import.meta.env.PUBLIC_API_URL}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
 export const fetchProduct = async (id: string) => {
-  const response = await axios.get<Product>(
-    `${import.meta.env.PUBLIC_API_URL}/products/${id}`,
-  )
+  const response = await axios.get<Product>(`${API_ENDPOINT}/products/${id}`)
 
   return response.data
 }
@@ -40,7 +39,7 @@ export type ProductForSale = Omit<
 
 export const fetchProductsForSale = async (storeSlug?: string) => {
   const response = await axios.get<ProductForSale[]>(
-    `${import.meta.env.PUBLIC_API_URL}/products/for-sale${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/products/for-sale${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -56,7 +55,7 @@ export const createProduct = async (
   storeSlug?: string,
 ) => {
   const response = await axios.post<Product>(
-    `${import.meta.env.PUBLIC_API_URL}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
     product,
   )
 
@@ -65,7 +64,7 @@ export const createProduct = async (
 
 export async function fetchProductSuggestions(productId: string) {
   const response = await axios.get<ProductForSale[]>(
-    `${import.meta.env.PUBLIC_API_URL}/products/suggestions?productId=${productId}`,
+    `${API_ENDPOINT}/products/suggestions?productId=${productId}`,
   )
 
   return response.data
@@ -78,7 +77,7 @@ export type UpdateProductRequest = Omit<
 
 export const updateProduct = async (product: UpdateProductRequest) => {
   const response = await axios.put<Product>(
-    `${import.meta.env.PUBLIC_API_URL}/products/${product.id}`,
+    `${API_ENDPOINT}/products/${product.id}`,
     product,
   )
 
@@ -86,7 +85,7 @@ export const updateProduct = async (product: UpdateProductRequest) => {
 }
 
 export const deleteProduct = async (id: string) => {
-  await axios.delete(`${import.meta.env.PUBLIC_API_URL}/products/${id}`)
+  await axios.delete(`${API_ENDPOINT}/products/${id}`)
 }
 
 export type TopSellingProduct = {
@@ -99,7 +98,7 @@ export type TopSellingProduct = {
 
 export async function fetchTopSellingProducts(storeSlug?: string) {
   const response = await axios.get<TopSellingProduct[]>(
-    `${import.meta.env.PUBLIC_API_URL}/products/top-selling${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/products/top-selling${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -107,7 +106,7 @@ export async function fetchTopSellingProducts(storeSlug?: string) {
 
 export async function fetchProductBySlug(slug: string) {
   const response = await axios.get<ProductForSale>(
-    `${import.meta.env.PUBLIC_API_URL}/products/slug/${slug}`,
+    `${API_ENDPOINT}/products/slug/${slug}`,
   )
 
   return response.data

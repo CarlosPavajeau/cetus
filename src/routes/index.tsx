@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/')({
   component: IndexPage,
+  ssr: false,
 })
 
 function IndexPage() {

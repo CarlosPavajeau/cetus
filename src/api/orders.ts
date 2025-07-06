@@ -1,3 +1,4 @@
+import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
 export enum OrderStatus {
@@ -58,9 +59,7 @@ export type Order = {
 }
 
 export const fetchOrder = async (id: string) => {
-  const response = await axios.get<Order>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/${id}`,
-  )
+  const response = await axios.get<Order>(`${API_ENDPOINT}/orders/${id}`)
 
   return response.data
 }
@@ -90,7 +89,7 @@ export const createOrder = async (
   storeSlug?: string,
 ) => {
   const response = await axios.post<SimpleOrder>(
-    `${import.meta.env.PUBLIC_API_URL}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
     order,
   )
 
@@ -110,7 +109,7 @@ export type SimpleOrder = {
 
 export const fetchOrders = async (storeSlug?: string) => {
   const response = await axios.get<SimpleOrder[]>(
-    `${import.meta.env.PUBLIC_API_URL}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -118,7 +117,7 @@ export const fetchOrders = async (storeSlug?: string) => {
 
 export const deliverOrder = async (orderId: string) => {
   const response = await axios.post<SimpleOrder>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/${orderId}/deliver`,
+    `${API_ENDPOINT}/orders/${orderId}/deliver`,
   )
 
   return response.data
@@ -126,7 +125,7 @@ export const deliverOrder = async (orderId: string) => {
 
 export const cancelOrder = async (orderId: string) => {
   const response = await axios.post<SimpleOrder>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/${orderId}/cancel`,
+    `${API_ENDPOINT}/orders/${orderId}/cancel`,
   )
 
   return response.data
@@ -143,7 +142,7 @@ export type OrderInsights = {
 
 export const fetchOrderInsights = async (month: string, storeSlug?: string) => {
   const response = await axios.get<OrderInsights>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/insights?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/orders/insights?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -157,7 +156,7 @@ export type OrderSummary = {
 
 export const fetchOrdersSummary = async (month: string, storeSlug?: string) => {
   const response = await axios.get<OrderSummary[]>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/summary?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/orders/summary?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -170,7 +169,7 @@ export type DeliveryFee = {
 
 export async function fetchDeliveryFee(cityId: string, storeSlug?: string) {
   const response = await axios.get<DeliveryFee>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees/${cityId}${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/orders/delivery-fees/${cityId}${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -178,7 +177,7 @@ export async function fetchDeliveryFee(cityId: string, storeSlug?: string) {
 
 export async function fetchDeliveryFees(storeSlug?: string) {
   const response = await axios.get<DeliveryFee[]>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -194,7 +193,7 @@ export async function createDeliveryFee(
   storeSlug?: string,
 ) {
   const response = await axios.post<DeliveryFee>(
-    `${import.meta.env.PUBLIC_API_URL}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
     deliveryFee,
   )
 

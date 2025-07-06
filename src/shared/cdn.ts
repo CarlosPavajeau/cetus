@@ -1,5 +1,5 @@
 export const getImageUrl = (image: string) => {
-  const cdnUrl = import.meta.env.PUBLIC_CDN_URL
+  const cdnUrl = import.meta.env.VITE_CDN_URL
 
   return `${cdnUrl}/${image}`
 }

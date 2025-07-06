@@ -1,3 +1,4 @@
+import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
 export enum ReviewRequestStatus {
@@ -21,7 +22,7 @@ export type ReviewRequest = {
 
 export async function fetchReviewRequest(token: string) {
   const response = await axios.get<ReviewRequest>(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/requests/${token}`,
+    `${API_ENDPOINT}/reviews/requests/${token}`,
   )
 
   return response.data
@@ -34,10 +35,7 @@ export type CreateProductReviewRequest = {
 }
 
 export async function createProductReview(request: CreateProductReviewRequest) {
-  const response = await axios.post(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/products`,
-    request,
-  )
+  const response = await axios.post(`${API_ENDPOINT}/reviews/products`, request)
 
   return response.data
 }
@@ -55,7 +53,7 @@ export async function fetchPendingForApprovalProductReviews(
   storeSlug?: string,
 ) {
   const response = await axios.get<PendingForApprovalProductReview[]>(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/products/pending${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/reviews/products/pending${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -71,7 +69,7 @@ export type ProductReview = {
 
 export async function fetchProductReviews(productId: string) {
   const response = await axios.get<ProductReview[]>(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/products/${productId}`,
+    `${API_ENDPOINT}/reviews/products/${productId}`,
   )
 
   return response.data
@@ -79,7 +77,7 @@ export async function fetchProductReviews(productId: string) {
 
 export async function approveProductReview(reviewId: string) {
   const response = await axios.post(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/products/${reviewId}/approve`,
+    `${API_ENDPOINT}/reviews/products/${reviewId}/approve`,
   )
 
   return response.data
@@ -92,7 +90,7 @@ export type RejectProductReviewRequest = {
 
 export async function rejectProductReview(request: RejectProductReviewRequest) {
   const response = await axios.post(
-    `${import.meta.env.PUBLIC_API_URL}/reviews/products/${request.id}/reject`,
+    `${API_ENDPOINT}/reviews/products/${request.id}/reject`,
     request,
   )
 

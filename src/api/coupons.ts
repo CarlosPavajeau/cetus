@@ -1,3 +1,4 @@
+import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
 export enum CouponDiscountType {
@@ -44,7 +45,7 @@ export type Coupon = {
 
 export async function fetchCoupons(storeSlug?: string) {
   const response = await axios.get<Coupon[]>(
-    `${import.meta.env.PUBLIC_API_URL}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -104,7 +105,7 @@ export async function createCoupon(
   storeSlug?: string,
 ) {
   const response = await axios.post<Coupon>(
-    `${import.meta.env.PUBLIC_API_URL}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
+    `${API_ENDPOINT}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
     coupon,
   )
 
@@ -119,7 +120,7 @@ export type CouponRule = {
 
 export async function fetchCouponRules(id: number) {
   const response = await axios.get<CouponRule[]>(
-    `${import.meta.env.PUBLIC_API_URL}/coupons/${id}/rules`,
+    `${API_ENDPOINT}/coupons/${id}/rules`,
   )
 
   return response.data
@@ -132,7 +133,7 @@ export type RedeemCouponRequest = {
 
 export async function redeemCoupon(coupon: RedeemCouponRequest) {
   const response = await axios.post<Coupon>(
-    `${import.meta.env.PUBLIC_API_URL}/coupons/redeem`,
+    `${API_ENDPOINT}/coupons/redeem`,
     coupon,
   )
 
