@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import appCss from '@/styles/index.css?url'
 import { getAuth } from '@clerk/tanstack-react-start/server'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
   createRootRouteWithContext,
@@ -79,21 +79,17 @@ const options = {
 }
 
 function RootComponent() {
-  const queryClient = new QueryClient()
-
   return (
     <RootDocument>
       <PostHogProvider apiKey={postHogKey} options={options}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <I18nProvider locale="es-CO">
             <ClerkProvider>
-              <QueryClientProvider client={queryClient}>
-                <TooltipProvider>
-                  <Outlet />
-                  <Toaster />
-                  <AuthInterceptor />
-                </TooltipProvider>
-              </QueryClientProvider>
+              <TooltipProvider>
+                <Outlet />
+                <Toaster />
+                <AuthInterceptor />
+              </TooltipProvider>
             </ClerkProvider>
           </I18nProvider>
         </ThemeProvider>
