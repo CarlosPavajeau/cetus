@@ -1,4 +1,5 @@
 import { fetchProductBySlug, fetchProductSuggestions } from '@/api/products'
+import { fetchProductReviews } from '@/api/reviews'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductDisplay } from '@/components/product/product-display'
@@ -12,12 +13,15 @@ import { Home } from 'lucide-react'
 export const Route = createFileRoute('/products/$slug')({
   loader: async (context) => {
     const slug = context.params.slug
+
     const product = await fetchProductBySlug(slug)
     const suggestions = await fetchProductSuggestions(product.id)
+    const reviews = await fetchProductReviews(product.id)
 
     return {
       product,
       suggestions,
+      reviews,
     }
   },
   component: ProductDetailsPage,
@@ -48,7 +52,7 @@ export const Route = createFileRoute('/products/$slug')({
 })
 
 function ProductDetailsPage() {
-  const { product, suggestions } = Route.useLoaderData()
+  const { product, suggestions, reviews } = Route.useLoaderData()
 
   return (
     <DefaultPageLayout>
@@ -56,7 +60,7 @@ function ProductDetailsPage() {
         <ProductDisplay key={product.id} product={product} />
 
         <div>
-          <ProductTabs id={product.id} />
+          <ProductTabs reviews={reviews} />
         </div>
 
         <SuggestedProducts products={suggestions} />
