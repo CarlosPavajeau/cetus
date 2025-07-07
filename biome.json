@@ -18,7 +18,10 @@
       "!**/out/**",
       "!**/public/**",
       "!**/tmp/**",
-      "!**/vendor/**"
+      "!**/vendor/**",
+      "!**/.vercel/**",
+      "!**/.tanstack/**",
+      "!**/.nitro/**"
     ]
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
