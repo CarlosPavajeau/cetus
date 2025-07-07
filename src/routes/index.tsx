@@ -15,7 +15,6 @@ import { useMemo, useState } from 'react'
 export const Route = createFileRoute('/')({
   loader: async () => {
     const { host } = await getServerhost()
-
     const store = await fetchStoreByDomain(host)
 
     const products = await fetchProductsForSale(store.slug)
@@ -24,6 +23,7 @@ export const Route = createFileRoute('/')({
     return {
       products,
       categories,
+      store,
     }
   },
   component: IndexPage,
@@ -41,7 +41,7 @@ export const Route = createFileRoute('/')({
 })
 
 function IndexPage() {
-  const { products, categories } = Route.useLoaderData()
+  const { products, categories, store } = Route.useLoaderData()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -63,14 +63,14 @@ function IndexPage() {
 
   if (!products || !categories) {
     return (
-      <DefaultPageLayout>
+      <DefaultPageLayout store={store}>
         <PageHeader title="Hubo un problema al cargar los datos" />
       </DefaultPageLayout>
     )
   }
 
   return (
-    <DefaultPageLayout>
+    <DefaultPageLayout store={store}>
       <FilterSection
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}

@@ -1,3 +1,4 @@
+import type { Store } from '@/api/stores'
 import { CartButton } from '@/components/cart-button'
 import { Footer } from '@/components/footer'
 import { ThemeSwitch } from '@/components/theme-switch'
@@ -10,13 +11,18 @@ import type { ReactNode } from 'react'
 
 type Props = {
   children: ReactNode
+  store?: Store
   showHeader?: boolean
 }
 
-export function DefaultPageLayout({ children, showHeader = true }: Props) {
+export function DefaultPageLayout({
+  children,
+  store,
+  showHeader = true,
+}: Props) {
   return (
     <div className="min-h-screen">
-      {showHeader && <NavBar />}
+      {showHeader && <NavBar store={store} />}
 
       <main className="container mx-auto min-h-screen bg-background px-4 pt-6 pb-16 sm:px-6 lg:px-8">
         {children}
@@ -27,7 +33,11 @@ export function DefaultPageLayout({ children, showHeader = true }: Props) {
   )
 }
 
-function NavBar() {
+type NavBarProps = {
+  store?: Store
+}
+
+function NavBar({ store }: NavBarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -35,7 +45,7 @@ function NavBar() {
           <div className="flex flex-shrink-0 items-center">
             <Link to="/" className="flex items-center gap-2">
               <h1 className="font-bold font-heading text-foreground text-xl sm:text-2xl">
-                TELEDIGITAL JYA
+                {store ? store.name : 'TELEDIGITAL JYA'}
               </h1>
             </Link>
           </div>
