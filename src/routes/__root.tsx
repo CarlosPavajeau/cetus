@@ -70,7 +70,6 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   notFoundComponent: () => <NotFound />,
-  pendingComponent: () => <NotFound />,
   component: RootComponent,
 })
 
