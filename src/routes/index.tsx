@@ -8,18 +8,15 @@ import { NotFound } from '@/components/not-found'
 import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product/product-grid'
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
+import { getServerhost } from '@/server/get-host'
 import { createFileRoute } from '@tanstack/react-router'
-import { getHeader, getHeaders } from '@tanstack/react-start/server'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/')({
   loader: async () => {
-    const domain = getHeader('Host')
+    const { host } = await getServerhost()
 
-    console.log('[INFO]: Request headers')
-    console.log(getHeaders())
-
-    const store = await fetchStoreByDomain(domain!)
+    const store = await fetchStoreByDomain(host)
 
     const products = await fetchProductsForSale(store.slug)
     const categories = await fetchCategories(store.slug)
