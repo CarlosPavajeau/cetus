@@ -1,5 +1,6 @@
 import { fetchCategories } from '@/api/categories'
 import { fetchProductsForSale } from '@/api/products'
+import { fetchStoreByDomain } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { FilterSection } from '@/components/home/filter-section'
 import { FilterSectionSkeleton } from '@/components/home/filter-section-skeleton'
@@ -8,12 +9,20 @@ import { PageHeader } from '@/components/page-header'
 import { ProductGrid } from '@/components/product/product-grid'
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
 import { createFileRoute } from '@tanstack/react-router'
+import { getHeader, getHeaders } from '@tanstack/react-start/server'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/')({
-  loader: async (context) => {
-    const products = await fetchProductsForSale()
-    const categories = await fetchCategories()
+  loader: async () => {
+    const domain = getHeader('Host')
+
+    console.log('[INFO]: Request headers')
+    console.log(getHeaders())
+
+    const store = await fetchStoreByDomain(domain!)
+
+    const products = await fetchProductsForSale(store.slug)
+    const categories = await fetchCategories(store.slug)
 
     return {
       products,
