@@ -12,6 +12,8 @@ export function createRouter() {
       context: { queryClient },
       scrollRestoration: true,
       scrollRestorationBehavior: 'smooth',
+      defaultPendingMs: 0,
+      defaultPendingMinMs: 0
     }),
     queryClient,
   )
