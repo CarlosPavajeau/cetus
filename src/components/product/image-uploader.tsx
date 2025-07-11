@@ -44,10 +44,16 @@ export function useImageUpload<T extends FormWithImageUrl>(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0]
-        const fileName = uuid()
+
+        const fileId = uuid()
+        const fileExtension = file.name.split('.').pop()
+
+        const fileName = `${fileId}.${fileExtension}`
+
+        const imageUrl = fileExtension === 'png' ? fileName : `${fileId}.webp`
 
         setMainImage(file)
-        form.setValue('imageUrl' as Path<T>, fileName as PathValue<T, Path<T>>)
+        form.setValue('imageUrl' as Path<T>, imageUrl as PathValue<T, Path<T>>)
         setHasImageChanged(true)
       }
     },
