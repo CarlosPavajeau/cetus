@@ -1,5 +1,5 @@
-export const getImageUrl = (image: string) => {
+export const getImageUrl = (image: string, format?: string) => {
   const cdnUrl = import.meta.env.VITE_CDN_URL
 
-  return `${cdnUrl}/${image}`
+  return `${cdnUrl}/${image}${format ? `.${format}` : ''}`
 }

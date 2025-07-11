@@ -111,15 +111,21 @@ function ProductDisplayComponent({ product }: Props) {
   return (
     <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
       <div className="relative aspect-square overflow-hidden rounded-lg border">
-        <Image
-          src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-          alt={product.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 50vw"
-          priority
-          quality={80}
-        />
+        <picture>
+          <Image
+            src={getImageUrl(product.imageUrl || 'placeholder.svg', 'png')}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+            quality={80}
+          />
+          <source
+            srcSet={getImageUrl(product.imageUrl || 'placeholder.svg', 'webp')}
+            type="image/webp"
+          />
+        </picture>
       </div>
 
       <div className="flex flex-col gap-4">
