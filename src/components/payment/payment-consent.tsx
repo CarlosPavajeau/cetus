@@ -2,13 +2,13 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Label } from '@/components/ui/label'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
-import type { PaymentFormValues } from '@/schemas/payments'
+import type { PaymentValues } from '@/schemas/payments'
 import { ShieldCheckIcon } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
 export const PaymentConsent = () => {
   const { merchant } = useMerchant()
-  const form = useFormContext<PaymentFormValues>()
+  const form = useFormContext<PaymentValues>()
 
   if (!merchant) return null
 

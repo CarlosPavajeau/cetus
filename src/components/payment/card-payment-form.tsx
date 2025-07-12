@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import type { PaymentFormValues } from '@/schemas/payments'
+import type { PaymentValues } from '@/schemas/payments'
 import { CreditCardIcon } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 import { usePaymentInputs } from 'react-payment-inputs'
@@ -27,7 +27,7 @@ export const CardPaymentForm = ({ order }: Props) => {
     getCardImageProps,
   } = usePaymentInputs()
 
-  const form = useFormContext<PaymentFormValues>()
+  const form = useFormContext<PaymentValues>()
 
   return (
     <BasePaymentForm order={order} buttonText="Pagar con tarjeta">

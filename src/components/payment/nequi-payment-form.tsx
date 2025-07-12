@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import type { PaymentFormValues } from '@/schemas/payments'
+import type { PaymentValues } from '@/schemas/payments'
 import { useFormContext } from 'react-hook-form'
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
 }
 
 export const NequiPaymentForm = ({ order }: Props) => {
-  const form = useFormContext<PaymentFormValues>()
+  const form = useFormContext<PaymentValues>()
 
   return (
     <BasePaymentForm order={order} buttonText="Pagar con Nequi">

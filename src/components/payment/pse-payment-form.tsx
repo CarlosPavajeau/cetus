@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useFinancialInstitutions } from '@/hooks/wompi/use-financial-institutions'
-import type { PaymentFormValues } from '@/schemas/payments'
+import type { PaymentValues } from '@/schemas/payments'
 import { useFormContext } from 'react-hook-form'
 
 type Props = {
@@ -27,7 +27,7 @@ export const PsePaymentForm = ({ order }: Props) => {
   const { financialInstitutions, isLoading: isLoadingFinancialInstitutions } =
     useFinancialInstitutions()
 
-  const form = useFormContext<PaymentFormValues>()
+  const form = useFormContext<PaymentValues>()
 
   return (
     <BasePaymentForm order={order} buttonText="Pagar con PSE">

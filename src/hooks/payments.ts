@@ -6,7 +6,7 @@ import {
   createPSETransaction,
   createTransaction,
 } from '@/api/third-party/wompi'
-import type { PaymentFormValues } from '@/schemas/payments'
+import type { PaymentValues } from '@/schemas/payments'
 import { valueToCents } from '@/shared/currency'
 import { useGenerateIntegritySignature } from '@/shared/wompi'
 import { useMutation } from '@tanstack/react-query'
@@ -25,7 +25,7 @@ export const useCreateTransaction = (order: Order) => {
   const { signature } = usePaymentSignature(order)
   const redirect = window.location.origin + `/orders/${order.id}/confirmation`
 
-  const createPaymentTransaction = async (values: PaymentFormValues) => {
+  const createPaymentTransaction = async (values: PaymentValues) => {
     const baseTransactionRequest = {
       acceptance_token: values.acceptance_token,
       amount_in_cents: valueToCents(order.total),
@@ -124,7 +124,9 @@ export const useCreateTransaction = (order: Order) => {
       const data = createTransactionMutation.data
 
       if (typeof data === 'string') {
-        window.open(data, '_self')
+        if (window !== undefined) {
+          window.open(data, '_self')
+        }
       } else {
         navigate({
           to: `/orders/${order.id}/confirmation`,

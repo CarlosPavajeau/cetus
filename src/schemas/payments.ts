@@ -1,97 +1,90 @@
-import { type TypeOf, z } from 'zod'
+import { type } from 'arktype'
 
-export const cardPaymentSchema = z.object({
-  type: z.literal('CARD'),
-  card_number: z.string({
+export const CardPaymentSchema = type({
+  type: "'CARD'",
+  card_number: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar el número de la tarjeta',
   }),
-  card_holder: z.string({
+  card_holder: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar el nombre del titular de la tarjeta',
   }),
-  card_cvc: z.string({
+  card_cvc: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar el código de seguridad de la tarjeta',
   }),
-  card_expiration_date: z.string({
+  card_expiration_date: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar la fecha de expiración de la tarjeta',
   }),
-
-  presigned_acceptance: z.boolean({
+  presigned_acceptance: type.boolean.configure({
     message: 'Debes aceptar los reglamentos',
   }),
-  presigned_personal_data_auth: z.boolean({
+  presigned_personal_data_auth: type.boolean.configure({
     message:
       'Debes aceptar la autorización para la administración de datos personales',
   }),
-  acceptance_token: z.string({
+  acceptance_token: type.string.moreThanLength(1).configure({
     message: 'Debes aceptar los reglamentos',
   }),
 })
 
-export const bancolombiaPaymentSchema = z.object({
-  type: z.literal('BANCOLOMBIA_TRANSFER'),
-
-  presigned_acceptance: z.boolean({
+export const BancolombiaPaymentSchema = type({
+  type: "'BANCOLOMBIA_TRANSFER'",
+  presigned_acceptance: type.boolean.configure({
     message: 'Debes aceptar los reglamentos',
   }),
-  presigned_personal_data_auth: z.boolean({
+  presigned_personal_data_auth: type.boolean.configure({
     message:
       'Debes aceptar la autorización para la administración de datos personales',
   }),
-  acceptance_token: z.string({
+  acceptance_token: type.string.moreThanLength(1).configure({
     message: 'Debes aceptar los reglamentos',
   }),
 })
 
-export const psePaymentSchema = z.object({
-  type: z.literal('PSE'),
-  user_type: z.enum(['0', '1'], {
+export const PSEPaymentSchema = type({
+  type: "'PSE'",
+  user_type: type("'0'|'1'").configure({
     message: 'Debes seleccionar el tipo de usuario',
   }),
-  user_legal_id_type: z.enum(['CC', 'NIT'], {
+  user_legal_id_type: type("'CC'|'NIT'").configure({
     message: 'Debes seleccionar el tipo de documento',
   }),
-  user_legal_id: z.string({
+  user_legal_id: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar el número de documento',
   }),
-  financial_institution_code: z.string({
+  financial_institution_code: type.string.moreThanLength(1).configure({
     message: 'Debes seleccionar la entidad financiera',
   }),
-
-  presigned_acceptance: z.boolean({
+  presigned_acceptance: type.boolean.configure({
     message: 'Debes aceptar los reglamentos',
   }),
-  presigned_personal_data_auth: z.boolean({
+  presigned_personal_data_auth: type.boolean.configure({
     message:
       'Debes aceptar la autorización para la administración de datos personales',
   }),
-  acceptance_token: z.string({
+  acceptance_token: type.string.moreThanLength(1).configure({
     message: 'Debes aceptar los reglamentos',
   }),
 })
 
-export const nequiPaymentSchema = z.object({
-  type: z.literal('NEQUI'),
-  phone_number: z.string({
+export const NequiPaymentSchema = type({
+  type: "'NEQUI'",
+  phone_number: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar el número de teléfono',
   }),
-
-  presigned_acceptance: z.boolean({
+  presigned_acceptance: type.boolean.configure({
     message: 'Debes aceptar los reglamentos',
   }),
-  presigned_personal_data_auth: z.boolean({
+  presigned_personal_data_auth: type.boolean.configure({
     message:
       'Debes aceptar la autorización para la administración de datos personales',
   }),
-  acceptance_token: z.string({
+  acceptance_token: type.string.moreThanLength(1).configure({
     message: 'Debes aceptar los reglamentos',
   }),
 })
 
-export const paymentSchema = z.discriminatedUnion('type', [
-  cardPaymentSchema,
-  bancolombiaPaymentSchema,
-  psePaymentSchema,
-  nequiPaymentSchema,
-])
+export const PaymentSchema = NequiPaymentSchema.or(BancolombiaPaymentSchema)
+  .or(PSEPaymentSchema)
+  .or(CardPaymentSchema)
 
-export type PaymentFormValues = TypeOf<typeof paymentSchema>
+export type PaymentValues = typeof PaymentSchema.infer

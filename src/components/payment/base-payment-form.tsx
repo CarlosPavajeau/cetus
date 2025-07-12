@@ -2,7 +2,7 @@ import type { Order } from '@/api/orders'
 import { PaymentConsent } from '@/components/payment/payment-consent'
 import { Button } from '@/components/ui/button'
 import { useCreateTransaction } from '@/hooks/payments'
-import type { PaymentFormValues } from '@/schemas/payments'
+import type { PaymentValues } from '@/schemas/payments'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useFormContext } from 'react-hook-form'
@@ -14,7 +14,7 @@ type Props = {
 }
 
 export const BasePaymentForm = ({ order, children, buttonText }: Props) => {
-  const form = useFormContext<PaymentFormValues>()
+  const form = useFormContext<PaymentValues>()
   const transactionMutation = useCreateTransaction(order)
 
   const onSubmit = form.handleSubmit((values) => {

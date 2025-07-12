@@ -8,9 +8,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrder } from '@/hooks/orders'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
-import { type PaymentFormValues, paymentSchema } from '@/schemas/payments'
+import { PaymentSchema, type PaymentValues } from '@/schemas/payments'
 import { cn } from '@/shared/cn'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { CreditCardIcon, SmartphoneIcon } from 'lucide-react'
 import { memo, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
@@ -89,8 +89,8 @@ const PaymentMethodItem = memo(function PaymentMethodItem({
 })
 
 export function PaymentOptions({ orderId }: PaymentOptionsProps) {
-  const form = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentSchema),
+  const form = useForm({
+    resolver: arktypeResolver(PaymentSchema),
     defaultValues: {
       type: 'CARD',
       acceptance_token: '',
@@ -101,7 +101,7 @@ export function PaymentOptions({ orderId }: PaymentOptionsProps) {
   const paymentMethod = form.watch('type')
 
   const setPaymentMethod = (value: string) => {
-    form.setValue('type', value as PaymentFormValues['type'], {
+    form.setValue('type', value as PaymentValues['type'], {
       shouldValidate: true,
       shouldDirty: true,
     })
