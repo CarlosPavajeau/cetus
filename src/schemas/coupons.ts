@@ -1,35 +1,42 @@
 import { CouponDiscountType, CouponRuleType } from '@/api/coupons'
-import { z } from 'zod'
+import { type } from 'arktype'
 
-export const couponDiscountType = z.nativeEnum(CouponDiscountType, {
-  errorMap: () => ({ message: 'El tipo de descuento es requerido' }),
-})
-export const couponRuleType = z.nativeEnum(CouponRuleType, {
-  errorMap: () => ({ message: 'El tipo de regla es requerido' }),
-})
-
-export const createCouponRuleSchema = z.object({
-  ruleType: couponRuleType,
-  value: z.string().min(1, 'El valor de la regla es requerido'),
+export const CreateCouponRuleSchema = type({
+  ruleType: type.valueOf(CouponRuleType),
+  value: type.string.moreThanLength(1).configure({
+    message: 'El valor de la regla es requerido',
+  }),
 })
 
-export const createCouponSchema = z.object({
-  code: z.string().min(1, 'El código es requerido'),
-  description: z.string().optional(),
-  discountType: couponDiscountType,
-  discountValue: z.coerce
-    .number()
-    .min(0, 'El valor del descuento debe ser mayor o igual a 0'),
-  usageLimit: z.coerce
-    .number()
-    .min(0, 'El límite de usos debe ser mayor o igual a 0')
+export const CreateCouponSchema = type({
+  code: type.string.moreThanLength(1).configure({
+    message: 'El código es requerido',
+  }),
+  description: type.string.optional(),
+  discountType: type.valueOf(CouponDiscountType),
+  discountValue: type.number.moreThan(0).configure({
+    message: 'El valor del descuento debe ser mayor o igual a 0',
+  }),
+  usageLimit: type.number
+    .moreThan(0)
+    .configure({
+      message: 'El límite de usos debe ser mayor o igual a 0',
+    })
     .optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  rules: z.array(createCouponRuleSchema),
+  startDate: type.Date.optional(),
+  endDate: type.Date.optional(),
+  rules: CreateCouponRuleSchema.array(),
 })
 
-export const redeemCouponSchema = z.object({
-  couponCode: z.string().min(1, 'El código es requerido'),
-  orderId: z.string().min(1, 'El ID del pedido es requerido'),
+export const RedeemCouponSchema = type({
+  couponCode: type.string.moreThanLength(1).configure({
+    message: 'El código es requerido',
+  }),
+  orderId: type.string.moreThanLength(1).configure({
+    message: 'El ID del pedido es requerido',
+  }),
 })
+
+export type CreateCoupon = typeof CreateCouponSchema.infer
+export type CreateCouponRule = typeof CreateCouponRuleSchema.infer
+export type RedeemCoupon = typeof RedeemCouponSchema.infer

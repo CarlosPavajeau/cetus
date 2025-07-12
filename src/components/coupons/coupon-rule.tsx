@@ -1,11 +1,8 @@
-import {
-  CouponRuleType,
-  CouponRuleTypeText,
-  type CreateCouponRule,
-} from '@/api/coupons'
+import { CouponRuleType, CouponRuleTypeText } from '@/api/coupons'
 import { Currency } from '@/components/currency'
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
+import type { CreateCouponRule } from '@/schemas/coupons'
 import { useOrganization } from '@clerk/tanstack-react-start'
 import { TrashIcon } from 'lucide-react'
 

@@ -1,8 +1,4 @@
-import {
-  COUPON_RULE_TYPE_OPTIONS,
-  CouponRuleType,
-  type CreateCouponRule,
-} from '@/api/coupons'
+import { COUPON_RULE_TYPE_OPTIONS, CouponRuleType } from '@/api/coupons'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -29,13 +25,15 @@ import {
 } from '@/components/ui/sheet'
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
-import { createCouponRuleSchema } from '@/schemas/coupons'
+import {
+  type CreateCouponRule,
+  CreateCouponRuleSchema,
+} from '@/schemas/coupons'
 import { useOrganization } from '@clerk/tanstack-react-start'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useFormContext } from 'react-hook-form'
-import type { TypeOf } from 'zod'
 
 type Props = {
   onSuccess: (rule: CreateCouponRule) => void
@@ -44,7 +42,7 @@ type Props = {
 export function AddCouponRule({ onSuccess }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const form = useForm({
-    resolver: zodResolver(createCouponRuleSchema),
+    resolver: arktypeResolver(CreateCouponRuleSchema),
     defaultValues: {
       ruleType: CouponRuleType.MinPurchaseAmount,
       value: '0',
@@ -135,7 +133,7 @@ type SelectRuleValueProps = {
 }
 
 function SelectRuleValue({ ruleType }: SelectRuleValueProps) {
-  const form = useFormContext<TypeOf<typeof createCouponRuleSchema>>()
+  const form = useFormContext<CreateCouponRule>()
 
   if (ruleType === CouponRuleType.OnePerCustomer) {
     return null
@@ -169,7 +167,7 @@ function SelectRuleValue({ ruleType }: SelectRuleValueProps) {
 }
 
 function SelectRuleValueSpecificCategory() {
-  const form = useFormContext<TypeOf<typeof createCouponRuleSchema>>()
+  const form = useFormContext<CreateCouponRule>()
   const org = useOrganization()
   const { categories } = useCategories(org.organization?.slug ?? undefined)
 
@@ -205,7 +203,7 @@ function SelectRuleValueSpecificCategory() {
 }
 
 function SelectRuleValueSpecificProduct() {
-  const form = useFormContext<TypeOf<typeof createCouponRuleSchema>>()
+  const form = useFormContext<CreateCouponRule>()
   const org = useOrganization()
   const { products } = useProducts(org.organization?.slug ?? undefined)
 

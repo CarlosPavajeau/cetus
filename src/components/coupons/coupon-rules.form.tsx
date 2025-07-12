@@ -1,12 +1,10 @@
-import type { CreateCouponRule } from '@/api/coupons'
 import { AddCouponRule } from '@/components/coupons/add-coupon-rule'
 import { CouponRule } from '@/components/coupons/coupon-rule'
-import type { createCouponSchema } from '@/schemas/coupons'
+import type { CreateCoupon, CreateCouponRule } from '@/schemas/coupons'
 import { useFormContext } from 'react-hook-form'
-import type { TypeOf } from 'zod'
 
 export function CouponRulesForm() {
-  const form = useFormContext<TypeOf<typeof createCouponSchema>>()
+  const form = useFormContext<CreateCoupon>()
   const rules = form.watch('rules')
 
   const addRule = (rule: CreateCouponRule) => {

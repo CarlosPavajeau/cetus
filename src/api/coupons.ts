@@ -1,3 +1,4 @@
+import type { CreateCoupon } from '@/schemas/coupons'
 import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
@@ -84,25 +85,9 @@ export const COUPON_RULE_TYPE_OPTIONS = [
   },
 ]
 
-export type CreateCouponRule = {
-  ruleType: CouponRuleType
-  value: string
-}
-
-export type CreateCouponRequest = {
-  code: string
-  description?: string
-  discountType: CouponDiscountType
-  discountValue: number
-  usageLimit?: number
-  startDate?: Date
-  endDate?: Date
-  rules: CreateCouponRule[]
-}
-
 export async function createCoupon(
-  coupon: CreateCouponRequest,
-  storeSlug?: string,
+  coupon: CreateCoupon,
+  storeSlug?: string | undefined,
 ) {
   const response = await axios.post<Coupon>(
     `${API_ENDPOINT}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,

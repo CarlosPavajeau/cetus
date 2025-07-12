@@ -21,10 +21,10 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateCoupon } from '@/hooks/coupons'
-import { createCouponSchema } from '@/schemas/coupons'
+import { CreateCouponSchema } from '@/schemas/coupons'
 import { generateCouponCode } from '@/shared/coupons'
 import { Protect, useOrganization } from '@clerk/tanstack-react-start'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -37,7 +37,7 @@ export const Route = createFileRoute('/app/coupons/new')({
 function RouteComponent() {
   const navigate = useNavigate({ from: '/app/coupons/new' })
   const form = useForm({
-    resolver: zodResolver(createCouponSchema),
+    resolver: arktypeResolver(CreateCouponSchema),
     defaultValues: {
       rules: [],
     },

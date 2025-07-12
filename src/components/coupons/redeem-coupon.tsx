@@ -13,9 +13,9 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRedeemCoupon } from '@/hooks/coupons'
 import { useOrder } from '@/hooks/orders'
-import { redeemCouponSchema } from '@/schemas/coupons'
+import { RedeemCouponSchema } from '@/schemas/coupons'
 import { extractErrorDetail } from '@/shared/error'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2Icon } from 'lucide-react'
 import { useEffect } from 'react'
@@ -28,7 +28,7 @@ type Props = {
 export function RedeemCoupon({ orderId }: Props) {
   const { order, isLoading } = useOrder(orderId)
   const form = useForm({
-    resolver: zodResolver(redeemCouponSchema),
+    resolver: arktypeResolver(RedeemCouponSchema),
     defaultValues: {
       couponCode: '',
       orderId,
