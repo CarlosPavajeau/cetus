@@ -10,13 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
-import {
-  AlertTriangleIcon,
-  CheckIcon,
-  MinusIcon,
-  PlusIcon,
-  ShoppingCartIcon,
-} from 'lucide-react'
+import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
 import { memo, useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -109,26 +103,25 @@ function ProductDisplayComponent({ product }: Props) {
   const isOutOfStock = product.stock <= 0
 
   return (
-    <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
-      <div className="relative aspect-square overflow-hidden rounded-lg border">
-        <Image
-          src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-          alt={product.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 50vw"
-          priority
-          quality={80}
-        />
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
+      <div className="flex w-full flex-col items-center">
+        <div className="relative aspect-square h-full w-full max-w-xl overflow-hidden rounded-lg border">
+          <Image
+            src={getImageUrl(product.imageUrl || 'placeholder.svg')}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+            quality={80}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Badge variant="secondary" className="mb-0 gap-0 rounded">
-              {product.category}
-            </Badge>
-            <h1 className="mb-0 font-medium text-2xl md:text-3xl">
+          <div className="flex flex-col">
+            <h1 className="mb-2 font-heading font-medium text-3xl">
               {product.name}
             </h1>
 
@@ -136,6 +129,10 @@ function ProductDisplayComponent({ product }: Props) {
               rating={product.rating}
               reviewsCount={product.reviewsCount}
             />
+
+            <div className="prose prose-sm mt-4">
+              <p>{product.description}</p>
+            </div>
           </div>
           <div className="font-bold text-2xl">
             <Currency value={product.price} currency="COP" />
@@ -144,74 +141,48 @@ function ProductDisplayComponent({ product }: Props) {
 
         <Separator />
 
-        <div className="flex items-center gap-2">
-          {product.stock > 2 ? (
-            <>
-              <Badge variant="outline" className="gap-1 rounded">
-                <CheckIcon
-                  className="text-success-base"
-                  size={12}
-                  aria-hidden="true"
-                />
-                En stock
-              </Badge>
-              <span className="text-muted-foreground text-xs">
-                ({product.stock} unidades restantes)
-              </span>
-            </>
-          ) : (
-            <>
-              <Badge
-                variant="secondary"
-                className="h-6 gap-1.5 rounded bg-warning-lighter px-2 text-warning-base"
+        <div className="mb-6 flex flex-1 flex-col gap-1.5">
+          <span className="text-muted-foreground text-xs">Categoría</span>
+          <Badge variant="secondary">{product.category}</Badge>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div>
+            <QuantitySelector
+              quantity={quantity}
+              onIncrement={incrementQuantity}
+              onDecrement={decrementQuantity}
+              max={product.stock}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock || isAddingToCart}
               >
-                <AlertTriangleIcon
-                  className="text-warning-base"
-                  size={12}
-                  aria-hidden="true"
-                />
-                Pocas unidades
-              </Badge>
-              <span className="text-muted-foreground text-xs">
-                ({product.stock} unidades restantes)
-              </span>
-            </>
-          )}
-        </div>
+                {isAddingToCart ? (
+                  <div className="flex items-center">
+                    <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                    Agregando...
+                  </div>
+                ) : (
+                  <>
+                    <ShoppingCartIcon className="mr-2 h-5 w-5" />
+                    {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
+                  </>
+                )}
+              </Button>
 
-        <div className="prose prose-sm">
-          <p>{product.description}</p>
-        </div>
+              <ProductShare productName={product.name} />
+            </div>
 
-        <div className="flex flex-1 flex-col gap-6">
-          <QuantitySelector
-            quantity={quantity}
-            onIncrement={incrementQuantity}
-            onDecrement={decrementQuantity}
-            max={product.stock}
-          />
-
-          <div className="flex items-center gap-2">
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <div className="flex items-center">
-                  <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                  Agregando...
-                </div>
-              ) : (
-                <>
-                  <ShoppingCartIcon className="mr-2 h-5 w-5" />
-                  {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
-                </>
-              )}
-            </Button>
-
-            <ProductShare productName={product.name} />
+            <span className="text-right text-muted-foreground text-xs">
+              {product.stock} unidades restantes
+            </span>
           </div>
         </div>
       </div>
@@ -221,7 +192,7 @@ function ProductDisplayComponent({ product }: Props) {
 
 export const ProductDisplay = memo(({ product }: Props) => {
   return (
-    <div className="flex flex-col gap-2">
+    <div>
       <title>{`${product.name} | TELEDIGITAL JYA`}</title>
       <ProductDisplayComponent product={product} />
     </div>
