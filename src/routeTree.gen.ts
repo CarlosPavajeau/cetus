@@ -22,6 +22,7 @@ import { Route as StoreRouteImport } from './routes/$store'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
+import { Route as ProductsAllRouteImport } from './routes/products/all'
 import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
@@ -99,6 +100,11 @@ const ReviewsNewRoute = ReviewsNewRouteImport.update({
   id: '/reviews/new',
   path: '/reviews/new',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsAllRoute = ProductsAllRouteImport.update({
+  id: '/all',
+  path: '/all',
+  getParentRoute: () => ProductsRoute,
 } as any)
 const ProductsSlugRoute = ProductsSlugRouteImport.update({
   id: '/$slug',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/products/all': typeof ProductsAllRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/products/all': typeof ProductsAllRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/app/reviews': typeof AppReviewsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/products/all': typeof ProductsAllRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/orders/$id'
     | '/products/$slug'
+    | '/products/all'
     | '/reviews/new'
     | '/app/'
     | '/app/coupons/new'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/orders/$id'
     | '/products/$slug'
+    | '/products/all'
     | '/reviews/new'
     | '/app'
     | '/app/coupons/new'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/orders/$id'
     | '/products/$slug'
+    | '/products/all'
     | '/reviews/new'
     | '/app/'
     | '/app/coupons/new'
@@ -433,6 +445,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reviews/new'
       preLoaderRoute: typeof ReviewsNewRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/products/all': {
+      id: '/products/all'
+      path: '/all'
+      fullPath: '/products/all'
+      preLoaderRoute: typeof ProductsAllRouteImport
+      parentRoute: typeof ProductsRoute
     }
     '/products/$slug': {
       id: '/products/$slug'
@@ -564,10 +583,12 @@ const OrdersRouteWithChildren =
 
 interface ProductsRouteChildren {
   ProductsSlugRoute: typeof ProductsSlugRoute
+  ProductsAllRoute: typeof ProductsAllRoute
 }
 
 const ProductsRouteChildren: ProductsRouteChildren = {
   ProductsSlugRoute: ProductsSlugRoute,
+  ProductsAllRoute: ProductsAllRoute,
 }
 
 const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
