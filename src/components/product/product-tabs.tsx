@@ -27,7 +27,12 @@ export function ProductTabs({ reviews }: Props) {
             value="reviews"
             className="relative rounded-none py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
           >
-            Reseñas {reviews.length > 0 && `(${reviews.length})`}
+            <div className="flex items-center gap-2">
+              <span>Reseñas</span>
+              <span className="-me-1 inline-flex h-5 max-h-full items-center rounded border px-1 font-[inherit] font-medium text-[0.625rem] text-muted-foreground">
+                {reviews.length}
+              </span>
+            </div>
           </TabsTrigger>
         </TabsList>
 
