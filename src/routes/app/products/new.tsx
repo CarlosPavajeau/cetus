@@ -18,12 +18,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateProduct } from '@/hooks/products'
-import {
-  type CreateProductFormValues,
-  createProductSchema,
-} from '@/schemas/product'
+import { CreateProductSchema } from '@/schemas/product'
 import { Protect, useOrganization } from '@clerk/tanstack-react-start'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -35,8 +32,8 @@ export const Route = createFileRoute('/app/products/new')({
 function ProductCreateForm() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
 
-  const form = useForm<CreateProductFormValues>({
-    resolver: zodResolver(createProductSchema),
+  const form = useForm({
+    resolver: arktypeResolver(CreateProductSchema),
     defaultValues: {
       name: '',
       description: '',

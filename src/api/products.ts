@@ -1,3 +1,4 @@
+import type { CreateProduct, UpdateProduct } from '@/schemas/product'
 import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
@@ -61,13 +62,8 @@ export async function fetchPopularProducts(storeSlug?: string) {
   return response.data
 }
 
-export type CreateProductRequest = Pick<
-  Product,
-  'name' | 'description' | 'price' | 'stock' | 'categoryId'
-> & { imageUrl: string }
-
 export const createProduct = async (
-  product: CreateProductRequest,
+  product: CreateProduct,
   storeSlug?: string,
 ) => {
   const response = await axios.post<Product>(
@@ -86,12 +82,7 @@ export async function fetchProductSuggestions(productId: string) {
   return response.data
 }
 
-export type UpdateProductRequest = Omit<
-  Product,
-  'createdAt' | 'updatedAt' | 'slug' | 'rating' | 'reviewsCount'
->
-
-export const updateProduct = async (product: UpdateProductRequest) => {
+export const updateProduct = async (product: UpdateProduct) => {
   const response = await axios.put<Product>(
     `${API_ENDPOINT}/products/${product.id}`,
     product,

@@ -25,8 +25,8 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useUpdateProduct } from '@/hooks/products'
-import { updateProductSchema } from '@/schemas/product'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { type UpdateProduct, UpdateProductSchema } from '@/schemas/product'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -38,12 +38,10 @@ export function UpdateProductDialog({ product }: Props) {
   const [isOpen, setIsOpen] = useState(false)
 
   const form = useForm({
-    resolver: zodResolver(updateProductSchema),
+    resolver: arktypeResolver(UpdateProductSchema),
     defaultValues: {
       ...product,
-      description: product.description,
-      imageUrl: product.imageUrl,
-    },
+    } satisfies UpdateProduct,
   })
 
   const {
@@ -191,7 +189,7 @@ export function UpdateProductDialog({ product }: Props) {
                         </span>
                         <Switch
                           id={field.name}
-                          checked={field.value}
+                          checked={field.value ?? false}
                           onCheckedChange={field.onChange}
                           aria-labelledby={`${field.name}-off ${field.name}-on`}
                         />

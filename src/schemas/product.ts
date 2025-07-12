@@ -1,28 +1,35 @@
-import { type TypeOf, z } from 'zod'
+import { type } from 'arktype'
 
-export const baseProductSchema = {
-  name: z.string().min(1, 'El nombre es requerido'),
-  description: z
-    .string()
-    .optional()
-    .transform((value) => (value?.trim() === '' ? undefined : value)),
-  price: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
-  stock: z.coerce.number().int().min(0, 'El stock debe ser mayor o igual a 0'),
-}
-
-export const createProductSchema = z.object({
-  ...baseProductSchema,
-  imageUrl: z.string().min(1, 'La imagen es requerida'),
-  categoryId: z.string().min(1, 'La categoría es requerida'),
+export const BaseProductSchema = type({
+  name: type.string.moreThanLength(1).configure({
+    message: 'El nombre del producto es requerido',
+  }),
+  description: type.string.optional(),
+  price: type.number.moreThan(0).configure({
+    message: 'El precio del producto debe ser mayor a 0',
+  }),
+  stock: type.number.moreThan(0).configure({
+    message: 'El stock del producto debe ser mayor a 0',
+  }),
 })
 
-export const updateProductSchema = z.object({
-  ...baseProductSchema,
-  id: z.string(),
-  enabled: z.boolean().default(true),
-  imageUrl: z.string().optional().default(''),
-  categoryId: z.string().min(1, 'La categoría es requerida'),
+export const CreateProductSchema = BaseProductSchema.and({
+  imageUrl: type.string.moreThanLength(1).configure({
+    message: 'La imagen del producto es requerida',
+  }),
+  categoryId: type.string.moreThanLength(1).configure({
+    message: 'La categoría del producto es requerida',
+  }),
 })
 
-export type CreateProductFormValues = TypeOf<typeof createProductSchema>
-export type UpdateProductFormValues = TypeOf<typeof updateProductSchema>
+export const UpdateProductSchema = BaseProductSchema.and({
+  id: type.string.moreThanLength(1),
+  enabled: type.boolean.default(true),
+  imageUrl: type.string.optional(),
+  categoryId: type.string.moreThanLength(1).configure({
+    message: 'La categoría del producto es requerida',
+  }),
+})
+
+export type CreateProduct = typeof CreateProductSchema.infer
+export type UpdateProduct = typeof UpdateProductSchema.infer
