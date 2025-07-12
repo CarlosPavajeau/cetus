@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { type CartItem, useCart } from '@/store/cart'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowRightIcon,
@@ -19,6 +19,7 @@ import { useCallback, useMemo } from 'react'
 
 export const Route = createFileRoute('/cart')({
   component: CartPage,
+  ssr: false,
 })
 
 function EmptyCart() {
