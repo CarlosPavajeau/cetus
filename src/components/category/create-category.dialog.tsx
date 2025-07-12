@@ -16,27 +16,29 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useOrganization } from '@clerk/tanstack-react-start'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { type } from 'arktype'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { type TypeOf, z } from 'zod'
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-const createCategorySchema = z.object({
-  name: z.string(),
+const CreateCategorySchema = type({
+  name: type.string.moreThanLength(1).configure({
+    message: 'El nombre debe tener más de 1 carácter',
+  }),
 })
 
-type FormValues = TypeOf<typeof createCategorySchema>
+type CreateCategory = typeof CreateCategorySchema.infer
 
 export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
   const org = useOrganization()
-  const form = useForm<FormValues>({
-    resolver: zodResolver(createCategorySchema),
+  const form = useForm<CreateCategory>({
+    resolver: arktypeResolver(CreateCategorySchema),
   })
 
   const createCategoryMutation = useMutation({
