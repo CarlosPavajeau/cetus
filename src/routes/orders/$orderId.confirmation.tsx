@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
 import { useTransaction } from '@/hooks/wompi/use-transaction'
 import { useCart } from '@/store/cart'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { type } from 'arktype'
 import { motion } from 'framer-motion'
 import {
   ArrowRightIcon,
@@ -14,18 +15,17 @@ import {
   XIcon,
 } from 'lucide-react'
 import { useEffect } from 'react'
-import { z } from 'zod'
 
-const orderConfirmationSearchSchema = z.object({
-  id: z.string(),
+const OrderConfirmationSearchSchema = type({
+  id: 'string',
 })
 
 export const Route = createFileRoute('/orders/$orderId/confirmation')({
-  component: OrderConfirmatioComponent,
-  validateSearch: orderConfirmationSearchSchema,
+  component: OrderConfirmationComponent,
+  validateSearch: OrderConfirmationSearchSchema,
 })
 
-function OrderConfirmatioComponent() {
+function OrderConfirmationComponent() {
   const { orderId } = Route.useParams()
   const { id } = Route.useSearch()
 

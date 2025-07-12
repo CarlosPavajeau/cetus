@@ -13,8 +13,7 @@ import {
 import { MONTHS } from '@/shared/constants'
 import { Protect } from '@clerk/tanstack-react-start'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { zodValidator } from '@tanstack/zod-adapter'
-import { z } from 'zod'
+import { type } from 'arktype'
 
 const months = [
   'january',
@@ -33,8 +32,8 @@ const months = [
 
 type Month = (typeof months)[number]
 
-const dashboardSearchSchema = z.object({
-  month: z.enum(months).default(() => {
+const DashboardSearchSchema = type({
+  month: type.valueOf(months).default(() => {
     return new Date()
       .toLocaleString('default', { month: 'long' })
       .toLocaleLowerCase() as unknown as Month
@@ -43,7 +42,7 @@ const dashboardSearchSchema = z.object({
 
 export const Route = createFileRoute('/app/dashboard/')({
   component: RouteComponent,
-  validateSearch: zodValidator(dashboardSearchSchema),
+  validateSearch: DashboardSearchSchema,
 })
 
 function RouteComponent() {
@@ -64,8 +63,8 @@ function RouteComponent() {
         <div>
           <Select
             onValueChange={handleMonthChange}
-            defaultValue={month}
-            value={month}
+            defaultValue={month as unknown as string}
+            value={month as unknown as string}
           >
             <SelectTrigger className="h-7 text-xs">
               <SelectValue placeholder="Selecciona un mes" />

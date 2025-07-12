@@ -7,22 +7,22 @@ import { ProductReviewForm } from '@/components/reviews/product-review-form'
 import { Button } from '@/components/ui/button'
 import { useReviewRequest } from '@/hooks/reviews'
 import { getImageUrl } from '@/shared/cdn'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { type } from 'arktype'
 import {
   AlertTriangleIcon,
   CheckCircleIcon,
   Home,
   ShoppingBagIcon,
 } from 'lucide-react'
-import { z } from 'zod'
 
-const reviewRequestSearchSchema = z.object({
-  token: z.string(),
+const ReviewRequestSearchSchema = type({
+  token: 'string',
 })
 
 export const Route = createFileRoute('/reviews/new')({
   component: RouteComponent,
-  validateSearch: reviewRequestSearchSchema,
+  validateSearch: ReviewRequestSearchSchema,
 })
 
 function RouteComponent() {

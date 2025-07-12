@@ -20,28 +20,28 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { type } from 'arktype'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { type TypeOf, z } from 'zod'
 
 type Props = {
   category: Category
 }
 
-const editCategorySchema = z.object({
-  id: z.string(),
-  name: z.string().min(1, 'El nombre es requerido'),
+const EditCategorySchema = type({
+  id: 'string',
+  name: type.string.moreThanLength(1).configure({
+    message: 'El nombre debe tener más de 1 carácter',
+  }),
 })
-
-type FormValues = TypeOf<typeof editCategorySchema>
 
 export const EditCategoryDialog = ({ category }: Props) => {
   const [open, setOpen] = useState(false)
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(editCategorySchema),
+  const form = useForm({
+    resolver: arktypeResolver(EditCategorySchema),
     defaultValues: {
       id: category.id,
       name: category.name,
