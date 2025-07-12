@@ -1,3 +1,4 @@
+import type { CreateOrder } from '@/schemas/orders'
 import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
@@ -64,30 +65,7 @@ export const fetchOrder = async (id: string) => {
   return response.data
 }
 
-export type CreateOrderRequest = {
-  address: string
-  cityId: string
-  total: number
-  items: {
-    productName: string
-    imageUrl?: string
-    productId: string
-    quantity: number
-    price: number
-  }[]
-  customer: {
-    id: string
-    name: string
-    email: string
-    phone: string
-    address: string
-  }
-}
-
-export const createOrder = async (
-  order: CreateOrderRequest,
-  storeSlug?: string,
-) => {
+export const createOrder = async (order: CreateOrder, storeSlug?: string) => {
   const response = await axios.post<SimpleOrder>(
     `${API_ENDPOINT}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
     order,
