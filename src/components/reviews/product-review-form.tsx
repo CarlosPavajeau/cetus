@@ -11,11 +11,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateProductReview } from '@/hooks/reviews'
 import {
-  type CreateProductReviewFormValues,
-  createProductReviewSchema,
+  type CreateProductReview,
+  CreateProductReviewSchema,
 } from '@/schemas/reviews'
 import { cn } from '@/shared/cn'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { StarIcon } from 'lucide-react'
@@ -33,8 +33,8 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
 
   const [hoverRating, setHoverRating] = useState('')
 
-  const form = useForm<CreateProductReviewFormValues>({
-    resolver: zodResolver(createProductReviewSchema),
+  const form = useForm<CreateProductReview>({
+    resolver: arktypeResolver(CreateProductReviewSchema),
     defaultValues: {
       reviewRequestId,
       rating: 0,
@@ -44,7 +44,7 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
 
   const queryClient = useQueryClient()
 
-  const onSubmit = async (values: CreateProductReviewFormValues) => {
+  const onSubmit = async (values: CreateProductReview) => {
     try {
       await createReviewMutation.mutateAsync(values)
       toast.success('¡Gracias por tu reseña!')

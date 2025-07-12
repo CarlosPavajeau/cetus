@@ -1,3 +1,4 @@
+import type { CreateProductReview } from '@/schemas/reviews'
 import { API_ENDPOINT } from '@/shared/constants'
 import axios from 'axios'
 
@@ -28,13 +29,7 @@ export async function fetchReviewRequest(token: string) {
   return response.data
 }
 
-export type CreateProductReviewRequest = {
-  reviewRequestId: string
-  comment: string
-  rating: number
-}
-
-export async function createProductReview(request: CreateProductReviewRequest) {
+export async function createProductReview(request: CreateProductReview) {
   const response = await axios.post(`${API_ENDPOINT}/reviews/products`, request)
 
   return response.data

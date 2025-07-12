@@ -1,17 +1,15 @@
-import { type TypeOf, z } from 'zod'
+import { type } from 'arktype'
 
-export const createProductReviewSchema = z.object({
-  reviewRequestId: z.string().min(1, 'El ID de la solicitud es requerido'),
-  rating: z.coerce
-    .number()
-    .min(1, 'La calificación es requerida')
-    .max(5, 'La calificación máxima es 5'),
-  comment: z
-    .string()
-    .min(10, 'El comentario debe tener al menos 10 caracteres')
-    .max(1000, 'El comentario no puede exceder los 1000 caracteres'),
+export const CreateProductReviewSchema = type({
+  reviewRequestId: type.string.moreThanLength(1).configure({
+    message: 'El ID de la solicitud es requerido',
+  }),
+  rating: type.number.moreThan(1).atMost(5).configure({
+    message: 'La calificación es requerida y debe estar entre 1 y 5',
+  }),
+  comment: type.string.atLeastLength(10).atMostLength(1000).configure({
+    message: 'El comentario debe tener entre 10 y 1000 caracteres',
+  }),
 })
 
-export type CreateProductReviewFormValues = TypeOf<
-  typeof createProductReviewSchema
->
+export type CreateProductReview = typeof CreateProductReviewSchema.infer
