@@ -16,8 +16,10 @@ export const Route = createFileRoute('/$store')({
     const slug = context.params.store
     const store = await fetchStoreBySlug(slug)
 
-    const products = await fetchProductsForSale(store.slug)
-    const categories = await fetchCategories(store.slug)
+    const [products, categories] = await Promise.all([
+      fetchProductsForSale(store.slug),
+      fetchCategories(store.slug)
+    ])
 
     return {
       store,
