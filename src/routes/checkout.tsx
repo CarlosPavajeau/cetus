@@ -1,8 +1,4 @@
-import {
-  createOrder,
-  type CreateOrderRequest,
-  type DeliveryFee,
-} from '@/api/orders'
+import { createOrder, type DeliveryFee } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
@@ -27,27 +23,27 @@ import {
   StepperTitle,
   StepperTrigger,
 } from '@/components/ui/stepper'
-import { useCustomer } from '@/hooks/customers.ts'
+import { useCustomer } from '@/hooks/customers'
 import { useDeliveryFee } from '@/hooks/orders'
-import { type CreateOrderFormValues, createOrderSchema } from '@/schemas/orders'
+import { type CreateOrder, CreateOrderSchema } from '@/schemas/orders'
 import { useAppStore } from '@/store/app'
 import { useCart } from '@/store/cart'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
+import { type } from 'arktype'
 import { ArrowRightIcon } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 
-const checkoutSearchSchema = z.object({
-  id: z.string().optional(),
+const CheckoutSearchSchema = type({
+  'id?': 'string',
 })
 
 export const Route = createFileRoute('/checkout')({
   component: RouteComponent,
-  validateSearch: checkoutSearchSchema,
+  validateSearch: CheckoutSearchSchema,
 })
 
 function useCartCheckout() {
@@ -59,8 +55,8 @@ function useCartCheckout() {
     [items],
   )
 
-  const form = useForm<CreateOrderFormValues>({
-    resolver: zodResolver(createOrderSchema),
+  const form = useForm({
+    resolver: arktypeResolver(CreateOrderSchema),
     defaultValues: {
       address: '',
       total,
@@ -80,16 +76,19 @@ function useCartCheckout() {
 
   useEffect(() => {
     form.setValue('total', total)
-    form.setValue(
-      'items',
-      items.map((item) => ({
-        productName: item.product.name,
-        imageUrl: item.product.imageUrl,
-        productId: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price,
-      })),
+
+    const formItems = items.map(
+      (item) =>
+        ({
+          productName: item.product.name,
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price,
+          imageUrl: item.product.imageUrl as string,
+        }) satisfies CreateOrder['items'][number],
     )
+
+    form.setValue('items', formItems)
   }, [form, items, total])
 
   const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
@@ -103,7 +102,7 @@ function useCartCheckout() {
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
-    mutationFn: (values: CreateOrderRequest) =>
+    mutationFn: (values: CreateOrder) =>
       createOrder(values, appStore.currentStore?.slug),
     onSuccess: (data) => {
       const orderId = data.id
@@ -115,12 +114,9 @@ function useCartCheckout() {
     },
   })
 
-  const onSubmit = useCallback(
-    form.handleSubmit((values) => {
-      createOrderMutation.mutate(values)
-    }),
-    [form, createOrderMutation],
-  )
+  const onSubmit = form.handleSubmit((values) => {
+    createOrderMutation.mutate(values)
+  })
 
   return {
     form,
@@ -139,7 +135,7 @@ function useCartCheckout() {
 const CUSTOMER_ID_DELAY = 750 // milliseconds
 
 type CustomerInfoFieldsProps = {
-  form: ReturnType<typeof useForm<CreateOrderFormValues>>
+  form: ReturnType<typeof useForm<CreateOrder>>
 }
 
 function CustomerInfoFields({ form }: CustomerInfoFieldsProps) {
@@ -230,7 +226,7 @@ function CustomerInfoFields({ form }: CustomerInfoFieldsProps) {
 }
 
 type DeliveryFeeInfoProps = {
-  deliveryFee?: DeliveryFee
+  deliveryFee: DeliveryFee | undefined
   isLoadingDeliveryFee: boolean
 }
 
