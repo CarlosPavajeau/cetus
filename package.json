@@ -42,6 +42,7 @@
     "@tanstack/zod-adapter": "^1.116.0",
     "@uidotdev/usehooks": "^2.4.1",
     "add": "^2.0.6",
+    "arktype": "^2.1.20",
     "axios": "^1.8.4",
     "bun": "^1.2.7",
     "class-variance-authority": "^0.7.1",
