@@ -29,7 +29,7 @@ export function DefaultPageLayout({
 }
 
 type NavBarProps = {
-  store?: Store
+  store?: Store | undefined
 }
 
 function NavBar({ store }: NavBarProps) {
