@@ -13,10 +13,12 @@ import { Home } from 'lucide-react'
 export const Route = createFileRoute('/products/$slug')({
   loader: async (context) => {
     const slug = context.params.slug
-
     const product = await fetchProductBySlug(slug)
-    const suggestions = await fetchProductSuggestions(product.id)
-    const reviews = await fetchProductReviews(product.id)
+
+    const [suggestions, reviews] = await Promise.all([
+      fetchProductSuggestions(product.id),
+      fetchProductReviews(product.id),
+    ])
 
     return {
       product,
