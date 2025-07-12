@@ -1,98 +1,48 @@
 import type { ProductForSale } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { Image } from '@/components/image'
-import { Button } from '@/components/ui/button'
+import { StarRating } from '@/components/product/star-rating'
 import { getImageUrl } from '@/shared/cdn'
-import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
-import { LoaderCircleIcon } from 'lucide-react'
-import { memo, useState } from 'react'
-import { toast } from 'sonner'
-import { ProductAddedNotification } from './product-added-notification'
+import { memo } from 'react'
 
 type Props = {
   product: ProductForSale
 }
 
 function ProductCardComponent({ product }: Props) {
-  const cart = useCart()
-  const [isAddingToCart, setIsAddingToCart] = useState(false)
-
-  const handleAddToCart = () => {
-    setIsAddingToCart(true)
-
-    // Simulate a small delay for better UX
-    setTimeout(() => {
-      const success = cart.add(product)
-      setIsAddingToCart(false)
-
-      if (!success) {
-        toast.error('No hay suficiente stock')
-        return
-      }
-
-      toast.custom((t) => (
-        <ProductAddedNotification
-          productName={product.name}
-          onClose={() => toast.dismiss(t)}
-        />
-      ))
-    }, 300)
-  }
-
   return (
-    <div className="overflow-hidden rounded-lg border transition-shadow hover:shadow-md">
-      <Link
-        to="/products/$slug"
-        params={{ slug: product.slug }}
-        className="block"
-      >
-        <div className="relative aspect-square">
+    <Link to="/products/$slug" params={{ slug: product.slug }}>
+      <div className="overflow-hidden rounded">
+        <div className="group relative flex aspect-square cursor-pointer items-center justify-center rounded rounded-b-none">
           <Image
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
             alt={product.name}
             fill
-            className="object-cover"
+            className="rounded rounded-b-none object-cover transition group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFdwI2QOQvhwAAAABJRU5ErkJggg=="
-            priority
           />
         </div>
-      </Link>
-      <div className="p-4">
-        <Link
-          to="/products/$slug"
-          params={{ slug: product.slug }}
-          className="block"
-        >
-          <h3 className="line-clamp-1 font-medium hover:underline">
+
+        <div className="pt-2">
+          <h3 className="w-full truncate pt-2 font-heading font-medium md:text-base">
             {product.name}
           </h3>
-        </Link>
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-muted-foreground text-sm">
-            {product.category}
-          </span>
-          <span className="font-semibold">
-            <Currency value={product.price} currency="COP" />
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs">{product.rating}</span>
+            <StarRating rating={product.rating} size={3} className="m-0 p-0" />
+          </div>
+
+          <div className="mt-2 flex items-center justify-between">
+            <span className="font-medium text-base">
+              <Currency value={product.price} currency="COP" />
+            </span>
+          </div>
         </div>
-        <Button
-          className="mt-4 w-full"
-          onClick={handleAddToCart}
-          disabled={isAddingToCart}
-        >
-          {isAddingToCart ? (
-            <>
-              <LoaderCircleIcon className="animate-spin" aria-hidden="true" />
-              Agregando...
-            </>
-          ) : (
-            'Añadir al carrito'
-          )}
-        </Button>
       </div>
-    </div>
+    </Link>
   )
 }
 
