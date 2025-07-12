@@ -19,7 +19,6 @@ import { useCallback, useMemo } from 'react'
 
 export const Route = createFileRoute('/cart')({
   component: CartPage,
-  ssr: false,
 })
 
 function EmptyCart() {
