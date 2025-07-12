@@ -45,6 +45,22 @@ export const fetchProductsForSale = async (storeSlug?: string) => {
   return response.data
 }
 
+export async function fetchFeaturedProducts(storeSlug?: string) {
+  const response = await axios.get<ProductForSale[]>(
+    `${API_ENDPOINT}/products/featured${storeSlug ? `?store=${storeSlug}` : ''}`,
+  )
+
+  return response.data
+}
+
+export async function fetchPopularProducts(storeSlug?: string) {
+  const response = await axios.get<ProductForSale[]>(
+    `${API_ENDPOINT}/products/popular${storeSlug ? `?store=${storeSlug}` : ''}`,
+  )
+
+  return response.data
+}
+
 export type CreateProductRequest = Pick<
   Product,
   'name' | 'description' | 'price' | 'stock' | 'categoryId'
