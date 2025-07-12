@@ -1,13 +1,12 @@
 import type { ProductForSale } from '@/api/products'
+import { GoToAllProductsButton } from '@/components/home/go-to-all-products-button'
 import { ProductCard } from '@/components/product/product-card'
-import { Button } from '@/components/ui/button'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from '@/components/ui/carousel'
 import Autoplay from 'embla-carousel-autoplay'
-import { ArrowRightIcon } from 'lucide-react'
 import { useRef } from 'react'
 
 type Props = {
@@ -41,14 +40,7 @@ export function FeaturedProductsSection({ products }: Props) {
       </div>
 
       <div className="flex">
-        <Button size="lg" className="group">
-          Ver todos
-          <ArrowRightIcon
-            className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-            size={16}
-            aria-hidden="true"
-          />
-        </Button>
+        <GoToAllProductsButton />
       </div>
     </div>
   )

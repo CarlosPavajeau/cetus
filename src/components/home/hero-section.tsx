@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button'
-import { ArrowRightIcon, ShoppingBagIcon } from 'lucide-react'
+import { GoToAllProductsButton } from '@/components/home/go-to-all-products-button'
+import { ShoppingBagIcon } from 'lucide-react'
 
 export function HeroSection() {
   return (
@@ -14,14 +14,7 @@ export function HeroSection() {
         </h1>
 
         <div className="mt-4 flex items-center md:mt-6">
-          <Button size="lg" className="group">
-            Ver todos
-            <ArrowRightIcon
-              className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-              size={16}
-              aria-hidden="true"
-            />
-          </Button>
+          <GoToAllProductsButton />
         </div>
       </div>
 
