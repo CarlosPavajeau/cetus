@@ -18,6 +18,8 @@ export function StarRating({
       {[...Array(maxRating)].map((_, i) => (
         <StarIcon
           key={i}
+          width={16}
+          height={16}
           className={`h-${size} w-${size} ${
             i < rating
               ? 'fill-warning-base text-warning-base'
