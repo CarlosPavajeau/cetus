@@ -17,8 +17,10 @@ export const Route = createFileRoute('/')({
     const { host } = await getServerhost()
     const store = await fetchStoreByDomain(host)
 
-    const products = await fetchProductsForSale(store.slug)
-    const categories = await fetchCategories(store.slug)
+    const [products, categories] = await Promise.all([
+      fetchProductsForSale(store.slug),
+      fetchCategories(store.slug)
+    ])
 
     return {
       products,
