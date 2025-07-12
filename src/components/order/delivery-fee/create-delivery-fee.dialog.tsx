@@ -27,27 +27,21 @@ import {
 } from '@/components/ui/select'
 import { useCities, useStates } from '@/hooks/use-state'
 import { useOrganization } from '@clerk/tanstack-react-start'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { type } from 'arktype'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { type TypeOf, z } from 'zod'
 
-const createDeliveryFeeSchema = z.object({
-  cityId: z
-    .string({
-      required_error: 'Seleccione una ciudad',
-    })
-    .min(1, 'Seleccione una ciudad'),
-  fee: z.coerce
-    .number({
-      required_error: 'Ingrese el costo de envío',
-    })
-    .min(1, 'El costo de envío debe ser mayor a 0'),
+const CreateDeliveryFeeSchema = type({
+  cityId: type.string.moreThanLength(1).configure({
+    message: 'Seleccione una ciudad',
+  }),
+  fee: type.number.moreThan(0).configure({
+    message: 'El costo de envío debe ser mayor a 0',
+  }),
 })
-
-type FormValues = TypeOf<typeof createDeliveryFeeSchema>
 
 export function CreateDeliveryFeeDialog() {
   const [open, setOpen] = useState(false)
@@ -80,11 +74,13 @@ type CreateDeliveryFeeFormProps = {
 
 function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
   const { states, isLoading } = useStates()
-  const [currentState, setCurrentState] = useState<string | undefined>()
+  const [currentState, setCurrentState] = useState<string | undefined>(
+    undefined,
+  )
   const { cities, isLoading: isLoadingCities } = useCities(currentState)
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(createDeliveryFeeSchema),
+  const form = useForm({
+    resolver: arktypeResolver(CreateDeliveryFeeSchema),
     defaultValues: {
       cityId: '',
       fee: 0,
@@ -125,7 +121,7 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
         <div className="*:not-first:mt-2">
           <Label htmlFor="state">Departamento</Label>
           <Select
-            value={currentState}
+            value={currentState as string}
             onValueChange={handleStateChange}
             disabled={isLoading || isLoadingCities}
           >
