@@ -7,6 +7,7 @@ import { ProductTabs } from '@/components/product/product-tabs'
 import { SuggestedProducts } from '@/components/product/suggested-product'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAppStore } from '@/store/app'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
 
@@ -55,9 +56,12 @@ export const Route = createFileRoute('/products/$slug')({
 
 function ProductDetailsPage() {
   const { product, suggestions, reviews } = Route.useLoaderData()
+  const { currentStore } = useAppStore()
 
   return (
     <DefaultPageLayout>
+      <title>{`${product.name} | ${currentStore?.name}`}</title>
+
       <div className="flex flex-col gap-8">
         <ProductDisplay key={product.id} product={product} />
 
