@@ -35,7 +35,7 @@ type Month = (typeof months)[number]
 const DashboardSearchSchema = type({
   month: type.valueOf(months).default(() => {
     return new Date()
-      .toLocaleString('default', { month: 'long' })
+      .toLocaleString('en', { month: 'long' })
       .toLocaleLowerCase() as unknown as Month
   }),
 })
