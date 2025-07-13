@@ -41,6 +41,7 @@ export function UpdateProductDialog({ product }: Props) {
     resolver: arktypeResolver(UpdateProductSchema),
     defaultValues: {
       ...product,
+      imageUrl: '',
     } satisfies UpdateProduct,
   })
 
