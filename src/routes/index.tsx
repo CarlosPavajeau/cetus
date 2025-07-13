@@ -9,7 +9,9 @@ import { PopularProductsSection } from '@/components/home/popular-products-secti
 import { NotFound } from '@/components/not-found'
 import { PageHeader } from '@/components/page-header'
 import { getServerhost } from '@/server/get-host'
+import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/')({
   loader: async () => {
@@ -40,16 +42,22 @@ function IndexPage() {
   const { store, featuredProducts, popularProducts, categories } =
     Route.useLoaderData()
 
+  const appStore = useAppStore()
+
+  useEffect(() => {
+    appStore.setCurrentStore(store)
+  }, [])
+
   if (!categories || !featuredProducts || !popularProducts) {
     return (
-      <DefaultPageLayout store={store}>
+      <DefaultPageLayout>
         <PageHeader title="Hubo un problema al cargar los datos" />
       </DefaultPageLayout>
     )
   }
 
   return (
-    <DefaultPageLayout store={store}>
+    <DefaultPageLayout>
       <HeroSection />
 
       <FeaturedProductsSection products={featuredProducts} />
