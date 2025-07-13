@@ -30,7 +30,7 @@ import { useAppStore } from '@/store/app'
 import { useCart } from '@/store/cart'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
 import { type } from 'arktype'
 import { ArrowRightIcon } from 'lucide-react'
@@ -284,10 +284,8 @@ function RouteComponent() {
     }
   }, [orderId])
 
-  const navigate = Route.useNavigate()
   if (isEmpty) {
-    navigate({ to: '/cart' })
-    return null
+    return <Navigate to="/cart" />
   }
 
   return (
