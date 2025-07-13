@@ -1,23 +1,22 @@
 import type { Store } from '@/api/stores'
 import { CartButton } from '@/components/cart-button'
 import { Footer } from '@/components/footer'
+import { useAppStore } from '@/store/app'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
 type Props = {
   children: ReactNode
-  store?: Store
   showHeader?: boolean
 }
 
-export function DefaultPageLayout({
-  children,
-  store,
-  showHeader = true,
-}: Props) {
+export function DefaultPageLayout({ children, showHeader = true }: Props) {
+  const { currentStore } = useAppStore()
+
   return (
     <div className="min-h-screen">
-      {showHeader && <NavBar store={store} />}
+      <title>{`${currentStore?.name}`}</title>
+      {showHeader && <NavBar store={currentStore} />}
 
       <main className="min-h-screen px-6 py-6 md:px-16 lg:px-32">
         {children}
