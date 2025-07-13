@@ -191,10 +191,5 @@ function ProductDisplayComponent({ product }: Props) {
 }
 
 export const ProductDisplay = memo(({ product }: Props) => {
-  return (
-    <div>
-      <title>{`${product.name} | TELEDIGITAL JYA`}</title>
-      <ProductDisplayComponent product={product} />
-    </div>
-  )
+  return <ProductDisplayComponent product={product} />
 })
