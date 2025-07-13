@@ -45,10 +45,10 @@ export const Route = createRootRouteWithContext<{
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       {
         name: 'keywords',
-        content: 'TELEDIGITAL JYA, ecommerce, store, shop, products',
+        content: 'cetus, ecommerce, store, shop, products',
       },
       {
-        title: 'TELEDIGITAL JYA',
+        title: 'cetus',
       },
     ],
     links: [
