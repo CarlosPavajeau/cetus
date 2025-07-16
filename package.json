@@ -8,9 +8,7 @@
     "check": "biome check --write",
     "dev": "vite dev",
     "format": "biome format --write",
-    "preview": "rsbuild preview",
-    "dev:rsdoctor": "RSDOCTOR=true rsbuild dev",
-    "build:rsdoctor": "RSDOCTOR=true rsbuild build"
+    "auth:generate": "npx @better-auth/cli generate --config src/server/auth.ts"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.25.5",
@@ -45,6 +43,7 @@
     "add": "^2.0.6",
     "arktype": "^2.1.20",
     "axios": "^1.8.4",
+    "better-auth": "^1.2.12",
     "bun": "^1.2.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -54,6 +53,7 @@
     "framer-motion": "^12.6.2",
     "lucide-react": "^0.525.0",
     "next-themes": "^0.4.6",
+    "pg": "^8.16.3",
     "posthog-js": "^1.236.1",
     "react": "^19.1.0",
     "react-aria": "^3.38.1",
@@ -70,13 +70,15 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.1",
+    "@better-auth/cli": "^1.2.12",
+    "@biomejs/biome": "2.0.6",
     "@rsbuild/core": "1.2.19",
     "@rsbuild/plugin-react": "^1.1.1",
     "@rsdoctor/rspack-plugin": "^1.0.1",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-router-devtools": "^1.114.29",
     "@tanstack/router-plugin": "^1.114.30",
+    "@types/pg": "^8.15.4",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/react-payment-inputs": "^1.1.4",
