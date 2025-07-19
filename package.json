@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
-    "@rsbuild/core": "1.2.19",
+    "@rsbuild/core": "1.4.8",
     "@rsbuild/plugin-react": "^1.1.1",
     "@rsdoctor/rspack-plugin": "^1.0.1",
     "@tailwindcss/postcss": "^4",
