@@ -11,7 +11,7 @@ export function GoogleSignIn() {
     await authClient.signIn.social({
       provider: 'google',
       callbackURL: '/app',
-      newUserCallbackURL: '/app/welcome',
+      newUserCallbackURL: '/onboarding',
     })
 
     setTimeout(() => {
