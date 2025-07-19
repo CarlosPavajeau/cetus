@@ -1,5 +1,4 @@
-import { API_ENDPOINT } from '@/shared/constants'
-import axios from 'axios'
+import { api } from '@/api/client'
 
 export type Store = {
   id: string
@@ -10,17 +9,13 @@ export type Store = {
 }
 
 export async function fetchStoreByDomain(domain: string) {
-  const response = await axios.get<Store>(
-    `${API_ENDPOINT}/stores/by-domain/${domain}`,
-  )
+  const response = await api.get<Store>(`/stores/by-domain/${domain}`)
 
   return response.data
 }
 
 export async function fetchStoreBySlug(slug: string) {
-  const response = await axios.get<Store>(
-    `${API_ENDPOINT}/stores/by-slug/${slug}`,
-  )
+  const response = await api.get<Store>(`/stores/by-slug/${slug}`)
 
   return response.data
 }

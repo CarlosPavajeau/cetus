@@ -1,6 +1,5 @@
+import { api } from '@/api/client'
 import type { CreateCoupon } from '@/schemas/coupons'
-import { API_ENDPOINT } from '@/shared/constants'
-import axios from 'axios'
 
 export enum CouponDiscountType {
   Percentage = 0,
@@ -45,8 +44,8 @@ export type Coupon = {
 }
 
 export async function fetchCoupons(storeSlug?: string) {
-  const response = await axios.get<Coupon[]>(
-    `${API_ENDPOINT}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<Coupon[]>(
+    `/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -89,8 +88,8 @@ export async function createCoupon(
   coupon: CreateCoupon,
   storeSlug?: string | undefined,
 ) {
-  const response = await axios.post<Coupon>(
-    `${API_ENDPOINT}/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.post<Coupon>(
+    `/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
     coupon,
   )
 
@@ -104,9 +103,7 @@ export type CouponRule = {
 }
 
 export async function fetchCouponRules(id: number) {
-  const response = await axios.get<CouponRule[]>(
-    `${API_ENDPOINT}/coupons/${id}/rules`,
-  )
+  const response = await api.get<CouponRule[]>(`/coupons/${id}/rules`)
 
   return response.data
 }
@@ -117,10 +114,7 @@ export type RedeemCouponRequest = {
 }
 
 export async function redeemCoupon(coupon: RedeemCouponRequest) {
-  const response = await axios.post<Coupon>(
-    `${API_ENDPOINT}/coupons/redeem`,
-    coupon,
-  )
+  const response = await api.post<Coupon>(`/coupons/redeem`, coupon)
 
   return response.data
 }

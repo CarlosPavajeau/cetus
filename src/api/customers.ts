@@ -1,5 +1,4 @@
-import { API_ENDPOINT } from '@/shared/constants'
-import axios from 'axios'
+import { api } from '@/api/client'
 
 export type Customer = {
   id: string
@@ -9,7 +8,7 @@ export type Customer = {
 }
 
 export async function fetchCustomer(id: string) {
-  const response = await axios.get<Customer>(`${API_ENDPOINT}/customers/${id}`)
+  const response = await api.get<Customer>(`/customers/${id}`)
 
   return response.data
 }

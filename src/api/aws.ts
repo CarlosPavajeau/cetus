@@ -1,5 +1,4 @@
-import { API_ENDPOINT } from '@/shared/constants'
-import axios from 'axios'
+import { api } from '@/api/client'
 
 export type CreateSignedUrlRequest = {
   fileName: string
@@ -10,8 +9,8 @@ export type CreateSignedUrlResponse = {
 }
 
 export const createSignedUrl = async (request: CreateSignedUrlRequest) => {
-  const response = await axios.post<CreateSignedUrlResponse>(
-    `${API_ENDPOINT}/aws/s3/presigned-url`,
+  const response = await api.post<CreateSignedUrlResponse>(
+    `/aws/s3/presigned-url`,
     request,
   )
 

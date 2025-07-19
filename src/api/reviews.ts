@@ -1,6 +1,5 @@
+import { api } from '@/api/client'
 import type { CreateProductReview } from '@/schemas/reviews'
-import { API_ENDPOINT } from '@/shared/constants'
-import axios from 'axios'
 
 export enum ReviewRequestStatus {
   Pending,
@@ -22,15 +21,13 @@ export type ReviewRequest = {
 }
 
 export async function fetchReviewRequest(token: string) {
-  const response = await axios.get<ReviewRequest>(
-    `${API_ENDPOINT}/reviews/requests/${token}`,
-  )
+  const response = await api.get<ReviewRequest>(`/reviews/requests/${token}`)
 
   return response.data
 }
 
 export async function createProductReview(request: CreateProductReview) {
-  const response = await axios.post(`${API_ENDPOINT}/reviews/products`, request)
+  const response = await api.post(`/reviews/products`, request)
 
   return response.data
 }
@@ -47,8 +44,8 @@ export type PendingForApprovalProductReview = {
 export async function fetchPendingForApprovalProductReviews(
   storeSlug?: string,
 ) {
-  const response = await axios.get<PendingForApprovalProductReview[]>(
-    `${API_ENDPOINT}/reviews/products/pending${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<PendingForApprovalProductReview[]>(
+    `/reviews/products/pending${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -63,17 +60,15 @@ export type ProductReview = {
 }
 
 export async function fetchProductReviews(productId: string) {
-  const response = await axios.get<ProductReview[]>(
-    `${API_ENDPOINT}/reviews/products/${productId}`,
+  const response = await api.get<ProductReview[]>(
+    `/reviews/products/${productId}`,
   )
 
   return response.data
 }
 
 export async function approveProductReview(reviewId: string) {
-  const response = await axios.post(
-    `${API_ENDPOINT}/reviews/products/${reviewId}/approve`,
-  )
+  const response = await api.post(`/reviews/products/${reviewId}/approve`)
 
   return response.data
 }
@@ -84,8 +79,8 @@ export type RejectProductReviewRequest = {
 }
 
 export async function rejectProductReview(request: RejectProductReviewRequest) {
-  const response = await axios.post(
-    `${API_ENDPOINT}/reviews/products/${request.id}/reject`,
+  const response = await api.post(
+    `/reviews/products/${request.id}/reject`,
     request,
   )
 

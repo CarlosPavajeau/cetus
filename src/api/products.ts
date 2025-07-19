@@ -1,6 +1,5 @@
+import { api } from '@/api/client'
 import type { CreateProduct, UpdateProduct } from '@/schemas/product'
-import { API_ENDPOINT } from '@/shared/constants'
-import axios from 'axios'
 
 export type Product = {
   id: string
@@ -20,15 +19,15 @@ export type Product = {
 }
 
 export const fetchProducts = async (storeSlug?: string) => {
-  const response = await axios.get<Product[]>(
-    `${API_ENDPOINT}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<Product[]>(
+    `/products${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
 export const fetchProduct = async (id: string) => {
-  const response = await axios.get<Product>(`${API_ENDPOINT}/products/${id}`)
+  const response = await api.get<Product>(`/products/${id}`)
 
   return response.data
 }
@@ -39,24 +38,24 @@ export type ProductForSale = Omit<
 >
 
 export const fetchProductsForSale = async (storeSlug?: string) => {
-  const response = await axios.get<ProductForSale[]>(
-    `${API_ENDPOINT}/products/for-sale${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<ProductForSale[]>(
+    `/products/for-sale${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
 export async function fetchFeaturedProducts(storeSlug?: string) {
-  const response = await axios.get<ProductForSale[]>(
-    `${API_ENDPOINT}/products/featured${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<ProductForSale[]>(
+    `/products/featured${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
 export async function fetchPopularProducts(storeSlug?: string) {
-  const response = await axios.get<ProductForSale[]>(
-    `${API_ENDPOINT}/products/popular${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<ProductForSale[]>(
+    `/products/popular${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -66,8 +65,8 @@ export const createProduct = async (
   product: CreateProduct,
   storeSlug?: string,
 ) => {
-  const response = await axios.post<Product>(
-    `${API_ENDPOINT}/products${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.post<Product>(
+    `/products${storeSlug ? `?store=${storeSlug}` : ''}`,
     product,
   )
 
@@ -75,24 +74,21 @@ export const createProduct = async (
 }
 
 export async function fetchProductSuggestions(productId: string) {
-  const response = await axios.get<ProductForSale[]>(
-    `${API_ENDPOINT}/products/suggestions?productId=${productId}`,
+  const response = await api.get<ProductForSale[]>(
+    `/products/suggestions?productId=${productId}`,
   )
 
   return response.data
 }
 
 export const updateProduct = async (product: UpdateProduct) => {
-  const response = await axios.put<Product>(
-    `${API_ENDPOINT}/products/${product.id}`,
-    product,
-  )
+  const response = await api.put<Product>(`/products/${product.id}`, product)
 
   return response.data
 }
 
 export const deleteProduct = async (id: string) => {
-  await axios.delete(`${API_ENDPOINT}/products/${id}`)
+  await api.delete(`/products/${id}`)
 }
 
 export type TopSellingProduct = {
@@ -104,17 +100,15 @@ export type TopSellingProduct = {
 }
 
 export async function fetchTopSellingProducts(storeSlug?: string) {
-  const response = await axios.get<TopSellingProduct[]>(
-    `${API_ENDPOINT}/products/top-selling${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<TopSellingProduct[]>(
+    `/products/top-selling${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
 export async function fetchProductBySlug(slug: string) {
-  const response = await axios.get<ProductForSale>(
-    `${API_ENDPOINT}/products/slug/${slug}`,
-  )
+  const response = await api.get<ProductForSale>(`/products/slug/${slug}`)
 
   return response.data
 }
