@@ -6,7 +6,7 @@ import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app')({
   beforeLoad: async () => {
-    const { session } = await GetSession()
+    const { session, user } = await GetSession()
 
     if (!session) {
       throw redirect({
@@ -22,7 +22,8 @@ export const Route = createFileRoute('/app')({
 
     return {
       activeOrganizationId: session.activeOrganizationId,
-      userId: session.userId,
+      session: session,
+      user: user,
     }
   },
   shouldReload: false,
