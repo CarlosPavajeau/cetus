@@ -11,7 +11,7 @@ export const GetAuthToken = createServerFn({ method: 'GET' }).handler(
       return undefined
     }
 
-    const token = await response.json() as { token: string }
+    const token = (await response.json()) as { token: string }
     return token
   },
 )
