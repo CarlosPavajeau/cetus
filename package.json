@@ -11,9 +11,6 @@
     "auth:generate": "npx @better-auth/cli generate --config src/server/auth.ts"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.25.5",
-    "@clerk/tanstack-react-start": "^0.19.0",
-    "@clerk/themes": "^2.2.26",
     "@hookform/resolvers": "^5.0.0",
     "@microsoft/signalr": "^8.0.7",
     "@radix-ui/react-alert-dialog": "^1.1.6",
