@@ -1,3 +1,4 @@
+import { authClient } from '@/auth/auth-client'
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +11,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { useOrganization } from '@clerk/tanstack-react-start'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   BadgePercentIcon,
@@ -23,6 +23,7 @@ import {
   TruckIcon,
 } from 'lucide-react'
 import { Badge } from './ui/badge'
+import { Skeleton } from './ui/skeleton'
 
 type SidebarMenuItem = {
   label: string
@@ -103,19 +104,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }
 
-  const org = useOrganization()
+  const { data: organization, isPending } = authClient.useActiveOrganization()
+
+  const OrganizationHeader = () => {
+    if (isPending) {
+      return <Skeleton className="h-8 w-full" />
+    }
+
+    return (
+      <div className="flex h-4 items-center justify-center gap-2">
+        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
+          <StoreIcon className="size-4" />
+        </div>
+        <h1 className="line-clamp-1 font-medium text-md">
+          {organization?.name}
+        </h1>
+      </div>
+    )
+  }
 
   return (
     <Sidebar {...props}>
       <SidebarHeader className="flex h-16 items-center justify-center gap-2 border-b">
-        <div className="flex h-4 items-center justify-center gap-2">
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
-            <StoreIcon className="size-4" />
-          </div>
-          <h1 className="line-clamp-1 font-medium text-md">
-            {org.organization?.name}
-          </h1>
-        </div>
+        <OrganizationHeader />
       </SidebarHeader>
       <SidebarContent>
         {MENU.map((group) => (
