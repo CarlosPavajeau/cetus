@@ -12,11 +12,11 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ReturnsRouteImport } from './routes/returns'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
@@ -47,6 +47,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReturnsRoute = ReturnsRouteImport.update({
   id: '/returns',
   path: '/returns',
@@ -65,11 +70,6 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -191,11 +191,11 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/login': typeof LoginRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
+  '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
@@ -219,11 +219,11 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/login': typeof LoginRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
+  '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
@@ -249,11 +249,11 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/login': typeof LoginRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
+  '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
@@ -280,11 +280,11 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/faq'
-    | '/login'
     | '/orders'
     | '/privacy'
     | '/products'
     | '/returns'
+    | '/sign-in'
     | '/terms'
     | '/app/categories'
     | '/app/delivery-fees'
@@ -308,11 +308,11 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/faq'
-    | '/login'
     | '/orders'
     | '/privacy'
     | '/products'
     | '/returns'
+    | '/sign-in'
     | '/terms'
     | '/app/categories'
     | '/app/delivery-fees'
@@ -337,11 +337,11 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/faq'
-    | '/login'
     | '/orders'
     | '/privacy'
     | '/products'
     | '/returns'
+    | '/sign-in'
     | '/terms'
     | '/app/categories'
     | '/app/delivery-fees'
@@ -367,11 +367,11 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
-  LoginRoute: typeof LoginRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProductsRoute: typeof ProductsRouteWithChildren
   ReturnsRoute: typeof ReturnsRoute
+  SignInRoute: typeof SignInRoute
   TermsRoute: typeof TermsRoute
   ReviewsNewRoute: typeof ReviewsNewRoute
 }
@@ -406,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/returns': {
       id: '/returns'
       path: '/returns'
@@ -432,13 +439,6 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/orders'
       preLoaderRoute: typeof OrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -664,11 +664,11 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
-  LoginRoute: LoginRoute,
   OrdersRoute: OrdersRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProductsRoute: ProductsRouteWithChildren,
   ReturnsRoute: ReturnsRoute,
+  SignInRoute: SignInRoute,
   TermsRoute: TermsRoute,
   ReviewsNewRoute: ReviewsNewRoute,
 }
