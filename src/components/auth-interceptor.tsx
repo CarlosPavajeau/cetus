@@ -1,18 +1,18 @@
-import { useAuth } from '@clerk/tanstack-react-start'
+import { GetAuthToken } from '@/server/get-auth-token'
 import axios from 'axios'
 import { useEffect } from 'react'
 
 export const AuthInterceptor = () => {
-  const { getToken } = useAuth()
-
   useEffect(() => {
     axios.interceptors.request.use(async (config) => {
-      const token = await getToken()
+      const { token } = await GetAuthToken()
 
-      config.headers.Authorization = `Bearer ${token}`
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+
       return config
     })
-  }, [getToken])
-
+  }, [])
   return null
 }
