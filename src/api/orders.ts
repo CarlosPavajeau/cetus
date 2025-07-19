@@ -1,6 +1,5 @@
+import { api } from '@/api/client'
 import type { CreateOrder } from '@/schemas/orders'
-import { API_ENDPOINT } from '@/shared/constants'
-import axios from 'axios'
 
 export enum OrderStatus {
   Pending,
@@ -60,14 +59,14 @@ export type Order = {
 }
 
 export const fetchOrder = async (id: string) => {
-  const response = await axios.get<Order>(`${API_ENDPOINT}/orders/${id}`)
+  const response = await api.get<Order>(`/orders/${id}`)
 
   return response.data
 }
 
 export const createOrder = async (order: CreateOrder, storeSlug?: string) => {
-  const response = await axios.post<SimpleOrder>(
-    `${API_ENDPOINT}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.post<SimpleOrder>(
+    `/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
     order,
   )
 
@@ -86,25 +85,21 @@ export type SimpleOrder = {
 }
 
 export const fetchOrders = async (storeSlug?: string) => {
-  const response = await axios.get<SimpleOrder[]>(
-    `${API_ENDPOINT}/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<SimpleOrder[]>(
+    `/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
 export const deliverOrder = async (orderId: string) => {
-  const response = await axios.post<SimpleOrder>(
-    `${API_ENDPOINT}/orders/${orderId}/deliver`,
-  )
+  const response = await api.post<SimpleOrder>(`/orders/${orderId}/deliver`)
 
   return response.data
 }
 
 export const cancelOrder = async (orderId: string) => {
-  const response = await axios.post<SimpleOrder>(
-    `${API_ENDPOINT}/orders/${orderId}/cancel`,
-  )
+  const response = await api.post<SimpleOrder>(`/orders/${orderId}/cancel`)
 
   return response.data
 }
@@ -119,8 +114,8 @@ export type OrderInsights = {
 }
 
 export const fetchOrderInsights = async (month: string, storeSlug?: string) => {
-  const response = await axios.get<OrderInsights>(
-    `${API_ENDPOINT}/orders/insights?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
+  const response = await api.get<OrderInsights>(
+    `/orders/insights?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -133,8 +128,8 @@ export type OrderSummary = {
 }
 
 export const fetchOrdersSummary = async (month: string, storeSlug?: string) => {
-  const response = await axios.get<OrderSummary[]>(
-    `${API_ENDPOINT}/orders/summary?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
+  const response = await api.get<OrderSummary[]>(
+    `/orders/summary?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -146,16 +141,16 @@ export type DeliveryFee = {
 }
 
 export async function fetchDeliveryFee(cityId: string, storeSlug?: string) {
-  const response = await axios.get<DeliveryFee>(
-    `${API_ENDPOINT}/orders/delivery-fees/${cityId}${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<DeliveryFee>(
+    `/orders/delivery-fees/${cityId}${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
 }
 
 export async function fetchDeliveryFees(storeSlug?: string) {
-  const response = await axios.get<DeliveryFee[]>(
-    `${API_ENDPOINT}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.get<DeliveryFee[]>(
+    `/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
   )
 
   return response.data
@@ -170,8 +165,8 @@ export async function createDeliveryFee(
   deliveryFee: CreateDeliveryFeeRequest,
   storeSlug?: string,
 ) {
-  const response = await axios.post<DeliveryFee>(
-    `${API_ENDPOINT}/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
+  const response = await api.post<DeliveryFee>(
+    `/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
     deliveryFee,
   )
 
