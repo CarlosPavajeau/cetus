@@ -38,6 +38,7 @@ export function useOrders(storeSlug?: string) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['orders', storeSlug],
     queryFn: () => fetchOrders(storeSlug),
+    enabled: !!storeSlug,
   })
 
   return {
