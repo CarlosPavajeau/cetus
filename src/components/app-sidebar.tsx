@@ -1,4 +1,3 @@
-import { authClient } from '@/auth/auth-client'
 import {
   Sidebar,
   SidebarContent,
@@ -11,6 +10,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { useAppStore } from '@/store/app'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   BadgePercentIcon,
@@ -104,10 +104,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }
 
-  const { data: organization, isPending } = authClient.useActiveOrganization()
+  const appStore = useAppStore()
 
   const OrganizationHeader = () => {
-    if (isPending) {
+    if (!appStore.currentStore) {
       return <Skeleton className="h-8 w-full" />
     }
 
@@ -117,7 +117,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <StoreIcon className="size-4" />
         </div>
         <h1 className="line-clamp-1 font-medium text-md">
-          {organization?.name}
+          {appStore.currentStore.name}
         </h1>
       </div>
     )
