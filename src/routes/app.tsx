@@ -14,6 +14,12 @@ export const Route = createFileRoute('/app')({
       })
     }
 
+    if (!session.activeOrganizationId) {
+      throw redirect({
+        to: '/onboarding',
+      })
+    }
+
     return {
       activeOrganizationId: session.activeOrganizationId,
       userId: session.userId,
