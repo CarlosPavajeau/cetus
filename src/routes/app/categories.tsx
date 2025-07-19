@@ -1,5 +1,4 @@
 import type { Category } from '@/api/categories'
-import { AccessDenied } from '@/components/access-denied'
 import { ConfirmDeleteCategoryDialog } from '@/components/category/confirm-delete-category-dialog'
 import { CreateCategoryDialog } from '@/components/category/create-category.dialog'
 import { EditCategoryDialog } from '@/components/category/edit-category-dialog'
@@ -15,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useCategories } from '@/hooks/categories'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -26,7 +25,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { EllipsisIcon, PlusIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/categories')({
   component: RouteComponent,
@@ -96,10 +95,8 @@ function useCategoryTable(categories: Category[] | undefined) {
 }
 
 function RouteComponent() {
-  const org = useOrganization()
-  const { categories, isLoading } = useCategories(
-    org.organization?.slug ?? undefined,
-  )
+  const { currentStore } = useAppStore()
+  const { categories, isLoading } = useCategories(currentStore?.slug)
   const { table, paginationInfo } = useCategoryTable(categories)
 
   const [isOpenCreateCategory, setIsOpenCreateCategory] = useState(false)
@@ -109,7 +106,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Categorías</h1>
 
@@ -131,7 +128,7 @@ function RouteComponent() {
         <DataTable table={table} />
         <TablePagination table={table} paginationInfo={paginationInfo} />
       </div>
-    </Protect>
+    </Fragment>
   )
 }
 

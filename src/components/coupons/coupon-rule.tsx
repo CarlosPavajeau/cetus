@@ -3,7 +3,7 @@ import { Currency } from '@/components/currency'
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import type { CreateCouponRule } from '@/schemas/coupons'
-import { useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { TrashIcon } from 'lucide-react'
 
 type Props = {
@@ -68,8 +68,8 @@ type CouponRuleValueSpecificCategoryProps = {
 function CouponRuleValueSpecificCategory({
   rule,
 }: CouponRuleValueSpecificCategoryProps) {
-  const org = useOrganization()
-  const { categories } = useCategories(org.organization?.slug ?? undefined)
+  const { currentStore } = useAppStore()
+  const { categories } = useCategories(currentStore?.slug)
 
   if (!categories) return null
 
@@ -87,8 +87,8 @@ type CouponRuleValueSpecificProductProps = {
 function CouponRuleValueSpecificProduct({
   rule,
 }: CouponRuleValueSpecificProductProps) {
-  const org = useOrganization()
-  const { products } = useProducts(org.organization?.slug ?? undefined)
+  const { currentStore } = useAppStore()
+  const { products } = useProducts(currentStore?.slug)
 
   if (!products) return null
 

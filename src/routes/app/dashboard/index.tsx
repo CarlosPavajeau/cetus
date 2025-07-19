@@ -1,4 +1,3 @@
-import { AccessDenied } from '@/components/access-denied'
 import { CompleteOrdersChart } from '@/components/order/complete-orders-chart'
 import { NewOrdersSummary } from '@/components/order/new-orders-summary'
 import { OrdersInsights } from '@/components/order/orders-insights'
@@ -11,9 +10,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MONTHS } from '@/shared/constants'
-import { Protect } from '@clerk/tanstack-react-start'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { type } from 'arktype'
+import { Fragment } from 'react'
 
 const months = [
   'january',
@@ -54,7 +53,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
           Panel de control
@@ -93,6 +92,6 @@ function RouteComponent() {
 
         <TopSellingProducts />
       </div>
-    </Protect>
+    </Fragment>
   )
 }

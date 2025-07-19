@@ -1,5 +1,4 @@
 import type { PendingForApprovalProductReview } from '@/api/reviews'
-import { AccessDenied } from '@/components/access-denied'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
@@ -7,7 +6,7 @@ import { FormattedDate } from '@/components/formatted-date'
 import { ProcessProductReview } from '@/components/reviews/process-product-review'
 import { usePendingForApprovalProductReviews } from '@/hooks/reviews'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -16,7 +15,7 @@ import {
   type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 
 export const Route = createFileRoute('/app/reviews')({
   component: RouteComponent,
@@ -86,9 +85,9 @@ function useReviewsTable(
 }
 
 function RouteComponent() {
-  const org = useOrganization()
+  const { currentStore } = useAppStore()
   const { pendingForApprovalProductReviews, isLoading } =
-    usePendingForApprovalProductReviews(org.organization?.slug ?? undefined)
+    usePendingForApprovalProductReviews(currentStore?.slug)
   const { table, paginationInfo } = useReviewsTable(
     pendingForApprovalProductReviews,
   )
@@ -98,7 +97,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
           Reseñas pendientes de aprobación
@@ -109,6 +108,6 @@ function RouteComponent() {
         <DataTable table={table} />
         <TablePagination table={table} paginationInfo={paginationInfo} />
       </div>
-    </Protect>
+    </Fragment>
   )
 }

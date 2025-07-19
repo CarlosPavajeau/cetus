@@ -1,5 +1,4 @@
 import { COUPON_DISCOUNT_TYPE_OPTIONS } from '@/api/coupons'
-import { AccessDenied } from '@/components/access-denied'
 import { CouponRulesForm } from '@/components/coupons/coupon-rules.form'
 import { ReturnButton } from '@/components/return-button'
 import { Button } from '@/components/ui/button'
@@ -23,10 +22,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCreateCoupon } from '@/hooks/coupons'
 import { CreateCouponSchema } from '@/schemas/coupons'
 import { generateCouponCode } from '@/shared/coupons'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
+import { Fragment } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -43,14 +43,14 @@ function RouteComponent() {
     },
   })
 
-  const org = useOrganization()
+  const { currentStore } = useAppStore()
   const createCouponMutation = useCreateCoupon({
     onSuccess: () => {
       toast.success('Cupón creado correctamente')
       navigate({ to: '/app/coupons' })
       form.reset()
     },
-    storeSlug: org.organization?.slug ?? undefined,
+    storeSlug: currentStore?.slug,
   })
 
   const onSubmit = form.handleSubmit((data) => {
@@ -71,7 +71,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="flex flex-col gap-4">
         <h1 className="font-heading font-semibold text-2xl">Crear cupón</h1>
 
@@ -211,6 +211,6 @@ function RouteComponent() {
           </form>
         </Form>
       </div>
-    </Protect>
+    </Fragment>
   )
 }

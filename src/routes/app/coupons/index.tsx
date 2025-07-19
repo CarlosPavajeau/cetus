@@ -1,5 +1,4 @@
 import { type Coupon, CouponDiscountTypeText } from '@/api/coupons'
-import { AccessDenied } from '@/components/access-denied'
 import { CouponDetails } from '@/components/coupons/coupon-details'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
@@ -8,7 +7,7 @@ import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
 import { useCoupons } from '@/hooks/coupons'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -18,7 +17,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { PlusIcon } from 'lucide-react'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 
 export const Route = createFileRoute('/app/coupons/')({
   component: RouteComponent,
@@ -104,8 +103,8 @@ function useCouponsTable(coupons: Coupon[] | undefined) {
 }
 
 function RouteComponent() {
-  const org = useOrganization()
-  const { coupons, isLoading } = useCoupons(org.organization?.slug ?? undefined)
+  const { currentStore } = useAppStore()
+  const { coupons, isLoading } = useCoupons(currentStore?.slug)
   const { table, paginationInfo } = useCouponsTable(coupons)
 
   if (isLoading) {
@@ -113,7 +112,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Cupones</h1>
 
@@ -129,6 +128,6 @@ function RouteComponent() {
         <DataTable table={table} />
         <TablePagination table={table} paginationInfo={paginationInfo} />
       </div>
-    </Protect>
+    </Fragment>
   )
 }

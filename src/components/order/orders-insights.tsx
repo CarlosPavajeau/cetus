@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderInsights } from '@/hooks/orders'
 import { cn } from '@/shared/cn'
-import { useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { useSearch } from '@tanstack/react-router'
 import { useNumberFormatter } from 'react-aria'
 
@@ -53,11 +53,11 @@ export function OrdersInsights() {
   const { month } = useSearch({
     from: '/app/dashboard/',
   })
-  const org = useOrganization()
+  const { currentStore } = useAppStore()
 
   const { insights, isLoading } = useOrderInsights(
-    month,
-    org.organization?.slug ?? undefined,
+    month as unknown as string,
+    currentStore?.slug,
   )
 
   if (isLoading) {

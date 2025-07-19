@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
-import { useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { useSearch } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
@@ -74,10 +74,11 @@ export function CompleteOrdersChart() {
   const { month } = useSearch({
     from: '/app/dashboard/',
   })
-  const org = useOrganization()
+  const { currentStore } = useAppStore()
+
   const { isLoading, summary } = useOrdersSummary(
-    month,
-    org.organization?.slug ?? undefined,
+    month as unknown as string,
+    currentStore?.slug,
   )
   const dayFormmatter = useDateFormatter({
     day: 'numeric',

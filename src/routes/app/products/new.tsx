@@ -1,4 +1,3 @@
-import { AccessDenied } from '@/components/access-denied'
 import { CategorySelector } from '@/components/category/category-selector'
 import { CreateCategoryDialog } from '@/components/category/create-category.dialog'
 import {
@@ -19,10 +18,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateProduct } from '@/hooks/products'
 import { CreateProductSchema } from '@/schemas/product'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute } from '@tanstack/react-router'
-import { useCallback, useState } from 'react'
+import { Fragment, useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 export const Route = createFileRoute('/app/products/new')({
@@ -53,19 +52,15 @@ function ProductCreateForm() {
     removeImage,
   } = useImageUpload(form)
 
-  const org = useOrganization()
-
-  const createProductMutation = useCreateProduct(
-    mainImage,
-    org.organization?.slug ?? undefined,
-  )
+  const { currentStore } = useAppStore()
+  const createProductMutation = useCreateProduct(mainImage, currentStore?.slug)
 
   const openCategoryDialog = useCallback(() => {
     setIsCategoryDialogOpen(true)
   }, [])
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="space-y-4">
         <h1 className="font-heading font-semibold text-2xl">Crear producto</h1>
 
@@ -201,6 +196,6 @@ function ProductCreateForm() {
           onOpenChange={setIsCategoryDialogOpen}
         />
       </div>
-    </Protect>
+    </Fragment>
   )
 }

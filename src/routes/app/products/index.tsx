@@ -1,5 +1,4 @@
 import type { Product } from '@/api/products'
-import { AccessDenied } from '@/components/access-denied'
 import { Currency } from '@/components/currency'
 import { TableFacetedFilter } from '@/components/data-table/faceted-filter'
 import { TablePagination } from '@/components/data-table/pagination'
@@ -20,7 +19,7 @@ import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/shared/cn'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type Column,
@@ -41,7 +40,15 @@ import {
   ListFilterIcon,
   PlusIcon,
 } from 'lucide-react'
-import { type Key, useCallback, useId, useMemo, useRef, useState } from 'react'
+import {
+  Fragment,
+  type Key,
+  useCallback,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 export const Route = createFileRoute('/app/products/')({
   component: RouteComponent,
@@ -116,7 +123,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
           <Badge
             className={cn(
               !row.getValue('enabled') &&
-                'bg-muted-foreground/60 text-primary-foreground',
+              'bg-muted-foreground/60 text-primary-foreground',
             )}
           >
             {row.getValue('enabled') ? 'Activo' : 'Inactivo'}
@@ -240,10 +247,9 @@ type CategoryFilterProps = {
 
 function CategoryFilter({ table }: CategoryFilterProps) {
   const categoryColumn = table.getColumn('categoryId') as Column<Product, Key>
-  const org = useOrganization()
-  const { isLoading, categories } = useCategories(
-    org.organization?.slug ?? undefined,
-  )
+  const { currentStore } = useAppStore()
+
+  const { isLoading, categories } = useCategories(currentStore?.slug)
 
   if (!categoryColumn || isLoading) {
     return null
@@ -269,10 +275,8 @@ function CategoryFilter({ table }: CategoryFilterProps) {
 }
 
 function RouteComponent() {
-  const org = useOrganization()
-  const { products, isLoading } = useProducts(
-    org.organization?.slug ?? undefined,
-  )
+  const { currentStore } = useAppStore()
+  const { products, isLoading } = useProducts(currentStore?.slug)
   const id = useId()
 
   const { table, paginationInfo } = useProductTable(products)
@@ -282,7 +286,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-heading font-semibold text-2xl">Productos</h1>
         <div>
@@ -309,7 +313,7 @@ function RouteComponent() {
         <DataTable table={table} />
         <TablePagination table={table} paginationInfo={paginationInfo} />
       </div>
-    </Protect>
+    </Fragment>
   )
 }
 

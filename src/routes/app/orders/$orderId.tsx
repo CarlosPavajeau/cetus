@@ -1,5 +1,4 @@
 import { deliverOrder, OrderStatus } from '@/api/orders'
-import { AccessDenied } from '@/components/access-denied'
 import { DefaultLoader } from '@/components/default-loader'
 import { CancelOrderButton } from '@/components/order/cancel-order-button'
 import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
@@ -10,11 +9,10 @@ import { ReturnButton } from '@/components/return-button'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
 import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
-import { Protect } from '@clerk/tanstack-react-start'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { Fragment, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 
 const REALTIME_URL = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
@@ -124,7 +122,7 @@ function OrderDetailsComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="space-y-6">
         <div className="space-y-2">
           <ReturnButton />
@@ -148,6 +146,6 @@ function OrderDetailsComponent() {
           {isCancelable && <CancelOrderButton orderId={order.id} />}
         </div>
       </div>
-    </Protect>
+    </Fragment>
   )
 }

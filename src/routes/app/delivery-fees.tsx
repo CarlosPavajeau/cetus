@@ -1,5 +1,4 @@
 import type { DeliveryFee } from '@/api/orders'
-import { AccessDenied } from '@/components/access-denied'
 import { Currency } from '@/components/currency'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
@@ -7,7 +6,7 @@ import { DefaultLoader } from '@/components/default-loader'
 import { CreateDeliveryFeeDialog } from '@/components/order/delivery-fee/create-delivery-fee.dialog'
 import { useDeliveryFees } from '@/hooks/orders'
 import { usePagination } from '@/hooks/use-pagination'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -16,7 +15,7 @@ import {
   type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/delivery-fees')({
   component: RouteComponent,
@@ -84,10 +83,8 @@ function useDeliveryFeesTable(deliveryFees: DeliveryFee[] | undefined) {
 }
 
 function RouteComponent() {
-  const org = useOrganization()
-  const { deliveryFees, isLoading } = useDeliveryFees(
-    org.organization?.slug ?? undefined,
-  )
+  const { currentStore } = useAppStore()
+  const { deliveryFees, isLoading } = useDeliveryFees(currentStore?.slug)
   const { table, paginationInfo } = useDeliveryFeesTable(deliveryFees)
 
   if (isLoading) {
@@ -95,7 +92,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Costos de envío</h1>
 
@@ -106,6 +103,6 @@ function RouteComponent() {
         <DataTable table={table} />
         <TablePagination table={table} paginationInfo={paginationInfo} />
       </div>
-    </Protect>
+    </Fragment>
   )
 }

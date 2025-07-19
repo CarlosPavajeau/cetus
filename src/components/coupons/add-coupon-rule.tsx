@@ -29,7 +29,7 @@ import {
   type CreateCouponRule,
   CreateCouponRuleSchema,
 } from '@/schemas/coupons'
-import { useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -168,8 +168,8 @@ function SelectRuleValue({ ruleType }: SelectRuleValueProps) {
 
 function SelectRuleValueSpecificCategory() {
   const form = useFormContext<CreateCouponRule>()
-  const org = useOrganization()
-  const { categories } = useCategories(org.organization?.slug ?? undefined)
+  const { currentStore } = useAppStore()
+  const { categories } = useCategories(currentStore?.slug)
 
   return (
     <FormField
@@ -204,8 +204,8 @@ function SelectRuleValueSpecificCategory() {
 
 function SelectRuleValueSpecificProduct() {
   const form = useFormContext<CreateCouponRule>()
-  const org = useOrganization()
-  const { products } = useProducts(org.organization?.slug ?? undefined)
+  const { currentStore } = useAppStore()
+  const { products } = useProducts(currentStore?.slug)
 
   return (
     <FormField
