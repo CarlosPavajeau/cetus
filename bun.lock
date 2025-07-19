@@ -71,6 +71,7 @@
         "@tailwindcss/postcss": "^4",
         "@tanstack/react-router-devtools": "^1.114.29",
         "@tanstack/router-plugin": "^1.114.30",
+        "@types/bun": "^1.2.18",
         "@types/pg": "^8.15.4",
         "@types/react": "^19.1.8",
         "@types/react-dom": "^19.1.6",
@@ -973,6 +974,8 @@
 
     "@types/better-sqlite3": ["@types/better-sqlite3@7.6.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-NMv9ASNARoKksWtsq/SHakpYAYnhBrQgGD8zkLYk/jaK8jUGn08CfEdTRgYhMypUQAfzSP8W6gNLe0q19/t4VA=="],
 
+    "@types/bun": ["@types/bun@1.2.18", "", { "dependencies": { "bun-types": "1.2.18" } }, "sha512-Xf6RaWVheyemaThV0kUfaAUvCNokFr+bH8Jxp+tTZfx7dAPA8z9ePnP9S9+Vspzuxxx9JRAXhnyccRj3GyCMdQ=="],
+
     "@types/connect": ["@types/connect@3.4.38", "", { "dependencies": { "@types/node": "*" } }, "sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug=="],
 
     "@types/cors": ["@types/cors@2.8.17", "", { "dependencies": { "@types/node": "*" } }, "sha512-8CGDvrBj1zgo2qE+oS3pOCyYNqCPryMWY2bGfwA0dcfopWGgxs+78df0Rs3rc9THP4JkOhLsAa+15VdpAqkcUA=="],
@@ -1206,6 +1209,8 @@
     "builtin-modules": ["builtin-modules@3.3.0", "", {}, "sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw=="],
 
     "bun": ["bun@1.2.7", "", { "optionalDependencies": { "@oven/bun-darwin-aarch64": "1.2.7", "@oven/bun-darwin-x64": "1.2.7", "@oven/bun-darwin-x64-baseline": "1.2.7", "@oven/bun-linux-aarch64": "1.2.7", "@oven/bun-linux-aarch64-musl": "1.2.7", "@oven/bun-linux-x64": "1.2.7", "@oven/bun-linux-x64-baseline": "1.2.7", "@oven/bun-linux-x64-musl": "1.2.7", "@oven/bun-linux-x64-musl-baseline": "1.2.7", "@oven/bun-windows-x64": "1.2.7", "@oven/bun-windows-x64-baseline": "1.2.7" }, "os": [ "linux", "win32", "darwin", ], "cpu": [ "x64", "arm64", ], "bin": { "bun": "bin/bun.exe", "bunx": "bin/bun.exe" } }, "sha512-qG4BH08wbAIN7cEXDi22MVUdmteUQLMmiHps8uGCcHcmI10LTyM0p2V8u18ns89rjWhsNZwkxQ3u/Tq10y9oGw=="],
+
+    "bun-types": ["bun-types@1.2.18", "", { "dependencies": { "@types/node": "*" }, "peerDependencies": { "@types/react": "^19" } }, "sha512-04+Eha5NP7Z0A9YgDAzMk5PHR16ZuLVa83b26kH5+cp1qZW4F6FmAURngE7INf4tKOvCE69vYvDEwoNl1tGiWw=="],
 
     "bytes": ["bytes@3.1.2", "", {}, "sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg=="],
 
