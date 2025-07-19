@@ -1,8 +1,11 @@
+import { authClient } from '@/auth/auth-client'
 import { AppNav } from '@/components/app-nav'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { GetSession } from '@/server/get-session'
+import { useAppStore } from '@/store/app'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/app')({
   beforeLoad: async () => {
@@ -21,8 +24,6 @@ export const Route = createFileRoute('/app')({
     }
 
     return {
-      activeOrganizationId: session.activeOrganizationId,
-      session: session,
       user: user,
     }
   },
@@ -31,6 +32,21 @@ export const Route = createFileRoute('/app')({
 })
 
 function RouteComponent() {
+  const { data: org, isPending } = authClient.useActiveOrganization()
+  const appStore = useAppStore()
+
+  useEffect(() => {
+    if (isPending) return
+
+    if (!org) return
+
+    appStore.setCurrentStore({
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+    })
+  }, [isPending, org])
+
   return (
     <SidebarProvider>
       <AppSidebar />
