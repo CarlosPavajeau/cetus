@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/popover'
 import { useCategories } from '@/hooks/categories'
 import { cn } from '@/shared/cn'
-import { useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { type FieldValues, useFormContext } from 'react-hook-form'
@@ -36,10 +36,8 @@ type Props = {
 }
 
 export function CategorySelector({ onSelectCreateCategory }: Props) {
-  const org = useOrganization()
-  const { categories, isLoading } = useCategories(
-    org.organization?.slug ?? undefined,
-  )
+  const { currentStore } = useAppStore()
+  const { categories, isLoading } = useCategories(currentStore?.slug)
   const form = useFormContext<FormWithCategory>()
   const [open, setOpen] = useState(false)
 
