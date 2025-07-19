@@ -7,10 +7,11 @@ export const GetAuthToken = createServerFn({ method: 'GET' }).handler(
       headers: getHeaders() as HeadersInit,
     })
 
-    const token = await response.json()
-
-    return {
-      token: token.token as string,
+    if (!response.ok) {
+      return undefined
     }
+
+    const token = await response.json() as { token: string }
+    return token
   },
 )
