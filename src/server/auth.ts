@@ -135,6 +135,14 @@ export const auth = betterAuth({
           },
         },
       },
+      jwks: {
+        keyPairConfig: {
+          alg: 'RS256',
+          modulusLength: 4096,
+          // @ts-ignore
+          extractable: true,
+        },
+      },
     }),
     reactStartCookies(),
   ],
