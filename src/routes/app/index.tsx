@@ -3,7 +3,6 @@ import {
   OrderStatus,
   type SimpleOrder,
 } from '@/api/orders'
-import { AccessDenied } from '@/components/access-denied'
 import { DefaultLoader } from '@/components/default-loader'
 import { OrderCard } from '@/components/order/order-card'
 import { Badge } from '@/components/ui/badge'
@@ -19,11 +18,18 @@ import { Separator } from '@/components/ui/separator'
 import { useOrders } from '@/hooks/orders'
 import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
 import { cn } from '@/shared/cn'
-import { Protect, useOrganization } from '@clerk/tanstack-react-start'
+import { useAppStore } from '@/store/app'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { CircleXIcon, ListFilterIcon, RefreshCwIcon } from 'lucide-react'
-import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+} from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
@@ -91,13 +97,13 @@ function SearchInput({
 const HUB_URL = `${import.meta.env.VITE_API_URL}/realtime/orders`
 
 function RouteComponent() {
-  const org = useOrganization()
-  const { orders, isLoading } = useOrders(org.organization?.slug ?? undefined)
+  const { currentStore } = useAppStore()
+  const { orders, isLoading } = useOrders(currentStore?.slug)
   const queryClient = useQueryClient()
 
   const { connection } = useHub(HUB_URL)
 
-  useHubGroup(connection, 'JoinStoreGroup', org.organization?.slug ?? undefined)
+  useHubGroup(connection, 'JoinStoreGroup', currentStore?.slug)
 
   useClientMethod(connection, 'ReceiveCreatedOrder', (order: SimpleOrder) => {
     queryClient.setQueryData<SimpleOrder[]>(['orders'], (oldOrders) => {
@@ -159,7 +165,7 @@ function RouteComponent() {
   }
 
   return (
-    <Protect permission="org:app:access" fallback={<AccessDenied />}>
+    <Fragment>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-heading font-semibold text-2xl">Pedidos</h1>
 
@@ -245,6 +251,6 @@ function RouteComponent() {
           <p className="text-muted-foreground">No hay pedidos disponibles</p>
         </div>
       )}
-    </Protect>
+    </Fragment>
   )
 }
