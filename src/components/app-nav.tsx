@@ -2,6 +2,7 @@ import { ThemeSwitch } from '@/components/theme-switch'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { useRouteContext } from '@tanstack/react-router'
+import { UserMenu } from './user-menu'
 
 export const AppNav = () => {
   const { user } = useRouteContext({
@@ -18,8 +19,8 @@ export const AppNav = () => {
         <ThemeSwitch />
       </div>
 
-      <div className="ml-auto flex h-4 items-center gap-4 px-6">
-        {user?.name}
+      <div className="ml-auto flex items-center px-6">
+        <UserMenu />
       </div>
     </header>
   )
