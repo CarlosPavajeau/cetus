@@ -1,4 +1,3 @@
-import { AuthInterceptor } from '@/components/auth-interceptor'
 import { NotFound } from '@/components/not-found'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -69,7 +68,6 @@ function RootComponent() {
               <Outlet />
             </RootDocument>
             <Toaster />
-            <AuthInterceptor />
           </TooltipProvider>
         </I18nProvider>
       </ThemeProvider>
