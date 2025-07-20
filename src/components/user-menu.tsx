@@ -1,6 +1,6 @@
 import { authClient } from '@/auth/auth-client'
-import { useRouteContext, useRouter } from '@tanstack/react-router'
-import { LogOutIcon } from 'lucide-react'
+import { Link, useRouteContext, useRouter } from '@tanstack/react-router'
+import { LogOutIcon, User2Icon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import {
@@ -47,6 +47,13 @@ export function UserMenu() {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+
+        <DropdownMenuItem asChild>
+          <Link to="/app/account">
+            <User2Icon size={16} className="opacity-60" aria-hidden="true" />
+            <span>Cuenta</span>
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuItem onClick={signOut}>
           <LogOutIcon size={16} className="opacity-60" aria-hidden="true" />
