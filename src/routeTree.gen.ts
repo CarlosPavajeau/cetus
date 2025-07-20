@@ -33,6 +33,7 @@ import { Route as AppReviewsRouteImport } from './routes/app/reviews'
 import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesRouteImport } from './routes/app/categories'
 import { Route as AppAccountRouteImport } from './routes/app/account'
+import { Route as AcceptInvitationIdRouteImport } from './routes/accept-invitation.$id'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
 import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
@@ -154,6 +155,11 @@ const AppAccountRoute = AppAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
+const AcceptInvitationIdRoute = AcceptInvitationIdRouteImport.update({
+  id: '/accept-invitation/$id',
+  path: '/accept-invitation/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
+  '/accept-invitation/$id': typeof AcceptInvitationIdRoute
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
+  '/accept-invitation/$id': typeof AcceptInvitationIdRoute
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
+  '/accept-invitation/$id': typeof AcceptInvitationIdRoute
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/sign-in'
     | '/terms'
+    | '/accept-invitation/$id'
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/sign-in'
     | '/terms'
+    | '/accept-invitation/$id'
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/sign-in'
     | '/terms'
+    | '/accept-invitation/$id'
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
@@ -398,6 +410,7 @@ export interface RootRouteChildren {
   ReturnsRoute: typeof ReturnsRoute
   SignInRoute: typeof SignInRoute
   TermsRoute: typeof TermsRoute
+  AcceptInvitationIdRoute: typeof AcceptInvitationIdRoute
   ReviewsNewRoute: typeof ReviewsNewRoute
 }
 export interface FileServerRoutesByFullPath {
@@ -578,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
+    '/accept-invitation/$id': {
+      id: '/accept-invitation/$id'
+      path: '/accept-invitation/$id'
+      fullPath: '/accept-invitation/$id'
+      preLoaderRoute: typeof AcceptInvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/products/': {
       id: '/app/products/'
       path: '/products'
@@ -712,6 +732,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReturnsRoute: ReturnsRoute,
   SignInRoute: SignInRoute,
   TermsRoute: TermsRoute,
+  AcceptInvitationIdRoute: AcceptInvitationIdRoute,
   ReviewsNewRoute: ReviewsNewRoute,
 }
 export const routeTree = rootRouteImport
