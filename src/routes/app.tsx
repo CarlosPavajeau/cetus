@@ -3,6 +3,7 @@ import { AppNav } from '@/components/app-nav'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { GetSession } from '@/server/get-session'
+import { SetActiveOrg } from '@/server/organizations'
 import { useAppStore } from '@/store/app'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useEffect } from 'react'
@@ -18,9 +19,12 @@ export const Route = createFileRoute('/app')({
     }
 
     if (!session.activeOrganizationId) {
-      throw redirect({
-        to: '/onboarding',
-      })
+      const activeOrg = await SetActiveOrg()
+      if (!activeOrg) {
+        throw redirect({
+          to: '/onboarding',
+        })
+      }
     }
 
     return {
