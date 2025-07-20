@@ -10,7 +10,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { useAppStore } from '@/store/app'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   BadgePercentIcon,
@@ -18,12 +17,11 @@ import {
   PackageIcon,
   ShoppingBasketIcon,
   StarIcon,
-  StoreIcon,
   TagIcon,
   TruckIcon,
 } from 'lucide-react'
+import { OrganizationSwitcher } from './organization-switcher'
 import { Badge } from './ui/badge'
-import { Skeleton } from './ui/skeleton'
 
 type SidebarMenuItem = {
   label: string
@@ -104,29 +102,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }
 
-  const appStore = useAppStore()
-
-  const OrganizationHeader = () => {
-    if (!appStore.currentStore) {
-      return <Skeleton className="h-8 w-full" />
-    }
-
-    return (
-      <div className="flex h-4 items-center justify-center gap-2">
-        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
-          <StoreIcon className="size-4" />
-        </div>
-        <h1 className="line-clamp-1 font-medium text-md">
-          {appStore.currentStore.name}
-        </h1>
-      </div>
-    )
-  }
-
   return (
     <Sidebar {...props}>
       <SidebarHeader className="flex h-16 items-center justify-center gap-2 border-b">
-        <OrganizationHeader />
+        <OrganizationSwitcher />
       </SidebarHeader>
       <SidebarContent>
         {MENU.map((group) => (
