@@ -1,4 +1,5 @@
 import { authClient } from '@/auth/auth-client'
+import { InviteMemberDialog } from '@/components/auth/invite-member-dialog'
 import { AccountSkeleton } from '@/components/skeletons/account-skeleton'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -8,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { BUILT_IN_ROLES } from '@/shared/constants'
 import { createFileRoute } from '@tanstack/react-router'
-import { UserCog2, UserPlus2Icon } from 'lucide-react'
+import { UserCog2 } from 'lucide-react'
 import { Fragment } from 'react/jsx-runtime'
 
 export const Route = createFileRoute('/app/account')({
@@ -94,10 +95,8 @@ function RouteComponent() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <p className="font-heading font-semibold text-lg">Miembros</p>
-                <Button size="sm">
-                  <UserPlus2Icon />
-                  Invitar miembro
-                </Button>
+
+                <InviteMemberDialog />
               </div>
 
               <div className="flex flex-col gap-1">
