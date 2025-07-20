@@ -1,4 +1,5 @@
-import { useRouteContext } from '@tanstack/react-router'
+import { authClient } from '@/auth/auth-client'
+import { useRouteContext, useRouter } from '@tanstack/react-router'
 import { LogOutIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
@@ -15,9 +16,15 @@ export function UserMenu() {
   const { user } = useRouteContext({
     from: '/app',
   })
+  const router = useRouter()
 
   if (!user) {
     return null
+  }
+
+  const signOut = async () => {
+    await authClient.signOut()
+    router.invalidate()
   }
 
   return (
@@ -41,7 +48,7 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={signOut}>
           <LogOutIcon size={16} className="opacity-60" aria-hidden="true" />
           <span>Cerrar sesión</span>
         </DropdownMenuItem>
