@@ -39,10 +39,6 @@ export const auth = betterAuth({
       userAgent: 'user_agent',
       userId: 'user_id',
     },
-    cookieCache: {
-      enabled: true,
-      maxAge: 10 * 60 * 60, // 10 hours
-    },
   },
   verification: {
     modelName: 'verifications',
