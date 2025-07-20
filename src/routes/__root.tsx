@@ -60,18 +60,18 @@ const options = {
 
 function RootComponent() {
   return (
-    <PostHogProvider apiKey={postHogKey} options={options}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <I18nProvider locale="es-CO">
-          <TooltipProvider>
-            <RootDocument>
+    <RootDocument>
+      <PostHogProvider apiKey={postHogKey} options={options}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <I18nProvider locale="es-CO">
+            <TooltipProvider>
               <Outlet />
-            </RootDocument>
-            <Toaster />
-          </TooltipProvider>
-        </I18nProvider>
-      </ThemeProvider>
-    </PostHogProvider>
+              <Toaster />
+            </TooltipProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </PostHogProvider>
+    </RootDocument>
   )
 }
 
