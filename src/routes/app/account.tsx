@@ -1,12 +1,14 @@
 import { authClient } from '@/auth/auth-client'
+import { AccountSkeleton } from '@/components/skeletons/account-skeleton'
+import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+import { BUILT_IN_ROLES } from '@/shared/constants'
 import { createFileRoute } from '@tanstack/react-router'
-import { PlusIcon } from 'lucide-react'
+import { UserCog2, UserPlus2Icon } from 'lucide-react'
 import { Fragment } from 'react/jsx-runtime'
 
 export const Route = createFileRoute('/app/account')({
@@ -19,15 +21,23 @@ function RouteComponent() {
     authClient.useActiveOrganization()
 
   if (isPending || isOrgPending) {
-    return <Skeleton className="h-4 w-full" />
+    return <AccountSkeleton />
   }
 
   if (!session) {
-    return <Skeleton className="h-4 w-full" />
+    return (
+      <Alert>
+        <AlertTitle>Error al cargar la sesión</AlertTitle>
+      </Alert>
+    )
   }
 
   if (!organization) {
-    return <Skeleton className="h-4 w-full" />
+    return (
+      <Alert>
+        <AlertTitle>Error al cargar la organización</AlertTitle>
+      </Alert>
+    )
   }
 
   const user = session.user
@@ -81,43 +91,60 @@ function RouteComponent() {
 
             <Separator />
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <p className="font-heading font-semibold text-lg">Miembros</p>
-
                 <Button size="sm">
-                  <PlusIcon />
-                  Agregar miembro
+                  <UserPlus2Icon />
+                  Invitar miembro
                 </Button>
               </div>
 
               <div className="flex flex-col gap-1">
                 {organization.members.map((member) => (
-                  <Card key={member.id}>
-                    <CardContent className="flex gap-4">
-                      <div>
-                        <Avatar>
-                          <AvatarImage
-                            src={member.user.image ?? undefined}
-                            alt={member.user.name}
-                          />
-                          <AvatarFallback>
-                            {member.user.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-col">
-                          <p className="font-semibold text-sm">
-                            {member.user.name}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            {member.user.email}
-                          </p>
+                  <Card key={member.id} className="py-2">
+                    <CardContent className="flex items-center justify-between gap-4 px-3">
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <Avatar>
+                            <AvatarImage
+                              src={member.user.image ?? undefined}
+                              alt={member.user.name}
+                            />
+                            <AvatarFallback>
+                              {member.user.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
                         </div>
 
-                        <Badge variant="secondary">{member.role}</Badge>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex flex-col">
+                            <p className="font-semibold text-sm">
+                              {member.user.name}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {member.user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">
+                          {BUILT_IN_ROLES.find(
+                            (role) => role.role === member.role,
+                          )?.label ?? 'Desconocido'}
+                        </Badge>
+                        {member.role === 'owner' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-60 hover:opacity-100"
+                          >
+                            <UserCog2 size={16} />
+                            <span className="sr-only">Configurar miembro</span>
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
