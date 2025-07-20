@@ -123,7 +123,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
           <Badge
             className={cn(
               !row.getValue('enabled') &&
-              'bg-muted-foreground/60 text-primary-foreground',
+                'bg-muted-foreground/60 text-primary-foreground',
             )}
           >
             {row.getValue('enabled') ? 'Activo' : 'Inactivo'}

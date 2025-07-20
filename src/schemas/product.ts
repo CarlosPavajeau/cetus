@@ -5,10 +5,10 @@ export const BaseProductSchema = type({
     message: 'El nombre del producto es requerido',
   }),
   description: type.string.optional(),
-  price: type("string.integer.parse").or("number>0").to("number>0").configure({
+  price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
-  stock: type("string.integer.parse").or("number>0").to("number>0").configure({
+  stock: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El stock del producto debe ser mayor a 0',
   }),
 })
