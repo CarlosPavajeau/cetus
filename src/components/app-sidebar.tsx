@@ -19,6 +19,7 @@ import {
   StarIcon,
   TagIcon,
   TruckIcon,
+  User2Icon,
 } from 'lucide-react'
 import { OrganizationSwitcher } from './organization-switcher'
 import { Badge } from './ui/badge'
@@ -75,6 +76,12 @@ const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuItem> = [
     href: '/app/delivery-fees',
     isNew: false,
     icon: TruckIcon,
+  },
+  {
+    label: 'Cuenta',
+    href: '/app/account',
+    isNew: true,
+    icon: User2Icon,
   },
 ] as const
 

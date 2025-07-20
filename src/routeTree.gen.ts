@@ -32,6 +32,7 @@ import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
 import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesRouteImport } from './routes/app/categories'
+import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
 import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
@@ -148,6 +149,11 @@ const AppCategoriesRoute = AppCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
+  '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
+  '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/terms': typeof TermsRoute
+  '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
@@ -296,6 +305,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/sign-in'
     | '/terms'
+    | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
     | '/app/reviews'
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/sign-in'
     | '/terms'
+    | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
     | '/app/reviews'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/sign-in'
     | '/terms'
+    | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
     | '/app/reviews'
@@ -559,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/account': {
+      id: '/app/account'
+      path: '/account'
+      fullPath: '/app/account'
+      preLoaderRoute: typeof AppAccountRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/products/': {
       id: '/app/products/'
       path: '/products'
@@ -623,6 +642,7 @@ declare module '@tanstack/react-start/server' {
 }
 
 interface AppRouteChildren {
+  AppAccountRoute: typeof AppAccountRoute
   AppCategoriesRoute: typeof AppCategoriesRoute
   AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
   AppReviewsRoute: typeof AppReviewsRoute
@@ -636,6 +656,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAccountRoute: AppAccountRoute,
   AppCategoriesRoute: AppCategoriesRoute,
   AppDeliveryFeesRoute: AppDeliveryFeesRoute,
   AppReviewsRoute: AppReviewsRoute,
