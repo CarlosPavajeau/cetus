@@ -1,17 +1,35 @@
 import { authClient } from '@/auth/auth-client'
 import { GoogleIcon } from '@/components/icons/google'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
-export function GoogleSignIn() {
+type Props = {
+  invitation?: string
+}
+
+export function GoogleSignIn({ invitation }: Props) {
   const [isLoading, setLoading] = useState(false)
+
+  const callbackUrl = useMemo(() => {
+    if (invitation) {
+      return `/accept-invitation/${invitation}`
+    }
+    return '/app'
+  }, [invitation])
+
+  const newUserCallbackURL = useMemo(() => {
+    if (invitation) {
+      return `/accept-invitation/${invitation}`
+    }
+    return '/onboarding'
+  }, [invitation])
 
   const signIn = async () => {
     setLoading(true)
     await authClient.signIn.social({
       provider: 'google',
-      callbackURL: '/app',
-      newUserCallbackURL: '/onboarding',
+      callbackURL: callbackUrl,
+      newUserCallbackURL: newUserCallbackURL,
     })
 
     setTimeout(() => {

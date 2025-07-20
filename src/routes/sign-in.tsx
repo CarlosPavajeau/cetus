@@ -1,12 +1,20 @@
 import { GoogleSignIn } from '@/components/google-sign-in'
 import { createFileRoute } from '@tanstack/react-router'
+import { type } from 'arktype'
 import { ShoppingCartIcon } from 'lucide-react'
 
+const SignInSearchSchema = type({
+  invitation: type.string.or(type.undefined).optional(),
+})
+
 export const Route = createFileRoute('/sign-in')({
+  validateSearch: SignInSearchSchema,
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const { invitation } = Route.useSearch()
+
   return (
     <div className="h-screen p-2">
       <header className="lef-0 absolute top-0 z-30 w-full">
@@ -30,7 +38,7 @@ function RouteComponent() {
               </div>
 
               <div className="space-y-4">
-                <GoogleSignIn />
+                <GoogleSignIn invitation={invitation} />
               </div>
             </div>
           </div>
