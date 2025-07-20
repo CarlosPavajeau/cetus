@@ -50,3 +50,9 @@ export const MONTHS = [
 ]
 
 export const API_ENDPOINT = import.meta.env.VITE_API_URL
+
+export const BUILT_IN_ROLES = [
+  { role: 'owner', label: 'Dueño' },
+  { role: 'admin', label: 'Administrador' },
+  { role: 'member', label: 'Miembro' },
+] as const
