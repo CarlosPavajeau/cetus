@@ -1,7 +1,9 @@
 import { authClient } from '@/auth/auth-client'
 import { AppNav } from '@/components/app-nav'
 import { AppSidebar } from '@/components/app-sidebar'
+import { MissingMercadoPagoConfigurationBanner } from '@/components/missing-mercado-pago-configuration-banner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { useStoreBySlug } from '@/hooks/stores'
 import { GetSession } from '@/server/get-session'
 import { SetActiveOrg } from '@/server/organizations'
 import { useAppStore } from '@/store/app'
@@ -37,19 +39,18 @@ export const Route = createFileRoute('/app')({
 
 function RouteComponent() {
   const { data: org, isPending } = authClient.useActiveOrganization()
+  const { store, isLoading } = useStoreBySlug(org?.slug)
   const appStore = useAppStore()
 
   useEffect(() => {
-    if (isPending) return
+    if (isPending || isLoading) return
 
     if (!org) return
 
-    appStore.setCurrentStore({
-      id: org.id,
-      name: org.name,
-      slug: org.slug,
-    })
-  }, [isPending, org])
+    if (!store) return
+
+    appStore.setCurrentStore(store)
+  }, [isPending, org, store, isLoading])
 
   return (
     <SidebarProvider>
@@ -57,6 +58,8 @@ function RouteComponent() {
 
       <SidebarInset className="flex min-h-screen flex-col">
         <AppNav />
+
+        <MissingMercadoPagoConfigurationBanner />
 
         <main className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
           <Outlet />
