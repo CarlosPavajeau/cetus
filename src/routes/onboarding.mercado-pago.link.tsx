@@ -1,6 +1,7 @@
 import { fetchMercadoPagoAuthorizationUrl } from '@/api/stores'
 import { Button } from '@/components/ui/button'
 import { GetSession } from '@/server/get-session'
+import { SetActiveOrg } from '@/server/organizations'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { ShoppingCartIcon } from 'lucide-react'
 
@@ -15,9 +16,13 @@ export const Route = createFileRoute('/onboarding/mercado-pago/link')({
     }
 
     if (!session.activeOrganizationId) {
-      throw redirect({
-        to: '/app',
-      })
+      const activeOrg = await SetActiveOrg()
+
+      if (!activeOrg) {
+        throw redirect({
+          to: '/app',
+        })
+      }
     }
   },
   loader: async () => {
