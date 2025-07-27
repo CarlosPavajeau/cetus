@@ -19,3 +19,23 @@ export async function fetchStoreBySlug(slug: string) {
 
   return response.data
 }
+
+type ConfigureMercadoPagoRequest = {
+  accessToken: string
+  refreshToken: string
+  expiresIn: number
+}
+
+export async function configureMercadoPago(
+  storeSlug: string,
+  config: ConfigureMercadoPagoRequest,
+) {
+  const response = await api.put(
+    `/stores/payment-providers/mercado-pago/credentials?store=${storeSlug}`,
+    {
+      body: config,
+    },
+  )
+
+  return response
+}
