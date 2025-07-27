@@ -172,3 +172,9 @@ export async function createDeliveryFee(
 
   return response.data
 }
+
+export async function createOrderPayment(orderId: string) {
+  const response = await api.post<string>(`/orders/${orderId}/payments`)
+
+  return response.data
+}
