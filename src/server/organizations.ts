@@ -25,7 +25,7 @@ export const SetActiveOrg = createServerFn({ method: 'POST' }).handler(
 
     return {
       id: org.id,
-      slug: org.slug
+      slug: org.slug,
     }
   },
 )
