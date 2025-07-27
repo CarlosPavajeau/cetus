@@ -1,10 +1,9 @@
 import { createOrder, type DeliveryFee } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
-import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
-import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/submit-button'
 import {
   Form,
   FormControl,
@@ -14,14 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Stepper,
-  StepperIndicator,
-  StepperItem,
-  StepperSeparator,
-  StepperTitle,
-  StepperTrigger,
-} from '@/components/ui/stepper'
 import { useCustomer } from '@/hooks/customers'
 import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrder, CreateOrderSchema } from '@/schemas/orders'
@@ -31,18 +22,12 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
-import { type } from 'arktype'
 import { ArrowRightIcon } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
-
-const CheckoutSearchSchema = type({
-  'id?': 'string',
-})
 
 export const Route = createFileRoute('/checkout/')({
   component: RouteComponent,
-  validateSearch: CheckoutSearchSchema,
 })
 
 function useCartCheckout() {
@@ -95,9 +80,6 @@ function useCartCheckout() {
     appStore.currentStore?.slug,
   )
 
-  const search = Route.useSearch()
-  const [orderId, setOrderId] = useState<string | undefined>(search.id)
-
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
@@ -106,10 +88,11 @@ function useCartCheckout() {
     onSuccess: (data) => {
       const orderId = data.id
       navigate({
-        to: '/checkout',
-        search: { id: orderId },
+        to: '/checkout/$id',
+        params: {
+          id: orderId,
+        },
       })
-      setOrderId(orderId)
     },
   })
 
@@ -127,7 +110,6 @@ function useCartCheckout() {
     isLoadingDeliveryFee,
     isSubmitting: createOrderMutation.isPending,
     isEmpty: items.length === 0,
-    orderId,
   }
 }
 
@@ -154,8 +136,6 @@ function CustomerInfoFields({ form }: CustomerInfoFieldsProps) {
   return (
     <div className="space-y-6 rounded-md border bg-card p-6">
       <div>
-        <h2 className="mb-6 font-medium text-lg">Información de envío</h2>
-
         <div className="space-y-4">
           <FormField
             control={form.control}
@@ -254,34 +234,15 @@ function DeliveryFeeInfo({
   )
 }
 
-const steps = [
-  {
-    step: 1,
-    title: 'Envió',
-  },
-  {
-    step: 2,
-    title: 'Pago',
-  },
-]
-
 function RouteComponent() {
   const {
     isEmpty,
     form,
     onSubmit,
     isSubmitting,
-    orderId,
     deliveryFee,
     isLoadingDeliveryFee,
   } = useCartCheckout()
-  const [currentStep, setCurrentStep] = useState(1)
-
-  useEffect(() => {
-    if (orderId) {
-      setCurrentStep(2)
-    }
-  }, [orderId])
 
   if (isEmpty) {
     return <Navigate to="/cart" />
@@ -289,73 +250,34 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <PageHeader title="Tu pedido" />
+      <PageHeader title="Datos de envío" />
 
-      <div className="space-y-8 text-center">
-        <Stepper value={currentStep} onValueChange={setCurrentStep}>
-          {steps.map(({ step, title }) => (
-            <StepperItem
-              key={step}
-              step={step}
-              className="not-last:flex-1 max-md:items-start"
-              loading={isSubmitting}
-            >
-              <StepperTrigger className="rounded max-md:flex-col">
-                <StepperIndicator />
-                <div className="text-center md:text-left">
-                  <StepperTitle>{title}</StepperTitle>
-                </div>
-              </StepperTrigger>
-              {step < steps.length && (
-                <StepperSeparator className="max-md:mt-3.5 md:mx-4" />
-              )}
-            </StepperItem>
-          ))}
-        </Stepper>
-      </div>
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="space-y-6">
+          <CustomerInfoFields form={form} />
 
-      <div className="mt-8">
-        {currentStep === 1 && (
-          <Form {...form}>
-            <form onSubmit={onSubmit} className="space-y-6">
-              <CustomerInfoFields form={form} />
+          <DeliveryFeeInfo
+            deliveryFee={deliveryFee}
+            isLoadingDeliveryFee={isLoadingDeliveryFee}
+          />
 
-              <DeliveryFeeInfo
-                deliveryFee={deliveryFee}
-                isLoadingDeliveryFee={isLoadingDeliveryFee}
+          <SubmitButton
+            type="submit"
+            className="group w-full"
+            isSubmitting={isSubmitting}
+            disabled={isSubmitting}
+          >
+            <div className="group flex items-center gap-2">
+              Continuar al pago
+              <ArrowRightIcon
+                className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
+                size={16}
+                aria-hidden="true"
               />
-
-              <Button
-                type="submit"
-                className="group w-full"
-                disabled={isSubmitting}
-              >
-                Continuar al pago
-                <ArrowRightIcon
-                  className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-                  size={16}
-                  aria-hidden="true"
-                />
-              </Button>
-            </form>
-          </Form>
-        )}
-
-        {currentStep === 2 && orderId && (
-          <div className="space-y-6">
-            <RedeemCoupon orderId={orderId} />
-
-            <Button size="lg" className="w-full">
-              Ir a pagar
-            </Button>
-
-            <DeliveryFeeInfo
-              deliveryFee={deliveryFee}
-              isLoadingDeliveryFee={isLoadingDeliveryFee}
-            />
-          </div>
-        )}
-      </div>
+            </div>
+          </SubmitButton>
+        </form>
+      </Form>
     </DefaultPageLayout>
   )
 }
