@@ -10,25 +10,32 @@ import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 type Props = {
   order: Order
   showId?: boolean
+  showStatus?: boolean
 }
 
-export function OrderSummary({ order, showId = false }: Props) {
+export function OrderSummary({
+  order,
+  showId = false,
+  showStatus = false,
+}: Props) {
   return (
     <>
       <div className="space-y-3 rounded-md border bg-card p-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium">Estado del pedido</h3>
-          <Badge variant="outline">
-            <span
-              className={cn(
-                'size-1.5 rounded-full',
-                OrderStatusColor[order.status],
-              )}
-              aria-hidden="true"
-            ></span>
-            {OrderStatusText[order.status]}
-          </Badge>
-        </div>
+        {showStatus && (
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium">Estado del pedido</h3>
+            <Badge variant="outline">
+              <span
+                className={cn(
+                  'size-1.5 rounded-full',
+                  OrderStatusColor[order.status],
+                )}
+                aria-hidden="true"
+              ></span>
+              {OrderStatusText[order.status]}
+            </Badge>
+          </div>
+        )}
 
         <p className="text-muted-foreground text-sm">
           Realizado el <FormattedDate date={new Date(order.createdAt)} />
