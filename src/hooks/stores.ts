@@ -16,12 +16,14 @@ export function useStoreByDomain(domain: string) {
   }
 }
 
-export function useStoreBySlug(slug: string) {
+export function useStoreBySlug(slug?: string) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['store', slug],
-    queryFn: () => fetchStoreBySlug(slug),
+    queryFn: () => fetchStoreBySlug(slug!),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: !!slug,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 
   return {
