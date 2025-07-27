@@ -1,5 +1,7 @@
-import { Button } from '@/components/ui/button'
+import { fetchMercadoPagoAuthorizationUrl } from '@/api/stores'
+import { SubmitButton } from '@/components/submit-button'
 import { useAppStore } from '@/store/app'
+import { useMutation } from '@tanstack/react-query'
 import { TriangleAlertIcon } from 'lucide-react'
 
 export function MissingMercadoPagoConfigurationBanner() {
@@ -34,13 +36,37 @@ export function MissingMercadoPagoConfigurationBanner() {
               </p>
             </div>
             <div className="flex gap-2 max-md:flex-wrap">
-              <Button size="sm" className="text-sm">
-                Configurar ahora
-              </Button>
+              <LinkToMercadoPagoButton />
             </div>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function LinkToMercadoPagoButton() {
+  const { mutate, isPending } = useMutation({
+    mutationKey: ['stores', 'mercado-pago', 'auth'],
+    mutationFn: fetchMercadoPagoAuthorizationUrl,
+    onSuccess: (authorizationUrl) => {
+      window.location.href = authorizationUrl
+    },
+  })
+
+  const linkToMercadoPago = () => {
+    mutate()
+  }
+
+  return (
+    <SubmitButton
+      onClick={linkToMercadoPago}
+      isSubmitting={isPending}
+      disabled={isPending}
+      type="button"
+      size="sm"
+    >
+      Conectar con Mercado Pago
+    </SubmitButton>
   )
 }
