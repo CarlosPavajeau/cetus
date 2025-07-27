@@ -38,6 +38,7 @@ import { Route as AppProductsIndexRouteImport } from './routes/app/products/inde
 import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
 import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
 import { Route as OrdersOrderIdConfirmationRouteImport } from './routes/orders/$orderId.confirmation'
+import { Route as OnboardingMercadoPagoLinkRouteImport } from './routes/onboarding.mercado-pago.link'
 import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
 import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
@@ -182,6 +183,12 @@ const OrdersOrderIdConfirmationRoute =
     path: '/$orderId/confirmation',
     getParentRoute: () => OrdersRoute,
   } as any)
+const OnboardingMercadoPagoLinkRoute =
+  OnboardingMercadoPagoLinkRouteImport.update({
+    id: '/mercado-pago/link',
+    path: '/mercado-pago/link',
+    getParentRoute: () => OnboardingRoute,
+  } as any)
 const AppProductsNewRoute = AppProductsNewRouteImport.update({
   id: '/products/new',
   path: '/products/new',
@@ -216,7 +223,7 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/onboarding': typeof OnboardingRoute
+  '/onboarding': typeof OnboardingRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
@@ -236,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
+  '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
@@ -247,7 +255,7 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/onboarding': typeof OnboardingRoute
+  '/onboarding': typeof OnboardingRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
@@ -267,6 +275,7 @@ export interface FileRoutesByTo {
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
+  '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
@@ -280,7 +289,7 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/onboarding': typeof OnboardingRoute
+  '/onboarding': typeof OnboardingRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
@@ -300,6 +309,7 @@ export interface FileRoutesById {
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
+  '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/app/coupons/': typeof AppCouponsIndexRoute
   '/app/dashboard/': typeof AppDashboardIndexRoute
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
+    | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
     | '/app/coupons'
     | '/app/dashboard'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
+    | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
     | '/app/coupons'
     | '/app/dashboard'
@@ -397,6 +409,7 @@ export interface FileRouteTypes {
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
+    | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
     | '/app/coupons/'
     | '/app/dashboard/'
@@ -410,7 +423,7 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
-  OnboardingRoute: typeof OnboardingRoute
+  OnboardingRoute: typeof OnboardingRouteWithChildren
   OrdersRoute: typeof OrdersRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProductsRoute: typeof ProductsRouteWithChildren
@@ -637,6 +650,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersOrderIdConfirmationRouteImport
       parentRoute: typeof OrdersRoute
     }
+    '/onboarding/mercado-pago/link': {
+      id: '/onboarding/mercado-pago/link'
+      path: '/mercado-pago/link'
+      fullPath: '/onboarding/mercado-pago/link'
+      preLoaderRoute: typeof OnboardingMercadoPagoLinkRouteImport
+      parentRoute: typeof OnboardingRoute
+    }
     '/app/products/new': {
       id: '/app/products/new'
       path: '/products/new'
@@ -709,6 +729,18 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface OnboardingRouteChildren {
+  OnboardingMercadoPagoLinkRoute: typeof OnboardingMercadoPagoLinkRoute
+}
+
+const OnboardingRouteChildren: OnboardingRouteChildren = {
+  OnboardingMercadoPagoLinkRoute: OnboardingMercadoPagoLinkRoute,
+}
+
+const OnboardingRouteWithChildren = OnboardingRoute._addFileChildren(
+  OnboardingRouteChildren,
+)
+
 interface OrdersRouteChildren {
   OrdersIdRoute: typeof OrdersIdRoute
   OrdersOrderIdConfirmationRoute: typeof OrdersOrderIdConfirmationRoute
@@ -743,7 +775,7 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
-  OnboardingRoute: OnboardingRoute,
+  OnboardingRoute: OnboardingRouteWithChildren,
   OrdersRoute: OrdersRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProductsRoute: ProductsRouteWithChildren,
