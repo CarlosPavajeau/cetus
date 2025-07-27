@@ -14,15 +14,18 @@ export const SetActiveOrg = createServerFn({ method: 'POST' }).handler(
       return undefined
     }
 
-    const org = list.at(0)
+    const org = list.at(0)!
 
     await auth.api.setActiveOrganization({
       body: {
-        organizationId: org?.id,
+        organizationId: org.id,
       },
       headers: headers,
     })
 
-    return org?.id
+    return {
+      id: org.id,
+      slug: org.slug
+    }
   },
 )

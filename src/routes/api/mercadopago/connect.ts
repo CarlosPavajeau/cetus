@@ -30,7 +30,8 @@ export const ServerRoute = createServerFileRoute(
 
     let activeOrganizationId = session.activeOrganizationId
     if (!activeOrganizationId) {
-      activeOrganizationId = await SetActiveOrg()
+      const org = await SetActiveOrg()
+      activeOrganizationId = org?.id
 
       if (!activeOrganizationId) {
         throw redirect({
