@@ -1,3 +1,4 @@
+import type { Order } from '@/api/orders'
 import { Currency } from '@/components/currency'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,35 +11,33 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useRedeemCoupon } from '@/hooks/coupons'
-import { useOrder } from '@/hooks/orders'
 import { RedeemCouponSchema } from '@/schemas/coupons'
 import { extractErrorDetail } from '@/shared/error'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useQueryClient } from '@tanstack/react-query'
+import { useRouter } from '@tanstack/react-router'
 import { Loader2Icon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 
 type Props = {
-  orderId: string
+  order: Order
 }
 
-export function RedeemCoupon({ orderId }: Props) {
-  const { order, isLoading } = useOrder(orderId)
+export function RedeemCoupon({ order }: Props) {
   const form = useForm({
     resolver: arktypeResolver(RedeemCouponSchema),
     defaultValues: {
       couponCode: '',
-      orderId,
+      orderId: order.id,
     },
   })
 
-  const queryClient = useQueryClient()
+  const router = useRouter()
   const onRedeemCouponSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['orders', orderId] })
+    router.invalidate()
   }
+
   const {
     mutate: redeemCoupon,
     isPending,
@@ -59,10 +58,6 @@ export function RedeemCoupon({ orderId }: Props) {
   const onSubmit = form.handleSubmit((data) => {
     redeemCoupon(data)
   })
-
-  if (isLoading) return <Skeleton className="h-10 w-full" />
-
-  if (!order) return null
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border bg-card p-4">
