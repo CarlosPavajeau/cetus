@@ -4,7 +4,6 @@ import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
-import { PaymentOptions } from '@/components/payment/payment-options'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -41,7 +40,7 @@ const CheckoutSearchSchema = type({
   'id?': 'string',
 })
 
-export const Route = createFileRoute('/checkout')({
+export const Route = createFileRoute('/checkout/')({
   component: RouteComponent,
   validateSearch: CheckoutSearchSchema,
 })
@@ -345,7 +344,10 @@ function RouteComponent() {
         {currentStep === 2 && orderId && (
           <div className="space-y-6">
             <RedeemCoupon orderId={orderId} />
-            <PaymentOptions orderId={orderId} />
+
+            <Button size="lg" className="w-full">
+              Ir a pagar
+            </Button>
 
             <DeliveryFeeInfo
               deliveryFee={deliveryFee}
