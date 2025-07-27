@@ -3,7 +3,7 @@ import { GetSession } from '@/server/get-session'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { ShoppingCartIcon } from 'lucide-react'
 
-export const Route = createFileRoute('/onboarding')({
+export const Route = createFileRoute('/onboarding/')({
   beforeLoad: async () => {
     const { session } = await GetSession()
 
