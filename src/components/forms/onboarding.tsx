@@ -1,3 +1,4 @@
+import { createStore } from '@/api/stores'
 import { authClient } from '@/auth/auth-client'
 import {
   Form,
@@ -40,6 +41,12 @@ export function OnBoardingForm() {
     const organization = result.data
     await authClient.organization.setActive({
       organizationId: organization.id,
+    })
+
+    await createStore({
+      name: organization.name,
+      slug: organization.slug,
+      externalId: organization.id,
     })
 
     navigate({

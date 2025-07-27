@@ -43,3 +43,15 @@ export async function fetchMercadoPagoAuthorizationUrl(): Promise<string> {
 
   return response.data
 }
+
+export type CreateStoreRequest = {
+  name: string
+  slug: string
+  externalId: string
+}
+
+export async function createStore(data: CreateStoreRequest) {
+  const response = await api.post('/stores', data)
+
+  return response.data
+}
