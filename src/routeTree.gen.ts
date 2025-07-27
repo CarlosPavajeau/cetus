@@ -17,13 +17,13 @@ import { Route as ReturnsRouteImport } from './routes/returns'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as StoreRouteImport } from './routes/$store'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
 import { Route as ProductsAllRouteImport } from './routes/products/all'
@@ -77,11 +77,6 @@ const OrdersRoute = OrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
@@ -110,6 +105,11 @@ const StoreRoute = StoreRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -185,9 +185,9 @@ const OrdersOrderIdConfirmationRoute =
   } as any)
 const OnboardingMercadoPagoLinkRoute =
   OnboardingMercadoPagoLinkRouteImport.update({
-    id: '/mercado-pago/link',
-    path: '/mercado-pago/link',
-    getParentRoute: () => OnboardingRoute,
+    id: '/onboarding/mercado-pago/link',
+    path: '/onboarding/mercado-pago/link',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AppProductsNewRoute = AppProductsNewRouteImport.update({
   id: '/products/new',
@@ -223,7 +223,6 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/onboarding': typeof OnboardingRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
@@ -240,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/products/all': typeof ProductsAllRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
+  '/onboarding': typeof OnboardingIndexRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -255,7 +255,6 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/onboarding': typeof OnboardingRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
@@ -272,6 +271,7 @@ export interface FileRoutesByTo {
   '/products/all': typeof ProductsAllRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
+  '/onboarding': typeof OnboardingIndexRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -289,7 +289,6 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/faq': typeof FaqRoute
-  '/onboarding': typeof OnboardingRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRouteWithChildren
@@ -306,6 +305,7 @@ export interface FileRoutesById {
   '/products/all': typeof ProductsAllRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -324,7 +324,6 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/faq'
-    | '/onboarding'
     | '/orders'
     | '/privacy'
     | '/products'
@@ -341,6 +340,7 @@ export interface FileRouteTypes {
     | '/products/all'
     | '/reviews/new'
     | '/app/'
+    | '/onboarding'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -356,7 +356,6 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/faq'
-    | '/onboarding'
     | '/orders'
     | '/privacy'
     | '/products'
@@ -373,6 +372,7 @@ export interface FileRouteTypes {
     | '/products/all'
     | '/reviews/new'
     | '/app'
+    | '/onboarding'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -389,7 +389,6 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/faq'
-    | '/onboarding'
     | '/orders'
     | '/privacy'
     | '/products'
@@ -406,6 +405,7 @@ export interface FileRouteTypes {
     | '/products/all'
     | '/reviews/new'
     | '/app/'
+    | '/onboarding/'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -423,7 +423,6 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   FaqRoute: typeof FaqRoute
-  OnboardingRoute: typeof OnboardingRouteWithChildren
   OrdersRoute: typeof OrdersRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProductsRoute: typeof ProductsRouteWithChildren
@@ -432,6 +431,8 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   AcceptInvitationIdRoute: typeof AcceptInvitationIdRoute
   ReviewsNewRoute: typeof ReviewsNewRoute
+  OnboardingIndexRoute: typeof OnboardingIndexRoute
+  OnboardingMercadoPagoLinkRoute: typeof OnboardingMercadoPagoLinkRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatServerRoute
@@ -503,13 +504,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/faq': {
       id: '/faq'
       path: '/faq'
@@ -550,6 +544,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -652,10 +653,10 @@ declare module '@tanstack/react-router' {
     }
     '/onboarding/mercado-pago/link': {
       id: '/onboarding/mercado-pago/link'
-      path: '/mercado-pago/link'
+      path: '/onboarding/mercado-pago/link'
       fullPath: '/onboarding/mercado-pago/link'
       preLoaderRoute: typeof OnboardingMercadoPagoLinkRouteImport
-      parentRoute: typeof OnboardingRoute
+      parentRoute: typeof rootRouteImport
     }
     '/app/products/new': {
       id: '/app/products/new'
@@ -729,18 +730,6 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
-interface OnboardingRouteChildren {
-  OnboardingMercadoPagoLinkRoute: typeof OnboardingMercadoPagoLinkRoute
-}
-
-const OnboardingRouteChildren: OnboardingRouteChildren = {
-  OnboardingMercadoPagoLinkRoute: OnboardingMercadoPagoLinkRoute,
-}
-
-const OnboardingRouteWithChildren = OnboardingRoute._addFileChildren(
-  OnboardingRouteChildren,
-)
-
 interface OrdersRouteChildren {
   OrdersIdRoute: typeof OrdersIdRoute
   OrdersOrderIdConfirmationRoute: typeof OrdersOrderIdConfirmationRoute
@@ -775,7 +764,6 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   FaqRoute: FaqRoute,
-  OnboardingRoute: OnboardingRouteWithChildren,
   OrdersRoute: OrdersRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProductsRoute: ProductsRouteWithChildren,
@@ -784,6 +772,8 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   AcceptInvitationIdRoute: AcceptInvitationIdRoute,
   ReviewsNewRoute: ReviewsNewRoute,
+  OnboardingIndexRoute: OnboardingIndexRoute,
+  OnboardingMercadoPagoLinkRoute: OnboardingMercadoPagoLinkRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
