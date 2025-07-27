@@ -31,11 +31,7 @@ export async function configureMercadoPago(
   config: ConfigureMercadoPagoRequest,
 ) {
   const response = await api.put(
-    `/stores/payment-providers/mercado-pago/credentials?store=${storeSlug}`,
-    {
-      body: config,
-    },
-  )
+    `/stores/payment-providers/mercado-pago/credentials?store=${storeSlug}`, config)
 
   return response
 }
