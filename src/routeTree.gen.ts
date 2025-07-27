@@ -41,6 +41,7 @@ import { Route as OrdersOrderIdConfirmationRouteImport } from './routes/orders/$
 import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
 import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
+import { ServerRoute as ApiMercadopagoConnectServerRouteImport } from './routes/api/mercadopago/connect'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -196,6 +197,12 @@ const AppCouponsNewRoute = AppCouponsNewRouteImport.update({
   path: '/coupons/new',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiMercadopagoConnectServerRoute =
+  ApiMercadopagoConnectServerRouteImport.update({
+    id: '/api/mercadopago/connect',
+    path: '/api/mercadopago/connect',
+    getParentRoute: () => rootServerRouteImport,
+  } as any)
 const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -415,24 +422,28 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatServerRoute
+  '/api/mercadopago/connect': typeof ApiMercadopagoConnectServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatServerRoute
+  '/api/mercadopago/connect': typeof ApiMercadopagoConnectServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/auth/$': typeof ApiAuthSplatServerRoute
+  '/api/mercadopago/connect': typeof ApiMercadopagoConnectServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/auth/$'
+  fullPaths: '/api/auth/$' | '/api/mercadopago/connect'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/auth/$'
-  id: '__root__' | '/api/auth/$'
+  to: '/api/auth/$' | '/api/mercadopago/connect'
+  id: '__root__' | '/api/auth/$' | '/api/mercadopago/connect'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
+  ApiMercadopagoConnectServerRoute: typeof ApiMercadopagoConnectServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -651,6 +662,13 @@ declare module '@tanstack/react-router' {
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
+    '/api/mercadopago/connect': {
+      id: '/api/mercadopago/connect'
+      path: '/api/mercadopago/connect'
+      fullPath: '/api/mercadopago/connect'
+      preLoaderRoute: typeof ApiMercadopagoConnectServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -740,6 +758,7 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
+  ApiMercadopagoConnectServerRoute: ApiMercadopagoConnectServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)
