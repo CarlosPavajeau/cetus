@@ -39,3 +39,11 @@ export async function configureMercadoPago(
 
   return response
 }
+
+export async function fetchMercadoPagoAuthorizationUrl(): Promise<string> {
+  const response = await api.get<string>(
+    `/stores/payment-providers/mercado-pago/authorization-url`,
+  )
+
+  return response.data
+}
