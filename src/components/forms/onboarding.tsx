@@ -43,7 +43,7 @@ export function OnBoardingForm() {
     })
 
     navigate({
-      to: '/app',
+      to: '/onboarding/mercado-pago/link',
       reloadDocument: true,
     })
   })
