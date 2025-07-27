@@ -1,9 +1,10 @@
-import { fetchOrder } from '@/api/orders'
+import { createOrderPayment, fetchOrder } from '@/api/orders'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { OrderSummary } from '@/components/order/order-summary'
 import { PageHeader } from '@/components/page-header'
 import { SubmitButton } from '@/components/submit-button'
+import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/checkout/$id')({
@@ -22,6 +23,18 @@ export const Route = createFileRoute('/checkout/$id')({
 
 function RouteComponent() {
   const { order } = Route.useLoaderData()
+
+  const { mutate, isPending } = useMutation({
+    mutationKey: ['orders', 'payment', 'create'],
+    mutationFn: createOrderPayment,
+    onSuccess: (paymentUrl) => {
+      window.location.href = paymentUrl
+    },
+  })
+
+  const handlePayment = () => {
+    mutate(order.id)
+  }
 
   return (
     <DefaultPageLayout>
@@ -44,8 +57,9 @@ function RouteComponent() {
         <SubmitButton
           size="lg"
           className="w-full"
-          disabled={false}
-          isSubmitting={false}
+          disabled={isPending}
+          isSubmitting={isPending}
+          onClick={handlePayment}
         >
           Ir a pagar
         </SubmitButton>
