@@ -6,6 +6,10 @@ export type Store = {
   slug: string
   customDomain?: string
   logoUrl?: string
+  address?: string
+  phone?: string
+  email?: string
+  isConnectedToMercadoPago: boolean
 }
 
 export async function fetchStoreByDomain(domain: string) {
@@ -31,7 +35,9 @@ export async function configureMercadoPago(
   config: ConfigureMercadoPagoRequest,
 ) {
   const response = await api.put(
-    `/stores/payment-providers/mercado-pago/credentials?store=${storeSlug}`, config)
+    `/stores/payment-providers/mercado-pago/credentials?store=${storeSlug}`,
+    config,
+  )
 
   return response
 }
