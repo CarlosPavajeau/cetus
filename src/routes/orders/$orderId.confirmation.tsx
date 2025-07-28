@@ -1,128 +1,94 @@
-import { DefaultLoader } from '@/components/default-loader'
+import { fetchOrder } from '@/api/orders'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { SupportButton } from '@/components/support-button'
 import { Button } from '@/components/ui/button'
-import { useOrder } from '@/hooks/orders'
-import { useTransaction } from '@/hooks/wompi/use-transaction'
+import { Skeleton } from '@/components/ui/skeleton'
+import { GetPayment } from '@/server/mercadopago'
 import { useCart } from '@/store/cart'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { type } from 'arktype'
 import { motion } from 'framer-motion'
 import {
   ArrowRightIcon,
   CheckCircleIcon,
+  InfoIcon,
   ShoppingBagIcon,
   XIcon,
 } from 'lucide-react'
 import { useEffect } from 'react'
 
 const OrderConfirmationSearchSchema = type({
-  id: 'string',
+  payment_id: 'number.integer',
 })
 
 export const Route = createFileRoute('/orders/$orderId/confirmation')({
-  component: OrderConfirmationComponent,
   validateSearch: OrderConfirmationSearchSchema,
+  beforeLoad: ({ search }) => {
+    const { payment_id } = search
+    return {
+      payment_id,
+    }
+  },
+  loader: async ({ params, context }) => {
+    try {
+      const { orderId } = params
+      const order = await fetchOrder(orderId)
+
+      const { payment_id } = context
+      const payment = await GetPayment({
+        data: {
+          payment_id: payment_id,
+        },
+      })
+
+      return { order, payment }
+    } catch (err) {
+      throw notFound()
+    }
+  },
+  pendingComponent: () => (
+    <DefaultPageLayout>
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+    </DefaultPageLayout>
+  ),
+  component: OrderConfirmationComponent,
+  notFoundComponent: () => (
+    <DefaultPageLayout>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-8 text-center"
+      >
+        <div className="mb-4 rounded-full bg-red-100 p-6">
+          <XIcon size={32} className="text-red-600" />
+        </div>
+        <h2 className="mb-2 font-semibold text-xl">¡Pedido no encontrado!</h2>
+
+        <p className="mb-6 max-w-md text-muted-foreground">
+          No se pudo encontrar el pedido asociado a tu número. Por favor,
+          contacta al soporte para más ayuda.
+        </p>
+
+        <div className="w-full max-w-xs space-y-3">
+          <SupportButton
+            message={`Hola, he tenido un problema con mi pedido.`}
+          />
+        </div>
+      </motion.div>
+    </DefaultPageLayout>
+  ),
 })
 
 function OrderConfirmationComponent() {
-  const { orderId } = Route.useParams()
-  const { id } = Route.useSearch()
-
-  const { order, isLoading } = useOrder(orderId)
-  const { transaction, isLoading: isLoadingTransaction } = useTransaction(id)
+  const { order, payment } = Route.useLoaderData()
 
   const { clear } = useCart()
   useEffect(() => {
-    if (!transaction || !order) return
+    clear()
+  }, [clear])
 
-    if (transaction.data.status === 'APPROVED') {
-      clear()
-    }
-  }, [clear, transaction, order])
-
-  if (isLoading || isLoadingTransaction) {
-    return (
-      <DefaultPageLayout>
-        <DefaultLoader />
-      </DefaultPageLayout>
-    )
-  }
-
-  if (!order) {
-    return (
-      <DefaultPageLayout>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-8 text-center"
-        >
-          <div className="mb-4 rounded-full bg-red-100 p-6">
-            <XIcon size={32} className="text-red-600" />
-          </div>
-          <h2 className="mb-2 font-semibold text-xl">¡Pedido no encontrado!</h2>
-          <p className="mb-2 text-muted-foreground">
-            Tu número de pedido es #
-            <span className="font-medium">{orderId}</span>.
-          </p>
-
-          <p className="mb-6 max-w-md text-muted-foreground">
-            No se pudo encontrar el pedido asociado a tu número. Por favor,
-            contacta al soporte para más ayuda.
-          </p>
-
-          <div className="w-full max-w-xs space-y-3">
-            <SupportButton
-              message={`Hola, he tenido un problema con mi pedido. El número de mi pedido es ${orderId}`}
-            />
-          </div>
-        </motion.div>
-      </DefaultPageLayout>
-    )
-  }
-
-  if (!transaction) {
-    return (
-      <DefaultPageLayout>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-8 text-center"
-        >
-          <div className="mb-4 rounded-full bg-red-100 p-6">
-            <XIcon size={32} className="text-red-600" />
-          </div>
-          <h2 className="mb-2 font-semibold text-xl">
-            ¡Transaccion no encontrada!
-          </h2>
-          <p className="mb-2 text-muted-foreground">
-            Tu número de pedido es #
-            <span className="font-medium">{order.orderNumber}</span>.
-          </p>
-
-          <p className="mb-6 max-w-md text-muted-foreground">
-            No se pudo encontrar la transacción asociada a tu pedido. Por favor,
-            contacta al soporte para más ayuda.
-          </p>
-
-          <div className="w-full max-w-xs space-y-3">
-            <SupportButton
-              message={`Hola, he tenido un problema con el pago de mi pedido. El número de mi pedido es ${order.orderNumber}`}
-            />
-
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/">
-                <ShoppingBagIcon className="mr-2" />
-                Volver a la tienda
-              </Link>
-            </Button>
-          </div>
-        </motion.div>
-      </DefaultPageLayout>
-    )
-  }
-
-  if (transaction.data.status === 'DECLINED') {
+  if (payment.status === 'rejected') {
     return (
       <DefaultPageLayout>
         <motion.div
@@ -150,6 +116,48 @@ function OrderConfirmationComponent() {
           <div className="w-full max-w-xs space-y-3">
             <SupportButton
               message={`Hola, he tenido un problema con el pago de mi pedido. El número de mi pedido es ${order.orderNumber}`}
+            />
+
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/">
+                <ShoppingBagIcon className="mr-2" />
+                Volver a la tienda
+              </Link>
+            </Button>
+          </div>
+        </motion.div>
+      </DefaultPageLayout>
+    )
+  }
+
+  if (payment.status !== 'approved') {
+    return (
+      <DefaultPageLayout>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-8 text-center"
+        >
+          <div className="mb-4 rounded-full bg-primary/10 p-6">
+            <InfoIcon size={32} className="text-primary" />
+          </div>
+          <h2 className="mb-2 font-semibold text-xl">
+            ¡Estamos procesando tu pago!
+          </h2>
+          <p className="mb-2 text-muted-foreground">
+            Tu número de pedido es #
+            <span className="font-medium">{order.orderNumber}</span>.
+          </p>
+
+          <p className="mb-6 max-w-md text-muted-foreground">
+            Estamos en proceso de verificación de tu pago. Esto puede tardar
+            unos minutos. Te notificaremos tan pronto como se complete el
+            proceso.
+          </p>
+
+          <div className="w-full max-w-xs space-y-3">
+            <SupportButton
+              message={`Hola, quisiera saber el estado de mi pedido. El número de mi pedido es ${order.orderNumber}`}
             />
 
             <Button asChild variant="outline" className="w-full">
