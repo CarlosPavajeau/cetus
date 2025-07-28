@@ -3,7 +3,7 @@ import { DefaultLoader } from '@/components/default-loader'
 import { CancelOrderButton } from '@/components/order/cancel-order-button'
 import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
 import { OrderSummary } from '@/components/order/order-summary'
-import { TransactionSummary } from '@/components/order/transaction-summary'
+import { PaymentSummary } from '@/components/order/payment-summary'
 import { PageHeader } from '@/components/page-header'
 import { ReturnButton } from '@/components/return-button'
 import { Button } from '@/components/ui/button'
@@ -133,7 +133,9 @@ function OrderDetailsComponent() {
 
         <OrderSummary order={order} showId />
 
-        {order.transactionId && <TransactionSummary id={order.transactionId} />}
+        {order.transactionId && (
+          <PaymentSummary id={Number(order.transactionId)} />
+        )}
 
         <div className="space-y-3">
           {order.status === OrderStatus.Paid && (
