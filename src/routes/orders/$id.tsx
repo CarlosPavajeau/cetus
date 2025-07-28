@@ -3,7 +3,7 @@ import { DefaultPageLayout } from '@/components/default-page-layout'
 import { OrderSummary } from '@/components/order/order-summary'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { PackageIcon, ShoppingBagIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/orders/$id')({
@@ -52,7 +52,7 @@ function RouteComponent() {
           <h2 className="font-medium">Pedido #{order.orderNumber}</h2>
         </div>
 
-        <OrderSummary order={order} />
+        <OrderSummary order={order} showStatus />
 
         <div className="space-y-3">
           <Button asChild variant="outline" className="w-full">
