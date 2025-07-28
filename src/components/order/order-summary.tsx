@@ -20,8 +20,8 @@ export function OrderSummary({
 }: Props) {
   return (
     <>
-      <div className="space-y-3 rounded-md border bg-card p-4">
-        {showStatus && (
+      {showStatus && (
+        <div className="space-y-3 rounded-md border bg-card p-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium">Estado del pedido</h3>
             <Badge variant="outline">
@@ -35,18 +35,18 @@ export function OrderSummary({
               {OrderStatusText[order.status]}
             </Badge>
           </div>
-        )}
 
-        <p className="text-muted-foreground text-sm">
-          Realizado el <FormattedDate date={new Date(order.createdAt)} />
-        </p>
-
-        {showId && (
           <p className="text-muted-foreground text-sm">
-            Id del pedido: {order.id}
+            Realizado el <FormattedDate date={new Date(order.createdAt)} />
           </p>
-        )}
-      </div>
+
+          {showId && (
+            <p className="text-muted-foreground text-sm">
+              Id del pedido: {order.id}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border bg-card">
         <div className="border-b p-4">
