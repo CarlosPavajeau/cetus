@@ -1,6 +1,5 @@
 import type { ProductForSale } from '@/api/products'
 import { Currency } from '@/components/currency'
-import { Image } from '@/components/image'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
 import { ProductRating } from '@/components/product/product-rating'
 import { ProductShare } from '@/components/product/product-share'
@@ -10,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
+import { Image } from '@unpic/react'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
 import { memo, useCallback, useState } from 'react'
 import { toast } from 'sonner'
@@ -109,11 +109,12 @@ function ProductDisplayComponent({ product }: Props) {
           <Image
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
             alt={product.name}
-            fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
+            height={600}
+            width={600}
+            layout="constrained"
             priority
-            quality={80}
           />
         </div>
       </div>
