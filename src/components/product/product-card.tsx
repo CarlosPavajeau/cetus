@@ -1,9 +1,10 @@
 import type { ProductForSale } from '@/api/products'
 import { Currency } from '@/components/currency'
-import { Image } from '@/components/image'
 import { StarRating } from '@/components/product/star-rating'
 import { getImageUrl } from '@/shared/cdn'
 import { Link } from '@tanstack/react-router'
+import { Image } from '@unpic/react'
+
 import { memo } from 'react'
 
 type Props = {
@@ -18,10 +19,14 @@ function ProductCardComponent({ product }: Props) {
           <Image
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
             alt={product.name}
-            fill
+            height={400}
+            width={400}
+            layout="constrained"
+            objectFit="cover"
+            sizes="(max-width: 768px) 50vw, 33vw"
             className="rounded rounded-b-none object-cover transition group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFdwI2QOQvhwAAAABJRU5ErkJggg=="
+            background="auto"
+            priority
           />
         </div>
 
