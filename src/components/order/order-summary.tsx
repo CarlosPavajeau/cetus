@@ -1,10 +1,10 @@
 import { type Order, OrderStatusColor, OrderStatusText } from '@/api/orders'
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
-import Image from '@/components/image'
 import { Badge } from '@/components/ui/badge'
 import { getImageUrl } from '@/shared/cdn'
 import { cn } from '@/shared/cn'
+import { Image } from '@unpic/react'
 import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 
 type Props = {
@@ -60,7 +60,10 @@ export function OrderSummary({
                 <Image
                   src={getImageUrl(item.imageUrl || 'placeholder.svg')}
                   alt={item.productName}
-                  fill
+                  width={64}
+                  height={64}
+                  layout="constrained"
+                  objectFit="cover"
                   sizes="64px"
                   className="object-cover"
                 />

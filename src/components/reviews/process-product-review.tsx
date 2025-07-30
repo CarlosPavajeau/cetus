@@ -4,7 +4,6 @@ import type {
 } from '@/api/reviews'
 import { approveProductReview, rejectProductReview } from '@/api/reviews'
 import { FormattedDate } from '@/components/formatted-date'
-import Image from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
@@ -18,6 +17,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { getImageUrl } from '@/shared/cdn'
 import { useQueryClient } from '@tanstack/react-query'
+import { Image } from '@unpic/react'
 import { CheckIcon, FileSearchIcon, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -94,7 +94,11 @@ export function ProcessProductReview({ review }: Props) {
               src={getImageUrl(review.product.imageUrl)}
               alt={review.product.name}
               className="size-20 rounded-lg object-cover"
-              quality={85}
+              width={80}
+              height={80}
+              sizes="80px"
+              layout="constrained"
+              objectFit="cover"
               priority
             />
             <div className="space-y-1.5">

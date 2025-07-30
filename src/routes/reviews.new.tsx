@@ -1,13 +1,13 @@
 import { ReviewRequestStatus } from '@/api/reviews'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import Image from '@/components/image'
 import { PageHeader } from '@/components/page-header'
 import { ProductReviewForm } from '@/components/reviews/product-review-form'
 import { Button } from '@/components/ui/button'
 import { useReviewRequest } from '@/hooks/reviews'
 import { getImageUrl } from '@/shared/cdn'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Image } from '@unpic/react'
 import { type } from 'arktype'
 import {
   AlertTriangleIcon,
@@ -121,6 +121,10 @@ function RouteComponent() {
           <Image
             src={getImageUrl(reviewRequest.product.imageUrl)}
             alt={reviewRequest.product.name}
+            width={64}
+            height={64}
+            layout="constrained"
+            objectFit="cover"
             className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
           />
           <div className="min-w-0 flex-1">

@@ -1,7 +1,7 @@
 import { Currency } from '@/components/currency'
-import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
+import { Image } from '@unpic/react'
 import { Trash2Icon } from 'lucide-react'
 
 type OrderItem = {
@@ -43,7 +43,9 @@ export function OrderItems({
                 <Image
                   src={getImageUrl(item.imageUrl || 'placeholder.svg')}
                   alt={item.productName}
-                  fill
+                  width={64}
+                  height={64}
+                  layout="constrained"
                   className="rounded-sm object-cover"
                   priority
                 />

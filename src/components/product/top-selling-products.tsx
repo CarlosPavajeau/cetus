@@ -1,9 +1,9 @@
-import Image from '@/components/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTopSellingProducts } from '@/hooks/products'
 import { getImageUrl } from '@/shared/cdn'
 import { useAppStore } from '@/store/app'
+import { Image } from '@unpic/react'
 import { Badge } from '../ui/badge'
 
 export function TopSellingProducts() {
@@ -45,7 +45,10 @@ export function TopSellingProducts() {
                   <Image
                     src={getImageUrl(product.imageUrl ?? 'placeholder.png')}
                     alt={product.name}
-                    fill
+                    width={80}
+                    height={80}
+                    layout="constrained"
+                    objectFit="cover"
                     sizes="80px"
                     className="object-cover"
                   />

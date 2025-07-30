@@ -1,11 +1,11 @@
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import Image from '@/components/image'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { type CartItem, useCart } from '@/store/cart'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Image } from '@unpic/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowRightIcon,
@@ -72,7 +72,10 @@ function CartItemComponent({ item }: CartItemProps) {
           <Image
             src={getImageUrl(item.product.imageUrl || '')}
             alt={item.product.name}
-            fill
+            width={80}
+            height={80}
+            layout="constrained"
+            objectFit="cover"
             sizes="80px"
             className="object-cover"
           />
