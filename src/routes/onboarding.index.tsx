@@ -14,9 +14,9 @@ export const Route = createFileRoute('/onboarding/')({
     }
 
     if (session.activeOrganizationId) {
-      // throw redirect({
-      //   to: '/app',
-      // })
+      throw redirect({
+        to: '/app',
+      })
     }
   },
   component: RouteComponent,
