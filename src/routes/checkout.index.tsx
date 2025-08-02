@@ -16,22 +16,39 @@ import { Input } from '@/components/ui/input'
 import { useCustomer } from '@/hooks/customers'
 import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrder, CreateOrderSchema } from '@/schemas/orders'
-import { useAppStore } from '@/store/app'
 import { useCart } from '@/store/cart'
+import { useTenantStore } from '@/store/use-tenant-store'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Navigate,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
 import { ArrowRightIcon } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 
 export const Route = createFileRoute('/checkout/')({
+  beforeLoad: () => {
+    const { store } = useTenantStore.getState()
+
+    if (!store) {
+      throw redirect({
+        to: '/',
+        search: {
+          redirectReason: 'NO_STORE_SELECTED',
+        },
+      })
+    }
+  },
   component: RouteComponent,
 })
 
 function useCartCheckout() {
-  const appStore = useAppStore()
+  const appStore = useTenantStore()
   const { items, count } = useCart()
   const total = useMemo(
     () =>
@@ -77,14 +94,14 @@ function useCartCheckout() {
 
   const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
     form.watch('cityId'),
-    appStore.currentStore?.slug,
+    appStore.store?.slug,
   )
 
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
     mutationFn: (values: CreateOrder) =>
-      createOrder(values, appStore.currentStore?.slug),
+      createOrder(values, appStore.store?.slug),
     onSuccess: (data) => {
       const orderId = data.id
       navigate({

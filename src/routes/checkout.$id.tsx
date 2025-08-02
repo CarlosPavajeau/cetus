@@ -4,10 +4,23 @@ import { DefaultPageLayout } from '@/components/default-page-layout'
 import { OrderSummary } from '@/components/order/order-summary'
 import { PageHeader } from '@/components/page-header'
 import { SubmitButton } from '@/components/submit-button'
+import { useTenantStore } from '@/store/use-tenant-store'
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/checkout/$id')({
+  beforeLoad: () => {
+    const { store } = useTenantStore.getState()
+
+    if (!store) {
+      throw redirect({
+        to: '/',
+        search: {
+          redirectReason: 'NO_STORE_SELECTED',
+        },
+      })
+    }
+  },
   loader: async ({ params }) => {
     const { id } = params
     const order = await fetchOrder(id)

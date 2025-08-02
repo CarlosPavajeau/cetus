@@ -4,7 +4,8 @@ import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { type CartItem, useCart } from '@/store/cart'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { useTenantStore } from '@/store/use-tenant-store'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -18,6 +19,18 @@ import {
 import { useCallback, useMemo } from 'react'
 
 export const Route = createFileRoute('/cart')({
+  beforeLoad: () => {
+    const { store } = useTenantStore.getState()
+
+    if (!store) {
+      throw redirect({
+        to: '/',
+        search: {
+          redirectReason: 'NO_STORE_SELECTED',
+        },
+      })
+    }
+  },
   component: CartPage,
 })
 
