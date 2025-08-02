@@ -15,8 +15,8 @@ export function HomeSkeleton() {
         <ProductGridSkeleton />
       </div>
 
-      <div className="my-8 flex flex-col items-center gap-6 rounded bg-muted p-4">
-        <p className="w-full text-center font-heading font-medium text-3xl">
+      <div className="my-8 flex flex-col items-center gap-6 rounded p-4">
+        <p className="w-full text-left font-heading font-medium text-3xl">
           Productos populares
         </p>
 
