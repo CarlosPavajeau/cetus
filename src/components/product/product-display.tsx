@@ -3,10 +3,8 @@ import { Currency } from '@/components/currency'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
 import { ProductRating } from '@/components/product/product-rating'
 import { ProductShare } from '@/components/product/product-share'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 import { Image } from '@unpic/react'
@@ -103,51 +101,42 @@ function ProductDisplayComponent({ product }: Props) {
   const isOutOfStock = product.stock <= 0
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
-      <div className="flex w-full flex-col items-center">
-        <div className="relative aspect-square h-full w-full max-w-xl overflow-hidden rounded-lg border">
+    <div className="grid gap-8 lg:grid-cols-2">
+      <div className="space-y-4">
+        <div className="relative aspect-square overflow-hidden">
           <Image
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
             alt={product.name}
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 50vw"
-            height={600}
             width={600}
-            layout="constrained"
-            priority
+            height={600}
+            className="h-full w-full object-cover"
           />
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col">
-            <h1 className="mb-2 font-heading font-medium text-3xl">
-              {product.name}
-            </h1>
+      <div className="space-y-6">
+        <div>
+          <h1 className="mb-2 font-bold font-heading text-2xl lg:text-3xl">
+            {product.name}
+          </h1>
 
+          <div className="mb-4 font-bold text-3xl">
+            <Currency value={product.price} currency="COP" />
+          </div>
+
+          <div className="mb-4 flex items-center space-x-2">
             <ProductRating
               rating={product.rating}
               reviewsCount={product.reviewsCount}
             />
-
-            <div className="prose prose-sm mt-4">
-              <p>{product.description}</p>
-            </div>
-          </div>
-          <div className="font-bold text-2xl">
-            <Currency value={product.price} currency="COP" />
           </div>
         </div>
 
-        <Separator />
-
-        <div className="mb-6 flex flex-1 flex-col gap-1.5">
-          <span className="text-muted-foreground text-xs">Categoría</span>
-          <Badge variant="secondary">{product.category}</Badge>
+        <div className="text-muted-foreground leading-relaxed">
+          <p>{product.description}</p>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="space-y-4">
           <div>
             <QuantitySelector
               quantity={quantity}
@@ -160,7 +149,7 @@ function ProductDisplayComponent({ product }: Props) {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <Button
-                className="w-full"
+                className="flex-1 gap-2"
                 size="lg"
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || isAddingToCart}
