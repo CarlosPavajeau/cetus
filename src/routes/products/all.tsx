@@ -5,22 +5,29 @@ import { ProductGrid } from '@/components/product/product-grid'
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
 import { useCategories } from '@/hooks/categories'
 import { useProductsForSale } from '@/hooks/products'
-import { useAppStore } from '@/store/app'
-import { createFileRoute, Navigate } from '@tanstack/react-router'
+import { useTenantStore } from '@/store/use-tenant-store'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/products/all')({
+  beforeLoad: () => {
+    const { store } = useTenantStore.getState()
+
+    if (!store) {
+      throw redirect({
+        to: '/',
+        search: {
+          redirectReason: 'NO_STORE_SELECTED',
+        },
+      })
+    }
+  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { currentStore } = useAppStore()
-  const { categories, isLoading: isLoadingCategories } = useCategories(
-    currentStore?.slug,
-  )
-  const { products, isLoading: isLoadingProducts } = useProductsForSale(
-    currentStore?.slug,
-  )
+  const { categories, isLoading: isLoadingCategories } = useCategories()
+  const { products, isLoading: isLoadingProducts } = useProductsForSale()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -40,10 +47,6 @@ function RouteComponent() {
     })
   }, [searchTerm, selectedCategories, products])
 
-  if (!currentStore) {
-    return <Navigate to="/" />
-  }
-
   if (isLoadingCategories || isLoadingProducts) {
     return (
       <DefaultPageLayout>
@@ -56,7 +59,7 @@ function RouteComponent() {
 
   if (!products || products.length === 0 || !categories) {
     return (
-      <DefaultPageLayout store={currentStore}>
+      <DefaultPageLayout>
         <p className="w-full text-left font-heading font-medium text-2xl">
           No hay productos disponibles
         </p>
@@ -65,7 +68,7 @@ function RouteComponent() {
   }
 
   return (
-    <DefaultPageLayout store={currentStore}>
+    <DefaultPageLayout>
       <div className="flex flex-col items-center gap-4">
         <p className="w-full text-left font-heading font-medium text-2xl">
           Todos nuestros productos

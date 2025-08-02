@@ -3,7 +3,6 @@ import { Currency } from '@/components/currency'
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import type { CreateCouponRule } from '@/schemas/coupons'
-import { useAppStore } from '@/store/app'
 import { TrashIcon } from 'lucide-react'
 
 type Props = {
@@ -68,8 +67,7 @@ type CouponRuleValueSpecificCategoryProps = {
 function CouponRuleValueSpecificCategory({
   rule,
 }: CouponRuleValueSpecificCategoryProps) {
-  const { currentStore } = useAppStore()
-  const { categories } = useCategories(currentStore?.slug)
+  const { categories } = useCategories()
 
   if (!categories) return null
 
@@ -87,8 +85,7 @@ type CouponRuleValueSpecificProductProps = {
 function CouponRuleValueSpecificProduct({
   rule,
 }: CouponRuleValueSpecificProductProps) {
-  const { currentStore } = useAppStore()
-  const { products } = useProducts(currentStore?.slug)
+  const { products } = useProducts()
 
   if (!products) return null
 

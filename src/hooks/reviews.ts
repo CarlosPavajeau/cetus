@@ -29,10 +29,10 @@ export function useCreateProductReview() {
   })
 }
 
-export function usePendingForApprovalProductReviews(storeSlug?: string) {
+export function usePendingForApprovalProductReviews() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['pending-for-approval-product-reviews', storeSlug],
-    queryFn: () => fetchPendingForApprovalProductReviews(storeSlug),
+    queryKey: ['pending-for-approval-product-reviews'],
+    queryFn: () => fetchPendingForApprovalProductReviews(),
   })
 
   return {

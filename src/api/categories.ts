@@ -17,13 +17,9 @@ export type CreateCategoryRequest = Pick<Category, 'name'>
 export type UpdateCategoryRequest = Pick<Category, 'name' | 'id'>
 
 export const createCategory = async (
-  category: CreateCategoryRequest,
-  storeSlug?: string,
+  category: CreateCategoryRequest
 ) => {
-  const response = await api.post<Category>(
-    `/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
-    category,
-  )
+  const response = await api.post<Category>('/categories', category)
 
   return response.data
 }

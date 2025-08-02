@@ -22,7 +22,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCreateCoupon } from '@/hooks/coupons'
 import { CreateCouponSchema } from '@/schemas/coupons'
 import { generateCouponCode } from '@/shared/coupons'
-import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
@@ -43,14 +42,12 @@ function RouteComponent() {
     },
   })
 
-  const { currentStore } = useAppStore()
   const createCouponMutation = useCreateCoupon({
     onSuccess: () => {
       toast.success('Cupón creado correctamente')
       navigate({ to: '/app/coupons' })
       form.reset()
     },
-    storeSlug: currentStore?.slug,
   })
 
   const onSubmit = form.handleSubmit((data) => {

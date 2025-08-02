@@ -6,7 +6,6 @@ import { FormattedDate } from '@/components/formatted-date'
 import { ProcessProductReview } from '@/components/reviews/process-product-review'
 import { usePendingForApprovalProductReviews } from '@/hooks/reviews'
 import { usePagination } from '@/hooks/use-pagination'
-import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -85,9 +84,8 @@ function useReviewsTable(
 }
 
 function RouteComponent() {
-  const { currentStore } = useAppStore()
   const { pendingForApprovalProductReviews, isLoading } =
-    usePendingForApprovalProductReviews(currentStore?.slug)
+    usePendingForApprovalProductReviews()
   const { table, paginationInfo } = useReviewsTable(
     pendingForApprovalProductReviews,
   )

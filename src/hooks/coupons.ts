@@ -4,13 +4,12 @@ import {
   fetchCoupons,
   redeemCoupon,
 } from '@/api/coupons'
-import type { CreateCoupon } from '@/schemas/coupons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-export function useCoupons(storeSlug?: string) {
+export function useCoupons() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['coupons', storeSlug],
-    queryFn: () => fetchCoupons(storeSlug),
+    queryKey: ['coupons'],
+    queryFn: () => fetchCoupons(),
   })
 
   return {
@@ -22,16 +21,12 @@ export function useCoupons(storeSlug?: string) {
 
 type UseCreateCouponProps = {
   onSuccess?: () => void
-  storeSlug?: string | undefined
 }
 
-export function useCreateCoupon({
-  onSuccess,
-  storeSlug,
-}: UseCreateCouponProps) {
+export function useCreateCoupon({ onSuccess }: UseCreateCouponProps) {
   return useMutation({
     mutationKey: ['create-coupon'],
-    mutationFn: (coupon: CreateCoupon) => createCoupon(coupon, storeSlug),
+    mutationFn: createCoupon,
     onSuccess: () => {
       onSuccess?.()
     },

@@ -6,7 +6,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useStoreBySlug } from '@/hooks/stores'
 import { GetSession } from '@/server/get-session'
 import { SetActiveOrg } from '@/server/organizations'
-import { useAppStore } from '@/store/app'
+import { useTenantStore } from '@/store/use-tenant-store'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
@@ -40,7 +40,7 @@ export const Route = createFileRoute('/app')({
 function RouteComponent() {
   const { data: org, isPending } = authClient.useActiveOrganization()
   const { store, isLoading } = useStoreBySlug(org?.slug)
-  const appStore = useAppStore()
+  const tenantStore = useTenantStore()
 
   useEffect(() => {
     if (isPending || isLoading) return
@@ -49,7 +49,7 @@ function RouteComponent() {
 
     if (!store) return
 
-    appStore.setCurrentStore(store)
+    tenantStore.actions.setStore(store)
   }, [isPending, org, store, isLoading])
 
   return (

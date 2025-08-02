@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useCategories } from '@/hooks/categories'
 import { usePagination } from '@/hooks/use-pagination'
-import { useAppStore } from '@/store/app'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -95,8 +94,7 @@ function useCategoryTable(categories: Category[] | undefined) {
 }
 
 function RouteComponent() {
-  const { currentStore } = useAppStore()
-  const { categories, isLoading } = useCategories(currentStore?.slug)
+  const { categories, isLoading } = useCategories()
   const { table, paginationInfo } = useCategoryTable(categories)
 
   const [isOpenCreateCategory, setIsOpenCreateCategory] = useState(false)

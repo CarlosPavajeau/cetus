@@ -8,6 +8,7 @@ type TenantStore = {
   actions: {
     fetchAndSetStore: (identifier: string) => Promise<Store>
     clearStore: () => void
+    setStore: (store: Store) => void
   }
 }
 
@@ -43,6 +44,9 @@ export const useTenantStore = create<TenantStore>()(
         },
         clearStore: () => {
           set({ store: undefined, status: 'idle' })
+        },
+        setStore: (store) => {
+          set({ store, status: 'success' })
         },
       },
     }),

@@ -8,10 +8,10 @@ import {
 } from '@/api/orders'
 import { useQuery } from '@tanstack/react-query'
 
-export function useOrderInsights(month: string, storeSlug?: string) {
+export function useOrderInsights(month: string) {
   const { data, isLoading } = useQuery({
-    queryKey: ['order-insights', month, storeSlug],
-    queryFn: () => fetchOrderInsights(month, storeSlug),
+    queryKey: ['order-insights', month],
+    queryFn: () => fetchOrderInsights(month),
   })
 
   return {
@@ -34,11 +34,10 @@ export function useOrder(id: string) {
   }
 }
 
-export function useOrders(storeSlug?: string) {
+export function useOrders() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['orders', storeSlug],
-    queryFn: () => fetchOrders(storeSlug),
-    enabled: !!storeSlug,
+    queryKey: ['orders'],
+    queryFn: () => fetchOrders(),
   })
 
   return {
@@ -48,10 +47,10 @@ export function useOrders(storeSlug?: string) {
   }
 }
 
-export function useOrdersSummary(month: string, storeSlug?: string) {
+export function useOrdersSummary(month: string) {
   const { data, isLoading } = useQuery({
-    queryKey: ['orders-summary', month, storeSlug],
-    queryFn: () => fetchOrdersSummary(month, storeSlug),
+    queryKey: ['orders-summary', month],
+    queryFn: () => fetchOrdersSummary(month),
   })
 
   return {
@@ -73,10 +72,10 @@ export function useDeliveryFee(cityId?: string, storeSlug?: string) {
   }
 }
 
-export function useDeliveryFees(storeSlug?: string) {
+export function useDeliveryFees() {
   const { data, isLoading } = useQuery({
-    queryKey: ['delivery-fees', storeSlug],
-    queryFn: () => fetchDeliveryFees(storeSlug),
+    queryKey: ['delivery-fees'],
+    queryFn: () => fetchDeliveryFees(),
   })
 
   return {

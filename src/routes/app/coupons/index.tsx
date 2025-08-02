@@ -7,7 +7,6 @@ import { FormattedDate } from '@/components/formatted-date'
 import { Button } from '@/components/ui/button'
 import { useCoupons } from '@/hooks/coupons'
 import { usePagination } from '@/hooks/use-pagination'
-import { useAppStore } from '@/store/app'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type ColumnDef,
@@ -103,8 +102,7 @@ function useCouponsTable(coupons: Coupon[] | undefined) {
 }
 
 function RouteComponent() {
-  const { currentStore } = useAppStore()
-  const { coupons, isLoading } = useCoupons(currentStore?.slug)
+  const { coupons, isLoading } = useCoupons()
   const { table, paginationInfo } = useCouponsTable(coupons)
 
   if (isLoading) {

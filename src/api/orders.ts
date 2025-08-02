@@ -84,10 +84,8 @@ export type SimpleOrder = {
   createdAt: string
 }
 
-export const fetchOrders = async (storeSlug?: string) => {
-  const response = await api.get<SimpleOrder[]>(
-    `/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export const fetchOrders = async () => {
+  const response = await api.get<SimpleOrder[]>('/orders')
 
   return response.data
 }
@@ -113,9 +111,9 @@ export type OrderInsights = {
   ordersCountPercentageChange: number
 }
 
-export const fetchOrderInsights = async (month: string, storeSlug?: string) => {
+export const fetchOrderInsights = async (month: string) => {
   const response = await api.get<OrderInsights>(
-    `/orders/insights?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
+    `/orders/insights?month=${month}`,
   )
 
   return response.data
@@ -127,9 +125,9 @@ export type OrderSummary = {
   createdAt: string
 }
 
-export const fetchOrdersSummary = async (month: string, storeSlug?: string) => {
+export const fetchOrdersSummary = async (month: string) => {
   const response = await api.get<OrderSummary[]>(
-    `/orders/summary?month=${month}${storeSlug ? `&store=${storeSlug}` : ''}`,
+    `/orders/summary?month=${month}`,
   )
 
   return response.data
@@ -148,10 +146,8 @@ export async function fetchDeliveryFee(cityId: string, storeSlug?: string) {
   return response.data
 }
 
-export async function fetchDeliveryFees(storeSlug?: string) {
-  const response = await api.get<DeliveryFee[]>(
-    `/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export async function fetchDeliveryFees() {
+  const response = await api.get<DeliveryFee[]>('/orders/delivery-fees')
 
   return response.data
 }
@@ -162,13 +158,9 @@ export type CreateDeliveryFeeRequest = {
 }
 
 export async function createDeliveryFee(
-  deliveryFee: CreateDeliveryFeeRequest,
-  storeSlug?: string,
+  deliveryFee: CreateDeliveryFeeRequest
 ) {
-  const response = await api.post<DeliveryFee>(
-    `/orders/delivery-fees${storeSlug ? `?store=${storeSlug}` : ''}`,
-    deliveryFee,
-  )
+  const response = await api.post<DeliveryFee>('/orders/delivery-fees', deliveryFee)
 
   return response.data
 }

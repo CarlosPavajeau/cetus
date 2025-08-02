@@ -5,7 +5,6 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
 import { cn } from '@/shared/cn'
-import { useAppStore } from '@/store/app'
 import { useSearch } from '@tanstack/react-router'
 import { useNumberFormatter } from 'react-aria'
 
@@ -20,12 +19,7 @@ export function NewOrdersSummary() {
   const { month } = useSearch({
     from: '/app/dashboard/',
   })
-  const { currentStore } = useAppStore()
-
-  const { isLoading, summary } = useOrdersSummary(
-    month as unknown as string,
-    currentStore?.slug,
-  )
+  const { isLoading, summary } = useOrdersSummary(month as unknown as string)
 
   const percentageFormatter = useNumberFormatter({
     style: 'percent',

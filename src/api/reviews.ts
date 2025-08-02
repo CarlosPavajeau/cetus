@@ -41,12 +41,8 @@ export type PendingForApprovalProductReview = {
   createdAt: string
 }
 
-export async function fetchPendingForApprovalProductReviews(
-  storeSlug?: string,
-) {
-  const response = await api.get<PendingForApprovalProductReview[]>(
-    `/reviews/products/pending${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export async function fetchPendingForApprovalProductReviews() {
+  const response = await api.get<PendingForApprovalProductReview[]>('/reviews/products/pending')
 
   return response.data
 }

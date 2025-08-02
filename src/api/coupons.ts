@@ -84,14 +84,8 @@ export const COUPON_RULE_TYPE_OPTIONS = [
   },
 ]
 
-export async function createCoupon(
-  coupon: CreateCoupon,
-  storeSlug?: string | undefined,
-) {
-  const response = await api.post<Coupon>(
-    `/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
-    coupon,
-  )
+export async function createCoupon(coupon: CreateCoupon) {
+  const response = await api.post<Coupon>('/coupons', coupon)
 
   return response.data
 }

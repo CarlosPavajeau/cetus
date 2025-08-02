@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-export function useCreateProduct(mainImage: File | null, storeSlug?: string) {
+export function useCreateProduct(mainImage: File | null) {
   const navigate = useNavigate()
 
   return useMutation({
@@ -24,7 +24,7 @@ export function useCreateProduct(mainImage: File | null, storeSlug?: string) {
         if (mainImage) {
           await uploadFileToS3({ fileName: values.imageUrl, file: mainImage })
         }
-        return createProduct(values, storeSlug)
+        return createProduct(values)
       } catch (error) {
         console.error('Failed to create product:', error)
         throw error
@@ -98,10 +98,10 @@ export function useProduct(id: string) {
   }
 }
 
-export function useProductsForSale(storeSlug?: string) {
+export function useProductsForSale() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['products', 'for-sale', storeSlug],
-    queryFn: () => fetchProductsForSale(storeSlug),
+    queryKey: ['products', 'for-sale'],
+    queryFn: () => fetchProductsForSale(),
   })
 
   return {
@@ -111,10 +111,10 @@ export function useProductsForSale(storeSlug?: string) {
   }
 }
 
-export function useProducts(storeSlug?: string) {
+export function useProducts() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['products', storeSlug],
-    queryFn: () => fetchProducts(storeSlug),
+    queryKey: ['products'],
+    queryFn: () => fetchProducts(),
     refetchOnMount: false,
   })
 
@@ -139,10 +139,10 @@ export function useProductSuggestions(productId?: string) {
   }
 }
 
-export function useTopSellingProducts(storeSlug?: string) {
+export function useTopSellingProducts() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['products', 'top-selling', storeSlug],
-    queryFn: () => fetchTopSellingProducts(storeSlug),
+    queryKey: ['products', 'top-selling'],
+    queryFn: () => fetchTopSellingProducts(),
   })
 
   return {

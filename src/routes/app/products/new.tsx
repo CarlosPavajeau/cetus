@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateProduct } from '@/hooks/products'
 import { CreateProductSchema } from '@/schemas/product'
-import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute } from '@tanstack/react-router'
 import { Fragment, useCallback, useState } from 'react'
@@ -52,8 +51,7 @@ function ProductCreateForm() {
     removeImage,
   } = useImageUpload(form)
 
-  const { currentStore } = useAppStore()
-  const createProductMutation = useCreateProduct(mainImage, currentStore?.slug)
+  const createProductMutation = useCreateProduct(mainImage)
 
   const openCategoryDialog = useCallback(() => {
     setIsCategoryDialogOpen(true)

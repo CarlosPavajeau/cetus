@@ -1,4 +1,4 @@
-import { type CreateCategoryRequest, createCategory } from '@/api/categories'
+import { createCategory } from '@/api/categories'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { type } from 'arktype'
@@ -36,15 +35,13 @@ const CreateCategorySchema = type({
 type CreateCategory = typeof CreateCategorySchema.infer
 
 export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
-  const { currentStore } = useAppStore()
   const form = useForm<CreateCategory>({
     resolver: arktypeResolver(CreateCategorySchema),
   })
 
   const createCategoryMutation = useMutation({
     mutationKey: ['categories', 'create'],
-    mutationFn: (category: CreateCategoryRequest) =>
-      createCategory(category, currentStore?.slug),
+    mutationFn: createCategory,
   })
 
   const onSubmit = form.handleSubmit((values) => {

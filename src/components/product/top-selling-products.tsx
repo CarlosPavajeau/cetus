@@ -2,13 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTopSellingProducts } from '@/hooks/products'
 import { getImageUrl } from '@/shared/cdn'
-import { useAppStore } from '@/store/app'
 import { Image } from '@unpic/react'
 import { Badge } from '../ui/badge'
 
 export function TopSellingProducts() {
-  const { currentStore } = useAppStore()
-  const { products, isLoading } = useTopSellingProducts(currentStore?.slug)
+  const { products, isLoading } = useTopSellingProducts()
 
   if (isLoading) {
     return (

@@ -19,7 +19,6 @@ import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/shared/cn'
-import { useAppStore } from '@/store/app'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type Column,
@@ -123,7 +122,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
           <Badge
             className={cn(
               !row.getValue('enabled') &&
-                'bg-muted-foreground/60 text-primary-foreground',
+              'bg-muted-foreground/60 text-primary-foreground',
             )}
           >
             {row.getValue('enabled') ? 'Activo' : 'Inactivo'}
@@ -247,9 +246,7 @@ type CategoryFilterProps = {
 
 function CategoryFilter({ table }: CategoryFilterProps) {
   const categoryColumn = table.getColumn('categoryId') as Column<Product, Key>
-  const { currentStore } = useAppStore()
-
-  const { isLoading, categories } = useCategories(currentStore?.slug)
+  const { isLoading, categories } = useCategories()
 
   if (!categoryColumn || isLoading) {
     return null
@@ -275,8 +272,7 @@ function CategoryFilter({ table }: CategoryFilterProps) {
 }
 
 function RouteComponent() {
-  const { currentStore } = useAppStore()
-  const { products, isLoading } = useProducts(currentStore?.slug)
+  const { products, isLoading } = useProducts()
   const id = useId()
 
   const { table, paginationInfo } = useProductTable(products)

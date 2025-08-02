@@ -1,4 +1,4 @@
-import { type CreateDeliveryFeeRequest, createDeliveryFee } from '@/api/orders'
+import { createDeliveryFee } from '@/api/orders'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useCities, useStates } from '@/hooks/use-state'
-import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { type } from 'arktype'
@@ -93,11 +92,9 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
   }
 
   const queryClient = useQueryClient()
-  const { currentStore } = useAppStore()
   const createDeliveryFeeMutation = useMutation({
     mutationKey: ['delivery-fees', 'create'],
-    mutationFn: (values: CreateDeliveryFeeRequest) =>
-      createDeliveryFee(values, currentStore?.slug),
+    mutationFn: createDeliveryFee,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['delivery-fees'],

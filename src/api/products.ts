@@ -18,10 +18,8 @@ export type Product = {
   updatedAt: string
 }
 
-export const fetchProducts = async (storeSlug?: string) => {
-  const response = await api.get<Product[]>(
-    `/products${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export const fetchProducts = async () => {
+  const response = await api.get<Product[]>('/products')
 
   return response.data
 }
@@ -37,10 +35,8 @@ export type ProductForSale = Omit<
   'createdAt' | 'updatedAt' | 'enabled'
 >
 
-export const fetchProductsForSale = async (storeSlug?: string) => {
-  const response = await api.get<ProductForSale[]>(
-    `/products/for-sale${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export const fetchProductsForSale = async () => {
+  const response = await anonymousApi.get<ProductForSale[]>('/products/for-sale')
 
   return response.data
 }
@@ -58,14 +54,8 @@ export async function fetchPopularProducts() {
   return response.data
 }
 
-export const createProduct = async (
-  product: CreateProduct,
-  storeSlug?: string,
-) => {
-  const response = await api.post<Product>(
-    `/products${storeSlug ? `?store=${storeSlug}` : ''}`,
-    product,
-  )
+export const createProduct = async (product: CreateProduct) => {
+  const response = await api.post<Product>('/products', product)
 
   return response.data
 }
@@ -96,10 +86,8 @@ export type TopSellingProduct = {
   salesCount: number
 }
 
-export async function fetchTopSellingProducts(storeSlug?: string) {
-  const response = await api.get<TopSellingProduct[]>(
-    `/products/top-selling${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export async function fetchTopSellingProducts() {
+  const response = await api.get<TopSellingProduct[]>('/products/top-selling')
 
   return response.data
 }

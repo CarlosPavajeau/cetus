@@ -29,7 +29,6 @@ import {
   type CreateCouponRule,
   CreateCouponRuleSchema,
 } from '@/schemas/coupons'
-import { useAppStore } from '@/store/app'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -168,8 +167,7 @@ function SelectRuleValue({ ruleType }: SelectRuleValueProps) {
 
 function SelectRuleValueSpecificCategory() {
   const form = useFormContext<CreateCouponRule>()
-  const { currentStore } = useAppStore()
-  const { categories } = useCategories(currentStore?.slug)
+  const { categories } = useCategories()
 
   return (
     <FormField
@@ -204,8 +202,7 @@ function SelectRuleValueSpecificCategory() {
 
 function SelectRuleValueSpecificProduct() {
   const form = useFormContext<CreateCouponRule>()
-  const { currentStore } = useAppStore()
-  const { products } = useProducts(currentStore?.slug)
+  const { products } = useProducts()
 
   return (
     <FormField

@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderInsights } from '@/hooks/orders'
 import { cn } from '@/shared/cn'
-import { useAppStore } from '@/store/app'
 import { useSearch } from '@tanstack/react-router'
 import { useNumberFormatter } from 'react-aria'
 
@@ -53,12 +52,7 @@ export function OrdersInsights() {
   const { month } = useSearch({
     from: '/app/dashboard/',
   })
-  const { currentStore } = useAppStore()
-
-  const { insights, isLoading } = useOrderInsights(
-    month as unknown as string,
-    currentStore?.slug,
-  )
+  const { insights, isLoading } = useOrderInsights(month as unknown as string)
 
   if (isLoading) {
     return (

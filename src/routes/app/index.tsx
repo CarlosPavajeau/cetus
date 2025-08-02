@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { useOrders } from '@/hooks/orders'
 import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
 import { cn } from '@/shared/cn'
-import { useAppStore } from '@/store/app'
+import { useTenantStore } from '@/store/use-tenant-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { CircleXIcon, ListFilterIcon, RefreshCwIcon } from 'lucide-react'
@@ -97,13 +97,13 @@ function SearchInput({
 const HUB_URL = `${import.meta.env.VITE_API_URL}/realtime/orders`
 
 function RouteComponent() {
-  const { currentStore } = useAppStore()
-  const { orders, isLoading } = useOrders(currentStore?.slug)
+  const { store } = useTenantStore()
+  const { orders, isLoading } = useOrders()
   const queryClient = useQueryClient()
 
   const { connection } = useHub(HUB_URL)
 
-  useHubGroup(connection, 'JoinStoreGroup', currentStore?.slug)
+  useHubGroup(connection, 'JoinStoreGroup', store?.slug)
 
   useClientMethod(connection, 'ReceiveCreatedOrder', (order: SimpleOrder) => {
     queryClient.setQueryData<SimpleOrder[]>(['orders'], (oldOrders) => {
