@@ -4,6 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --breakpoint-3xl: 1600px;
+  --breakpoint-4xl: 2000px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -303,4 +305,8 @@ html {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@utility container {
+  @apply 3xl:max-w-screen-2xl mx-auto max-w-[1400px];
 }
