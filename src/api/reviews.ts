@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi, api } from '@/api/client'
 import type { CreateProductReview } from '@/schemas/reviews'
 
 export enum ReviewRequestStatus {
@@ -60,7 +60,7 @@ export type ProductReview = {
 }
 
 export async function fetchProductReviews(productId: string) {
-  const response = await api.get<ProductReview[]>(
+  const response = await anonymousApi.get<ProductReview[]>(
     `/reviews/products/${productId}`,
   )
 

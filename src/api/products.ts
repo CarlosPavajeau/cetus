@@ -71,7 +71,7 @@ export const createProduct = async (
 }
 
 export async function fetchProductSuggestions(productId: string) {
-  const response = await api.get<ProductForSale[]>(
+  const response = await anonymousApi.get<ProductForSale[]>(
     `/products/suggestions?productId=${productId}`,
   )
 
@@ -105,7 +105,9 @@ export async function fetchTopSellingProducts(storeSlug?: string) {
 }
 
 export async function fetchProductBySlug(slug: string) {
-  const response = await api.get<ProductForSale>(`/products/slug/${slug}`)
+  const response = await anonymousApi.get<ProductForSale>(
+    `/products/slug/${slug}`,
+  )
 
   return response.data
 }
