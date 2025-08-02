@@ -64,11 +64,8 @@ export const fetchOrder = async (id: string) => {
   return response.data
 }
 
-export const createOrder = async (order: CreateOrder, storeSlug?: string) => {
-  const response = await api.post<SimpleOrder>(
-    `/orders${storeSlug ? `?store=${storeSlug}` : ''}`,
-    order,
-  )
+export const createOrder = async (order: CreateOrder) => {
+  const response = await api.post<SimpleOrder>('/orders', order)
 
   return response.data
 }
@@ -138,10 +135,8 @@ export type DeliveryFee = {
   fee: number
 }
 
-export async function fetchDeliveryFee(cityId: string, storeSlug?: string) {
-  const response = await api.get<DeliveryFee>(
-    `/orders/delivery-fees/${cityId}${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export async function fetchDeliveryFee(cityId: string) {
+  const response = await api.get<DeliveryFee>(`/orders/delivery-fees/${cityId}`)
 
   return response.data
 }
@@ -157,10 +152,11 @@ export type CreateDeliveryFeeRequest = {
   fee: number
 }
 
-export async function createDeliveryFee(
-  deliveryFee: CreateDeliveryFeeRequest
-) {
-  const response = await api.post<DeliveryFee>('/orders/delivery-fees', deliveryFee)
+export async function createDeliveryFee(deliveryFee: CreateDeliveryFeeRequest) {
+  const response = await api.post<DeliveryFee>(
+    '/orders/delivery-fees',
+    deliveryFee,
+  )
 
   return response.data
 }

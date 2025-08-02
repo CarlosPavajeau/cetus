@@ -48,7 +48,6 @@ export const Route = createFileRoute('/checkout/')({
 })
 
 function useCartCheckout() {
-  const appStore = useTenantStore()
   const { items, count } = useCart()
   const total = useMemo(
     () =>
@@ -94,14 +93,12 @@ function useCartCheckout() {
 
   const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
     form.watch('cityId'),
-    appStore.store?.slug,
   )
 
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
-    mutationFn: (values: CreateOrder) =>
-      createOrder(values, appStore.store?.slug),
+    mutationFn: createOrder,
     onSuccess: (data) => {
       const orderId = data.id
       navigate({

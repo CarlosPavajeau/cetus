@@ -43,10 +43,8 @@ export type Coupon = {
   updatedAt: string
 }
 
-export async function fetchCoupons(storeSlug?: string) {
-  const response = await api.get<Coupon[]>(
-    `/coupons${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export async function fetchCoupons() {
+  const response = await api.get<Coupon[]>('/coupons')
 
   return response.data
 }

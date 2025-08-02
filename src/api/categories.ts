@@ -16,9 +16,7 @@ export const fetchCategories = async () => {
 export type CreateCategoryRequest = Pick<Category, 'name'>
 export type UpdateCategoryRequest = Pick<Category, 'name' | 'id'>
 
-export const createCategory = async (
-  category: CreateCategoryRequest
-) => {
+export const createCategory = async (category: CreateCategoryRequest) => {
   const response = await api.post<Category>('/categories', category)
 
   return response.data

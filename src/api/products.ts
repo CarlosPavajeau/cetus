@@ -36,7 +36,8 @@ export type ProductForSale = Omit<
 >
 
 export const fetchProductsForSale = async () => {
-  const response = await anonymousApi.get<ProductForSale[]>('/products/for-sale')
+  const response =
+    await anonymousApi.get<ProductForSale[]>('/products/for-sale')
 
   return response.data
 }

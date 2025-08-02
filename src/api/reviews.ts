@@ -42,7 +42,9 @@ export type PendingForApprovalProductReview = {
 }
 
 export async function fetchPendingForApprovalProductReviews() {
-  const response = await api.get<PendingForApprovalProductReview[]>('/reviews/products/pending')
+  const response = await api.get<PendingForApprovalProductReview[]>(
+    '/reviews/products/pending',
+  )
 
   return response.data
 }

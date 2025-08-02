@@ -59,10 +59,10 @@ export function useOrdersSummary(month: string) {
   }
 }
 
-export function useDeliveryFee(cityId?: string, storeSlug?: string) {
+export function useDeliveryFee(cityId?: string) {
   const { data, isLoading } = useQuery({
-    queryKey: ['delivery-fee', cityId, storeSlug],
-    queryFn: () => fetchDeliveryFee(cityId!, storeSlug),
+    queryKey: ['delivery-fee', cityId],
+    queryFn: () => fetchDeliveryFee(cityId!),
     enabled: !!cityId,
   })
 
