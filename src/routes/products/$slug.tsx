@@ -7,13 +7,25 @@ import { ProductTabs } from '@/components/product/product-tabs'
 import { SuggestedProducts } from '@/components/product/suggested-product'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAppStore } from '@/store/app'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { useTenantStore } from '@/store/use-tenant-store'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Home } from 'lucide-react'
 
 export const Route = createFileRoute('/products/$slug')({
-  loader: async (context) => {
-    const slug = context.params.slug
+  beforeLoad: () => {
+    const { store } = useTenantStore.getState()
+
+    if (!store) {
+      throw redirect({
+        to: '/',
+        search: {
+          redirectReason: 'NO_STORE_SELECTED',
+        },
+      })
+    }
+  },
+  loader: async ({ params }) => {
+    const slug = params.slug
     const product = await fetchProductBySlug(slug)
 
     const [suggestions, reviews] = await Promise.all([
@@ -56,11 +68,11 @@ export const Route = createFileRoute('/products/$slug')({
 
 function ProductDetailsPage() {
   const { product, suggestions, reviews } = Route.useLoaderData()
-  const { currentStore } = useAppStore()
+  const { store } = useTenantStore()
 
   return (
     <DefaultPageLayout>
-      <title>{`${product.name} | ${currentStore?.name}`}</title>
+      <title>{`${product.name} | ${store?.name}`}</title>
 
       <div className="flex flex-col gap-8">
         <ProductDisplay key={product.id} product={product} />
@@ -100,7 +112,7 @@ function ProductDisplaySkeleton() {
             <Skeleton className="h-4 w-32" />
           </div>
 
-          <div className="prose prose-sm">
+          <div className="prose prose-sm gap-1">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-5/6" />
