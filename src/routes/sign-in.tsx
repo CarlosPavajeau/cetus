@@ -153,7 +153,14 @@ function RouteComponent() {
             <p className="text-center text-accent-foreground text-sm">
               ¿No tienes una cuenta?
               <Button asChild variant="link" className="px-2">
-                <Link to="/">Crear cuenta</Link>
+                <Link
+                  to="/sign-up"
+                  search={{
+                    invitation,
+                  }}
+                >
+                  Crear cuenta
+                </Link>
               </Button>
             </p>
           </div>
