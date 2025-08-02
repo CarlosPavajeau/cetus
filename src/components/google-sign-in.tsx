@@ -37,15 +37,9 @@ export function GoogleSignIn({ invitation }: Props) {
     }, 2000)
   }
   return (
-    <Button
-      size="lg"
-      variant="outline"
-      className="w-full"
-      onClick={signIn}
-      disabled={isLoading}
-    >
+    <Button variant="outline" onClick={signIn} disabled={isLoading}>
       <GoogleIcon className="h-5 w-5" />
-      <span className="whitespace-nowrap">Continuar con Google</span>
+      <span className="whitespace-nowrap">Google</span>
     </Button>
   )
 }
