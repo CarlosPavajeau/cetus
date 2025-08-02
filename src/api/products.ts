@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi, api } from '@/api/client'
 import type { CreateProduct, UpdateProduct } from '@/schemas/product'
 
 export type Product = {
@@ -45,18 +45,15 @@ export const fetchProductsForSale = async (storeSlug?: string) => {
   return response.data
 }
 
-export async function fetchFeaturedProducts(storeSlug?: string) {
-  const response = await api.get<ProductForSale[]>(
-    `/products/featured${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export async function fetchFeaturedProducts() {
+  const response =
+    await anonymousApi.get<ProductForSale[]>('/products/featured')
 
   return response.data
 }
 
-export async function fetchPopularProducts(storeSlug?: string) {
-  const response = await api.get<ProductForSale[]>(
-    `/products/popular${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export async function fetchPopularProducts() {
+  const response = await anonymousApi.get<ProductForSale[]>('/products/popular')
 
   return response.data
 }

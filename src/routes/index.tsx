@@ -26,11 +26,7 @@ export const Route = createFileRoute('/')({
       }
 
       const [featuredProducts, popularProducts, categories] = await Promise.all(
-        [
-          fetchFeaturedProducts(store.slug),
-          fetchPopularProducts(store.slug),
-          fetchCategories(store.slug),
-        ],
+        [fetchFeaturedProducts(), fetchPopularProducts(), fetchCategories()],
       )
 
       return {

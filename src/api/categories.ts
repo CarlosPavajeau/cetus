@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi, api } from '@/api/client'
 
 export type Category = {
   id: string
@@ -7,10 +7,8 @@ export type Category = {
   updatedAt: string
 }
 
-export const fetchCategories = async (storeSlug?: string) => {
-  const response = await api.get<Category[]>(
-    `/categories${storeSlug ? `?store=${storeSlug}` : ''}`,
-  )
+export const fetchCategories = async () => {
+  const response = await anonymousApi.get<Category[]>('/categories')
 
   return response.data
 }
