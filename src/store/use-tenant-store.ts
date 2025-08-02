@@ -1,0 +1,58 @@
+import { fetchStoreByDomain, fetchStoreBySlug, type Store } from '@/api/stores'
+import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+
+type TenantStore = {
+  store?: Store
+  status: 'idle' | 'loading' | 'success' | 'error'
+  actions: {
+    fetchAndSetStore: (identifier: string) => Promise<Store>
+    clearStore: () => void
+  }
+}
+
+function isDomain(identifier: string): boolean {
+  const domainRegex = /^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i
+  return domainRegex.test(identifier)
+}
+
+export const useTenantStore = create<TenantStore>()(
+  persist(
+    (set, get) => ({
+      store: undefined,
+      status: 'idle',
+      actions: {
+        fetchAndSetStore: async (identifier) => {
+          set({ status: 'loading' })
+          try {
+            let store: Store | undefined = undefined
+            if (isDomain(identifier)) {
+              store = await fetchStoreByDomain(identifier)
+            } else {
+              store = await fetchStoreBySlug(identifier)
+            }
+
+            set({ store, status: 'success' })
+            return store
+          } catch (error) {
+            console.error('Failed to fetch store', error)
+            get().actions.clearStore()
+            set({ status: 'error' })
+            throw error
+          }
+        },
+        clearStore: () => {
+          set({ store: undefined, status: 'idle' })
+        },
+      },
+    }),
+    {
+      name: 'store-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ store: state.store }),
+    },
+  ),
+)
+
+export const useTenantStoreActions = () =>
+  useTenantStore((state) => state.actions)
