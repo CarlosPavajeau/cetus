@@ -12,6 +12,7 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ReturnsRouteImport } from './routes/returns'
 import { Route as ProductsRouteImport } from './routes/products'
@@ -51,6 +52,11 @@ const rootServerRouteImport = createServerRootRoute()
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignInRoute = SignInRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
   '/app/account': typeof AppAccountRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
   '/app/account': typeof AppAccountRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
   '/app/account': typeof AppAccountRoute
@@ -337,6 +346,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/returns'
     | '/sign-in'
+    | '/sign-up'
     | '/terms'
     | '/accept-invitation/$id'
     | '/app/account'
@@ -370,6 +380,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/returns'
     | '/sign-in'
+    | '/sign-up'
     | '/terms'
     | '/accept-invitation/$id'
     | '/app/account'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/returns'
     | '/sign-in'
+    | '/sign-up'
     | '/terms'
     | '/accept-invitation/$id'
     | '/app/account'
@@ -439,6 +451,7 @@ export interface RootRouteChildren {
   ProductsRoute: typeof ProductsRouteWithChildren
   ReturnsRoute: typeof ReturnsRoute
   SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
   TermsRoute: typeof TermsRoute
   AcceptInvitationIdRoute: typeof AcceptInvitationIdRoute
   CheckoutIdRoute: typeof CheckoutIdRoute
@@ -480,6 +493,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-in': {
@@ -788,6 +808,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRoute: ProductsRouteWithChildren,
   ReturnsRoute: ReturnsRoute,
   SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
   TermsRoute: TermsRoute,
   AcceptInvitationIdRoute: AcceptInvitationIdRoute,
   CheckoutIdRoute: CheckoutIdRoute,
