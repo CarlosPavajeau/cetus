@@ -1,10 +1,30 @@
+import { authClient } from '@/auth/auth-client'
 import { GoogleSignIn } from '@/components/google-sign-in'
-import { createFileRoute } from '@tanstack/react-router'
+import { SubmitButton } from '@/components/submit-button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { type } from 'arktype'
-import { ShoppingCartIcon } from 'lucide-react'
+import { HopIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
 
 const SignInSearchSchema = type({
   invitation: type.string.or(type.undefined).optional(),
+})
+
+const SignInWithEmailAndPasswordSchema = type({
+  email: type('string.email'),
+  password: type('string'),
 })
 
 export const Route = createFileRoute('/sign-in')({
@@ -14,36 +34,131 @@ export const Route = createFileRoute('/sign-in')({
 
 function RouteComponent() {
   const { invitation } = Route.useSearch()
+  const [authError, setAuthError] = useState<string | undefined>()
+
+  const form = useForm({
+    resolver: arktypeResolver(SignInWithEmailAndPasswordSchema),
+  })
+
+  const callbackUrl = useMemo(() => {
+    if (invitation) {
+      return `/accept-invitation/${invitation}`
+    }
+    return '/app'
+  }, [invitation])
+
+  const handleSubmit = form.handleSubmit(async (data) => {
+    const { error } = await authClient.signIn.email({
+      email: data.email,
+      password: data.password,
+      rememberMe: true,
+      callbackURL: callbackUrl,
+    })
+
+    if (error) {
+      setAuthError(error.message)
+    }
+  })
 
   return (
-    <div className="h-screen p-2">
-      <header className="lef-0 absolute top-0 z-30 w-full">
-        <div className="p-6 md:p-8">
-          <ShoppingCartIcon className="h-8 w-auto" />
-        </div>
-      </header>
+    <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
+      <Form {...form}>
+        <form
+          onSubmit={handleSubmit}
+          className="m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)] border bg-muted dark:[--color-muted:var(--color-zinc-900)]"
+        >
+          <div className="-m-px rounded-[calc(var(--radius)+.125rem)] border bg-card p-8 pb-6">
+            <div className="text-center">
+              <Link to="/" aria-label="go home" className="mx-auto block w-fit">
+                <HopIcon />
+              </Link>
+              <h1 className="mt-4 mb-1 font-semibold text-xl">
+                Iniciar sesión en Cetus
+              </h1>
+              <p className="text-sm">
+                ¡Bienvenido de nuevo! Inicia sesión para continuar
+              </p>
+            </div>
 
-      <div className="flex h-full">
-        <div className="relative w-full">
-          <div className="relative z-10 flex h-full items-center justify-center p-6">
-            <div className="w-full max-w-md space-y-8">
-              <div className="text-center">
-                <h1 className="mb-4 font-heading text-lg">
-                  Bienvenido a Cetus
-                </h1>
-
-                <p className="mb-8 text-muted-foreground text-sm">
-                  Inicia sesión para continuar al panel de control
-                </p>
+            {authError && (
+              <div className="mt-6">
+                <Alert variant="destructive">
+                  <AlertTitle>Ha ocurrido un error</AlertTitle>
+                  <AlertDescription>{authError}</AlertDescription>
+                </Alert>
               </div>
+            )}
 
-              <div className="space-y-4">
-                <GoogleSignIn invitation={invitation} />
-              </div>
+            <div className="mt-6 space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Contraseña</FormLabel>
+                      <Button asChild variant="link" size="sm">
+                        <Link
+                          to="/"
+                          className="link intent-info variant-ghost text-sm"
+                        >
+                          ¿Olvidaste tu contraseña?
+                        </Link>
+                      </Button>
+                    </div>
+                    <FormControl>
+                      <Input {...field} type="password" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <SubmitButton
+                className="w-full"
+                type="submit"
+                isSubmitting={form.formState.isSubmitting}
+                disabled={!form.formState.isValid}
+              >
+                Iniciar sesión
+              </SubmitButton>
+            </div>
+
+            <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <hr className="border-dashed" />
+              <span className="text-muted-foreground text-xs">
+                O continúa con
+              </span>
+              <hr className="border-dashed" />
+            </div>
+
+            <div className="grid gap-3">
+              <GoogleSignIn invitation={invitation} />
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+
+          <div className="p-3">
+            <p className="text-center text-accent-foreground text-sm">
+              ¿No tienes una cuenta?
+              <Button asChild variant="link" className="px-2">
+                <Link to="/">Crear cuenta</Link>
+              </Button>
+            </p>
+          </div>
+        </form>
+      </Form>
+    </section>
   )
 }
