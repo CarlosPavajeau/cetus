@@ -1,7 +1,7 @@
 import type { Store } from '@/api/stores'
 import { CartButton } from '@/components/cart-button'
 import { Footer } from '@/components/footer'
-import { useAppStore } from '@/store/app'
+import { useTenantStore } from '@/store/use-tenant-store'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
@@ -11,12 +11,13 @@ type Props = {
 }
 
 export function DefaultPageLayout({ children, showHeader = true }: Props) {
-  const { currentStore } = useAppStore()
+  const { store } = useTenantStore()
+  const pageTitle = store !== undefined ? store.name : 'cetus'
 
   return (
     <div className="min-h-screen">
-      <title>{`${currentStore?.name}`}</title>
-      {showHeader && <NavBar store={currentStore} />}
+      <title>{`${pageTitle}`}</title>
+      {showHeader && <NavBar store={store} />}
 
       <main className="min-h-screen px-6 py-6 md:px-16 lg:px-32">
         {children}
@@ -32,13 +33,15 @@ type NavBarProps = {
 }
 
 function NavBar({ store }: NavBarProps) {
+  const navbarTitle = store !== undefined ? store.name : 'cetus'
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background">
       <div className="flex items-center justify-between px-6 py-3 md:px-16 lg:px-32">
         <div>
           <Link to="/" className="flex items-center gap-2">
             <h1 className="font-bold font-heading text-foreground text-xl">
-              {store ? store.name : 'TELEDIGITAL JYA'}
+              {navbarTitle}
             </h1>
           </Link>
         </div>
