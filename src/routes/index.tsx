@@ -1,6 +1,5 @@
 import { fetchCategories } from '@/api/categories'
 import { fetchFeaturedProducts, fetchPopularProducts } from '@/api/products'
-import { fetchStoreByDomain } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { FeaturedProductsSection } from '@/components/home/featured-products-section'
 import { HeroSection } from '@/components/home/hero-section'
@@ -9,26 +8,38 @@ import { PopularProductsSection } from '@/components/home/popular-products-secti
 import { NotFound } from '@/components/not-found'
 import { PageHeader } from '@/components/page-header'
 import { getServerhost } from '@/server/get-host'
-import { useAppStore } from '@/store/app'
-import { createFileRoute } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useTenantStore } from '@/store/use-tenant-store'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
+  ssr: false,
   loader: async () => {
-    const { host } = await getServerhost()
-    const store = await fetchStoreByDomain(host)
+    try {
+      const { host } = await getServerhost()
+      const { store } = useTenantStore.getState()
+      const { fetchAndSetStore } = useTenantStore.getState().actions
 
-    const [featuredProducts, popularProducts, categories] = await Promise.all([
-      fetchFeaturedProducts(store.slug),
-      fetchPopularProducts(store.slug),
-      fetchCategories(store.slug),
-    ])
+      await fetchAndSetStore(host)
 
-    return {
-      store,
-      featuredProducts,
-      popularProducts,
-      categories,
+      if (!store) {
+        throw notFound()
+      }
+
+      const [featuredProducts, popularProducts, categories] = await Promise.all(
+        [
+          fetchFeaturedProducts(store.slug),
+          fetchPopularProducts(store.slug),
+          fetchCategories(store.slug),
+        ],
+      )
+
+      return {
+        featuredProducts,
+        popularProducts,
+        categories,
+      }
+    } catch (err) {
+      throw notFound()
     }
   },
   component: IndexPage,
@@ -39,14 +50,8 @@ export const Route = createFileRoute('/')({
 })
 
 function IndexPage() {
-  const { store, featuredProducts, popularProducts, categories } =
+  const { featuredProducts, popularProducts, categories } =
     Route.useLoaderData()
-
-  const appStore = useAppStore()
-
-  useEffect(() => {
-    appStore.setCurrentStore(store)
-  }, [])
 
   if (!categories || !featuredProducts || !popularProducts) {
     return (
