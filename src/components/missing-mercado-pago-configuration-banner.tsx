@@ -1,17 +1,17 @@
 import { fetchMercadoPagoAuthorizationUrl } from '@/api/stores'
 import { SubmitButton } from '@/components/submit-button'
-import { useAppStore } from '@/store/app'
+import { useTenantStore } from '@/store/use-tenant-store'
 import { useMutation } from '@tanstack/react-query'
 import { TriangleAlertIcon } from 'lucide-react'
 
 export function MissingMercadoPagoConfigurationBanner() {
-  const { currentStore } = useAppStore()
+  const { store } = useTenantStore()
 
-  if (!currentStore) {
+  if (!store) {
     return null
   }
 
-  if (currentStore.isConnectedToMercadoPago) {
+  if (store.isConnectedToMercadoPago) {
     return null
   }
 
