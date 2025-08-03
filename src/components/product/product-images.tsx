@@ -65,7 +65,7 @@ export function ProductImages({ product }: Props) {
       </Carousel>
 
       <div className="space-x-2">
-        {product.images.map((image, index) => (
+        {images.map((image, index) => (
           <button
             key={index}
             className={cn(
