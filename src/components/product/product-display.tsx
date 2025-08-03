@@ -1,13 +1,12 @@
 import type { ProductForSale } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
+import { ProductImages } from '@/components/product/product-images'
 import { ProductRating } from '@/components/product/product-rating'
 import { ProductShare } from '@/components/product/product-share'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
-import { Image } from '@unpic/react'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
 import { memo, useCallback, useState } from 'react'
 import { toast } from 'sonner'
@@ -102,17 +101,7 @@ function ProductDisplayComponent({ product }: Props) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <div className="space-y-4">
-        <div className="relative aspect-square overflow-hidden">
-          <Image
-            src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-            alt={product.name}
-            width={600}
-            height={600}
-            className="h-full w-full object-cover"
-          />
-        </div>
-      </div>
+      <ProductImages product={product} />
 
       <div className="space-y-6">
         <div>
