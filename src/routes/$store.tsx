@@ -13,12 +13,11 @@ export const Route = createFileRoute('/$store')({
   ssr: false,
   loader: async (context) => {
     const slug = context.params.store
-    const { store } = useTenantStore.getState()
     const { fetchAndSetStore } = useTenantStore.getState().actions
 
-    await fetchAndSetStore(slug)
+    const result = await fetchAndSetStore(slug)
 
-    if (!store) {
+    if (!result) {
       throw notFound()
     }
 
