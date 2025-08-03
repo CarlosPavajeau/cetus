@@ -1,9 +1,14 @@
+import { Currency } from '@/components/currency'
+import { DefaultLoader } from '@/components/default-loader'
+import { FormattedDate } from '@/components/formatted-date'
+import { Badge } from '@/components/ui/badge'
 import { usePaymentInfo } from '@/hooks/use-payment-info'
 import { cn } from '@/shared/cn'
-import { Currency } from '../currency'
-import { DefaultLoader } from '../default-loader'
-import { FormattedDate } from '../formatted-date'
-import { Badge } from '../ui/badge'
+import {
+  getMercadoPagoPaymentFeeLabel,
+  getMercadoPagoPaymentMethodLabel,
+  getMercadoPagoPaymentStatusLabel,
+} from '@/shared/mercado-pago'
 
 type Props = {
   id: number
@@ -23,14 +28,14 @@ export function PaymentSummary({ id }: Props) {
   return (
     <div className="space-y-3 rounded-md border bg-card p-4">
       <div className="flex justify-between">
-        <h3 className="font-medium">Estado del pago</h3>
+        <h3 className="font-medium">Información del pago</h3>
 
         <Badge variant="outline">
           <span
             className={cn('size-1.5 rounded-full bg-success-base')}
             aria-hidden="true"
           ></span>
-          {payment.status}
+          {getMercadoPagoPaymentStatusLabel(payment.status)}
         </Badge>
       </div>
 
@@ -44,19 +49,52 @@ export function PaymentSummary({ id }: Props) {
         <div className="flex justify-between">
           <span className="text-muted-foreground">Método de pago</span>
 
-          <span>{payment.payment_method?.id}</span>
+          <span>
+            {getMercadoPagoPaymentMethodLabel(payment.payment_method_id)}
+          </span>
         </div>
 
         <div className="flex justify-between">
           <span className="text-muted-foreground">Monto</span>
 
-          <span>
-            <Currency value={payment.net_amount || 0} currency="COP" />
+          <span className="text-success-base">
+            + <Currency value={payment.net_amount || 0} currency="COP" />
+          </span>
+        </div>
+
+        {payment.fee_details?.map((fee) => (
+          <div className="flex justify-between" key={fee.type}>
+            <span className="text-muted-foreground">
+              {getMercadoPagoPaymentFeeLabel(fee.type)}
+            </span>
+
+            <span className="text-error-base">
+              - <Currency value={fee.amount || 0} currency="COP" />
+            </span>
+          </div>
+        ))}
+
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Cantidad neta recibida</span>
+
+          <span className="font-medium text-success-base">
+            <Currency
+              value={payment.transaction_details?.net_received_amount || 0}
+              currency="COP"
+            />
           </span>
         </div>
 
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Fecha</span>
+          <span className="text-muted-foreground">Fecha de creación</span>
+
+          <span>
+            <FormattedDate date={new Date(payment.date_created!)} />
+          </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Fecha de aprobación</span>
 
           <span>
             <FormattedDate date={new Date(payment.date_approved!)} />
