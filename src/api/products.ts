@@ -1,6 +1,13 @@
 import { anonymousApi, api } from '@/api/client'
 import type { CreateProduct, UpdateProduct } from '@/schemas/product'
 
+export type ProductImage = {
+  id: number
+  imageUrl: string
+  altText?: string
+  sortOrder: number
+}
+
 export type Product = {
   id: string
   name: string
@@ -9,6 +16,7 @@ export type Product = {
   price: number
   stock: number
   imageUrl?: string
+  images: ProductImage[]
   rating: number
   reviewsCount: number
   enabled: boolean
