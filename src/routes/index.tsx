@@ -15,8 +15,11 @@ export const Route = createFileRoute('/')({
   ssr: false,
   loader: async () => {
     const { host, isAppUrl } = await getServerhost()
+    const { fetchAndSetStore, clearStore } = useTenantStore.getState().actions
 
     if (isAppUrl) {
+      clearStore()
+
       return {
         isAppUrl,
       }
@@ -24,7 +27,6 @@ export const Route = createFileRoute('/')({
 
     try {
       const { store } = useTenantStore.getState()
-      const { fetchAndSetStore } = useTenantStore.getState().actions
 
       await fetchAndSetStore(host)
 
