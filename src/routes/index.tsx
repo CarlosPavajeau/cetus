@@ -1,28 +1,37 @@
 import { fetchCategories } from '@/api/categories'
 import { fetchFeaturedProducts, fetchPopularProducts } from '@/api/products'
 import { DefaultPageLayout } from '@/components/default-page-layout'
+import { ApplicationHome } from '@/components/home/application-home'
 import { FeaturedProductsSection } from '@/components/home/featured-products-section'
 import { HeroSection } from '@/components/home/hero-section'
 import { HomeSkeleton } from '@/components/home/home-sekeleton'
 import { PopularProductsSection } from '@/components/home/popular-products-section'
-import { NotFound } from '@/components/not-found'
 import { PageHeader } from '@/components/page-header'
 import { getServerhost } from '@/server/get-host'
 import { useTenantStore } from '@/store/use-tenant-store'
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
   ssr: false,
   loader: async () => {
+    const { host, isAppUrl } = await getServerhost()
+
+    if (isAppUrl) {
+      return {
+        isAppUrl,
+      }
+    }
+
     try {
-      const { host } = await getServerhost()
       const { store } = useTenantStore.getState()
       const { fetchAndSetStore } = useTenantStore.getState().actions
 
       await fetchAndSetStore(host)
 
       if (!store) {
-        throw notFound()
+        return {
+          isAppUrl,
+        }
       }
 
       const [featuredProducts, popularProducts, categories] = await Promise.all(
@@ -33,21 +42,29 @@ export const Route = createFileRoute('/')({
         featuredProducts,
         popularProducts,
         categories,
+        isAppUrl,
       }
     } catch (err) {
-      throw notFound()
+      return {
+        isAppUrl,
+      }
     }
   },
   component: IndexPage,
   pendingComponent: HomeSkeleton,
-  notFoundComponent: () => {
-    return <NotFound />
-  },
 })
 
 function IndexPage() {
-  const { featuredProducts, popularProducts, categories } =
+  const { featuredProducts, popularProducts, categories, isAppUrl } =
     Route.useLoaderData()
+
+  if (isAppUrl) {
+    return (
+      <DefaultPageLayout>
+        <ApplicationHome />
+      </DefaultPageLayout>
+    )
+  }
 
   if (!categories || !featuredProducts || !popularProducts) {
     return (
