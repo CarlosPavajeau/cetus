@@ -1,27 +1,31 @@
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import { HeroSection } from '@/components/home/hero-section'
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export function HomeSkeleton() {
   return (
     <DefaultPageLayout>
-      <HeroSection />
+      <HeroSectionSkeleton />
 
       <div className="flex flex-col items-center gap-6 pb-6">
-        <p className="w-full text-left font-heading font-medium text-2xl">
-          Productos destacados
-        </p>
+        <div className='w-full'>
+          <Skeleton className="h-6 w-52" />
+        </div>
 
         <ProductGridSkeleton />
       </div>
 
       <div className="my-8 flex flex-col items-center gap-6 rounded p-4">
-        <p className="w-full text-left font-heading font-medium text-3xl">
-          Productos populares
-        </p>
+        <div className='w-full'>
+          <Skeleton className="h-6 w-52" />
+        </div>
 
         <ProductGridSkeleton />
       </div>
     </DefaultPageLayout>
   )
+}
+
+function HeroSectionSkeleton() {
+  return <Skeleton className="mb-8 flex h-64 w-full min-w-full" />
 }
