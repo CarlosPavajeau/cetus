@@ -8,7 +8,7 @@ export function HomeSkeleton() {
       <HeroSectionSkeleton />
 
       <div className="flex flex-col items-center gap-6 pb-6">
-        <div className='w-full'>
+        <div className="w-full">
           <Skeleton className="h-6 w-52" />
         </div>
 
@@ -16,7 +16,7 @@ export function HomeSkeleton() {
       </div>
 
       <div className="my-8 flex flex-col items-center gap-6 rounded p-4">
-        <div className='w-full'>
+        <div className="w-full">
           <Skeleton className="h-6 w-52" />
         </div>
 
