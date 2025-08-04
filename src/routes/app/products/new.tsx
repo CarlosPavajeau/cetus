@@ -1,14 +1,12 @@
 import { CategorySelector } from '@/components/category/category-selector'
 import { CreateCategoryDialog } from '@/components/category/create-category.dialog'
-import {
-  ImageUploader,
-  useImageUpload,
-} from '@/components/product/image-uploader'
+import { ProductImagesUploader } from '@/components/product/product-images-uploader'
 import { ReturnButton } from '@/components/return-button'
-import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/submit-button'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,11 +15,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateProduct } from '@/hooks/products'
+import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { CreateProductSchema } from '@/schemas/product'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute } from '@tanstack/react-router'
-import { Fragment, useCallback, useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { v7 as uuid } from 'uuid'
 
 export const Route = createFileRoute('/app/products/new')({
   component: ProductCreateForm,
@@ -37,25 +37,45 @@ function ProductCreateForm() {
       description: '',
       price: 0,
       stock: 0,
-      imageUrl: '',
       categoryId: '',
+      images: [],
     },
   })
 
-  const {
-    mainImage,
-    mainImageUrl,
-    getRootProps,
-    getInputProps,
-    isDragActive,
-    removeImage,
-  } = useImageUpload(form)
+  const [productImages, setProductImages] = useState<FileWithPreview[]>([])
 
-  const createProductMutation = useCreateProduct(mainImage)
+  const generateImageUrl = (file: FileWithPreview) => {
+    const rawFile = file.file
 
-  const openCategoryDialog = useCallback(() => {
+    const fileId = uuid()
+    const fileExtension = rawFile.name.split('.').pop()
+    const fileName = `${fileId}.${fileExtension}`
+
+    const imageUrl = fileExtension === 'png' ? fileName : `${fileId}.webp`
+
+    return imageUrl
+  }
+
+  const handleFilesChange = (files: FileWithPreview[]) => {
+    setProductImages(files)
+
+    const formImages = files.map((file, index) => ({
+      id: file.id,
+      imageUrl: generateImageUrl(file),
+      sortOrder: index,
+    }))
+
+    form.setValue('images', formImages)
+  }
+
+  const createProductMutation = useCreateProduct(productImages)
+  const handleSubmit = form.handleSubmit((values) => {
+    createProductMutation.mutate(values)
+  })
+
+  const openCategoryDialog = () => {
     setIsCategoryDialogOpen(true)
-  }, [])
+  }
 
   return (
     <Fragment>
@@ -66,9 +86,7 @@ function ProductCreateForm() {
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((values) =>
-              createProductMutation.mutate(values),
-            )}
+            onSubmit={handleSubmit}
             className="space-y-8 rounded-md border border-muted bg-card p-4 md:p-8"
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -157,18 +175,21 @@ function ProductCreateForm() {
               <div>
                 <FormField
                   control={form.control}
-                  name="imageUrl"
+                  name="images"
                   render={() => (
                     <FormItem>
-                      <ImageUploader
-                        form={form}
-                        mainImage={mainImage}
-                        mainImageUrl={mainImageUrl}
-                        getRootProps={getRootProps}
-                        getInputProps={getInputProps}
-                        isDragActive={isDragActive}
-                        removeImage={removeImage}
+                      <FormLabel>Imágenes</FormLabel>
+                      <ProductImagesUploader
+                        onFilesChange={handleFilesChange}
                       />
+
+                      <FormDescription>
+                        Las imágenes serán mostradas en el orden en que fueron
+                        subidas. Tomando como imagen principal la primera imagen
+                        subida.
+                      </FormDescription>
+
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -176,15 +197,13 @@ function ProductCreateForm() {
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="submit"
+              <SubmitButton
+                isSubmitting={createProductMutation.isPending}
                 disabled={createProductMutation.isPending}
                 className="w-full md:w-auto"
               >
-                {createProductMutation.isPending
-                  ? 'Creando...'
-                  : 'Crear producto'}
-              </Button>
+                Crear producto
+              </SubmitButton>
             </div>
           </form>
         </Form>
