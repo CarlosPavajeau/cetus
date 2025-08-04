@@ -43,6 +43,16 @@ export type ProductForSale = Omit<
   'createdAt' | 'updatedAt' | 'enabled'
 >
 
+export type SimpleProductForSale = {
+  id: string
+  name: string
+  slug: string
+  imageUrl: string
+  price: number
+  rating: number
+  reviewsCount: number
+}
+
 export const fetchProductsForSale = async () => {
   const response =
     await anonymousApi.get<ProductForSale[]>('/products/for-sale')
@@ -52,13 +62,14 @@ export const fetchProductsForSale = async () => {
 
 export async function fetchFeaturedProducts() {
   const response =
-    await anonymousApi.get<ProductForSale[]>('/products/featured')
+    await anonymousApi.get<SimpleProductForSale[]>('/products/featured')
 
   return response.data
 }
 
 export async function fetchPopularProducts() {
-  const response = await anonymousApi.get<ProductForSale[]>('/products/popular')
+  const response =
+    await anonymousApi.get<SimpleProductForSale[]>('/products/popular')
 
   return response.data
 }
