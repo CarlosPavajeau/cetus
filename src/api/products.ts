@@ -51,11 +51,12 @@ export type SimpleProductForSale = {
   price: number
   rating: number
   reviewsCount: number
+  categoryId: string
 }
 
 export const fetchProductsForSale = async () => {
   const response =
-    await anonymousApi.get<ProductForSale[]>('/products/for-sale')
+    await anonymousApi.get<SimpleProductForSale[]>('/products/for-sale')
 
   return response.data
 }
