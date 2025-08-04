@@ -13,9 +13,19 @@ export const BaseProductSchema = type({
   }),
 })
 
-export const CreateProductSchema = BaseProductSchema.and({
+export const CreateProductImageSchema = type({
+  id: type.string.moreThanLength(1).configure({
+    message: 'El ID de la imagen del producto es requerido',
+  }),
   imageUrl: type.string.moreThanLength(1).configure({
     message: 'La imagen del producto es requerida',
+  }),
+  sortOrder: type.number.default(0),
+})
+
+export const CreateProductSchema = BaseProductSchema.and({
+  images: CreateProductImageSchema.array().moreThanLength(0).configure({
+    message: 'Se requiere al menos una imagen del producto',
   }),
   categoryId: type.string.moreThanLength(1).configure({
     message: 'La categoría del producto es requerida',
