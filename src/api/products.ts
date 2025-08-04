@@ -82,7 +82,7 @@ export const createProduct = async (product: CreateProduct) => {
 }
 
 export async function fetchProductSuggestions(productId: string) {
-  const response = await anonymousApi.get<ProductForSale[]>(
+  const response = await anonymousApi.get<SimpleProductForSale[]>(
     `/products/suggestions?productId=${productId}`,
   )
 

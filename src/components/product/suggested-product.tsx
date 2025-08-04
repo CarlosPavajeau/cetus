@@ -1,8 +1,8 @@
-import type { ProductForSale } from '@/api/products'
+import type { SimpleProductForSale } from '@/api/products'
 import { ProductCard } from '@/components/product/product-card'
 
 type Props = {
-  products: ProductForSale[]
+  products: SimpleProductForSale[]
 }
 
 export function SuggestedProducts({ products }: Props) {
