@@ -1,4 +1,4 @@
-import type { ProductForSale } from '@/api/products'
+import type { SimpleProductForSale } from '@/api/products'
 import { GoToAllProductsButton } from '@/components/home/go-to-all-products-button'
 import { ProductCard } from '@/components/product/product-card'
 import {
@@ -10,7 +10,7 @@ import Autoplay from 'embla-carousel-autoplay'
 import { useRef } from 'react'
 
 type Props = {
-  products: ProductForSale[]
+  products: SimpleProductForSale[]
 }
 
 export function FeaturedProductsSection({ products }: Props) {

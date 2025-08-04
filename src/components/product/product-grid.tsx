@@ -1,4 +1,4 @@
-import type { ProductForSale } from '@/api/products'
+import type { SimpleProductForSale } from '@/api/products'
 import { ProductCard } from '@/components/product/product-card'
 import { SearchSlashIcon } from 'lucide-react'
 
@@ -15,7 +15,7 @@ const EmptyProductGrid = () => (
 )
 
 type Props = {
-  products: ProductForSale[]
+  products: SimpleProductForSale[]
 }
 
 export function ProductGrid({ products }: Props) {

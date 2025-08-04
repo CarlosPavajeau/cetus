@@ -1,14 +1,13 @@
-import type { ProductForSale } from '@/api/products'
+import type { SimpleProductForSale } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { StarRating } from '@/components/product/star-rating'
 import { getImageUrl } from '@/shared/cdn'
 import { Link } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
-
 import { memo } from 'react'
 
 type Props = {
-  product: ProductForSale
+  product: SimpleProductForSale
 }
 
 function ProductCardComponent({ product }: Props) {

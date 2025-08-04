@@ -1,9 +1,9 @@
-import type { ProductForSale } from '@/api/products'
+import type { SimpleProductForSale } from '@/api/products'
 import { GoToAllProductsButton } from '@/components/home/go-to-all-products-button'
 import { ProductGrid } from '@/components/product/product-grid'
 
 type Props = {
-  products: ProductForSale[]
+  products: SimpleProductForSale[]
 }
 
 export function PopularProductsSection({ products }: Props) {
