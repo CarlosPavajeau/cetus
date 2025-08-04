@@ -9,21 +9,40 @@ import {
   fetchTopSellingProducts,
   updateProduct,
 } from '@/api/products'
+import type { FileWithPreview } from '@/hooks/use-file-upload'
 import type { CreateProduct, UpdateProduct } from '@/schemas/product'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-export function useCreateProduct(mainImage: File | null) {
+export function useCreateProduct(images: FileWithPreview[]) {
   const navigate = useNavigate()
 
   return useMutation({
     mutationKey: ['products', 'create'],
     mutationFn: async (values: CreateProduct) => {
       try {
-        if (mainImage) {
-          await uploadFileToS3({ fileName: values.imageUrl, file: mainImage })
-        }
+        const filesToUpload = values.images
+          .map((image) => {
+            const file = images.find((img) => img.id === image.id)
+
+            if (!file) {
+              return undefined
+            }
+
+            if (file.file instanceof File) {
+              return uploadFileToS3({
+                fileName: image.imageUrl,
+                file: file.file,
+              })
+            }
+
+            return undefined
+          })
+          .filter((upload) => upload !== undefined)
+
+        await Promise.all(filesToUpload)
+
         return createProduct(values)
       } catch (error) {
         console.error('Failed to create product:', error)
