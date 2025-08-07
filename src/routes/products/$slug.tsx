@@ -18,6 +18,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useTenantStore } from '@/store/use-tenant-store'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { ChevronRight, Home, HomeIcon } from 'lucide-react'
+import { useId } from 'react'
+import { v7 as uuid } from 'uuid'
 
 export const Route = createFileRoute('/products/$slug')({
   beforeLoad: () => {
@@ -52,8 +54,8 @@ export const Route = createFileRoute('/products/$slug')({
     return (
       <DefaultPageLayout>
         <PageHeader
-          title="Producto no encontrado"
           subtitle="El producto que estás buscando no existe."
+          title="Producto no encontrado"
         />
 
         <Button asChild>
@@ -88,7 +90,7 @@ function ProductDetailsPage() {
             <BreadcrumbList>
               <BreadcrumbItem className="text-xs">
                 <Link to="/">
-                  <HomeIcon size={12} aria-hidden="true" />
+                  <HomeIcon aria-hidden="true" size={12} />
                   <span className="sr-only">Home</span>
                 </Link>
               </BreadcrumbItem>
@@ -117,6 +119,8 @@ function ProductDetailsPage() {
 }
 
 function ProductDisplaySkeleton() {
+  const id = useId()
+
   return (
     <div className="container min-h-screen max-w-7xl">
       <div className="px-4">
@@ -135,8 +139,11 @@ function ProductDisplaySkeleton() {
             </div>
 
             <div className="hidden space-x-2 lg:flex">
-              {[...Array(4)].map((_, index) => (
-                <Skeleton key={index} className="h-20 w-20 rounded-lg" />
+              {[...new Array(4)].map((_) => (
+                <Skeleton
+                  className="h-20 w-20 rounded-lg"
+                  key={`skeleton-${id}-${uuid()}`}
+                />
               ))}
             </div>
           </div>
@@ -148,8 +155,11 @@ function ProductDisplaySkeleton() {
 
               <div className="mb-4 flex items-center space-x-2">
                 <div className="flex space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-5 w-5 rounded" />
+                  {[...new Array(5)].map((_) => (
+                    <Skeleton
+                      className="h-5 w-5 rounded"
+                      key={`skeleton-${id}-${uuid()}`}
+                    />
                   ))}
                 </div>
                 <Skeleton className="h-4 w-20" />
