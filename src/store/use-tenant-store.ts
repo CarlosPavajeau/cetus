@@ -12,8 +12,9 @@ type TenantStore = {
   }
 }
 
+const domainRegex = /^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i
+
 function isDomain(identifier: string): boolean {
-  const domainRegex = /^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i
   return domainRegex.test(identifier) || identifier.includes('localhost')
 }
 
@@ -26,7 +27,7 @@ export const useTenantStore = create<TenantStore>()(
         fetchAndSetStore: async (identifier) => {
           set({ status: 'loading' })
           try {
-            let store: Store | undefined = undefined
+            let store: Store | undefined
             if (isDomain(identifier)) {
               store = await fetchStoreByDomain(identifier)
             } else {
