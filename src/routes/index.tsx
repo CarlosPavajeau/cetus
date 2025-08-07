@@ -68,7 +68,7 @@ function IndexPage() {
     )
   }
 
-  if (!categories || !featuredProducts || !popularProducts) {
+  if (!(categories && featuredProducts && popularProducts)) {
     return (
       <DefaultPageLayout>
         <PageHeader title="Hubo un problema al cargar los datos" />
