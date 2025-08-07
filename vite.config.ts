@@ -13,7 +13,6 @@ export default defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tanstackStart({
-      target: 'vercel',
       customViteReactPlugin: true,
     }),
     viteReact(),
