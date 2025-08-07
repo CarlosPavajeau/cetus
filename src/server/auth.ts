@@ -1,4 +1,5 @@
 import { ac, roles } from '@/auth/permissions'
+import { sendInvitationEmail } from '@/server/send-invitation-email'
 import { env } from '@/shared/env'
 import { betterAuth } from 'better-auth'
 import { admin, jwt, organization } from 'better-auth/plugins'
@@ -79,7 +80,16 @@ export const auth = betterAuth({
     }),
     organization({
       ac,
-      roles: roles,
+      roles,
+      sendInvitationEmail: async (data) => {
+        await sendInvitationEmail({
+          id: data.id,
+          email: data.email,
+          invitedByUsername: data.inviter.user.name,
+          invitedByEmail: data.inviter.user.email,
+          teamName: data.organization.name,
+        })
+      },
       schema: {
         session: {
           fields: {
@@ -135,7 +145,7 @@ export const auth = betterAuth({
         keyPairConfig: {
           alg: 'RS256',
           modulusLength: 4096,
-          // @ts-ignore
+          // @ts-expect-error
           extractable: true,
         },
       },
