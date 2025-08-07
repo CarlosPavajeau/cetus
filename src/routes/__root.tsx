@@ -16,9 +16,11 @@ import { PostHogProvider } from 'posthog-js/react'
 import type { ReactNode } from 'react'
 import { I18nProvider } from 'react-aria'
 
-export const Route = createRootRouteWithContext<{
+type RouterContext = {
   queryClient: QueryClient
-}>()({
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -81,7 +83,8 @@ type RootDocumentProps = {
 
 function RootDocument({ children }: RootDocumentProps) {
   return (
-    <html>
+    <html lang="es">
+      {/** biome-ignore lint/style/noHeadElement: required for tanstack router */}
       <head>
         <HeadContent />
       </head>
