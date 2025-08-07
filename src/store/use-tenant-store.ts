@@ -1,4 +1,5 @@
 import { fetchStoreByDomain, fetchStoreBySlug, type Store } from '@/api/stores'
+import consola from 'consola'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
@@ -37,7 +38,7 @@ export const useTenantStore = create<TenantStore>()(
             set({ store, status: 'success' })
             return store
           } catch (error) {
-            console.error('Failed to fetch store', error)
+            consola.error('Failed to fetch store', error)
             get().actions.clearStore()
             set({ status: 'error' })
             throw error
