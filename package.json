@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "@better-auth/cli": "^1.2.12",
-    "@biomejs/biome": "2.0.6",
+    "@biomejs/biome": "2.1.2",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-router-devtools": "^1.114.29",
     "@tanstack/router-plugin": "^1.114.30",
@@ -82,6 +82,7 @@
     "tailwindcss": "^4.1.11",
     "tw-animate-css": "^1.2.8",
     "typescript": "^5.8.3",
+    "ultracite": "5.1.2",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "packageManager": "pnpm@10.14.0"
