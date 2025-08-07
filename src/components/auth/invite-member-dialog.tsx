@@ -58,10 +58,11 @@ export function InviteMemberDialog() {
     const result = await authClient.organization.inviteMember({
       email: data.email,
       role: data.role,
+      resend: true,
     })
 
     if (result.error) {
-      toast.error('No se puedo enviar la invitación')
+      toast.error('No se pudo enviar la invitación')
       return
     }
 
@@ -70,7 +71,7 @@ export function InviteMemberDialog() {
   })
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus2Icon />
@@ -88,7 +89,7 @@ export function InviteMemberDialog() {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <form className="flex flex-col gap-4" onSubmit={onSubmit}>
             <FormField
               control={form.control}
               name="email"
@@ -97,8 +98,8 @@ export function InviteMemberDialog() {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
-                      type="email"
                       placeholder="Ejemplo: example@example.com"
+                      type="email"
                       {...field}
                     />
                   </FormControl>
@@ -116,8 +117,8 @@ export function InviteMemberDialog() {
                   <FormLabel>Rol</FormLabel>
 
                   <Select
-                    onValueChange={field.onChange}
                     defaultValue={field.value}
+                    onValueChange={field.onChange}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -138,16 +139,16 @@ export function InviteMemberDialog() {
 
             <DialogFooter>
               <Button
-                type="button"
-                variant="outline"
                 disabled={form.formState.isSubmitting}
                 onClick={onClose}
+                type="button"
+                variant="outline"
               >
                 Cancelar
               </Button>
               <SubmitButton
-                isSubmitting={form.formState.isSubmitting}
                 disabled={!form.formState.isValid}
+                isSubmitting={form.formState.isSubmitting}
               >
                 Enviar invitación
               </SubmitButton>
