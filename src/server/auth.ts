@@ -50,15 +50,15 @@ export const auth = betterAuth({
     },
   },
   database: new Pool({
-    connectionString: env.DATABASE_URL!,
+    connectionString: env.DATABASE_URL,
   }),
   emailAndPassword: {
     enabled: true,
   },
   socialProviders: {
     google: {
-      clientId: env.AUTH_GOOGLE_ID!,
-      clientSecret: env.AUTH_GOOGLE_SECRET!,
+      clientId: env.AUTH_GOOGLE_ID,
+      clientSecret: env.AUTH_GOOGLE_SECRET,
     },
   },
   plugins: [
