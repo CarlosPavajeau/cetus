@@ -1,60 +1,34 @@
-//https://github.com/unjs/std-env/blob/main/src/env.ts
+import { createEnv } from '@t3-oss/env-core'
+import { type } from 'arktype'
 
-const _envShim = Object.create(null)
+export const env = createEnv({
+  server: {
+    DATABASE_URL: type('string.url'),
+    BETTER_AUTH_SECRET: type('string'),
+    BETTER_AUTH_URL: type('string.url'),
+    AUTH_GOOGLE_ID: type('string'),
+    AUTH_GOOGLE_SECRET: type('string'),
+    MP_ACCESS_TOKEN: type('string'),
+    MP_CLIENT_SECRET: type('string'),
+    APP_URL: type('string.url'),
+    RESEND_API_KEY: type('string'),
+    RESEND_FROM: type('string.email'),
+  },
 
-export type EnvObject = Record<string, string | undefined>
+  clientPrefix: 'VITE_',
+  client: {
+    VITE_API_URL: type('string.url'),
+    VITE_WOMPI_KEY: type('string'),
+    VITE_WOMPI_INTEGRITY_SECRET: type('string'),
+    VITE_WOMPI_API_URL: type('string.url'),
+    VITE_CDN_URL: type('string.url'),
+    VITE_POSTHOG_KEY: type('string'),
+    VITE_POSTHOG_HOST: type('string.url'),
+    VITE_MP_PUBLIC_KEY: type('string'),
+    VITE_MP_CLIENT_ID: type('string'),
+    VITE_APP_URL: type('string.url'),
+  },
 
-const _getEnv = (useShim?: boolean) =>
-  globalThis.process?.env ||
-  //@ts-expect-error
-  globalThis.Deno?.env.toObject() ||
-  //@ts-expect-error
-  globalThis.__env__ ||
-  (useShim ? _envShim : globalThis)
-
-export const env = new Proxy<EnvObject>(_envShim, {
-  get(_, prop) {
-    const env = _getEnv()
-    // biome-ignore lint/suspicious/noExplicitAny: not needed
-    return env[prop as any] ?? _envShim[prop]
-  },
-  has(_, prop) {
-    const env = _getEnv()
-    return prop in env || prop in _envShim
-  },
-  set(_, prop, value) {
-    const env = _getEnv(true)
-    // biome-ignore lint/suspicious/noExplicitAny: not needed
-    env[prop as any] = value
-    return true
-  },
-  deleteProperty(_, prop) {
-    if (!prop) {
-      return false
-    }
-    const env = _getEnv(true)
-    // biome-ignore lint/suspicious/noExplicitAny: not needed
-    delete env[prop as any]
-    return true
-  },
-  ownKeys() {
-    const env = _getEnv(true)
-    return Object.keys(env)
-  },
+  runtimeEnv: process.env,
+  emptyStringAsUndefined: true,
 })
-
-function toBoolean(val: boolean | string | undefined) {
-  return val ? val !== 'false' : false
-}
-
-export const nodeENV =
-  (typeof process !== 'undefined' && process.env && process.env.NODE_ENV) || ''
-
-/** Detect if `NODE_ENV` environment variable is `production` */
-export const isProduction = nodeENV === 'production'
-
-/** Detect if `NODE_ENV` environment variable is `dev` or `development` */
-export const isDevelopment = nodeENV === 'dev' || nodeENV === 'development'
-
-/** Detect if `NODE_ENV` environment variable is `test` */
-export const isTest = nodeENV === 'test' || toBoolean(env.TEST)
