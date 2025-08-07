@@ -24,7 +24,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { EllipsisIcon, PlusIcon } from 'lucide-react'
-import { Fragment, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/categories')({
   component: RouteComponent,
@@ -104,29 +104,29 @@ function RouteComponent() {
   }
 
   return (
-    <Fragment>
+    <>
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Categorías</h1>
 
         <CreateCategoryDialog
-          open={isOpenCreateCategory}
           onOpenChange={setIsOpenCreateCategory}
+          open={isOpenCreateCategory}
         />
 
         <Button
           className="ml-auto"
           onClick={() => setIsOpenCreateCategory(true)}
         >
-          <PlusIcon className="-ms-1 opacity-60" size={16} aria-hidden="true" />
+          <PlusIcon aria-hidden="true" className="-ms-1 opacity-60" size={16} />
           Crear categoria
         </Button>
       </div>
 
       <div className="grid gap-4 overflow-hidden">
         <DataTable table={table} />
-        <TablePagination table={table} paginationInfo={paginationInfo} />
+        <TablePagination paginationInfo={paginationInfo} table={table} />
       </div>
-    </Fragment>
+    </>
   )
 }
 
@@ -138,12 +138,12 @@ function RowActions({ row }: { row: Row<Category> }) {
       <DropdownMenuTrigger asChild>
         <div className="flex justify-end">
           <Button
+            aria-label="Edit item"
+            className="shadow-none"
             size="icon"
             variant="ghost"
-            className="shadow-none"
-            aria-label="Edit item"
           >
-            <EllipsisIcon size={16} aria-hidden={true} />
+            <EllipsisIcon aria-hidden={true} size={16} />
           </Button>
         </div>
       </DropdownMenuTrigger>
