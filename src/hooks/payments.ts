@@ -23,7 +23,7 @@ export const usePaymentSignature = (order: Order) => {
 
 export const useCreateTransaction = (order: Order) => {
   const { signature } = usePaymentSignature(order)
-  const redirect = window.location.origin + `/orders/${order.id}/confirmation`
+  const redirect = `${window.location.origin}/orders/${order.id}/confirmation`
 
   const createPaymentTransaction = async (values: PaymentValues) => {
     const baseTransactionRequest = {
@@ -131,7 +131,7 @@ export const useCreateTransaction = (order: Order) => {
         navigate({
           to: `/orders/${order.id}/confirmation`,
           search: {
-            id: data.data.id,
+            payment_id: Number(data.data.id),
           },
         })
       }
