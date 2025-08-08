@@ -34,7 +34,7 @@ function RouteComponent() {
             El pedido que buscas no existe o ha sido eliminado
           </p>
 
-          <Button asChild variant="outline" className="w-full">
+          <Button asChild className="w-full" variant="outline">
             <Link to="/">
               <ShoppingBagIcon className="mr-2" />
               Volver a la tienda
@@ -55,7 +55,7 @@ function RouteComponent() {
         <OrderSummary order={order} showStatus />
 
         <div className="space-y-3">
-          <Button asChild variant="outline" className="w-full">
+          <Button asChild className="w-full" variant="outline">
             <Link to="/">
               <ShoppingBagIcon className="mr-2" />
               Seguir comprando
