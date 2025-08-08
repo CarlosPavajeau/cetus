@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 type TenantStore = {
   store?: Store
-  status: 'idle' | 'loading' | 'success' | 'error'
+  status: 'idle' | 'loading' | 'success' | 'error' | 'cleaned'
   actions: {
     fetchAndSetStore: (identifier: string) => Promise<Store>
     clearStore: () => void
@@ -45,7 +45,7 @@ export const useTenantStore = create<TenantStore>()(
           }
         },
         clearStore: () => {
-          set({ store: undefined, status: 'idle' })
+          set({ store: undefined, status: 'cleaned' })
         },
         setStore: (store) => {
           set({ store, status: 'success' })
@@ -55,7 +55,7 @@ export const useTenantStore = create<TenantStore>()(
     {
       name: 'store-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ store: state.store }),
+      partialize: (state) => ({ store: state.store, status: state.status }),
     },
   ),
 )
