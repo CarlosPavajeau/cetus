@@ -22,14 +22,7 @@ import { useTenantStore } from '@/store/use-tenant-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { CircleXIcon, ListFilterIcon, RefreshCwIcon } from 'lucide-react'
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
@@ -67,27 +60,28 @@ function SearchInput({
   return (
     <div className="relative flex-1">
       <Input
-        id={`${id}-input`}
+        aria-label="Buscar por número de orden"
         className={cn(
           'peer min-w-60 flex-1 ps-9',
           Boolean(searchTerm) && 'pe-9',
         )}
-        value={searchTerm ?? ''}
+        id={`${id}-input`}
         onChange={(e) => setSearchTerm(e.target.value)}
         placeholder="Buscar por número de orden..."
         type="text"
-        aria-label="Buscar por número de orden"
+        value={searchTerm ?? ''}
       />
       <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
-        <ListFilterIcon size={16} aria-hidden="true" />
+        <ListFilterIcon aria-hidden="true" size={16} />
       </div>
       {Boolean(searchTerm) && (
         <button
-          className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Clear filter"
+          className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
           onClick={handleClearFilter}
+          type="button"
         >
-          <CircleXIcon size={16} aria-hidden="true" />
+          <CircleXIcon aria-hidden="true" size={16} />
         </button>
       )}
     </div>
@@ -107,7 +101,9 @@ function RouteComponent() {
 
   useClientMethod(connection, 'ReceiveCreatedOrder', (order: SimpleOrder) => {
     queryClient.setQueryData<SimpleOrder[]>(['orders'], (oldOrders) => {
-      if (!oldOrders) return [order]
+      if (!oldOrders) {
+        return [order]
+      }
 
       return [...oldOrders, order]
     })
@@ -138,7 +134,9 @@ function RouteComponent() {
   }
 
   const filteredOrders = useMemo(() => {
-    if (!orders) return []
+    if (!orders) {
+      return []
+    }
 
     return orders.filter((order) => {
       const isMatchingSearchTerm = order.orderNumber
@@ -165,16 +163,16 @@ function RouteComponent() {
   }
 
   return (
-    <Fragment>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-heading font-semibold text-2xl">Pedidos</h1>
 
         <div>
-          <Button variant="outline" onClick={refresh}>
+          <Button onClick={refresh} variant="outline">
             <RefreshCwIcon
+              aria-hidden="true"
               className="-ms-1 opacity-60"
               size={16}
-              aria-hidden="true"
             />
             Recargar
           </Button>
@@ -186,23 +184,23 @@ function RouteComponent() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <ListFilterIcon size={16} aria-hidden="true" />
+            <Button className="gap-2" variant="outline">
+              <ListFilterIcon aria-hidden="true" size={16} />
               Estado
               {statuses.length > 0 && (
                 <>
-                  <Separator orientation="vertical" className="mx-2 h-4" />
+                  <Separator className="mx-2 h-4" orientation="vertical" />
                   <Badge
-                    variant="secondary"
                     className="rounded-sm px-1 font-normal lg:hidden"
+                    variant="secondary"
                   >
                     {statuses.length}
                   </Badge>
                   <div className="hidden space-x-1 lg:flex">
                     {statuses.length > 2 ? (
                       <Badge
-                        variant="secondary"
                         className="rounded-sm px-1 font-normal"
+                        variant="secondary"
                       >
                         {statuses.length} seleccionados
                       </Badge>
@@ -211,9 +209,9 @@ function RouteComponent() {
                         statuses.includes(option.value),
                       ).map((option) => (
                         <Badge
-                          variant="secondary"
-                          key={option.value}
                           className="rounded-sm px-1 font-normal"
+                          key={option.value}
+                          variant="secondary"
                         >
                           {option.label}
                         </Badge>
@@ -228,9 +226,9 @@ function RouteComponent() {
           <DropdownMenuContent className="w-56">
             {ORDER_STATUS_OPTIONS.map((option) => (
               <DropdownMenuCheckboxItem
-                key={option.value}
-                className="capitalize"
                 checked={statuses.includes(option.value)}
+                className="capitalize"
+                key={option.value}
                 onCheckedChange={() => handleStatusChange(option.value)}
               >
                 {option.label}
@@ -251,6 +249,6 @@ function RouteComponent() {
           <p className="text-muted-foreground">No hay pedidos disponibles</p>
         </div>
       )}
-    </Fragment>
+    </>
   )
 }
