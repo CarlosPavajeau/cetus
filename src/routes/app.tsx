@@ -30,7 +30,7 @@ export const Route = createFileRoute('/app')({
     }
 
     return {
-      user: user,
+      user,
     }
   },
   shouldReload: false,
@@ -43,11 +43,17 @@ function RouteComponent() {
   const tenantStore = useTenantStore()
 
   useEffect(() => {
-    if (isPending || isLoading) return
+    if (isPending || isLoading) {
+      return
+    }
 
-    if (!org) return
+    if (!org) {
+      return
+    }
 
-    if (!store) return
+    if (!store) {
+      return
+    }
 
     tenantStore.actions.setStore(store)
   }, [isPending, org, store, isLoading])
