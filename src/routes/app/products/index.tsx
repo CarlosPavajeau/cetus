@@ -39,15 +39,7 @@ import {
   ListFilterIcon,
   PlusIcon,
 } from 'lucide-react'
-import {
-  Fragment,
-  type Key,
-  useCallback,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { type Key, useCallback, useId, useMemo, useRef, useState } from 'react'
 
 export const Route = createFileRoute('/app/products/')({
   component: RouteComponent,
@@ -61,7 +53,9 @@ const categoryFilterFn: FilterFn<Product> = (
   columnId,
   filterValue: string[],
 ) => {
-  if (!filterValue?.length) return true
+  if (!filterValue?.length) {
+    return true
+  }
 
   const categoryId = row.getValue(columnId) as string
 
@@ -86,7 +80,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
         header: 'Precio',
         cell: ({ row }) => (
           <div>
-            <Currency value={row.getValue('price')} currency="COP" />
+            <Currency currency="COP" value={row.getValue('price')} />
           </div>
         ),
         size: 90,
@@ -99,7 +93,7 @@ const useProductColumns = (): ColumnDef<Product>[] => {
           <div className="flex items-center gap-1.5">
             {row.getValue('stock')}
             {row.getValue<number>('stock') < MINIMUM_STOCK && (
-              <Badge variant="destructive" className="rounded">
+              <Badge className="rounded" variant="destructive">
                 Bajo stock
               </Badge>
             )}
@@ -212,28 +206,29 @@ function SearchInput({ table, id }: SearchInputProps) {
   return (
     <div className="relative flex-1">
       <Input
-        id={`${id}-input`}
-        ref={inputRef}
+        aria-label="Buscar por nombre"
         className={cn(
           'peer min-w-60 flex-1 ps-9',
           Boolean(filterValue) && 'pe-9',
         )}
-        value={filterValue ?? ''}
+        id={`${id}-input`}
         onChange={(e) => nameColumn?.setFilterValue(e.target.value)}
         placeholder="Buscar por nombre..."
+        ref={inputRef}
         type="text"
-        aria-label="Buscar por nombre"
+        value={filterValue ?? ''}
       />
       <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
-        <ListFilterIcon size={16} aria-hidden="true" />
+        <ListFilterIcon aria-hidden="true" size={16} />
       </div>
       {Boolean(filterValue) && (
         <button
-          className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Clear filter"
+          className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
           onClick={handleClearFilter}
+          type="button"
         >
-          <CircleXIcon size={16} aria-hidden="true" />
+          <CircleXIcon aria-hidden="true" size={16} />
         </button>
       )}
     </div>
@@ -264,8 +259,8 @@ function CategoryFilter({ table }: CategoryFilterProps) {
   return (
     <TableFacetedFilter
       column={categoryColumn}
-      title="Categoría"
       options={options}
+      title="Categoría"
       width={300}
     />
   )
@@ -282,16 +277,16 @@ function RouteComponent() {
   }
 
   return (
-    <Fragment>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-heading font-semibold text-2xl">Productos</h1>
         <div>
-          <Button className="ml-auto" asChild>
+          <Button asChild className="ml-auto">
             <Link to="/app/products/new">
               <PlusIcon
+                aria-hidden="true"
                 className="-ms-1 opacity-60"
                 size={16}
-                aria-hidden="true"
               />
               Crear producto
             </Link>
@@ -300,16 +295,16 @@ function RouteComponent() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <SearchInput table={table} id={id} />
+        <SearchInput id={id} table={table} />
 
         <CategoryFilter table={table} />
       </div>
 
       <div className="grid gap-4 overflow-hidden">
         <DataTable table={table} />
-        <TablePagination table={table} paginationInfo={paginationInfo} />
+        <TablePagination paginationInfo={paginationInfo} table={table} />
       </div>
-    </Fragment>
+    </>
   )
 }
 
@@ -319,12 +314,12 @@ function RowActions({ row }: { row: Row<Product> }) {
       <DropdownMenuTrigger asChild>
         <div className="flex justify-end">
           <Button
+            aria-label="Edit item"
+            className="shadow-none"
             size="icon"
             variant="ghost"
-            className="shadow-none"
-            aria-label="Edit item"
           >
-            <EllipsisIcon size={16} aria-hidden="true" />
+            <EllipsisIcon aria-hidden="true" size={16} />
           </Button>
         </div>
       </DropdownMenuTrigger>
