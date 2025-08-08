@@ -6,7 +6,7 @@ import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
 import { useCategories } from '@/hooks/categories'
 import { useProductsForSale } from '@/hooks/products'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/_store-required/products/all')({
   component: RouteComponent,
@@ -19,6 +19,10 @@ function RouteComponent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
+  // Defer expensive filtering operations to prevent blocking user input
+  const deferredSearchTerm = useDeferredValue(searchTerm)
+  const deferredSelectedCategories = useDeferredValue(selectedCategories)
+
   const filteredProducts = useMemo(() => {
     if (!products) {
       return []
@@ -27,14 +31,14 @@ function RouteComponent() {
     return products.filter((product) => {
       const matchesSearch = product.name
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+        .includes(deferredSearchTerm.toLowerCase())
       const matchesCategory =
-        selectedCategories.length === 0 ||
-        selectedCategories.includes(product.categoryId)
+        deferredSelectedCategories.length === 0 ||
+        deferredSelectedCategories.includes(product.categoryId)
 
       return matchesSearch && matchesCategory
     })
-  }, [searchTerm, selectedCategories, products])
+  }, [deferredSearchTerm, deferredSelectedCategories, products])
 
   if (isLoadingCategories || isLoadingProducts) {
     return (
