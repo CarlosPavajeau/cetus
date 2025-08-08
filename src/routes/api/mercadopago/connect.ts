@@ -65,9 +65,11 @@ export const ServerRoute = createServerFileRoute(
     })
 
     if (
-      !credentials.access_token ||
-      !credentials.refresh_token ||
-      !credentials.expires_in
+      !(
+        credentials.access_token &&
+        credentials.refresh_token &&
+        credentials.expires_in
+      )
     ) {
       throw notFound()
     }
