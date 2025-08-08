@@ -14,7 +14,7 @@ import {
   type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/app/reviews')({
   component: RouteComponent,
@@ -95,7 +95,7 @@ function RouteComponent() {
   }
 
   return (
-    <Fragment>
+    <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
           Reseñas pendientes de aprobación
@@ -104,8 +104,8 @@ function RouteComponent() {
 
       <div className="grid gap-4 overflow-hidden">
         <DataTable table={table} />
-        <TablePagination table={table} paginationInfo={paginationInfo} />
+        <TablePagination paginationInfo={paginationInfo} table={table} />
       </div>
-    </Fragment>
+    </>
   )
 }
