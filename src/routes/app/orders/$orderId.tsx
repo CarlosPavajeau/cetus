@@ -12,7 +12,7 @@ import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
-import { Fragment, useCallback, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 
 const REALTIME_URL = `${import.meta.env.PUBLIC_API_URL}/realtime/orders`
@@ -57,24 +57,24 @@ const CompleteOrderButton = ({
 
   return (
     <Button
-      type="submit"
       className="group w-full"
-      size="lg"
-      onClick={handleCompleteOrder}
       disabled={deliverOrderMutation.isPending}
+      onClick={handleCompleteOrder}
+      size="lg"
+      type="submit"
     >
       {deliverOrderMutation.isPending && (
         <LoaderCircleIcon
+          aria-hidden="true"
           className="animate-spin"
           size={16}
-          aria-hidden="true"
         />
       )}
       Completar pedido
       <ArrowRightIcon
+        aria-hidden="true"
         className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
         size={16}
-        aria-hidden="true"
       />
     </Button>
   )
@@ -93,17 +93,21 @@ function OrderDetailsComponent() {
     if (order) {
       toast.custom((t) => (
         <OrderCompletedNotification
-          orderNumber={order.orderNumber}
           onClose={() => toast.dismiss(t)}
+          orderNumber={order.orderNumber}
         />
       ))
     }
   }, [navigate, order])
 
   const isCancelable = useMemo(() => {
-    if (!order) return false
+    if (!order) {
+      return false
+    }
 
-    if (order.status === OrderStatus.Pending) return true
+    if (order.status === OrderStatus.Pending) {
+      return true
+    }
 
     return false
   }, [order])
@@ -115,39 +119,37 @@ function OrderDetailsComponent() {
   if (!order) {
     return (
       <PageHeader
-        title="Pedido no encontrado"
         subtitle="No se pudo encontrar el pedido solicitado."
+        title="Pedido no encontrado"
       />
     )
   }
 
   return (
-    <Fragment>
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <ReturnButton />
-          <h2 className="font-medium">
-            Procesamiento del pedido #{order.orderNumber}
-          </h2>
-        </div>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <ReturnButton />
+        <h2 className="font-medium">
+          Procesamiento del pedido #{order.orderNumber}
+        </h2>
+      </div>
 
-        <OrderSummary order={order} showId />
+      <OrderSummary order={order} showId />
 
-        {order.transactionId && (
-          <PaymentSummary id={Number(order.transactionId)} />
+      {order.transactionId && (
+        <PaymentSummary id={Number(order.transactionId)} />
+      )}
+
+      <div className="space-y-3">
+        {order.status === OrderStatus.Paid && (
+          <CompleteOrderButton
+            onSuccess={handleOrderSuccess}
+            orderId={order.id}
+          />
         )}
 
-        <div className="space-y-3">
-          {order.status === OrderStatus.Paid && (
-            <CompleteOrderButton
-              orderId={order.id}
-              onSuccess={handleOrderSuccess}
-            />
-          )}
-
-          {isCancelable && <CancelOrderButton orderId={order.id} />}
-        </div>
+        {isCancelable && <CancelOrderButton orderId={order.id} />}
       </div>
-    </Fragment>
+    </div>
   )
 }
