@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { env } from '@/shared/env'
+import { generateProductSEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronRight, Home, HomeIcon } from 'lucide-react'
@@ -35,6 +37,89 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
       product,
       suggestions,
       reviews,
+    }
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return {}
+    }
+
+    const { product, reviews } = loaderData
+    const baseUrl =
+      typeof window !== 'undefined' ? window.location.origin : env.APP_URL // fallback URL
+
+    // Generate comprehensive SEO configuration
+    const storeName = 'Cetus' // This should be dynamic based on store context
+    const seoConfig = generateProductSEO(
+      product,
+      storeName,
+      baseUrl,
+      reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        customerName: review.customer,
+        createdAt: review.createdAt,
+      })),
+    )
+
+    const seoTags = generateSEOTags(seoConfig)
+
+    return {
+      title: seoConfig.title,
+      meta: [
+        // Essential SEO meta tags
+        ...seoTags,
+
+        // Additional product-specific meta tags
+        { name: 'product:price:amount', content: product.price.toString() },
+        { name: 'product:price:currency', content: 'COP' },
+        {
+          name: 'product:availability',
+          content: product.stock > 0 ? 'in_stock' : 'out_of_stock',
+        },
+        { name: 'product:condition', content: 'new' },
+
+        // Rich snippet meta
+        { name: 'rating', content: product.rating?.toString() || '' },
+        {
+          name: 'review_count',
+          content: product.reviewsCount?.toString() || '0',
+        },
+
+        // Mobile optimization
+        { name: 'format-detection', content: 'telephone=no' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+      ].filter((tag) => tag.content), // Remove empty content tags
+
+      links: [
+        // Canonical URL to prevent duplicate content
+        { rel: 'canonical', href: seoConfig.canonicalUrl },
+
+        // Preload main product image for better performance
+        ...(product.images?.[0]?.imageUrl
+          ? [{ rel: 'preload', href: product.images[0].imageUrl, as: 'image' }]
+          : []),
+
+        // Product-specific structured data
+        ...(seoConfig.structuredData
+          ? seoConfig.structuredData.map((data, index) => ({
+              rel: 'structured-data',
+              type: 'application/ld+json',
+              href: `data:application/ld+json,${encodeURIComponent(JSON.stringify(data))}`,
+              key: `structured-data-${index}`,
+            }))
+          : []),
+      ],
+
+      // Add structured data scripts
+      scripts:
+        seoConfig.structuredData?.map((data, index) => ({
+          type: 'application/ld+json',
+          children: JSON.stringify(data, null, 2),
+          key: `json-ld-${index}`,
+        })) || [],
     }
   },
   component: ProductDetailsPage,
@@ -68,23 +153,32 @@ function ProductDetailsPage() {
   const { product, suggestions, reviews } = Route.useLoaderData()
   const { store } = useTenantStore()
 
+  // Generate additional SEO data for the client side
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+  const productUrl = `${baseUrl}/products/${product.slug}`
+  const title = `${product.name} | ${store?.name}`.slice(0, 60)
+
   return (
     <DefaultPageLayout>
-      <title>{`${product.name} | ${store?.name}`}</title>
-
-      <div className="container flex max-w-7xl flex-col gap-6">
-        <div>
+      <title>{title}</title>
+      <main className="container flex max-w-7xl flex-col gap-6">
+        <nav aria-label="Breadcrumb">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="text-xs">
-                <Link to="/">
+                <Link aria-label="Ir al inicio" to="/">
                   <HomeIcon aria-hidden="true" size={12} />
-                  <span className="sr-only">Home</span>
+                  <span className="sr-only">Inicio</span>
                 </Link>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem className="text-xs">
-                <BreadcrumbLink href="#">{product.category}</BreadcrumbLink>
+                <BreadcrumbLink
+                  aria-label={`Categoría: ${product.category}`}
+                  href="#"
+                >
+                  {product.category}
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem className="text-xs">
@@ -92,16 +186,52 @@ function ProductDetailsPage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </div>
+        </nav>
 
-        <ProductDisplay key={product.id} product={product} />
+        <section aria-labelledby="product-info">
+          <ProductDisplay key={product.id} product={product} />
+        </section>
 
-        <div>
+        <section aria-labelledby="product-details" className="space-y-6">
           <ProductTabs reviews={reviews} />
-        </div>
+        </section>
 
-        <SuggestedProducts products={suggestions} />
-      </div>
+        <section aria-labelledby="suggested-products">
+          <SuggestedProducts products={suggestions} />
+        </section>
+
+        <div className="sr-only">
+          <h1>
+            {product.name} - Comprar en {store?.name || 'Cetus'}
+          </h1>
+          <p>
+            {product.description && `${product.description} `}
+            Precio: $
+            {product.price.toLocaleString('es-CO', {
+              style: 'currency',
+              currency: 'COP',
+            })}
+            {product.rating && ` | Calificación: ${product.rating}/5 estrellas`}
+            {product.reviewsCount && ` (${product.reviewsCount} reseñas)`}
+            {product.category && ` | Categoría: ${product.category}`}
+            {product.stock > 0 ? ' | En stock' : ' | Agotado'}
+          </p>
+          <div>
+            <span>Disponible en: {store?.name || 'Cetus'}</span>
+            <span>URL del producto: {productUrl}</span>
+            {product.images?.map((image, index) => (
+              <span
+                data-image-alt={
+                  image.altText || `${product.name} - Imagen ${index + 1}`
+                }
+                data-image-url={image.imageUrl}
+                key={image.id}
+                style={{ display: 'none' }}
+              />
+            ))}
+          </div>
+        </div>
+      </main>
     </DefaultPageLayout>
   )
 }
