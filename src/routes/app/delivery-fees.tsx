@@ -14,7 +14,7 @@ import {
   type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
-import { Fragment, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/delivery-fees')({
   component: RouteComponent,
@@ -41,7 +41,7 @@ function useDeliveryFeesColumns(): ColumnDef<DeliveryFee>[] {
         header: 'Costo de envío',
         cell: ({ row }) => (
           <div>
-            <Currency value={row.getValue('fee')} currency="COP" />
+            <Currency currency="COP" value={row.getValue('fee')} />
           </div>
         ),
       },
@@ -90,7 +90,7 @@ function RouteComponent() {
   }
 
   return (
-    <Fragment>
+    <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Costos de envío</h1>
 
@@ -99,8 +99,8 @@ function RouteComponent() {
 
       <div className="grid gap-4 overflow-hidden">
         <DataTable table={table} />
-        <TablePagination table={table} paginationInfo={paginationInfo} />
+        <TablePagination paginationInfo={paginationInfo} table={table} />
       </div>
-    </Fragment>
+    </>
   )
 }
