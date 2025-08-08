@@ -83,39 +83,39 @@ function CategoryFilter({
   return (
     <div className="relative flex items-center">
       <Button
-        variant="ghost"
-        size="sm"
+        aria-label="Scroll categories left"
         className={cn(
-          'absolute -left-1.5 z-10 h-8 w-8 rounded bg-card',
+          '-left-1.5 absolute z-10 h-8 w-8 rounded bg-card',
           showLeftArrow ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={() => scroll('left')}
-        aria-label="Scroll categories left"
+        size="sm"
+        variant="ghost"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
       <div
-        ref={scrollContainerRef}
         className="scrollbar-hide flex gap-2 overflow-x-auto"
         onScroll={checkScrollButtons}
+        ref={scrollContainerRef}
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         <Badge
-          variant={selectedCategories.length === 0 ? 'default' : 'secondary'}
           className="shrink-0 cursor-pointer rounded px-2 py-1 transition-colors duration-200"
           onClick={() => setSelectedCategories([])}
+          variant={selectedCategories.length === 0 ? 'default' : 'secondary'}
         >
           Todas
         </Badge>
         {categories.map((category) => (
           <Badge
+            className="shrink-0 cursor-pointer rounded px-2 py-1 transition-colors duration-200"
             key={category.id}
+            onClick={() => toggleCategory(category.id)}
             variant={
               selectedCategories.includes(category.id) ? 'default' : 'secondary'
             }
-            className="shrink-0 cursor-pointer rounded px-2 py-1 transition-colors duration-200"
-            onClick={() => toggleCategory(category.id)}
           >
             {category.name}
           </Badge>
@@ -123,14 +123,14 @@ function CategoryFilter({
       </div>
 
       <Button
-        variant="ghost"
-        size="sm"
+        aria-label="Scroll categories right"
         className={cn(
-          'absolute -right-1.5 z-10 h-8 w-8 rounded bg-card',
+          '-right-1.5 absolute z-10 h-8 w-8 rounded bg-card',
           showRightArrow ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={() => scroll('right')}
-        aria-label="Scroll categories right"
+        size="sm"
+        variant="ghost"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
@@ -165,24 +165,25 @@ function FilterSectionComponent({
       <div>
         <div className="relative">
           <Input
-            id={id}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Buscar productos..."
             className="peer ps-9 pe-9 transition-all duration-200"
+            id={id}
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar productos..."
             type="search"
-            aria-label="Buscar productos..."
+            value={searchTerm}
           />
           <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
             <SearchIcon size={16} />
           </div>
           {searchTerm && (
             <button
-              className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Limpiar búsqueda"
+              className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
               onClick={onClear}
+              type="button"
             >
-              <CircleXIcon size={16} aria-hidden="true" />
+              <CircleXIcon aria-hidden="true" size={16} />
             </button>
           )}
         </div>
