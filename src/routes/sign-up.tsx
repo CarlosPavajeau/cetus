@@ -65,12 +65,12 @@ function RouteComponent() {
     <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
       <Form {...form}>
         <form
-          onSubmit={handleSubmit}
           className="m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)] border bg-muted dark:[--color-muted:var(--color-zinc-900)]"
+          onSubmit={handleSubmit}
         >
           <div className="-m-px rounded-[calc(var(--radius)+.125rem)] border bg-card p-8 pb-6">
             <div className="text-center">
-              <Link to="/" aria-label="go home" className="mx-auto block w-fit">
+              <Link aria-label="go home" className="mx-auto block w-fit" to="/">
                 <HopIcon />
               </Link>
               <h1 className="mt-4 mb-1 font-semibold text-xl">
@@ -124,10 +124,10 @@ function RouteComponent() {
                   <FormItem>
                     <div className="flex items-center justify-between">
                       <FormLabel>Contraseña</FormLabel>
-                      <Button asChild variant="link" size="sm">
+                      <Button asChild size="sm" variant="link">
                         <Link
-                          to="/"
                           className="link intent-info variant-ghost text-sm"
+                          to="/"
                         >
                           ¿Olvidaste tu contraseña?
                         </Link>
@@ -142,9 +142,9 @@ function RouteComponent() {
 
               <SubmitButton
                 className="w-full"
-                type="submit"
-                isSubmitting={form.formState.isSubmitting}
                 disabled={!form.formState.isValid}
+                isSubmitting={form.formState.isSubmitting}
+                type="submit"
               >
                 Iniciar sesión
               </SubmitButton>
@@ -166,12 +166,12 @@ function RouteComponent() {
           <div className="p-3">
             <p className="text-center text-accent-foreground text-sm">
               ¿Ya tienes una cuenta?
-              <Button asChild variant="link" className="px-2">
+              <Button asChild className="px-2" variant="link">
                 <Link
-                  to="/sign-in"
                   search={{
                     invitation,
                   }}
+                  to="/sign-in"
                 >
                   Iniciar sesión
                 </Link>

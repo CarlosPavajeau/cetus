@@ -42,8 +42,8 @@ function RouteComponent() {
     return (
       <DefaultPageLayout>
         <PageHeader
-          title="Error al cargar la solicitud de reseña"
           subtitle="Por favor, inténtalo de nuevo más tarde."
+          title="Error al cargar la solicitud de reseña"
         />
 
         <Button asChild>
@@ -61,7 +61,7 @@ function RouteComponent() {
       <DefaultPageLayout>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="mb-4 rounded-full bg-success-lighter p-6">
-            <CheckCircleIcon size={32} className="text-success-base" />
+            <CheckCircleIcon className="text-success-base" size={32} />
           </div>
 
           <PageHeader title="¡Reseña enviada!" />
@@ -89,7 +89,7 @@ function RouteComponent() {
       <DefaultPageLayout>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="mb-4 rounded-full bg-warning-lighter p-6">
-            <AlertTriangleIcon size={32} className="text-warning-base" />
+            <AlertTriangleIcon className="text-warning-base" size={32} />
           </div>
 
           <PageHeader title="Reseña expirada" />
@@ -119,13 +119,13 @@ function RouteComponent() {
         </h3>
         <div className="flex items-start gap-3">
           <Image
-            src={getImageUrl(reviewRequest.product.imageUrl)}
             alt={reviewRequest.product.name}
-            width={64}
+            className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
             height={64}
             layout="constrained"
             objectFit="cover"
-            className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
+            src={getImageUrl(reviewRequest.product.imageUrl)}
+            width={64}
           />
           <div className="min-w-0 flex-1">
             <h4 className="font-semibold text-sm leading-tight">
