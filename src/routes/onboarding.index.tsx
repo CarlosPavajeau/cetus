@@ -28,7 +28,7 @@ function RouteComponent() {
       <div className="m-auto h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)] border bg-muted dark:[--color-muted:var(--color-zinc-900)]">
         <div className="-m-px rounded-[calc(var(--radius)+.125rem)] border bg-card p-8 pb-6">
           <div className="text-center">
-            <Link to="/" aria-label="go home" className="mx-auto block w-fit">
+            <Link aria-label="go home" className="mx-auto block w-fit" to="/">
               <HopIcon />
             </Link>
             <h1 className="mt-4 mb-1 font-semibold text-xl">
