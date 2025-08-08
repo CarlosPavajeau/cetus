@@ -25,7 +25,6 @@ import { generateCouponCode } from '@/shared/coupons'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
-import { Fragment } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -68,146 +67,144 @@ function RouteComponent() {
   }
 
   return (
-    <Fragment>
-      <div className="flex flex-col gap-4">
-        <h1 className="font-heading font-semibold text-2xl">Crear cupón</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="font-heading font-semibold text-2xl">Crear cupón</h1>
 
-        <div>
-          <ReturnButton />
-        </div>
+      <div>
+        <ReturnButton />
+      </div>
 
-        <Form {...form}>
-          <form
-            onSubmit={onSubmit}
-            className="space-y-8 rounded-md border border-muted bg-card p-4 md:p-8"
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-4">
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Código</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <Input placeholder="Código del cupón" {...field} />
-                          <Button
-                            variant="outline"
-                            type="button"
-                            size="icon"
-                            onClick={generateCode}
-                          >
-                            <RefreshCcwIcon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descripción</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Descripción del cupón"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="discountType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de descuento</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={onDiscountTypeChange}
-                          defaultValue={field.value?.toString()}
+      <Form {...form}>
+        <form
+          className="space-y-8 rounded-md border border-muted bg-card p-4 md:p-8"
+          onSubmit={onSubmit}
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Input placeholder="Código del cupón" {...field} />
+                        <Button
+                          onClick={generateCode}
+                          size="icon"
+                          type="button"
+                          variant="outline"
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona un tipo de descuento" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COUPON_DISCOUNT_TYPE_OPTIONS.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value.toString()}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <RefreshCcwIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="discountValue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor del descuento</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Valor del descuento"
-                          {...field}
-                          type="number"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descripción</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Descripción del cupón"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="usageLimit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Límite de usos</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Límite de usos"
-                          {...field}
-                          type="number"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="flex flex-col gap-6">
-                <CouponRulesForm />
+              <FormField
+                control={form.control}
+                name="discountType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de descuento</FormLabel>
+                    <FormControl>
+                      <Select
+                        defaultValue={field.value?.toString()}
+                        onValueChange={onDiscountTypeChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un tipo de descuento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COUPON_DISCOUNT_TYPE_OPTIONS.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value.toString()}
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <div className="w-full">
-                  <Button type="submit" className="w-full">
-                    {createCouponMutation.isPending ? (
-                      <Loader2Icon className="size-4 animate-spin" />
-                    ) : (
-                      'Crear cupón'
-                    )}
-                  </Button>
-                </div>
+              <FormField
+                control={form.control}
+                name="discountValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor del descuento</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Valor del descuento"
+                        {...field}
+                        type="number"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="usageLimit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Límite de usos</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Límite de usos"
+                        {...field}
+                        type="number"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex flex-col gap-6">
+              <CouponRulesForm />
+
+              <div className="w-full">
+                <Button className="w-full" type="submit">
+                  {createCouponMutation.isPending ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    'Crear cupón'
+                  )}
+                </Button>
               </div>
             </div>
-          </form>
-        </Form>
-      </div>
-    </Fragment>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }
