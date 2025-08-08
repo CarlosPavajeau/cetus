@@ -33,7 +33,9 @@ function RouteComponent() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
   const filteredProducts = useMemo(() => {
-    if (!products) return []
+    if (!products) {
+      return []
+    }
 
     return products.filter((product) => {
       const matchesSearch = product.name
@@ -75,11 +77,11 @@ function RouteComponent() {
         </p>
 
         <FilterSection
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedCategories={selectedCategories}
-          setSelectedCategories={setSelectedCategories}
           categories={categories}
+          searchTerm={searchTerm}
+          selectedCategories={selectedCategories}
+          setSearchTerm={setSearchTerm}
+          setSelectedCategories={setSelectedCategories}
         />
 
         <ProductGrid products={filteredProducts} />
