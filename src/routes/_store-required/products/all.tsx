@@ -5,23 +5,10 @@ import { ProductGrid } from '@/components/product/product-grid'
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
 import { useCategories } from '@/hooks/categories'
 import { useProductsForSale } from '@/hooks/products'
-import { useTenantStore } from '@/store/use-tenant-store'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
-export const Route = createFileRoute('/products/all')({
-  beforeLoad: () => {
-    const { store } = useTenantStore.getState()
-
-    if (!store) {
-      throw redirect({
-        to: '/',
-        search: {
-          redirectReason: 'NO_STORE_SELECTED',
-        },
-      })
-    }
-  },
+export const Route = createFileRoute('/_store-required/products/all')({
   component: RouteComponent,
 })
 

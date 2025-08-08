@@ -17,33 +17,15 @@ import { useCustomer } from '@/hooks/customers'
 import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrder, CreateOrderSchema } from '@/schemas/orders'
 import { useCart } from '@/store/cart'
-import { useTenantStore } from '@/store/use-tenant-store'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
-import {
-  createFileRoute,
-  Navigate,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
 import { ArrowRightIcon } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 
-export const Route = createFileRoute('/checkout/')({
-  beforeLoad: () => {
-    const { store } = useTenantStore.getState()
-
-    if (!store) {
-      throw redirect({
-        to: '/',
-        search: {
-          redirectReason: 'NO_STORE_SELECTED',
-        },
-      })
-    }
-  },
+export const Route = createFileRoute('/_store-required/checkout/')({
   component: RouteComponent,
 })
 
@@ -158,7 +140,7 @@ function CustomerInfoFields({ form }: CustomerInfoFieldsProps) {
               <FormItem>
                 <FormLabel>Identificación</FormLabel>
                 <FormControl>
-                  <Input type="text" autoFocus {...field} />
+                  <Input autoFocus type="text" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -236,7 +218,7 @@ function DeliveryFeeInfo({
           <>
             El costo del envío es de{' '}
             <span className="font-medium">
-              <Currency value={deliveryFee.fee} currency="COP" />
+              <Currency currency="COP" value={deliveryFee.fee} />
             </span>
             .
           </>
@@ -267,7 +249,7 @@ function RouteComponent() {
       <PageHeader title="Datos de envío" />
 
       <Form {...form}>
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form className="space-y-6" onSubmit={onSubmit}>
           <CustomerInfoFields form={form} />
 
           <DeliveryFeeInfo
@@ -276,17 +258,17 @@ function RouteComponent() {
           />
 
           <SubmitButton
-            type="submit"
             className="group w-full"
-            isSubmitting={isSubmitting}
             disabled={isSubmitting}
+            isSubmitting={isSubmitting}
+            type="submit"
           >
             <div className="group flex items-center gap-2">
               Continuar al pago
               <ArrowRightIcon
+                aria-hidden="true"
                 className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
                 size={16}
-                aria-hidden="true"
               />
             </div>
           </SubmitButton>

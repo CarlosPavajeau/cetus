@@ -4,8 +4,7 @@ import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { type CartItem, useCart } from '@/store/cart'
-import { useTenantStore } from '@/store/use-tenant-store'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -18,31 +17,19 @@ import {
 } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 
-export const Route = createFileRoute('/cart')({
-  beforeLoad: () => {
-    const { store } = useTenantStore.getState()
-
-    if (!store) {
-      throw redirect({
-        to: '/',
-        search: {
-          redirectReason: 'NO_STORE_SELECTED',
-        },
-      })
-    }
-  },
+export const Route = createFileRoute('/_store-required/cart')({
   component: CartPage,
 })
 
 function EmptyCart() {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="flex flex-col items-center justify-center py-12 text-center"
+      initial={{ opacity: 0 }}
     >
       <div className="mb-4 rounded-full bg-muted p-6">
-        <ShoppingBagIcon size={32} className="text-muted-foreground" />
+        <ShoppingBagIcon className="text-muted-foreground" size={32} />
       </div>
       <h2 className="mb-2 font-semibold text-2xl">Tu carrito está vacío</h2>
       <p className="mb-6 max-w-md text-muted-foreground">
@@ -83,14 +70,14 @@ function CartItemComponent({ item }: CartItemProps) {
       <div className="flex p-3">
         <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
           <Image
-            src={getImageUrl(item.product.imageUrl || '')}
             alt={item.product.name}
-            width={80}
+            className="object-cover"
             height={80}
             layout="constrained"
             objectFit="cover"
             sizes="80px"
-            className="object-cover"
+            src={getImageUrl(item.product.imageUrl || '')}
+            width={80}
           />
         </div>
 
@@ -103,13 +90,14 @@ function CartItemComponent({ item }: CartItemProps) {
             <button
               className="text-muted-foreground hover:text-red-500"
               onClick={handleRemoveItem}
+              type="button"
             >
               <Trash2Icon className="h-4 w-4" />
             </button>
           </div>
 
           <span className="mt-1 font-medium text-xs">
-            <Currency value={item.product.price} currency="COP" />
+            <Currency currency="COP" value={item.product.price} />
           </span>
 
           <div className="mt-auto flex items-center justify-between">
@@ -117,6 +105,7 @@ function CartItemComponent({ item }: CartItemProps) {
               <button
                 className="p-1 text-muted-foreground"
                 onClick={handleDecrement}
+                type="button"
               >
                 <MinusIcon className="h-4 w-4" />
               </button>
@@ -124,6 +113,7 @@ function CartItemComponent({ item }: CartItemProps) {
               <button
                 className="p-1 text-muted-foreground"
                 onClick={handleIncrement}
+                type="button"
               >
                 <PlusIcon className="h-4 w-4" />
               </button>
@@ -131,8 +121,8 @@ function CartItemComponent({ item }: CartItemProps) {
 
             <span className="font-medium text-sm">
               <Currency
-                value={item.product.price * item.quantity}
                 currency="COP"
+                value={item.product.price * item.quantity}
               />
             </span>
           </div>
@@ -168,14 +158,14 @@ function CartPage() {
 
       <AnimatePresence mode="wait">
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }}
         >
           <div className="space-y-6">
             <div className="space-y-4">
               {cart.items.map((item) => (
-                <CartItemComponent key={item.product.id} item={item} />
+                <CartItemComponent item={item} key={item.product.id} />
               ))}
             </div>
 
@@ -187,7 +177,7 @@ function CartPage() {
                   <span className="text-muted-foreground">Subtotal</span>
 
                   <span>
-                    <Currency value={total} currency="COP" />
+                    <Currency currency="COP" value={total} />
                   </span>
                 </div>
 
@@ -195,15 +185,15 @@ function CartPage() {
                   <span className="text-muted-foreground">Envio</span>
 
                   <span>
-                    <Currency value={5000} currency="COP" /> -{' '}
-                    <Currency value={15000} currency="COP" />
+                    <Currency currency="COP" value={5000} /> -{' '}
+                    <Currency currency="COP" value={15_000} />
                   </span>
                 </div>
 
                 <div className="mt-2 flex justify-between border-t pt-2 font-medium">
                   <span>Total</span>
                   <span>
-                    <Currency value={total} currency="COP" />
+                    <Currency currency="COP" value={total} />
                   </span>
                 </div>
 
@@ -217,18 +207,18 @@ function CartPage() {
             </div>
 
             <div className="space-y-3">
-              <Button className="group w-full" asChild>
+              <Button asChild className="group w-full">
                 <Link to="/checkout">
                   Continuar con el pago
                   <ArrowRightIcon
+                    aria-hidden="true"
                     className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
                     size={16}
-                    aria-hidden="true"
                   />
                 </Link>
               </Button>
 
-              <Button variant="outline" className="w-full" asChild>
+              <Button asChild className="w-full" variant="outline">
                 <Link to="/">
                   <ShoppingCartIcon className="mr-2" />
                   Seguir comprando

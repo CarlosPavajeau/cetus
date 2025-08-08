@@ -16,24 +16,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTenantStore } from '@/store/use-tenant-store'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronRight, Home, HomeIcon } from 'lucide-react'
 import { useId } from 'react'
 import { v7 as uuid } from 'uuid'
 
-export const Route = createFileRoute('/products/$slug')({
-  beforeLoad: () => {
-    const { store } = useTenantStore.getState()
-
-    if (!store) {
-      throw redirect({
-        to: '/',
-        search: {
-          redirectReason: 'NO_STORE_SELECTED',
-        },
-      })
-    }
-  },
+export const Route = createFileRoute('/_store-required/products/$slug')({
   loader: async ({ params }) => {
     const slug = params.slug
     const product = await fetchProductBySlug(slug)
@@ -118,7 +106,7 @@ function ProductDetailsPage() {
   )
 }
 
-function ProductDisplaySkeleton() {
+export function ProductDisplaySkeleton() {
   const id = useId()
 
   return (

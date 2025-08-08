@@ -4,23 +4,10 @@ import { DefaultPageLayout } from '@/components/default-page-layout'
 import { OrderSummary } from '@/components/order/order-summary'
 import { PageHeader } from '@/components/page-header'
 import { SubmitButton } from '@/components/submit-button'
-import { useTenantStore } from '@/store/use-tenant-store'
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/checkout/$id')({
-  beforeLoad: () => {
-    const { store } = useTenantStore.getState()
-
-    if (!store) {
-      throw redirect({
-        to: '/',
-        search: {
-          redirectReason: 'NO_STORE_SELECTED',
-        },
-      })
-    }
-  },
+export const Route = createFileRoute('/_store-required/checkout/$id')({
   loader: async ({ params }) => {
     const { id } = params
     const order = await fetchOrder(id)
@@ -52,8 +39,8 @@ function RouteComponent() {
   return (
     <DefaultPageLayout>
       <PageHeader
-        title={`Pedido #${order.orderNumber}`}
         subtitle="Tu pedido ha sido creado exitosamente. Ahora, puedes proceder al pago."
+        title={`Pedido #${order.orderNumber}`}
       />
 
       <div className="space-y-6">
@@ -68,11 +55,11 @@ function RouteComponent() {
         </div>
 
         <SubmitButton
-          size="lg"
           className="w-full"
           disabled={isPending}
           isSubmitting={isPending}
           onClick={handlePayment}
+          size="lg"
         >
           Ir a pagar
         </SubmitButton>
