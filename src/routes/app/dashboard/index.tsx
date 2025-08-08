@@ -12,7 +12,6 @@ import {
 import { MONTHS } from '@/shared/constants'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { type } from 'arktype'
-import { Fragment } from 'react'
 
 const months = [
   'january',
@@ -48,12 +47,12 @@ function RouteComponent() {
   const { month } = Route.useSearch()
 
   const navigate = useNavigate()
-  const handleMonthChange = (month: Month) => {
-    navigate({ to: '/app/dashboard', search: { month } })
+  const handleMonthChange = (selectedMonth: Month) => {
+    navigate({ to: '/app/dashboard', search: { month: selectedMonth } })
   }
 
   return (
-    <Fragment>
+    <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
           Panel de control
@@ -61,21 +60,21 @@ function RouteComponent() {
 
         <div>
           <Select
-            onValueChange={handleMonthChange}
             defaultValue={month as unknown as string}
+            onValueChange={handleMonthChange}
             value={month as unknown as string}
           >
             <SelectTrigger className="h-7 text-xs">
               <SelectValue placeholder="Selecciona un mes" />
             </SelectTrigger>
             <SelectContent>
-              {MONTHS.map((month) => (
+              {MONTHS.map((monthOption) => (
                 <SelectItem
-                  key={month.value}
-                  value={month.value}
                   className="pe-8 text-xs"
+                  key={monthOption.value}
+                  value={monthOption.value}
                 >
-                  {month.label}
+                  {monthOption.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -92,6 +91,6 @@ function RouteComponent() {
 
         <TopSellingProducts />
       </div>
-    </Fragment>
+    </>
   )
 }
