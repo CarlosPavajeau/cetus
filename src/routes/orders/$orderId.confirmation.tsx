@@ -37,7 +37,7 @@ export const Route = createFileRoute('/orders/$orderId/confirmation')({
       const { payment_id } = context
       const payment = await GetPayment({
         data: {
-          payment_id: payment_id,
+          payment_id,
         },
       })
 
@@ -56,12 +56,12 @@ export const Route = createFileRoute('/orders/$orderId/confirmation')({
   notFoundComponent: () => (
     <DefaultPageLayout>
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center py-8 text-center"
+        initial={{ opacity: 0 }}
       >
         <div className="mb-4 rounded-full bg-red-100 p-6">
-          <XIcon size={32} className="text-red-600" />
+          <XIcon className="text-red-600" size={32} />
         </div>
         <h2 className="mb-2 font-semibold text-xl">¡Pedido no encontrado!</h2>
 
@@ -72,7 +72,7 @@ export const Route = createFileRoute('/orders/$orderId/confirmation')({
 
         <div className="w-full max-w-xs space-y-3">
           <SupportButton
-            message={`Hola, he tenido un problema con mi pedido.`}
+            message={'Hola, he tenido un problema con mi pedido.'}
           />
         </div>
       </motion.div>
@@ -92,12 +92,12 @@ function OrderConfirmationComponent() {
     return (
       <DefaultPageLayout>
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex flex-col items-center justify-center py-8 text-center"
+          initial={{ opacity: 0 }}
         >
           <div className="mb-4 rounded-full bg-red-100 p-6">
-            <XIcon size={32} className="text-red-600" />
+            <XIcon className="text-red-600" size={32} />
           </div>
           <h2 className="mb-2 font-semibold text-xl">
             ¡Tu pago ha sido rechazado!
@@ -118,7 +118,7 @@ function OrderConfirmationComponent() {
               message={`Hola, he tenido un problema con el pago de mi pedido. El número de mi pedido es ${order.orderNumber}`}
             />
 
-            <Button asChild variant="outline" className="w-full">
+            <Button asChild className="w-full" variant="outline">
               <Link to="/">
                 <ShoppingBagIcon className="mr-2" />
                 Volver a la tienda
@@ -134,12 +134,12 @@ function OrderConfirmationComponent() {
     return (
       <DefaultPageLayout>
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex flex-col items-center justify-center py-8 text-center"
+          initial={{ opacity: 0 }}
         >
           <div className="mb-4 rounded-full bg-primary/10 p-6">
-            <InfoIcon size={32} className="text-primary" />
+            <InfoIcon className="text-primary" size={32} />
           </div>
           <h2 className="mb-2 font-semibold text-xl">
             ¡Estamos procesando tu pago!
@@ -160,7 +160,7 @@ function OrderConfirmationComponent() {
               message={`Hola, quisiera saber el estado de mi pedido. El número de mi pedido es ${order.orderNumber}`}
             />
 
-            <Button asChild variant="outline" className="w-full">
+            <Button asChild className="w-full" variant="outline">
               <Link to="/">
                 <ShoppingBagIcon className="mr-2" />
                 Volver a la tienda
@@ -175,12 +175,12 @@ function OrderConfirmationComponent() {
   return (
     <DefaultPageLayout>
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center py-8 text-center"
+        initial={{ opacity: 0 }}
       >
         <div className="mb-4 rounded-full bg-emerald-100 p-6">
-          <CheckCircleIcon size={32} className="text-emerald-600" />
+          <CheckCircleIcon className="text-emerald-600" size={32} />
         </div>
         <h2 className="mb-2 font-semibold text-xl">¡Pedido completado!</h2>
         <p className="mb-2 text-muted-foreground">
@@ -199,18 +199,18 @@ function OrderConfirmationComponent() {
         </p>
 
         <div className="w-full max-w-xs space-y-3">
-          <Button className="group w-full" asChild>
-            <Link to="/orders/$id" params={{ id: order.id }}>
+          <Button asChild className="group w-full">
+            <Link params={{ id: order.id }} to="/orders/$id">
               Ver detalles del pedido
               <ArrowRightIcon
+                aria-hidden="true"
                 className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
                 size={16}
-                aria-hidden="true"
               />
             </Link>
           </Button>
 
-          <Button asChild variant="outline" className="w-full">
+          <Button asChild className="w-full" variant="outline">
             <Link to="/">
               <ShoppingBagIcon className="mr-2" />
               Seguir comprando
