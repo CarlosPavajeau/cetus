@@ -58,7 +58,7 @@ function RouteComponent() {
           <CardContent className="flex items-center gap-4">
             <div>
               <Avatar className="size-14">
-                <AvatarImage src={user.image ?? undefined} alt={user.name} />
+                <AvatarImage alt={user.name} src={user.image ?? undefined} />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
             </div>
@@ -104,9 +104,9 @@ function RouteComponent() {
               <div className="flex flex-col gap-1">
                 {organization.members.map((member) => (
                   <MemberCard
+                    isOwner={isOwner}
                     key={member.id}
                     member={member}
-                    isOwner={isOwner}
                   />
                 ))}
               </div>
