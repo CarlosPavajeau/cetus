@@ -402,7 +402,7 @@ export function generateHomepageSEO(
               '@type': 'Product',
               name: product.name,
               url: `${baseUrl}/products/${product.slug}`,
-              image: product.imageUrl,
+              image: getImageUrl(product.imageUrl),
               offers: {
                 '@type': 'Offer',
                 price: product.price,
