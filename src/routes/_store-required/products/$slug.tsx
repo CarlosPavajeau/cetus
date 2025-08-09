@@ -22,7 +22,7 @@ import { generateProductSEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronRight, Home, HomeIcon } from 'lucide-react'
-import { useId } from 'react'
+import { useEffect, useId } from 'react'
 import { v7 as uuid } from 'uuid'
 
 export const Route = createFileRoute('/_store-required/products/$slug')({
@@ -96,7 +96,7 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
 
         // Mobile optimization
         { name: 'format-detection', content: 'telephone=no' },
-        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
       ].filter((tag) => tag.content), // Remove empty content tags
 
@@ -163,8 +163,16 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
 })
 
 function ProductDetailsPage() {
-  const { product, suggestions, reviews } = Route.useLoaderData()
-  const { store } = useTenantStore()
+  const { product, suggestions, reviews, store } = Route.useLoaderData()
+
+  const { actions } = useTenantStore()
+  useEffect(() => {
+    if (!store) {
+      return
+    }
+
+    actions.setStore(store)
+  }, [actions, store])
 
   // Generate additional SEO data for the client side
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
