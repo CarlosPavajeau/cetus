@@ -4,8 +4,8 @@ import { getHeader } from '@tanstack/react-start/server'
 
 export const getServerhost = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const host = getHeader('Host')!
-    const appUrl = new URL(env.APP_URL!)
+    const host = getHeader('Host') ?? 'localhost'
+    const appUrl = new URL(env.APP_URL)
 
     return {
       host,
