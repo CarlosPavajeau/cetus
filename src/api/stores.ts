@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi, api } from '@/api/client'
 
 export type Store = {
   id: string
@@ -13,13 +13,19 @@ export type Store = {
 }
 
 export async function fetchStoreByDomain(domain: string) {
-  const response = await api.get<Store>(`/stores/by-domain/${domain}`)
+  const response = await anonymousApi.get<Store>(`/stores/by-domain/${domain}`)
 
   return response.data
 }
 
 export async function fetchStoreBySlug(slug: string) {
-  const response = await api.get<Store>(`/stores/by-slug/${slug}`)
+  const response = await anonymousApi.get<Store>(`/stores/by-slug/${slug}`)
+
+  return response.data
+}
+
+export async function fetchStoreById(id: string) {
+  const response = await anonymousApi.get<Store>(`/stores/${id}`)
 
   return response.data
 }
@@ -44,7 +50,7 @@ export async function configureMercadoPago(
 
 export async function fetchMercadoPagoAuthorizationUrl(): Promise<string> {
   const response = await api.get<string>(
-    `/stores/payment-providers/mercado-pago/authorization-url`,
+    '/stores/payment-providers/mercado-pago/authorization-url',
   )
 
   return response.data
