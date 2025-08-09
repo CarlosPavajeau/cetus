@@ -1,5 +1,6 @@
 import { fetchCategories } from '@/api/categories'
 import { fetchFeaturedProducts, fetchPopularProducts } from '@/api/products'
+import { fetchStoreByDomain } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { ApplicationHome } from '@/components/home/application-home'
 import { FeaturedProductsSection } from '@/components/home/featured-products-section'
@@ -11,54 +12,47 @@ import { getServerhost } from '@/server/get-host'
 import { env } from '@/shared/env'
 import { generateHomepageSEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
+import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { useEffect } from 'react'
+
+const storeByDomainQuery = (domain: string) =>
+  queryOptions({
+    queryKey: ['store', domain],
+    queryFn: () => fetchStoreByDomain(domain),
+  })
 
 export const Route = createFileRoute('/')({
-  ssr: false,
-  loader: async () => {
+  loader: async ({ context }) => {
     const { host, isAppUrl } = await getServerhost()
-    const { fetchAndSetStore, clearStore } = useTenantStore.getState().actions
 
     if (isAppUrl) {
-      clearStore()
-
       return {
         isAppUrl,
       }
     }
 
-    try {
-      const { store } = useTenantStore.getState()
+    const store = await context.queryClient.ensureQueryData(
+      storeByDomainQuery(host),
+    )
 
-      await fetchAndSetStore(host)
+    const [featuredProducts, popularProducts, categories] = await Promise.all([
+      fetchFeaturedProducts(store.slug),
+      fetchPopularProducts(store.slug),
+      fetchCategories(store.slug),
+    ])
 
-      if (!store) {
-        return {
-          isAppUrl,
-        }
-      }
-
-      const [featuredProducts, popularProducts, categories] = await Promise.all(
-        [fetchFeaturedProducts(), fetchPopularProducts(), fetchCategories()],
-      )
-
-      return {
-        featuredProducts,
-        popularProducts,
-        categories,
-        isAppUrl,
-        store,
-      }
-    } catch (err) {
-      return {
-        isAppUrl,
-      }
+    return {
+      featuredProducts,
+      popularProducts,
+      categories,
+      isAppUrl,
+      store,
     }
   },
   head: ({ loaderData }) => {
     if (!loaderData || loaderData.isAppUrl) {
       return {
-        title: 'Cetus - Plataforma de E-commerce',
         meta: [
           {
             name: 'description',
@@ -95,10 +89,12 @@ export const Route = createFileRoute('/')({
     const seoTags = generateSEOTags(seoConfig)
 
     return {
-      title: seoConfig.title,
       meta: [
         // Essential SEO meta tags
         ...seoTags,
+
+        // Page title
+        { title: seoConfig.title, content: seoConfig.title },
 
         // Homepage-specific meta tags
         { name: 'geo.region', content: 'CO' },
@@ -115,7 +111,7 @@ export const Route = createFileRoute('/')({
 
         // Mobile optimization
         { name: 'format-detection', content: 'telephone=no' },
-        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
         { name: 'apple-mobile-web-app-title', content: store.name },
 
@@ -143,8 +139,8 @@ export const Route = createFileRoute('/')({
         })) || []),
 
         // Alternative language versions (if applicable)
-        { rel: 'alternate', hreflang: 'es-CO', href: baseUrl },
-        { rel: 'alternate', hreflang: 'es', href: baseUrl },
+        { rel: 'alternate', hrefLang: 'es-CO', href: baseUrl },
+        { rel: 'alternate', hrefLang: 'es', href: baseUrl },
 
         // Sitemap reference
         {
@@ -178,6 +174,15 @@ export const Route = createFileRoute('/')({
 function IndexPage() {
   const { featuredProducts, popularProducts, categories, isAppUrl, store } =
     Route.useLoaderData()
+
+  const { actions } = useTenantStore()
+  useEffect(() => {
+    if (!store) {
+      return
+    }
+
+    actions.setStore(store)
+  }, [actions, store])
 
   if (isAppUrl) {
     return (
