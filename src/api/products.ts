@@ -38,10 +38,21 @@ export const fetchProduct = async (id: string) => {
   return response.data
 }
 
-export type ProductForSale = Omit<
-  Product,
-  'createdAt' | 'updatedAt' | 'enabled'
->
+export type ProductForSale = {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  price: number
+  stock: number
+  imageUrl?: string
+  images: ProductImage[]
+  rating: number
+  reviewsCount: number
+  categoryId: string
+  category?: string
+  storeId: string
+}
 
 export type SimpleProductForSale = {
   id: string
