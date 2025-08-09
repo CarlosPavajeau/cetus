@@ -45,11 +45,15 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
     }
 
     const { product, reviews } = loaderData
+    const { store } = useTenantStore.getState()
+
     const baseUrl =
-      typeof window !== 'undefined' ? window.location.origin : env.APP_URL // fallback URL
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : (store?.customDomain ?? env.APP_URL)
 
     // Generate comprehensive SEO configuration
-    const storeName = 'Cetus' // This should be dynamic based on store context
+    const storeName = store?.name ?? 'cetus'
     const seoConfig = generateProductSEO(
       product,
       storeName,
