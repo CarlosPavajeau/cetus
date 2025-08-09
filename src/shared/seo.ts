@@ -1,5 +1,6 @@
 import type { Category } from '@/api/categories'
 import type { ProductForSale, SimpleProductForSale } from '@/api/products'
+import { getImageUrl } from '@/shared/cdn'
 
 export interface SEOConfig {
   title: string
@@ -33,7 +34,9 @@ export function generateProductSEO(
   }>,
 ): SEOConfig {
   const productUrl = `${baseUrl}/products/${product.slug}`
-  const mainImage = product.images?.[0]?.imageUrl || product.imageUrl
+  const mainImage = getImageUrl(
+    product.images?.[0]?.imageUrl || product.imageUrl || 'placeholder.svg',
+  )
 
   // Generate optimized title (recommended 50-60 characters)
   const title = `${product.name} | ${storeName}`.slice(0, 60)
