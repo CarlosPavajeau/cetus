@@ -342,7 +342,7 @@ export function generateHomepageSEO(
   categories?: Category[],
 ): SEOConfig {
   // Generate optimized homepage title (recommended 50-60 characters)
-  const title = `${storeName} - Tienda Online | Compra los Mejores Productos`
+  const title = storeName
 
   // Generate compelling meta description (recommended 150-160 characters)
   const productCount =
