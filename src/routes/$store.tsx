@@ -1,5 +1,6 @@
 import { fetchCategories } from '@/api/categories'
 import { fetchFeaturedProducts, fetchPopularProducts } from '@/api/products'
+import { fetchStoreBySlug } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { FeaturedProductsSection } from '@/components/home/featured-products-section'
 import { HeroSection } from '@/components/home/hero-section'
@@ -9,28 +10,32 @@ import { PageHeader } from '@/components/page-header'
 import { env } from '@/shared/env'
 import { generateHomepageSEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
+import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
+import { useEffect } from 'react'
+
+const storeBySlugQuery = (slug: string) =>
+  queryOptions({
+    queryKey: ['store', slug],
+    queryFn: () => fetchStoreBySlug(slug),
+  })
 
 export const Route = createFileRoute('/$store')({
-  ssr: false,
-  loader: async (context) => {
-    const slug = context.params.store
-    const { fetchAndSetStore } = useTenantStore.getState().actions
+  loader: async ({ context, params }) => {
+    const slug = params.store
+    const store = await context.queryClient.ensureQueryData(
+      storeBySlugQuery(slug),
+    )
 
-    const result = await fetchAndSetStore(slug)
-
-    if (!result) {
+    if (!store) {
       throw notFound()
     }
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
-      fetchFeaturedProducts(),
-      fetchPopularProducts(),
-      fetchCategories(),
+      fetchFeaturedProducts(store.slug),
+      fetchPopularProducts(store.slug),
+      fetchCategories(store.slug),
     ])
-
-    // Get the current store after it's been set
-    const { store } = useTenantStore.getState()
 
     return {
       featuredProducts,
@@ -65,19 +70,17 @@ export const Route = createFileRoute('/$store')({
         ? window.location.origin
         : `${env.APP_URL}/${storeSlug}` // Store-specific URL
 
-    const storeUrl = `${baseUrl}/${storeSlug}`
-
     // Generate comprehensive store homepage SEO configuration
     const seoConfig = generateHomepageSEO(
       store.name,
-      storeUrl, // Use store-specific URL
+      baseUrl, // Use store-specific URL
       featuredProducts,
       popularProducts,
       categories,
     )
 
     // Customize title for store-specific page
-    const storeSpecificTitle = `${store.name} - Tienda Online | Productos de Calidad`
+    const storeSpecificTitle = `${store.name}`
 
     // Customize description for store-specific page
     const storeSpecificDescription = `Descubre ${store.name}, tu tienda online especializada. ${
@@ -97,19 +100,21 @@ export const Route = createFileRoute('/$store')({
       ...seoConfig,
       title: storeSpecificTitle,
       description: storeSpecificDescription,
-      canonicalUrl: storeUrl,
+      canonicalUrl: baseUrl,
       ogTitle: storeSpecificTitle,
       ogDescription: storeSpecificDescription,
-      ogUrl: storeUrl,
+      ogUrl: baseUrl,
       twitterTitle: storeSpecificTitle,
       twitterDescription: storeSpecificDescription,
     })
 
     return {
-      title: storeSpecificTitle,
       meta: [
         // Essential SEO meta tags
         ...seoTags,
+
+        // Page title
+        { title: seoConfig.title, content: seoConfig.title },
 
         // Store-specific meta tags
         { name: 'store-name', content: store.name },
@@ -133,7 +138,7 @@ export const Route = createFileRoute('/$store')({
 
         // Mobile optimization
         { name: 'format-detection', content: 'telephone=no' },
-        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
 
         // Store-specific e-commerce meta
@@ -149,7 +154,7 @@ export const Route = createFileRoute('/$store')({
 
       links: [
         // Canonical URL for store
-        { rel: 'canonical', href: storeUrl },
+        { rel: 'canonical', href: baseUrl },
 
         // Preload featured product images for better performance
         ...(featuredProducts?.slice(0, 3).map((product, index) => ({
@@ -160,14 +165,14 @@ export const Route = createFileRoute('/$store')({
         })) || []),
 
         // Alternative language versions
-        { rel: 'alternate', hreflang: 'es-CO', href: storeUrl },
-        { rel: 'alternate', hreflang: 'es', href: storeUrl },
+        { rel: 'alternate', hrefLang: 'es-CO', href: baseUrl },
+        { rel: 'alternate', hrefLang: 'es', href: baseUrl },
 
         // Store-specific sitemap
         {
           rel: 'sitemap',
           type: 'application/xml',
-          href: `${storeUrl}/sitemap.xml`,
+          href: `${baseUrl}/sitemap.xml`,
         },
 
         // Store RSS feed
@@ -175,7 +180,7 @@ export const Route = createFileRoute('/$store')({
           rel: 'alternate',
           type: 'application/rss+xml',
           title: `${store.name} - Productos`,
-          href: `${storeUrl}/feed.xml`,
+          href: `${baseUrl}/feed.xml`,
         },
 
         // Favicon and touch icons (store-specific if available)
@@ -199,6 +204,15 @@ export const Route = createFileRoute('/$store')({
 function RouteComponent() {
   const { featuredProducts, popularProducts, categories, store } =
     Route.useLoaderData()
+
+  const { actions } = useTenantStore()
+  useEffect(() => {
+    if (!store) {
+      return
+    }
+
+    actions.setStore(store)
+  }, [actions, store])
 
   if (!(categories && featuredProducts && popularProducts)) {
     return (
