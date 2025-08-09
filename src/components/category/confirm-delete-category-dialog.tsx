@@ -41,12 +41,12 @@ export const ConfirmDeleteCategoryDialog = ({ category }: Props) => {
   }, [deleteCategoryMutation.isSuccess, queryClient])
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
         <DropdownMenuItem
-          onSelect={(e) => e.preventDefault()}
-          onClick={() => setOpen(true)}
           aria-label="Delete category"
+          onClick={() => setOpen(true)}
+          onSelect={(e) => e.preventDefault()}
         >
           <span>Eliminar</span>
         </DropdownMenuItem>
@@ -63,15 +63,15 @@ export const ConfirmDeleteCategoryDialog = ({ category }: Props) => {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <Button
-            variant="destructive"
             disabled={deleteCategoryMutation.isPending}
             onClick={handleDelete}
+            variant="destructive"
           >
             {deleteCategoryMutation.isPending && (
               <LoaderCircleIcon
+                aria-hidden="true"
                 className="animate-spin"
                 size={16}
-                aria-hidden="true"
               />
             )}
             Sí, eliminar

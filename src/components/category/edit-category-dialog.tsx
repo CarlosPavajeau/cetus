@@ -82,13 +82,13 @@ export const EditCategoryDialog = ({ category }: Props) => {
   return (
     <>
       <DropdownMenuItem
-        onSelect={(e) => e.preventDefault()}
         onClick={() => setOpen(true)}
+        onSelect={(e) => e.preventDefault()}
       >
         Editar
       </DropdownMenuItem>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="sm:text-center">
@@ -97,21 +97,21 @@ export const EditCategoryDialog = ({ category }: Props) => {
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form className="space-y-4" onSubmit={onSubmit}>
               <FormField
-                name="name"
                 control={form.control}
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nombre</FormLabel>
                     <FormControl>
-                      <Input type="text" autoFocus {...field} />
+                      <Input autoFocus type="text" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={updateCategoryMutation.isPending}>
+              <Button disabled={updateCategoryMutation.isPending} type="submit">
                 {updateCategoryMutation.isPending
                   ? 'Actualizando...'
                   : 'Actualizar'}

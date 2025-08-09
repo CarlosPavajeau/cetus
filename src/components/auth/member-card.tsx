@@ -34,8 +34,8 @@ export function MemberCard({ member, isOwner }: Props) {
           <div>
             <Avatar>
               <AvatarImage
-                src={member.user.image ?? undefined}
                 alt={member.user.name}
+                src={member.user.image ?? undefined}
               />
               <AvatarFallback>{member.user.name.charAt(0)}</AvatarFallback>
             </Avatar>
@@ -60,9 +60,9 @@ export function MemberCard({ member, isOwner }: Props) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="ghost"
-                  size="icon"
                   className="opacity-60 hover:opacity-100"
+                  size="icon"
+                  variant="ghost"
                 >
                   <UserCog2 size={16} />
                   <span className="sr-only">Configurar miembro</span>
@@ -71,18 +71,18 @@ export function MemberCard({ member, isOwner }: Props) {
               <DropdownMenuContent>
                 <DropdownMenuItem>
                   <UserCogIcon
-                    size={16}
-                    className="opacity-60"
                     aria-hidden="true"
+                    className="opacity-60"
+                    size={16}
                   />
                   Actualizar rol
                 </DropdownMenuItem>
 
                 <DropdownMenuItem variant="destructive">
                   <UserXIcon
-                    size={16}
-                    className="opacity-60"
                     aria-hidden="true"
+                    className="opacity-60"
+                    size={16}
                   />
                   Eliminar miembro
                 </DropdownMenuItem>

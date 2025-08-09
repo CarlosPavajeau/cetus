@@ -64,7 +64,7 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
   }, [createCategoryMutation.isSuccess, form, onOpenChange, queryClient])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="sm:text-center">
@@ -73,21 +73,21 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
             <FormField
-              name="name"
               control={form.control}
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nombre</FormLabel>
                   <FormControl>
-                    <Input type="text" autoFocus {...field} />
+                    <Input autoFocus type="text" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={createCategoryMutation.isPending}>
+            <Button disabled={createCategoryMutation.isPending} type="submit">
               Agregar
             </Button>
           </form>

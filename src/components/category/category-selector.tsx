@@ -42,23 +42,22 @@ export function CategorySelector({ onSelectCreateCategory }: Props) {
   return (
     <FormField
       control={form.control}
-      name="categoryId"
       disabled={isLoading}
+      name="categoryId"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Categoría</FormLabel>
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover onOpenChange={setOpen} open={open}>
             <PopoverTrigger asChild>
               <FormControl>
                 <Button
-                  variant="outline"
-                  role="combobox"
                   aria-expanded={open}
                   className={cn(
                     'w-full justify-between',
                     !field.value && 'text-muted-foreground',
                   )}
                   disabled={isLoading}
+                  variant="outline"
                 >
                   {field.value
                     ? categories?.find(
@@ -72,20 +71,20 @@ export function CategorySelector({ onSelectCreateCategory }: Props) {
             <PopoverContent className="w-full min-w-[var(--radix-popper-anchor-width)] border-input p-0">
               <Command>
                 <CommandInput
-                  placeholder="Buscar categoría..."
                   className="h-9"
+                  placeholder="Buscar categoría..."
                 />
                 <CommandList>
                   <CommandEmpty>No se encontraron categorías.</CommandEmpty>
                   <CommandGroup>
                     {categories?.map((category) => (
                       <CommandItem
-                        value={category.name}
                         key={category.id}
                         onSelect={() => {
                           form.setValue('categoryId', category.id)
                           setOpen(false)
                         }}
+                        value={category.name}
                       >
                         {category.name}
                         <CheckIcon
