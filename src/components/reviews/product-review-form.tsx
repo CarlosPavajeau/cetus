@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/submit-button'
 import {
   Form,
   FormControl,
@@ -33,7 +33,7 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
 
   const [hoverRating, setHoverRating] = useState('')
 
-  const form = useForm<CreateProductReview>({
+  const form = useForm({
     resolver: arktypeResolver(CreateProductReviewSchema),
     defaultValues: {
       reviewRequestId,
@@ -59,7 +59,7 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
           name="rating"
@@ -73,25 +73,27 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
                     onValueChange={field.onChange}
                   >
                     {['1', '2', '3', '4', '5'].map((value) => (
+                      // biome-ignore lint/nursery/noNoninteractiveElementInteractions: required for hover animation
                       <label
-                        key={value}
                         className="group relative cursor-pointer rounded p-0.5 outline-none has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
+                        htmlFor={`${field.name}-${value}`}
+                        key={value}
                         onMouseEnter={() => setHoverRating(value)}
                         onMouseLeave={() => setHoverRating('')}
                       >
                         <RadioGroupItem
+                          className="sr-only"
                           id={`${field.name}-${value}`}
                           value={value}
-                          className="sr-only"
                         />
                         <StarIcon
-                          size={24}
                           className={cn(
                             'h-8 w-8 transition-all group-hover:scale-110',
                             (hoverRating || field.value) >= value
                               ? 'fill-warning-base text-warning-base'
                               : 'text-input',
                           )}
+                          size={24}
                         />
                         <span className="sr-only">
                           {value} star{value === '1' ? '' : 's'}
@@ -114,8 +116,8 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
               <FormLabel>Comentario</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Cuéntanos tu experiencia con el producto..."
                   className="min-h-[120px] resize-none"
+                  placeholder="Cuéntanos tu experiencia con el producto..."
                   {...field}
                 />
               </FormControl>
@@ -124,13 +126,12 @@ export function ProductReviewForm({ reviewRequestId }: Props) {
           )}
         />
 
-        <Button
-          type="submit"
-          className="w-full"
+        <SubmitButton
           disabled={createReviewMutation.isPending}
+          isSubmitting={createReviewMutation.isPending}
         >
-          {createReviewMutation.isPending ? 'Enviando...' : 'Enviar reseña'}
-        </Button>
+          Enviar reseña
+        </SubmitButton>
       </form>
     </Form>
   )
