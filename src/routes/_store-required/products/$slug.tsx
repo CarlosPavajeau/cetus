@@ -1,5 +1,6 @@
 import { fetchProductBySlug, fetchProductSuggestions } from '@/api/products'
 import { fetchProductReviews } from '@/api/reviews'
+import { fetchStoreById } from '@/api/stores'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
 import { ProductDisplay } from '@/components/product/product-display'
@@ -28,6 +29,7 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
   loader: async ({ params }) => {
     const slug = params.slug
     const product = await fetchProductBySlug(slug)
+    const store = await fetchStoreById(product.storeId)
 
     const [suggestions, reviews] = await Promise.all([
       fetchProductSuggestions(product.id),
@@ -38,6 +40,7 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
       product,
       suggestions,
       reviews,
+      store,
     }
   },
   head: ({ loaderData }) => {
@@ -45,16 +48,15 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
       return {}
     }
 
-    const { product, reviews } = loaderData
-    const { store } = useTenantStore.getState()
+    const { product, reviews, store } = loaderData
 
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
-        : (store?.customDomain ?? env.APP_URL)
+        : (store.customDomain ?? env.APP_URL)
 
     // Generate comprehensive SEO configuration
-    const storeName = store?.name ?? 'cetus'
+    const storeName = store.name
     const seoConfig = generateProductSEO(
       product,
       storeName,
@@ -86,10 +88,10 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
         { name: 'product:condition', content: 'new' },
 
         // Rich snippet meta
-        { name: 'rating', content: product.rating?.toString() || '' },
+        { name: 'rating', content: product.rating.toString() },
         {
           name: 'review_count',
-          content: product.reviewsCount?.toString() || '0',
+          content: product.reviewsCount.toString(),
         },
 
         // Mobile optimization
