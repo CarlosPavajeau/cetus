@@ -2,10 +2,10 @@ import { anonymousApi, api } from '@/api/client'
 import type { CreateProductReview } from '@/schemas/reviews'
 
 export enum ReviewRequestStatus {
-  Pending,
-  Sent,
-  Completed,
-  Expired,
+  Pending = 0,
+  Sent = 1,
+  Completed = 2,
+  Expired = 3,
 }
 
 export type ReviewRequestProduct = {
@@ -21,13 +21,15 @@ export type ReviewRequest = {
 }
 
 export async function fetchReviewRequest(token: string) {
-  const response = await api.get<ReviewRequest>(`/reviews/requests/${token}`)
+  const response = await anonymousApi.get<ReviewRequest>(
+    `/reviews/requests/${token}`,
+  )
 
   return response.data
 }
 
 export async function createProductReview(request: CreateProductReview) {
-  const response = await api.post(`/reviews/products`, request)
+  const response = await anonymousApi.post('/reviews/products', request)
 
   return response.data
 }
