@@ -56,14 +56,13 @@ export function OnBoardingForm() {
   })
 
   const name = form.watch('name')
-
   useEffect(() => {
     form.setValue('slug', name?.toLowerCase().replace(/\s+/g, '-'))
   }, [name])
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} className="flex flex-col space-y-4">
+      <form className="flex flex-col space-y-4" onSubmit={onSubmit}>
         <FormField
           control={form.control}
           name="name"
@@ -91,15 +90,15 @@ export function OnBoardingForm() {
         />
 
         <SubmitButton
-          isSubmitting={form.formState.isSubmitting}
           disabled={!form.formState.isDirty}
+          isSubmitting={form.formState.isSubmitting}
         >
           <div className="group flex w-full items-center space-x-2">
             <span>Registrar datos</span>
             <ArrowRightIcon
+              aria-hidden="true"
               className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
               size={16}
-              aria-hidden="true"
             />
           </div>
         </SubmitButton>
