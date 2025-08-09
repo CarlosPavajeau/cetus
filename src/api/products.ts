@@ -72,16 +72,24 @@ export const fetchProductsForSale = async () => {
   return response.data
 }
 
-export async function fetchFeaturedProducts() {
-  const response =
-    await anonymousApi.get<SimpleProductForSale[]>('/products/featured')
+export async function fetchFeaturedProducts(store: string) {
+  const response = await anonymousApi.get<SimpleProductForSale[]>(
+    '/products/featured',
+    {
+      params: { store },
+    },
+  )
 
   return response.data
 }
 
-export async function fetchPopularProducts() {
-  const response =
-    await anonymousApi.get<SimpleProductForSale[]>('/products/popular')
+export async function fetchPopularProducts(store: string) {
+  const response = await anonymousApi.get<SimpleProductForSale[]>(
+    '/products/popular',
+    {
+      params: { store },
+    },
+  )
 
   return response.data
 }

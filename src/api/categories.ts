@@ -7,8 +7,10 @@ export type Category = {
   updatedAt: string
 }
 
-export const fetchCategories = async () => {
-  const response = await anonymousApi.get<Category[]>('/categories')
+export const fetchCategories = async (store: string) => {
+  const response = await anonymousApi.get<Category[]>('/categories', {
+    params: { store },
+  })
 
   return response.data
 }
