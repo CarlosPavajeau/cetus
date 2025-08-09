@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getImageUrl } from '@/shared/cdn'
 import { env } from '@/shared/env'
 import { generateProductSEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
@@ -103,7 +104,13 @@ export const Route = createFileRoute('/_store-required/products/$slug')({
 
         // Preload main product image for better performance
         ...(product.images?.[0]?.imageUrl
-          ? [{ rel: 'preload', href: product.images[0].imageUrl, as: 'image' }]
+          ? [
+              {
+                rel: 'preload',
+                href: getImageUrl(product.images[0].imageUrl),
+                as: 'image',
+              },
+            ]
           : []),
 
         // Product-specific structured data
