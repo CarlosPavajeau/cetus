@@ -1,5 +1,5 @@
+import { Button } from '@/components/ui/button'
 import { Link } from '@tanstack/react-router'
-import { Button } from '../ui/button'
 
 export function ApplicationHome() {
   return (
@@ -15,7 +15,7 @@ export function ApplicationHome() {
 
       <section>
         <div className="relative pt-24 md:pt-36">
-          <div className="-z-10 absolute inset-0 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--color-background)_75%)]"></div>
+          <div className="-z-10 absolute inset-0 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--color-background)_75%)]" />
           <div className="mx-auto max-w-7xl px-6">
             <div className="text-center sm:mx-auto lg:mt-0 lg:mr-auto">
               <h1 className="text-balance font-heading text-4xl md:text-7xl lg:mt-16 xl:text-[5.25rem]">
@@ -30,7 +30,7 @@ export function ApplicationHome() {
               </p>
 
               <div className="mt-12 flex flex-col items-center justify-center gap-2 md:flex-row">
-                <Button asChild size="lg" className="px-5 text-base">
+                <Button asChild className="px-5 text-base" size="lg">
                   <Link to="/sign-up">
                     <span className="text-nowrap">Empieza gratis hoy</span>
                   </Link>
