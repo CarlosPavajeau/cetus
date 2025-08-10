@@ -578,7 +578,7 @@ export function generateCategorySEO(
             '@type': 'Product',
             name: product.name,
             url: `${baseUrl}/products/${product.slug}`,
-            image: getImageUrl(product.imageUrl || 'placeholder.svg'),
+            image: getImageUrl(product.imageUrl),
             ...(product.price && {
               offers: {
                 '@type': 'Offer',
