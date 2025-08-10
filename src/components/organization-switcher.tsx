@@ -1,5 +1,6 @@
 import { authClient } from '@/auth/auth-client'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useRouter } from '@tanstack/react-router'
 import { ChevronsUpDownIcon, StoreIcon } from 'lucide-react'
 import {
   DropdownMenu,
@@ -15,6 +16,7 @@ export function OrganizationSwitcher() {
     authClient.useActiveOrganization()
   const { data: orgs, isPending: isOrgsPending } =
     authClient.useListOrganizations()
+  const router = useRouter()
 
   if (isActiveOrgPending || isOrgsPending) {
     return <Skeleton className="h-12 w-full" />
@@ -24,6 +26,8 @@ export function OrganizationSwitcher() {
     await authClient.organization.setActive({
       organizationId: orgId,
     })
+
+    router.invalidate()
   }
 
   return (
@@ -32,8 +36,8 @@ export function OrganizationSwitcher() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="lg"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
                 <StoreIcon className="size-4" />
@@ -47,8 +51,8 @@ export function OrganizationSwitcher() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             align="start"
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side="bottom"
             sideOffset={4}
           >
@@ -57,9 +61,9 @@ export function OrganizationSwitcher() {
             </DropdownMenuLabel>
             {orgs?.map((org) => (
               <DropdownMenuItem
+                className="gap-2 p-2"
                 key={org.id}
                 onClick={() => onSelectOrg(org.id)}
-                className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center">
                   <StoreIcon className="size-4 shrink-0" />
