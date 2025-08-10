@@ -1,4 +1,5 @@
 import { anonymousApi, api } from '@/api/client'
+import type { UpdateStoreValues } from '@/schemas/stores'
 
 export type Store = {
   id: string
@@ -70,6 +71,12 @@ export type CreateStoreRequest = {
 
 export async function createStore(data: CreateStoreRequest) {
   const response = await api.post('/stores', data)
+
+  return response.data
+}
+
+export async function updateStore(data: UpdateStoreValues) {
+  const response = await api.put<Store>(`/stores/${data.id}`, data)
 
   return response.data
 }
