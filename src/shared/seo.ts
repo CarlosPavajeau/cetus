@@ -1,4 +1,4 @@
-import type { Category } from '@/api/categories'
+import type { Category, FindCategoryBySlugResponse } from '@/api/categories'
 import type { ProductForSale, SimpleProductForSale } from '@/api/products'
 import { getImageUrl } from '@/shared/cdn'
 
@@ -502,6 +502,154 @@ export function generateHomepageSEO(
     twitterTitle: title,
     twitterDescription: description.slice(0, 160),
     twitterImage: featuredProducts?.[0]?.imageUrl || undefined,
+    structuredData,
+  }
+}
+
+export function generateCategorySEO(
+  category: FindCategoryBySlugResponse,
+  storeName: string,
+  baseUrl: string,
+  products?: SimpleProductForSale[],
+): SEOConfig {
+  const categoryUrl = `${baseUrl}/categories/${category.slug}`
+
+  // Generate optimized category title (recommended 50-60 characters)
+  const title = `${category.name} | ${storeName}`.slice(0, 60)
+
+  // Generate compelling meta description (recommended 150-160 characters)
+  const productCount = products?.length || 0
+  const description = `Explora ${category.name} en ${storeName}. ${
+    productCount > 0
+      ? `${productCount} productos disponibles`
+      : 'Productos de calidad'
+  } con los mejores precios y envío rápido a toda Colombia.`
+
+  // Generate category-specific keywords
+  const keywords = [
+    category.name,
+    storeName,
+    'comprar online',
+    'tienda virtual',
+    'productos',
+    'ofertas',
+    'envío Colombia',
+    'precios',
+    'calidad',
+    ...(products?.slice(0, 5).map((p) => p.name) || []),
+  ].join(', ')
+
+  // Create BreadcrumbList schema
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Inicio',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: category.name,
+        item: categoryUrl,
+      },
+    ],
+  }
+
+  // Create CollectionPage schema
+  const collectionPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${category.name} - ${storeName}`,
+    description,
+    url: categoryUrl,
+    mainEntity: {
+      '@type': 'ItemList',
+      name: category.name,
+      numberOfItems: productCount,
+      ...(products?.length && {
+        itemListElement: products.slice(0, 20).map((product, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          item: {
+            '@type': 'Product',
+            name: product.name,
+            url: `${baseUrl}/products/${product.slug}`,
+            image: getImageUrl(product.imageUrl || 'placeholder.svg'),
+            ...(product.price && {
+              offers: {
+                '@type': 'Offer',
+                price: product.price,
+                priceCurrency: 'COP',
+                availability: 'https://schema.org/InStock',
+                url: `${baseUrl}/products/${product.slug}`,
+              },
+            }),
+          },
+        })),
+      }),
+    },
+  }
+
+  // Create FAQ schema for category
+  const categoryFAQSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `¿Qué productos hay en ${category.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `En la categoría ${category.name} de ${storeName} encontrarás ${
+            productCount > 0
+              ? `${productCount} productos`
+              : 'una selección de productos'
+          } de alta calidad con los mejores precios.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: '¿Hacen envíos de estos productos?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Sí, todos los productos de ${category.name} tienen envío disponible a toda Colombia desde ${storeName}.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: '¿Los productos tienen garantía?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Todos los productos en ${category.name} cuentan con garantía. Las condiciones específicas varían según el producto.`,
+        },
+      },
+    ],
+  }
+
+  const structuredData = [
+    breadcrumbSchema,
+    collectionPageSchema,
+    categoryFAQSchema,
+  ]
+
+  return {
+    title,
+    description: description.slice(0, 160),
+    keywords,
+    canonicalUrl: categoryUrl,
+    ogTitle: title,
+    ogDescription: description.slice(0, 160),
+    ogImage: products?.[0]?.imageUrl || undefined,
+    ogType: 'website',
+    ogUrl: categoryUrl,
+    twitterCard: 'summary_large_image',
+    twitterTitle: title,
+    twitterDescription: description.slice(0, 160),
+    twitterImage: products?.[0]?.imageUrl || undefined,
     structuredData,
   }
 }

@@ -27,6 +27,7 @@ import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
+import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
 import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesRouteImport } from './routes/app/categories'
@@ -128,6 +129,11 @@ const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => OrdersRoute,
+} as any)
+const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
+  id: '/categories/$slug',
+  path: '/categories/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppReviewsRoute = AppReviewsRouteImport.update({
   id: '/reviews',
@@ -254,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
+  '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
+  '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
   '/app/reviews': typeof AppReviewsRoute
+  '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/app/categories'
     | '/app/delivery-fees'
     | '/app/reviews'
+    | '/categories/$slug'
     | '/orders/$id'
     | '/reviews/new'
     | '/app/'
@@ -396,6 +406,7 @@ export interface FileRouteTypes {
     | '/app/categories'
     | '/app/delivery-fees'
     | '/app/reviews'
+    | '/categories/$slug'
     | '/orders/$id'
     | '/reviews/new'
     | '/app'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/app/categories'
     | '/app/delivery-fees'
     | '/app/reviews'
+    | '/categories/$slug'
     | '/orders/$id'
     | '/reviews/new'
     | '/app/'
@@ -464,6 +476,7 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   TermsRoute: typeof TermsRoute
   AcceptInvitationIdRoute: typeof AcceptInvitationIdRoute
+  CategoriesSlugRoute: typeof CategoriesSlugRoute
   ReviewsNewRoute: typeof ReviewsNewRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
   OnboardingMercadoPagoLinkRoute: typeof OnboardingMercadoPagoLinkRoute
@@ -607,6 +620,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/orders/$id'
       preLoaderRoute: typeof OrdersIdRouteImport
       parentRoute: typeof OrdersRoute
+    }
+    '/categories/$slug': {
+      id: '/categories/$slug'
+      path: '/categories/$slug'
+      fullPath: '/categories/$slug'
+      preLoaderRoute: typeof CategoriesSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/reviews': {
       id: '/app/reviews'
@@ -832,6 +852,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   TermsRoute: TermsRoute,
   AcceptInvitationIdRoute: AcceptInvitationIdRoute,
+  CategoriesSlugRoute: CategoriesSlugRoute,
   ReviewsNewRoute: ReviewsNewRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
   OnboardingMercadoPagoLinkRoute: OnboardingMercadoPagoLinkRoute,

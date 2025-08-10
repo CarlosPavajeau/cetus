@@ -39,7 +39,7 @@ export const deleteCategory = async (id: string) => {
   return response.data
 }
 
-type FindCategoryBySlugResponse = {
+export type FindCategoryBySlugResponse = {
   id: string
   name: string
   slug: string
