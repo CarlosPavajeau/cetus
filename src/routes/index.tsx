@@ -9,6 +9,7 @@ import { HomeSkeleton } from '@/components/home/home-sekeleton'
 import { PopularProductsSection } from '@/components/home/popular-products-section'
 import { PageHeader } from '@/components/page-header'
 import { getServerhost } from '@/server/get-host'
+import { getImageUrl } from '@/shared/cdn'
 import { env } from '@/shared/env'
 import { generateHomepageSEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
@@ -133,7 +134,7 @@ export const Route = createFileRoute('/')({
         // Preload featured product images for better performance
         ...(featuredProducts?.slice(0, 3).map((product, index) => ({
           rel: 'preload',
-          href: product.imageUrl,
+          href: getImageUrl(product.imageUrl),
           as: 'image',
           key: `preload-featured-${index}`,
         })) || []),

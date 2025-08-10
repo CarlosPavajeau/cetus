@@ -10,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { getImageUrl } from '@/shared/cdn'
 import { env } from '@/shared/env'
 import { generateCategorySEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
@@ -154,7 +155,7 @@ export const Route = createFileRoute('/categories/$slug')({
         // Preload product images for better performance
         ...(products?.slice(0, 3).map((product, index) => ({
           rel: 'preload',
-          href: product.imageUrl,
+          href: getImageUrl(product.imageUrl),
           as: 'image',
           key: `preload-category-product-${index}`,
         })) || []),
