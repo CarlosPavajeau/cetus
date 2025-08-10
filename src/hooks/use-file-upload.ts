@@ -115,7 +115,7 @@ export const useFileUpload = (
       if (accept !== '*') {
         const acceptedTypes = accept.split(',').map((type) => type.trim())
         const fileType = file instanceof File ? file.type || '' : file.type
-        const fileExtension = `.${file instanceof File ? file.name.split('.').pop() : file.name.split('.').pop()}`
+        const fileExtension = `.${file.name.split('.').pop()}`
 
         const isAccepted = isFileAccepted(
           fileType,
@@ -124,7 +124,7 @@ export const useFileUpload = (
         )
 
         if (!isAccepted) {
-          return `File "${file instanceof File ? file.name : file.name}" is not an accepted file type.`
+          return `File "${file.name}" is not an accepted file type.`
         }
       }
 
