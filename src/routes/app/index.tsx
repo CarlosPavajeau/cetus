@@ -5,6 +5,7 @@ import {
 } from '@/api/orders'
 import { DefaultLoader } from '@/components/default-loader'
 import { OrderCard } from '@/components/order/order-card'
+import { SearchInput } from '@/components/search-input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,80 +14,18 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { useOrders } from '@/hooks/orders'
 import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
-import { cn } from '@/shared/cn'
 import { useTenantStore } from '@/store/use-tenant-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { CircleXIcon, ListFilterIcon, RefreshCwIcon } from 'lucide-react'
-import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { ListFilterIcon, RefreshCwIcon } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
 })
-
-type SearchInputProps = {
-  initialValue?: string
-  onSearch: (value: string) => void
-  debounceTime?: number
-}
-
-function SearchInput({
-  initialValue = '',
-  onSearch,
-  debounceTime = 300,
-}: SearchInputProps) {
-  const [searchTerm, setSearchTerm] = useState(initialValue)
-  const id = useId()
-
-  // Debounce search term changes
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      onSearch(searchTerm)
-    }, debounceTime)
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [searchTerm, onSearch, debounceTime])
-
-  const handleClearFilter = () => {
-    setSearchTerm('')
-  }
-
-  return (
-    <div className="relative flex-1">
-      <Input
-        aria-label="Buscar por número de orden"
-        className={cn(
-          'peer min-w-60 flex-1 ps-9',
-          Boolean(searchTerm) && 'pe-9',
-        )}
-        id={`${id}-input`}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Buscar por número de orden..."
-        type="text"
-        value={searchTerm ?? ''}
-      />
-      <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
-        <ListFilterIcon aria-hidden="true" size={16} />
-      </div>
-      {Boolean(searchTerm) && (
-        <button
-          aria-label="Clear filter"
-          className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={handleClearFilter}
-          type="button"
-        >
-          <CircleXIcon aria-hidden="true" size={16} />
-        </button>
-      )}
-    </div>
-  )
-}
 
 const HUB_URL = `${import.meta.env.VITE_API_URL}/realtime/orders`
 
