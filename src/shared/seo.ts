@@ -135,7 +135,7 @@ export function generateProductSEO(
               '@type': 'ListItem',
               position: 2,
               name: product.category,
-              item: `${baseUrl}/categories/${encodeURIComponent(product.category.toLowerCase())}`,
+              item: `${baseUrl}/categories/${encodeURIComponent(product.categorySlug.toLowerCase())}`,
             },
           ]
         : []),
