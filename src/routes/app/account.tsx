@@ -1,6 +1,7 @@
 import { authClient } from '@/auth/auth-client'
 import { MembersList } from '@/components/auth/members-list'
 import { AccountSkeleton } from '@/components/skeletons/account-skeleton'
+import { UpdateStoreForm } from '@/components/stores/update-store-form'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
@@ -79,17 +80,7 @@ function RouteComponent() {
 
         <Card>
           <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <div>
-                <p className="text-muted-foreground text-xs">Nombre</p>
-                <p className="font-medium text-sm">{organization.name}</p>
-              </div>
-
-              <div>
-                <p className="text-muted-foreground text-xs">Slug</p>
-                <p className="text-sm">{organization.slug}</p>
-              </div>
-            </div>
+            <UpdateStoreForm />
 
             <Separator />
 
