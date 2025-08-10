@@ -38,3 +38,18 @@ export const deleteCategory = async (id: string) => {
 
   return response.data
 }
+
+type FindCategoryBySlugResponse = {
+  id: string
+  name: string
+  slug: string
+  storeId: string
+}
+
+export async function fetchCategoryBySlug(slug: string) {
+  const response = await anonymousApi.get<FindCategoryBySlugResponse>(
+    `/categories/${slug}`,
+  )
+
+  return response.data
+}
