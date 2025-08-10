@@ -26,7 +26,7 @@ type Props = {
   isOwner: boolean
 }
 
-export function MemberCard({ member, isOwner }: Props) {
+export function MemberCard({ member, isOwner }: Readonly<Props>) {
   return (
     <Card className="py-2">
       <CardContent className="flex items-center justify-between gap-4 px-3">
