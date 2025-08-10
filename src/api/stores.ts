@@ -30,6 +30,12 @@ export async function fetchStoreById(id: string) {
   return response.data
 }
 
+export async function fetchStoreByExternalId(externalId: string) {
+  const response = await api.get<Store>(`/stores/by-external-id/${externalId}`)
+
+  return response.data
+}
+
 type ConfigureMercadoPagoRequest = {
   accessToken: string
   refreshToken: string
