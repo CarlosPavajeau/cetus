@@ -24,14 +24,14 @@ import {
 import { OrganizationSwitcher } from './organization-switcher'
 import { Badge } from './ui/badge'
 
-type SidebarMenuItem = {
+type SidebarMenuElement = {
   label: string
   href: string
   isNew: boolean
   icon?: React.ComponentType
 }
 
-const MAIN_MENU: ReadonlyArray<SidebarMenuItem> = [
+const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
   {
     label: 'Pedidos',
     href: '/app',
@@ -70,7 +70,7 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuItem> = [
   },
 ] as const
 
-const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuItem> = [
+const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuElement> = [
   {
     label: 'Costos de envio',
     href: '/app/delivery-fees',
@@ -80,7 +80,7 @@ const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuItem> = [
   {
     label: 'Cuenta',
     href: '/app/account',
-    isNew: true,
+    isNew: false,
     icon: User2Icon,
   },
 ] as const
@@ -123,10 +123,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {group.items.map((tab) => (
                   <SidebarMenuItem key={tab.href}>
                     <SidebarMenuButton
+                      asChild
                       isActive={currentPath === tab.href}
                       onClick={closeSidebar}
                       tooltip={tab.label}
-                      asChild
                     >
                       <Link to={tab.href}>
                         {tab.icon && <tab.icon />}
