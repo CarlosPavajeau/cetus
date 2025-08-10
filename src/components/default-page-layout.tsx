@@ -27,7 +27,7 @@ export function DefaultPageLayout({ children, showHeader = true }: Props) {
 }
 
 type NavBarProps = {
-  store?: Store | undefined
+  store?: Store
 }
 
 function NavBar({ store }: NavBarProps) {
