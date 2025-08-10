@@ -1,6 +1,5 @@
 import { authClient } from '@/auth/auth-client'
-import { InviteMemberDialog } from '@/components/auth/invite-member-dialog'
-import { MemberCard } from '@/components/auth/member-card'
+import { MembersList } from '@/components/auth/members-list'
 import { AccountSkeleton } from '@/components/skeletons/account-skeleton'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -94,23 +93,11 @@ function RouteComponent() {
 
             <Separator />
 
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <p className="font-heading font-semibold text-lg">Miembros</p>
-
-                {(isOwner || isAdmin) && <InviteMemberDialog />}
-              </div>
-
-              <div className="flex flex-col gap-1">
-                {organization.members.map((member) => (
-                  <MemberCard
-                    isOwner={isOwner}
-                    key={member.id}
-                    member={member}
-                  />
-                ))}
-              </div>
-            </div>
+            <MembersList
+              isAdmin={isAdmin}
+              isOwner={isOwner}
+              members={organization.members}
+            />
           </CardContent>
         </Card>
       </div>
