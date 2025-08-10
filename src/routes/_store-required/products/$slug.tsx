@@ -194,11 +194,14 @@ function ProductDetailsPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem className="text-xs">
-                <BreadcrumbLink
-                  aria-label={`Categoría: ${product.category}`}
-                  href="#"
-                >
-                  {product.category}
+                <BreadcrumbLink asChild>
+                  <Link
+                    aria-label={`Categoría: ${product.category}`}
+                    params={{ slug: product.categorySlug }}
+                    to="/categories/$slug"
+                  >
+                    {product.category}
+                  </Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
