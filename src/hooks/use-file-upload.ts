@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { v7 as uuid } from 'uuid'
 
 export type FileMetadata = {
   name: string
@@ -144,7 +145,7 @@ export const useFileUpload = (
 
   const generateUniqueId = useCallback((file: File | FileMetadata): string => {
     if (file instanceof File) {
-      return `${file.name}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+      return `${file.name}-${Date.now()}-${uuid()}`
     }
     return file.id
   }, [])
