@@ -51,6 +51,7 @@ export type ProductForSale = {
   reviewsCount: number
   categoryId: string
   category?: string
+  categorySlug: string
   storeId: string
 }
 
@@ -89,6 +90,14 @@ export async function fetchPopularProducts(store: string) {
     {
       params: { store },
     },
+  )
+
+  return response.data
+}
+
+export async function fetchProductsByCategory(categoryId: string) {
+  const response = await anonymousApi.get<SimpleProductForSale[]>(
+    `/products/category/${categoryId}`,
   )
 
   return response.data
