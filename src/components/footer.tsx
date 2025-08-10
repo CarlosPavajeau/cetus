@@ -71,7 +71,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {store?.phone && (
+          {storePhone && (
             <div className="space-y-3">
               <h3 className="font-semibold text-sm uppercase tracking-wider">
                 Contacto
@@ -81,9 +81,9 @@ export function Footer() {
                   <PhoneIcon className="mr-2 h-5 w-5 flex-shrink-0 text-muted-foreground" />
                   <a
                     className="text-sm hover:text-primary"
-                    href={`tel:+${store.phone}`}
+                    href={`tel:+${storePhone}`}
                   >
-                    {store.phone}
+                    {storePhone}
                   </a>
                 </li>
               </ul>
