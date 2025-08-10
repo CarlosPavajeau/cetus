@@ -6,7 +6,7 @@ import {
   fetchOrders,
   fetchOrdersSummary,
 } from '@/api/orders'
-import { useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery } from '@tanstack/react-query'
 
 export function useOrderInsights(month: string) {
   const { data, isLoading } = useQuery({
@@ -34,11 +34,13 @@ export function useOrder(id: string) {
   }
 }
 
+export const ordersQuery = queryOptions({
+  queryKey: ['orders'],
+  queryFn: () => fetchOrders(),
+})
+
 export function useOrders() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => fetchOrders(),
-  })
+  const { data, isLoading, error } = useQuery(ordersQuery)
 
   return {
     orders: data,
