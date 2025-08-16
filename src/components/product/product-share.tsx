@@ -30,8 +30,8 @@ export function ProductShare({ productName, className = '' }: Props) {
 
   const shareUrls = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}&t=${encodeURIComponent(productName)}`,
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${productName} - ${productUrl}`)}`,
-    instagram: `https://instagram.com/`, // Instagram doesn't support direct sharing via URL
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${productUrl}`)}`,
+    instagram: 'https://instagram.com/', // Instagram doesn't support direct sharing via URL
   }
 
   const handleShare = (platform: keyof typeof shareUrls) => {
@@ -49,9 +49,9 @@ export function ProductShare({ productName, className = '' }: Props) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
           className={`h-10 w-10 ${className}`}
+          size="icon"
+          variant="outline"
         >
           <Share2Icon className="h-4 w-4" />
         </Button>
