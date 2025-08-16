@@ -326,9 +326,7 @@ export function generateOrganizationSchema(
     url: baseUrl,
     sameAs: [
       // Add social media links here when available
-      // 'https://www.facebook.com/yourstore',
-      // 'https://www.instagram.com/yourstore',
-      // 'https://twitter.com/yourstore'
+      'https://www.instagram.com/teledigital_jya_',
     ],
   }
 }
