@@ -23,9 +23,9 @@ const QuantitySelector = memo(
     quantity,
     onIncrement,
     onDecrement,
-    max = Infinity,
+    max = Number.POSITIVE_INFINITY,
   }: QuantitySelectorProps) => {
-    const isMaxReached = max !== Infinity && quantity >= max
+    const isMaxReached = max !== Number.POSITIVE_INFINITY && quantity >= max
 
     return (
       <div className="flex items-center">
@@ -33,16 +33,18 @@ const QuantitySelector = memo(
         <div className="flex items-center rounded-md border border-input">
           <button
             className="p-2 text-muted-foreground"
-            onClick={onDecrement}
             disabled={quantity <= 1}
+            onClick={onDecrement}
+            type="button"
           >
             <MinusIcon className="h-4 w-4" />
           </button>
           <span className="px-4">{quantity}</span>
           <button
             className="p-2 text-muted-foreground"
-            onClick={onIncrement}
             disabled={isMaxReached}
+            onClick={onIncrement}
+            type="button"
           >
             <PlusIcon className="h-4 w-4" />
           </button>
@@ -90,8 +92,8 @@ function ProductDisplayComponent({ product }: Props) {
 
       toast.custom((t) => (
         <ProductAddedNotification
-          productName={product.name}
           onClose={() => toast.dismiss(t)}
+          productName={product.name}
         />
       ))
     }, 300)
@@ -110,7 +112,7 @@ function ProductDisplayComponent({ product }: Props) {
           </h1>
 
           <div className="mb-4 font-bold text-3xl">
-            <Currency value={product.price} currency="COP" />
+            <Currency currency="COP" value={product.price} />
           </div>
 
           <div className="mb-4 flex items-center space-x-2">
@@ -128,10 +130,10 @@ function ProductDisplayComponent({ product }: Props) {
         <div className="space-y-4">
           <div>
             <QuantitySelector
-              quantity={quantity}
-              onIncrement={incrementQuantity}
-              onDecrement={decrementQuantity}
               max={product.stock}
+              onDecrement={decrementQuantity}
+              onIncrement={incrementQuantity}
+              quantity={quantity}
             />
           </div>
 
@@ -139,9 +141,9 @@ function ProductDisplayComponent({ product }: Props) {
             <div className="flex items-center gap-2">
               <Button
                 className="flex-1 gap-2"
-                size="lg"
-                onClick={handleAddToCart}
                 disabled={isOutOfStock || isAddingToCart}
+                onClick={handleAddToCart}
+                size="lg"
               >
                 {isAddingToCart ? (
                   <div className="flex items-center">
