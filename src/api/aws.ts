@@ -10,7 +10,7 @@ export type CreateSignedUrlResponse = {
 
 export const createSignedUrl = async (request: CreateSignedUrlRequest) => {
   const response = await api.post<CreateSignedUrlResponse>(
-    `/aws/s3/presigned-url`,
+    '/aws/s3/presigned-url',
     request,
   )
 
