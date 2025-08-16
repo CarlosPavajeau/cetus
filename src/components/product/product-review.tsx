@@ -15,11 +15,11 @@ type Props = {
 
 export function ProductReview({ review }: Props) {
   return (
-    <Card className="w-full rounded-none border-0 border-b bg-transparent p-0 shadow-none last:border-b-0">
+    <Card className="w-full rounded-none border-0 border-b bg-transparent p-0 pb-2 shadow-none last:border-b-0">
       <CardContent className="flex flex-col gap-2 p-0">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-1.5">
                 <p className="font-medium text-sm">{review.customer}</p>
                 <Tooltip>
@@ -36,7 +36,7 @@ export function ProductReview({ review }: Props) {
               </p>
             </div>
           </div>
-          <StarRating rating={review.rating} maxRating={5} />
+          <StarRating maxRating={5} rating={review.rating} />
         </div>
 
         <div className="space-y-2">
