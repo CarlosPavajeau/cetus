@@ -185,6 +185,12 @@ function IndexPage() {
     actions.setStore(store)
   }, [actions, store])
 
+  useEffect(() => {
+    if (isAppUrl) {
+      actions.clearStore()
+    }
+  }, [isAppUrl, actions])
+
   if (isAppUrl) {
     return (
       <DefaultPageLayout>
