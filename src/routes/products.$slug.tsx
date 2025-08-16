@@ -25,7 +25,7 @@ import { ChevronRight, Home, HomeIcon } from 'lucide-react'
 import { useEffect, useId } from 'react'
 import { v7 as uuid } from 'uuid'
 
-export const Route = createFileRoute('/_store-required/products/$slug')({
+export const Route = createFileRoute('/products/$slug')({
   loader: async ({ params }) => {
     const slug = params.slug
     const product = await fetchProductBySlug(slug)

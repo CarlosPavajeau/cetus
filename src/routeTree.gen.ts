@@ -26,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
+import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
@@ -44,7 +45,6 @@ import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
 import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
 import { Route as StoreRequiredProductsAllRouteImport } from './routes/_store-required/products/all'
-import { Route as StoreRequiredProductsSlugRouteImport } from './routes/_store-required/products/$slug'
 import { Route as StoreRequiredCheckoutIdRouteImport } from './routes/_store-required/checkout.$id'
 import { ServerRoute as ApiMercadopagoConnectServerRouteImport } from './routes/api/mercadopago/connect'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
@@ -124,6 +124,11 @@ const ReviewsNewRoute = ReviewsNewRouteImport.update({
   id: '/reviews/new',
   path: '/reviews/new',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsSlugRoute = ProductsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ProductsRoute,
 } as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
@@ -219,12 +224,6 @@ const StoreRequiredProductsAllRoute =
     path: '/products/all',
     getParentRoute: () => StoreRequiredRoute,
   } as any)
-const StoreRequiredProductsSlugRoute =
-  StoreRequiredProductsSlugRouteImport.update({
-    id: '/products/$slug',
-    path: '/products/$slug',
-    getParentRoute: () => StoreRequiredRoute,
-  } as any)
 const StoreRequiredCheckoutIdRoute = StoreRequiredCheckoutIdRouteImport.update({
   id: '/checkout/$id',
   path: '/checkout/$id',
@@ -249,7 +248,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -262,11 +261,11 @@ export interface FileRoutesByFullPath {
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
+  '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/checkout/$id': typeof StoreRequiredCheckoutIdRoute
-  '/products/$slug': typeof StoreRequiredProductsSlugRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -284,7 +283,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -297,11 +296,11 @@ export interface FileRoutesByTo {
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
+  '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/checkout/$id': typeof StoreRequiredCheckoutIdRoute
-  '/products/$slug': typeof StoreRequiredProductsSlugRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -322,7 +321,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/returns': typeof ReturnsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -335,11 +334,11 @@ export interface FileRoutesById {
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
+  '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/_store-required/checkout/$id': typeof StoreRequiredCheckoutIdRoute
-  '/_store-required/products/$slug': typeof StoreRequiredProductsSlugRoute
   '/_store-required/products/all': typeof StoreRequiredProductsAllRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -373,11 +372,11 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
+    | '/products/$slug'
     | '/reviews/new'
     | '/app/'
     | '/onboarding'
     | '/checkout/$id'
-    | '/products/$slug'
     | '/products/all'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
@@ -408,11 +407,11 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
+    | '/products/$slug'
     | '/reviews/new'
     | '/app'
     | '/onboarding'
     | '/checkout/$id'
-    | '/products/$slug'
     | '/products/all'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
@@ -445,11 +444,11 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
+    | '/products/$slug'
     | '/reviews/new'
     | '/app/'
     | '/onboarding/'
     | '/_store-required/checkout/$id'
-    | '/_store-required/products/$slug'
     | '/_store-required/products/all'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
@@ -470,7 +469,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
-  ProductsRoute: typeof ProductsRoute
+  ProductsRoute: typeof ProductsRouteWithChildren
   ReturnsRoute: typeof ReturnsRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
@@ -614,6 +613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReviewsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products/$slug': {
+      id: '/products/$slug'
+      path: '/$slug'
+      fullPath: '/products/$slug'
+      preLoaderRoute: typeof ProductsSlugRouteImport
+      parentRoute: typeof ProductsRoute
+    }
     '/orders/$id': {
       id: '/orders/$id'
       path: '/$id'
@@ -740,13 +746,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRequiredProductsAllRouteImport
       parentRoute: typeof StoreRequiredRoute
     }
-    '/_store-required/products/$slug': {
-      id: '/_store-required/products/$slug'
-      path: '/products/$slug'
-      fullPath: '/products/$slug'
-      preLoaderRoute: typeof StoreRequiredProductsSlugRouteImport
-      parentRoute: typeof StoreRequiredRoute
-    }
     '/_store-required/checkout/$id': {
       id: '/_store-required/checkout/$id'
       path: '/checkout/$id'
@@ -778,7 +777,6 @@ declare module '@tanstack/react-start/server' {
 interface StoreRequiredRouteChildren {
   StoreRequiredCartRoute: typeof StoreRequiredCartRoute
   StoreRequiredCheckoutIdRoute: typeof StoreRequiredCheckoutIdRoute
-  StoreRequiredProductsSlugRoute: typeof StoreRequiredProductsSlugRoute
   StoreRequiredProductsAllRoute: typeof StoreRequiredProductsAllRoute
   StoreRequiredCheckoutIndexRoute: typeof StoreRequiredCheckoutIndexRoute
 }
@@ -786,7 +784,6 @@ interface StoreRequiredRouteChildren {
 const StoreRequiredRouteChildren: StoreRequiredRouteChildren = {
   StoreRequiredCartRoute: StoreRequiredCartRoute,
   StoreRequiredCheckoutIdRoute: StoreRequiredCheckoutIdRoute,
-  StoreRequiredProductsSlugRoute: StoreRequiredProductsSlugRoute,
   StoreRequiredProductsAllRoute: StoreRequiredProductsAllRoute,
   StoreRequiredCheckoutIndexRoute: StoreRequiredCheckoutIndexRoute,
 }
@@ -838,6 +835,18 @@ const OrdersRouteChildren: OrdersRouteChildren = {
 const OrdersRouteWithChildren =
   OrdersRoute._addFileChildren(OrdersRouteChildren)
 
+interface ProductsRouteChildren {
+  ProductsSlugRoute: typeof ProductsSlugRoute
+}
+
+const ProductsRouteChildren: ProductsRouteChildren = {
+  ProductsSlugRoute: ProductsSlugRoute,
+}
+
+const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
+  ProductsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   StoreRoute: StoreRoute,
@@ -846,7 +855,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   OrdersRoute: OrdersRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
-  ProductsRoute: ProductsRoute,
+  ProductsRoute: ProductsRouteWithChildren,
   ReturnsRoute: ReturnsRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
