@@ -17,11 +17,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCreateProduct } from '@/hooks/products'
 import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { CreateProductSchema } from '@/schemas/product'
+import { generateImageUrl } from '@/shared/images'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { v7 as uuid } from 'uuid'
 
 export const Route = createFileRoute('/app/products/new')({
   component: ProductCreateForm,
@@ -43,18 +43,6 @@ function ProductCreateForm() {
   })
 
   const [productImages, setProductImages] = useState<FileWithPreview[]>([])
-
-  const generateImageUrl = (file: FileWithPreview) => {
-    const rawFile = file.file
-
-    const fileId = uuid()
-    const fileExtension = rawFile.name.split('.').pop()
-    const fileName = `${fileId}.${fileExtension}`
-
-    const imageUrl = fileExtension === 'png' ? fileName : `${fileId}.webp`
-
-    return imageUrl
-  }
 
   const handleFilesChange = (files: FileWithPreview[]) => {
     setProductImages(files)
