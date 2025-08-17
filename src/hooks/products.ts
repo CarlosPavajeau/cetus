@@ -3,7 +3,6 @@ import {
   createProduct,
   fetchProduct,
   fetchProductBySlug,
-  fetchProductSuggestions,
   fetchProducts,
   fetchProductsForSale,
   fetchTopSellingProducts,
@@ -13,6 +12,7 @@ import type { FileWithPreview } from '@/hooks/use-file-upload'
 import type { CreateProduct, UpdateProduct } from '@/schemas/product'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import consola from 'consola'
 import { toast } from 'sonner'
 
 export function useCreateProduct(images: FileWithPreview[]) {
@@ -27,7 +27,7 @@ export function useCreateProduct(images: FileWithPreview[]) {
             const file = images.find((img) => img.id === image.id)
 
             if (!file) {
-              return undefined
+              return null
             }
 
             if (file.file instanceof File) {
@@ -37,15 +37,15 @@ export function useCreateProduct(images: FileWithPreview[]) {
               })
             }
 
-            return undefined
+            return null
           })
-          .filter((upload) => upload !== undefined)
+          .filter((upload) => upload !== null)
 
         await Promise.all(filesToUpload)
 
         return createProduct(values)
       } catch (error) {
-        console.error('Failed to create product:', error)
+        consola.error('Failed to create product:', error)
         throw error
       }
     },
@@ -84,7 +84,7 @@ export function useUpdateProduct(
           ...(hasImageChanged ? { imageUrl: values.imageUrl } : {}),
         })
       } catch (error) {
-        console.error('Failed to update product:', error)
+        consola.error('Failed to update product:', error)
         const errorMessage =
           error instanceof Error ? error.message : 'Error desconocido'
         toast.error(`Error al actualizar el producto: ${errorMessage}`)
@@ -139,20 +139,6 @@ export function useProducts() {
 
   return {
     products: data,
-    isLoading,
-    error,
-  }
-}
-
-export function useProductSuggestions(productId?: string) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['products', 'suggestions', productId],
-    queryFn: () => fetchProductSuggestions(productId!),
-    enabled: Boolean(productId),
-  })
-
-  return {
-    suggestions: data,
     isLoading,
     error,
   }
