@@ -61,28 +61,35 @@ export function useCreateProduct(images: FileWithPreview[]) {
   })
 }
 
-export function useUpdateProduct(
-  mainImage: File | null,
-  hasImageChanged: boolean,
-  onSuccess?: () => void,
-) {
+export function useUpdateProduct(images: FileWithPreview[]) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationKey: ['products', 'update'],
     mutationFn: async (values: UpdateProduct) => {
       try {
-        if (hasImageChanged && mainImage && values.imageUrl) {
-          await uploadFileToS3({ fileName: values.imageUrl, file: mainImage })
-        }
+        const filesToUpload = values.images
+          .map((image) => {
+            const file = images.find((img) => img.id === image.id)
 
-        return updateProduct({
-          ...values,
-          // If the image has not changed, we don't want to update the imageUrl
-          // in the database, so we only include it if it has changed
-          // and the imageUrl is not empty
-          ...(hasImageChanged ? { imageUrl: values.imageUrl } : {}),
-        })
+            if (!file) {
+              return null
+            }
+
+            if (file.file instanceof File) {
+              return uploadFileToS3({
+                fileName: image.imageUrl,
+                file: file.file,
+              })
+            }
+
+            return null
+          })
+          .filter((upload) => upload !== null)
+
+        await Promise.all(filesToUpload)
+
+        return updateProduct(values)
       } catch (error) {
         consola.error('Failed to update product:', error)
         const errorMessage =
@@ -96,10 +103,6 @@ export function useUpdateProduct(
         queryKey: ['products'],
       })
       toast.success('Producto actualizado correctamente')
-
-      if (onSuccess) {
-        onSuccess()
-      }
     },
   })
 }
