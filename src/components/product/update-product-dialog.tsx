@@ -63,17 +63,17 @@ export function UpdateProductDialog({ product }: Props) {
   )
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
         <DropdownMenuItem
-          onSelect={(e) => e.preventDefault()}
           aria-label="Edit product"
+          onSelect={(e) => e.preventDefault()}
         >
           <span>Editar</span>
         </DropdownMenuItem>
       </SheetTrigger>
 
-      <SheetContent className="w-full sm:max-w-lg" aria-describedby={undefined}>
+      <SheetContent aria-describedby={undefined} className="w-full sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Actualizar producto</SheetTitle>
         </SheetHeader>
@@ -93,7 +93,7 @@ export function UpdateProductDialog({ product }: Props) {
                   <FormItem>
                     <FormLabel>Nombre</FormLabel>
                     <FormControl>
-                      <Input type="text" autoFocus {...field} />
+                      <Input autoFocus type="text" {...field} />
                     </FormControl>
 
                     <FormMessage />
@@ -172,35 +172,21 @@ export function UpdateProductDialog({ product }: Props) {
                 control={form.control}
                 name="enabled"
                 render={({ field }) => (
-                  <FormItem className="*:not-first:ml-2">
+                  <FormItem>
                     <FormLabel>Estado</FormLabel>
                     <FormControl>
-                      <div
-                        className="group inline-flex items-center gap-2"
-                        data-state={field.value ? 'checked' : 'unchecked'}
-                      >
-                        <span
-                          id={`${field.name}-off`}
-                          className="flex-1 cursor-pointer text-right text-sm group-data-[state=checked]:text-muted-foreground/70"
-                          aria-controls={field.name}
-                          onClick={() => field.onChange(false)}
-                        >
-                          Inactivo
-                        </span>
-                        <Switch
-                          id={field.name}
-                          checked={field.value ?? false}
-                          onCheckedChange={field.onChange}
-                          aria-labelledby={`${field.name}-off ${field.name}-on`}
-                        />
-                        <span
-                          id={`${field.name}-on`}
-                          className="flex-1 cursor-pointer text-left text-sm group-data-[state=unchecked]:text-muted-foreground/70"
-                          aria-controls={field.name}
-                          onClick={() => field.onChange(true)}
-                        >
-                          Activo
-                        </span>
+                      <div>
+                        <div className="inline-flex items-center gap-2">
+                          <Switch
+                            aria-label="Toggle switch"
+                            checked={field.value ?? false}
+                            id={field.name}
+                            onCheckedChange={field.onChange}
+                          />
+                          <FormLabel className="font-medium text-sm">
+                            {field.value ? 'Activo' : 'Inactivo'}
+                          </FormLabel>
+                        </div>
                       </div>
                     </FormControl>
 
@@ -216,11 +202,11 @@ export function UpdateProductDialog({ product }: Props) {
                   <FormItem>
                     <ImageUploader
                       form={form}
+                      getInputProps={getInputProps}
+                      getRootProps={getRootProps}
+                      isDragActive={isDragActive}
                       mainImage={mainImage}
                       mainImageUrl={mainImageUrl}
-                      getRootProps={getRootProps}
-                      getInputProps={getInputProps}
-                      isDragActive={isDragActive}
                       removeImage={removeImage}
                     />
                   </FormItem>
@@ -229,9 +215,9 @@ export function UpdateProductDialog({ product }: Props) {
             </div>
 
             <Button
-              type="submit"
               className="w-full"
               disabled={updateProductMutation.isPending}
+              type="submit"
             >
               {updateProductMutation.isPending
                 ? 'Actualizando...'
