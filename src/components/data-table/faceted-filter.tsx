@@ -37,31 +37,31 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
   title,
   options,
   width = 200,
-}: Props<TData, TValue>) {
+}: Readonly<Props<TData, TValue>>) {
   const facets = column?.getFacetedUniqueValues()
   const selectedValues = new Set(column?.getFilterValue() as TValue[])
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-2 border">
-          <FilterIcon size={16} aria-hidden="true" />
+        <Button className="gap-2 border" variant="outline">
+          <FilterIcon aria-hidden="true" size={16} />
           {title}
 
           {selectedValues && (
             <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
+              <Separator className="mx-2 h-4" orientation="vertical" />
               <Badge
-                variant="secondary"
                 className="rounded-sm px-1 font-normal lg:hidden"
+                variant="secondary"
               >
                 {selectedValues.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 || selectedValues.size === 0 ? (
                   <Badge
-                    variant="secondary"
                     className="rounded-sm px-1 font-normal"
+                    variant="secondary"
                   >
                     {selectedValues.size} seleccionados
                   </Badge>
@@ -70,9 +70,9 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge
-                        variant="secondary"
-                        key={option.value}
                         className="rounded-sm px-1 font-normal"
+                        key={option.value}
+                        variant="secondary"
                       >
                         {option.label}
                       </Badge>
@@ -83,7 +83,7 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={`w-[${width}px] p-0`} align="start">
+      <PopoverContent align="start" className={`w-[${width}px] p-0`}>
         <Command>
           <CommandInput placeholder={title} />
 
@@ -133,8 +133,8 @@ export function TableFacetedFilter<TData, TValue extends React.Key>({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
                     className="justify-center text-center"
+                    onSelect={() => column?.setFilterValue(undefined)}
                   >
                     Limpiar todos los filtros
                   </CommandItem>

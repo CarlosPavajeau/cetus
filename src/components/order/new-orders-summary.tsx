@@ -114,12 +114,12 @@ export function NewOrdersSummary() {
               {percentageFormatter.format(mainStatPercentage)}
             </span>
             <Badge
-              variant="default"
               className={cn(
                 percentageChange > 0
                   ? 'bg-success-light text-success-dark'
                   : 'bg-error-light text-error-dark',
               )}
+              variant="default"
             >
               {percentageFormatter.format(percentageChange)}
             </Badge>
@@ -138,22 +138,22 @@ export function NewOrdersSummary() {
           <div className="flex gap-[5px]">
             {statusInsights.map((status, index) => (
               <div
-                key={index}
                 className={`${status.color} h-2 rounded-xs`}
+                key={index}
                 style={{
                   width: `${status.percentage}%`,
                   display: status.percentage > 0 ? 'block' : 'none',
                 }}
-              ></div>
+              />
             ))}
           </div>
           <div className="flex flex-wrap gap-4">
             {statusInsights.map((status, index) => (
-              <div key={index} className="flex items-center gap-2">
+              <div className="flex items-center gap-2" key={index}>
                 <span
-                  className={`size-2 rounded-full ${status.color}`}
                   aria-hidden="true"
-                ></span>
+                  className={`size-2 rounded-full ${status.color}`}
+                />
                 <span className="text-muted-foreground text-xs">
                   {status.label}
                 </span>
@@ -164,7 +164,7 @@ export function NewOrdersSummary() {
 
         <Separator />
 
-        <table className="w-full" cellPadding={0}>
+        <table cellPadding={0} className="w-full">
           <thead className="text-left">
             <tr className="font-medium text-muted-foreground text-xs">
               <th>Estado</th>
@@ -172,15 +172,15 @@ export function NewOrdersSummary() {
               <th className="w-12">Total</th>
             </tr>
           </thead>
-          <tbody className="h-4" aria-hidden="true"></tbody>
+          <tbody aria-hidden="true" className="h-4" />
           <tbody>
             {statusInsights.map((status, index) => (
-              <tr key={index} className="text-sm">
+              <tr className="text-sm" key={index}>
                 <td className="flex items-center gap-2 py-1">
                   <span
-                    className={`size-2 rounded-full ${status.color}`}
                     aria-hidden="true"
-                  ></span>
+                    className={`size-2 rounded-full ${status.color}`}
+                  />
                   <span>{status.label}</span>
                 </td>
                 <td>{percentageFormatter.format(status.percentage / 100)}</td>

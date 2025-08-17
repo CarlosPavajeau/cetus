@@ -17,7 +17,7 @@ type Props = {
   isAdmin: boolean
 }
 
-export function MembersList({ members, isOwner, isAdmin }: Props) {
+export function MembersList({ members, isOwner, isAdmin }: Readonly<Props>) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">

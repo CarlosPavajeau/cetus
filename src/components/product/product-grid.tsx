@@ -5,7 +5,7 @@ import { SearchSlashIcon } from 'lucide-react'
 const EmptyProductGrid = () => (
   <div className="flex flex-col items-center justify-center py-12 text-center">
     <div className="mb-4 rounded-full bg-muted p-6">
-      <SearchSlashIcon size={32} className="text-muted-foreground" />
+      <SearchSlashIcon className="text-muted-foreground" size={32} />
     </div>
     <h2 className="mb-2 font-semibold text-2xl">No se encontraron productos</h2>
     <p className="mb-6 max-w-md text-muted-foreground">
@@ -18,7 +18,7 @@ type Props = {
   products: SimpleProductForSale[]
 }
 
-export function ProductGrid({ products }: Props) {
+export function ProductGrid({ products }: Readonly<Props>) {
   if (!products.length) {
     return <EmptyProductGrid />
   }

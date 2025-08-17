@@ -4,6 +4,7 @@ import { CouponRulesDetails } from '@/components/coupons/coupon-rules-details'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
@@ -17,13 +18,12 @@ import {
 import { cn } from '@/shared/cn'
 import { CheckIcon, CopyIcon, EyeIcon } from 'lucide-react'
 import { useState } from 'react'
-import { Progress } from '../ui/progress'
 
 type Props = {
   coupon: Coupon
 }
 
-export function CouponDetails({ coupon }: Props) {
+export function CouponDetails({ coupon }: Readonly<Props>) {
   const [open, setOpen] = useState(false)
 
   const [copied, setCopied] = useState<boolean>(false)
@@ -34,43 +34,46 @@ export function CouponDetails({ coupon }: Props) {
   }
 
   const isExpired = () => {
-    if (!coupon.endDate) return false
+    if (!coupon.endDate) {
+      return false
+    }
+
     return new Date(coupon.endDate) < new Date()
   }
 
   const getStatusBadge = () => {
     if (!coupon.isActive) {
       return (
-        <Badge variant="secondary" className="rounded">
+        <Badge className="rounded" variant="secondary">
           Inactivo
         </Badge>
       )
     }
     if (isExpired()) {
       return (
-        <Badge variant="destructive" className="rounded">
+        <Badge className="rounded" variant="destructive">
           Expirado
         </Badge>
       )
     }
     if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
       return (
-        <Badge variant="destructive" className="rounded">
+        <Badge className="rounded" variant="destructive">
           Límite alcanzado
         </Badge>
       )
     }
     return (
-      <Badge variant="default" className="rounded">
+      <Badge className="rounded" variant="default">
         Activo
       </Badge>
     )
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet onOpenChange={setOpen} open={open}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button size="icon" variant="ghost">
           <EyeIcon className="h-5 w-5" />
         </Button>
       </SheetTrigger>
@@ -85,12 +88,12 @@ export function CouponDetails({ coupon }: Props) {
             <div className="flex items-center justify-between">
               <h3 className="line-clamp-1 font-medium text-sm">Código</h3>
               <Button
-                variant="outline"
-                size="icon"
-                onClick={handleCopy}
                 aria-label={copied ? 'Copiado' : 'Copiar al portapapeles'}
-                disabled={copied}
                 className="disabled:opacity-100"
+                disabled={copied}
+                onClick={handleCopy}
+                size="icon"
+                variant="outline"
               >
                 <div
                   className={cn(
@@ -99,9 +102,9 @@ export function CouponDetails({ coupon }: Props) {
                   )}
                 >
                   <CheckIcon
+                    aria-hidden="true"
                     className="text-success-base"
                     size={16}
-                    aria-hidden="true"
                   />
                 </div>
                 <div
@@ -110,7 +113,7 @@ export function CouponDetails({ coupon }: Props) {
                     copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
                   )}
                 >
-                  <CopyIcon size={16} aria-hidden="true" />
+                  <CopyIcon aria-hidden="true" size={16} />
                 </div>
               </Button>
             </div>
@@ -194,7 +197,7 @@ export function CouponDetails({ coupon }: Props) {
         </div>
 
         <SheetFooter className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button onClick={() => setOpen(false)} variant="outline">
             Cerrar
           </Button>
         </SheetFooter>

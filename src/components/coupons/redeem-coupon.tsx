@@ -1,6 +1,6 @@
 import type { Order } from '@/api/orders'
 import { Currency } from '@/components/currency'
-import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/submit-button'
 import {
   Form,
   FormControl,
@@ -16,7 +16,6 @@ import { RedeemCouponSchema } from '@/schemas/coupons'
 import { extractErrorDetail } from '@/shared/error'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useRouter } from '@tanstack/react-router'
-import { Loader2Icon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -24,7 +23,7 @@ type Props = {
   order: Order
 }
 
-export function RedeemCoupon({ order }: Props) {
+export function RedeemCoupon({ order }: Readonly<Props>) {
   const form = useForm({
     resolver: arktypeResolver(RedeemCouponSchema),
     defaultValues: {
@@ -47,7 +46,9 @@ export function RedeemCoupon({ order }: Props) {
   })
 
   useEffect(() => {
-    if (!error) return
+    if (!error) {
+      return
+    }
 
     form.setError('couponCode', {
       type: 'manual',
@@ -64,12 +65,12 @@ export function RedeemCoupon({ order }: Props) {
       <div className="flex flex-col gap-0.5 font-medium">
         <span className="text-muted-foreground text-sm">Total a pagar</span>
         <span>
-          <Currency value={order.total} currency="COP" />
+          <Currency currency="COP" value={order.total} />
         </span>
       </div>
 
       <Form {...form}>
-        <form onSubmit={onSubmit} className="grid gap-4">
+        <form className="grid gap-4" onSubmit={onSubmit}>
           <FormField
             control={form.control}
             name="couponCode"
@@ -88,17 +89,15 @@ export function RedeemCoupon({ order }: Props) {
           />
 
           <div className="flex justify-end">
-            <Button
-              type="submit"
-              size="sm"
-              variant="outline"
+            <SubmitButton
               disabled={isPending}
+              isSubmitting={isPending}
+              size="sm"
+              type="submit"
+              variant="outline"
             >
-              {isPending && (
-                <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-              )}
               Aplicar cupón
-            </Button>
+            </SubmitButton>
           </div>
         </form>
       </Form>

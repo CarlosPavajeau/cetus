@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Form } from '@/components/ui/form'
 import { Link } from '@tanstack/react-router'
 import { HopIcon } from 'lucide-react'
-import type { ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import type { FieldValues, UseFormReturn } from 'react-hook-form'
 
 interface AuthLayoutProps<T extends FieldValues = FieldValues> {
   form: UseFormReturn<T>
-  onSubmit: (e: React.FormEvent) => void
+  onSubmit: (e: FormEvent) => void
   title: string
   description: string
   authError?: string
@@ -31,7 +31,7 @@ export function AuthLayout<T extends FieldValues = FieldValues>({
   footerText,
   footerLinkText,
   footerLinkTo,
-}: AuthLayoutProps<T>) {
+}: Readonly<AuthLayoutProps<T>>) {
   return (
     <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
       <Form {...form}>

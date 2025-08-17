@@ -130,7 +130,7 @@ function RouteComponent() {
   )
 }
 
-function RowActions({ row }: { row: Row<Category> }) {
+function RowActions({ row }: Readonly<{ row: Row<Category> }>) {
   const category = row.original
 
   return (

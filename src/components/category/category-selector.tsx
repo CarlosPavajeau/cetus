@@ -34,7 +34,7 @@ type Props = {
   onSelectCreateCategory?: () => void
 }
 
-export function CategorySelector({ onSelectCreateCategory }: Props) {
+export function CategorySelector({ onSelectCreateCategory }: Readonly<Props>) {
   const { categories, isLoading } = useCategories()
   const form = useFormContext<FormWithCategory>()
   const [open, setOpen] = useState(false)

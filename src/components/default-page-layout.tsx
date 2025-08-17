@@ -10,7 +10,10 @@ type Props = {
   showHeader?: boolean
 }
 
-export function DefaultPageLayout({ children, showHeader = true }: Props) {
+export function DefaultPageLayout({
+  children,
+  showHeader = true,
+}: Readonly<Props>) {
   const { store } = useTenantStore()
 
   return (
@@ -30,7 +33,7 @@ type NavBarProps = {
   store?: Store
 }
 
-function NavBar({ store }: NavBarProps) {
+function NavBar({ store }: Readonly<NavBarProps>) {
   const navbarTitle = store !== undefined ? store.name : 'cetus'
 
   return (

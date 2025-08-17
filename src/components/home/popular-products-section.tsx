@@ -6,7 +6,7 @@ type Props = {
   products: SimpleProductForSale[]
 }
 
-export function PopularProductsSection({ products }: Props) {
+export function PopularProductsSection({ products }: Readonly<Props>) {
   return (
     <div className="my-8 flex flex-col items-center gap-6 rounded bg-muted p-6">
       <p className="w-full text-left font-heading font-medium text-3xl">

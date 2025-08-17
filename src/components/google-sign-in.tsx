@@ -7,8 +7,8 @@ type Props = {
   invitation?: string
 }
 
-export function GoogleSignIn({ invitation }: Props) {
-  const [isLoading, setLoading] = useState(false)
+export function GoogleSignIn({ invitation }: Readonly<Props>) {
+  const [isLoading, setIsLoading] = useState(false)
 
   const callbackUrl = useMemo(() => {
     if (invitation) {
@@ -25,19 +25,19 @@ export function GoogleSignIn({ invitation }: Props) {
   }, [invitation])
 
   const signIn = async () => {
-    setLoading(true)
+    setIsLoading(true)
     await authClient.signIn.social({
       provider: 'google',
       callbackURL: callbackUrl,
-      newUserCallbackURL: newUserCallbackURL,
+      newUserCallbackURL,
     })
 
     setTimeout(() => {
-      setLoading(false)
+      setIsLoading(false)
     }, 2000)
   }
   return (
-    <Button variant="outline" onClick={signIn} disabled={isLoading}>
+    <Button disabled={isLoading} onClick={signIn} variant="outline">
       <GoogleIcon className="h-5 w-5" />
       <span className="whitespace-nowrap">Google</span>
     </Button>

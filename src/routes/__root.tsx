@@ -81,7 +81,7 @@ type RootDocumentProps = {
   children: ReactNode
 }
 
-function RootDocument({ children }: RootDocumentProps) {
+function RootDocument({ children }: Readonly<RootDocumentProps>) {
   return (
     <html lang="es">
       {/** biome-ignore lint/style/noHeadElement: required for tanstack router */}

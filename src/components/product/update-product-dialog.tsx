@@ -23,7 +23,7 @@ const findProductQuery = (id: string, shouldFind: boolean) =>
     enabled: shouldFind,
   })
 
-export function UpdateProductDialog({ product }: Props) {
+export function UpdateProductDialog({ product }: Readonly<Props>) {
   const [isOpen, setIsOpen] = useState(false)
   const { isLoading, data } = useQuery(findProductQuery(product.id, isOpen))
 

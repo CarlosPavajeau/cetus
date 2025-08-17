@@ -26,15 +26,15 @@ const PAGE_SIZE_OPTIONS = [5, 10, 25, 50]
 export function TablePagination<T = unknown>({
   table,
   paginationInfo,
-}: Props<T>) {
+}: Readonly<Props<T>>) {
   const { pages, showLeftEllipsis, showRightEllipsis } = paginationInfo
 
   return (
     <div className="flex items-center justify-between gap-3 max-sm:flex-col">
       {/* Page number information */}
       <p
-        className="flex-1 whitespace-nowrap text-muted-foreground text-sm"
         aria-live="polite"
+        className="flex-1 whitespace-nowrap text-muted-foreground text-sm"
       >
         Página{' '}
         <span className="text-foreground">
@@ -50,14 +50,14 @@ export function TablePagination<T = unknown>({
             {/* Previous page button */}
             <PaginationItem>
               <Button
+                aria-label="Go to previous page"
+                className="disabled:pointer-events-none disabled:opacity-50"
+                disabled={!table.getCanPreviousPage()}
+                onClick={() => table.previousPage()}
                 size="icon"
                 variant="outline"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                aria-label="Go to previous page"
               >
-                <ChevronLeftIcon size={16} aria-hidden="true" />
+                <ChevronLeftIcon aria-hidden="true" size={16} />
               </Button>
             </PaginationItem>
 
@@ -75,10 +75,10 @@ export function TablePagination<T = unknown>({
               return (
                 <PaginationItem key={page}>
                   <Button
+                    aria-current={isActive ? 'page' : undefined}
+                    onClick={() => table.setPageIndex(page - 1)}
                     size="icon"
                     variant={isActive ? 'outline' : 'ghost'}
-                    onClick={() => table.setPageIndex(page - 1)}
-                    aria-current={isActive ? 'page' : undefined}
                   >
                     {page}
                   </Button>
@@ -96,14 +96,14 @@ export function TablePagination<T = unknown>({
             {/* Next page button */}
             <PaginationItem>
               <Button
+                aria-label="Go to next page"
+                className="disabled:pointer-events-none disabled:opacity-50"
+                disabled={!table.getCanNextPage()}
+                onClick={() => table.nextPage()}
                 size="icon"
                 variant="outline"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                aria-label="Go to next page"
               >
-                <ChevronRightIcon size={16} aria-hidden="true" />
+                <ChevronRightIcon aria-hidden="true" size={16} />
               </Button>
             </PaginationItem>
           </PaginationContent>
@@ -113,15 +113,15 @@ export function TablePagination<T = unknown>({
       {/* Results per page */}
       <div className="flex flex-1 justify-end">
         <Select
-          value={table.getState().pagination.pageSize.toString()}
+          aria-label="Results per page"
           onValueChange={(value) => {
             table.setPageSize(Number(value))
           }}
-          aria-label="Results per page"
+          value={table.getState().pagination.pageSize.toString()}
         >
           <SelectTrigger
-            id="results-per-page"
             className="w-fit whitespace-nowrap"
+            id="results-per-page"
           >
             <SelectValue placeholder="Select number of results" />
           </SelectTrigger>

@@ -19,7 +19,7 @@ type Props = {
   className?: string
 }
 
-export function ProductShare({ productName, className = '' }: Props) {
+export function ProductShare({ productName, className = '' }: Readonly<Props>) {
   const [productUrl, setProductUrl] = useState('')
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function ProductShare({ productName, className = '' }: Props) {
 
   const shareUrls = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}&t=${encodeURIComponent(productName)}`,
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${productUrl}`)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(productUrl)}`,
     instagram: 'https://instagram.com/', // Instagram doesn't support direct sharing via URL
   }
 

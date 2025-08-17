@@ -14,7 +14,7 @@ type Props = {
   id: number
 }
 
-export function PaymentSummary({ id }: Props) {
+export function PaymentSummary({ id }: Readonly<Props>) {
   const { payment, isLoading } = usePaymentInfo(id)
 
   if (isLoading) {
@@ -32,9 +32,9 @@ export function PaymentSummary({ id }: Props) {
 
         <Badge variant="outline">
           <span
-            className={cn('size-1.5 rounded-full bg-success-base')}
             aria-hidden="true"
-          ></span>
+            className={cn('size-1.5 rounded-full bg-success-base')}
+          />
           {getMercadoPagoPaymentStatusLabel(payment.status)}
         </Badge>
       </div>
@@ -58,7 +58,7 @@ export function PaymentSummary({ id }: Props) {
           <span className="text-muted-foreground">Monto</span>
 
           <span className="text-success-base">
-            + <Currency value={payment.net_amount || 0} currency="COP" />
+            + <Currency currency="COP" value={payment.net_amount || 0} />
           </span>
         </div>
 
@@ -69,7 +69,7 @@ export function PaymentSummary({ id }: Props) {
             </span>
 
             <span className="text-error-base">
-              - <Currency value={fee.amount || 0} currency="COP" />
+              - <Currency currency="COP" value={fee.amount || 0} />
             </span>
           </div>
         ))}
@@ -79,27 +79,31 @@ export function PaymentSummary({ id }: Props) {
 
           <span className="font-medium text-success-base">
             <Currency
-              value={payment.transaction_details?.net_received_amount || 0}
               currency="COP"
+              value={payment.transaction_details?.net_received_amount || 0}
             />
           </span>
         </div>
 
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Fecha de creación</span>
+        {payment.date_created && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Fecha de creación</span>
 
-          <span>
-            <FormattedDate date={new Date(payment.date_created!)} />
-          </span>
-        </div>
+            <span>
+              <FormattedDate date={new Date(payment.date_created)} />
+            </span>
+          </div>
+        )}
 
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Fecha de aprobación</span>
+        {payment.date_approved && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Fecha de aprobación</span>
 
-          <span>
-            <FormattedDate date={new Date(payment.date_approved!)} />
-          </span>
-        </div>
+            <span>
+              <FormattedDate date={new Date(payment.date_approved)} />
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

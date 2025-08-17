@@ -13,7 +13,7 @@ type Props = {
   products: SimpleProductForSale[]
 }
 
-export function FeaturedProductsSection({ products }: Props) {
+export function FeaturedProductsSection({ products }: Readonly<Props>) {
   const plugin = useRef(Autoplay({ delay: 2000, stopOnInteraction: false }))
 
   return (
@@ -24,14 +24,14 @@ export function FeaturedProductsSection({ products }: Props) {
 
       <div className="w-full">
         <Carousel
-          plugins={[plugin.current]}
           className="w-full"
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
+          plugins={[plugin.current]}
         >
           <CarouselContent className="-ml-1">
             {products.map((product) => (
-              <CarouselItem key={product.id} className="pl-4 md:basis-1/5">
+              <CarouselItem className="pl-4 md:basis-1/5" key={product.id}>
                 <ProductCard key={product.id} product={product} />
               </CarouselItem>
             ))}

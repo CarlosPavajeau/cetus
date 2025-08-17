@@ -25,7 +25,7 @@ type Props = {
   product: Product
 }
 
-export function UpdateProductForm({ product }: Props) {
+export function UpdateProductForm({ product }: Readonly<Props>) {
   const form = useForm({
     resolver: arktypeResolver(UpdateProductSchema),
     defaultValues: {

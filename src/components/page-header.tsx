@@ -5,7 +5,7 @@ type Props = {
   subtitle?: ReactNode
 }
 
-export function PageHeader({ title, subtitle }: Props) {
+export function PageHeader({ title, subtitle }: Readonly<Props>) {
   return (
     <div className="mb-6 max-w-3xl space-y-2 max-sm:text-center">
       <h1 className="font-heading font-semibold text-2xl sm:text-3xl">

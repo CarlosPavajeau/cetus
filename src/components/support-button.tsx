@@ -5,13 +5,13 @@ type Props = {
   message: string
 }
 
-export function SupportButton({ message }: Props) {
+export function SupportButton({ message }: Readonly<Props>) {
   return (
-    <Button className="w-full" asChild>
+    <Button asChild className="w-full">
       <a
         href={`https://wa.me/573233125221?text=${encodeURIComponent(message)}`}
-        target="_blank"
         rel="noopener noreferrer"
+        target="_blank"
       >
         <HeadsetIcon />
         Soporte

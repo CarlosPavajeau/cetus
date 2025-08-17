@@ -1,4 +1,5 @@
 import { cancelOrder } from '@/api/orders'
+import { SubmitButton } from '@/components/submit-button'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -11,14 +12,14 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangleIcon, LoaderCircleIcon, TrashIcon } from 'lucide-react'
+import { AlertTriangleIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 
 type Props = {
   orderId: string
 }
 
-export function CancelOrderButton({ orderId }: Props) {
+export function CancelOrderButton({ orderId }: Readonly<Props>) {
   const [open, setOpen] = useState(false)
 
   const queryClient = useQueryClient()
@@ -36,13 +37,13 @@ export function CancelOrderButton({ orderId }: Props) {
   const handleCancelOrder = () => cancelOrderMutation.mutate()
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
         <Button className="group w-full" size="lg" variant="destructive">
           <TrashIcon
+            aria-hidden="true"
             className="-ms-1 opacity-60"
             size={16}
-            aria-hidden="true"
           />
           Cancelar pedido
         </Button>
@@ -63,20 +64,14 @@ export function CancelOrderButton({ orderId }: Props) {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
 
-          <Button
-            variant="destructive"
+          <SubmitButton
             disabled={cancelOrderMutation.isPending}
+            isSubmitting={cancelOrderMutation.isPending}
             onClick={handleCancelOrder}
+            variant="destructive"
           >
-            {cancelOrderMutation.isPending && (
-              <LoaderCircleIcon
-                className="animate-spin"
-                size={16}
-                aria-hidden="true"
-              />
-            )}
             Confirmar
-          </Button>
+          </SubmitButton>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -12,7 +12,10 @@ type Props = {
   onFilesChange?: (files: FileWithPreview[]) => void
 }
 
-export function ProductImagesUploader({ initialFiles, onFilesChange }: Props) {
+export function ProductImagesUploader({
+  initialFiles,
+  onFilesChange,
+}: Readonly<Props>) {
   const maxSizeMB = 5
   const maxSize = maxSizeMB * 1024 * 1024 // 5MB default
   const maxFiles = 5

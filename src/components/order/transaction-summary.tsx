@@ -14,7 +14,7 @@ type Props = {
   id: string
 }
 
-export function TransactionSummary({ id }: Props) {
+export function TransactionSummary({ id }: Readonly<Props>) {
   const { transaction, isLoading } = useTransaction(id)
 
   if (isLoading) {
@@ -32,12 +32,12 @@ export function TransactionSummary({ id }: Props) {
 
         <Badge variant="outline">
           <span
+            aria-hidden="true"
             className={cn(
               'size-1.5 rounded-full',
               TransactionStatusColor[transaction.data.status],
             )}
-            aria-hidden="true"
-          ></span>
+          />
           {TransactionStatusText[transaction.data.status]}
         </Badge>
       </div>
@@ -62,8 +62,8 @@ export function TransactionSummary({ id }: Props) {
 
           <span>
             <Currency
-              value={transaction.data.amount_in_cents / 100}
               currency="COP"
+              value={transaction.data.amount_in_cents / 100}
             />
           </span>
         </div>

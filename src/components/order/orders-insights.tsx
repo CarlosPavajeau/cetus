@@ -16,7 +16,7 @@ export function InsightCard({
   title,
   value,
   percentageChange,
-}: InsightCardProps) {
+}: Readonly<InsightCardProps>) {
   const percentageFormatter = useNumberFormatter({
     style: 'percent',
     minimumFractionDigits: 1,
@@ -76,12 +76,12 @@ export function OrdersInsights() {
     },
     {
       title: 'Ingresos del mes',
-      value: <Currency value={insights.currentMonthTotal} currency="COP" />,
+      value: <Currency currency="COP" value={insights.currentMonthTotal} />,
       percentageChange: insights.revenuePercentageChange,
     },
     {
       title: 'Costo del mes',
-      value: <Currency value={insights.currentMonthCost} currency="COP" />,
+      value: <Currency currency="COP" value={insights.currentMonthCost} />,
     },
   ]
 
@@ -90,9 +90,9 @@ export function OrdersInsights() {
       {insightsData.map((item) => (
         <InsightCard
           key={item.title}
+          percentageChange={item.percentageChange}
           title={item.title}
           value={item.value}
-          percentageChange={item.percentageChange}
         />
       ))}
     </div>

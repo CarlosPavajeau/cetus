@@ -8,7 +8,7 @@ type Props = {
   reviews: ProductReviewType[]
 }
 
-export function ProductTabs({ reviews }: Props) {
+export function ProductTabs({ reviews }: Readonly<Props>) {
   if (reviews.length === 0) {
     return (
       <Alert>

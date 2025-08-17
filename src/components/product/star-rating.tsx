@@ -1,6 +1,6 @@
 import { StarIcon } from 'lucide-react'
 
-type StarRatingProps = {
+type Props = {
   rating: number
   size?: number
   maxRating?: number
@@ -12,19 +12,19 @@ export function StarRating({
   maxRating = 5,
   size = 5,
   className = '',
-}: StarRatingProps) {
+}: Readonly<Props>) {
   return (
     <div className={`flex ${className}`}>
-      {[...Array(maxRating)].map((_, i) => (
+      {[new Array(maxRating)].map((_, i) => (
         <StarIcon
-          key={i}
-          width={16}
-          height={16}
           className={`h-${size} w-${size} ${
             i < rating
               ? 'fill-warning-base text-warning-base'
               : 'text-muted-foreground'
           }`}
+          height={16}
+          key={i}
+          width={16}
         />
       ))}
     </div>

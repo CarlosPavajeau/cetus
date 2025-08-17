@@ -37,18 +37,21 @@ export function TopSellingProducts() {
       <CardContent className="flex flex-col gap-5 pb-6">
         <div className="flex flex-col gap-2.5">
           {products.map((product) => (
-            <div className="overflow-hidden rounded-lg border bg-card">
+            <div
+              className="overflow-hidden rounded-lg border bg-card"
+              key={product.id}
+            >
               <div className="flex p-3">
                 <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                   <Image
-                    src={getImageUrl(product.imageUrl ?? 'placeholder.png')}
                     alt={product.name}
-                    width={80}
+                    className="object-cover"
                     height={80}
                     layout="constrained"
                     objectFit="cover"
                     sizes="80px"
-                    className="object-cover"
+                    src={getImageUrl(product.imageUrl ?? 'placeholder.png')}
+                    width={80}
                   />
                 </div>
                 <div className="ml-3 flex flex-1 flex-col">
@@ -57,7 +60,7 @@ export function TopSellingProducts() {
                       {product.name}
                     </h3>
                     {product.category && (
-                      <Badge variant="secondary" className="rounded text-xs">
+                      <Badge className="rounded text-xs" variant="secondary">
                         {product.category}
                       </Badge>
                     )}

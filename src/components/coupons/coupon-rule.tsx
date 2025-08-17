@@ -10,7 +10,7 @@ type Props = {
   onRemove?: () => void
 }
 
-export function CouponRule({ rule, onRemove }: Props) {
+export function CouponRule({ rule, onRemove }: Readonly<Props>) {
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
       <div className="flex p-3">
@@ -40,11 +40,11 @@ type CouponRuleValueProps = {
   rule: CreateCouponRule
 }
 
-function CouponRuleValue({ rule }: CouponRuleValueProps) {
+function CouponRuleValue({ rule }: Readonly<CouponRuleValueProps>) {
   if (rule.ruleType === CouponRuleType.MinPurchaseAmount) {
     return (
       <span className="mt-1 font-medium text-xs">
-        <Currency value={Number(rule.value)} currency="COP" />
+        <Currency currency="COP" value={Number(rule.value)} />
       </span>
     )
   }
@@ -66,14 +66,18 @@ type CouponRuleValueSpecificCategoryProps = {
 
 function CouponRuleValueSpecificCategory({
   rule,
-}: CouponRuleValueSpecificCategoryProps) {
+}: Readonly<CouponRuleValueSpecificCategoryProps>) {
   const { categories } = useCategories()
 
-  if (!categories) return null
+  if (!categories) {
+    return null
+  }
 
-  const category = categories.find((category) => category.id === rule.value)
+  const category = categories.find((c) => c.id === rule.value)
 
-  if (!category) return null
+  if (!category) {
+    return null
+  }
 
   return <span className="mt-1 font-medium text-xs">{category?.name}</span>
 }
@@ -84,14 +88,18 @@ type CouponRuleValueSpecificProductProps = {
 
 function CouponRuleValueSpecificProduct({
   rule,
-}: CouponRuleValueSpecificProductProps) {
+}: Readonly<CouponRuleValueSpecificProductProps>) {
   const { products } = useProducts()
 
-  if (!products) return null
+  if (!products) {
+    return null
+  }
 
-  const product = products.find((product) => product.id === rule.value)
+  const product = products.find((p) => p.id === rule.value)
 
-  if (!product) return null
+  if (!product) {
+    return null
+  }
 
   return <span className="mt-1 font-medium text-xs">{product?.name}</span>
 }

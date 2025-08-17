@@ -6,10 +6,9 @@ import { useId } from 'react'
 type Props = {
   value?: string
   onSearch: (value: string) => void
-  debounceTime?: number
 }
 
-export function SearchInput({ value = '', onSearch }: Props) {
+export function SearchInput({ value = '', onSearch }: Readonly<Props>) {
   const id = useId()
 
   const handleClearFilter = () => {

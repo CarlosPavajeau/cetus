@@ -50,7 +50,7 @@ type CartItemProps = {
   item: CartItem
 }
 
-function CartItemComponent({ item }: CartItemProps) {
+function CartItemComponent({ item }: Readonly<CartItemProps>) {
   const cart = useCart()
 
   const handleRemoveItem = useCallback(() => {

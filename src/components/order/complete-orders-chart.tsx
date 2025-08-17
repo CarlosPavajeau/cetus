@@ -35,35 +35,36 @@ interface CustomCursorProps {
   className?: string
 }
 
-function CustomCursor(props: CustomCursorProps) {
+function CustomCursor(props: Readonly<CustomCursorProps>) {
   const { fill, pointerEvents, height, points, className } = props
 
   if (!points || points.length === 0) {
     return null
   }
 
-  const { x, y } = points[0]!
+  const { x, y } = points[0]
+
   return (
     <>
       <Rectangle
+        className={className}
+        fill={fill}
+        height={height}
+        pointerEvents={pointerEvents}
+        type="linear"
+        width={24}
         x={x - 12}
         y={y}
-        fill={fill}
-        pointerEvents={pointerEvents}
-        width={24}
-        height={height}
-        className={className}
-        type="linear"
       />
       <Rectangle
+        className="recharts-tooltip-inner-cursor"
+        fill={fill}
+        height={height}
+        pointerEvents={pointerEvents}
+        type="linear"
+        width={1}
         x={x - 1}
         y={y}
-        fill={fill}
-        pointerEvents={pointerEvents}
-        width={1}
-        height={height}
-        className="recharts-tooltip-inner-cursor"
-        type="linear"
       />
     </>
   )
@@ -162,8 +163,8 @@ export function CompleteOrdersChart() {
           </div>
         </div>
         <ChartContainer
-          config={chartConfig}
           className="aspect-auto h-full min-h-72 w-full [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-(--chart-1)/15 [&_.recharts-rectangle.recharts-tooltip-inner-cursor]:fill-white/20"
+          config={chartConfig}
         >
           <AreaChart
             accessibilityLayer
@@ -171,36 +172,36 @@ export function CompleteOrdersChart() {
             margin={{ left: -12, right: 12, top: 12 }}
           >
             <CartesianGrid
-              vertical={false}
-              strokeDasharray="2 2"
               stroke="var(--border)"
+              strokeDasharray="2 2"
+              vertical={false}
             />
             <XAxis
               dataKey="createdAt"
+              stroke="var(--border)"
+              tickFormatter={(value) => dayFormmatter.format(new Date(value))}
               tickLine={false}
               tickMargin={12}
-              tickFormatter={(value) => dayFormmatter.format(new Date(value))}
-              stroke="var(--border)"
             />
             <YAxis
               axisLine={false}
-              tickLine={false}
               interval="preserveStartEnd"
+              tickLine={false}
             />
 
             <ChartTooltip
               content={
                 <CustomTooltipContent
-                  labelFormatter={(label) =>
-                    monthFormatter.format(new Date(label))
-                  }
                   colorMap={{
                     count: 'var(--chart-1)',
                   }}
+                  dataKeys={['count']}
+                  labelFormatter={(label) =>
+                    monthFormatter.format(new Date(label))
+                  }
                   labelMap={{
                     count: 'Ordenes',
                   }}
-                  dataKeys={['count']}
                   valueFormatter={(value) => `${value.toLocaleString()}`}
                 />
               }
@@ -208,17 +209,17 @@ export function CompleteOrdersChart() {
             />
 
             <Area
-              type="natural"
-              dataKey="count"
-              stroke="var(--chart-1)"
-              fill="var(--chart-1)"
-              fillOpacity={0.1}
               activeDot={{
                 r: 5,
                 fill: 'var(--chart-1)',
                 stroke: 'var(--background)',
                 strokeWidth: 2,
               }}
+              dataKey="count"
+              fill="var(--chart-1)"
+              fillOpacity={0.1}
+              stroke="var(--chart-1)"
+              type="natural"
             />
           </AreaChart>
         </ChartContainer>

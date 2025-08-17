@@ -191,7 +191,7 @@ type SearchInputProps = {
   id: string
 }
 
-function SearchInput({ table, id }: SearchInputProps) {
+function SearchInput({ table, id }: Readonly<SearchInputProps>) {
   const inputRef = useRef<HTMLInputElement>(null)
   const nameColumn = table.getColumn('name')
   const filterValue = nameColumn?.getFilterValue() as string
@@ -239,7 +239,7 @@ type CategoryFilterProps = {
   table: ReturnType<typeof useReactTable<Product>>
 }
 
-function CategoryFilter({ table }: CategoryFilterProps) {
+function CategoryFilter({ table }: Readonly<CategoryFilterProps>) {
   const categoryColumn = table.getColumn('categoryId') as Column<Product, Key>
   const { isLoading, categories } = useCategories()
 

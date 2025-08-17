@@ -24,7 +24,7 @@ const QuantitySelector = memo(
     onIncrement,
     onDecrement,
     max = Number.POSITIVE_INFINITY,
-  }: QuantitySelectorProps) => {
+  }: Readonly<QuantitySelectorProps>) => {
     const isMaxReached = max !== Number.POSITIVE_INFINITY && quantity >= max
 
     return (
@@ -64,7 +64,7 @@ type Props = {
   product: ProductForSale
 }
 
-function ProductDisplayComponent({ product }: Props) {
+function ProductDisplayComponent({ product }: Readonly<Props>) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)

@@ -48,10 +48,10 @@ export function CreateDeliveryFeeDialog() {
   const close = () => setOpen(false)
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button className="ml-auto">
-          <PlusIcon className="-ms-1 opacity-60" size={16} aria-hidden="true" />
+          <PlusIcon aria-hidden="true" className="-ms-1 opacity-60" size={16} />
           Agregar costo de envío
         </Button>
       </DialogTrigger>
@@ -71,7 +71,9 @@ type CreateDeliveryFeeFormProps = {
   onSuccess?: () => void
 }
 
-function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
+function CreateDeliveryFeeForm({
+  onSuccess,
+}: Readonly<CreateDeliveryFeeFormProps>) {
   const { states, isLoading } = useStates()
   const [currentState, setCurrentState] = useState<string | undefined>(
     undefined,
@@ -118,9 +120,9 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
         <div className="*:not-first:mt-2">
           <Label htmlFor="state">Departamento</Label>
           <Select
-            value={currentState as string}
-            onValueChange={handleStateChange}
             disabled={isLoading || isLoadingCities}
+            onValueChange={handleStateChange}
+            value={currentState as string}
           >
             <SelectTrigger>
               <SelectValue placeholder="Seleccione un departamento" />
@@ -143,9 +145,9 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
               <FormLabel>Ciudad</FormLabel>
               <FormControl>
                 <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
                   disabled={isLoading || isLoadingCities || !currentState}
+                  onValueChange={field.onChange}
+                  value={field.value}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccione una ciudad" />
@@ -181,8 +183,8 @@ function CreateDeliveryFeeForm({ onSuccess }: CreateDeliveryFeeFormProps) {
 
         <Button
           className="w-full"
-          type="submit"
           disabled={createDeliveryFeeMutation.isPending}
+          type="submit"
         >
           Agregar
         </Button>

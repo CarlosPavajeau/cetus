@@ -27,7 +27,7 @@ export function OrderItems({
   editable = false,
   onRemove,
   onQuantityChange,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className="space-y-6 rounded-md border bg-card p-6">
       <h2 className="font-medium text-lg">{title}</h2>
@@ -35,19 +35,19 @@ export function OrderItems({
       <div className="space-y-4">
         {items.map((item) => (
           <div
-            key={item.id || item.productId}
             className="rounded-md border p-4"
+            key={item.id || item.productId}
           >
             <div className="flex gap-4">
               <div className="relative h-24 w-24 rounded-md">
                 <Image
-                  src={getImageUrl(item.imageUrl || 'placeholder.svg')}
                   alt={item.productName}
-                  width={64}
+                  className="rounded-sm object-cover"
                   height={64}
                   layout="constrained"
-                  className="rounded-sm object-cover"
                   priority
+                  src={getImageUrl(item.imageUrl || 'placeholder.svg')}
+                  width={64}
                 />
               </div>
 
@@ -57,11 +57,11 @@ export function OrderItems({
 
                   {editable && onRemove && (
                     <Button
-                      size="icon"
-                      variant="ghost"
                       className="text-destructive hover:text-destructive/80"
-                      type="button"
                       onClick={() => onRemove(item.id || item.productId || '')}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
                     >
                       <Trash2Icon className="h-4 w-4" />
                     </Button>
@@ -72,45 +72,45 @@ export function OrderItems({
                   {editable && onQuantityChange ? (
                     <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
-                        size="icon"
                         className="h-8 w-8"
-                        type="button"
                         onClick={() =>
                           onQuantityChange(
                             item.id || item.productId || '',
                             item.quantity - 1,
                           )
                         }
+                        size="icon"
+                        type="button"
+                        variant="outline"
                       >
                         -
                       </Button>
                       <span className="w-8 text-center">{item.quantity}</span>
                       <Button
-                        variant="outline"
-                        size="icon"
                         className="h-8 w-8"
-                        type="button"
                         onClick={() =>
                           onQuantityChange(
                             item.id || item.productId || '',
                             item.quantity + 1,
                           )
                         }
+                        size="icon"
+                        type="button"
+                        variant="outline"
                       >
                         +
                       </Button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Currency value={item.price} currency="COP" /> x{' '}
+                      <Currency currency="COP" value={item.price} /> x{' '}
                       {item.quantity}
                     </div>
                   )}
                   <div className="ml-auto font-medium">
                     <Currency
-                      value={item.price * item.quantity}
                       currency="COP"
+                      value={item.price * item.quantity}
                     />
                   </div>
                 </div>

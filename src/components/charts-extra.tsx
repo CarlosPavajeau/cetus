@@ -18,8 +18,8 @@ export function CustomTooltipContent({
   dataKeys, // If provided, will be used to order the items
   labelFormatter,
   valueFormatter = (value) => `${value.toLocaleString()}`,
-}: CustomTooltipContentProps) {
-  if (!active || !payload || !payload.length) {
+}: Readonly<CustomTooltipContentProps>) {
+  if (!(active && payload && payload.length)) {
     return null
   }
 
@@ -48,7 +48,9 @@ export function CustomTooltipContent({
       <div className="grid gap-1.5">
         {orderedPayload.map((entry, index) => {
           // Skip undefined entries
-          if (!entry) return null
+          if (!entry) {
+            return null
+          }
 
           const name = entry.dataKey as string
           const value = entry.value as number
@@ -59,8 +61,8 @@ export function CustomTooltipContent({
 
           return (
             <div
-              key={`item-${index}`}
               className="flex items-center justify-between gap-3"
+              key={`item-${index}`}
             >
               <div className="flex items-center gap-2">
                 <div

@@ -38,7 +38,7 @@ type Props = {
   onSuccess: (rule: CreateCouponRule) => void
 }
 
-export function AddCouponRule({ onSuccess }: Props) {
+export function AddCouponRule({ onSuccess }: Readonly<Props>) {
   const [isOpen, setIsOpen] = useState(false)
   const form = useForm({
     resolver: arktypeResolver(CreateCouponRuleSchema),
@@ -65,9 +65,9 @@ export function AddCouponRule({ onSuccess }: Props) {
   })
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" type="button">
+        <Button size="sm" type="button" variant="outline">
           <PlusIcon />
           Agregar regla
         </Button>
@@ -80,7 +80,7 @@ export function AddCouponRule({ onSuccess }: Props) {
 
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
           <Form {...form}>
-            <form onSubmit={onSubmit} className="flex flex-col gap-6">
+            <form className="flex flex-col gap-6" onSubmit={onSubmit}>
               <FormField
                 control={form.control}
                 name="ruleType"
@@ -89,8 +89,8 @@ export function AddCouponRule({ onSuccess }: Props) {
                     <FormLabel>Tipo de regla</FormLabel>
                     <FormControl>
                       <Select
-                        onValueChange={(value) => onRuleTypeChange(value)}
                         defaultValue={field.value?.toString()}
+                        onValueChange={(value) => onRuleTypeChange(value)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un tipo de regla" />
@@ -115,7 +115,7 @@ export function AddCouponRule({ onSuccess }: Props) {
               <SelectRuleValue ruleType={form.watch('ruleType')} />
 
               <div className="w-full">
-                <Button type="button" className="w-full" onClick={onSubmit}>
+                <Button className="w-full" onClick={onSubmit} type="button">
                   Agregar regla
                 </Button>
               </div>
@@ -131,7 +131,7 @@ type SelectRuleValueProps = {
   ruleType: CouponRuleType
 }
 
-function SelectRuleValue({ ruleType }: SelectRuleValueProps) {
+function SelectRuleValue({ ruleType }: Readonly<SelectRuleValueProps>) {
   const form = useFormContext<CreateCouponRule>()
 
   if (ruleType === CouponRuleType.OnePerCustomer) {
@@ -178,8 +178,8 @@ function SelectRuleValueSpecificCategory() {
           <FormLabel>Categoría</FormLabel>
           <FormControl>
             <Select
-              onValueChange={(value) => field.onChange(value)}
               defaultValue={field.value}
+              onValueChange={(value) => field.onChange(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona una categoría" />
@@ -213,8 +213,8 @@ function SelectRuleValueSpecificProduct() {
           <FormLabel>Producto</FormLabel>
           <FormControl>
             <Select
-              onValueChange={(value) => field.onChange(value)}
               defaultValue={field.value}
+              onValueChange={(value) => field.onChange(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona un producto" />

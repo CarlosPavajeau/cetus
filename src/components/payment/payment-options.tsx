@@ -61,12 +61,12 @@ interface PaymentMethodItemProps extends PaymentMethod {
   isSelected: boolean
 }
 
-const PaymentMethodItem = memo(function PaymentMethodItem({
+const PaymentMethodItem = memo(function PaymentMethodItemComponent({
   id,
   label,
   PaymentIcon,
   isSelected,
-}: PaymentMethodItemProps) {
+}: Readonly<PaymentMethodItemProps>) {
   return (
     <div
       className={cn(
@@ -76,11 +76,11 @@ const PaymentMethodItem = memo(function PaymentMethodItem({
         },
       )}
     >
-      <RadioGroupItem id={id} value={id} className="sr-only" />
-      <PaymentIcon className="size-6" size={20} aria-hidden="true" />
+      <RadioGroupItem className="sr-only" id={id} value={id} />
+      <PaymentIcon aria-hidden="true" className="size-6" size={20} />
       <label
-        htmlFor={id}
         className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0"
+        htmlFor={id}
       >
         {label}
       </label>
@@ -88,7 +88,7 @@ const PaymentMethodItem = memo(function PaymentMethodItem({
   )
 })
 
-export function PaymentOptions({ orderId }: PaymentOptionsProps) {
+export function PaymentOptions({ orderId }: Readonly<PaymentOptionsProps>) {
   const form = useForm({
     resolver: arktypeResolver(PaymentSchema),
     defaultValues: {
@@ -137,8 +137,8 @@ export function PaymentOptions({ orderId }: PaymentOptionsProps) {
       <div className="space-y-6">
         <RadioGroup
           className="grid-cols-4"
-          value={paymentMethod}
           onValueChange={setPaymentMethod}
+          value={paymentMethod}
         >
           {PAYMENT_METHODS.map((method) => (
             <PaymentMethodItem

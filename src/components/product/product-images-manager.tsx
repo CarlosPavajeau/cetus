@@ -9,7 +9,10 @@ type Props = {
   onFilesChange: (files: FileWithPreview[]) => void
 }
 
-export function ProductImagesManager({ existingImages, onFilesChange }: Props) {
+export function ProductImagesManager({
+  existingImages,
+  onFilesChange,
+}: Readonly<Props>) {
   const initialFiles = existingImages.map(
     (image) =>
       ({

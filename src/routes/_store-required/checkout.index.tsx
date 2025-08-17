@@ -115,7 +115,7 @@ type CustomerInfoFieldsProps = {
   form: ReturnType<typeof useForm<CreateOrder>>
 }
 
-function CustomerInfoFields({ form }: CustomerInfoFieldsProps) {
+function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
   const formCustomerId = form.watch('customer.id')
   const customerId = useDebounce(formCustomerId, CUSTOMER_ID_DELAY)
 
@@ -208,7 +208,7 @@ type DeliveryFeeInfoProps = {
 function DeliveryFeeInfo({
   deliveryFee,
   isLoadingDeliveryFee,
-}: DeliveryFeeInfoProps) {
+}: Readonly<DeliveryFeeInfoProps>) {
   return (
     <div>
       <small className="text-muted-foreground text-xs">

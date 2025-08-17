@@ -27,7 +27,7 @@ type Props = {
   reviewRequestId: string
 }
 
-export function ProductReviewForm({ reviewRequestId }: Props) {
+export function ProductReviewForm({ reviewRequestId }: Readonly<Props>) {
   const navigate = useNavigate()
   const createReviewMutation = useCreateProductReview()
 

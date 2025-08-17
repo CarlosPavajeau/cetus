@@ -5,7 +5,7 @@ type Props = {
   products: SimpleProductForSale[]
 }
 
-export function SuggestedProducts({ products }: Props) {
+export function SuggestedProducts({ products }: Readonly<Props>) {
   if (!products.length) {
     return null
   }

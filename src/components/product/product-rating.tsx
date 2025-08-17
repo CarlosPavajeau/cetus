@@ -1,4 +1,4 @@
-import { StarRating } from './star-rating'
+import { StarRating } from '@/components/product/star-rating'
 
 type Props = {
   rating: number
@@ -12,10 +12,10 @@ export function ProductRating({
   reviewsCount,
   maxRating = 5,
   className = '',
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <StarRating rating={rating} maxRating={maxRating} />
+      <StarRating maxRating={maxRating} rating={rating} />
       <span className="text-muted-foreground text-xs">
         ({reviewsCount} {reviewsCount === 1 ? 'reseña' : 'reseñas'})
       </span>

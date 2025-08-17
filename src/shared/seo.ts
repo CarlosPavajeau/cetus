@@ -42,9 +42,16 @@ export function generateProductSEO(
   const title = `${product.name} | ${storeName}`.slice(0, 60)
 
   // Generate meta description (recommended 150-160 characters)
-  const description = product.description
-    ? `${product.description.slice(0, 120)}... Precio: $${product.price.toLocaleString()} | ${storeName}`
-    : `Compra ${product.name} en ${storeName}. Precio: $${product.price.toLocaleString()}. ${product.rating ? `⭐ ${product.rating}/5 (${product.reviewsCount} reseñas)` : ''}`
+  let description: string
+  if (product.description) {
+    description = `${product.description.slice(0, 120)}... Precio: $${product.price.toLocaleString()} | ${storeName}`
+  } else {
+    let ratingText = ''
+    if (product.rating) {
+      ratingText = `⭐ ${product.rating}/5 (${product.reviewsCount} reseñas)`
+    }
+    description = `Compra ${product.name} en ${storeName}. Precio: $${product.price.toLocaleString()}. ${ratingText}`
+  }
 
   // Generate keywords
   const keywords = [
@@ -351,9 +358,16 @@ export function generateHomepageSEO(
       .map((cat) => cat.name)
       .join(', ') || ''
 
-  const description = `Descubre ${storeName}, tu tienda online de confianza. ${
-    productCount > 0 ? `Más de ${productCount} productos` : 'Productos'
-  }${categoryNames ? ` en ${categoryNames}` : ''}. Envío rápido y precios increíbles.`
+  let description = `Descubre ${storeName}, tu tienda online de confianza. `
+  if (productCount > 0) {
+    description += `Más de ${productCount} productos`
+  } else {
+    description += 'Productos'
+  }
+  if (categoryNames) {
+    description += ` en ${categoryNames}`
+  }
+  description += '. Envío rápido y precios increíbles.'
 
   // Generate homepage-specific keywords
   const categoryKeywords = categories?.map((cat) => cat.name) || []

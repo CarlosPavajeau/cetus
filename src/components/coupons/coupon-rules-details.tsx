@@ -8,7 +8,7 @@ type Props = {
   couponId: number
 }
 
-export function CouponRulesDetails({ couponId }: Props) {
+export function CouponRulesDetails({ couponId }: Readonly<Props>) {
   const { couponRules, isLoading, error } = useCouponRules(couponId)
 
   if (isLoading) {

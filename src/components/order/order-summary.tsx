@@ -17,7 +17,7 @@ export function OrderSummary({
   order,
   showId = false,
   showStatus = false,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <>
       {showStatus && (
@@ -26,12 +26,12 @@ export function OrderSummary({
             <h3 className="font-medium">Estado del pedido</h3>
             <Badge variant="outline">
               <span
+                aria-hidden="true"
                 className={cn(
                   'size-1.5 rounded-full',
                   OrderStatusColor[order.status],
                 )}
-                aria-hidden="true"
-              ></span>
+              />
               {OrderStatusText[order.status]}
             </Badge>
           </div>
@@ -55,17 +55,17 @@ export function OrderSummary({
 
         <div className="divide-y">
           {order.items.map((item) => (
-            <div key={item.id} className="flex p-4">
+            <div className="flex p-4" key={item.id}>
               <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                 <Image
-                  src={getImageUrl(item.imageUrl || 'placeholder.svg')}
                   alt={item.productName}
-                  width={64}
+                  className="object-cover"
                   height={64}
                   layout="constrained"
                   objectFit="cover"
                   sizes="64px"
-                  className="object-cover"
+                  src={getImageUrl(item.imageUrl || 'placeholder.svg')}
+                  width={64}
                 />
               </div>
 
@@ -76,15 +76,15 @@ export function OrderSummary({
                   </h4>
                   <span className="ml-2 font-medium text-sm">
                     <Currency
-                      value={item.price * item.quantity}
                       currency="COP"
+                      value={item.price * item.quantity}
                     />
                   </span>
                 </div>
 
                 <div className="mt-1 flex items-center">
                   <span className="text-muted-foreground text-xs">
-                    <Currency value={item.price} currency="COP" /> ×{' '}
+                    <Currency currency="COP" value={item.price} /> ×{' '}
                     {item.quantity}
                   </span>
                 </div>
@@ -97,25 +97,25 @@ export function OrderSummary({
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
             <span>
-              <Currency value={order.subtotal} currency="COP" />
+              <Currency currency="COP" value={order.subtotal} />
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Descuento</span>
             <span className="text-destructive">
-              - <Currency value={order.discount} currency="COP" />
+              - <Currency currency="COP" value={order.discount} />
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total a pagar</span>
             <span>
-              <Currency value={order.total} currency="COP" />
+              <Currency currency="COP" value={order.total} />
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Envío</span>
             <span>
-              <Currency value={order.deliveryFee || 0} currency="COP" />
+              <Currency currency="COP" value={order.deliveryFee || 0} />
             </span>
           </div>
 
@@ -123,8 +123,8 @@ export function OrderSummary({
             <span>Total</span>
             <span>
               <Currency
-                value={order.total + (order.deliveryFee || 0)}
                 currency="COP"
+                value={order.total + (order.deliveryFee || 0)}
               />
             </span>
           </div>

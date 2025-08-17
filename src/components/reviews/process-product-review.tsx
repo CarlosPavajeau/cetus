@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { getImageUrl } from '@/shared/cdn'
 import { useQueryClient } from '@tanstack/react-query'
 import { Image } from '@unpic/react'
+import consola from 'consola'
 import { CheckIcon, FileSearchIcon, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -27,7 +28,7 @@ type Props = {
   review: PendingForApprovalProductReview
 }
 
-export function ProcessProductReview({ review }: Props) {
+export function ProcessProductReview({ review }: Readonly<Props>) {
   const [isOpen, setIsOpen] = useState(false)
   const [moderatorNotes, setModeratorNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -44,7 +45,7 @@ export function ProcessProductReview({ review }: Props) {
         queryKey: ['pending-for-approval-product-reviews'],
       })
     } catch (error) {
-      console.error('Error approving review:', error)
+      consola.error('Error approving review:', error)
     } finally {
       setIsProcessing(false)
     }
@@ -69,14 +70,14 @@ export function ProcessProductReview({ review }: Props) {
         queryKey: ['pending-for-approval-product-reviews'],
       })
     } catch (error) {
-      console.error('Error rejecting review:', error)
+      consola.error('Error rejecting review:', error)
     } finally {
       setIsProcessing(false)
     }
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
         <Button size="sm">
           <FileSearchIcon />
@@ -91,15 +92,15 @@ export function ProcessProductReview({ review }: Props) {
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
           <div className="flex items-start gap-4 rounded-lg bg-secondary p-4">
             <Image
-              src={getImageUrl(review.product.imageUrl)}
               alt={review.product.name}
               className="size-20 rounded-lg object-cover"
-              width={80}
               height={80}
-              sizes="80px"
               layout="constrained"
               objectFit="cover"
               priority
+              sizes="80px"
+              src={getImageUrl(review.product.imageUrl)}
+              width={80}
             />
             <div className="space-y-1.5">
               <h3 className="font-medium text-base">{review.product.name}</h3>
@@ -115,7 +116,7 @@ export function ProcessProductReview({ review }: Props) {
           <div className="grid gap-4">
             <div className="grid gap-2">
               <p className="font-medium text-sm">Calificación:</p>
-              <StarRating rating={review.rating} className="gap-1" />
+              <StarRating className="gap-1" rating={review.rating} />
             </div>
             <div className="grid gap-2">
               <p className="font-medium text-sm">Comentario:</p>
@@ -124,18 +125,18 @@ export function ProcessProductReview({ review }: Props) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="moderatorNotes" className="font-medium text-sm">
+            <Label className="font-medium text-sm" htmlFor="moderatorNotes">
               Notas del moderador
               <span className="ml-1 text-muted-foreground">
                 (requerido para rechazar)
               </span>
             </Label>
             <Textarea
+              className="min-h-[100px] resize-none"
               id="moderatorNotes"
+              onChange={(e) => setModeratorNotes(e.target.value)}
               placeholder="Escribe las razones para rechazar la reseña..."
               value={moderatorNotes}
-              onChange={(e) => setModeratorNotes(e.target.value)}
-              className="min-h-[100px] resize-none"
             />
           </div>
         </div>
@@ -143,18 +144,18 @@ export function ProcessProductReview({ review }: Props) {
         <SheetFooter>
           <div className="flex gap-3">
             <Button
-              onClick={handleApprove}
-              disabled={isProcessing}
               className="flex-1"
+              disabled={isProcessing}
+              onClick={handleApprove}
             >
               <CheckIcon />
               Aprobar
             </Button>
             <Button
-              variant="destructive"
-              onClick={handleReject}
-              disabled={isProcessing}
               className="flex-1"
+              disabled={isProcessing}
+              onClick={handleReject}
+              variant="destructive"
             >
               <XIcon />
               Rechazar

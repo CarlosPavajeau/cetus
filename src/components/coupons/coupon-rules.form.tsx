@@ -30,8 +30,8 @@ export function CouponRulesForm() {
         {rules.map((rule, index) => (
           <CouponRule
             key={index}
-            rule={rule}
             onRemove={() => removeRule(index)}
+            rule={rule}
           />
         ))}
       </div>
