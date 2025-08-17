@@ -36,6 +36,9 @@ export const UpdateProductSchema = BaseProductSchema.and({
   id: type.string.moreThanLength(1),
   enabled: type.boolean.default(true),
   imageUrl: type.string.or(type.undefined).optional(),
+  images: CreateProductImageSchema.array().moreThanLength(0).configure({
+    message: 'Se requiere al menos una imagen del producto',
+  }),
   categoryId: type.string.moreThanLength(1).configure({
     message: 'La categoría del producto es requerida',
   }),
