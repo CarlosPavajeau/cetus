@@ -4,6 +4,8 @@
     "": {
       "name": "cetus",
       "dependencies": {
+        "@fontsource-variable/inter": "^5.2.6",
+        "@fontsource-variable/outfit": "^5.2.6",
         "@hookform/resolvers": "^5.2.1",
         "@microsoft/signalr": "^9.0.6",
         "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -273,6 +275,10 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.2", "", { "dependencies": { "@floating-ui/dom": "^1.0.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-06okr5cgPzMNBy+Ycse2A6udMi4bqwW/zgBF/rwjcNqWkyr82Mcg8b0vjX8OJpZFy/FKjJmw6wV7t44kK6kW7A=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.9", "", {}, "sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg=="],
+
+    "@fontsource-variable/inter": ["@fontsource-variable/inter@5.2.6", "", {}, "sha512-jks/bficUPQ9nn7GvXvHtlQIPudW7Wx8CrlZoY8bhxgeobNxlQan8DclUJuYF2loYRrGpfrhCIZZspXYysiVGg=="],
+
+    "@fontsource-variable/outfit": ["@fontsource-variable/outfit@5.2.6", "", {}, "sha512-0wNlmsinE4taUgmRySxld13//NtnGwN58mBegexyhYuFqiQG/4Ho+5CCkiFxXijnojmCiaBaKkYt72LDwZHiKg=="],
 
     "@formatjs/ecma402-abstract": ["@formatjs/ecma402-abstract@2.3.3", "", { "dependencies": { "@formatjs/fast-memoize": "2.2.6", "@formatjs/intl-localematcher": "0.6.0", "decimal.js": "10", "tslib": "2" } }, "sha512-pJT1OkhplSmvvr6i3CWTPvC/FGC06MbN5TNBfRO6Ox62AEz90eMq+dVvtX9Bl3jxCEkS0tATzDarRZuOLw7oFg=="],
 

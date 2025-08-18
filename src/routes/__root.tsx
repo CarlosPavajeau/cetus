@@ -16,6 +16,9 @@ import { PostHogProvider } from 'posthog-js/react'
 import type { ReactNode } from 'react'
 import { I18nProvider } from 'react-aria'
 
+import '@fontsource-variable/inter'
+import '@fontsource-variable/outfit'
+
 type RouterContext = {
   queryClient: QueryClient
 }
@@ -33,23 +36,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         title: 'cetus',
       },
     ],
-    links: [
-      { rel: 'stylesheet', href: appCss },
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      {
-        rel: 'preconnect',
-        href: 'https://fonts.gstatic.com',
-        crossOrigin: 'anonymous',
-      },
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
-      },
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&display=swap',
-      },
-    ],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
