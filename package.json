@@ -11,6 +11,8 @@
     "auth:generate": "npx @better-auth/cli generate --config src/server/auth.ts"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.2.6",
+    "@fontsource-variable/outfit": "^5.2.6",
     "@hookform/resolvers": "^5.2.1",
     "@microsoft/signalr": "^9.0.6",
     "@radix-ui/react-alert-dialog": "^1.1.14",
