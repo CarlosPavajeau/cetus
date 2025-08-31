@@ -64,6 +64,7 @@ export type SimpleProductForSale = {
   rating: number
   reviewsCount: number
   categoryId: string
+  variantId: number
 }
 
 export const fetchProductsForSale = async () => {

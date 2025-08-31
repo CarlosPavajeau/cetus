@@ -12,7 +12,11 @@ type Props = {
 
 function ProductCardComponent({ product }: Readonly<Props>) {
   return (
-    <Link params={{ slug: product.slug }} to="/products/$slug">
+    <Link
+      params={{ slug: product.slug }}
+      search={{ variant: product.variantId }}
+      to="/products/$slug"
+    >
       <div className="overflow-hidden rounded">
         <div className="group relative flex aspect-square cursor-pointer items-center justify-center rounded rounded-b-none">
           <Image
