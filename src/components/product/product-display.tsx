@@ -62,9 +62,13 @@ const QuantitySelector = memo(
 
 type Props = {
   product: ProductForSale
+  variant: number
 }
 
-function ProductDisplayComponent({ product }: Readonly<Props>) {
+function ProductDisplayComponent({
+  product,
+  variant: variantId,
+}: Readonly<Props>) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -99,11 +103,17 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
     }, 300)
   }, [cart, product, quantity])
 
-  const isOutOfStock = product.stock <= 0
+  const variant = product.variants.find((v) => v.id === variantId)
+
+  if (!variant) {
+    return null
+  }
+
+  const isOutOfStock = variant.stock <= 0
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <ProductImages product={product} />
+      <ProductImages images={variant.images} />
 
       <div className="space-y-6">
         <div>
@@ -112,7 +122,7 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
           </h1>
 
           <div className="mb-4 font-bold text-3xl">
-            <Currency currency="COP" value={product.price} />
+            <Currency currency="COP" value={variant.price} />
           </div>
 
           <div className="mb-4 flex items-center space-x-2">
@@ -130,7 +140,7 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
         <div className="space-y-4">
           <div>
             <QuantitySelector
-              max={product.stock}
+              max={variant.stock}
               onDecrement={decrementQuantity}
               onIncrement={incrementQuantity}
               quantity={quantity}
@@ -162,7 +172,7 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
             </div>
 
             <span className="text-right text-muted-foreground text-xs">
-              {product.stock} unidades restantes
+              {variant.stock} unidades restantes
             </span>
           </div>
         </div>
@@ -171,6 +181,6 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
   )
 }
 
-export const ProductDisplay = memo(({ product }: Props) => {
-  return <ProductDisplayComponent product={product} />
+export const ProductDisplay = memo(({ product, variant }: Props) => {
+  return <ProductDisplayComponent product={product} variant={variant} />
 })

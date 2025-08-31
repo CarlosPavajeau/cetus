@@ -1,5 +1,9 @@
 import type { Category, FindCategoryBySlugResponse } from '@/api/categories'
-import type { ProductForSale, SimpleProductForSale } from '@/api/products'
+import type {
+  ProductForSale,
+  ProductVariantResponse,
+  SimpleProductForSale,
+} from '@/api/products'
 import { getImageUrl } from '@/shared/cdn'
 
 export interface SEOConfig {
@@ -23,6 +27,7 @@ export interface SEOConfig {
 
 export function generateProductSEO(
   product: ProductForSale,
+  variant: ProductVariantResponse,
   storeName: string,
   baseUrl: string,
   reviews?: Array<{
@@ -35,7 +40,7 @@ export function generateProductSEO(
 ): SEOConfig {
   const productUrl = `${baseUrl}/products/${product.slug}`
   const mainImage = getImageUrl(
-    product.images?.[0]?.imageUrl || product.imageUrl || 'placeholder.svg',
+    variant.images?.[0]?.imageUrl || 'placeholder.svg',
   )
 
   // Generate optimized title (recommended 50-60 characters)
@@ -44,13 +49,13 @@ export function generateProductSEO(
   // Generate meta description (recommended 150-160 characters)
   let description: string
   if (product.description) {
-    description = `${product.description.slice(0, 120)}... Precio: $${product.price.toLocaleString()} | ${storeName}`
+    description = `${product.description.slice(0, 120)}... Precio: $${variant.price.toLocaleString()} | ${storeName}`
   } else {
     let ratingText = ''
     if (product.rating) {
       ratingText = `⭐ ${product.rating}/5 (${product.reviewsCount} reseñas)`
     }
-    description = `Compra ${product.name} en ${storeName}. Precio: $${product.price.toLocaleString()}. ${ratingText}`
+    description = `Compra ${product.name} en ${storeName}. Precio: $${variant.price.toLocaleString()}. ${ratingText}`
   }
 
   // Generate keywords
@@ -79,10 +84,10 @@ export function generateProductSEO(
     },
     offers: {
       '@type': 'Offer',
-      price: product.price,
+      price: variant.price,
       priceCurrency: 'COP', // Assuming Colombian Peso based on Spanish content
       availability:
-        product.stock > 0
+        variant.stock > 0
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
       url: productUrl,
@@ -156,7 +161,7 @@ export function generateProductSEO(
   }
 
   // Generate additional schemas
-  const faqSchema = generateProductFAQSchema(product, storeName)
+  const faqSchema = generateProductFAQSchema(product, variant, storeName)
   const organizationSchema = generateOrganizationSchema(storeName, baseUrl)
 
   return {
@@ -271,17 +276,18 @@ export function generateStructuredDataScript(structuredData: object[]): string {
 // Generate FAQ structured data for common e-commerce questions
 export function generateProductFAQSchema(
   product: ProductForSale,
+  variant: ProductVariantResponse,
   storeName: string,
 ): object {
   const faqs = [
     {
       question: `¿Cuál es el precio de ${product.name}?`,
-      answer: `El precio de ${product.name} es $${product.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}.`,
+      answer: `El precio de ${product.name} es $${variant.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}.`,
     },
     {
       question: `¿${product.name} está disponible?`,
       answer:
-        product.stock > 0
+        variant.stock > 0
           ? `Sí, ${product.name} está disponible en stock.`
           : `Lo sentimos, ${product.name} está actualmente agotado.`,
     },

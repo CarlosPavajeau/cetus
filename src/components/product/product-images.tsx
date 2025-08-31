@@ -1,4 +1,4 @@
-import type { ProductForSale, ProductImage } from '@/api/products'
+import type { ProductImage } from '@/api/products'
 import {
   Carousel,
   type CarouselApi,
@@ -8,28 +8,13 @@ import {
 import { getImageUrl } from '@/shared/cdn'
 import { cn } from '@/shared/cn'
 import { Image } from '@unpic/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Props = {
-  product: ProductForSale
+  images: ProductImage[]
 }
 
-export function ProductImages({ product }: Readonly<Props>) {
-  const images = useMemo(() => {
-    if (product.images.length === 0) {
-      return [
-        {
-          id: 1,
-          imageUrl: product.imageUrl ?? '/placeholder.svg',
-          altText: product.name,
-          sortOrder: 0,
-        } satisfies ProductImage,
-      ]
-    }
-
-    return product.images
-  }, [product])
-
+export function ProductImages({ images }: Readonly<Props>) {
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
 
@@ -53,7 +38,7 @@ export function ProductImages({ product }: Readonly<Props>) {
             <CarouselItem key={image.id}>
               <div className="relative aspect-square overflow-hidden">
                 <Image
-                  alt={product.name}
+                  alt={image.altText}
                   className="h-full w-full object-cover"
                   layout="fullWidth"
                   src={getImageUrl(image.imageUrl || 'placeholder.svg')}

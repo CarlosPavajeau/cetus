@@ -38,21 +38,35 @@ export const fetchProduct = async (id: string) => {
   return response.data
 }
 
+export type ProductOptionValue = {
+  id: number
+  value: string
+  optionTypeId: number
+  optionTypeName: string
+}
+
+export type ProductVariantResponse = {
+  id: number
+  sku: string
+  price: number
+  stock: number
+  images: ProductImage[]
+  optionValues: ProductOptionValue[]
+}
+
 export type ProductForSale = {
   id: string
   name: string
   slug: string
   description?: string
-  price: number
-  stock: number
-  imageUrl?: string
-  images: ProductImage[]
   rating: number
   reviewsCount: number
   categoryId: string
   category?: string
   categorySlug: string
   storeId: string
+
+  variants: ProductVariantResponse[]
 }
 
 export type SimpleProductForSale = {
