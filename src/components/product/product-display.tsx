@@ -157,21 +157,27 @@ const ProductOptions = memo(
                     className="flex flex-col items-center gap-1"
                     key={value.id}
                   >
-                    <Button
-                      asChild
-                      className={value.isAvailable ? '' : 'opacity-50'}
-                      disabled={!value.isAvailable || isSelected}
-                      size="sm"
-                      variant={isSelected ? 'default' : 'outline'}
-                    >
-                      <Link
-                        replace
-                        search={{ variant: findCompatibleVariant(value.id) }}
-                        to="."
+                    {value.isAvailable && !isSelected ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link
+                          replace
+                          search={{ variant: findCompatibleVariant(value.id) }}
+                          to="."
+                        >
+                          {value.value}
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        aria-disabled
+                        className="disabled:opacity-100"
+                        disabled
+                        size="sm"
+                        variant={isSelected ? 'default' : 'outline'}
                       >
                         {value.value}
-                      </Link>
-                    </Button>
+                      </Button>
+                    )}
                   </div>
                 )
               })}
