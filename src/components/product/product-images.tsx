@@ -54,9 +54,10 @@ export function ProductImages({ images }: Readonly<Props>) {
       <div className="space-x-2">
         {images.map((image, index) => (
           <button
+            aria-current={current === index}
             className={cn(
               'h-20 w-20 overflow-hidden rounded opacity-50',
-              current === index && 'border-primary opacity-100',
+              current === index && 'opacity-100',
             )}
             key={image.id}
             onClick={() => api?.scrollTo(index)}
@@ -66,7 +67,8 @@ export function ProductImages({ images }: Readonly<Props>) {
               alt={`Product view ${index + 1}`}
               className="h-full w-full object-cover"
               height={80}
-              src={getImageUrl(image.imageUrl || '/placeholder.svg')}
+              loading="lazy"
+              src={getImageUrl(image.imageUrl || 'placeholder.svg')}
               width={80}
             />
           </button>
