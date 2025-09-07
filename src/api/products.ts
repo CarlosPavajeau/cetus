@@ -1,5 +1,9 @@
 import { anonymousApi, api } from '@/api/client'
-import type { CreateProduct, UpdateProduct } from '@/schemas/product'
+import type {
+  CreateProduct,
+  CreateProductOptionType,
+  UpdateProduct,
+} from '@/schemas/product'
 
 export type ProductImage = {
   id: number
@@ -177,6 +181,17 @@ export type ProductOptionType = {
 
 export async function fetchProductOptionTypes() {
   const response = await api.get<ProductOptionType[]>('/products/option-types')
+
+  return response.data
+}
+
+export async function createProductOptionType(
+  optionType: CreateProductOptionType,
+) {
+  const response = await api.post<ProductOptionType>(
+    '/products/option-types',
+    optionType,
+  )
 
   return response.data
 }
