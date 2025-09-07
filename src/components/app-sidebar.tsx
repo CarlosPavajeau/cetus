@@ -44,7 +44,7 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
       },
       {
         label: 'Opciones',
-        href: '/app/product-options',
+        href: '/app/product-option-types',
         isNew: false,
       },
     ],
