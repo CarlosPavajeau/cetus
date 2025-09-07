@@ -40,6 +40,10 @@ export const useCart = create<CartStore>()(
         )
         const quantityToAdd = quantity ?? 1
 
+        if (!Number.isFinite(quantityToAdd) || quantityToAdd <= 0) {
+          return false
+        }
+
         if (found) {
           if (found.quantity + quantityToAdd > product.stock) {
             return false
@@ -57,6 +61,11 @@ export const useCart = create<CartStore>()(
             count: state.count + quantityToAdd,
           }))
         } else {
+          // enforce stock on first add
+          if (quantityToAdd > product.stock) {
+            return false
+          }
+
           set((state) => ({
             items: [...state.items, { product, quantity: quantityToAdd }],
             count: state.count + quantityToAdd,
