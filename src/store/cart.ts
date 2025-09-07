@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 export type CartItemProduct = {
-  id: string
+  productId: string
   name: string
   slug: string
   imageUrl: string

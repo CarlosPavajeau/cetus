@@ -263,7 +263,7 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
     setTimeout(() => {
       const success = cart.add(
         {
-          id: product.id,
+          productId: product.id,
           name: product.name,
           slug: product.slug,
           imageUrl: variant.images.at(0)?.imageUrl ?? 'placeholder.svg',
