@@ -8,6 +8,7 @@ export type CartItemProduct = {
   imageUrl: string
   price: number
   variantId: number
+  stock: number
 }
 
 export type CartItem = {
@@ -38,6 +39,10 @@ export const useCart = create<CartStore>()(
         const quantityToAdd = quantity ?? 1
 
         if (found) {
+          if (found.quantity + quantityToAdd > product.stock) {
+            return false
+          }
+
           set((state) => ({
             items: state.items.map((item) =>
               item.product.id === product.id
