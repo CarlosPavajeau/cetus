@@ -28,7 +28,9 @@ export const CreateOrderSchema = type({
   total: type.number
     .moreThan(0)
     .describe('El total del pedido debe ser mayor a cero'),
-  items: CreateOrderItemSchema.array().moreThanLength(0),
+  items: CreateOrderItemSchema.array()
+    .moreThanLength(0)
+    .configure({ message: 'Agrega al menos un producto' }),
   customer: {
     id: type.string.moreThanLength(1).configure({
       message: 'Por favor ingrese su número de identificación',
