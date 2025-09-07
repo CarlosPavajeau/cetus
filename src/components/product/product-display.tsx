@@ -365,7 +365,10 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
               <ProductShare productName={product.name} />
             </div>
 
-            <span className="text-right text-muted-foreground text-xs">
+            <span
+              aria-live="polite"
+              className="text-right text-muted-foreground text-xs"
+            >
               {variant.stock} unidades restantes
             </span>
           </div>
