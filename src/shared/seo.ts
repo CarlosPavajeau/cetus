@@ -294,7 +294,7 @@ export function generateProductFAQSchema(
   const faqs = [
     {
       question: `¿Cuál es el precio de ${product.name}?`,
-      answer: `El precio de ${product.name} es $${variant.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}.`,
+      answer: `El precio de ${product.name} es ${variant.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}.`,
     },
     {
       question: `¿${product.name} está disponible?`,
