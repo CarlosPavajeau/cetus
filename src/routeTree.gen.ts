@@ -30,6 +30,7 @@ import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
+import { Route as AppProductOptionTypesRouteImport } from './routes/app/product-option-types'
 import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesRouteImport } from './routes/app/categories'
 import { Route as AppAccountRouteImport } from './routes/app/account'
@@ -145,6 +146,11 @@ const AppReviewsRoute = AppReviewsRouteImport.update({
   path: '/reviews',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProductOptionTypesRoute = AppProductOptionTypesRouteImport.update({
+  id: '/product-option-types',
+  path: '/product-option-types',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDeliveryFeesRoute = AppDeliveryFeesRouteImport.update({
   id: '/delivery-fees',
   path: '/delivery-fees',
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
@@ -404,6 +414,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
@@ -641,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReviewsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/product-option-types': {
+      id: '/app/product-option-types'
+      path: '/product-option-types'
+      fullPath: '/app/product-option-types'
+      preLoaderRoute: typeof AppProductOptionTypesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/delivery-fees': {
       id: '/app/delivery-fees'
       path: '/delivery-fees'
@@ -796,6 +815,7 @@ interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppCategoriesRoute: typeof AppCategoriesRoute
   AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
+  AppProductOptionTypesRoute: typeof AppProductOptionTypesRoute
   AppReviewsRoute: typeof AppReviewsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCouponsNewRoute: typeof AppCouponsNewRoute
@@ -810,6 +830,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppCategoriesRoute: AppCategoriesRoute,
   AppDeliveryFeesRoute: AppDeliveryFeesRoute,
+  AppProductOptionTypesRoute: AppProductOptionTypesRoute,
   AppReviewsRoute: AppReviewsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCouponsNewRoute: AppCouponsNewRoute,
