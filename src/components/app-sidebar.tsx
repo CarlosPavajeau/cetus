@@ -1,3 +1,4 @@
+import { OrganizationSwitcher } from '@/components/organization-switcher'
 import {
   Sidebar,
   SidebarContent,
@@ -6,11 +7,13 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Link, useRouterState } from '@tanstack/react-router'
+import {
+  type SidebarMenuElement,
+  SidebarMenuItemWithCollapsible,
+} from '@/components/ui/sidebar-menu-item'
+import { useRouterState } from '@tanstack/react-router'
 import {
   BadgePercentIcon,
   LayoutDashboardIcon,
@@ -21,15 +24,6 @@ import {
   TruckIcon,
   User2Icon,
 } from 'lucide-react'
-import { OrganizationSwitcher } from './organization-switcher'
-import { Badge } from './ui/badge'
-
-type SidebarMenuElement = {
-  label: string
-  href: string
-  isNew: boolean
-  icon?: React.ComponentType
-}
 
 const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
   {
@@ -43,6 +37,18 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
     href: '/app/products',
     isNew: false,
     icon: ShoppingBasketIcon,
+    items: [
+      {
+        label: 'Todos los productos',
+        href: '/app/products',
+        isNew: false,
+      },
+      {
+        label: 'Opciones',
+        href: '/app/product-options',
+        isNew: false,
+      },
+    ],
   },
   {
     label: 'Categorias',
@@ -100,7 +106,6 @@ const MENU = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouterState()
-  const currentPath = router.location.pathname
 
   const sidebar = useSidebar()
   const closeSidebar = () => {
@@ -120,25 +125,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((tab) => (
-                  <SidebarMenuItem key={tab.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={currentPath === tab.href}
-                      onClick={closeSidebar}
-                      tooltip={tab.label}
-                    >
-                      <Link to={tab.href}>
-                        {tab.icon && <tab.icon />}
-                        <span className="text-sm">{tab.label}</span>
-                        {tab.isNew && (
-                          <Badge className="ml-auto rounded">
-                            <span className="text-xs">Nuevo</span>
-                          </Badge>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                {group.items.map((item) => (
+                  <SidebarMenuItemWithCollapsible
+                    item={item}
+                    key={item.href}
+                    onItemClick={closeSidebar}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
