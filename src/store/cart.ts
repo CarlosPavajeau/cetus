@@ -1,10 +1,17 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import type { ProductForSale } from '@/api/products'
+export type CartItemProduct = {
+  id: string
+  name: string
+  slug: string
+  imageUrl: string
+  price: number
+  variantId: number
+}
 
 export type CartItem = {
-  product: ProductForSale
+  product: CartItemProduct
   quantity: number
 }
 
@@ -12,9 +19,9 @@ type CartStore = {
   items: CartItem[]
   count: number
 
-  add: (product: ProductForSale, quantity?: number) => boolean
-  reduce: (product: ProductForSale) => void
-  remove: (product: ProductForSale) => void
+  add: (product: CartItemProduct, quantity?: number) => boolean
+  reduce: (product: CartItemProduct) => void
+  remove: (product: CartItemProduct) => void
 
   clear: () => void
 }
@@ -27,14 +34,10 @@ export const useCart = create<CartStore>()(
       add: (product, quantity) => {
         const { items } = get()
 
-        const item = items.find((item) => item.product.id === product.id)
+        const found = items.find((item) => item.product.id === product.id)
         const quantityToAdd = quantity ?? 1
 
-        if (item) {
-          if (item.quantity + quantityToAdd > product.stock) {
-            return false
-          }
-
+        if (found) {
           set((state) => ({
             items: state.items.map((item) =>
               item.product.id === product.id
@@ -58,22 +61,22 @@ export const useCart = create<CartStore>()(
       remove: (product) => {
         const { items } = get()
 
-        const item = items.find((item) => item.product.id === product.id)
+        const found = items.find((item) => item.product.id === product.id)
 
-        if (item) {
+        if (found) {
           set((state) => ({
             items: state.items.filter((item) => item.product.id !== product.id),
-            count: state.count - item.quantity,
+            count: state.count - found.quantity,
           }))
         }
       },
       reduce: (product) => {
         const { items } = get()
 
-        const item = items.find((item) => item.product.id === product.id)
+        const found = items.find((item) => item.product.id === product.id)
 
-        if (item) {
-          if (item.quantity > 1) {
+        if (found) {
+          if (found.quantity > 1) {
             set((state) => ({
               items: state.items.map((item) =>
                 item.product.id === product.id
