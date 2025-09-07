@@ -45,7 +45,12 @@ function createOptionGroups(
       }
 
       const existingValue = group.values.find((v) => v.id === optionValue.id)
-      if (!existingValue) {
+
+      if (existingValue) {
+        // Aggregate availability across all variants that include this value
+        existingValue.isAvailable =
+          existingValue.isAvailable || variant.stock > 0
+      } else {
         group.values.push({
           id: optionValue.id,
           value: optionValue.value,
