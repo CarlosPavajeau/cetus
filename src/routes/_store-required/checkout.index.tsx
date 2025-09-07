@@ -69,7 +69,7 @@ function useCartCheckout() {
           variantId: item.product.variantId,
           quantity: item.quantity,
           price: item.product.price,
-          imageUrl: item.product.imageUrl as string,
+          imageUrl: item.product.imageUrl,
         }) satisfies CreateOrder['items'][number],
     )
 
