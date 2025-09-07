@@ -163,3 +163,20 @@ export async function fetchProductBySlug(slug: string) {
 
   return response.data
 }
+
+export type ProductOptionTypeValue = {
+  id: number
+  value: string
+}
+
+export type ProductOptionType = {
+  id: number
+  name: string
+  values: ProductOptionTypeValue[]
+}
+
+export async function fetchProductOptionTypes() {
+  const response = await api.get<ProductOptionType[]>('/products/option-types')
+
+  return response.data
+}
