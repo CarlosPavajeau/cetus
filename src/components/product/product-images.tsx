@@ -8,6 +8,7 @@ import {
 import { getImageUrl } from '@/shared/cdn'
 import { cn } from '@/shared/cn'
 import { Image } from '@unpic/react'
+import consola from 'consola'
 import { useEffect, useState } from 'react'
 
 type Props = {
@@ -20,14 +21,15 @@ export function ProductImages({ images }: Readonly<Props>) {
 
   useEffect(() => {
     if (!api) {
-      return
+      return () => consola.log('Carousel API not initialized')
     }
 
     setCurrent(api.selectedScrollSnap())
 
-    api.on('select', () => {
-      setCurrent(api.selectedScrollSnap())
-    })
+    const onSelect = () => setCurrent(api.selectedScrollSnap())
+    api.on('select', onSelect)
+
+    return () => api.off?.('select', onSelect)
   }, [api])
 
   return (
