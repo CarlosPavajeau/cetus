@@ -35,7 +35,9 @@ export const useCart = create<CartStore>()(
       add: (product, quantity) => {
         const { items } = get()
 
-        const found = items.find((item) => item.product.id === product.id)
+        const found = items.find(
+          (item) => item.product.variantId === product.variantId,
+        )
         const quantityToAdd = quantity ?? 1
 
         if (found) {
@@ -45,7 +47,7 @@ export const useCart = create<CartStore>()(
 
           set((state) => ({
             items: state.items.map((item) =>
-              item.product.id === product.id
+              item.product.variantId === product.variantId
                 ? {
                     ...item,
                     quantity: item.quantity + quantityToAdd,
@@ -66,11 +68,15 @@ export const useCart = create<CartStore>()(
       remove: (product) => {
         const { items } = get()
 
-        const found = items.find((item) => item.product.id === product.id)
+        const found = items.find(
+          (item) => item.product.variantId === product.variantId,
+        )
 
         if (found) {
           set((state) => ({
-            items: state.items.filter((item) => item.product.id !== product.id),
+            items: state.items.filter(
+              (item) => item.product.variantId !== product.variantId,
+            ),
             count: state.count - found.quantity,
           }))
         }
@@ -78,13 +84,15 @@ export const useCart = create<CartStore>()(
       reduce: (product) => {
         const { items } = get()
 
-        const found = items.find((item) => item.product.id === product.id)
+        const found = items.find(
+          (item) => item.product.variantId === product.variantId,
+        )
 
         if (found) {
           if (found.quantity > 1) {
             set((state) => ({
               items: state.items.map((item) =>
-                item.product.id === product.id
+                item.product.variantId === product.variantId
                   ? {
                       ...item,
                       quantity: item.quantity - 1,
@@ -96,7 +104,7 @@ export const useCart = create<CartStore>()(
           } else {
             set((state) => ({
               items: state.items.filter(
-                (item) => item.product.id !== product.id,
+                (item) => item.product.variantId !== product.variantId,
               ),
               count: state.count - 1,
             }))
