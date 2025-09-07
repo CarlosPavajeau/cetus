@@ -27,7 +27,7 @@ import { useEffect, useId } from 'react'
 import { v7 as uuid } from 'uuid'
 
 const ProductSearchSchema = type({
-  variant: type('number'),
+  variant: type('number>0'),
 })
 
 export const Route = createFileRoute('/products/$slug')({
