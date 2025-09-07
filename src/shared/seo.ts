@@ -138,7 +138,7 @@ export function generateProductSEO(
     ...(product.category && {
       category: product.category,
     }),
-    sku: product.id,
+    sku: variant.sku,
     url: productUrl,
   }
 
