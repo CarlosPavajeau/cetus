@@ -116,10 +116,18 @@ const ProductOptions = memo(
             ),
           )
 
-          return hasSelectedOption && hasOtherOptions
+          return hasSelectedOption && hasOtherOptions && variant.stock > 0
         })
 
-        return compatibleVariant?.id || selectedOption.variantId
+        return (
+          compatibleVariant?.id ??
+          product.variants.find(
+            (v) =>
+              v.optionValues.some((ov) => ov.id === selectedOptionId) &&
+              v.stock > 0,
+          )?.id ??
+          selectedOption.variantId
+        )
       },
       [currentVariantId, currentOptionValues, optionGroups, product.variants],
     )
@@ -267,7 +275,7 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
         />
       ))
     }, 300)
-  }, [cart, product, quantity])
+  }, [cart, product, quantity, variant])
 
   const isOutOfStock = variant.stock <= 0
 
