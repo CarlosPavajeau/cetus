@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useCart } from '@/store/cart'
 import { Link } from '@tanstack/react-router'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 type OptionGroup = {
@@ -289,6 +289,18 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
   }, [cart, product, quantity, variant])
 
   const isOutOfStock = variant.stock <= 0
+
+  // Ensure quantity stays within the current variant's stock
+  useEffect(() => {
+    setQuantity((q) => {
+      const max = Math.max(variant.stock, 0)
+      if (max === 0) {
+        return 1
+      }
+
+      return Math.min(q, max)
+    })
+  }, [variant.stock])
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
