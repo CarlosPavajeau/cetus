@@ -46,3 +46,14 @@ export const UpdateProductSchema = BaseProductSchema.and({
 
 export type CreateProduct = typeof CreateProductSchema.infer
 export type UpdateProduct = typeof UpdateProductSchema.infer
+
+export const CreateProductOptionTypeSchema = type({
+  name: type.string.moreThanLength(1).configure({
+    message: 'El nombre de la opción de producto es requerido',
+  }),
+  values: type.string.array().moreThanLength(0).configure({
+    message: 'Se requiere al menos un valor para la opción de producto',
+  }),
+})
+
+export type CreateProductOptionType = typeof CreateProductOptionTypeSchema.infer
