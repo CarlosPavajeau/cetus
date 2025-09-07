@@ -21,9 +21,11 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
+import consola from 'consola'
 import { ArrowRightIcon } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_store-required/checkout/')({
   ssr: false,
@@ -90,6 +92,12 @@ function useCartCheckout() {
           id: orderId,
         },
       })
+    },
+    onError: (error) => {
+      consola.error('Error creating order:', error)
+      toast.error(
+        'Ha ocurrido un error en la creación de la orden. Intente de nuevo',
+      )
     },
   })
 
