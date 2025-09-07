@@ -40,17 +40,21 @@ function useCartCheckout() {
     [items],
   )
 
+  const toOrderItems = (source: typeof items) =>
+    source.map((item) => ({
+      productName: item.product.name,
+      variantId: item.product.variantId,
+      quantity: item.quantity,
+      price: item.product.price,
+      imageUrl: item.product.imageUrl,
+    })) as CreateOrder['items']
+
   const form = useForm({
     resolver: arktypeResolver(CreateOrderSchema),
     defaultValues: {
       address: '',
       total,
-      items: items.map((item) => ({
-        productName: item.product.name,
-        variantId: item.product.variantId,
-        quantity: item.quantity,
-        price: item.product.price,
-      })),
+      items: toOrderItems(items),
     },
   })
 
@@ -62,18 +66,7 @@ function useCartCheckout() {
   useEffect(() => {
     form.setValue('total', total)
 
-    const formItems = items.map(
-      (item) =>
-        ({
-          productName: item.product.name,
-          variantId: item.product.variantId,
-          quantity: item.quantity,
-          price: item.product.price,
-          imageUrl: item.product.imageUrl,
-        }) satisfies CreateOrder['items'][number],
-    )
-
-    form.setValue('items', formItems)
+    form.setValue('items', toOrderItems(items))
   }, [form, items, total])
 
   const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
