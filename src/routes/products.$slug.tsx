@@ -253,7 +253,7 @@ function ProductDetailsPage() {
           </h1>
           <p>
             {product.description && `${product.description} `}
-            Precio: $
+            Precio:
             {variant.price.toLocaleString('es-CO', {
               style: 'currency',
               currency: 'COP',

@@ -49,13 +49,25 @@ export function generateProductSEO(
   // Generate meta description (recommended 150-160 characters)
   let description: string
   if (product.description) {
-    description = `${product.description.slice(0, 120)}... Precio: $${variant.price.toLocaleString()} | ${storeName}`
+    description = `${product.description.slice(0, 120)}... Precio: ${variant.price.toLocaleString(
+      'es-CO',
+      {
+        style: 'currency',
+        currency: 'COP',
+      },
+    )} | ${storeName}`
   } else {
     let ratingText = ''
     if (product.rating) {
       ratingText = `⭐ ${product.rating}/5 (${product.reviewsCount} reseñas)`
     }
-    description = `Compra ${product.name} en ${storeName}. Precio: $${variant.price.toLocaleString()}. ${ratingText}`
+    description = `Compra ${product.name} en ${storeName}. Precio: ${variant.price.toLocaleString(
+      'es-CO',
+      {
+        style: 'currency',
+        currency: 'COP',
+      },
+    )}. ${ratingText}`
   }
 
   // Generate keywords
