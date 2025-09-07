@@ -7,9 +7,168 @@ import { ProductShare } from '@/components/product/product-share'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useCart } from '@/store/cart'
+import { Link } from '@tanstack/react-router'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+type OptionGroup = {
+  optionTypeName: string
+  optionTypeId: number
+  values: Array<{
+    id: number
+    value: string
+    variantId: number
+    isAvailable: boolean
+  }>
+}
+
+// Helper function to group option values by type
+function createOptionGroups(
+  variants: ProductForSale['variants'],
+): OptionGroup[] {
+  const groups = new Map<number, OptionGroup>()
+
+  for (const variant of variants) {
+    for (const optionValue of variant.optionValues) {
+      if (!groups.has(optionValue.optionTypeId)) {
+        groups.set(optionValue.optionTypeId, {
+          optionTypeName: optionValue.optionTypeName,
+          optionTypeId: optionValue.optionTypeId,
+          values: [],
+        })
+      }
+
+      const group = groups.get(optionValue.optionTypeId)
+      if (!group) {
+        continue
+      }
+
+      const existingValue = group.values.find((v) => v.id === optionValue.id)
+      if (!existingValue) {
+        group.values.push({
+          id: optionValue.id,
+          value: optionValue.value,
+          variantId: variant.id,
+          isAvailable: variant.stock > 0,
+        })
+      }
+    }
+  }
+
+  return Array.from(groups.values())
+}
+
+type ProductOptionsProps = {
+  product: ProductForSale
+  currentVariantId: number
+}
+
+const ProductOptions = memo(
+  ({ product, currentVariantId }: Readonly<ProductOptionsProps>) => {
+    // Group option values by option type
+    const optionGroups = useMemo(
+      () => createOptionGroups(product.variants),
+      [product.variants],
+    )
+
+    // Get current variant's option values
+    const currentVariant = product.variants.find(
+      (v) => v.id === currentVariantId,
+    )
+    const currentOptionValues = currentVariant?.optionValues || []
+
+    // Find compatible variant when an option is selected
+    const findCompatibleVariant = useCallback(
+      (selectedOptionId: number) => {
+        const selectedOption = optionGroups
+          .flatMap((group) => group.values)
+          .find((value) => value.id === selectedOptionId)
+
+        if (!selectedOption) {
+          return currentVariantId
+        }
+
+        // Get the option type of the selected option
+        const selectedOptionType = optionGroups.find((group) =>
+          group.values.some((value) => value.id === selectedOptionId),
+        )
+
+        if (!selectedOptionType) {
+          return currentVariantId
+        }
+
+        // Find other selected options (from different option types)
+        const otherSelectedOptions = currentOptionValues.filter(
+          (optionValue) =>
+            optionValue.optionTypeId !== selectedOptionType.optionTypeId,
+        )
+
+        // Find variant that matches the selected option + other selected options
+        const compatibleVariant = product.variants.find((variant) => {
+          const hasSelectedOption = variant.optionValues.some(
+            (optionValue) => optionValue.id === selectedOptionId,
+          )
+
+          const hasOtherOptions = otherSelectedOptions.every((otherOption) =>
+            variant.optionValues.some(
+              (optionValue) => optionValue.id === otherOption.id,
+            ),
+          )
+
+          return hasSelectedOption && hasOtherOptions
+        })
+
+        return compatibleVariant?.id || selectedOption.variantId
+      },
+      [currentVariantId, currentOptionValues, optionGroups, product.variants],
+    )
+
+    if (optionGroups.length === 0) {
+      return null
+    }
+
+    return (
+      <div className="space-y-4">
+        {optionGroups.map((group) => (
+          <div className="flex flex-col gap-2" key={group.optionTypeId}>
+            <Label>{group.optionTypeName}:</Label>
+            <div className="flex flex-wrap gap-2">
+              {group.values.map((value) => {
+                const isSelected = currentOptionValues.some(
+                  (optionValue) => optionValue.id === value.id,
+                )
+
+                return (
+                  <div
+                    className="flex flex-col items-center gap-1"
+                    key={value.id}
+                  >
+                    <Button
+                      asChild
+                      className={value.isAvailable ? '' : 'opacity-50'}
+                      disabled={!value.isAvailable || isSelected}
+                      size="sm"
+                      variant={isSelected ? 'default' : 'outline'}
+                    >
+                      <Link
+                        replace
+                        search={{ variant: findCompatibleVariant(value.id) }}
+                        to="."
+                      >
+                        {value.value}
+                      </Link>
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  },
+)
 
 type QuantitySelectorProps = {
   quantity: number
@@ -136,6 +295,8 @@ function ProductDisplayComponent({
         <div className="text-muted-foreground leading-relaxed">
           <p>{product.description}</p>
         </div>
+
+        <ProductOptions currentVariantId={variantId} product={product} />
 
         <div className="space-y-4">
           <div>
