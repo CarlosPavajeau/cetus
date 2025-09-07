@@ -26,6 +26,7 @@ import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 
 export const Route = createFileRoute('/_store-required/checkout/')({
+  ssr: false,
   component: RouteComponent,
 })
 
@@ -44,7 +45,7 @@ function useCartCheckout() {
       total,
       items: items.map((item) => ({
         productName: item.product.name,
-        productId: item.product.id,
+        variantId: item.product.variantId,
         quantity: item.quantity,
         price: item.product.price,
       })),
@@ -63,7 +64,7 @@ function useCartCheckout() {
       (item) =>
         ({
           productName: item.product.name,
-          productId: item.product.id,
+          variantId: item.product.variantId,
           quantity: item.quantity,
           price: item.product.price,
           imageUrl: item.product.imageUrl as string,
