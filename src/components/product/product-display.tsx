@@ -1,4 +1,4 @@
-import type { ProductForSale } from '@/api/products'
+import type { ProductForSale, ProductVariantResponse } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
 import { ProductImages } from '@/components/product/product-images'
@@ -221,13 +221,10 @@ const QuantitySelector = memo(
 
 type Props = {
   product: ProductForSale
-  variant: number
+  variant: ProductVariantResponse
 }
 
-function ProductDisplayComponent({
-  product,
-  variant: variantId,
-}: Readonly<Props>) {
+function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -245,7 +242,17 @@ function ProductDisplayComponent({
 
     // Simulate a small delay for better UX
     setTimeout(() => {
-      const success = cart.add(product, quantity)
+      const success = cart.add(
+        {
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          imageUrl: variant.images[0].imageUrl,
+          price: variant.price,
+          variantId: variant.id,
+        },
+        quantity,
+      )
       setIsAddingToCart(false)
 
       if (!success) {
@@ -261,12 +268,6 @@ function ProductDisplayComponent({
       ))
     }, 300)
   }, [cart, product, quantity])
-
-  const variant = product.variants.find((v) => v.id === variantId)
-
-  if (!variant) {
-    return null
-  }
 
   const isOutOfStock = variant.stock <= 0
 
@@ -296,7 +297,7 @@ function ProductDisplayComponent({
           <p>{product.description}</p>
         </div>
 
-        <ProductOptions currentVariantId={variantId} product={product} />
+        <ProductOptions currentVariantId={variant.id} product={product} />
 
         <div className="space-y-4">
           <div>

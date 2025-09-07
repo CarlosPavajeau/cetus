@@ -235,7 +235,7 @@ function ProductDetailsPage() {
           <ProductDisplay
             key={product.id}
             product={product}
-            variant={variant.id}
+            variant={variant}
           />
         </section>
 
