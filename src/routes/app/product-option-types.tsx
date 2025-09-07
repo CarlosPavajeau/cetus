@@ -46,7 +46,7 @@ function RouteComponent() {
     <>
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
-          Opciones de producto
+          Tipos de opciones de producto
         </h1>
       </div>
 
