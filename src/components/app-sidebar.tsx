@@ -13,7 +13,6 @@ import {
   type SidebarMenuElement,
   SidebarMenuItemWithCollapsible,
 } from '@/components/ui/sidebar-menu-item'
-import { useRouterState } from '@tanstack/react-router'
 import {
   BadgePercentIcon,
   LayoutDashboardIcon,
@@ -105,8 +104,6 @@ const MENU = [
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const router = useRouterState()
-
   const sidebar = useSidebar()
   const closeSidebar = () => {
     if (sidebar.isMobile) {
