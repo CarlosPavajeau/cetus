@@ -266,7 +266,7 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
           id: product.id,
           name: product.name,
           slug: product.slug,
-          imageUrl: variant.images[0].imageUrl,
+          imageUrl: variant.images.at(0)?.imageUrl ?? 'placeholder.svg',
           price: variant.price,
           variantId: variant.id,
         },
