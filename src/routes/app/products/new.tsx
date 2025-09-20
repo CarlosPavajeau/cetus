@@ -1,202 +1,155 @@
-import { CategorySelector } from '@/components/category/category-selector'
-import { CreateCategoryDialog } from '@/components/category/create-category.dialog'
-import { ProductImagesUploader } from '@/components/product/product-images-uploader'
-import { ReturnButton } from '@/components/return-button'
-import { SubmitButton } from '@/components/submit-button'
+import { ProductRegistrationForm } from '@/components/product/product-registration-form'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { useCreateProduct } from '@/hooks/products'
-import type { FileWithPreview } from '@/hooks/use-file-upload'
-import { CreateProductSchema } from '@/schemas/product'
-import { generateImageUrl } from '@/shared/images'
-import { arktypeResolver } from '@hookform/resolvers/arktype'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { createFileRoute } from '@tanstack/react-router'
+import { EyeIcon, PackageIcon, SettingsIcon, ZapIcon } from 'lucide-react'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
 
 export const Route = createFileRoute('/app/products/new')({
-  component: ProductCreateForm,
+  ssr: false,
+  component: CreateProductPage,
 })
 
-function ProductCreateForm() {
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
+function CreateProductPage() {
+  const [mode, setMode] = useState<'advanced' | 'simple' | null>(null)
 
-  const form = useForm({
-    resolver: arktypeResolver(CreateProductSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      price: 0,
-      stock: 0,
-      categoryId: '',
-      images: [],
-    },
-  })
-
-  const [productImages, setProductImages] = useState<FileWithPreview[]>([])
-
-  const handleFilesChange = (files: FileWithPreview[]) => {
-    setProductImages(files)
-
-    const formImages = files.map((file, index) => ({
-      id: file.id,
-      imageUrl: generateImageUrl(file),
-      sortOrder: index,
-    }))
-
-    form.setValue('images', formImages)
-  }
-
-  const createProductMutation = useCreateProduct(productImages)
-  const handleSubmit = form.handleSubmit((values) => {
-    createProductMutation.mutate(values)
-  })
-
-  const openCategoryDialog = () => {
-    setIsCategoryDialogOpen(true)
+  if (mode) {
+    return <ProductRegistrationForm mode={mode} onBack={() => setMode(null)} />
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="font-heading font-semibold text-2xl">Crear producto</h1>
+    <div>
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-12 text-center">
+          <h1 className="mb-4 text-balance font-bold font-heading text-4xl text-foreground">
+            Registrar producto
+          </h1>
+          <p className="text-pretty text-muted-foreground text-xl">
+            Crea y gestiona tu catálogo de productos con opciones avanzadas de
+            variantes o registro de productos simples
+          </p>
+        </div>
 
-      <ReturnButton />
-
-      <Form {...form}>
-        <form
-          className="space-y-8 rounded-md border border-muted bg-card p-4 md:p-8"
-          onSubmit={handleSubmit}
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nombre del producto" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descripción del producto"
-                        {...field}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Precio</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            className="peer ps-6 pe-12"
-                            type="number"
-                            {...field}
-                          />
-                          <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
-                            $
-                          </span>
-                          <span className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground text-sm peer-disabled:opacity-50">
-                            COP
-                          </span>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="tabular-nums"
-                          type="number"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <div className="grid gap-8 md:grid-cols-2">
+          <Card className="transition-colors hover:border-primary">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <SettingsIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="flex items-center justify-between text-foreground text-xl">
+                    <span>Registro avanzado</span>
+                    <Badge variant="secondary">Recomendado</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    Gestión completa de productos con variantes y opciones
+                  </CardDescription>
+                </div>
               </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <PackageIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    Información básica del producto
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <SettingsIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    Opciones personalizadas (tamaño, color, sabor)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <EyeIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    Variantes múltiples con imágenes
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <EyeIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    Vista previa en pantallas grandes
+                  </span>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Button
+                  className="w-full"
+                  onClick={() => setMode('advanced')}
+                  size="lg"
+                >
+                  Iniciar registro avanzado
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-              <CategorySelector onSelectCreateCategory={openCategoryDialog} />
-            </div>
-
-            <div>
-              <FormField
-                control={form.control}
-                name="images"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Imágenes</FormLabel>
-                    <ProductImagesUploader onFilesChange={handleFilesChange} />
-
-                    <FormDescription>
-                      Las imágenes serán mostradas en el orden en que fueron
-                      subidas. Tomando como imagen principal la primera imagen
-                      subida.
-                    </FormDescription>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <SubmitButton
-              className="w-full md:w-auto"
-              disabled={createProductMutation.isPending}
-              isSubmitting={createProductMutation.isPending}
-            >
-              Crear producto
-            </SubmitButton>
-          </div>
-        </form>
-      </Form>
-
-      <CreateCategoryDialog
-        onOpenChange={setIsCategoryDialogOpen}
-        open={isCategoryDialogOpen}
-      />
+          <Card className="transition-colors hover:border-primary">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <ZapIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="flex items-center justify-between text-foreground text-xl">
+                    <span>Registro simple</span>
+                    <Badge variant="secondary">Configuración rápida</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    Configuración rápida para productos de variante única
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <PackageIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    Información básica del producto
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ZapIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">Gestión de precios y stock</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <EyeIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    Carga de imágenes de productos
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ZapIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    Creación de una única variante
+                  </span>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Button
+                  className="w-full"
+                  onClick={() => setMode('simple')}
+                  size="lg"
+                  variant="outline"
+                >
+                  Iniciar registro simple
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
