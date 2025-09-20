@@ -2,6 +2,8 @@ import { anonymousApi, api } from '@/api/client'
 import type {
   CreateProduct,
   CreateProductOptionType,
+  CreateProductVariant,
+  CreateSimpleProduct,
   UpdateProduct,
 } from '@/schemas/product'
 
@@ -122,8 +124,14 @@ export async function fetchProductsByCategory(categoryId: string) {
   return response.data
 }
 
-export const createProduct = async (product: CreateProduct) => {
+export async function createProduct(product: CreateProduct) {
   const response = await api.post<Product>('/products', product)
+
+  return response.data
+}
+
+export async function createSimpleProduct(product: CreateSimpleProduct) {
+  const response = await api.post<Product>('/products/simple', product)
 
   return response.data
 }
@@ -191,6 +199,15 @@ export async function createProductOptionType(
   const response = await api.post<ProductOptionType>(
     '/products/option-types',
     optionType,
+  )
+
+  return response.data
+}
+
+export async function createProductVariant(variant: CreateProductVariant) {
+  const response = await api.post<ProductVariantResponse>(
+    '/products/variants',
+    variant,
   )
 
   return response.data
