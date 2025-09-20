@@ -1,4 +1,5 @@
 import { StarIcon } from 'lucide-react'
+import { v7 as uuid } from 'uuid'
 
 type Props = {
   rating: number
@@ -15,7 +16,7 @@ export function StarRating({
 }: Readonly<Props>) {
   return (
     <div className={`flex ${className}`}>
-      {[new Array(maxRating)].map((_, i) => (
+      {Array.from({ length: maxRating }).map((_, i) => (
         <StarIcon
           className={`h-${size} w-${size} ${
             i < rating
@@ -23,7 +24,7 @@ export function StarRating({
               : 'text-muted-foreground'
           }`}
           height={16}
-          key={i}
+          key={uuid()}
           width={16}
         />
       ))}
