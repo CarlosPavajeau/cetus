@@ -206,9 +206,18 @@ export async function createProductOptionType(
 
 export async function createProductVariant(variant: CreateProductVariant) {
   const response = await api.post<ProductVariantResponse>(
-    '/products/variants',
+    `products/${variant.productId}/variants`,
     variant,
   )
 
   return response.data
+}
+
+export type CreateProductOption = {
+  productId: string
+  optionTypeId: number
+}
+
+export async function createProductOption(option: CreateProductOption) {
+  return await api.post(`products/${option.productId}/options`, option)
 }
