@@ -1,13 +1,16 @@
 import { uploadFileToS3 } from '@/api/aws'
 import { createSimpleProduct } from '@/api/products'
 import type { FileWithPreview } from '@/hooks/use-file-upload'
-import type { CreateSimpleProduct } from '@/schemas/product'
+import type {
+  CreateProductVariant,
+  CreateSimpleProduct,
+} from '@/schemas/product'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-async function uploadProductImages(
-  values: CreateSimpleProduct,
+export async function uploadProductImages(
+  values: CreateSimpleProduct | CreateProductVariant,
   images: FileWithPreview[],
 ) {
   const filestoUpload = values.images
