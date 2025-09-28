@@ -33,10 +33,10 @@ import { CreateProductVariantSchema } from '@/schemas/product'
 import { generateImageUrl } from '@/shared/images'
 import { useAdvancedProductRegistrationStore } from '@/store/products/advance-product-registration-store'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import consola from 'consola'
 import { PlusIcon } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { v7 as uuid } from 'uuid'
 
 export function ProductVariantRegistrationSheet() {
   const { selectedOptions, productId, variants, addVariant } =
@@ -85,16 +85,38 @@ export function ProductVariantRegistrationSheet() {
 
       const usedCombinations = new Set(usedVariantCombinations)
 
-      consola.log(currentValues, potentialCombination, usedCombinations)
-
       return !usedCombinations.has(potentialCombination)
     },
     [currentValues, usedVariantCombinations],
   )
 
-  const onSelectOptionValue = (optionId: string) => {
-    const optionValues = form.getValues('optionValueIds')
-    form.setValue('optionValueIds', [...optionValues, Number(optionId)])
+  const skuId = useMemo(() => uuid(), [currentValues])
+
+  const generateVariantSku = (values: number[]) => {
+    const optionNames = selectedOptions
+      .map((opt) => opt.name.toLocaleLowerCase())
+      .join('-')
+
+    return `${productId.slice(0, 4)}-${optionNames}-${values.join('-')}-${skuId.slice(-8)}`
+  }
+
+  const onSelectOptionValue = (optionId: number) => (optionValueId: string) => {
+    const option = selectedOptions.find((opt) => opt.id === optionId)
+    if (!option) {
+      return
+    }
+
+    // Remove the previously selected value for current option
+    const filterValues = currentValues.filter(
+      (id) => !option.values.some((v) => v.id === Number(id)),
+    )
+
+    const newValues = [...filterValues, Number(optionValueId)]
+
+    form.setValue('optionValueIds', newValues)
+
+    const variantSku = generateVariantSku(newValues.map((id) => Number(id)))
+    form.setValue('sku', variantSku)
   }
 
   const { mutateAsync } = useCreateProductVariant(variantImages)
@@ -112,8 +134,19 @@ export function ProductVariantRegistrationSheet() {
     setOpen(false)
   })
 
+  const handleOnOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      form.reset({
+        productId,
+        optionValueIds: [],
+        images: [],
+      })
+    }
+    setOpen(isOpen)
+  }
+
   return (
-    <Sheet onOpenChange={setOpen} open={open}>
+    <Sheet onOpenChange={handleOnOpenChange} open={open}>
       <SheetTrigger asChild>
         <Button>
           <PlusIcon className="h-4 w-4" />
@@ -139,7 +172,10 @@ export function ProductVariantRegistrationSheet() {
                 <div className="*:not-first:mt-2" key={option.id}>
                   <Label>{option.name}</Label>
 
-                  <Select key={option.id} onValueChange={onSelectOptionValue}>
+                  <Select
+                    key={option.id}
+                    onValueChange={onSelectOptionValue(option.id)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
