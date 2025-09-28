@@ -1,4 +1,5 @@
 import type { ProductOptionType } from '@/api/products'
+import type { CreateProductVariant } from '@/schemas/product'
 import { create } from 'zustand'
 
 export const TOTAL_STEPS = 4
@@ -7,10 +8,13 @@ type AdvanceProductRegistrationStore = {
   step: number
   productId: string
   selectedOptions: ProductOptionType[]
+  variants: CreateProductVariant[]
 
   setProductId: (id: string) => void
   addProductOption: (option: ProductOptionType) => void
   removeProductOption: (option: ProductOptionType) => void
+
+  addVariant: (variant: CreateProductVariant) => void
 
   reset: () => void
   nextStep: () => void
@@ -21,6 +25,7 @@ export const useAdvancedProductRegistrationStore =
     step: 1,
     productId: '',
     selectedOptions: [],
+    variants: [],
     setProductId: (id) => set({ productId: id }),
     addProductOption: (option) =>
       set((state) => ({
@@ -32,7 +37,12 @@ export const useAdvancedProductRegistrationStore =
           (o) => o.id !== option.id,
         ),
       })),
-    reset: () => set({ productId: '', selectedOptions: [], step: 1 }),
+    addVariant: (variant) =>
+      set((state) => ({
+        variants: [...state.variants, variant],
+      })),
+    reset: () =>
+      set({ productId: '', selectedOptions: [], variants: [], step: 1 }),
     nextStep: () =>
       set((state) => ({
         step: state.step >= TOTAL_STEPS ? 1 : state.step + 1,

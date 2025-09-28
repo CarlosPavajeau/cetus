@@ -44,7 +44,6 @@ import {
   TagIcon,
   Trash2Icon,
 } from 'lucide-react'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { v7 } from 'uuid'
 
@@ -334,12 +333,8 @@ function ProductOptionsStep() {
 }
 
 function ProductVariantsStep() {
-  const { selectedOptions, reset } = useAdvancedProductRegistrationStore()
-  const [variants, setVariants] = useState<CreateProductVariant[]>([])
-
-  const handleOnRegisterProductVariant = (variant: CreateProductVariant) => {
-    setVariants((prev) => [...prev, variant])
-  }
+  const { selectedOptions, reset, variants } =
+    useAdvancedProductRegistrationStore()
 
   const generateVariantName = (variant: CreateProductVariant) => {
     // Generate variant name based on selected option values
@@ -397,9 +392,7 @@ function ProductVariantsStep() {
               créalas manualmente
             </p>
             <div className="flex flex-col justify-center gap-2 sm:flex-row">
-              <ProductVariantRegistrationSheet
-                onSuccess={handleOnRegisterProductVariant}
-              />
+              <ProductVariantRegistrationSheet />
             </div>
           </div>
         )}
@@ -408,9 +401,7 @@ function ProductVariantsStep() {
           <>
             <div className="flex flex-wrap items-center gap-4 rounded-md bg-muted/50 p-4">
               <div className="flex-1" />
-              <ProductVariantRegistrationSheet
-                onSuccess={handleOnRegisterProductVariant}
-              />
+              <ProductVariantRegistrationSheet />
             </div>
 
             <div className="space-y-4">

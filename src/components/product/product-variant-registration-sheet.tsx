@@ -29,23 +29,18 @@ import {
 } from '@/components/ui/sheet'
 import { useCreateProductVariant } from '@/hooks/products/use-create-product-variant'
 import type { FileWithPreview } from '@/hooks/use-file-upload'
-import {
-  type CreateProductVariant,
-  CreateProductVariantSchema,
-} from '@/schemas/product'
+import { CreateProductVariantSchema } from '@/schemas/product'
 import { generateImageUrl } from '@/shared/images'
 import { useAdvancedProductRegistrationStore } from '@/store/products/advance-product-registration-store'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
+import consola from 'consola'
 import { PlusIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-type Props = {
-  onSuccess: (createdVariant: CreateProductVariant) => void
-}
-
-export function ProductVariantRegistrationSheet({ onSuccess }: Props) {
-  const { selectedOptions, productId } = useAdvancedProductRegistrationStore()
+export function ProductVariantRegistrationSheet() {
+  const { selectedOptions, productId, variants, addVariant } =
+    useAdvancedProductRegistrationStore()
   const [open, setOpen] = useState(false)
 
   const form = useForm({
@@ -70,6 +65,33 @@ export function ProductVariantRegistrationSheet({ onSuccess }: Props) {
     form.setValue('images', formImages)
   }
 
+  const usedVariantCombinations = useMemo(() => {
+    return variants.map((variant) =>
+      variant.optionValueIds
+        .map((id) => Number(id))
+        .sort((a, b) => a - b)
+        .join('-'),
+    )
+  }, [variants])
+
+  const currentValues = form.watch('optionValueIds')
+  const canUseOptionValue = useCallback(
+    (valueId: number) => {
+      const parsedCurrentValues = currentValues.map((id) => Number(id))
+
+      const potentialCombination = [...parsedCurrentValues, valueId]
+        .sort((a, b) => a - b)
+        .join('-')
+
+      const usedCombinations = new Set(usedVariantCombinations)
+
+      consola.log(currentValues, potentialCombination, usedCombinations)
+
+      return !usedCombinations.has(potentialCombination)
+    },
+    [currentValues, usedVariantCombinations],
+  )
+
   const onSelectOptionValue = (optionId: string) => {
     const optionValues = form.getValues('optionValueIds')
     form.setValue('optionValueIds', [...optionValues, Number(optionId)])
@@ -86,8 +108,8 @@ export function ProductVariantRegistrationSheet({ onSuccess }: Props) {
       images: [],
     })
 
+    addVariant(values)
     setOpen(false)
-    onSuccess(values)
   })
 
   return (
@@ -123,7 +145,11 @@ export function ProductVariantRegistrationSheet({ onSuccess }: Props) {
                     </SelectTrigger>
                     <SelectContent>
                       {option.values.map((value) => (
-                        <SelectItem key={value.id} value={String(value.id)}>
+                        <SelectItem
+                          disabled={!canUseOptionValue(value.id)}
+                          key={value.id}
+                          value={String(value.id)}
+                        >
                           {value.value}
                         </SelectItem>
                       ))}
