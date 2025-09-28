@@ -26,7 +26,6 @@ import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { CreateSimpleProductSchema } from '@/schemas/product'
 import { generateImageUrl } from '@/shared/images'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import consola from 'consola'
 import { ArrowLeftIcon, PackageIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -72,7 +71,6 @@ export function SimpleProductRegistrationForm({ onBack }: Props) {
   const { mutateAsync } = useCreateSimpleProduct(productImages)
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    consola.log('Submitting form with values {}', values)
     await mutateAsync(values)
   })
 
