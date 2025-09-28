@@ -45,7 +45,6 @@ import {
   Trash2Icon,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { v7 } from 'uuid'
 
 type Props = {
   onBack: () => void
@@ -414,7 +413,7 @@ function ProductVariantsStep() {
               {variants.map((variant) => (
                 <div
                   className="overflow-hidden rounded-md border bg-card"
-                  key={v7()}
+                  key={variant.sku}
                 >
                   <div className="flex p-3">
                     <div className="flex flex-1 flex-col gap-2">
