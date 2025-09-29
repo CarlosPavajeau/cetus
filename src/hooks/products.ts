@@ -1,6 +1,5 @@
 import { uploadFileToS3 } from '@/api/aws'
 import {
-  fetchProduct,
   fetchProductBySlug,
   fetchProducts,
   fetchProductsForSale,
@@ -57,19 +56,6 @@ export function useUpdateProduct(images: FileWithPreview[]) {
       toast.success('Producto actualizado correctamente')
     },
   })
-}
-
-export function useProduct(id: string) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => fetchProduct(id),
-  })
-
-  return {
-    product: data,
-    isLoading,
-    error,
-  }
 }
 
 export function useProductsForSale() {
