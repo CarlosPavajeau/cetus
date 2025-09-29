@@ -19,15 +19,9 @@ export type Product = {
   name: string
   slug: string
   description?: string
-  price: number
-  stock: number
-  imageUrl?: string
-  images: ProductImage[]
-  rating: number
-  reviewsCount: number
-  enabled: boolean
-  category?: string
   categoryId: string
+  category: string
+  enabled: boolean
   createdAt: string
   updatedAt: string
 }
