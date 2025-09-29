@@ -1,6 +1,5 @@
 import { uploadFileToS3 } from '@/api/aws'
 import {
-  createProduct,
   fetchProduct,
   fetchProductBySlug,
   fetchProducts,
@@ -9,57 +8,10 @@ import {
   updateProduct,
 } from '@/api/products'
 import type { FileWithPreview } from '@/hooks/use-file-upload'
-import type { CreateProduct, UpdateProduct } from '@/schemas/product'
+import type { UpdateProduct } from '@/schemas/product'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
 import consola from 'consola'
 import { toast } from 'sonner'
-
-export function useCreateProduct(images: FileWithPreview[]) {
-  const navigate = useNavigate()
-
-  return useMutation({
-    mutationKey: ['products', 'create'],
-    mutationFn: async (values: CreateProduct) => {
-      try {
-        const filesToUpload = values.images
-          .map((image) => {
-            const file = images.find((img) => img.id === image.id)
-
-            if (!file) {
-              return null
-            }
-
-            if (file.file instanceof File) {
-              return uploadFileToS3({
-                fileName: image.imageUrl,
-                file: file.file,
-              })
-            }
-
-            return null
-          })
-          .filter((upload) => upload !== null)
-
-        await Promise.all(filesToUpload)
-
-        return createProduct(values)
-      } catch (error) {
-        consola.error('Failed to create product:', error)
-        throw error
-      }
-    },
-    onSuccess: () => {
-      toast.success('Producto creado correctamente')
-      navigate({ to: '/app/products' })
-    },
-    onError: (error) => {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error desconocido'
-      toast.error(`Error al crear el producto: ${errorMessage}`)
-    },
-  })
-}
 
 export function useUpdateProduct(images: FileWithPreview[]) {
   const queryClient = useQueryClient()
@@ -136,7 +88,7 @@ export function useProductsForSale() {
 export function useProducts() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['products'],
-    queryFn: () => fetchProducts(),
+    queryFn: fetchProducts,
     refetchOnMount: false,
   })
 
