@@ -33,16 +33,16 @@ export const CreateProductSchema = type({
   }),
 })
 
-export const UpdateProductSchema = BaseProductSchema.and({
+export const UpdateProductSchema = type({
   id: type.string.moreThanLength(1),
-  enabled: type.boolean.default(true),
-  imageUrl: type.string.or(type.undefined).optional(),
-  images: CreateProductImageSchema.array().moreThanLength(0).configure({
-    message: 'Se requiere al menos una imagen del producto',
+  name: type.string.moreThanLength(1).configure({
+    message: 'El nombre del producto es requerido',
   }),
+  description: type.string.optional(),
   categoryId: type.string.moreThanLength(1).configure({
     message: 'La categoría del producto es requerida',
   }),
+  enabled: type.boolean.default(true),
 })
 
 export type CreateProduct = typeof CreateProductSchema.infer
