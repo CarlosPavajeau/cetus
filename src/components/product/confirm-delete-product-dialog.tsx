@@ -1,4 +1,4 @@
-import { type Product, deleteProduct } from '@/api/products'
+import { deleteProduct, type Product } from '@/api/products'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LoaderCircleIcon } from 'lucide-react'
+import { LoaderCircleIcon, TrashIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 type Props = {
@@ -41,13 +41,15 @@ export const ConfirmDeleteProductDialog = ({ product }: Props) => {
   }, [deleteProductMutation.isSuccess, queryClient])
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
         <DropdownMenuItem
-          onSelect={(e) => e.preventDefault()}
-          onClick={() => setOpen(true)}
           aria-label="Delete product"
+          onClick={() => setOpen(true)}
+          onSelect={(e) => e.preventDefault()}
+          variant="destructive"
         >
+          <TrashIcon aria-hidden="true" size={16} />
           <span>Eliminar</span>
         </DropdownMenuItem>
       </AlertDialogTrigger>
@@ -63,15 +65,15 @@ export const ConfirmDeleteProductDialog = ({ product }: Props) => {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <Button
-            variant="destructive"
             disabled={deleteProductMutation.isPending}
             onClick={handleDelete}
+            variant="destructive"
           >
             {deleteProductMutation.isPending && (
               <LoaderCircleIcon
+                aria-hidden="true"
                 className="animate-spin"
                 size={16}
-                aria-hidden="true"
               />
             )}
             Sí, eliminar
