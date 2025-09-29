@@ -52,7 +52,7 @@ type Props = {
 
 export function AdvancedProductRegistrationForm({ onBack }: Props) {
   const { step, reset } = useAdvancedProductRegistrationStore()
-  const totalSteps = 4
+  const totalSteps = 3
 
   const handleBack = () => {
     reset()
