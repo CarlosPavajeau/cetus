@@ -1,7 +1,13 @@
 import type { Product } from '@/api/products'
 import { CategorySelector } from '@/components/category/category-selector'
-import { ProductImagesManager } from '@/components/product/product-images-manager'
 import { SubmitButton } from '@/components/submit-button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -13,12 +19,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { useUpdateProduct } from '@/hooks/products'
-import type { FileWithPreview } from '@/hooks/use-file-upload'
-import { type UpdateProduct, UpdateProductSchema } from '@/schemas/product'
-import { generateImageUrl } from '@/shared/images'
+import { useUpdateProduct } from '@/hooks/products/use-update-product'
+import { UpdateProductSchema } from '@/schemas/product'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useState } from 'react'
+import { PackageIcon, RefreshCwIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 
 type Props = {
@@ -30,193 +34,113 @@ export function UpdateProductForm({ product }: Readonly<Props>) {
     resolver: arktypeResolver(UpdateProductSchema),
     defaultValues: {
       ...product,
-      images: product.images.map((image) => ({
-        id: image.id.toString(),
-        imageUrl: image.imageUrl,
-        sortOrder: image.sortOrder,
-      })),
-    } satisfies UpdateProduct,
+    },
   })
 
-  const [newProductImages, setNewProductImages] = useState<FileWithPreview[]>(
-    [],
-  )
-  const existingImages = product.images
-
-  const handleFilesChange = (files: FileWithPreview[]) => {
-    const shouldGenerateImageUrl = (file: FileWithPreview) => {
-      const existingImage = existingImages.find(
-        (image) => image.imageUrl === file.id,
-      )
-      return !existingImage
-    }
-
-    const formImages = files.map((file, index) => {
-      if (shouldGenerateImageUrl(file)) {
-        return {
-          id: file.id,
-          imageUrl: generateImageUrl(file),
-          sortOrder: index,
-        }
-      }
-
-      const existingImage = existingImages.find(
-        (image) => image.imageUrl === file.id,
-      )
-
-      return {
-        id: file.id,
-        imageUrl: existingImage?.imageUrl ?? '',
-        sortOrder: index,
-      }
-    })
-
-    form.setValue('images', formImages)
-    setNewProductImages(files)
-  }
-
-  const updateProductMutation = useUpdateProduct(newProductImages)
-  const handleSubmit = form.handleSubmit((values) =>
-    updateProductMutation.mutate(values),
+  const { mutateAsync } = useUpdateProduct()
+  const handleSubmit = form.handleSubmit(
+    async (values) => await mutateAsync(values),
   )
 
   return (
-    <Form {...form}>
-      <form
-        className="grid flex-1 auto-rows-min gap-6 px-4"
-        onSubmit={handleSubmit}
-      >
-        <div className="grid gap-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nombre</FormLabel>
-                <FormControl>
-                  <Input autoFocus type="text" {...field} />
-                </FormControl>
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descripción</FormLabel>
-                <FormControl>
-                  <Textarea {...field} value={field.value || ''} />
-                </FormControl>
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Precio</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        className="peer ps-6 pe-12"
-                        placeholder="0.00"
-                        type="text"
-                        {...field}
-                      />
-                      <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
-                        $
-                      </span>
-                      <span className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground text-sm peer-disabled:opacity-50">
-                        COP
-                      </span>
-                    </div>
-                  </FormControl>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock</FormLabel>
-                  <FormControl>
-                    <Input
-                      className="tabular-nums"
-                      placeholder="0.00"
-                      type="text"
-                      {...field}
-                    />
-                  </FormControl>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <PackageIcon className="h-5 w-5 text-primary" />
           </div>
-
-          <CategorySelector />
-
-          <FormField
-            control={form.control}
-            name="enabled"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <FormControl>
-                  <div>
-                    <div className="inline-flex items-center gap-2">
-                      <Switch
-                        aria-label="Toggle switch"
-                        checked={field.value ?? false}
-                        id={field.name}
-                        onCheckedChange={field.onChange}
-                      />
-                      <FormLabel className="font-medium text-sm">
-                        {field.value ? 'Activo' : 'Inactivo'}
-                      </FormLabel>
-                    </div>
-                  </div>
-                </FormControl>
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="images"
-            render={() => (
-              <ProductImagesManager
-                existingImages={existingImages}
-                onFilesChange={handleFilesChange}
-              />
-            )}
-          />
+          <div>
+            <CardTitle className="text-foreground">
+              Información básica del producto
+            </CardTitle>
+            <CardDescription>
+              Actualiza los detalles básicos sobre tu producto
+            </CardDescription>
+          </div>
         </div>
+      </CardHeader>
 
-        <SubmitButton
-          className="w-full"
-          disabled={updateProductMutation.isPending}
-          isSubmitting={updateProductMutation.isPending}
-          type="submit"
-        >
-          Actualizar
-        </SubmitButton>
-      </form>
-    </Form>
+      <CardContent>
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre</FormLabel>
+                    <FormControl>
+                      <Input autoFocus type="text" {...field} />
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <CategorySelector />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descripción</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} value={field.value || ''} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="enabled"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado</FormLabel>
+                  <FormControl>
+                    <div>
+                      <div className="inline-flex items-center gap-2">
+                        <Switch
+                          aria-label="Toggle switch"
+                          checked={field.value ?? false}
+                          id={field.name}
+                          onCheckedChange={field.onChange}
+                        />
+                        <FormLabel className="font-medium text-sm">
+                          {field.value ? 'Activo' : 'Inactivo'}
+                        </FormLabel>
+                      </div>
+                    </div>
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-between pt-6">
+              <div />
+
+              <SubmitButton
+                disabled={form.formState.isSubmitting}
+                isSubmitting={form.formState.isSubmitting}
+                type="submit"
+              >
+                <div className="flex items-center gap-2">
+                  Actualizar
+                  <RefreshCwIcon className="h-4 w-4" />
+                </div>
+              </SubmitButton>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   )
 }
