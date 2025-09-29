@@ -5,12 +5,12 @@ import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { ConfirmDeleteProductDialog } from '@/components/product/confirm-delete-product-dialog'
-import { UpdateProductDialog } from '@/components/product/update-product-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,7 @@ import {
 import {
   CircleXIcon,
   EllipsisIcon,
+  EyeIcon,
   ListFilterIcon,
   PlusIcon,
 } from 'lucide-react'
@@ -306,7 +307,13 @@ function RowActions({ row }: { row: Row<Product> }) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-        <UpdateProductDialog product={row.original} />
+        <DropdownMenuItem asChild>
+          <Link params={{ id: row.original.id }} to="/app/products/$id/details">
+            <EyeIcon aria-hidden="true" className="opacity-60" size={16} />
+            Ver detalles
+          </Link>
+        </DropdownMenuItem>
+
         <ConfirmDeleteProductDialog product={row.original} />
       </DropdownMenuContent>
     </DropdownMenu>
