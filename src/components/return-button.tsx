@@ -18,13 +18,8 @@ export function ReturnButton(props: Props) {
   }
 
   return (
-    <Button
-      variant="ghost"
-      className="text-muted-foreground"
-      onClick={handleBack}
-      {...props}
-    >
-      <ArrowLeftIcon size={14} />
+    <Button onClick={handleBack} size="sm" variant="ghost" {...props}>
+      <ArrowLeftIcon className="h-4 w-4" />
       Volver
     </Button>
   )
