@@ -284,6 +284,7 @@ function ProductOptionsStep() {
                       </h3>
 
                       <button
+                        aria-label={`Quitar la opción ${option.name}`}
                         className="text-muted-foreground hover:text-red-500"
                         onClick={() => handleRemoveOption(option)}
                         type="button"
