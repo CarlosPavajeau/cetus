@@ -1,5 +1,4 @@
 import type { Product } from '@/api/products'
-import { Currency } from '@/components/currency'
 import { TableFacetedFilter } from '@/components/data-table/faceted-filter'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
@@ -46,7 +45,6 @@ export const Route = createFileRoute('/app/products/')({
 })
 
 export const DEFAULT_PAGE_SIZE = 5
-const MINIMUM_STOCK = 3
 
 const categoryFilterFn: FilterFn<Product> = (
   row,
@@ -75,31 +73,14 @@ const useProductColumns = (): ColumnDef<Product>[] => {
         size: 180,
       },
       {
-        id: 'price',
-        accessorKey: 'price',
-        header: 'Precio',
+        id: 'category',
+        accessorKey: 'category',
+        header: 'Categoría',
         cell: ({ row }) => (
-          <div>
-            <Currency currency="COP" value={row.getValue('price')} />
-          </div>
+          <Badge variant="secondary">
+            {row.getValue('category') ?? 'Desconocida'}
+          </Badge>
         ),
-        size: 90,
-      },
-      {
-        id: 'stock',
-        accessorKey: 'stock',
-        header: 'Stock',
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1.5">
-            {row.getValue('stock')}
-            {row.getValue<number>('stock') < MINIMUM_STOCK && (
-              <Badge className="rounded" variant="destructive">
-                Bajo stock
-              </Badge>
-            )}
-          </div>
-        ),
-        size: 60,
       },
       {
         id: 'categoryId',
