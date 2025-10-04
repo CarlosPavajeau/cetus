@@ -70,10 +70,10 @@ export const CreateProductVariantSchema = type({
     message: 'El precio del producto debe ser mayor a 0',
   }),
   stockQuantity: type('string.integer.parse')
-    .or('number>0')
-    .to('number>0')
+    .or('number>=0')
+    .to('number>=0')
     .configure({
-      message: 'El stock del producto debe ser mayor a 0',
+      message: 'El stock del producto debe ser mayor o igual a 0',
     }),
   optionValueIds: type('string.integer.parse')
     .or('number>0')
@@ -101,10 +101,10 @@ export const CreateSimpleProductSchema = type({
     message: 'El precio del producto debe ser mayor a 0',
   }),
   stockQuantity: type('string.integer.parse')
-    .or('number>0')
-    .to('number>0')
+    .or('number>=0')
+    .to('number>=0')
     .configure({
-      message: 'El stock del producto debe ser mayor a 0',
+      message: 'El stock del producto debe ser mayor o igual a 0',
     }),
   images: CreateProductImageSchema.array().moreThanLength(0).configure({
     message: 'Se requiere al menos una imagen del producto',
