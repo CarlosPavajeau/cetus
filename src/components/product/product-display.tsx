@@ -1,4 +1,4 @@
-import type { ProductForSale } from '@/api/products'
+import type { ProductForSale, ProductVariantResponse } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { ProductAddedNotification } from '@/components/product/product-added-notification'
 import { ProductImages } from '@/components/product/product-images'
@@ -7,9 +7,187 @@ import { ProductShare } from '@/components/product/product-share'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useCart } from '@/store/cart'
+import { Link } from '@tanstack/react-router'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+
+type OptionGroup = {
+  optionTypeName: string
+  optionTypeId: number
+  values: Array<{
+    id: number
+    value: string
+    variantId: number
+    isAvailable: boolean
+  }>
+}
+
+// Helper function to group option values by type
+function createOptionGroups(
+  variants: ProductForSale['variants'],
+): OptionGroup[] {
+  const groups = new Map<number, OptionGroup>()
+
+  for (const variant of variants) {
+    for (const optionValue of variant.optionValues) {
+      if (!groups.has(optionValue.optionTypeId)) {
+        groups.set(optionValue.optionTypeId, {
+          optionTypeName: optionValue.optionTypeName,
+          optionTypeId: optionValue.optionTypeId,
+          values: [],
+        })
+      }
+
+      const group = groups.get(optionValue.optionTypeId)
+      if (!group) {
+        continue
+      }
+
+      const existingValue = group.values.find((v) => v.id === optionValue.id)
+
+      if (existingValue) {
+        // Aggregate availability across all variants that include this value
+        existingValue.isAvailable =
+          existingValue.isAvailable || variant.stock > 0
+      } else {
+        group.values.push({
+          id: optionValue.id,
+          value: optionValue.value,
+          variantId: variant.id,
+          isAvailable: variant.stock > 0,
+        })
+      }
+    }
+  }
+
+  return Array.from(groups.values())
+}
+
+type ProductOptionsProps = {
+  product: ProductForSale
+  currentVariantId: number
+}
+
+const ProductOptions = memo(
+  ({ product, currentVariantId }: Readonly<ProductOptionsProps>) => {
+    // Group option values by option type
+    const optionGroups = useMemo(
+      () => createOptionGroups(product.variants),
+      [product.variants],
+    )
+
+    // Get current variant's option values
+    const currentVariant = product.variants.find(
+      (v) => v.id === currentVariantId,
+    )
+    const currentOptionValues = currentVariant?.optionValues || []
+
+    // Find compatible variant when an option is selected
+    const findCompatibleVariant = useCallback(
+      (selectedOptionId: number) => {
+        const selectedOption = optionGroups
+          .flatMap((group) => group.values)
+          .find((value) => value.id === selectedOptionId)
+
+        if (!selectedOption) {
+          return currentVariantId
+        }
+
+        // Get the option type of the selected option
+        const selectedOptionType = optionGroups.find((group) =>
+          group.values.some((value) => value.id === selectedOptionId),
+        )
+
+        if (!selectedOptionType) {
+          return currentVariantId
+        }
+
+        // Find other selected options (from different option types)
+        const otherSelectedOptions = currentOptionValues.filter(
+          (optionValue) =>
+            optionValue.optionTypeId !== selectedOptionType.optionTypeId,
+        )
+
+        // Find variant that matches the selected option + other selected options
+        const compatibleVariant = product.variants.find((variant) => {
+          const hasSelectedOption = variant.optionValues.some(
+            (optionValue) => optionValue.id === selectedOptionId,
+          )
+
+          const hasOtherOptions = otherSelectedOptions.every((otherOption) =>
+            variant.optionValues.some(
+              (optionValue) => optionValue.id === otherOption.id,
+            ),
+          )
+
+          return hasSelectedOption && hasOtherOptions && variant.stock > 0
+        })
+
+        return (
+          compatibleVariant?.id ??
+          product.variants.find(
+            (v) =>
+              v.optionValues.some((ov) => ov.id === selectedOptionId) &&
+              v.stock > 0,
+          )?.id ??
+          selectedOption.variantId
+        )
+      },
+      [currentVariantId, currentOptionValues, optionGroups, product.variants],
+    )
+
+    if (optionGroups.length === 0) {
+      return null
+    }
+
+    return (
+      <div className="space-y-4">
+        {optionGroups.map((group) => (
+          <div className="flex flex-col gap-2" key={group.optionTypeId}>
+            <Label>{group.optionTypeName}:</Label>
+            <div className="flex flex-wrap gap-2">
+              {group.values.map((value) => {
+                const isSelected = currentOptionValues.some(
+                  (optionValue) => optionValue.id === value.id,
+                )
+
+                return (
+                  <div
+                    className="flex flex-col items-center gap-1"
+                    key={value.id}
+                  >
+                    {value.isAvailable && !isSelected ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link
+                          replace
+                          search={{ variant: findCompatibleVariant(value.id) }}
+                          to="."
+                        >
+                          {value.value}
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        aria-disabled
+                        className="disabled:opacity-100"
+                        disabled
+                        size="sm"
+                        variant={isSelected ? 'default' : 'outline'}
+                      >
+                        {value.value}
+                      </Button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  },
+)
 
 type QuantitySelectorProps = {
   quantity: number
@@ -62,9 +240,10 @@ const QuantitySelector = memo(
 
 type Props = {
   product: ProductForSale
+  variant: ProductVariantResponse
 }
 
-function ProductDisplayComponent({ product }: Readonly<Props>) {
+function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -82,7 +261,18 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
 
     // Simulate a small delay for better UX
     setTimeout(() => {
-      const success = cart.add(product, quantity)
+      const success = cart.add(
+        {
+          productId: product.id,
+          name: product.name,
+          slug: product.slug,
+          imageUrl: variant.images.at(0)?.imageUrl ?? 'placeholder.svg',
+          price: variant.price,
+          variantId: variant.id,
+          stock: variant.stock,
+        },
+        quantity,
+      )
       setIsAddingToCart(false)
 
       if (!success) {
@@ -97,13 +287,25 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
         />
       ))
     }, 300)
-  }, [cart, product, quantity])
+  }, [cart, product, quantity, variant])
 
-  const isOutOfStock = product.stock <= 0
+  const isOutOfStock = variant.stock <= 0
+
+  // Ensure quantity stays within the current variant's stock
+  useEffect(() => {
+    setQuantity((q) => {
+      const max = Math.max(variant.stock, 0)
+      if (max === 0) {
+        return 1
+      }
+
+      return Math.min(q, max)
+    })
+  }, [variant.stock])
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <ProductImages product={product} />
+      <ProductImages images={variant.images} />
 
       <div className="space-y-6">
         <div>
@@ -112,7 +314,7 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
           </h1>
 
           <div className="mb-4 font-bold text-3xl">
-            <Currency currency="COP" value={product.price} />
+            <Currency currency="COP" value={variant.price} />
           </div>
 
           <div className="mb-4 flex items-center space-x-2">
@@ -127,10 +329,12 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
           <p>{product.description}</p>
         </div>
 
+        <ProductOptions currentVariantId={variant.id} product={product} />
+
         <div className="space-y-4">
           <div>
             <QuantitySelector
-              max={product.stock}
+              max={variant.stock}
               onDecrement={decrementQuantity}
               onIncrement={incrementQuantity}
               quantity={quantity}
@@ -161,8 +365,11 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
               <ProductShare productName={product.name} />
             </div>
 
-            <span className="text-right text-muted-foreground text-xs">
-              {product.stock} unidades restantes
+            <span
+              aria-live="polite"
+              className="text-right text-muted-foreground text-xs"
+            >
+              {variant.stock} unidades restantes
             </span>
           </div>
         </div>
@@ -171,6 +378,6 @@ function ProductDisplayComponent({ product }: Readonly<Props>) {
   )
 }
 
-export const ProductDisplay = memo(({ product }: Props) => {
-  return <ProductDisplayComponent product={product} />
+export const ProductDisplay = memo(({ product, variant }: Props) => {
+  return <ProductDisplayComponent product={product} variant={variant} />
 })

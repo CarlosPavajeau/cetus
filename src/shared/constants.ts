@@ -56,3 +56,5 @@ export const BUILT_IN_ROLES = [
   { role: 'admin', label: 'Administrador' },
   { role: 'member', label: 'Miembro' },
 ] as const
+
+export const DEFAULT_PAGE_SIZE = 5

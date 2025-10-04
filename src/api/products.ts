@@ -1,5 +1,11 @@
 import { anonymousApi, api } from '@/api/client'
-import type { CreateProduct, UpdateProduct } from '@/schemas/product'
+import type {
+  CreateProduct,
+  CreateProductOptionType,
+  CreateProductVariant,
+  CreateSimpleProduct,
+  UpdateProduct,
+} from '@/schemas/product'
 
 export type ProductImage = {
   id: number
@@ -13,15 +19,9 @@ export type Product = {
   name: string
   slug: string
   description?: string
-  price: number
-  stock: number
-  imageUrl?: string
-  images: ProductImage[]
-  rating: number
-  reviewsCount: number
-  enabled: boolean
-  category?: string
   categoryId: string
+  category: string
+  enabled: boolean
   createdAt: string
   updatedAt: string
 }
@@ -38,21 +38,35 @@ export const fetchProduct = async (id: string) => {
   return response.data
 }
 
+export type ProductOptionValue = {
+  id: number
+  value: string
+  optionTypeId: number
+  optionTypeName: string
+}
+
+export type ProductVariantResponse = {
+  id: number
+  sku: string
+  price: number
+  stock: number
+  images: ProductImage[]
+  optionValues: ProductOptionValue[]
+}
+
 export type ProductForSale = {
   id: string
   name: string
   slug: string
   description?: string
-  price: number
-  stock: number
-  imageUrl?: string
-  images: ProductImage[]
   rating: number
   reviewsCount: number
   categoryId: string
   category?: string
   categorySlug: string
   storeId: string
+
+  variants: ProductVariantResponse[]
 }
 
 export type SimpleProductForSale = {
@@ -64,6 +78,7 @@ export type SimpleProductForSale = {
   rating: number
   reviewsCount: number
   categoryId: string
+  variantId: number
 }
 
 export const fetchProductsForSale = async () => {
@@ -103,8 +118,14 @@ export async function fetchProductsByCategory(categoryId: string) {
   return response.data
 }
 
-export const createProduct = async (product: CreateProduct) => {
+export async function createProduct(product: CreateProduct) {
   const response = await api.post<Product>('/products', product)
+
+  return response.data
+}
+
+export async function createSimpleProduct(product: CreateSimpleProduct) {
+  const response = await api.post<Product>('/products/simple', product)
 
   return response.data
 }
@@ -144,6 +165,74 @@ export async function fetchTopSellingProducts() {
 export async function fetchProductBySlug(slug: string) {
   const response = await anonymousApi.get<ProductForSale>(
     `/products/slug/${slug}`,
+  )
+
+  return response.data
+}
+
+export type ProductOptionTypeValue = {
+  id: number
+  value: string
+}
+
+export type ProductOptionType = {
+  id: number
+  name: string
+  values: ProductOptionTypeValue[]
+}
+
+export async function fetchProductOptionTypes() {
+  const response = await api.get<ProductOptionType[]>('/products/option-types')
+
+  return response.data
+}
+
+export async function createProductOptionType(
+  optionType: CreateProductOptionType,
+) {
+  const response = await api.post<ProductOptionType>(
+    '/products/option-types',
+    optionType,
+  )
+
+  return response.data
+}
+
+export async function createProductVariant(variant: CreateProductVariant) {
+  const response = await api.post<ProductVariantResponse>(
+    `products/${variant.productId}/variants`,
+    variant,
+  )
+
+  return response.data
+}
+
+export async function fetchProductVariants(productId: string) {
+  const response = await api.get<ProductVariantResponse[]>(
+    `products/${productId}/variants`,
+  )
+
+  return response.data
+}
+
+export type CreateProductOption = {
+  productId: string
+  optionTypeId: number
+}
+
+export async function createProductOption(option: CreateProductOption) {
+  return await api.post(`products/${option.productId}/options`, option)
+}
+
+export type ProductOptionResponse = {
+  productId: string
+  optionTypeId: number
+  optionType: ProductOptionType
+}
+
+export async function fetchProductOptions(productId: string) {
+  const response = await api.get<ProductOptionResponse[]>(
+    `products/${productId}/options`,
   )
 
   return response.data

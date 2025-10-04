@@ -1,17 +1,16 @@
 import type { Product } from '@/api/products'
-import { Currency } from '@/components/currency'
 import { TableFacetedFilter } from '@/components/data-table/faceted-filter'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
 import { DefaultLoader } from '@/components/default-loader'
 import { FormattedDate } from '@/components/formatted-date'
 import { ConfirmDeleteProductDialog } from '@/components/product/confirm-delete-product-dialog'
-import { UpdateProductDialog } from '@/components/product/update-product-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -36,6 +35,7 @@ import {
 import {
   CircleXIcon,
   EllipsisIcon,
+  EyeIcon,
   ListFilterIcon,
   PlusIcon,
 } from 'lucide-react'
@@ -46,7 +46,6 @@ export const Route = createFileRoute('/app/products/')({
 })
 
 export const DEFAULT_PAGE_SIZE = 5
-const MINIMUM_STOCK = 3
 
 const categoryFilterFn: FilterFn<Product> = (
   row,
@@ -75,31 +74,14 @@ const useProductColumns = (): ColumnDef<Product>[] => {
         size: 180,
       },
       {
-        id: 'price',
-        accessorKey: 'price',
-        header: 'Precio',
+        id: 'category',
+        accessorKey: 'category',
+        header: 'Categoría',
         cell: ({ row }) => (
-          <div>
-            <Currency currency="COP" value={row.getValue('price')} />
-          </div>
+          <Badge variant="secondary">
+            {row.getValue('category') ?? 'Desconocida'}
+          </Badge>
         ),
-        size: 90,
-      },
-      {
-        id: 'stock',
-        accessorKey: 'stock',
-        header: 'Stock',
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1.5">
-            {row.getValue('stock')}
-            {row.getValue<number>('stock') < MINIMUM_STOCK && (
-              <Badge className="rounded" variant="destructive">
-                Bajo stock
-              </Badge>
-            )}
-          </div>
-        ),
-        size: 60,
       },
       {
         id: 'categoryId',
@@ -325,7 +307,13 @@ function RowActions({ row }: { row: Row<Product> }) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-        <UpdateProductDialog product={row.original} />
+        <DropdownMenuItem asChild>
+          <Link params={{ id: row.original.id }} to="/app/products/$id/details">
+            <EyeIcon aria-hidden="true" className="opacity-60" size={16} />
+            Ver detalles
+          </Link>
+        </DropdownMenuItem>
+
         <ConfirmDeleteProductDialog product={row.original} />
       </DropdownMenuContent>
     </DropdownMenu>

@@ -20,16 +20,32 @@ import { getImageUrl } from '@/shared/cdn'
 import { env } from '@/shared/env'
 import { generateProductSEO, generateSEOTags } from '@/shared/seo'
 import { useTenantStore } from '@/store/use-tenant-store'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
+import { type } from 'arktype'
 import { ChevronRight, Home, HomeIcon } from 'lucide-react'
 import { useEffect, useId } from 'react'
 import { v7 as uuid } from 'uuid'
 
+const ProductSearchSchema = type({
+  variant: type('number>0'),
+})
+
 export const Route = createFileRoute('/products/$slug')({
-  loader: async ({ params }) => {
+  validateSearch: ProductSearchSchema,
+  beforeLoad: ({ search }) => {
+    return {
+      variant: search.variant,
+    }
+  },
+  loader: async ({ params, context }) => {
     const slug = params.slug
     const product = await fetchProductBySlug(slug)
     const store = await fetchStoreById(product.storeId)
+    const variant = product.variants.find((v) => v.id === context.variant)
+
+    if (!variant) {
+      throw notFound()
+    }
 
     const [suggestions, reviews] = await Promise.all([
       fetchProductSuggestions(product.id),
@@ -41,6 +57,7 @@ export const Route = createFileRoute('/products/$slug')({
       suggestions,
       reviews,
       store,
+      variant,
     }
   },
   head: ({ loaderData }) => {
@@ -48,7 +65,7 @@ export const Route = createFileRoute('/products/$slug')({
       return {}
     }
 
-    const { product, reviews, store } = loaderData
+    const { product, variant, reviews, store } = loaderData
 
     const baseUrl =
       typeof window !== 'undefined'
@@ -59,6 +76,7 @@ export const Route = createFileRoute('/products/$slug')({
     const storeName = store.name
     const seoConfig = generateProductSEO(
       product,
+      variant,
       storeName,
       baseUrl,
       reviews.map((review) => ({
@@ -79,11 +97,11 @@ export const Route = createFileRoute('/products/$slug')({
         ...seoTags,
 
         // Additional product-specific meta tags
-        { name: 'product:price:amount', content: product.price.toString() },
+        { name: 'product:price:amount', content: variant.price.toString() },
         { name: 'product:price:currency', content: 'COP' },
         {
           name: 'product:availability',
-          content: product.stock > 0 ? 'in_stock' : 'out_of_stock',
+          content: variant.stock > 0 ? 'in_stock' : 'out_of_stock',
         },
         { name: 'product:condition', content: 'new' },
 
@@ -105,11 +123,11 @@ export const Route = createFileRoute('/products/$slug')({
         { rel: 'canonical', href: seoConfig.canonicalUrl },
 
         // Preload main product image for better performance
-        ...(product.images?.[0]?.imageUrl
+        ...(variant.images?.[0]?.imageUrl
           ? [
               {
                 rel: 'preload',
-                href: getImageUrl(product.images[0].imageUrl),
+                href: getImageUrl(variant.images[0].imageUrl),
                 as: 'image',
               },
             ]
@@ -163,7 +181,8 @@ export const Route = createFileRoute('/products/$slug')({
 })
 
 function ProductDetailsPage() {
-  const { product, suggestions, reviews, store } = Route.useLoaderData()
+  const { product, variant, suggestions, reviews, store } =
+    Route.useLoaderData()
 
   const { actions } = useTenantStore()
   useEffect(() => {
@@ -213,7 +232,11 @@ function ProductDetailsPage() {
         </nav>
 
         <section aria-labelledby="product-info">
-          <ProductDisplay key={product.id} product={product} />
+          <ProductDisplay
+            key={product.id}
+            product={product}
+            variant={variant}
+          />
         </section>
 
         <section aria-labelledby="product-details" className="space-y-6">
@@ -230,20 +253,20 @@ function ProductDetailsPage() {
           </h1>
           <p>
             {product.description && `${product.description} `}
-            Precio: $
-            {product.price.toLocaleString('es-CO', {
+            Precio:
+            {variant.price.toLocaleString('es-CO', {
               style: 'currency',
               currency: 'COP',
             })}
             {product.rating && ` | Calificación: ${product.rating}/5 estrellas`}
             {product.reviewsCount && ` (${product.reviewsCount} reseñas)`}
             {product.category && ` | Categoría: ${product.category}`}
-            {product.stock > 0 ? ' | En stock' : ' | Agotado'}
+            {variant.stock > 0 ? ' | En stock' : ' | Agotado'}
           </p>
           <div>
             <span>Disponible en: {store?.name || 'Cetus'}</span>
             <span>URL del producto: {productUrl}</span>
-            {product.images?.map((image, index) => (
+            {variant.images?.map((image, index) => (
               <span
                 data-image-alt={
                   image.altText || `${product.name} - Imagen ${index + 1}`

@@ -165,7 +165,10 @@ function CartPage() {
           <div className="space-y-6">
             <div className="space-y-4">
               {cart.items.map((item) => (
-                <CartItemComponent item={item} key={item.product.id} />
+                <CartItemComponent
+                  item={item}
+                  key={`${item.product.productId}:${item.product.variantId}`}
+                />
               ))}
             </div>
 

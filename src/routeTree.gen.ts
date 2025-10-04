@@ -30,6 +30,7 @@ import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
+import { Route as AppProductOptionTypesRouteImport } from './routes/app/product-option-types'
 import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesRouteImport } from './routes/app/categories'
 import { Route as AppAccountRouteImport } from './routes/app/account'
@@ -46,6 +47,7 @@ import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$order
 import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
 import { Route as StoreRequiredProductsAllRouteImport } from './routes/_store-required/products/all'
 import { Route as StoreRequiredCheckoutIdRouteImport } from './routes/_store-required/checkout.$id'
+import { Route as AppProductsIdDetailsRouteImport } from './routes/app/products.$id.details'
 import { ServerRoute as ApiMercadopagoConnectServerRouteImport } from './routes/api/mercadopago/connect'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
@@ -145,6 +147,11 @@ const AppReviewsRoute = AppReviewsRouteImport.update({
   path: '/reviews',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProductOptionTypesRoute = AppProductOptionTypesRouteImport.update({
+  id: '/product-option-types',
+  path: '/product-option-types',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDeliveryFeesRoute = AppDeliveryFeesRouteImport.update({
   id: '/delivery-fees',
   path: '/delivery-fees',
@@ -229,6 +236,11 @@ const StoreRequiredCheckoutIdRoute = StoreRequiredCheckoutIdRouteImport.update({
   path: '/checkout/$id',
   getParentRoute: () => StoreRequiredRoute,
 } as any)
+const AppProductsIdDetailsRoute = AppProductsIdDetailsRouteImport.update({
+  id: '/products/$id/details',
+  path: '/products/$id/details',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiMercadopagoConnectServerRoute =
   ApiMercadopagoConnectServerRouteImport.update({
     id: '/api/mercadopago/connect',
@@ -258,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -276,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
+  '/app/products/$id/details': typeof AppProductsIdDetailsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -293,6 +307,7 @@ export interface FileRoutesByTo {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -311,6 +326,7 @@ export interface FileRoutesByTo {
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
+  '/app/products/$id/details': typeof AppProductsIdDetailsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -331,6 +347,7 @@ export interface FileRoutesById {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -349,6 +366,7 @@ export interface FileRoutesById {
   '/app/coupons/': typeof AppCouponsIndexRoute
   '/app/dashboard/': typeof AppDashboardIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
+  '/app/products/$id/details': typeof AppProductsIdDetailsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -369,6 +387,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
@@ -387,6 +406,7 @@ export interface FileRouteTypes {
     | '/app/coupons'
     | '/app/dashboard'
     | '/app/products'
+    | '/app/products/$id/details'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -404,6 +424,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
@@ -422,6 +443,7 @@ export interface FileRouteTypes {
     | '/app/coupons'
     | '/app/dashboard'
     | '/app/products'
+    | '/app/products/$id/details'
   id:
     | '__root__'
     | '/'
@@ -441,6 +463,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
     | '/orders/$id'
@@ -459,6 +482,7 @@ export interface FileRouteTypes {
     | '/app/coupons/'
     | '/app/dashboard/'
     | '/app/products/'
+    | '/app/products/$id/details'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -641,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReviewsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/product-option-types': {
+      id: '/app/product-option-types'
+      path: '/product-option-types'
+      fullPath: '/app/product-option-types'
+      preLoaderRoute: typeof AppProductOptionTypesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/delivery-fees': {
       id: '/app/delivery-fees'
       path: '/delivery-fees'
@@ -753,6 +784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRequiredCheckoutIdRouteImport
       parentRoute: typeof StoreRequiredRoute
     }
+    '/app/products/$id/details': {
+      id: '/app/products/$id/details'
+      path: '/products/$id/details'
+      fullPath: '/app/products/$id/details'
+      preLoaderRoute: typeof AppProductsIdDetailsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 declare module '@tanstack/react-start/server' {
@@ -796,6 +834,7 @@ interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppCategoriesRoute: typeof AppCategoriesRoute
   AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
+  AppProductOptionTypesRoute: typeof AppProductOptionTypesRoute
   AppReviewsRoute: typeof AppReviewsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCouponsNewRoute: typeof AppCouponsNewRoute
@@ -804,12 +843,14 @@ interface AppRouteChildren {
   AppCouponsIndexRoute: typeof AppCouponsIndexRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
+  AppProductsIdDetailsRoute: typeof AppProductsIdDetailsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppCategoriesRoute: AppCategoriesRoute,
   AppDeliveryFeesRoute: AppDeliveryFeesRoute,
+  AppProductOptionTypesRoute: AppProductOptionTypesRoute,
   AppReviewsRoute: AppReviewsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCouponsNewRoute: AppCouponsNewRoute,
@@ -818,6 +859,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCouponsIndexRoute: AppCouponsIndexRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
+  AppProductsIdDetailsRoute: AppProductsIdDetailsRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

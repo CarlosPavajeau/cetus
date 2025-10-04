@@ -1,5 +1,23 @@
 import { type } from 'arktype'
 
+const CreateOrderItemSchema = type({
+  productName: type.string
+    .moreThanLength(1)
+    .describe('Ingresa el nombre del producto'),
+  imageUrl: 'string?',
+  variantId: type.number
+    .moreThan(0)
+    .describe(
+      'Se requiere un identificador válido de la variante del producto',
+    ),
+  quantity: type.number
+    .moreThan(0)
+    .describe('La cantidad debe ser al menos 1 unidad'),
+  price: type.number
+    .moreThan(0)
+    .describe('El precio debe ser un valor positivo'),
+})
+
 export const CreateOrderSchema = type({
   address: type.string.moreThanLength(1).configure({
     message: 'Ingrese una dirección completa',
@@ -10,23 +28,9 @@ export const CreateOrderSchema = type({
   total: type.number
     .moreThan(0)
     .describe('El total del pedido debe ser mayor a cero'),
-  items: type({
-    productName: type.string
-      .moreThanLength(1)
-      .describe('Ingresa el nombre del producto'),
-    imageUrl: 'string?',
-    productId: type.string
-      .moreThanLength(1)
-      .describe('Se requiere un identificador válido del producto'),
-    quantity: type.number
-      .moreThan(0)
-      .describe('La cantidad debe ser al menos 1 unidad'),
-    price: type.number
-      .moreThan(0)
-      .describe('El precio debe ser un valor positivo'),
-  })
-    .array()
-    .moreThanLength(0),
+  items: CreateOrderItemSchema.array()
+    .moreThanLength(0)
+    .configure({ message: 'Agrega al menos un producto' }),
   customer: {
     id: type.string.moreThanLength(1).configure({
       message: 'Por favor ingrese su número de identificación',

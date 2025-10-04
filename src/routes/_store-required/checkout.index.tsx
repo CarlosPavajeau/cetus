@@ -21,11 +21,14 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
+import consola from 'consola'
 import { ArrowRightIcon } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_store-required/checkout/')({
+  ssr: false,
   component: RouteComponent,
 })
 
@@ -37,17 +40,21 @@ function useCartCheckout() {
     [items],
   )
 
+  const toOrderItems = (source: typeof items) =>
+    source.map((item) => ({
+      productName: item.product.name,
+      variantId: item.product.variantId,
+      quantity: item.quantity,
+      price: item.product.price,
+      imageUrl: item.product.imageUrl,
+    })) as CreateOrder['items']
+
   const form = useForm({
     resolver: arktypeResolver(CreateOrderSchema),
     defaultValues: {
       address: '',
       total,
-      items: items.map((item) => ({
-        productName: item.product.name,
-        productId: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price,
-      })),
+      items: toOrderItems(items),
     },
   })
 
@@ -59,18 +66,7 @@ function useCartCheckout() {
   useEffect(() => {
     form.setValue('total', total)
 
-    const formItems = items.map(
-      (item) =>
-        ({
-          productName: item.product.name,
-          productId: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price,
-          imageUrl: item.product.imageUrl as string,
-        }) satisfies CreateOrder['items'][number],
-    )
-
-    form.setValue('items', formItems)
+    form.setValue('items', toOrderItems(items))
   }, [form, items, total])
 
   const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
@@ -89,6 +85,12 @@ function useCartCheckout() {
           id: orderId,
         },
       })
+    },
+    onError: (error) => {
+      consola.error('Error creating order:', error)
+      toast.error(
+        'Ha ocurrido un error en la creación de la orden. Intente de nuevo',
+      )
     },
   })
 

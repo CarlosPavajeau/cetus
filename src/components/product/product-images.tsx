@@ -1,4 +1,4 @@
-import type { ProductForSale, ProductImage } from '@/api/products'
+import type { ProductImage } from '@/api/products'
 import {
   Carousel,
   type CarouselApi,
@@ -8,41 +8,28 @@ import {
 import { getImageUrl } from '@/shared/cdn'
 import { cn } from '@/shared/cn'
 import { Image } from '@unpic/react'
-import { useEffect, useMemo, useState } from 'react'
+import consola from 'consola'
+import { useEffect, useState } from 'react'
 
 type Props = {
-  product: ProductForSale
+  images: ProductImage[]
 }
 
-export function ProductImages({ product }: Readonly<Props>) {
-  const images = useMemo(() => {
-    if (product.images.length === 0) {
-      return [
-        {
-          id: 1,
-          imageUrl: product.imageUrl ?? '/placeholder.svg',
-          altText: product.name,
-          sortOrder: 0,
-        } satisfies ProductImage,
-      ]
-    }
-
-    return product.images
-  }, [product])
-
+export function ProductImages({ images }: Readonly<Props>) {
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
 
   useEffect(() => {
     if (!api) {
-      return
+      return () => consola.log('Carousel API not initialized')
     }
 
     setCurrent(api.selectedScrollSnap())
 
-    api.on('select', () => {
-      setCurrent(api.selectedScrollSnap())
-    })
+    const onSelect = () => setCurrent(api.selectedScrollSnap())
+    api.on('select', onSelect)
+
+    return () => api.off?.('select', onSelect)
   }, [api])
 
   return (
@@ -53,7 +40,7 @@ export function ProductImages({ product }: Readonly<Props>) {
             <CarouselItem key={image.id}>
               <div className="relative aspect-square overflow-hidden">
                 <Image
-                  alt={product.name}
+                  alt={image.altText}
                   className="h-full w-full object-cover"
                   layout="fullWidth"
                   src={getImageUrl(image.imageUrl || 'placeholder.svg')}
@@ -67,9 +54,10 @@ export function ProductImages({ product }: Readonly<Props>) {
       <div className="space-x-2">
         {images.map((image, index) => (
           <button
+            aria-current={current === index}
             className={cn(
               'h-20 w-20 overflow-hidden rounded opacity-50',
-              current === index && 'border-primary opacity-100',
+              current === index && 'opacity-100',
             )}
             key={image.id}
             onClick={() => api?.scrollTo(index)}
@@ -79,7 +67,8 @@ export function ProductImages({ product }: Readonly<Props>) {
               alt={`Product view ${index + 1}`}
               className="h-full w-full object-cover"
               height={80}
-              src={getImageUrl(image.imageUrl || '/placeholder.svg')}
+              loading="lazy"
+              src={getImageUrl(image.imageUrl || 'placeholder.svg')}
               width={80}
             />
           </button>

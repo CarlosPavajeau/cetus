@@ -1,10 +1,18 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import type { ProductForSale } from '@/api/products'
+export type CartItemProduct = {
+  productId: string
+  name: string
+  slug: string
+  imageUrl: string
+  price: number
+  variantId: number
+  stock: number
+}
 
 export type CartItem = {
-  product: ProductForSale
+  product: CartItemProduct
   quantity: number
 }
 
@@ -12,9 +20,9 @@ type CartStore = {
   items: CartItem[]
   count: number
 
-  add: (product: ProductForSale, quantity?: number) => boolean
-  reduce: (product: ProductForSale) => void
-  remove: (product: ProductForSale) => void
+  add: (product: CartItemProduct, quantity?: number) => boolean
+  reduce: (product: CartItemProduct) => void
+  remove: (product: CartItemProduct) => void
 
   clear: () => void
 }
@@ -27,17 +35,23 @@ export const useCart = create<CartStore>()(
       add: (product, quantity) => {
         const { items } = get()
 
-        const item = items.find((item) => item.product.id === product.id)
+        const found = items.find(
+          (item) => item.product.variantId === product.variantId,
+        )
         const quantityToAdd = quantity ?? 1
 
-        if (item) {
-          if (item.quantity + quantityToAdd > product.stock) {
+        if (!Number.isFinite(quantityToAdd) || quantityToAdd <= 0) {
+          return false
+        }
+
+        if (found) {
+          if (found.quantity + quantityToAdd > product.stock) {
             return false
           }
 
           set((state) => ({
             items: state.items.map((item) =>
-              item.product.id === product.id
+              item.product.variantId === product.variantId
                 ? {
                     ...item,
                     quantity: item.quantity + quantityToAdd,
@@ -47,6 +61,11 @@ export const useCart = create<CartStore>()(
             count: state.count + quantityToAdd,
           }))
         } else {
+          // enforce stock on first add
+          if (quantityToAdd > product.stock) {
+            return false
+          }
+
           set((state) => ({
             items: [...state.items, { product, quantity: quantityToAdd }],
             count: state.count + quantityToAdd,
@@ -58,25 +77,31 @@ export const useCart = create<CartStore>()(
       remove: (product) => {
         const { items } = get()
 
-        const item = items.find((item) => item.product.id === product.id)
+        const found = items.find(
+          (item) => item.product.variantId === product.variantId,
+        )
 
-        if (item) {
+        if (found) {
           set((state) => ({
-            items: state.items.filter((item) => item.product.id !== product.id),
-            count: state.count - item.quantity,
+            items: state.items.filter(
+              (item) => item.product.variantId !== product.variantId,
+            ),
+            count: state.count - found.quantity,
           }))
         }
       },
       reduce: (product) => {
         const { items } = get()
 
-        const item = items.find((item) => item.product.id === product.id)
+        const found = items.find(
+          (item) => item.product.variantId === product.variantId,
+        )
 
-        if (item) {
-          if (item.quantity > 1) {
+        if (found) {
+          if (found.quantity > 1) {
             set((state) => ({
               items: state.items.map((item) =>
-                item.product.id === product.id
+                item.product.variantId === product.variantId
                   ? {
                       ...item,
                       quantity: item.quantity - 1,
@@ -88,7 +113,7 @@ export const useCart = create<CartStore>()(
           } else {
             set((state) => ({
               items: state.items.filter(
-                (item) => item.product.id !== product.id,
+                (item) => item.product.variantId !== product.variantId,
               ),
               count: state.count - 1,
             }))
