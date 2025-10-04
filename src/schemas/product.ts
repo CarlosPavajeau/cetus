@@ -4,7 +4,7 @@ export const BaseProductSchema = type({
   name: type.string.moreThanLength(1).configure({
     message: 'El nombre del producto es requerido',
   }),
-  description: type.string.optional(),
+  description: type.string.or(type.undefined).optional(),
   price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
@@ -27,7 +27,7 @@ export const CreateProductSchema = type({
   name: type.string.moreThanLength(1).configure({
     message: 'El nombre del producto es requerido',
   }),
-  description: type.string.optional(),
+  description: type.string.or(type.undefined).optional(),
   categoryId: type.string.moreThanLength(1).configure({
     message: 'La categoría del producto es requerida',
   }),
@@ -38,7 +38,7 @@ export const UpdateProductSchema = type({
   name: type.string.moreThanLength(1).configure({
     message: 'El nombre del producto es requerido',
   }),
-  description: type.string.optional(),
+  description: type.string.or(type.undefined).optional(),
   categoryId: type.string.moreThanLength(1).configure({
     message: 'La categoría del producto es requerida',
   }),
