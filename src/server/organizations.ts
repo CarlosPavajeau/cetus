@@ -1,10 +1,10 @@
 import { auth } from '@/server/auth'
 import { createServerFn } from '@tanstack/react-start'
-import { getHeaders } from '@tanstack/react-start/server'
+import { getRequestHeaders } from '@tanstack/react-start/server'
 
 export const SetActiveOrg = createServerFn({ method: 'POST' }).handler(
   async () => {
-    const headers = new Headers(getHeaders() as HeadersInit)
+    const headers = new Headers(getRequestHeaders() as HeadersInit)
 
     const list = await auth.api.listOrganizations({
       headers,
