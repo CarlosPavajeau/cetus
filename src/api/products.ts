@@ -207,6 +207,14 @@ export async function createProductVariant(variant: CreateProductVariant) {
   return response.data
 }
 
+export async function fetchProductVariants(productId: string) {
+  const response = await api.get<ProductVariantResponse[]>(
+    `products/${productId}/variants`,
+  )
+
+  return response.data
+}
+
 export type CreateProductOption = {
   productId: string
   optionTypeId: number

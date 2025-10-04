@@ -1,15 +1,9 @@
 import { DefaultLoader } from '@/components/default-loader'
+import { ProductVariants } from '@/components/product/product-variants'
 import { UpdateProductForm } from '@/components/product/update-product-form'
 import { UpdateProductOptionsForm } from '@/components/product/update-product-options-form'
 import { ReturnButton } from '@/components/return-button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { productQuery } from '@/hooks/products/use-product'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -66,25 +60,7 @@ function RouteComponent() {
           <UpdateProductOptionsForm product={product} />
         </TabsContent>
         <TabsContent value="variants">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-2">
-                  <PackageIcon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-foreground">
-                    Variantes del producto
-                  </CardTitle>
-                  <CardDescription>
-                    Actualiza las variantes del producto
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent>{product.slug}</CardContent>
-          </Card>
+          <ProductVariants product={product} />
         </TabsContent>
       </Tabs>
     </div>
