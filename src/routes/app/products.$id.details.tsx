@@ -1,5 +1,6 @@
 import { DefaultLoader } from '@/components/default-loader'
 import { UpdateProductForm } from '@/components/product/update-product-form'
+import { UpdateProductOptionsForm } from '@/components/product/update-product-options-form'
 import { ReturnButton } from '@/components/return-button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -62,26 +63,7 @@ function RouteComponent() {
           <UpdateProductForm product={product} />
         </TabsContent>
         <TabsContent value="options">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-2">
-                  <SettingsIcon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-foreground">
-                    Opciones del producto
-                  </CardTitle>
-                  <CardDescription>
-                    Actualiza las diferentes opciones disponibles para tu
-                    producto (por ejemplo, tamaño, color, sabor)
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent>{product.category}</CardContent>
-          </Card>
+          <UpdateProductOptionsForm product={product} />
         </TabsContent>
         <TabsContent value="variants">
           <Card>
