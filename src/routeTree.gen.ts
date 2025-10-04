@@ -8,8 +8,6 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignUpRouteImport } from './routes/sign-up'
@@ -45,13 +43,11 @@ import { Route as OnboardingMercadoPagoLinkRouteImport } from './routes/onboardi
 import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
 import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
+import { Route as ApiMercadopagoConnectRouteImport } from './routes/api/mercadopago/connect'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as StoreRequiredProductsAllRouteImport } from './routes/_store-required/products/all'
 import { Route as StoreRequiredCheckoutIdRouteImport } from './routes/_store-required/checkout.$id'
 import { Route as AppProductsIdDetailsRouteImport } from './routes/app/products.$id.details'
-import { ServerRoute as ApiMercadopagoConnectServerRouteImport } from './routes/api/mercadopago/connect'
-import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
-
-const rootServerRouteImport = createServerRootRoute()
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -225,6 +221,16 @@ const AppCouponsNewRoute = AppCouponsNewRouteImport.update({
   path: '/coupons/new',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiMercadopagoConnectRoute = ApiMercadopagoConnectRouteImport.update({
+  id: '/api/mercadopago/connect',
+  path: '/api/mercadopago/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StoreRequiredProductsAllRoute =
   StoreRequiredProductsAllRouteImport.update({
     id: '/products/all',
@@ -240,17 +246,6 @@ const AppProductsIdDetailsRoute = AppProductsIdDetailsRouteImport.update({
   id: '/products/$id/details',
   path: '/products/$id/details',
   getParentRoute: () => AppRoute,
-} as any)
-const ApiMercadopagoConnectServerRoute =
-  ApiMercadopagoConnectServerRouteImport.update({
-    id: '/api/mercadopago/connect',
-    path: '/api/mercadopago/connect',
-    getParentRoute: () => rootServerRouteImport,
-  } as any)
-const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootServerRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -280,6 +275,8 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingIndexRoute
   '/checkout/$id': typeof StoreRequiredCheckoutIdRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -317,6 +314,8 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingIndexRoute
   '/checkout/$id': typeof StoreRequiredCheckoutIdRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -357,6 +356,8 @@ export interface FileRoutesById {
   '/onboarding/': typeof OnboardingIndexRoute
   '/_store-required/checkout/$id': typeof StoreRequiredCheckoutIdRoute
   '/_store-required/products/all': typeof StoreRequiredProductsAllRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -397,6 +398,8 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/checkout/$id'
     | '/products/all'
+    | '/api/auth/$'
+    | '/api/mercadopago/connect'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -434,6 +437,8 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/checkout/$id'
     | '/products/all'
+    | '/api/auth/$'
+    | '/api/mercadopago/connect'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -473,6 +478,8 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/_store-required/checkout/$id'
     | '/_store-required/products/all'
+    | '/api/auth/$'
+    | '/api/mercadopago/connect'
     | '/app/coupons/new'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -502,32 +509,9 @@ export interface RootRouteChildren {
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   ReviewsNewRoute: typeof ReviewsNewRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiMercadopagoConnectRoute: typeof ApiMercadopagoConnectRoute
   OnboardingMercadoPagoLinkRoute: typeof OnboardingMercadoPagoLinkRoute
-}
-export interface FileServerRoutesByFullPath {
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-  '/api/mercadopago/connect': typeof ApiMercadopagoConnectServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-  '/api/mercadopago/connect': typeof ApiMercadopagoConnectServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-  '/api/mercadopago/connect': typeof ApiMercadopagoConnectServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/auth/$' | '/api/mercadopago/connect'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/auth/$' | '/api/mercadopago/connect'
-  id: '__root__' | '/api/auth/$' | '/api/mercadopago/connect'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
-  ApiMercadopagoConnectServerRoute: typeof ApiMercadopagoConnectServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -770,6 +754,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCouponsNewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/mercadopago/connect': {
+      id: '/api/mercadopago/connect'
+      path: '/api/mercadopago/connect'
+      fullPath: '/api/mercadopago/connect'
+      preLoaderRoute: typeof ApiMercadopagoConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_store-required/products/all': {
       id: '/_store-required/products/all'
       path: '/products/all'
@@ -790,24 +788,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/products/$id/details'
       preLoaderRoute: typeof AppProductsIdDetailsRouteImport
       parentRoute: typeof AppRoute
-    }
-  }
-}
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/mercadopago/connect': {
-      id: '/api/mercadopago/connect'
-      path: '/api/mercadopago/connect'
-      fullPath: '/api/mercadopago/connect'
-      preLoaderRoute: typeof ApiMercadopagoConnectServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatServerRouteImport
-      parentRoute: typeof rootServerRouteImport
     }
   }
 }
@@ -906,15 +886,19 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriesSlugRoute: CategoriesSlugRoute,
   ReviewsNewRoute: ReviewsNewRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiMercadopagoConnectRoute: ApiMercadopagoConnectRoute,
   OnboardingMercadoPagoLinkRoute: OnboardingMercadoPagoLinkRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
-  ApiMercadopagoConnectServerRoute: ApiMercadopagoConnectServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()
