@@ -17,7 +17,7 @@ type Props = {
 }
 
 export function ProductVariants({ product }: Props) {
-  const { isLoading, data } = useQuery({
+  const { isLoading, data, error } = useQuery({
     queryKey: ['products', 'variant', product.id],
     queryFn: () => fetchProductVariants(product.id),
   })
@@ -32,8 +32,43 @@ export function ProductVariants({ product }: Props) {
     )
   }
 
-  if (!data) {
-    return null
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <p className="text-destructive text-sm">
+            Error al cargar las variantes del producto
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <PackageIcon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-foreground">
+                Variantes del producto
+              </CardTitle>
+              <CardDescription>
+                Actualiza las variantes del producto
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">
+            Este producto no tiene variantes configuradas
+          </p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
