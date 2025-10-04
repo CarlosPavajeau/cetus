@@ -16,7 +16,7 @@ type Props = {
 }
 
 export function UpdateProductOptionsForm({ product }: Props) {
-  const { isLoading, data } = useQuery({
+  const { isLoading, data, error } = useQuery({
     queryKey: ['products', 'options', product.id],
     queryFn: () => fetchProductOptions(product.id),
   })
@@ -31,8 +31,43 @@ export function UpdateProductOptionsForm({ product }: Props) {
     )
   }
 
-  if (!data) {
-    return null
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <p className="text-destructive text-sm">
+            Error al cargar las opciones del producto
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <SettingsIcon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-foreground">
+                Opciones del producto
+              </CardTitle>
+              <CardDescription>
+                Opciones disponibles para tu producto
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">
+            Este producto no tiene opciones configuradas
+          </p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
