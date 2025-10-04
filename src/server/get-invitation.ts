@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getHeaders } from '@tanstack/react-start/server'
+import { getRequestHeaders } from '@tanstack/react-start/server'
 import { type } from 'arktype'
 import { auth } from './auth'
 
@@ -8,7 +8,7 @@ const GetInvitationSchema = type({
 })
 
 export const GetInvitation = createServerFn({ method: 'GET' })
-  .validator(GetInvitationSchema)
+  .inputValidator(GetInvitationSchema)
   .handler(async ({ data }) => {
     const id = data.id
 
@@ -16,7 +16,7 @@ export const GetInvitation = createServerFn({ method: 'GET' })
       query: {
         id,
       },
-      headers: new Headers(getHeaders() as HeadersInit),
+      headers: new Headers(getRequestHeaders() as HeadersInit),
     })
 
     return invitation

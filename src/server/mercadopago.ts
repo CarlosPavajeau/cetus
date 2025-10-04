@@ -4,7 +4,7 @@ import { type } from 'arktype'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 
 export const mercadopago = new MercadoPagoConfig({
-  accessToken: env.MP_ACCESS_TOKEN!,
+  accessToken: env.MP_ACCESS_TOKEN,
 })
 
 const GetPaymentSchema = type({
@@ -12,7 +12,7 @@ const GetPaymentSchema = type({
 })
 
 export const GetPayment = createServerFn({ method: 'GET' })
-  .validator(GetPaymentSchema)
+  .inputValidator(GetPaymentSchema)
   .handler(async ({ data }) => {
     const { payment_id } = data
     const paymentClient = new Payment(mercadopago)
