@@ -1,110 +1,110 @@
-import { Currency } from '@/components/currency'
-import { DefaultLoader } from '@/components/default-loader'
+import type { Order } from '@/api/orders'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { usePaymentInfo } from '@/hooks/use-payment-info'
 import { cn } from '@/shared/cn'
 import {
-  getMercadoPagoPaymentFeeLabel,
   getMercadoPagoPaymentMethodLabel,
   getMercadoPagoPaymentStatusLabel,
 } from '@/shared/mercado-pago'
+import { Skeleton } from '../ui/skeleton'
 
 type Props = {
-  id: number
+  order: Order
 }
 
-export function PaymentSummary({ id }: Readonly<Props>) {
-  const { payment, isLoading } = usePaymentInfo(id)
+export function PaymentSummary({ order }: Readonly<Props>) {
+  const { payment, isLoading } = usePaymentInfo(
+    Number(order.transactionId || 0),
+  )
 
   if (isLoading) {
-    return <DefaultLoader />
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Información del pago</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-3 text-sm">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (!payment) {
-    return null
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Información del pago</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <p>No se encontró información del pago.</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <div className="space-y-3 rounded-md border bg-card p-4">
-      <div className="flex justify-between">
-        <h3 className="font-medium">Información del pago</h3>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>Información del pago</span>
 
-        <Badge variant="outline">
-          <span
-            aria-hidden="true"
-            className={cn('size-1.5 rounded-full bg-success-base')}
-          />
-          {getMercadoPagoPaymentStatusLabel(payment.status)}
-        </Badge>
-      </div>
-
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Id</span>
-
-          <span>{payment.id}</span>
-        </div>
-
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Método de pago</span>
-
-          <span>
-            {getMercadoPagoPaymentMethodLabel(payment.payment_method_id)}
-          </span>
-        </div>
-
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Monto</span>
-
-          <span className="text-success-base">
-            + <Currency currency="COP" value={payment.net_amount || 0} />
-          </span>
-        </div>
-
-        {payment.fee_details?.map((fee) => (
-          <div className="flex justify-between" key={fee.type}>
-            <span className="text-muted-foreground">
-              {getMercadoPagoPaymentFeeLabel(fee.type)}
-            </span>
-
-            <span className="text-error-base">
-              - <Currency currency="COP" value={fee.amount || 0} />
-            </span>
-          </div>
-        ))}
-
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Cantidad neta recibida</span>
-
-          <span className="font-medium text-success-base">
-            <Currency
-              currency="COP"
-              value={payment.transaction_details?.net_received_amount || 0}
+          <Badge variant="outline">
+            <span
+              aria-hidden="true"
+              className={cn('size-1.5 rounded-full bg-success-base')}
             />
-          </span>
+            {getMercadoPagoPaymentStatusLabel(payment.status)}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <div className="space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Id</span>
+
+            <span>{payment.id}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Método de pago</span>
+
+            <span>
+              {getMercadoPagoPaymentMethodLabel(payment.payment_method_id)}
+            </span>
+          </div>
+
+          {payment.date_created && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Iniciado el</span>
+
+              <span>
+                <FormattedDate date={new Date(payment.date_created)} />
+              </span>
+            </div>
+          )}
+
+          {payment.date_approved && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Aprobado el</span>
+
+              <span>
+                <FormattedDate date={new Date(payment.date_approved)} />
+              </span>
+            </div>
+          )}
         </div>
-
-        {payment.date_created && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Fecha de creación</span>
-
-            <span>
-              <FormattedDate date={new Date(payment.date_created)} />
-            </span>
-          </div>
-        )}
-
-        {payment.date_approved && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Fecha de aprobación</span>
-
-            <span>
-              <FormattedDate date={new Date(payment.date_approved)} />
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

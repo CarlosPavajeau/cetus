@@ -8,6 +8,7 @@ export function usePaymentInfo(paymentId: number) {
       GetPayment({
         data: { payment_id: paymentId },
       }),
+    enabled: paymentId > 0,
   })
 
   return {

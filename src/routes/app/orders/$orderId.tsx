@@ -3,9 +3,9 @@ import { DefaultLoader } from '@/components/default-loader'
 import { CancelOrderButton } from '@/components/order/cancel-order-button'
 import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
 import { OrderSummary } from '@/components/order/order-summary'
-import { PaymentSummary } from '@/components/order/payment-summary'
 import { PageHeader } from '@/components/page-header'
 import { ReturnButton } from '@/components/return-button'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
 import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
@@ -126,29 +126,30 @@ function OrderDetailsComponent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <ReturnButton />
-        <h2 className="font-medium">
-          Procesamiento del pedido #{order.orderNumber}
-        </h2>
+    <div className="mx-auto max-w-7xl">
+      <div className="flex items-center justify-between space-y-2">
+        <div className="flex items-center justify-between space-y-2">
+          <ReturnButton />
+        </div>
+
+        <Badge className="ml-auto" variant="secondary">
+          #{order.orderNumber}
+        </Badge>
       </div>
 
-      <OrderSummary order={order} showId />
+      <div>
+        <OrderSummary order={order} />
 
-      {order.transactionId && (
-        <PaymentSummary id={Number(order.transactionId)} />
-      )}
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          {order.status === OrderStatus.Paid && (
+            <CompleteOrderButton
+              onSuccess={handleOrderSuccess}
+              orderId={order.id}
+            />
+          )}
 
-      <div className="space-y-3">
-        {order.status === OrderStatus.Paid && (
-          <CompleteOrderButton
-            onSuccess={handleOrderSuccess}
-            orderId={order.id}
-          />
-        )}
-
-        {isCancelable && <CancelOrderButton orderId={order.id} />}
+          {isCancelable && <CancelOrderButton orderId={order.id} />}
+        </div>
       </div>
     </div>
   )
