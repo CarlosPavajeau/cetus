@@ -47,21 +47,15 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <h2 className="font-medium">Pedido #{order.orderNumber}</h2>
-        </div>
+      <div className="space-y-8">
+        <OrderSummary order={order} />
 
-        <OrderSummary order={order} showStatus />
-
-        <div className="space-y-3">
-          <Button asChild className="w-full" variant="outline">
-            <Link to="/">
-              <ShoppingBagIcon className="mr-2" />
-              Seguir comprando
-            </Link>
-          </Button>
-        </div>
+        <Button asChild className="w-full" size="lg">
+          <Link to="/">
+            <ShoppingBagIcon />
+            Seguir comprando
+          </Link>
+        </Button>
       </div>
     </DefaultPageLayout>
   )
