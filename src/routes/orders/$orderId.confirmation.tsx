@@ -1,8 +1,8 @@
 import { fetchOrder } from '@/api/orders'
+import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { SupportButton } from '@/components/support-button'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { GetPayment } from '@/server/mercadopago'
 import { useCart } from '@/store/cart'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
@@ -48,8 +48,7 @@ export const Route = createFileRoute('/orders/$orderId/confirmation')({
   },
   pendingComponent: () => (
     <DefaultPageLayout>
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
+      <DefaultLoader />
     </DefaultPageLayout>
   ),
   component: OrderConfirmationComponent,
