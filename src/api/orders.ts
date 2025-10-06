@@ -2,10 +2,10 @@ import { api } from '@/api/client'
 import type { CreateOrder } from '@/schemas/orders'
 
 export enum OrderStatus {
-  Pending,
-  Paid,
-  Delivered,
-  Canceled,
+  Pending = 0,
+  Paid = 1,
+  Delivered = 2,
+  Canceled = 3,
 }
 
 export const OrderStatusText = {
@@ -56,6 +56,7 @@ export type Order = {
   createdAt: string
 
   transactionId?: string
+  storeId: string
 }
 
 export const fetchOrder = async (id: string) => {
