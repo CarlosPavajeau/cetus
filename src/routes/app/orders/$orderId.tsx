@@ -100,17 +100,10 @@ function OrderDetailsComponent() {
     }
   }, [navigate, order])
 
-  const isCancelable = useMemo(() => {
-    if (!order) {
-      return false
-    }
-
-    if (order.status !== OrderStatus.Canceled) {
-      return true
-    }
-
-    return false
-  }, [order])
+  const isCancelable = useMemo(
+    () => (order ? order.status !== OrderStatus.Canceled : false),
+    [order],
+  )
 
   if (isLoading) {
     return <DefaultLoader />
