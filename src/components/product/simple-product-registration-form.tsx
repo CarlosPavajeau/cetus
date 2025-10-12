@@ -189,7 +189,7 @@ export function SimpleProductRegistrationForm({ onBack }: Props) {
 
                     <FormField
                       control={form.control}
-                      name="stockQuantity"
+                      name="stock"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Stock</FormLabel>

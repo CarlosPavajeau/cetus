@@ -65,14 +65,16 @@ export function ProductVariantRegistrationSheet() {
     form.setValue('images', formImages)
   }
 
-  const usedVariantCombinations = useMemo(() => {
-    return variants.map((variant) =>
-      variant.optionValueIds
-        .map((id) => Number(id))
-        .sort((a, b) => a - b)
-        .join('-'),
-    )
-  }, [variants])
+  const usedVariantCombinations = useMemo(
+    () =>
+      variants.map((variant) =>
+        variant.optionValueIds
+          .map((id) => Number(id))
+          .sort((a, b) => a - b)
+          .join('-'),
+      ),
+    [variants],
+  )
 
   const currentValues = form.watch('optionValueIds')
   const canUseOptionValue = useCallback(
@@ -239,7 +241,7 @@ export function ProductVariantRegistrationSheet() {
 
               <FormField
                 control={form.control}
-                name="stockQuantity"
+                name="stock"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Stock</FormLabel>

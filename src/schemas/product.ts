@@ -69,7 +69,7 @@ export const CreateProductVariantSchema = type({
   price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
-  stockQuantity: type('string.integer.parse')
+  stock: type('string.integer.parse')
     .or('number>=0')
     .to('number>=0')
     .configure({
@@ -100,7 +100,7 @@ export const CreateSimpleProductSchema = type({
   price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
-  stockQuantity: type('string.integer.parse')
+  stock: type('string.integer.parse')
     .or('number>=0')
     .to('number>=0')
     .configure({

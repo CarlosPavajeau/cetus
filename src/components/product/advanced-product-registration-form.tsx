@@ -443,7 +443,7 @@ function ProductVariantsStep() {
                         <span className="text-muted-foreground text-sm">
                           Stock:{' '}
                           <span className="text-foreground">
-                            {variant.stockQuantity}
+                            {variant.stock}
                           </span>
                         </span>
 
