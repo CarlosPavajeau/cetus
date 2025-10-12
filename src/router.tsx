@@ -1,3 +1,4 @@
+import { NotFound } from '@/components/not-found'
 import { QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
@@ -10,9 +11,9 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultPreload: 'intent',
     defaultPendingMs: 0,
     defaultPendingMinMs: 0,
+    defaultNotFoundComponent: () => <NotFound />,
   })
 
   setupRouterSsrQueryIntegration({
