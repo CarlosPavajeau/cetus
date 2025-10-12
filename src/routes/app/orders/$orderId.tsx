@@ -105,7 +105,7 @@ function OrderDetailsComponent() {
       return false
     }
 
-    if (order.status === OrderStatus.Pending) {
+    if (order.status !== OrderStatus.Canceled) {
       return true
     }
 
