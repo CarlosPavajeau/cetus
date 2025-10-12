@@ -57,7 +57,9 @@ export function OrderSummary({ order }: Readonly<Props>) {
               <div className="flex items-start gap-2">
                 <MapPinIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
                 <div className="text-sm">
-                  <div>{order.address}</div>
+                  <div>
+                    {order.address} - {order.city}, {order.state}
+                  </div>
                 </div>
               </div>
 
