@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { type } from 'arktype'
+import consola from 'consola'
 import { BanIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -34,8 +35,8 @@ const MaxCancelOrderReasonLength = 1024
 
 const CancelOrderSchema = type({
   id: type('string.uuid'),
-  reason: type(`string < ${MaxCancelOrderReasonLength}`).configure({
-    message: `El motivo no debe exceder los ${MaxCancelOrderReasonLength} caracteres.`,
+  reason: type(`string <= ${MaxCancelOrderReasonLength}`).configure({
+    message: `El motivo debe tener menos de ${MaxCancelOrderReasonLength} caracteres.`,
   }),
 })
 
@@ -57,6 +58,13 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
         queryKey: ['orders'],
       })
     },
+    onError: (error) => {
+      consola.error(error)
+      form.setError('root', {
+        type: 'server',
+        message: 'No se pudo cancelar el pedido. Intenta de nuevo.',
+      })
+    },
   })
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -67,7 +75,12 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
     <Form {...form}>
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogTrigger asChild>
-          <Button className="group w-full" size="lg" variant="destructive">
+          <Button
+            className="group w-full"
+            size="lg"
+            type="button"
+            variant="destructive"
+          >
             <BanIcon aria-hidden="true" size={16} />
             Cancelar pedido
           </Button>
@@ -90,7 +103,10 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
                 <FormItem>
                   <FormLabel>Motivo</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Textarea
+                      maxLength={MaxCancelOrderReasonLength}
+                      {...field}
+                    />
                   </FormControl>
 
                   <FormMessage />
@@ -109,6 +125,7 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
               <SubmitButton
                 disabled={form.formState.isSubmitting}
                 isSubmitting={form.formState.isSubmitting}
+                type="submit"
                 variant="destructive"
               >
                 Cancelar pedido
