@@ -1,4 +1,5 @@
 import { cancelOrder } from '@/api/orders'
+import { SubmitButton } from '@/components/submit-button'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -24,7 +25,6 @@ import { type } from 'arktype'
 import { BanIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { SubmitButton } from '../submit-button'
 
 type Props = {
   orderId: string
@@ -34,7 +34,9 @@ const MaxCancelOrderReasonLength = 1024
 
 const CancelOrderSchema = type({
   id: type('string.uuid'),
-  reason: type('string').lessThanLength(MaxCancelOrderReasonLength),
+  reason: type(`string < ${MaxCancelOrderReasonLength}`).configure({
+    message: `El motivo no debe exceder los ${MaxCancelOrderReasonLength} caracteres.`,
+  }),
 })
 
 export function CancelOrderDialog({ orderId }: Readonly<Props>) {
@@ -63,7 +65,7 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
 
   return (
     <Form {...form}>
-      <Dialog>
+      <Dialog onOpenChange={setOpen} open={open}>
         <DialogTrigger asChild>
           <Button className="group w-full" size="lg" variant="destructive">
             <BanIcon aria-hidden="true" size={16} />
@@ -97,6 +99,13 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
             />
 
             <DialogFooter>
+              <Button
+                onClick={() => setOpen(false)}
+                type="button"
+                variant="outline"
+              >
+                Cancelar
+              </Button>
               <SubmitButton
                 disabled={form.formState.isSubmitting}
                 isSubmitting={form.formState.isSubmitting}
