@@ -14,8 +14,10 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { UpdateProductVariantSchema } from '@/schemas/product'
+import { getImageUrl } from '@/shared/cdn'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
+import { Image } from '@unpic/react'
 import { RefreshCwIcon, TagIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -63,13 +65,7 @@ export function UpdateProductVariantForm({ variant, productId }: Props) {
         <div className="flex flex-1 flex-col gap-2">
           <div className="flex justify-between">
             <div className="flex items-center gap-2">
-              {variant.optionValues.length > 0 && (
-                <h3 className="line-clamp-1 font-medium text-sm">
-                  {variant.optionValues.map((v) => v.value).join(' / ')}
-                </h3>
-              )}
-
-              <Badge className="text-xs" variant="secondary">
+              <Badge className="text-xs" variant="outline">
                 <TagIcon className="inline h-3 w-3" />
                 {variant.sku}
               </Badge>
@@ -87,9 +83,24 @@ export function UpdateProductVariantForm({ variant, productId }: Props) {
 
           <div className="flex items-center gap-2">
             {variant.optionValues.map((value) => (
-              <Badge key={value.id} variant="secondary">
+              <Badge key={value.id}>
                 {value.optionTypeName}: {value.value}
               </Badge>
+            ))}
+          </div>
+
+          <div className="mb-4 flex gap-2">
+            {variant.images.map((image) => (
+              <Image
+                alt={image.altText}
+                className="rounded-sm object-cover"
+                height={96}
+                key={image.id}
+                layout="constrained"
+                priority
+                src={getImageUrl(image.imageUrl || 'placeholder.svg')}
+                width={96}
+              />
             ))}
           </div>
 
