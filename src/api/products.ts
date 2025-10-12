@@ -5,6 +5,7 @@ import type {
   CreateProductVariant,
   CreateSimpleProduct,
   UpdateProduct,
+  UpdateProductVariant,
 } from '@/schemas/product'
 
 export type ProductImage = {
@@ -233,6 +234,15 @@ export type ProductOptionResponse = {
 export async function fetchProductOptions(productId: string) {
   const response = await api.get<ProductOptionResponse[]>(
     `products/${productId}/options`,
+  )
+
+  return response.data
+}
+
+export async function updateProductVariant(variant: UpdateProductVariant) {
+  const response = await api.put<ProductVariantResponse>(
+    `products/variants/${variant.id}`,
+    variant,
   )
 
   return response.data
