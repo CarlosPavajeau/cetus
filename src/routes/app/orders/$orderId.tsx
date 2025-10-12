@@ -1,6 +1,6 @@
 import { deliverOrder, OrderStatus } from '@/api/orders'
 import { DefaultLoader } from '@/components/default-loader'
-import { CancelOrderButton } from '@/components/order/cancel-order-button'
+import { CancelOrderDialog } from '@/components/order/cancel-order-dialog'
 import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
 import { OrderSummary } from '@/components/order/order-summary'
 import { PageHeader } from '@/components/page-header'
@@ -148,7 +148,7 @@ function OrderDetailsComponent() {
             />
           )}
 
-          {isCancelable && <CancelOrderButton orderId={order.id} />}
+          {isCancelable && <CancelOrderDialog orderId={order.id} />}
         </div>
       </div>
     </div>
