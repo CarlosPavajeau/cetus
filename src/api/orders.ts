@@ -94,8 +94,16 @@ export const deliverOrder = async (orderId: string) => {
   return response.data
 }
 
-export const cancelOrder = async (orderId: string) => {
-  const response = await api.post<SimpleOrder>(`/orders/${orderId}/cancel`)
+export type CancelOrderRequest = {
+  id: string
+  reason: string
+}
+
+export const cancelOrder = async (data: CancelOrderRequest) => {
+  const response = await api.post<SimpleOrder>(
+    `/orders/${data.id}/cancel`,
+    data,
+  )
 
   return response.data
 }
