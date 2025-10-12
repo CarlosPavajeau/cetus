@@ -6,6 +6,8 @@ import { admin, jwt, organization } from 'better-auth/plugins'
 import { reactStartCookies } from 'better-auth/react-start'
 import { Pool } from 'pg'
 
+const MaxSessionCacheAge = 300 // 5 minutes
+
 export const auth = betterAuth({
   user: {
     modelName: 'users',
@@ -39,6 +41,10 @@ export const auth = betterAuth({
       ipAddress: 'ip_address',
       userAgent: 'user_agent',
       userId: 'user_id',
+    },
+    cookieCache: {
+      enabled: true,
+      maxAge: MaxSessionCacheAge,
     },
   },
   verification: {
