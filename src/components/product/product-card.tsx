@@ -14,6 +14,7 @@ function ProductCardComponent({ product }: Readonly<Props>) {
   return (
     <Link
       params={{ slug: product.slug }}
+      preload="intent"
       search={{ variant: product.variantId }}
       to="/products/$slug"
     >
