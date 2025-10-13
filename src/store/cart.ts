@@ -1,3 +1,4 @@
+import type { ProductOptionValue } from '@/api/products'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
@@ -9,6 +10,7 @@ export type CartItemProduct = {
   price: number
   variantId: number
   stock: number
+  optionValues: ProductOptionValue[]
 }
 
 export type CartItem = {

@@ -1,6 +1,7 @@
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { PageHeader } from '@/components/page-header'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getImageUrl } from '@/shared/cdn'
 import { type CartItem, useCart } from '@/store/cart'
@@ -96,9 +97,15 @@ function CartItemComponent({ item }: Readonly<CartItemProps>) {
             </button>
           </div>
 
-          <span className="mt-1 font-medium text-xs">
-            <Currency currency="COP" value={item.product.price} />
-          </span>
+          <div className="mt-1">
+            <div className="flex items-center gap-2">
+              {item.product.optionValues?.map((value) => (
+                <Badge className="text-xs" key={value.id} variant="outline">
+                  {value.optionTypeName}: {value.value}
+                </Badge>
+              ))}
+            </div>
+          </div>
 
           <div className="mt-auto flex items-center justify-between">
             <div className="flex items-center rounded-md border">

@@ -270,6 +270,7 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
           price: variant.price,
           variantId: variant.id,
           stock: variant.stock,
+          optionValues: variant.optionValues,
         },
         quantity,
       )
@@ -378,6 +379,6 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
   )
 }
 
-export const ProductDisplay = memo(({ product, variant }: Props) => {
-  return <ProductDisplayComponent product={product} variant={variant} />
-})
+export const ProductDisplay = memo(({ product, variant }: Props) => (
+  <ProductDisplayComponent product={product} variant={variant} />
+))
