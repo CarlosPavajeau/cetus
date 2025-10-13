@@ -25,12 +25,12 @@ export function OrderCard({ order }: Props) {
             <span className="font-semibold">#{order.orderNumber}</span>
             <Badge variant="outline">
               <span
+                aria-hidden="true"
                 className={cn(
                   'size-1.5 rounded-full',
                   OrderStatusColor[order.status],
                 )}
-                aria-hidden="true"
-              ></span>
+              />
               {OrderStatusText[order.status]}
             </Badge>
           </div>
@@ -39,7 +39,9 @@ export function OrderCard({ order }: Props) {
         <div className="space-y-2 p-4">
           <div className="flex items-start gap-2">
             <MapPinIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{order.address}</span>
+            <span className="text-sm">
+              {order.address} - {order.city}, {order.state}
+            </span>
           </div>
           <div className="flex items-start gap-2">
             <ClockIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
@@ -49,20 +51,19 @@ export function OrderCard({ order }: Props) {
           </div>
           <div className="flex items-start gap-2">
             <span className="font-medium text-sm">
-              <Currency value={order.total} currency="COP" />
+              <Currency currency="COP" value={order.total} />
             </span>
           </div>
 
-          {/* Action buttons */}
           <div className="mt-4 flex justify-end border-t pt-4">
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 font-normal"
                 asChild
+                className="gap-1.5 font-normal"
+                size="sm"
+                variant="outline"
               >
-                <Link to="/app/orders/$orderId" params={{ orderId: order.id }}>
+                <Link params={{ orderId: order.id }} to="/app/orders/$orderId">
                   <EyeIcon />
                   <span>Ver detalles</span>
                 </Link>

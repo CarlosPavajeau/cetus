@@ -77,6 +77,8 @@ export type SimpleOrder = {
   id: string
   orderNumber: number
   address: string
+  city: string
+  state: string
   subtotal: number
   discount: number
   total: number
