@@ -50,7 +50,7 @@ function RouteComponent() {
           </div>
 
           <div className="hidden flex-col gap-2 md:flex">
-            <OrderSummary order={order} />
+            <OrderSummary isCustomer order={order} />
           </div>
         </div>
 

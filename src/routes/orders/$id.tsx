@@ -1,8 +1,12 @@
+import { OrderStatusColor, OrderStatusText } from '@/api/orders'
 import { DefaultLoader } from '@/components/default-loader'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { OrderSummary } from '@/components/order/order-summary'
+import { PageHeader } from '@/components/page-header'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useOrder } from '@/hooks/orders'
+import { cn } from '@/shared/cn'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { PackageIcon, ShoppingBagIcon } from 'lucide-react'
 
@@ -47,8 +51,23 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <div className="space-y-8">
-        <OrderSummary order={order} />
+      <div className="space-y-6">
+        <PageHeader title={`Pedido #${order.orderNumber}`} />
+
+        <div className="space-y-3">
+          <Badge variant="outline">
+            <span
+              aria-hidden="true"
+              className={cn(
+                'size-1.5 rounded-full',
+                OrderStatusColor[order.status],
+              )}
+            />
+            {OrderStatusText[order.status]}
+          </Badge>
+
+          <OrderSummary isCustomer order={order} />
+        </div>
 
         <Button asChild className="w-full" size="lg">
           <Link to="/">

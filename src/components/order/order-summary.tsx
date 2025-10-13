@@ -12,35 +12,38 @@ import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 
 type Props = {
   order: Order
+  isCustomer?: boolean
 }
 
-export function OrderSummary({ order }: Readonly<Props>) {
+export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <div className="flex items-center justify-between space-y-2">
-          <div className="flex items-center gap-2">
-            <h2 className="font-bold text-xl"># {order.orderNumber}</h2>
+      {!isCustomer && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between space-y-2">
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-xl"># {order.orderNumber}</h2>
 
-            <Badge variant="outline">
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'size-1.5 rounded-full',
-                  OrderStatusColor[order.status],
-                )}
-              />
-              {OrderStatusText[order.status]}
-            </Badge>
+              <Badge variant="outline">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'size-1.5 rounded-full',
+                    OrderStatusColor[order.status],
+                  )}
+                />
+                {OrderStatusText[order.status]}
+              </Badge>
+            </div>
           </div>
+
+          <p className="text-muted-foreground text-sm">
+            Realizado el <FormattedDate date={new Date(order.createdAt)} />
+          </p>
         </div>
+      )}
 
-        <p className="text-muted-foreground text-sm">
-          Realizado el <FormattedDate date={new Date(order.createdAt)} />
-        </p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={cn('grid gap-6', !isCustomer && 'lg:grid-cols-2')}>
         <Card>
           <CardHeader>
             <CardTitle>Información de envío</CardTitle>
@@ -76,7 +79,7 @@ export function OrderSummary({ order }: Readonly<Props>) {
           </CardContent>
         </Card>
 
-        <PaymentSummary order={order} />
+        {!isCustomer && <PaymentSummary order={order} />}
       </div>
 
       <Card>
