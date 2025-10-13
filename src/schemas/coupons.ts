@@ -14,11 +14,15 @@ export const CreateCouponSchema = type({
   }),
   description: type.string.optional(),
   discountType: type.valueOf(CouponDiscountType),
-  discountValue: type.number.moreThan(0).configure({
-    message: 'El valor del descuento debe ser mayor o igual a 0',
-  }),
-  usageLimit: type.number
-    .moreThan(0)
+  discountValue: type('string.integer.parse')
+    .or('number>=0')
+    .to('number>=0')
+    .configure({
+      message: 'El valor del descuento debe ser mayor o igual a 0',
+    }),
+  usageLimit: type('string.integer.parse')
+    .or('number>=0')
+    .to('number>=0')
     .configure({
       message: 'El límite de usos debe ser mayor o igual a 0',
     })
