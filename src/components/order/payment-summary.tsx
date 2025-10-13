@@ -95,7 +95,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             <span className="text-muted-foreground">Método de pago</span>
 
             <span>
-              {getMercadoPagoPaymentMethodLabel(payment.payment_method_id)}
+              {getMercadoPagoPaymentMethodLabel(payment.payment_type_id)}
             </span>
           </div>
 
