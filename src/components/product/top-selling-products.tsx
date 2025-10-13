@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useTopSellingProducts } from '@/hooks/products'
 import { getImageUrl } from '@/shared/cdn'
 import { Image } from '@unpic/react'
-import { Badge } from '../ui/badge'
+import { Badge } from '@/components/ui/badge'
 
 export function TopSellingProducts() {
   const { products, isLoading } = useTopSellingProducts()

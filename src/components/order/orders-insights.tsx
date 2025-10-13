@@ -1,4 +1,5 @@
 import { Currency } from '@/components/currency'
+import { Badge } from '@/components/ui/badge'
 import {
   Card,
   CardAction,
@@ -11,7 +12,6 @@ import { useOrderInsights } from '@/hooks/orders'
 import { useSearch } from '@tanstack/react-router'
 import { TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
 import { useNumberFormatter } from 'react-aria'
-import { Badge } from '../ui/badge'
 
 type InsightCardProps = {
   title: string

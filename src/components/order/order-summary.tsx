@@ -10,11 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { getImageUrl } from '@/shared/cdn'
-import { cn } from '@/shared/cn'
-import { Image } from '@unpic/react'
-import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 import {
   Item,
   ItemContent,
@@ -22,7 +17,12 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from '../ui/item'
+} from '@/components/ui/item'
+import { Separator } from '@/components/ui/separator'
+import { getImageUrl } from '@/shared/cdn'
+import { cn } from '@/shared/cn'
+import { Image } from '@unpic/react'
+import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 
 type Props = {
   order: Order

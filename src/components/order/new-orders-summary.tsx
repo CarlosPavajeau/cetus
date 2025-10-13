@@ -6,19 +6,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useOrdersSummary } from '@/hooks/orders'
-import { useSearch } from '@tanstack/react-router'
-import { ChartNoAxesCombinedIcon } from 'lucide-react'
-import { useNumberFormatter } from 'react-aria'
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '../ui/empty'
+} from '@/components/ui/empty'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useOrdersSummary } from '@/hooks/orders'
+import { useSearch } from '@tanstack/react-router'
+import { ChartNoAxesCombinedIcon } from 'lucide-react'
+import { useNumberFormatter } from 'react-aria'
 
 type StatusInsight = {
   label: string

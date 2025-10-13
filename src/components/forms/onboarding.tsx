@@ -1,5 +1,6 @@
 import { createStore } from '@/api/stores'
 import { authClient } from '@/auth/auth-client'
+import { SubmitButton } from '@/components/submit-button'
 import {
   Form,
   FormControl,
@@ -7,6 +8,7 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useNavigate } from '@tanstack/react-router'
 import { type } from 'arktype'
@@ -14,8 +16,6 @@ import { ArrowRightIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { SubmitButton } from '../submit-button'
-import { Input } from '../ui/input'
 
 const CreateOrganizationSchema = type({
   name: type.string,

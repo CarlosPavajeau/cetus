@@ -8,6 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import { Skeleton } from '@/components/ui/skeleton'
 import { usePaymentInfo } from '@/hooks/use-payment-info'
 import { cn } from '@/shared/cn'
 import {
@@ -15,14 +23,6 @@ import {
   getMercadoPagoPaymentStatusLabel,
 } from '@/shared/mercado-pago'
 import { BanknoteXIcon } from 'lucide-react'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '../ui/empty'
-import { Skeleton } from '../ui/skeleton'
 
 type Props = {
   order: Order

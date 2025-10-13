@@ -12,6 +12,13 @@ import {
   ChartContainer,
   ChartTooltip,
 } from '@/components/ui/chart'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
 import { useSearch } from '@tanstack/react-router'
@@ -26,13 +33,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '../ui/empty'
 
 const chartConfig = {
   actual: {

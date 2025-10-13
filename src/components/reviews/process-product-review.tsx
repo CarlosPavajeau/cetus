@@ -4,6 +4,7 @@ import type {
 } from '@/api/reviews'
 import { approveProductReview, rejectProductReview } from '@/api/reviews'
 import { FormattedDate } from '@/components/formatted-date'
+import { StarRating } from '@/components/product/star-rating'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
@@ -22,7 +23,6 @@ import consola from 'consola'
 import { CheckIcon, FileSearchIcon, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { StarRating } from '../product/star-rating'
 
 type Props = {
   review: PendingForApprovalProductReview
