@@ -26,6 +26,12 @@ import {
 
 const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
   {
+    label: 'Panel',
+    href: '/app/dashboard',
+    isNew: false,
+    icon: LayoutDashboardIcon,
+  },
+  {
     label: 'Pedidos',
     href: '/app',
     isNew: false,
@@ -54,12 +60,6 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
     href: '/app/categories',
     isNew: false,
     icon: TagIcon,
-  },
-  {
-    label: 'Panel',
-    href: '/app/dashboard',
-    isNew: false,
-    icon: LayoutDashboardIcon,
   },
   {
     label: 'Reseñas',
