@@ -35,12 +35,20 @@ type NavBarProps = {
 
 function NavBar({ store }: Readonly<NavBarProps>) {
   const navbarTitle = store !== undefined ? store.name : 'cetus'
+  const hasStore = store !== undefined
+  const hasCustomDomain = store?.customDomain !== undefined
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background">
       <div className="flex items-center justify-between px-6 py-3 md:px-16 lg:px-32">
         <div>
-          <Link className="flex items-center gap-2" to="/">
+          <Link
+            className="flex items-center gap-2"
+            params={{
+              store: store?.slug,
+            }}
+            to={hasStore && !hasCustomDomain ? '/$store' : '/'}
+          >
             <h1 className="font-bold font-heading text-foreground text-xl">
               {navbarTitle}
             </h1>
