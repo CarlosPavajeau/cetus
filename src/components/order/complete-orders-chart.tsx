@@ -27,7 +27,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-interface CustomCursorProps {
+type CustomCursorProps = {
   fill?: string
   pointerEvents?: string
   height?: number
@@ -53,6 +53,7 @@ function CustomCursor(props: Readonly<CustomCursorProps>) {
         pointerEvents={pointerEvents}
         type="linear"
         width={24}
+        // biome-ignore lint/style/noMagicNumbers: no check needed
         x={x - 12}
         y={y}
       />

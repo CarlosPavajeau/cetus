@@ -1,10 +1,17 @@
 import { Currency } from '@/components/currency'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderInsights } from '@/hooks/orders'
-import { cn } from '@/shared/cn'
 import { useSearch } from '@tanstack/react-router'
+import { TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
 import { useNumberFormatter } from 'react-aria'
+import { Badge } from '../ui/badge'
 
 type InsightCardProps = {
   title: string
@@ -25,27 +32,26 @@ export function InsightCard({
   })
 
   return (
-    <Card className="w-full gap-0 overflow-hidden">
+    <Card className="@container/card">
       <CardHeader>
-        <CardTitle className="font-normal text-muted-foreground">
-          {title}
+        <CardDescription>{title}</CardDescription>
+        <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">
+          {value}
         </CardTitle>
-      </CardHeader>
-      <CardContent className="mt-1 flex items-center gap-1.5">
-        <span className="font-medium text-2xl">{value}</span>
+
         {percentageChange !== undefined && percentageChange !== 0 && (
-          <span className="text-muted-foreground text-xs">
-            <span
-              className={cn(
-                percentageChange > 0 ? 'text-success-base' : 'text-destructive',
+          <CardAction>
+            <Badge variant="outline">
+              {percentageChange > 0 ? (
+                <TrendingUpIcon className="text-success-base" />
+              ) : (
+                <TrendingDownIcon className="text-destructive" />
               )}
-            >
               {percentageFormatter.format(percentageChange)}
-            </span>{' '}
-            vs mes anterior
-          </span>
+            </Badge>
+          </CardAction>
         )}
-      </CardContent>
+      </CardHeader>
     </Card>
   )
 }
