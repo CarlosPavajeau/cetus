@@ -31,11 +31,14 @@ const months = [
 type Month = (typeof months)[number]
 
 const DashboardSearchSchema = type({
-  month: type.valueOf(months).default(() => {
-    return new Date()
-      .toLocaleString('en', { month: 'long' })
-      .toLocaleLowerCase() as unknown as Month
-  }),
+  month: type
+    .valueOf(months)
+    .default(
+      () =>
+        new Date()
+          .toLocaleString('en', { month: 'long' })
+          .toLocaleLowerCase() as unknown as Month,
+    ),
 })
 
 export const Route = createFileRoute('/app/dashboard/')({

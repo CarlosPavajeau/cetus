@@ -27,7 +27,9 @@ export function InsightCard({
   return (
     <Card className="w-full gap-0 overflow-hidden">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="font-normal text-muted-foreground">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent className="mt-1 flex items-center gap-1.5">
         <span className="font-medium text-2xl">{value}</span>
