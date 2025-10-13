@@ -3,12 +3,26 @@ import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
 import { PaymentSummary } from '@/components/order/payment-summary'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { getImageUrl } from '@/shared/cdn'
 import { cn } from '@/shared/cn'
 import { Image } from '@unpic/react'
 import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '../ui/item'
 
 type Props = {
   order: Order
@@ -86,59 +100,63 @@ export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
         <CardHeader>
           <CardTitle>Productos</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-4">
+
+        <CardContent>
+          <ItemGroup className="gap-2">
             {order.items.map((item) => (
-              <div className="flex flex-wrap gap-2" key={item.id}>
-                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+              <Item key={item.id} role="listitem" size="sm" variant="outline">
+                <ItemMedia className="size-20" variant="image">
                   <Image
                     alt={item.productName}
                     className="object-cover"
-                    height={64}
+                    height={128}
                     layout="constrained"
                     objectFit="cover"
-                    sizes="64px"
                     src={getImageUrl(item.imageUrl || 'placeholder.svg')}
-                    width={64}
+                    width={128}
                   />
-                </div>
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle className="line-clamp-1">
+                    {item.productName}
+                  </ItemTitle>
 
-                <div className="flex flex-1 flex-col gap-3">
-                  <div className="space-y-1">
-                    <h4 className="font-medium text-sm">{item.productName}</h4>
+                  <ItemDescription>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        {item.optionValues.map((value) => (
+                          <Badge
+                            className="text-xs"
+                            key={value.id}
+                            variant="outline"
+                          >
+                            {value.optionTypeName}: {value.value}
+                          </Badge>
+                        ))}
+                      </div>
 
-                    <div className="flex items-center gap-2">
-                      {item.optionValues.map((value) => (
-                        <Badge
-                          className="text-xs"
-                          key={value.id}
-                          variant="outline"
-                        >
-                          {value.optionTypeName}: {value.value}
+                      <div className="flex gap-2">
+                        <Badge variant="secondary">
+                          <span>
+                            Precio:{' '}
+                            <Currency currency="COP" value={item.price} />
+                          </span>
                         </Badge>
-                      ))}
+
+                        <Badge variant="secondary">
+                          <span>Cantidad: {item.quantity}</span>
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Badge variant="secondary">
-                      <span>
-                        Precio: <Currency currency="COP" value={item.price} />
-                      </span>
-                    </Badge>
-
-                    <Badge variant="secondary">
-                      <span>Cantidad: {item.quantity}</span>
-                    </Badge>
-                  </div>
-                </div>
-              </div>
+                  </ItemDescription>
+                </ItemContent>
+              </Item>
             ))}
-          </div>
+          </ItemGroup>
+        </CardContent>
 
-          <Separator />
-
-          <div className="space-y-2 text-sm">
+        <CardFooter className="border-t">
+          <div className="w-full space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>
               <span>
@@ -176,7 +194,7 @@ export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
               </span>
             </div>
           </div>
-        </CardContent>
+        </CardFooter>
       </Card>
     </div>
   )
