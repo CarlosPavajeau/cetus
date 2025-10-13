@@ -10,7 +10,15 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
 import { useSearch } from '@tanstack/react-router'
+import { ChartNoAxesCombinedIcon } from 'lucide-react'
 import { useNumberFormatter } from 'react-aria'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '../ui/empty'
 
 type StatusInsight = {
   label: string
@@ -42,18 +50,24 @@ export function NewOrdersSummary() {
     )
   }
 
-  if (!summary) {
-    return null
-  }
-
-  if (summary.length === 0) {
+  if (!summary || summary.length === 0) {
     return (
       <Card className="@container/card col-span-4 lg:col-span-3">
         <CardHeader>
           <CardTitle>Pedidos</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No hay datos disponibles</p>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ChartNoAxesCombinedIcon />
+              </EmptyMedia>
+              <EmptyTitle>No hay pedidos</EmptyTitle>
+              <EmptyDescription>
+                No tienes pedidos registrados.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         </CardContent>
       </Card>
     )

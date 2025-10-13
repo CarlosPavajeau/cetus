@@ -17,7 +17,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
 import { useSearch } from '@tanstack/react-router'
-import { TrendingUpIcon } from 'lucide-react'
+import { ChartNoAxesCombinedIcon, TrendingUpIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {
@@ -28,6 +28,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '../ui/empty'
 
 const chartConfig = {
   actual: {
@@ -153,8 +160,18 @@ export function CompleteOrdersChart() {
         <CardHeader>
           <CardTitle>Pedidos completados</CardTitle>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
-          <p className="text-muted-foreground">No hay datos disponibles</p>
+        <CardContent>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ChartNoAxesCombinedIcon />
+              </EmptyMedia>
+              <EmptyTitle>No hay pedidos completados</EmptyTitle>
+              <EmptyDescription>
+                No has completado ningún pedido aún.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         </CardContent>
       </Card>
     )
