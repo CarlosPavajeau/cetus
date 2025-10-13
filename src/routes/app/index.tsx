@@ -1,31 +1,39 @@
-import { ORDER_STATUS_OPTIONS } from '@/api/orders'
 import { DefaultLoader } from '@/components/default-loader'
 import { FiltersBar } from '@/components/order/app/filters-bar'
 import { OrdersHeader } from '@/components/order/app/orders-header'
 import { OrdersList } from '@/components/order/app/orders-list'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { useOrders } from '@/hooks/orders'
 import { useOrderFilters } from '@/hooks/orders/use-order-filters'
 import { useOrderRealtime } from '@/hooks/orders/use-order-realtime'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { memo, useCallback } from 'react'
+import { PackageXIcon } from 'lucide-react'
+import { useCallback } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
 })
 
-// Empty state component
-const EmptyState = memo(({ hasFilters }: { hasFilters: boolean }) => (
-  <div className="flex h-full w-full items-center justify-center">
-    <p className="text-muted-foreground">
-      {hasFilters
-        ? 'No se encontraron pedidos con los filtros aplicados'
-        : 'No hay pedidos disponibles'}
-    </p>
-  </div>
-))
-
-EmptyState.displayName = 'EmptyState'
+const EmptyState = () => (
+  <Empty>
+    <EmptyHeader>
+      <EmptyMedia variant="icon">
+        <PackageXIcon />
+      </EmptyMedia>
+      <EmptyTitle>No hay pedidos</EmptyTitle>
+      <EmptyDescription>
+        No hay pedidos disponibles con los filtros aplicados
+      </EmptyDescription>
+    </EmptyHeader>
+  </Empty>
+)
 
 function RouteComponent() {
   const { orders, isLoading } = useOrders()
@@ -47,8 +55,6 @@ function RouteComponent() {
     })
   }, [queryClient])
 
-  const hasFilters =
-    searchTerm !== '' || statuses.length < ORDER_STATUS_OPTIONS.length
   const isEmpty = !orders || orders.length === 0
   const noResults = filteredOrders.length === 0
 
@@ -60,7 +66,7 @@ function RouteComponent() {
     return (
       <>
         <OrdersHeader onRefresh={refresh} />
-        <EmptyState hasFilters={false} />
+        <EmptyState />
       </>
     )
   }
@@ -74,11 +80,7 @@ function RouteComponent() {
         searchTerm={searchTerm}
         statuses={statuses}
       />
-      {noResults ? (
-        <EmptyState hasFilters={hasFilters} />
-      ) : (
-        <OrdersList orders={filteredOrders} />
-      )}
+      {noResults ? <EmptyState /> : <OrdersList orders={filteredOrders} />}
     </>
   )
 }
