@@ -1,9 +1,7 @@
 import { OrderStatus } from '@/api/orders'
 import { CustomTooltipContent } from '@/components/charts-extra'
-import { Badge } from '@/components/ui/badge'
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -17,7 +15,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
 import { useSearch } from '@tanstack/react-router'
-import { ChartNoAxesCombinedIcon, TrendingUpIcon } from 'lucide-react'
+import { ChartNoAxesCombinedIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {
@@ -184,12 +182,6 @@ export function CompleteOrdersChart() {
         <CardDescription>
           Se han completado {totalOrders} pedidos
         </CardDescription>
-        <CardAction>
-          <Badge variant="outline">
-            <TrendingUpIcon className="text-success-base" />
-            +5%
-          </Badge>
-        </CardAction>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
