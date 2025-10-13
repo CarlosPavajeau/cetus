@@ -1,10 +1,14 @@
 import { OrderStatus, OrderStatusText } from '@/api/orders'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
-import { cn } from '@/shared/cn'
 import { useSearch } from '@tanstack/react-router'
 import { useNumberFormatter } from 'react-aria'
 
@@ -14,6 +18,8 @@ type StatusInsight = {
   percentage: number
   total: number
 }
+
+const PercentageMultiplier = 100
 
 export function NewOrdersSummary() {
   const { month } = useSearch({
@@ -42,11 +48,11 @@ export function NewOrdersSummary() {
 
   if (summary.length === 0) {
     return (
-      <Card className="col-span-4 overflow-hidden rounded-md py-0 lg:col-span-3">
-        <CardHeader className="px-6 pt-6 pb-0">
+      <Card className="@container/card col-span-4 lg:col-span-3">
+        <CardHeader>
           <CardTitle>Pedidos</CardTitle>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
+        <CardContent>
           <p className="text-muted-foreground">No hay datos disponibles</p>
         </CardContent>
       </Card>
@@ -67,10 +73,13 @@ export function NewOrdersSummary() {
     (order) => order.status === OrderStatus.Canceled,
   ).length
 
-  const pendingOrdersPercentage = (pendingOrders / ordersCount) * 100
-  const paidOrdersPercentage = (paidOrders / ordersCount) * 100
-  const shippedOrdersPercentage = (shippedOrders / ordersCount) * 100
-  const canceledOrdersPercentage = (canceledOrders / ordersCount) * 100
+  const pendingOrdersPercentage =
+    (pendingOrders / ordersCount) * PercentageMultiplier
+  const paidOrdersPercentage = (paidOrders / ordersCount) * PercentageMultiplier
+  const shippedOrdersPercentage =
+    (shippedOrders / ordersCount) * PercentageMultiplier
+  const canceledOrdersPercentage =
+    (canceledOrders / ordersCount) * PercentageMultiplier
 
   const statusInsights: StatusInsight[] = [
     {
@@ -99,47 +108,20 @@ export function NewOrdersSummary() {
     },
   ]
 
-  const mainStatPercentage = shippedOrdersPercentage / 100
-  const percentageChange = Math.random() * 0.1 - 0.05
-
   return (
-    <Card className="col-span-4 gap-0 overflow-hidden py-0 lg:col-span-3">
-      <CardHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-0">
-        <CardTitle>Estado de pedidos</CardTitle>
+    <Card className="@container/card col-span-4 lg:col-span-3">
+      <CardHeader>
+        <CardTitle>Estado de los pedidos</CardTitle>
+        <CardDescription>{ordersCount} pedidos en total</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5 pb-6">
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-end gap-2">
-            <span className="font-medium text-2xl text-foreground">
-              {percentageFormatter.format(mainStatPercentage)}
-            </span>
-            <Badge
-              className={cn(
-                percentageChange > 0
-                  ? 'bg-success-light text-success-dark'
-                  : 'bg-error-light text-error-dark',
-              )}
-              variant="default"
-            >
-              {percentageFormatter.format(percentageChange)}
-            </Badge>
 
-            <span className="text-muted-foreground text-xs">
-              vs mes anterior
-            </span>
-          </div>
-
-          <small className="text-muted-foreground text-xs">
-            Porcentaje de pedidos completados.
-          </small>
-        </div>
-
+      <CardContent className="grid gap-3">
         <div className="flex flex-col gap-5">
           <div className="flex gap-[5px]">
             {statusInsights.map((status, index) => (
               <div
                 className={`${status.color} h-2 rounded-xs`}
-                key={index}
+                key={`${status.label}-${index}`}
                 style={{
                   width: `${status.percentage}%`,
                   display: status.percentage > 0 ? 'block' : 'none',
@@ -149,7 +131,10 @@ export function NewOrdersSummary() {
           </div>
           <div className="flex flex-wrap gap-4">
             {statusInsights.map((status, index) => (
-              <div className="flex items-center gap-2" key={index}>
+              <div
+                className="flex items-center gap-2"
+                key={`${status.label}-${index}`}
+              >
                 <span
                   aria-hidden="true"
                   className={`size-2 rounded-full ${status.color}`}
@@ -162,20 +147,20 @@ export function NewOrdersSummary() {
           </div>
         </div>
 
-        <Separator />
+        <Separator className="my-1" />
 
         <table cellPadding={0} className="w-full">
           <thead className="text-left">
-            <tr className="font-medium text-muted-foreground text-xs">
+            <tr className="text-muted-foreground text-xs">
               <th>Estado</th>
               <th>Porcentaje</th>
               <th className="w-12">Total</th>
             </tr>
           </thead>
-          <tbody aria-hidden="true" className="h-4" />
+          <tbody aria-hidden="true" className="h-2" />
           <tbody>
             {statusInsights.map((status, index) => (
-              <tr className="text-sm" key={index}>
+              <tr className="text-sm" key={`${status.label}-${index}`}>
                 <td className="flex items-center gap-2 py-1">
                   <span
                     aria-hidden="true"
@@ -183,7 +168,11 @@ export function NewOrdersSummary() {
                   />
                   <span>{status.label}</span>
                 </td>
-                <td>{percentageFormatter.format(status.percentage / 100)}</td>
+                <td>
+                  {percentageFormatter.format(
+                    status.percentage / PercentageMultiplier,
+                  )}
+                </td>
                 <td>{status.total}</td>
               </tr>
             ))}
