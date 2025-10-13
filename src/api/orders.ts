@@ -114,11 +114,11 @@ export const cancelOrder = async (data: CancelOrderRequest) => {
 
 export type OrderInsights = {
   currentMonthTotal: number
-  currentMonthCost: number
-  allOrdersCount: number
-  completedOrdersCount: number
   revenuePercentageChange: number
   ordersCountPercentageChange: number
+  allOrdersCount: number
+  completedOrdersCount: number
+  customersCount: number
 }
 
 export const fetchOrderInsights = async (month: string) => {

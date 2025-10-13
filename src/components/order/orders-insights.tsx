@@ -88,8 +88,8 @@ export function OrdersInsights() {
       percentageChange: insights.revenuePercentageChange,
     },
     {
-      title: 'Costo del mes',
-      value: <Currency currency="COP" value={insights.currentMonthCost} />,
+      title: 'Clientes',
+      value: insights.customersCount,
     },
   ]
 
