@@ -90,7 +90,7 @@ export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
         <CardContent className="space-y-3">
           <div className="divide-y">
             {order.items.map((item) => (
-              <div className="flex flex-wrap" key={item.id}>
+              <div className="flex flex-wrap gap-2" key={item.id}>
                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                   <Image
                     alt={item.productName}
@@ -104,24 +104,33 @@ export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
                   />
                 </div>
 
-                <div className="ml-3 flex-1">
-                  <div className="flex justify-between">
-                    <h4 className="line-clamp-1 font-medium text-sm">
-                      {item.productName}
-                    </h4>
-                    <span className="ml-2 font-medium text-sm">
-                      <Currency
-                        currency="COP"
-                        value={item.price * item.quantity}
-                      />
-                    </span>
+                <div className="flex flex-1 flex-col gap-3">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-sm">{item.productName}</h4>
+
+                    <div className="flex items-center gap-2">
+                      {item.optionValues.map((value) => (
+                        <Badge
+                          className="text-xs"
+                          key={value.id}
+                          variant="outline"
+                        >
+                          {value.optionTypeName}: {value.value}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="mt-1 flex items-center">
-                    <span className="text-muted-foreground text-xs">
-                      <Currency currency="COP" value={item.price} /> ×{' '}
-                      {item.quantity}
-                    </span>
+                  <div className="flex gap-2">
+                    <Badge variant="secondary">
+                      <span>
+                        Precio: <Currency currency="COP" value={item.price} />
+                      </span>
+                    </Badge>
+
+                    <Badge variant="secondary">
+                      <span>Cantidad: {item.quantity}</span>
+                    </Badge>
                   </div>
                 </div>
               </div>

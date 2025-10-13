@@ -1,5 +1,6 @@
 import { api } from '@/api/client'
 import type { CreateOrder } from '@/schemas/orders'
+import type { ProductOptionValue } from './products'
 
 export enum OrderStatus {
   Pending = 0,
@@ -32,6 +33,22 @@ export const OrderStatusColor = {
   [OrderStatus.Canceled]: 'bg-destructive',
 }
 
+type OrderItem = {
+  id: string
+  productName: string
+  imageUrl?: string
+  quantity: number
+  price: number
+  variantId: number
+  optionValues: ProductOptionValue[]
+}
+
+type OrderCustomer = {
+  name: string
+  email: string
+  phone: string
+}
+
 export type Order = {
   id: string
   orderNumber: number
@@ -43,18 +60,8 @@ export type Order = {
   deliveryFee?: number
   total: number
   status: OrderStatus
-  items: {
-    id: string
-    productName: string
-    imageUrl?: string
-    quantity: number
-    price: number
-  }[]
-  customer: {
-    name: string
-    email: string
-    phone: string
-  }
+  items: OrderItem[]
+  customer: OrderCustomer
   createdAt: string
 
   transactionId?: string
