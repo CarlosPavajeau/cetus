@@ -86,9 +86,8 @@ export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
         <CardHeader>
           <CardTitle>Productos</CardTitle>
         </CardHeader>
-
         <CardContent className="space-y-3">
-          <div className="divide-y">
+          <div className="space-y-4">
             {order.items.map((item) => (
               <div className="flex flex-wrap gap-2" key={item.id}>
                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
