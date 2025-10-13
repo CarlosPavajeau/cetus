@@ -1,7 +1,13 @@
 import type { Order } from '@/api/orders'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { usePaymentInfo } from '@/hooks/use-payment-info'
 import { cn } from '@/shared/cn'
 import {
@@ -65,9 +71,8 @@ export function PaymentSummary({ order }: Readonly<Props>) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Información del pago</span>
-
+        <CardTitle>Información del pago</CardTitle>
+        <CardAction>
           <Badge variant="outline">
             <span
               aria-hidden="true"
@@ -75,7 +80,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             />
             {getMercadoPagoPaymentStatusLabel(payment.status)}
           </Badge>
-        </CardTitle>
+        </CardAction>
       </CardHeader>
 
       <CardContent>
