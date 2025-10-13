@@ -90,6 +90,7 @@ export function OrdersInsights() {
     {
       title: 'Clientes',
       value: insights.customersCount,
+      percentageChange: insights.customerPercentageChange,
     },
   ]
 
