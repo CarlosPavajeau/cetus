@@ -1,6 +1,14 @@
 import { OrderStatus } from '@/api/orders'
 import { CustomTooltipContent } from '@/components/charts-extra'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   type ChartConfig,
   ChartContainer,
@@ -9,6 +17,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrdersSummary } from '@/hooks/orders'
 import { useSearch } from '@tanstack/react-router'
+import { TrendingUpIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { useDateFormatter } from 'react-aria'
 import {
@@ -77,6 +86,7 @@ export function CompleteOrdersChart() {
   })
   const { isLoading, summary } = useOrdersSummary(month as unknown as string)
   const dayFormmatter = useDateFormatter({
+    month: 'short',
     day: 'numeric',
   })
   const monthFormatter = useDateFormatter({
@@ -139,8 +149,8 @@ export function CompleteOrdersChart() {
 
   if (chartData.length === 0) {
     return (
-      <Card className="col-span-4 overflow-hidden rounded-md py-0">
-        <CardHeader className="px-6 pt-6 pb-0">
+      <Card className="@container/card col-span-4">
+        <CardHeader>
           <CardTitle>Pedidos completados</CardTitle>
         </CardHeader>
         <CardContent className="px-6 pb-6">
@@ -151,20 +161,22 @@ export function CompleteOrdersChart() {
   }
 
   return (
-    <Card className="col-span-4 gap-0 overflow-hidden py-0">
-      <CardHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-0">
+    <Card className="@container/card col-span-4">
+      <CardHeader>
         <CardTitle>Pedidos completados</CardTitle>
+        <CardDescription>
+          Se han completado {totalOrders} pedidos
+        </CardDescription>
+        <CardAction>
+          <Badge variant="outline">
+            <TrendingUpIcon className="text-success-base" />
+            +5%
+          </Badge>
+        </CardAction>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5 pb-6">
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-end gap-2">
-            <span className="font-medium text-2xl text-foreground">
-              {totalOrders}
-            </span>
-          </div>
-        </div>
+      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
-          className="aspect-auto h-full min-h-72 w-full [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-(--chart-1)/15 [&_.recharts-rectangle.recharts-tooltip-inner-cursor]:fill-white/20"
+          className="aspect-auto h-[250px] w-full"
           config={chartConfig}
         >
           <AreaChart
