@@ -8,6 +8,14 @@ import {
   getMercadoPagoPaymentMethodLabel,
   getMercadoPagoPaymentStatusLabel,
 } from '@/shared/mercado-pago'
+import { BanknoteXIcon } from 'lucide-react'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '../ui/empty'
 import { Skeleton } from '../ui/skeleton'
 
 type Props = {
@@ -40,15 +48,17 @@ export function PaymentSummary({ order }: Readonly<Props>) {
 
   if (!payment) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Información del pago</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <p>No se encontró información del pago.</p>
-        </CardContent>
-      </Card>
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <BanknoteXIcon />
+          </EmptyMedia>
+          <EmptyTitle>Sin información de pago</EmptyTitle>
+          <EmptyDescription>
+            No se ha encontrado información de pago para este pedido.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 
