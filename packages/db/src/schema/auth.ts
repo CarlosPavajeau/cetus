@@ -107,4 +107,5 @@ export default {
   organization,
   member,
   invitation,
+  jwks,
 }
