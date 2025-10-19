@@ -1,4 +1,3 @@
-import { env } from '@cetus/env/client'
 import { useMemo, useState } from 'react'
 import { GoogleIcon } from '@/components/icons/google'
 import { Button } from '@/components/ui/button'
@@ -13,16 +12,16 @@ export function GoogleSignIn({ invitation }: Readonly<Props>) {
 
   const callbackUrl = useMemo(() => {
     if (invitation) {
-      return `${env.VITE_APP_URL}/accept-invitation/${invitation}`
+      return `/accept-invitation/${invitation}`
     }
-    return `${env.VITE_APP_URL}/app`
+    return '/app'
   }, [invitation])
 
   const newUserCallbackURL = useMemo(() => {
     if (invitation) {
-      return `${env.VITE_APP_URL}/accept-invitation/${invitation}`
+      return `/accept-invitation/${invitation}`
     }
-    return `${env.VITE_APP_URL}/onboarding`
+    return '/onboarding'
   }, [invitation])
 
   const signIn = async () => {
