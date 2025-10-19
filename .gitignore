@@ -4,7 +4,7 @@
 *.log*
 *.pem
 
-# Dist
+# Dependencies
 node_modules
 dist
 .nitro
@@ -13,30 +13,48 @@ dist
 
 # IDE
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 !.vscode/extensions.json
 .idea
+*.swp
+*.swo
+*~
+.DS_Store
 
-# testing
+# Testing
 coverage
+.nyc_output
 
-# production
+# Build outputs
 build
+*.tsbuildinfo
 
 # debug
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 .pnpm-debug.log*
 
-# local env files
+# Turbo
+.turbo
+
+# Environment variables
 .env
 .env*.local
 
-# vercel
+# Vercel
 .vercel
-
-# typescript
-*.tsbuildinfo
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Misc
+*.tgz
+.cache
+tmp
+temp
