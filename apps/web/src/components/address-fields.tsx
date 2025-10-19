@@ -1,4 +1,3 @@
-import { SelectValue } from '@radix-ui/react-select'
 import { useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import {
@@ -15,12 +14,13 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
 import { useCities, useStates } from '@/hooks/use-state'
-import type { CreateOrderFormValues } from '@/schemas/orders'
+import type { CreateOrder } from '@/schemas/orders'
 
 export function AddressFields() {
-  const form = useFormContext<CreateOrderFormValues>()
+  const form = useFormContext<CreateOrder>()
 
   const { states, isLoading } = useStates()
   const [currentState, setCurrentState] = useState<string | undefined>()
