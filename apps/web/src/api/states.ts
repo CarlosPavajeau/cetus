@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi } from '@/api/client'
 
 export type State = {
   id: string
@@ -6,7 +6,7 @@ export type State = {
 }
 
 export const fetchStates = async () => {
-  const response = await api.get<State[]>('/states')
+  const response = await anonymousApi.get<State[]>('/states')
 
   return response.data
 }
@@ -17,7 +17,7 @@ export type City = {
 }
 
 export const fetchCities = async (stateId: string) => {
-  const response = await api.get<City[]>(`/states/${stateId}/cities`)
+  const response = await anonymousApi.get<City[]>(`/states/${stateId}/cities`)
 
   return response.data
 }
