@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { authClient } from '@/shared/auth-client'
+import { getToken } from '@/functions/get-token'
 import { API_ENDPOINT } from '@/shared/constants'
 import { useTenantStore } from '@/store/use-tenant-store'
 
@@ -8,10 +8,10 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(async (config) => {
-  const response = await authClient.token()
+  const token = await getToken()
 
-  if (response.data) {
-    config.headers.Authorization = `Bearer ${response.data.token}`
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
   }
 
   return config
