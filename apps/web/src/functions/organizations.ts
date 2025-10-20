@@ -1,7 +1,7 @@
+import { auth } from '@cetus/auth'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import consola from 'consola'
-import { authClient } from '@/shared/auth-client'
 
 export const setActiveOrg = createServerFn({ method: 'POST' }).handler(
   async () => {
@@ -9,23 +9,17 @@ export const setActiveOrg = createServerFn({ method: 'POST' }).handler(
 
     consola.log('Setting active organization')
 
-    const organizations = await authClient.organization.list({
-      fetchOptions: {
-        headers,
-      },
+    const organizations = await auth.api.listOrganizations({
+      headers,
     })
 
     consola.log('organizations', organizations)
 
-    if (organizations.error) {
+    if (organizations.length === 0) {
       return
     }
 
-    if (organizations.data.length === 0) {
-      return
-    }
-
-    const organization = organizations.data.at(0)
+    const organization = organizations.at(0)
 
     consola.log('organization', organization)
 
@@ -33,11 +27,11 @@ export const setActiveOrg = createServerFn({ method: 'POST' }).handler(
       return
     }
 
-    await authClient.organization.setActive({
-      organizationId: organization.id,
-      fetchOptions: {
-        headers,
+    await auth.api.setActiveOrganization({
+      body: {
+        organizationId: organization.id,
       },
+      headers,
     })
 
     return {
