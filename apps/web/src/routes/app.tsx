@@ -29,7 +29,7 @@ export const Route = createFileRoute('/app')({
     }
 
     let organizationId = session.session.activeOrganizationId
-    consola.info('organizationId', organizationId)
+    consola.log('organizationId', organizationId)
     if (!organizationId) {
       const activeOrg = await setActiveOrg()
       if (!activeOrg) {

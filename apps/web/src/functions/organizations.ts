@@ -7,13 +7,15 @@ export const setActiveOrg = createServerFn({ method: 'POST' }).handler(
   async () => {
     const headers = new Headers(getRequestHeaders() as HeadersInit)
 
-    consola.info('Setting active organization')
+    consola.log('Setting active organization')
 
     const organizations = await authClient.organization.list({
       fetchOptions: {
         headers,
       },
     })
+
+    consola.log('organizations', organizations)
 
     if (organizations.error) {
       return
@@ -24,6 +26,8 @@ export const setActiveOrg = createServerFn({ method: 'POST' }).handler(
     }
 
     const organization = organizations.data.at(0)
+
+    consola.log('organization', organization)
 
     if (!organization) {
       return
