@@ -1,23 +1,11 @@
 import { auth } from '@cetus/auth'
-import { createIsomorphicFn } from '@tanstack/react-start'
+import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
-import consola from 'consola'
-import { authClient } from '@/shared/auth-client'
 
-export const getToken = createIsomorphicFn()
-  .server(async () => {
-    const response = await auth.api.getToken({
-      headers: getRequestHeaders(),
-    })
-
-    return response.token
+export const getToken = createServerFn({ method: 'GET' }).handler(async () => {
+  const response = await auth.api.getToken({
+    headers: getRequestHeaders(),
   })
-  .client(async () => {
-    const response = await authClient.token()
 
-    if (response.error) {
-      consola.error(response.error)
-    }
-
-    return response.data?.token || ''
-  })
+  return response.token
+})
