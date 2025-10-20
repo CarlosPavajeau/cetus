@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi, api } from '@/api/client'
 import type { CreateOrder } from '@/schemas/orders'
 import type { ProductOptionValue } from './products'
 
@@ -69,13 +69,13 @@ export type Order = {
 }
 
 export const fetchOrder = async (id: string) => {
-  const response = await api.get<Order>(`/orders/${id}`)
+  const response = await anonymousApi.get<Order>(`/orders/${id}`)
 
   return response.data
 }
 
 export const createOrder = async (order: CreateOrder) => {
-  const response = await api.post<SimpleOrder>('/orders', order)
+  const response = await anonymousApi.post<SimpleOrder>('/orders', order)
 
   return response.data
 }
@@ -157,7 +157,9 @@ export type DeliveryFee = {
 }
 
 export async function fetchDeliveryFee(cityId: string) {
-  const response = await api.get<DeliveryFee>(`/orders/delivery-fees/${cityId}`)
+  const response = await anonymousApi.get<DeliveryFee>(
+    `/orders/delivery-fees/${cityId}`,
+  )
 
   return response.data
 }
@@ -183,7 +185,9 @@ export async function createDeliveryFee(deliveryFee: CreateDeliveryFeeRequest) {
 }
 
 export async function createOrderPayment(orderId: string) {
-  const response = await api.post<string>(`/orders/${orderId}/payments`)
+  const response = await anonymousApi.post<string>(
+    `/orders/${orderId}/payments`,
+  )
 
   return response.data
 }
