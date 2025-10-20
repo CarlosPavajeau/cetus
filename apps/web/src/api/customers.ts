@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi } from '@/api/client'
 
 export type Customer = {
   id: string
@@ -8,7 +8,7 @@ export type Customer = {
 }
 
 export async function fetchCustomer(id: string) {
-  const response = await api.get<Customer>(`/customers/${id}`)
+  const response = await anonymousApi.get<Customer>(`/customers/${id}`)
 
   return response.data
 }

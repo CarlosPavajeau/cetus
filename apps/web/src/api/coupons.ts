@@ -1,4 +1,4 @@
-import { api } from '@/api/client'
+import { anonymousApi, api } from '@/api/client'
 import type { CreateCoupon } from '@/schemas/coupons'
 
 export enum CouponDiscountType {
@@ -106,7 +106,7 @@ export type RedeemCouponRequest = {
 }
 
 export async function redeemCoupon(coupon: RedeemCouponRequest) {
-  const response = await api.post<Coupon>('/coupons/redeem', coupon)
+  const response = await anonymousApi.post<Coupon>('/coupons/redeem', coupon)
 
   return response.data
 }
