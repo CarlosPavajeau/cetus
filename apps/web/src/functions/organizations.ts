@@ -1,10 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
+import consola from 'consola'
 import { authClient } from '@/shared/auth-client'
 
 export const setActiveOrg = createServerFn({ method: 'POST' }).handler(
   async () => {
     const headers = new Headers(getRequestHeaders() as HeadersInit)
+
+    consola.info('Setting active organization')
 
     const organizations = await authClient.organization.list({
       fetchOptions: {

@@ -1,5 +1,6 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import consola from 'consola'
 import { useEffect } from 'react'
 import { fetchStoreByExternalId } from '@/api/stores'
 import { AppNav } from '@/components/app-nav'
@@ -28,6 +29,7 @@ export const Route = createFileRoute('/app')({
     }
 
     let organizationId = session.session.activeOrganizationId
+    consola.info('organizationId', organizationId)
     if (!organizationId) {
       const activeOrg = await setActiveOrg()
       if (!activeOrg) {
