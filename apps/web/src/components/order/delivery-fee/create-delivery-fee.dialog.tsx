@@ -37,7 +37,7 @@ const CreateDeliveryFeeSchema = type({
   cityId: type.string.moreThanLength(1).configure({
     message: 'Seleccione una ciudad',
   }),
-  fee: type.number.moreThan(0).configure({
+  fee: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El costo de envío debe ser mayor a 0',
   }),
 })
