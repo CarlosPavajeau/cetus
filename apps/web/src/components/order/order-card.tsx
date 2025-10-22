@@ -16,7 +16,7 @@ type Props = {
   order: SimpleOrder
 }
 
-export function OrderCard({ order }: Props) {
+export function OrderCard({ order }: Readonly<Props>) {
   return (
     <Card className="p-0">
       <CardContent className="p-0">

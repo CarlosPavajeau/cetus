@@ -27,7 +27,10 @@ type Props = {
   productId: string
 }
 
-export function UpdateProductVariantForm({ variant, productId }: Props) {
+export function UpdateProductVariantForm({
+  variant,
+  productId,
+}: Readonly<Props>) {
   const form = useForm({
     resolver: arktypeResolver(UpdateProductVariantSchema),
     defaultValues: {

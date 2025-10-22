@@ -35,7 +35,7 @@ type Props = {
   onSuccess: () => void
 }
 
-export function CreateProductOptionTypeSheet({ onSuccess }: Props) {
+export function CreateProductOptionTypeSheet({ onSuccess }: Readonly<Props>) {
   const [open, setOpen] = useState(false)
   const form = useForm({
     resolver: arktypeResolver(CreateProductOptionTypeSchema),

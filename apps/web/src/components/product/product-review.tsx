@@ -13,7 +13,7 @@ type Props = {
   review: ProductReviewType
 }
 
-export function ProductReview({ review }: Props) {
+export function ProductReview({ review }: Readonly<Props>) {
   return (
     <Card className="w-full rounded-none border-0 border-b bg-transparent p-0 pb-2 shadow-none last:border-b-0">
       <CardContent className="flex flex-col gap-2 p-0">

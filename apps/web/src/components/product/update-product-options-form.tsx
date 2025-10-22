@@ -15,7 +15,7 @@ type Props = {
   product: Product
 }
 
-export function UpdateProductOptionsForm({ product }: Props) {
+export function UpdateProductOptionsForm({ product }: Readonly<Props>) {
   const { isLoading, data, error } = useQuery({
     queryKey: ['products', 'options', product.id],
     queryFn: () => fetchProductOptions(product.id),

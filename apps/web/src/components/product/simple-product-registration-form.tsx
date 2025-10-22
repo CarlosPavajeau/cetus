@@ -35,7 +35,7 @@ type Props = {
   onBack: () => void
 }
 
-export function SimpleProductRegistrationForm({ onBack }: Props) {
+export function SimpleProductRegistrationForm({ onBack }: Readonly<Props>) {
   const form = useForm({
     resolver: arktypeResolver(CreateSimpleProductSchema),
   })
@@ -57,7 +57,8 @@ export function SimpleProductRegistrationForm({ onBack }: Props) {
   const id = useMemo(() => uuid(), [])
 
   const generateProductSku = useCallback(() => {
-    const baseSku = productName?.trim().replace(/\s+/g, '-').toLowerCase() || ''
+    const baseSku =
+      productName?.trim().replaceAll(/\s+/g, '-').toLowerCase() || ''
     return `${baseSku}-${id.slice(-4)}`
   }, [productName, id])
 

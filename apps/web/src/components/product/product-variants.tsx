@@ -15,7 +15,7 @@ type Props = {
   product: Product
 }
 
-export function ProductVariants({ product }: Props) {
+export function ProductVariants({ product }: Readonly<Props>) {
   const { isLoading, data, error } = useQuery({
     queryKey: ['products', 'variant', product.id],
     queryFn: () => fetchProductVariants(product.id),

@@ -6,7 +6,7 @@ type Props = {
   onBack: () => void
 }
 
-export function ProductRegistrationForm({ mode, onBack }: Props) {
+export function ProductRegistrationForm({ mode, onBack }: Readonly<Props>) {
   if (mode === 'simple') {
     return <SimpleProductRegistrationForm onBack={onBack} />
   }

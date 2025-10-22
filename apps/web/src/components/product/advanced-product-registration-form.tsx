@@ -50,7 +50,7 @@ type Props = {
   onBack: () => void
 }
 
-export function AdvancedProductRegistrationForm({ onBack }: Props) {
+export function AdvancedProductRegistrationForm({ onBack }: Readonly<Props>) {
   const { step, reset } = useAdvancedProductRegistrationStore()
   const totalSteps = 3
 
