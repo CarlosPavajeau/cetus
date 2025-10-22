@@ -20,10 +20,9 @@ export function Footer() {
   const { store } = useTenantStore()
 
   const title = store?.name ?? 'cetus'
-  const description =
-    store !== undefined
-      ? 'Ofrecemos productos de alta calidad con el mejor servicio al cliente.'
-      : 'Vende en línea más rápido y sin complicaciones'
+  const description = store
+    ? 'Ofrecemos productos de alta calidad con el mejor servicio al cliente.'
+    : 'Vende en línea más rápido y sin complicaciones'
   const storePhone = store?.phone
 
   return (
