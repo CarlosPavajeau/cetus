@@ -57,7 +57,7 @@ export function OnBoardingForm() {
 
   const name = form.watch('name')
   useEffect(() => {
-    form.setValue('slug', name?.toLowerCase().replace(/\s+/g, '-'))
+    form.setValue('slug', name?.toLowerCase().replaceAll(/\s+/g, '-'))
   }, [name])
 
   return (
