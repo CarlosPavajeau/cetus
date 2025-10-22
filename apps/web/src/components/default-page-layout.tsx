@@ -34,9 +34,9 @@ type NavBarProps = {
 }
 
 function NavBar({ store }: Readonly<NavBarProps>) {
-  const navbarTitle = store !== undefined ? store.name : 'cetus'
-  const hasStore = store !== undefined
-  const hasCustomDomain = store?.customDomain !== undefined
+  const navbarTitle = store?.name ?? 'cetus'
+  const hasStore = Boolean(store)
+  const hasCustomDomain = Boolean(store?.customDomain)
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background">
