@@ -17,7 +17,7 @@
     "@fontsource-variable/outfit": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "@microsoft/signalr": "^9.0.6",
-    "@react-email/components": "0.5.6",
+    "@react-email/components": "0.5.7",
     "@remixicon/react": "^4.6.0",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.1.14",
