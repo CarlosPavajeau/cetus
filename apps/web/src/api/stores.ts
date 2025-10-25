@@ -1,5 +1,8 @@
 import { anonymousApi, api } from '@/api/client'
-import type { UpdateStoreValues } from '@/schemas/stores'
+import type {
+  ConfigureWompiCredentialsValues,
+  UpdateStoreValues,
+} from '@/schemas/stores'
 
 export type Store = {
   id: string
@@ -10,6 +13,10 @@ export type Store = {
   address?: string
   phone?: string
   email?: string
+  wompiPublicKey?: string
+  wompiPrivateKey?: string
+  wompiEventsKey?: string
+  wompiIntegrityKey?: string
   isConnectedToMercadoPago: boolean
 }
 
@@ -77,6 +84,17 @@ export async function createStore(data: CreateStoreRequest) {
 
 export async function updateStore(data: UpdateStoreValues) {
   const response = await api.put<Store>(`/stores/${data.id}`, data)
+
+  return response.data
+}
+
+export async function configureWompiCredentials(
+  data: ConfigureWompiCredentialsValues,
+) {
+  const response = await api.put(
+    '/stores/payment-providers/wompi/credentials',
+    data,
+  )
 
   return response.data
 }
