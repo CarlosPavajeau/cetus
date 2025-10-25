@@ -16,7 +16,7 @@ import { useTenantStore } from '@/store/use-tenant-store'
 import { HideableInput } from '../hideable-input'
 
 export function ConfigureWompiCredentialsForm() {
-  const { store } = useTenantStore()
+  const { store, actions } = useTenantStore()
   const form = useForm({
     resolver: arktypeResolver(ConfigureWompiCredentialsSchema),
     defaultValues: {
@@ -30,11 +30,15 @@ export function ConfigureWompiCredentialsForm() {
   const mutation = useMutation({
     mutationKey: ['stores', 'payment-providers', 'wompi', 'credentials'],
     mutationFn: configureWompiCredentials,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Configuración guardada', {
         description:
           'La configuración de Wompi ha sido actualizada correctamente.',
       })
+
+      if (store) {
+        await actions.fetchAndSetStore(store.slug)
+      }
     },
   })
 
