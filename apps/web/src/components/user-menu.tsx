@@ -1,16 +1,22 @@
+import { authClient } from '@/shared/auth-client'
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router'
 import { LogOutIcon, User2Icon } from 'lucide-react'
-import { authClient } from '@/shared/auth-client'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Button } from './ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from './ui/sidebar'
 
 export function UserMenu() {
   const { user } = useRouteContext({
@@ -27,39 +33,70 @@ export function UserMenu() {
     router.invalidate()
   }
 
+  const { isMobile } = useSidebar()
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="h-auto p-0 hover:bg-transparent" variant="ghost">
-          <Avatar>
-            <AvatarImage alt={user.name} src={user.image ?? undefined} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="max-w-64">
-        <DropdownMenuLabel className="flex min-w-0 flex-col">
-          <span className="truncate font-medium text-foreground text-sm">
-            {user.name}
-          </span>
-          <span className="truncate font-normal text-muted-foreground text-xs">
-            {user.email}
-          </span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={user.image ?? ''} alt={user.name} />
+                <AvatarFallback className="rounded-lg">
+                  {user.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate text-xs">{user.email}</span>
+              </div>
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            side={isMobile ? 'bottom' : 'right'}
+            align="end"
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="p-0 font-normal">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage src={user.image ?? ''} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">
+                    {user.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate text-xs">{user.email}</span>
+                </div>
+              </div>
+            </DropdownMenuLabel>
 
-        <DropdownMenuItem asChild>
-          <Link to="/app/account">
-            <User2Icon aria-hidden="true" className="opacity-60" size={16} />
-            <span>Cuenta</span>
-          </Link>
-        </DropdownMenuItem>
+            <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={signOut}>
-          <LogOutIcon aria-hidden="true" className="opacity-60" size={16} />
-          <span>Cerrar sesión</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link to="/app/account">
+                  <User2Icon />
+                  Cuenta
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={signOut}>
+              <LogOutIcon />
+              Cerrar sesión
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   )
 }

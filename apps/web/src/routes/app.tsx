@@ -67,12 +67,12 @@ function RouteComponent() {
     <SidebarProvider>
       <AppSidebar />
 
-      <SidebarInset className="flex min-h-screen flex-col">
+      <SidebarInset>
         <AppNav />
 
         <MissingMercadoPagoConfigurationBanner />
 
-        <main className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
+        <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <Outlet />
         </main>
       </SidebarInset>

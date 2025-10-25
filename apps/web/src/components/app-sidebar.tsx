@@ -12,17 +12,20 @@ import { OrganizationSwitcher } from '@/components/organization-switcher'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar'
 import {
   type SidebarMenuElement,
   SidebarMenuItemWithCollapsible,
 } from '@/components/ui/sidebar-menu-item'
+import { UserMenu } from '@/components/user-menu'
 
 const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
   {
@@ -112,10 +115,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar {...props}>
-      <SidebarHeader className="flex h-16 items-center justify-center gap-2 border-b">
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
         <OrganizationSwitcher />
       </SidebarHeader>
+
       <SidebarContent>
         {MENU.map((group) => (
           <SidebarGroup key={group.id}>
@@ -134,6 +138,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
+
+      <SidebarFooter>
+        <UserMenu />
+      </SidebarFooter>
+
+      <SidebarRail />
     </Sidebar>
   )
 }
