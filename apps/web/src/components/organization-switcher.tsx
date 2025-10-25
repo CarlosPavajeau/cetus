@@ -1,22 +1,27 @@
-import { useRouter } from '@tanstack/react-router'
 import { ChevronsUpDownIcon, StoreIcon } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { authClient } from '@/shared/auth-client'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu'
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from './ui/sidebar'
+} from '@/components/ui/dropdown-menu'
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
+import { authClient } from '@/shared/auth-client'
 
 export function OrganizationSwitcher() {
   const { data: activeOrg, isPending: isActiveOrgPending } =
     authClient.useActiveOrganization()
   const { data: orgs, isPending: isOrgsPending } =
     authClient.useListOrganizations()
-  const router = useRouter()
+
+  const { isMobile } = useSidebar()
 
   if (isActiveOrgPending || isOrgsPending) {
     return <Skeleton className="h-12 w-full" />
@@ -27,7 +32,7 @@ export function OrganizationSwitcher() {
       organizationId: orgId,
     })
 
-    router.invalidate()
+    window.location.reload()
   }
 
   return (
@@ -39,21 +44,21 @@ export function OrganizationSwitcher() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               size="lg"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <StoreIcon className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {activeOrg?.name}
-                </span>
+                <span className="truncate font-medium">{activeOrg?.name}</span>
+                <span className="truncate text-xs">{activeOrg?.slug}</span>
               </div>
               <ChevronsUpDownIcon className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             align="start"
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side="bottom"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
@@ -65,8 +70,8 @@ export function OrganizationSwitcher() {
                 key={org.id}
                 onClick={() => onSelectOrg(org.id)}
               >
-                <div className="flex size-6 items-center justify-center">
-                  <StoreIcon className="size-4 shrink-0" />
+                <div className="flex size-6 items-center justify-center rounded-md border">
+                  <StoreIcon className="size-3.5 shrink-0" />
                 </div>
                 {org.name}
               </DropdownMenuItem>
