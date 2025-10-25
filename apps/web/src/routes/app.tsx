@@ -1,7 +1,3 @@
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
-import consola from 'consola'
-import { useEffect } from 'react'
 import { fetchStoreByExternalId } from '@/api/stores'
 import { AppNav } from '@/components/app-nav'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -10,6 +6,9 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { getSession } from '@/functions/get-session'
 import { setActiveOrg } from '@/functions/organizations'
 import { useTenantStore } from '@/store/use-tenant-store'
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
 const storeByExternalIdQuery = (id: string) =>
   queryOptions({
@@ -29,7 +28,6 @@ export const Route = createFileRoute('/app')({
     }
 
     let organizationId = session.session.activeOrganizationId
-    consola.log('organizationId', organizationId)
     if (!organizationId) {
       const activeOrg = await setActiveOrg()
       if (!activeOrg) {
