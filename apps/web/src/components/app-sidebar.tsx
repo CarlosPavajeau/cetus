@@ -1,5 +1,6 @@
 import {
   BadgePercentIcon,
+  CreditCardIcon,
   LayoutDashboardIcon,
   PackageIcon,
   ShoppingBasketIcon,
@@ -90,6 +91,12 @@ const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuElement> = [
     href: '/app/account',
     isNew: false,
     icon: User2Icon,
+  },
+  {
+    label: 'Pagos',
+    href: '/app/payments',
+    isNew: false,
+    icon: CreditCardIcon,
   },
 ] as const
 
