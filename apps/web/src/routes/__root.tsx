@@ -72,14 +72,13 @@ type RootDocumentProps = {
 function RootDocument({ children }: Readonly<RootDocumentProps>) {
   return (
     <html lang="es">
-      {/** biome-ignore lint/style/noHeadElement: required for tanstack router */}
       <head>
         <HeadContent />
       </head>
       <body className="bg-background font-sans antialiased">
         {children}
-        <TanStackRouterDevtools position="bottom-right" />
-        <ReactQueryDevtools buttonPosition="bottom-left" />
+        <TanStackRouterDevtools position="top-right" />
+        <ReactQueryDevtools buttonPosition="bottom-right" />
         <Scripts />
       </body>
     </html>
