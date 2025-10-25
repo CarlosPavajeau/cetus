@@ -92,9 +92,5 @@
       "attributePosition": "auto"
     }
   },
-  "extends": [
-    "ultracite/core",
-    "ultracite/react",
-    "ultracite/remix"
-  ]
+  "extends": ["ultracite/core", "ultracite/react", "ultracite/remix"]
 }
