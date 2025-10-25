@@ -1,14 +1,13 @@
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { fetchStoreByExternalId } from '@/api/stores'
 import { AppNav } from '@/components/app-nav'
 import { AppSidebar } from '@/components/app-sidebar'
-import { MissingMercadoPagoConfigurationBanner } from '@/components/missing-mercado-pago-configuration-banner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { getSession } from '@/functions/get-session'
 import { setActiveOrg } from '@/functions/organizations'
 import { useTenantStore } from '@/store/use-tenant-store'
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
-import { useEffect } from 'react'
 
 const storeByExternalIdQuery = (id: string) =>
   queryOptions({
@@ -69,8 +68,6 @@ function RouteComponent() {
 
       <SidebarInset>
         <AppNav />
-
-        <MissingMercadoPagoConfigurationBanner />
 
         <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <Outlet />
