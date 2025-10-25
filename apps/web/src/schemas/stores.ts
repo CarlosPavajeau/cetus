@@ -11,3 +11,21 @@ export const UpdateStoreSchema = type({
 })
 
 export type UpdateStoreValues = typeof UpdateStoreSchema.infer
+
+export const ConfigureWompiCredentialsSchema = type({
+  publicKey: type('string').atLeastLength(1).configure({
+    message: 'La llave pública es requerida',
+  }),
+  privateKey: type('string').atLeastLength(1).configure({
+    message: 'La llave privada es requerida',
+  }),
+  eventsKey: type('string').atLeastLength(1).configure({
+    message: 'La llave de eventos es requerida',
+  }),
+  integrityKey: type('string').atLeastLength(1).configure({
+    message: 'La llave de integridad es requerida',
+  }),
+})
+
+export type ConfigureWompiCredentialsValues =
+  typeof ConfigureWompiCredentialsSchema.infer
