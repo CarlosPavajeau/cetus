@@ -29,6 +29,7 @@ import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
 import { Route as AppProductOptionTypesRouteImport } from './routes/app/product-option-types'
+import { Route as AppPaymentsRouteImport } from './routes/app/payments'
 import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesRouteImport } from './routes/app/categories'
 import { Route as AppAccountRouteImport } from './routes/app/account'
@@ -148,6 +149,11 @@ const AppProductOptionTypesRoute = AppProductOptionTypesRouteImport.update({
   path: '/product-option-types',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPaymentsRoute = AppPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDeliveryFeesRoute = AppDeliveryFeesRouteImport.update({
   id: '/delivery-fees',
   path: '/delivery-fees',
@@ -265,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/payments': typeof AppPaymentsRoute
   '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
@@ -304,6 +311,7 @@ export interface FileRoutesByTo {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/payments': typeof AppPaymentsRoute
   '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
@@ -346,6 +354,7 @@ export interface FileRoutesById {
   '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
+  '/app/payments': typeof AppPaymentsRoute
   '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
@@ -388,6 +397,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/payments'
     | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/payments'
     | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
+    | '/app/payments'
     | '/app/product-option-types'
     | '/app/reviews'
     | '/categories/$slug'
@@ -656,6 +668,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductOptionTypesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/payments': {
+      id: '/app/payments'
+      path: '/payments'
+      fullPath: '/app/payments'
+      preLoaderRoute: typeof AppPaymentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/delivery-fees': {
       id: '/app/delivery-fees'
       path: '/delivery-fees'
@@ -814,6 +833,7 @@ interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppCategoriesRoute: typeof AppCategoriesRoute
   AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
+  AppPaymentsRoute: typeof AppPaymentsRoute
   AppProductOptionTypesRoute: typeof AppProductOptionTypesRoute
   AppReviewsRoute: typeof AppReviewsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -830,6 +850,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppCategoriesRoute: AppCategoriesRoute,
   AppDeliveryFeesRoute: AppDeliveryFeesRoute,
+  AppPaymentsRoute: AppPaymentsRoute,
   AppProductOptionTypesRoute: AppProductOptionTypesRoute,
   AppReviewsRoute: AppReviewsRoute,
   AppIndexRoute: AppIndexRoute,
