@@ -1,5 +1,4 @@
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import consola from 'consola'
 import {
   CalendarIcon,
   CircleUserIcon,
@@ -65,7 +64,6 @@ export const CardPaymentForm = ({ order }: Props) => {
   }, [merchant, form])
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    consola.log(data)
     await transactionMutation.mutateAsync(data)
   })
 
