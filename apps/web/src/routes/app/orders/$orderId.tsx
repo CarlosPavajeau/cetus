@@ -4,7 +4,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
-import { deliverOrder, OrderStatus } from '@/api/orders'
+import { deliverOrder } from '@/api/orders'
 import { DefaultLoader } from '@/components/default-loader'
 import { CancelOrderDialog } from '@/components/order/cancel-order-dialog'
 import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
@@ -102,7 +102,7 @@ function OrderDetailsComponent() {
   }, [navigate, order])
 
   const isCancelable = useMemo(
-    () => (order ? order.status !== OrderStatus.Canceled : false),
+    () => (order ? order.status !== 'canceled' : false),
     [order],
   )
 
@@ -120,7 +120,7 @@ function OrderDetailsComponent() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div>
       <div className="flex items-center justify-between space-y-2">
         <div className="flex items-center justify-between space-y-2">
           <ReturnButton />
@@ -134,8 +134,8 @@ function OrderDetailsComponent() {
       <div>
         <OrderSummary order={order} />
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          {order.status === OrderStatus.Paid && (
+        <div className="mt-6 flex w-full flex-col gap-2">
+          {order.status === 'paid' && (
             <CompleteOrderButton
               onSuccess={handleOrderSuccess}
               orderId={order.id}
