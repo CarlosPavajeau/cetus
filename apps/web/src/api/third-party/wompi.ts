@@ -1,17 +1,10 @@
+import { env } from '@cetus/env/client'
 import axios from 'axios'
 
-// Base client setup
-const createWompiClient = () =>
-  axios.create({
-    baseURL: import.meta.env.VITE_WOMPI_API_URL,
-    headers: {
-      Authorization: `Bearer ${import.meta.env.VITE_WOMPI_KEY}`,
-    },
-  })
+const wompi = axios.create({
+  baseURL: env.VITE_WOMPI_API_URL,
+})
 
-const wompi = createWompiClient()
-
-// Types
 export type PresignedToken = {
   acceptance_token: string
   permalink: string
@@ -53,7 +46,6 @@ export type BancolombiaUserType = 'PERSON'
 
 export type LegalIdType = 'CC' | 'NIT'
 
-// Payment methods with discriminated union for better type safety
 export type CardPaymentMethod = {
   type: 'CARD'
   token: string
@@ -162,33 +154,61 @@ export type GetFinancialInstitutionsResponse = {
   data: FinancialInstitution[]
 }
 
-// API Functions
-export const getMerchant = async () => {
-  const response = await wompi.get<Merchant>(
-    `/merchants/${import.meta.env.VITE_WOMPI_KEY}`,
-  )
+export const getMerchant = async (publicKey: string) => {
+  const response = await wompi.get<Merchant>(`/merchants/${publicKey}`, {
+    headers: {
+      Authorization: `Bearer ${publicKey}`,
+    },
+  })
   return response.data
 }
 
-export const createTransaction = async (data: CreateTransactionRequest) => {
-  const response = await wompi.post<Transaction>('/transactions', data)
+export const createTransaction = async (
+  data: CreateTransactionRequest,
+  publicKey: string,
+) => {
+  const response = await wompi.post<Transaction>('/transactions', data, {
+    headers: {
+      Authorization: `Bearer ${publicKey}`,
+    },
+  })
+
   return response.data
 }
 
-export const getTransaction = async (id: string) => {
-  const response = await wompi.get<Transaction>(`/transactions/${id}`)
+export const getTransaction = async (id: string, publicKey: string) => {
+  const response = await wompi.get<Transaction>(`/transactions/${id}`, {
+    headers: {
+      Authorization: `Bearer ${publicKey}`,
+    },
+  })
+
   return response.data
 }
 
-export const createCardToken = async (data: CreateCardTokenRequest) => {
-  const response = await wompi.post<CardToken>('/tokens/cards', data)
+export const createCardToken = async (
+  data: CreateCardTokenRequest,
+  publicKey: string,
+) => {
+  const response = await wompi.post<CardToken>('/tokens/cards', data, {
+    headers: {
+      Authorization: `Bearer ${publicKey}`,
+    },
+  })
+
   return response.data
 }
 
-export const getFinancialInstitutions = async () => {
+export const getFinancialInstitutions = async (publicKey: string) => {
   const response = await wompi.get<GetFinancialInstitutionsResponse>(
     '/pse/financial_institutions',
+    {
+      headers: {
+        Authorization: `Bearer ${publicKey}`,
+      },
+    },
   )
+
   return response.data
 }
 
@@ -196,19 +216,23 @@ export const getFinancialInstitutions = async () => {
  * Helper function to wait for async payment URL
  * Used by both PSE and Bancolombia transfer payment methods
  */
-const waitForAsyncPaymentUrl = async (transactionId: string) => {
-  let transaction = await getTransaction(transactionId)
+const waitForAsyncPaymentUrl = async (
+  transactionId: string,
+  publicKey: string,
+) => {
+  let transaction = await getTransaction(transactionId, publicKey)
   let payment = transaction.data.payment_method as
     | BancolombiaTransferPaymentMethod
     | PSEPaymentMethod
 
   // Perform long polling to check if the transaction has async payment URL
   const maxRetries = 5
+  const delay = 1000
   let retries = 0
 
   while (!payment.extra?.async_payment_url && retries < maxRetries) {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    transaction = await getTransaction(transactionId)
+    await new Promise((resolve) => setTimeout(resolve, delay))
+    transaction = await getTransaction(transactionId, publicKey)
     payment = transaction.data.payment_method as
       | BancolombiaTransferPaymentMethod
       | PSEPaymentMethod
@@ -227,23 +251,27 @@ const waitForAsyncPaymentUrl = async (transactionId: string) => {
  */
 export const createBancolombiaTransfer = async (
   data: CreateTransactionRequest,
+  publicKey: string,
 ) => {
   if (data.payment_method.type !== 'BANCOLOMBIA_TRANSFER') {
     throw new Error('Invalid payment method')
   }
 
-  const transaction = await createTransaction(data)
-  return waitForAsyncPaymentUrl(transaction.data.id)
+  const transaction = await createTransaction(data, publicKey)
+  return waitForAsyncPaymentUrl(transaction.data.id, publicKey)
 }
 
 /**
  * Create a transaction with PSE and wait for the async payment URL
  */
-export const createPSETransaction = async (data: CreateTransactionRequest) => {
+export const createPSETransaction = async (
+  data: CreateTransactionRequest,
+  publicKey: string,
+) => {
   if (data.payment_method.type !== 'PSE') {
     throw new Error('Invalid payment method')
   }
 
-  const transaction = await createTransaction(data)
-  return waitForAsyncPaymentUrl(transaction.data.id)
+  const transaction = await createTransaction(data, publicKey)
+  return waitForAsyncPaymentUrl(transaction.data.id, publicKey)
 }
