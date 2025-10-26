@@ -1,9 +1,14 @@
+import { env } from '@cetus/env/client'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
+import { SettingsIcon } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { configureWompiCredentials } from '@/api/stores'
+import { CopiableInput } from '@/components/copiable-input'
+import { HideableInput } from '@/components/hideable-input'
 import { SubmitButton } from '@/components/submit-button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Field,
   FieldError,
@@ -13,7 +18,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { ConfigureWompiCredentialsSchema } from '@/schemas/stores'
 import { useTenantStore } from '@/store/use-tenant-store'
-import { HideableInput } from '../hideable-input'
 
 export function ConfigureWompiCredentialsForm() {
   const { store, actions } = useTenantStore()
@@ -49,6 +53,29 @@ export function ConfigureWompiCredentialsForm() {
   return (
     <form id="configure-wompi-credentials-form" onSubmit={handleSubmit}>
       <FieldGroup>
+        <Alert>
+          <SettingsIcon />
+          <AlertTitle>Configuración de Eventos</AlertTitle>
+          <AlertDescription>
+            <span>
+              Asegurate de tener nuestra URL de eventos configurada
+              correctamente en la plataforma de Wompi. Más información en la
+              documentación oficial{' '}
+              <a
+                className="text-foreground underline"
+                href="https://docs.wompi.co/docs/colombia/eventos/"
+              >
+                aquí.
+              </a>
+            </span>
+            <div>
+              <CopiableInput
+                value={`${env.VITE_API_URL}/webhooks/wompi/payments`}
+              />
+            </div>
+          </AlertDescription>
+        </Alert>
+
         <Controller
           control={form.control}
           name="publicKey"
@@ -121,16 +148,16 @@ export function ConfigureWompiCredentialsForm() {
             </Field>
           )}
         />
-      </FieldGroup>
 
-      <div className="pt-6">
-        <SubmitButton
-          disabled={form.formState.isSubmitting}
-          isSubmitting={form.formState.isSubmitting}
-        >
-          Guardar
-        </SubmitButton>
-      </div>
+        <div>
+          <SubmitButton
+            disabled={form.formState.isSubmitting}
+            isSubmitting={form.formState.isSubmitting}
+          >
+            Guardar
+          </SubmitButton>
+        </div>
+      </FieldGroup>
     </form>
   )
 }
