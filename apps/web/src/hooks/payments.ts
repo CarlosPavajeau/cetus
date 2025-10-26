@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import type { Order } from '@/api/orders'
 import {
@@ -21,7 +20,7 @@ export const usePaymentSignature = (order: Order) => {
   return useGenerateIntegritySignature(reference, amount, integritySecret)
 }
 
-export const useCreateTransaction = (order: Order) => {
+export const useCreateTransaction = (order: Order, publicKey: string) => {
   const { signature } = usePaymentSignature(order)
   const redirect = `${window.location.origin}/orders/${order.id}/confirmation`
 
@@ -43,13 +42,16 @@ export const useCreateTransaction = (order: Order) => {
     if (values.type === 'CARD') {
       const [expMonth, expYear] = values.card_expiration_date.split('/')
 
-      const cardToken = await createCardToken({
-        number: values.card_number.replace(/\s/g, ''),
-        card_holder: values.card_holder,
-        cvc: values.card_cvc,
-        exp_year: expYear.trim(),
-        exp_month: expMonth.trim(),
-      })
+      const cardToken = await createCardToken(
+        {
+          number: values.card_number.replace(/\s/g, ''),
+          card_holder: values.card_holder,
+          cvc: values.card_cvc,
+          exp_year: expYear.trim(),
+          exp_month: expMonth.trim(),
+        },
+        publicKey,
+      )
 
       if (cardToken.status !== 'CREATED') {
         throw new Error('Card token creation failed')
@@ -64,7 +66,7 @@ export const useCreateTransaction = (order: Order) => {
         },
       } satisfies CreateTransactionRequest
 
-      return await createTransaction(createTransactionRequest)
+      return await createTransaction(createTransactionRequest, publicKey)
     }
 
     if (values.type === 'BANCOLOMBIA_TRANSFER') {
@@ -78,7 +80,10 @@ export const useCreateTransaction = (order: Order) => {
         },
       } satisfies CreateTransactionRequest
 
-      return await createBancolombiaTransfer(createTransactionRequest)
+      return await createBancolombiaTransfer(
+        createTransactionRequest,
+        publicKey,
+      )
     }
 
     if (values.type === 'PSE') {
@@ -94,7 +99,7 @@ export const useCreateTransaction = (order: Order) => {
         },
       } satisfies CreateTransactionRequest
 
-      return await createPSETransaction(createTransactionRequest)
+      return await createPSETransaction(createTransactionRequest, publicKey)
     }
 
     if (values.type === 'NEQUI') {
@@ -106,7 +111,7 @@ export const useCreateTransaction = (order: Order) => {
         },
       } satisfies CreateTransactionRequest
 
-      return await createTransaction(createTransactionRequest)
+      return await createTransaction(createTransactionRequest, publicKey)
     }
 
     throw new Error('Invalid payment method')
@@ -117,26 +122,15 @@ export const useCreateTransaction = (order: Order) => {
     mutationFn: createPaymentTransaction,
   })
 
-  const navigate = useNavigate()
-
   useEffect(() => {
     if (createTransactionMutation.isSuccess) {
       const data = createTransactionMutation.data
 
-      if (typeof data === 'string') {
-        if (window !== undefined) {
-          window.open(data, '_self')
-        }
-      } else {
-        navigate({
-          to: `/orders/${order.id}/confirmation`,
-          search: {
-            payment_id: Number(data.data.id),
-          },
-        })
+      if (typeof data === 'string' && window !== undefined) {
+        window.open(data, '_self')
       }
     }
-  }, [createTransactionMutation, order, navigate])
+  }, [createTransactionMutation])
 
   return createTransactionMutation
 }
