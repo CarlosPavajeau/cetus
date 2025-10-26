@@ -1,33 +1,58 @@
-import { ShieldCheckIcon } from 'lucide-react'
-import { useFormContext } from 'react-hook-form'
+import { useEffect } from 'react'
+import { Controller, useFormContext } from 'react-hook-form'
 import { Checkbox } from '@/components/ui/checkbox'
-import { FormField, FormItem, FormMessage } from '@/components/ui/form'
-import { Label } from '@/components/ui/label'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
 import type { PaymentValues } from '@/schemas/payments'
 
-export const PaymentConsent = () => {
-  const { merchant } = useMerchant()
+type Props = {
+  publicKey: string
+  hideConsent?: boolean
+}
+
+export const PaymentConsent = ({ publicKey, hideConsent = false }: Props) => {
+  const { merchant } = useMerchant(publicKey)
   const form = useFormContext<PaymentValues>()
 
-  if (!merchant) return null
+  useEffect(() => {
+    if (merchant?.data?.presigned_acceptance?.acceptance_token) {
+      form.setValue(
+        'acceptance_token',
+        merchant.data.presigned_acceptance.acceptance_token,
+        { shouldValidate: true },
+      )
+    }
+  }, [merchant, form])
+
+  if (!merchant) {
+    return null
+  }
+
+  if (hideConsent) {
+    return null
+  }
 
   return (
-    <div className="space-y-4">
-      <FormField
+    <FieldGroup data-slot="checkbox-group">
+      <Controller
         control={form.control}
         name="presigned_acceptance"
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex items-center gap-2">
+        render={({ field, fieldState }) => (
+          <Field>
+            <Field data-invalid={fieldState.invalid} orientation="horizontal">
               <Checkbox
                 checked={field.value}
+                id="presigned-acceptance"
+                name={field.name}
                 onCheckedChange={field.onChange}
               />
-              <Label
-                className="text-muted-foreground"
-                htmlFor="presigned_acceptance"
-              >
+
+              <FieldLabel htmlFor="presigned-acceptance">
                 Acepto haber leído{' '}
                 <a
                   className="text-foreground underline"
@@ -37,29 +62,28 @@ export const PaymentConsent = () => {
                 >
                   los reglamentos
                 </a>{' '}
-                para hacer este pago.
-              </Label>
-            </div>
-
-            <FormMessage />
-          </FormItem>
+                para hacer este pago
+              </FieldLabel>
+            </Field>
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
         )}
       />
 
-      <FormField
+      <Controller
         control={form.control}
         name="presigned_personal_data_auth"
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex items-center gap-2">
+        render={({ field, fieldState }) => (
+          <Field>
+            <Field data-invalid={fieldState.invalid} orientation="horizontal">
               <Checkbox
                 checked={field.value}
+                id="presigned-personal-data-auth"
+                name={field.name}
                 onCheckedChange={field.onChange}
               />
-              <Label
-                className="text-muted-foreground"
-                htmlFor="presigned_acceptance"
-              >
+
+              <FieldLabel htmlFor="presigned-personal-data-auth">
                 Acepto la{' '}
                 <a
                   className="text-foreground underline"
@@ -69,20 +93,13 @@ export const PaymentConsent = () => {
                 >
                   autorización para la administración de datos personales
                 </a>
-              </Label>
-            </div>
+              </FieldLabel>
+            </Field>
 
-            <FormMessage />
-          </FormItem>
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
         )}
       />
-
-      <div className="flex items-center gap-2">
-        <ShieldCheckIcon className="text-foreground" size={16} />
-        <p className="text-muted-foreground text-xs">
-          Pagos seguros con Wompi.
-        </p>
-      </div>
-    </div>
+    </FieldGroup>
   )
 }
