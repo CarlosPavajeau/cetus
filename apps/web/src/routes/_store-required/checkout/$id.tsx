@@ -11,6 +11,7 @@ import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
 import { OrderItemView } from '@/components/order/order-item-view'
+import { CardPaymentForm } from '@/components/payment/card-payment-form'
 import { SubmitButton } from '@/components/submit-button'
 import {
   Accordion,
@@ -123,7 +124,7 @@ function RouteComponent() {
                     </AccordionTrigger>
 
                     <AccordionContent>
-                      ReUI provides ready-to-use CRUD examples for developers.
+                      <CardPaymentForm order={order} />
                     </AccordionContent>
                   </AccordionItem>
 

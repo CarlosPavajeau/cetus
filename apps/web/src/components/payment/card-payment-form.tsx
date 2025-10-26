@@ -1,18 +1,22 @@
-import { CreditCardIcon } from 'lucide-react'
-import { useFormContext } from 'react-hook-form'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
+import consola from 'consola'
+import {
+  CalendarIcon,
+  CircleUserIcon,
+  CreditCardIcon,
+  RectangleEllipsis,
+} from 'lucide-react'
+import { useEffect } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { usePaymentInputs } from 'react-payment-inputs'
 import images, { type CardImages } from 'react-payment-inputs/images'
 import type { Order } from '@/api/orders'
-import { BasePaymentForm } from '@/components/payment/base-payment-form'
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import type { PaymentValues } from '@/schemas/payments'
+import { useCreateTransaction } from '@/hooks/payments'
+import { useMerchant } from '@/hooks/wompi/use-merchant'
+import { PaymentSchema } from '@/schemas/payments'
+import { SubmitButton } from '../submit-button'
+import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group'
 
 type Props = {
   order: Order
@@ -27,29 +31,57 @@ export const CardPaymentForm = ({ order }: Props) => {
     getCardImageProps,
   } = usePaymentInputs()
 
-  const form = useFormContext<PaymentValues>()
+  const form = useForm({
+    resolver: arktypeResolver(PaymentSchema),
+    defaultValues: {
+      type: 'CARD',
+      acceptance_token: '',
+      presigned_acceptance: true,
+      presigned_personal_data_auth: true,
+    },
+  })
+
+  const transactionMutation = useCreateTransaction(order, '')
+
+  const { merchant } = useMerchant('')
+
+  useEffect(() => {
+    if (merchant?.data?.presigned_acceptance?.acceptance_token) {
+      form.setValue(
+        'acceptance_token',
+        merchant.data.presigned_acceptance.acceptance_token,
+        { shouldValidate: true },
+      )
+    }
+  }, [merchant, form])
+
+  const handleSubmit = form.handleSubmit(async (data) => {
+    consola.log(data)
+    await transactionMutation.mutateAsync(data)
+  })
 
   return (
-    <BasePaymentForm buttonText="Pagar con tarjeta" order={order}>
-      <FormField
-        control={form.control}
-        name="card_number"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Número de tarjeta</FormLabel>
-            <FormControl>
-              <div className="relative">
-                <Input
-                  autoFocus
-                  className="peer ps-9 [direction:inherit]"
+    <form id="card-payment-form" onSubmit={handleSubmit}>
+      <FieldGroup>
+        <Controller
+          control={form.control}
+          name="card_number"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="card_number">Número de tarjeta</FieldLabel>
+
+              <InputGroup>
+                <InputGroupInput
                   {...getCardNumberProps({
                     onBlur: field.onBlur,
                     onChange: field.onChange,
                   })}
+                  aria-invalid={fieldState.invalid}
+                  autoComplete="off"
+                  id="card-number"
                   placeholder="Número de tarjeta"
                 />
-
-                <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+                <InputGroupAddon>
                   {meta.cardType ? (
                     <svg
                       className="overflow-hidden rounded-sm"
@@ -59,85 +91,109 @@ export const CardPaymentForm = ({ order }: Props) => {
                       width={20}
                     />
                   ) : (
-                    <CreditCardIcon
-                      aria-hidden="true"
-                      size={16}
-                      strokeWidth={2}
-                    />
+                    <CreditCardIcon aria-hidden="true" />
                   )}
-                </div>
-              </div>
-            </FormControl>
+                </InputGroupAddon>
+              </InputGroup>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
 
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        <div className="grid grid-cols-2 gap-4">
+          <Controller
+            control={form.control}
+            name="card_expiration_date"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="card-expiration-date">
+                  Fecha de expiración
+                </FieldLabel>
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="card_expiration_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fecha de expiración</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    className="[direction:inherit]"
+                <InputGroup>
+                  <InputGroupInput
                     {...getExpiryDateProps({
                       onBlur: field.onBlur,
                       onChange: field.onChange,
                     })}
+                    aria-invalid={fieldState.invalid}
+                    autoComplete="off"
+                    id="card-expiration-date"
                   />
-                </div>
-              </FormControl>
+                  <InputGroupAddon>
+                    <CalendarIcon />
+                  </InputGroupAddon>
+                </InputGroup>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <Controller
+            control={form.control}
+            name="card_cvc"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="card-cvc">CVC</FieldLabel>
 
-        <FormField
+                <InputGroup>
+                  <InputGroupInput
+                    {...getCVCProps({
+                      onBlur: field.onBlur,
+                      onChange: field.onChange,
+                    })}
+                    aria-invalid={fieldState.invalid}
+                    autoComplete="off"
+                    id="card-cvc"
+                  />
+                  <InputGroupAddon>
+                    <RectangleEllipsis />
+                  </InputGroupAddon>
+                </InputGroup>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </div>
+
+        <Controller
           control={form.control}
-          name="card_cvc"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CVC</FormLabel>
-              <FormControl>
-                <Input
-                  className="[direction:inherit]"
-                  {...getCVCProps({
-                    onBlur: field.onBlur,
-                    onChange: field.onChange,
-                  })}
-                />
-              </FormControl>
+          name="card_holder"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="card-holder">Titular</FieldLabel>
 
-              <FormMessage />
-            </FormItem>
+              <InputGroup>
+                <InputGroupInput
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  autoComplete="off"
+                  id="card-holder"
+                  placeholder="Nombre completo"
+                />
+                <InputGroupAddon>
+                  <CircleUserIcon />
+                </InputGroupAddon>
+              </InputGroup>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
+      </FieldGroup>
+
+      <div className="pt-6">
+        <SubmitButton
+          disabled={form.formState.isSubmitting}
+          form="card-payment-form"
+          isSubmitting={form.formState.isSubmitting}
+        >
+          Pagar con tarjeta
+        </SubmitButton>
       </div>
-
-      <FormField
-        control={form.control}
-        name="card_holder"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Nombre del titular</FormLabel>
-            <FormControl>
-              <Input
-                className="[direction:inherit]"
-                {...field}
-                placeholder="Nombre del titular"
-              />
-            </FormControl>
-
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </BasePaymentForm>
+    </form>
   )
 }
