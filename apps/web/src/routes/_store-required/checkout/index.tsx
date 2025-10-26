@@ -2,7 +2,6 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
-import { Image } from '@unpic/react'
 import consola from 'consola'
 import {
   ArrowLeftIcon,
@@ -17,6 +16,7 @@ import { createOrder } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
+import { OrderItemView } from '@/components/order/order-item-view'
 import { SubmitButton } from '@/components/submit-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,19 +35,12 @@ import {
 } from '@/components/ui/field'
 import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item'
+import { ItemGroup } from '@/components/ui/item'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { useCustomer } from '@/hooks/customers'
 import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrder, CreateOrderSchema } from '@/schemas/orders'
-import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 
 export const Route = createFileRoute('/_store-required/checkout/')({
@@ -347,61 +340,21 @@ function RouteComponent() {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {items.map((item) => (
-                  <Item className="p-0" key={item.product.slug}>
-                    <ItemMedia className="size-16" variant="image">
-                      <Image
-                        alt={item.product.name}
-                        className="object-cover"
-                        height={64}
-                        layout="constrained"
-                        objectFit="cover"
-                        src={getImageUrl(
-                          item.product.imageUrl || 'placeholder.svg',
-                        )}
-                        width={64}
-                      />
-                    </ItemMedia>
-
-                    <ItemContent>
-                      <ItemTitle className="line-clamp-1 truncate">
-                        {item.product.name}
-                      </ItemTitle>
-
-                      <ItemDescription>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            {item.product.optionValues.map((value) => (
-                              <Badge
-                                className="text-xs"
-                                key={value.id}
-                                variant="outline"
-                              >
-                                {value.optionTypeName}: {value.value}
-                              </Badge>
-                            ))}
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Badge variant="secondary">
-                              <span>
-                                Precio:{' '}
-                                <Currency
-                                  currency="COP"
-                                  value={item.product.price}
-                                />
-                              </span>
-                            </Badge>
-
-                            <Badge variant="secondary">
-                              <span>Cantidad: {item.quantity}</span>
-                            </Badge>
-                          </div>
-                        </div>
-                      </ItemDescription>
-                    </ItemContent>
-                  </Item>
-                ))}
+                <ItemGroup className="gap-2">
+                  {items.map((item) => (
+                    <OrderItemView
+                      item={{
+                        id: item.product.slug,
+                        productName: item.product.name,
+                        imageUrl: item.product.imageUrl,
+                        optionValues: item.product.optionValues,
+                        price: item.product.price,
+                        quantity: item.quantity,
+                      }}
+                      key={`${item.product.variantId}-${item.product.name}`}
+                    />
+                  ))}
+                </ItemGroup>
 
                 <Separator />
 

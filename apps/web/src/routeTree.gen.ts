@@ -38,7 +38,7 @@ import { Route as StoreRequiredCartRouteImport } from './routes/_store-required/
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
 import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
 import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
-import { Route as StoreRequiredCheckoutIndexRouteImport } from './routes/_store-required/checkout.index'
+import { Route as StoreRequiredCheckoutIndexRouteImport } from './routes/_store-required/checkout/index'
 import { Route as OrdersOrderIdConfirmationRouteImport } from './routes/orders/$orderId.confirmation'
 import { Route as OnboardingMercadoPagoLinkRouteImport } from './routes/onboarding.mercado-pago.link'
 import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
@@ -47,7 +47,7 @@ import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
 import { Route as ApiMercadopagoConnectRouteImport } from './routes/api/mercadopago/connect'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as StoreRequiredProductsAllRouteImport } from './routes/_store-required/products/all'
-import { Route as StoreRequiredCheckoutIdRouteImport } from './routes/_store-required/checkout.$id'
+import { Route as StoreRequiredCheckoutIdRouteImport } from './routes/_store-required/checkout/$id'
 import { Route as AppProductsIdDetailsRouteImport } from './routes/app/products.$id.details'
 
 const TermsRoute = TermsRouteImport.update({
