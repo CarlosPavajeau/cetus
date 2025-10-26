@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useReducer } from 'react'
-import { OrderStatus, type SimpleOrder } from '@/api/orders'
+import type { OrderStatus, SimpleOrder } from '@/api/orders'
 
 type FilterState = {
   searchTerm: string
@@ -13,7 +13,7 @@ type FilterAction =
 
 const initialFilterState: FilterState = {
   searchTerm: '',
-  statuses: [OrderStatus.Pending, OrderStatus.Paid],
+  statuses: ['pending', 'paid'],
 }
 
 function filterReducer(state: FilterState, action: FilterAction): FilterState {
