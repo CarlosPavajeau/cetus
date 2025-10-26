@@ -1,23 +1,16 @@
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useRouter } from '@tanstack/react-router'
+import { TagIcon } from 'lucide-react'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import type { Order } from '@/api/orders'
-import { Currency } from '@/components/currency'
 import { SubmitButton } from '@/components/submit-button'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useRedeemCoupon } from '@/hooks/coupons'
 import { RedeemCouponSchema } from '@/schemas/coupons'
 import { extractErrorDetail } from '@/shared/error'
+import { Field, FieldError, FieldGroup } from '../ui/field'
 
 type Props = {
   order: Order
@@ -61,44 +54,46 @@ export function RedeemCoupon({ order }: Readonly<Props>) {
   })
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border bg-card p-4">
-      <div className="flex flex-col gap-0.5 font-medium">
-        <span className="text-muted-foreground text-sm">Total a pagar</span>
-        <span>
-          <Currency currency="COP" value={order.total} />
-        </span>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 font-medium text-sm">
+        <TagIcon className="h-4 w-4" />
+        <span>Cupon de descuento</span>
       </div>
 
       <Form {...form}>
-        <form className="grid gap-4" onSubmit={onSubmit}>
-          <FormField
-            control={form.control}
-            name="couponCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Código del cupón</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-                <FormDescription>
-                  Ingresa un código para obtener descuentos
-                </FormDescription>
-              </FormItem>
-            )}
-          />
+        <form id="redeem-coupon" onSubmit={onSubmit}>
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="couponCode"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <div className="flex w-full items-center gap-2">
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                      id="coupon-code"
+                      placeholder="Ingresa tu código de cupón"
+                    />
 
-          <div className="flex justify-end">
-            <SubmitButton
-              disabled={isPending}
-              isSubmitting={isPending}
-              size="sm"
-              type="submit"
-              variant="outline"
-            >
-              Aplicar cupón
-            </SubmitButton>
-          </div>
+                    <SubmitButton
+                      disabled={isPending}
+                      form="redeem-coupon"
+                      isSubmitting={isPending}
+                      type="submit"
+                      variant="secondary"
+                    >
+                      Aplicar cupón
+                    </SubmitButton>
+                  </div>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
         </form>
       </Form>
     </div>
