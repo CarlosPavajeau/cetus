@@ -48,10 +48,10 @@ export const PSEPaymentSchema = type({
   user_legal_id_type: type("'CC'|'NIT'").configure({
     message: 'Debes seleccionar el tipo de documento',
   }),
-  user_legal_id: type.string.moreThanLength(1).configure({
+  user_legal_id: type('string>=1').configure({
     message: 'Debes ingresar el número de documento',
   }),
-  financial_institution_code: type.string.moreThanLength(1).configure({
+  financial_institution_code: type('string>=1').configure({
     message: 'Debes seleccionar la entidad financiera',
   }),
   presigned_acceptance: type.boolean.configure({
