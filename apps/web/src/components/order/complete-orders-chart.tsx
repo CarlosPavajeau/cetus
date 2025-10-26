@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { OrderStatus } from '@/api/orders'
 import { CustomTooltipContent } from '@/components/charts-extra'
 import {
   Card,
@@ -107,7 +106,7 @@ export function CompleteOrdersChart() {
     }
 
     const completeOrders = summary.filter(
-      (order) => order.status === OrderStatus.Delivered,
+      (order) => order.status === 'delivered',
     )
 
     const data = completeOrders

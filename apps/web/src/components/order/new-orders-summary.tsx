@@ -1,7 +1,7 @@
 import { useSearch } from '@tanstack/react-router'
 import { ChartNoAxesCombinedIcon } from 'lucide-react'
 import { useNumberFormatter } from 'react-aria'
-import { OrderStatus, OrderStatusText } from '@/api/orders'
+import { OrderStatusText } from '@/api/orders'
 import {
   Card,
   CardContent,
@@ -75,16 +75,14 @@ export function NewOrdersSummary() {
 
   const ordersCount = summary.length
   const pendingOrders = summary.filter(
-    (order) => order.status === OrderStatus.Pending,
+    (order) => order.status === 'pending',
   ).length
-  const paidOrders = summary.filter(
-    (order) => order.status === OrderStatus.Paid,
-  ).length
+  const paidOrders = summary.filter((order) => order.status === 'paid').length
   const shippedOrders = summary.filter(
-    (order) => order.status === OrderStatus.Delivered,
+    (order) => order.status === 'delivered',
   ).length
   const canceledOrders = summary.filter(
-    (order) => order.status === OrderStatus.Canceled,
+    (order) => order.status === 'canceled',
   ).length
 
   const pendingOrdersPercentage =
@@ -97,25 +95,25 @@ export function NewOrdersSummary() {
 
   const statusInsights: StatusInsight[] = [
     {
-      label: OrderStatusText[OrderStatus.Pending],
+      label: OrderStatusText.pending,
       color: 'bg-warning-base',
       percentage: pendingOrdersPercentage,
       total: pendingOrders,
     },
     {
-      label: OrderStatusText[OrderStatus.Paid],
+      label: OrderStatusText.paid,
       color: 'bg-success-base',
       percentage: paidOrdersPercentage,
       total: paidOrders,
     },
     {
-      label: OrderStatusText[OrderStatus.Delivered],
+      label: OrderStatusText.delivered,
       color: 'bg-success-dark',
       percentage: shippedOrdersPercentage,
       total: shippedOrders,
     },
     {
-      label: OrderStatusText[OrderStatus.Canceled],
+      label: OrderStatusText.canceled,
       color: 'bg-destructive',
       percentage: canceledOrdersPercentage,
       total: canceledOrders,
