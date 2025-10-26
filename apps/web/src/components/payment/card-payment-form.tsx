@@ -11,12 +11,21 @@ import { Controller, useForm } from 'react-hook-form'
 import { usePaymentInputs } from 'react-payment-inputs'
 import images, { type CardImages } from 'react-payment-inputs/images'
 import type { Order } from '@/api/orders'
+import { SubmitButton } from '@/components/submit-button'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 import { useCreateTransaction } from '@/hooks/payments'
 import { useMerchant } from '@/hooks/wompi/use-merchant'
 import { PaymentSchema } from '@/schemas/payments'
-import { SubmitButton } from '../submit-button'
-import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group'
 
 type Props = {
   order: Order
