@@ -2,29 +2,52 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
+import { Image } from '@unpic/react'
 import consola from 'consola'
-import { ArrowRightIcon } from 'lucide-react'
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  PackageIcon,
+  TruckIcon,
+} from 'lucide-react'
 import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { createOrder, type DeliveryFee } from '@/api/orders'
+import { createOrder } from '@/api/orders'
 import { AddressFields } from '@/components/address-fields'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import { PageHeader } from '@/components/page-header'
 import { SubmitButton } from '@/components/submit-button'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
+import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item'
+import { Separator } from '@/components/ui/separator'
+import { Spinner } from '@/components/ui/spinner'
 import { useCustomer } from '@/hooks/customers'
 import { useDeliveryFee } from '@/hooks/orders'
 import { type CreateOrder, CreateOrderSchema } from '@/schemas/orders'
+import { getImageUrl } from '@/shared/cdn'
 import { useCart } from '@/store/cart'
 
 export const Route = createFileRoute('/_store-required/checkout/')({
@@ -124,111 +147,96 @@ function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
   const { customer, isLoading } = useCustomer(customerId)
 
   useEffect(() => {
+    if (isLoading) {
+      return
+    }
+
     if (customer) {
       form.setValue('customer.name', customer.name)
       form.setValue('customer.email', customer.email)
       form.setValue('customer.phone', customer.phone)
     }
-  }, [customer, form])
+  }, [customer, form, isLoading])
 
   return (
-    <div className="space-y-6 rounded-md border bg-card p-6">
-      <div>
-        <div className="space-y-4">
-          <FormField
+    <FieldGroup>
+      <div className="space-y-4">
+        <Controller
+          control={form.control}
+          name="customer.id"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="customer-id">Identificación</FieldLabel>
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                autoComplete="off"
+                id="customer-id"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={form.control}
+          name="customer.name"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="customer-name">Nombre completo</FieldLabel>
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                id="customer-name"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Controller
             control={form.control}
-            name="customer.id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Identificación</FormLabel>
-                <FormControl>
-                  <Input autoFocus type="text" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            name="customer.email"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="customer-email">
+                  Correo electrónico
+                </FieldLabel>
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  id="customer-email"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
             )}
           />
 
-          <FormField
+          <Controller
             control={form.control}
-            name="customer.name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nombre completo</FormLabel>
-                <FormControl>
-                  <Input type="text" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            name="customer.phone"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="customer-phone">Teléfono</FieldLabel>
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  id="customer-phone"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
             )}
           />
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="customer.email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Correo electrónico</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} disabled={isLoading} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="customer.phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Teléfono</FormLabel>
-                  <FormControl>
-                    <Input type="tel" {...field} disabled={isLoading} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
         </div>
       </div>
 
-      <div>
-        <AddressFields />
-      </div>
-    </div>
-  )
-}
-
-type DeliveryFeeInfoProps = {
-  deliveryFee: DeliveryFee | undefined
-  isLoadingDeliveryFee: boolean
-}
-
-function DeliveryFeeInfo({
-  deliveryFee,
-  isLoadingDeliveryFee,
-}: Readonly<DeliveryFeeInfoProps>) {
-  return (
-    <div>
-      <small className="text-muted-foreground text-xs">
-        Recuerda que el costo del envío es cancelado al momento de la entrega de
-        los productos.{' '}
-        {!isLoadingDeliveryFee && deliveryFee !== undefined ? (
-          <>
-            El costo del envío es de{' '}
-            <span className="font-medium">
-              <Currency currency="COP" value={deliveryFee.fee} />
-            </span>
-            .
-          </>
-        ) : (
-          'Debes seleccionar una ciudad para calcular el costo del envío.'
-        )}
-      </small>
-    </div>
+      <AddressFields />
+    </FieldGroup>
   )
 }
 
@@ -240,6 +248,8 @@ function RouteComponent() {
     isSubmitting,
     deliveryFee,
     isLoadingDeliveryFee,
+    items,
+    total,
   } = useCartCheckout()
 
   if (isEmpty) {
@@ -248,34 +258,184 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <PageHeader title="Datos de envío" />
+      <div className="mx-auto max-w-7xl">
+        <div className="flex items-center justify-between space-y-2">
+          <Button size="sm" variant="ghost">
+            <ArrowLeftIcon className="mr-2 h-4 w-4" />
+            Volver
+          </Button>
 
-      <Form {...form}>
-        <form className="space-y-6" onSubmit={onSubmit}>
-          <CustomerInfoFields form={form} />
+          <div className="flex items-center gap-2">
+            {isLoadingDeliveryFee && (
+              <Badge variant="secondary">
+                <Spinner />
+                Calculando costo de envío...
+              </Badge>
+            )}
 
-          <DeliveryFeeInfo
-            deliveryFee={deliveryFee}
-            isLoadingDeliveryFee={isLoadingDeliveryFee}
-          />
+            {isSubmitting && (
+              <Badge variant="secondary">
+                <Spinner />
+                Creando pedido...
+              </Badge>
+            )}
 
-          <SubmitButton
-            className="group w-full"
-            disabled={isSubmitting}
-            isSubmitting={isSubmitting}
-            type="submit"
-          >
-            <div className="group flex items-center gap-2">
-              Continuar al pago
-              <ArrowRightIcon
-                aria-hidden="true"
-                className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-                size={16}
-              />
-            </div>
-          </SubmitButton>
-        </form>
-      </Form>
+            <Badge className="ml-auto">Paso 1 de 2</Badge>
+          </div>
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="col-span-2 lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <TruckIcon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>Datos de envío</CardTitle>
+                    <CardDescription>
+                      Por favor, ingresa tus datos básicos para continuar con el
+                      proceso de compra.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={onSubmit}>
+                    <CustomerInfoFields form={form} />
+
+                    <small className="text-muted-foreground text-xs">
+                      Recuerda que el costo del envío es cancelado al momento de
+                      la entrega de los productos.
+                    </small>
+
+                    <SubmitButton
+                      className="group mt-6 w-full"
+                      disabled={isSubmitting || isLoadingDeliveryFee}
+                      isSubmitting={isSubmitting}
+                      type="submit"
+                    >
+                      <div className="group flex items-center gap-2">
+                        Continuar al pago
+                        <ArrowRightIcon
+                          aria-hidden="true"
+                          className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
+                          size={16}
+                        />
+                      </div>
+                    </SubmitButton>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="col-span-1 hidden lg:block">
+            <Card className="sticky top-20">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <PackageIcon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>Resumen de la orden</CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {items.map((item) => (
+                  <Item className="p-0" key={item.product.slug}>
+                    <ItemMedia className="size-16" variant="image">
+                      <Image
+                        alt={item.product.name}
+                        className="object-cover"
+                        height={64}
+                        layout="constrained"
+                        objectFit="cover"
+                        src={getImageUrl(
+                          item.product.imageUrl || 'placeholder.svg',
+                        )}
+                        width={64}
+                      />
+                    </ItemMedia>
+
+                    <ItemContent>
+                      <ItemTitle className="line-clamp-1 truncate">
+                        {item.product.name}
+                      </ItemTitle>
+
+                      <ItemDescription>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            {item.product.optionValues.map((value) => (
+                              <Badge
+                                className="text-xs"
+                                key={value.id}
+                                variant="outline"
+                              >
+                                {value.optionTypeName}: {value.value}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Badge variant="secondary">
+                              <span>
+                                Precio:{' '}
+                                <Currency
+                                  currency="COP"
+                                  value={item.product.price}
+                                />
+                              </span>
+                            </Badge>
+
+                            <Badge variant="secondary">
+                              <span>Cantidad: {item.quantity}</span>
+                            </Badge>
+                          </div>
+                        </div>
+                      </ItemDescription>
+                    </ItemContent>
+                  </Item>
+                ))}
+
+                <Separator />
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-medium">
+                      <Currency currency="COP" value={total} />
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Envío</span>
+                    <span className="font-medium">
+                      <Currency currency="COP" value={deliveryFee?.fee ?? 0} />
+                    </span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>
+                    <Currency
+                      currency="COP"
+                      value={total + (deliveryFee?.fee ?? 0)}
+                    />
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </DefaultPageLayout>
   )
 }

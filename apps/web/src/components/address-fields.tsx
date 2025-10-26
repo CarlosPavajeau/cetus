@@ -1,14 +1,6 @@
 import { useState } from 'react'
-import { useFormContext } from 'react-hook-form'
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+import { Controller, useFormContext } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -18,6 +10,7 @@ import {
 } from '@/components/ui/select'
 import { useCities, useStates } from '@/hooks/use-state'
 import type { CreateOrder } from '@/schemas/orders'
+import { Field, FieldContent, FieldError, FieldLabel } from './ui/field'
 
 export function AddressFields() {
   const form = useFormContext<CreateOrder>()
@@ -34,73 +27,82 @@ export function AddressFields() {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="*:not-first:mt-2">
-          <Label htmlFor="state">Departamento</Label>
-          <Select
-            disabled={isLoading || isLoadingCities}
-            onValueChange={handleStateChange}
-            value={currentState}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccione un departamento" />
-            </SelectTrigger>
-            <SelectContent>
-              {states?.map((state) => (
-                <SelectItem key={state.id} value={state.id}>
-                  {state.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <FormField
+        <Controller
           control={form.control}
           name="cityId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ciudad</FormLabel>
-              <FormControl>
-                <Select
-                  disabled={isLoading || isLoadingCities || !currentState}
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione una ciudad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities?.map((city) => (
-                      <SelectItem key={city.id} value={city.id}>
-                        {city.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
+          render={({ fieldState }) => (
+            <Field>
+              <FieldContent data-invalid={fieldState.invalid}>
+                <FieldLabel>Departamento</FieldLabel>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </FieldContent>
 
-              <FormMessage />
-            </FormItem>
+              <Select
+                disabled={isLoading || isLoadingCities}
+                onValueChange={handleStateChange}
+                value={currentState}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione un departamento" />
+                </SelectTrigger>
+                <SelectContent position="item-aligned">
+                  {states?.map((state) => (
+                    <SelectItem key={state.id} value={state.id}>
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           )}
         />
-      </div>
 
-      <div className="mt-4">
-        <FormField
+        <Controller
           control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Dirección</FormLabel>
-              <FormControl>
-                <Input type="text" {...field} />
-              </FormControl>
+          name="cityId"
+          render={({ field, fieldState }) => (
+            <Field>
+              <FieldContent data-invalid={fieldState.invalid}>
+                <FieldLabel>Ciudad</FieldLabel>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </FieldContent>
 
-              <FormMessage />
-            </FormItem>
+              <Select
+                disabled={isLoading || isLoadingCities || !currentState}
+                onValueChange={field.onChange}
+                value={field.value}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione una ciudad" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities?.map((city) => (
+                    <SelectItem key={city.id} value={city.id}>
+                      {city.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           )}
         />
       </div>
+
+      <Controller
+        control={form.control}
+        name="address"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="address">Dirección</FieldLabel>
+            <Input {...field} aria-invalid={fieldState.invalid} id="address" />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
     </>
   )
 }
