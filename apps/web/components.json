@@ -10,6 +10,7 @@
     "cssVariables": true,
     "prefix": ""
   },
+  "iconLibrary": "lucide",
   "aliases": {
     "components": "@/components",
     "utils": "@/shared/cn",
@@ -17,5 +18,7 @@
     "lib": "@/shared",
     "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide"
+  "registries": {
+    "@reui": "https://reui.io/r/{name}.json"
+  }
 }
