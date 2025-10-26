@@ -10,10 +10,11 @@ import { createOrderPayment, fetchOrder } from '@/api/orders'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
-import { BancolombiaLogo } from '@/components/icons'
+import { BancolombiaLogo, PSELogo } from '@/components/icons'
 import { OrderItemView } from '@/components/order/order-item-view'
 import { BancolombiaPayment } from '@/components/payment/bancolombia-payment'
 import { CardPaymentForm } from '@/components/payment/card-payment-form'
+import { PsePaymentForm } from '@/components/payment/pse-payment-form'
 import { SubmitButton } from '@/components/submit-button'
 import {
   Accordion,
@@ -153,7 +154,7 @@ function RouteComponent() {
                     <AccordionTrigger>
                       <Item className="p-0">
                         <ItemMedia variant="icon">
-                          <BanknoteIcon />
+                          <PSELogo />
                         </ItemMedia>
                         <ItemContent>
                           <ItemTitle>PSE</ItemTitle>
@@ -164,8 +165,7 @@ function RouteComponent() {
                       </Item>
                     </AccordionTrigger>
                     <AccordionContent>
-                      Developers looking to save time with pre-built CRUD
-                      solutions.
+                      <PsePaymentForm order={order} />
                     </AccordionContent>
                   </AccordionItem>
 
