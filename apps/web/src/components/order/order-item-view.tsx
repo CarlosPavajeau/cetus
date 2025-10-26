@@ -2,19 +2,19 @@ import { Image } from '@unpic/react'
 import type { ProductOptionValue } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { Badge } from '@/components/ui/badge'
-import { getImageUrl } from '@/shared/cdn'
 import {
   Item,
   ItemContent,
   ItemDescription,
   ItemMedia,
   ItemTitle,
-} from '../ui/item'
+} from '@/components/ui/item'
+import { getImageUrl } from '@/shared/cdn'
 
 type OrderItem = {
   id: string
   productName: string
-  imageUrl: string
+  imageUrl?: string
   optionValues: ProductOptionValue[]
   price: number
   quantity: number
