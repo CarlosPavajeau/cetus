@@ -1,10 +1,11 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import {
   BanknoteIcon,
   CreditCardIcon,
   PackageIcon,
   ShieldCheckIcon,
   Smartphone,
+  StoreIcon,
 } from 'lucide-react'
 import { fetchOrder } from '@/api/orders'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
@@ -24,6 +25,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -33,6 +35,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import {
   Item,
   ItemContent,
   ItemDescription,
@@ -41,6 +51,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item'
 import { Separator } from '@/components/ui/separator'
+import { useTenantStore } from '@/store/use-tenant-store'
 
 export const Route = createFileRoute('/_store-required/checkout/$id')({
   loader: async ({ params }) => {
@@ -58,6 +69,33 @@ export const Route = createFileRoute('/_store-required/checkout/$id')({
 
 function RouteComponent() {
   const { order } = Route.useLoaderData()
+  const { store } = useTenantStore()
+
+  if (!store) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <StoreIcon />
+          </EmptyMedia>
+          <EmptyTitle>Tienda no encontrada</EmptyTitle>
+          <EmptyDescription>
+            No se pudo encontrar la tienda asociada a este pedido.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild>
+            <Link to="/">Volver al inicio</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  const publicKey = store.wompiPublicKey
+  const hasMercadoPago = store.isConnectedToMercadoPago
+
+  const emptyPaymentMethods = !(publicKey || hasMercadoPago)
 
   return (
     <DefaultPageLayout>
@@ -94,108 +132,152 @@ function RouteComponent() {
               </CardHeader>
 
               <CardContent>
-                <Accordion
-                  className="w-full"
-                  collapsible
-                  type="single"
-                  variant="outline"
-                >
-                  <AccordionItem value="card">
-                    <AccordionTrigger>
-                      <Item className="p-0">
-                        <ItemMedia variant="icon">
-                          <CreditCardIcon />
-                        </ItemMedia>
-                        <ItemContent>
-                          <ItemTitle>Tarjeta de Crédito o Débito</ItemTitle>
-                          <ItemDescription>
-                            Paga con tu tarjeta de crédito o débito
-                          </ItemDescription>
-                        </ItemContent>
-                      </Item>
-                    </AccordionTrigger>
+                {emptyPaymentMethods && (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <StoreIcon />
+                      </EmptyMedia>
+                      <EmptyTitle>
+                        No hay métodos de pago disponibles
+                      </EmptyTitle>
+                      <EmptyDescription>
+                        Por favor, comuníquese con el administrador de la tienda
+                        para obtener más información.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>
+                      <Button asChild>
+                        <Link to="/">Volver al inicio</Link>
+                      </Button>
+                    </EmptyContent>
+                  </Empty>
+                )}
 
-                    <AccordionContent>
-                      <CardPaymentForm order={order} />
-                    </AccordionContent>
-                  </AccordionItem>
+                {!emptyPaymentMethods && (
+                  <Accordion
+                    className="w-full"
+                    collapsible
+                    type="single"
+                    variant="outline"
+                  >
+                    {publicKey && (
+                      <>
+                        <AccordionItem value="card">
+                          <AccordionTrigger>
+                            <Item className="p-0">
+                              <ItemMedia variant="icon">
+                                <CreditCardIcon />
+                              </ItemMedia>
+                              <ItemContent>
+                                <ItemTitle>
+                                  Tarjeta de Crédito o Débito
+                                </ItemTitle>
+                                <ItemDescription>
+                                  Paga con tu tarjeta de crédito o débito
+                                </ItemDescription>
+                              </ItemContent>
+                            </Item>
+                          </AccordionTrigger>
 
-                  <AccordionItem value="bancolombia">
-                    <AccordionTrigger>
-                      <Item className="p-0">
-                        <ItemMedia variant="icon">
-                          <BancolombiaLogo />
-                        </ItemMedia>
-                        <ItemContent>
-                          <ItemTitle>Botón Bancolombia</ItemTitle>
-                          <ItemDescription>
-                            Realiza el pago con tu cuenta de Bancolombia
-                          </ItemDescription>
-                        </ItemContent>
-                      </Item>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <BancolombiaPayment order={order} />
-                    </AccordionContent>
-                  </AccordionItem>
+                          <AccordionContent>
+                            <CardPaymentForm
+                              order={order}
+                              publicKey={publicKey}
+                            />
+                          </AccordionContent>
+                        </AccordionItem>
 
-                  <AccordionItem value="pse">
-                    <AccordionTrigger>
-                      <Item className="p-0">
-                        <ItemMedia variant="icon">
-                          <PSELogo />
-                        </ItemMedia>
-                        <ItemContent>
-                          <ItemTitle>PSE</ItemTitle>
-                          <ItemDescription>
-                            Paga con cualquiera de tus cuentas bancarias
-                          </ItemDescription>
-                        </ItemContent>
-                      </Item>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <PsePaymentForm order={order} />
-                    </AccordionContent>
-                  </AccordionItem>
+                        <AccordionItem value="bancolombia">
+                          <AccordionTrigger>
+                            <Item className="p-0">
+                              <ItemMedia variant="icon">
+                                <BancolombiaLogo />
+                              </ItemMedia>
+                              <ItemContent>
+                                <ItemTitle>Botón Bancolombia</ItemTitle>
+                                <ItemDescription>
+                                  Realiza el pago con tu cuenta de Bancolombia
+                                </ItemDescription>
+                              </ItemContent>
+                            </Item>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <BancolombiaPayment
+                              order={order}
+                              publicKey={publicKey}
+                            />
+                          </AccordionContent>
+                        </AccordionItem>
 
-                  <AccordionItem value="nequi">
-                    <AccordionTrigger>
-                      <Item className="p-0">
-                        <ItemMedia variant="icon">
-                          <Smartphone className="text-[#CA0080]" />
-                        </ItemMedia>
-                        <ItemContent>
-                          <ItemTitle>Nequi</ItemTitle>
-                          <ItemDescription>
-                            Paga con tu cuenta Nequi
-                          </ItemDescription>
-                        </ItemContent>
-                      </Item>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <NequiPaymentForm order={order} />
-                    </AccordionContent>
-                  </AccordionItem>
+                        <AccordionItem value="pse">
+                          <AccordionTrigger>
+                            <Item className="p-0">
+                              <ItemMedia variant="icon">
+                                <PSELogo />
+                              </ItemMedia>
+                              <ItemContent>
+                                <ItemTitle>PSE</ItemTitle>
+                                <ItemDescription>
+                                  Paga con cualquiera de tus cuentas bancarias
+                                </ItemDescription>
+                              </ItemContent>
+                            </Item>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <PsePaymentForm
+                              order={order}
+                              publicKey={publicKey}
+                            />
+                          </AccordionContent>
+                        </AccordionItem>
 
-                  <AccordionItem value="mercado-pago">
-                    <AccordionTrigger>
-                      <Item className="p-0">
-                        <ItemMedia variant="icon">
-                          <BanknoteIcon />
-                        </ItemMedia>
-                        <ItemContent>
-                          <ItemTitle>Mercado pago</ItemTitle>
-                          <ItemDescription>
-                            Pago con el portal de Mercado Pago
-                          </ItemDescription>
-                        </ItemContent>
-                      </Item>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <MercadoPagoPayment order={order} />
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                        <AccordionItem value="nequi">
+                          <AccordionTrigger>
+                            <Item className="p-0">
+                              <ItemMedia variant="icon">
+                                <Smartphone className="text-[#CA0080]" />
+                              </ItemMedia>
+                              <ItemContent>
+                                <ItemTitle>Nequi</ItemTitle>
+                                <ItemDescription>
+                                  Paga con tu cuenta Nequi
+                                </ItemDescription>
+                              </ItemContent>
+                            </Item>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <NequiPaymentForm
+                              order={order}
+                              publicKey={publicKey}
+                            />
+                          </AccordionContent>
+                        </AccordionItem>
+                      </>
+                    )}
+
+                    {hasMercadoPago && (
+                      <AccordionItem value="mercado-pago">
+                        <AccordionTrigger>
+                          <Item className="p-0">
+                            <ItemMedia variant="icon">
+                              <BanknoteIcon />
+                            </ItemMedia>
+                            <ItemContent>
+                              <ItemTitle>Mercado pago</ItemTitle>
+                              <ItemDescription>
+                                Pago con el portal de Mercado Pago
+                              </ItemDescription>
+                            </ItemContent>
+                          </Item>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <MercadoPagoPayment order={order} />
+                        </AccordionContent>
+                      </AccordionItem>
+                    )}
+                  </Accordion>
+                )}
               </CardContent>
             </Card>
           </div>
