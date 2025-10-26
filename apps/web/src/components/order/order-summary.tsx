@@ -1,8 +1,8 @@
-import { Image } from '@unpic/react'
 import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 import { type Order, OrderStatusColor, OrderStatusText } from '@/api/orders'
 import { Currency } from '@/components/currency'
 import { FormattedDate } from '@/components/formatted-date'
+import { OrderItemView } from '@/components/order/order-item-view'
 import { PaymentSummary } from '@/components/order/payment-summary'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -12,16 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item'
+import { ItemGroup } from '@/components/ui/item'
 import { Separator } from '@/components/ui/separator'
-import { getImageUrl } from '@/shared/cdn'
 import { cn } from '@/shared/cn'
 
 type Props = {
@@ -104,53 +96,7 @@ export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
         <CardContent>
           <ItemGroup className="gap-2">
             {order.items.map((item) => (
-              <Item key={item.id} role="listitem" size="sm" variant="outline">
-                <ItemMedia className="size-20" variant="image">
-                  <Image
-                    alt={item.productName}
-                    className="object-cover"
-                    height={128}
-                    layout="constrained"
-                    objectFit="cover"
-                    src={getImageUrl(item.imageUrl || 'placeholder.svg')}
-                    width={128}
-                  />
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle className="line-clamp-1">
-                    {item.productName}
-                  </ItemTitle>
-
-                  <ItemDescription>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        {item.optionValues.map((value) => (
-                          <Badge
-                            className="text-xs"
-                            key={value.id}
-                            variant="outline"
-                          >
-                            {value.optionTypeName}: {value.value}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Badge variant="secondary">
-                          <span>
-                            Precio:{' '}
-                            <Currency currency="COP" value={item.price} />
-                          </span>
-                        </Badge>
-
-                        <Badge variant="secondary">
-                          <span>Cantidad: {item.quantity}</span>
-                        </Badge>
-                      </div>
-                    </div>
-                  </ItemDescription>
-                </ItemContent>
-              </Item>
+              <OrderItemView item={item} key={item.id} />
             ))}
           </ItemGroup>
         </CardContent>
