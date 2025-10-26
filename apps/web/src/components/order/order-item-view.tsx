@@ -2,13 +2,7 @@ import { Image } from '@unpic/react'
 import type { ProductOptionValue } from '@/api/products'
 import { Currency } from '@/components/currency'
 import { Badge } from '@/components/ui/badge'
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item'
+import { Item, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item'
 import { getImageUrl } from '@/shared/cdn'
 
 type OrderItem = {
@@ -41,29 +35,27 @@ export function OrderItemView({ item }: Props) {
       <ItemContent>
         <ItemTitle className="line-clamp-1">{item.productName}</ItemTitle>
 
-        <ItemDescription>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              {item.optionValues.map((value) => (
-                <Badge className="text-xs" key={value.id} variant="outline">
-                  {value.optionTypeName}: {value.value}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="flex gap-2">
-              <Badge variant="secondary">
-                <span>
-                  Precio: <Currency currency="COP" value={item.price} />
-                </span>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            {item.optionValues.map((value) => (
+              <Badge className="text-xs" key={value.id} variant="outline">
+                {value.optionTypeName}: {value.value}
               </Badge>
-
-              <Badge variant="secondary">
-                <span>Cantidad: {item.quantity}</span>
-              </Badge>
-            </div>
+            ))}
           </div>
-        </ItemDescription>
+
+          <div className="flex gap-2">
+            <Badge variant="secondary">
+              <span>
+                Precio: <Currency currency="COP" value={item.price} />
+              </span>
+            </Badge>
+
+            <Badge variant="secondary">
+              <span>Cantidad: {item.quantity}</span>
+            </Badge>
+          </div>
+        </div>
       </ItemContent>
     </Item>
   )
