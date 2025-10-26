@@ -2,36 +2,31 @@ import { anonymousApi, api } from '@/api/client'
 import type { CreateOrder } from '@/schemas/orders'
 import type { ProductOptionValue } from './products'
 
-export enum OrderStatus {
-  Pending = 0,
-  Paid = 1,
-  Delivered = 2,
-  Canceled = 3,
-}
+export type OrderStatus = 'pending' | 'paid' | 'delivered' | 'canceled'
 
-export const OrderStatusText = {
-  [OrderStatus.Pending]: 'Pendiente',
-  [OrderStatus.Paid]: 'Pagado',
-  [OrderStatus.Delivered]: 'Enviado',
-  [OrderStatus.Canceled]: 'Cancelado',
-}
+export const OrderStatusText: Record<OrderStatus, string> = {
+  pending: 'Pendiente',
+  paid: 'Pagado',
+  delivered: 'Enviado',
+  canceled: 'Cancelado',
+} as const
 
 export const ORDER_STATUS_OPTIONS = [
-  { value: OrderStatus.Pending, label: OrderStatusText[OrderStatus.Pending] },
-  { value: OrderStatus.Paid, label: OrderStatusText[OrderStatus.Paid] },
+  { value: 'pending', label: OrderStatusText.pending },
+  { value: 'paid', label: OrderStatusText.paid },
   {
-    value: OrderStatus.Delivered,
-    label: OrderStatusText[OrderStatus.Delivered],
+    value: 'delivered',
+    label: OrderStatusText.delivered,
   },
-  { value: OrderStatus.Canceled, label: OrderStatusText[OrderStatus.Canceled] },
-]
+  { value: 'canceled', label: OrderStatusText.canceled },
+] as const
 
-export const OrderStatusColor = {
-  [OrderStatus.Pending]: 'bg-warning-base',
-  [OrderStatus.Paid]: 'bg-success-base',
-  [OrderStatus.Delivered]: 'bg-success-base',
-  [OrderStatus.Canceled]: 'bg-destructive',
-}
+export const OrderStatusColor: Record<OrderStatus, string> = {
+  pending: 'bg-warning-base',
+  paid: 'bg-success-base',
+  delivered: 'bg-success-base',
+  canceled: 'bg-destructive',
+} as const
 
 type OrderItem = {
   id: string
@@ -186,6 +181,36 @@ export async function createDeliveryFee(deliveryFee: CreateDeliveryFeeRequest) {
 
 export async function createOrderPayment(orderId: string) {
   const response = await anonymousApi.post<string>(
+    `/orders/${orderId}/payments`,
+  )
+
+  return response.data
+}
+
+export type PaymentProvider = 'mercado_pago' | 'wompi'
+
+export type OrderPaymentResponse = {
+  paymentProvider: PaymentProvider
+  transactionId: string
+  status: string
+  paymentMethod: string
+  createdAt?: string
+  approvedAt?: string
+}
+
+export function getPaymentProviderName(provider: PaymentProvider) {
+  switch (provider) {
+    case 'mercado_pago':
+      return 'Mercado Pago'
+    case 'wompi':
+      return 'Wompi'
+    default:
+      return 'Desconocido'
+  }
+}
+
+export async function fetchOrderPayment(orderId: string) {
+  const response = await anonymousApi.get<OrderPaymentResponse>(
     `/orders/${orderId}/payments`,
   )
 

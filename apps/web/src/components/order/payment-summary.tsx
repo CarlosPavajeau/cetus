@@ -1,5 +1,5 @@
 import { BanknoteXIcon } from 'lucide-react'
-import type { Order } from '@/api/orders'
+import { getPaymentProviderName, type Order } from '@/api/orders'
 import { FormattedDate } from '@/components/formatted-date'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -17,7 +17,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
-import { usePaymentInfo } from '@/hooks/use-payment-info'
+import { useOrderPaymentInfo } from '@/hooks/use-order-payment-info'
 import { cn } from '@/shared/cn'
 import {
   getMercadoPagoPaymentMethodLabel,
@@ -29,9 +29,7 @@ type Props = {
 }
 
 export function PaymentSummary({ order }: Readonly<Props>) {
-  const { payment, isLoading } = usePaymentInfo(
-    Number(order.transactionId || 0),
-  )
+  const { payment, isLoading } = useOrderPaymentInfo(order.id)
 
   if (isLoading) {
     return (
@@ -88,33 +86,39 @@ export function PaymentSummary({ order }: Readonly<Props>) {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Id</span>
 
-            <span>{payment.id}</span>
+            <span>{payment.transactionId}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Proveedor</span>
+
+            <span>{getPaymentProviderName(payment.paymentProvider)}</span>
           </div>
 
           <div className="flex justify-between">
             <span className="text-muted-foreground">Método de pago</span>
 
             <span>
-              {getMercadoPagoPaymentMethodLabel(payment.payment_type_id)}
+              {getMercadoPagoPaymentMethodLabel(payment.paymentMethod)}
             </span>
           </div>
 
-          {payment.date_created && (
+          {payment.createdAt && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Iniciado el</span>
 
               <span>
-                <FormattedDate date={new Date(payment.date_created)} />
+                <FormattedDate date={new Date(payment.createdAt)} />
               </span>
             </div>
           )}
 
-          {payment.date_approved && (
+          {payment.approvedAt && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Aprobado el</span>
 
               <span>
-                <FormattedDate date={new Date(payment.date_approved)} />
+                <FormattedDate date={new Date(payment.approvedAt)} />
               </span>
             </div>
           )}
