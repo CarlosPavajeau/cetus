@@ -1,7 +1,7 @@
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import type { Order } from '@/api/orders'
+import { PaymentConsent } from '@/components/payment/payment-consent'
 import { SubmitButton } from '@/components/submit-button'
 import {
   Field,
@@ -10,6 +10,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field'
+import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -20,118 +21,42 @@ import {
 } from '@/components/ui/select'
 import { useCreateTransaction } from '@/hooks/payments'
 import { useFinancialInstitutions } from '@/hooks/wompi/use-financial-institutions'
-import { useMerchant } from '@/hooks/wompi/use-merchant'
 import { PaymentSchema } from '@/schemas/payments'
 
 type Props = {
   order: Order
+  publicKey: string
 }
 
-export const PsePaymentForm = ({ order }: Props) => {
+export const PsePaymentForm = ({ order, publicKey }: Props) => {
   const form = useForm({
     resolver: arktypeResolver(PaymentSchema),
     defaultValues: {
       type: 'PSE',
       acceptance_token: '',
-      presigned_acceptance: true,
-      presigned_personal_data_auth: true,
     },
   })
 
   const { financialInstitutions, isLoading: isLoadingFinancialInstitutions } =
-    useFinancialInstitutions('')
+    useFinancialInstitutions(publicKey)
 
-  const transactionMutation = useCreateTransaction(order, '')
-
-  const { merchant } = useMerchant('')
-
-  useEffect(() => {
-    if (merchant?.data?.presigned_acceptance?.acceptance_token) {
-      form.setValue(
-        'acceptance_token',
-        merchant.data.presigned_acceptance.acceptance_token,
-        { shouldValidate: true },
-      )
-    }
-  }, [merchant, form])
+  const transactionMutation = useCreateTransaction(order, publicKey)
 
   const handleSubmit = form.handleSubmit(async (data) => {
     await transactionMutation.mutateAsync(data)
   })
 
   return (
-    <form id="pse-payment-form" onSubmit={handleSubmit}>
-      <FieldGroup>
-        <Controller
-          control={form.control}
-          name="financial_institution_code"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldContent data-invalid={fieldState.invalid}>
-                <FieldLabel>Banco</FieldLabel>
-              </FieldContent>
-
-              <Select
-                disabled={isLoadingFinancialInstitutions}
-                onValueChange={field.onChange}
-                value={field.value}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un banco" />
-                </SelectTrigger>
-                <SelectContent position="item-aligned">
-                  {financialInstitutions?.map((institution) => (
-                    <SelectItem
-                      key={institution.financial_institution_code}
-                      value={institution.financial_institution_code}
-                    >
-                      {institution.financial_institution_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          control={form.control}
-          name="user_type"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldContent data-invalid={fieldState.invalid}>
-                <FieldLabel>Tipo de persona</FieldLabel>
-              </FieldContent>
-
-              <Select
-                disabled={isLoadingFinancialInstitutions}
-                onValueChange={field.onChange}
-                value={field.value}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un tipo de persona" />
-                </SelectTrigger>
-                <SelectContent position="item-aligned">
-                  <SelectItem value="0">Natural</SelectItem>
-                  <SelectItem value="1">Jurídica</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <div className="grid grid-cols-3 gap-4">
+    <Form {...form}>
+      <form id="pse-payment-form" onSubmit={handleSubmit}>
+        <FieldGroup>
           <Controller
             control={form.control}
-            name="user_legal_id_type"
+            name="financial_institution_code"
             render={({ field, fieldState }) => (
               <Field>
                 <FieldContent data-invalid={fieldState.invalid}>
-                  <FieldLabel>Tipo de documento</FieldLabel>
+                  <FieldLabel>Banco</FieldLabel>
                 </FieldContent>
 
                 <Select
@@ -140,11 +65,17 @@ export const PsePaymentForm = ({ order }: Props) => {
                   value={field.value}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="CC/NIT" />
+                    <SelectValue placeholder="Seleccione un banco" />
                   </SelectTrigger>
                   <SelectContent position="item-aligned">
-                    <SelectItem value="CC">Cédula de ciudadanía</SelectItem>
-                    <SelectItem value="NIT">NIT</SelectItem>
+                    {financialInstitutions?.map((institution) => (
+                      <SelectItem
+                        key={institution.financial_institution_code}
+                        value={institution.financial_institution_code}
+                      >
+                        {institution.financial_institution_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -157,35 +88,97 @@ export const PsePaymentForm = ({ order }: Props) => {
 
           <Controller
             control={form.control}
-            name="user_legal_id"
+            name="user_type"
             render={({ field, fieldState }) => (
-              <Field className="col-span-2" data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="document-id">
-                  Número de documento
-                </FieldLabel>
-                <Input
-                  {...field}
-                  aria-invalid={fieldState.invalid}
-                  id="document-id"
-                />
+              <Field>
+                <FieldContent data-invalid={fieldState.invalid}>
+                  <FieldLabel>Tipo de persona</FieldLabel>
+                </FieldContent>
+
+                <Select
+                  disabled={isLoadingFinancialInstitutions}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un tipo de persona" />
+                  </SelectTrigger>
+                  <SelectContent position="item-aligned">
+                    <SelectItem value="0">Natural</SelectItem>
+                    <SelectItem value="1">Jurídica</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
                 )}
               </Field>
             )}
           />
-        </div>
-      </FieldGroup>
 
-      <div className="pt-6">
-        <SubmitButton
-          disabled={form.formState.isSubmitting}
-          form="pse-payment-form"
-          isSubmitting={form.formState.isSubmitting}
-        >
-          Ir al portal PSE
-        </SubmitButton>
-      </div>
-    </form>
+          <div className="grid grid-cols-3 gap-4">
+            <Controller
+              control={form.control}
+              name="user_legal_id_type"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldContent data-invalid={fieldState.invalid}>
+                    <FieldLabel>Tipo de documento</FieldLabel>
+                  </FieldContent>
+
+                  <Select
+                    disabled={isLoadingFinancialInstitutions}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="CC/NIT" />
+                    </SelectTrigger>
+                    <SelectContent position="item-aligned">
+                      <SelectItem value="CC">CC</SelectItem>
+                      <SelectItem value="NIT">NIT</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="user_legal_id"
+              render={({ field, fieldState }) => (
+                <Field className="col-span-2" data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="document-id">
+                    Número de documento
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    id="document-id"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </div>
+
+          <PaymentConsent publicKey={publicKey} />
+
+          <SubmitButton
+            disabled={form.formState.isSubmitting}
+            form="pse-payment-form"
+            isSubmitting={form.formState.isSubmitting}
+          >
+            Ir al portal PSE
+          </SubmitButton>
+        </FieldGroup>
+      </form>
+    </Form>
   )
 }

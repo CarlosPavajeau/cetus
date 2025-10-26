@@ -11,11 +11,17 @@ type Props = {
   order: Order
   children: ReactNode
   buttonText: string
+  publicKey: string
 }
 
-export const BasePaymentForm = ({ order, children, buttonText }: Props) => {
+export const BasePaymentForm = ({
+  order,
+  children,
+  buttonText,
+  publicKey,
+}: Props) => {
   const form = useFormContext<PaymentValues>()
-  const transactionMutation = useCreateTransaction(order)
+  const transactionMutation = useCreateTransaction(order, publicKey)
 
   const onSubmit = form.handleSubmit((values) => {
     transactionMutation.mutate(values)
