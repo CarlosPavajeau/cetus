@@ -1,5 +1,3 @@
-'use client'
-
 import { Collapsible as CollapsiblePrimitive } from 'radix-ui'
 
 function Collapsible({
@@ -30,4 +28,4 @@ function CollapsibleContent({
   )
 }
 
-export { Collapsible, CollapsibleContent, CollapsibleTrigger }
+export { Collapsible, CollapsibleTrigger, CollapsibleContent }
