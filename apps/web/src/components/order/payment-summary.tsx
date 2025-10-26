@@ -19,10 +19,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOrderPaymentInfo } from '@/hooks/use-order-payment-info'
 import { cn } from '@/shared/cn'
-import {
-  getMercadoPagoPaymentMethodLabel,
-  getMercadoPagoPaymentStatusLabel,
-} from '@/shared/mercado-pago'
+import { getPaymentMethodLabel, paymentStatusLabel } from '@/shared/payments'
 
 type Props = {
   order: Order
@@ -76,7 +73,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
               aria-hidden="true"
               className={cn('size-1.5 rounded-full bg-success-base')}
             />
-            {getMercadoPagoPaymentStatusLabel(payment.status)}
+            {paymentStatusLabel(payment.status)}
           </Badge>
         </CardAction>
       </CardHeader>
@@ -98,9 +95,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Método de pago</span>
 
-            <span>
-              {getMercadoPagoPaymentMethodLabel(payment.paymentMethod)}
-            </span>
+            <span>{getPaymentMethodLabel(payment.paymentMethod)}</span>
           </div>
 
           {payment.createdAt && (
