@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import {
   BanknoteIcon,
@@ -7,7 +6,7 @@ import {
   ShieldCheckIcon,
   Smartphone,
 } from 'lucide-react'
-import { createOrderPayment, fetchOrder } from '@/api/orders'
+import { fetchOrder } from '@/api/orders'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
 import { Currency } from '@/components/currency'
 import { DefaultPageLayout } from '@/components/default-page-layout'
@@ -15,9 +14,9 @@ import { BancolombiaLogo, PSELogo } from '@/components/icons'
 import { OrderItemView } from '@/components/order/order-item-view'
 import { BancolombiaPayment } from '@/components/payment/bancolombia-payment'
 import { CardPaymentForm } from '@/components/payment/card-payment-form'
+import { MercadoPagoPayment } from '@/components/payment/mercado-pago-payment'
 import { NequiPaymentForm } from '@/components/payment/nequi-payment-form'
 import { PsePaymentForm } from '@/components/payment/pse-payment-form'
-import { SubmitButton } from '@/components/submit-button'
 import {
   Accordion,
   AccordionContent,
@@ -59,18 +58,6 @@ export const Route = createFileRoute('/_store-required/checkout/$id')({
 
 function RouteComponent() {
   const { order } = Route.useLoaderData()
-
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['orders', 'payment', 'create'],
-    mutationFn: createOrderPayment,
-    onSuccess: (paymentUrl) => {
-      window.location.href = paymentUrl
-    },
-  })
-
-  const handlePayment = () => {
-    mutate(order.id)
-  }
 
   return (
     <DefaultPageLayout>
@@ -205,14 +192,7 @@ function RouteComponent() {
                       </Item>
                     </AccordionTrigger>
                     <AccordionContent>
-                      <SubmitButton
-                        disabled={isPending}
-                        isSubmitting={isPending}
-                        onClick={handlePayment}
-                        type="button"
-                      >
-                        Ir a Mercado Pago
-                      </SubmitButton>
+                      <MercadoPagoPayment order={order} />
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
