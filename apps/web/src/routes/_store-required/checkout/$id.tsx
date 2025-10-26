@@ -5,6 +5,7 @@ import {
   CreditCardIcon,
   PackageIcon,
   ShieldCheckIcon,
+  Smartphone,
 } from 'lucide-react'
 import { createOrderPayment, fetchOrder } from '@/api/orders'
 import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
@@ -14,6 +15,7 @@ import { BancolombiaLogo, PSELogo } from '@/components/icons'
 import { OrderItemView } from '@/components/order/order-item-view'
 import { BancolombiaPayment } from '@/components/payment/bancolombia-payment'
 import { CardPaymentForm } from '@/components/payment/card-payment-form'
+import { NequiPaymentForm } from '@/components/payment/nequi-payment-form'
 import { PsePaymentForm } from '@/components/payment/pse-payment-form'
 import { SubmitButton } from '@/components/submit-button'
 import {
@@ -173,7 +175,7 @@ function RouteComponent() {
                     <AccordionTrigger>
                       <Item className="p-0">
                         <ItemMedia variant="icon">
-                          <BanknoteIcon />
+                          <Smartphone className="text-[#CA0080]" />
                         </ItemMedia>
                         <ItemContent>
                           <ItemTitle>Nequi</ItemTitle>
@@ -184,8 +186,7 @@ function RouteComponent() {
                       </Item>
                     </AccordionTrigger>
                     <AccordionContent>
-                      Developers looking to save time with pre-built CRUD
-                      solutions.
+                      <NequiPaymentForm order={order} />
                     </AccordionContent>
                   </AccordionItem>
 
