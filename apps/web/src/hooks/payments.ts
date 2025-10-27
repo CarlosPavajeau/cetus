@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import type { Order } from '@/api/orders'
 import {
   type CreateTransactionRequest,
@@ -117,20 +117,24 @@ export const useCreateTransaction = (order: Order, publicKey: string) => {
     throw new Error('Invalid payment method')
   }
 
+  const navigate = useNavigate()
+
   const createTransactionMutation = useMutation({
     mutationKey: ['create-transaction', order.id],
     mutationFn: createPaymentTransaction,
-  })
-
-  useEffect(() => {
-    if (createTransactionMutation.isSuccess) {
-      const data = createTransactionMutation.data
-
+    onSuccess: (data) => {
       if (typeof data === 'string' && window !== undefined) {
         window.open(data, '_self')
+      } else {
+        navigate({
+          to: '/orders/$orderId/confirmation',
+          params: {
+            orderId: order.id,
+          },
+        })
       }
-    }
-  }, [createTransactionMutation])
+    },
+  })
 
   return createTransactionMutation
 }
