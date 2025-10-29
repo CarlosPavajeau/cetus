@@ -1,5 +1,5 @@
 import { useNumberFormatter } from 'react-aria'
-import { type Coupon, CouponDiscountType } from '@/api/coupons'
+import type { Coupon } from '@/api/coupons'
 import { Currency } from '@/components/currency'
 
 type Props = {
@@ -13,7 +13,7 @@ export function CouponDiscountValue({ coupon }: Readonly<Props>) {
     maximumFractionDigits: 1,
   })
 
-  if (coupon.discountType === CouponDiscountType.Percentage) {
+  if (coupon.discountType === 'percentage') {
     return (
       <p className="text-muted-foreground text-sm">
         {percentageFormatter.format(coupon.discountValue / 100)}
@@ -21,7 +21,7 @@ export function CouponDiscountValue({ coupon }: Readonly<Props>) {
     )
   }
 
-  if (coupon.discountType === CouponDiscountType.FixedAmount) {
+  if (coupon.discountType === 'fixed_amount') {
     return (
       <p className="text-muted-foreground text-sm">
         <Currency currency="COP" value={Number(coupon.discountValue)} />
@@ -29,7 +29,7 @@ export function CouponDiscountValue({ coupon }: Readonly<Props>) {
     )
   }
 
-  if (coupon.discountType === CouponDiscountType.FreeShipping) {
+  if (coupon.discountType === 'free_shipping') {
     return <p className="text-muted-foreground text-sm">Envío gratis</p>
   }
 }

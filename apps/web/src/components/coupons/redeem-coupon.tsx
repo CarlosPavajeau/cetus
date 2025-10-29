@@ -5,12 +5,12 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import type { Order } from '@/api/orders'
 import { SubmitButton } from '@/components/submit-button'
+import { Field, FieldError, FieldGroup } from '@/components/ui/field'
 import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useRedeemCoupon } from '@/hooks/coupons'
 import { RedeemCouponSchema } from '@/schemas/coupons'
 import { extractErrorDetail } from '@/shared/error'
-import { Field, FieldError, FieldGroup } from '../ui/field'
 
 type Props = {
   order: Order

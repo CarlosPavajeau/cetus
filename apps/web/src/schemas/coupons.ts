@@ -1,8 +1,9 @@
 import { type } from 'arktype'
-import { CouponDiscountType, CouponRuleType } from '@/api/coupons'
 
 export const CreateCouponRuleSchema = type({
-  ruleType: type.valueOf(CouponRuleType),
+  ruleType: type(
+    "'min_purchase_amount'|'specific_product'|'specific_category'|'one_per_customer'",
+  ),
   value: type.string.moreThanLength(1).configure({
     message: 'El valor de la regla es requerido',
   }),
@@ -13,7 +14,7 @@ export const CreateCouponSchema = type({
     message: 'El código es requerido',
   }),
   description: type.string.optional(),
-  discountType: type.valueOf(CouponDiscountType),
+  discountType: type("'percentage'|'fixed_amount'|'free_shipping'"),
   discountValue: type('string.integer.parse')
     .or('number>=0')
     .to('number>=0')

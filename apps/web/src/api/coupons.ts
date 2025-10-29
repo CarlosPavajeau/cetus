@@ -1,32 +1,33 @@
 import { anonymousApi, api } from '@/api/client'
 import type { CreateCoupon } from '@/schemas/coupons'
 
-export enum CouponDiscountType {
-  Percentage = 0,
-  FixedAmount = 1,
-  FreeShipping = 2,
+export type CouponDiscountType = 'percentage' | 'fixed_amount' | 'free_shipping'
+
+export const CouponDiscountTypeText: Record<CouponDiscountType, string> = {
+  percentage: 'Porcentaje',
+  fixed_amount: 'Monto fijo',
+  free_shipping: 'Envío gratis',
 }
 
-export const CouponDiscountTypeText = {
-  [CouponDiscountType.Percentage]: 'Porcentaje',
-  [CouponDiscountType.FixedAmount]: 'Monto fijo',
-  [CouponDiscountType.FreeShipping]: 'Envío gratis',
+export type CouponDiscountTypeOption = {
+  value: CouponDiscountType
+  label: string
 }
 
-export const COUPON_DISCOUNT_TYPE_OPTIONS = [
+export const COUPON_DISCOUNT_TYPE_OPTIONS: CouponDiscountTypeOption[] = [
   {
-    value: CouponDiscountType.Percentage,
-    label: CouponDiscountTypeText[CouponDiscountType.Percentage],
+    value: 'percentage',
+    label: CouponDiscountTypeText.percentage,
   },
   {
-    value: CouponDiscountType.FixedAmount,
-    label: CouponDiscountTypeText[CouponDiscountType.FixedAmount],
+    value: 'fixed_amount',
+    label: CouponDiscountTypeText.fixed_amount,
   },
   {
-    value: CouponDiscountType.FreeShipping,
-    label: CouponDiscountTypeText[CouponDiscountType.FreeShipping],
+    value: 'free_shipping',
+    label: CouponDiscountTypeText.free_shipping,
   },
-]
+] as const
 
 export type Coupon = {
   id: number
@@ -49,36 +50,40 @@ export async function fetchCoupons() {
   return response.data
 }
 
-export enum CouponRuleType {
-  MinPurchaseAmount = 0,
-  SpecificProduct = 1,
-  SpecificCategory = 2,
-  OnePerCustomer = 3,
+export type CouponRuleType =
+  | 'min_purchase_amount'
+  | 'specific_product'
+  | 'specific_category'
+  | 'one_per_customer'
+
+export const CouponRuleTypeText: Record<CouponRuleType, string> = {
+  min_purchase_amount: 'Monto mínimo de compra',
+  specific_product: 'Producto específico',
+  specific_category: 'Categoría específica',
+  one_per_customer: 'Un cupón por cliente',
 }
 
-export const CouponRuleTypeText = {
-  [CouponRuleType.MinPurchaseAmount]: 'Monto mínimo de compra',
-  [CouponRuleType.SpecificProduct]: 'Producto específico',
-  [CouponRuleType.SpecificCategory]: 'Categoría específica',
-  [CouponRuleType.OnePerCustomer]: 'Un cupón por cliente',
+export type CouponRuleTypeOption = {
+  value: CouponRuleType
+  label: string
 }
 
-export const COUPON_RULE_TYPE_OPTIONS = [
+export const COUPON_RULE_TYPE_OPTIONS: CouponRuleTypeOption[] = [
   {
-    value: CouponRuleType.MinPurchaseAmount,
-    label: CouponRuleTypeText[CouponRuleType.MinPurchaseAmount],
+    value: 'min_purchase_amount',
+    label: CouponRuleTypeText.min_purchase_amount,
   },
   {
-    value: CouponRuleType.SpecificProduct,
-    label: CouponRuleTypeText[CouponRuleType.SpecificProduct],
+    value: 'specific_product',
+    label: CouponRuleTypeText.specific_product,
   },
   {
-    value: CouponRuleType.SpecificCategory,
-    label: CouponRuleTypeText[CouponRuleType.SpecificCategory],
+    value: 'specific_category',
+    label: CouponRuleTypeText.specific_category,
   },
   {
-    value: CouponRuleType.OnePerCustomer,
-    label: CouponRuleTypeText[CouponRuleType.OnePerCustomer],
+    value: 'one_per_customer',
+    label: CouponRuleTypeText.one_per_customer,
   },
 ]
 

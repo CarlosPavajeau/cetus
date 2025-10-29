@@ -1,5 +1,5 @@
 import { TrashIcon } from 'lucide-react'
-import { CouponRuleType, CouponRuleTypeText } from '@/api/coupons'
+import { CouponRuleTypeText } from '@/api/coupons'
 import { Currency } from '@/components/currency'
 import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'

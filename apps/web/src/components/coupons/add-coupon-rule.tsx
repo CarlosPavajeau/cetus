@@ -2,7 +2,7 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useFormContext } from 'react-hook-form'
-import { COUPON_RULE_TYPE_OPTIONS, CouponRuleType } from '@/api/coupons'
+import { COUPON_RULE_TYPE_OPTIONS, type CouponRuleType } from '@/api/coupons'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -43,15 +43,15 @@ export function AddCouponRule({ onSuccess }: Readonly<Props>) {
   const form = useForm({
     resolver: arktypeResolver(CreateCouponRuleSchema),
     defaultValues: {
-      ruleType: CouponRuleType.MinPurchaseAmount,
+      ruleType: 'min_purchase_amount' as CouponRuleType,
       value: '0',
     },
   })
 
-  const onRuleTypeChange = (value: string) => {
-    form.setValue('ruleType', Number(value))
+  const onRuleTypeChange = (value: CouponRuleType) => {
+    form.setValue('ruleType', value)
 
-    if (Number(value) === CouponRuleType.OnePerCustomer) {
+    if (value === 'one_per_customer') {
       form.setValue('value', 'true')
       return
     }
@@ -89,8 +89,10 @@ export function AddCouponRule({ onSuccess }: Readonly<Props>) {
                     <FormLabel>Tipo de regla</FormLabel>
                     <FormControl>
                       <Select
-                        defaultValue={field.value?.toString()}
-                        onValueChange={(value) => onRuleTypeChange(value)}
+                        defaultValue={field.value}
+                        onValueChange={(value) =>
+                          onRuleTypeChange(value as CouponRuleType)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un tipo de regla" />
@@ -112,7 +114,9 @@ export function AddCouponRule({ onSuccess }: Readonly<Props>) {
                 )}
               />
 
-              <SelectRuleValue ruleType={form.watch('ruleType')} />
+              <SelectRuleValue
+                ruleType={form.watch('ruleType') as CouponRuleType}
+              />
 
               <div className="w-full">
                 <Button className="w-full" onClick={onSubmit} type="button">
@@ -134,11 +138,11 @@ type SelectRuleValueProps = {
 function SelectRuleValue({ ruleType }: Readonly<SelectRuleValueProps>) {
   const form = useFormContext<CreateCouponRule>()
 
-  if (ruleType === CouponRuleType.OnePerCustomer) {
+  if (ruleType === 'one_per_customer') {
     return null
   }
 
-  if (ruleType === CouponRuleType.MinPurchaseAmount) {
+  if (ruleType === 'min_purchase_amount') {
     return (
       <FormField
         control={form.control}
@@ -156,11 +160,11 @@ function SelectRuleValue({ ruleType }: Readonly<SelectRuleValueProps>) {
     )
   }
 
-  if (ruleType === CouponRuleType.SpecificCategory) {
+  if (ruleType === 'specific_category') {
     return <SelectRuleValueSpecificCategory />
   }
 
-  if (ruleType === CouponRuleType.SpecificProduct) {
+  if (ruleType === 'specific_product') {
     return <SelectRuleValueSpecificProduct />
   }
 }
