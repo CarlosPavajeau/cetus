@@ -41,7 +41,7 @@ type CouponRuleValueProps = {
 }
 
 function CouponRuleValue({ rule }: Readonly<CouponRuleValueProps>) {
-  if (rule.ruleType === CouponRuleType.MinPurchaseAmount) {
+  if (rule.ruleType === 'min_purchase_amount') {
     return (
       <span className="mt-1 font-medium text-xs">
         <Currency currency="COP" value={Number(rule.value)} />
@@ -49,11 +49,11 @@ function CouponRuleValue({ rule }: Readonly<CouponRuleValueProps>) {
     )
   }
 
-  if (rule.ruleType === CouponRuleType.SpecificCategory) {
+  if (rule.ruleType === 'specific_category') {
     return <CouponRuleValueSpecificCategory rule={rule} />
   }
 
-  if (rule.ruleType === CouponRuleType.SpecificProduct) {
+  if (rule.ruleType === 'specific_product') {
     return <CouponRuleValueSpecificProduct rule={rule} />
   }
 
