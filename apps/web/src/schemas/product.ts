@@ -126,6 +126,8 @@ export const UpdateProductVariantSchema = type({
   price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
+  enabled: type.boolean.default(true),
+  featured: type.boolean.default(false),
 })
 
 export type UpdateProductVariant = typeof UpdateProductVariantSchema.infer

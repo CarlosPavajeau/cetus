@@ -53,6 +53,8 @@ export type ProductVariantResponse = {
   stock: number
   images: ProductImage[]
   optionValues: ProductOptionValue[]
+  enabled: boolean
+  featured: boolean
 }
 
 export type ProductForSale = {
