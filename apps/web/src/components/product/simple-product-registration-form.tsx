@@ -76,7 +76,7 @@ export function SimpleProductRegistrationForm({ onBack }: Readonly<Props>) {
   })
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div>
       <div className="flex items-center justify-between space-y-2">
         <Button onClick={onBack} size="sm" variant="ghost">
           <ArrowLeftIcon className="mr-2 h-4 w-4" />
