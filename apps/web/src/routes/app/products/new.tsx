@@ -22,8 +22,10 @@ function CreateProductPage() {
 
   if (mode) {
     return (
-      <div className="mx-auto max-w-7xl">
-        <ProductRegistrationForm mode={mode} onBack={() => setMode(null)} />
+      <div className="flex flex-1 flex-col items-center">
+        <div className="w-full max-w-7xl space-y-3">
+          <ProductRegistrationForm mode={mode} onBack={() => setMode(null)} />
+        </div>
       </div>
     )
   }

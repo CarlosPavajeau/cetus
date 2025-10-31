@@ -213,8 +213,7 @@ export function SimpleProductRegistrationForm({ onBack }: Readonly<Props>) {
                     control={form.control}
                     name="images"
                     render={() => (
-                      <FormItem>
-                        <FormLabel>Imágenes</FormLabel>
+                      <FormItem className="mt-4">
                         <ProductImagesUploader
                           onFilesChange={handleFilesChange}
                         />

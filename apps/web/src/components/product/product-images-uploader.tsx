@@ -79,10 +79,10 @@ export function ProductImagesUploader({
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div className="flex flex-wrap items-center gap-4">
               {files.map((file) => (
                 <div
-                  className="relative aspect-square rounded-md bg-accent"
+                  className="relative aspect-square size-40 rounded-md bg-accent"
                   key={file.id}
                 >
                   <Image

@@ -28,41 +28,43 @@ function RouteComponent() {
   const { data: product } = useSuspenseQuery(productQuery(id))
 
   return (
-    <div className="mx-auto max-w-7xl space-y-3">
-      <div className="flex items-center justify-between space-y-2">
-        <ReturnButton className="m-0" />
+    <div className="flex flex-1 flex-col items-center">
+      <div className="w-full max-w-7xl space-y-3">
+        <div className="flex items-center justify-between space-y-2">
+          <ReturnButton className="m-0" />
 
-        <Badge className="text-xs" variant="outline">
-          <TagIcon className="inline h-3 w-3" />
-          {product.slug}
-        </Badge>
+          <Badge className="text-xs" variant="outline">
+            <TagIcon className="inline h-3 w-3" />
+            {product.slug}
+          </Badge>
+        </div>
+
+        <Tabs defaultValue="basic">
+          <TabsList className="grid h-auto w-full grid-cols-3">
+            <TabsTrigger className="flex items-center gap-2" value="basic">
+              <PackageIcon className="h-4 w-4" />
+              Información básica
+            </TabsTrigger>
+            <TabsTrigger className="flex items-center gap-2" value="options">
+              <SettingsIcon className="h-4 w-4" />
+              Opciones
+            </TabsTrigger>
+            <TabsTrigger className="flex items-center gap-2" value="variants">
+              <PackageIcon className="h-4 w-4" />
+              Variantes
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="basic">
+            <UpdateProductForm product={product} />
+          </TabsContent>
+          <TabsContent value="options">
+            <UpdateProductOptionsForm product={product} />
+          </TabsContent>
+          <TabsContent value="variants">
+            <ProductVariants product={product} />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="basic">
-        <TabsList className="grid h-auto w-full grid-cols-3">
-          <TabsTrigger className="flex items-center gap-2" value="basic">
-            <PackageIcon className="h-4 w-4" />
-            Información básica
-          </TabsTrigger>
-          <TabsTrigger className="flex items-center gap-2" value="options">
-            <SettingsIcon className="h-4 w-4" />
-            Opciones
-          </TabsTrigger>
-          <TabsTrigger className="flex items-center gap-2" value="variants">
-            <PackageIcon className="h-4 w-4" />
-            Variantes
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="basic">
-          <UpdateProductForm product={product} />
-        </TabsContent>
-        <TabsContent value="options">
-          <UpdateProductOptionsForm product={product} />
-        </TabsContent>
-        <TabsContent value="variants">
-          <ProductVariants product={product} />
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }
