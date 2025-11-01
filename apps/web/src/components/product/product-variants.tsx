@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { PackageIcon } from 'lucide-react'
 import { fetchProductVariants, type Product } from '@/api/products'
 import { DefaultLoader } from '@/components/default-loader'
+import { AddProductVariantSheet } from '@/components/product/add-product-variant-sheet'
 import { UpdateProductVariantForm } from '@/components/product/update-product-variant-form'
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -82,6 +84,10 @@ export function ProductVariants({ product }: Readonly<Props>) {
             </CardDescription>
           </div>
         </div>
+
+        <CardAction>
+          <AddProductVariantSheet product={product} />
+        </CardAction>
       </CardHeader>
 
       <CardContent>
