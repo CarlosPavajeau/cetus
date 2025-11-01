@@ -82,7 +82,7 @@ export function ProductImagesUploader({
             <div className="flex flex-wrap items-center gap-4">
               {files.map((file) => (
                 <div
-                  className="relative aspect-square size-40 rounded-md bg-accent"
+                  className="relative aspect-square size-30 rounded-md bg-accent"
                   key={file.id}
                 >
                   <Image
