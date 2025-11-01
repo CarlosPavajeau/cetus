@@ -45,7 +45,7 @@ export function CategorySelector({ onSelectCreateCategory }: Readonly<Props>) {
       disabled={isLoading}
       name="categoryId"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="gap-3">
           <FormLabel>Categoría</FormLabel>
           <Popover onOpenChange={setOpen} open={open}>
             <PopoverTrigger asChild>

@@ -1,6 +1,6 @@
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { PackageIcon, RefreshCwIcon } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import type { Product } from '@/api/products'
 import { CategorySelector } from '@/components/category/category-selector'
 import { SubmitButton } from '@/components/submit-button'
@@ -12,16 +12,21 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
+import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroupTextarea,
+} from '@/components/ui/input-group'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import { useUpdateProduct } from '@/hooks/products/use-update-product'
 import { UpdateProductSchema } from '@/schemas/product'
 
@@ -62,70 +67,75 @@ export function UpdateProductForm({ product }: Readonly<Props>) {
 
       <CardContent>
         <Form {...form}>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input autoFocus type="text" {...field} />
-                    </FormControl>
+          <form id="update-product-form" onSubmit={handleSubmit}>
+            <FieldGroup>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Controller
+                  control={form.control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="name">Nombre</FieldLabel>
+                      <Input id="name" type="text" {...field} />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
 
-                    <FormMessage />
-                  </FormItem>
+                <CategorySelector />
+              </div>
+
+              <Controller
+                control={form.control}
+                name="description"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="description">Descripción</FieldLabel>
+
+                    <InputGroup>
+                      <InputGroupTextarea
+                        {...field}
+                        value={field.value || ''}
+                      />
+                      <InputGroupAddon align="block-end">
+                        <InputGroupText className="text-muted-foreground text-xs">
+                          {field.value?.length || 0} caracteres
+                        </InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
                 )}
               />
 
-              <CategorySelector />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descripción</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} value={field.value || ''} />
-                  </FormControl>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="enabled"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estado</FormLabel>
-                  <FormControl>
-                    <div>
-                      <div className="inline-flex items-center gap-2">
-                        <Switch
-                          aria-label="Toggle switch"
-                          checked={field.value ?? false}
-                          id={field.name}
-                          onCheckedChange={field.onChange}
-                        />
-                        <FormLabel className="font-medium text-sm">
-                          {field.value ? 'Activo' : 'Inactivo'}
-                        </FormLabel>
-                      </div>
+              <Controller
+                control={form.control}
+                name="enabled"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="enabled">Estado</FieldLabel>
+                    <div className="inline-flex items-center gap-2">
+                      <Switch
+                        aria-invalid={fieldState.invalid}
+                        checked={field.value}
+                        id="enabled"
+                        name={field.name}
+                        onCheckedChange={field.onChange}
+                      />
+                      <FieldDescription>
+                        {field.value ? 'Activo' : 'Inactivo'}
+                      </FieldDescription>
                     </div>
-                  </FormControl>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-between pt-6">
-              <div />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
 
               <SubmitButton
                 disabled={form.formState.isSubmitting}
@@ -137,7 +147,7 @@ export function UpdateProductForm({ product }: Readonly<Props>) {
                   <RefreshCwIcon className="h-4 w-4" />
                 </div>
               </SubmitButton>
-            </div>
+            </FieldGroup>
           </form>
         </Form>
       </CardContent>
