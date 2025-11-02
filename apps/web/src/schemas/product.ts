@@ -78,7 +78,8 @@ export const CreateProductVariantSchema = type({
   optionValueIds: type('string.integer.parse')
     .or('number>0')
     .to('number>0')
-    .array(),
+    .array()
+    .atLeastLength(1),
   images: CreateProductImageSchema.array().moreThanLength(0).configure({
     message: 'Se requiere al menos una imagen del producto',
   }),
