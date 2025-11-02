@@ -1,9 +1,9 @@
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useQuery } from '@tanstack/react-query'
-import consola from 'consola'
 import { PlusIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { v7 as uuid } from 'uuid'
 import {
   fetchProductOptions,
   fetchProductVariants,
@@ -26,7 +26,6 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '@/components/ui/input-group'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -42,9 +41,39 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { useCreateProductVariant } from '@/hooks/products/use-create-product-variant'
 import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { CreateProductVariantSchema } from '@/schemas/product'
 import { generateImageUrl } from '@/shared/images'
+
+const generateSKU = (
+  productName: string,
+  options: Record<string, string>,
+): string => {
+  const MaxProductNameChars = 4
+  const normalizedName = productName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
+    .slice(0, MaxProductNameChars)
+
+  const optionParts = Object.entries(options)
+    .map(([key, value]) => {
+      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '')
+      const normalizedValue = value.toLowerCase().replace(/[^a-z0-9]/g, '')
+      return `${normalizedKey}-${normalizedValue}`
+    })
+    .join('-')
+
+  const MaxFinalPartLength = 8
+  const finalPart = uuid().slice(-MaxFinalPartLength)
+
+  return optionParts
+    ? `${normalizedName}-${optionParts}-${finalPart}`
+    : `${normalizedName}-${finalPart}`
+}
 
 type Props = {
   product: Product
@@ -86,7 +115,7 @@ export function AddProductVariantSheet({ product }: Props) {
 
   const getDisabledValues = useMemo(() => {
     if (!(variants && options)) {
-      return (_: number) => new Set<number>()
+      return () => new Set<number>()
     }
 
     return (optionId: number) => {
@@ -106,7 +135,6 @@ export function AddProductVariantSheet({ product }: Props) {
       }
 
       for (const value of currentOption.values.map((val) => val.id)) {
-        // Create a hypothetical variant with this value
         const hypotheticalVariant = {
           ...selectedOptions,
           [optionId]: value,
@@ -114,7 +142,7 @@ export function AddProductVariantSheet({ product }: Props) {
 
         // Check if this combination already exists in variants
         const isDuplicate = variants.some((variant) =>
-          Object.entries(hypotheticalVariant).every(([_, val]) =>
+          Object.entries(hypotheticalVariant).every(([__, val]) =>
             variant.optionValues.map((v) => v.id).includes(val),
           ),
         )
@@ -129,19 +157,50 @@ export function AddProductVariantSheet({ product }: Props) {
   }, [variants, options, selectedOptions])
 
   const onSelectOptionValue = (optionId: number) => (optionValueId: string) => {
-    setSelectedOptions((prev) => ({
-      ...prev,
+    const newSelectedOptions = {
+      ...selectedOptions,
       [optionId]: Number(optionValueId),
-    }))
+    }
+    setSelectedOptions(newSelectedOptions)
+
+    const optionValueIds = Object.values(newSelectedOptions)
+    form.setValue('optionValueIds', optionValueIds, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+
+    const optionNames = Object.entries(newSelectedOptions).reduce(
+      (acc, [key, value]) => {
+        const option = options.find((o) => o.id === Number(key))
+        if (option) {
+          const valueName =
+            option.values.find((v) => v.id === value)?.value || ''
+          acc[option.name] = valueName
+        }
+        return acc
+      },
+      {} as Record<string, string>,
+    )
+
+    const sku = generateSKU(product.id, optionNames)
+    form.setValue('sku', sku, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
   }
 
   useEffect(() => {
-    form.setValue('optionValueIds', Object.values(selectedOptions))
-  }, [selectedOptions, form])
-
-  const handleSubmit = form.handleSubmit((values) => {
-    consola.log(values)
-  })
+    if (options.length > 0) {
+      form.register('optionValueIds', {
+        validate: (value) => {
+          if (!value || value.length !== options.length) {
+            return 'Debes seleccionar una opción para cada tipo de variante'
+          }
+          return true
+        },
+      })
+    }
+  }, [options, form])
 
   const handleOnOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
@@ -150,11 +209,13 @@ export function AddProductVariantSheet({ product }: Props) {
         optionValueIds: [],
         images: [],
       })
+      setSelectedOptions({})
+      setVariantImages([])
     }
     setOpen(isOpen)
   }
 
-  const [_, setVariantImages] = useState<FileWithPreview[]>([])
+  const [variantImages, setVariantImages] = useState<FileWithPreview[]>([])
   const handleFilesChange = (files: FileWithPreview[]) => {
     setVariantImages(files)
 
@@ -167,6 +228,13 @@ export function AddProductVariantSheet({ product }: Props) {
     form.setValue('images', formImages)
   }
 
+  const { mutateAsync } = useCreateProductVariant(variantImages)
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    await mutateAsync(values)
+    handleOnOpenChange(false)
+  })
+
   return (
     <Sheet onOpenChange={handleOnOpenChange} open={open}>
       <SheetTrigger asChild>
@@ -176,7 +244,7 @@ export function AddProductVariantSheet({ product }: Props) {
         </Button>
       </SheetTrigger>
 
-      <SheetContent className="w-[600px]">
+      <SheetContent className="md:max-w-xl">
         <SheetHeader>
           <SheetTitle>Agregar variante del producto</SheetTitle>
           <SheetDescription>
@@ -189,16 +257,24 @@ export function AddProductVariantSheet({ product }: Props) {
             <FieldGroup>
               {options?.map((option) => {
                 const disabledValues = getDisabledValues(option.id)
+                const isSelected = selectedOptions[option.id] !== undefined
+                const hasError = form.formState.isSubmitted && !isSelected
 
                 return (
-                  <div className="*:not-first:mt-2" key={option.id}>
-                    <Label>{option.name}</Label>
+                  <Field data-invalid={hasError} key={option.id}>
+                    <FieldLabel htmlFor={`option-${option.id}`}>
+                      {option.name}
+                    </FieldLabel>
 
                     <Select
-                      key={option.id}
                       onValueChange={onSelectOptionValue(option.id)}
+                      value={
+                        selectedOptions[option.id]
+                          ? String(selectedOptions[option.id])
+                          : undefined
+                      }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id={`option-${option.id}`}>
                         <SelectValue placeholder="Selecciona una opción" />
                       </SelectTrigger>
                       <SelectContent>
@@ -222,7 +298,16 @@ export function AddProductVariantSheet({ product }: Props) {
                         })}
                       </SelectContent>
                     </Select>
-                  </div>
+                    {hasError && (
+                      <FieldError
+                        errors={[
+                          {
+                            message: `Debes seleccionar una opción para ${option.name}`,
+                          },
+                        ]}
+                      />
+                    )}
+                  </Field>
                 )
               })}
 
