@@ -12,8 +12,11 @@ export function useCreateProductVariant(images: FileWithPreview[]) {
       await uploadProductImages(values, images)
       return createProductVariant(values)
     },
-    onSuccess: () => {
+    onSuccess: (_, variables, __, context) => {
       toast.success('Variante de producto creada correctamente')
+      context.client.invalidateQueries({
+        queryKey: ['products', 'variant', variables.productId],
+      })
     },
   })
 }
