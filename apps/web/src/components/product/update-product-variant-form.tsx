@@ -127,7 +127,10 @@ export function UpdateProductVariantForm({
             ))}
           </div>
 
-          <form id="update-product-variant-form" onSubmit={handleSubmit}>
+          <form
+            id={`update-product-variant-form-${variant.id}`}
+            onSubmit={handleSubmit}
+          >
             <FieldGroup>
               <div className="grid gap-4 md:grid-cols-2">
                 <Controller
@@ -229,7 +232,7 @@ export function UpdateProductVariantForm({
 
               <SubmitButton
                 disabled={form.formState.isSubmitting}
-                form="update-product-variant-form"
+                form={`update-product-variant-form-${variant.id}`}
                 isSubmitting={form.formState.isSubmitting}
                 type="submit"
               >
