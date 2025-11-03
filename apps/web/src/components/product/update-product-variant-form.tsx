@@ -1,10 +1,12 @@
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { Image } from '@unpic/react'
-import { RefreshCwIcon, TagIcon } from 'lucide-react'
+import { GripVerticalIcon, RefreshCwIcon, TagIcon } from 'lucide-react'
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
+  type ProductImage,
   type ProductVariantResponse,
   updateProductVariant,
 } from '@/api/products'
@@ -28,6 +30,8 @@ import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { UpdateProductVariantSchema } from '@/schemas/product'
 import { getImageUrl } from '@/shared/cdn'
+import { Button } from '../ui/button'
+import { Sortable, SortableItem, SortableItemHandle } from '../ui/sortable'
 
 type Props = {
   variant: ProductVariantResponse
@@ -73,6 +77,25 @@ export function UpdateProductVariantForm({
     await mutateAsync(data)
   })
 
+  const [images, setImages] = useState(variant.images || [])
+
+  const handleImagesChange = (newImagesIds: number[]) => {
+    const newImages = newImagesIds
+      .map((id, index) => {
+        const existingImage = images.find((image) => image.id === id)
+        if (existingImage) {
+          return {
+            ...existingImage,
+            sortOrder: index,
+          } satisfies ProductImage
+        }
+        return null
+      })
+      .filter((image) => image !== null)
+
+    setImages(newImages)
+  }
+
   return (
     <div className="overflow-hidden rounded-md border bg-card">
       <div className="flex p-3">
@@ -104,7 +127,7 @@ export function UpdateProductVariantForm({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="mb-6 flex items-center gap-2">
             {variant.optionValues.map((value) => (
               <Badge key={value.id}>
                 {value.optionTypeName}: {value.value}
@@ -112,19 +135,41 @@ export function UpdateProductVariantForm({
             ))}
           </div>
 
-          <div className="mb-4 flex gap-2">
-            {variant.images.map((image) => (
-              <Image
-                alt={image.altText}
-                className="rounded-sm object-cover"
-                height={96}
-                key={image.id}
-                layout="constrained"
-                priority
-                src={getImageUrl(image.imageUrl || 'placeholder.svg')}
-                width={96}
-              />
-            ))}
+          <div className="mb-6">
+            <Sortable
+              className="flex flex-wrap gap-2.5"
+              getItemValue={(item) => item.toString()}
+              onValueChange={handleImagesChange}
+              strategy="grid"
+              value={images.map((img) => img.id)}
+            >
+              {images.map((img) => (
+                <SortableItem key={img.id} value={img.id.toString()}>
+                  <div className="group relative flex shrink-0 items-center justify-center rounded-md border border-border bg-accent/50 shadow-none transition-all duration-200 hover:z-10 hover:bg-accent/70 data-[dragging=true]:z-50">
+                    <Image
+                      alt={img.altText}
+                      className="pointer-events-none h-[120px] w-full rounded-md object-cover"
+                      height={120}
+                      key={img.id}
+                      layout="constrained"
+                      priority
+                      src={getImageUrl(img.imageUrl || 'placeholder.svg')}
+                      width={120}
+                    />
+
+                    <SortableItemHandle className="absolute start-2 top-2 cursor-grab opacity-0 active:cursor-grabbing group-hover:opacity-100">
+                      <Button
+                        className="size-6 rounded-full"
+                        size="icon"
+                        variant="outline"
+                      >
+                        <GripVerticalIcon className="size-3.5" />
+                      </Button>
+                    </SortableItemHandle>
+                  </div>
+                </SortableItem>
+              ))}
+            </Sortable>
           </div>
 
           <form
