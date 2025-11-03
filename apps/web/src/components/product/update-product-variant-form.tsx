@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
+  orderProductVariantImages,
   type ProductImage,
   type ProductVariantResponse,
   updateProductVariant,
@@ -73,13 +74,23 @@ export function UpdateProductVariantForm({
     },
   })
 
+  const [images, setImages] = useState(variant.images || [])
+  const [hasImagesChanged, setHasImagesChanged] = useState(false)
+
   const handleSubmit = form.handleSubmit(async (data) => {
     await mutateAsync(data)
+
+    if (hasImagesChanged) {
+      await orderProductVariantImages({
+        variantId: variant.id,
+        images,
+      })
+      setHasImagesChanged(false)
+    }
   })
 
-  const [images, setImages] = useState(variant.images || [])
-
   const handleImagesChange = (newImagesIds: number[]) => {
+    setHasImagesChanged(true)
     const newImages = newImagesIds
       .map((id, index) => {
         const existingImage = images.find((image) => image.id === id)
@@ -109,7 +120,7 @@ export function UpdateProductVariantForm({
             </div>
 
             <div className="flex items-center gap-2">
-              {form.formState.isDirty && (
+              {(form.formState.isDirty || hasImagesChanged) && (
                 <Badge
                   className="bg-warning-lighter text-warning-base"
                   variant="secondary"

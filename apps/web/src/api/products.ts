@@ -249,3 +249,17 @@ export async function updateProductVariant(variant: UpdateProductVariant) {
 
   return response.data
 }
+
+export type OrderVariantImages = {
+  variantId: number
+  images: ProductImage[]
+}
+
+export async function orderProductVariantImages(data: OrderVariantImages) {
+  const response = await api.put(
+    `products/variants/${data.variantId}/images/order`,
+    data,
+  )
+
+  return response.data
+}
