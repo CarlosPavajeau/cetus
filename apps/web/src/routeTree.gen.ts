@@ -49,6 +49,7 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as StoreRequiredProductsAllRouteImport } from './routes/_store-required/products/all'
 import { Route as StoreRequiredCheckoutIdRouteImport } from './routes/_store-required/checkout/$id'
 import { Route as AppProductsIdDetailsRouteImport } from './routes/app/products.$id.details'
+import { Route as AppProductsVariantsIdEditRouteImport } from './routes/app/products.variants.$id.edit'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -253,6 +254,12 @@ const AppProductsIdDetailsRoute = AppProductsIdDetailsRouteImport.update({
   path: '/products/$id/details',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProductsVariantsIdEditRoute =
+  AppProductsVariantsIdEditRouteImport.update({
+    id: '/products/variants/$id/edit',
+    path: '/products/variants/$id/edit',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
+  '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -334,6 +342,7 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/products': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
+  '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -377,6 +386,7 @@ export interface FileRoutesById {
   '/app/dashboard/': typeof AppDashboardIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
+  '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/products'
     | '/app/products/$id/details'
+    | '/app/products/variants/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -460,6 +471,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/products'
     | '/app/products/$id/details'
+    | '/app/products/variants/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -502,6 +514,7 @@ export interface FileRouteTypes {
     | '/app/dashboard/'
     | '/app/products/'
     | '/app/products/$id/details'
+    | '/app/products/variants/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -808,6 +821,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductsIdDetailsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/products/variants/$id/edit': {
+      id: '/app/products/variants/$id/edit'
+      path: '/products/variants/$id/edit'
+      fullPath: '/app/products/variants/$id/edit'
+      preLoaderRoute: typeof AppProductsVariantsIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -844,6 +864,7 @@ interface AppRouteChildren {
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
   AppProductsIdDetailsRoute: typeof AppProductsIdDetailsRoute
+  AppProductsVariantsIdEditRoute: typeof AppProductsVariantsIdEditRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -861,6 +882,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
   AppProductsIdDetailsRoute: AppProductsIdDetailsRoute,
+  AppProductsVariantsIdEditRoute: AppProductsVariantsIdEditRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
