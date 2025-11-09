@@ -41,7 +41,7 @@ export function ProductVariantImagesManager({
     },
   }))
 
-  const handleImagesChange = (newImagesIds: number[]) => {
+  const handleImagesOrderChange = (newImagesIds: number[]) => {
     setHasImagesChanged(true)
     const newImages = newImagesIds
       .map((id, index) => {
@@ -66,7 +66,7 @@ export function ProductVariantImagesManager({
       <Sortable
         className="flex flex-wrap gap-2.5"
         getItemValue={(item) => item.toString()}
-        onValueChange={handleImagesChange}
+        onValueChange={handleImagesOrderChange}
         strategy="grid"
         value={images.map((img) => img.id)}
       >
