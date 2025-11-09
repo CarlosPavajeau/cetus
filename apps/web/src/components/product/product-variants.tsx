@@ -76,6 +76,12 @@ const columns: ColumnDef<ProductVariantResponse>[] = [
     size: 60,
   },
   {
+    id: 'sales-count',
+    header: 'Ventas',
+    accessorKey: 'salesCount',
+    size: 60,
+  },
+  {
     id: 'enabled',
     header: 'Estado',
     cell: ({ row }) => (
@@ -108,7 +114,7 @@ const columns: ColumnDef<ProductVariantResponse>[] = [
         </Link>
       </Button>
     ),
-    size: 60,
+    size: 40,
   },
 ]
 

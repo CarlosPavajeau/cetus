@@ -51,6 +51,7 @@ export type ProductVariantResponse = {
   sku: string
   price: number
   stock: number
+  salesCount: number
   images: ProductImage[]
   optionValues: ProductOptionValue[]
   enabled: boolean
