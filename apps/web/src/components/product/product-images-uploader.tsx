@@ -45,7 +45,7 @@ export function ProductImagesUploader({
       {/** biome-ignore lint/a11y/noStaticElementInteractions: it's a drop area */}
       {/** biome-ignore lint/nursery/noNoninteractiveElementInteractions: it's a drop area */}
       <div
-        className="relative flex min-h-52 flex-col items-center not-data-[files]:justify-center overflow-hidden rounded-xl border border-input border-dashed p-4 transition-colors has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+        className="relative flex min-h-52 flex-col items-center not-data-[files]:justify-center overflow-hidden rounded-md border border-input border-dashed p-4 transition-colors has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
         data-dragging={isDragging || undefined}
         data-files={files.length > 0 || undefined}
         onDragEnter={handleDragEnter}

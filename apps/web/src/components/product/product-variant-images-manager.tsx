@@ -1,4 +1,5 @@
 import { Image } from '@unpic/react'
+import consola from 'consola'
 import { GripVerticalIcon } from 'lucide-react'
 import { useImperativeHandle, useState } from 'react'
 import { orderProductVariantImages, type ProductImage } from '@/api/products'
@@ -9,7 +10,9 @@ import {
   SortableItem,
   SortableItemHandle,
 } from '@/components/ui/sortable'
+import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { getImageUrl } from '@/shared/cdn'
+import { ProductImagesUploader } from './product-images-uploader'
 
 export type ProductVariantImagesManagerHandle = {
   process: () => Promise<void>
@@ -25,9 +28,12 @@ export function ProductVariantImagesManager({
   initialImages,
   ref,
   variantId,
-}: Props) {
+}: Readonly<Props>) {
   const [images, setImages] = useState<ProductImage[]>(initialImages || [])
   const [hasImagesChanged, setHasImagesChanged] = useState(false)
+  const [newImagesToUpload, setNewImagesToUpload] = useState<FileWithPreview[]>(
+    [],
+  )
 
   useImperativeHandle(ref, () => ({
     process: async () => {
@@ -37,6 +43,11 @@ export function ProductVariantImagesManager({
           images,
         })
         setHasImagesChanged(false)
+      }
+
+      if (newImagesToUpload.length > 0) {
+        consola.log('Uploading images...')
+        setNewImagesToUpload([])
       }
     },
   }))
@@ -57,6 +68,10 @@ export function ProductVariantImagesManager({
       .filter((image) => image !== null)
 
     setImages(newImages)
+  }
+
+  const handleFilesChange = (files: FileWithPreview[]) => {
+    setNewImagesToUpload(files)
   }
 
   return (
@@ -97,6 +112,8 @@ export function ProductVariantImagesManager({
           </SortableItem>
         ))}
       </Sortable>
+
+      <ProductImagesUploader onFilesChange={handleFilesChange} />
     </Field>
   )
 }
