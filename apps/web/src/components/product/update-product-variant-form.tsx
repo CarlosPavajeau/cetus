@@ -1,19 +1,18 @@
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
-import { Image } from '@unpic/react'
-import { GripVerticalIcon, RefreshCwIcon } from 'lucide-react'
-import { useState } from 'react'
+import { RefreshCwIcon } from 'lucide-react'
+import { useRef } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
-  orderProductVariantImages,
-  type ProductImage,
   type ProductVariantResponse,
   updateProductVariant,
 } from '@/api/products'
+import {
+  ProductVariantImagesManager,
+  type ProductVariantImagesManagerHandle,
+} from '@/components/product/product-variant-images-manager'
 import { SubmitButton } from '@/components/submit-button'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Field,
   FieldDescription,
@@ -28,14 +27,8 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '@/components/ui/input-group'
-import {
-  Sortable,
-  SortableItem,
-  SortableItemHandle,
-} from '@/components/ui/sortable'
 import { Switch } from '@/components/ui/switch'
 import { UpdateProductVariantSchema } from '@/schemas/product'
-import { getImageUrl } from '@/shared/cdn'
 
 type Props = {
   variant: ProductVariantResponse
@@ -69,91 +62,21 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
     },
   })
 
-  const [images, setImages] = useState(variant.images || [])
-  const [hasImagesChanged, setHasImagesChanged] = useState(false)
+  const managerRef = useRef<ProductVariantImagesManagerHandle>(null)
 
   const handleSubmit = form.handleSubmit(async (data) => {
     await mutateAsync(data)
-
-    if (hasImagesChanged) {
-      await orderProductVariantImages({
-        variantId: variant.id,
-        images,
-      })
-      setHasImagesChanged(false)
-    }
+    await managerRef.current?.process()
   })
-
-  const handleImagesChange = (newImagesIds: number[]) => {
-    setHasImagesChanged(true)
-    const newImages = newImagesIds
-      .map((id, index) => {
-        const existingImage = images.find((image) => image.id === id)
-        if (existingImage) {
-          return {
-            ...existingImage,
-            sortOrder: index,
-          } satisfies ProductImage
-        }
-        return null
-      })
-      .filter((image) => image !== null)
-
-    setImages(newImages)
-  }
 
   return (
     <div>
       <div className="flex flex-1 flex-col gap-2">
-        <Field>
-          <FieldLabel>Opciones</FieldLabel>
-          <div className="flex items-center gap-2">
-            {variant.optionValues.map((value) => (
-              <Badge key={value.id}>
-                {value.optionTypeName}: {value.value}
-              </Badge>
-            ))}
-          </div>
-        </Field>
-
-        <Field>
-          <FieldLabel>Imágenes</FieldLabel>
-
-          <Sortable
-            className="flex flex-wrap gap-2.5"
-            getItemValue={(item) => item.toString()}
-            onValueChange={handleImagesChange}
-            strategy="grid"
-            value={images.map((img) => img.id)}
-          >
-            {images.map((img) => (
-              <SortableItem key={img.id} value={img.id.toString()}>
-                <div className="group relative flex shrink-0 items-center justify-center rounded-md border border-border bg-accent/50 shadow-none transition-all duration-200 hover:z-10 hover:bg-accent/70 data-[dragging=true]:z-50">
-                  <Image
-                    alt={img.altText}
-                    className="pointer-events-none h-[120px] w-full rounded-md object-cover"
-                    height={120}
-                    key={img.id}
-                    layout="constrained"
-                    priority
-                    src={getImageUrl(img.imageUrl || 'placeholder.svg')}
-                    width={120}
-                  />
-
-                  <SortableItemHandle className="absolute start-2 top-2 cursor-grab opacity-0 active:cursor-grabbing group-hover:opacity-100">
-                    <Button
-                      className="size-6 rounded-full"
-                      size="icon"
-                      variant="outline"
-                    >
-                      <GripVerticalIcon className="size-3.5" />
-                    </Button>
-                  </SortableItemHandle>
-                </div>
-              </SortableItem>
-            ))}
-          </Sortable>
-        </Field>
+        <ProductVariantImagesManager
+          initialImages={variant.images}
+          ref={managerRef}
+          variantId={variant.id}
+        />
 
         <form
           id={`update-product-variant-form-${variant.id}`}
