@@ -61,7 +61,13 @@ function RouteComponent() {
                   Editar variante
                 </CardTitle>
                 <CardDescription>
-                  Actualiza los detalles básicos sobre tu variante
+                  <div className="mt-2 flex items-center gap-2">
+                    {data.optionValues.map((value) => (
+                      <Badge key={value.id}>
+                        {value.optionTypeName}: {value.value}
+                      </Badge>
+                    ))}
+                  </div>
                 </CardDescription>
               </div>
             </div>
