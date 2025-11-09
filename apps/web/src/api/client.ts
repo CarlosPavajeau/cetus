@@ -14,10 +14,6 @@ api.interceptors.request.use(async (config) => {
     config.headers.Authorization = `Bearer ${token}`
   }
 
-  return config
-})
-
-api.interceptors.request.use((config) => {
   const { store } = useTenantStore.getState()
 
   if (store) {
