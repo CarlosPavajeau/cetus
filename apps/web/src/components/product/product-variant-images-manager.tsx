@@ -1,12 +1,3 @@
-import { Image } from '@unpic/react'
-import {
-  AlertCircleIcon,
-  GripVerticalIcon,
-  ImageIcon,
-  UploadIcon,
-  XIcon,
-} from 'lucide-react'
-import { useImperativeHandle, useState } from 'react'
 import { uploadFileToS3 } from '@/api/aws'
 import {
   addVariantImages,
@@ -24,6 +15,15 @@ import {
 import { type FileWithPreview, useFileUpload } from '@/hooks/use-file-upload'
 import { getImageUrl } from '@/shared/cdn'
 import { generateImageUrl } from '@/shared/images'
+import { Image } from '@unpic/react'
+import {
+  AlertCircleIcon,
+  GripVerticalIcon,
+  ImageIcon,
+  UploadIcon,
+  XIcon,
+} from 'lucide-react'
+import { useImperativeHandle, useState } from 'react'
 
 const formatBytes = (bytes: number): string => {
   if (bytes === 0) {
@@ -82,7 +82,7 @@ export function ProductVariantImagesManager({
       (file, index) =>
         ({
           id: index + maxPosition + 1,
-          imageUrl: generateImageUrl(file),
+          imageUrl: generateImageUrl(),
           preview: file.preview,
           sortOrder: index + maxPosition + 1,
           isNew: true,

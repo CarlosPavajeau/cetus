@@ -1,9 +1,3 @@
-import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useQuery } from '@tanstack/react-query'
-import { PlusIcon } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { v7 as uuid } from 'uuid'
 import {
   fetchProductOptions,
   fetchProductVariants,
@@ -45,6 +39,12 @@ import { useCreateProductVariant } from '@/hooks/products/use-create-product-var
 import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { CreateProductVariantSchema } from '@/schemas/product'
 import { generateImageUrl } from '@/shared/images'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { useQuery } from '@tanstack/react-query'
+import { PlusIcon } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { v7 as uuid } from 'uuid'
 
 const generateSKU = (
   productName: string,
@@ -221,7 +221,7 @@ export function AddProductVariantSheet({ product }: Props) {
 
     const formImages = files.map((file, index) => ({
       id: file.id,
-      imageUrl: generateImageUrl(file),
+      imageUrl: generateImageUrl(),
       sortOrder: index,
     }))
 

@@ -1,8 +1,3 @@
-import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { ArrowLeftIcon, PackageIcon } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { v7 as uuid } from 'uuid'
 import { CategorySelector } from '@/components/category/category-selector'
 import { ProductImagesUploader } from '@/components/product/product-images-uploader'
 import { SubmitButton } from '@/components/submit-button'
@@ -30,6 +25,11 @@ import { useCreateSimpleProduct } from '@/hooks/products/use-create-simple-produ
 import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { CreateSimpleProductSchema } from '@/schemas/product'
 import { generateImageUrl } from '@/shared/images'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { ArrowLeftIcon, PackageIcon } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { v7 as uuid } from 'uuid'
 
 type Props = {
   onBack: () => void
@@ -46,7 +46,7 @@ export function SimpleProductRegistrationForm({ onBack }: Readonly<Props>) {
 
     const formImages = files.map((file, index) => ({
       id: file.id,
-      imageUrl: generateImageUrl(file),
+      imageUrl: generateImageUrl(),
       sortOrder: index,
     }))
 

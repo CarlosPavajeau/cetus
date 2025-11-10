@@ -1,8 +1,3 @@
-import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { PlusIcon } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { v7 as uuid } from 'uuid'
 import { ProductImagesUploader } from '@/components/product/product-images-uploader'
 import { SubmitButton } from '@/components/submit-button'
 import { Button } from '@/components/ui/button'
@@ -37,6 +32,11 @@ import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { CreateProductVariantSchema } from '@/schemas/product'
 import { generateImageUrl } from '@/shared/images'
 import { useAdvancedProductRegistrationStore } from '@/store/products/advance-product-registration-store'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { PlusIcon } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { v7 as uuid } from 'uuid'
 
 export function ProductVariantRegistrationSheet() {
   const { selectedOptions, productId, variants, addVariant } =
@@ -58,7 +58,7 @@ export function ProductVariantRegistrationSheet() {
 
     const formImages = files.map((file, index) => ({
       id: file.id,
-      imageUrl: generateImageUrl(file),
+      imageUrl: generateImageUrl(),
       sortOrder: index,
     }))
 
