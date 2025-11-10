@@ -23,6 +23,8 @@ export const CreateProductImageSchema = type({
   sortOrder: type.number.default(0),
 })
 
+export type CreateProductImage = typeof CreateProductImageSchema.infer
+
 export const CreateProductSchema = type({
   name: type.string.moreThanLength(1).configure({
     message: 'El nombre del producto es requerido',
