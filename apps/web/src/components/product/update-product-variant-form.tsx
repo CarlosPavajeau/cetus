@@ -65,8 +65,8 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
   const managerRef = useRef<ProductVariantImagesManagerHandle>(null)
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync(data)
     await managerRef.current?.process()
+    await mutateAsync(data)
   })
 
   return (
