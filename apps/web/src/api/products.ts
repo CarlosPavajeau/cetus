@@ -1,6 +1,7 @@
 import { anonymousApi, api } from '@/api/client'
 import type {
   CreateProduct,
+  CreateProductImage,
   CreateProductOptionType,
   CreateProductVariant,
   CreateSimpleProduct,
@@ -268,6 +269,33 @@ export async function orderProductVariantImages(data: OrderVariantImages) {
   const response = await api.put(
     `products/variants/${data.variantId}/images/order`,
     data,
+  )
+
+  return response.data
+}
+
+export type AddVariantImages = {
+  id: number
+  images: CreateProductImage[]
+}
+
+export type AddVariantImagesResponse = {
+  id: number
+  images: ProductImage[]
+}
+
+export async function addVariantImages(data: AddVariantImages) {
+  const response = await api.post<AddVariantImagesResponse>(
+    `products/variants/${data.id}/images`,
+    data,
+  )
+
+  return response.data
+}
+
+export async function deleteVariantImage(variantId: number, imageId: number) {
+  const response = await api.delete(
+    `products/variants/images/${imageId}?variantId=${variantId}`,
   )
 
   return response.data
