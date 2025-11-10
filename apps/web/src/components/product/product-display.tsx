@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { ProductForSale, ProductVariantResponse } from '@/api/products'
 import { Currency } from '@/components/currency'
@@ -69,125 +69,124 @@ type ProductOptionsProps = {
   currentVariantId: number
 }
 
-const ProductOptions = memo(
-  ({ product, currentVariantId }: Readonly<ProductOptionsProps>) => {
-    // Group option values by option type
-    const optionGroups = useMemo(
-      () => createOptionGroups(product.variants),
-      [product.variants],
-    )
+const ProductOptions = ({
+  product,
+  currentVariantId,
+}: Readonly<ProductOptionsProps>) => {
+  // Group option values by option type
+  const optionGroups = useMemo(
+    () => createOptionGroups(product.variants),
+    [product.variants],
+  )
 
-    // Get current variant's option values
-    const currentVariant = product.variants.find(
-      (v) => v.id === currentVariantId,
-    )
-    const currentOptionValues = currentVariant?.optionValues || []
+  // Get current variant's option values
+  const currentVariant = product.variants.find((v) => v.id === currentVariantId)
+  const currentOptionValues = currentVariant?.optionValues || []
 
-    // Find compatible variant when an option is selected
-    const findCompatibleVariant = useCallback(
-      (selectedOptionId: number) => {
-        const selectedOption = optionGroups
-          .flatMap((group) => group.values)
-          .find((value) => value.id === selectedOptionId)
+  // Find compatible variant when an option is selected
+  const findCompatibleVariant = useCallback(
+    (selectedOptionId: number) => {
+      const selectedOption = optionGroups
+        .flatMap((group) => group.values)
+        .find((value) => value.id === selectedOptionId)
 
-        if (!selectedOption) {
-          return currentVariantId
-        }
+      if (!selectedOption) {
+        return currentVariantId
+      }
 
-        // Get the option type of the selected option
-        const selectedOptionType = optionGroups.find((group) =>
-          group.values.some((value) => value.id === selectedOptionId),
+      // Get the option type of the selected option
+      const selectedOptionType = optionGroups.find((group) =>
+        group.values.some((value) => value.id === selectedOptionId),
+      )
+
+      if (!selectedOptionType) {
+        return currentVariantId
+      }
+
+      // Find other selected options (from different option types)
+      const otherSelectedOptions = currentOptionValues.filter(
+        (optionValue) =>
+          optionValue.optionTypeId !== selectedOptionType.optionTypeId,
+      )
+
+      // Find variant that matches the selected option + other selected options
+      const compatibleVariant = product.variants.find((variant) => {
+        const hasSelectedOption = variant.optionValues.some(
+          (optionValue) => optionValue.id === selectedOptionId,
         )
 
-        if (!selectedOptionType) {
-          return currentVariantId
-        }
-
-        // Find other selected options (from different option types)
-        const otherSelectedOptions = currentOptionValues.filter(
-          (optionValue) =>
-            optionValue.optionTypeId !== selectedOptionType.optionTypeId,
+        const hasOtherOptions = otherSelectedOptions.every((otherOption) =>
+          variant.optionValues.some(
+            (optionValue) => optionValue.id === otherOption.id,
+          ),
         )
 
-        // Find variant that matches the selected option + other selected options
-        const compatibleVariant = product.variants.find((variant) => {
-          const hasSelectedOption = variant.optionValues.some(
-            (optionValue) => optionValue.id === selectedOptionId,
-          )
+        return hasSelectedOption && hasOtherOptions && variant.stock > 0
+      })
 
-          const hasOtherOptions = otherSelectedOptions.every((otherOption) =>
-            variant.optionValues.some(
-              (optionValue) => optionValue.id === otherOption.id,
-            ),
-          )
+      return (
+        compatibleVariant?.id ??
+        product.variants.find(
+          (v) =>
+            v.optionValues.some((ov) => ov.id === selectedOptionId) &&
+            v.stock > 0,
+        )?.id ??
+        selectedOption.variantId
+      )
+    },
+    [currentVariantId, currentOptionValues, optionGroups, product.variants],
+  )
 
-          return hasSelectedOption && hasOtherOptions && variant.stock > 0
-        })
+  if (optionGroups.length === 0) {
+    return null
+  }
 
-        return (
-          compatibleVariant?.id ??
-          product.variants.find(
-            (v) =>
-              v.optionValues.some((ov) => ov.id === selectedOptionId) &&
-              v.stock > 0,
-          )?.id ??
-          selectedOption.variantId
-        )
-      },
-      [currentVariantId, currentOptionValues, optionGroups, product.variants],
-    )
+  return (
+    <div className="space-y-4">
+      {optionGroups.map((group) => (
+        <div className="flex flex-col gap-2" key={group.optionTypeId}>
+          <Label>{group.optionTypeName}:</Label>
+          <div className="flex flex-wrap gap-2">
+            {group.values.map((value) => {
+              const isSelected = currentOptionValues.some(
+                (optionValue) => optionValue.id === value.id,
+              )
 
-    if (optionGroups.length === 0) {
-      return null
-    }
-
-    return (
-      <div className="space-y-4">
-        {optionGroups.map((group) => (
-          <div className="flex flex-col gap-2" key={group.optionTypeId}>
-            <Label>{group.optionTypeName}:</Label>
-            <div className="flex flex-wrap gap-2">
-              {group.values.map((value) => {
-                const isSelected = currentOptionValues.some(
-                  (optionValue) => optionValue.id === value.id,
-                )
-
-                return (
-                  <div
-                    className="flex flex-col items-center gap-1"
-                    key={value.id}
-                  >
-                    {value.isAvailable && !isSelected ? (
-                      <Button asChild size="sm" variant="outline">
-                        <Link
-                          replace
-                          search={{ variant: findCompatibleVariant(value.id) }}
-                          to="."
-                        >
-                          {value.value}
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button
-                        aria-disabled
-                        className="disabled:opacity-100"
-                        disabled
-                        size="sm"
-                        variant={isSelected ? 'default' : 'outline'}
+              return (
+                <div
+                  className="flex flex-col items-center gap-1"
+                  key={value.id}
+                >
+                  {value.isAvailable && !isSelected ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link
+                        replace
+                        search={{ variant: findCompatibleVariant(value.id) }}
+                        to="."
                       >
                         {value.value}
-                      </Button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      aria-disabled
+                      className="disabled:opacity-100"
+                      disabled
+                      size="sm"
+                      variant={isSelected ? 'default' : 'outline'}
+                    >
+                      {value.value}
+                    </Button>
+                  )}
+                </div>
+              )
+            })}
           </div>
-        ))}
-      </div>
-    )
-  },
-)
+        </div>
+      ))}
+    </div>
+  )
+}
 
 type QuantitySelectorProps = {
   quantity: number
@@ -196,54 +195,52 @@ type QuantitySelectorProps = {
   max?: number
 }
 
-const QuantitySelector = memo(
-  ({
-    quantity,
-    onIncrement,
-    onDecrement,
-    max = Number.POSITIVE_INFINITY,
-  }: Readonly<QuantitySelectorProps>) => {
-    const isMaxReached = max !== Number.POSITIVE_INFINITY && quantity >= max
+const QuantitySelector = ({
+  quantity,
+  onIncrement,
+  onDecrement,
+  max = Number.POSITIVE_INFINITY,
+}: Readonly<QuantitySelectorProps>) => {
+  const isMaxReached = max !== Number.POSITIVE_INFINITY && quantity >= max
 
-    return (
-      <div className="flex items-center">
-        <Label className="mr-2">Cantidad:</Label>
-        <div className="flex items-center rounded-md border border-input">
-          <button
-            className="p-2 text-muted-foreground"
-            disabled={quantity <= 1}
-            onClick={onDecrement}
-            type="button"
-          >
-            <MinusIcon className="h-4 w-4" />
-          </button>
-          <span className="px-4">{quantity}</span>
-          <button
-            className="p-2 text-muted-foreground"
-            disabled={isMaxReached}
-            onClick={onIncrement}
-            type="button"
-          >
-            <PlusIcon className="h-4 w-4" />
-          </button>
-        </div>
-
-        {isMaxReached && (
-          <span className="ml-4 text-red-500 text-sm">
-            Máximo: {max} unidades
-          </span>
-        )}
+  return (
+    <div className="flex items-center">
+      <Label className="mr-2">Cantidad:</Label>
+      <div className="flex items-center rounded-md border border-input">
+        <button
+          className="p-2 text-muted-foreground"
+          disabled={quantity <= 1}
+          onClick={onDecrement}
+          type="button"
+        >
+          <MinusIcon className="h-4 w-4" />
+        </button>
+        <span className="px-4">{quantity}</span>
+        <button
+          className="p-2 text-muted-foreground"
+          disabled={isMaxReached}
+          onClick={onIncrement}
+          type="button"
+        >
+          <PlusIcon className="h-4 w-4" />
+        </button>
       </div>
-    )
-  },
-)
+
+      {isMaxReached && (
+        <span className="ml-4 text-red-500 text-sm">
+          Máximo: {max} unidades
+        </span>
+      )}
+    </div>
+  )
+}
 
 type Props = {
   product: ProductForSale
   variant: ProductVariantResponse
 }
 
-function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
+export function ProductDisplay({ product, variant }: Readonly<Props>) {
   const cart = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -378,7 +375,3 @@ function ProductDisplayComponent({ product, variant }: Readonly<Props>) {
     </div>
   )
 }
-
-export const ProductDisplay = memo(({ product, variant }: Props) => (
-  <ProductDisplayComponent product={product} variant={variant} />
-))
