@@ -1,7 +1,8 @@
-import axios from 'axios'
 import { getToken } from '@/functions/get-token'
+import { getStoreSlug } from '@/functions/store-slug'
 import { API_ENDPOINT } from '@/shared/constants'
 import { useTenantStore } from '@/store/use-tenant-store'
+import axios from 'axios'
 
 const api = axios.create({
   baseURL: API_ENDPOINT,
@@ -14,12 +15,12 @@ api.interceptors.request.use(async (config) => {
     config.headers.Authorization = `Bearer ${token}`
   }
 
-  const { store } = useTenantStore.getState()
+  const storeSlugValue = getStoreSlug()
 
-  if (store) {
+  if (storeSlugValue) {
     config.params = {
       ...config.params,
-      store: store.slug,
+      store: storeSlugValue,
     }
   }
 
