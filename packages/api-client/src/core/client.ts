@@ -4,10 +4,9 @@ export type ApiClientConfig = {
   baseUrl: string
   timeout?: number
   withCredentials?: boolean
-  // Funciones inyectables para obtener datos externos
+
   getAccessToken?: () => string | null | Promise<string | null>
   getCurrentStore?: () => string | null | Promise<string | null>
-  // Headers personalizados adicionales
   customHeaders?:
     | Record<string, string>
     | (() => Record<string, string> | Promise<Record<string, string>>)
@@ -32,10 +31,8 @@ export class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request Interceptor - Inyectar datos dinámicos
     this.client.interceptors.request.use(
       async (config) => {
-        // 1. Inyectar Access Token
         if (this.config.getAccessToken) {
           const token = await this.config.getAccessToken()
           if (token) {
@@ -43,19 +40,14 @@ export class ApiClient {
           }
         }
 
-        // 2. Inyectar Store Actual
         if (this.config.getCurrentStore) {
           const store = await this.config.getCurrentStore()
           if (store) {
-            // Opción 1: Como header
             config.headers['X-Store-Id'] = store
-
-            // Opción 2: Como query param (si tu API lo prefiere)
-            // config.params = { ...config.params, store }
+            config.params = { ...config.params, store }
           }
         }
 
-        // 3. Headers personalizados adicionales
         if (this.config.customHeaders) {
           const customHeaders =
             typeof this.config.customHeaders === 'function'
@@ -70,7 +62,6 @@ export class ApiClient {
       (error) => Promise.reject(error),
     )
 
-    // Response Interceptor - Manejar errores
     this.client.interceptors.response.use(
       (response) => response,
       async (error) => Promise.reject(error),
