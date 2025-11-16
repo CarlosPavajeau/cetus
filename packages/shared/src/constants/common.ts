@@ -47,7 +47,7 @@ export const monthsLabels = [
     value: 'december',
     label: 'Diciembre',
   },
-]
+] as const
 
 export const builtInRole = [
   { role: 'owner', label: 'Dueño' },
