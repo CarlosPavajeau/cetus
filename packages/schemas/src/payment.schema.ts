@@ -1,5 +1,18 @@
 import { type } from 'arktype'
 
+const commonAcceptanceFields = {
+  presigned_acceptance: type.boolean.configure({
+    message: 'Debes aceptar los reglamentos',
+  }),
+  presigned_personal_data_auth: type.boolean.configure({
+    message:
+      'Debes aceptar la autorización para la administración de datos personales',
+  }),
+  acceptance_token: type.string.moreThanLength(1).configure({
+    message: 'Debes aceptar los reglamentos',
+  }),
+}
+
 export const cardPaymentSchema = type({
   type: "'CARD'",
   card_number: type.string.moreThanLength(1).configure({
@@ -14,30 +27,12 @@ export const cardPaymentSchema = type({
   card_expiration_date: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar la fecha de expiración de la tarjeta',
   }),
-  presigned_acceptance: type.boolean.configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
-  presigned_personal_data_auth: type.boolean.configure({
-    message:
-      'Debes aceptar la autorización para la administración de datos personales',
-  }),
-  acceptance_token: type.string.moreThanLength(1).configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
+  ...commonAcceptanceFields,
 })
 
 export const bancolombiaPaymentSchema = type({
   type: "'BANCOLOMBIA_TRANSFER'",
-  presigned_acceptance: type.boolean.configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
-  presigned_personal_data_auth: type.boolean.configure({
-    message:
-      'Debes aceptar la autorización para la administración de datos personales',
-  }),
-  acceptance_token: type.string.moreThanLength(1).configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
+  ...commonAcceptanceFields,
 })
 
 export const psePaymentSchema = type({
@@ -54,16 +49,7 @@ export const psePaymentSchema = type({
   financial_institution_code: type('string>=1').configure({
     message: 'Debes seleccionar la entidad financiera',
   }),
-  presigned_acceptance: type.boolean.configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
-  presigned_personal_data_auth: type.boolean.configure({
-    message:
-      'Debes aceptar la autorización para la administración de datos personales',
-  }),
-  acceptance_token: type.string.moreThanLength(1).configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
+  ...commonAcceptanceFields,
 })
 
 export const nequiPaymentSchema = type({
@@ -71,16 +57,7 @@ export const nequiPaymentSchema = type({
   phone_number: type.string.moreThanLength(1).configure({
     message: 'Debes ingresar el número de teléfono',
   }),
-  presigned_acceptance: type.boolean.configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
-  presigned_personal_data_auth: type.boolean.configure({
-    message:
-      'Debes aceptar la autorización para la administración de datos personales',
-  }),
-  acceptance_token: type.string.moreThanLength(1).configure({
-    message: 'Debes aceptar los reglamentos',
-  }),
+  ...commonAcceptanceFields,
 })
 
 export const paymentSchema = nequiPaymentSchema
