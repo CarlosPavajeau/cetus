@@ -95,7 +95,7 @@ export type TransactionData = {
   currency: 'COP'
   payment_method_type: PaymentMethodType
   payment_method: TransactionPaymentMethod
-  customer_data: Required<CustomerData>
+  customer_data: CustomerData
 }
 
 export type Transaction = {
