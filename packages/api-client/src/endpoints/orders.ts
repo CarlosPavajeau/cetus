@@ -16,10 +16,18 @@ export const ordersApi = {
   getById: (id: string) => authenticatedClient.get<Order>(`/orders/${id}`),
 
   getInsights: (month: string) =>
-    authenticatedClient.get<OrderInsights>(`/orders/insights?month=${month}`),
+    authenticatedClient.get<OrderInsights>('/orders/insights', {
+      params: {
+        month,
+      },
+    }),
 
   summary: (month: string) =>
-    authenticatedClient.get<OrderSummary>(`/orders/summary?month=${month}`),
+    authenticatedClient.get<OrderSummary>('/orders/summary', {
+      params: {
+        month,
+      },
+    }),
 
   create: (data: CreateOrder) =>
     anonymousClient.post<SimpleOrder>('/orders', data),
