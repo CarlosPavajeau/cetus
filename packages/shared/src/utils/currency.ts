@@ -1,1 +1,1 @@
-export const valueToCents = (value: number) => value * 100
+export const valueToCents = (value: number): number => Math.round(value * 100)
