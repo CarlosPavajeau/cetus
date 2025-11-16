@@ -61,11 +61,6 @@ export class ApiClient {
       },
       (error) => Promise.reject(error),
     )
-
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error) => Promise.reject(error),
-    )
   }
 
   updateConfig(updates: Partial<ApiClientConfig>) {
