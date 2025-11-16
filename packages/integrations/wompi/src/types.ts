@@ -102,6 +102,11 @@ export type Transaction = {
   data: TransactionData
 }
 
+/**
+ * Card tokenization request.
+ * WARNING: Contains sensitive PCI data. Never log or store these values.
+ * Must be transmitted over HTTPS only.
+ */
 export type CreateCardTokenRequest = {
   number: string
   cvc: string
