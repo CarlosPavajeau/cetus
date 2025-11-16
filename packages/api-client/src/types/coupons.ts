@@ -50,8 +50,8 @@ export type CreateCoupon = {
     ruleType: CouponRuleType
     value: string
   }[]
-  description?: string | undefined
-  usageLimit?: number | undefined
-  startDate?: Date | undefined
-  endDate?: Date | undefined
+  description?: string
+  usageLimit?: number
+  startDate?: Date
+  endDate?: Date
 }
