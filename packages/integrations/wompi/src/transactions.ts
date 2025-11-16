@@ -11,7 +11,7 @@ export const transactionsApi = {
   getById: async (id: string) => {
     const client = getWompiClient()
 
-    const response = await client.get<Transaction>(`/transactions/${id}`)
+    const response = await client.get<Transaction>(`transactions/${id}`)
 
     return response.data
   },
