@@ -1,17 +1,14 @@
 import { paymentMethodLabels, paymentStatusLabels } from '../constants/payment'
 
-export function paymentStatusLabel(status?: string) {
-  if (!status) {
-    return 'Desconocido'
+function createLabelGetter(labelMap: Map<string, string>) {
+  return (key?: string) => {
+    if (!key) {
+      return 'Desconocido'
+    }
+    return labelMap.get(key) || key
   }
-
-  return paymentStatusLabels.get(status) || status
 }
 
-export function getPaymentMethodLabel(method?: string) {
-  if (!method) {
-    return 'Desconocido'
-  }
+export const paymentStatusLabel = createLabelGetter(paymentStatusLabels)
 
-  return paymentMethodLabels.get(method) || method
-}
+export const getPaymentMethodLabel = createLabelGetter(paymentMethodLabels)
