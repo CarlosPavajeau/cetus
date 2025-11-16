@@ -37,9 +37,5 @@ export function getImageUrl(image: string) {
  * ```
  */
 export function generateImageName() {
-  const fileId = uuid()
-
-  const imageUrl = `${fileId}.webp`
-
-  return imageUrl
+  return `${uuid()}.webp`
 }
