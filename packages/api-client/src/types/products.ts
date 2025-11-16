@@ -109,7 +109,7 @@ export type AddVariantImagesResponse = {
 export type CreateProduct = {
   name: string
   categoryId: string
-  description?: string | undefined
+  description?: string
 }
 
 export type CreateSimpleProduct = {
@@ -123,7 +123,7 @@ export type CreateSimpleProduct = {
     imageUrl: string
     sortOrder: number
   }[]
-  description?: string | undefined
+  description?: string
 }
 
 export type UpdateProduct = {
@@ -131,7 +131,7 @@ export type UpdateProduct = {
   name: string
   categoryId: string
   enabled: boolean
-  description?: string | undefined
+  description?: string
 }
 
 export type CreateProductOptionType = {
