@@ -31,9 +31,9 @@ export const productsApi = {
     anonymousClient.get<Product[]>(`products/category/${categoryId}`),
 
   listSuggestions: (productId: string) =>
-    anonymousClient.get<Product[]>(
-      `products/suggestions?productId=${productId}`,
-    ),
+    anonymousClient.get<Product[]>('products/suggestions', {
+      params: { productId },
+    }),
 
   listTopSelling: () =>
     authenticatedClient.get<Product[]>('products/top-selling'),
@@ -114,9 +114,14 @@ export const productsApi = {
           data,
         ),
 
-      delete: (id: number, imageId: number) =>
+      delete: (variantId: number, imageId: number) =>
         authenticatedClient.delete<void>(
-          `products/variants/images/${imageId}?variantId=${id}`,
+          `products/variants/images/${imageId}`,
+          {
+            params: {
+              variantId,
+            },
+          },
         ),
     },
   },
