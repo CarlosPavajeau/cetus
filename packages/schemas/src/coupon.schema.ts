@@ -1,0 +1,43 @@
+import { type } from 'arktype'
+
+export const createCouponRuleSchema = type({
+  ruleType: type(
+    "'min_purchase_amount'|'specific_product'|'specific_category'|'one_per_customer'",
+  ),
+  value: type.string.moreThanLength(1).configure({
+    message: 'El valor de la regla es requerido',
+  }),
+})
+
+export const createCouponSchema = type({
+  code: type.string.moreThanLength(1).configure({
+    message: 'El código es requerido',
+  }),
+  description: type.string.optional(),
+  discountType: type("'percentage'|'fixed_amount'|'free_shipping'"),
+  discountValue: type('string.integer.parse')
+    .or('number>=0')
+    .to('number>=0')
+    .configure({
+      message: 'El valor del descuento debe ser mayor o igual a 0',
+    }),
+  usageLimit: type('string.integer.parse')
+    .or('number>=0')
+    .to('number>=0')
+    .configure({
+      message: 'El límite de usos debe ser mayor o igual a 0',
+    })
+    .optional(),
+  startDate: type.Date.optional(),
+  endDate: type.Date.optional(),
+  rules: createCouponRuleSchema.array(),
+})
+
+export const redeemCouponSchema = type({
+  couponCode: type.string.moreThanLength(1).configure({
+    message: 'El código es requerido',
+  }),
+  orderId: type.string.moreThanLength(1).configure({
+    message: 'El ID del pedido es requerido',
+  }),
+})
