@@ -20,7 +20,7 @@ export const reviewsApi = {
     anonymousClient.get<ReviewRequest>(`reviews/requests/${token}`),
 
   create: (data: CreateProductReview) =>
-    anonymousClient.post('reviews/products', data),
+    anonymousClient.post<void>('reviews/products', data),
 
   approve: (reviewId: string) =>
     authenticatedClient.post<void>(`reviews/products/${reviewId}/approve`),
