@@ -14,5 +14,5 @@ export type SEOConfig = {
   twitterTitle?: string
   twitterDescription?: string
   twitterImage?: string
-  structuredData?: object[]
+  structuredData?: Record<string, unknown>[]
 }
