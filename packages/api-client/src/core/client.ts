@@ -31,36 +31,32 @@ export class ApiClient {
   }
 
   private setupInterceptors() {
-    this.client.interceptors.request.use(
-      async (config) => {
-        if (this.config.getAccessToken) {
-          const token = await this.config.getAccessToken()
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-          }
+    this.client.interceptors.request.use(async (config) => {
+      if (this.config.getAccessToken) {
+        const token = await this.config.getAccessToken()
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
         }
+      }
 
-        if (this.config.getCurrentStore) {
-          const store = await this.config.getCurrentStore()
-          if (store) {
-            config.headers['X-Store-Id'] = store
-            config.params = { ...config.params, store }
-          }
+      if (this.config.getCurrentStore) {
+        const store = await this.config.getCurrentStore()
+        if (store) {
+          config.params = { ...config.params, store }
         }
+      }
 
-        if (this.config.customHeaders) {
-          const customHeaders =
-            typeof this.config.customHeaders === 'function'
-              ? await this.config.customHeaders()
-              : this.config.customHeaders
+      if (this.config.customHeaders) {
+        const customHeaders =
+          typeof this.config.customHeaders === 'function'
+            ? await this.config.customHeaders()
+            : this.config.customHeaders
 
-          Object.assign(config.headers, customHeaders)
-        }
+        Object.assign(config.headers, customHeaders)
+      }
 
-        return config
-      },
-      (error) => Promise.reject(error),
-    )
+      return config
+    })
   }
 
   updateConfig(updates: Partial<ApiClientConfig>) {
