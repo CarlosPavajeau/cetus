@@ -21,7 +21,6 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cetus/env": "workspace:*",
     "arktype": "catalog:"
   }
 }
