@@ -22,7 +22,18 @@ import { v7 as uuid } from 'uuid'
 export function getImageUrl(image: string) {
   const cdnUrl = env.VITE_CDN_URL
 
-  return `${cdnUrl}/${image}`
+  if (!cdnUrl) {
+    throw new Error('CDN_URL is not configured')
+  }
+
+  if (!image?.trim()) {
+    throw new Error('Image path cannot be empty')
+  }
+
+  const normalizedCdn = cdnUrl.endsWith('/') ? cdnUrl.slice(0, -1) : cdnUrl
+  const normalizedImage = image.startsWith('/') ? image : `/${image}`
+
+  return `${normalizedCdn}${normalizedImage}`
 }
 
 /**
