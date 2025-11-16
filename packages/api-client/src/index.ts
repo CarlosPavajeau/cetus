@@ -1,3 +1,4 @@
+import { awsApi } from './endpoints/aws'
 import { categoriesApi } from './endpoints/categories'
 import { couponsApi } from './endpoints/coupons'
 import { customersApi } from './endpoints/customers'
@@ -8,6 +9,7 @@ import { statesApi } from './endpoints/states'
 import { storesApi } from './endpoints/stores'
 
 export const api = {
+  aws: awsApi,
   categories: categoriesApi,
   coupons: couponsApi,
   customers: customersApi,
