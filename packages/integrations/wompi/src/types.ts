@@ -66,13 +66,6 @@ export type TransactionPaymentMethod =
   | BancolombiaTransferPaymentMethod
   | PSEPaymentMethod
 
-export const TransactionPaymentMethodText = {
-  CARD: 'Tarjeta de crédito',
-  NEQUI: 'Nequi',
-  BANCOLOMBIA_TRANSFER: 'Transferencia Bancolombia',
-  PSE: 'PSE',
-}
-
 export type CustomerData = {
   phone_number: string
   full_name: string
