@@ -9,19 +9,19 @@ import type {
 
 export const storesApi = {
   create: (data: CreateStoreRequest) =>
-    authenticatedClient.post('/stores', data),
+    authenticatedClient.post<void>('/stores', data),
 
   update: (id: string, data: UpdateStoreValues) =>
     authenticatedClient.put<Store>(`/stores/${id}`, data),
 
   configureMercadopago: (config: ConfigureMercadoPagoRequest) =>
-    authenticatedClient.put(
+    authenticatedClient.put<void>(
       '/stores/payment-providers/mercado-pago/credentials',
       config,
     ),
 
   configureWompi: (config: ConfigureWompiCredentialsValues) =>
-    authenticatedClient.put(
+    authenticatedClient.put<void>(
       '/stores/payment-providers/wompi/credentials',
       config,
     ),
