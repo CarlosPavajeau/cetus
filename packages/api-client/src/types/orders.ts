@@ -101,7 +101,7 @@ export type CreateOrder = {
     variantId: number
     quantity: number
     price: number
-    imageUrl?: string | undefined
+    imageUrl?: string
   }[]
   customer: {
     id: string
