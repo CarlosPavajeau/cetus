@@ -1,7 +1,7 @@
 export type SEOConfig = {
   title: string
   description: string
-  keywords?: string
+  keywords?: string[]
   canonicalUrl?: string
   noIndex?: boolean
   noFollow?: boolean
