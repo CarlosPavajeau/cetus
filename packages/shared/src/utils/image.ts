@@ -7,9 +7,8 @@ import { v7 as uuid } from 'uuid'
  * Concatenates the base CDN origin from `env.VITE_CDN_URL` with the provided image path.
  *
  * @remarks
- * - This function does not normalize leading/trailing slashes; avoid double slashes by ensuring
- *   either the base URL does not end with `/` or the `image` argument does not start with `/`.
- * - If `env.VITE_CDN_URL` is unset or empty, the returned URL may be malformed.
+ * - Automatically normalizes slashes: removes trailing slash from CDN URL and ensures leading slash on image path.
+ * - Throws an error if `env.VITE_CDN_URL` is unset or empty, or if the image path is empty.
  *
  * @param image - The relative path or filename of the image within the CDN.
  * @returns The absolute URL of the image on the CDN.
