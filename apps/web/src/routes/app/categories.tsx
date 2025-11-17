@@ -12,90 +12,48 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useCategories } from '@/hooks/categories'
-import { usePagination } from '@/hooks/use-pagination'
+import { useTableWithPagination } from '@/hooks/use-table-with-pagination'
 import { CreateCategoryDialog } from '@cetus/features/categories/components/create-category.dialog'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  type ColumnDef,
-  getCoreRowModel,
-  getPaginationRowModel,
-  type PaginationState,
-  type Row,
-  useReactTable,
-} from '@tanstack/react-table'
+import type { ColumnDef, Row } from '@tanstack/react-table'
 import { EllipsisIcon, PlusIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/app/categories')({
   component: RouteComponent,
 })
 
-const DEFAULT_PAGE_SIZE = 5
-
-function useCategoryColumns(): ColumnDef<Category>[] {
-  return useMemo(
-    () => [
-      {
-        id: 'name',
-        accessorKey: 'name',
-        header: 'Nombre',
-      },
-      {
-        id: 'createdAt',
-        accessorKey: 'createdAt',
-        header: 'Fecha de creación',
-        cell: ({ row }) => (
-          <div>
-            <FormattedDate date={new Date(row.getValue('createdAt'))} />
-          </div>
-        ),
-      },
-      {
-        id: 'actions',
-        header: () => <span className="sr-only">Actions</span>,
-        cell: ({ row }) => <RowActions row={row} />,
-        size: 60,
-        enableHiding: false,
-      },
-    ],
-    [],
-  )
-}
-
-function useCategoryTable(categories: Category[] | undefined) {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: DEFAULT_PAGE_SIZE,
-  })
-
-  const columns = useCategoryColumns()
-
-  const table = useReactTable({
-    data: categories ?? [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
-    state: {
-      pagination,
-    },
-  })
-
-  const paginationInfo = usePagination({
-    currentPage: table.getState().pagination.pageIndex + 1,
-    totalPages: table.getPageCount(),
-    paginationItemsToDisplay: DEFAULT_PAGE_SIZE,
-  })
-
-  return {
-    table,
-    paginationInfo,
-  }
-}
+const columns: ColumnDef<Category>[] = [
+  {
+    id: 'name',
+    accessorKey: 'name',
+    header: 'Nombre',
+  },
+  {
+    id: 'createdAt',
+    accessorKey: 'createdAt',
+    header: 'Fecha de creación',
+    cell: ({ row }) => (
+      <div>
+        <FormattedDate date={new Date(row.getValue('createdAt'))} />
+      </div>
+    ),
+  },
+  {
+    id: 'actions',
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ({ row }) => <RowActions row={row} />,
+    size: 60,
+    enableHiding: false,
+  },
+]
 
 function RouteComponent() {
   const { categories, isLoading } = useCategories()
-  const { table, paginationInfo } = useCategoryTable(categories)
+  const { table, paginationInfo } = useTableWithPagination(
+    columns,
+    categories ?? [],
+  )
 
   const [isOpenCreateCategory, setIsOpenCreateCategory] = useState(false)
 
