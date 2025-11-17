@@ -25,11 +25,12 @@ export function getImageUrl(image: string) {
     throw new Error('CDN_URL is not configured')
   }
 
-  if (!image.trim()) {
+  const trimmedImage = image.trim()
+
+  if (!trimmedImage) {
     throw new Error('Image path cannot be empty')
   }
 
-  const trimmedImage = image.trim()
   const normalizedCdn = cdnUrl.endsWith('/') ? cdnUrl.slice(0, -1) : cdnUrl
   const normalizedImage = trimmedImage.startsWith('/')
     ? trimmedImage
