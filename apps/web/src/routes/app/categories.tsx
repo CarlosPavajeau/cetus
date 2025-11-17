@@ -1,17 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import {
-  type ColumnDef,
-  getCoreRowModel,
-  getPaginationRowModel,
-  type PaginationState,
-  type Row,
-  useReactTable,
-} from '@tanstack/react-table'
-import { EllipsisIcon, PlusIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
 import type { Category } from '@/api/categories'
 import { ConfirmDeleteCategoryDialog } from '@/components/category/confirm-delete-category-dialog'
-import { CreateCategoryDialog } from '@/components/category/create-category.dialog'
 import { EditCategoryDialog } from '@/components/category/edit-category-dialog'
 import { TablePagination } from '@/components/data-table/pagination'
 import { DataTable } from '@/components/data-table/table'
@@ -25,6 +13,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useCategories } from '@/hooks/categories'
 import { usePagination } from '@/hooks/use-pagination'
+import { CreateCategoryDialog } from '@cetus/features/categories/components/create-category.dialog'
+import { createFileRoute } from '@tanstack/react-router'
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  type Row,
+  useReactTable,
+} from '@tanstack/react-table'
+import { EllipsisIcon, PlusIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/categories')({
   component: RouteComponent,
