@@ -29,6 +29,9 @@ type Props = {
 export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
   const form = useForm({
     resolver: arktypeResolver(createCategorySchema),
+    defaultValues: {
+      name: '',
+    },
   })
 
   const createCategoryMutation = useCreateCategory()
@@ -56,7 +59,7 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="sm:text-center">
-              Agregar categoria
+              Agregar categoría
             </DialogTitle>
           </DialogHeader>
 
