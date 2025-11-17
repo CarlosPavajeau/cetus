@@ -1,23 +1,24 @@
+import { SubmitButton } from '@/components/submit-button'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useCreateCategory } from '@cetus/features/categories/hooks/use-create-category'
 import { createCategorySchema } from '@cetus/schemas/category.schema'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 
 type Props = {
   open: boolean
@@ -31,7 +32,7 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
 
   const createCategoryMutation = useCreateCategory()
 
-  const onSubmit = form.handleSubmit((values) => {
+  const handleSubmit = form.handleSubmit((values) => {
     createCategoryMutation.mutate(values, {
       onSuccess: () => {
         form.reset({
@@ -45,34 +46,55 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="sm:text-center">
-            Agregar categoria
-          </DialogTitle>
-        </DialogHeader>
+      <form id="create-category-form" onSubmit={handleSubmit}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="sm:text-center">
+              Agregar categoria
+            </DialogTitle>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={onSubmit}>
-            <FormField
+          <FieldGroup>
+            <Controller
               control={form.control}
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre</FormLabel>
-                  <FormControl>
-                    <Input autoFocus type="text" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="name">Nombre</FieldLabel>
+
+                  <Input
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    autoComplete="off"
+                    id="name"
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
               )}
             />
-            <Button disabled={createCategoryMutation.isPending} type="submit">
+          </FieldGroup>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </DialogClose>
+
+            <SubmitButton
+              disabled={createCategoryMutation.isPending}
+              form="create-category-form"
+              isSubmitting={createCategoryMutation.isPending}
+              type="submit"
+            >
               Agregar
-            </Button>
-          </form>
-        </Form>
-      </DialogContent>
+            </SubmitButton>
+          </DialogFooter>
+        </DialogContent>
+      </form>
     </Dialog>
   )
 }
