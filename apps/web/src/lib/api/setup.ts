@@ -4,6 +4,7 @@ import {
   setStoreProvider,
   setTokenProvider,
 } from '@cetus/api-client/core/instance'
+import consola from 'consola'
 
 export function setupApiClient() {
   setTokenProvider(async () => {
@@ -11,7 +12,7 @@ export function setupApiClient() {
       const token = await getToken()
       return token
     } catch (error) {
-      console.error('Error getting access token:', error)
+      consola.error('Error getting access token:', error)
       return null
     }
   })
@@ -26,7 +27,7 @@ export function setupApiClient() {
 
       return store
     } catch (error) {
-      console.error('Error getting current store:', error)
+      consola.error('Error getting current store:', error)
       return null
     }
   })
