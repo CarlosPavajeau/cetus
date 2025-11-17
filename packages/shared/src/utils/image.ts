@@ -46,7 +46,7 @@ export function getImageUrl(image: string) {
  * @example
  * ```ts
  * const imageName = generateImageName();
- * // Returns: "550e8400-e29b-41d4-a716-446655440000.webp"
+ * // Returns: "01933d3e-c4a0-7000-8000-123456789abc.webp" (UUID v7 - time-ordered)
  * ```
  */
 export function generateImageName() {
