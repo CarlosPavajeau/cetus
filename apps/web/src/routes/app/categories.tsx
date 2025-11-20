@@ -11,9 +11,9 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useCategories } from '@/hooks/categories'
 import { useTableWithPagination } from '@/hooks/use-table-with-pagination'
 import { CreateCategoryDialog } from '@cetus/web/features/categories/components/create-category.dialog'
+import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef, Row } from '@tanstack/react-table'
 import { EllipsisIcon, PlusIcon } from 'lucide-react'
@@ -49,11 +49,8 @@ const columns: ColumnDef<Category>[] = [
 ]
 
 function RouteComponent() {
-  const { categories, isLoading } = useCategories()
-  const { table, paginationInfo } = useTableWithPagination(
-    columns,
-    categories ?? [],
-  )
+  const { data, isLoading } = useCategories()
+  const { table, paginationInfo } = useTableWithPagination(columns, data ?? [])
 
   const [isOpenCreateCategory, setIsOpenCreateCategory] = useState(false)
 
