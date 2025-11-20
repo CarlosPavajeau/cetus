@@ -49,12 +49,14 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <form id="create-category-form" onSubmit={handleSubmit}>
-        <DialogContent>
+      <DialogContent>
+        <form
+          className="space-y-6"
+          id="create-category-form"
+          onSubmit={handleSubmit}
+        >
           <DialogHeader>
-            <DialogTitle className="sm:text-center">
-              Agregar categoría
-            </DialogTitle>
+            <DialogTitle>Agregar categoría</DialogTitle>
           </DialogHeader>
 
           <FieldGroup>
@@ -95,8 +97,8 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
               Agregar
             </SubmitButton>
           </DialogFooter>
-        </DialogContent>
-      </form>
+        </form>
+      </DialogContent>
     </Dialog>
   )
 }
