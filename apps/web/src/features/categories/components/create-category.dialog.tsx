@@ -95,7 +95,6 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
 
             <SubmitButton
               disabled={createCategoryMutation.isPending}
-              form="create-category-form"
               isSubmitting={createCategoryMutation.isPending}
               type="submit"
             >
