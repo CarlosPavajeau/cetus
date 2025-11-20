@@ -59,8 +59,8 @@ function RouteComponent() {
   }
 
   return (
-    <>
-      <div className="mb-6 flex items-center justify-between gap-4">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">Categorías</h1>
 
         <CreateCategoryDialog
@@ -81,7 +81,7 @@ function RouteComponent() {
         <DataTable table={table} />
         <TablePagination paginationInfo={paginationInfo} table={table} />
       </div>
-    </>
+    </div>
   )
 }
 

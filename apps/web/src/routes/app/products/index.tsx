@@ -1,3 +1,23 @@
+import type { Product } from '@/api/products'
+import { TableFacetedFilter } from '@/components/data-table/faceted-filter'
+import { TablePagination } from '@/components/data-table/pagination'
+import { DataTable } from '@/components/data-table/table'
+import { DefaultLoader } from '@/components/default-loader'
+import { FormattedDate } from '@/components/formatted-date'
+import { ConfirmDeleteProductDialog } from '@/components/product/confirm-delete-product-dialog'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { useCategories } from '@/hooks/categories'
+import { useProducts } from '@/hooks/products'
+import { usePagination } from '@/hooks/use-pagination'
+import { cn } from '@/shared/cn'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   type Column,
@@ -20,26 +40,6 @@ import {
   PlusIcon,
 } from 'lucide-react'
 import { type Key, useCallback, useId, useMemo, useRef, useState } from 'react'
-import type { Product } from '@/api/products'
-import { TableFacetedFilter } from '@/components/data-table/faceted-filter'
-import { TablePagination } from '@/components/data-table/pagination'
-import { DataTable } from '@/components/data-table/table'
-import { DefaultLoader } from '@/components/default-loader'
-import { FormattedDate } from '@/components/formatted-date'
-import { ConfirmDeleteProductDialog } from '@/components/product/confirm-delete-product-dialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { useCategories } from '@/hooks/categories'
-import { useProducts } from '@/hooks/products'
-import { usePagination } from '@/hooks/use-pagination'
-import { cn } from '@/shared/cn'
 
 export const Route = createFileRoute('/app/products/')({
   component: RouteComponent,

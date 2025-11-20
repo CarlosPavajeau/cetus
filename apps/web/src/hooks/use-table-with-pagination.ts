@@ -1,13 +1,15 @@
+import { usePagination } from '@/hooks/use-pagination'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants'
 import {
   type ColumnDef,
   getCoreRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
   getPaginationRowModel,
   type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
 import { useState } from 'react'
-import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants'
 
 export function useTableWithPagination<T = unknown>(
   columns: ColumnDef<T>[],
@@ -22,7 +24,9 @@ export function useTableWithPagination<T = unknown>(
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     onPaginationChange: setPagination,
     state: {
       pagination,
