@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useCategories } from '@/hooks/categories'
 import { useTableWithPagination } from '@/hooks/use-table-with-pagination'
-import { CreateCategoryDialog } from '@cetus/features/categories/components/create-category.dialog'
+import { CreateCategoryDialog } from '@cetus/web/features/categories/components/create-category.dialog'
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef, Row } from '@tanstack/react-table'
 import { EllipsisIcon, PlusIcon } from 'lucide-react'
