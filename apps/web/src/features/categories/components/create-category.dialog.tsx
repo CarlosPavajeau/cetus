@@ -19,7 +19,6 @@ import { createCategorySchema } from '@cetus/schemas/category.schema'
 import { useCreateCategory } from '@cetus/web/features/categories/hooks/use-create-category'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 
 type Props = {
   open: boolean
@@ -44,11 +43,6 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
         })
 
         onOpenChange(false)
-      },
-      onError: (error) => {
-        toast.error('Error al crear la categoría', {
-          description: error.message || 'Por favor, intente nuevamente',
-        })
       },
     })
   })
