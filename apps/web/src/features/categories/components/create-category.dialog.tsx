@@ -15,8 +15,8 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { useCreateCategory } from '@cetus/features/categories/hooks/use-create-category'
 import { createCategorySchema } from '@cetus/schemas/category.schema'
+import { useCreateCategory } from '@cetus/web/features/categories/hooks/use-create-category'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
