@@ -43,6 +43,8 @@ export class ApiClient {
         const store = await this.config.getCurrentStore()
         if (store) {
           config.params = { ...config.params, store }
+
+          config.headers['X-Current-Store'] = store
         }
       }
 
