@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button'
-import { CategoriesTable } from '@/features/categories/components/categories-table'
+import { Button } from '@cetus/ui/button'
+import { CategoriesTable } from '@cetus/web/features/categories/components/categories-table'
 import { CreateCategoryDialog } from '@cetus/web/features/categories/components/create-category.dialog'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
 import { createFileRoute } from '@tanstack/react-router'
