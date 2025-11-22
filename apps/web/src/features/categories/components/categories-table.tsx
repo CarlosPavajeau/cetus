@@ -1,4 +1,3 @@
-import { ConfirmDeleteCategoryDialog } from '@/components/category/confirm-delete-category-dialog'
 import { EditCategoryDialog } from '@/components/category/edit-category-dialog'
 import { FormattedDate } from '@/components/formatted-date'
 import type { Category } from '@cetus/api-client/types/categories'
@@ -12,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@cetus/ui/dropdown-menu'
 import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { DeleteCategoryDialog } from '@cetus/web/features/categories/components/delete-category.dialog'
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -115,7 +115,7 @@ function RowActions({ row }: Readonly<{ row: Row<Category> }>) {
 
       <DropdownMenuContent align="end">
         <EditCategoryDialog category={category} />
-        <ConfirmDeleteCategoryDialog category={category} />
+        <DeleteCategoryDialog category={category} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
