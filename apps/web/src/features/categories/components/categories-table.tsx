@@ -1,5 +1,3 @@
-import { EditCategoryDialog } from '@/components/category/edit-category-dialog'
-import { FormattedDate } from '@/components/formatted-date'
 import type { Category } from '@cetus/api-client/types/categories'
 import { Button } from '@cetus/ui/button'
 import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
@@ -11,7 +9,9 @@ import {
   DropdownMenuTrigger,
 } from '@cetus/ui/dropdown-menu'
 import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { DeleteCategoryDialog } from '@cetus/web/features/categories/components/delete-category.dialog'
+import { EditCategoryDialog } from '@cetus/web/features/categories/components/edit-category.dialog'
 import {
   type ColumnDef,
   getCoreRowModel,
