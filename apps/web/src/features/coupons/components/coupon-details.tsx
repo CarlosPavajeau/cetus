@@ -1,13 +1,10 @@
-import { CheckIcon, CopyIcon, EyeIcon } from 'lucide-react'
-import { useState } from 'react'
-import { type Coupon, CouponDiscountTypeText } from '@/api/coupons'
-import { CouponDiscountValue } from '@/components/coupons/coupon-discount-value'
-import { CouponRulesDetails } from '@/components/coupons/coupon-rules-details'
-import { FormattedDate } from '@/components/formatted-date'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
+import { CouponDiscountTypeText } from '@/api/coupons'
+import { cn } from '@/shared/cn'
+import type { Coupon } from '@cetus/api-client/types/coupons'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import { Progress } from '@cetus/ui/progress'
+import { Separator } from '@cetus/ui/separator'
 import {
   Sheet,
   SheetContent,
@@ -16,8 +13,12 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet'
-import { cn } from '@/shared/cn'
+} from '@cetus/ui/sheet'
+import { FormattedDate } from '@cetus/web/components/formatted-date'
+import { CouponDiscountValue } from '@cetus/web/features/coupons/components/coupon-discount-value'
+import { CouponRulesDetails } from '@cetus/web/features/coupons/components/coupon-rules-details'
+import { CheckIcon, CopyIcon, EyeIcon } from 'lucide-react'
+import { useState } from 'react'
 
 type Props = {
   coupon: Coupon

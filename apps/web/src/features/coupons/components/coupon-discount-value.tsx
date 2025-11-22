@@ -1,6 +1,6 @@
+import type { Coupon } from '@cetus/api-client/types/coupons'
+import { Currency } from '@cetus/web/components/currency'
 import { useNumberFormatter } from 'react-aria'
-import type { Coupon } from '@/api/coupons'
-import { Currency } from '@/components/currency'
 
 type Props = {
   coupon: Coupon

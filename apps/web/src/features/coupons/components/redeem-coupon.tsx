@@ -1,16 +1,17 @@
+import { api } from '@cetus/api-client'
+import type { Order } from '@cetus/api-client/types/orders'
+import { redeemCouponSchema } from '@cetus/schemas/coupon.schema'
+import { Field, FieldError, FieldGroup } from '@cetus/ui/field'
+import { Form } from '@cetus/ui/form'
+import { Input } from '@cetus/ui/input'
+import { SubmitButton } from '@cetus/web/components/submit-button'
+import { extractErrorDetail } from '@cetus/web/shared/error'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { TagIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import type { Order } from '@/api/orders'
-import { SubmitButton } from '@/components/submit-button'
-import { Field, FieldError, FieldGroup } from '@/components/ui/field'
-import { Form } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useRedeemCoupon } from '@/hooks/coupons'
-import { RedeemCouponSchema } from '@/schemas/coupons'
-import { extractErrorDetail } from '@/shared/error'
 
 type Props = {
   order: Order
@@ -18,7 +19,7 @@ type Props = {
 
 export function RedeemCoupon({ order }: Readonly<Props>) {
   const form = useForm({
-    resolver: arktypeResolver(RedeemCouponSchema),
+    resolver: arktypeResolver(redeemCouponSchema),
     defaultValues: {
       couponCode: '',
       orderId: order.id,
@@ -26,16 +27,16 @@ export function RedeemCoupon({ order }: Readonly<Props>) {
   })
 
   const router = useRouter()
-  const onRedeemCouponSuccess = () => {
-    router.invalidate()
-  }
-
   const {
     mutate: redeemCoupon,
     isPending,
     error,
-  } = useRedeemCoupon({
-    onSuccess: onRedeemCouponSuccess,
+  } = useMutation({
+    mutationKey: ['coupons', 'redeem'],
+    mutationFn: api.coupons.redeem,
+    onSuccess: () => {
+      router.invalidate()
+    },
   })
 
   useEffect(() => {

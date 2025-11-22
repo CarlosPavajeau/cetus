@@ -1,9 +1,9 @@
-import { TrashIcon } from 'lucide-react'
 import { CouponRuleTypeText } from '@/api/coupons'
-import { Currency } from '@/components/currency'
-import { useCategories } from '@/hooks/categories'
 import { useProducts } from '@/hooks/products'
 import type { CreateCouponRule } from '@/schemas/coupons'
+import { Currency } from '@cetus/web/components/currency'
+import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
+import { TrashIcon } from 'lucide-react'
 
 type Props = {
   rule: CreateCouponRule
@@ -67,7 +67,7 @@ type CouponRuleValueSpecificCategoryProps = {
 function CouponRuleValueSpecificCategory({
   rule,
 }: Readonly<CouponRuleValueSpecificCategoryProps>) {
-  const { categories } = useCategories()
+  const { data: categories } = useCategories()
 
   if (!categories) {
     return null

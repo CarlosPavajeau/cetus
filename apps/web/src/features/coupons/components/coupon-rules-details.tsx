@@ -1,8 +1,8 @@
-import { InfoIcon } from 'lucide-react'
-import { CouponRule } from '@/components/coupons/coupon-rule'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCouponRules } from '@/hooks/coupons'
+import { CouponRule } from '@cetus/web/features/coupons/components/coupon-rule'
+import { InfoIcon } from 'lucide-react'
 
 type Props = {
   couponId: number
