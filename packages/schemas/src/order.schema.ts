@@ -50,3 +50,12 @@ export const createOrderSchema = type({
     }),
   },
 })
+
+export const createDeliveryFeeSchema = type({
+  cityId: type.string.moreThanLength(1).configure({
+    message: 'Seleccione una ciudad',
+  }),
+  fee: type('string.integer.parse').or('number>0').to('number>0').configure({
+    message: 'El costo de envío debe ser mayor a 0',
+  }),
+})
