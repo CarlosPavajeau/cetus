@@ -2,8 +2,10 @@ import { SubmitButton } from '@/components/submit-button'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -50,37 +52,38 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
-        <form
-          className="space-y-6"
-          id="create-category-form"
-          onSubmit={handleSubmit}
-        >
+        <form id="create-category-form" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Agregar categoría</DialogTitle>
+            <DialogDescription>
+              Complete el siguiente formulario para agregar una nueva categoría.
+            </DialogDescription>
           </DialogHeader>
 
-          <FieldGroup>
-            <Controller
-              control={form.control}
-              name="name"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="name">Nombre</FieldLabel>
+          <DialogBody>
+            <FieldGroup>
+              <Controller
+                control={form.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="name">Nombre</FieldLabel>
 
-                  <Input
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    autoComplete="off"
-                    id="name"
-                  />
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                      id="name"
+                    />
 
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGroup>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </FieldGroup>
+          </DialogBody>
 
           <DialogFooter>
             <DialogClose asChild>
