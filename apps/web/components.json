@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@/components",
-    "utils": "@/shared/cn",
-    "ui": "@/components/ui",
-    "lib": "@/shared",
-    "hooks": "@/hooks"
+    "components": "@cetus/web/components",
+    "utils": "@cetus/web/shared/cn",
+    "ui": "@cetus/ui",
+    "lib": "@cetus/web/shared",
+    "hooks": "@cetus/web/hooks"
   },
   "registries": {
     "@reui": "https://reui.io/r/{name}.json"
