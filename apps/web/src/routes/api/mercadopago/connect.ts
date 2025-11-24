@@ -1,14 +1,12 @@
+import { api } from '@cetus/api-client'
+import { authClient } from '@cetus/auth/client'
 import { env } from '@cetus/env/server'
+import { getSession } from '@cetus/web/functions/get-session'
+import { mercadopago } from '@cetus/web/functions/mercadopago'
+import { setActiveOrg } from '@cetus/web/functions/organizations'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { OAuth } from 'mercadopago'
-import { configureMercadoPago } from '@/api/stores'
-import { getSession } from '@/functions/get-session'
-import { mercadopago } from '@/functions/mercadopago'
-import { setActiveOrg } from '@/functions/organizations'
-import { authClient } from '@/shared/auth-client'
-
-const HTTP_STATUS_NO_CONTENT = 204
 
 export const Route = createFileRoute('/api/mercadopago/connect')({
   server: {
@@ -81,22 +79,22 @@ export const Route = createFileRoute('/api/mercadopago/connect')({
           throw notFound()
         }
 
-        const response = await configureMercadoPago(org.data.slug || '', {
-          accessToken: credentials.access_token,
-          refreshToken: credentials.refresh_token,
-          expiresIn: credentials.expires_in,
-        })
+        try {
+          await api.stores.configureMercadopago({
+            accessToken: credentials.access_token,
+            refreshToken: credentials.refresh_token,
+            expiresIn: credentials.expires_in,
+          })
 
-        if (response.status === HTTP_STATUS_NO_CONTENT) {
           throw redirect({
             to: '/app',
           })
+        } catch (error) {
+          return new Response(null, {
+            status: 500,
+            statusText: 'Cannot connect to Mercado Pago',
+          })
         }
-
-        return new Response(null, {
-          status: 500,
-          statusText: 'Cannot connect to Mercado Pago',
-        })
       },
     },
   },

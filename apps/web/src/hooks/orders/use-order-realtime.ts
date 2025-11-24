@@ -1,9 +1,13 @@
+import type { SimpleOrder } from '@cetus/api-client/types/orders'
 import { env } from '@cetus/env/client'
+import {
+  useClientMethod,
+  useHub,
+  useHubGroup,
+} from '@cetus/web/hooks/realtime/use-hub'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import type { SimpleOrder } from '@/api/orders'
-import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
-import { useTenantStore } from '@/store/use-tenant-store'
 
 const HUB_URL = `${env.VITE_API_URL}/realtime/orders`
 

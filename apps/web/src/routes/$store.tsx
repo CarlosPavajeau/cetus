@@ -1,24 +1,22 @@
+import { api } from '@cetus/api-client'
 import { env } from '@cetus/env/server'
+import { getImageUrl } from '@cetus/shared/utils/image'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
+import { HeroSection } from '@cetus/web/components/home/hero-section'
+import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
+import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
+import { PageHeader } from '@cetus/web/components/page-header'
+import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { fetchCategories } from '@/api/categories'
-import { fetchFeaturedProducts, fetchPopularProducts } from '@/api/products'
-import { fetchStoreBySlug } from '@/api/stores'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { FeaturedProductsSection } from '@/components/home/featured-products-section'
-import { HeroSection } from '@/components/home/hero-section'
-import { HomeSkeleton } from '@/components/home/home-sekeleton'
-import { PopularProductsSection } from '@/components/home/popular-products-section'
-import { PageHeader } from '@/components/page-header'
-import { getImageUrl } from '@/shared/cdn'
-import { generateHomepageSEO, generateSEOTags } from '@/shared/seo'
-import { useTenantStore } from '@/store/use-tenant-store'
 
 const storeBySlugQuery = (slug: string) =>
   queryOptions({
     queryKey: ['store', slug],
-    queryFn: () => fetchStoreBySlug(slug),
+    queryFn: () => api.stores.getBySlug(slug),
   })
 
 export const Route = createFileRoute('/$store')({
@@ -34,9 +32,9 @@ export const Route = createFileRoute('/$store')({
     }
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
-      fetchFeaturedProducts(store.slug),
-      fetchPopularProducts(store.slug),
-      fetchCategories(store.slug),
+      api.products.listFeatured(),
+      api.products.listPopular(),
+      api.categories.list(),
     ])
 
     return {

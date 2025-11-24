@@ -1,4 +1,3 @@
-import { flexRender, type useReactTable } from '@tanstack/react-table'
 import {
   Table,
   TableBody,
@@ -6,7 +5,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '@cetus/ui/table'
+import { flexRender, type useReactTable } from '@tanstack/react-table'
 
 type Props<T = unknown> = {
   table: ReturnType<typeof useReactTable<T>>

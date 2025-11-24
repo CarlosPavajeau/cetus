@@ -1,7 +1,7 @@
+import { Separator } from '@cetus/ui/separator'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { Link } from '@tanstack/react-router'
 import { PhoneIcon } from 'lucide-react'
-import { Separator } from '@/components/ui/separator'
-import { useTenantStore } from '@/store/use-tenant-store'
 
 const fastLinks = [
   { name: 'Inicio', href: '/' },

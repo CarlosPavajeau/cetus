@@ -1,8 +1,8 @@
+import { Separator } from '@cetus/ui/separator'
+import { cn } from '@cetus/web/shared/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 import type * as React from 'react'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/shared/cn'
 
 function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
   return (

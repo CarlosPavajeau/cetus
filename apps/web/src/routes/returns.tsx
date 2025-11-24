@@ -1,6 +1,6 @@
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { SupportButton } from '@cetus/web/components/support-button'
 import { createFileRoute } from '@tanstack/react-router'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { SupportButton } from '@/components/support-button'
 
 export const Route = createFileRoute('/returns')({
   component: RouteComponent,

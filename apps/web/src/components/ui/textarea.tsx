@@ -1,6 +1,5 @@
+import { cn } from '@cetus/web/shared/utils'
 import type * as React from 'react'
-
-import { cn } from '@/shared/cn'
 
 function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
   return (

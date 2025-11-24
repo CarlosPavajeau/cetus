@@ -1,6 +1,6 @@
+import { Button } from '@cetus/ui/button'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { HeadsetIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useTenantStore } from '@/store/use-tenant-store'
 
 type Props = {
   message: string

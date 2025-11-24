@@ -1,9 +1,9 @@
+import type { Store } from '@cetus/api-client/types/stores'
+import { CartButton } from '@cetus/web/components/cart-button'
+import { Footer } from '@cetus/web/components/footer'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import type { Store } from '@/api/stores'
-import { CartButton } from '@/components/cart-button'
-import { Footer } from '@/components/footer'
-import { useTenantStore } from '@/store/use-tenant-store'
 
 type Props = {
   children: ReactNode

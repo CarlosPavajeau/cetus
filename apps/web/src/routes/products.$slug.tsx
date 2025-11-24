@@ -1,17 +1,6 @@
+import { api } from '@cetus/api-client'
 import { env } from '@cetus/env/server'
-import { createFileRoute, Link, notFound } from '@tanstack/react-router'
-import { type } from 'arktype'
-import { ChevronRight, Home, HomeIcon } from 'lucide-react'
-import { useEffect, useId } from 'react'
-import { v7 as uuid } from 'uuid'
-import { fetchProductBySlug, fetchProductSuggestions } from '@/api/products'
-import { fetchProductReviews } from '@/api/reviews'
-import { fetchStoreById } from '@/api/stores'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { PageHeader } from '@/components/page-header'
-import { ProductDisplay } from '@/components/product/product-display'
-import { ProductTabs } from '@/components/product/product-tabs'
-import { SuggestedProducts } from '@/components/product/suggested-product'
+import { getImageUrl } from '@cetus/shared/utils/image'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,12 +8,21 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { getImageUrl } from '@/shared/cdn'
-import { generateProductSEO, generateSEOTags } from '@/shared/seo'
-import { useTenantStore } from '@/store/use-tenant-store'
+} from '@cetus/ui/breadcrumb'
+import { Button } from '@cetus/ui/button'
+import { Skeleton } from '@cetus/ui/skeleton'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { PageHeader } from '@cetus/web/components/page-header'
+import { ProductDisplay } from '@cetus/web/features/products/components/product-display'
+import { ProductTabs } from '@cetus/web/features/products/components/product-tabs'
+import { SuggestedProducts } from '@cetus/web/features/products/components/suggested-product'
+import { generateProductSEO, generateSEOTags } from '@cetus/web/shared/seo'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
+import { type } from 'arktype'
+import { ChevronRight, Home, HomeIcon } from 'lucide-react'
+import { useEffect, useId } from 'react'
+import { v7 as uuid } from 'uuid'
 
 const ProductSearchSchema = type({
   variant: type('number>0'),
@@ -37,8 +35,8 @@ export const Route = createFileRoute('/products/$slug')({
   }),
   loader: async ({ params, context }) => {
     const slug = params.slug
-    const product = await fetchProductBySlug(slug)
-    const store = await fetchStoreById(product.storeId)
+    const product = await api.products.getBySlug(slug)
+    const store = await api.stores.getById(product.storeId)
     const variant = product.variants.find((v) => v.id === context.variant)
 
     if (!variant) {
@@ -46,8 +44,8 @@ export const Route = createFileRoute('/products/$slug')({
     }
 
     const [suggestions, reviews] = await Promise.all([
-      fetchProductSuggestions(product.id),
-      fetchProductReviews(product.id),
+      api.products.listSuggestions(product.id),
+      api.reviews.list(product.id),
     ])
 
     return {

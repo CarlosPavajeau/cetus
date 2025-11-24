@@ -1,9 +1,8 @@
 'use client'
 
+import { cn } from '@cetus/web/shared/utils'
 import { Switch as SwitchPrimitive } from 'radix-ui'
 import type * as React from 'react'
-
-import { cn } from '@/shared/cn'
 
 function Switch({
   className,

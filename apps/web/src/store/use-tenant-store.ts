@@ -1,7 +1,8 @@
+import { api } from '@cetus/api-client'
+import type { Store } from '@cetus/api-client/types/stores'
 import consola from 'consola'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { fetchStoreByDomain, fetchStoreBySlug, type Store } from '@/api/stores'
 
 type TenantStore = {
   store?: Store
@@ -30,9 +31,9 @@ export const useTenantStore = create<TenantStore>()(
           try {
             let store: Store | undefined
             if (isDomain(identifier)) {
-              store = await fetchStoreByDomain(identifier)
+              store = await api.stores.getByDomain(identifier)
             } else {
-              store = await fetchStoreBySlug(identifier)
+              store = await api.stores.getBySlug(identifier)
             }
 
             set({ store, status: 'success' })

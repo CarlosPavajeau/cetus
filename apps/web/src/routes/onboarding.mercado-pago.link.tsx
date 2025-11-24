@@ -1,9 +1,9 @@
+import { api } from '@cetus/api-client'
+import { Button } from '@cetus/ui/button'
+import { getSession } from '@cetus/web/functions/get-session'
+import { setActiveOrg } from '@cetus/web/functions/organizations'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { HopIcon } from 'lucide-react'
-import { fetchMercadoPagoAuthorizationUrl } from '@/api/stores'
-import { Button } from '@/components/ui/button'
-import { getSession } from '@/functions/get-session'
-import { setActiveOrg } from '@/functions/organizations'
 
 export const Route = createFileRoute('/onboarding/mercado-pago/link')({
   beforeLoad: async () => {
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/onboarding/mercado-pago/link')({
     }
   },
   loader: async () => {
-    const authorizationUrl = await fetchMercadoPagoAuthorizationUrl()
+    const authorizationUrl = await api.stores.getMercadoPagoAuthorizationUrl()
 
     return {
       authorizationUrl,

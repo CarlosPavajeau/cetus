@@ -1,5 +1,5 @@
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { createFileRoute } from '@tanstack/react-router'
-import { DefaultPageLayout } from '@/components/default-page-layout'
 
 export const Route = createFileRoute('/faq')({
   component: RouteComponent,

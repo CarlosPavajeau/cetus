@@ -1,11 +1,11 @@
+import { type Button, buttonVariants } from '@cetus/ui/button'
+import { cn } from '@cetus/web/shared/utils'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MoreHorizontalIcon,
 } from 'lucide-react'
 import type * as React from 'react'
-import { type Button, buttonVariants } from '@/components/ui/button'
-import { cn } from '@/shared/cn'
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (

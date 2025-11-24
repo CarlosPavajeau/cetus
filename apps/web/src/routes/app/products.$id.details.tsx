@@ -1,21 +1,23 @@
+import { Badge } from '@cetus/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@cetus/ui/tabs'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { ReturnButton } from '@cetus/web/components/return-button'
+import { ProductVariants } from '@cetus/web/features/products/components/product-variants'
+import { UpdateProductForm } from '@cetus/web/features/products/components/update-product-form'
+import { UpdateProductOptionsForm } from '@cetus/web/features/products/components/update-product-options-form'
+import { productQueries } from '@cetus/web/features/products/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { PackageIcon, SettingsIcon, TagIcon } from 'lucide-react'
-import { DefaultLoader } from '@/components/default-loader'
-import { ProductVariants } from '@/components/product/product-variants'
-import { UpdateProductForm } from '@/components/product/update-product-form'
-import { UpdateProductOptionsForm } from '@/components/product/update-product-options-form'
-import { ReturnButton } from '@/components/return-button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { productQuery } from '@/hooks/products/use-product'
 
 export const Route = createFileRoute('/app/products/$id/details')({
   ssr: false,
   loader: async ({ params, context }) => {
     const { id } = params
 
-    const product = await context.queryClient.ensureQueryData(productQuery(id))
+    const product = await context.queryClient.ensureQueryData(
+      productQueries.detail(id),
+    )
 
     return product
   },
@@ -25,7 +27,7 @@ export const Route = createFileRoute('/app/products/$id/details')({
 
 function RouteComponent() {
   const { id } = Route.useParams()
-  const { data: product } = useSuspenseQuery(productQuery(id))
+  const { data: product } = useSuspenseQuery(productQueries.detail(id))
 
   return (
     <div className="flex flex-1 flex-col items-center">

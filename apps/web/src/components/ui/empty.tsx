@@ -1,6 +1,5 @@
+import { cn } from '@cetus/web/shared/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
-
-import { cn } from '@/shared/cn'
 
 function Empty({ className, ...props }: React.ComponentProps<'div'>) {
   return (

@@ -1,3 +1,49 @@
+import { api } from '@cetus/api-client'
+import { setWompiConfig } from '@cetus/integrations-wompi/config'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@cetus/ui/accordion'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@cetus/ui/card'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@cetus/ui/empty'
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@cetus/ui/item'
+import { Separator } from '@cetus/ui/separator'
+import { Currency } from '@cetus/web/components/currency'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { BancolombiaLogo, PSELogo } from '@cetus/web/components/icons'
+import { RedeemCoupon } from '@cetus/web/features/coupons/components/redeem-coupon'
+import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
+import { BancolombiaPayment } from '@cetus/web/features/payments/components/bancolombia-payment'
+import { CardPaymentForm } from '@cetus/web/features/payments/components/card-payment-form'
+import { MercadoPagoPayment } from '@cetus/web/features/payments/components/mercado-pago-payment'
+import { NequiPaymentForm } from '@cetus/web/features/payments/components/nequi-payment-form'
+import { PsePaymentForm } from '@cetus/web/features/payments/components/pse-payment-form'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import {
   BanknoteIcon,
@@ -7,56 +53,11 @@ import {
   Smartphone,
   StoreIcon,
 } from 'lucide-react'
-import { fetchOrder } from '@/api/orders'
-import { RedeemCoupon } from '@/components/coupons/redeem-coupon'
-import { Currency } from '@/components/currency'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { BancolombiaLogo, PSELogo } from '@/components/icons'
-import { OrderItemView } from '@/components/order/order-item-view'
-import { BancolombiaPayment } from '@/components/payment/bancolombia-payment'
-import { CardPaymentForm } from '@/components/payment/card-payment-form'
-import { MercadoPagoPayment } from '@/components/payment/mercado-pago-payment'
-import { NequiPaymentForm } from '@/components/payment/nequi-payment-form'
-import { PsePaymentForm } from '@/components/payment/pse-payment-form'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty'
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item'
-import { Separator } from '@/components/ui/separator'
-import { useTenantStore } from '@/store/use-tenant-store'
 
 export const Route = createFileRoute('/_store-required/checkout/$id')({
   loader: async ({ params }) => {
     const { id } = params
-    const order = await fetchOrder(id)
+    const order = await api.orders.getById(id)
 
     if (!order) {
       throw notFound()
@@ -94,6 +95,13 @@ function RouteComponent() {
 
   const publicKey = store.wompiPublicKey
   const hasMercadoPago = store.isConnectedToMercadoPago
+
+  if (publicKey) {
+    setWompiConfig({
+      publicKey,
+      environment: 'sandbox',
+    })
+  }
 
   const emptyPaymentMethods = !(publicKey || hasMercadoPago)
 

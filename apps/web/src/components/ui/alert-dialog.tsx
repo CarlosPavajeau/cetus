@@ -1,9 +1,10 @@
 'use client'
 
+import { buttonVariants } from '@cetus/ui/button'
+import { cn } from '@cetus/web/shared/utils'
+import type { VariantProps } from 'class-variance-authority'
 import { AlertDialog as AlertDialogPrimitive } from 'radix-ui'
 import type * as React from 'react'
-import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/shared/cn'
 
 function AlertDialog({
   ...props
@@ -34,7 +35,7 @@ function AlertDialogOverlay({
   return (
     <AlertDialogPrimitive.Overlay
       className={cn(
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80 data-[state=closed]:animate-out data-[state=open]:animate-in',
+        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/30 [backdrop-filter:blur(4px)] data-[state=closed]:animate-out data-[state=open]:animate-in',
         className,
       )}
       data-slot="alert-dialog-overlay"
@@ -52,7 +53,7 @@ function AlertDialogContent({
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
         className={cn(
-          'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 -translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-4 overflow-y-auto rounded-xl border bg-background p-6 shadow-lg duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in sm:max-w-100',
+          'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-black/5 shadow-lg duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in sm:rounded-lg',
           className,
         )}
         data-slot="alert-dialog-content"
@@ -62,34 +63,33 @@ function AlertDialogContent({
   )
 }
 
-function AlertDialogHeader({
+const AlertDialogHeader = ({
   className,
   ...props
-}: React.ComponentProps<'div'>) {
-  return (
-    <div
-      className={cn('flex flex-col gap-1 text-center sm:text-left', className)}
-      data-slot="alert-dialog-header"
-      {...props}
-    />
-  )
-}
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col space-y-2 text-center sm:text-left',
+      className,
+    )}
+    data-slot="alert-dialog-header"
+    {...props}
+  />
+)
 
-function AlertDialogFooter({
+const AlertDialogFooter = ({
   className,
   ...props
-}: React.ComponentProps<'div'>) {
-  return (
-    <div
-      className={cn(
-        'flex flex-col-reverse gap-3 sm:flex-row sm:justify-end',
-        className,
-      )}
-      data-slot="alert-dialog-footer"
-      {...props}
-    />
-  )
-}
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2.5',
+      className,
+    )}
+    data-slot="alert-dialog-footer"
+    {...props}
+  />
+)
 
 function AlertDialogTitle({
   className,
@@ -119,11 +119,14 @@ function AlertDialogDescription({
 
 function AlertDialogAction({
   className,
+  variant,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
+  VariantProps<typeof buttonVariants>) {
   return (
     <AlertDialogPrimitive.Action
-      className={cn(buttonVariants(), className)}
+      className={cn(buttonVariants({ variant }), className)}
+      data-slot="alert-dialog-action"
       {...props}
     />
   )
@@ -135,7 +138,12 @@ function AlertDialogCancel({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
   return (
     <AlertDialogPrimitive.Cancel
-      className={cn(buttonVariants({ variant: 'outline' }), className)}
+      className={cn(
+        buttonVariants({ variant: 'outline' }),
+        'mt-2 sm:mt-0',
+        className,
+      )}
+      data-slot="alert-dialog-cancel"
       {...props}
     />
   )

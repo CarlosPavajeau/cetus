@@ -1,16 +1,4 @@
 import {
-  BadgePercentIcon,
-  CreditCardIcon,
-  LayoutDashboardIcon,
-  PackageIcon,
-  ShoppingBasketIcon,
-  StarIcon,
-  TagIcon,
-  TruckIcon,
-  User2Icon,
-} from 'lucide-react'
-import { OrganizationSwitcher } from '@/components/organization-switcher'
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -21,12 +9,24 @@ import {
   SidebarMenu,
   SidebarRail,
   useSidebar,
-} from '@/components/ui/sidebar'
+} from '@cetus/ui/sidebar'
 import {
   type SidebarMenuElement,
   SidebarMenuItemWithCollapsible,
-} from '@/components/ui/sidebar-menu-item'
-import { UserMenu } from '@/components/user-menu'
+} from '@cetus/ui/sidebar-menu-item'
+import { OrganizationSwitcher } from '@cetus/web/components/organization-switcher'
+import { UserMenu } from '@cetus/web/components/user-menu'
+import {
+  BadgePercentIcon,
+  CreditCardIcon,
+  LayoutDashboardIcon,
+  PackageIcon,
+  ShoppingBasketIcon,
+  StarIcon,
+  TagIcon,
+  TruckIcon,
+  User2Icon,
+} from 'lucide-react'
 
 const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
   {

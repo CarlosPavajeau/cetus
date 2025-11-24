@@ -1,6 +1,6 @@
+import { Button } from '@cetus/web/components/ui/button'
 import { Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
 
 export function ApplicationHome() {
   const transition = { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }

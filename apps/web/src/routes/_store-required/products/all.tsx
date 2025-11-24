@@ -1,20 +1,23 @@
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { FilterSection } from '@cetus/web/components/home/filter-section'
+import { FilterSectionSkeleton } from '@cetus/web/components/home/filter-section-skeleton'
+import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
+import { ProductGrid } from '@cetus/web/features/products/components/product-grid'
+import { ProductGridSkeleton } from '@cetus/web/features/products/components/product-grid-skeleton'
+import { productQueries } from '@cetus/web/features/products/queries'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useDeferredValue, useMemo, useState } from 'react'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { FilterSection } from '@/components/home/filter-section'
-import { FilterSectionSkeleton } from '@/components/home/filter-section-skeleton'
-import { ProductGrid } from '@/components/product/product-grid'
-import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
-import { useCategories } from '@/hooks/categories'
-import { useProductsForSale } from '@/hooks/products'
 
 export const Route = createFileRoute('/_store-required/products/all')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { categories, isLoading: isLoadingCategories } = useCategories()
-  const { products, isLoading: isLoadingProducts } = useProductsForSale()
+  const { data: categories, isLoading: isLoadingCategories } = useCategories()
+  const { data: products, isLoading: isLoadingProducts } = useQuery(
+    productQueries.forSale,
+  )
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])

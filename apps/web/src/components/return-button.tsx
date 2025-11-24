@@ -1,7 +1,7 @@
+import { Button } from '@cetus/ui/button'
 import { useCanGoBack, useRouter } from '@tanstack/react-router'
 import { ArrowLeftIcon } from 'lucide-react'
 import type { ComponentProps } from 'react'
-import { Button } from '@/components/ui/button'
 
 type Props = ComponentProps<typeof Button>
 

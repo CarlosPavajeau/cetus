@@ -1,19 +1,19 @@
-import { ChevronsUpDownIcon, StoreIcon } from 'lucide-react'
+import { authClient } from '@cetus/auth/client'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@cetus/ui/dropdown-menu'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar'
-import { Skeleton } from '@/components/ui/skeleton'
-import { authClient } from '@/shared/auth-client'
+} from '@cetus/ui/sidebar'
+import { Skeleton } from '@cetus/ui/skeleton'
+import { ChevronsUpDownIcon, StoreIcon } from 'lucide-react'
 
 export function OrganizationSwitcher() {
   const { data: activeOrg, isPending: isActiveOrgPending } =

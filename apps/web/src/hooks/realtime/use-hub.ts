@@ -10,7 +10,9 @@ export function useHub(hubUrl: string) {
 
   // Create and start connection
   const connect = useCallback(async () => {
-    if (connectingRef.current || connectionRef.current) return
+    if (connectingRef.current || connectionRef.current) {
+      return
+    }
 
     connectingRef.current = true
     setError(null)
@@ -37,7 +39,9 @@ export function useHub(hubUrl: string) {
 
   // Disconnect
   const disconnect = useCallback(async () => {
-    if (!connectionRef.current) return
+    if (!connectionRef.current) {
+      return
+    }
 
     try {
       await connectionRef.current.stop()
@@ -87,7 +91,9 @@ export function useClientMethod<T = unknown>(
   callback: (data: T) => void,
 ) {
   useEffect(() => {
-    if (!hubConnection) return
+    if (!hubConnection) {
+      return
+    }
 
     // Register client method
     hubConnection.on(methodName, callback)
@@ -109,7 +115,9 @@ export function useHubGroup(
 
   useEffect(() => {
     async function joinGroup() {
-      if (!(hubConnection && groupId) || hasJoinedRef.current) return
+      if (!(hubConnection && groupId) || hasJoinedRef.current) {
+        return
+      }
 
       try {
         await hubConnection.invoke(groupMethod, groupId)

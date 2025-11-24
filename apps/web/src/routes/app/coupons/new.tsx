@@ -1,12 +1,9 @@
-import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
-import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { COUPON_DISCOUNT_TYPE_OPTIONS } from '@/api/coupons'
-import { CouponRulesForm } from '@/components/coupons/coupon-rules.form'
-import { ReturnButton } from '@/components/return-button'
-import { Button } from '@/components/ui/button'
+import { api } from '@cetus/api-client'
+import type { CouponDiscountType } from '@cetus/api-client/types/coupons'
+import { createCouponSchema } from '@cetus/schemas/coupon.schema'
+import { couponDiscountTypeLabels } from '@cetus/shared/constants/coupon'
+import { generateCouponCode } from '@cetus/shared/utils/coupon-code-generator'
+import { Button } from '@cetus/ui/button'
 import {
   Form,
   FormControl,
@@ -14,19 +11,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+} from '@cetus/ui/form'
+import { Input } from '@cetus/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { useCreateCoupon } from '@/hooks/coupons'
-import { CreateCouponSchema } from '@/schemas/coupons'
-import { generateCouponCode } from '@/shared/coupons'
+} from '@cetus/ui/select'
+import { Textarea } from '@cetus/ui/textarea'
+import { ReturnButton } from '@cetus/web/components/return-button'
+import { CouponRulesForm } from '@cetus/web/features/coupons/components/coupon-rules.form'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { useMutation } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/app/coupons/new')({
   component: RouteComponent,
@@ -35,13 +37,15 @@ export const Route = createFileRoute('/app/coupons/new')({
 function RouteComponent() {
   const navigate = useNavigate({ from: '/app/coupons/new' })
   const form = useForm({
-    resolver: arktypeResolver(CreateCouponSchema),
+    resolver: arktypeResolver(createCouponSchema),
     defaultValues: {
       rules: [],
     },
   })
 
-  const createCouponMutation = useCreateCoupon({
+  const createCouponMutation = useMutation({
+    mutationKey: ['coupons', 'create'],
+    mutationFn: api.coupons.create,
     onSuccess: () => {
       toast.success('Cupón creado correctamente')
       navigate({ to: '/app/coupons' })
@@ -62,8 +66,8 @@ function RouteComponent() {
     form.setValue('code', code)
   }
 
-  const onDiscountTypeChange = (value: string) => {
-    form.setValue('discountType', Number(value))
+  const onDiscountTypeChange = (value: CouponDiscountType) => {
+    form.setValue('discountType', value)
   }
 
   return (
@@ -137,14 +141,13 @@ function RouteComponent() {
                           <SelectValue placeholder="Selecciona un tipo de descuento" />
                         </SelectTrigger>
                         <SelectContent>
-                          {COUPON_DISCOUNT_TYPE_OPTIONS.map((option) => (
-                            <SelectItem
-                              key={option.value}
-                              value={option.value.toString()}
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(couponDiscountTypeLabels).map(
+                            ([key, value]) => (
+                              <SelectItem key={key} value={key}>
+                                {value}
+                              </SelectItem>
+                            ),
+                          )}
                         </SelectContent>
                       </Select>
                     </FormControl>

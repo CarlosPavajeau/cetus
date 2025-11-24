@@ -1,9 +1,8 @@
 'use client'
 
+import { cn } from '@cetus/web/shared/utils'
 import * as React from 'react'
 import * as RechartsPrimitive from 'recharts'
-
-import { cn } from '@/shared/cn'
 
 // Theme configuration for light/dark mode
 const THEMES = { light: '', dark: '.dark' } as const

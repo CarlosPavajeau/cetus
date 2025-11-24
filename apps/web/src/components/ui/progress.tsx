@@ -1,9 +1,8 @@
 'use client'
 
+import { cn } from '@cetus/web/shared/utils'
 import { Progress as ProgressPrimitive } from 'radix-ui'
 import type * as React from 'react'
-
-import { cn } from '@/shared/cn'
 
 const DEFAULT_VALUE = 0
 const MAX_VALUE = 100

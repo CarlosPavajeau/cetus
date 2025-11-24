@@ -1,5 +1,5 @@
-import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Label } from '@cetus/ui/label'
+import { Skeleton } from '@cetus/ui/skeleton'
 
 export function FilterSectionSkeleton() {
   return (

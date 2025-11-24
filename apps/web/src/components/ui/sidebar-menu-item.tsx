@@ -1,21 +1,21 @@
 'use client'
 
-import { Link, useRouterState } from '@tanstack/react-router'
-import { ChevronRightIcon } from 'lucide-react'
-import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@cetus/ui/badge'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+} from '@cetus/ui/collapsible'
 import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '@/components/ui/sidebar'
+} from '@cetus/ui/sidebar'
+import { Link, useRouterState } from '@tanstack/react-router'
+import { ChevronRightIcon } from 'lucide-react'
+import { useState } from 'react'
 
 export type SidebarMenuElement = {
   label: string
@@ -25,7 +25,7 @@ export type SidebarMenuElement = {
   items?: SidebarMenuElement[]
 }
 
-interface SidebarMenuItemWithCollapsibleProps {
+type SidebarMenuItemWithCollapsibleProps = {
   item: SidebarMenuElement
   onItemClick?: () => void
 }

@@ -1,4 +1,4 @@
-import { useTenantStore } from '@/store/use-tenant-store'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createIsomorphicFn, createServerFn } from '@tanstack/react-start'
 import { getCookie, setCookie } from '@tanstack/react-start/server'
 import { type } from 'arktype'

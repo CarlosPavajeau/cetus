@@ -1,4 +1,4 @@
-import { Skeleton } from './ui/skeleton'
+import { Skeleton } from '@cetus/ui/skeleton'
 
 export function DefaultLoader() {
   return (

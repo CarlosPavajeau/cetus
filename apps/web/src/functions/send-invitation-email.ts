@@ -1,6 +1,6 @@
 import { env } from '@cetus/env/server'
-import InviteUserEmail from '@/components/emails/invite-user-email'
-import { resend } from '@/functions/resend'
+import InviteUserEmail from '@cetus/web/components/emails/invite-user-email'
+import { resend } from '@cetus/web/functions/resend'
 
 type SendInvitationEmailData = {
   id: string

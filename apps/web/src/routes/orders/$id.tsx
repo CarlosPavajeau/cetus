@@ -1,14 +1,18 @@
+import { api } from '@cetus/api-client'
+import {
+  orderStatusColors,
+  orderStatusLabels,
+} from '@cetus/shared/constants/order'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { PageHeader } from '@cetus/web/components/page-header'
+import { OrderSummary } from '@cetus/web/features/orders/components/order-summary'
+import { cn } from '@cetus/web/shared/utils'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { PackageIcon, ShoppingBagIcon } from 'lucide-react'
-import { OrderStatusColor, OrderStatusText } from '@/api/orders'
-import { DefaultLoader } from '@/components/default-loader'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { OrderSummary } from '@/components/order/order-summary'
-import { PageHeader } from '@/components/page-header'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { useOrder } from '@/hooks/orders'
-import { cn } from '@/shared/cn'
 
 export const Route = createFileRoute('/orders/$id')({
   component: RouteComponent,
@@ -16,7 +20,10 @@ export const Route = createFileRoute('/orders/$id')({
 
 function RouteComponent() {
   const { id } = Route.useParams()
-  const { order, isLoading } = useOrder(id)
+  const { data: order, isLoading } = useQuery({
+    queryKey: ['order', id],
+    queryFn: () => api.orders.getById(id),
+  })
 
   if (isLoading) {
     return (
@@ -60,10 +67,10 @@ function RouteComponent() {
               aria-hidden="true"
               className={cn(
                 'size-1.5 rounded-full',
-                OrderStatusColor[order.status],
+                orderStatusColors[order.status],
               )}
             />
-            {OrderStatusText[order.status]}
+            {orderStatusLabels[order.status]}
           </Badge>
 
           <OrderSummary isCustomer order={order} />

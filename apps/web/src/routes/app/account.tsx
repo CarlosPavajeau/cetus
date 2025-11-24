@@ -1,13 +1,13 @@
+import { authClient } from '@cetus/auth/client'
+import { Alert, AlertTitle } from '@cetus/ui/alert'
+import { Avatar, AvatarFallback, AvatarImage } from '@cetus/ui/avatar'
+import { Card, CardContent } from '@cetus/ui/card'
+import { Separator } from '@cetus/ui/separator'
+import { AccountSkeleton } from '@cetus/web/components/skeletons/account-skeleton'
+import { MembersList } from '@cetus/web/features/auth/components/members-list'
+import { EditStoreForm } from '@cetus/web/features/stores/components/edit-store-form'
 import { createFileRoute } from '@tanstack/react-router'
 import { Fragment } from 'react/jsx-runtime'
-import { MembersList } from '@/components/auth/members-list'
-import { AccountSkeleton } from '@/components/skeletons/account-skeleton'
-import { UpdateStoreForm } from '@/components/stores/update-store-form'
-import { Alert, AlertTitle } from '@/components/ui/alert'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { authClient } from '@/shared/auth-client'
 
 export const Route = createFileRoute('/app/account')({
   component: RouteComponent,
@@ -80,7 +80,7 @@ function RouteComponent() {
 
         <Card>
           <CardContent className="flex flex-col gap-4">
-            <UpdateStoreForm />
+            <EditStoreForm />
 
             <Separator />
 

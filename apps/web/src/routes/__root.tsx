@@ -1,3 +1,11 @@
+import { env } from '@cetus/env/client'
+import { Toaster } from '@cetus/ui/sonner'
+import { TooltipProvider } from '@cetus/ui/tooltip'
+import { NotFound } from '@cetus/web/components/not-found'
+import { setupApiClient } from '@cetus/web/lib/api/setup'
+import appCss from '@cetus/web/styles/index.css?url'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/outfit'
 import type { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
@@ -9,16 +17,8 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
 import { PostHogProvider } from 'posthog-js/react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { I18nProvider } from 'react-aria'
-import { NotFound } from '@/components/not-found'
-import { Toaster } from '@/components/ui/sonner'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import appCss from '@/styles/index.css?url'
-
-import '@fontsource-variable/inter'
-import '@fontsource-variable/outfit'
-import { env } from '@cetus/env/client'
 
 type RouterContext = {
   queryClient: QueryClient
@@ -49,6 +49,10 @@ const options = {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    setupApiClient()
+  }, [])
+
   return (
     <RootDocument>
       <PostHogProvider apiKey={postHogKey} options={options}>

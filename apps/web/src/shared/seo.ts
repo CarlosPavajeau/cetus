@@ -1,12 +1,15 @@
-import type { Category, FindCategoryBySlugResponse } from '@/api/categories'
+import type {
+  Category,
+  CategoryBySlugResponse,
+} from '@cetus/api-client/types/categories'
 import type {
   ProductForSale,
   ProductVariantResponse,
   SimpleProductForSale,
-} from '@/api/products'
-import { getImageUrl } from '@/shared/cdn'
+} from '@cetus/api-client/types/products'
+import { getImageUrl } from '@cetus/shared/utils/image'
 
-export interface SEOConfig {
+export type SEOConfig = {
   title: string
   description: string
   keywords?: string
@@ -537,7 +540,7 @@ export function generateHomepageSEO(
 }
 
 export function generateCategorySEO(
-  category: FindCategoryBySlugResponse,
+  category: CategoryBySlugResponse,
   storeName: string,
   baseUrl: string,
   products?: SimpleProductForSale[],

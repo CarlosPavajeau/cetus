@@ -1,11 +1,11 @@
-import { EyeIcon, EyeOffIcon } from 'lucide-react'
-import { type ComponentProps, useState } from 'react'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from './ui/input-group'
+} from '@cetus/ui/input-group'
+import { EyeIcon, EyeOffIcon } from 'lucide-react'
+import { type ComponentProps, useState } from 'react'
 
 type Props = ComponentProps<typeof InputGroupInput> & {
   initialHidden?: boolean

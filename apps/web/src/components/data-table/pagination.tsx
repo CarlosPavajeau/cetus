@@ -1,20 +1,20 @@
-import type { useReactTable } from '@tanstack/react-table'
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@cetus/ui/button'
 import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
-} from '@/components/ui/pagination'
+} from '@cetus/ui/pagination'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import type { usePagination } from '@/hooks/use-pagination'
+} from '@cetus/ui/select'
+import type { usePagination } from '@cetus/web/hooks/use-pagination'
+import type { useReactTable } from '@tanstack/react-table'
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 
 type Props<T = unknown> = {
   table: ReturnType<typeof useReactTable<T>>

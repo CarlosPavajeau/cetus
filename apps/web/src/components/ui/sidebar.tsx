@@ -1,22 +1,22 @@
 'use client'
 
-import { cva, type VariantProps } from 'class-variance-authority'
-import { PanelLeftIcon } from 'lucide-react'
-import { Slot } from 'radix-ui'
-import * as React from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@cetus/ui/button'
+import { Input } from '@cetus/ui/input'
+import { Separator } from '@cetus/ui/separator'
+import { Sheet, SheetContent, SheetTitle } from '@cetus/ui/sheet'
+import { Skeleton } from '@cetus/ui/skeleton'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { useIsMobile } from '@/hooks/use-mobile'
-import { cn } from '@/shared/cn'
+} from '@cetus/ui/tooltip'
+import { useIsMobile } from '@cetus/web/hooks/use-mobile'
+import { cn } from '@cetus/web/shared/utils'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { PanelLeftIcon } from 'lucide-react'
+import { Slot } from 'radix-ui'
+import * as React from 'react'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state'
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
