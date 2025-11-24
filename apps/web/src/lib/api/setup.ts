@@ -9,7 +9,6 @@ import consola from 'consola'
 export function setupApiClient() {
   setTokenProvider(async () => {
     try {
-      consola.log('Getting access token for API client')
       const token = await getToken()
       return token
     } catch (error) {
