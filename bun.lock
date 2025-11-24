@@ -188,9 +188,7 @@
     "packages/shared": {
       "name": "@cetus/shared",
       "dependencies": {
-        "@cetus/env": "workspace:*",
-        "arktype": "catalog:",
-        "axios": "^1.12.2",
+        "uuid": "^13.0.0",
       },
       "devDependencies": {
         "tsdown": "catalog:",

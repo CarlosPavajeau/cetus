@@ -1,5 +1,5 @@
 import { env } from '@cetus/env/client'
-import { v7 as uuid } from 'uuid'
+import { uuid } from './uuid'
 
 /**
  * Builds a fully qualified CDN URL for an image asset.

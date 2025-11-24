@@ -21,8 +21,6 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cetus/env": "workspace:*",
-    "axios": "^1.12.2",
-    "arktype": "catalog:"
+    "uuid": "^13.0.0"
   }
 }
