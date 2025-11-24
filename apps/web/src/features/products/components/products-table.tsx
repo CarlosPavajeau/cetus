@@ -50,6 +50,7 @@ const columns: ColumnDef<Product>[] = [
         {row.getValue('category') ?? 'Desconocida'}
       </Badge>
     ),
+    size: 180,
     meta: {
       skeleton: <Skeleton className="h-5 w-32" />,
     },
@@ -57,7 +58,6 @@ const columns: ColumnDef<Product>[] = [
   {
     id: 'categoryId',
     accessorKey: 'categoryId',
-    size: 100,
     enableHiding: true,
   },
   {
@@ -74,7 +74,7 @@ const columns: ColumnDef<Product>[] = [
         {row.getValue('enabled') ? 'Activo' : 'Inactivo'}
       </Badge>
     ),
-    size: 70,
+    size: 60,
     meta: {
       skeleton: <Skeleton className="h-5 w-16" />,
     },
@@ -88,6 +88,7 @@ const columns: ColumnDef<Product>[] = [
         <FormattedDate date={new Date(row.getValue('createdAt'))} />
       </div>
     ),
+    size: 120,
     meta: {
       skeleton: <Skeleton className="h-5 w-32" />,
     },
