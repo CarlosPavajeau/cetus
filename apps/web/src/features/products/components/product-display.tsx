@@ -163,7 +163,6 @@ const ProductOptions = ({
                   {value.isAvailable && !isSelected ? (
                     <Button asChild size="sm" variant="outline">
                       <Link
-                        replace
                         search={{ variant: findCompatibleVariant(value.id) }}
                         to="."
                       >
