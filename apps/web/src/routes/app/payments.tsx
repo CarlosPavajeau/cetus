@@ -1,23 +1,23 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { CheckIcon } from 'lucide-react'
-import { ConnectToMercadoPagoButton } from '@/components/connect-to-mercado-pago-button'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@cetus/ui/badge'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@cetus/ui/card'
 import {
   Item,
   ItemActions,
   ItemContent,
   ItemDescription,
   ItemTitle,
-} from '@/components/ui/item'
-import { ConfigureWompiCredentialsForm } from '@/components/wompi/configure-wompi-credentials-form'
-import { useTenantStore } from '@/store/use-tenant-store'
+} from '@cetus/ui/item'
+import { ConfigureWompiCredentialsForm } from '@cetus/web/features/stores/components/configure-wompi-credentials-form'
+import { ConnectToMercadoPagoButton } from '@cetus/web/features/stores/components/connect-to-mercado-pago-button'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
+import { createFileRoute } from '@tanstack/react-router'
+import { CheckIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/app/payments')({
   component: RouteComponent,

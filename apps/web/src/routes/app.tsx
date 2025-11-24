@@ -1,19 +1,20 @@
-import { fetchStoreByExternalId } from '@/api/stores'
-import { AppNav } from '@/components/app-nav'
-import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { getSession } from '@/functions/get-session'
-import { setActiveOrg } from '@/functions/organizations'
-import { setStoreSlug } from '@/functions/store-slug'
-import { useTenantStore } from '@/store/use-tenant-store'
+import { api } from '@cetus/api-client'
+import { AppNav } from '@cetus/web/components/app-nav'
+import { AppSidebar } from '@cetus/web/components/app-sidebar'
+import { SidebarInset, SidebarProvider } from '@cetus/web/components/ui/sidebar'
+import { getSession } from '@cetus/web/functions/get-session'
+import { setActiveOrg } from '@cetus/web/functions/organizations'
+import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { setupApiClient } from '../lib/api/setup'
 
 const storeByExternalIdQuery = (id: string) =>
   queryOptions({
     queryKey: ['store', 'external', id],
-    queryFn: () => fetchStoreByExternalId(id),
+    queryFn: () => api.stores.getByExternalId(id),
     staleTime: 300_000,
   })
 
@@ -26,6 +27,8 @@ export const Route = createFileRoute('/app')({
         to: '/sign-in',
       })
     }
+
+    setupApiClient()
 
     let organizationId = session.session.activeOrganizationId
     if (!organizationId) {

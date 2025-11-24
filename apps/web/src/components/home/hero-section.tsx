@@ -1,5 +1,5 @@
+import { GoToAllProductsButton } from '@cetus/web/components/home/go-to-all-products-button'
 import { ShoppingBagIcon } from 'lucide-react'
-import { GoToAllProductsButton } from '@/components/home/go-to-all-products-button'
 
 export function HeroSection() {
   return (

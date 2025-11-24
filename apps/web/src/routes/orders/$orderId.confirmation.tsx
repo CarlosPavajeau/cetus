@@ -1,3 +1,9 @@
+import { api } from '@cetus/api-client'
+import { Button } from '@cetus/ui/button'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { SupportButton } from '@cetus/web/components/support-button'
+import { useCart } from '@cetus/web/store/cart'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
@@ -7,18 +13,12 @@ import {
   XIcon,
 } from 'lucide-react'
 import { useEffect } from 'react'
-import { fetchOrder } from '@/api/orders'
-import { DefaultLoader } from '@/components/default-loader'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { SupportButton } from '@/components/support-button'
-import { Button } from '@/components/ui/button'
-import { useCart } from '@/store/cart'
 
 export const Route = createFileRoute('/orders/$orderId/confirmation')({
   loader: async ({ params }) => {
     try {
       const { orderId } = params
-      const order = await fetchOrder(orderId)
+      const order = await api.orders.getById(orderId)
 
       return { order }
     } catch (err) {

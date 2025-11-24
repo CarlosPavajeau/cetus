@@ -9,10 +9,12 @@ import type {
   CreateSimpleProduct,
   OrderVariantImages,
   Product,
+  ProductForSale,
   ProductOptionResponse,
   ProductOptionType,
   ProductVariantResponse,
   SimpleProductForSale,
+  TopSellingProduct,
   UpdateProduct,
   UpdateProductVariant,
 } from '../types/products'
@@ -23,25 +25,29 @@ export const productsApi = {
   listForSale: () =>
     anonymousClient.get<SimpleProductForSale[]>('products/for-sale'),
 
-  listFeatured: () => anonymousClient.get<Product[]>('products/featured'),
+  listFeatured: () =>
+    anonymousClient.get<SimpleProductForSale[]>('products/featured'),
 
-  listPopular: () => anonymousClient.get<Product[]>('products/popular'),
+  listPopular: () =>
+    anonymousClient.get<SimpleProductForSale[]>('products/popular'),
 
   listByCategory: (categoryId: string) =>
-    anonymousClient.get<Product[]>(`products/category/${categoryId}`),
+    anonymousClient.get<SimpleProductForSale[]>(
+      `products/category/${categoryId}`,
+    ),
 
   listSuggestions: (productId: string) =>
-    anonymousClient.get<Product[]>('products/suggestions', {
+    anonymousClient.get<SimpleProductForSale[]>('products/suggestions', {
       params: { productId },
     }),
 
   listTopSelling: () =>
-    authenticatedClient.get<Product[]>('products/top-selling'),
+    authenticatedClient.get<TopSellingProduct[]>('products/top-selling'),
 
   getById: (id: string) => authenticatedClient.get<Product>(`products/${id}`),
 
   getBySlug: (slug: string) =>
-    authenticatedClient.get<Product>(`products/slug/${slug}`),
+    authenticatedClient.get<ProductForSale>(`products/slug/${slug}`),
 
   create: (data: CreateProduct) =>
     authenticatedClient.post<Product>('products', data),

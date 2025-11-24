@@ -1,9 +1,8 @@
 'use client'
 
+import { cn } from '@cetus/web/shared/utils'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 import type * as React from 'react'
-
-import { cn } from '@/shared/cn'
 
 function Checkbox({
   className,

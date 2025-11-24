@@ -1,6 +1,6 @@
-import { Checkbox } from '@/components/ui/checkbox'
-import { useDataGrid } from '@/components/ui/data-grid'
-import { cn } from '@/shared/cn'
+import { Checkbox } from '@cetus/ui/checkbox'
+import { useDataGrid } from '@cetus/ui/data-grid'
+import { cn } from '@cetus/web/shared/utils'
 import {
   type Cell,
   type Column,

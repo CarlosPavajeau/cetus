@@ -1,5 +1,4 @@
-import { BookDashedIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@cetus/ui/button'
 import {
   Empty,
   EmptyContent,
@@ -7,7 +6,8 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty'
+} from '@cetus/ui/empty'
+import { BookDashedIcon } from 'lucide-react'
 
 export function NotFound() {
   return (

@@ -1,17 +1,17 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { type } from 'arktype'
-import { CompleteOrdersChart } from '@/components/order/complete-orders-chart'
-import { NewOrdersSummary } from '@/components/order/new-orders-summary'
-import { OrdersInsights } from '@/components/order/orders-insights'
-import { TopSellingProducts } from '@/components/product/top-selling-products'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { MONTHS } from '@/shared/constants'
+} from '@cetus/ui/select'
+import { CompleteOrdersChart } from '@cetus/web/features/orders/components/complete-orders-chart'
+import { NewOrdersSummary } from '@cetus/web/features/orders/components/new-orders-summary'
+import { OrdersInsights } from '@cetus/web/features/orders/components/orders-insights'
+import { TopSellingProducts } from '@cetus/web/features/products/components/top-selling-products'
+import { MONTHS } from '@cetus/web/shared/constants'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { type } from 'arktype'
 
 const months = [
   'january',

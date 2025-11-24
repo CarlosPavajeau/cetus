@@ -1,8 +1,8 @@
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import { useCart } from '@cetus/web/store/cart'
 import { Link } from '@tanstack/react-router'
 import { ShoppingCartIcon } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { useCart } from '@/store/cart'
 
 export const CartButton = () => {
   const { count } = useCart()

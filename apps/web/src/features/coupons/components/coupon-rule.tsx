@@ -1,9 +1,12 @@
-import { CouponRuleTypeText } from '@/api/coupons'
-import { useProducts } from '@/hooks/products'
-import type { CreateCouponRule } from '@/schemas/coupons'
+import type { createCouponRuleSchema } from '@cetus/schemas/coupon.schema'
+import { couponRuleTypeLabels } from '@cetus/shared/constants/coupon'
 import { Currency } from '@cetus/web/components/currency'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
+import { productQueries } from '@cetus/web/features/products/queries'
+import { useQuery } from '@tanstack/react-query'
 import { TrashIcon } from 'lucide-react'
+
+type CreateCouponRule = typeof createCouponRuleSchema.infer
 
 type Props = {
   rule: CreateCouponRule
@@ -17,7 +20,7 @@ export function CouponRule({ rule, onRemove }: Readonly<Props>) {
         <div className="flex flex-1 flex-col">
           <div className="flex justify-between">
             <h3 className="line-clamp-1 font-medium text-sm">
-              {CouponRuleTypeText[rule.ruleType]}
+              {couponRuleTypeLabels[rule.ruleType]}
             </h3>
             {onRemove && (
               <button
@@ -89,7 +92,7 @@ type CouponRuleValueSpecificProductProps = {
 function CouponRuleValueSpecificProduct({
   rule,
 }: Readonly<CouponRuleValueSpecificProductProps>) {
-  const { products } = useProducts()
+  const { data: products } = useQuery(productQueries.list)
 
   if (!products) {
     return null

@@ -1,6 +1,5 @@
+import { cn } from '@cetus/web/shared/utils'
 import type * as React from 'react'
-
-import { cn } from '@/shared/cn'
 
 function Card({ className, ...props }: React.ComponentProps<'div'>) {
   return (
@@ -83,10 +82,10 @@ function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
 
 export {
   Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
   CardAction,
-  CardDescription,
   CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 }

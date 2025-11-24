@@ -1,8 +1,10 @@
+import type {
+  CreateProductVariant,
+  ProductOptionType,
+} from '@cetus/api-client/types/products'
 import { create } from 'zustand'
-import type { ProductOptionType } from '@/api/products'
-import type { CreateProductVariant } from '@/schemas/product'
 
-export const TOTAL_STEPS = 4
+export const totalSteps = 4
 
 type AdvanceProductRegistrationStore = {
   step: number
@@ -45,6 +47,6 @@ export const useAdvancedProductRegistrationStore =
       set({ productId: '', selectedOptions: [], variants: [], step: 1 }),
     nextStep: () =>
       set((state) => ({
-        step: state.step >= TOTAL_STEPS ? 1 : state.step + 1,
+        step: state.step >= totalSteps ? 1 : state.step + 1,
       })),
   }))

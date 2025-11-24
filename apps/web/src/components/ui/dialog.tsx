@@ -1,6 +1,4 @@
-'use client'
-
-import { cn } from '@/shared/utils'
+import { cn } from '@cetus/web/shared/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { X } from 'lucide-react'
 import { Dialog as DialogPrimitive } from 'radix-ui'

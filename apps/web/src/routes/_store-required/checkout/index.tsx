@@ -1,5 +1,30 @@
+import { api } from '@cetus/api-client'
+import type { CreateOrder } from '@cetus/api-client/types/orders'
+import { createOrderSchema } from '@cetus/schemas/order.schema'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@cetus/ui/card'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
+import { Form } from '@cetus/ui/form'
+import { Input } from '@cetus/ui/input'
+import { ItemGroup } from '@cetus/ui/item'
+import { Separator } from '@cetus/ui/separator'
+import { Spinner } from '@cetus/ui/spinner'
+import { AddressFields } from '@cetus/web/components/address-fields'
+import { Currency } from '@cetus/web/components/currency'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { SubmitButton } from '@cetus/web/components/submit-button'
+import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
+import { orderQueries } from '@cetus/web/features/orders/queries'
+import { useCart } from '@cetus/web/store/cart'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
 import consola from 'consola'
@@ -12,36 +37,6 @@ import {
 import { useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { createOrder } from '@/api/orders'
-import { AddressFields } from '@/components/address-fields'
-import { Currency } from '@/components/currency'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { OrderItemView } from '@/components/order/order-item-view'
-import { SubmitButton } from '@/components/submit-button'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field'
-import { Form } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { ItemGroup } from '@/components/ui/item'
-import { Separator } from '@/components/ui/separator'
-import { Spinner } from '@/components/ui/spinner'
-import { useCustomer } from '@/hooks/customers'
-import { useDeliveryFee } from '@/hooks/orders'
-import { type CreateOrder, CreateOrderSchema } from '@/schemas/orders'
-import { useCart } from '@/store/cart'
 
 export const Route = createFileRoute('/_store-required/checkout/')({
   ssr: false,
@@ -66,7 +61,7 @@ function useCartCheckout() {
     })) as CreateOrder['items']
 
   const form = useForm({
-    resolver: arktypeResolver(CreateOrderSchema),
+    resolver: arktypeResolver(createOrderSchema),
     defaultValues: {
       address: '',
       total,
@@ -85,14 +80,14 @@ function useCartCheckout() {
     form.setValue('items', toOrderItems(items))
   }, [form, items, total])
 
-  const { deliveryFee, isLoading: isLoadingDeliveryFee } = useDeliveryFee(
-    form.watch('cityId'),
+  const { data: deliveryFee, isLoading: isLoadingDeliveryFee } = useQuery(
+    orderQueries.deliveryFees.detail(form.watch('cityId')),
   )
 
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
-    mutationFn: createOrder,
+    mutationFn: api.orders.create,
     onSuccess: (data) => {
       const orderId = data.id
       navigate({
@@ -137,7 +132,11 @@ function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
   const formCustomerId = form.watch('customer.id')
   const customerId = useDebounce(formCustomerId, CUSTOMER_ID_DELAY)
 
-  const { customer, isLoading } = useCustomer(customerId)
+  const { data: customer, isLoading } = useQuery({
+    queryKey: ['customers', 'detail', customerId],
+    queryFn: () => api.customers.getById(customerId),
+    enabled: !!customerId,
+  })
 
   useEffect(() => {
     if (isLoading) {

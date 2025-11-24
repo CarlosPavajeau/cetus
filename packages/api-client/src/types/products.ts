@@ -159,3 +159,11 @@ export type UpdateProductVariant = {
   enabled: boolean
   featured: boolean
 }
+
+export type TopSellingProduct = {
+  id: string
+  name: string
+  imageUrl?: string
+  category?: string
+  salesCount: number
+}

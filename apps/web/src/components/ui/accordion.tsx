@@ -1,10 +1,8 @@
-'use client'
-
+import { cn } from '@cetus/web/shared/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { ChevronDown, Plus } from 'lucide-react'
 import { Accordion as AccordionPrimitive } from 'radix-ui'
 import * as React from 'react'
-import { cn } from '@/shared/cn'
 
 // Variants
 const accordionRootVariants = cva('', {
@@ -181,4 +179,4 @@ function AccordionContent(
 }
 
 // Exports
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger }

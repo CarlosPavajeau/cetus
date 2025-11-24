@@ -1,7 +1,7 @@
+import { authClient } from '@cetus/auth/client'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { type } from 'arktype'
-import { authClient } from '@/shared/auth-client'
 
 const GetInvitationSchema = type({
   id: type.string,

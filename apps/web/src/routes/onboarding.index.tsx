@@ -1,7 +1,7 @@
+import { OnBoardingForm } from '@cetus/web/components/forms/onboarding'
+import { getSession } from '@cetus/web/functions/get-session'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { HopIcon } from 'lucide-react'
-import { OnBoardingForm } from '@/components/forms/onboarding'
-import { getSession } from '@/functions/get-session'
 
 export const Route = createFileRoute('/onboarding/')({
   beforeLoad: async () => {

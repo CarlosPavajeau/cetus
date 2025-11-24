@@ -1,3 +1,10 @@
+import { getImageUrl } from '@cetus/shared/utils/image'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import { Currency } from '@cetus/web/components/currency'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { PageHeader } from '@cetus/web/components/page-header'
+import { type CartItem, useCart } from '@cetus/web/store/cart'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -10,13 +17,6 @@ import {
   Trash2Icon,
 } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
-import { Currency } from '@/components/currency'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { PageHeader } from '@/components/page-header'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { getImageUrl } from '@/shared/cdn'
-import { type CartItem, useCart } from '@/store/cart'
 
 export const Route = createFileRoute('/_store-required/cart')({
   component: CartPage,

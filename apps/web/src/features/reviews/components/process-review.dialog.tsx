@@ -13,7 +13,7 @@ import DialogContent, {
 } from '@cetus/ui/dialog'
 import { Field, FieldGroup, FieldLabel } from '@cetus/ui/field'
 import { Textarea } from '@cetus/ui/textarea'
-import { StarRating } from '@cetus/web/components/product/star-rating'
+import { StarRating } from '@cetus/web/features/products/components/star-rating'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Image } from '@unpic/react'
 import { FileSearchIcon } from 'lucide-react'

@@ -1,5 +1,5 @@
+import type { OrderStatus, SimpleOrder } from '@cetus/api-client/types/orders'
 import { useCallback, useMemo, useReducer } from 'react'
-import type { OrderStatus, SimpleOrder } from '@/api/orders'
 
 type FilterState = {
   searchTerm: string

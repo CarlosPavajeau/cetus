@@ -1,6 +1,4 @@
-'use client'
-
-import { cn } from '@/shared/utils'
+import { cn } from '@cetus/web/shared/utils'
 import type {
   ColumnFiltersState,
   RowData,

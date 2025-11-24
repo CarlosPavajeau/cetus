@@ -1,9 +1,9 @@
+import { Button } from '@cetus/ui/button'
+import { Input } from '@cetus/ui/input'
+import { Textarea } from '@cetus/ui/textarea'
+import { cn } from '@cetus/web/shared/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import type * as React from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/shared/cn'
 
 function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
   return (
@@ -161,7 +161,7 @@ export {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupText,
   InputGroupInput,
+  InputGroupText,
   InputGroupTextarea,
 }

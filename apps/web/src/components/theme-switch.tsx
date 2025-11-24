@@ -1,13 +1,13 @@
-import { MonitorIcon, MoonIcon, SunIcon } from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { Button } from '@/components/ui/button'
+import { Button } from '@cetus/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@cetus/ui/dropdown-menu'
+import { MonitorIcon, MoonIcon, SunIcon } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 export function ThemeSwitch() {
   const { setTheme } = useTheme()

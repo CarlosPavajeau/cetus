@@ -1,5 +1,5 @@
-import { SubmitButton } from '@/components/submit-button'
-import { Button } from '@/components/ui/button'
+import { createCategorySchema } from '@cetus/schemas/category.schema'
+import { Button } from '@cetus/ui/button'
 import {
   Dialog,
   DialogBody,
@@ -9,15 +9,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { createCategorySchema } from '@cetus/schemas/category.schema'
+} from '@cetus/ui/dialog'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
+import { Input } from '@cetus/ui/input'
+import { SubmitButton } from '@cetus/web/components/submit-button'
 import { useCreateCategory } from '@cetus/web/features/categories/hooks/use-create-category'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { Controller, useForm } from 'react-hook-form'

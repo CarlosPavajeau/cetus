@@ -20,7 +20,6 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
       "@cetus/web/*": ["./src/*"],
       "@cetus/ui/*": ["./src/components/ui/*"]
     }

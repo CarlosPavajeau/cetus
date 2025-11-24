@@ -1,11 +1,11 @@
-import { useCopyToClipboard } from '@uidotdev/usehooks'
-import { CheckIcon, CopyIcon } from 'lucide-react'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from '@/components/ui/input-group'
+} from '@cetus/ui/input-group'
+import { useCopyToClipboard } from '@uidotdev/usehooks'
+import { CheckIcon, CopyIcon } from 'lucide-react'
 
 type Props = {
   value: string

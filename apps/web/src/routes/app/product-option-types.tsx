@@ -1,21 +1,17 @@
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
+import type { ProductOptionType } from '@cetus/api-client/types/products'
+import { TablePagination } from '@cetus/web/components/data-table/pagination'
+import { DataTable } from '@cetus/web/components/data-table/table'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { CreateProductOptionTypeSheet } from '@cetus/web/features/products/components/create-product-option-type-sheet'
+import { productQueries } from '@cetus/web/features/products/queries'
+import { useTableWithPagination } from '@cetus/web/hooks/use-table-with-pagination'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { fetchProductOptionTypes, type ProductOptionType } from '@/api/products'
-import { TablePagination } from '@/components/data-table/pagination'
-import { DataTable } from '@/components/data-table/table'
-import { DefaultLoader } from '@/components/default-loader'
-import { CreateProductOptionTypeSheet } from '@/components/product/create-product-option-type-sheet'
-import { useTableWithPagination } from '@/hooks/use-table-with-pagination'
-
-const productOptionTypesQuery = queryOptions({
-  queryKey: ['product-option-types'],
-  queryFn: fetchProductOptionTypes,
-})
 
 export const Route = createFileRoute('/app/product-option-types')({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(productOptionTypesQuery)
+    await context.queryClient.ensureQueryData(productQueries.optionTypes.list())
   },
   component: RouteComponent,
   pendingComponent: DefaultLoader,
@@ -40,13 +36,13 @@ const columns: ColumnDef<ProductOptionType>[] = [
 ]
 
 function RouteComponent() {
-  const { data } = useSuspenseQuery(productOptionTypesQuery)
+  const { data } = useSuspenseQuery(productQueries.optionTypes.list())
   const { table, paginationInfo } = useTableWithPagination(columns, data)
 
   const context = Route.useRouteContext()
 
   const handleSuccess = () => {
-    context.queryClient.invalidateQueries(productOptionTypesQuery)
+    context.queryClient.invalidateQueries(productQueries.optionTypes.list())
   }
 
   return (

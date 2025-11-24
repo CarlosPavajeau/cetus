@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button'
-import { useDataGrid } from '@/components/ui/data-grid'
+import { Button } from '@cetus/ui/button'
+import { useDataGrid } from '@cetus/ui/data-grid'
 import {
   DataGridTableBase,
   DataGridTableBody,
@@ -14,7 +14,7 @@ import {
   DataGridTableHeadRowCell,
   DataGridTableHeadRowCellResize,
   DataGridTableRowSpacer,
-} from '@/components/ui/data-grid-table'
+} from '@cetus/ui/data-grid-table'
 import {
   closestCenter,
   DndContext,

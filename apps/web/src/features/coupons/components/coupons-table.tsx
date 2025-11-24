@@ -1,5 +1,5 @@
-import { CouponDiscountTypeText } from '@/api/coupons'
 import type { Coupon } from '@cetus/api-client/types/coupons'
+import { couponDiscountTypeLabels } from '@cetus/shared/constants/coupon'
 import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
 import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
 import { DataGridTable } from '@cetus/ui/data-grid-table'
@@ -26,7 +26,7 @@ const columns: ColumnDef<Coupon>[] = [
     id: 'discountType',
     header: 'Tipo de descuento',
     cell: ({ row }) => (
-      <p>{CouponDiscountTypeText[row.original.discountType]}</p>
+      <p>{couponDiscountTypeLabels[row.original.discountType]}</p>
     ),
   },
   {

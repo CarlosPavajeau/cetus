@@ -1,14 +1,14 @@
-import { Button } from '@/components/ui/button'
-import { useDataGrid } from '@/components/ui/data-grid'
+import { Button } from '@cetus/ui/button'
+import { useDataGrid } from '@cetus/ui/data-grid'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/shared/cn'
+} from '@cetus/ui/select'
+import { Skeleton } from '@cetus/ui/skeleton'
+import { cn } from '@cetus/web/shared/utils'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 

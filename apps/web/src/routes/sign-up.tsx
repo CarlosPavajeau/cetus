@@ -1,20 +1,15 @@
+import { authClient } from '@cetus/auth/client'
+import { Button } from '@cetus/ui/button'
+import { FormControl, FormField, FormItem, FormLabel } from '@cetus/ui/form'
+import { Input } from '@cetus/ui/input'
+import { SubmitButton } from '@cetus/web/components/submit-button'
+import { AuthLayout } from '@cetus/web/features/auth/components/auth-layout'
+import { authSearchSchema } from '@cetus/web/schemas/auth'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { type } from 'arktype'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { AuthLayout } from '@/components/auth/auth-layout'
-import { SubmitButton } from '@/components/submit-button'
-import { Button } from '@/components/ui/button'
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { AuthSearchSchema, useAuthCallback } from '@/hooks/use-auth-callback'
-import { authClient } from '@/shared/auth-client'
 
 const SignUpWithEmailAndPasswordSchema = type({
   name: type('string'),
@@ -23,14 +18,15 @@ const SignUpWithEmailAndPasswordSchema = type({
 })
 
 export const Route = createFileRoute('/sign-up')({
-  validateSearch: AuthSearchSchema,
+  validateSearch: authSearchSchema,
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const { invitation } = Route.useSearch()
   const [authError, setAuthError] = useState<string | undefined>()
-  const callbackUrl = useAuthCallback(invitation)
+  const callbackUrl =
+    invitation !== undefined ? `/accept-invitation/${invitation}` : '/app'
 
   const form = useForm({
     resolver: arktypeResolver(SignUpWithEmailAndPasswordSchema),
@@ -94,7 +90,7 @@ function RouteComponent() {
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel>Contraseña</FormLabel>
-              <Button asChild size="sm" variant="link">
+              <Button asChild mode="link" size="sm" underline="solid">
                 <Link className="link intent-info variant-ghost text-sm" to="/">
                   ¿Olvidaste tu contraseña?
                 </Link>

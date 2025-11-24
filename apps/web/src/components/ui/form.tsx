@@ -1,5 +1,5 @@
-'use client'
-
+import { Label } from '@cetus/ui/label'
+import { cn } from '@cetus/web/shared/utils'
 import { type Label as LabelPrimitive, Slot } from 'radix-ui'
 import * as React from 'react'
 import {
@@ -11,8 +11,6 @@ import {
   useFormContext,
   useFormState,
 } from 'react-hook-form'
-import { Label } from '@/components/ui/label'
-import { cn } from '@/shared/cn'
 
 const Form = FormProvider
 

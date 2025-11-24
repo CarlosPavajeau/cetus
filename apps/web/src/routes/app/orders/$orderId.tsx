@@ -1,20 +1,24 @@
+import { api } from '@cetus/api-client'
 import { env } from '@cetus/env/client'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { PageHeader } from '@cetus/web/components/page-header'
+import { ReturnButton } from '@cetus/web/components/return-button'
+import { CancelOrderDialog } from '@cetus/web/features/orders/components/cancel-order-dialog'
+import { OrderCompletedNotification } from '@cetus/web/features/orders/components/order-completed-notification'
+import { OrderSummary } from '@cetus/web/features/orders/components/order-summary'
+import { orderQueries } from '@cetus/web/features/orders/queries'
+import {
+  useClientMethod,
+  useHub,
+  useHubGroup,
+} from '@cetus/web/hooks/realtime/use-hub'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon, LoaderCircleIcon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
-import { deliverOrder } from '@/api/orders'
-import { DefaultLoader } from '@/components/default-loader'
-import { CancelOrderDialog } from '@/components/order/cancel-order-dialog'
-import { OrderCompletedNotification } from '@/components/order/order-completed-notification'
-import { OrderSummary } from '@/components/order/order-summary'
-import { PageHeader } from '@/components/page-header'
-import { ReturnButton } from '@/components/return-button'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { useOrder } from '@/hooks/orders'
-import { useClientMethod, useHub, useHubGroup } from '@/hooks/realtime/use-hub'
 
 const REALTIME_URL = `${env.VITE_API_URL}/realtime/orders`
 
@@ -48,7 +52,7 @@ const CompleteOrderButton = ({
 }: CompleteOrderButtonProps) => {
   const deliverOrderMutation = useMutation({
     mutationKey: ['orders', 'deliver'],
-    mutationFn: () => deliverOrder(orderId),
+    mutationFn: () => api.orders.deliver(orderId),
     onSuccess,
   })
 
@@ -84,7 +88,7 @@ const CompleteOrderButton = ({
 function OrderDetailsComponent() {
   const { orderId } = Route.useParams()
   const navigate = useNavigate()
-  const { order, isLoading } = useOrder(orderId)
+  const { data: order, isLoading } = useQuery(orderQueries.detail(orderId))
 
   useRealtimeOrderUpdates(orderId)
 

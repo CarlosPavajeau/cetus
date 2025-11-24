@@ -1,6 +1,6 @@
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@cetus/ui/skeleton'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { ProductGridSkeleton } from '@cetus/web/features/products/components/product-grid-skeleton'
 
 export function HomeSkeleton() {
   return (

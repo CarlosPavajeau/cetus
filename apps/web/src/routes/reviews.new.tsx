@@ -1,3 +1,10 @@
+import { getImageUrl } from '@cetus/shared/utils/image'
+import { Button } from '@cetus/ui/button'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { PageHeader } from '@cetus/web/components/page-header'
+import { CreateProductReview } from '@cetus/web/features/reviews/components/create-product-review'
+import { useReviewRequest } from '@cetus/web/features/reviews/hooks/use-review-request'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
 import { type } from 'arktype'
@@ -7,28 +14,20 @@ import {
   Home,
   ShoppingBagIcon,
 } from 'lucide-react'
-import { ReviewRequestStatus } from '@/api/reviews'
-import { DefaultLoader } from '@/components/default-loader'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { PageHeader } from '@/components/page-header'
-import { ProductReviewForm } from '@/components/reviews/product-review-form'
-import { Button } from '@/components/ui/button'
-import { useReviewRequest } from '@/hooks/reviews'
-import { getImageUrl } from '@/shared/cdn'
 
-const ReviewRequestSearchSchema = type({
+const reviewRequestSearchSchema = type({
   token: 'string',
 })
 
 export const Route = createFileRoute('/reviews/new')({
   component: RouteComponent,
-  validateSearch: ReviewRequestSearchSchema,
+  validateSearch: reviewRequestSearchSchema,
 })
 
 function RouteComponent() {
   const { token } = Route.useSearch()
 
-  const { reviewRequest, isLoading, error } = useReviewRequest(token)
+  const { data: reviewRequest, isLoading, error } = useReviewRequest(token)
 
   if (isLoading) {
     return (
@@ -56,7 +55,7 @@ function RouteComponent() {
     )
   }
 
-  if (reviewRequest.status === ReviewRequestStatus.Completed) {
+  if (reviewRequest.status === 'completed') {
     return (
       <DefaultPageLayout>
         <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -84,7 +83,7 @@ function RouteComponent() {
     )
   }
 
-  if (reviewRequest.status === ReviewRequestStatus.Expired) {
+  if (reviewRequest.status === 'expired') {
     return (
       <DefaultPageLayout>
         <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -141,7 +140,7 @@ function RouteComponent() {
       </div>
 
       <div className="mt-6">
-        <ProductReviewForm reviewRequestId={reviewRequest.id} />
+        <CreateProductReview reviewRequestId={reviewRequest.id} />
       </div>
     </DefaultPageLayout>
   )

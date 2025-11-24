@@ -1,21 +1,21 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
-import { PackageXIcon } from 'lucide-react'
-import { useCallback } from 'react'
-import { DefaultLoader } from '@/components/default-loader'
-import { FiltersBar } from '@/components/order/app/filters-bar'
-import { OrdersHeader } from '@/components/order/app/orders-header'
-import { OrdersList } from '@/components/order/app/orders-list'
+import { api } from '@cetus/api-client'
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty'
-import { useOrders } from '@/hooks/orders'
-import { useOrderFilters } from '@/hooks/orders/use-order-filters'
-import { useOrderRealtime } from '@/hooks/orders/use-order-realtime'
+} from '@cetus/ui/empty'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { FiltersBar } from '@cetus/web/features/orders/components/filters-bar'
+import { OrdersHeader } from '@cetus/web/features/orders/components/orders-header'
+import { OrdersList } from '@cetus/web/features/orders/components/orders-list'
+import { useOrderFilters } from '@cetus/web/hooks/orders/use-order-filters'
+import { useOrderRealtime } from '@cetus/web/hooks/orders/use-order-realtime'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
+import { PackageXIcon } from 'lucide-react'
+import { useCallback } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
@@ -36,7 +36,12 @@ const EmptyState = () => (
 )
 
 function RouteComponent() {
-  const { orders, isLoading } = useOrders()
+  const { data, isLoading } = useQuery({
+    queryKey: ['orders'],
+    queryFn: api.orders.list,
+  })
+  const orders = data?.items || []
+
   const queryClient = useQueryClient()
 
   useOrderRealtime()

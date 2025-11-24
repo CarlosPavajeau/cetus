@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: no needed */
 'use client'
 
+import { cn } from '@cetus/web/shared/utils'
 import {
   DndContext,
   type DragEndEvent,
@@ -24,7 +25,6 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Slot } from 'radix-ui'
 import React from 'react'
-import { cn } from '@/shared/cn'
 
 // Sortable Item Context
 const SortableItemContext = React.createContext<{

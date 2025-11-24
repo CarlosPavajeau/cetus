@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button'
-import { useDataGrid } from '@/components/ui/data-grid'
+import { Button } from '@cetus/ui/button'
+import { useDataGrid } from '@cetus/ui/data-grid'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -12,8 +12,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { cn } from '@/shared/utils'
+} from '@cetus/ui/dropdown-menu'
+import { cn } from '@cetus/web/shared/utils'
 import type { Column } from '@tanstack/react-table'
 import {
   ArrowDown,

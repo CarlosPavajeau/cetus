@@ -1,28 +1,26 @@
+import { api } from '@cetus/api-client'
 import { env } from '@cetus/env/server'
-import { queryOptions } from '@tanstack/react-query'
-import { createFileRoute, Link, notFound } from '@tanstack/react-router'
-import { HomeIcon } from 'lucide-react'
-import { useEffect } from 'react'
-import { fetchCategoryBySlug } from '@/api/categories'
-import { fetchProductsByCategory } from '@/api/products'
-import { fetchStoreById } from '@/api/stores'
-import { DefaultPageLayout } from '@/components/default-page-layout'
-import { ProductGrid } from '@/components/product/product-grid'
+import { getImageUrl } from '@cetus/shared/utils/image'
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { getImageUrl } from '@/shared/cdn'
-import { generateCategorySEO, generateSEOTags } from '@/shared/seo'
-import { useTenantStore } from '@/store/use-tenant-store'
+} from '@cetus/ui/breadcrumb'
+import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { ProductGrid } from '@cetus/web/features/products/components/product-grid'
+import { generateCategorySEO, generateSEOTags } from '@cetus/web/shared/seo'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
+import { queryOptions } from '@tanstack/react-query'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
+import { HomeIcon } from 'lucide-react'
+import { useEffect } from 'react'
 
 const categoryBySlugQuery = (slug: string) =>
   queryOptions({
     queryKey: ['category', slug],
-    queryFn: () => fetchCategoryBySlug(slug),
+    queryFn: () => api.categories.getBySlug(slug),
   })
 
 export const Route = createFileRoute('/categories/$slug')({
@@ -37,8 +35,8 @@ export const Route = createFileRoute('/categories/$slug')({
     }
 
     const [store, products] = await Promise.all([
-      fetchStoreById(category.storeId),
-      fetchProductsByCategory(category.id),
+      api.stores.getById(category.storeId),
+      api.products.listByCategory(category.id),
     ])
 
     return {

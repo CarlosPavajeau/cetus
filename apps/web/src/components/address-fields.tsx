@@ -1,23 +1,25 @@
-import { useState } from 'react'
-import { Controller, useFormContext } from 'react-hook-form'
-import { Input } from '@/components/ui/input'
+import type { CreateOrder } from '@cetus/api-client/types/orders'
+import { Field, FieldContent, FieldError, FieldLabel } from '@cetus/ui/field'
+import { Input } from '@cetus/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { useCities, useStates } from '@/hooks/use-state'
-import type { CreateOrder } from '@/schemas/orders'
-import { Field, FieldContent, FieldError, FieldLabel } from './ui/field'
+} from '@cetus/ui/select'
+import { useStates } from '@cetus/web/features/states/hooks/use-state'
+import { useStateCities } from '@cetus/web/features/states/hooks/use-state-cities'
+import { useState } from 'react'
+import { Controller, useFormContext } from 'react-hook-form'
 
 export function AddressFields() {
   const form = useFormContext<CreateOrder>()
 
-  const { states, isLoading } = useStates()
+  const { data: states, isLoading } = useStates()
   const [currentState, setCurrentState] = useState<string | undefined>()
-  const { cities, isLoading: isLoadingCities } = useCities(currentState)
+  const { data: cities, isLoading: isLoadingCities } =
+    useStateCities(currentState)
 
   const handleStateChange = (value: string) => {
     setCurrentState(value)

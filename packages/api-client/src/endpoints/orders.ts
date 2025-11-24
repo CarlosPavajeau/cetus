@@ -1,5 +1,7 @@
 import { anonymousClient, authenticatedClient } from '../core/instance'
+import type { PaginatedResponse } from '../types/common'
 import type {
+  CancelOrderRequest,
   CreateDeliveryFeeRequest,
   CreateOrder,
   DeliveryFee,
@@ -11,7 +13,8 @@ import type {
 } from '../types/orders'
 
 export const ordersApi = {
-  list: () => authenticatedClient.get<SimpleOrder[]>('/orders'),
+  list: () =>
+    authenticatedClient.get<PaginatedResponse<SimpleOrder>>('/orders'),
 
   getById: (id: string) => authenticatedClient.get<Order>(`/orders/${id}`),
 
@@ -23,7 +26,7 @@ export const ordersApi = {
     }),
 
   summary: (month: string) =>
-    authenticatedClient.get<OrderSummary>('/orders/summary', {
+    authenticatedClient.get<OrderSummary[]>('/orders/summary', {
       params: {
         month,
       },
@@ -35,8 +38,8 @@ export const ordersApi = {
   deliver: (id: string) =>
     authenticatedClient.post<SimpleOrder>(`/orders/${id}/deliver`),
 
-  cancel: (id: string) =>
-    authenticatedClient.post<SimpleOrder>(`/orders/${id}/cancel`),
+  cancel: (data: CancelOrderRequest) =>
+    authenticatedClient.post<SimpleOrder>(`/orders/${data.id}/cancel`, data),
 
   deliveryFees: {
     list: () => authenticatedClient.get<DeliveryFee[]>('/orders/delivery-fees'),

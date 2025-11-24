@@ -1,7 +1,7 @@
+import { Input } from '@cetus/ui/input'
+import { cn } from '@cetus/web/shared/utils'
 import { CircleXIcon, ListFilterIcon } from 'lucide-react'
 import { useId } from 'react'
-import { Input } from '@/components/ui/input'
-import { cn } from '@/shared/cn'
 
 type Props = {
   value?: string

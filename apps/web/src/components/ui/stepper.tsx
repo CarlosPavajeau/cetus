@@ -1,10 +1,9 @@
 'use client'
 
+import { cn } from '@cetus/web/shared/utils'
 import { CheckIcon, LoaderCircleIcon } from 'lucide-react'
 import { Slot } from 'radix-ui'
 import { createContext, useCallback, useContext, useState } from 'react'
-
-import { cn } from '@/shared/cn'
 
 type StepperContextValue = {
   activeStep: number

@@ -1,6 +1,6 @@
+import type { ProductOptionValue } from '@cetus/api-client/types/products'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { ProductOptionValue } from '@/api/products'
 
 export type CartItemProduct = {
   productId: string

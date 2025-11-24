@@ -1,3 +1,14 @@
+import { api } from '@cetus/api-client'
+import { authClient } from '@cetus/auth/client'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@cetus/ui/form'
+import { Input } from '@cetus/ui/input'
+import { SubmitButton } from '@cetus/web/components/submit-button'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useNavigate } from '@tanstack/react-router'
 import { type } from 'arktype'
@@ -5,17 +16,6 @@ import { ArrowRightIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { createStore } from '@/api/stores'
-import { SubmitButton } from '@/components/submit-button'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { authClient } from '@/shared/auth-client'
 
 const CreateOrganizationSchema = type({
   name: type.string,
@@ -43,7 +43,7 @@ export function OnBoardingForm() {
       organizationId: organization.id,
     })
 
-    await createStore({
+    await api.stores.create({
       name: organization.name,
       slug: organization.slug,
       externalId: organization.id,

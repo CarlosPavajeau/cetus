@@ -1,5 +1,5 @@
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Navigate, Outlet } from '@tanstack/react-router'
-import { useTenantStore } from '@/store/use-tenant-store'
 
 export const Route = createFileRoute('/_store-required')({
   component: RouteComponent,

@@ -6,7 +6,8 @@
   "workspaces": {
     "packages": [
       "apps/*",
-      "packages/*"
+      "packages/*",
+      "packages/integrations/*"
     ],
     "catalog": {
       "arktype": "^2.1.22",

@@ -1,7 +1,5 @@
-import type { Column } from '@tanstack/react-table'
-import { CheckIcon, FilterIcon } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
 import {
   Command,
   CommandEmpty,
@@ -10,14 +8,12 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/shared/cn'
+} from '@cetus/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@cetus/ui/popover'
+import { Separator } from '@cetus/ui/separator'
+import { cn } from '@cetus/web/shared/utils'
+import type { Column } from '@tanstack/react-table'
+import { CheckIcon, FilterIcon } from 'lucide-react'
 
 type Option<TValue extends React.Key> = {
   value: TValue

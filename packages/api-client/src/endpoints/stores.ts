@@ -35,5 +35,10 @@ export const storesApi = {
   getById: (id: string) => anonymousClient.get<Store>(`/stores/${id}`),
 
   getByExternalId: (externalId: string) =>
-    anonymousClient.get<Store>(`/stores/by-external-id/${externalId}`),
+    authenticatedClient.get<Store>(`/stores/by-external-id/${externalId}`),
+
+  getMercadoPagoAuthorizationUrl: () =>
+    authenticatedClient.get<string>(
+      '/stores/payment-providers/mercado-pago/authorization-url',
+    ),
 }

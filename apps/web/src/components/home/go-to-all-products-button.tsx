@@ -1,6 +1,6 @@
+import { Button } from '@cetus/ui/button'
 import { Link } from '@tanstack/react-router'
 import { ArrowRightIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 export function GoToAllProductsButton() {
   return (

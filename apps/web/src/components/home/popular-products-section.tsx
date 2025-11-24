@@ -1,6 +1,6 @@
-import type { SimpleProductForSale } from '@/api/products'
-import { GoToAllProductsButton } from '@/components/home/go-to-all-products-button'
-import { ProductGrid } from '@/components/product/product-grid'
+import type { SimpleProductForSale } from '@cetus/api-client/types/products'
+import { GoToAllProductsButton } from '@cetus/web/components/home/go-to-all-products-button'
+import { ProductGrid } from '@cetus/web/features/products/components/product-grid'
 
 type Props = {
   products: SimpleProductForSale[]

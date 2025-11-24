@@ -1,4 +1,3 @@
-import { randomInt } from 'node:crypto'
 import { defaultCouponCharacters } from '../constants/coupon'
 import type { GenerateCouponCodeOptions } from '../types/coupon'
 
@@ -21,7 +20,7 @@ export function generateCouponCode(options: GenerateCouponCodeOptions = {}) {
   let randomPart = ''
   const charactersLength = characters.length
   for (let i = 0; i < length; i++) {
-    const randomIndex = randomInt(0, charactersLength)
+    const randomIndex = Math.floor(Math.random() * charactersLength)
     randomPart += characters.charAt(randomIndex)
   }
 

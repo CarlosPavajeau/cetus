@@ -1,16 +1,16 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { EyeIcon, PackageIcon, SettingsIcon, ZapIcon } from 'lucide-react'
-import { useState } from 'react'
-import { ProductRegistrationForm } from '@/components/product/product-registration-form'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@cetus/ui/card'
+import { ProductRegistrationForm } from '@cetus/web/features/products/components/product-registration-form'
+import { createFileRoute } from '@tanstack/react-router'
+import { EyeIcon, PackageIcon, SettingsIcon, ZapIcon } from 'lucide-react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/app/products/new')({
   ssr: false,

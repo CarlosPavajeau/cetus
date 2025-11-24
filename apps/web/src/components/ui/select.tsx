@@ -1,10 +1,9 @@
 'use client'
 
+import { cn } from '@cetus/web/shared/utils'
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 import { Select as SelectPrimitive } from 'radix-ui'
 import type * as React from 'react'
-
-import { cn } from '@/shared/cn'
 
 function Select({
   ...props

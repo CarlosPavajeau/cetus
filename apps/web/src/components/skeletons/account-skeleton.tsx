@@ -1,5 +1,5 @@
+import { Skeleton } from '@cetus/ui/skeleton'
 import { Fragment } from 'react/jsx-runtime'
-import { Skeleton } from '@/components/ui/skeleton'
 
 export function AccountSkeleton() {
   return (

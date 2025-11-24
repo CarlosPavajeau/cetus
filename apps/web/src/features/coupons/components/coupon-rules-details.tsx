@@ -1,7 +1,7 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useCouponRules } from '@/hooks/coupons'
+import { Alert, AlertDescription, AlertTitle } from '@cetus/ui/alert'
+import { Skeleton } from '@cetus/ui/skeleton'
 import { CouponRule } from '@cetus/web/features/coupons/components/coupon-rule'
+import { useCouponRules } from '@cetus/web/features/coupons/hooks/use-coupon-rules'
 import { InfoIcon } from 'lucide-react'
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
 }
 
 export function CouponRulesDetails({ couponId }: Readonly<Props>) {
-  const { couponRules, isLoading, error } = useCouponRules(couponId)
+  const { data: couponRules, isLoading, error } = useCouponRules(couponId)
 
   if (isLoading) {
     return (

@@ -1,5 +1,9 @@
-'use client'
-
+import type { Category } from '@cetus/api-client/types/categories'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import { Input } from '@cetus/ui/input'
+import { Label } from '@cetus/ui/label'
+import { cn } from '@cetus/web/shared/utils'
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,12 +11,6 @@ import {
   SearchIcon,
 } from 'lucide-react'
 import { memo, useCallback, useEffect, useId, useRef, useState } from 'react'
-import type { Category } from '@/api/categories'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { cn } from '@/shared/cn'
 
 type Props = {
   searchTerm: string

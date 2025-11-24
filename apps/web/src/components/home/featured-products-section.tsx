@@ -1,13 +1,9 @@
+import type { SimpleProductForSale } from '@cetus/api-client/types/products'
+import { Carousel, CarouselContent, CarouselItem } from '@cetus/ui/carousel'
+import { GoToAllProductsButton } from '@cetus/web/components/home/go-to-all-products-button'
+import { ProductCard } from '@cetus/web/features/products/components/product-card'
 import Autoplay from 'embla-carousel-autoplay'
 import { useRef } from 'react'
-import type { SimpleProductForSale } from '@/api/products'
-import { GoToAllProductsButton } from '@/components/home/go-to-all-products-button'
-import { ProductCard } from '@/components/product/product-card'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel'
 
 type Props = {
   products: SimpleProductForSale[]

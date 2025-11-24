@@ -1,6 +1,5 @@
-import { CouponDiscountTypeText } from '@/api/coupons'
-import { cn } from '@/shared/cn'
 import type { Coupon } from '@cetus/api-client/types/coupons'
+import { couponDiscountTypeLabels } from '@cetus/shared/constants/coupon'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Progress } from '@cetus/ui/progress'
@@ -17,6 +16,7 @@ import {
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { CouponDiscountValue } from '@cetus/web/features/coupons/components/coupon-discount-value'
 import { CouponRulesDetails } from '@cetus/web/features/coupons/components/coupon-rules-details'
+import { cn } from '@cetus/web/shared/utils'
 import { CheckIcon, CopyIcon, EyeIcon } from 'lucide-react'
 import { useState } from 'react'
 
@@ -127,7 +127,7 @@ export function CouponDetails({ coupon }: Readonly<Props>) {
               Tipo de descuento
             </h3>
             <p className="text-muted-foreground text-sm">
-              {CouponDiscountTypeText[coupon.discountType]}
+              {couponDiscountTypeLabels[coupon.discountType]}
             </p>
           </div>
           <div>

@@ -1,7 +1,7 @@
+import { authClient } from '@cetus/auth/client'
+import { Button } from '@cetus/ui/button'
+import { GoogleIcon } from '@cetus/web/components/icons/google'
 import { useMemo, useState } from 'react'
-import { GoogleIcon } from '@/components/icons/google'
-import { Button } from '@/components/ui/button'
-import { authClient } from '@/shared/auth-client'
 
 type Props = {
   invitation?: string

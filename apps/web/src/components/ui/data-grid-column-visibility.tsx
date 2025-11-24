@@ -4,7 +4,7 @@ import {
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@cetus/ui/dropdown-menu'
 import type { Table } from '@tanstack/react-table'
 import type { ReactNode } from 'react'
 

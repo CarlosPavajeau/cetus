@@ -1,12 +1,18 @@
+import { Button, type buttonVariants } from '@cetus/ui/button'
+import { cn } from '@cetus/web/shared/utils'
+import type { VariantProps } from 'class-variance-authority'
 import { LoaderCircleIcon } from 'lucide-react'
-import { cn } from '@/shared/cn'
-import { Button, type ButtonProps } from './ui/button'
+import type * as React from 'react'
 
 type Props = {
   children: React.ReactNode
   isSubmitting: boolean
   disabled: boolean
-} & ButtonProps
+} & React.ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    selected?: boolean
+    asChild?: boolean
+  }
 
 export function SubmitButton({
   children,

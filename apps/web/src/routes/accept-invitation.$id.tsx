@@ -1,3 +1,8 @@
+import { authClient } from '@cetus/auth/client'
+import { Button } from '@cetus/ui/button'
+import { SubmitButton } from '@cetus/web/components/submit-button'
+import { getInvitation } from '@cetus/web/functions/get-invitation'
+import { getSession } from '@cetus/web/functions/get-session'
 import {
   createFileRoute,
   ErrorComponent,
@@ -8,11 +13,6 @@ import {
 import { HomeIcon, HopIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { SubmitButton } from '@/components/submit-button'
-import { Button } from '@/components/ui/button'
-import { getInvitation } from '@/functions/get-invitation'
-import { getSession } from '@/functions/get-session'
-import { authClient } from '@/shared/auth-client'
 
 export const Route = createFileRoute('/accept-invitation/$id')({
   beforeLoad: async ({ params }) => {
