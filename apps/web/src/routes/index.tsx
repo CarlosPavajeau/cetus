@@ -15,6 +15,7 @@ import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { setupApiClient } from '../lib/api/setup'
 
 const storeByDomainQuery = (domain: string) =>
   queryOptions({
@@ -41,6 +42,8 @@ export const Route = createFileRoute('/')({
         slug: store.slug,
       },
     })
+
+    setupApiClient()
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),
