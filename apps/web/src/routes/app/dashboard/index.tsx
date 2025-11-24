@@ -55,8 +55,8 @@ function RouteComponent() {
   }
 
   return (
-    <>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
           Panel de control
         </h1>
@@ -94,6 +94,6 @@ function RouteComponent() {
 
         <TopSellingProducts />
       </div>
-    </>
+    </div>
   )
 }

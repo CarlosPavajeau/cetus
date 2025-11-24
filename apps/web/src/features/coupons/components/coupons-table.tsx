@@ -4,6 +4,7 @@ import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
 import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
 import { DataGridTable } from '@cetus/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { Skeleton } from '@cetus/ui/skeleton'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { CouponDetails } from '@cetus/web/features/coupons/components/coupon-details'
 import {
@@ -21,6 +22,9 @@ const columns: ColumnDef<Coupon>[] = [
     id: 'code',
     header: 'Código',
     cell: ({ row }) => <p className="font-medium">{row.original.code}</p>,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'discountType',
@@ -28,6 +32,9 @@ const columns: ColumnDef<Coupon>[] = [
     cell: ({ row }) => (
       <p>{couponDiscountTypeLabels[row.original.discountType]}</p>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'usageLimit',
@@ -39,16 +46,25 @@ const columns: ColumnDef<Coupon>[] = [
           : 'Sin límite'}
       </p>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'usageCount',
     header: 'Usos',
     cell: ({ row }) => <p>{row.original.usageCount}</p>,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'isActive',
     header: 'Activo',
     cell: ({ row }) => <p>{row.original.isActive ? 'Sí' : 'No'}</p>,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'createdAt',
@@ -56,11 +72,17 @@ const columns: ColumnDef<Coupon>[] = [
     cell: ({ row }) => (
       <FormattedDate date={new Date(row.original.createdAt)} />
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'actions',
     header: 'Acciones',
     cell: ({ row }) => <CouponDetails coupon={row.original} />,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-8" />,
+    },
   },
 ]
 

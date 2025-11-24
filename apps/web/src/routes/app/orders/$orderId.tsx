@@ -124,7 +124,7 @@ function OrderDetailsComponent() {
   }
 
   return (
-    <div>
+    <div className="p-4">
       <div className="flex items-center justify-between space-y-2">
         <div className="flex items-center justify-between space-y-2">
           <ReturnButton />

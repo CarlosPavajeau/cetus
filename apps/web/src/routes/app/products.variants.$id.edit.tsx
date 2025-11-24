@@ -25,7 +25,11 @@ export const Route = createFileRoute('/app/products/variants/$id/edit')({
     return { id }
   },
   component: RouteComponent,
-  pendingComponent: () => <DefaultLoader />,
+  pendingComponent: () => (
+    <div className="p-4">
+      <DefaultLoader />
+    </div>
+  ),
 })
 
 function RouteComponent() {
@@ -33,7 +37,7 @@ function RouteComponent() {
   const { data } = useSuspenseQuery(productQueries.variants.detail(Number(id)))
 
   return (
-    <div className="flex flex-1 flex-col items-center">
+    <div className="flex flex-1 flex-col items-center p-4">
       <div className="w-full max-w-7xl space-y-3">
         <div className="flex items-center justify-between">
           <div>

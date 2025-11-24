@@ -3,6 +3,7 @@ import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
 import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
 import { DataGridTable } from '@cetus/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { Skeleton } from '@cetus/ui/skeleton'
 import { Currency } from '@cetus/web/components/currency'
 import {
   type ColumnDef,
@@ -19,11 +20,17 @@ const columns: ColumnDef<DeliveryFee>[] = [
     id: 'city',
     accessorKey: 'city',
     header: 'Ciudad',
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'state',
     accessorKey: 'state',
     header: 'Departamento',
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'fee',
@@ -34,6 +41,9 @@ const columns: ColumnDef<DeliveryFee>[] = [
         <Currency currency="COP" value={row.getValue('fee')} />
       </div>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
 ]
 

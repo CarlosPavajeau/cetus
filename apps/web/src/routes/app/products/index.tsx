@@ -13,7 +13,7 @@ function RouteComponent() {
   const { data: products, isLoading } = useQuery(productQueries.list)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
         <h1 className="font-heading font-semibold text-2xl">Productos</h1>
         <div>

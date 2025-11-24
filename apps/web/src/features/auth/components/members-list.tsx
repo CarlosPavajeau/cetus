@@ -1,15 +1,8 @@
+import type { authClient } from '@cetus/auth/client'
 import { InviteMemberDialog } from '@cetus/web/features/auth/components/invite-member-dialog'
 import { MemberCard } from '@cetus/web/features/auth/components/member-card'
-import type { Member as BaseMember } from 'better-auth/plugins'
 
-type Member = BaseMember & {
-  user: {
-    id: string
-    name: string
-    email: string
-    image: string | undefined
-  }
-}
+type Member = ReturnType<typeof authClient.organization.listMembers>[number]
 
 type Props = {
   members: Member[]

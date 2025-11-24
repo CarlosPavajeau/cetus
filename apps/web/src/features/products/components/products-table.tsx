@@ -12,6 +12,7 @@ import {
 } from '@cetus/ui/dropdown-menu'
 import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
+import { Skeleton } from '@cetus/web/components/ui/skeleton'
 import { DeleteProductDialog } from '@cetus/web/features/products/components/delete-product.dialog'
 import { cn } from '@cetus/web/shared/utils'
 import { Link } from '@tanstack/react-router'
@@ -36,6 +37,9 @@ const columns: ColumnDef<Product>[] = [
       <div className="font-medium">{row.getValue('name')}</div>
     ),
     size: 180,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'category',
@@ -46,6 +50,9 @@ const columns: ColumnDef<Product>[] = [
         {row.getValue('category') ?? 'Desconocida'}
       </Badge>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'categoryId',
@@ -68,6 +75,9 @@ const columns: ColumnDef<Product>[] = [
       </Badge>
     ),
     size: 70,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-16" />,
+    },
   },
   {
     id: 'createdAt',
@@ -78,6 +88,9 @@ const columns: ColumnDef<Product>[] = [
         <FormattedDate date={new Date(row.getValue('createdAt'))} />
       </div>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'actions',
@@ -85,6 +98,9 @@ const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => <RowActions row={row} />,
     size: 60,
     enableHiding: false,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
 ]
 

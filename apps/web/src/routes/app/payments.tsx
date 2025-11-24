@@ -28,7 +28,7 @@ function RouteComponent() {
   const isConnectedToMercadoPago = store?.isConnectedToMercadoPago ?? false
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 p-4">
       <div className="flex flex-col gap-1">
         <h2 className="scroll-m-20 font-heading font-semibold text-2xl tracking-tight">
           Configuración de pagos

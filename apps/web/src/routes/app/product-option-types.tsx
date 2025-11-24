@@ -46,8 +46,8 @@ function RouteComponent() {
   }
 
   return (
-    <>
-      <div className="mb-6 flex items-center justify-between gap-4">
+    <div className="space-y-6 p-4">
+      <div className="flex items-center justify-between gap-4">
         <h1 className="font-heading font-semibold text-2xl">
           Tipos de opciones de producto
         </h1>
@@ -59,6 +59,6 @@ function RouteComponent() {
         <DataTable table={table} />
         <TablePagination paginationInfo={paginationInfo} table={table} />
       </div>
-    </>
+    </div>
   )
 }

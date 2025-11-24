@@ -11,7 +11,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { PackageIcon, SettingsIcon, TagIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/app/products/$id/details')({
-  ssr: false,
   loader: async ({ params, context }) => {
     const { id } = params
 
@@ -22,7 +21,11 @@ export const Route = createFileRoute('/app/products/$id/details')({
     return product
   },
   component: RouteComponent,
-  pendingComponent: DefaultLoader,
+  pendingComponent: () => (
+    <div className="p-4">
+      <DefaultLoader />
+    </div>
+  ),
 })
 
 function RouteComponent() {
@@ -30,7 +33,7 @@ function RouteComponent() {
   const { data: product } = useSuspenseQuery(productQueries.detail(id))
 
   return (
-    <div className="flex flex-1 flex-col items-center">
+    <div className="flex flex-1 flex-col items-center p-4">
       <div className="w-full max-w-7xl space-y-3">
         <div className="flex items-center justify-between space-y-2">
           <ReturnButton className="m-0" />

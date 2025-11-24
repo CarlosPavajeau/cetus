@@ -71,7 +71,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 p-4">
       <h1 className="font-heading font-semibold text-2xl">Crear cupón</h1>
 
       <div>

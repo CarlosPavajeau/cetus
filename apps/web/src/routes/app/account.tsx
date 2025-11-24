@@ -3,11 +3,10 @@ import { Alert, AlertTitle } from '@cetus/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@cetus/ui/avatar'
 import { Card, CardContent } from '@cetus/ui/card'
 import { Separator } from '@cetus/ui/separator'
-import { AccountSkeleton } from '@cetus/web/components/skeletons/account-skeleton'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
 import { MembersList } from '@cetus/web/features/auth/components/members-list'
 import { EditStoreForm } from '@cetus/web/features/stores/components/edit-store-form'
 import { createFileRoute } from '@tanstack/react-router'
-import { Fragment } from 'react/jsx-runtime'
 
 export const Route = createFileRoute('/app/account')({
   component: RouteComponent,
@@ -19,7 +18,11 @@ function RouteComponent() {
     authClient.useActiveOrganization()
 
   if (isPending || isOrgPending) {
-    return <AccountSkeleton />
+    return (
+      <div className="p-4">
+        <DefaultLoader />
+      </div>
+    )
   }
 
   if (!session) {
@@ -46,8 +49,8 @@ function RouteComponent() {
   const isAdmin = currentUserRole === 'admin'
 
   return (
-    <Fragment>
-      <h1 className="mb-4 font-heading font-semibold text-2xl">
+    <div className="space-y-6 p-4">
+      <h1 className="font-heading font-semibold text-2xl">
         Configuración de la cuenta
       </h1>
 
@@ -92,6 +95,6 @@ function RouteComponent() {
           </CardContent>
         </Card>
       </div>
-    </Fragment>
+    </div>
   )
 }

@@ -22,7 +22,7 @@ function CreateProductPage() {
 
   if (mode) {
     return (
-      <div className="flex flex-1 flex-col items-center">
+      <div className="flex flex-1 flex-col items-center p-4">
         <div className="w-full max-w-7xl space-y-3">
           <ProductRegistrationForm mode={mode} onBack={() => setMode(null)} />
         </div>
@@ -31,7 +31,7 @@ function CreateProductPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl p-4">
       <div className="mb-12 text-center">
         <h1 className="mb-4 text-balance font-bold font-heading text-4xl text-foreground">
           Registrar producto

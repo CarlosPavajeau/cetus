@@ -3,6 +3,7 @@ import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
 import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
 import { DataGridTable } from '@cetus/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { Skeleton } from '@cetus/ui/skeleton'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import {
   type ColumnDef,
@@ -22,11 +23,17 @@ const columns: ColumnDef<PendingForApprovalProductReview>[] = [
     cell: ({ row }) => (
       <p className="font-medium">{row.original.product.name}</p>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'customer',
     accessorKey: 'customer',
     header: 'Cliente',
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'createdAt',
@@ -37,11 +44,17 @@ const columns: ColumnDef<PendingForApprovalProductReview>[] = [
         <FormattedDate date={new Date(row.original.createdAt)} />
       </div>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'actions',
     header: 'Acciones',
     cell: ({ row }) => <ProcessReviewDialog review={row.original} />,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-8" />,
+    },
   },
 ]
 

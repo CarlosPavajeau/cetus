@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@cetus/ui/dropdown-menu'
 import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { Skeleton } from '@cetus/ui/skeleton'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { DeleteCategoryDialog } from '@cetus/web/features/categories/components/delete-category.dialog'
 import { EditCategoryDialog } from '@cetus/web/features/categories/components/edit-category.dialog'
@@ -29,6 +30,9 @@ const columns: ColumnDef<Category>[] = [
     id: 'name',
     accessorKey: 'name',
     header: 'Nombre',
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'createdAt',
@@ -39,6 +43,9 @@ const columns: ColumnDef<Category>[] = [
         <FormattedDate date={new Date(row.getValue('createdAt'))} />
       </div>
     ),
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
   {
     id: 'actions',
@@ -46,6 +53,9 @@ const columns: ColumnDef<Category>[] = [
     cell: ({ row }) => <RowActions row={row} />,
     size: 60,
     enableHiding: false,
+    meta: {
+      skeleton: <Skeleton className="h-5 w-32" />,
+    },
   },
 ]
 
