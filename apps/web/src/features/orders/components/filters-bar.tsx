@@ -15,7 +15,7 @@ export const FiltersBar = memo(
     onSearch: (term: string) => void
     onStatusToggle: (status: OrderStatus) => void
   }) => (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <SearchInput onSearch={onSearch} value={searchTerm} />
       <StatusFilter onStatusToggle={onStatusToggle} statuses={statuses} />
     </div>

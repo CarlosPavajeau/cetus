@@ -13,8 +13,8 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@cetus/web/components",
-    "utils": "@cetus/web/shared/cn",
-    "ui": "@cetus/ui",
+    "utils": "@cetus/web/shared/utils",
+    "ui": "@cetus/web/components/ui",
     "lib": "@cetus/web/shared",
     "hooks": "@cetus/web/hooks"
   },

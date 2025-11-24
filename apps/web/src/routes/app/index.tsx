@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { orderStatusLabels } from '@cetus/shared/constants/order'
 import {
   Empty,
   EmptyDescription,
@@ -6,16 +6,29 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@cetus/ui/empty'
+import { CustomDateRangeInput } from '@cetus/web/components/custom-date-range-input'
 import { DefaultLoader } from '@cetus/web/components/default-loader'
-import { FiltersBar } from '@cetus/web/features/orders/components/filters-bar'
-import { OrdersHeader } from '@cetus/web/features/orders/components/orders-header'
+import { Button } from '@cetus/web/components/ui/button'
+import {
+  createFilter,
+  type Filter,
+  type FilterFieldConfig,
+  Filters,
+} from '@cetus/web/components/ui/filters'
 import { OrdersList } from '@cetus/web/features/orders/components/orders-list'
-import { useOrderFilters } from '@cetus/web/hooks/orders/use-order-filters'
+import { orderQueries } from '@cetus/web/features/orders/queries'
 import { useOrderRealtime } from '@cetus/web/hooks/orders/use-order-realtime'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { PackageXIcon } from 'lucide-react'
-import { useCallback } from 'react'
+import {
+  CalendarIcon,
+  FunnelPlusIcon,
+  FunnelXIcon,
+  PackageXIcon,
+  RefreshCwIcon,
+  TagIcon,
+} from 'lucide-react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/app/')({
   component: RouteComponent,
@@ -35,57 +48,117 @@ const EmptyState = () => (
   </Empty>
 )
 
+const fields: FilterFieldConfig[] = [
+  {
+    key: 'statuses',
+    label: 'Estado',
+    icon: <TagIcon />,
+    type: 'multiselect',
+    className: 'w-[180px]',
+    operators: [
+      {
+        value: 'is_any_of',
+        label: 'cualquiera de',
+      },
+    ],
+    options: [
+      ...Object.entries(orderStatusLabels).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    ],
+    defaultOperator: 'is_any_of',
+  },
+  {
+    key: 'daterange',
+    label: 'Fechas',
+    icon: <CalendarIcon className="size-3.5" />,
+    type: 'custom',
+    operators: [{ value: 'between', label: 'entre' }],
+    customRenderer: ({ values, onChange }) => (
+      <CustomDateRangeInput onChange={onChange} values={values} />
+    ),
+    defaultOperator: 'between',
+  },
+]
+
 function RouteComponent() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['orders'],
-    queryFn: api.orders.list,
-  })
-  const orders = data?.items || []
-
-  const queryClient = useQueryClient()
-
   useOrderRealtime()
 
-  const {
-    filteredOrders,
-    searchTerm,
-    statuses,
-    handleSearch,
-    handleStatusToggle,
-  } = useOrderFilters(orders)
+  const [filters, setFilters] = useState<Filter[]>([
+    createFilter('statuses', 'is_any_of', ['pending', 'paid']),
+  ])
 
-  const refresh = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: ['orders'],
-    })
-  }, [queryClient])
+  const orderFilters = filters.reduce<Record<string, unknown>>(
+    (acc, filter) => {
+      if (filter.field === 'daterange') {
+        const [from, to] = filter.values ?? []
+        if (from) {
+          acc.from = from
+        }
+        if (to) {
+          acc.to = to
+        }
+      } else {
+        acc[filter.field] = filter.values
+      }
+      return acc
+    },
+    {},
+  )
 
-  const isEmpty = !orders || orders.length === 0
-  const noResults = filteredOrders.length === 0
+  const { data, isLoading } = useQuery(orderQueries.list(orderFilters))
 
-  if (isLoading) {
-    return <DefaultLoader />
+  const queryClient = useQueryClient()
+  const refresh = () => {
+    queryClient.invalidateQueries(orderQueries.list(orderFilters))
   }
 
-  if (isEmpty) {
-    return (
-      <>
-        <OrdersHeader onRefresh={refresh} />
-        <EmptyState />
-      </>
-    )
+  const orders = data?.items || []
+  const isEmpty = !orders || orders.length === 0
+
+  const content = () => {
+    if (isLoading) {
+      return <DefaultLoader />
+    }
+
+    if (isEmpty) {
+      return <EmptyState />
+    }
+
+    return <OrdersList orders={orders} />
   }
 
   return (
-    <>
-      <OrdersHeader onRefresh={refresh} />
-      <FiltersBar
-        onSearch={handleSearch}
-        onStatusToggle={handleStatusToggle}
-        searchTerm={searchTerm}
-        statuses={statuses}
-      />
-      {noResults ? <EmptyState /> : <OrdersList orders={filteredOrders} />}
-    </>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b p-2">
+        <Filters
+          addButton={
+            <Button mode="icon" size="sm" variant="outline">
+              <FunnelPlusIcon />
+            </Button>
+          }
+          fields={fields}
+          filters={filters}
+          onChange={setFilters}
+          size="sm"
+        />
+
+        <div className="flex items-center gap-2">
+          {filters.length > 0 && (
+            <Button onClick={() => setFilters([])} size="xs" variant="outline">
+              <FunnelXIcon /> Limpiar filtros
+            </Button>
+          )}
+
+          <Button onClick={refresh} size="xs" variant="outline">
+            <RefreshCwIcon aria-hidden="true" />
+            Recargar
+          </Button>
+        </div>
+      </div>
+
+      <div className="px-4">{content()}</div>
+    </div>
   )
 }

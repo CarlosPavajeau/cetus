@@ -5,6 +5,12 @@ import { queryOptions } from '@tanstack/react-query'
 export const ordersKeys = createQueryKeys('orders')
 
 export const orderQueries = {
+  list: (filters?: Record<string, unknown>) =>
+    queryOptions({
+      queryKey: ordersKeys.list(filters),
+      queryFn: () => api.orders.list(filters),
+    }),
+
   detail: (orderId: string) =>
     queryOptions({
       queryKey: ordersKeys.detail(orderId),

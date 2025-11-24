@@ -8,13 +8,19 @@ import type {
   Order,
   OrderInsights,
   OrderPaymentResponse,
+  OrderQueryParams,
   OrderSummary,
   SimpleOrder,
 } from '../types/orders'
 
 export const ordersApi = {
-  list: () =>
-    authenticatedClient.get<PaginatedResponse<SimpleOrder>>('/orders'),
+  list: (params?: OrderQueryParams) =>
+    authenticatedClient.get<PaginatedResponse<SimpleOrder>>('/orders', {
+      params,
+      paramsSerializer: {
+        indexes: null,
+      },
+    }),
 
   getById: (id: string) => authenticatedClient.get<Order>(`/orders/${id}`),
 

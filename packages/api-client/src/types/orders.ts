@@ -111,3 +111,8 @@ export type CreateOrder = {
     address: string
   }
 }
+
+export type OrderQueryParams = {
+  statuses?: OrderStatus[]
+  [key: string]: unknown
+}
