@@ -7,6 +7,7 @@ import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
 import { PageHeader } from '@cetus/web/components/page-header'
+import { setStoreSlug } from '@cetus/web/functions/store-slug'
 import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
@@ -30,6 +31,12 @@ export const Route = createFileRoute('/$store')({
     if (!store) {
       throw notFound()
     }
+
+    await setStoreSlug({
+      data: {
+        slug: store.slug,
+      },
+    })
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),
