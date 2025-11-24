@@ -21,6 +21,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@cetus/env": "workspace:*",
     "uuid": "^13.0.0"
   }
 }
