@@ -2,14 +2,14 @@ import { db } from '@cetus/db'
 import schema from '@cetus/db/schema/auth'
 import { env } from '@cetus/env/server'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { type BetterAuthOptions, betterAuth } from 'better-auth/minimal'
+import { betterAuth } from 'better-auth/minimal'
 import { admin, jwt, organization } from 'better-auth/plugins'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { ac, roles } from './permissions'
 
-const MaxSessionCacheAge = 300
+const maxSessionCacheAge = 300
 
-export const auth = betterAuth<BetterAuthOptions>({
+export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
 
@@ -22,7 +22,7 @@ export const auth = betterAuth<BetterAuthOptions>({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: MaxSessionCacheAge,
+      maxAge: maxSessionCacheAge,
     },
   },
   socialProviders: {
