@@ -5,6 +5,7 @@ import { Currency } from '@cetus/web/components/currency'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { type CartItem, useCart } from '@cetus/web/store/cart'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -23,6 +24,10 @@ export const Route = createFileRoute('/_store-required/cart')({
 })
 
 function EmptyCart() {
+  const { store } = useTenantStore()
+  const hasStore = Boolean(store)
+  const hasCustomDomain = Boolean(store?.customDomain)
+
   return (
     <motion.div
       animate={{ opacity: 1 }}
@@ -37,8 +42,14 @@ function EmptyCart() {
         Parece que aún no has agregado productos a tu carrito. Explora nuestra
         tienda para encontrar lo que necesitas.
       </p>
-      <Button asChild>
-        <Link to="/">
+      <Button asChild size="lg">
+        <Link
+          className="flex items-center gap-2"
+          params={{
+            store: store?.slug,
+          }}
+          to={hasStore && !hasCustomDomain ? '/$store' : '/'}
+        >
           <ShoppingCartIcon className="mr-2" />
           Explorar productos
         </Link>
