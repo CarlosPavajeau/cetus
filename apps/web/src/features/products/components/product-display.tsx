@@ -5,7 +5,6 @@ import type {
 import { Button } from '@cetus/ui/button'
 import { Label } from '@cetus/ui/label'
 import { Currency } from '@cetus/web/components/currency'
-import { ProductAddedNotification } from '@cetus/web/features/products/components/product-added-notification'
 import { ProductImages } from '@cetus/web/features/products/components/product-images'
 import { ProductRating } from '@cetus/web/features/products/components/product-rating'
 import { ProductShare } from '@cetus/web/features/products/components/product-share'
@@ -280,12 +279,9 @@ export function ProductDisplay({ product, variant }: Readonly<Props>) {
         return
       }
 
-      toast.custom((t) => (
-        <ProductAddedNotification
-          onClose={() => toast.dismiss(t)}
-          productName={product.name}
-        />
-      ))
+      toast.success('Producto agregado al carrito', {
+        duration: 3000,
+      })
     }, 300)
   }, [cart, product, quantity, variant])
 
