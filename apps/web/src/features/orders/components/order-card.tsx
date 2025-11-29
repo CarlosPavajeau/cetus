@@ -1,14 +1,13 @@
 import type { SimpleOrder } from '@cetus/api-client/types/orders'
 import {
-  orderStatusColors,
+  orderStatusBadgeVariants,
   orderStatusLabels,
 } from '@cetus/shared/constants/order'
-import { Badge } from '@cetus/ui/badge'
+import { Badge, BadgeDot } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Card, CardContent } from '@cetus/ui/card'
 import { Currency } from '@cetus/web/components/currency'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
-import { cn } from '@cetus/web/shared/utils'
 import { Link } from '@tanstack/react-router'
 import { ClockIcon, EyeIcon, MapPinIcon } from 'lucide-react'
 
@@ -23,14 +22,12 @@ export function OrderCard({ order }: Readonly<Props>) {
         <div className="flex items-center justify-between border-b p-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold">#{order.orderNumber}</span>
-            <Badge variant="outline">
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'size-1.5 rounded-full',
-                  orderStatusColors[order.status],
-                )}
-              />
+            <Badge
+              appearance="outline"
+              size="sm"
+              variant={orderStatusBadgeVariants[order.status]}
+            >
+              <BadgeDot />
               {orderStatusLabels[order.status]}
             </Badge>
           </div>
