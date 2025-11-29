@@ -1,18 +1,22 @@
 import { api } from '@cetus/api-client'
 import {
-  orderStatusColors,
+  orderStatusBadgeVariants,
   orderStatusLabels,
 } from '@cetus/shared/constants/order'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { DefaultLoader } from '@cetus/web/components/default-loader'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { PageHeader } from '@cetus/web/components/page-header'
+import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { OrderSummary } from '@cetus/web/features/orders/components/order-summary'
-import { cn } from '@cetus/web/shared/utils'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { PackageIcon, ShoppingBagIcon } from 'lucide-react'
+import {
+  AlertCircleIcon,
+  CalendarIcon,
+  PackageIcon,
+  ShoppingBagIcon,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/orders/$id')({
   component: RouteComponent,
@@ -58,30 +62,54 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <div className="space-y-6">
-        <PageHeader title={`Pedido #${order.orderNumber}`} />
+      <div className="w-full flex-col space-y-4 py-4">
+        <div className="flex w-full flex-col space-y-2">
+          <div className="flex w-full items-center gap-3">
+            <h1 className="font-bold text-2xl text-foreground tracking-tight">
+              Orden #{order.orderNumber}
+            </h1>
+            <Badge
+              appearance="outline"
+              variant={orderStatusBadgeVariants[order.status]}
+            >
+              {orderStatusLabels[order.status]}
+            </Badge>
+          </div>
 
-        <div className="space-y-3">
-          <Badge variant="outline">
-            <span
-              aria-hidden="true"
-              className={cn(
-                'size-1.5 rounded-full',
-                orderStatusColors[order.status],
-              )}
-            />
-            {orderStatusLabels[order.status]}
-          </Badge>
+          <div className="flex items-center text-muted-foreground text-sm">
+            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+            <FormattedDate date={new Date(order.createdAt)} />
+          </div>
 
-          <OrderSummary isCustomer order={order} />
+          {order.status === 'canceled' && order.cancellationReason && (
+            <div className="mt-2 flex w-full items-start space-x-2 rounded-md bg-destructive/10 px-3 py-2 text-destructive text-sm">
+              <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="flex flex-col">
+                <span className="font-medium">
+                  Razón: {order.cancellationReason}
+                </span>
+
+                {order.cancelledAt && (
+                  <span className="mt-0.5 text-xs opacity-90">
+                    Cancelado el{' '}
+                    <FormattedDate date={new Date(order.cancelledAt)} />
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <Button asChild className="w-full" size="lg">
-          <Link to="/">
-            <ShoppingBagIcon />
-            Seguir comprando
-          </Link>
-        </Button>
+        <OrderSummary order={order} />
+
+        <div>
+          <Button asChild size="lg">
+            <Link to="/">
+              <ShoppingBagIcon />
+              Seguir comprando
+            </Link>
+          </Button>
+        </div>
       </div>
     </DefaultPageLayout>
   )
