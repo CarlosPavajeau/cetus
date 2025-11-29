@@ -77,7 +77,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
           Información del pago
         </CardTitle>
 
-        <Badge appearance="outline" variant="success">
+        <Badge appearance="outline" variant={isPaid ? 'success' : 'warning'}>
           {isPaid ? <CheckCircle2Icon /> : <AlertCircleIcon />}
           {paymentStatusLabel(payment.status)}
         </Badge>
