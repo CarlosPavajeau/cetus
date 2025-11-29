@@ -1,9 +1,9 @@
 import type { Order } from '@cetus/api-client/types/orders'
 import {
-  orderStatusColors,
+  orderStatusBadgeVariants,
   orderStatusLabels,
 } from '@cetus/shared/constants/order'
-import { Badge } from '@cetus/ui/badge'
+import { Badge, BadgeDot } from '@cetus/ui/badge'
 import {
   Card,
   CardContent,
@@ -34,14 +34,11 @@ export function OrderSummary({ order, isCustomer = false }: Readonly<Props>) {
             <div className="flex items-center gap-2">
               <h2 className="font-bold text-xl"># {order.orderNumber}</h2>
 
-              <Badge variant="outline">
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'size-1.5 rounded-full',
-                    orderStatusColors[order.status],
-                  )}
-                />
+              <Badge
+                appearance="outline"
+                variant={orderStatusBadgeVariants[order.status]}
+              >
+                <BadgeDot />
                 {orderStatusLabels[order.status]}
               </Badge>
             </div>
