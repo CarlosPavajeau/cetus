@@ -91,7 +91,8 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             </div>
             <div>
               <p className="font-medium text-sm">
-                {orderPaymentProviders[payment.paymentProvider]}
+                {orderPaymentProviders[payment.paymentProvider] ??
+                  payment.paymentProvider}
               </p>
               <p className="text-muted-foreground text-xs capitalize">
                 {getPaymentMethodLabel(payment.paymentMethod)}
