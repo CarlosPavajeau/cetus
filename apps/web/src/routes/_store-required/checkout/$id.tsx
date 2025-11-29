@@ -99,7 +99,7 @@ function RouteComponent() {
   if (publicKey) {
     setWompiConfig({
       publicKey,
-      environment: 'sandbox',
+      environment: store.slug === 'cantte' ? 'sandbox' : 'production',
     })
   }
 
