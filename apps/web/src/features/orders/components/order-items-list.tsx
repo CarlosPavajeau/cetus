@@ -7,9 +7,9 @@ import {
   CardTitle,
 } from '@cetus/ui/card'
 import { ItemGroup } from '@cetus/ui/item'
+import { Separator } from '@cetus/ui/separator'
 import { Currency } from '@cetus/web/components/currency'
-import { Separator } from '@cetus/web/components/ui/separator'
-import { OrderItemView } from './order-item-view'
+import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
 
 type Props = {
   order: Order
