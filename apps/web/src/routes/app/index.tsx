@@ -1,4 +1,8 @@
-import { orderStatusLabels } from '@cetus/shared/constants/order'
+import type { OrderStatus } from '@cetus/api-client/orders-BRDNsrXE'
+import {
+  orderStatusColors,
+  orderStatusLabels,
+} from '@cetus/shared/constants/order'
 import {
   Empty,
   EmptyDescription,
@@ -18,6 +22,7 @@ import {
 import { OrdersList } from '@cetus/web/features/orders/components/orders-list'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import { useOrderRealtime } from '@cetus/web/hooks/orders/use-order-realtime'
+import { cn } from '@cetus/web/shared/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import {
@@ -48,6 +53,24 @@ const EmptyState = () => (
   </Empty>
 )
 
+const OrderStatusIcon = ({ status }: { status: OrderStatus }) => {
+  const colors = {
+    low: 'bg-green-500',
+    medium: 'bg-yellow-500',
+    high: 'bg-violet-500',
+    urgent: 'bg-orange-500',
+    critical: 'bg-red-500',
+  }
+  return (
+    <div
+      className={cn(
+        'size-2.25 shrink-0 rounded-full',
+        orderStatusColors[status],
+      )}
+    />
+  )
+}
+
 const fields: FilterFieldConfig[] = [
   {
     key: 'statuses',
@@ -65,6 +88,7 @@ const fields: FilterFieldConfig[] = [
       ...Object.entries(orderStatusLabels).map(([value, label]) => ({
         value,
         label,
+        icon: <OrderStatusIcon status={value as OrderStatus} />,
       })),
     ],
     defaultOperator: 'is_any_of',
