@@ -43,6 +43,9 @@ export const orderQueries = {
       queryOptions({
         queryKey: [...ordersKeys.details(), 'payment', orderId],
         queryFn: () => api.orders.payments.getByOrderId(orderId),
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        retry: 2,
       }),
   },
 }
