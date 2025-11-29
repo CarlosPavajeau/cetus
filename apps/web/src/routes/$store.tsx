@@ -8,12 +8,12 @@ import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { setupApiClient } from '../lib/api/setup'
 
 const storeBySlugQuery = (slug: string) =>
   queryOptions({
@@ -38,7 +38,7 @@ export const Route = createFileRoute('/$store')({
       },
     })
 
-    setupApiClient()
+    setupApiClient(store.slug)
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),

@@ -10,12 +10,12 @@ import { PopularProductsSection } from '@cetus/web/components/home/popular-produ
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getServerhost } from '@cetus/web/functions/get-host'
 import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { setupApiClient } from '../lib/api/setup'
 
 const storeByDomainQuery = (domain: string) =>
   queryOptions({
@@ -43,7 +43,7 @@ export const Route = createFileRoute('/')({
       },
     })
 
-    setupApiClient()
+    setupApiClient(store.slug)
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),
