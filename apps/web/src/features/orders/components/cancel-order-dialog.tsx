@@ -75,13 +75,8 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
     <Form {...form}>
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogTrigger asChild>
-          <Button
-            className="group w-full"
-            size="lg"
-            type="button"
-            variant="destructive"
-          >
-            <BanIcon aria-hidden="true" size={16} />
+          <Button size="sm" type="button" variant="destructive">
+            <BanIcon aria-hidden="true" />
             Cancelar pedido
           </Button>
         </DialogTrigger>
