@@ -12,6 +12,13 @@ export const orderStatusColors = Object.freeze({
   canceled: 'bg-destructive',
 })
 
+export const orderStatusBadgeVariants = Object.freeze({
+  pending: 'warning',
+  paid: 'success',
+  delivered: 'success',
+  canceled: 'destructive',
+})
+
 export const orderPaymentProviders = Object.freeze({
   wompi: 'Wompi',
   mercado_pago: 'MercadoPago',
