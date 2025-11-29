@@ -2,7 +2,7 @@ import type { ProductOptionValue } from './products'
 
 export type OrderStatus = 'pending' | 'paid' | 'delivered' | 'canceled'
 
-type OrderItem = {
+export type OrderItem = {
   id: string
   productName: string
   imageUrl?: string
@@ -12,7 +12,7 @@ type OrderItem = {
   optionValues: ProductOptionValue[]
 }
 
-type OrderCustomer = {
+export type OrderCustomer = {
   name: string
   email: string
   phone: string
@@ -35,6 +35,9 @@ export type Order = {
 
   transactionId?: string
   storeId: string
+
+  cancellationReason?: string
+  cancelledAt?: string
 }
 
 export type SimpleOrder = {
