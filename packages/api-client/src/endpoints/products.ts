@@ -47,7 +47,7 @@ export const productsApi = {
   getById: (id: string) => authenticatedClient.get<Product>(`products/${id}`),
 
   getBySlug: (slug: string) =>
-    authenticatedClient.get<ProductForSale>(`products/slug/${slug}`),
+    anonymousClient.get<ProductForSale>(`products/slug/${slug}`),
 
   create: (data: CreateProduct) =>
     authenticatedClient.post<Product>('products', data),
