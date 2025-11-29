@@ -34,6 +34,7 @@ export const orderQueries = {
       queryOptions({
         queryKey: [...ordersKeys.details(), 'delivery-fees', cityId],
         queryFn: () => api.orders.deliveryFees.getByCity(cityId),
+        enabled: !!cityId,
       }),
   },
 
