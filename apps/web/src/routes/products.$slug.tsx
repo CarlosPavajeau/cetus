@@ -16,6 +16,8 @@ import { PageHeader } from '@cetus/web/components/page-header'
 import { ProductDisplay } from '@cetus/web/features/products/components/product-display'
 import { ProductTabs } from '@cetus/web/features/products/components/product-tabs'
 import { SuggestedProducts } from '@cetus/web/features/products/components/suggested-product'
+import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateProductSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
@@ -42,6 +44,14 @@ export const Route = createFileRoute('/products/$slug')({
     if (!variant) {
       throw notFound()
     }
+
+    await setStoreSlug({
+      data: {
+        slug: store.slug,
+      },
+    })
+
+    setupApiClient(store.slug)
 
     const [suggestions, reviews] = await Promise.all([
       api.products.listSuggestions(product.id),
