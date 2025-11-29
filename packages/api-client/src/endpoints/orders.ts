@@ -22,7 +22,7 @@ export const ordersApi = {
       },
     }),
 
-  getById: (id: string) => authenticatedClient.get<Order>(`/orders/${id}`),
+  getById: (id: string) => anonymousClient.get<Order>(`/orders/${id}`),
 
   getInsights: (month: string) =>
     authenticatedClient.get<OrderInsights>('/orders/insights', {
