@@ -26,7 +26,10 @@ export function ProductGrid({ products }: Readonly<Props>) {
   return (
     <div className="grid w-full grid-cols-1 flex-col items-center gap-6 md:grid-cols-3 lg:grid-cols-4">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard
+          key={`${product.id}-${product.variantId}`}
+          product={product}
+        />
       ))}
     </div>
   )
