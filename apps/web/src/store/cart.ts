@@ -21,114 +21,116 @@ export type CartItem = {
 type CartStore = {
   items: CartItem[]
   count: number
+  totalPrice: number
 
   add: (product: CartItemProduct, quantity?: number) => boolean
   reduce: (product: CartItemProduct) => void
   remove: (product: CartItemProduct) => void
-
   clear: () => void
+  getItem: (variantId: number) => CartItem | undefined
 }
 
 export const useCart = create<CartStore>()(
   persist(
-    (set, get) => ({
-      items: [],
-      count: 0,
-      add: (product, quantity) => {
-        const { items } = get()
-
-        const found = items.find(
-          (item) => item.product.variantId === product.variantId,
+    (set, get) => {
+      const updateDerivedState = (items: CartItem[]) => {
+        const count = items.reduce((sum, item) => sum + item.quantity, 0)
+        const totalPrice = items.reduce(
+          (sum, item) => sum + item.product.price * item.quantity,
+          0,
         )
-        const quantityToAdd = quantity ?? 1
+        return { count, totalPrice }
+      }
 
-        if (!Number.isFinite(quantityToAdd) || quantityToAdd <= 0) {
-          return false
-        }
+      return {
+        items: [],
+        count: 0,
+        totalPrice: 0,
 
-        if (found) {
-          if (found.quantity + quantityToAdd > product.stock) {
+        add: (product, quantity = 1) => {
+          if (!Number.isFinite(quantity) || quantity <= 0) {
             return false
           }
 
-          set((state) => ({
-            items: state.items.map((item) =>
-              item.product.variantId === product.variantId
-                ? {
-                    ...item,
-                    quantity: item.quantity + quantityToAdd,
-                  }
-                : item,
-            ),
-            count: state.count + quantityToAdd,
-          }))
-        } else {
-          // enforce stock on first add
-          if (quantityToAdd > product.stock) {
-            return false
+          const { items } = get()
+          const existingItem = items.find(
+            (item) => item.product.variantId === product.variantId,
+          )
+          const newQuantity = (existingItem?.quantity ?? 0) + quantity
+
+          if (newQuantity > product.stock) {
+            return false // Not enough stock
           }
 
-          set((state) => ({
-            items: [...state.items, { product, quantity: quantityToAdd }],
-            count: state.count + quantityToAdd,
-          }))
-        }
-
-        return true
-      },
-      remove: (product) => {
-        const { items } = get()
-
-        const found = items.find(
-          (item) => item.product.variantId === product.variantId,
-        )
-
-        if (found) {
-          set((state) => ({
-            items: state.items.filter(
-              (item) => item.product.variantId !== product.variantId,
-            ),
-            count: state.count - found.quantity,
-          }))
-        }
-      },
-      reduce: (product) => {
-        const { items } = get()
-
-        const found = items.find(
-          (item) => item.product.variantId === product.variantId,
-        )
-
-        if (found) {
-          if (found.quantity > 1) {
-            set((state) => ({
-              items: state.items.map((item) =>
+          const updatedItems = existingItem
+            ? items.map((item) =>
                 item.product.variantId === product.variantId
-                  ? {
-                      ...item,
-                      quantity: item.quantity - 1,
-                    }
+                  ? { ...item, quantity: newQuantity }
                   : item,
-              ),
-              count: state.count - 1,
-            }))
-          } else {
-            set((state) => ({
-              items: state.items.filter(
-                (item) => item.product.variantId !== product.variantId,
-              ),
-              count: state.count - 1,
-            }))
+              )
+            : [...items, { product, quantity }]
+
+          set({
+            items: updatedItems,
+            ...updateDerivedState(updatedItems),
+          })
+
+          return true
+        },
+
+        remove: (product) => {
+          const { items } = get()
+          const updatedItems = items.filter(
+            (item) => item.product.variantId !== product.variantId,
+          )
+
+          if (updatedItems.length < items.length) {
+            set({
+              items: updatedItems,
+              ...updateDerivedState(updatedItems),
+            })
           }
-        }
-      },
-      clear: () => {
-        set(() => ({
-          items: [],
-          count: 0,
-        }))
-      },
-    }),
+        },
+
+        reduce: (product) => {
+          const { items } = get()
+          const existingItem = items.find(
+            (item) => item.product.variantId === product.variantId,
+          )
+
+          if (!existingItem) {
+            return
+          }
+
+          const updatedItems =
+            existingItem.quantity > 1
+              ? items.map((item) =>
+                  item.product.variantId === product.variantId
+                    ? { ...item, quantity: item.quantity - 1 }
+                    : item,
+                )
+              : items.filter(
+                  (item) => item.product.variantId !== product.variantId,
+                )
+
+          set({
+            items: updatedItems,
+            ...updateDerivedState(updatedItems),
+          })
+        },
+
+        clear: () => {
+          set({
+            items: [],
+            count: 0,
+            totalPrice: 0,
+          })
+        },
+
+        getItem: (variantId: number) =>
+          get().items.find((item) => item.product.variantId === variantId),
+      }
+    },
     {
       name: 'cetus-cart',
       storage: createJSONStorage(() => sessionStorage),

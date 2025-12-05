@@ -19,19 +19,19 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.2",
     "@types/ws": "^8.18.1",
+    "drizzle-kit": "^0.31.7",
     "tsdown": "catalog:"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "drizzle-orm": "^0.44.2",
-    "@neondatabase/serverless": "^1.0.1",
-    "ws": "^8.18.3",
-    "dotenv": "catalog:",
+    "@cetus/env": "workspace:*",
+    "@neondatabase/serverless": "^1.0.2",
     "arktype": "catalog:",
-    "@cetus/env": "workspace:*"
+    "dotenv": "catalog:",
+    "drizzle-orm": "^0.44.7",
+    "ws": "^8.18.3"
   }
 }
