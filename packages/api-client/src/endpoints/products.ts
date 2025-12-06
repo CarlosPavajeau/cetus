@@ -13,6 +13,7 @@ import type {
   ProductOptionResponse,
   ProductOptionType,
   ProductVariantResponse,
+  SearchProductResponse,
   SimpleProductForSale,
   TopSellingProduct,
   UpdateProduct,
@@ -43,6 +44,11 @@ export const productsApi = {
 
   listTopSelling: () =>
     authenticatedClient.get<TopSellingProduct[]>('products/top-selling'),
+
+  search: (searchTerm: string) =>
+    anonymousClient.get<SearchProductResponse[]>('products/search', {
+      params: { searchTerm },
+    }),
 
   getById: (id: string) => authenticatedClient.get<Product>(`products/${id}`),
 

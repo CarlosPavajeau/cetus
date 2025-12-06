@@ -167,3 +167,27 @@ export type TopSellingProduct = {
   category?: string
   salesCount: number
 }
+
+export type SearchProductVariantResponse = {
+  id: number
+  sku: string
+  price: number
+  stock: number
+  imageUrl?: string
+  optionValues: ProductOptionValue[]
+}
+
+export type SearchProductResponse = {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  rating: number
+  reviewsCount: number
+  categoryId: string
+  category?: string
+  categorySlug: string
+  storeId: string
+
+  variants: SearchProductVariantResponse[]
+}
