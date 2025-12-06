@@ -17,6 +17,12 @@ export const productQueries = {
     queryKey: [...productKeys.lists(), 'top-selling'],
     queryFn: api.products.listTopSelling,
   }),
+  search: (term: string) =>
+    queryOptions({
+      queryKey: [...productKeys.lists(), 'search', term],
+      queryFn: () => api.products.search(term),
+      enabled: term.trim().length > 3,
+    }),
   detail: (id: string) =>
     queryOptions({
       queryKey: productKeys.detail(id),
