@@ -2,6 +2,7 @@ import { awsApi } from './endpoints/aws'
 import { categoriesApi } from './endpoints/categories'
 import { couponsApi } from './endpoints/coupons'
 import { customersApi } from './endpoints/customers'
+import { inventoryApi } from './endpoints/inventory'
 import { ordersApi } from './endpoints/orders'
 import { productsApi } from './endpoints/products'
 import { reviewsApi } from './endpoints/reviews'
@@ -13,6 +14,7 @@ export const api = {
   categories: categoriesApi,
   coupons: couponsApi,
   customers: customersApi,
+  inventory: inventoryApi,
   orders: ordersApi,
   products: productsApi,
   reviews: reviewsApi,

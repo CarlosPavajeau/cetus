@@ -191,3 +191,18 @@ export type SearchProductResponse = {
 
   variants: SearchProductVariantResponse[]
 }
+
+export type AdjustmentType = 'delta' | 'snapshot'
+
+export type InventoryAdjustmentItem = {
+  variantId: number
+  value: number
+  type: AdjustmentType
+  reason?: string
+}
+
+export type AdjustInventoryStock = {
+  globalReason?: string
+  userId: string
+  adjustments: InventoryAdjustmentItem[]
+}
