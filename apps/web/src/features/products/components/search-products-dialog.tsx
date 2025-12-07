@@ -1,3 +1,4 @@
+import type { ProductOptionValue } from '@cetus/api-client/types/products'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import {
   CommandDialog,
@@ -24,10 +25,19 @@ import { CommandLoading } from 'cmdk'
 import { BookDashedIcon, SearchIcon } from 'lucide-react'
 import { useState } from 'react'
 
+export type SelectedProductVariant = {
+  id: number
+  name: string
+  sku: string
+  imageUrl?: string
+  stock: number
+  optionValues: ProductOptionValue[]
+}
+
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSelect: (variantId: number) => void
+  onSelect: (selected: SelectedProductVariant) => void
 }
 
 export function SearchProductsDialog({ open, onOpenChange, onSelect }: Props) {
@@ -35,6 +45,22 @@ export function SearchProductsDialog({ open, onOpenChange, onSelect }: Props) {
   const searchTerm = useDebounce(searchTermState, 200)
 
   const { data, isFetching } = useQuery(productQueries.search(searchTerm))
+
+  const handleSelect = (productId: string, variantId: number) => {
+    const product = data?.find((p) => p.id === productId)
+    const variant = product?.variants.find((v) => v.id === variantId)
+
+    if (product && variant) {
+      onSelect({
+        id: variant.id,
+        name: product.name,
+        sku: variant.sku,
+        imageUrl: variant.imageUrl,
+        stock: variant.stock,
+        optionValues: variant.optionValues,
+      })
+    }
+  }
 
   return (
     <CommandDialog onOpenChange={onOpenChange} open={open}>
@@ -97,7 +123,7 @@ export function SearchProductsDialog({ open, onOpenChange, onSelect }: Props) {
             {product.variants.map((variant) => (
               <CommandItem
                 key={variant.id}
-                onSelect={() => onSelect(variant.id)}
+                onSelect={() => handleSelect(product.id, variant.id)}
                 value={variant.sku}
               >
                 <Item
