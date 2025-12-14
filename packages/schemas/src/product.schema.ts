@@ -129,12 +129,9 @@ export const adjustInventoryStockSchema = type({
     variantId: type('number>0').configure({
       message: 'El id de la variante del producto es requerido',
     }),
-    value: type('string.integer.parse')
-      .or('number>=0')
-      .to('number>=0')
-      .configure({
-        message: 'El valor de ajuste es requerido',
-      }),
+    value: type('string.integer.parse').or('number').to('number').configure({
+      message: 'El valor de ajuste es requerido',
+    }),
     type: type("'delta'|'snapshot'").configure({
       message: 'El tipo de ajuste es requerido',
     }),
