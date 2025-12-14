@@ -5,6 +5,17 @@ import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Card } from '@cetus/ui/card'
 import {
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@cetus/ui/dialog'
+import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -31,6 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from '@cetus/ui/table'
+import { Textarea } from '@cetus/ui/textarea'
 import { SubmitButton } from '@cetus/web/components/submit-button'
 import {
   SearchProductsDialog,
@@ -43,6 +55,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import consola from 'consola'
 import {
   AlertTriangleIcon,
+  MessageSquareIcon,
   PackageIcon,
   SaveIcon,
   ScanBarcodeIcon,
@@ -64,13 +77,87 @@ export const Route = createFileRoute('/app/inventory/adjustment')({
   component: RouteComponent,
 })
 
-type AdjustmentsFormValues = {
-  userId: string
-  adjustments: {
-    variantId: number
-    type: 'delta' | 'snapshot'
-    value: number
-  }[]
+type AdjustmentsFormValues = typeof adjustInventoryStockSchema.infer
+
+function GlobalReasonDialog() {
+  const [open, setOpen] = useState(false)
+  const [draftGlobalReason, setDraftGlobalReason] = useState('')
+  const form = useFormContext<AdjustmentsFormValues>()
+
+  return (
+    <Dialog
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (nextOpen) {
+          setDraftGlobalReason(form.getValues('globalReason') ?? '')
+        }
+      }}
+      open={open}
+    >
+      <DialogTrigger asChild>
+        <Button
+          aria-label="Agregar motivo global"
+          mode="icon"
+          size="sm"
+          title="Agregar motivo global"
+          type="button"
+          variant="outline"
+        >
+          <MessageSquareIcon aria-hidden="true" />
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Motivo global</DialogTitle>
+          <DialogDescription>
+            Este motivo se aplicará a todos los ajustes de inventario.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="globalReason">Motivo (opcional)</FieldLabel>
+              <Textarea
+                autoComplete="off"
+                id="globalReason"
+                maxLength={100}
+                onChange={(e) => setDraftGlobalReason(e.target.value)}
+                placeholder="Ej: Ajuste por conteo físico"
+                value={draftGlobalReason}
+              />
+            </Field>
+          </FieldGroup>
+        </DialogBody>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button
+            onClick={() => {
+              const trimmed = draftGlobalReason.trim()
+              form.setValue(
+                'globalReason',
+                trimmed === '' ? undefined : trimmed,
+                {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                },
+              )
+              setOpen(false)
+            }}
+            type="button"
+          >
+            Guardar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 const ProductInfo = ({ variant }: { variant: SelectedProductVariant }) => (
@@ -337,6 +424,7 @@ function RouteComponent() {
   const form = useForm<AdjustmentsFormValues>({
     resolver: arktypeResolver(adjustInventoryStockSchema),
     defaultValues: {
+      globalReason: undefined,
       userId: '',
       adjustments: [],
     },
@@ -424,7 +512,11 @@ function RouteComponent() {
   })
 
   const handleReset = useCallback(() => {
-    form.reset({ userId: session?.user.id ?? '', adjustments: [] })
+    form.reset({
+      globalReason: undefined,
+      userId: session?.user.id ?? '',
+      adjustments: [],
+    })
     setSelectedProducts({})
   }, [form, session])
 
@@ -462,21 +554,24 @@ function RouteComponent() {
           ) : (
             <main className="mx-auto w-full flex-1">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 font-semibold text-sm">
+                <h2 className="flex items-center gap-2 text-sm">
                   Productos agregados
                   <Badge shape="circle" variant="secondary">
                     {fields.length}
                   </Badge>
                 </h2>
-                <Button
-                  appearance="ghost"
-                  onClick={handleReset}
-                  size="sm"
-                  type="button"
-                  variant="destructive"
-                >
-                  Descartar ajuste
-                </Button>
+                <div className="flex gap-2">
+                  <GlobalReasonDialog />
+                  <Button
+                    appearance="ghost"
+                    onClick={handleReset}
+                    size="sm"
+                    type="button"
+                    variant="destructive"
+                  >
+                    Descartar ajuste
+                  </Button>
+                </div>
               </div>
 
               <div className="hidden md:block">
