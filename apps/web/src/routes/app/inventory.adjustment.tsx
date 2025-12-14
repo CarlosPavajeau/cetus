@@ -640,11 +640,12 @@ function RouteComponent() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-medium">
-                    {fields.length} ajuste{fields.length !== 1 ? 's' : ''} de
-                    inventario
+                    {fields.length} {fields.length === 1 ? 'ajuste' : 'ajustes'}{' '}
+                    de inventario
                   </span>
                   <span className="text-muted-foreground text-sm">
-                    {validFields} ajuste{validFields !== 1 ? 's' : ''} válido
+                    {validFields}{' '}
+                    {validFields === 1 ? 'ajuste válido' : 'ajustes válidos'}
                   </span>
                 </div>
               </div>
