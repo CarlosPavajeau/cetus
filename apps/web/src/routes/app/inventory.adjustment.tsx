@@ -505,6 +505,13 @@ function RouteComponent() {
       toast.success('Ajustes de inventario aplicados correctamente.')
       handleReset()
     },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Error al aplicar los ajustes de inventario.',
+      )
+    },
   })
 
   const handleSubmit = form.handleSubmit(async (data) => {
