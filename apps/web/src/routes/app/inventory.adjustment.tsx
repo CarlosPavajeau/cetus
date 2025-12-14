@@ -3,12 +3,7 @@ import { authClient } from '@cetus/auth/client'
 import { adjustInventoryStockSchema } from '@cetus/schemas/product.schema'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@cetus/ui/dropdown-menu'
+import { Card } from '@cetus/ui/card'
 import {
   Empty,
   EmptyDescription,
@@ -16,8 +11,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@cetus/ui/empty'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
 import { Input } from '@cetus/ui/input'
 import { Item, ItemContent, ItemTitle } from '@cetus/ui/item'
+import { Kbd } from '@cetus/ui/kbd'
 import {
   Select,
   SelectContent,
@@ -35,7 +32,6 @@ import {
   TableRow,
 } from '@cetus/ui/table'
 import { SubmitButton } from '@cetus/web/components/submit-button'
-import { Kbd } from '@cetus/web/components/ui/kbd'
 import {
   SearchProductsDialog,
   type SelectedProductVariant,
@@ -47,7 +43,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import consola from 'consola'
 import {
   AlertTriangleIcon,
-  MoreVerticalIcon,
   PackageIcon,
   SaveIcon,
   ScanBarcodeIcon,
@@ -103,7 +98,6 @@ const NewStockIndicator = ({
   currentStock: number
 }) => {
   const isNegative = newStock < 0
-  const hasIncreased = newStock > currentStock
 
   const getStatusColor = () => {
     if (newStock > currentStock) {
@@ -242,38 +236,32 @@ const AdjustmentCard = ({
   )
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="flex items-start justify-between">
-        <ProductInfo variant={variant} />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button appearance="ghost" mode="icon" size="icon" type="button">
-              <MoreVerticalIcon size={16} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              className="text-destructive"
-              onSelect={() => onRemove(index)}
-            >
-              <Trash2Icon className="mr-2 h-4 w-4" />
-              Remover
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <Card className="relative gap-4 p-4">
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <Button
+          mode="icon"
+          onClick={() => onRemove(index)}
+          size="xs"
+          variant="ghost"
+        >
+          <Trash2Icon />
+        </Button>
       </div>
-      <div className="mt-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-sm">Stock actual</span>
-          <span className="font-medium">{variant.stock ?? 'Desconocido'}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-sm">Operacion</span>
-          <div className="w-[150px]">
-            <Controller
-              control={control}
-              name={`adjustments.${index}.type`}
-              render={({ field }) => (
+      <div>
+        <ProductInfo variant={variant} />
+        <span className="text-muted-foreground text-xs">
+          Stock actual: {variant.stock}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 items-end gap-3">
+        <FieldGroup>
+          <Controller
+            control={control}
+            name={`adjustments.${index}.type`}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Operación</FieldLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar" />
@@ -287,33 +275,41 @@ const AdjustmentCard = ({
                     </SelectGroup>
                   </SelectContent>
                 </Select>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name={`adjustments.${index}.value`}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Valor</FieldLabel>
+                <Input {...field} type="number" />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-sm">Stock nuevo</span>
+            <NewStockIndicator
+              currentStock={variant.stock ?? 0}
+              newStock={calculateNewStock(
+                type,
+                Number(value),
+                variant.stock ?? 0,
               )}
             />
           </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-sm">Valor</span>
-          <div className="w-[100px]">
-            <Controller
-              control={control}
-              name={`adjustments.${index}.value`}
-              render={({ field }) => <Input {...field} type="number" />}
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-sm">Stock nuevo</span>
-          <NewStockIndicator
-            currentStock={variant.stock ?? 0}
-            newStock={calculateNewStock(
-              type,
-              Number(value),
-              variant.stock ?? 0,
-            )}
-          />
-        </div>
+        </FieldGroup>
       </div>
-    </div>
+    </Card>
   )
 }
 
