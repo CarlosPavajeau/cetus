@@ -542,7 +542,7 @@ function RouteComponent() {
               <SearchIcon />
               Buscar productos...
               <Kbd className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-[5px] hidden select-none px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex">
-                Ctrl + J
+                {navigator.userAgent.includes('Mac') ? '⌘' : 'Ctrl'} + J
               </Kbd>
             </Button>
           </div>
