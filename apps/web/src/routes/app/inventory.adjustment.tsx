@@ -52,7 +52,6 @@ import { cn } from '@cetus/web/shared/utils'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import consola from 'consola'
 import {
   AlertTriangleIcon,
   MessageSquareIcon,
@@ -469,9 +468,7 @@ function RouteComponent() {
       )
 
       if (isAlreadyAdded) {
-        consola.warn(
-          `El producto "${selected.name}" ya ha sido agregado a la lista.`,
-        )
+        toast.info(`El producto "${selected.name}" ya está en la lista.`)
         return
       }
 
