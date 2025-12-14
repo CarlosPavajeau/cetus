@@ -24,7 +24,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useDebounce } from '@uidotdev/usehooks'
 import { Image } from '@unpic/react'
 import { CommandLoading } from 'cmdk'
-import { BookDashedIcon, SearchIcon } from 'lucide-react'
+import { AlertTriangleIcon, BookDashedIcon, SearchIcon } from 'lucide-react'
 import { useState } from 'react'
 
 export type SelectedProductVariant = {
@@ -50,7 +50,9 @@ export function SearchProductsDialog({
   const [searchTermState, setSearchTermState] = useState('')
   const searchTerm = useDebounce(searchTermState, 200)
 
-  const { data, isFetching } = useQuery(productQueries.search(searchTerm))
+  const { data, isFetching, isError, error } = useQuery(
+    productQueries.search(searchTerm),
+  )
 
   const handleSelect = (productId: string, variantId: number) => {
     const product = data?.find((p) => p.id === productId)
@@ -79,7 +81,7 @@ export function SearchProductsDialog({
           />
 
           <CommandList>
-            {!isFetching && data === undefined && (
+            {!isFetching && data === undefined && !isError && (
               <CommandEmpty>
                 <Empty>
                   <EmptyHeader>
@@ -95,7 +97,25 @@ export function SearchProductsDialog({
               </CommandEmpty>
             )}
 
-            {!isFetching && data?.length === 0 && (
+            {isError && (
+              <CommandEmpty>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <AlertTriangleIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>Error al buscar productos</EmptyTitle>
+                    <EmptyDescription>
+                      {error instanceof Error
+                        ? error.message
+                        : 'Intenta de nuevo más tarde.'}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              </CommandEmpty>
+            )}
+
+            {!isFetching && data?.length === 0 && !isError && (
               <CommandEmpty>
                 <Empty>
                   <EmptyHeader>
@@ -111,7 +131,7 @@ export function SearchProductsDialog({
               </CommandEmpty>
             )}
 
-            {isFetching && (
+            {isFetching && !isError && (
               <CommandLoading>
                 <Empty className="w-full">
                   <EmptyHeader>
@@ -127,62 +147,63 @@ export function SearchProductsDialog({
               </CommandLoading>
             )}
 
-            {data?.map((product) => (
-              <CommandGroup heading={product.name} key={product.id}>
-                {product.variants.map((variant) => (
-                  <CommandItem
-                    key={variant.id}
-                    onSelect={() => handleSelect(product.id, variant.id)}
-                    value={variant.sku}
-                  >
-                    <Item
-                      className="w-full p-0"
-                      key={variant.sku}
-                      role="listitem"
-                      size="sm"
+            {!(isFetching || isError) &&
+              data?.map((product) => (
+                <CommandGroup heading={product.name} key={product.id}>
+                  {product.variants.map((variant) => (
+                    <CommandItem
+                      key={variant.id}
+                      onSelect={() => handleSelect(product.id, variant.id)}
+                      value={variant.sku}
                     >
-                      <ItemMedia className="size-20" variant="image">
-                        <Image
-                          alt={variant.sku}
-                          className="object-cover"
-                          height={128}
-                          layout="constrained"
-                          objectFit="cover"
-                          src={getImageUrl(
-                            variant.imageUrl || 'placeholder.svg',
-                          )}
-                          width={128}
-                        />
-                      </ItemMedia>
-                      <ItemContent>
-                        <ItemTitle className="line-clamp-1">
-                          {product.name}
-                        </ItemTitle>
+                      <Item
+                        className="w-full p-0"
+                        key={variant.sku}
+                        role="listitem"
+                        size="sm"
+                      >
+                        <ItemMedia className="size-20" variant="image">
+                          <Image
+                            alt={variant.sku}
+                            className="object-cover"
+                            height={128}
+                            layout="constrained"
+                            objectFit="cover"
+                            src={getImageUrl(
+                              variant.imageUrl || 'placeholder.svg',
+                            )}
+                            width={128}
+                          />
+                        </ItemMedia>
+                        <ItemContent>
+                          <ItemTitle className="line-clamp-1">
+                            {product.name}
+                          </ItemTitle>
 
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            {variant.optionValues.map((value) => (
-                              <span
-                                className="text-muted-foreground text-xs"
-                                key={value.id}
-                              >
-                                {value.optionTypeName}: {value.value}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              {variant.optionValues.map((value) => (
+                                <span
+                                  className="text-muted-foreground text-xs"
+                                  key={value.id}
+                                >
+                                  {value.optionTypeName}: {value.value}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="flex gap-2">
+                              <span className="text-xs">
+                                Stock: {variant.stock}
                               </span>
-                            ))}
+                            </div>
                           </div>
-
-                          <div className="flex gap-2">
-                            <span className="text-xs">
-                              Stock: {variant.stock}
-                            </span>
-                          </div>
-                        </div>
-                      </ItemContent>
-                    </Item>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            ))}
+                        </ItemContent>
+                      </Item>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ))}
           </CommandList>
         </Command>
       </DialogContent>
