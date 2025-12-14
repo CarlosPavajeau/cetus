@@ -42,7 +42,11 @@ type Props = {
   onSelect: (selected: SelectedProductVariant) => void
 }
 
-export function SearchProductsDialog({ open, onOpenChange, onSelect }: Props) {
+export function SearchProductsDialog({
+  open,
+  onOpenChange,
+  onSelect,
+}: Readonly<Props>) {
   const [searchTermState, setSearchTermState] = useState('')
   const searchTerm = useDebounce(searchTermState, 200)
 
