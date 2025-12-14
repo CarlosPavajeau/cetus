@@ -468,7 +468,7 @@ function RouteComponent() {
       )
 
       if (isAlreadyAdded) {
-        toast.info(`El producto "${selected.name}" ya está en la lista.`)
+        toast.warning(`El producto "${selected.name}" ya está en la lista.`)
         return
       }
 
@@ -584,7 +584,7 @@ function RouteComponent() {
                     <TableRow>
                       <TableHead>Producto</TableHead>
                       <TableHead>Stock actual</TableHead>
-                      <TableHead>Operacion</TableHead>
+                      <TableHead>Operación</TableHead>
                       <TableHead>Valor</TableHead>
                       <TableHead className="text-right">Stock nuevo</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
