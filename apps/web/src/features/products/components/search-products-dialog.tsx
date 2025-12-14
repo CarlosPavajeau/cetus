@@ -1,7 +1,7 @@
 import type { ProductOptionValue } from '@cetus/api-client/types/products'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import {
-  CommandDialog,
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -17,7 +17,9 @@ import {
 } from '@cetus/ui/empty'
 import { Item, ItemContent, ItemMedia, ItemTitle } from '@cetus/ui/item'
 import { Spinner } from '@cetus/ui/spinner'
+import DialogContent, { Dialog } from '@cetus/web/components/ui/dialog'
 import { productQueries } from '@cetus/web/features/products/queries'
+import { DialogTitle } from '@radix-ui/react-dialog'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounce } from '@uidotdev/usehooks'
 import { Image } from '@unpic/react'
@@ -63,114 +65,123 @@ export function SearchProductsDialog({ open, onOpenChange, onSelect }: Props) {
   }
 
   return (
-    <CommandDialog onOpenChange={onOpenChange} open={open}>
-      <CommandInput
-        onValueChange={setSearchTermState}
-        placeholder="Digite el nombre del producto"
-      />
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="overflow-hidden p-0 shadow-lg">
+        <DialogTitle className="hidden" />
+        <Command shouldFilter={false}>
+          <CommandInput
+            onValueChange={setSearchTermState}
+            placeholder="Digite el nombre del producto"
+          />
 
-      <CommandList>
-        {!isFetching && data === undefined && (
-          <CommandEmpty>
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <SearchIcon />
-                </EmptyMedia>
-                <EmptyTitle>Busca productos por nombre</EmptyTitle>
-                <EmptyDescription>
-                  Empieza a escribir para ver resultados.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </CommandEmpty>
-        )}
+          <CommandList>
+            {!isFetching && data === undefined && (
+              <CommandEmpty>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <SearchIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>Busca productos por nombre</EmptyTitle>
+                    <EmptyDescription>
+                      Empieza a escribir para ver resultados.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              </CommandEmpty>
+            )}
 
-        {!isFetching && data?.length === 0 && (
-          <CommandEmpty>
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <BookDashedIcon />
-                </EmptyMedia>
-                <EmptyTitle>No se encontraron productos</EmptyTitle>
-                <EmptyDescription>
-                  Intenta con otro término de búsqueda.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </CommandEmpty>
-        )}
+            {!isFetching && data?.length === 0 && (
+              <CommandEmpty>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <BookDashedIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>No se encontraron productos</EmptyTitle>
+                    <EmptyDescription>
+                      Intenta con otro término de búsqueda.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              </CommandEmpty>
+            )}
 
-        {isFetching && (
-          <CommandLoading>
-            <Empty className="w-full">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Spinner />
-                </EmptyMedia>
-                <EmptyTitle>Buscando productos...</EmptyTitle>
-                <EmptyDescription>
-                  Por favor espera un momento.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </CommandLoading>
-        )}
+            {isFetching && (
+              <CommandLoading>
+                <Empty className="w-full">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Spinner />
+                    </EmptyMedia>
+                    <EmptyTitle>Buscando productos...</EmptyTitle>
+                    <EmptyDescription>
+                      Por favor espera un momento.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              </CommandLoading>
+            )}
 
-        {data?.map((product) => (
-          <CommandGroup heading={product.name} key={product.id}>
-            {product.variants.map((variant) => (
-              <CommandItem
-                key={variant.id}
-                onSelect={() => handleSelect(product.id, variant.id)}
-                value={variant.sku}
-              >
-                <Item
-                  className="w-full p-0"
-                  key={variant.sku}
-                  role="listitem"
-                  size="sm"
-                >
-                  <ItemMedia className="size-20" variant="image">
-                    <Image
-                      alt={variant.sku}
-                      className="object-cover"
-                      height={128}
-                      layout="constrained"
-                      objectFit="cover"
-                      src={getImageUrl(variant.imageUrl || 'placeholder.svg')}
-                      width={128}
-                    />
-                  </ItemMedia>
-                  <ItemContent>
-                    <ItemTitle className="line-clamp-1">
-                      {product.name}
-                    </ItemTitle>
+            {data?.map((product) => (
+              <CommandGroup heading={product.name} key={product.id}>
+                {product.variants.map((variant) => (
+                  <CommandItem
+                    key={variant.id}
+                    onSelect={() => handleSelect(product.id, variant.id)}
+                    value={variant.sku}
+                  >
+                    <Item
+                      className="w-full p-0"
+                      key={variant.sku}
+                      role="listitem"
+                      size="sm"
+                    >
+                      <ItemMedia className="size-20" variant="image">
+                        <Image
+                          alt={variant.sku}
+                          className="object-cover"
+                          height={128}
+                          layout="constrained"
+                          objectFit="cover"
+                          src={getImageUrl(
+                            variant.imageUrl || 'placeholder.svg',
+                          )}
+                          width={128}
+                        />
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle className="line-clamp-1">
+                          {product.name}
+                        </ItemTitle>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        {variant.optionValues.map((value) => (
-                          <span
-                            className="text-muted-foreground text-xs"
-                            key={value.id}
-                          >
-                            {value.optionTypeName}: {value.value}
-                          </span>
-                        ))}
-                      </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            {variant.optionValues.map((value) => (
+                              <span
+                                className="text-muted-foreground text-xs"
+                                key={value.id}
+                              >
+                                {value.optionTypeName}: {value.value}
+                              </span>
+                            ))}
+                          </div>
 
-                      <div className="flex gap-2">
-                        <span className="text-xs">Stock: {variant.stock}</span>
-                      </div>
-                    </div>
-                  </ItemContent>
-                </Item>
-              </CommandItem>
+                          <div className="flex gap-2">
+                            <span className="text-xs">
+                              Stock: {variant.stock}
+                            </span>
+                          </div>
+                        </div>
+                      </ItemContent>
+                    </Item>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             ))}
-          </CommandGroup>
-        ))}
-      </CommandList>
-    </CommandDialog>
+          </CommandList>
+        </Command>
+      </DialogContent>
+    </Dialog>
   )
 }
