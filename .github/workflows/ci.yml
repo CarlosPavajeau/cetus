@@ -35,7 +35,7 @@ jobs:
           echo "BUN_CACHE_DIR=$(bun pm cache)" >> $GITHUB_OUTPUT
 
       - name: Setup Bun cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ steps.bun-cache.outputs.BUN_CACHE_DIR }}
@@ -48,7 +48,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Setup Turborepo cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .turbo
           key: ${{ runner.os }}-turbo-${{ github.sha }}
