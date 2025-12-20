@@ -121,3 +121,25 @@ export const updateProductVariantSchema = type({
   enabled: type.boolean.default(true),
   featured: type.boolean.default(false),
 })
+
+export const adjustInventoryStockSchema = type({
+  globalReason: type('0 < string <= 100').optional(),
+  userId: type('string'),
+  adjustments: type({
+    variantId: type('number>0').configure({
+      message: 'El id de la variante del producto es requerido',
+    }),
+    value: type('string.integer.parse').or('number').to('number').configure({
+      message: 'El valor de ajuste es requerido',
+    }),
+    type: type("'delta'|'snapshot'").configure({
+      message: 'El tipo de ajuste es requerido',
+    }),
+    reason: type('0 < string <= 100').optional(),
+  })
+    .array()
+    .moreThanLength(0)
+    .configure({
+      message: 'Se requiere al menos un ajuste de inventario',
+    }),
+})

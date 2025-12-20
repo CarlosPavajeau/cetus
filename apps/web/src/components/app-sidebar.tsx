@@ -57,6 +57,11 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
         href: '/app/product-option-types',
         isNew: false,
       },
+      {
+        label: 'Ajuste de inventario',
+        href: '/app/inventory/adjustment',
+        isNew: true,
+      },
     ],
   },
   {
