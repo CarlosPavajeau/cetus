@@ -252,6 +252,8 @@ const AdjustmentTableRow = ({
     `adjustments.${index}`,
   )
 
+  const numericValue = Number.isFinite(Number(value)) ? Number(value) : 0
+
   return (
     <TableRow>
       <TableCell>
@@ -287,7 +289,7 @@ const AdjustmentTableRow = ({
       <TableCell className="text-right">
         <NewStockIndicator
           currentStock={variant.stock ?? 0}
-          newStock={calculateNewStock(type, Number(value), variant.stock ?? 0)}
+          newStock={calculateNewStock(type, numericValue, variant.stock ?? 0)}
         />
       </TableCell>
       <TableCell className="text-right">
