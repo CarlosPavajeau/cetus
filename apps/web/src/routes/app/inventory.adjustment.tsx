@@ -468,8 +468,9 @@ function RouteComponent() {
     (selected: SelectedProductVariant) => {
       setSearchDialogOpen(false)
 
-      const isAlreadyAdded = fields.some(
-        (field) => field.variantId === selected.id,
+      const currentAdjustments = form.getValues('adjustments')
+      const isAlreadyAdded = currentAdjustments.some(
+        (adjustment) => adjustment.variantId === selected.id,
       )
 
       if (isAlreadyAdded) {
@@ -480,7 +481,7 @@ function RouteComponent() {
       append({ variantId: selected.id, type: 'delta', value: 0 })
       setSelectedProducts((prev) => ({ ...prev, [selected.id]: selected }))
     },
-    [append, fields],
+    [append, form],
   )
 
   const handleRemoveProduct = useCallback(
