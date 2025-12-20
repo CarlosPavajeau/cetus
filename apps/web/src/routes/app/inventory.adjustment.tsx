@@ -453,7 +453,7 @@ function RouteComponent() {
     if (session?.user.id) {
       form.setValue('userId', session.user.id)
     }
-  }, [session, isPending, form.setValue])
+  }, [session, isPending, form])
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
