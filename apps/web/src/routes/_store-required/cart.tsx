@@ -1,5 +1,4 @@
 import { getImageUrl } from '@cetus/shared/utils/image'
-import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Currency } from '@cetus/web/components/currency'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
@@ -111,9 +110,9 @@ function CartItemComponent({ item }: Readonly<CartItemProps>) {
           <div className="mt-1">
             <div className="flex items-center gap-2">
               {item.product.optionValues?.map((value) => (
-                <Badge className="text-xs" key={value.id} variant="outline">
+                <span className="text-muted-foreground text-xs" key={value.id}>
                   {value.optionTypeName}: {value.value}
-                </Badge>
+                </span>
               ))}
             </div>
           </div>
