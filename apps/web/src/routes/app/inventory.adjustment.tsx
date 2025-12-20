@@ -328,9 +328,11 @@ const AdjustmentCard = ({
     <Card className="relative gap-4 p-4">
       <div className="absolute top-2 right-2 flex items-center gap-1">
         <Button
+          aria-label="Eliminar producto"
           mode="icon"
           onClick={() => onRemove(index)}
           size="xs"
+          type="button"
           variant="ghost"
         >
           <Trash2Icon />
