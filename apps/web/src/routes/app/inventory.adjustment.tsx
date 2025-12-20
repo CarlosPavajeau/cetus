@@ -324,6 +324,8 @@ const AdjustmentCard = ({
     `adjustments.${index}`,
   )
 
+  const numericValue = Number.isFinite(Number(value)) ? Number(value) : 0
+
   return (
     <Card className="relative gap-4 p-4">
       <div className="absolute top-2 right-2 flex items-center gap-1">
@@ -393,7 +395,7 @@ const AdjustmentCard = ({
               currentStock={variant.stock ?? 0}
               newStock={calculateNewStock(
                 type,
-                Number(value),
+                numericValue,
                 variant.stock ?? 0,
               )}
             />
