@@ -80,7 +80,7 @@ function CartItemComponent({ item }: Readonly<CartItemProps>) {
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
       <div className="flex p-3">
-        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
           <Image
             alt={item.product.name}
             className="object-cover"
