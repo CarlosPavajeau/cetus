@@ -160,7 +160,7 @@ function GlobalReasonDialog() {
 }
 
 const ProductInfo = ({ variant }: { variant: SelectedProductVariant }) => (
-  <Item className="w-full p-0" key={variant.sku} role="listitem" size="sm">
+  <Item className="w-full p-0" key={variant.sku} size="sm">
     <ItemContent>
       <ItemTitle className="line-clamp-1">{variant.name}</ItemTitle>
       <div className="space-y-2">
