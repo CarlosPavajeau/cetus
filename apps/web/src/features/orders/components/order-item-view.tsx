@@ -38,9 +38,9 @@ export function OrderItemView({ item }: Props) {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             {item.optionValues.map((value) => (
-              <Badge className="text-xs" key={value.id} variant="outline">
-                {value.optionTypeName}: {value.value}
-              </Badge>
+              <span className="text-muted-foreground text-xs" key={value.id}>
+              {value.optionTypeName}: {value.value}
+            </span>
             ))}
           </div>
 
