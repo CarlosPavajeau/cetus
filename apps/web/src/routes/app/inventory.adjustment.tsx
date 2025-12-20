@@ -295,6 +295,7 @@ const AdjustmentTableRow = ({
       <TableCell className="text-right">
         <Button
           appearance="ghost"
+          aria-label="Eliminar producto"
           mode="icon"
           onClick={() => onRemove(index)}
           size="icon"
