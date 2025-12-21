@@ -217,7 +217,7 @@ const NewStockIndicator = ({
           {getStatusIcon()}
         </span>
       </div>
-      {isNegative && (
+      {!!isNegative && (
         <div className="flex items-center justify-end gap-1 text-[10px] text-destructive">
           <AlertTriangleIcon size={10} /> Negativo
         </div>
@@ -368,7 +368,7 @@ const AdjustmentCard = ({
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                {fieldState.invalid && (
+                {!!fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
                 )}
               </Field>
@@ -382,7 +382,7 @@ const AdjustmentCard = ({
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>Valor</FieldLabel>
                 <Input {...field} type="number" />
-                {fieldState.invalid && (
+                {!!fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
                 )}
               </Field>
@@ -430,7 +430,7 @@ function RouteComponent() {
   const form = useForm<AdjustmentsFormValues>({
     resolver: arktypeResolver(adjustInventoryStockSchema),
     defaultValues: {
-      globalReason: undefined,
+      globalReason: '',
       userId: '',
       adjustments: [],
     },
@@ -549,7 +549,7 @@ function RouteComponent() {
             >
               <SearchIcon />
               Buscar productos...
-              <Kbd className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-[5px] hidden select-none px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex">
+              <Kbd className="pointer-events-none absolute top-1/2 right-[5px] hidden -translate-y-1/2 select-none px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex">
                 {typeof navigator !== 'undefined' &&
                 navigator.userAgent.includes('Mac')
                   ? '⌘'
