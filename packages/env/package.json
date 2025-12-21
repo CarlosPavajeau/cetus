@@ -3,23 +3,15 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
     "./*": {
-      "types": "./dist/*.d.ts",
       "default": "./src/*.ts"
     }
   },
-  "scripts": {
-    "build": "tsdown"
-  },
+  "scripts": {},
   "devDependencies": {
-    "tsdown": "catalog:",
-    "vite": "^7.2.6"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "catalog:"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.8",

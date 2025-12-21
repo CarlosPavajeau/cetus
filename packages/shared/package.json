@@ -3,25 +3,18 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
     "./*": {
-      "types": "./dist/*.d.ts",
       "default": "./src/*.ts"
     }
   },
-  "scripts": {
-    "build": "tsdown"
-  },
+  "scripts": {},
   "devDependencies": {
-    "tsdown": "catalog:"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "catalog:"
   },
   "dependencies": {
     "@cetus/env": "workspace:*",
-    "uuid": "^13.0.0"
+    "uuid": "catalog:"
   }
 }
