@@ -1,4 +1,4 @@
-import { cn } from '@cetus/web/shared/cn'
+import { cn } from '@cetus/web/shared/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { ChevronDown, type LucideIcon } from 'lucide-react'
 import { Slot as SlotPrimitive } from 'radix-ui'
@@ -435,7 +435,7 @@ function ButtonArrow({
 }: ButtonArrowProps) {
   return (
     <Icon
-      className={cn('-me-1 ms-auto', className)}
+      className={cn('ms-auto -me-1', className)}
       data-slot="button-arrow"
       {...props}
     />

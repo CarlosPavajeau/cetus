@@ -11,7 +11,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
 import { Popover, PopoverContent, PopoverTrigger } from '@cetus/ui/popover'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
-import { cn } from '@cetus/web/shared/cn'
+import { cn } from '@cetus/web/shared/utils'
 import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
