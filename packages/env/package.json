@@ -9,12 +9,12 @@
       "default": "./src/*.ts"
     }
   },
-  "scripts": {},
-  "devDependencies": {
-    "typescript": "catalog:"
-  },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.8",
-    "arktype": "catalog:"
+    "arktype": "catalog:",
+    "dotenv": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
   }
 }
