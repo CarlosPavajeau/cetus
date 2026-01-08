@@ -21,6 +21,6 @@ export const env = createEnv({
 
   onValidationError: (issues) => {
     console.error('❌ Invalid environment variables:', issues)
-    throw new Error(`Invalid environment variables ${JSON.stringify(issues)}`)
+    throw new Error('Invalid environment variables')
   },
 })
