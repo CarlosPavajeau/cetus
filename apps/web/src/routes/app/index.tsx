@@ -1,4 +1,4 @@
-import type { OrderStatus } from '@cetus/api-client/orders-BRDNsrXE'
+import type { OrderStatus } from '@cetus/api-client/types/orders'
 import {
   orderStatusColors,
   orderStatusLabels,
@@ -54,13 +54,6 @@ const EmptyState = () => (
 )
 
 const OrderStatusIcon = ({ status }: { status: OrderStatus }) => {
-  const colors = {
-    low: 'bg-green-500',
-    medium: 'bg-yellow-500',
-    high: 'bg-violet-500',
-    urgent: 'bg-orange-500',
-    critical: 'bg-red-500',
-  }
   return (
     <div
       className={cn(
@@ -77,7 +70,7 @@ const fields: FilterFieldConfig[] = [
     label: 'Estado',
     icon: <TagIcon />,
     type: 'multiselect',
-    className: 'w-[180px]',
+    className: 'w-[250px]',
     operators: [
       {
         value: 'is_any_of',
@@ -110,7 +103,10 @@ function RouteComponent() {
   useOrderRealtime()
 
   const [filters, setFilters] = useState<Filter[]>([
-    createFilter('statuses', 'is_any_of', ['pending', 'paid']),
+    createFilter('statuses', 'is_any_of', [
+      'pending_payment',
+      'payment_confirmed',
+    ]),
   ])
 
   const orderFilters = filters.reduce<Record<string, unknown>>(

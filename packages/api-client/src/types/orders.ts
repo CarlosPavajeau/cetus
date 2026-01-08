@@ -1,6 +1,15 @@
 import type { ProductOptionValue } from './products'
 
-export type OrderStatus = 'pending' | 'paid' | 'delivered' | 'canceled'
+export type OrderStatus =
+  | 'pending_payment'
+  | 'payment_confirmed'
+  | 'processing'
+  | 'ready_for_pickup'
+  | 'shipped'
+  | 'delivered'
+  | 'failed_delivery'
+  | 'canceled'
+  | 'returned'
 
 export type OrderItem = {
   id: string
@@ -84,7 +93,15 @@ export type CreateDeliveryFeeRequest = {
   fee: number
 }
 
-export type PaymentProvider = 'mercado_pago' | 'wompi'
+export type PaymentProvider = 'manual' | 'mercado_pago' | 'wompi'
+
+export type PaymentMethod =
+  | 'cash'
+  | 'credit_card'
+  | 'pse'
+  | 'cash_reference'
+  | 'cash_on_delivery'
+  | 'bank_transfer'
 
 export type OrderPaymentResponse = {
   paymentProvider: PaymentProvider
