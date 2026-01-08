@@ -4,8 +4,6 @@ import { TooltipProvider } from '@cetus/ui/tooltip'
 import { NotFound } from '@cetus/web/components/not-found'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import appCss from '@cetus/web/styles/index.css?url'
-import '@fontsource-variable/inter'
-import '@fontsource-variable/outfit'
 import type { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
