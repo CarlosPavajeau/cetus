@@ -4,11 +4,11 @@ import { type } from 'arktype'
 export const env = createEnv({
   clientPrefix: 'VITE_',
   client: {
-    VITE_API_URL: type('string.url'),
-    VITE_WOMPI_API_URL: type('string.url'),
-    VITE_CDN_URL: type('string.url'),
+    VITE_API_URL: type('string'),
+    VITE_WOMPI_API_URL: type('string'),
+    VITE_CDN_URL: type('string'),
     VITE_POSTHOG_KEY: type('string'),
-    VITE_POSTHOG_HOST: type('string.url'),
+    VITE_POSTHOG_HOST: type('string'),
     VITE_MP_PUBLIC_KEY: type('string'),
     VITE_APP_URL: type('string.url'),
   },
