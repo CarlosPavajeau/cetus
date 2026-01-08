@@ -18,5 +18,4 @@ export const env = createEnv({
   // biome-ignore lint/suspicious/noExplicitAny: need to access import.meta.env
   runtimeEnv: (import.meta as any).env,
   emptyStringAsUndefined: true,
-  skipValidation: true,
 })
