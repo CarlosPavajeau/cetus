@@ -11,7 +11,7 @@ export const env = createEnv({
     MP_CLIENT_SECRET: type('string'),
     APP_URL: type('string'),
     RESEND_API_KEY: type('string'),
-    RESEND_FROM: type('string.email'),
+    RESEND_FROM: type('string'),
     CORS_ORIGIN: type('string'),
   },
   runtimeEnv: process.env,
