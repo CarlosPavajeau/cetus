@@ -15,7 +15,8 @@ export const env = createEnv({
     VITE_APP_URL: type('string.url'),
   },
 
-  runtimeEnv: import.meta.env,
+  // biome-ignore lint/suspicious/noExplicitAny: need to access import.meta.env
+  runtimeEnv: (import.meta as any).env,
   emptyStringAsUndefined: true,
   skipValidation: true,
 })
