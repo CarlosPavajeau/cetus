@@ -5,8 +5,6 @@ export const env = createEnv({
   clientPrefix: 'VITE_',
   client: {
     VITE_API_URL: type('string.url'),
-    VITE_WOMPI_KEY: type('string'),
-    VITE_WOMPI_INTEGRITY_SECRET: type('string'),
     VITE_WOMPI_API_URL: type('string.url'),
     VITE_CDN_URL: type('string.url'),
     VITE_POSTHOG_KEY: type('string'),
