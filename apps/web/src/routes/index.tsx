@@ -201,6 +201,7 @@ function IndexPage() {
   }, [isAppUrl, actions])
 
   console.log(clEnv.VITE_API_URL)
+  console.log(clEnv.VITE_CDN_URL)
 
   if (isAppUrl) {
     return (
