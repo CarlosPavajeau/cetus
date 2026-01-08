@@ -7,7 +7,6 @@ import appCss from '@cetus/web/styles/index.css?url'
 import type { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
-  ClientOnly,
   createRootRouteWithContext,
   HeadContent,
   Outlet,
@@ -54,18 +53,16 @@ function RootComponent() {
 
   return (
     <RootDocument>
-      <ClientOnly>
-        <PostHogProvider apiKey={postHogKey} options={options}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <I18nProvider locale="es-CO">
-              <TooltipProvider>
-                <Outlet />
-                <Toaster />
-              </TooltipProvider>
-            </I18nProvider>
-          </ThemeProvider>
-        </PostHogProvider>
-      </ClientOnly>
+      <PostHogProvider apiKey={postHogKey} options={options}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <I18nProvider locale="es-CO">
+            <TooltipProvider>
+              <Outlet />
+              <Toaster />
+            </TooltipProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </PostHogProvider>
     </RootDocument>
   )
 }
