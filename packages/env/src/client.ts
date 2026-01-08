@@ -14,4 +14,9 @@ export const env = createEnv({
   // biome-ignore lint/suspicious/noExplicitAny: need to access import.meta.env
   runtimeEnv: (import.meta as any).env,
   emptyStringAsUndefined: true,
+
+  onValidationError: (issues) => {
+    console.error('❌ Invalid environment variables:', issues)
+    throw new Error(`Invalid environment variables ${JSON.stringify(issues)}`)
+  },
 })
