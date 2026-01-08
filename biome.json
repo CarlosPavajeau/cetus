@@ -56,7 +56,13 @@
         "useForOf": "error",
         "useImportType": "warn",
         "useShorthandFunctionType": "error",
-        "useArrayLiterals": "off"
+        "useArrayLiterals": "off",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "options": {
+            "style": "type"
+          }
+        }
       },
       "suspicious": {
         "noEmptyBlockStatements": "error",
