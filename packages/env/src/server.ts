@@ -11,6 +11,7 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: type('string'),
     MP_ACCESS_TOKEN: type('string'),
     MP_CLIENT_SECRET: type('string'),
+    MP_CLIENT_ID: type('string'),
     APP_URL: type('string'),
     RESEND_API_KEY: type('string'),
     RESEND_FROM: type('string'),
