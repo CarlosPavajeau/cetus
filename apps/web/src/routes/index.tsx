@@ -59,7 +59,7 @@ export const Route = createFileRoute('/')({
       store,
     }
   },
-  head: ({ loaderData }) => {
+  head: async ({ loaderData }) => {
     if (!loaderData || loaderData.isAppUrl) {
       return {
         meta: [
@@ -83,7 +83,7 @@ export const Route = createFileRoute('/')({
       return {}
     }
 
-    const appUrl = getAppUrl()
+    const appUrl = await getAppUrl()
     const baseUrl =
       typeof window !== 'undefined' ? window.location.origin : appUrl // fallback URL
 

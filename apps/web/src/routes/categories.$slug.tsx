@@ -46,7 +46,7 @@ export const Route = createFileRoute('/categories/$slug')({
       categorySlug: slug,
     }
   },
-  head: ({ loaderData }) => {
+  head: async ({ loaderData }) => {
     if (!(loaderData?.store && loaderData?.category)) {
       return {
         title: 'Categoría no encontrada',
@@ -65,7 +65,7 @@ export const Route = createFileRoute('/categories/$slug')({
 
     const { category, store, products, categorySlug } = loaderData
 
-    const appUrl = getAppUrl()
+    const appUrl = await getAppUrl()
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin

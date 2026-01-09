@@ -66,14 +66,14 @@ export const Route = createFileRoute('/products/$slug')({
       variant,
     }
   },
-  head: ({ loaderData }) => {
+  head: async ({ loaderData }) => {
     if (!loaderData) {
       return {}
     }
 
     const { product, variant, reviews, store } = loaderData
 
-    const appUrl = getAppUrl()
+    const appUrl = await getAppUrl()
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
