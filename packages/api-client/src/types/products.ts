@@ -206,3 +206,33 @@ export type AdjustInventoryStock = {
   userId: string
   adjustments: InventoryAdjustmentItem[]
 }
+
+export type InventoryTransactionType =
+  | 'sale'
+  | 'adjustment'
+  | 'return'
+  | 'purchase'
+  | 'transfer'
+
+export type InventoryTransaction = {
+  id: string
+  createdAt: Date
+  productName: string
+  sku: string
+  variantId: number
+  optionValues: ProductOptionValue[]
+  type: InventoryTransactionType
+  quantity: number
+  stockAfter: number
+  reason?: string
+  referenceId?: string
+}
+
+export type InventoryTransactionQueryParams = {
+  page: number
+  pageSize: number
+  variantId?: number
+  type?: InventoryTransactionType
+  from?: Date
+  to?: Date
+}
