@@ -18,6 +18,7 @@ import { OrganizationSwitcher } from '@cetus/web/components/organization-switche
 import { UserMenu } from '@cetus/web/components/user-menu'
 import {
   BadgePercentIcon,
+  BoxesIcon,
   CreditCardIcon,
   LayoutDashboardIcon,
   PackageIcon,
@@ -57,8 +58,16 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
         href: '/app/product-option-types',
         isNew: false,
       },
+    ],
+  },
+  {
+    label: 'Inventario',
+    href: '/app/inventory',
+    isNew: false,
+    icon: BoxesIcon,
+    items: [
       {
-        label: 'Ajuste de inventario',
+        label: 'Realizar ajustes',
         href: '/app/inventory/adjustment',
         isNew: true,
       },
