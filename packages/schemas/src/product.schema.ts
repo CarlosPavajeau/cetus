@@ -123,19 +123,19 @@ export const updateProductVariantSchema = type({
 })
 
 export const adjustInventoryStockSchema = type({
-  globalReason: type('0 < string <= 100').optional(),
+  globalReason: type('0 <= string <= 100').optional(),
   userId: type('string'),
   adjustments: type({
     variantId: type('number>0').configure({
       message: 'El id de la variante del producto es requerido',
     }),
-    value: type('string.integer.parse').or('number').to('number').configure({
-      message: 'El valor de ajuste es requerido',
+    value: type('number.integer>0|number.integer<0').configure({
+      message: 'El valor no puede ser 0',
     }),
     type: type("'delta'|'snapshot'").configure({
       message: 'El tipo de ajuste es requerido',
     }),
-    reason: type('0 < string <= 100').optional(),
+    reason: type('0 <= string <= 100').optional(),
   })
     .array()
     .moreThanLength(0)
