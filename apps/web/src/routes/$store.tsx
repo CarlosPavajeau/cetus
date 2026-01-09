@@ -1,5 +1,4 @@
 import { api } from '@cetus/api-client'
-import { env } from '@cetus/env/server'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
@@ -7,6 +6,7 @@ import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
 import { PageHeader } from '@cetus/web/components/page-header'
+import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { setStoreSlug } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
@@ -74,10 +74,11 @@ export const Route = createFileRoute('/$store')({
     const { featuredProducts, popularProducts, categories, store, storeSlug } =
       loaderData
 
+    const appUrl = getAppUrl()
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
-        : `${env.APP_URL}/${storeSlug}` // Store-specific URL
+        : `${appUrl}/${storeSlug}` // Store-specific URL
 
     // Generate comprehensive store homepage SEO configuration
     const seoConfig = generateHomepageSEO(

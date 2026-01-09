@@ -1,6 +1,5 @@
 import { api } from '@cetus/api-client'
 import { env as clEnv } from '@cetus/env/client'
-import { env } from '@cetus/env/server'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { ApplicationHome } from '@cetus/web/components/home/application-home'
@@ -9,6 +8,7 @@ import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
 import { PageHeader } from '@cetus/web/components/page-header'
+import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { getServerhost } from '@cetus/web/functions/get-host'
 import { setStoreSlug } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
@@ -84,8 +84,9 @@ export const Route = createFileRoute('/')({
       return {}
     }
 
+    const appUrl = getAppUrl()
     const baseUrl =
-      typeof window !== 'undefined' ? window.location.origin : env.APP_URL // fallback URL
+      typeof window !== 'undefined' ? window.location.origin : appUrl // fallback URL
 
     // Generate comprehensive homepage SEO configuration
     const seoConfig = generateHomepageSEO(

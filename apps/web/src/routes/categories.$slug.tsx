@@ -1,5 +1,4 @@
 import { api } from '@cetus/api-client'
-import { env } from '@cetus/env/server'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import {
   Breadcrumb,
@@ -10,6 +9,7 @@ import {
 } from '@cetus/ui/breadcrumb'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { ProductGrid } from '@cetus/web/features/products/components/product-grid'
+import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { generateCategorySEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
@@ -65,10 +65,11 @@ export const Route = createFileRoute('/categories/$slug')({
 
     const { category, store, products, categorySlug } = loaderData
 
+    const appUrl = getAppUrl()
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
-        : `${env.APP_URL}/${store.slug}` // Store-specific URL
+        : `${appUrl}/${store.slug}` // Store-specific URL
 
     const categoryUrl = `${baseUrl}/categories/${categorySlug}`
 

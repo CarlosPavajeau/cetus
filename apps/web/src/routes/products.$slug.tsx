@@ -1,5 +1,4 @@
 import { api } from '@cetus/api-client'
-import { env } from '@cetus/env/server'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import {
   Breadcrumb,
@@ -16,6 +15,7 @@ import { PageHeader } from '@cetus/web/components/page-header'
 import { ProductDisplay } from '@cetus/web/features/products/components/product-display'
 import { ProductTabs } from '@cetus/web/features/products/components/product-tabs'
 import { SuggestedProducts } from '@cetus/web/features/products/components/suggested-product'
+import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { setStoreSlug } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateProductSEO, generateSEOTags } from '@cetus/web/shared/seo'
@@ -73,11 +73,11 @@ export const Route = createFileRoute('/products/$slug')({
 
     const { product, variant, reviews, store } = loaderData
 
+    const appUrl = getAppUrl()
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
-        : (store.customDomain ?? env.APP_URL)
-
+        : (store.customDomain ?? appUrl)
     // Generate comprehensive SEO configuration
     const storeName = store.name
     const seoConfig = generateProductSEO(
