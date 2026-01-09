@@ -22,6 +22,13 @@ const storeBySlugQuery = (slug: string) =>
   })
 
 export const Route = createFileRoute('/$store')({
+  beforeLoad: () => {
+    const appUrl = getAppUrl()
+
+    return {
+      appUrl,
+    }
+  },
   loader: async ({ context, params }) => {
     const slug = params.store
     const store = await context.queryClient.ensureQueryData(
@@ -52,6 +59,7 @@ export const Route = createFileRoute('/$store')({
       categories,
       store,
       storeSlug: slug,
+      appUrl: context.appUrl,
     }
   },
   head: ({ loaderData }) => {
@@ -74,11 +82,10 @@ export const Route = createFileRoute('/$store')({
     const { featuredProducts, popularProducts, categories, store, storeSlug } =
       loaderData
 
-    const appUrl = getAppUrl()
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
-        : `${appUrl}/${storeSlug}` // Store-specific URL
+        : `${loaderData.appUrl}/${storeSlug}` // Store-specific URL
 
     // Generate comprehensive store homepage SEO configuration
     const seoConfig = generateHomepageSEO(
