@@ -22,8 +22,8 @@ const storeBySlugQuery = (slug: string) =>
   })
 
 export const Route = createFileRoute('/$store')({
-  beforeLoad: () => {
-    const appUrl = getAppUrl()
+  beforeLoad: async () => {
+    const appUrl = await getAppUrl()
 
     return {
       appUrl,
