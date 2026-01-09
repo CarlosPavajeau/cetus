@@ -260,7 +260,7 @@ const AdjustmentTableRow = ({
         <ProductInfo variant={variant} />
       </TableCell>
       <TableCell>{variant.stock ?? 'Desconocido'}</TableCell>
-      <TableCell className="w-[250px]">
+      <TableCell className="w-62.5">
         <Controller
           control={control}
           name={`adjustments.${index}.type`}
@@ -279,11 +279,30 @@ const AdjustmentTableRow = ({
           )}
         />
       </TableCell>
-      <TableCell className="w-[120px]">
+      <TableCell className="w-60">
         <Controller
           control={control}
           name={`adjustments.${index}.value`}
-          render={({ field }) => <Input {...field} type="number" />}
+          render={({ field, fieldState }) => (
+            <Field className="w-full">
+              <Input
+                onBlur={(e) => {
+                  const value = e.target.value
+                  field.onChange(value === '' ? undefined : Number(value))
+                  field.onBlur()
+                }}
+                onChange={(e) => {
+                  const value = e.target.value
+                  field.onChange(value === '' ? '' : Number(value))
+                }}
+                type="number"
+                value={field.value === undefined ? '' : field.value}
+              />
+              {!!fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} />
+              )}
+            </Field>
+          )}
         />
       </TableCell>
       <TableCell className="text-right">
@@ -381,7 +400,20 @@ const AdjustmentCard = ({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>Valor</FieldLabel>
-                <Input {...field} type="number" />
+                <Input
+                  onBlur={(e) => {
+                    const value = e.target.value
+                    field.onChange(value === '' ? undefined : Number(value))
+                    field.onBlur()
+                  }}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    field.onChange(value === '' ? '' : Number(value))
+                  }}
+                  type="number"
+                  value={field.value === undefined ? '' : field.value}
+                />
+
                 {!!fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
                 )}
@@ -549,7 +581,7 @@ function RouteComponent() {
             >
               <SearchIcon />
               Buscar productos...
-              <Kbd className="pointer-events-none absolute top-1/2 right-[5px] hidden -translate-y-1/2 select-none px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex">
+              <Kbd className="pointer-events-none absolute top-1/2 right-1.25 hidden -translate-y-1/2 select-none px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex">
                 {typeof navigator !== 'undefined' &&
                 navigator.userAgent.includes('Mac')
                   ? '⌘'
