@@ -1,5 +1,4 @@
 import { api } from '@cetus/api-client'
-import { env as clEnv } from '@cetus/env/client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { ApplicationHome } from '@cetus/web/components/home/application-home'
@@ -200,9 +199,6 @@ function IndexPage() {
       actions.clearStore()
     }
   }, [isAppUrl, actions])
-
-  console.log(clEnv.VITE_API_URL)
-  console.log(clEnv.VITE_CDN_URL)
 
   if (isAppUrl) {
     return (
