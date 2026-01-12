@@ -1,17 +1,20 @@
-import { useDateFormatter } from 'react-aria'
+import { type DateFormatterOptions, useDateFormatter } from 'react-aria'
 
 type Props = {
   date: Date
+  options?: DateFormatterOptions
 }
 
-export const FormattedDate = ({ date }: Props) => {
-  const formatter = useDateFormatter({
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-  })
+const defaultOptions: DateFormatterOptions = {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+}
+
+export const FormattedDate = ({ date, options = undefined }: Props) => {
+  const formatter = useDateFormatter(options ?? defaultOptions)
 
   return <span>{formatter.format(date)}</span>
 }
