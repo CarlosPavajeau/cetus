@@ -153,7 +153,7 @@ function OrderDetailsComponent() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {order.status === 'paid' && (
+              {order.status === 'payment_confirmed' && (
                 <CompleteOrderButton
                   onSuccess={handleOrderSuccess}
                   orderId={order.id}
