@@ -1,7 +1,4 @@
-import type {
-  InventoryTransactionQueryParams,
-  InventoryTransactionType,
-} from '@cetus/api-client/types/products'
+import type { InventoryTransactionQueryParams } from '@cetus/api-client/types/products'
 import { inventoryTransactionTypeLabels } from '@cetus/shared/constants/inventory'
 import { CustomDateRangeInput } from '@cetus/web/components/custom-date-range-input'
 import { Button } from '@cetus/web/components/ui/button'
@@ -33,11 +30,11 @@ const fields: FilterFieldConfig[] = [
     key: 'transaction_type',
     label: 'Tipo de transacción',
     icon: <TagIcon />,
-    type: 'select',
+    type: 'multiselect',
     operators: [
       {
-        value: 'is',
-        label: 'es',
+        value: 'is_any_of',
+        label: 'es cualquiera de',
       },
     ],
     options: [
@@ -65,7 +62,7 @@ const fields: FilterFieldConfig[] = [
 
 function RouteComponent() {
   const [filters, setFilters] = useState<Filter[]>([
-    createFilter('transaction_type', 'is', ['adjustment']),
+    createFilter('transaction_type', 'is_any_of', ['adjustment']),
   ])
 
   const transactionsFilters = filters.reduce<Record<string, unknown>>(
@@ -100,7 +97,7 @@ function RouteComponent() {
     to: transactionsFilters.to
       ? new Date(transactionsFilters.to as string)
       : undefined,
-    type: transactionsFilters.transaction_type as InventoryTransactionType,
+    types: transactionsFilters.transaction_type as string[] | undefined,
   }
 
   const { data, isLoading } = useQuery(

@@ -232,7 +232,7 @@ export type InventoryTransactionQueryParams = {
   page: number
   pageSize: number
   variantId?: number
-  type?: InventoryTransactionType
+  types?: string[]
   from?: Date
   to?: Date
 }
