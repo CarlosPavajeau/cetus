@@ -36,6 +36,7 @@ import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as AcceptInvitationIdRouteImport } from './routes/accept-invitation.$id'
 import { Route as StoreRequiredCartRouteImport } from './routes/_store-required/cart'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
+import { Route as AppInventoryIndexRouteImport } from './routes/app/inventory.index'
 import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
 import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
 import { Route as StoreRequiredCheckoutIndexRouteImport } from './routes/_store-required/checkout/index'
@@ -186,6 +187,11 @@ const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   path: '/products/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInventoryIndexRoute = AppInventoryIndexRouteImport.update({
+  id: '/inventory/',
+  path: '/inventory/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof StoreRequiredCheckoutIndexRoute
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
+  '/app/inventory': typeof AppInventoryIndexRoute
   '/app/products': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
   '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
@@ -348,6 +355,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof StoreRequiredCheckoutIndexRoute
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
+  '/app/inventory': typeof AppInventoryIndexRoute
   '/app/products': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
   '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/_store-required/checkout/': typeof StoreRequiredCheckoutIndexRoute
   '/app/coupons/': typeof AppCouponsIndexRoute
   '/app/dashboard/': typeof AppDashboardIndexRoute
+  '/app/inventory/': typeof AppInventoryIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
   '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
@@ -438,6 +447,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/app/coupons'
     | '/app/dashboard'
+    | '/app/inventory'
     | '/app/products'
     | '/app/products/$id/details'
     | '/app/products/variants/$id/edit'
@@ -480,6 +490,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/app/coupons'
     | '/app/dashboard'
+    | '/app/inventory'
     | '/app/products'
     | '/app/products/$id/details'
     | '/app/products/variants/$id/edit'
@@ -524,6 +535,7 @@ export interface FileRouteTypes {
     | '/_store-required/checkout/'
     | '/app/coupons/'
     | '/app/dashboard/'
+    | '/app/inventory/'
     | '/app/products/'
     | '/app/products/$id/details'
     | '/app/products/variants/$id/edit'
@@ -742,6 +754,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/inventory/': {
+      id: '/app/inventory/'
+      path: '/inventory'
+      fullPath: '/app/inventory'
+      preLoaderRoute: typeof AppInventoryIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/dashboard/': {
       id: '/app/dashboard/'
       path: '/dashboard'
@@ -882,6 +901,7 @@ interface AppRouteChildren {
   AppProductsNewRoute: typeof AppProductsNewRoute
   AppCouponsIndexRoute: typeof AppCouponsIndexRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
+  AppInventoryIndexRoute: typeof AppInventoryIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
   AppProductsIdDetailsRoute: typeof AppProductsIdDetailsRoute
   AppProductsVariantsIdEditRoute: typeof AppProductsVariantsIdEditRoute
@@ -901,6 +921,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProductsNewRoute: AppProductsNewRoute,
   AppCouponsIndexRoute: AppCouponsIndexRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
+  AppInventoryIndexRoute: AppInventoryIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
   AppProductsIdDetailsRoute: AppProductsIdDetailsRoute,
   AppProductsVariantsIdEditRoute: AppProductsVariantsIdEditRoute,

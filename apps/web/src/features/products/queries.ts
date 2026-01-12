@@ -1,4 +1,5 @@
 import { api } from '@cetus/api-client'
+import type { InventoryTransactionQueryParams } from '@cetus/api-client/types/products'
 import { createQueryKeys } from '@cetus/web/lib/query/create-query-keys'
 import { queryOptions } from '@tanstack/react-query'
 
@@ -61,6 +62,14 @@ export const productQueries = {
       queryOptions({
         queryKey: [...productKeys.details(), 'variant', id],
         queryFn: () => api.products.variants.getById(id),
+      }),
+  },
+
+  inventory: {
+    transactions: (filters?: InventoryTransactionQueryParams) =>
+      queryOptions({
+        queryKey: [...productKeys.list(filters), 'inventory', 'transactions'],
+        queryFn: () => api.inventory.listTransactions(filters),
       }),
   },
 }

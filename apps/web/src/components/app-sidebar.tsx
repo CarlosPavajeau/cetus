@@ -71,6 +71,11 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
         href: '/app/inventory/adjustment',
         isNew: true,
       },
+      {
+        label: 'Lista de movimientos',
+        href: '/app/inventory',
+        isNew: true,
+      },
     ],
   },
   {
