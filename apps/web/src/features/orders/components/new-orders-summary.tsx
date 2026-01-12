@@ -78,9 +78,11 @@ export function NewOrdersSummary() {
 
   const ordersCount = summary.length
   const pendingOrders = summary.filter(
-    (order) => order.status === 'pending',
+    (order) => order.status === 'pending_payment',
   ).length
-  const paidOrders = summary.filter((order) => order.status === 'paid').length
+  const paidOrders = summary.filter(
+    (order) => order.status === 'payment_confirmed',
+  ).length
   const shippedOrders = summary.filter(
     (order) => order.status === 'delivered',
   ).length
@@ -98,13 +100,13 @@ export function NewOrdersSummary() {
 
   const statusInsights: StatusInsight[] = [
     {
-      label: orderStatusLabels.pending,
+      label: orderStatusLabels.pending_payment,
       color: 'bg-warning-base',
       percentage: pendingOrdersPercentage,
       total: pendingOrders,
     },
     {
-      label: orderStatusLabels.paid,
+      label: orderStatusLabels.payment_confirmed,
       color: 'bg-success-base',
       percentage: paidOrdersPercentage,
       total: paidOrders,
@@ -132,7 +134,7 @@ export function NewOrdersSummary() {
 
       <CardContent className="grid gap-3">
         <div className="flex flex-col gap-5">
-          <div className="flex gap-[5px]">
+          <div className="flex gap-1.25">
             {statusInsights.map((status, index) => (
               <div
                 className={`${status.color} h-2 rounded-xs`}
