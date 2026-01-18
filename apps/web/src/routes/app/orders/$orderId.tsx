@@ -1,45 +1,30 @@
-import { api } from '@cetus/api-client'
 import { env } from '@cetus/env/client'
 import {
   orderStatusBadgeVariants,
   orderStatusLabels,
 } from '@cetus/shared/constants/order'
 import { Badge } from '@cetus/ui/badge'
-import { Button } from '@cetus/ui/button'
 import { DefaultLoader } from '@cetus/web/components/default-loader'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { ReturnButton } from '@cetus/web/components/return-button'
-import { CancelOrderDialog } from '@cetus/web/features/orders/components/cancel-order-dialog'
-import { OrderCompletedNotification } from '@cetus/web/features/orders/components/order-completed-notification'
 import { OrderSummary } from '@cetus/web/features/orders/components/order-summary'
+import { UpdateOrderStatusButton } from '@cetus/web/features/orders/components/update-order-status-button'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import {
   useClientMethod,
   useHub,
   useHubGroup,
 } from '@cetus/web/hooks/realtime/use-hub'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import {
-  AlertCircleIcon,
-  CalendarIcon,
-  LoaderCircleIcon,
-  SendIcon,
-} from 'lucide-react'
-import { useCallback, useMemo } from 'react'
-import { toast } from 'sonner'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
+import { AlertCircleIcon, CalendarIcon } from 'lucide-react'
 
 const REALTIME_URL = `${env.VITE_API_URL}/realtime/orders`
 
 export const Route = createFileRoute('/app/orders/$orderId')({
   component: OrderDetailsComponent,
 })
-
-type CompleteOrderButtonProps = {
-  orderId: string
-  onSuccess: () => void
-}
 
 function useRealtimeOrderUpdates(orderId: string) {
   const { connection } = useHub(REALTIME_URL)
@@ -56,60 +41,11 @@ function useRealtimeOrderUpdates(orderId: string) {
   return connection
 }
 
-const CompleteOrderButton = ({
-  orderId,
-  onSuccess,
-}: CompleteOrderButtonProps) => {
-  const deliverOrderMutation = useMutation({
-    mutationKey: ['orders', 'deliver'],
-    mutationFn: () => api.orders.deliver(orderId),
-    onSuccess,
-  })
-
-  const handleCompleteOrder = useCallback(() => {
-    deliverOrderMutation.mutate()
-  }, [deliverOrderMutation])
-
-  return (
-    <Button
-      disabled={deliverOrderMutation.isPending}
-      onClick={handleCompleteOrder}
-      size="sm"
-    >
-      {deliverOrderMutation.isPending ? (
-        <LoaderCircleIcon aria-hidden="true" className="animate-spin" />
-      ) : (
-        <SendIcon />
-      )}
-      {deliverOrderMutation.isPending ? 'Completando...' : 'Completar pedido'}
-    </Button>
-  )
-}
-
 function OrderDetailsComponent() {
   const { orderId } = Route.useParams()
-  const navigate = useNavigate()
   const { data: order, isLoading } = useQuery(orderQueries.detail(orderId))
 
   useRealtimeOrderUpdates(orderId)
-
-  const handleOrderSuccess = useCallback(() => {
-    navigate({ to: '/app' })
-
-    if (order) {
-      toast.custom((t) => (
-        <OrderCompletedNotification
-          onClose={() => toast.dismiss(t)}
-          orderNumber={order.orderNumber}
-        />
-      ))
-    }
-  }, [navigate, order])
-
-  const isCancelable = useMemo(
-    () => (order ? order.status !== 'canceled' : false),
-    [order],
-  )
 
   if (isLoading) {
     return <DefaultLoader />
@@ -126,7 +62,7 @@ function OrderDetailsComponent() {
 
   return (
     <div>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="sticky top-0 z-10 space-y-4 py-4 backdrop-blur-md">
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
             <div className="flex flex-col space-y-2">
@@ -153,14 +89,7 @@ function OrderDetailsComponent() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {order.status === 'payment_confirmed' && (
-                <CompleteOrderButton
-                  onSuccess={handleOrderSuccess}
-                  orderId={order.id}
-                />
-              )}
-
-              {isCancelable && <CancelOrderDialog orderId={order.id} />}
+              <UpdateOrderStatusButton order={order} />
             </div>
           </div>
 
