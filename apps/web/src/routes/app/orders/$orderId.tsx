@@ -62,7 +62,7 @@ function OrderDetailsComponent() {
 
   return (
     <div>
-      <div className="px-4 sm:px-6 lg:px-8">
+      <div className="px-4 pb-4 sm:px-6 lg:px-8">
         <div className="sticky top-0 z-10 space-y-4 py-4 backdrop-blur-md">
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
             <div className="flex flex-col space-y-2">
@@ -88,7 +88,7 @@ function OrderDetailsComponent() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col items-baseline justify-end">
               <UpdateOrderStatusButton order={order} />
             </div>
           </div>
