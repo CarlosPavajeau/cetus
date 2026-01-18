@@ -43,8 +43,10 @@ export const orderQueries = {
       queryOptions({
         queryKey: [...ordersKeys.details(), 'payment', orderId],
         queryFn: () => api.orders.payments.getByOrderId(orderId),
-        refetchOnWindowFocus: false,
+        staleTime: 300_000, // 5 minutes
+        refetchOnReconnect: false,
         refetchOnMount: false,
+        refetchOnWindowFocus: false,
         retry: 2,
       }),
   },
