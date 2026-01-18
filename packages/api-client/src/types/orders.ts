@@ -67,6 +67,13 @@ export type CancelOrderRequest = {
   reason: string
 }
 
+export type ChangeOrderStatusRequest = {
+  orderId: string
+  newStatus: OrderStatus
+  userId?: string
+  notes?: string
+}
+
 export type OrderInsights = {
   currentMonthTotal: number
   revenuePercentageChange: number

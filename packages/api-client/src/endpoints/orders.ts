@@ -2,6 +2,7 @@ import { anonymousClient, authenticatedClient } from '../core/instance'
 import type { PaginatedResponse } from '../types/common'
 import type {
   CancelOrderRequest,
+  ChangeOrderStatusRequest,
   CreateDeliveryFeeRequest,
   CreateOrder,
   DeliveryFee,
@@ -46,6 +47,9 @@ export const ordersApi = {
 
   cancel: (data: CancelOrderRequest) =>
     authenticatedClient.post<SimpleOrder>(`/orders/${data.id}/cancel`, data),
+
+  updateStatus: (data: ChangeOrderStatusRequest) =>
+    authenticatedClient.put<void>(`/orders/${data.orderId}/status`, data),
 
   deliveryFees: {
     list: () => authenticatedClient.get<DeliveryFee[]>('/orders/delivery-fees'),
