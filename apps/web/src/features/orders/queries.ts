@@ -23,6 +23,13 @@ export const orderQueries = {
       queryFn: () => api.orders.summary(month),
     }),
 
+  timeline: (orderId: string) =>
+    queryOptions({
+      queryKey: [...ordersKeys.details(), 'timeline', orderId],
+      queryFn: () => api.orders.timeline(orderId),
+      enabled: !!orderId,
+    }),
+
   insights: (month: string) =>
     queryOptions({
       queryKey: [...ordersKeys.lists(), 'insights', month],
