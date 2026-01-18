@@ -7,7 +7,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@cetus/ui/dialog'
 import {
   Form,
@@ -23,11 +22,12 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { type } from 'arktype'
 import consola from 'consola'
-import { BanIcon } from 'lucide-react'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 type Props = {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+
   orderId: string
 }
 
@@ -40,8 +40,11 @@ const CancelOrderSchema = type({
   }),
 })
 
-export function CancelOrderDialog({ orderId }: Readonly<Props>) {
-  const [open, setOpen] = useState(false)
+export function CancelOrderDialog({
+  open,
+  onOpenChange,
+  orderId,
+}: Readonly<Props>) {
   const form = useForm({
     resolver: arktypeResolver(CancelOrderSchema),
     defaultValues: {
@@ -53,7 +56,7 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
     mutationKey: ['orders', 'cancel', orderId],
     mutationFn: api.orders.cancel,
     onSuccess: (_, __, ___, context) => {
-      setOpen(false)
+      onOpenChange(false)
       context.client.invalidateQueries({
         queryKey: ['orders'],
       })
@@ -73,14 +76,7 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
 
   return (
     <Form {...form}>
-      <Dialog onOpenChange={setOpen} open={open}>
-        <DialogTrigger asChild>
-          <Button size="sm" type="button" variant="destructive">
-            <BanIcon aria-hidden="true" />
-            Cancelar pedido
-          </Button>
-        </DialogTrigger>
-
+      <Dialog onOpenChange={onOpenChange} open={open}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancelar pedido</DialogTitle>
@@ -111,11 +107,11 @@ export function CancelOrderDialog({ orderId }: Readonly<Props>) {
 
             <DialogFooter>
               <Button
-                onClick={() => setOpen(false)}
+                onClick={() => onOpenChange(false)}
                 type="button"
                 variant="outline"
               >
-                Cancelar
+                Cerrar
               </Button>
               <SubmitButton
                 disabled={form.formState.isSubmitting}
