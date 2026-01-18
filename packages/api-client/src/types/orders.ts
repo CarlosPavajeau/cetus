@@ -143,3 +143,12 @@ export type OrderQueryParams = {
   statuses?: OrderStatus[]
   [key: string]: unknown
 }
+
+export type OrderTimeline = {
+  id: string
+  fromStatus?: OrderStatus
+  toStatus: OrderStatus
+  createdAt: string
+  changedById?: string
+  notes?: string
+}

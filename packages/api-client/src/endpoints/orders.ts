@@ -11,6 +11,7 @@ import type {
   OrderPaymentResponse,
   OrderQueryParams,
   OrderSummary,
+  OrderTimeline,
   SimpleOrder,
 } from '../types/orders'
 
@@ -38,6 +39,9 @@ export const ordersApi = {
         month,
       },
     }),
+
+  timeline: (orderId: string) =>
+    anonymousClient.get<OrderTimeline[]>(`/orders/${orderId}/timeline`),
 
   create: (data: CreateOrder) =>
     anonymousClient.post<SimpleOrder>('/orders', data),
