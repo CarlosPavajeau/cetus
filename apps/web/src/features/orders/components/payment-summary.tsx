@@ -11,6 +11,8 @@ import {
 } from '@cetus/ui/empty'
 import { Skeleton } from '@cetus/ui/skeleton'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
+import { Button } from '@cetus/web/components/ui/button'
+import { Label } from '@cetus/web/components/ui/label'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import {
   getPaymentMethodLabel,
@@ -21,7 +23,7 @@ import {
   AlertCircleIcon,
   BanknoteXIcon,
   CheckCircle2Icon,
-  WalletIcon,
+  CopyIcon,
 } from 'lucide-react'
 
 type Props = {
@@ -71,57 +73,109 @@ export function PaymentSummary({ order }: Readonly<Props>) {
   const isPaid = payment.status === 'approved' || payment.status === 'APPROVED'
 
   return (
-    <Card className="flex h-full flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="font-semibold text-base">
-          Información del pago
-        </CardTitle>
+    <Card className="p-4">
+      <div className="flex flex-row items-center justify-between">
+        <h3 className="font-semibold">Información del pago</h3>
 
         <Badge appearance="outline" variant={isPaid ? 'success' : 'warning'}>
           {isPaid ? <CheckCircle2Icon /> : <AlertCircleIcon />}
           {paymentStatusLabel(payment.status)}
         </Badge>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 space-y-4">
+      <div className="space-y-2">
         <div className="flex items-center justify-between rounded-lg border bg-secondary/20 p-3">
           <div className="flex items-center space-x-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-white shadow-sm">
-              <WalletIcon className="h-5 w-5 text-muted-foreground" />
-            </div>
             <div>
               <p className="font-medium text-sm">
-                {orderPaymentProviders[payment.paymentProvider] ??
-                  payment.paymentProvider}
-              </p>
-              <p className="text-muted-foreground text-xs capitalize">
                 {getPaymentMethodLabel(payment.paymentMethod)}
               </p>
+              <p className="text-muted-foreground text-xs">Método de pago</p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">ID de transacción</span>
-            <span className="font-mono">{order.transactionId}</span>
+        <div className="rounded-lg border border-border p-3">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
+                Id de transacción
+              </Label>
+              <div className="flex items-center gap-2">
+                <code className="max-w-45 truncate rounded border border-border px-2 py-1 font-mono text-xs">
+                  {order.transactionId}
+                </code>
+
+                <Button
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    navigator.clipboard.writeText(payment.transactionId)
+                  }
+                  size="icon"
+                  variant="ghost"
+                >
+                  <CopyIcon className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           </div>
-
-          {payment.createdAt && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Iniciado el</span>
-              <FormattedDate date={new Date(payment.createdAt)} />
-            </div>
-          )}
-
-          {payment.approvedAt && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Aprobado el</span>
-              <FormattedDate date={new Date(payment.approvedAt)} />
-            </div>
-          )}
         </div>
-      </CardContent>
+
+        <div className="border-border border-t pt-4">
+          <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
+            Proveedor
+          </Label>
+
+          <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-sm">
+                {orderPaymentProviders[payment.paymentProvider] ??
+                  payment.paymentProvider}
+              </div>
+              <div className="text-muted-foreground text-xs">
+                Gateway de pago
+              </div>
+            </div>
+            <Badge appearance="light" variant="success">
+              Activo
+            </Badge>
+          </div>
+        </div>
+
+        {(payment.createdAt || payment.approvedAt) && (
+          <div className="border-border border-t pt-4">
+            <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
+              Eventos
+            </Label>
+            <div className="space-y-3">
+              {payment.createdAt && (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="text-muted-foreground text-xs">
+                      Iniciado el
+                    </div>
+                    <div className="font-medium text-sm">
+                      <FormattedDate date={new Date(payment.createdAt)} />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {payment.approvedAt && (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="text-muted-foreground text-xs">
+                      Aprobado el
+                    </div>
+                    <div className="font-medium text-sm">
+                      <FormattedDate date={new Date(payment.approvedAt)} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </Card>
   )
 }
