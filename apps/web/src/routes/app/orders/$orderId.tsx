@@ -112,7 +112,7 @@ function OrderDetailsComponent() {
           )}
         </div>
 
-        <OrderSummary order={order} />
+        <OrderSummary isAdmin order={order} />
       </div>
     </div>
   )

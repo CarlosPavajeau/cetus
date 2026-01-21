@@ -6,9 +6,10 @@ import { PaymentSummary } from '@cetus/web/features/orders/components/payment-su
 
 type Props = {
   order: Order
+  isAdmin?: boolean
 }
 
-export function OrderSummary({ order }: Readonly<Props>) {
+export function OrderSummary({ order, isAdmin = false }: Readonly<Props>) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]">
       <div className="space-y-4">
@@ -17,7 +18,7 @@ export function OrderSummary({ order }: Readonly<Props>) {
       <div className="space-y-4">
         <OrderCustomerCard address={order.address} customer={order.customer} />
 
-        <PaymentSummary order={order} />
+        {isAdmin && <PaymentSummary order={order} />}
 
         <OrderTimeline order={order} />
       </div>
