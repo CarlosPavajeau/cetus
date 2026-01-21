@@ -75,7 +75,7 @@ export function OrderTimeline({ order }: Readonly<Props>) {
                   />
                 </TimelineTime>
 
-                <TimelineTitle>
+                <TimelineTitle className="font-medium text-sm">
                   {orderStatusLabels[event.toStatus]}
                 </TimelineTitle>
               </TimelineHeader>
