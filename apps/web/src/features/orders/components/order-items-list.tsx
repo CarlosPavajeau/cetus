@@ -77,7 +77,7 @@ export function OrderItemsList({ order }: Readonly<Props>) {
           </div>
         </div>
 
-        <div className="mt-6 border-border border-t pt-6">
+        <div className="mt-6 hidden border-border border-t pt-6">
           <div className="mb-3 text-muted-foreground text-sm">
             Factura enviada al correo del cliente
           </div>
