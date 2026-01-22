@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
+import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { PostHogProvider } from 'posthog-js/react'
 import { type ReactNode, useEffect } from 'react'
 import { I18nProvider } from 'react-aria'
@@ -53,16 +54,18 @@ function RootComponent() {
 
   return (
     <RootDocument>
-      <PostHogProvider apiKey={postHogKey} options={options}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <I18nProvider locale="es-CO">
-            <TooltipProvider>
-              <Outlet />
-              <Toaster />
-            </TooltipProvider>
-          </I18nProvider>
-        </ThemeProvider>
-      </PostHogProvider>
+      <NuqsAdapter>
+        <PostHogProvider apiKey={postHogKey} options={options}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <I18nProvider locale="es-CO">
+              <TooltipProvider>
+                <Outlet />
+                <Toaster />
+              </TooltipProvider>
+            </I18nProvider>
+          </ThemeProvider>
+        </PostHogProvider>
+      </NuqsAdapter>
     </RootDocument>
   )
 }
