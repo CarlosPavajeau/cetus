@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api, type ProductForSaleParams } from '@cetus/api-client'
 import type { InventoryTransactionQueryParams } from '@cetus/api-client/types/products'
 import { createQueryKeys } from '@cetus/web/lib/query/create-query-keys'
 import { queryOptions } from '@tanstack/react-query'
@@ -10,10 +10,11 @@ export const productQueries = {
     queryKey: productKeys.lists(),
     queryFn: api.products.list,
   }),
-  forSale: queryOptions({
-    queryKey: [...productKeys.lists(), 'for-sale'],
-    queryFn: api.products.listForSale,
-  }),
+  forSale: (params: ProductForSaleParams) =>
+    queryOptions({
+      queryKey: [...productKeys.lists(), 'for-sale', params],
+      queryFn: () => api.products.listForSale(params),
+    }),
   topSelling: queryOptions({
     queryKey: [...productKeys.lists(), 'top-selling'],
     queryFn: api.products.listTopSelling,

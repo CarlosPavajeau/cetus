@@ -21,12 +21,25 @@ import type {
   UpdateProductVariant,
 } from '../types/products'
 
+export type ProductForSaleParams = {
+  page?: number
+  pageSize?: number
+  searchTerm?: string
+  categoryIds?: string[]
+}
+
 export const productsApi = {
   list: () => authenticatedClient.get<Product[]>('products'),
 
-  listForSale: () =>
+  listForSale: (params?: ProductForSaleParams) =>
     anonymousClient.get<PaginatedResponse<SimpleProductForSale>>(
       'products/for-sale',
+      {
+        params,
+        paramsSerializer: {
+          indexes: null,
+        },
+      },
     ),
 
   listFeatured: () =>
