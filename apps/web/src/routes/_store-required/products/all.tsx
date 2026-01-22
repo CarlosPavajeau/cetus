@@ -31,7 +31,7 @@ function RouteComponent() {
       return []
     }
 
-    return products.filter((product) => {
+    return products.items.filter((product) => {
       const matchesSearch = product.name
         .toLowerCase()
         .includes(deferredSearchTerm.toLowerCase())
@@ -53,7 +53,7 @@ function RouteComponent() {
     )
   }
 
-  if (!products || products.length === 0 || !categories) {
+  if (!products || products.items.length === 0 || !categories) {
     return (
       <DefaultPageLayout>
         <p className="w-full text-left font-heading font-medium text-2xl">

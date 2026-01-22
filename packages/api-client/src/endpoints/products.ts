@@ -1,4 +1,5 @@
 import { anonymousClient, authenticatedClient } from '../core/instance'
+import type { PaginatedResponse } from '../types/common'
 import type {
   AddVariantImages,
   AddVariantImagesResponse,
@@ -24,7 +25,9 @@ export const productsApi = {
   list: () => authenticatedClient.get<Product[]>('products'),
 
   listForSale: () =>
-    anonymousClient.get<SimpleProductForSale[]>('products/for-sale'),
+    anonymousClient.get<PaginatedResponse<SimpleProductForSale>>(
+      'products/for-sale',
+    ),
 
   listFeatured: () =>
     anonymousClient.get<SimpleProductForSale[]>('products/featured'),
