@@ -1,4 +1,3 @@
-import { api } from '@cetus/api-client'
 import type { Order, OrderStatus } from '@cetus/api-client/types/orders'
 import { orderStatusLabels } from '@cetus/shared/constants/order'
 import {
@@ -8,7 +7,6 @@ import {
   DropdownMenuTrigger,
 } from '@cetus/ui/dropdown-menu'
 import { Button } from '@cetus/web/components/ui/button'
-import { Spinner } from '@cetus/web/components/ui/spinner'
 import {
   CancelCircleIcon,
   CreditCardPosIcon,
@@ -21,11 +19,10 @@ import {
   UnavailableIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { useMutation } from '@tanstack/react-query'
 import { ChevronDownIcon } from 'lucide-react'
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
-import { toast } from 'sonner'
+import { type ReactNode, useMemo, useState } from 'react'
 import { CancelOrderDialog } from './cancel-order-dialog'
+import { UpdateOrderStatusDialog } from './update-order-status-dialog'
 
 type Props = {
   order: Order
@@ -62,80 +59,47 @@ export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
   )
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(null)
 
-  const updateStatusMutation = useMutation({
-    mutationKey: ['orders', 'status', order.id],
-    mutationFn: api.orders.updateStatus,
-    onSuccess: (_, __, ___, context) => {
-      toast.success('Estado del pedido actualizado')
-      context.client.invalidateQueries({
-        queryKey: ['orders'],
-      })
-    },
-    onError: () => {
-      toast.error('No se pudo actualizar el estado del pedido.')
-    },
-  })
-
-  const handleStatusChange = useCallback(
-    (status: OrderStatus) => {
-      updateStatusMutation.mutate({
-        orderId: order.id,
-        newStatus: status,
-      })
-    },
-    [updateStatusMutation, order],
-  )
+  const handleSelectStatus = (status: OrderStatus) => {
+    if (status === 'canceled') {
+      setCancelDialogOpen(true)
+      return
+    }
+    setSelectedStatus(status)
+    setUpdateDialogOpen(true)
+  }
 
   if (nextStatuses.length === 0) {
     return null
   }
 
+  const isAnyDialogOpen = cancelDialogOpen || isUpdateDialogOpen
+
   return (
     <>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button type="button">
-            {updateStatusMutation.isPending ? (
-              <Spinner aria-hidden="true" />
-            ) : (
-              <HugeiconsIcon icon={PackageIcon} />
-            )}
+          <Button disabled={isAnyDialogOpen} type="button">
+            <HugeiconsIcon icon={PackageIcon} />
             Cambiar estado
             <ChevronDownIcon aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-60">
-          {nextStatuses.map((status) => {
-            const StatusIcon = statusIcons[status]
-
-            if (status === 'canceled') {
-              return (
-                <DropdownMenuItem
-                  className="gap-2"
-                  disabled={updateStatusMutation.isPending}
-                  key={status}
-                  onSelect={() => setCancelDialogOpen(true)}
-                  variant="destructive"
-                >
-                  {StatusIcon}
-                  {orderStatusLabels[status]}
-                </DropdownMenuItem>
-              )
-            }
-
-            return (
-              <DropdownMenuItem
-                className="gap-2"
-                disabled={updateStatusMutation.isPending}
-                key={status}
-                onSelect={() => handleStatusChange(status)}
-              >
-                {StatusIcon}
-                {orderStatusLabels[status]}
-              </DropdownMenuItem>
-            )
-          })}
+          {nextStatuses.map((status) => (
+            <DropdownMenuItem
+              className="gap-2"
+              disabled={isAnyDialogOpen}
+              key={status}
+              onSelect={() => handleSelectStatus(status)}
+              variant={status === 'canceled' ? 'destructive' : 'default'}
+            >
+              {statusIcons[status]}
+              {orderStatusLabels[status]}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -143,6 +107,13 @@ export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
         onOpenChange={setCancelDialogOpen}
         open={cancelDialogOpen}
         orderId={order.id}
+      />
+      
+      <UpdateOrderStatusDialog
+        onOpenChange={setUpdateDialogOpen}
+        open={isUpdateDialogOpen}
+        orderId={order.id}
+        status={selectedStatus}
       />
     </>
   )
