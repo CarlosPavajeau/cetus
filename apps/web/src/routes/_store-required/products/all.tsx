@@ -1,21 +1,15 @@
+import { api } from '@cetus/api-client'
 import { Button } from '@cetus/ui/button'
 import { Input } from '@cetus/ui/input'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from '@cetus/ui/pagination'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
 import { ProductGrid } from '@cetus/web/features/products/components/product-grid'
 import { ProductGridSkeleton } from '@cetus/web/features/products/components/product-grid-skeleton'
-import { productQueries } from '@cetus/web/features/products/queries'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { productKeys } from '@cetus/web/features/products/queries'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
-import { SearchIcon, SearchXIcon } from 'lucide-react'
+import { Loader2, SearchIcon, SearchXIcon } from 'lucide-react'
 import {
   createStandardSchemaV1,
   parseAsIndex,
@@ -26,7 +20,6 @@ import {
 import { type ReactNode, useEffect, useState } from 'react'
 
 const searchParams = {
-  page: parseAsIndex.withDefault(1),
   pageSize: parseAsIndex.withDefault(20),
   searchTerm: parseAsString.withDefault(''),
   categoryIds: parseAsNativeArrayOf(parseAsString),
@@ -41,14 +34,24 @@ function RouteComponent() {
   const [searchQuery, setSearchQuery] = useQueryStates(searchParams)
 
   const { data: categories, isLoading: isLoadingCategories } = useCategories()
-  const {
-    data: products,
-    isPending,
-    isFetching,
-  } = useQuery({
-    ...productQueries.forSale(searchQuery),
-    placeholderData: keepPreviousData,
-  })
+  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useInfiniteQuery({
+      queryKey: [...productKeys.lists(), 'for-sale', searchQuery],
+      queryFn: ({ pageParam }) => {
+        return api.products.listForSale({
+          ...searchQuery,
+          page: pageParam as number,
+        })
+      },
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, allPages) => {
+        if (!lastPage.totalPages) {
+          return undefined
+        }
+        const nextPage = allPages.length + 1
+        return nextPage <= lastPage.totalPages ? nextPage : undefined
+      },
+    })
 
   const [localSearchTerm, setLocalSearchTerm] = useState(searchQuery.searchTerm)
   const debouncedSearchTerm = useDebounce(localSearchTerm, 400)
@@ -68,12 +71,7 @@ function RouteComponent() {
     setSearchQuery((prev) => ({
       ...prev,
       categoryIds: newCategoryIds,
-      page: 1,
     }))
-  }
-
-  const handlePageChange = (newPage: number) => {
-    setSearchQuery((prev) => ({ ...prev, page: newPage }))
   }
 
   if (isPending || isLoadingCategories) {
@@ -91,13 +89,11 @@ function RouteComponent() {
     )
   }
 
-  const pageCount = products?.totalPages ?? 1
+  const allProducts = data?.pages.flatMap((page) => page.items) ?? []
 
   let content: ReactNode
 
-  if (isFetching) {
-    content = <ProductGridSkeleton />
-  } else if (!products || products.items.length === 0) {
+  if (allProducts.length === 0) {
     content = (
       <div className="flex min-h-[40vh] w-full flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed">
         <SearchXIcon className="size-16 text-muted-foreground" />
@@ -112,7 +108,7 @@ function RouteComponent() {
       </div>
     )
   } else {
-    content = <ProductGrid products={products.items} />
+    content = <ProductGrid products={allProducts} />
   }
 
   return (
@@ -144,7 +140,7 @@ function RouteComponent() {
                     size="xs"
                     variant={
                       searchQuery.categoryIds?.includes(category.id)
-                        ? 'primary'
+                        ? 'default'
                         : 'outline'
                     }
                   >
@@ -158,44 +154,23 @@ function RouteComponent() {
 
         {content}
 
-        {pageCount > 1 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  className={
-                    searchQuery.page <= 1
-                      ? 'pointer-events-none opacity-50'
-                      : ''
-                  }
-                  onClick={() => handlePageChange(searchQuery.page - 1)}
-                />
-              </PaginationItem>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map(
-                (page) => (
-                  <PaginationItem key={page}>
-                    <Button
-                      onClick={() => handlePageChange(page)}
-                      size="icon"
-                      variant={page === searchQuery.page ? 'primary' : 'ghost'}
-                    >
-                      {page}
-                    </Button>
-                  </PaginationItem>
-                ),
+        {hasNextPage && (
+          <div className="flex justify-center py-6">
+            <Button
+              disabled={isFetchingNextPage}
+              onClick={() => fetchNextPage()}
+              variant="link"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cargando...
+                </>
+              ) : (
+                'Cargar más productos'
               )}
-              <PaginationItem>
-                <PaginationNext
-                  className={
-                    searchQuery.page >= pageCount
-                      ? 'pointer-events-none opacity-50'
-                      : ''
-                  }
-                  onClick={() => handlePageChange(searchQuery.page + 1)}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+            </Button>
+          </div>
         )}
       </div>
     </DefaultPageLayout>
