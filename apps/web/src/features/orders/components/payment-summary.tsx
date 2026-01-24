@@ -95,85 +95,89 @@ export function PaymentSummary({ order }: Readonly<Props>) {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border p-3">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
+        {payment.paymentProvider !== 'manual' && (
+          <>
+            <div className="rounded-lg border border-border p-3">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
+                    Id de transacción
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <code className="max-w-45 truncate rounded border border-border px-2 py-1 font-mono text-xs">
+                      {payment.transactionId}
+                    </code>
+
+                    <Button
+                      className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        navigator.clipboard.writeText(payment.transactionId)
+                      }
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <CopyIcon className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-border border-t pt-4">
               <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
-                Id de transacción
+                Proveedor
               </Label>
-              <div className="flex items-center gap-2">
-                <code className="max-w-45 truncate rounded border border-border px-2 py-1 font-mono text-xs">
-                  {order.transactionId}
-                </code>
 
-                <Button
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                  onClick={() =>
-                    navigator.clipboard.writeText(payment.transactionId)
-                  }
-                  size="icon"
-                  variant="ghost"
-                >
-                  <CopyIcon className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-border border-t pt-4">
-          <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
-            Proveedor
-          </Label>
-
-          <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm">
-                {orderPaymentProviders[payment.paymentProvider] ??
-                  payment.paymentProvider}
-              </div>
-              <div className="text-muted-foreground text-xs">
-                Gateway de pago
-              </div>
-            </div>
-            <Badge appearance="light" variant="success">
-              Activo
-            </Badge>
-          </div>
-        </div>
-
-        {(payment.createdAt || payment.approvedAt) && (
-          <div className="border-border border-t pt-4">
-            <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
-              Eventos
-            </Label>
-            <div className="space-y-3">
-              {payment.createdAt && (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="text-muted-foreground text-xs">
-                      Iniciado el
-                    </div>
-                    <div className="font-medium text-sm">
-                      <FormattedDate date={new Date(payment.createdAt)} />
-                    </div>
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-sm">
+                    {orderPaymentProviders[payment.paymentProvider] ??
+                      payment.paymentProvider}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    Gateway de pago
                   </div>
                 </div>
-              )}
-              {payment.approvedAt && (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="text-muted-foreground text-xs">
-                      Aprobado el
-                    </div>
-                    <div className="font-medium text-sm">
-                      <FormattedDate date={new Date(payment.approvedAt)} />
-                    </div>
-                  </div>
-                </div>
-              )}
+                <Badge appearance="light" variant="success">
+                  Activo
+                </Badge>
+              </div>
             </div>
-          </div>
+
+            {(payment.createdAt || payment.approvedAt) && (
+              <div className="border-border border-t pt-4">
+                <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
+                  Eventos
+                </Label>
+                <div className="space-y-3">
+                  {payment.createdAt && (
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <div className="text-muted-foreground text-xs">
+                          Iniciado el
+                        </div>
+                        <div className="font-medium text-sm">
+                          <FormattedDate date={new Date(payment.createdAt)} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {payment.approvedAt && (
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <div className="text-muted-foreground text-xs">
+                          Aprobado el
+                        </div>
+                        <div className="font-medium text-sm">
+                          <FormattedDate date={new Date(payment.approvedAt)} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </Card>
