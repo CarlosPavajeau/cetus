@@ -16,6 +16,7 @@ export const paymentMethodLabels = Object.freeze({
   debit_card: 'Tarjeta de débito',
   bank_transfer: 'Transferencia bancaria',
   cash: 'Efectivo',
+  cash_on_delivery: 'Pago contra entrega',
   account_money: 'Dinero en cuenta',
   CARD: 'Tarjeta de crédito/débito',
   NEQUI: 'Nequi',
