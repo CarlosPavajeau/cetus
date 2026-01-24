@@ -39,3 +39,8 @@ export const orderPaymentProviders = Object.freeze({
   wompi: 'Wompi',
   mercado_pago: 'MercadoPago',
 })
+
+export const manualPaymentMethodLabels = Object.freeze({
+  cash_on_delivery: 'Pago contra entrega',
+  bank_transfer: 'Transferencia bancaria',
+})
