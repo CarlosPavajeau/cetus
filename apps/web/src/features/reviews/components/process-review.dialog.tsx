@@ -2,9 +2,9 @@ import { api } from '@cetus/api-client'
 import type { PendingForApprovalProductReview } from '@cetus/api-client/types/reviews'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { Button } from '@cetus/ui/button'
-import DialogContent, {
+import {
   Dialog,
-  DialogBody,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -85,51 +85,45 @@ export function ProcessReviewDialog({ review }: Readonly<Props>) {
           </DialogDescription>
         </DialogHeader>
 
-        <DialogBody>
-          <FieldGroup>
-            <div className="flex items-start gap-4 rounded-lg bg-secondary p-2">
-              <Image
-                alt={review.product.name}
-                className="size-20 rounded-lg object-cover"
-                height={80}
-                layout="constrained"
-                objectFit="cover"
-                src={getImageUrl(review.product.imageUrl)}
-                width={80}
-              />
-              <div>
-                <h3 className="font-medium text-base">{review.product.name}</h3>
+        <FieldGroup>
+          <div className="flex items-start gap-4 rounded-lg bg-secondary p-2">
+            <Image
+              alt={review.product.name}
+              className="size-20 rounded-lg object-cover"
+              height={80}
+              layout="constrained"
+              objectFit="cover"
+              src={getImageUrl(review.product.imageUrl)}
+              width={80}
+            />
+            <div>
+              <h3 className="font-medium text-base">{review.product.name}</h3>
 
-                <div className="flex items-center gap-2">
-                  <p className="text-muted-foreground text-sm">Calificación:</p>
-                  <StarRating
-                    className="gap-1"
-                    rating={review.rating}
-                    size={3}
-                  />
-                </div>
-
-                <p className="text-muted-foreground text-sm">
-                  Comentario: {review.comment}
-                </p>
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground text-sm">Calificación:</p>
+                <StarRating className="gap-1" rating={review.rating} size={3} />
               </div>
+
+              <p className="text-muted-foreground text-sm">
+                Comentario: {review.comment}
+              </p>
             </div>
+          </div>
 
-            <Field>
-              <FieldLabel>
-                Razón para rechazar la reseña (obligatorio si rechazas):
-              </FieldLabel>
+          <Field>
+            <FieldLabel>
+              Razón para rechazar la reseña (obligatorio si rechazas):
+            </FieldLabel>
 
-              <Textarea
-                className="min-h-[100px] resize-none"
-                id="moderatorNotes"
-                onChange={(e) => setModeratorNotes(e.target.value)}
-                placeholder="Escribe las razones para rechazar la reseña..."
-                value={moderatorNotes}
-              />
-            </Field>
-          </FieldGroup>
-        </DialogBody>
+            <Textarea
+              className="min-h-25 resize-none"
+              id="moderatorNotes"
+              onChange={(e) => setModeratorNotes(e.target.value)}
+              placeholder="Escribe las razones para rechazar la reseña..."
+              value={moderatorNotes}
+            />
+          </Field>
+        </FieldGroup>
 
         <DialogFooter>
           <Button
