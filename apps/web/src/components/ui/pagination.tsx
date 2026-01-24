@@ -1,10 +1,12 @@
-import { type Button, buttonVariants } from '@cetus/ui/button'
+import { Button } from '@cetus/web/components/ui/button'
+
 import { cn } from '@cetus/web/shared/utils'
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  MoreHorizontalIcon,
-} from 'lucide-react'
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  MoreHorizontalCircle01Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import type * as React from 'react'
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
@@ -13,6 +15,7 @@ function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
       aria-label="pagination"
       className={cn('mx-auto flex w-full justify-center', className)}
       data-slot="pagination"
+      role="navigation"
       {...props}
     />
   )
@@ -24,7 +27,7 @@ function PaginationContent({
 }: React.ComponentProps<'ul'>) {
   return (
     <ul
-      className={cn('flex flex-row items-center gap-1', className)}
+      className={cn('flex items-center gap-0.5', className)}
       data-slot="pagination-content"
       {...props}
     />
@@ -37,7 +40,6 @@ function PaginationItem({ ...props }: React.ComponentProps<'li'>) {
 
 type PaginationLinkProps = {
   isActive?: boolean
-  isDisabled?: boolean
 } & Pick<React.ComponentProps<typeof Button>, 'size'> &
   React.ComponentProps<'a'>
 
@@ -48,20 +50,19 @@ function PaginationLink({
   ...props
 }: PaginationLinkProps) {
   return (
-    // biome-ignore lint/nursery/useAnchorHref: href is passed on props
-    <a
-      aria-current={isActive ? 'page' : undefined}
-      className={cn(
-        buttonVariants({
-          variant: isActive ? 'outline' : 'ghost',
-          size,
-        }),
-        className,
-      )}
-      data-active={isActive}
-      data-slot="pagination-link"
-      {...props}
-    />
+    <Button
+      asChild
+      className={cn(className)}
+      size={size}
+      variant={isActive ? 'outline' : 'ghost'}
+    >
+      <a
+        aria-current={isActive ? 'page' : undefined}
+        data-active={isActive}
+        data-slot="pagination-link"
+        {...props}
+      />
+    </Button>
   )
 }
 
@@ -72,12 +73,16 @@ function PaginationPrevious({
   return (
     <PaginationLink
       aria-label="Go to previous page"
-      className={cn('gap-1 px-2.5 sm:pe-4', className)}
+      className={cn('pl-1.5!', className)}
       size="default"
       {...props}
     >
-      <ChevronLeftIcon size={16} />
-      <span>Previous</span>
+      <HugeiconsIcon
+        data-icon="inline-start"
+        icon={ArrowLeft01Icon}
+        strokeWidth={2}
+      />
+      <span className="hidden sm:block">Previous</span>
     </PaginationLink>
   )
 }
@@ -89,12 +94,16 @@ function PaginationNext({
   return (
     <PaginationLink
       aria-label="Go to next page"
-      className={cn('gap-1 px-2.5 sm:ps-4', className)}
+      className={cn('pr-1.5!', className)}
       size="default"
       {...props}
     >
-      <span>Next</span>
-      <ChevronRightIcon size={16} />
+      <span className="hidden sm:block">Next</span>
+      <HugeiconsIcon
+        data-icon="inline-end"
+        icon={ArrowRight01Icon}
+        strokeWidth={2}
+      />
     </PaginationLink>
   )
 }
@@ -106,11 +115,14 @@ function PaginationEllipsis({
   return (
     <span
       aria-hidden
-      className={cn('flex size-9 items-center justify-center', className)}
+      className={cn(
+        "flex size-8 items-center justify-center [&_svg:not([class*='size-'])]:size-4",
+        className,
+      )}
       data-slot="pagination-ellipsis"
       {...props}
     >
-      <MoreHorizontalIcon size={16} />
+      <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
       <span className="sr-only">More pages</span>
     </span>
   )
