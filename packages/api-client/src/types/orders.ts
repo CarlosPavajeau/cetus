@@ -72,6 +72,7 @@ export type ChangeOrderStatusRequest = {
   newStatus: OrderStatus
   userId?: string
   notes?: string
+  paymentMethod?: PaymentMethod
 }
 
 export type OrderInsights = {
