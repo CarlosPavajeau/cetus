@@ -174,7 +174,7 @@ const ProductOptions = ({
                       className="disabled:opacity-100"
                       disabled
                       size="sm"
-                      variant={isSelected ? 'primary' : 'outline'}
+                      variant={isSelected ? 'default' : 'outline'}
                     >
                       {value.value}
                     </Button>
