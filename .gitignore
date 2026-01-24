@@ -3,6 +3,8 @@
 *.local
 *.log*
 *.pem
+.agents
+skills
 
 # Dependencies
 node_modules

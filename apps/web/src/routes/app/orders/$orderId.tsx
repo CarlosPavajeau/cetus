@@ -48,7 +48,11 @@ function OrderDetailsComponent() {
   useRealtimeOrderUpdates(orderId)
 
   if (isLoading) {
-    return <DefaultLoader />
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <DefaultLoader />
+      </div>
+    )
   }
 
   if (!order) {

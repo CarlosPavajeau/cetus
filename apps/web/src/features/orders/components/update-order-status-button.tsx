@@ -9,21 +9,21 @@ import {
 } from '@cetus/ui/dropdown-menu'
 import { Button } from '@cetus/web/components/ui/button'
 import { Spinner } from '@cetus/web/components/ui/spinner'
-import { useMutation } from '@tanstack/react-query'
 import {
-  BanIcon,
-  CheckCircleIcon,
-  ChevronDownIcon,
-  ClockIcon,
-  CreditCardIcon,
+  CancelCircleIcon,
+  CreditCardPosIcon,
+  DeliveryReturn01Icon,
+  PackageDeliveredIcon,
   PackageIcon,
-  PackageSearchIcon,
-  RotateCcwIcon,
-  StoreIcon,
-  TruckIcon,
-  XCircleIcon,
-} from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+  PackageProcessIcon,
+  ShippingTruck01Icon,
+  Store01Icon,
+  UnavailableIcon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { useMutation } from '@tanstack/react-query'
+import { ChevronDownIcon } from 'lucide-react'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { CancelOrderDialog } from './cancel-order-dialog'
 
@@ -44,16 +44,16 @@ const nextAllowedOrderStatuses: Record<OrderStatus, OrderStatus[]> = {
 }
 
 const statusIcons = {
-  pending_payment: ClockIcon,
-  payment_confirmed: CreditCardIcon,
-  processing: PackageSearchIcon,
-  ready_for_pickup: StoreIcon,
-  shipped: TruckIcon,
-  delivered: CheckCircleIcon,
-  failed_delivery: XCircleIcon,
-  canceled: BanIcon,
-  returned: RotateCcwIcon,
-} satisfies Record<OrderStatus, typeof ClockIcon>
+  pending_payment: <HugeiconsIcon icon={PackageProcessIcon} />,
+  payment_confirmed: <HugeiconsIcon icon={CreditCardPosIcon} />,
+  processing: <HugeiconsIcon icon={PackageProcessIcon} />,
+  ready_for_pickup: <HugeiconsIcon icon={Store01Icon} />,
+  shipped: <HugeiconsIcon icon={ShippingTruck01Icon} />,
+  delivered: <HugeiconsIcon icon={PackageDeliveredIcon} />,
+  failed_delivery: <HugeiconsIcon icon={CancelCircleIcon} />,
+  canceled: <HugeiconsIcon icon={UnavailableIcon} />,
+  returned: <HugeiconsIcon icon={DeliveryReturn01Icon} />,
+} satisfies Record<OrderStatus, ReactNode>
 
 export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
   const nextStatuses = useMemo(
@@ -95,11 +95,11 @@ export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
     <>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" type="button">
+          <Button type="button">
             {updateStatusMutation.isPending ? (
               <Spinner aria-hidden="true" />
             ) : (
-              <PackageIcon aria-hidden="true" />
+              <HugeiconsIcon icon={PackageIcon} />
             )}
             Cambiar estado
             <ChevronDownIcon aria-hidden="true" />
@@ -116,8 +116,9 @@ export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
                   disabled={updateStatusMutation.isPending}
                   key={status}
                   onSelect={() => setCancelDialogOpen(true)}
+                  variant="destructive"
                 >
-                  <StatusIcon className="size-4" />
+                  {StatusIcon}
                   {orderStatusLabels[status]}
                 </DropdownMenuItem>
               )
@@ -130,7 +131,7 @@ export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
                 key={status}
                 onSelect={() => handleStatusChange(status)}
               >
-                <StatusIcon className="size-4" />
+                {StatusIcon}
                 {orderStatusLabels[status]}
               </DropdownMenuItem>
             )
