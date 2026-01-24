@@ -1,10 +1,10 @@
 import { api } from '@cetus/api-client'
 import { createDeliveryFeeSchema } from '@cetus/schemas/order.schema'
 import { Button } from '@cetus/ui/button'
-import DialogContent, {
+import {
   Dialog,
-  DialogBody,
   DialogClose,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -93,7 +93,7 @@ export function CreateDeliveryFeeDialog() {
             </DialogDescription>
           </DialogHeader>
 
-          <DialogBody>
+          <div>
             <FieldGroup>
               <Field>
                 <FieldLabel>Departamento</FieldLabel>
@@ -179,7 +179,7 @@ export function CreateDeliveryFeeDialog() {
                 )}
               />
             </FieldGroup>
-          </DialogBody>
+          </div>
 
           <DialogFooter>
             <DialogClose asChild>

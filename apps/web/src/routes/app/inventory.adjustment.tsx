@@ -6,7 +6,6 @@ import { Button } from '@cetus/ui/button'
 import { Card } from '@cetus/ui/card'
 import {
   Dialog,
-  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
@@ -96,8 +95,7 @@ function GlobalReasonDialog() {
       <DialogTrigger asChild>
         <Button
           aria-label="Agregar motivo global"
-          mode="icon"
-          size="sm"
+          size="icon-sm"
           title="Agregar motivo global"
           type="button"
           variant="outline"
@@ -114,7 +112,7 @@ function GlobalReasonDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <DialogBody>
+        <div>
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="globalReason">Motivo (opcional)</FieldLabel>
@@ -128,7 +126,7 @@ function GlobalReasonDialog() {
               />
             </Field>
           </FieldGroup>
-        </DialogBody>
+        </div>
 
         <DialogFooter>
           <DialogClose asChild>
@@ -313,9 +311,7 @@ const AdjustmentTableRow = ({
       </TableCell>
       <TableCell className="text-right">
         <Button
-          appearance="ghost"
           aria-label="Eliminar producto"
-          mode="icon"
           onClick={() => onRemove(index)}
           size="icon"
           type="button"
@@ -350,9 +346,8 @@ const AdjustmentCard = ({
       <div className="absolute top-2 right-2 flex items-center gap-1">
         <Button
           aria-label="Eliminar producto"
-          mode="icon"
           onClick={() => onRemove(index)}
-          size="xs"
+          size="icon-xs"
           type="button"
           variant="ghost"
         >
@@ -574,7 +569,6 @@ function RouteComponent() {
           <div className="sticky top-0 z-10 space-y-4 bg-background py-4">
             <Button
               className="relative w-full"
-              mode="input"
               onClick={() => setSearchDialogOpen(true)}
               type="button"
               variant="outline"
@@ -611,7 +605,6 @@ function RouteComponent() {
                 <div className="flex gap-2">
                   <GlobalReasonDialog />
                   <Button
-                    appearance="ghost"
                     onClick={handleReset}
                     size="sm"
                     type="button"

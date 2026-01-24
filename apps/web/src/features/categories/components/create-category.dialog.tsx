@@ -2,7 +2,6 @@ import { createCategorySchema } from '@cetus/schemas/category.schema'
 import { Button } from '@cetus/ui/button'
 import {
   Dialog,
-  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
@@ -55,7 +54,7 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
             </DialogDescription>
           </DialogHeader>
 
-          <DialogBody>
+          <div>
             <FieldGroup>
               <Controller
                 control={form.control}
@@ -78,7 +77,7 @@ export const CreateCategoryDialog = ({ open, onOpenChange }: Props) => {
                 )}
               />
             </FieldGroup>
-          </DialogBody>
+          </div>
 
           <DialogFooter>
             <DialogClose asChild>

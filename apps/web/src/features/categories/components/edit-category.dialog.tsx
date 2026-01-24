@@ -5,10 +5,10 @@ import type {
 } from '@cetus/api-client/types/categories'
 import { editCategorySchema } from '@cetus/schemas/category.schema'
 import { Button } from '@cetus/ui/button'
-import DialogContent, {
+import {
   Dialog,
-  DialogBody,
   DialogClose,
+  DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -72,7 +72,7 @@ export function EditCategoryDialog({ category }: Props) {
             <DialogTitle>Editar categoría</DialogTitle>
           </DialogHeader>
 
-          <DialogBody>
+          <div>
             <FieldGroup>
               <Controller
                 control={form.control}
@@ -95,7 +95,7 @@ export function EditCategoryDialog({ category }: Props) {
                 )}
               />
             </FieldGroup>
-          </DialogBody>
+          </div>
 
           <DialogFooter>
             <DialogClose asChild>

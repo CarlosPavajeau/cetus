@@ -17,7 +17,7 @@ import {
 } from '@cetus/ui/empty'
 import { Item, ItemContent, ItemMedia, ItemTitle } from '@cetus/ui/item'
 import { Spinner } from '@cetus/ui/spinner'
-import DialogContent, { Dialog } from '@cetus/web/components/ui/dialog'
+import { Dialog } from '@cetus/web/components/ui/dialog'
 import { productQueries } from '@cetus/web/features/products/queries'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { useQuery } from '@tanstack/react-query'
@@ -72,7 +72,7 @@ export function SearchProductsDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="overflow-hidden p-0 shadow-lg">
+      <div className="overflow-hidden p-0 shadow-lg">
         <DialogTitle className="hidden" />
         <Command shouldFilter={false}>
           <CommandInput
@@ -206,7 +206,7 @@ export function SearchProductsDialog({
               ))}
           </CommandList>
         </Command>
-      </DialogContent>
+      </div>
     </Dialog>
   )
 }
