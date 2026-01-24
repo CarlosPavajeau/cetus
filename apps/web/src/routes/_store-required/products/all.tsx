@@ -1,18 +1,25 @@
 import { api } from '@cetus/api-client'
 import { Button } from '@cetus/ui/button'
-import { Input } from '@cetus/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@cetus/ui/input-group'
+import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { Skeleton } from '@cetus/web/components/ui/skeleton'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
 import { ProductGrid } from '@cetus/web/features/products/components/product-grid'
 import { ProductGridSkeleton } from '@cetus/web/features/products/components/product-grid-skeleton'
 import { productKeys } from '@cetus/web/features/products/queries'
+import { Search01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
-import { Loader2, SearchIcon, SearchXIcon } from 'lucide-react'
+import { Loader2, SearchXIcon } from 'lucide-react'
 import {
   createStandardSchemaV1,
-  parseAsIndex,
   parseAsNativeArrayOf,
   parseAsString,
   useQueryStates,
@@ -20,7 +27,6 @@ import {
 import { type ReactNode, useEffect, useState } from 'react'
 
 const searchParams = {
-  pageSize: parseAsIndex.withDefault(20),
   searchTerm: parseAsString.withDefault(''),
   categoryIds: parseAsNativeArrayOf(parseAsString),
 }
@@ -74,17 +80,18 @@ function RouteComponent() {
     }))
   }
 
-  if (isPending || isLoadingCategories) {
+  if (isLoadingCategories) {
     return (
       <DefaultPageLayout>
         <div className="flex w-full flex-col items-center gap-4">
-          <p className="w-full text-left font-heading font-medium text-2xl">
+          <h2 className="w-full text-left font-heading font-medium text-2xl">
             Todos nuestros productos
-          </p>
-          <div className="h-10 w-full" />
-          <div className="h-9 w-full" />
+          </h2>
+
+          <Skeleton className="h-10 w-full" />
+
+          <ProductGridSkeleton />
         </div>
-        <ProductGridSkeleton />
       </DefaultPageLayout>
     )
   }
@@ -111,6 +118,10 @@ function RouteComponent() {
     content = <ProductGrid products={allProducts} />
   }
 
+  if (isPending) {
+    content = <ProductGridSkeleton />
+  }
+
   return (
     <DefaultPageLayout>
       <div className="flex flex-col items-center gap-4">
@@ -119,19 +130,20 @@ function RouteComponent() {
         </p>
 
         <div className="flex w-full flex-col gap-4">
-          <div className="relative w-full">
-            <SearchIcon className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-10"
+          <InputGroup>
+            <InputGroupInput
               onChange={(e) => setLocalSearchTerm(e.target.value)}
               placeholder="Buscar productos..."
               value={localSearchTerm}
             />
-          </div>
+            <InputGroupAddon>
+              <HugeiconsIcon icon={Search01Icon} />
+            </InputGroupAddon>
+          </InputGroup>
 
           {categories && categories.length > 0 && (
-            <div className="relative w-full">
-              <div className="scrollbar-hide flex w-full gap-2 overflow-x-auto pb-2">
+            <ScrollArea>
+              <div className="flex w-max space-x-1 pb-4">
                 {categories.map((category) => (
                   <Button
                     className="shrink-0"
@@ -148,7 +160,8 @@ function RouteComponent() {
                   </Button>
                 ))}
               </div>
-            </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           )}
         </div>
 
