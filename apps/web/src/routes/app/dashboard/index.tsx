@@ -56,33 +56,23 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-heading font-semibold text-2xl">
-          Panel de control
-        </h1>
-
-        <div>
-          <Select
-            defaultValue={month as unknown as string}
-            onValueChange={handleMonthChange}
-            value={month as unknown as string}
-          >
-            <SelectTrigger className="h-7 text-xs">
-              <SelectValue placeholder="Selecciona un mes" />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((monthOption) => (
-                <SelectItem
-                  className="pe-8 text-xs"
-                  key={monthOption.value}
-                  value={monthOption.value}
-                >
-                  {monthOption.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <Select
+          defaultValue={month as unknown as string}
+          onValueChange={handleMonthChange}
+          value={month as unknown as string}
+        >
+          <SelectTrigger className="w-full max-w-48">
+            <SelectValue placeholder="Selecciona un mes" />
+          </SelectTrigger>
+          <SelectContent position="popper">
+            {MONTHS.map((monthOption) => (
+              <SelectItem key={monthOption.value} value={monthOption.value}>
+                {monthOption.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <OrdersInsights />
