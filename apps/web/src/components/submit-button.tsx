@@ -30,7 +30,7 @@ export function SubmitButton({
         {children}
       </span>
       {isSubmitting && (
-        <span className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2">
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <LoaderCircleIcon
             aria-hidden="true"
             className="animate-spin"

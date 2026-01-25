@@ -75,7 +75,7 @@ export function AuthLayout<T extends FieldValues = FieldValues>({
           <div className="p-3">
             <p className="text-center text-accent-foreground text-sm">
               {footerText}
-              <Button asChild className="px-2" mode="link">
+              <Button asChild variant="link">
                 <Link
                   search={{
                     invitation,

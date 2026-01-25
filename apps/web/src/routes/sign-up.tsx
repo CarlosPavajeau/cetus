@@ -90,10 +90,8 @@ function RouteComponent() {
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel>Contraseña</FormLabel>
-              <Button asChild mode="link" size="sm" underline="solid">
-                <Link className="link intent-info variant-ghost text-sm" to="/">
-                  ¿Olvidaste tu contraseña?
-                </Link>
+              <Button asChild size="xs" variant="link">
+                <Link to="/">¿Olvidaste tu contraseña?</Link>
               </Button>
             </div>
             <FormControl>

@@ -37,7 +37,7 @@ export function GoogleSignIn({ invitation }: Readonly<Props>) {
     }, 2000)
   }
   return (
-    <Button disabled={isLoading} onClick={signIn} variant="outline">
+    <Button disabled={isLoading} onClick={signIn} size="lg" variant="outline">
       <GoogleIcon className="h-5 w-5" />
       <span className="whitespace-nowrap">Google</span>
     </Button>
