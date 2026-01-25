@@ -9,16 +9,16 @@ export function ApplicationHome() {
     <main className="relative overflow-hidden">
       <div
         aria-hidden
-        className="-z-10 pointer-events-none absolute inset-0 select-none opacity-70 contain-strict"
+        className="pointer-events-none absolute inset-0 -z-10 select-none opacity-70 contain-strict"
       >
-        <div className="absolute top-[-10%] left-[-20%] h-[36rem] w-[36rem] rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(0,0%,85%,.10)_0,hsla(0,0%,55%,.04)_50%,hsla(0,0%,45%,0)_80%)] blur-3xl" />
-        <div className="absolute top-[10%] right-[-25%] h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.08)_0,hsla(0,0%,45%,.03)_80%,transparent_100%)] blur-2xl" />
-        <div className="-translate-x-1/2 absolute bottom-[-20%] left-1/2 h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.06)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)] blur-2xl" />
+        <div className="absolute top-[-10%] left-[-20%] h-144 w-xl rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(0,0%,85%,.10)_0,hsla(0,0%,55%,.04)_50%,hsla(0,0%,45%,0)_80%)] blur-3xl" />
+        <div className="absolute top-[10%] right-[-25%] h-120 w-120 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.08)_0,hsla(0,0%,45%,.03)_80%,transparent_100%)] blur-2xl" />
+        <div className="absolute bottom-[-20%] left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.06)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)] blur-2xl" />
       </div>
 
       <section>
         <div className="relative pt-24 md:pt-32">
-          <div className="-z-10 absolute inset-0 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--color-background)_75%)]" />
+          <div className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--color-background)_75%)]" />
           <div className="mx-auto max-w-7xl px-6">
             <div className="text-center sm:mx-auto lg:mt-0 lg:mr-auto">
               <motion.h1
@@ -233,18 +233,18 @@ export function ApplicationHome() {
 
       <section className="mx-auto my-28 max-w-7xl px-6">
         <motion.div
-          className="relative overflow-hidden rounded border bg-gradient-to-b from-background to-muted/30 p-10 text-center"
+          className="relative overflow-hidden rounded border bg-linear-to-b from-background to-muted/30 p-10 text-center"
           initial={{ opacity: 0, y: 18 }}
           viewport={{ once: true, amount: 0.6 }}
           whileInView={{ opacity: 1, y: 0, transition }}
         >
           <div
             aria-hidden
-            className="-left-24 -top-24 pointer-events-none absolute size-64 rounded-full bg-primary/10 blur-3xl"
+            className="pointer-events-none absolute -top-24 -left-24 size-64 rounded-full bg-primary/10 blur-3xl"
           />
           <div
             aria-hidden
-            className="-bottom-24 -right-24 pointer-events-none absolute size-72 rounded-full bg-primary/10 blur-3xl"
+            className="pointer-events-none absolute -right-24 -bottom-24 size-72 rounded-full bg-primary/10 blur-3xl"
           />
 
           <h2 className="font-heading text-2xl md:text-4xl">
