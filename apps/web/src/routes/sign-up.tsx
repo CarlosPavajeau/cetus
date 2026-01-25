@@ -1,21 +1,14 @@
 import { authClient } from '@cetus/auth/client'
-import { Button } from '@cetus/ui/button'
-import { FormControl, FormField, FormItem, FormLabel } from '@cetus/ui/form'
+import { signUpWithEmailAndPasswordSchema } from '@cetus/schemas/auth.schema'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
 import { Input } from '@cetus/ui/input'
 import { SubmitButton } from '@cetus/web/components/submit-button'
 import { AuthLayout } from '@cetus/web/features/auth/components/auth-layout'
 import { authSearchSchema } from '@cetus/web/schemas/auth'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { type } from 'arktype'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-
-const SignUpWithEmailAndPasswordSchema = type({
-  name: type('string'),
-  email: type('string.email'),
-  password: type('string'),
-})
+import { Controller, useForm } from 'react-hook-form'
 
 export const Route = createFileRoute('/sign-up')({
   validateSearch: authSearchSchema,
@@ -29,7 +22,7 @@ function RouteComponent() {
     invitation !== undefined ? `/accept-invitation/${invitation}` : '/app'
 
   const form = useForm({
-    resolver: arktypeResolver(SignUpWithEmailAndPasswordSchema),
+    resolver: arktypeResolver(signUpWithEmailAndPasswordSchema),
   })
 
   const handleSubmit = form.handleSubmit(async (data) => {
@@ -57,54 +50,65 @@ function RouteComponent() {
       onSubmit={handleSubmit}
       title="Crear una cuenta en Cetus"
     >
-      <FormField
-        control={form.control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Nombre</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+      <FieldGroup>
+        <Controller
+          control={form.control}
+          name="name"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="name">Nombre</FieldLabel>
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                autoComplete="off"
+                id="name"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="email"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+        <Controller
+          control={form.control}
+          name="email"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                autoComplete="off"
+                id="email"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="password"
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex items-center justify-between">
-              <FormLabel>Contraseña</FormLabel>
-              <Button asChild size="xs" variant="link">
-                <Link to="/">¿Olvidaste tu contraseña?</Link>
-              </Button>
-            </div>
-            <FormControl>
-              <Input {...field} type="password" />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+        <Controller
+          control={form.control}
+          name="password"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="password">Contraseña</FieldLabel>
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                autoComplete="off"
+                id="password"
+                type="password"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+      </FieldGroup>
 
       <SubmitButton
         className="w-full"
-        disabled={!form.formState.isValid}
+        disabled={form.formState.isSubmitting}
         isSubmitting={form.formState.isSubmitting}
+        size="lg"
         type="submit"
       >
         Crear cuenta
