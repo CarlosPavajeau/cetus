@@ -11,15 +11,15 @@ export const orderStatusLabels = Object.freeze({
 })
 
 export const orderStatusColors = Object.freeze({
-  pending_payment: 'bg-warning-base',
-  payment_confirmed: 'bg-success-base',
-  processing: 'bg-info-base',
-  ready_for_pickup: 'bg-info-base',
-  shipped: 'bg-info-base',
-  delivered: 'bg-success-base',
-  canceled: 'bg-destructive',
-  failed_delivery: 'bg-destructive',
-  returned: 'bg-destructive',
+  pending_payment: 'oklch(0.77 0.16 70)',
+  payment_confirmed: 'oklch(0.72 0.19 150)',
+  processing: 'oklch(0.77 0.16 70)',
+  ready_for_pickup: 'oklch(0.72 0.19 150)',
+  shipped: 'oklch(0.72 0.19 150)',
+  delivered: 'oklch(0.72 0.19 150)',
+  canceled: 'oklch(0.64 0.21 25)',
+  failed_delivery: 'oklch(0.72 0.00 0)',
+  returned: 'oklch(0.72 0.00 0)',
 })
 
 export const orderStatusBadgeVariants = Object.freeze({
