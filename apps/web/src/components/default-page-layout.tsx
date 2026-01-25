@@ -55,9 +55,11 @@ function NavBar({ store }: Readonly<NavBarProps>) {
           </Link>
         </div>
 
-        <div className="flex items-center gap-4">
-          <CartButton />
-        </div>
+        {hasStore && (
+          <div className="flex items-center gap-4">
+            <CartButton />
+          </div>
+        )}
       </div>
     </header>
   )
