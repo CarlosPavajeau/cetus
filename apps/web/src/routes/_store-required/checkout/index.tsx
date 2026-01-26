@@ -1,7 +1,6 @@
 import { api } from '@cetus/api-client'
 import type { CreateOrder } from '@cetus/api-client/types/orders'
 import { createOrderSchema } from '@cetus/schemas/order.schema'
-import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import {
   Card,
@@ -15,7 +14,6 @@ import { Form } from '@cetus/ui/form'
 import { Input } from '@cetus/ui/input'
 import { ItemGroup } from '@cetus/ui/item'
 import { Separator } from '@cetus/ui/separator'
-import { Spinner } from '@cetus/ui/spinner'
 import { AddressFields } from '@cetus/web/components/address-fields'
 import { Currency } from '@cetus/web/components/currency'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
@@ -24,16 +22,13 @@ import { OrderItemView } from '@cetus/web/features/orders/components/order-item-
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import { useCart } from '@cetus/web/store/cart'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { ArrowLeft01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
 import consola from 'consola'
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  PackageIcon,
-  TruckIcon,
-} from 'lucide-react'
+import { PackageIcon, TruckIcon } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -250,30 +245,12 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between space-y-2">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2">
+        <div>
           <Button size="sm" variant="ghost">
-            <ArrowLeftIcon className="mr-2 h-4 w-4" />
+            <HugeiconsIcon data-icon="inline-start" icon={ArrowLeft01Icon} />
             Volver
           </Button>
-
-          <div className="flex items-center gap-2">
-            {isLoadingDeliveryFee && (
-              <Badge variant="secondary">
-                <Spinner />
-                Calculando costo de envío...
-              </Badge>
-            )}
-
-            {isSubmitting && (
-              <Badge variant="secondary">
-                <Spinner />
-                Creando pedido...
-              </Badge>
-            )}
-
-            <Badge className="ml-auto">Paso 1 de 2</Badge>
-          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
@@ -308,16 +285,10 @@ function RouteComponent() {
                       className="group mt-6 w-full"
                       disabled={isSubmitting || isLoadingDeliveryFee}
                       isSubmitting={isSubmitting}
+                      size="lg"
                       type="submit"
                     >
-                      <div className="group flex items-center gap-2">
-                        Continuar al pago
-                        <ArrowRightIcon
-                          aria-hidden="true"
-                          className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-                          size={16}
-                        />
-                      </div>
+                      Continuar al pago
                     </SubmitButton>
                   </form>
                 </Form>

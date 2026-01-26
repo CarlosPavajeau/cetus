@@ -9,7 +9,6 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  ArrowRightIcon,
   MinusIcon,
   PlusIcon,
   ShoppingBagIcon,
@@ -227,22 +226,12 @@ function CartPage() {
             </div>
 
             <div className="space-y-3">
-              <Button asChild className="group w-full">
-                <Link to="/checkout">
-                  Continuar con el pago
-                  <ArrowRightIcon
-                    aria-hidden="true"
-                    className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-                    size={16}
-                  />
-                </Link>
+              <Button asChild className="w-full" size="lg">
+                <Link to="/checkout">Continuar con el pago</Link>
               </Button>
 
-              <Button asChild className="w-full" variant="outline">
-                <Link to="/">
-                  <ShoppingCartIcon className="mr-2" />
-                  Seguir comprando
-                </Link>
+              <Button asChild className="w-full" variant="secondary">
+                <Link to="/">Seguir comprando</Link>
               </Button>
             </div>
           </div>

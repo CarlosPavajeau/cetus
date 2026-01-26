@@ -44,12 +44,13 @@ import { MercadoPagoPayment } from '@cetus/web/features/payments/components/merc
 import { NequiPaymentForm } from '@cetus/web/features/payments/components/nequi-payment-form'
 import { PsePaymentForm } from '@cetus/web/features/payments/components/pse-payment-form'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
+import { SecurityCheckIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import {
   BanknoteIcon,
   CreditCardIcon,
   PackageIcon,
-  ShieldCheckIcon,
   Smartphone,
   StoreIcon,
 } from 'lucide-react'
@@ -107,18 +108,16 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2">
         <div className="flex items-center justify-between space-y-2">
           <div className="flex items-center gap-2">
-            <Badge variant="secondary"># {order.orderNumber}</Badge>
-            <Badge variant="secondary">
-              <ShieldCheckIcon />
+            <Badge
+              className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+              variant="secondary"
+            >
+              <HugeiconsIcon icon={SecurityCheckIcon} />
               Pago seguro
             </Badge>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Badge className="ml-auto">Paso 2 de 2</Badge>
           </div>
         </div>
 
@@ -298,7 +297,9 @@ function RouteComponent() {
                     <PackageIcon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle>Resumen de la orden</CardTitle>
+                    <CardTitle>
+                      Resumen de la orden #{order.orderNumber}
+                    </CardTitle>
                   </div>
                 </div>
               </CardHeader>
