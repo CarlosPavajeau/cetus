@@ -108,7 +108,7 @@ export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
         open={cancelDialogOpen}
         orderId={order.id}
       />
-      
+
       <UpdateOrderStatusDialog
         onOpenChange={setUpdateDialogOpen}
         open={isUpdateDialogOpen}

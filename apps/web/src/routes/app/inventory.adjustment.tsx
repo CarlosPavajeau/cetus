@@ -57,7 +57,6 @@ import {
   PackageIcon,
   SaveIcon,
   ScanBarcodeIcon,
-  SearchIcon,
   Trash2Icon,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -98,7 +97,7 @@ function GlobalReasonDialog() {
           size="icon-sm"
           title="Agregar motivo global"
           type="button"
-          variant="outline"
+          variant="secondary"
         >
           <MessageSquareIcon aria-hidden="true" />
         </Button>
@@ -565,17 +564,15 @@ function RouteComponent() {
   return (
     <FormProvider {...form}>
       <form id="inventory-adjustment-form" onSubmit={handleSubmit}>
-        <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl flex-col px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[calc(100vh-4rem)] flex-col px-4 sm:px-6 lg:px-8">
           <div className="sticky top-0 z-10 space-y-4 bg-background py-4">
             <Button
-              className="relative w-full"
               onClick={() => setSearchDialogOpen(true)}
               type="button"
               variant="outline"
             >
-              <SearchIcon />
-              Buscar productos...
-              <Kbd className="pointer-events-none absolute top-1/2 right-1.25 hidden -translate-y-1/2 select-none px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex">
+              Agregar un producto
+              <Kbd className="translate-x-0.5" data-icon="inline-end">
                 {typeof navigator !== 'undefined' &&
                 navigator.userAgent.includes('Mac')
                   ? '⌘'
