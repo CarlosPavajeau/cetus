@@ -1,175 +1,154 @@
-import type { Product } from '@cetus/api-client/types/products'
+import type { Category } from '@cetus/api-client/types/categories'
 import { Button } from '@cetus/ui/button'
 import {
-  type Filter,
-  type FilterFieldConfig,
-  Filters,
-} from '@cetus/web/components/ui/filters'
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from '@cetus/web/components/ui/combobox'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@cetus/web/components/ui/input-group'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
 import { ProductsTable } from '@cetus/web/features/products/components/products-table'
 import { productQueries } from '@cetus/web/features/products/queries'
+import { Search01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { FunnelPlusIcon, PlusIcon } from 'lucide-react'
+import { PlusIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/products/')({
   component: RouteComponent,
 })
 
+type ProductFilters = {
+  name?: string
+  categoryIds?: string[]
+  onlyActive?: boolean
+}
+
 function RouteComponent() {
+  const anchor = useComboboxAnchor()
+
   const { data: products, isLoading } = useQuery(productQueries.list)
   const { data: categories } = useCategories()
+  const [productFilters, setProductFilters] = useState<ProductFilters>({})
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
 
-  const [filters, setFilters] = useState<Filter[]>([])
-
-  const fields: FilterFieldConfig[] = [
-    {
-      key: 'name',
-      label: 'Nombre',
-      operators: [{ value: 'contains', label: 'contiene' }],
-      type: 'text',
-      className: 'w-40',
-      placeholder: 'Buscar por nombre',
-      defaultOperator: 'contains',
-    },
-    {
-      key: 'categoryId',
-      label: 'Categoría',
-      type: 'multiselect',
-      className: 'w-[180px]',
-      operators: [
-        {
-          value: 'is_any_of',
-          label: 'cualquiera de',
-        },
-      ],
-      options: categories?.map((category) => ({
-        value: category.id,
-        label: category.name,
-      })),
-      defaultOperator: 'is_any_of',
-    },
-    {
-      key: 'enabled',
-      label: 'Estado',
-      type: 'select',
-      searchable: false,
-      className: 'w-[140px]',
-      operators: [
-        {
-          value: 'is',
-          label: 'es',
-        },
-        {
-          value: 'is_not',
-          label: 'no es',
-        },
-      ],
-      options: [
-        {
-          value: 'true',
-          label: 'Activo',
-          icon: <div className="size-2 rounded-full bg-green-500" />,
-        },
-        {
-          value: 'false',
-          label: 'Inactivo',
-          icon: <div className="size-2 rounded-full bg-destructive" />,
-        },
-      ],
-    },
-  ]
+  const handleFilterChange = (
+    key: keyof ProductFilters,
+    value: string | string[] | boolean,
+  ) => {
+    setProductFilters((prev) => ({ ...prev, [key]: value }))
+  }
 
   const filteredData = useMemo(() => {
     if (!products) {
       return []
     }
 
-    let filtered = [...products]
+    let filteredProducts = [...products]
 
-    const activeFilters = filters.filter((filter) => {
-      const { values } = filter
-      // Check if filter has meaningful values
-      if (!values || values.length === 0) {
-        return false
-      }
-      // For text/string values, check if they're not empty strings
-      if (
-        values.every(
-          (value) => typeof value === 'string' && value.trim() === '',
-        )
-      ) {
-        return false
-      }
-
-      // For number values, check if they're not null/undefined
-      if (values.every((value) => value === null || value === undefined)) {
-        return false
-      }
-
-      // For arrays, check if they're not empty
-      if (values.every((value) => Array.isArray(value) && value.length === 0)) {
-        return false
-      }
-
-      return true
-    })
-
-    for (const filter of activeFilters) {
-      const { field, operator, values } = filter
-      filtered = filtered.filter((item) => {
-        const fieldValue = item[field as keyof Product]
-        switch (operator) {
-          case 'contains':
-            return values.some((value) =>
-              String(fieldValue)
-                .toLowerCase()
-                .includes(String(value).toLowerCase()),
-            )
-          case 'is_any_of':
-            return values.includes(fieldValue)
-          case 'is':
-            return String(fieldValue) === String(values[0])
-          case 'is_not':
-            return String(fieldValue) !== String(values[0])
-          default:
-            return true
-        }
-      })
+    if (productFilters.name !== undefined) {
+      filteredProducts = filteredProducts.filter((product) =>
+        product.name
+          .toLowerCase()
+          .includes(productFilters.name?.toLowerCase() || ''),
+      )
     }
 
-    return filtered
-  }, [products, filters])
+    if (
+      productFilters.categoryIds !== undefined &&
+      productFilters.categoryIds.length > 0
+    ) {
+      filteredProducts = filteredProducts.filter((product) =>
+        productFilters.categoryIds?.includes(product.categoryId),
+      )
+    }
+
+    if (productFilters.onlyActive !== undefined) {
+      filteredProducts = filteredProducts.filter((product) => product.enabled)
+    }
+
+    return filteredProducts
+  }, [products, productFilters])
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b p-2">
-        <Filters
-          addButton={
-            <Button mode="icon" size="sm" variant="outline">
-              <FunnelPlusIcon />
-            </Button>
-          }
-          fields={fields}
-          filters={filters}
-          onChange={setFilters}
-          size="sm"
-        />
-
-        <Button asChild size="xs">
-          <Link to="/app/products/new">
-            <PlusIcon
-              aria-hidden="true"
-              className="-ms-1 opacity-60"
-              size={16}
+    <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-wrap items-center justify-between">
+        <div className="flex items-center gap-2">
+          <InputGroup className="lg:ml-auto lg:max-w-72">
+            <InputGroupAddon>
+              <HugeiconsIcon icon={Search01Icon} />
+            </InputGroupAddon>
+            <InputGroupInput
+              onChange={(e) => handleFilterChange('name', e.target.value)}
+              placeholder="Nombre del producto"
             />
+          </InputGroup>
+
+          <Combobox
+            autoHighlight
+            defaultValue={selectedCategories}
+            items={categories}
+            itemToStringValue={(category: Category) => category.name}
+            multiple
+            onValueChange={(selected: Category[]) => {
+              setSelectedCategories(selected)
+              handleFilterChange(
+                'categoryIds',
+                selected.map((category) => category.id),
+              )
+            }}
+            value={selectedCategories}
+          >
+            <ComboboxChips className="w-full max-w-2xl" ref={anchor}>
+              <ComboboxValue>
+                {(values) => (
+                  <>
+                    {values.map((category: Category) => (
+                      <ComboboxChip key={category.id}>
+                        {category.name}
+                      </ComboboxChip>
+                    ))}
+                    <ComboboxChipsInput placeholder="Categoría" />
+                  </>
+                )}
+              </ComboboxValue>
+            </ComboboxChips>
+
+            <ComboboxContent anchor={anchor}>
+              <ComboboxEmpty>No se encontraron categorías.</ComboboxEmpty>
+              <ComboboxList>
+                {(category: Category) => (
+                  <ComboboxItem key={category.id} value={category}>
+                    {category.name}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </div>
+
+        <Button asChild>
+          <Link to="/app/products/new">
+            <PlusIcon />
             Crear producto
           </Link>
         </Button>
       </div>
 
-      <div className="px-4">
+      <div>
         <ProductsTable isLoading={isLoading} products={filteredData} />
       </div>
     </div>
