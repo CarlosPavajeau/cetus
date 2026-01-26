@@ -9,6 +9,7 @@
     "dev": "vite dev"
   },
   "dependencies": {
+    "@base-ui/react": "^1.1.0",
     "@cetus/api-client": "workspace:*",
     "@cetus/auth": "workspace:*",
     "@cetus/env": "workspace:*",
