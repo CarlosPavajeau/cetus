@@ -81,18 +81,18 @@ export function CreateDeliveryFeeDialog() {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger>
-        <Button>Agregar costo de envío</Button>
+        <Button type="button">Agregar costo de envío</Button>
       </DialogTrigger>
       <DialogContent>
-        <form id="create-delivery-fee-form" onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Agregar costo de envío</DialogTitle>
-            <DialogDescription>
-              Complete el siguiente formulario para agregar un nuevo costo de
-              envío.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Agregar costo de envío</DialogTitle>
+          <DialogDescription>
+            Complete el siguiente formulario para agregar un nuevo costo de
+            envío.
+          </DialogDescription>
+        </DialogHeader>
 
+        <form id="create-delivery-fee-form" onSubmit={handleSubmit}>
           <div>
             <FieldGroup>
               <Field>
@@ -180,23 +180,24 @@ export function CreateDeliveryFeeDialog() {
               />
             </FieldGroup>
           </div>
-
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancelar
-              </Button>
-            </DialogClose>
-
-            <SubmitButton
-              disabled={createDeliveryFeeMutation.isPending}
-              isSubmitting={createDeliveryFeeMutation.isPending}
-              type="submit"
-            >
-              Agregar
-            </SubmitButton>
-          </DialogFooter>
         </form>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancelar
+            </Button>
+          </DialogClose>
+
+          <SubmitButton
+            disabled={createDeliveryFeeMutation.isPending}
+            form="create-delivery-fee-form"
+            isSubmitting={createDeliveryFeeMutation.isPending}
+            type="submit"
+          >
+            Agregar
+          </SubmitButton>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
