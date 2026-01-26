@@ -15,7 +15,6 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-  InputGroupText,
 } from '@cetus/ui/input-group'
 import {
   Select,
@@ -125,13 +124,14 @@ export function CreateDeliveryFeeDialog() {
                     <FieldLabel htmlFor="cityId">Ciudad</FieldLabel>
 
                     <Select
+                      data-invalid={fieldState.invalid}
                       disabled={
                         isLoadingCities || !currentState || isLoadingStates
                       }
                       onValueChange={field.onChange}
                       value={field.value}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-invalid={fieldState.invalid}>
                         <SelectValue placeholder="Seleccione una ciudad" />
                       </SelectTrigger>
 
@@ -159,17 +159,14 @@ export function CreateDeliveryFeeDialog() {
                     <FieldLabel htmlFor="fee">Costo de envío</FieldLabel>
 
                     <InputGroup>
-                      <InputGroupAddon>
-                        <InputGroupText>$</InputGroupText>
-                      </InputGroupAddon>
                       <InputGroupInput
+                        aria-invalid={fieldState.invalid}
                         className="tabular-nums"
                         id="price"
                         {...field}
                       />
-                      <InputGroupAddon align="inline-end">
-                        <InputGroupText>COP</InputGroupText>
-                      </InputGroupAddon>
+                      <InputGroupAddon>$</InputGroupAddon>
+                      <InputGroupAddon align="inline-end">COP</InputGroupAddon>
                     </InputGroup>
 
                     {fieldState.invalid && (
