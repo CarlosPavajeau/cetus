@@ -25,12 +25,9 @@ function RouteComponent() {
           open={isOpenCreateCategory}
         />
 
-        <Button
-          className="ml-auto"
-          onClick={() => setIsOpenCreateCategory(true)}
-        >
-          <PlusIcon aria-hidden="true" className="-ms-1 opacity-60" size={16} />
-          Crear categoria
+        <Button onClick={() => setIsOpenCreateCategory(true)}>
+          <PlusIcon data-icon="inline-start" />
+          Crear categoría
         </Button>
       </div>
 
