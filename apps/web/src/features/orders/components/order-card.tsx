@@ -1,9 +1,6 @@
 import type { SimpleOrder } from '@cetus/api-client/types/orders'
-import {
-  orderStatusBadgeVariants,
-  orderStatusLabels,
-} from '@cetus/shared/constants/order'
-import { Badge, BadgeDot } from '@cetus/ui/badge'
+import { orderStatusLabels } from '@cetus/shared/constants/order'
+import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Card, CardContent } from '@cetus/ui/card'
 import { Currency } from '@cetus/web/components/currency'
@@ -22,14 +19,7 @@ export function OrderCard({ order }: Readonly<Props>) {
         <div className="flex items-center justify-between border-b p-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold">#{order.orderNumber}</span>
-            <Badge
-              appearance="outline"
-              size="sm"
-              variant={orderStatusBadgeVariants[order.status]}
-            >
-              <BadgeDot />
-              {orderStatusLabels[order.status]}
-            </Badge>
+            <Badge>{orderStatusLabels[order.status]}</Badge>
           </div>
         </div>
 
