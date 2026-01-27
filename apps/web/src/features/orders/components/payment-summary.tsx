@@ -18,6 +18,7 @@ import {
   getPaymentMethodLabel,
   paymentStatusLabel,
 } from '@cetus/web/shared/payments'
+import { cn } from '@cetus/web/shared/utils'
 import { useQuery } from '@tanstack/react-query'
 import {
   AlertCircleIcon,
@@ -77,7 +78,13 @@ export function PaymentSummary({ order }: Readonly<Props>) {
       <div className="flex flex-row items-center justify-between">
         <h3 className="font-semibold">Información del pago</h3>
 
-        <Badge appearance="outline" variant={isPaid ? 'success' : 'warning'}>
+        <Badge
+          className={cn({
+            'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300':
+              isPaid,
+          })}
+          variant={isPaid ? 'secondary' : 'destructive'}
+        >
           {isPaid ? <CheckCircle2Icon /> : <AlertCircleIcon />}
           {paymentStatusLabel(payment.status)}
         </Badge>
@@ -138,9 +145,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
                     Gateway de pago
                   </div>
                 </div>
-                <Badge appearance="light" variant="success">
-                  Activo
-                </Badge>
+                <Badge>Activo</Badge>
               </div>
             </div>
 

@@ -1,8 +1,5 @@
 import { env } from '@cetus/env/client'
-import {
-  orderStatusBadgeVariants,
-  orderStatusLabels,
-} from '@cetus/shared/constants/order'
+import { orderStatusLabels } from '@cetus/shared/constants/order'
 import { Badge } from '@cetus/ui/badge'
 import { DefaultLoader } from '@cetus/web/components/default-loader'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
@@ -78,12 +75,7 @@ function OrderDetailsComponent() {
                 <h1 className="font-bold text-2xl text-foreground tracking-tight">
                   Orden #{order.orderNumber}
                 </h1>
-                <Badge
-                  appearance="outline"
-                  variant={orderStatusBadgeVariants[order.status]}
-                >
-                  {orderStatusLabels[order.status]}
-                </Badge>
+                <Badge>{orderStatusLabels[order.status]}</Badge>
               </div>
 
               <div className="flex items-center text-muted-foreground text-sm">
