@@ -1,11 +1,21 @@
 import { api } from '@cetus/api-client'
+import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
+import { Checkbox } from '@cetus/ui/checkbox'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@cetus/ui/input-group'
-import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { Label } from '@cetus/ui/label'
+import { Separator } from '@cetus/ui/separator'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@cetus/ui/sheet'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { Skeleton } from '@cetus/web/components/ui/skeleton'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
@@ -17,7 +27,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
-import { Loader2, SearchXIcon } from 'lucide-react'
+import { FilterIcon, Loader2, SearchXIcon, XIcon } from 'lucide-react'
 import {
   createStandardSchemaV1,
   parseAsNativeArrayOf,
@@ -38,6 +48,7 @@ export const Route = createFileRoute('/_store-required/products/all')({
 
 function RouteComponent() {
   const [searchQuery, setSearchQuery] = useQueryStates(searchParams)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   const { data: categories, isLoading: isLoadingCategories } = useCategories()
   const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } =
@@ -80,111 +91,245 @@ function RouteComponent() {
     }))
   }
 
+  const clearFilters = () => {
+    setSearchQuery({ searchTerm: '', categoryIds: null })
+    setLocalSearchTerm('')
+  }
+
+  const activeFilterCount =
+    (searchQuery.categoryIds?.length ?? 0) + (searchQuery.searchTerm ? 1 : 0)
+
+  const allProducts = data?.pages.flatMap((page) => page.items) ?? []
+  const totalCount = data?.pages[0]?.totalCount ?? 0
+
+  const filterContent = (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <Label className="font-medium text-sm">Buscar</Label>
+        <InputGroup>
+          <InputGroupInput
+            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            placeholder="Buscar productos..."
+            value={localSearchTerm}
+          />
+          <InputGroupAddon>
+            <HugeiconsIcon icon={Search01Icon} />
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+
+      <Separator />
+
+      {categories && categories.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <Label className="font-medium text-sm">Categorías</Label>
+            {categories.length > 12 && (
+              <span className="text-muted-foreground text-xs">
+                {categories.length} categorías
+              </span>
+            )}
+          </div>
+          <div className="flex max-h-105 flex-col gap-1 overflow-y-auto">
+            {categories.map((category) => (
+              <Label
+                className="flex shrink-0 cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-muted"
+                key={category.id}
+              >
+                <Checkbox
+                  checked={
+                    searchQuery.categoryIds?.includes(category.id) ?? false
+                  }
+                  onCheckedChange={() => handleCategoryToggle(category.id)}
+                />
+                <span className="text-sm">{category.name}</span>
+              </Label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeFilterCount > 0 && (
+        <>
+          <Separator />
+          <Button className="w-full" onClick={clearFilters} variant="outline">
+            <XIcon className="mr-2 size-4" />
+            Limpiar filtros
+          </Button>
+        </>
+      )}
+    </div>
+  )
+
   if (isLoadingCategories) {
     return (
       <DefaultPageLayout>
-        <div className="flex w-full flex-col items-center gap-4">
-          <h2 className="w-full text-left font-heading font-medium text-2xl">
-            Todos nuestros productos
-          </h2>
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+          <aside className="hidden w-64 shrink-0 lg:block">
+            <div className="sticky top-24 flex flex-col gap-4">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-px w-full" />
+              <Skeleton className="h-6 w-20" />
+              <div className="flex flex-col gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton className="h-10 w-full" key={i} />
+                ))}
+              </div>
+            </div>
+          </aside>
 
-          <Skeleton className="h-10 w-full" />
-
-          <ProductGridSkeleton />
+          <div className="flex-1">
+            <div className="mb-6 flex items-center justify-between">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-10 w-24 lg:hidden" />
+            </div>
+            <ProductGridSkeleton />
+          </div>
         </div>
       </DefaultPageLayout>
     )
   }
 
-  const allProducts = data?.pages.flatMap((page) => page.items) ?? []
-
   let content: ReactNode
 
-  if (allProducts.length === 0) {
+  if (isPending) {
+    content = <ProductGridSkeleton />
+  } else if (allProducts.length === 0) {
     content = (
-      <div className="flex min-h-[40vh] w-full flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed">
-        <SearchXIcon className="size-16 text-muted-foreground" />
+      <div className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed bg-muted/30 p-8">
+        <div className="rounded-full bg-muted p-4">
+          <SearchXIcon className="size-12 text-muted-foreground" />
+        </div>
         <div className="text-center">
-          <h2 className="font-bold font-heading text-2xl">
+          <h2 className="font-bold font-heading text-xl">
             No se encontraron productos
           </h2>
-          <p className="text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-sm">
             Intenta ajustar tu búsqueda o filtros.
           </p>
         </div>
+        {activeFilterCount > 0 && (
+          <Button onClick={clearFilters} variant="outline">
+            <XIcon className="mr-2 size-4" />
+            Limpiar filtros
+          </Button>
+        )}
       </div>
     )
   } else {
     content = <ProductGrid products={allProducts} />
   }
 
-  if (isPending) {
-    content = <ProductGridSkeleton />
-  }
-
   return (
     <DefaultPageLayout>
-      <div className="flex flex-col items-center gap-4">
-        <p className="w-full text-left font-heading font-medium text-2xl">
-          Todos nuestros productos
-        </p>
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+        <aside className="hidden w-64 shrink-0 lg:block">
+          <div className="sticky top-24">
+            <h3 className="mb-4 font-heading font-semibold text-lg">Filtros</h3>
+            {filterContent}
+          </div>
+        </aside>
 
-        <div className="flex w-full flex-col gap-4">
-          <InputGroup>
-            <InputGroupInput
-              onChange={(e) => setLocalSearchTerm(e.target.value)}
-              placeholder="Buscar productos..."
-              value={localSearchTerm}
-            />
-            <InputGroupAddon>
-              <HugeiconsIcon icon={Search01Icon} />
-            </InputGroupAddon>
-          </InputGroup>
+        <div className="flex-1">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="font-heading font-semibold text-2xl">
+                Todos nuestros productos
+              </h1>
+              {!isPending && (
+                <p className="mt-1 text-muted-foreground text-sm">
+                  {totalCount} {totalCount === 1 ? 'producto' : 'productos'}{' '}
+                  encontrados
+                </p>
+              )}
+            </div>
 
-          {categories && categories.length > 0 && (
-            <ScrollArea>
-              <div className="flex w-max space-x-1 pb-4">
-                {categories.map((category) => (
-                  <Button
-                    className="shrink-0"
-                    key={category.id}
-                    onClick={() => handleCategoryToggle(category.id)}
-                    size="xs"
-                    variant={
-                      searchQuery.categoryIds?.includes(category.id)
-                        ? 'default'
-                        : 'outline'
-                    }
+            <Sheet onOpenChange={setIsFilterOpen} open={isFilterOpen}>
+              <SheetTrigger asChild>
+                <Button className="lg:hidden" variant="outline">
+                  <FilterIcon className="mr-2 size-4" />
+                  Filtros
+                  {activeFilterCount > 0 && (
+                    <Badge className="ml-2" variant="default">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="overflow-y-auto" side="left">
+                <SheetHeader>
+                  <SheetTitle>Filtros</SheetTitle>
+                </SheetHeader>
+                <div className="px-4 pb-4">{filterContent}</div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {activeFilterCount > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
+              {searchQuery.searchTerm && (
+                <Badge className="gap-1" variant="secondary">
+                  Búsqueda: {searchQuery.searchTerm}
+                  <button
+                    className="ml-1 rounded-full hover:bg-background/50"
+                    onClick={() => {
+                      setSearchQuery((prev) => ({ ...prev, searchTerm: '' }))
+                      setLocalSearchTerm('')
+                    }}
+                    type="button"
                   >
+                    <XIcon className="size-3" />
+                  </button>
+                </Badge>
+              )}
+              {searchQuery.categoryIds?.map((categoryId) => {
+                const category = categories?.find((c) => c.id === categoryId)
+                return category ? (
+                  <Badge className="gap-1" key={categoryId} variant="secondary">
                     {category.name}
-                  </Button>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+                    <button
+                      className="ml-1 rounded-full hover:bg-background/50"
+                      onClick={() => handleCategoryToggle(categoryId)}
+                      type="button"
+                    >
+                      <XIcon className="size-3" />
+                    </button>
+                  </Badge>
+                ) : null
+              })}
+              <Button
+                className="h-5 px-2 text-xs"
+                onClick={clearFilters}
+                variant="ghost"
+              >
+                Limpiar todo
+              </Button>
+            </div>
+          )}
+
+          {content}
+
+          {hasNextPage && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                disabled={isFetchingNextPage}
+                onClick={() => fetchNextPage()}
+                size="lg"
+                variant="outline"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Cargando...
+                  </>
+                ) : (
+                  'Cargar más productos'
+                )}
+              </Button>
+            </div>
           )}
         </div>
-
-        {content}
-
-        {hasNextPage && (
-          <div className="flex justify-center py-6">
-            <Button
-              disabled={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
-              variant="link"
-            >
-              {isFetchingNextPage ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cargando...
-                </>
-              ) : (
-                'Cargar más productos'
-              )}
-            </Button>
-          </div>
-        )}
       </div>
     </DefaultPageLayout>
   )
