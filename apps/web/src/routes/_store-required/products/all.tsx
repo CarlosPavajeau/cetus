@@ -43,7 +43,9 @@ const searchParams = {
 
 export const Route = createFileRoute('/_store-required/products/all')({
   component: RouteComponent,
-  validateSearch: createStandardSchemaV1(searchParams),
+  validateSearch: createStandardSchemaV1(searchParams, {
+    partialOutput: true,
+  }),
 })
 
 function RouteComponent() {
