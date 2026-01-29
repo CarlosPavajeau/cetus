@@ -5,6 +5,8 @@ import { FeaturedProductsSection } from '@cetus/web/components/home/featured-pro
 import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
+import { PromoBannerSection } from '@cetus/web/components/home/promo-banner-section'
+import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { setStoreSlug } from '@cetus/web/functions/store-slug'
@@ -241,7 +243,7 @@ function RouteComponent() {
 
   return (
     <DefaultPageLayout>
-      <main>
+      <main className="space-y-8 md:space-y-12">
         <section aria-labelledby="store-hero-heading">
           <h1 className="sr-only" id="store-hero-heading">
             Bienvenido a {store?.name} - Tu Tienda Online Especializada
@@ -249,11 +251,25 @@ function RouteComponent() {
           <HeroSection />
         </section>
 
+        <section aria-labelledby="store-trust-badges-heading">
+          <h2 className="sr-only" id="store-trust-badges-heading">
+            Por qué comprar en {store?.name}
+          </h2>
+          <TrustBadgesSection />
+        </section>
+
         <section aria-labelledby="store-featured-products-heading">
           <h2 className="sr-only" id="store-featured-products-heading">
             Productos Destacados en {store?.name}
           </h2>
           <FeaturedProductsSection products={featuredProducts} />
+        </section>
+
+        <section aria-labelledby="store-promo-banner-heading">
+          <h2 className="sr-only" id="store-promo-banner-heading">
+            Ofertas y promociones
+          </h2>
+          <PromoBannerSection />
         </section>
 
         <section aria-labelledby="store-popular-products-heading">

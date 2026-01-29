@@ -64,7 +64,7 @@ export function ProductImages({ images }: Readonly<Props>) {
           <>
             <button
               aria-label="Previous image"
-              className="-translate-y-1/2 absolute top-1/2 left-4 flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 text-white shadow-sm transition-colors hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 disabled:opacity-50"
+              className="absolute top-1/2 left-4 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-gray-800 text-white shadow-sm transition-colors hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 disabled:opacity-50"
               onClick={() => api?.scrollPrev()}
               type="button"
             >
@@ -72,7 +72,7 @@ export function ProductImages({ images }: Readonly<Props>) {
             </button>
             <button
               aria-label="Next image"
-              className="-translate-y-1/2 absolute top-1/2 right-4 flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 text-white shadow-sm transition-colors hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 disabled:opacity-50"
+              className="absolute top-1/2 right-4 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-gray-800 text-white shadow-sm transition-colors hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 disabled:opacity-50"
               onClick={() => api?.scrollNext()}
               type="button"
             >
@@ -82,7 +82,7 @@ export function ProductImages({ images }: Readonly<Props>) {
         )}
 
         {images.length > 1 && (
-          <div className="-translate-x-1/2 absolute bottom-4 left-1/2 flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 shadow-sm">
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/70 px-3 py-2 shadow-sm">
             {images.map((img, index) => {
               const isActive = index === current
               return (

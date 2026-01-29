@@ -6,6 +6,8 @@ import { FeaturedProductsSection } from '@cetus/web/components/home/featured-pro
 import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
+import { PromoBannerSection } from '@cetus/web/components/home/promo-banner-section'
+import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { getServerhost } from '@cetus/web/functions/get-host'
@@ -218,9 +220,16 @@ function IndexPage() {
 
   return (
     <DefaultPageLayout>
-      <main>
+      <main className="space-y-8 md:space-y-12">
         <section aria-labelledby="hero-heading">
           <HeroSection />
+        </section>
+
+        <section aria-labelledby="trust-badges-heading">
+          <h2 className="sr-only" id="trust-badges-heading">
+            Por qué comprar en {store?.name}
+          </h2>
+          <TrustBadgesSection />
         </section>
 
         <section aria-labelledby="featured-products-heading">
@@ -228,6 +237,13 @@ function IndexPage() {
             Productos Destacados en {store?.name}
           </h2>
           <FeaturedProductsSection products={featuredProducts} />
+        </section>
+
+        <section aria-labelledby="promo-banner-heading">
+          <h2 className="sr-only" id="promo-banner-heading">
+            Ofertas y promociones
+          </h2>
+          <PromoBannerSection />
         </section>
 
         <section aria-labelledby="popular-products-heading">
