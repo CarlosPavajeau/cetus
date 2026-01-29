@@ -97,7 +97,7 @@ const MemoizedCategoryFilter = memo(function CategoryFilterInternal({
       <Button
         aria-label="Scroll categories left"
         className={cn(
-          '-left-1.5 absolute z-10 h-8 w-8 rounded bg-card',
+          'absolute -left-1.5 z-10 h-8 w-8 rounded bg-card',
           showLeftArrow ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={scrollLeft}
@@ -133,7 +133,7 @@ const MemoizedCategoryFilter = memo(function CategoryFilterInternal({
       <Button
         aria-label="Scroll categories right"
         className={cn(
-          '-right-1.5 absolute z-10 h-8 w-8 rounded bg-card',
+          'absolute -right-1.5 z-10 h-8 w-8 rounded bg-card',
           showRightArrow ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={scrollRight}
