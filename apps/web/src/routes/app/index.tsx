@@ -1,4 +1,7 @@
-import type { OrderStatus } from '@cetus/api-client/types/orders'
+import type {
+  OrderQueryParams,
+  OrderStatus,
+} from '@cetus/api-client/types/orders'
 import {
   orderStatusColors,
   orderStatusLabels,
@@ -50,16 +53,10 @@ const EmptyState = () => (
   </Empty>
 )
 
-type OrderFilters = {
-  statuses: OrderStatus[]
-  from?: Date
-  to?: Date
-}
-
 function RouteComponent() {
   useOrderRealtime()
 
-  const [orderFilters, setOrderFilters] = useState<OrderFilters>({
+  const [orderFilters, setOrderFilters] = useState<OrderQueryParams>({
     statuses: [
       'pending_payment',
       'payment_confirmed',
@@ -71,9 +68,9 @@ function RouteComponent() {
   const toggleStatus = (status: OrderStatus) => {
     setOrderFilters((prev) => ({
       ...prev,
-      statuses: prev.statuses.includes(status)
+      statuses: prev.statuses?.includes(status)
         ? prev.statuses.filter((s) => s !== status)
-        : [...prev.statuses, status],
+        : [...(prev.statuses ?? []), status],
     }))
   }
 
@@ -107,7 +104,7 @@ function RouteComponent() {
                 {Object.entries(orderStatusColors).map(([key, label]) => (
                   <div
                     className="size-2.5 shrink-0 rounded-full border grayscale transition-all data-[active=true]:border-(--color) data-[active=true]:bg-(--color) data-[active=true]:grayscale-0"
-                    data-active={orderFilters.statuses.includes(
+                    data-active={orderFilters.statuses?.includes(
                       key as unknown as OrderStatus,
                     )}
                     key={key}
@@ -119,7 +116,7 @@ function RouteComponent() {
                   />
                 ))}
               </div>
-              Estados {orderFilters.statuses.length}/
+              Estados {orderFilters.statuses?.length || 0}/
               {Object.entries(orderStatusColors).length}
               <HugeiconsIcon icon={ArrowDown01Icon} />
             </Button>
@@ -127,7 +124,7 @@ function RouteComponent() {
 
           <DropdownMenuContent align="end" className="w-56">
             {Object.entries(orderStatusLabels).map(([key, label]) => {
-              const isSelected = orderFilters.statuses.includes(
+              const isSelected = orderFilters.statuses?.includes(
                 key as unknown as OrderStatus,
               )
               const color = orderStatusColors[key as unknown as OrderStatus]

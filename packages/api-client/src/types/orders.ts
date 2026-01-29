@@ -141,8 +141,11 @@ export type CreateOrder = {
 }
 
 export type OrderQueryParams = {
+  page?: number
+  pageSize?: number
   statuses?: OrderStatus[]
-  [key: string]: unknown
+  from?: string
+  to?: string
 }
 
 export type OrderTimeline = {

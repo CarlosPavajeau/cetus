@@ -1,11 +1,12 @@
 import { api } from '@cetus/api-client'
+import type { OrderQueryParams } from '@cetus/api-client/types/orders'
 import { createQueryKeys } from '@cetus/web/lib/query/create-query-keys'
 import { queryOptions } from '@tanstack/react-query'
 
 export const ordersKeys = createQueryKeys('orders')
 
 export const orderQueries = {
-  list: (filters?: Record<string, unknown>) =>
+  list: (filters?: OrderQueryParams) =>
     queryOptions({
       queryKey: ordersKeys.list(filters),
       queryFn: () => api.orders.list(filters),
