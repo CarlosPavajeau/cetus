@@ -652,7 +652,7 @@ function FilterInput<T = unknown>({
         {!isValid && validationMessage && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="-translate-y-1/2 absolute top-1/2 right-2 flex items-center">
+              <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center">
                 <AlertCircle className="size-3.5 text-destructive" />
               </div>
             </TooltipTrigger>
@@ -1213,7 +1213,7 @@ function SelectOptionsPopover<T = unknown>({
               {selectedOptions.length > 0 && (
                 <div
                   className={cn(
-                    '-space-x-1.5 flex items-center',
+                    'flex items-center -space-x-1.5',
                     field.selectedOptionsClassName,
                   )}
                 >
@@ -1681,7 +1681,7 @@ function FilterValueSelector<T = unknown>({
           ) : (
             <>
               {selectedOptions.length > 0 && (
-                <div className="-space-x-1.5 flex items-center">
+                <div className="flex items-center -space-x-1.5">
                   {selectedOptions.slice(0, 3).map((option) => (
                     <div key={String(option.value)}>{option.icon}</div>
                   ))}
