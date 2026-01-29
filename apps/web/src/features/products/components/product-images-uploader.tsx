@@ -45,7 +45,7 @@ export function ProductImagesUploader({
       {/** biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag */}
       {/** biome-ignore lint/a11y/noStaticElementInteractions: drag */}
       <div
-        className="relative flex min-h-52 flex-col items-center not-data-[files]:justify-center overflow-hidden rounded-md border border-input border-dashed p-4 transition-colors has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+        className="relative flex min-h-52 flex-col items-center not-data-files:justify-center overflow-hidden rounded-md border border-input border-dashed p-4 transition-colors has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
         data-dragging={isDragging || undefined}
         data-files={files.length > 0 || undefined}
         onDragEnter={handleDragEnter}
@@ -93,7 +93,7 @@ export function ProductImagesUploader({
                   />
                   <Button
                     aria-label="Remove image"
-                    className="-top-2 -right-2 absolute size-6 rounded-full border-2 border-background shadow-none focus-visible:border-background"
+                    className="absolute -top-2 -right-2 size-6 rounded-full border-2 border-background shadow-none focus-visible:border-background"
                     onClick={() => removeFile(file.id)}
                     size="icon"
                     type="button"
