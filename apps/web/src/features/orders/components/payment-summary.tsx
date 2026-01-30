@@ -1,7 +1,13 @@
 import type { Order } from '@cetus/api-client/types/orders'
 import { orderPaymentProviders } from '@cetus/shared/constants/order'
 import { Badge } from '@cetus/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@cetus/ui/card'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@cetus/ui/card'
 import {
   Empty,
   EmptyDescription,
@@ -9,10 +15,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@cetus/ui/empty'
+import { Separator } from '@cetus/ui/separator'
 import { Skeleton } from '@cetus/ui/skeleton'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { Button } from '@cetus/web/components/ui/button'
-import { Label } from '@cetus/web/components/ui/label'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import {
   getPaymentMethodLabel,
@@ -74,117 +80,104 @@ export function PaymentSummary({ order }: Readonly<Props>) {
   const isPaid = payment.status === 'approved' || payment.status === 'APPROVED'
 
   return (
-    <Card className="p-4">
-      <div className="flex flex-row items-center justify-between">
-        <h3 className="font-semibold">Información del pago</h3>
+    <Card>
+      <CardHeader>
+        <CardTitle>Información del pago</CardTitle>
+        <CardAction>
+          <Badge
+            className={cn({
+              'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300':
+                isPaid,
+            })}
+            variant={isPaid ? 'secondary' : 'destructive'}
+          >
+            {isPaid ? <CheckCircle2Icon /> : <AlertCircleIcon />}
+            {paymentStatusLabel(payment.status)}
+          </Badge>
+        </CardAction>
+      </CardHeader>
 
-        <Badge
-          className={cn({
-            'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300':
-              isPaid,
-          })}
-          variant={isPaid ? 'secondary' : 'destructive'}
-        >
-          {isPaid ? <CheckCircle2Icon /> : <AlertCircleIcon />}
-          {paymentStatusLabel(payment.status)}
-        </Badge>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between rounded-lg border bg-secondary/20 p-3">
-          <div className="flex items-center space-x-3">
-            <div>
-              <p className="font-medium text-sm">
-                {getPaymentMethodLabel(payment.paymentMethod)}
-              </p>
-              <p className="text-muted-foreground text-xs">Método de pago</p>
-            </div>
-          </div>
+      <CardContent className="space-y-4">
+        <div>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            Método de pago
+          </span>
+          <p className="font-medium text-sm">
+            {getPaymentMethodLabel(payment.paymentMethod)}
+          </p>
         </div>
 
         {payment.paymentProvider !== 'manual' && (
           <>
-            <div className="rounded-lg border border-border p-3">
-              <div className="flex items-start gap-3">
-                <div className="min-w-0 flex-1">
-                  <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
-                    Id de transacción
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <code className="max-w-45 truncate rounded border border-border px-2 py-1 font-mono text-xs">
-                      {payment.transactionId}
-                    </code>
+            <Separator />
 
-                    <Button
-                      className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                      onClick={() =>
-                        navigator.clipboard.writeText(payment.transactionId)
-                      }
-                      size="icon"
-                      variant="ghost"
-                    >
-                      <CopyIcon className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
+            <div>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Id de transacción
+              </span>
+              <div className="flex items-center gap-2">
+                <code className="max-w-45 truncate rounded border border-border px-2 py-1 font-mono text-xs">
+                  {payment.transactionId}
+                </code>
+                <Button
+                  onClick={() =>
+                    navigator.clipboard.writeText(payment.transactionId)
+                  }
+                  size="icon"
+                  variant="ghost"
+                >
+                  <CopyIcon className="size-3.5" />
+                </Button>
               </div>
             </div>
 
-            <div className="border-border border-t pt-4">
-              <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
-                Proveedor
-              </Label>
+            <Separator />
 
-              <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm">
-                    {orderPaymentProviders[payment.paymentProvider] ??
-                      payment.paymentProvider}
-                  </div>
-                  <div className="text-muted-foreground text-xs">
-                    Gateway de pago
-                  </div>
-                </div>
+            <div>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Proveedor
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-sm">
+                  {orderPaymentProviders[payment.paymentProvider] ??
+                    payment.paymentProvider}
+                </span>
                 <Badge>Activo</Badge>
               </div>
             </div>
 
             {(payment.createdAt || payment.approvedAt) && (
-              <div className="border-border border-t pt-4">
-                <Label className="mb-1 block font-medium text-xs uppercase tracking-wide">
-                  Eventos
-                </Label>
-                <div className="space-y-3">
-                  {payment.createdAt && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <div className="text-muted-foreground text-xs">
-                          Iniciado el
-                        </div>
-                        <div className="font-medium text-sm">
+              <>
+                <Separator />
+
+                <div>
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Eventos
+                  </span>
+                  <div className="mt-1 space-y-2">
+                    {payment.createdAt && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Iniciado</span>
+                        <span className="font-medium">
                           <FormattedDate date={new Date(payment.createdAt)} />
-                        </div>
+                        </span>
                       </div>
-                    </div>
-                  )}
-                  {payment.approvedAt && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <div className="text-muted-foreground text-xs">
-                          Aprobado el
-                        </div>
-                        <div className="font-medium text-sm">
+                    )}
+                    {payment.approvedAt && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Aprobado</span>
+                        <span className="font-medium">
                           <FormattedDate date={new Date(payment.approvedAt)} />
-                        </div>
+                        </span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </>
         )}
-      </div>
+      </CardContent>
     </Card>
   )
 }
