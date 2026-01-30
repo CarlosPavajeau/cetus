@@ -21,7 +21,9 @@ import {
   EmptyTitle,
 } from '@cetus/ui/empty'
 import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { DateRangeFilter } from '@cetus/web/features/orders/components/date-range-filter'
 import { OrdersList } from '@cetus/web/features/orders/components/orders-list'
+import { OrdersPagination } from '@cetus/web/features/orders/components/orders-pagination'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import { useOrderRealtime } from '@cetus/web/hooks/orders/use-order-realtime'
 import {
@@ -56,22 +58,42 @@ const EmptyState = () => (
 function RouteComponent() {
   useOrderRealtime()
 
-  const [orderFilters, setOrderFilters] = useState<OrderQueryParams>({
-    statuses: [
-      'pending_payment',
-      'payment_confirmed',
-      'processing',
-    ] as OrderStatus[],
-  })
+  const [statuses, setStatuses] = useState<OrderStatus[]>([
+    'pending_payment',
+    'payment_confirmed',
+    'processing',
+  ])
+  const [dateRange, setDateRange] = useState<{ from?: string; to?: string }>({})
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  const orderFilters: OrderQueryParams = {
+    page,
+    pageSize,
+    statuses,
+    from: dateRange.from,
+    to: dateRange.to,
+  }
+
   const { data, isLoading } = useQuery(orderQueries.list(orderFilters))
 
   const toggleStatus = (status: OrderStatus) => {
-    setOrderFilters((prev) => ({
-      ...prev,
-      statuses: prev.statuses?.includes(status)
-        ? prev.statuses.filter((s) => s !== status)
-        : [...(prev.statuses ?? []), status],
-    }))
+    setStatuses((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status],
+    )
+    setPage(1)
+  }
+
+  const handleDateRangeChange = (range: { from?: string; to?: string }) => {
+    setDateRange(range)
+    setPage(1)
+  }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    setPage(1)
   }
 
   const queryClient = useQueryClient()
@@ -80,6 +102,8 @@ function RouteComponent() {
   }
 
   const orders = data?.items || []
+  const totalCount = data?.totalCount ?? 0
+  const totalPages = data?.totalPages ?? 0
   const isEmpty = !orders || orders.length === 0
 
   const content = () => {
@@ -91,7 +115,24 @@ function RouteComponent() {
       return <EmptyState />
     }
 
-    return <OrdersList orders={orders} />
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-muted-foreground text-sm">
+          {totalCount} pedidos encontrados
+        </p>
+        <OrdersList orders={orders} />
+        {totalPages > 1 && (
+          <OrdersPagination
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            totalPages={totalPages}
+          />
+        )}
+      </div>
+    )
   }
 
   return (
@@ -104,7 +145,7 @@ function RouteComponent() {
                 {Object.entries(orderStatusColors).map(([key, label]) => (
                   <div
                     className="size-2.5 shrink-0 rounded-full border grayscale transition-all data-[active=true]:border-(--color) data-[active=true]:bg-(--color) data-[active=true]:grayscale-0"
-                    data-active={orderFilters.statuses?.includes(
+                    data-active={statuses.includes(
                       key as unknown as OrderStatus,
                     )}
                     key={key}
@@ -116,7 +157,7 @@ function RouteComponent() {
                   />
                 ))}
               </div>
-              Estados {orderFilters.statuses?.length || 0}/
+              Estados {statuses.length}/
               {Object.entries(orderStatusColors).length}
               <HugeiconsIcon icon={ArrowDown01Icon} />
             </Button>
@@ -124,7 +165,7 @@ function RouteComponent() {
 
           <DropdownMenuContent align="end" className="w-56">
             {Object.entries(orderStatusLabels).map(([key, label]) => {
-              const isSelected = orderFilters.statuses?.includes(
+              const isSelected = statuses.includes(
                 key as unknown as OrderStatus,
               )
               const color = orderStatusColors[key as unknown as OrderStatus]
@@ -153,6 +194,12 @@ function RouteComponent() {
             })}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <DateRangeFilter
+          from={dateRange.from}
+          onChange={handleDateRangeChange}
+          to={dateRange.to}
+        />
 
         <Button onClick={refresh} size="icon" variant="outline">
           <HugeiconsIcon icon={Refresh01Icon} />

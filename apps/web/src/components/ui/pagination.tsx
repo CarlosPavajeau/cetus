@@ -82,7 +82,7 @@ function PaginationPrevious({
         icon={ArrowLeft01Icon}
         strokeWidth={2}
       />
-      <span className="hidden sm:block">Previous</span>
+      <span className="hidden sm:block">Anterior</span>
     </PaginationLink>
   )
 }
@@ -98,7 +98,7 @@ function PaginationNext({
       size="default"
       {...props}
     >
-      <span className="hidden sm:block">Next</span>
+      <span className="hidden sm:block">Siguiente</span>
       <HugeiconsIcon
         data-icon="inline-end"
         icon={ArrowRight01Icon}
