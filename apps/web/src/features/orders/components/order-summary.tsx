@@ -11,7 +11,7 @@ type Props = {
 
 export function OrderSummary({ order, isAdmin = false }: Readonly<Props>) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4">
         <OrderItemsList order={order} />
       </div>
