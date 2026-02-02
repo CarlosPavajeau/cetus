@@ -595,9 +595,7 @@ function RouteComponent() {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-sm">
                   Productos agregados
-                  <Badge shape="circle" variant="secondary">
-                    {fields.length}
-                  </Badge>
+                  <Badge variant="secondary">{fields.length}</Badge>
                 </h2>
                 <div className="flex gap-2">
                   <GlobalReasonDialog />
