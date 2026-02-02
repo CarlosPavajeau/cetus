@@ -45,6 +45,26 @@ export const createOrderSchema = type({
   shipping: createOrderShippingSchema,
 })
 
+export const createSaleSchema = type({
+  items: createOrderItemSchema
+    .array()
+    .moreThanLength(0)
+    .configure({ message: 'Agrega al menos un producto' }),
+  customer: createOrderCustomerSchema,
+  channel: type("'whatsapp'|'messenger'|'in_store'|'other'").configure({
+    message: 'Selecciona un canal de venta',
+  }),
+  paymentMethod: type("'nequi'|'bank_transfer'|'cash_on_delivery'").configure({
+    message: 'Selecciona un método de pago',
+  }),
+  paymentStatus: type(
+    "'pending'|'awaiting_verification'|'verified'|'rejected'|'refunded'",
+  ).configure({
+    message: 'Selecciona un estado de pago',
+  }),
+  shipping: createOrderShippingSchema.optional(),
+})
+
 export const createDeliveryFeeSchema = type({
   cityId: type.string.moreThanLength(1).configure({
     message: 'Seleccione una ciudad',
