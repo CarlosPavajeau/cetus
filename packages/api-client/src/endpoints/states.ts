@@ -6,4 +6,7 @@ export const statesApi = {
 
   listCities: (stateId: string) =>
     anonymousClient.get<City[]>(`/states/${stateId}/cities`),
+
+  getCity: (cityId: string) =>
+    anonymousClient.get<City>(`/states/cities/${cityId}`),
 }
