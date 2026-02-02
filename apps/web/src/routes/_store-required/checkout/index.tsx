@@ -1,5 +1,8 @@
 import { api } from '@cetus/api-client'
-import type { CreateOrder } from '@cetus/api-client/types/orders'
+import type {
+  CreateOrder,
+  CreateOrderItem,
+} from '@cetus/api-client/types/orders'
 import { createOrderSchema } from '@cetus/schemas/order.schema'
 import { Button } from '@cetus/ui/button'
 import {
@@ -47,36 +50,26 @@ function useCartCheckout() {
   )
 
   const toOrderItems = (source: typeof items) =>
-    source.map((item) => ({
-      productName: item.product.name,
-      variantId: item.product.variantId,
-      quantity: item.quantity,
-      price: item.product.price,
-      imageUrl: item.product.imageUrl,
-    })) as CreateOrder['items']
+    source.map(
+      (item) =>
+        ({
+          variantId: item.product.variantId,
+          quantity: item.quantity,
+        }) satisfies CreateOrderItem,
+    )
 
   const form = useForm({
     resolver: arktypeResolver(createOrderSchema),
     defaultValues: {
-      address: '',
-      total,
       items: toOrderItems(items),
+      customer: {
+        documentNumber: '',
+      },
     },
   })
 
-  const address = form.watch('address')
-  useEffect(() => {
-    form.setValue('customer.address', address)
-  }, [address, form])
-
-  useEffect(() => {
-    form.setValue('total', total)
-
-    form.setValue('items', toOrderItems(items))
-  }, [form, items, total])
-
   const { data: deliveryFee, isLoading: isLoadingDeliveryFee } = useQuery(
-    orderQueries.deliveryFees.detail(form.watch('cityId')),
+    orderQueries.deliveryFees.detail(form.watch('shipping.cityId')),
   )
 
   const navigate = useNavigate()
@@ -124,13 +117,15 @@ type CustomerInfoFieldsProps = {
 }
 
 function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
-  const formCustomerId = form.watch('customer.id')
-  const customerId = useDebounce(formCustomerId, CUSTOMER_ID_DELAY)
+  const documentNumber = useDebounce(
+    form.watch('customer.documentNumber'),
+    CUSTOMER_ID_DELAY,
+  )
 
   const { data: customer, isLoading } = useQuery({
-    queryKey: ['customers', 'detail', customerId],
-    queryFn: () => api.customers.getById(customerId),
-    enabled: !!customerId,
+    queryKey: ['customers', 'detail', documentNumber],
+    queryFn: () => api.customers.getById(documentNumber ?? ''),
+    enabled: !!documentNumber,
   })
 
   useEffect(() => {
@@ -150,7 +145,7 @@ function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
       <div className="space-y-4">
         <Controller
           control={form.control}
-          name="customer.id"
+          name="customer.documentNumber"
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="customer-id">Identificación</FieldLabel>

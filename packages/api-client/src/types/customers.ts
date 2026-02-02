@@ -4,3 +4,5 @@ export type Customer = {
   email: string
   phone: string
 }
+
+export type DocumentType = 'CC' | 'CE' | 'NIT' | 'PP' | 'OTHER'

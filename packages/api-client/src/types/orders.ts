@@ -1,3 +1,4 @@
+import type { DocumentType } from './customers'
 import type { ProductOptionValue } from './products'
 
 export type OrderStatus =
@@ -120,24 +121,28 @@ export type OrderPaymentResponse = {
   approvedAt?: string
 }
 
-export type CreateOrder = {
+export type CreateOrderItem = {
+  variantId: number
+  quantity: number
+}
+
+export type CreateOrderCustomer = {
+  phone: string
+  name: string
+  email?: string
+  documentType?: DocumentType
+  documentNumber?: string
+}
+
+export type CreateOrderShipping = {
   address: string
   cityId: string
-  total: number
-  items: {
-    productName: string
-    variantId: number
-    quantity: number
-    price: number
-    imageUrl?: string
-  }[]
-  customer: {
-    id: string
-    name: string
-    email: string
-    phone: string
-    address: string
-  }
+}
+
+export type CreateOrder = {
+  items: CreateOrderItem[]
+  customer: CreateOrderCustomer
+  shipping: CreateOrderShipping
 }
 
 export type OrderQueryParams = {

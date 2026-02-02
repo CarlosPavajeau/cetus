@@ -23,7 +23,7 @@ export function AddressFields() {
 
   const handleStateChange = (value: string) => {
     setCurrentState(value)
-    form.resetField('cityId', { defaultValue: '' })
+    form.resetField('shipping.cityId', { defaultValue: '' })
   }
 
   return (
@@ -31,7 +31,7 @@ export function AddressFields() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Controller
           control={form.control}
-          name="cityId"
+          name="shipping.cityId"
           render={({ fieldState }) => (
             <Field>
               <FieldContent data-invalid={fieldState.invalid}>
@@ -63,7 +63,7 @@ export function AddressFields() {
 
         <Controller
           control={form.control}
-          name="cityId"
+          name="shipping.cityId"
           render={({ field, fieldState }) => (
             <Field>
               <FieldContent data-invalid={fieldState.invalid}>
@@ -96,7 +96,7 @@ export function AddressFields() {
 
       <Controller
         control={form.control}
-        name="address"
+        name="shipping.address"
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor="address">Dirección</FieldLabel>
