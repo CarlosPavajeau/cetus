@@ -8,9 +8,10 @@ type Props = {
 export function QuickSaleFab({ onClick }: Readonly<Props>) {
   return (
     <Button
-      className="fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg"
+      className="fixed right-6 bottom-6 z-40 size-14 rounded-full shadow-lg"
       onClick={onClick}
       size="icon-lg"
+      type="button"
     >
       <PlusIcon className="size-6" />
       <span className="sr-only">Venta rápida</span>
