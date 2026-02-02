@@ -5,6 +5,7 @@ import type {
   ChangeOrderStatusRequest,
   CreateDeliveryFeeRequest,
   CreateOrder,
+  CreateSale,
   DeliveryFee,
   Order,
   OrderInsights,
@@ -45,6 +46,9 @@ export const ordersApi = {
 
   create: (data: CreateOrder) =>
     anonymousClient.post<SimpleOrder>('/orders', data),
+
+  createSale: (data: CreateSale) =>
+    authenticatedClient.post<SimpleOrder>('/sales', data),
 
   deliver: (id: string) =>
     authenticatedClient.post<SimpleOrder>(`/orders/${id}/deliver`),

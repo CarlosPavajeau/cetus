@@ -111,6 +111,7 @@ export type PaymentMethod =
   | 'cash_reference'
   | 'cash_on_delivery'
   | 'bank_transfer'
+  | 'nequi'
 
 export type OrderPaymentResponse = {
   paymentProvider: PaymentProvider
@@ -143,6 +144,29 @@ export type CreateOrder = {
   items: CreateOrderItem[]
   customer: CreateOrderCustomer
   shipping: CreateOrderShipping
+}
+
+export type OrderChannel =
+  | 'ecommerce'
+  | 'whatsapp'
+  | 'messenger'
+  | 'in_store'
+  | 'other'
+
+export type PaymentStatus =
+  | 'pending'
+  | 'awaiting_verification'
+  | 'verified'
+  | 'rejected'
+  | 'refunded'
+
+export type CreateSale = {
+  items: CreateOrderItem[]
+  customer: CreateOrderCustomer
+  channel: OrderChannel
+  paymentMethod: PaymentMethod
+  shipping?: CreateOrderShipping
+  paymentStatus: PaymentStatus
 }
 
 export type OrderQueryParams = {
