@@ -104,12 +104,6 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     enabled: !!cityId,
   })
 
-  useEffect(() => {
-    if (city) {
-      form.setValue('shipping.cityId', city.id)
-    }
-  }, [city, form])
-
   const total = form.watch('items').reduce((acc, item) => {
     const price =
       selectedProduct?.id === item.variantId ? selectedProduct.price : 0
