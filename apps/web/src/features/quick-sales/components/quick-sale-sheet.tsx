@@ -70,12 +70,11 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     name: 'items',
   })
 
-  const total = form
-    .watch('items')
-    .reduce(
-      (acc, item) => acc + item.quantity * (selectedProduct?.price ?? 0),
-      0,
-    )
+  const total = form.watch('items').reduce((acc, item) => {
+    const price =
+      selectedProduct?.id === item.variantId ? selectedProduct.price : 0
+    return acc + item.quantity * price
+  }, 0)
 
   const handleProductSelect = useCallback(
     (product: SelectedProductVariant) => {
