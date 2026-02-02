@@ -34,8 +34,8 @@ const nextAllowedOrderStatuses: Record<OrderStatus, OrderStatus[]> = {
   processing: ['ready_for_pickup', 'shipped', 'canceled'],
   shipped: ['delivered', 'failed_delivery'],
   ready_for_pickup: ['delivered', 'canceled'],
-  delivered: [],
-  failed_delivery: ['shipped', 'returned'],
+  delivered: ['returned'],
+  failed_delivery: ['shipped', 'returned', 'canceled'],
   canceled: [],
   returned: [],
 }
