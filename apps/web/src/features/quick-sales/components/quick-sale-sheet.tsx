@@ -1,6 +1,7 @@
 import { api } from '@cetus/api-client'
 import { createSaleSchema } from '@cetus/schemas/order.schema'
 import {
+  defaultCityId,
   paymentStatus,
   saleChannels,
   salePaymentMethods,
@@ -13,6 +14,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@cetus/ui/field'
+import { Input } from '@cetus/ui/input'
 import { Label } from '@cetus/ui/label'
 import {
   Select,
@@ -29,21 +31,25 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@cetus/ui/sheet'
+import { Skeleton } from '@cetus/ui/skeleton'
 import { Currency } from '@cetus/web/components/currency'
 import { SubmitButton } from '@cetus/web/components/submit-button'
-import { Input } from '@cetus/web/components/ui/input'
-import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Image } from '@unpic/react'
-import { XIcon } from 'lucide-react'
-import { useCallback, useState } from 'react'
-import { Controller, useFieldArray, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 import {
   ProductSearchInline,
   type SelectedProductVariant,
-} from './product-search-inline'
-import { QuantityInput } from './quantity-input'
+} from '@cetus/web/features/quick-sales/components/product-search-inline'
+import { QuantityInput } from '@cetus/web/features/quick-sales/components/quantity-input'
+import { UpdateSaleLocationDialog } from '@cetus/web/features/quick-sales/components/update-sale-location-dialog'
+import { arktypeResolver } from '@hookform/resolvers/arktype'
+import { MapPinpoint01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useDebounce } from '@uidotdev/usehooks'
+import { Image } from '@unpic/react'
+import { XIcon } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Controller, useFieldArray, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 type Props = {
   open: boolean
@@ -63,6 +69,9 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
         name: '',
         phone: '',
       },
+      shipping: {
+        cityId: defaultCityId,
+      },
       channel: undefined,
       paymentMethod: undefined,
       paymentStatus: 'pending',
@@ -74,6 +83,32 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     control: form.control,
     name: 'items',
   })
+
+  const customerPhone = useDebounce(form.watch('customer.phone'), 300)
+  const { data: customer, isLoading: isCustomerLoading } = useQuery({
+    queryKey: ['customers', 'by-phone', customerPhone],
+    queryFn: () => api.customers.getByPhone(customerPhone),
+    enabled: !!customerPhone,
+  })
+
+  useEffect(() => {
+    if (customer) {
+      form.setValue('customer.name', customer.name)
+    }
+  }, [customer, form])
+
+  const cityId = form.watch('shipping.cityId') ?? ''
+  const { data: city, isLoading: isCityLoading } = useQuery({
+    queryKey: ['cities', 'by-id', cityId],
+    queryFn: () => api.states.getCity(cityId),
+    enabled: !!cityId,
+  })
+
+  useEffect(() => {
+    if (city) {
+      form.setValue('shipping.cityId', city.id)
+    }
+  }, [city, form])
 
   const total = form.watch('items').reduce((acc, item) => {
     const price =
@@ -123,10 +158,29 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="max-h-[95vh] overflow-y-auto" side="bottom">
+      <SheetContent className="max-h-screen overflow-y-auto" side="bottom">
         <SheetHeader>
           <SheetTitle>Venta rápida</SheetTitle>
-          <SheetDescription>Registra una venta en segundos</SheetDescription>
+          <SheetDescription>
+            {isCityLoading && <Skeleton className="h-4 w-24" />}
+            {!isCityLoading && city && (
+              <div className="flex justify-between">
+                <span className="inline-flex items-center gap-1.5">
+                  <HugeiconsIcon
+                    className="size-3.5 shrink-0"
+                    icon={MapPinpoint01Icon}
+                  />
+                  {city.name}, {city.state}
+                </span>
+
+                <UpdateSaleLocationDialog
+                  onSelectCity={(cityId) =>
+                    form.setValue('shipping.cityId', cityId)
+                  }
+                />
+              </div>
+            )}
+          </SheetDescription>
         </SheetHeader>
 
         <form
@@ -227,11 +281,31 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
             <Controller
               control={form.control}
+              disabled={isCustomerLoading}
               name="customer.name"
               render={({ field, fieldState }) => (
                 <Field>
                   <FieldContent data-invalid={fieldState.invalid}>
                     <FieldLabel>Nombre del cliente</FieldLabel>
+                  </FieldContent>
+
+                  <Input {...field} type="text" />
+
+                  {fieldState.error && (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              disabled={isCustomerLoading}
+              name="shipping.address"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldContent data-invalid={fieldState.invalid}>
+                    <FieldLabel>Dirección de envío</FieldLabel>
                   </FieldContent>
 
                   <Input {...field} type="text" />
