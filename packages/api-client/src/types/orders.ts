@@ -153,6 +153,8 @@ export type OrderChannel =
   | 'in_store'
   | 'other'
 
+export type SaleChannel = 'whatsapp' | 'messenger' | 'in_store' | 'other'
+
 export type PaymentStatus =
   | 'pending'
   | 'awaiting_verification'
@@ -163,8 +165,8 @@ export type PaymentStatus =
 export type CreateSale = {
   items: CreateOrderItem[]
   customer: CreateOrderCustomer
-  channel: OrderChannel
-  paymentMethod: PaymentMethod
+  channel: SaleChannel
+  paymentMethod: 'nequi' | 'bank_transfer' | 'cash_on_delivery'
   shipping?: CreateOrderShipping
   paymentStatus: PaymentStatus
 }
