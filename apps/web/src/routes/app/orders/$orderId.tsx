@@ -38,7 +38,6 @@ function useRealtimeOrderUpdates(orderId: string) {
       queryKey: ['orders', orderId],
     })
   })
-
 }
 
 function OrderDetailsComponent() {
