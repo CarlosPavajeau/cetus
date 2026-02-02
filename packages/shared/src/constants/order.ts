@@ -44,3 +44,91 @@ export const manualPaymentMethodLabels = Object.freeze({
   cash_on_delivery: 'Pago contra entrega',
   bank_transfer: 'Transferencia bancaria',
 })
+
+export const saleChannels = [
+  {
+    value: 'whatsapp',
+    label: 'WhatsApp',
+  },
+  {
+    value: 'messenger',
+    label: 'Messenger',
+  },
+  {
+    value: 'in_store',
+    label: 'Tienda',
+  },
+  {
+    value: 'other',
+    label: 'Otro',
+  },
+] as const
+
+export const paymentMethodLabels = [
+  {
+    value: 'cash',
+    label: 'Efectivo',
+  },
+  {
+    value: 'credit_card',
+    label: 'Tarjeta de crédito/debito',
+  },
+  {
+    value: 'pse',
+    label: 'PSE',
+  },
+  {
+    value: 'cash_reference',
+    label: 'Pago contra referencia',
+  },
+  {
+    value: 'cash_on_delivery',
+    label: 'Pago contra entrega',
+  },
+  {
+    value: 'bank_transfer',
+    label: 'Transferencia bancaria',
+  },
+  {
+    value: 'nequi',
+    label: 'Nequi',
+  },
+] as const
+
+export const salePaymentMethods = [
+  {
+    value: 'cash_on_delivery',
+    label: 'Pago contra entrega',
+  },
+  {
+    value: 'bank_transfer',
+    label: 'Transferencia bancaria',
+  },
+  {
+    value: 'nequi',
+    label: 'Nequi',
+  },
+] as const
+
+export const paymentStatus = [
+  {
+    value: 'pending',
+    label: 'Pendiente',
+  },
+  {
+    value: 'awaiting_verification',
+    label: 'Esperando verificación',
+  },
+  {
+    value: 'verified',
+    label: 'Verificado',
+  },
+  {
+    value: 'rejected',
+    label: 'Rechazado',
+  },
+  {
+    value: 'refunded',
+    label: 'Reembolsado',
+  },
+] as const
