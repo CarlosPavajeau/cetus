@@ -12,7 +12,7 @@ export function QuickSaleProvider() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        event.key === 'V' &&
+        event.key === 'A' &&
         event.shiftKey &&
         (event.metaKey || event.ctrlKey)
       ) {
