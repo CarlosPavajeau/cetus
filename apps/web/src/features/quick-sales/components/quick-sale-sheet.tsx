@@ -63,6 +63,7 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
       paymentMethod: undefined,
       paymentStatus: 'pending',
     },
+    mode: 'onChange',
   })
 
   const { fields, append } = useFieldArray({
