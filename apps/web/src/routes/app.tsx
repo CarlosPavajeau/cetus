@@ -2,6 +2,7 @@ import { api } from '@cetus/api-client'
 import { AppNav } from '@cetus/web/components/app-nav'
 import { AppSidebar } from '@cetus/web/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@cetus/web/components/ui/sidebar'
+import { QuickSaleProvider } from '@cetus/web/features/quick-sales/components/quick-sale-provider'
 import { getSession } from '@cetus/web/functions/get-session'
 import { setActiveOrg } from '@cetus/web/functions/organizations'
 import { setStoreSlug } from '@cetus/web/functions/store-slug'
@@ -83,6 +84,8 @@ function RouteComponent() {
           <Outlet />
         </main>
       </SidebarInset>
+
+      <QuickSaleProvider />
     </SidebarProvider>
   )
 }
