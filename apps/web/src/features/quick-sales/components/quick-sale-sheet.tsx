@@ -59,6 +59,10 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     resolver: arktypeResolver(createSaleSchema),
     defaultValues: {
       items: [],
+      customer: {
+        name: '',
+        phone: '',
+      },
       channel: undefined,
       paymentMethod: undefined,
       paymentStatus: 'pending',
