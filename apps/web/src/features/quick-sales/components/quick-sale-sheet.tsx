@@ -286,9 +286,7 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
                     </SelectContent>
                   </Select>
                   {fieldState.error && (
-                    <p className="mt-1 text-destructive text-xs">
-                      {fieldState.error.message}
-                    </p>
+                    <FieldError>{fieldState.error.message}</FieldError>
                   )}
                 </Field>
               )}
@@ -319,9 +317,7 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
                     </SelectContent>
                   </Select>
                   {fieldState.error && (
-                    <p className="mt-1 text-destructive text-xs">
-                      {fieldState.error.message}
-                    </p>
+                    <FieldError>{fieldState.error.message}</FieldError>
                   )}
                 </Field>
               )}
