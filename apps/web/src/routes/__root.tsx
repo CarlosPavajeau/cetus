@@ -82,8 +82,8 @@ function RootDocument({ children }: Readonly<RootDocumentProps>) {
       </head>
       <body className="bg-background font-sans antialiased">
         {children}
-        <TanStackRouterDevtools position="bottom-right" />
-        <ReactQueryDevtools buttonPosition="bottom-right" />
+        <TanStackRouterDevtools position="top-right" />
+        <ReactQueryDevtools buttonPosition="top-right" />
         <Scripts />
       </body>
     </html>
