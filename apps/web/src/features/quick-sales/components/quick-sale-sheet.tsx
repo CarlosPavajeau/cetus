@@ -83,6 +83,11 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
   const handleProductSelect = useCallback(
     (product: SelectedProductVariant) => {
+      if (product.stock <= 0) {
+        toast.error('Producto agotado')
+        return
+      }
+
       setSelectedProduct(product)
       append({ quantity: 1, variantId: product.id })
     },
