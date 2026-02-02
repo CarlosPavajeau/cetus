@@ -33,7 +33,7 @@ import { Currency } from '@cetus/web/components/currency'
 import { SubmitButton } from '@cetus/web/components/submit-button'
 import { Input } from '@cetus/web/components/ui/input'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Image } from '@unpic/react'
 import { XIcon } from 'lucide-react'
 import { useCallback, useState } from 'react'
@@ -99,11 +99,14 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     form.setValue('items', [])
   }, [form])
 
+  const queryClient = useQueryClient()
   const { mutateAsync } = useMutation({
     mutationKey: ['sales'],
     mutationFn: api.orders.createSale,
     onSuccess: () => {
       toast.success('Venta registrada con éxito')
+
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
 
       form.reset()
       setSelectedProduct(undefined)
