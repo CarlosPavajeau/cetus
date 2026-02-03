@@ -99,7 +99,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
 
       <CardContent className="space-y-4">
         <div>
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          <span className="text-muted-foreground text-xs uppercase tracking-wide">
             Método de pago
           </span>
           <p className="font-medium text-sm">
@@ -112,7 +112,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             <Separator />
 
             <div>
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              <span className="text-muted-foreground text-xs uppercase tracking-wide">
                 Id de transacción
               </span>
               <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             <Separator />
 
             <div>
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              <span className="text-muted-foreground text-xs uppercase tracking-wide">
                 Proveedor
               </span>
               <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
                 <Separator />
 
                 <div>
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <span className="text-muted-foreground text-xs uppercase tracking-wide">
                     Eventos
                   </span>
                   <div className="mt-1 space-y-2">
