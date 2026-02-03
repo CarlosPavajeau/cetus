@@ -6,7 +6,7 @@ import {
   saleChannels,
   salePaymentMethods,
 } from '@cetus/shared/constants/order'
-import { getImageUrl } from '@cetus/shared/utils/image'
+import { Button } from '@cetus/ui/button'
 import {
   Field,
   FieldContent,
@@ -15,7 +15,6 @@ import {
   FieldLabel,
 } from '@cetus/ui/field'
 import { Input } from '@cetus/ui/input'
-import { Label } from '@cetus/ui/label'
 import {
   Select,
   SelectContent,
@@ -38,18 +37,20 @@ import {
   ProductSearchInline,
   type SelectedProductVariant,
 } from '@cetus/web/features/quick-sales/components/product-search-inline'
-import { QuantityInput } from '@cetus/web/features/quick-sales/components/quantity-input'
+import { SaleLineItem } from '@cetus/web/features/quick-sales/components/sale-line-item'
 import { UpdateSaleLocationDialog } from '@cetus/web/features/quick-sales/components/update-sale-location-dialog'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { MapPinpoint01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useDebounce } from '@uidotdev/usehooks'
-import { Image } from '@unpic/react'
-import { XIcon } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { PlusIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+
+const MAX_PRODUCTS = 20
 
 type Props = {
   open: boolean
@@ -57,9 +58,10 @@ type Props = {
 }
 
 export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
-  const [selectedProduct, setSelectedProduct] = useState<
-    SelectedProductVariant | undefined
-  >(undefined)
+  const [selectedProducts, setSelectedProducts] = useState<
+    Map<number, SelectedProductVariant>
+  >(new Map())
+  const [showSearch, setShowSearch] = useState(false)
 
   const form = useForm({
     resolver: arktypeResolver(createSaleSchema),
@@ -79,10 +81,13 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     mode: 'onChange',
   })
 
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'items',
   })
+
+  const hasProducts = selectedProducts.size > 0
+  const canAddMore = selectedProducts.size < MAX_PRODUCTS
 
   const customerPhone = useDebounce(form.watch('customer.phone'), 300)
   const { data: customer, isLoading: isCustomerLoading } = useQuery({
@@ -110,10 +115,17 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
   })
 
   const total = form.watch('items').reduce((acc, item) => {
-    const price =
-      selectedProduct?.id === item.variantId ? selectedProduct.price : 0
+    const product = selectedProducts.get(item.variantId)
+    const price = product?.price ?? 0
     return acc + item.quantity * price
   }, 0)
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedProducts(new Map())
+      setShowSearch(false)
+    }
+  }, [open])
 
   const handleProductSelect = useCallback(
     (product: SelectedProductVariant) => {
@@ -122,16 +134,52 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
         return
       }
 
-      setSelectedProduct(product)
+      // Duplicate detection: if variant already selected, increment quantity
+      if (selectedProducts.has(product.id)) {
+        const existingIndex = fields.findIndex(
+          (f) => f.variantId === product.id,
+        )
+        if (existingIndex !== -1) {
+          const currentQty = form.getValues(`items.${existingIndex}.quantity`)
+          if (currentQty >= product.stock) {
+            toast.error('Stock insuficiente')
+            setShowSearch(false)
+            return
+          }
+          form.setValue(`items.${existingIndex}.quantity`, currentQty + 1)
+        }
+        setShowSearch(false)
+        return
+      }
+
+      // Cap at MAX_PRODUCTS
+      if (selectedProducts.size >= MAX_PRODUCTS) {
+        toast.error(`Máximo ${MAX_PRODUCTS} productos por venta`)
+        return
+      }
+
+      setSelectedProducts((prev) => {
+        const next = new Map(prev)
+        next.set(product.id, product)
+        return next
+      })
       append({ quantity: 1, variantId: product.id })
+      setShowSearch(false)
     },
-    [append],
+    [append, fields, form, selectedProducts],
   )
 
-  const handleClearProduct = useCallback(() => {
-    setSelectedProduct(undefined)
-    form.setValue('items', [])
-  }, [form])
+  const handleRemoveProduct = useCallback(
+    (index: number, variantId: number) => {
+      remove(index)
+      setSelectedProducts((prev) => {
+        const next = new Map(prev)
+        next.delete(variantId)
+        return next
+      })
+    },
+    [remove],
+  )
 
   const queryClient = useQueryClient()
   const { mutateAsync } = useMutation({
@@ -143,7 +191,8 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
 
       form.reset()
-      setSelectedProduct(undefined)
+      setSelectedProducts(new Map())
+      setShowSearch(false)
       onOpenChange(false)
     },
     onError: () => {
@@ -187,77 +236,113 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
           id="quick-sale-form"
           onSubmit={onSubmit}
         >
-          {selectedProduct ? (
-            <div className="flex items-center gap-3 rounded-lg border p-1">
-              <Image
-                alt={selectedProduct.name}
-                className="rounded-md object-cover"
-                height={48}
-                layout="constrained"
-                objectFit="cover"
-                src={getImageUrl(selectedProduct.imageUrl || 'placeholder.svg')}
-                width={48}
-              />
-              <div className="flex-1 space-y-0.5">
-                <p className="line-clamp-1 font-medium text-sm">
-                  {selectedProduct.name}
-                </p>
+          <AnimatePresence initial={false}>
+            {fields.map((field, index) => {
+              const product = selectedProducts.get(field.variantId)
+              if (!product) {
+                return null
+              }
 
-                <div className="flex items-center gap-2">
-                  {selectedProduct.optionValues.map((value) => (
-                    <span
-                      className="text-muted-foreground text-xs"
-                      key={value.id}
-                    >
-                      {value.optionTypeName}: {value.value}
-                    </span>
-                  ))}
-                </div>
-
-                <p className="text-muted-foreground text-sm">
-                  <Currency currency="COP" value={selectedProduct.price} />
-                </p>
-              </div>
-              <button
-                className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-                onClick={handleClearProduct}
-                type="button"
-              >
-                <XIcon className="size-4" />
-                <span className="sr-only">Quitar producto</span>
-              </button>
-            </div>
-          ) : (
-            <ProductSearchInline onSelect={handleProductSelect} />
-          )}
-
-          {selectedProduct && (
-            <>
-              {fields.map((field, index) => (
-                <div className="space-y-2" key={field.id}>
-                  <Label>Cantidad</Label>
+              return (
+                <motion.div
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  initial={{ opacity: 0, height: 0 }}
+                  key={field.id}
+                  style={{ overflow: 'hidden' }}
+                >
                   <Controller
                     control={form.control}
                     name={`items.${index}.quantity`}
-                    render={({ field }) => (
-                      <QuantityInput
-                        max={selectedProduct.stock}
-                        onChange={field.onChange}
-                        value={field.value}
+                    render={({ field: quantityField }) => (
+                      <SaleLineItem
+                        onQuantityChange={quantityField.onChange}
+                        onRemove={() =>
+                          handleRemoveProduct(index, field.variantId)
+                        }
+                        product={product}
+                        quantity={quantityField.value}
                       />
                     )}
                   />
-                </div>
-              ))}
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
 
-              <div className="flex items-center justify-between rounded-lg bg-muted p-3">
-                <span className="font-medium text-sm">Total</span>
+          <AnimatePresence mode="wait">
+            {!hasProducts && (
+              <motion.div
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 1, height: 'auto' }}
+                key="initial-search"
+                style={{ overflow: 'hidden' }}
+              >
+                <ProductSearchInline onSelect={handleProductSelect} />
+              </motion.div>
+            )}
+
+            {hasProducts && showSearch && (
+              <motion.div
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex flex-col gap-2"
+                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, height: 0 }}
+                key="add-search"
+                style={{ overflow: 'hidden' }}
+              >
+                <ProductSearchInline onSelect={handleProductSelect} />
+                <Button
+                  className="w-full"
+                  onClick={() => setShowSearch(false)}
+                  type="button"
+                  variant="ghost"
+                >
+                  Cancelar
+                </Button>
+              </motion.div>
+            )}
+
+            {hasProducts && !showSearch && canAddMore && (
+              <motion.div
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, height: 0 }}
+                key="add-button"
+                style={{ overflow: 'hidden' }}
+              >
+                <Button
+                  className="w-full border-dashed"
+                  onClick={() => setShowSearch(true)}
+                  type="button"
+                  variant="outline"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Agregar otro producto
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {hasProducts && (
+              <motion.div
+                animate={{ opacity: 1 }}
+                className="flex items-center justify-between rounded-lg bg-muted p-3"
+                exit={{ opacity: 0 }}
+                initial={{ opacity: 0 }}
+              >
+                <span className="font-medium text-sm">
+                  Total ({selectedProducts.size}{' '}
+                  {selectedProducts.size === 1 ? 'producto' : 'productos'})
+                </span>
                 <span className="font-semibold text-lg">
                   <Currency currency="COP" value={total} />
                 </span>
-              </div>
-            </>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <FieldGroup>
             <Controller
