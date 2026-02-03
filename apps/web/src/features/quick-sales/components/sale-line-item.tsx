@@ -74,6 +74,7 @@ export function SaleLineItem({
           <div className="mt-auto flex items-center justify-between pt-1">
             <div className="flex items-center rounded-md border">
               <button
+                aria-label="Disminuir cantidad"
                 className="p-1 text-muted-foreground disabled:opacity-50"
                 disabled={quantity <= 1}
                 onClick={handleDecrement}
@@ -83,6 +84,7 @@ export function SaleLineItem({
               </button>
               <span className="px-2 text-sm">{quantity}</span>
               <button
+                aria-label="Aumentar cantidad"
                 className="p-1 text-muted-foreground disabled:opacity-50"
                 disabled={quantity >= product.stock}
                 onClick={handleIncrement}
