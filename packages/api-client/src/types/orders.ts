@@ -31,23 +31,32 @@ export type OrderCustomer = {
 export type Order = {
   id: string
   orderNumber: number
-  address: string
+  status: OrderStatus
+  address?: string
   city: string
   state: string
+
   subtotal: number
   discount: number
   deliveryFee?: number
   total: number
-  status: OrderStatus
+
   items: OrderItem[]
+
   customer: OrderCustomer
-  createdAt: string
+
+  channel: OrderChannel
+  paymentStatus: PaymentStatus
+  paymentProvider?: PaymentProvider
+  paymentMethod: PaymentMethod
 
   transactionId?: string
   storeId: string
 
-  cancellationReason?: string
   cancelledAt?: string
+  cancellationReason?: string
+
+  createdAt: string
 }
 
 export type SimpleOrder = {
