@@ -91,9 +91,7 @@ export const DateRangeFilter = memo(
     const handleApply = () => {
       if (date?.from) {
         const fromStr = date.from.toISOString().split('T')[0]
-        const toStr = date.to
-          ? date.to.toISOString().split('T')[0]
-          : fromStr
+        const toStr = date.to ? date.to.toISOString().split('T')[0] : fromStr
         onChange({ from: fromStr, to: toStr })
       }
       setIsOpen(false)
@@ -126,7 +124,11 @@ export const DateRangeFilter = memo(
             {label}
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="flex w-auto p-0" sideOffset={8}>
+        <PopoverContent
+          align="start"
+          className="flex w-auto p-0"
+          sideOffset={8}
+        >
           <div className="flex flex-col gap-1 border-border border-r p-3">
             {presets.map((preset) => (
               <Button

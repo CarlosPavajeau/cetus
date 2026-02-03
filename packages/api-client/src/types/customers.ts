@@ -1,7 +1,9 @@
 export type Customer = {
   id: string
+  documentType?: DocumentType
+  documentNumber?: string
   name: string
-  email: string
+  email?: string
   phone: string
 }
 

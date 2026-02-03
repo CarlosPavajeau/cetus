@@ -183,7 +183,10 @@ function ProductCardComponent({
               ) : justAdded ? (
                 <HugeiconsIcon className="h-4 w-4" icon={Tick01Icon} />
               ) : (
-                <HugeiconsIcon className="h-4 w-4" icon={ShoppingCartAdd01Icon} />
+                <HugeiconsIcon
+                  className="h-4 w-4"
+                  icon={ShoppingCartAdd01Icon}
+                />
               )}
             </button>
           </div>

@@ -132,3 +132,5 @@ export const paymentStatus = [
     label: 'Reembolsado',
   },
 ] as const
+
+export const defaultCityId = 'f97957e9-d820-4858-ac26-b5d03d658370'
