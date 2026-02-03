@@ -299,7 +299,6 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
             <Controller
               control={form.control}
-              disabled={isCustomerLoading}
               name="shipping.address"
               render={({ field, fieldState }) => (
                 <Field>
