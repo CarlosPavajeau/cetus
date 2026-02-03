@@ -207,7 +207,7 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="max-h-screen overflow-y-auto" side="bottom">
+      <SheetContent className="max-h-[95vh] overflow-y-auto" side="bottom">
         <SheetHeader>
           <SheetTitle>Venta rápida</SheetTitle>
           <SheetDescription>
