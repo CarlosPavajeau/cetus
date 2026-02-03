@@ -100,7 +100,7 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     if (!isCustomerLoading) {
       form.setValue('customer.name', customer?.name ?? '')
     }
-  }, [customer, customerPhone, isCustomerLoading, form])
+  }, [customer, customerPhone, isCustomerLoading, form.setValue])
 
   const cityId = form.watch('shipping.cityId') ?? ''
   const { data: city, isLoading: isCityLoading } = useQuery({
