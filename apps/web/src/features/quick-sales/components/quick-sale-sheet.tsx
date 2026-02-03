@@ -122,10 +122,11 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
   useEffect(() => {
     if (!open) {
+      form.reset()
       setSelectedProducts(new Map())
       setShowSearch(false)
     }
-  }, [open])
+  }, [open, form])
 
   const handleProductSelect = useCallback(
     (product: SelectedProductVariant) => {
