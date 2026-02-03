@@ -23,6 +23,7 @@ const paymentMethodLabels = new Map<string, string>([
   ['credit_card', 'Tarjeta de crédito'],
   ['debit_card', 'Tarjeta de débito'],
   ['bank_transfer', 'Transferencia bancaria'],
+  ['nequi', 'Nequi'],
   ['cash', 'Efectivo'],
   ['cash_on_delivery', 'Pago contra entrega'],
   ['account_money', 'Dinero en cuenta'],
