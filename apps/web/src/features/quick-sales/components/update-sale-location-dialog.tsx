@@ -20,13 +20,14 @@ import { useStates } from '@cetus/web/features/states/hooks/use-state'
 import { useStateCities } from '@cetus/web/features/states/hooks/use-state-cities'
 import { LocationUpdate01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Props = {
   onSelectCity: (cityId: string) => void
 }
 
 export function UpdateSaleLocationDialog({ onSelectCity }: Props) {
+  const [open, setOpen] = useState(false)
   const { data: states, isLoading } = useStates()
   const [currentState, setCurrentState] = useState<string | undefined>()
   const { data: cities, isLoading: isLoadingCities } =
@@ -48,13 +49,15 @@ export function UpdateSaleLocationDialog({ onSelectCity }: Props) {
     }
   }
 
-  const handleCancel = () => {
-    setCurrentState(undefined)
-    setSelectedCity(undefined)
-  }
+  useEffect(() => {
+    if (open) {
+      setCurrentState(undefined)
+      setSelectedCity(undefined)
+    }
+  }, [open])
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="xs" type="button" variant="secondary">
           <HugeiconsIcon icon={LocationUpdate01Icon} />
@@ -116,9 +119,7 @@ export function UpdateSaleLocationDialog({ onSelectCity }: Props) {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button onClick={handleCancel} variant="outline">
-              Cancelar
-            </Button>
+            <Button variant="outline">Cancelar</Button>
           </DialogClose>
           <DialogClose asChild>
             <Button disabled={!selectedCity} onClick={handleSave} type="button">
