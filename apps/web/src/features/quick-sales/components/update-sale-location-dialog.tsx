@@ -33,6 +33,15 @@ export function UpdateSaleLocationDialog({ onSelectCity }: Props) {
     useStateCities(currentState)
   const [selectedCity, setSelectedCity] = useState<string | undefined>()
 
+  const handleSelectState = (stateId: string) => {
+    setCurrentState(stateId)
+    setSelectedCity(undefined)
+  }
+
+  const handleSelectCity = (cityId: string) => {
+    setSelectedCity(cityId)
+  }
+
   const handleSave = () => {
     if (selectedCity) {
       onSelectCity(selectedCity)
@@ -65,7 +74,7 @@ export function UpdateSaleLocationDialog({ onSelectCity }: Props) {
 
             <Select
               disabled={isLoading || isLoadingCities}
-              onValueChange={(value) => setCurrentState(value)}
+              onValueChange={handleSelectState}
               value={currentState}
             >
               <SelectTrigger>
@@ -88,7 +97,7 @@ export function UpdateSaleLocationDialog({ onSelectCity }: Props) {
 
             <Select
               disabled={isLoading || isLoadingCities || !currentState}
-              onValueChange={(value) => setSelectedCity(value)}
+              onValueChange={handleSelectCity}
               value={selectedCity}
             >
               <SelectTrigger>
