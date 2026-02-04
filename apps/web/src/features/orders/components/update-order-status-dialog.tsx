@@ -6,7 +6,6 @@ import {
 } from '@cetus/shared/constants/order'
 import { Alert, AlertDescription, AlertTitle } from '@cetus/ui/alert'
 import { Button } from '@cetus/ui/button'
-import { Checkbox } from '@cetus/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -41,6 +40,10 @@ import {
   FieldLegend,
   FieldSet,
 } from '@cetus/web/components/ui/field'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@cetus/web/components/ui/toggle-group'
 import { useIsMobile } from '@cetus/web/hooks/use-mobile'
 import { cn } from '@cetus/web/shared/utils'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
@@ -289,24 +292,42 @@ export function UpdateOrderStatusDialog({
               <FieldGroup className="gap-3">
                 {checklistItems.map((item) => (
                   <Field key={item.id} orientation="horizontal">
-                    <Checkbox
-                      checked={checklistState[item.id] ?? false}
+                    <FieldLabel className="font-normal" htmlFor={item.id}>
+                      {item.label}
+                    </FieldLabel>
+
+                    <ToggleGroup
                       id={item.id}
-                      onCheckedChange={(checked) => {
+                      onValueChange={(value) => {
                         setChecklistState((prev) => ({
                           ...prev,
-                          [item.id]: checked === true,
+                          [item.id]: value === 'yes',
                         }))
+
                         setTouchedItems((prev) => {
                           const next = new Set(prev)
                           next.add(item.id)
                           return next
                         })
                       }}
-                    />
-                    <FieldLabel className="font-normal" htmlFor={item.id}>
-                      {item.label}
-                    </FieldLabel>
+                      size="sm"
+                      type="single"
+                      value={
+                        touchedItems.has(item.id)
+                          ? checklistState[item.id]
+                            ? 'yes'
+                            : 'no'
+                          : undefined
+                      }
+                      variant="outline"
+                    >
+                      <ToggleGroupItem aria-label="si" value="yes">
+                        Si
+                      </ToggleGroupItem>
+                      <ToggleGroupItem aria-label="no" value="no">
+                        No
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </Field>
                 ))}
               </FieldGroup>
