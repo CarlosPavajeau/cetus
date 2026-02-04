@@ -262,10 +262,7 @@ export function UpdateOrderStatusDialog({
             render={({ field, fieldState }) => (
               <FieldSet className="w-full max-w-xs">
                 <FieldLegend variant="label">Método de pago</FieldLegend>
-                <RadioGroup
-                  defaultValue={field.value}
-                  onValueChange={field.onChange}
-                >
+                <RadioGroup onValueChange={field.onChange} value={field.value}>
                   {Object.entries(manualPaymentMethodLabels).map(
                     ([key, label]) => (
                       <Field
