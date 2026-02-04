@@ -65,6 +65,13 @@ export const saleChannels = [
   },
 ] as const
 
+export function getSaleChannelLabel(channel: string) {
+  const channelLabel = saleChannels.find(
+    (channelOption) => channelOption.value === channel,
+  )?.label
+  return channelLabel || 'Desconocido'
+}
+
 export const paymentMethodLabels = [
   {
     value: 'cash',

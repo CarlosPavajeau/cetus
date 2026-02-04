@@ -1,5 +1,6 @@
 import { env } from '@cetus/env/client'
 import {
+  getSaleChannelLabel,
   orderStatusColors,
   orderStatusLabels,
 } from '@cetus/shared/constants/order'
@@ -17,9 +18,15 @@ import {
   useHub,
   useHubGroup,
 } from '@cetus/web/hooks/realtime/use-hub'
+import {
+  Calendar03Icon,
+  MapPinpoint01Icon,
+  PromotionIcon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { AlertCircleIcon, CalendarIcon, MapPinIcon } from 'lucide-react'
+import { AlertCircleIcon } from 'lucide-react'
 
 const REALTIME_URL = `${env.VITE_API_URL}/realtime/orders`
 
@@ -96,15 +103,35 @@ function OrderDetailsComponent() {
 
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
             <span className="inline-flex items-center gap-1.5">
-              <CalendarIcon className="size-3.5 shrink-0" />
+              <HugeiconsIcon
+                className="size-3.5 shrink-0"
+                icon={Calendar03Icon}
+              />
               <FormattedDate date={new Date(order.createdAt)} />
             </span>
 
             <Separator className="hidden sm:block" orientation="vertical" />
 
+            {order.city && (
+              <>
+                <span className="inline-flex items-center gap-1.5">
+                  <HugeiconsIcon
+                    className="size-3.5 shrink-0"
+                    icon={MapPinpoint01Icon}
+                  />
+                  {order.city}, {order.state}
+                </span>
+
+                <Separator className="hidden sm:block" orientation="vertical" />
+              </>
+            )}
+
             <span className="inline-flex items-center gap-1.5">
-              <MapPinIcon className="size-3.5 shrink-0" />
-              {order.city}, {order.state}
+              <HugeiconsIcon
+                className="size-3.5 shrink-0"
+                icon={PromotionIcon}
+              />
+              {getSaleChannelLabel(order.channel)}
             </span>
 
             <Separator className="hidden sm:block" orientation="vertical" />
