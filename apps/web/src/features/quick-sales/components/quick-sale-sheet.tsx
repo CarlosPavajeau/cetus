@@ -122,7 +122,19 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
   useEffect(() => {
     if (!open) {
-      form.reset()
+      form.reset({
+        items: [],
+        customer: {
+          name: '',
+          phone: '',
+        },
+        shipping: {
+          cityId: defaultCityId,
+        },
+        channel: undefined,
+        paymentMethod: undefined,
+        paymentStatus: 'pending',
+      })
       setSelectedProducts(new Map())
       setShowSearch(false)
     }
@@ -135,11 +147,15 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
         return
       }
 
+      const variantId = Number(product.id)
+      if (!variantId) {
+        toast.error('Producto no encontrado')
+        return
+      }
+
       // Duplicate detection: if variant already selected, increment quantity
-      if (selectedProducts.has(product.id)) {
-        const existingIndex = fields.findIndex(
-          (f) => f.variantId === product.id,
-        )
+      if (selectedProducts.has(variantId)) {
+        const existingIndex = fields.findIndex((f) => f.variantId === variantId)
         if (existingIndex !== -1) {
           const currentQty = form.getValues(`items.${existingIndex}.quantity`)
           if (currentQty >= product.stock) {
@@ -161,10 +177,10 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
 
       setSelectedProducts((prev) => {
         const next = new Map(prev)
-        next.set(product.id, product)
+        next.set(variantId, product)
         return next
       })
-      append({ quantity: 1, variantId: product.id })
+      append({ quantity: 1, variantId })
       setShowSearch(false)
     },
     [append, fields, form, selectedProducts],
@@ -188,12 +204,8 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
     mutationFn: api.orders.createSale,
     onSuccess: () => {
       toast.success('Venta registrada con éxito')
-
       queryClient.invalidateQueries({ queryKey: ['orders'] })
 
-      form.reset()
-      setSelectedProducts(new Map())
-      setShowSearch(false)
       onOpenChange(false)
     },
     onError: () => {
@@ -237,39 +249,41 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
           id="quick-sale-form"
           onSubmit={onSubmit}
         >
-          <AnimatePresence initial={false}>
-            {fields.map((field, index) => {
-              const product = selectedProducts.get(field.variantId)
-              if (!product) {
-                return null
-              }
+          {hasProducts && (
+            <AnimatePresence initial={false}>
+              {fields.map((field, index) => {
+                const product = selectedProducts.get(field.variantId)
+                if (!product) {
+                  return null
+                }
 
-              return (
-                <motion.div
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  initial={{ opacity: 0, height: 0 }}
-                  key={field.id}
-                  style={{ overflow: 'hidden' }}
-                >
-                  <Controller
-                    control={form.control}
-                    name={`items.${index}.quantity`}
-                    render={({ field: quantityField }) => (
-                      <SaleLineItem
-                        onQuantityChange={quantityField.onChange}
-                        onRemove={() =>
-                          handleRemoveProduct(index, field.variantId)
-                        }
-                        product={product}
-                        quantity={quantityField.value}
-                      />
-                    )}
-                  />
-                </motion.div>
-              )
-            })}
-          </AnimatePresence>
+                return (
+                  <motion.div
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    initial={{ opacity: 0, height: 0 }}
+                    key={field.id}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <Controller
+                      control={form.control}
+                      name={`items.${index}.quantity`}
+                      render={({ field: quantityField }) => (
+                        <SaleLineItem
+                          onQuantityChange={quantityField.onChange}
+                          onRemove={() =>
+                            handleRemoveProduct(index, field.variantId)
+                          }
+                          product={product}
+                          quantity={quantityField.value}
+                        />
+                      )}
+                    />
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
+          )}
 
           <AnimatePresence mode="wait">
             {!hasProducts && (
