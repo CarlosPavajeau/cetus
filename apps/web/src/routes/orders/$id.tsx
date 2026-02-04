@@ -68,10 +68,7 @@ function RouteComponent() {
             <h1 className="font-bold text-2xl text-foreground tracking-tight">
               Orden #{order.orderNumber}
             </h1>
-            <Badge
-              appearance="outline"
-              variant={orderStatusBadgeVariants[order.status]}
-            >
+            <Badge variant={orderStatusBadgeVariants[order.status]}>
               {orderStatusLabels[order.status]}
             </Badge>
           </div>

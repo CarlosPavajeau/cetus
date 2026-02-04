@@ -23,12 +23,12 @@ export const orderStatusColors = Object.freeze({
 })
 
 export const orderStatusBadgeVariants = Object.freeze({
-  pending_payment: 'warning',
-  payment_confirmed: 'success',
-  processing: 'info',
-  ready_for_pickup: 'info',
-  shipped: 'info',
-  delivered: 'success',
+  pending_payment: 'secondary',
+  payment_confirmed: 'secondary',
+  processing: 'secondary',
+  ready_for_pickup: 'secondary',
+  shipped: 'secondary',
+  delivered: 'secondary',
   canceled: 'destructive',
   failed_delivery: 'destructive',
   returned: 'destructive',
