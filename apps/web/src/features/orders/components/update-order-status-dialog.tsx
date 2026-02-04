@@ -181,9 +181,7 @@ export function UpdateOrderStatusDialog({
     if (hasFailed) {
       form.setValue('newStatus', 'canceled')
       form.setValue('notes', 'No se pudo verificar el pago')
-    }
-
-    if (allChecked) {
+    } else if (allChecked) {
       form.setValue('newStatus', 'payment_confirmed')
       form.setValue('notes', 'Pago verificado correctamente')
     }
