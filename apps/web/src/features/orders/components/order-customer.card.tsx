@@ -4,7 +4,7 @@ import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 
 type Props = {
   customer: OrderCustomer
-  address: string
+  address?: string
 }
 
 export function OrderCustomerCard({ customer, address }: Props) {
@@ -36,10 +36,12 @@ export function OrderCustomerCard({ customer, address }: Props) {
           </a>
         </div>
 
-        <div className="flex items-center text-muted-foreground text-sm">
-          <MapPinIcon className="mr-2 h-4 w-4" />
-          <span>{address}</span>
-        </div>
+        {address && (
+          <div className="flex items-center text-muted-foreground text-sm">
+            <MapPinIcon className="mr-2 h-4 w-4" />
+            <span>{address}</span>
+          </div>
+        )}
       </div>
     </Card>
   )
