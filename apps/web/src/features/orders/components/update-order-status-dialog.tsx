@@ -42,6 +42,7 @@ import {
   FieldSet,
 } from '@cetus/web/components/ui/field'
 import { useIsMobile } from '@cetus/web/hooks/use-mobile'
+import { cn } from '@cetus/web/shared/utils'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { type } from 'arktype'
@@ -164,7 +165,10 @@ export function UpdateOrderStatusDialog({
   const [touchedItems, setTouchedItems] = useState<Set<string>>(new Set())
 
   const selectedPaymentMethod = form.watch('paymentMethod')
-  const checklistItems = getChecklistItems(selectedPaymentMethod, order)
+  const checklistItems =
+    newStatus === 'payment_confirmed'
+      ? getChecklistItems(selectedPaymentMethod, order)
+      : []
   const allChecked =
     checklistItems.length > 0 &&
     checklistItems.every((item) => checklistState[item.id])
@@ -174,7 +178,23 @@ export function UpdateOrderStatusDialog({
   )
 
   useEffect(() => {
-    const items = getChecklistItems(selectedPaymentMethod, order)
+    if (hasFailed) {
+      form.setValue('newStatus', 'canceled')
+      form.setValue('notes', 'No se pudo verificar el pago')
+    }
+
+    if (allChecked) {
+      form.setValue('newStatus', 'payment_confirmed')
+      form.setValue('notes', 'Pago verificado correctamente')
+    }
+  }, [hasFailed, allChecked, form.setValue])
+
+  useEffect(() => {
+    const items =
+      newStatus === 'payment_confirmed'
+        ? getChecklistItems(selectedPaymentMethod, order)
+        : []
+
     // Only reset if the set of items actually changed (different payment method category)
     setChecklistState((prev) => {
       const newState: Record<string, boolean> = {}
@@ -187,7 +207,7 @@ export function UpdateOrderStatusDialog({
       const validIds = new Set(items.map((i) => i.id))
       return new Set([...prev].filter((id) => validIds.has(id)))
     })
-  }, [selectedPaymentMethod, order])
+  }, [selectedPaymentMethod, order, newStatus])
 
   useEffect(() => {
     form.reset({
@@ -343,20 +363,19 @@ export function UpdateOrderStatusDialog({
         Cerrar
       </Button>
       {hasFailed ? (
-        <Button
-          onClick={() => onOpenChange(false)}
-          type="button"
+        <SubmitButton
+          disabled={form.formState.isSubmitting}
+          isSubmitting={form.formState.isSubmitting}
+          type="submit"
           variant="destructive"
         >
           Rechazar
-        </Button>
+        </SubmitButton>
       ) : (
         <SubmitButton
-          className={
-            allChecked
-              ? 'bg-green-600 text-white hover:bg-green-700'
-              : undefined
-          }
+          className={cn({
+            'bg-green-600 text-white hover:bg-green-700': allChecked,
+          })}
           disabled={
             form.formState.isSubmitting ||
             (checklistItems.length > 0 && !allChecked)
