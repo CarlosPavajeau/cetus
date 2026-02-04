@@ -20,7 +20,7 @@ type Props = {
 
 export function OrderItemView({ item }: Props) {
   return (
-    <Item key={item.id} role="listitem" size="sm">
+    <Item className="p-0" key={item.id} role="listitem" size="sm">
       <ItemMedia className="size-20" variant="image">
         <Image
           alt={item.productName}
