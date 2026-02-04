@@ -69,7 +69,6 @@ type NewPaymentMethod = (typeof UpdateStatusSchema.infer)['paymentMethod']
 type ChecklistItem = {
   id: string
   label: string | ReactNode
-  canFail: boolean
 }
 
 function getChecklistItems(
@@ -86,7 +85,6 @@ function getChecklistItems(
             <Currency currency="COP" value={order.total} />
           </span>
         ),
-        canFail: false,
       },
       {
         id: 'verify-2',
@@ -96,7 +94,6 @@ function getChecklistItems(
             <Currency currency="COP" value={order.total} />?
           </span>
         ),
-        canFail: true,
       },
       {
         id: 'verify-3',
@@ -105,17 +102,14 @@ function getChecklistItems(
             ¿El nombre del remitente coincide con {order.customer.name}?
           </span>
         ),
-        canFail: true,
       },
       {
         id: 'verify-4',
         label: '¿La fecha y hora de la transferencia son recientes?',
-        canFail: true,
       },
       {
         id: 'verify-5',
         label: '¿El dinero ya se refleja en tu saldo?',
-        canFail: true,
       },
     ]
   }
@@ -173,8 +167,7 @@ export function UpdateOrderStatusDialog({
     checklistItems.length > 0 &&
     checklistItems.every((item) => checklistState[item.id])
   const hasFailed = checklistItems.some(
-    (item) =>
-      item.canFail && touchedItems.has(item.id) && !checklistState[item.id],
+    (item) => touchedItems.has(item.id) && !checklistState[item.id],
   )
 
   useEffect(() => {
