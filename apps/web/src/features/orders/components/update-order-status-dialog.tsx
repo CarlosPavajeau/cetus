@@ -246,6 +246,7 @@ export function UpdateOrderStatusDialog({
       newStatus: values.newStatus,
       notes: values.notes,
       paymentMethod: values.paymentMethod,
+      paymentStatus: values.paymentStatus,
     })
   })
 
