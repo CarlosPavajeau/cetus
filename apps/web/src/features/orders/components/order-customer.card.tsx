@@ -1,5 +1,8 @@
 import type { OrderCustomer } from '@cetus/api-client/types/orders'
 import { Card } from '@cetus/ui/card'
+import { Button } from '@cetus/web/components/ui/button'
+import { WhatsappIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 
 type Props = {
@@ -42,6 +45,17 @@ export function OrderCustomerCard({ customer, address }: Props) {
             <span>{address}</span>
           </div>
         )}
+
+        <Button asChild className="w-full">
+          <a
+            href={`https://wa.me/${customer.phone}`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <HugeiconsIcon className="size-3.5" icon={WhatsappIcon} />
+            Contactar por WhatsApp
+          </a>
+        </Button>
       </div>
     </Card>
   )
