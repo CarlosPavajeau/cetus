@@ -1,17 +1,17 @@
-const paymentStatusLabels = new Map<string, string>([
+import type {
+  PaymentMethod,
+  PaymentStatus,
+} from '@cetus/api-client/types/orders'
+
+const paymentStatusLabels = new Map<PaymentStatus, string>([
   ['pending', 'Pendiente'],
-  ['in_process', 'En proceso'],
-  ['approved', 'Aprobado'],
+  ['awaiting_verification', 'Esperando verificación'],
+  ['verified', 'Verificado'],
   ['rejected', 'Rechazado'],
   ['refunded', 'Reembolsado'],
-  ['cancelled', 'Cancelado'],
-  ['PENDING', 'Pendiente'],
-  ['APPROVED', 'Aprobado'],
-  ['DECLINED', 'Declinado'],
-  ['ERROR', 'Error'],
 ] as const)
 
-export function paymentStatusLabel(status?: string) {
+export function getPaymentStatusLabel(status?: PaymentStatus) {
   if (!status) {
     return 'Desconocido'
   }
@@ -19,21 +19,17 @@ export function paymentStatusLabel(status?: string) {
   return paymentStatusLabels.get(status) || status
 }
 
-const paymentMethodLabels = new Map<string, string>([
+const paymentMethodLabels = new Map<PaymentMethod, string>([
+  ['cash', 'Efectivo'],
   ['credit_card', 'Tarjeta de crédito'],
-  ['debit_card', 'Tarjeta de débito'],
+  ['pse', 'PSE'],
+  ['cash_reference', 'Referencia de pago'],
+  ['cash_on_delivery', 'Pago contra entrega'],
   ['bank_transfer', 'Transferencia bancaria'],
   ['nequi', 'Nequi'],
-  ['cash', 'Efectivo'],
-  ['cash_on_delivery', 'Pago contra entrega'],
-  ['account_money', 'Dinero en cuenta'],
-  ['CARD', 'Tarjeta de crédito/débito'],
-  ['NEQUI', 'Nequi'],
-  ['BANCOLOMBIA_TRANSFER', 'Transferencia Bancolombia'],
-  ['PSE', 'PSE'],
 ] as const)
 
-export function getPaymentMethodLabel(method?: string) {
+export function getPaymentMethodLabel(method?: PaymentMethod) {
   if (!method) {
     return 'Desconocido'
   }

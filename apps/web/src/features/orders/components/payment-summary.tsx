@@ -22,16 +22,17 @@ import { Button } from '@cetus/web/components/ui/button'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import {
   getPaymentMethodLabel,
-  paymentStatusLabel,
+  getPaymentStatusLabel,
 } from '@cetus/web/shared/payments'
 import { cn } from '@cetus/web/shared/utils'
-import { useQuery } from '@tanstack/react-query'
 import {
   AlertCircleIcon,
-  BanknoteXIcon,
-  CheckCircle2Icon,
-  CopyIcon,
-} from 'lucide-react'
+  CheckmarkCircle02Icon,
+  Copy01Icon,
+  MoneyNotFound02Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { useQuery } from '@tanstack/react-query'
 
 type Props = {
   order: Order
@@ -66,7 +67,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
       <Empty className="border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <BanknoteXIcon />
+            <HugeiconsIcon icon={MoneyNotFound02Icon} />
           </EmptyMedia>
           <EmptyTitle>Sin información de pago</EmptyTitle>
           <EmptyDescription>
@@ -77,10 +78,13 @@ export function PaymentSummary({ order }: Readonly<Props>) {
     )
   }
 
-  const isPaid = payment.status === 'approved' || payment.status === 'APPROVED'
+  const isPaid = order.paymentStatus === 'verified'
+  const isPending =
+    order.paymentStatus === 'pending' ||
+    order.paymentStatus === 'awaiting_verification'
 
   return (
-    <Card>
+    <Card className="gap-0">
       <CardHeader>
         <CardTitle>Información del pago</CardTitle>
         <CardAction>
@@ -88,11 +92,19 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             className={cn({
               'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300':
                 isPaid,
+              'bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300':
+                isPending,
             })}
-            variant={isPaid ? 'secondary' : 'destructive'}
+            variant={
+              order.paymentStatus === 'rejected' ? 'destructive' : 'secondary'
+            }
           >
-            {isPaid ? <CheckCircle2Icon /> : <AlertCircleIcon />}
-            {paymentStatusLabel(payment.status)}
+            {isPaid ? (
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} />
+            ) : (
+              <HugeiconsIcon icon={AlertCircleIcon} />
+            )}
+            {getPaymentStatusLabel(order.paymentStatus)}
           </Badge>
         </CardAction>
       </CardHeader>
@@ -103,11 +115,11 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             Método de pago
           </span>
           <p className="font-medium text-sm">
-            {getPaymentMethodLabel(payment.paymentMethod)}
+            {getPaymentMethodLabel(order.paymentMethod)}
           </p>
         </div>
 
-        {payment.paymentProvider !== 'manual' && (
+        {order.paymentProvider !== 'manual' && (
           <>
             <Separator />
 
@@ -126,7 +138,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
                   size="icon"
                   variant="ghost"
                 >
-                  <CopyIcon className="size-3.5" />
+                  <HugeiconsIcon icon={Copy01Icon} />
                 </Button>
               </div>
             </div>
