@@ -4,6 +4,7 @@ import { ItemGroup, ItemSeparator } from '@cetus/ui/item'
 import { Separator } from '@cetus/ui/separator'
 import { Currency } from '@cetus/web/components/currency'
 import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
+import { Fragment } from 'react/jsx-runtime'
 
 type Props = {
   order: Order
@@ -19,10 +20,10 @@ export function OrderItemsList({ order }: Readonly<Props>) {
 
         <ItemGroup>
           {order.items.map((item, index) => (
-            <>
-              <OrderItemView item={item} key={item.id} />
+            <Fragment key={item.id}>
+              <OrderItemView item={item} />
               {index < order.items.length - 1 && <ItemSeparator />}
-            </>
+            </Fragment>
           ))}
         </ItemGroup>
       </Card>

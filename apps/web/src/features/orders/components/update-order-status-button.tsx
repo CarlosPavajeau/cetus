@@ -24,10 +24,6 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { CancelOrderDialog } from './cancel-order-dialog'
 import { UpdateOrderStatusDialog } from './update-order-status-dialog'
 
-type Props = {
-  order: Order
-}
-
 const nextAllowedOrderStatuses: Record<OrderStatus, OrderStatus[]> = {
   pending_payment: ['payment_confirmed', 'canceled'],
   payment_confirmed: ['processing', 'canceled'],
@@ -51,6 +47,10 @@ const statusIcons = {
   canceled: <HugeiconsIcon icon={UnavailableIcon} />,
   returned: <HugeiconsIcon icon={DeliveryReturn01Icon} />,
 } satisfies Record<OrderStatus, ReactNode>
+
+type Props = {
+  order: Order
+}
 
 export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
   const nextStatuses = useMemo(
@@ -110,10 +110,10 @@ export function UpdateOrderStatusButton({ order }: Readonly<Props>) {
       />
 
       <UpdateOrderStatusDialog
+        newStatus={selectedStatus}
         onOpenChange={setUpdateDialogOpen}
         open={isUpdateDialogOpen}
-        orderId={order.id}
-        status={selectedStatus}
+        order={order}
       />
     </>
   )
