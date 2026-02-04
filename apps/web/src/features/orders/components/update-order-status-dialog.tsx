@@ -274,7 +274,6 @@ export function UpdateOrderStatusDialog({
               <Field key={item.id} orientation="horizontal">
                 <Checkbox
                   checked={checklistState[item.id] ?? false}
-                  defaultChecked
                   id={item.id}
                   onCheckedChange={(checked) => {
                     setChecklistState((prev) => ({
