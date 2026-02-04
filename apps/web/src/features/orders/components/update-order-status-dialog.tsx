@@ -64,6 +64,7 @@ const UpdateStatusSchema = type({
   ),
   notes: type(`string <= ${MaxNotesLength}`).optional(),
   paymentMethod: type("'cash_on_delivery'|'bank_transfer'|'nequi'|undefined"),
+  paymentStatus: type("'verified'|'rejected'").optional(),
 })
 
 type NewStatus = (typeof UpdateStatusSchema.infer)['newStatus']
@@ -177,12 +178,15 @@ export function UpdateOrderStatusDialog({
     if (hasFailed) {
       form.setValue('newStatus', 'canceled')
       form.setValue('notes', 'No se pudo verificar el pago')
+      form.setValue('paymentStatus', 'rejected')
     } else if (allChecked) {
       form.setValue('newStatus', 'payment_confirmed')
       form.setValue('notes', 'Pago verificado correctamente')
+      form.setValue('paymentStatus', 'verified')
     } else if (newStatus) {
       form.setValue('newStatus', newStatus as unknown as NewStatus)
       form.setValue('notes', '')
+      form.setValue('paymentStatus', undefined)
     }
   }, [hasFailed, allChecked, form.setValue, newStatus])
 

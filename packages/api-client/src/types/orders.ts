@@ -80,9 +80,10 @@ export type CancelOrderRequest = {
 export type ChangeOrderStatusRequest = {
   orderId: string
   newStatus: OrderStatus
+  paymentMethod?: PaymentMethod
+  paymentStatus?: PaymentStatus
   userId?: string
   notes?: string
-  paymentMethod?: PaymentMethod
 }
 
 export type OrderInsights = {
