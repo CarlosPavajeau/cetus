@@ -174,11 +174,20 @@ export function UpdateOrderStatusDialog({
   )
 
   useEffect(() => {
-    if (selectedPaymentMethod) {
-      setChecklistState({})
-      setTouchedItems(new Set())
-    }
-  }, [selectedPaymentMethod])
+    const items = getChecklistItems(selectedPaymentMethod, order)
+    // Only reset if the set of items actually changed (different payment method category)
+    setChecklistState((prev) => {
+      const newState: Record<string, boolean> = {}
+      for (const item of items) {
+        newState[item.id] = prev[item.id] ?? false
+      }
+      return newState
+    })
+    setTouchedItems((prev) => {
+      const validIds = new Set(items.map((i) => i.id))
+      return new Set([...prev].filter((id) => validIds.has(id)))
+    })
+  }, [selectedPaymentMethod, order])
 
   useEffect(() => {
     form.reset({
