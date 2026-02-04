@@ -180,8 +180,11 @@ export function UpdateOrderStatusDialog({
     } else if (allChecked) {
       form.setValue('newStatus', 'payment_confirmed')
       form.setValue('notes', 'Pago verificado correctamente')
+    } else if (newStatus) {
+      form.setValue('newStatus', newStatus as unknown as NewStatus)
+      form.setValue('notes', '')
     }
-  }, [hasFailed, allChecked, form.setValue])
+  }, [hasFailed, allChecked, form.setValue, newStatus])
 
   useEffect(() => {
     const items =
