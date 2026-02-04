@@ -6,7 +6,6 @@ import {
 } from '@cetus/shared/constants/order'
 import { Alert, AlertDescription, AlertTitle } from '@cetus/ui/alert'
 import { Button } from '@cetus/ui/button'
-import { Checkbox } from '@cetus/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -41,6 +40,13 @@ import {
   FieldLegend,
   FieldSet,
 } from '@cetus/web/components/ui/field'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@cetus/web/components/ui/select'
 import { useIsMobile } from '@cetus/web/hooks/use-mobile'
 import { cn } from '@cetus/web/shared/utils'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
@@ -289,13 +295,14 @@ export function UpdateOrderStatusDialog({
               <FieldGroup className="gap-3">
                 {checklistItems.map((item) => (
                   <Field key={item.id} orientation="horizontal">
-                    <Checkbox
-                      checked={checklistState[item.id] ?? false}
-                      id={item.id}
-                      onCheckedChange={(checked) => {
+                    <FieldLabel className="font-normal" htmlFor={item.id}>
+                      {item.label}
+                    </FieldLabel>
+                    <Select
+                      onValueChange={(value) => {
                         setChecklistState((prev) => ({
                           ...prev,
-                          [item.id]: checked === true,
+                          [item.id]: value === 'yes',
                         }))
                         setTouchedItems((prev) => {
                           const next = new Set(prev)
@@ -303,10 +310,15 @@ export function UpdateOrderStatusDialog({
                           return next
                         })
                       }}
-                    />
-                    <FieldLabel className="font-normal" htmlFor={item.id}>
-                      {item.label}
-                    </FieldLabel>
+                    >
+                      <SelectTrigger size="sm">
+                        <SelectValue placeholder="Si o no" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Si</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </Field>
                 ))}
               </FieldGroup>
