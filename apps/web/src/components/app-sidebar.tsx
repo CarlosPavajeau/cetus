@@ -31,14 +31,20 @@ import {
 
 const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
   {
-    label: 'Panel',
+    label: 'Inicio',
+    href: '/app',
+    isNew: false,
+    icon: LayoutDashboardIcon,
+  },
+  {
+    label: 'Panel de control',
     href: '/app/dashboard',
     isNew: false,
     icon: LayoutDashboardIcon,
   },
   {
     label: 'Pedidos',
-    href: '/app',
+    href: '/app/orders',
     isNew: false,
     icon: PackageIcon,
   },

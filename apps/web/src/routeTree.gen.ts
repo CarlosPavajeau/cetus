@@ -36,6 +36,7 @@ import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as AcceptInvitationIdRouteImport } from './routes/accept-invitation.$id'
 import { Route as StoreRequiredCartRouteImport } from './routes/_store-required/cart'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
+import { Route as AppOrdersIndexRouteImport } from './routes/app/orders.index'
 import { Route as AppInventoryIndexRouteImport } from './routes/app/inventory.index'
 import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
 import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
@@ -187,6 +188,11 @@ const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
   path: '/products/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInventoryIndexRoute = AppInventoryIndexRouteImport.update({
   id: '/inventory/',
   path: '/inventory/',
@@ -313,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/inventory': typeof AppInventoryIndexRoute
+  '/app/orders': typeof AppOrdersIndexRoute
   '/app/products': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
   '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/app/coupons': typeof AppCouponsIndexRoute
   '/app/dashboard': typeof AppDashboardIndexRoute
   '/app/inventory': typeof AppInventoryIndexRoute
+  '/app/orders': typeof AppOrdersIndexRoute
   '/app/products': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
   '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
@@ -402,6 +410,7 @@ export interface FileRoutesById {
   '/app/coupons/': typeof AppCouponsIndexRoute
   '/app/dashboard/': typeof AppDashboardIndexRoute
   '/app/inventory/': typeof AppInventoryIndexRoute
+  '/app/orders/': typeof AppOrdersIndexRoute
   '/app/products/': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
   '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
@@ -448,6 +457,7 @@ export interface FileRouteTypes {
     | '/app/coupons'
     | '/app/dashboard'
     | '/app/inventory'
+    | '/app/orders'
     | '/app/products'
     | '/app/products/$id/details'
     | '/app/products/variants/$id/edit'
@@ -491,6 +501,7 @@ export interface FileRouteTypes {
     | '/app/coupons'
     | '/app/dashboard'
     | '/app/inventory'
+    | '/app/orders'
     | '/app/products'
     | '/app/products/$id/details'
     | '/app/products/variants/$id/edit'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/app/coupons/'
     | '/app/dashboard/'
     | '/app/inventory/'
+    | '/app/orders/'
     | '/app/products/'
     | '/app/products/$id/details'
     | '/app/products/variants/$id/edit'
@@ -754,6 +766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/orders/': {
+      id: '/app/orders/'
+      path: '/orders'
+      fullPath: '/app/orders'
+      preLoaderRoute: typeof AppOrdersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/inventory/': {
       id: '/app/inventory/'
       path: '/inventory'
@@ -902,6 +921,7 @@ interface AppRouteChildren {
   AppCouponsIndexRoute: typeof AppCouponsIndexRoute
   AppDashboardIndexRoute: typeof AppDashboardIndexRoute
   AppInventoryIndexRoute: typeof AppInventoryIndexRoute
+  AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppProductsIndexRoute: typeof AppProductsIndexRoute
   AppProductsIdDetailsRoute: typeof AppProductsIdDetailsRoute
   AppProductsVariantsIdEditRoute: typeof AppProductsVariantsIdEditRoute
@@ -922,6 +942,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCouponsIndexRoute: AppCouponsIndexRoute,
   AppDashboardIndexRoute: AppDashboardIndexRoute,
   AppInventoryIndexRoute: AppInventoryIndexRoute,
+  AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppProductsIndexRoute: AppProductsIndexRoute,
   AppProductsIdDetailsRoute: AppProductsIdDetailsRoute,
   AppProductsVariantsIdEditRoute: AppProductsVariantsIdEditRoute,
