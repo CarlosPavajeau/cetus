@@ -237,82 +237,84 @@ export function UpdateOrderStatusDialog({
   const formContent = (
     <FieldGroup>
       {newStatus === 'payment_confirmed' && (
-        <FormField
-          control={form.control}
-          name="paymentMethod"
-          render={({ field, fieldState }) => (
-            <FieldSet className="w-full max-w-xs">
-              <FieldLegend variant="label">Método de pago</FieldLegend>
-              <RadioGroup
-                defaultValue={field.value}
-                onValueChange={field.onChange}
-              >
-                {Object.entries(manualPaymentMethodLabels).map(
-                  ([key, label]) => (
-                    <Field
-                      data-invalid={fieldState.invalid}
-                      key={key}
-                      orientation="horizontal"
-                    >
-                      <RadioGroupItem
-                        aria-invalid={fieldState.invalid}
-                        id={key}
-                        value={key}
-                      />
-                      <FieldLabel className="font-normal" htmlFor={key}>
-                        {label}
-                      </FieldLabel>
-                    </Field>
-                  ),
-                )}
-              </RadioGroup>
+        <>
+          <FormField
+            control={form.control}
+            name="paymentMethod"
+            render={({ field, fieldState }) => (
+              <FieldSet className="w-full max-w-xs">
+                <FieldLegend variant="label">Método de pago</FieldLegend>
+                <RadioGroup
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                >
+                  {Object.entries(manualPaymentMethodLabels).map(
+                    ([key, label]) => (
+                      <Field
+                        data-invalid={fieldState.invalid}
+                        key={key}
+                        orientation="horizontal"
+                      >
+                        <RadioGroupItem
+                          aria-invalid={fieldState.invalid}
+                          id={key}
+                          value={key}
+                        />
+                        <FieldLabel className="font-normal" htmlFor={key}>
+                          {label}
+                        </FieldLabel>
+                      </Field>
+                    ),
+                  )}
+                </RadioGroup>
+              </FieldSet>
+            )}
+          />
+
+          {checklistItems.length > 0 && (
+            <FieldSet>
+              <FieldLegend variant="label">Verificación de pago</FieldLegend>
+              <FieldDescription>
+                {getPaymentVerificationMessage(selectedPaymentMethod)}
+              </FieldDescription>
+
+              <FieldGroup className="gap-3">
+                {checklistItems.map((item) => (
+                  <Field key={item.id} orientation="horizontal">
+                    <Checkbox
+                      checked={checklistState[item.id] ?? false}
+                      id={item.id}
+                      onCheckedChange={(checked) => {
+                        setChecklistState((prev) => ({
+                          ...prev,
+                          [item.id]: checked === true,
+                        }))
+                        setTouchedItems((prev) => {
+                          const next = new Set(prev)
+                          next.add(item.id)
+                          return next
+                        })
+                      }}
+                    />
+                    <FieldLabel className="font-normal" htmlFor={item.id}>
+                      {item.label}
+                    </FieldLabel>
+                  </Field>
+                ))}
+              </FieldGroup>
+
+              {hasFailed && (
+                <Alert variant="destructive">
+                  <AlertTriangleIcon />
+                  <AlertTitle>Posible fraude detectado</AlertTitle>
+                  <AlertDescription>
+                    Uno o más items de verificación no coinciden.
+                  </AlertDescription>
+                </Alert>
+              )}
             </FieldSet>
           )}
-        />
-      )}
-
-      {checklistItems.length > 0 && (
-        <FieldSet>
-          <FieldLegend variant="label">Verificación de pago</FieldLegend>
-          <FieldDescription>
-            {getPaymentVerificationMessage(selectedPaymentMethod)}
-          </FieldDescription>
-
-          <FieldGroup className="gap-3">
-            {checklistItems.map((item) => (
-              <Field key={item.id} orientation="horizontal">
-                <Checkbox
-                  checked={checklistState[item.id] ?? false}
-                  id={item.id}
-                  onCheckedChange={(checked) => {
-                    setChecklistState((prev) => ({
-                      ...prev,
-                      [item.id]: checked === true,
-                    }))
-                    setTouchedItems((prev) => {
-                      const next = new Set(prev)
-                      next.add(item.id)
-                      return next
-                    })
-                  }}
-                />
-                <FieldLabel className="font-normal" htmlFor={item.id}>
-                  {item.label}
-                </FieldLabel>
-              </Field>
-            ))}
-          </FieldGroup>
-
-          {hasFailed && (
-            <Alert variant="destructive">
-              <AlertTriangleIcon />
-              <AlertTitle>Posible fraude detectado</AlertTitle>
-              <AlertDescription>
-                Uno o más items de verificación no coinciden.
-              </AlertDescription>
-            </Alert>
-          )}
-        </FieldSet>
+        </>
       )}
 
       <FormField
