@@ -1,212 +1,428 @@
-import type {
-  OrderQueryParams,
-  OrderStatus,
-} from '@cetus/api-client/types/orders'
+import { api } from '@cetus/api-client'
+import type { PaymentStatusMetrics } from '@cetus/api-client/types/reports'
+import { getSaleChannelLabel } from '@cetus/shared/constants/order'
+import { getImageUrl } from '@cetus/shared/utils/image'
 import {
-  orderStatusColors,
-  orderStatusLabels,
-} from '@cetus/shared/constants/order'
-import { Button } from '@cetus/ui/button'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@cetus/ui/card'
+import { FormattedDate } from '@cetus/web/components/formatted-date'
+import { Button } from '@cetus/web/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@cetus/ui/dropdown-menu'
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@cetus/web/components/ui/chart'
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@cetus/ui/empty'
-import { DefaultLoader } from '@cetus/web/components/default-loader'
-import { DateRangeFilter } from '@cetus/web/features/orders/components/date-range-filter'
-import { OrdersList } from '@cetus/web/features/orders/components/orders-list'
-import { OrdersPagination } from '@cetus/web/features/orders/components/orders-pagination'
-import { orderQueries } from '@cetus/web/features/orders/queries'
-import { useOrderRealtime } from '@cetus/web/hooks/orders/use-order-realtime'
-import {
-  ArrowDown01Icon,
-  Refresh01Icon,
-  Tick02Icon,
-} from '@hugeicons/core-free-icons'
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@cetus/web/components/ui/item'
+import { StatsCard } from '@cetus/web/features/reports/components/stats-card'
+import { getPaymentStatusLabel } from '@cetus/web/shared/payments'
+import { Refresh01FreeIcons } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { PackageXIcon } from 'lucide-react'
-import { useState } from 'react'
+import { Image } from '@unpic/react'
+import { useMemo } from 'react'
+import { useNumberFormatter } from 'react-aria'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Label,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 export const Route = createFileRoute('/app/')({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData({
+      queryKey: ['reports', 'daily-summary'],
+      queryFn: () => api.reports.getDailySummary(),
+    })
+  },
   component: RouteComponent,
 })
 
-const EmptyState = () => (
-  <Empty>
-    <EmptyHeader>
-      <EmptyMedia variant="icon">
-        <PackageXIcon />
-      </EmptyMedia>
-      <EmptyTitle>No hay pedidos</EmptyTitle>
-      <EmptyDescription>
-        No hay pedidos disponibles con los filtros aplicados
-      </EmptyDescription>
-    </EmptyHeader>
-  </Empty>
-)
+function getChannelLabel(channel: string) {
+  if (channel === 'ecommerce') {
+    return 'E-commerce'
+  }
+  return getSaleChannelLabel(channel)
+}
+
+const orderStatusConfig = {
+  confirmed: { label: 'Confirmadas', color: 'oklch(0.72 0.19 150)' },
+  pending: { label: 'Pendientes', color: 'oklch(0.80 0.15 85)' },
+  awaitingVerification: {
+    label: 'Por verificar',
+    color: 'oklch(0.70 0.15 250)',
+  },
+  rejected: { label: 'Rechazadas', color: 'oklch(0.64 0.21 25)' },
+  canceled: { label: 'Canceladas', color: 'oklch(0.55 0.02 260)' },
+} satisfies ChartConfig
+
+const channelColors = [
+  'oklch(0.70 0.17 250)',
+  'oklch(0.72 0.19 150)',
+  'oklch(0.80 0.15 85)',
+  'oklch(0.64 0.21 25)',
+  'oklch(0.55 0.02 260)',
+]
 
 function RouteComponent() {
-  useOrderRealtime()
+  const { data, dataUpdatedAt, refetch } = useSuspenseQuery({
+    queryKey: ['reports', 'daily-summary'],
+    queryFn: () => api.reports.getDailySummary(),
+  })
 
-  const [statuses, setStatuses] = useState<OrderStatus[]>([
-    'pending_payment',
-    'payment_confirmed',
-    'processing',
-  ])
-  const [dateRange, setDateRange] = useState<{ from?: string; to?: string }>({})
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const currencyFormat = useNumberFormatter({
+    style: 'currency',
+    currency: 'COP',
+  })
+  const numberFormat = useNumberFormatter()
+  const percentageFormat = useNumberFormatter({
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 
-  const orderFilters: OrderQueryParams = {
-    page,
-    pageSize,
-    statuses,
-    from: dateRange.from,
-    to: dateRange.to,
-  }
+  const orderStatusData = useMemo(
+    () =>
+      [
+        {
+          status: 'confirmed',
+          value: data.orders.confirmed,
+          fill: 'var(--color-confirmed)',
+        },
+        {
+          status: 'pending',
+          value: data.orders.pending,
+          fill: 'var(--color-pending)',
+        },
+        {
+          status: 'awaitingVerification',
+          value: data.orders.awaitingVerification,
+          fill: 'var(--color-awaitingVerification)',
+        },
+        {
+          status: 'rejected',
+          value: data.orders.rejected,
+          fill: 'var(--color-rejected)',
+        },
+        {
+          status: 'canceled',
+          value: data.orders.canceled,
+          fill: 'var(--color-canceled)',
+        },
+      ].filter((d) => d.value > 0),
+    [data.orders],
+  )
 
-  const { data, isLoading } = useQuery(orderQueries.list(orderFilters))
+  const channelChartData = useMemo(
+    () =>
+      data.byChannel.map((ch, i) => ({
+        channel: getChannelLabel(ch.channel),
+        revenue: ch.revenue,
+        orderCount: ch.orderCount,
+        fill: channelColors[i % channelColors.length],
+      })),
+    [data.byChannel],
+  )
 
-  const toggleStatus = (status: OrderStatus) => {
-    setStatuses((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status],
-    )
-    setPage(1)
-  }
-
-  const handleDateRangeChange = (range: { from?: string; to?: string }) => {
-    setDateRange(range)
-    setPage(1)
-  }
-
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize)
-    setPage(1)
-  }
-
-  const queryClient = useQueryClient()
-  const refresh = () => {
-    queryClient.invalidateQueries(orderQueries.list(orderFilters))
-  }
-
-  const orders = data?.items || []
-  const totalCount = data?.totalCount ?? 0
-  const totalPages = data?.totalPages ?? 0
-  const isEmpty = !orders || orders.length === 0
-
-  const content = () => {
-    if (isLoading) {
-      return <DefaultLoader />
+  const channelConfig = useMemo(() => {
+    const config: ChartConfig = {}
+    for (const item of channelChartData) {
+      config[item.channel] = { label: item.channel, color: item.fill }
     }
-
-    if (isEmpty) {
-      return <EmptyState />
-    }
-
-    return (
-      <div className="flex flex-col gap-4">
-        <p className="text-muted-foreground text-sm">
-          {totalCount} pedidos encontrados
-        </p>
-        <OrdersList orders={orders} />
-        {totalPages > 1 && (
-          <OrdersPagination
-            onPageChange={setPage}
-            onPageSizeChange={handlePageSizeChange}
-            page={page}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            totalPages={totalPages}
-          />
-        )}
-      </div>
-    )
-  }
+    config.revenue = { label: 'Ingresos' }
+    return config
+  }, [channelChartData])
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="justify-between" variant="outline">
-              <div className="flex items-center -space-x-0.5">
-                {Object.entries(orderStatusColors).map(([key, label]) => (
-                  <div
-                    className="size-2.5 shrink-0 rounded-full border grayscale transition-all data-[active=true]:border-(--color) data-[active=true]:bg-(--color) data-[active=true]:grayscale-0"
-                    data-active={statuses.includes(
-                      key as unknown as OrderStatus,
-                    )}
-                    key={key}
-                    style={
-                      {
-                        '--color': label,
-                      } as React.CSSProperties
-                    }
-                  />
-                ))}
-              </div>
-              Estados {statuses.length}/
-              {Object.entries(orderStatusColors).length}
-              <HugeiconsIcon icon={ArrowDown01Icon} />
-            </Button>
-          </DropdownMenuTrigger>
+    <div className="space-y-4 p-4">
+      <div>
+        <h1 className="font-heading font-medium text-2xl">Resumen del día</h1>
+        <div className="flex items-center gap-2">
+          <small className="text-muted-foreground text-sm">
+            Última actualización:{' '}
+            <FormattedDate date={new Date(dataUpdatedAt)} />
+          </small>
 
-          <DropdownMenuContent align="end" className="w-56">
-            {Object.entries(orderStatusLabels).map(([key, label]) => {
-              const isSelected = statuses.includes(
-                key as unknown as OrderStatus,
-              )
-              const color = orderStatusColors[key as unknown as OrderStatus]
-              return (
-                <DropdownMenuItem
-                  data-active={isSelected}
-                  key={key}
-                  onSelect={() => toggleStatus(key as unknown as OrderStatus)}
-                  style={
-                    {
-                      '--color': color,
-                    } as React.CSSProperties
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="size-2 rounded-full bg-(--color)" />
-                    {label}
-                  </div>
-
-                  <HugeiconsIcon
-                    className="ml-auto opacity-0 group-data-[active=true]/dropdown-menu-item:opacity-100"
-                    icon={Tick02Icon}
-                  />
-                </DropdownMenuItem>
-              )
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DateRangeFilter
-          from={dateRange.from}
-          onChange={handleDateRangeChange}
-          to={dateRange.to}
-        />
-
-        <Button onClick={refresh} size="icon" variant="outline">
-          <HugeiconsIcon icon={Refresh01Icon} />
-        </Button>
+          <Button onClick={() => refetch()} size="xs" variant="outline">
+            <HugeiconsIcon data-icon="inline-start" icon={Refresh01FreeIcons} />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
-      <div>{content()}</div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          format={(value) => numberFormat.format(value)}
+          title="Ventas del día"
+          value={data.orders.total}
+        />
+        <StatsCard
+          format={(value) => currencyFormat.format(value)}
+          title="Ingresos confirmados"
+          value={data.revenue.confirmed}
+        />
+        <StatsCard
+          format={(value) => currencyFormat.format(value)}
+          title="Ingresos pendientes"
+          value={data.revenue.pending}
+        />
+        <StatsCard
+          format={(value) => numberFormat.format(value)}
+          title="Ventas por cobrar"
+          value={data.orders.pending}
+        />
+      </div>
+
+      <div className="rounded-md bg-muted/50 p-4">
+        <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground">
+            Total del día:{' '}
+            <span className="font-semibold text-foreground">
+              {currencyFormat.format(data.revenue.total)}
+            </span>
+          </p>
+          <p className="text-muted-foreground">
+            Tasa de confirmación:{' '}
+            <span className="font-semibold text-foreground">
+              {data.orders.total > 0
+                ? percentageFormat.format(
+                    data.orders.confirmed / data.orders.total,
+                  )
+                : '—'}
+            </span>
+          </p>
+        </div>
+      </div>
+      {data.topProduct && (
+        <div className="flex flex-col gap-2">
+          <p className="font-medium">Producto más vendido</p>
+
+          <Item variant="outline">
+            <ItemMedia variant="image">
+              <Image
+                alt={data.topProduct.productName}
+                className="object-cover"
+                height={80}
+                layout="constrained"
+                objectFit="cover"
+                src={getImageUrl(data.topProduct.imageUrl ?? 'placeholder.svg')}
+                width={80}
+              />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle className="line-clamp-1">
+                {data.topProduct.productName}
+              </ItemTitle>
+              <ItemDescription>
+                {numberFormat.format(data.topProduct.quantitySold)} vendidos
+                &middot; {currencyFormat.format(data.topProduct.revenue)}
+              </ItemDescription>
+            </ItemContent>
+          </Item>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Estado de ventas</CardTitle>
+            <CardDescription>
+              Distribución de {numberFormat.format(data.orders.total)} ventas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data.orders.total > 0 ? (
+              <>
+                <ChartContainer
+                  className="mx-auto aspect-square max-h-62.5"
+                  config={orderStatusConfig}
+                >
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                    <Pie
+                      data={orderStatusData}
+                      dataKey="value"
+                      innerRadius={60}
+                      nameKey="status"
+                      strokeWidth={5}
+                    >
+                      <Label
+                        content={({ viewBox }) => {
+                          if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                            return (
+                              <text
+                                dominantBaseline="middle"
+                                textAnchor="middle"
+                                x={viewBox.cx}
+                                y={viewBox.cy}
+                              >
+                                <tspan
+                                  className="fill-muted-foreground text-sm"
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) - 10}
+                                >
+                                  Ventas
+                                </tspan>
+                                <tspan
+                                  className="fill-foreground font-medium text-xl"
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 15}
+                                >
+                                  {numberFormat.format(data.orders.total)}
+                                </tspan>
+                              </text>
+                            )
+                          }
+                        }}
+                      />
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+
+                <div className="flex flex-col gap-3">
+                  {orderStatusData.map((item) => (
+                    <div
+                      className="flex items-center justify-between"
+                      key={item.status}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-4 w-1 rounded-full"
+                          style={{
+                            backgroundColor:
+                              orderStatusConfig[
+                                item.status as keyof typeof orderStatusConfig
+                              ].color,
+                          }}
+                        />
+                        <h6 className="font-medium text-sm leading-tight">
+                          {
+                            orderStatusConfig[
+                              item.status as keyof typeof orderStatusConfig
+                            ].label
+                          }
+                        </h6>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <h6 className="font-medium text-sm">
+                          {numberFormat.format(item.value)}
+                        </h6>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="py-8 text-center text-muted-foreground text-sm">
+                Sin ventas registradas hoy.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Ventas por canal</CardTitle>
+            <CardDescription>Ingresos por canal de venta</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {channelChartData.length > 0 ? (
+              <ChartContainer
+                className="aspect-auto h-62.5 w-full"
+                config={channelConfig}
+              >
+                <BarChart
+                  data={channelChartData}
+                  layout="vertical"
+                  margin={{ left: 0, right: 16 }}
+                >
+                  <CartesianGrid horizontal={false} />
+                  <YAxis
+                    axisLine={false}
+                    dataKey="channel"
+                    tickLine={false}
+                    tickMargin={8}
+                    type="category"
+                    width={90}
+                  />
+                  <XAxis hide type="number" />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value) =>
+                          currencyFormat.format(value as number)
+                        }
+                        hideLabel
+                      />
+                    }
+                  />
+                  <Bar dataKey="revenue" radius={4}>
+                    {channelChartData.map((entry) => (
+                      <Cell fill={entry.fill} key={entry.channel} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <p className="py-8 text-center text-muted-foreground text-sm">
+                Sin datos de canales para hoy.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Estado de pagos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.byPaymentStatus.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {data.byPaymentStatus.map((ps: PaymentStatusMetrics) => (
+                  <div
+                    className="flex items-center justify-between rounded-md border p-3"
+                    key={ps.status}
+                  >
+                    <div>
+                      <p className="font-medium text-sm">
+                        {getPaymentStatusLabel(ps.status)}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {numberFormat.format(ps.orderCount)} ventas &middot;{' '}
+                        {percentageFormat.format(ps.percentage / 100)}
+                      </p>
+                    </div>
+                    <p className="font-medium font-mono text-sm tabular-nums">
+                      {currencyFormat.format(ps.revenue)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Sin datos de pagos para hoy.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
