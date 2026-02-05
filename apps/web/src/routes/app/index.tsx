@@ -222,7 +222,7 @@ function RouteComponent() {
                 height={80}
                 layout="constrained"
                 objectFit="cover"
-                src={getImageUrl(data.topProduct.imageUrl || 'placeholder.svg')}
+                src={getImageUrl(data.topProduct.imageUrl ?? 'placeholder.svg')}
                 width={80}
               />
             </ItemMedia>
