@@ -52,15 +52,17 @@ export function CountingNumber({
     }
 
     setHasAnimated(true)
-    const timeout = setTimeout(() => {
-      const controls = animate(motionValue, to, {
-        duration,
-        onUpdate: (v) => setDisplay(v),
-        onComplete,
-      })
-      return () => controls.stop()
-    }, delay)
-    return () => clearTimeout(timeout)
+
+    const controls = animate(motionValue, to, {
+      duration,
+      onUpdate: (v) => setDisplay(v),
+      onComplete,
+    })
+    const timeoutId = setTimeout(() => controls.stop(), delay)
+    return () => {
+      clearTimeout(timeoutId)
+      controls.stop()
+    }
   }, [shouldStart, from, to, duration, delay])
 
   return (
