@@ -22,7 +22,9 @@ export function StatsCard({ title, value, format, className }: Props) {
                 format={format}
                 from={0}
                 to={
-                  typeof value === 'number' ? value : Number.parseFloat(value)
+                  typeof value === 'number'
+                    ? value
+                    : Number.parseFloat(value) || 0
                 }
               />
             </p>
