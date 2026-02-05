@@ -273,18 +273,18 @@ function RouteComponent() {
                                 y={viewBox.cy}
                               >
                                 <tspan
-                                  className="fill-foreground font-bold text-3xl"
+                                  className="fill-muted-foreground text-sm"
                                   x={viewBox.cx}
-                                  y={viewBox.cy}
-                                >
-                                  {numberFormat.format(data.orders.total)}
-                                </tspan>
-                                <tspan
-                                  className="fill-muted-foreground"
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 24}
+                                  y={(viewBox.cy || 0) - 10}
                                 >
                                   Ventas
+                                </tspan>
+                                <tspan
+                                  className="fill-foreground font-medium text-xl"
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 15}
+                                >
+                                  {numberFormat.format(data.orders.total)}
                                 </tspan>
                               </text>
                             )
