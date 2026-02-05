@@ -201,10 +201,11 @@ function RouteComponent() {
           <p className="text-muted-foreground">
             Tasa de confirmación:{' '}
             <span className="font-semibold text-foreground">
-              {data.orders.total > 0 &&
-                percentageFormat.format(
-                  data.orders.confirmed / data.orders.total,
-                )}
+              {data.orders.total > 0
+                ? percentageFormat.format(
+                    data.orders.confirmed / data.orders.total,
+                  )
+                : '—'}
             </span>
           </p>
         </div>
