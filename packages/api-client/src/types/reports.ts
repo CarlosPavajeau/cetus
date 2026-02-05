@@ -38,7 +38,7 @@ export type TopProductItem = {
 }
 
 export type DailySummaryResponse = {
-  date: Date
+  date: string
   orders: OrdersMetrics
   revenue: RevenueMetrics
   topProduct?: TopProductItem | null
