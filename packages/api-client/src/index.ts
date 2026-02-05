@@ -5,6 +5,7 @@ import { customersApi } from './endpoints/customers'
 import { inventoryApi } from './endpoints/inventory'
 import { ordersApi } from './endpoints/orders'
 import { productsApi } from './endpoints/products'
+import { reportsApi } from './endpoints/reports'
 import { reviewsApi } from './endpoints/reviews'
 import { statesApi } from './endpoints/states'
 import { storesApi } from './endpoints/stores'
@@ -17,6 +18,7 @@ export const api = {
   inventory: inventoryApi,
   orders: ordersApi,
   products: productsApi,
+  reports: reportsApi,
   reviews: reviewsApi,
   states: statesApi,
   stores: storesApi,
