@@ -10,6 +10,8 @@ type Props = {
 }
 
 export function StatsCard({ title, value, format, className }: Props) {
+  const numValue = typeof value === 'number' ? value : Number.parseFloat(value)
+
   return (
     <Card className={cn('w-full', className)}>
       <CardContent>
@@ -21,11 +23,7 @@ export function StatsCard({ title, value, format, className }: Props) {
                 duration={0.5}
                 format={format}
                 from={0}
-                to={
-                  typeof value === 'number'
-                    ? value
-                    : Number.parseFloat(value) || 0
-                }
+                to={Number.isNaN(numValue) ? 0 : numValue}
               />
             </p>
           </div>
