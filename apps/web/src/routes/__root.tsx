@@ -4,6 +4,8 @@ import { TooltipProvider } from '@cetus/ui/tooltip'
 import { NotFound } from '@cetus/web/components/not-found'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import appCss from '@cetus/web/styles/index.css?url'
+import interLatinFont from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
+import outfitLatinFont from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
@@ -57,7 +59,23 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         title: 'cetus',
       },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      {
+        rel: 'preload',
+        href: interLatinFont,
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'preload',
+        href: outfitLatinFont,
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
+      { rel: 'stylesheet', href: appCss },
+    ],
   }),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
