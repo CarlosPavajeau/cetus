@@ -6,21 +6,7 @@ import type {
 import { createProductSchema } from '@cetus/schemas/product.schema'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@cetus/ui/card'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@cetus/ui/form'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
 import { Input } from '@cetus/ui/input'
 import { Label } from '@cetus/ui/label'
 import { Textarea } from '@cetus/ui/textarea'
@@ -39,7 +25,7 @@ import {
   TagIcon,
   Trash2Icon,
 } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { Controller, FormProvider, useForm } from 'react-hook-form'
 import { productQueries } from '../queries'
 
 export function AdvancedProductRegistrationForm() {
@@ -77,74 +63,66 @@ function BasicProductInformationStep() {
   })
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2">
-            <PackageIcon className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-foreground">
-              Información básica del producto
-            </CardTitle>
-            <CardDescription>
-              Ingresa los detalles básicos sobre tu producto
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input autoFocus type="text" {...field} />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
+    <FormProvider {...form}>
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <FieldGroup>
+          <Controller
+            control={form.control}
+            name="name"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Nombre</FieldLabel>
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  autoFocus
+                  placeholder="Ej: Camiseta deportiva"
+                  type="text"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
                 )}
-              />
+              </Field>
+            )}
+          />
 
-              <CategoryCombobox />
-            </div>
+          <CategoryCombobox />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descripción</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} value={field.value || ''} />
-                  </FormControl>
+          <Controller
+            control={form.control}
+            name="description"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Descripción</FieldLabel>
+                <Textarea
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Describe brevemente tu producto..."
+                  value={field.value || ''}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGroup>
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-between pt-6">
-              <div />
-
-              <SubmitButton disabled={isPending} isSubmitting={isPending}>
-                <div className="flex items-center gap-2">
-                  Siguiente: Configurar opciones
-                  <SettingsIcon className="h-4 w-4" />
-                </div>
-              </SubmitButton>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        <div className="pt-2">
+          <SubmitButton
+            className="w-full md:ml-auto md:flex md:w-auto"
+            disabled={isPending}
+            isSubmitting={isPending}
+            size="lg"
+          >
+            <span className="flex items-center gap-2">
+              Siguiente: Configurar opciones
+              <SettingsIcon className="h-4 w-4" />
+            </span>
+          </SubmitButton>
+        </div>
+      </form>
+    </FormProvider>
   )
 }
 
@@ -191,112 +169,95 @@ function ProductOptionsStep() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2">
-            <SettingsIcon className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-foreground">
-              Opciones del producto
-            </CardTitle>
-            <CardDescription>
-              Define las diferentes opciones disponibles para tu producto (por
-              ejemplo, tamaño, color, sabor)
-            </CardDescription>
+    <div className="space-y-6">
+      {isLoading && <DefaultLoader />}
+
+      {!isLoading && data && (
+        <div className="flex flex-col gap-3">
+          <Label className="font-medium text-sm">Opciones disponibles</Label>
+          <div className="flex flex-wrap gap-2">
+            {data.map((option) => (
+              <Button
+                className="text-xs"
+                disabled={selectedOptions.some((o) => o.id === option.id)}
+                key={option.id}
+                onClick={() => handleAddOption(option)}
+                size="sm"
+                variant="outline"
+              >
+                <PlusIcon className="h-3 w-3" />
+                {option.name}
+              </Button>
+            ))}
           </div>
         </div>
-      </CardHeader>
+      )}
 
-      <CardContent className="space-y-6">
-        {isLoading && <DefaultLoader />}
+      {selectedOptions.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label className="font-medium text-sm">
+            Opciones seleccionadas ({selectedOptions.length})
+          </Label>
 
-        {!isLoading && data && (
-          <div className="flex flex-col gap-3">
-            <Label className="font-medium text-sm">Opciones disponibles</Label>
-            <div className="flex flex-wrap gap-2">
-              {data.map((option) => (
-                <Button
-                  className="text-xs"
-                  disabled={selectedOptions.some((o) => o.id === option.id)}
-                  key={option.id}
-                  onClick={() => handleAddOption(option)}
-                  size="sm"
-                  variant="outline"
-                >
-                  <PlusIcon className="h-3 w-3" />
-                  {option.name}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
+          {selectedOptions.map((option) => (
+            <div
+              className="overflow-hidden rounded-md border bg-card"
+              key={option.id}
+            >
+              <div className="flex p-3">
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="flex justify-between">
+                    <h3 className="line-clamp-1 font-medium text-sm">
+                      {option.name}
+                    </h3>
 
-        {selectedOptions.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <Label className="font-medium text-sm">
-              Opciones seleccionadas ({selectedOptions.length})
-            </Label>
+                    <button
+                      aria-label={`Quitar la opción ${option.name}`}
+                      className="text-muted-foreground hover:text-red-500"
+                      onClick={() => handleRemoveOption(option)}
+                      type="button"
+                    >
+                      <Trash2Icon className="h-4 w-4" />
+                    </button>
+                  </div>
 
-            {selectedOptions.map((option) => (
-              <div
-                className="overflow-hidden rounded-md border bg-card"
-                key={option.id}
-              >
-                <div className="flex p-3">
-                  <div className="flex flex-1 flex-col gap-2">
-                    <div className="flex justify-between">
-                      <h3 className="line-clamp-1 font-medium text-sm">
-                        {option.name}
-                      </h3>
-
-                      <button
-                        aria-label={`Quitar la opción ${option.name}`}
-                        className="text-muted-foreground hover:text-red-500"
-                        onClick={() => handleRemoveOption(option)}
-                        type="button"
-                      >
-                        <Trash2Icon className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {option.values.map((value) => (
-                        <Badge key={value.id} variant="secondary">
-                          {value.value}
-                        </Badge>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    {option.values.map((value) => (
+                      <Badge key={value.id} variant="secondary">
+                        {value.value}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {selectedOptions.length === 0 && (
-          <div className="py-8 text-center text-muted-foreground">
-            <SettingsIcon className="mx-auto mb-3 h-12 w-12 opacity-50" />
-            <p className="text-sm">Aún no se han añadido opciones</p>
-            <p className="text-xs">
-              Agrega opciones como tamaño, color o sabor para crear variantes de
-              producto
-            </p>
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <SubmitButton
-            disabled={selectedOptions.length === 0 || isPending}
-            isSubmitting={isPending}
-            onClick={handleSubmit}
-          >
-            Siguiente: Configurar variantes
-          </SubmitButton>
+            </div>
+          ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {selectedOptions.length === 0 && (
+        <div className="py-8 text-center text-muted-foreground">
+          <SettingsIcon className="mx-auto mb-3 h-12 w-12 opacity-50" />
+          <p className="text-sm">Aún no se han añadido opciones</p>
+          <p className="text-xs">
+            Agrega opciones como tamaño, color o sabor para crear variantes de
+            producto
+          </p>
+        </div>
+      )}
+
+      <div className="pt-2">
+        <SubmitButton
+          className="w-full md:ml-auto md:flex md:w-auto"
+          disabled={selectedOptions.length === 0 || isPending}
+          isSubmitting={isPending}
+          onClick={handleSubmit}
+          size="lg"
+        >
+          Siguiente: Configurar variantes
+        </SubmitButton>
+      </div>
+    </div>
   )
 }
 
@@ -305,7 +266,6 @@ function ProductVariantsStep() {
     useAdvancedProductRegistrationStore()
 
   const generateVariantName = (variant: CreateProductVariant) => {
-    // Generate variant name based on selected option values
     const optionValues = selectedOptions
       .map((option) => {
         const value = option.values.find((v) =>
@@ -333,112 +293,94 @@ function ProductVariantsStep() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2">
-            <PackageIcon className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-foreground">
-              Variantes del producto
-            </CardTitle>
-            <CardDescription>
-              Cree variantes específicas según las opciones de su producto
-            </CardDescription>
+    <div className="space-y-6">
+      {variants.length === 0 && (
+        <div className="py-8 text-center">
+          <PackageIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
+          <h3 className="mb-2 font-medium">No se han creado variantes aún</h3>
+          <p className="mb-4 text-muted-foreground text-sm">
+            Genera variantes automáticamente a partir de tus opciones o créalas
+            manualmente
+          </p>
+          <div className="flex flex-col justify-center gap-2 sm:flex-row">
+            <ProductVariantRegistrationSheet />
           </div>
         </div>
-      </CardHeader>
+      )}
 
-      <CardContent className="space-y-6">
-        {variants.length === 0 && (
-          <div className="py-8 text-center">
-            <PackageIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-            <h3 className="mb-2 font-medium">No se han creado variantes aún</h3>
-            <p className="mb-4 text-muted-foreground text-sm">
-              Genera variantes automáticamente a partir de tus opciones o
-              créalas manualmente
-            </p>
-            <div className="flex flex-col justify-center gap-2 sm:flex-row">
-              <ProductVariantRegistrationSheet />
-            </div>
+      {variants.length > 0 && (
+        <>
+          <div className="flex flex-wrap items-center gap-4 rounded-md bg-muted/50 p-4">
+            <div className="flex-1" />
+            <ProductVariantRegistrationSheet />
           </div>
-        )}
 
-        {variants.length > 0 && (
-          <>
-            <div className="flex flex-wrap items-center gap-4 rounded-md bg-muted/50 p-4">
-              <div className="flex-1" />
-              <ProductVariantRegistrationSheet />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="font-medium text-sm">
+                Variantes ({variants.length})
+              </Label>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="font-medium text-sm">
-                  Variantes ({variants.length})
-                </Label>
-              </div>
-
-              {variants.map((variant) => (
-                <div
-                  className="overflow-hidden rounded-md border bg-card"
-                  key={variant.sku}
-                >
-                  <div className="flex p-3">
-                    <div className="flex flex-1 flex-col gap-2">
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-2">
-                          <h3 className="line-clamp-1 font-medium text-sm">
-                            {generateVariantName(variant)}
-                          </h3>
-
-                          <Badge className="text-xs" variant="outline">
-                            <TagIcon className="inline h-3 w-3" />
-                            {variant.sku}
-                          </Badge>
-                        </div>
-                      </div>
-
+            {variants.map((variant) => (
+              <div
+                className="overflow-hidden rounded-md border bg-card"
+                key={variant.sku}
+              >
+                <div className="flex p-3">
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="flex justify-between">
                       <div className="flex items-center gap-2">
-                        {variant.optionValueIds.map((value) => (
-                          <Badge key={value} variant="secondary">
-                            {getOptionValueName(value)}
-                          </Badge>
-                        ))}
-                      </div>
+                        <h3 className="line-clamp-1 font-medium text-sm">
+                          {generateVariantName(variant)}
+                        </h3>
 
-                      <div className="flex flex-wrap gap-4 text-sm">
-                        <span className="text-muted-foreground text-sm">
-                          Stock:{' '}
-                          <span className="text-foreground">
-                            {variant.stock}
-                          </span>
-                        </span>
-
-                        <span className="text-muted-foreground text-sm">
-                          Precio:{' '}
-                          <span className="text-foreground">
-                            <Currency currency="COP" value={variant.price} />
-                          </span>
-                        </span>
+                        <Badge className="text-xs" variant="outline">
+                          <TagIcon className="inline h-3 w-3" />
+                          {variant.sku}
+                        </Badge>
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {variant.optionValueIds.map((value) => (
+                        <Badge key={value} variant="secondary">
+                          {getOptionValueName(value)}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <span className="text-muted-foreground text-sm">
+                        Stock:{' '}
+                        <span className="text-foreground">{variant.stock}</span>
+                      </span>
+
+                      <span className="text-muted-foreground text-sm">
+                        Precio:{' '}
+                        <span className="text-foreground">
+                          <Currency currency="COP" value={variant.price} />
+                        </span>
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
-        <div className="flex justify-end">
-          <Button
-            disabled={variants.length === 0}
-            onClick={handleCompleteRegistration}
-          >
-            Completar registro
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="pt-2">
+        <Button
+          className="w-full md:ml-auto md:flex md:w-auto"
+          disabled={variants.length === 0}
+          onClick={handleCompleteRegistration}
+          size="lg"
+        >
+          Completar registro
+        </Button>
+      </div>
+    </div>
   )
 }
