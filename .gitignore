@@ -5,6 +5,7 @@
 *.pem
 .agents
 skills
+.claude
 
 # Dependencies
 node_modules
