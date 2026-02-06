@@ -1,10 +1,5 @@
 import type { PaymentStatusMetrics } from '@cetus/api-client/types/reports'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@cetus/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@cetus/ui/card'
 import { getPaymentStatusLabel } from '@cetus/web/shared/payments'
 import { useNumberFormatter } from 'react-aria'
 

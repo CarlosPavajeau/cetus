@@ -1,7 +1,7 @@
 import type { SimpleProductForSale } from '@cetus/api-client/types/products'
 import { getImageUrl } from '@cetus/shared/utils/image'
-import { Badge } from '@cetus/web/components/ui/badge'
 import { Currency } from '@cetus/web/components/currency'
+import { Badge } from '@cetus/web/components/ui/badge'
 import { StarRating } from '@cetus/web/features/products/components/star-rating'
 import { cn } from '@cetus/web/shared/utils'
 import { useCart } from '@cetus/web/store/cart'

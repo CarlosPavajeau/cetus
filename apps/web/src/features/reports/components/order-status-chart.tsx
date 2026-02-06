@@ -82,9 +82,7 @@ export function OrderStatusChart({ orders }: Readonly<Props>) {
               config={orderStatusConfig}
             >
               <PieChart>
-                <ChartTooltip
-                  content={<ChartTooltipContent hideLabel />}
-                />
+                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                 <Pie
                   data={orderStatusData}
                   dataKey="value"
