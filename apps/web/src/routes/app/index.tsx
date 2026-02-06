@@ -6,6 +6,7 @@ import { DailySummaryDateSelector } from '@cetus/web/features/reports/components
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createStandardSchemaV1, parseAsString, useQueryState } from 'nuqs'
+import { useCallback } from 'react'
 
 const searchParams = {
   date: parseAsString,
@@ -18,6 +19,15 @@ export const Route = createFileRoute('/app/')({
   component: RouteComponent,
 })
 
+const SummarySkeleton = (
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <Skeleton className="h-25 w-full" />
+    <Skeleton className="h-25 w-full" />
+    <Skeleton className="h-25 w-full" />
+    <Skeleton className="h-25 w-full" />
+  </div>
+)
+
 function RouteComponent() {
   const [dateParam] = useQueryState('date', parseAsString)
   const queryClient = useQueryClient()
@@ -28,10 +38,10 @@ function RouteComponent() {
       api.reports.getDailySummary(dateParam ? new Date(dateParam) : undefined),
   })
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     refetch()
     queryClient.invalidateQueries({ queryKey: ['orders'] })
-  }
+  }, [refetch, queryClient])
 
   return (
     <div className="space-y-4 p-4">
@@ -40,15 +50,8 @@ function RouteComponent() {
         onRefresh={handleRefresh}
       />
 
-      {isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-25 w-full" />
-          <Skeleton className="h-25 w-full" />
-          <Skeleton className="h-25 w-full" />
-          <Skeleton className="h-25 w-full" />
-        </div>
-      )}
-      {data && <DailySummaryContent data={data} />}
+      {isLoading ? SummarySkeleton : null}
+      {data ? <DailySummaryContent data={data} /> : null}
       <DailySalesList />
     </div>
   )

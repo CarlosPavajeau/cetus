@@ -27,6 +27,12 @@ function isPaid(status: OrderStatus) {
   return paidStatuses.has(status)
 }
 
+const filters: { key: SalesFilter; label: string }[] = [
+  { key: 'all', label: 'Todas' },
+  { key: 'paid', label: 'Pagadas' },
+  { key: 'pending', label: 'Pendientes' },
+]
+
 export function DailySalesList() {
   const [dateParam] = useQueryState('date', parseAsString)
   const [filter, setFilter] = useState<SalesFilter>('all')
@@ -48,12 +54,6 @@ export function DailySalesList() {
     }
     return orders.filter((o) => o.status === 'pending_payment')
   }, [orders, filter])
-
-  const filters: { key: SalesFilter; label: string }[] = [
-    { key: 'all', label: 'Todas' },
-    { key: 'paid', label: 'Pagadas' },
-    { key: 'pending', label: 'Pendientes' },
-  ]
 
   return (
     <section className="space-y-3">
