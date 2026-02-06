@@ -122,13 +122,13 @@ function ProductCardComponent({
               'h-full w-full object-cover transition-transform duration-500',
               'group-hover:scale-110',
             )}
-            height={400}
+            height={240}
             layout="constrained"
             objectFit="cover"
             priority={priority}
-            sizes="(max-width: 768px) 50vw, 33vw"
+            sizes="(max-width: 768px) 45vw, (max-width: 1024px) 30vw, 20vw"
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-            width={400}
+            width={240}
           />
 
           {(showBadge || hasDiscount) && (
@@ -195,14 +195,14 @@ function ProductCardComponent({
 
           <div
             className={cn(
-              'absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/20 to-transparent p-4 transition-opacity duration-300',
+              'absolute inset-x-0 bottom-0 bg-linear-to-t from-black/20 to-transparent p-4 transition-opacity duration-300',
               isHovered ? 'opacity-100' : 'opacity-0',
             )}
           />
         </div>
 
         <div className="p-3">
-          <h3 className="line-clamp-2 min-h-[2.5rem] font-heading font-medium text-sm leading-tight md:text-base">
+          <h3 className="line-clamp-2 min-h-10 font-heading font-medium text-sm leading-tight md:text-base">
             {product.name}
           </h3>
 

@@ -5,19 +5,40 @@ import { NotFound } from '@cetus/web/components/not-found'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import appCss from '@cetus/web/styles/index.css?url'
 import type { QueryClient } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
   Scripts,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
-import { PostHogProvider } from 'posthog-js/react'
-import { type ReactNode, useEffect } from 'react'
+import {
+  type ComponentType,
+  lazy,
+  type ReactNode,
+  Suspense,
+  useEffect,
+  useState,
+} from 'react'
 import { I18nProvider } from 'react-aria'
+
+// bundle-dynamic-imports: Devtools only loaded in development
+const TanStackRouterDevtools = import.meta.env.PROD
+  ? () => null
+  : lazy(() =>
+      import('@tanstack/react-router-devtools').then((m) => ({
+        default: m.TanStackRouterDevtools,
+      })),
+    )
+
+const ReactQueryDevtools = import.meta.env.PROD
+  ? () => null
+  : lazy(() =>
+      import('@tanstack/react-query-devtools').then((m) => ({
+        default: m.ReactQueryDevtools,
+      })),
+    )
 
 type RouterContext = {
   queryClient: QueryClient
@@ -43,8 +64,37 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 const postHogKey = env.VITE_POSTHOG_KEY
-const options = {
+const postHogOptions = {
   api_host: env.VITE_POSTHOG_HOST,
+}
+
+// bundle-defer-third-party: Defer analytics loading until after first paint
+function DeferredAnalytics({ children }: { children: ReactNode }) {
+  const [Provider, setProvider] = useState<ComponentType<{
+    apiKey: string
+    options: Record<string, string>
+    children: ReactNode
+  }> | null>(null)
+
+  useEffect(() => {
+    if (!postHogKey) {
+      return
+    }
+
+    import('posthog-js/react').then((mod) => {
+      setProvider(() => mod.PostHogProvider)
+    })
+  }, [])
+
+  if (!Provider) {
+    return <>{children}</>
+  }
+
+  return (
+    <Provider apiKey={postHogKey} options={postHogOptions}>
+      {children}
+    </Provider>
+  )
 }
 
 function RootComponent() {
@@ -55,7 +105,7 @@ function RootComponent() {
   return (
     <RootDocument>
       <NuqsAdapter>
-        <PostHogProvider apiKey={postHogKey} options={options}>
+        <DeferredAnalytics>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <I18nProvider locale="es-CO">
               <TooltipProvider>
@@ -64,7 +114,7 @@ function RootComponent() {
               </TooltipProvider>
             </I18nProvider>
           </ThemeProvider>
-        </PostHogProvider>
+        </DeferredAnalytics>
       </NuqsAdapter>
     </RootDocument>
   )
@@ -82,8 +132,10 @@ function RootDocument({ children }: Readonly<RootDocumentProps>) {
       </head>
       <body className="bg-background font-sans antialiased">
         {children}
-        <TanStackRouterDevtools position="top-right" />
-        <ReactQueryDevtools buttonPosition="top-right" />
+        <Suspense>
+          <TanStackRouterDevtools position="top-right" />
+          <ReactQueryDevtools buttonPosition="top-right" />
+        </Suspense>
         <Scripts />
       </body>
     </html>
