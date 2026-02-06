@@ -33,7 +33,6 @@ import { useAdvancedProductRegistrationStore } from '@cetus/web/store/products/a
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import {
-  ArrowLeftIcon,
   PackageIcon,
   PlusIcon,
   SettingsIcon,
@@ -43,41 +42,16 @@ import {
 import { useForm } from 'react-hook-form'
 import { productQueries } from '../queries'
 
-type Props = {
-  onBack: () => void
-}
-
-export function AdvancedProductRegistrationForm({ onBack }: Readonly<Props>) {
-  const { step, reset } = useAdvancedProductRegistrationStore()
-  const totalSteps = 3
-
-  const handleBack = () => {
-    reset()
-    onBack()
-  }
+export function AdvancedProductRegistrationForm() {
+  const { step } = useAdvancedProductRegistrationStore()
 
   return (
-    <div>
-      <div className="flex items-center justify-between space-y-2">
-        <Button onClick={handleBack} size="sm" variant="ghost">
-          <ArrowLeftIcon className="h-4 w-4" />
-          Volver
-        </Button>
+    <div className="space-y-2">
+      {step === 1 && <BasicProductInformationStep />}
 
-        <Badge className="ml-auto" variant="secondary">
-          Paso {step} de {totalSteps}
-        </Badge>
-      </div>
+      {step === 2 && <ProductOptionsStep />}
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-3">
-          {step === 1 && <BasicProductInformationStep />}
-
-          {step === 2 && <ProductOptionsStep />}
-
-          {step === 3 && <ProductVariantsStep />}
-        </div>
-      </div>
+      {step === 3 && <ProductVariantsStep />}
     </div>
   )
 }
