@@ -31,7 +31,8 @@ export function CategoryCombobox() {
                 autoHighlight
                 disabled={isLoading}
                 items={data ?? []}
-                itemToStringValue={(category: Category) => category.name}
+                itemToStringLabel={(category: Category) => category.name}
+                itemToStringValue={(category: Category) => category.id}
                 onValueChange={(category: Category | null) => {
                   setValue('categoryId', category?.id ?? '', {
                     shouldValidate: true,
