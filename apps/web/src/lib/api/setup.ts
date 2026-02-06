@@ -21,7 +21,7 @@ export function setupApiClient(storeId?: string) {
     try {
       const currentStoreId = getCurrentStoreId()
 
-      return currentStoreId || storeId || null
+      return storeId || currentStoreId || null
     } catch (error) {
       consola.error('Error getting current store:', error)
       return null

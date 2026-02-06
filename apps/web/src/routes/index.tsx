@@ -45,7 +45,7 @@ export const Route = createFileRoute('/')({
       },
     })
 
-    setupApiClient(store.slug)
+    setupApiClient(store.id)
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),
