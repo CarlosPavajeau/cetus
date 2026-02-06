@@ -1,14 +1,12 @@
 import { createSimpleProductSchema } from '@cetus/schemas/product.schema'
 import { generateImageName } from '@cetus/shared/utils/image'
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@cetus/ui/form'
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@cetus/ui/field'
 import { Input } from '@cetus/ui/input'
 import { Separator } from '@cetus/ui/separator'
 import { Textarea } from '@cetus/ui/textarea'
@@ -19,7 +17,7 @@ import { useCreateSimpleProduct } from '@cetus/web/features/products/hooks/use-c
 import type { FileWithPreview } from '@cetus/web/hooks/use-file-upload'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, FormProvider, useForm } from 'react-hook-form'
 import { v7 as uuid } from 'uuid'
 
 export function SimpleProductRegistrationForm() {
@@ -63,66 +61,69 @@ export function SimpleProductRegistrationForm() {
   })
 
   return (
-    <Form {...form}>
+    <FormProvider {...form}>
       <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <FormField
+        <FieldGroup>
+          <Controller
             control={form.control}
             name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nombre</FormLabel>
-                <FormControl>
-                  <Input
-                    autoFocus
-                    placeholder="Ej: Camiseta deportiva"
-                    type="text"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Nombre</FieldLabel>
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  autoFocus
+                  placeholder="Ej: Camiseta deportiva"
+                  type="text"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
             )}
           />
 
           <CategoryCombobox />
 
-          <FormField
+          <Controller
             control={form.control}
             name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descripción</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe brevemente tu producto..."
-                    {...field}
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Descripción</FieldLabel>
+                <Textarea
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Describe brevemente tu producto..."
+                  value={field.value || ''}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
             )}
           />
-        </div>
+        </FieldGroup>
 
         <Separator />
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Precio</FormLabel>
-                <FormControl>
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="price"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Precio</FieldLabel>
                   <div className="relative">
                     <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
                       className="peer ps-6 pe-12"
                       inputMode="decimal"
                       placeholder="0"
                       type="text"
-                      {...field}
                     />
                     <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
                       $
@@ -131,71 +132,83 @@ export function SimpleProductRegistrationForm() {
                       COP
                     </span>
                   </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
 
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Stock</FormLabel>
-                <FormControl>
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="stock"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Stock</FieldLabel>
                   <Input
+                    {...field}
+                    aria-invalid={fieldState.invalid}
                     className="tabular-nums"
                     inputMode="numeric"
                     placeholder="0"
                     type="text"
-                    {...field}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
         </div>
 
-        <FormField
-          control={form.control}
-          name="sku"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-muted-foreground">SKU</FormLabel>
-              <FormControl>
+        <FieldGroup>
+          <Controller
+            control={form.control}
+            name="sku"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel className="text-muted-foreground">SKU</FieldLabel>
                 <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
                   className="text-muted-foreground"
                   type="text"
-                  {...field}
                 />
-              </FormControl>
-              <FormDescription>
-                Generado automáticamente a partir del nombre
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FieldDescription>
+                  Generado automáticamente a partir del nombre
+                </FieldDescription>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGroup>
 
         <Separator />
 
-        <FormField
-          control={form.control}
-          name="images"
-          render={() => (
-            <FormItem>
-              <ProductImagesUploader onFilesChange={handleFilesChange} />
+        <FieldGroup>
+          <Controller
+            control={form.control}
+            name="images"
+            render={({ fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <ProductImagesUploader onFilesChange={handleFilesChange} />
 
-              <FormDescription>
-                La primera imagen será la imagen principal del producto.
-              </FormDescription>
+                <FieldDescription>
+                  La primera imagen será la imagen principal del producto.
+                </FieldDescription>
 
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGroup>
 
         <div className="pt-2">
           <SubmitButton
@@ -208,6 +221,6 @@ export function SimpleProductRegistrationForm() {
           </SubmitButton>
         </div>
       </form>
-    </Form>
+    </FormProvider>
   )
 }
