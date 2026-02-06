@@ -47,7 +47,7 @@ export const Route = createFileRoute('/app')({
       storeByExternalIdQuery(organizationId),
     )
 
-    await setStoreId({
+    setStoreId({
       data: {
         id: store.id,
       },

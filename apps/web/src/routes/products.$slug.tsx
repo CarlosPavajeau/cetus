@@ -45,7 +45,7 @@ export const Route = createFileRoute('/products/$slug')({
       throw notFound()
     }
 
-    await setStoreId({
+    setStoreId({
       data: {
         id: store.id,
       },
