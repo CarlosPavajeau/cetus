@@ -9,7 +9,7 @@ import { PromoBannerSection } from '@cetus/web/components/home/promo-banner-sect
 import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
-import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { setStoreId } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
@@ -41,13 +41,13 @@ export const Route = createFileRoute('/$store')({
       throw notFound()
     }
 
-    await setStoreSlug({
+    await setStoreId({
       data: {
-        slug: store.slug,
+        id: store.id,
       },
     })
 
-    setupApiClient(store.slug)
+    setupApiClient(store.id)
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),

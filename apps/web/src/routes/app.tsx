@@ -5,7 +5,7 @@ import { SidebarInset, SidebarProvider } from '@cetus/web/components/ui/sidebar'
 import { QuickSaleProvider } from '@cetus/web/features/quick-sales/components/quick-sale-provider'
 import { getSession } from '@cetus/web/functions/get-session'
 import { setActiveOrg } from '@cetus/web/functions/organizations'
-import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { setStoreId } from '@cetus/web/functions/store-slug'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
@@ -47,9 +47,9 @@ export const Route = createFileRoute('/app')({
       storeByExternalIdQuery(organizationId),
     )
 
-    await setStoreSlug({
+    await setStoreId({
       data: {
-        slug: store.slug,
+        id: store.id,
       },
     })
 

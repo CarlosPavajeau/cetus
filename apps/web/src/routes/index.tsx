@@ -11,7 +11,7 @@ import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-sect
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { getServerhost } from '@cetus/web/functions/get-host'
-import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { setStoreId } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
@@ -39,9 +39,9 @@ export const Route = createFileRoute('/')({
       storeByDomainQuery(host),
     )
 
-    await setStoreSlug({
+    await setStoreId({
       data: {
-        slug: store.slug,
+        id: store.id,
       },
     })
 

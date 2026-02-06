@@ -3,10 +3,10 @@ import {
   setTokenProvider,
 } from '@cetus/api-client/core/instance'
 import { getToken } from '@cetus/web/functions/get-token'
-import { getStoreSlug } from '@cetus/web/functions/store-slug'
+import { getCurrentStoreId } from '@cetus/web/functions/store-slug'
 import consola from 'consola'
 
-export function setupApiClient(storeSlug?: string) {
+export function setupApiClient(storeId?: string) {
   setTokenProvider(async () => {
     try {
       const token = await getToken()
@@ -19,9 +19,9 @@ export function setupApiClient(storeSlug?: string) {
 
   setStoreProvider(async () => {
     try {
-      const store = getStoreSlug()
+      const currentStoreId = getCurrentStoreId()
 
-      return store || storeSlug || null
+      return currentStoreId || storeId || null
     } catch (error) {
       consola.error('Error getting current store:', error)
       return null

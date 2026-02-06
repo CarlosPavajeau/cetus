@@ -3,14 +3,14 @@ import { createIsomorphicFn, createServerFn } from '@tanstack/react-start'
 import { getCookie, setCookie } from '@tanstack/react-start/server'
 import { type } from 'arktype'
 
-export const getStoreSlug = createIsomorphicFn()
-  .client(() => useTenantStore.getState().store?.slug)
+export const getCurrentStoreId = createIsomorphicFn()
+  .client(() => useTenantStore.getState().store?.id)
   .server(() => getCookie('store'))
 
-export const setStoreSlug = createServerFn({ method: 'POST' })
-  .inputValidator(type({ slug: 'string' }))
+export const setStoreId = createServerFn({ method: 'POST' })
+  .inputValidator(type({ id: 'string.uuid' }))
   .handler(async ({ data }) => {
-    setCookie('store', data.slug, {
+    setCookie('store', data.id, {
       secure: true,
     })
   })

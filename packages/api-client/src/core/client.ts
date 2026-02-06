@@ -44,7 +44,7 @@ export class ApiClient {
         if (store) {
           config.params = { ...config.params, store }
 
-          config.headers['X-Current-Store'] = store
+          config.headers['X-Current-Store-Id'] = store
         }
       }
 

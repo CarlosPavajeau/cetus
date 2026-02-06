@@ -16,7 +16,7 @@ import { ProductDisplay } from '@cetus/web/features/products/components/product-
 import { ProductTabs } from '@cetus/web/features/products/components/product-tabs'
 import { SuggestedProducts } from '@cetus/web/features/products/components/suggested-product'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
-import { setStoreSlug } from '@cetus/web/functions/store-slug'
+import { setStoreId } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateProductSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
@@ -45,13 +45,13 @@ export const Route = createFileRoute('/products/$slug')({
       throw notFound()
     }
 
-    await setStoreSlug({
+    await setStoreId({
       data: {
-        slug: store.slug,
+        id: store.id,
       },
     })
 
-    setupApiClient(store.slug)
+    setupApiClient(store.id)
 
     const [suggestions, reviews] = await Promise.all([
       api.products.listSuggestions(product.id),
