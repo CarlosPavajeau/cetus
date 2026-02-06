@@ -77,6 +77,7 @@ export function FeaturedProductsSection({ products }: Readonly<Props>) {
               >
                 <ProductCard
                   originalPrice={getSimulatedOriginalPrice(product, index)}
+                  priority={index < 2}
                   product={product}
                   showBadge={getProductBadge(index)}
                   variant="featured"

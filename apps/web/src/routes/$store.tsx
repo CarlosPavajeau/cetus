@@ -4,8 +4,6 @@ import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
 import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
-import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
-import { PromoBannerSection } from '@cetus/web/components/home/promo-banner-section'
 import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
@@ -15,13 +13,31 @@ import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
+
+const PopularProductsSection = lazy(() =>
+  import('@cetus/web/components/home/popular-products-section').then((m) => ({
+    default: m.PopularProductsSection,
+  })),
+)
+
+const PromoBannerSection = lazy(() =>
+  import('@cetus/web/components/home/promo-banner-section').then((m) => ({
+    default: m.PromoBannerSection,
+  })),
+)
 
 const storeBySlugQuery = (slug: string) =>
   queryOptions({
     queryKey: ['store', slug],
     queryFn: () => api.stores.getBySlug(slug),
   })
+
+const errorFallback = (
+  <DefaultPageLayout>
+    <PageHeader title="Hubo un problema al cargar los datos" />
+  </DefaultPageLayout>
+)
 
 export const Route = createFileRoute('/$store')({
   beforeLoad: async () => {
@@ -41,7 +57,8 @@ export const Route = createFileRoute('/$store')({
       throw notFound()
     }
 
-    await setStoreId({
+    // Fire-and-forget: cookie is for subsequent requests, not needed for current fetch
+    setStoreId({
       data: {
         id: store.id,
       },
@@ -234,11 +251,7 @@ function RouteComponent() {
   }, [actions, store])
 
   if (!(categories && featuredProducts && popularProducts)) {
-    return (
-      <DefaultPageLayout>
-        <PageHeader title="Hubo un problema al cargar los datos" />
-      </DefaultPageLayout>
-    )
+    return errorFallback
   }
 
   return (
@@ -265,18 +278,34 @@ function RouteComponent() {
           <FeaturedProductsSection products={featuredProducts} />
         </section>
 
-        <section aria-labelledby="store-promo-banner-heading">
+        <section
+          aria-labelledby="store-promo-banner-heading"
+          style={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: 'auto 200px',
+          }}
+        >
           <h2 className="sr-only" id="store-promo-banner-heading">
             Ofertas y promociones
           </h2>
-          <PromoBannerSection />
+          <Suspense>
+            <PromoBannerSection />
+          </Suspense>
         </section>
 
-        <section aria-labelledby="store-popular-products-heading">
+        <section
+          aria-labelledby="store-popular-products-heading"
+          style={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: 'auto 600px',
+          }}
+        >
           <h2 className="sr-only" id="store-popular-products-heading">
             Productos Más Populares en {store?.name}
           </h2>
-          <PopularProductsSection products={popularProducts} />
+          <Suspense>
+            <PopularProductsSection products={popularProducts} />
+          </Suspense>
         </section>
 
         <div className="sr-only">
@@ -286,13 +315,16 @@ function RouteComponent() {
               Descubre {store?.name}, tu tienda online de confianza
               especializada en productos de calidad. Ofrecemos una cuidadosa
               selección de productos con
-              {featuredProducts.length > 0 &&
-                ` ${featuredProducts.length} productos destacados`}
-              {popularProducts.length > 0 &&
-                ` y ${popularProducts.length} productos populares`}
+              {featuredProducts.length > 0
+                ? ` ${featuredProducts.length} productos destacados`
+                : null}
+              {popularProducts.length > 0
+                ? ` y ${popularProducts.length} productos populares`
+                : null}
               .
-              {categories.length > 0 &&
-                ` Explora nuestras categorías especializadas: ${categories.map((cat) => cat.name).join(', ')}.`}
+              {categories.length > 0
+                ? ` Explora nuestras categorías especializadas: ${categories.map((cat) => cat.name).join(', ')}.`
+                : null}
               Envío rápido a toda Colombia, atención personalizada y garantía de
               satisfacción.
             </p>
@@ -329,8 +361,9 @@ function RouteComponent() {
               {store?.name} es una tienda online especializada que forma parte
               de la plataforma Cetus E-commerce. Nos dedicamos a ofrecer
               productos de calidad con un servicio excepcional.
-              {categories.length > 0 &&
-                ` Nos especializamos en: ${categories.map((cat) => cat.name).join(', ')}.`}
+              {categories.length > 0
+                ? ` Nos especializamos en: ${categories.map((cat) => cat.name).join(', ')}.`
+                : null}
             </p>
           </div>
         </div>

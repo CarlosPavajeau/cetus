@@ -1,12 +1,9 @@
 import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { ApplicationHome } from '@cetus/web/components/home/application-home'
 import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
 import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
-import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
-import { PromoBannerSection } from '@cetus/web/components/home/promo-banner-section'
 import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
@@ -17,13 +14,37 @@ import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
+
+const ApplicationHome = lazy(() =>
+  import('@cetus/web/components/home/application-home').then((m) => ({
+    default: m.ApplicationHome,
+  })),
+)
+
+const PopularProductsSection = lazy(() =>
+  import('@cetus/web/components/home/popular-products-section').then((m) => ({
+    default: m.PopularProductsSection,
+  })),
+)
+
+const PromoBannerSection = lazy(() =>
+  import('@cetus/web/components/home/promo-banner-section').then((m) => ({
+    default: m.PromoBannerSection,
+  })),
+)
 
 const storeByDomainQuery = (domain: string) =>
   queryOptions({
     queryKey: ['store', domain],
     queryFn: () => api.stores.getByDomain(domain),
   })
+
+const errorFallback = (
+  <DefaultPageLayout>
+    <PageHeader title="Hubo un problema al cargar los datos" />
+  </DefaultPageLayout>
+)
 
 export const Route = createFileRoute('/')({
   loader: async ({ context }) => {
@@ -39,7 +60,8 @@ export const Route = createFileRoute('/')({
       storeByDomainQuery(host),
     )
 
-    await setStoreId({
+    // Fire-and-forget: cookie is for subsequent requests, not needed for current fetch
+    setStoreId({
       data: {
         id: store.id,
       },
@@ -205,17 +227,15 @@ function IndexPage() {
   if (isAppUrl) {
     return (
       <DefaultPageLayout>
-        <ApplicationHome />
+        <Suspense>
+          <ApplicationHome />
+        </Suspense>
       </DefaultPageLayout>
     )
   }
 
   if (!(categories && featuredProducts && popularProducts)) {
-    return (
-      <DefaultPageLayout>
-        <PageHeader title="Hubo un problema al cargar los datos" />
-      </DefaultPageLayout>
-    )
+    return errorFallback
   }
 
   return (
@@ -239,18 +259,34 @@ function IndexPage() {
           <FeaturedProductsSection products={featuredProducts} />
         </section>
 
-        <section aria-labelledby="promo-banner-heading">
+        <section
+          aria-labelledby="promo-banner-heading"
+          style={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: 'auto 200px',
+          }}
+        >
           <h2 className="sr-only" id="promo-banner-heading">
             Ofertas y promociones
           </h2>
-          <PromoBannerSection />
+          <Suspense>
+            <PromoBannerSection />
+          </Suspense>
         </section>
 
-        <section aria-labelledby="popular-products-heading">
+        <section
+          aria-labelledby="popular-products-heading"
+          style={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: 'auto 600px',
+          }}
+        >
           <h2 className="sr-only" id="popular-products-heading">
             Productos Populares en {store?.name}
           </h2>
-          <PopularProductsSection products={popularProducts} />
+          <Suspense>
+            <PopularProductsSection products={popularProducts} />
+          </Suspense>
         </section>
 
         <div className="sr-only">
@@ -259,13 +295,16 @@ function IndexPage() {
             Bienvenido a {store?.name}, tu destino para compras online en
             Colombia. Descubre nuestra amplia selección de productos de alta
             calidad con
-            {featuredProducts.length > 0 &&
-              ` ${featuredProducts.length} productos destacados`}
-            {popularProducts.length > 0 &&
-              ` y ${popularProducts.length} productos populares`}
+            {featuredProducts.length > 0
+              ? ` ${featuredProducts.length} productos destacados`
+              : null}
+            {popularProducts.length > 0
+              ? ` y ${popularProducts.length} productos populares`
+              : null}
             .
-            {categories.length > 0 &&
-              ` Explora nuestras categorías: ${categories.map((cat) => cat.name).join(', ')}.`}
+            {categories.length > 0
+              ? ` Explora nuestras categorías: ${categories.map((cat) => cat.name).join(', ')}.`
+              : null}
             Envío rápido a toda Colombia y los mejores precios garantizados.
           </p>
           <div>

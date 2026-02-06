@@ -25,6 +25,7 @@ type Props = {
   originalPrice?: number
   // TODO: Add stock to SimpleProductForSale in backend API
   stock?: number
+  priority?: boolean
 }
 
 function ProductCardComponent({
@@ -33,6 +34,7 @@ function ProductCardComponent({
   showBadge = null,
   originalPrice,
   stock = 99, // Default stock until backend provides it
+  priority = false,
 }: Readonly<Props>) {
   const cart = useCart()
   const [isHovered, setIsHovered] = useState(false)
@@ -123,7 +125,7 @@ function ProductCardComponent({
             height={400}
             layout="constrained"
             objectFit="cover"
-            priority
+            priority={priority}
             sizes="(max-width: 768px) 50vw, 33vw"
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
             width={400}

@@ -9,7 +9,7 @@ export const getCurrentStoreId = createIsomorphicFn()
 
 export const setStoreId = createServerFn({ method: 'POST' })
   .inputValidator(type({ id: 'string.uuid' }))
-  .handler(async ({ data }) => {
+  .handler(({ data }) => {
     setCookie('store', data.id, {
       secure: true,
     })

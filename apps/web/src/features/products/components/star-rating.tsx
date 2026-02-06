@@ -1,6 +1,4 @@
 import { StarIcon } from 'lucide-react'
-import { useMemo } from 'react'
-import { v7 as uuid } from 'uuid'
 
 type Props = {
   rating: number
@@ -15,11 +13,6 @@ export function StarRating({
   size = 5,
   className = '',
 }: Readonly<Props>) {
-  const starKeys = useMemo(
-    () => Array.from({ length: maxRating }, () => uuid()),
-    [maxRating],
-  )
-
   return (
     <div className={`flex ${className}`}>
       {Array.from({ length: maxRating }).map((_, i) => (
@@ -30,7 +23,7 @@ export function StarRating({
               : 'text-muted-foreground'
           }`}
           height={16}
-          key={starKeys[i]}
+          key={i}
           width={16}
         />
       ))}
