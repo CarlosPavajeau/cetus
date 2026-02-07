@@ -23,8 +23,7 @@ import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { type } from 'arktype'
 import { ChevronRight, Home, HomeIcon } from 'lucide-react'
-import { useEffect, useId } from 'react'
-import { v7 as uuid } from 'uuid'
+import { useEffect } from 'react'
 
 const ProductSearchSchema = type({
   variant: type('number>0'),
@@ -203,7 +202,7 @@ function ProductDetailsPage() {
   return (
     <DefaultPageLayout>
       <title>{title}</title>
-      <main className="container flex max-w-7xl flex-col gap-6">
+      <main className="container mx-auto flex max-w-7xl flex-col gap-8">
         <nav aria-label="Breadcrumb">
           <Breadcrumb>
             <BreadcrumbList>
@@ -286,10 +285,8 @@ function ProductDetailsPage() {
 }
 
 export function ProductDisplaySkeleton() {
-  const id = useId()
-
   return (
-    <div className="container min-h-screen max-w-7xl">
+    <div className="container mx-auto min-h-screen max-w-7xl">
       <div className="px-4">
         <div className="flex items-center space-x-2">
           <Skeleton className="h-4 w-32" />
@@ -298,39 +295,25 @@ export function ProductDisplaySkeleton() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-4">
-            <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-50">
+          <div className="space-y-3">
+            <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
               <Skeleton className="h-full w-full" />
             </div>
 
-            <div className="hidden space-x-2 lg:flex">
-              {[...new Array(4)].map((_) => (
-                <Skeleton
-                  className="h-20 w-20 rounded-lg"
-                  key={`skeleton-${id}-${uuid()}`}
-                />
+            <div className="hidden gap-2 lg:flex">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton className="h-16 w-16 rounded-md" key={`thumb-${i}`} />
               ))}
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6">
             <div>
               <Skeleton className="mb-2 h-8 w-3/4" />
-              <Skeleton className="mb-4 h-10 w-32" />
-
-              <div className="mb-4 flex items-center space-x-2">
-                <div className="flex space-x-1">
-                  {[...new Array(5)].map((_) => (
-                    <Skeleton
-                      className="h-5 w-5 rounded"
-                      key={`skeleton-${id}-${uuid()}`}
-                    />
-                  ))}
-                </div>
-                <Skeleton className="h-4 w-20" />
-              </div>
+              <Skeleton className="mb-4 h-5 w-32" />
+              <Skeleton className="h-10 w-40" />
             </div>
 
             <div className="space-y-2">
@@ -340,8 +323,9 @@ export function ProductDisplaySkeleton() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-32" />
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-32" />
+                <Skeleton className="h-4 w-24" />
               </div>
               <Skeleton className="h-12 w-full" />
             </div>

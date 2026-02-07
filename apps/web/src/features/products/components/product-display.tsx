@@ -194,6 +194,7 @@ type QuantitySelectorProps = {
   onIncrement: () => void
   onDecrement: () => void
   max?: number
+  stock: number
 }
 
 const QuantitySelector = ({
@@ -201,37 +202,41 @@ const QuantitySelector = ({
   onIncrement,
   onDecrement,
   max = Number.POSITIVE_INFINITY,
+  stock,
 }: Readonly<QuantitySelectorProps>) => {
   const isMaxReached = max !== Number.POSITIVE_INFINITY && quantity >= max
 
   return (
-    <div className="flex items-center">
-      <Label className="mr-2">Cantidad:</Label>
-      <div className="flex items-center rounded-md border border-input">
-        <button
-          className="p-2 text-muted-foreground"
-          disabled={quantity <= 1}
-          onClick={onDecrement}
-          type="button"
-        >
-          <MinusIcon className="h-4 w-4" />
-        </button>
-        <span className="px-4">{quantity}</span>
-        <button
-          className="p-2 text-muted-foreground"
-          disabled={isMaxReached}
-          onClick={onIncrement}
-          type="button"
-        >
-          <PlusIcon className="h-4 w-4" />
-        </button>
+    <div className="flex items-center gap-3">
+      <div className="flex items-center">
+        <Label className="mr-2">Cantidad:</Label>
+        <div className="flex items-center rounded-md border border-input">
+          <button
+            className="p-2 text-muted-foreground"
+            disabled={quantity <= 1}
+            onClick={onDecrement}
+            type="button"
+          >
+            <MinusIcon className="h-4 w-4" />
+          </button>
+          <span className="px-4">{quantity}</span>
+          <button
+            className="p-2 text-muted-foreground"
+            disabled={isMaxReached}
+            onClick={onIncrement}
+            type="button"
+          >
+            <PlusIcon className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      {isMaxReached && (
-        <span className="ml-4 text-red-500 text-sm">
-          Máximo: {max} unidades
-        </span>
-      )}
+      <span
+        aria-live="polite"
+        className="text-muted-foreground text-sm"
+      >
+        {isMaxReached ? `Máximo: ${max}` : `${stock} disponibles`}
+      </span>
     </div>
   )
 }
@@ -303,70 +308,62 @@ export function ProductDisplay({ product, variant }: Readonly<Props>) {
     <div className="grid gap-8 lg:grid-cols-2">
       <ProductImages images={variant.images} />
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div>
-          <h1 className="mb-2 font-bold font-heading text-2xl lg:text-3xl">
+          <h1 className="font-bold font-heading text-2xl lg:text-3xl">
             {product.name}
           </h1>
 
-          <div className="mb-4 font-bold text-3xl">
-            <Currency currency="COP" value={variant.price} />
-          </div>
-
-          <div className="mb-4 flex items-center space-x-2">
+          <div className="mt-2 flex items-center gap-2">
             <ProductRating
               rating={product.rating}
               reviewsCount={product.reviewsCount}
             />
           </div>
+
+          <div className="mt-4 font-bold text-4xl">
+            <Currency currency="COP" value={variant.price} />
+          </div>
         </div>
 
-        <div className="text-muted-foreground leading-relaxed">
-          <p>{product.description}</p>
-        </div>
+        {product.description && (
+          <p className="text-muted-foreground leading-relaxed">
+            {product.description}
+          </p>
+        )}
 
         <ProductOptions currentVariantId={variant.id} product={product} />
 
         <div className="space-y-4">
-          <div>
-            <QuantitySelector
-              max={variant.stock}
-              onDecrement={decrementQuantity}
-              onIncrement={incrementQuantity}
-              quantity={quantity}
-            />
-          </div>
+          <QuantitySelector
+            max={variant.stock}
+            onDecrement={decrementQuantity}
+            onIncrement={incrementQuantity}
+            quantity={quantity}
+            stock={variant.stock}
+          />
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Button
-                className="flex-1 gap-2"
-                disabled={isOutOfStock || isAddingToCart}
-                onClick={handleAddToCart}
-                size="lg"
-              >
-                {isAddingToCart ? (
-                  <div className="flex items-center">
-                    <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                    Agregando...
-                  </div>
-                ) : (
-                  <>
-                    <ShoppingCartIcon className="mr-2 h-5 w-5" />
-                    {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
-                  </>
-                )}
-              </Button>
-
-              <ProductShare productName={product.name} />
-            </div>
-
-            <span
-              aria-live="polite"
-              className="text-right text-muted-foreground text-xs"
+          <div className="flex items-center gap-2">
+            <Button
+              className="flex-1 gap-2"
+              disabled={isOutOfStock || isAddingToCart}
+              onClick={handleAddToCart}
+              size="lg"
             >
-              {variant.stock} unidades restantes
-            </span>
+              {isAddingToCart ? (
+                <div className="flex items-center">
+                  <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Agregando...
+                </div>
+              ) : (
+                <>
+                  <ShoppingCartIcon className="mr-2 h-5 w-5" />
+                  {isOutOfStock ? 'Producto agotado' : 'Agregar al carrito'}
+                </>
+              )}
+            </Button>
+
+            <ProductShare productName={product.name} />
           </div>
         </div>
       </div>
