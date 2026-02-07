@@ -37,7 +37,6 @@ function ProductCardComponent({
   priority = false,
 }: Readonly<Props>) {
   const cart = useCart()
-  const [isHovered, setIsHovered] = useState(false)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [justAdded, setJustAdded] = useState(false)
 
@@ -51,7 +50,9 @@ function ProductCardComponent({
       e.preventDefault()
       e.stopPropagation()
 
-      if (isAddingToCart || justAdded) return
+      if (isAddingToCart || justAdded) {
+        return
+      }
 
       setIsAddingToCart(true)
 
@@ -111,8 +112,6 @@ function ProductCardComponent({
           'group overflow-hidden rounded-lg bg-card transition-all duration-300',
           'hover:shadow-black/5 hover:shadow-lg',
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         <div className="relative flex aspect-square cursor-pointer items-center justify-center overflow-hidden">
           <Image
@@ -122,13 +121,10 @@ function ProductCardComponent({
               'h-full w-full object-cover transition-transform duration-500',
               'group-hover:scale-110',
             )}
-            height={240}
-            layout="constrained"
-            objectFit="cover"
+            layout="fullWidth"
             priority={priority}
             sizes="(max-width: 768px) 45vw, (max-width: 1024px) 30vw, 20vw"
             src={getImageUrl(product.imageUrl || 'placeholder.svg')}
-            width={240}
           />
 
           {(showBadge || hasDiscount) && (
@@ -149,9 +145,7 @@ function ProductCardComponent({
           <div
             className={cn(
               'absolute top-2 right-2 z-10 flex flex-col gap-2 transition-all duration-300',
-              isHovered
-                ? 'translate-x-0 opacity-100'
-                : 'translate-x-4 opacity-0',
+              'translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100',
             )}
           >
             <button
@@ -196,7 +190,7 @@ function ProductCardComponent({
           <div
             className={cn(
               'absolute inset-x-0 bottom-0 bg-linear-to-t from-black/20 to-transparent p-4 transition-opacity duration-300',
-              isHovered ? 'opacity-100' : 'opacity-0',
+              'opacity-0 group-hover:opacity-100',
             )}
           />
         </div>
