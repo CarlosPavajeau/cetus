@@ -2,6 +2,7 @@ import type { SimpleProductForSale } from '@cetus/api-client/types/products'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { Currency } from '@cetus/web/components/currency'
 import { Badge } from '@cetus/web/components/ui/badge'
+import { Button } from '@cetus/web/components/ui/button'
 import { StarRating } from '@cetus/web/features/products/components/star-rating'
 import { cn } from '@cetus/web/shared/utils'
 import { useCart } from '@cetus/web/store/cart'
@@ -148,43 +149,36 @@ function ProductCardComponent({
               'translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100',
             )}
           >
-            <button
+            <Button
               aria-label="Agregar a favoritos"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-primary hover:text-white"
+              className="rounded-full"
               onClick={(e) => {
                 e.preventDefault()
                 // TODO: Implement wishlist functionality
               }}
+              size="icon-lg"
               type="button"
+              variant="secondary"
             >
               <HugeiconsIcon className="h-4 w-4" icon={FavouriteIcon} />
-            </button>
-            <button
+            </Button>
+            <Button
               aria-label="Agregar al carrito"
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full shadow-sm transition-colors',
-                justAdded
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-white/90 hover:bg-primary hover:text-white',
-              )}
+              className="rounded-full"
               disabled={isAddingToCart}
               onClick={handleAddToCart}
+              size="icon-lg"
               type="button"
+              variant="secondary"
             >
               {isAddingToCart ? (
-                <HugeiconsIcon
-                  className="h-4 w-4 animate-spin"
-                  icon={Loading03Icon}
-                />
+                <HugeiconsIcon className="animate-spin" icon={Loading03Icon} />
               ) : justAdded ? (
-                <HugeiconsIcon className="h-4 w-4" icon={Tick01Icon} />
+                <HugeiconsIcon icon={Tick01Icon} />
               ) : (
-                <HugeiconsIcon
-                  className="h-4 w-4"
-                  icon={ShoppingCartAdd01Icon}
-                />
+                <HugeiconsIcon icon={ShoppingCartAdd01Icon} />
               )}
-            </button>
+            </Button>
           </div>
 
           <div
