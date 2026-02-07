@@ -23,7 +23,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { PaginationState } from '@tanstack/react-table'
 import { useDebounce } from '@uidotdev/usehooks'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/app/customers/')({
   component: RouteComponent,
@@ -41,17 +41,20 @@ function RouteComponent() {
     pageSize: 10,
   })
   const [sortBy, setSortBy] = useState<CustomerSortBy>('total_spent')
-  const [rawSearchTerm, setRawSearchTerm] = useState<string | undefined>(
-    undefined,
-  )
+  const [rawSearchTerm, setRawSearchTerm] = useState<string>('')
   const searchTerm = useDebounce(rawSearchTerm, 300)
 
   const queryParams: CustomerQueryParams = {
     page: pagination.pageIndex + 1,
     pageSize: pagination.pageSize,
-    search: searchTerm,
+    search: searchTerm ?? undefined,
     sortBy,
   }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset pagination when search or sort changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }, [searchTerm, sortBy])
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers', queryParams],
