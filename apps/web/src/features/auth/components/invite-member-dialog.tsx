@@ -73,7 +73,7 @@ export function InviteMemberDialog() {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button>
           <UserPlus2Icon />
           Invitar miembro
         </Button>

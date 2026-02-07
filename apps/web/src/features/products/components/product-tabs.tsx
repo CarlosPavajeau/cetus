@@ -14,9 +14,7 @@ export function ProductTabs({ reviews }: Readonly<Props>) {
       <Alert>
         <InfoIcon />
         <AlertTitle>No hay reseñas</AlertTitle>
-        <AlertDescription>
-          Este producto aún no tiene reseñas.
-        </AlertDescription>
+        <AlertDescription>Este producto aún no tiene reseñas.</AlertDescription>
       </Alert>
     )
   }

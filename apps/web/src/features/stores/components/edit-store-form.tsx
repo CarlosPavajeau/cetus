@@ -26,9 +26,6 @@ export function EditStoreForm() {
       address: store?.address,
       phone: store?.phone,
       email: store?.email,
-      customDomain: store?.customDomain
-        ? new URL(store?.customDomain).host
-        : undefined,
     },
   })
 
@@ -102,29 +99,6 @@ export function EditStoreForm() {
                     <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground/80 peer-disabled:opacity-50">
                       <MailIcon aria-hidden="true" size={16} />
                     </div>
-                  </div>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="customDomain"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Dominio personalizado</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      className="peer ps-16"
-                      placeholder="google.com"
-                      type="text"
-                      {...field}
-                    />
-                    <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground text-sm peer-disabled:opacity-50">
-                      https://
-                    </span>
                   </div>
                 </FormControl>
               </FormItem>

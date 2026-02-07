@@ -231,10 +231,7 @@ const QuantitySelector = ({
         </div>
       </div>
 
-      <span
-        aria-live="polite"
-        className="text-muted-foreground text-sm"
-      >
+      <span aria-live="polite" className="text-muted-foreground text-sm">
         {isMaxReached ? `Máximo: ${max}` : `${stock} disponibles`}
       </span>
     </div>

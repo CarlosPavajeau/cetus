@@ -19,14 +19,13 @@ import { UserMenu } from '@cetus/web/components/user-menu'
 import {
   BadgePercentIcon,
   BoxesIcon,
-  CreditCardIcon,
   LayoutDashboardIcon,
   PackageIcon,
+  SettingsIcon,
   ShoppingBasketIcon,
   StarIcon,
   TagIcon,
   TruckIcon,
-  User2Icon,
 } from 'lucide-react'
 
 const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
@@ -112,16 +111,10 @@ const CONFIGURATIONS_MENU: ReadonlyArray<SidebarMenuElement> = [
     icon: TruckIcon,
   },
   {
-    label: 'Cuenta',
-    href: '/app/account',
+    label: 'Configuración',
+    href: '/app/settings',
     isNew: false,
-    icon: User2Icon,
-  },
-  {
-    label: 'Pagos',
-    href: '/app/payments',
-    isNew: false,
-    icon: CreditCardIcon,
+    icon: SettingsIcon,
   },
 ] as const
 

@@ -18,7 +18,7 @@ export function CopiableInput({ value }: Props) {
   return (
     <InputGroup>
       <InputGroupInput
-        className="field-sizing-content"
+        className="min-w-0 truncate"
         placeholder={value}
         readOnly
       />

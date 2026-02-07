@@ -80,9 +80,9 @@ export function UserMenu() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link to="/app/account">
+                <Link to="/app/settings">
                   <User2Icon />
-                  Cuenta
+                  Configuración
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

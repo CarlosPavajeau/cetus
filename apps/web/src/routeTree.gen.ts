@@ -27,12 +27,11 @@ import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
 import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
 import { Route as AppProductOptionTypesRouteImport } from './routes/app/product-option-types'
-import { Route as AppPaymentsRouteImport } from './routes/app/payments'
 import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
 import { Route as AppCategoriesRouteImport } from './routes/app/categories'
-import { Route as AppAccountRouteImport } from './routes/app/account'
 import { Route as AcceptInvitationIdRouteImport } from './routes/accept-invitation.$id'
 import { Route as StoreRequiredCartRouteImport } from './routes/_store-required/cart'
 import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
@@ -143,6 +142,11 @@ const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
   path: '/categories/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppReviewsRoute = AppReviewsRouteImport.update({
   id: '/reviews',
   path: '/reviews',
@@ -153,11 +157,6 @@ const AppProductOptionTypesRoute = AppProductOptionTypesRouteImport.update({
   path: '/product-option-types',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPaymentsRoute = AppPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppDeliveryFeesRoute = AppDeliveryFeesRouteImport.update({
   id: '/delivery-fees',
   path: '/delivery-fees',
@@ -166,11 +165,6 @@ const AppDeliveryFeesRoute = AppDeliveryFeesRouteImport.update({
 const AppCategoriesRoute = AppCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAccountRoute = AppAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
 const AcceptInvitationIdRoute = AcceptInvitationIdRouteImport.update({
@@ -293,12 +287,11 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/cart': typeof StoreRequiredCartRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
-  '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
-  '/app/payments': typeof AppPaymentsRoute
   '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
@@ -337,12 +330,11 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/cart': typeof StoreRequiredCartRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
-  '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
-  '/app/payments': typeof AppPaymentsRoute
   '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
@@ -384,12 +376,11 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_store-required/cart': typeof StoreRequiredCartRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
-  '/app/account': typeof AppAccountRoute
   '/app/categories': typeof AppCategoriesRoute
   '/app/delivery-fees': typeof AppDeliveryFeesRoute
-  '/app/payments': typeof AppPaymentsRoute
   '/app/product-option-types': typeof AppProductOptionTypesRoute
   '/app/reviews': typeof AppReviewsRoute
+  '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
@@ -431,12 +422,11 @@ export interface FileRouteTypes {
     | '/terms'
     | '/cart'
     | '/accept-invitation/$id'
-    | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
-    | '/app/payments'
     | '/app/product-option-types'
     | '/app/reviews'
+    | '/app/settings'
     | '/categories/$slug'
     | '/orders/$id'
     | '/products/$slug'
@@ -475,12 +465,11 @@ export interface FileRouteTypes {
     | '/terms'
     | '/cart'
     | '/accept-invitation/$id'
-    | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
-    | '/app/payments'
     | '/app/product-option-types'
     | '/app/reviews'
+    | '/app/settings'
     | '/categories/$slug'
     | '/orders/$id'
     | '/products/$slug'
@@ -521,12 +510,11 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_store-required/cart'
     | '/accept-invitation/$id'
-    | '/app/account'
     | '/app/categories'
     | '/app/delivery-fees'
-    | '/app/payments'
     | '/app/product-option-types'
     | '/app/reviews'
+    | '/app/settings'
     | '/categories/$slug'
     | '/orders/$id'
     | '/products/$slug'
@@ -703,6 +691,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/reviews': {
       id: '/app/reviews'
       path: '/reviews'
@@ -717,13 +712,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductOptionTypesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/payments': {
-      id: '/app/payments'
-      path: '/payments'
-      fullPath: '/app/payments'
-      preLoaderRoute: typeof AppPaymentsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/delivery-fees': {
       id: '/app/delivery-fees'
       path: '/delivery-fees'
@@ -736,13 +724,6 @@ declare module '@tanstack/react-router' {
       path: '/categories'
       fullPath: '/app/categories'
       preLoaderRoute: typeof AppCategoriesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/account': {
-      id: '/app/account'
-      path: '/account'
-      fullPath: '/app/account'
-      preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
     '/accept-invitation/$id': {
@@ -907,12 +888,11 @@ const StoreRequiredRouteWithChildren = StoreRequiredRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
-  AppAccountRoute: typeof AppAccountRoute
   AppCategoriesRoute: typeof AppCategoriesRoute
   AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
-  AppPaymentsRoute: typeof AppPaymentsRoute
   AppProductOptionTypesRoute: typeof AppProductOptionTypesRoute
   AppReviewsRoute: typeof AppReviewsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCouponsNewRoute: typeof AppCouponsNewRoute
   AppInventoryAdjustmentRoute: typeof AppInventoryAdjustmentRoute
@@ -928,12 +908,11 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAccountRoute: AppAccountRoute,
   AppCategoriesRoute: AppCategoriesRoute,
   AppDeliveryFeesRoute: AppDeliveryFeesRoute,
-  AppPaymentsRoute: AppPaymentsRoute,
   AppProductOptionTypesRoute: AppProductOptionTypesRoute,
   AppReviewsRoute: AppReviewsRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCouponsNewRoute: AppCouponsNewRoute,
   AppInventoryAdjustmentRoute: AppInventoryAdjustmentRoute,

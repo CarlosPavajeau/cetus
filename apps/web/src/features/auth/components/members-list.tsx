@@ -14,8 +14,6 @@ export function MembersList({ members, isOwner, isAdmin }: Readonly<Props>) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <p className="font-heading font-semibold">Miembros</p>
-
         {(isOwner || isAdmin) && <InviteMemberDialog />}
       </div>
 
