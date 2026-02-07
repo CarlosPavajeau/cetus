@@ -19,16 +19,12 @@ export function DataTable<T = unknown>({
   onRowClick,
 }: Readonly<Props<T>>) {
   return (
-    <Table className="table-fixed border-separate border-spacing-0 [&_tr:not(:last-child)_td]:border-b">
+    <Table>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow
-            className="border-0 hover:bg-transparent"
-            key={headerGroup.id}
-          >
+          <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => (
               <TableHead
-                className="relative h-9 select-none border-border border-y bg-muted first:rounded-l-lg first:border-l last:rounded-r-lg last:border-r"
                 key={header.id}
                 style={{ width: `${header.getSize()}px` }}
               >
@@ -48,7 +44,6 @@ export function DataTable<T = unknown>({
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => (
             <TableRow
-              className="h-px border-0 hover:bg-accent/50 [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
               data-state={row.getIsSelected() && 'selected'}
               key={row.id}
               onClick={() => {
@@ -58,7 +53,7 @@ export function DataTable<T = unknown>({
               }}
             >
               {row.getVisibleCells().map((cell) => (
-                <TableCell className="h-[inherit] last:py-0" key={cell.id}>
+                <TableCell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}

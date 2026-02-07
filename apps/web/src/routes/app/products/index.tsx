@@ -1,5 +1,6 @@
 import type { Category } from '@cetus/api-client/types/categories'
 import { Button } from '@cetus/ui/button'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
 import {
   Combobox,
   ComboboxChip,
@@ -24,7 +25,6 @@ import { Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { PlusIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/app/products/')({
@@ -85,8 +85,8 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex flex-wrap items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-center gap-2 sm:flex-row">
           <InputGroup className="lg:ml-auto lg:max-w-72">
             <InputGroupAddon>
               <HugeiconsIcon icon={Search01Icon} />
@@ -141,16 +141,12 @@ function RouteComponent() {
         </div>
 
         <Button asChild>
-          <Link to="/app/products/new">
-            <PlusIcon />
-            Crear producto
-          </Link>
+          <Link to="/app/products/new">Crear producto</Link>
         </Button>
       </div>
 
-      <div>
-        <ProductsTable isLoading={isLoading} products={filteredData} />
-      </div>
+      {isLoading && <DefaultLoader />}
+      {!isLoading && <ProductsTable products={filteredData} />}
     </div>
   )
 }

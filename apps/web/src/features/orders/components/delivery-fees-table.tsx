@@ -1,10 +1,8 @@
 import type { DeliveryFee } from '@cetus/api-client/types/orders'
-import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
-import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
-import { DataGridTable } from '@cetus/ui/data-grid-table'
-import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
 import { Skeleton } from '@cetus/ui/skeleton'
 import { Currency } from '@cetus/web/components/currency'
+import { TablePagination } from '@cetus/web/components/data-table/pagination'
+import { DataTable } from '@cetus/web/components/data-table/table'
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -49,10 +47,9 @@ const columns: ColumnDef<DeliveryFee>[] = [
 
 type Props = {
   deliveryFees?: DeliveryFee[]
-  isLoading: boolean
 }
 
-export function DeliveryFeesTable({ deliveryFees, isLoading }: Props) {
+export function DeliveryFeesTable({ deliveryFees }: Props) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
@@ -73,22 +70,9 @@ export function DeliveryFeesTable({ deliveryFees, isLoading }: Props) {
   })
 
   return (
-    <DataGrid
-      isLoading={isLoading}
-      recordCount={deliveryFees?.length || 0}
-      table={table}
-      tableLayout={{ dense: true }}
-    >
-      <div className="w-full space-y-2.5">
-        <DataGridContainer>
-          <ScrollArea>
-            <DataGridTable />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </DataGridContainer>
-
-        <DataGridPagination />
-      </div>
-    </DataGrid>
+    <div className="grid gap-4 overflow-hidden">
+      <DataTable table={table} />
+      <TablePagination table={table} />
+    </div>
   )
 }

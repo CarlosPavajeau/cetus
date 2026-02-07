@@ -47,8 +47,8 @@ function RouteComponent() {
 
   return (
     <div className="space-y-6 p-4">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="font-heading font-semibold text-2xl">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+        <h1 className="font-heading font-semibold text-xl">
           Tipos de opciones de producto
         </h1>
 

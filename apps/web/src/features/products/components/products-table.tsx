@@ -1,16 +1,14 @@
 import type { Product } from '@cetus/api-client/types/products'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
-import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
-import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
-import { DataGridTable } from '@cetus/ui/data-grid-table'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@cetus/ui/dropdown-menu'
-import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { TablePagination } from '@cetus/web/components/data-table/pagination'
+import { DataTable } from '@cetus/web/components/data-table/table'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { Skeleton } from '@cetus/web/components/ui/skeleton'
 import { DeleteProductDialog } from '@cetus/web/features/products/components/delete-product.dialog'
@@ -34,7 +32,12 @@ const columns: ColumnDef<Product>[] = [
     accessorKey: 'name',
     header: 'Nombre',
     cell: ({ row }) => (
-      <div className="font-medium">{row.getValue('name')}</div>
+      <div className="flex flex-col gap-1">
+        <span>{row.getValue('name')}</span>
+        <span className="text-muted-foreground text-xs">
+          {row.getValue('slug')}
+        </span>
+      </div>
     ),
     size: 180,
     meta: {
@@ -45,11 +48,6 @@ const columns: ColumnDef<Product>[] = [
     id: 'category',
     accessorKey: 'category',
     header: 'Categoría',
-    cell: ({ row }) => (
-      <Badge variant="secondary">
-        {row.getValue('category') ?? 'Desconocida'}
-      </Badge>
-    ),
     size: 180,
     meta: {
       skeleton: <Skeleton className="h-5 w-32" />,
@@ -107,10 +105,9 @@ const columns: ColumnDef<Product>[] = [
 
 type Props = {
   products?: Product[]
-  isLoading: boolean
 }
 
-export function ProductsTable({ products, isLoading }: Props) {
+export function ProductsTable({ products }: Props) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
@@ -134,23 +131,10 @@ export function ProductsTable({ products, isLoading }: Props) {
   })
 
   return (
-    <DataGrid
-      isLoading={isLoading}
-      recordCount={products?.length || 0}
-      table={table}
-      tableLayout={{ dense: true }}
-    >
-      <div className="w-full space-y-2.5">
-        <DataGridContainer>
-          <ScrollArea>
-            <DataGridTable />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </DataGridContainer>
-
-        <DataGridPagination />
-      </div>
-    </DataGrid>
+    <div className="grid gap-4 overflow-hidden">
+      <DataTable table={table} />
+      <TablePagination table={table} />
+    </div>
   )
 }
 

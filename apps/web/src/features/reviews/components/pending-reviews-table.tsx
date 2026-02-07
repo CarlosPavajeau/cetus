@@ -1,9 +1,7 @@
 import type { PendingForApprovalProductReview } from '@cetus/api-client/types/reviews'
-import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
-import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
-import { DataGridTable } from '@cetus/ui/data-grid-table'
-import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
 import { Skeleton } from '@cetus/ui/skeleton'
+import { TablePagination } from '@cetus/web/components/data-table/pagination'
+import { DataTable } from '@cetus/web/components/data-table/table'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import {
   type ColumnDef,
@@ -60,10 +58,9 @@ const columns: ColumnDef<PendingForApprovalProductReview>[] = [
 
 type Props = {
   reviews?: PendingForApprovalProductReview[]
-  isLoading: boolean
 }
 
-export function PendingReviewsTable({ reviews, isLoading }: Readonly<Props>) {
+export function PendingReviewsTable({ reviews }: Readonly<Props>) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
@@ -84,22 +81,9 @@ export function PendingReviewsTable({ reviews, isLoading }: Readonly<Props>) {
   })
 
   return (
-    <DataGrid
-      isLoading={isLoading}
-      recordCount={reviews?.length || 0}
-      table={table}
-      tableLayout={{ dense: true }}
-    >
-      <div className="w-full space-y-2.5">
-        <DataGridContainer>
-          <ScrollArea>
-            <DataGridTable />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </DataGridContainer>
-
-        <DataGridPagination />
-      </div>
-    </DataGrid>
+    <div className="grid gap-4 overflow-hidden">
+      <DataTable table={table} />
+      <TablePagination table={table} />
+    </div>
   )
 }

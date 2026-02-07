@@ -1,139 +1,87 @@
-import { Button } from '@cetus/ui/button'
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
 } from '@cetus/ui/pagination'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@cetus/ui/select'
 import type { usePagination } from '@cetus/web/hooks/use-pagination'
 import type { useReactTable } from '@tanstack/react-table'
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { Field, FieldLabel } from '../ui/field'
 
 type Props<T = unknown> = {
   table: ReturnType<typeof useReactTable<T>>
-  paginationInfo: ReturnType<typeof usePagination>
+  paginationInfo?: ReturnType<typeof usePagination>
 }
 
-const PAGE_SIZE_OPTIONS = [5, 10, 25, 50]
-
-export function TablePagination<T = unknown>({
-  table,
-  paginationInfo,
-}: Readonly<Props<T>>) {
-  const { pages, showLeftEllipsis, showRightEllipsis } = paginationInfo
-
+export function TablePagination<T = unknown>({ table }: Readonly<Props<T>>) {
   return (
-    <div className="flex items-center justify-between gap-3 max-sm:flex-col">
-      {/* Page number information */}
-      <p
-        aria-live="polite"
-        className="flex-1 whitespace-nowrap text-muted-foreground text-sm"
-      >
-        Página{' '}
-        <span className="text-foreground">
-          {table.getState().pagination.pageIndex + 1}
-        </span>{' '}
-        de <span className="text-foreground">{table.getPageCount()}</span>
-      </p>
-
-      {/* Pagination buttons */}
-      <div className="grow">
-        <Pagination>
-          <PaginationContent>
-            {/* Previous page button */}
-            <PaginationItem>
-              <Button
-                aria-label="Go to previous page"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                disabled={!table.getCanPreviousPage()}
-                onClick={() => table.previousPage()}
-                size="icon"
-                variant="outline"
-              >
-                <ChevronLeftIcon aria-hidden="true" size={16} />
-              </Button>
-            </PaginationItem>
-
-            {/* Left ellipsis (...) */}
-            {showLeftEllipsis && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-
-            {/* Page number buttons */}
-            {pages.map((page) => {
-              const isActive =
-                page === table.getState().pagination.pageIndex + 1
-              return (
-                <PaginationItem key={page}>
-                  <Button
-                    aria-current={isActive ? 'page' : undefined}
-                    onClick={() => table.setPageIndex(page - 1)}
-                    size="icon"
-                    variant={isActive ? 'outline' : 'ghost'}
-                  >
-                    {page}
-                  </Button>
-                </PaginationItem>
-              )
-            })}
-
-            {/* Right ellipsis (...) */}
-            {showRightEllipsis && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-
-            {/* Next page button */}
-            <PaginationItem>
-              <Button
-                aria-label="Go to next page"
-                className="disabled:pointer-events-none disabled:opacity-50"
-                disabled={!table.getCanNextPage()}
-                onClick={() => table.nextPage()}
-                size="icon"
-                variant="outline"
-              >
-                <ChevronRightIcon aria-hidden="true" size={16} />
-              </Button>
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
-
-      {/* Results per page */}
-      <div className="flex flex-1 justify-end">
+    <div className="flex items-center justify-between gap-4">
+      <Field className="w-fit" orientation="horizontal">
+        <FieldLabel htmlFor="select-rows-per-page">
+          Elementos por página
+        </FieldLabel>
         <Select
-          aria-label="Results per page"
-          onValueChange={(value) => {
-            table.setPageSize(Number(value))
-          }}
-          value={table.getState().pagination.pageSize.toString()}
+          defaultValue="10"
+          onValueChange={(value) => table.setPageSize(Number(value))}
         >
-          <SelectTrigger
-            className="w-fit whitespace-nowrap"
-            id="results-per-page"
-          >
-            <SelectValue placeholder="Select number of results" />
+          <SelectTrigger className="w-20" id="select-rows-per-page">
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            {PAGE_SIZE_OPTIONS.map((pageSize) => (
-              <SelectItem key={pageSize} value={pageSize.toString()}>
-                {pageSize} / página
-              </SelectItem>
-            ))}
+          <SelectContent align="start">
+            <SelectGroup>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
-      </div>
+      </Field>
+      <Pagination className="mx-0 w-auto">
+        <PaginationContent>
+          <PaginationItem onClick={table.previousPage}>
+            <PaginationPrevious
+              aria-disabled={!table.getCanPreviousPage()}
+              className={
+                table.getCanPreviousPage()
+                  ? ''
+                  : 'pointer-events-none opacity-50'
+              }
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (table.getCanPreviousPage()) {
+                  table.previousPage()
+                }
+              }}
+            />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationNext
+              aria-disabled={!table.getCanNextPage()}
+              className={
+                table.getCanNextPage() ? '' : 'pointer-events-none opacity-50'
+              }
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (table.getCanNextPage()) {
+                  table.nextPage()
+                }
+              }}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   )
 }

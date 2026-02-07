@@ -1,15 +1,13 @@
 import type { Category } from '@cetus/api-client/types/categories'
 import { Button } from '@cetus/ui/button'
-import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
-import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
-import { DataGridTable } from '@cetus/ui/data-grid-table'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@cetus/ui/dropdown-menu'
-import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
 import { Skeleton } from '@cetus/ui/skeleton'
+import { TablePagination } from '@cetus/web/components/data-table/pagination'
+import { DataTable } from '@cetus/web/components/data-table/table'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { DeleteCategoryDialog } from '@cetus/web/features/categories/components/delete-category.dialog'
 import { EditCategoryDialog } from '@cetus/web/features/categories/components/edit-category.dialog'
@@ -61,13 +59,12 @@ const columns: ColumnDef<Category>[] = [
 
 type Props = {
   categories?: Category[]
-  isLoading: boolean
 }
 
-export function CategoriesTable({ categories, isLoading }: Props) {
+export function CategoriesTable({ categories }: Props) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 10,
   })
 
   const table = useReactTable({
@@ -85,23 +82,10 @@ export function CategoriesTable({ categories, isLoading }: Props) {
   })
 
   return (
-    <DataGrid
-      isLoading={isLoading}
-      recordCount={categories?.length || 0}
-      table={table}
-      tableLayout={{ dense: true }}
-    >
-      <div className="w-full space-y-2.5">
-        <DataGridContainer>
-          <ScrollArea>
-            <DataGridTable />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </DataGridContainer>
-
-        <DataGridPagination />
-      </div>
-    </DataGrid>
+    <div className="grid gap-4 overflow-hidden">
+      <DataTable table={table} />
+      <TablePagination table={table} />
+    </div>
   )
 }
 

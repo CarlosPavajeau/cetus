@@ -1,10 +1,8 @@
 import type { Coupon } from '@cetus/api-client/types/coupons'
 import { couponDiscountTypeLabels } from '@cetus/shared/constants/coupon'
-import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
-import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
-import { DataGridTable } from '@cetus/ui/data-grid-table'
-import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
 import { Skeleton } from '@cetus/ui/skeleton'
+import { TablePagination } from '@cetus/web/components/data-table/pagination'
+import { DataTable } from '@cetus/web/components/data-table/table'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { CouponDetails } from '@cetus/web/features/coupons/components/coupon-details'
 import {
@@ -88,10 +86,9 @@ const columns: ColumnDef<Coupon>[] = [
 
 type Props = {
   coupons?: Coupon[]
-  isLoading: boolean
 }
 
-export function CouponsTable({ coupons, isLoading }: Props) {
+export function CouponsTable({ coupons }: Props) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
@@ -112,22 +109,9 @@ export function CouponsTable({ coupons, isLoading }: Props) {
   })
 
   return (
-    <DataGrid
-      isLoading={isLoading}
-      recordCount={coupons?.length || 0}
-      table={table}
-      tableLayout={{ dense: true }}
-    >
-      <div className="w-full space-y-2.5">
-        <DataGridContainer>
-          <ScrollArea>
-            <DataGridTable />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </DataGridContainer>
-
-        <DataGridPagination />
-      </div>
-    </DataGrid>
+    <div className="grid gap-4 overflow-hidden">
+      <DataTable table={table} />
+      <TablePagination table={table} />
+    </div>
   )
 }
