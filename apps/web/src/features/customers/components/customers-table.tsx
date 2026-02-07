@@ -6,7 +6,6 @@ import { FormattedDate } from '@cetus/web/components/formatted-date'
 import {
   type ColumnDef,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   type OnChangeFn,
   type PaginationState,
@@ -66,7 +65,6 @@ export function CustomersTable({
     pageCount,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     manualPagination: true,
     onPaginationChange,
