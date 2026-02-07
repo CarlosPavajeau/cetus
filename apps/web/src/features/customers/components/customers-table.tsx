@@ -36,9 +36,14 @@ const columns: ColumnDef<CustomerSummaryResponse>[] = [
   {
     accessorKey: 'lastPurchase',
     header: 'Última compra',
-    cell: ({ row }) => (
-      <FormattedDate date={new Date(row.getValue('lastPurchase'))} />
-    ),
+    cell: ({ row }) => {
+      const lastPurchase = row.getValue('lastPurchase')
+      return lastPurchase ? (
+        <FormattedDate date={new Date(lastPurchase as string)} />
+      ) : (
+        <span>-</span>
+      )
+    },
   },
 ]
 
