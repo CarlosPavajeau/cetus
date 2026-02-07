@@ -88,33 +88,79 @@ export function CustomDomainSection() {
 
       <Alert>
         <InfoIcon className="size-4" />
-        <AlertTitle>Configuración DNS</AlertTitle>
+        <AlertTitle>¿Cómo conectar tu dominio?</AlertTitle>
         <AlertDescription className="flex flex-col gap-3">
           <p>
-            Para conectar tu dominio personalizado, agrega el siguiente registro
-            DNS en tu proveedor de dominio:
+            Para conectar tu dominio personalizado, accede a la configuración
+            DNS de tu proveedor de dominio y agrega los siguientes registros:
           </p>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Host</TableHead>
-                <TableHead>Valor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-mono">CNAME</TableCell>
-                <TableCell className="font-mono">@</TableCell>
-                <TableCell className="font-mono">cetus.app</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <div className="flex flex-col gap-1">
+            <p className="font-medium text-foreground text-xs">
+              Si usas un subdominio (ej: tienda.tudominio.com)
+            </p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono">CNAME</TableCell>
+                  <TableCell className="font-mono">tienda</TableCell>
+                  <TableCell className="font-mono">
+                    cname.vercel-dns.com
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
 
-          <p className="text-muted-foreground text-xs">
-            Los cambios de DNS pueden tardar hasta 48 horas en propagarse.
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="font-medium text-foreground text-xs">
+              Si usas un dominio raíz (ej: tudominio.com)
+            </p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono">A</TableCell>
+                  <TableCell className="font-mono">@</TableCell>
+                  <TableCell className="font-mono">76.76.21.21</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="rounded-md bg-muted p-3 text-xs">
+            <p className="mb-1 font-medium text-foreground">Pasos:</p>
+            <ol className="list-inside list-decimal space-y-1 text-muted-foreground">
+              <li>Ingresa tu dominio en el campo de arriba y guárdalo.</li>
+              <li>
+                Accede al panel de tu proveedor de dominio (GoDaddy, Namecheap,
+                Cloudflare, etc.).
+              </li>
+              <li>
+                Agrega el registro DNS correspondiente según tu tipo de dominio.
+              </li>
+              <li>
+                Espera la propagación DNS (puede tardar hasta 48 horas).
+              </li>
+              <li>
+                El certificado SSL se generará automáticamente una vez
+                verificado.
+              </li>
+            </ol>
+          </div>
         </AlertDescription>
       </Alert>
     </div>
