@@ -8,3 +8,22 @@ export type Customer = {
 }
 
 export type DocumentType = 'CC' | 'CE' | 'NIT' | 'PP' | 'OTHER'
+
+export type CustomerSummaryResponse = {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  totalOrders: number
+  totalSpent: number
+  lastPurchase?: string
+}
+
+export type CustomerSortBy = 'name' | 'total_spent' | 'last_purchase'
+
+export type CustomerQueryParams = {
+  page?: number
+  pageSize?: number
+  search?: string
+  sortBy?: CustomerSortBy
+}
