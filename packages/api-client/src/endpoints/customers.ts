@@ -1,5 +1,10 @@
-import { anonymousClient } from '../core/instance'
-import type { Customer } from '../types/customers'
+import { anonymousClient, authenticatedClient } from '../core/instance'
+import type { PaginatedResponse } from '../types/common'
+import type {
+  Customer,
+  CustomerQueryParams,
+  CustomerSummaryResponse,
+} from '../types/customers'
 
 export const customersApi = {
   getById: (id: string) => anonymousClient.get<Customer>(`/customers/${id}`),
@@ -7,5 +12,11 @@ export const customersApi = {
   getByPhone: (phone: string) =>
     anonymousClient.get<Customer>(
       `/customers/by-phone/${encodeURIComponent(phone)}`,
+    ),
+
+  list: (params?: CustomerQueryParams) =>
+    authenticatedClient.get<PaginatedResponse<CustomerSummaryResponse>>(
+      '/customers',
+      { params },
     ),
 }

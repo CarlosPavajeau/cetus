@@ -26,6 +26,7 @@ import {
   StarIcon,
   TagIcon,
   TruckIcon,
+  UserIcon,
 } from 'lucide-react'
 
 const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
@@ -100,6 +101,12 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
     href: '/app/coupons',
     isNew: false,
     icon: BadgePercentIcon,
+  },
+  {
+    label: 'Clientes',
+    href: '/app/customers',
+    isNew: false,
+    icon: UserIcon,
   },
 ] as const
 
