@@ -3,12 +3,10 @@ import type {
   InventoryTransactionType,
 } from '@cetus/api-client/types/products'
 import { inventoryTransactionTypeLabels } from '@cetus/shared/constants/inventory'
-import { Badge, type BadgeProps } from '@cetus/ui/badge'
-import { DataGrid, DataGridContainer } from '@cetus/ui/data-grid'
-import { DataGridPagination } from '@cetus/ui/data-grid-pagination'
-import { DataGridTable } from '@cetus/ui/data-grid-table'
-import { ScrollArea, ScrollBar } from '@cetus/ui/scroll-area'
+import { Badge, type badgeVariants } from '@cetus/ui/badge'
 import { Skeleton } from '@cetus/ui/skeleton'
+import { TablePagination } from '@cetus/web/components/data-table/pagination'
+import { DataTable } from '@cetus/web/components/data-table/table'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { cn } from '@cetus/web/shared/utils'
 import {
@@ -20,10 +18,10 @@ import {
   type PaginationState,
   useReactTable,
 } from '@tanstack/react-table'
+import type { VariantProps } from 'class-variance-authority'
 
 type Props = {
   data: InventoryTransaction[]
-  isLoading: boolean
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
   pageCount: number
@@ -32,13 +30,13 @@ type Props = {
 const getTransactionBadgeVariant = (
   type: InventoryTransactionType,
   quantity: number,
-): BadgeProps['variant'] => {
+): VariantProps<typeof badgeVariants>['variant'] => {
   switch (type) {
     case 'sale':
       return 'outline'
     case 'purchase':
     case 'return':
-      return 'success'
+      return 'secondary'
     case 'adjustment':
       return quantity < 0 ? 'destructive' : 'secondary'
     default:
@@ -165,7 +163,6 @@ const columns: ColumnDef<InventoryTransaction>[] = [
 
 export function InventoryMovementsTable({
   data,
-  isLoading,
   pagination,
   onPaginationChange,
   pageCount,
@@ -186,21 +183,9 @@ export function InventoryMovementsTable({
   })
 
   return (
-    <DataGrid
-      isLoading={isLoading}
-      recordCount={table.getRowCount()}
-      table={table}
-      tableLayout={{ dense: true }}
-    >
-      <div className="w-full space-y-2.5">
-        <DataGridContainer>
-          <ScrollArea>
-            <DataGridTable />
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </DataGridContainer>
-        <DataGridPagination />
-      </div>
-    </DataGrid>
+    <div className="grid gap-4 overflow-hidden">
+      <DataTable table={table} />
+      <TablePagination table={table} />
+    </div>
   )
 }

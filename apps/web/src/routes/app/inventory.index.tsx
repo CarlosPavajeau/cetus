@@ -1,103 +1,66 @@
-import type { InventoryTransactionQueryParams } from '@cetus/api-client/types/products'
+import type {
+  InventoryTransactionQueryParams,
+  InventoryTransactionType,
+} from '@cetus/api-client/types/products'
 import { inventoryTransactionTypeLabels } from '@cetus/shared/constants/inventory'
-import { CustomDateRangeInput } from '@cetus/web/components/custom-date-range-input'
-import { Button } from '@cetus/web/components/ui/button'
+import { Button } from '@cetus/ui/button'
 import {
-  createFilter,
-  type Filter,
-  type FilterFieldConfig,
-  Filters,
-} from '@cetus/web/components/ui/filters'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@cetus/ui/dropdown-menu'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { DateRangeFilter } from '@cetus/web/features/orders/components/date-range-filter'
 import { InventoryMovementsTable } from '@cetus/web/features/products/components/inventory-movements-table'
 import { productQueries } from '@cetus/web/features/products/queries'
+import { ArrowDown01Icon, Tick02Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { PaginationState } from '@tanstack/react-table'
-import {
-  CalendarIcon,
-  FunnelPlusIcon,
-  FunnelXIcon,
-  TagIcon,
-} from 'lucide-react'
+import { TagIcon } from 'lucide-react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/app/inventory/')({
   component: RouteComponent,
 })
 
-const fields: FilterFieldConfig[] = [
-  {
-    key: 'transaction_type',
-    label: 'Tipo de transacción',
-    icon: <TagIcon />,
-    type: 'multiselect',
-    operators: [
-      {
-        value: 'is_any_of',
-        label: 'es cualquiera de',
-      },
-    ],
-    options: [
-      ...Object.entries(inventoryTransactionTypeLabels).map(
-        ([value, label]) => ({
-          value,
-          label,
-        }),
-      ),
-    ],
-    defaultOperator: 'is',
-  },
-  {
-    key: 'daterange',
-    label: 'Fechas',
-    icon: <CalendarIcon className="size-3.5" />,
-    type: 'custom',
-    operators: [{ value: 'between', label: 'entre' }],
-    customRenderer: ({ values, onChange }) => (
-      <CustomDateRangeInput onChange={onChange} values={values} />
-    ),
-    defaultOperator: 'between',
-  },
-]
+const transactionTypeColors: Record<InventoryTransactionType, string> = {
+  sale: '#10b981',
+  adjustment: '#6366f1',
+  return: '#f59e0b',
+  purchase: '#3b82f6',
+  transfer: '#8b5cf6',
+}
 
 function RouteComponent() {
-  const [filters, setFilters] = useState<Filter[]>([
-    createFilter('transaction_type', 'is_any_of', ['adjustment']),
-  ])
-
-  const transactionsFilters = filters.reduce<Record<string, unknown>>(
-    (acc, filter) => {
-      if (filter.field === 'daterange') {
-        const [from, to] = filter.values ?? []
-        if (from) {
-          acc.from = from
-        }
-        if (to) {
-          acc.to = to
-        }
-      } else {
-        acc[filter.field] = filter.values
-      }
-      return acc
-    },
-    {},
-  )
+  const [types, setTypes] = useState<InventoryTransactionType[]>(['adjustment'])
+  const [dateRange, setDateRange] = useState<{ from?: string; to?: string }>({})
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   })
 
+  const toggleType = (type: InventoryTransactionType) => {
+    setTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    )
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }
+
+  const handleDateRangeChange = (range: { from?: string; to?: string }) => {
+    setDateRange(range)
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }
+
   const queryParams: InventoryTransactionQueryParams = {
     page: pagination.pageIndex + 1,
     pageSize: pagination.pageSize,
-    from: transactionsFilters.from
-      ? new Date(transactionsFilters.from as string)
-      : undefined,
-    to: transactionsFilters.to
-      ? new Date(transactionsFilters.to as string)
-      : undefined,
-    types: transactionsFilters.transaction_type as string[] | undefined,
+    from: dateRange.from ? new Date(dateRange.from) : undefined,
+    to: dateRange.to ? new Date(dateRange.to) : undefined,
+    types: types.length > 0 ? types : undefined,
   }
 
   const { data, isLoading } = useQuery(
@@ -108,38 +71,84 @@ function RouteComponent() {
   const pageCount = data?.totalPages ?? 0
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2">
-        <Filters
-          addButton={
-            <Button mode="icon" size="sm" variant="outline">
-              <FunnelPlusIcon />
+    <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <TagIcon className="size-4" />
+              <div className="flex items-center -space-x-0.5">
+                {Object.entries(transactionTypeColors).map(([key, color]) => (
+                  <div
+                    className="size-2.5 shrink-0 rounded-full border grayscale transition-all data-[active=true]:border-(--color) data-[active=true]:bg-(--color) data-[active=true]:grayscale-0"
+                    data-active={types.includes(
+                      key as InventoryTransactionType,
+                    )}
+                    key={key}
+                    style={
+                      {
+                        '--color': color,
+                      } as React.CSSProperties
+                    }
+                  />
+                ))}
+              </div>
+              Tipos {types.length}/{Object.keys(transactionTypeColors).length}
+              <HugeiconsIcon icon={ArrowDown01Icon} />
             </Button>
-          }
-          fields={fields}
-          filters={filters}
-          onChange={setFilters}
-          size="sm"
-        />
+          </DropdownMenuTrigger>
 
-        <div className="flex items-center gap-2">
-          {filters.length > 0 && (
-            <Button onClick={() => setFilters([])} size="xs" variant="outline">
-              <FunnelXIcon /> Limpiar filtros
-            </Button>
-          )}
-        </div>
+          <DropdownMenuContent align="start" className="w-56">
+            {Object.entries(inventoryTransactionTypeLabels).map(
+              ([key, label]) => {
+                const isSelected = types.includes(
+                  key as InventoryTransactionType,
+                )
+                const color =
+                  transactionTypeColors[key as InventoryTransactionType]
+                return (
+                  <DropdownMenuItem
+                    data-active={isSelected}
+                    key={key}
+                    onSelect={() => toggleType(key as InventoryTransactionType)}
+                    style={
+                      {
+                        '--color': color,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="size-2 rounded-full bg-(--color)" />
+                      {label}
+                    </div>
+
+                    <HugeiconsIcon
+                      className="ml-auto opacity-0 group-data-[active=true]/dropdown-menu-item:opacity-100"
+                      icon={Tick02Icon}
+                    />
+                  </DropdownMenuItem>
+                )
+              },
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DateRangeFilter
+          from={dateRange.from}
+          onChange={handleDateRangeChange}
+          to={dateRange.to}
+        />
       </div>
 
-      <div className="px-2">
+      {isLoading && <DefaultLoader />}
+      {!isLoading && (
         <InventoryMovementsTable
           data={items}
-          isLoading={isLoading}
           onPaginationChange={setPagination}
           pageCount={pageCount}
           pagination={pagination}
         />
-      </div>
+      )}
     </div>
   )
 }
