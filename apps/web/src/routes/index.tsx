@@ -1,10 +1,8 @@
 import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
 import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
-import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { getServerhost } from '@cetus/web/functions/get-host'
@@ -25,6 +23,18 @@ const ApplicationHome = lazy(() =>
 const PopularProductsSection = lazy(() =>
   import('@cetus/web/components/home/popular-products-section').then((m) => ({
     default: m.PopularProductsSection,
+  })),
+)
+
+const FeaturedProductsSection = lazy(() =>
+  import('@cetus/web/components/home/featured-products-section').then((m) => ({
+    default: m.FeaturedProductsSection,
+  })),
+)
+
+const TrustBadgesSection = lazy(() =>
+  import('@cetus/web/components/home/trust-badges-section').then((m) => ({
+    default: m.TrustBadgesSection,
   })),
 )
 
@@ -196,7 +206,7 @@ export const Route = createFileRoute('/')({
       scripts:
         seoConfig.structuredData?.map((data, index) => ({
           type: 'application/ld+json',
-          children: JSON.stringify(data, null, 2),
+          children: JSON.stringify(data),
           key: `json-ld-homepage-${index}`,
         })) || [],
     }
@@ -209,25 +219,26 @@ function IndexPage() {
   const { featuredProducts, popularProducts, categories, isAppUrl, store } =
     Route.useLoaderData()
 
-  const { actions } = useTenantStore()
+  const setStore = useTenantStore((state) => state.actions.setStore)
+  const clearStore = useTenantStore((state) => state.actions.clearStore)
   useEffect(() => {
     if (!store) {
       return
     }
 
-    actions.setStore(store)
-  }, [actions, store])
+    setStore(store)
+  }, [setStore, store])
 
   useEffect(() => {
     if (isAppUrl) {
-      actions.clearStore()
+      clearStore()
     }
-  }, [isAppUrl, actions])
+  }, [isAppUrl, clearStore])
 
   if (isAppUrl) {
     return (
       <DefaultPageLayout>
-        <Suspense>
+        <Suspense fallback={null}>
           <ApplicationHome />
         </Suspense>
       </DefaultPageLayout>
@@ -245,18 +256,34 @@ function IndexPage() {
           <HeroSection />
         </section>
 
-        <section aria-labelledby="trust-badges-heading">
+        <section
+          aria-labelledby="trust-badges-heading"
+          style={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: 'auto 180px',
+          }}
+        >
           <h2 className="sr-only" id="trust-badges-heading">
             Por qué comprar en {store?.name}
           </h2>
-          <TrustBadgesSection />
+          <Suspense fallback={null}>
+            <TrustBadgesSection />
+          </Suspense>
         </section>
 
-        <section aria-labelledby="featured-products-heading">
+        <section
+          aria-labelledby="featured-products-heading"
+          style={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: 'auto 520px',
+          }}
+        >
           <h2 className="sr-only" id="featured-products-heading">
             Productos Destacados en {store?.name}
           </h2>
-          <FeaturedProductsSection products={featuredProducts} />
+          <Suspense fallback={null}>
+            <FeaturedProductsSection products={featuredProducts} />
+          </Suspense>
         </section>
 
         <section
@@ -269,7 +296,7 @@ function IndexPage() {
           <h2 className="sr-only" id="promo-banner-heading">
             Ofertas y promociones
           </h2>
-          <Suspense>
+          <Suspense fallback={null}>
             <PromoBannerSection />
           </Suspense>
         </section>
@@ -284,7 +311,7 @@ function IndexPage() {
           <h2 className="sr-only" id="popular-products-heading">
             Productos Populares en {store?.name}
           </h2>
-          <Suspense>
+          <Suspense fallback={null}>
             <PopularProductsSection products={popularProducts} />
           </Suspense>
         </section>
