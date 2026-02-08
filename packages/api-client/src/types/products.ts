@@ -57,10 +57,12 @@ export type SimpleProductForSale = {
   slug: string
   imageUrl: string
   price: number
+  stock: number
   rating: number
   reviewsCount: number
   categoryId: string
   variantId: number
+  optionValues: ProductOptionValue[]
 }
 
 export type ProductOptionTypeValue = {

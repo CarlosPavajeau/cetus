@@ -61,7 +61,6 @@ export function FeaturedProductsSection({ products }: Readonly<Props>) {
             priority={index < 4}
             product={product}
             showBadge={getProductBadge(index)}
-            variant="featured"
           />
         ))}
       </div>

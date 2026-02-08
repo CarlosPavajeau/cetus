@@ -20,21 +20,16 @@ import { toast } from 'sonner'
 
 type Props = {
   product: SimpleProductForSale
-  variant?: 'default' | 'featured'
   showBadge?: 'featured' | 'popular' | 'sale' | 'new' | null
   // TODO: Implement discount logic in backend - originalPrice should come from API
   originalPrice?: number
-  // TODO: Add stock to SimpleProductForSale in backend API
-  stock?: number
   priority?: boolean
 }
 
 function ProductCardComponent({
   product,
-  variant = 'default',
   showBadge = null,
   originalPrice,
-  stock = 99, // Default stock until backend provides it
   priority = false,
 }: Readonly<Props>) {
   const cart = useCart()
@@ -67,9 +62,8 @@ function ProductCardComponent({
             imageUrl: product.imageUrl || 'placeholder.svg',
             price: product.price,
             variantId: product.variantId,
-            stock,
-            // TODO: Add optionValues to SimpleProductForSale in backend
-            optionValues: [],
+            stock: product.stock,
+            optionValues: product.optionValues,
           },
           1,
         )
@@ -88,7 +82,7 @@ function ProductCardComponent({
         setTimeout(() => setJustAdded(false), 2000)
       }, 300)
     },
-    [cart, product, stock, isAddingToCart, justAdded],
+    [cart, product, isAddingToCart, justAdded],
   )
 
   const badgeConfig = {
@@ -190,9 +184,18 @@ function ProductCardComponent({
         </div>
 
         <div className="p-3">
-          <h3 className="line-clamp-2 min-h-10 font-heading font-medium text-sm leading-tight md:text-base">
-            {product.name}
-          </h3>
+          <div className="min-h-10">
+            <h3 className="line-clamp-2 font-heading font-medium text-sm leading-tight md:text-base">
+              {product.name}
+            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              {product.optionValues?.map((value) => (
+                <span className="text-muted-foreground text-xs" key={value.id}>
+                  {value.optionTypeName}: {value.value}
+                </span>
+              ))}
+            </div>
+          </div>
 
           <div className="mt-1 flex items-center gap-1.5">
             <StarRating className="m-0 p-0" rating={product.rating} size={3} />
