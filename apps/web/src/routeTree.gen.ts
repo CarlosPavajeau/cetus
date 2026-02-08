@@ -46,6 +46,7 @@ import { Route as OnboardingMercadoPagoLinkRouteImport } from './routes/onboardi
 import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
 import { Route as AppInventoryAdjustmentRouteImport } from './routes/app/inventory.adjustment'
+import { Route as AppCustomersCustomerIdRouteImport } from './routes/app/customers.$customerId'
 import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
 import { Route as ApiMercadopagoConnectRouteImport } from './routes/api/mercadopago/connect'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -241,6 +242,11 @@ const AppInventoryAdjustmentRoute = AppInventoryAdjustmentRouteImport.update({
   path: '/inventory/adjustment',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCustomersCustomerIdRoute = AppCustomersCustomerIdRouteImport.update({
+  id: '/customers/$customerId',
+  path: '/customers/$customerId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCouponsNewRoute = AppCouponsNewRouteImport.update({
   id: '/coupons/new',
   path: '/coupons/new',
@@ -309,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
+  '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
+  '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
   '/app/coupons/new': typeof AppCouponsNewRoute
+  '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
   '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
   '/app/products/new': typeof AppProductsNewRoute
@@ -447,6 +456,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/mercadopago/connect'
     | '/app/coupons/new'
+    | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -491,6 +501,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/mercadopago/connect'
     | '/app/coupons/new'
+    | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -537,6 +548,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/mercadopago/connect'
     | '/app/coupons/new'
+    | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
     | '/app/orders/$orderId'
     | '/app/products/new'
@@ -836,6 +848,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInventoryAdjustmentRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/customers/$customerId': {
+      id: '/app/customers/$customerId'
+      path: '/customers/$customerId'
+      fullPath: '/app/customers/$customerId'
+      preLoaderRoute: typeof AppCustomersCustomerIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/coupons/new': {
       id: '/app/coupons/new'
       path: '/coupons/new'
@@ -914,6 +933,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCouponsNewRoute: typeof AppCouponsNewRoute
+  AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
   AppInventoryAdjustmentRoute: typeof AppInventoryAdjustmentRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
@@ -935,6 +955,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCouponsNewRoute: AppCouponsNewRoute,
+  AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
   AppInventoryAdjustmentRoute: AppInventoryAdjustmentRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
   AppProductsNewRoute: AppProductsNewRoute,
