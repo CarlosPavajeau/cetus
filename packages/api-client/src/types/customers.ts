@@ -5,6 +5,11 @@ export type Customer = {
   name: string
   email?: string
   phone: string
+
+  since?: string
+  totalPurchases: number
+  totalSpent: number
+  purchaseFrequencyDays?: number
 }
 
 export type DocumentType = 'CC' | 'CE' | 'NIT' | 'PP' | 'OTHER'
