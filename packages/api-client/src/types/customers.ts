@@ -32,3 +32,9 @@ export type CustomerQueryParams = {
   search?: string
   sortBy?: CustomerSortBy
 }
+
+export type CustomerOrdersQueryParams = {
+  page?: number
+  pageSize?: number
+  customerId: string
+}

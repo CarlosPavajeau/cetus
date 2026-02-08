@@ -2,9 +2,11 @@ import { anonymousClient, authenticatedClient } from '../core/instance'
 import type { PaginatedResponse } from '../types/common'
 import type {
   Customer,
+  CustomerOrdersQueryParams,
   CustomerQueryParams,
   CustomerSummaryResponse,
 } from '../types/customers'
+import type { SimpleOrder } from '../types/orders'
 
 export const customersApi = {
   getById: (id: string) =>
@@ -18,6 +20,12 @@ export const customersApi = {
   list: (params?: CustomerQueryParams) =>
     authenticatedClient.get<PaginatedResponse<CustomerSummaryResponse>>(
       '/customers',
+      { params },
+    ),
+
+  listOrders: (params: CustomerOrdersQueryParams) =>
+    authenticatedClient.get<PaginatedResponse<SimpleOrder>>(
+      `/customers/${params.customerId}/orders`,
       { params },
     ),
 }
