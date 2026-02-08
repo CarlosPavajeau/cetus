@@ -152,9 +152,7 @@ export function CustomDomainSection() {
               <li>
                 Agrega el registro DNS correspondiente según tu tipo de dominio.
               </li>
-              <li>
-                Espera la propagación DNS (puede tardar hasta 48 horas).
-              </li>
+              <li>Espera la propagación DNS (puede tardar hasta 48 horas).</li>
               <li>
                 El certificado SSL se generará automáticamente una vez
                 verificado.
