@@ -1,13 +1,15 @@
 import type { CreateOrder } from '@cetus/api-client/types/orders'
+import type { City, State } from '@cetus/api-client/types/states'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@cetus/ui/combobox'
 import { Field, FieldContent, FieldError, FieldLabel } from '@cetus/ui/field'
 import { Input } from '@cetus/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@cetus/ui/select'
 import { useStates } from '@cetus/web/features/states/hooks/use-state'
 import { useStateCities } from '@cetus/web/features/states/hooks/use-state-cities'
 import { useState } from 'react'
@@ -17,14 +19,10 @@ export function AddressFields() {
   const form = useFormContext<CreateOrder>()
 
   const { data: states, isLoading } = useStates()
-  const [currentState, setCurrentState] = useState<string | undefined>()
-  const { data: cities, isLoading: isLoadingCities } =
-    useStateCities(currentState)
-
-  const handleStateChange = (value: string) => {
-    setCurrentState(value)
-    form.resetField('shipping.cityId', { defaultValue: '' })
-  }
+  const [currentState, setCurrentState] = useState<State | null>(null)
+  const { data: cities, isLoading: isLoadingCities } = useStateCities(
+    currentState?.id,
+  )
 
   return (
     <>
@@ -41,22 +39,34 @@ export function AddressFields() {
                 )}
               </FieldContent>
 
-              <Select
+              <Combobox
+                autoHighlight
                 disabled={isLoading || isLoadingCities}
-                onValueChange={handleStateChange}
+                items={states ?? []}
+                itemToStringLabel={(state: State) => state.name}
+                itemToStringValue={(state: State) => state.id}
+                onValueChange={(state: State | null) => {
+                  setCurrentState(state)
+                  form.resetField('shipping.cityId', { defaultValue: '' })
+                }}
                 value={currentState}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un departamento" />
-                </SelectTrigger>
-                <SelectContent position="item-aligned">
-                  {states?.map((state) => (
-                    <SelectItem key={state.id} value={state.id}>
-                      {state.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxInput
+                  disabled={isLoading || isLoadingCities}
+                  placeholder="Buscar departamento..."
+                  showClear
+                />
+                <ComboboxContent>
+                  <ComboboxEmpty>Sin resultados</ComboboxEmpty>
+                  <ComboboxList>
+                    {(state: State) => (
+                      <ComboboxItem key={state.id} value={state}>
+                        {state.name}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </Field>
           )}
         />
@@ -64,33 +74,49 @@ export function AddressFields() {
         <Controller
           control={form.control}
           name="shipping.cityId"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldContent data-invalid={fieldState.invalid}>
-                <FieldLabel>Ciudad</FieldLabel>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </FieldContent>
+          render={({ field, fieldState }) => {
+            const selectedCity =
+              cities?.find((c) => c.id === field.value) ?? null
 
-              <Select
-                disabled={isLoading || isLoadingCities || !currentState}
-                onValueChange={field.onChange}
-                value={field.value}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione una ciudad" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities?.map((city) => (
-                    <SelectItem key={city.id} value={city.id}>
-                      {city.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
+            return (
+              <Field>
+                <FieldContent data-invalid={fieldState.invalid}>
+                  <FieldLabel>Ciudad</FieldLabel>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </FieldContent>
+
+                <Combobox
+                  autoHighlight
+                  disabled={isLoading || isLoadingCities || !currentState}
+                  items={cities ?? []}
+                  itemToStringLabel={(city: City) => city.name}
+                  itemToStringValue={(city: City) => city.id}
+                  onValueChange={(city: City | null) => {
+                    field.onChange(city?.id ?? '')
+                  }}
+                  value={selectedCity}
+                >
+                  <ComboboxInput
+                    disabled={isLoading || isLoadingCities || !currentState}
+                    placeholder="Buscar ciudad..."
+                    showClear
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>Sin resultados</ComboboxEmpty>
+                    <ComboboxList>
+                      {(city: City) => (
+                        <ComboboxItem key={city.id} value={city}>
+                          {city.name}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              </Field>
+            )
+          }}
         />
       </div>
 

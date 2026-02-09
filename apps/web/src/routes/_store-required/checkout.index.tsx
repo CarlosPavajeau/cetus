@@ -1,212 +1,29 @@
-import { api } from '@cetus/api-client'
-import type {
-  CreateOrder,
-  CreateOrderItem,
-} from '@cetus/api-client/types/orders'
-import { createOrderSchema } from '@cetus/schemas/order.schema'
 import { Button } from '@cetus/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@cetus/ui/card'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
+  FieldDescription,
+  FieldGroup,
+  FieldLegend,
+  FieldSet,
+} from '@cetus/ui/field'
 import { Form } from '@cetus/ui/form'
-import { Input } from '@cetus/ui/input'
-import { ItemGroup } from '@cetus/ui/item'
 import { Separator } from '@cetus/ui/separator'
 import { AddressFields } from '@cetus/web/components/address-fields'
-import { Currency } from '@cetus/web/components/currency'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { SubmitButton } from '@cetus/web/components/submit-button'
-import { customerQueries } from '@cetus/web/features/customers/queries'
-import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
-import { orderQueries } from '@cetus/web/features/orders/queries'
-import { useCart } from '@cetus/web/store/cart'
-import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { ArrowLeft01Icon } from '@hugeicons/core-free-icons'
+import { Spinner } from '@cetus/web/components/ui/spinner'
+import { CustomerInfoFields } from '@cetus/web/features/checkout/components/customer-info-fields'
+import type { OrderSummaryProps } from '@cetus/web/features/checkout/components/order-summary'
+import {
+  MobileOrderSummary,
+  OrderSummary,
+} from '@cetus/web/features/checkout/components/order-summary'
+import { useCartCheckout } from '@cetus/web/features/checkout/hooks/use-cart-checkout'
+import { ArrowLeft01Icon, SecurityCheckIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router'
-import { useDebounce } from '@uidotdev/usehooks'
-import consola from 'consola'
-import { PackageIcon, TruckIcon } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { createFileRoute, Link, Navigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_store-required/checkout/')({
-  ssr: false,
   component: RouteComponent,
 })
-
-function useCartCheckout() {
-  const { items, count } = useCart()
-  const total = useMemo(
-    () =>
-      items.reduce((acc, item) => acc + item.product.price * item.quantity, 0),
-    [items],
-  )
-
-  const toOrderItems = (source: typeof items) =>
-    source.map(
-      (item) =>
-        ({
-          variantId: item.product.variantId,
-          quantity: item.quantity,
-        }) satisfies CreateOrderItem,
-    )
-
-  const form = useForm({
-    resolver: arktypeResolver(createOrderSchema),
-    defaultValues: {
-      items: toOrderItems(items),
-      customer: {
-        documentNumber: '',
-      },
-    },
-  })
-
-  const { data: deliveryFee, isLoading: isLoadingDeliveryFee } = useQuery(
-    orderQueries.deliveryFees.detail(form.watch('shipping.cityId')),
-  )
-
-  const navigate = useNavigate()
-  const createOrderMutation = useMutation({
-    mutationKey: ['orders', 'create'],
-    mutationFn: api.orders.create,
-    onSuccess: (data) => {
-      const orderId = data.id
-      navigate({
-        to: '/checkout/$id',
-        params: {
-          id: orderId,
-        },
-      })
-    },
-    onError: (error) => {
-      consola.error('Error creating order:', error)
-      toast.error(
-        'Ha ocurrido un error en la creación de la orden. Intente de nuevo',
-      )
-    },
-  })
-
-  const onSubmit = form.handleSubmit((values) => {
-    createOrderMutation.mutate(values)
-  })
-
-  return {
-    form,
-    items,
-    count,
-    total,
-    onSubmit,
-    deliveryFee,
-    isLoadingDeliveryFee,
-    isSubmitting: createOrderMutation.isPending,
-    isEmpty: items.length === 0,
-  }
-}
-
-const debounceDelay = 300
-
-type CustomerInfoFieldsProps = {
-  form: ReturnType<typeof useForm<CreateOrder>>
-}
-
-function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
-  const phone = useDebounce(form.watch('customer.phone'), debounceDelay)
-
-  const { data: customer, isLoading } = useQuery(
-    customerQueries.detailByPhone(phone),
-  )
-
-  useEffect(() => {
-    if (isLoading) {
-      return
-    }
-
-    if (customer) {
-      form.setValue('customer.name', customer.name)
-      form.setValue('customer.email', customer.email)
-      form.setValue('customer.documentNumber', customer.documentNumber)
-      form.setValue('customer.documentType', customer.documentType)
-    }
-  }, [customer, form, isLoading])
-
-  return (
-    <FieldGroup>
-      <Controller
-        control={form.control}
-        name="customer.phone"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="customer-phone">Teléfono</FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              id="customer-phone"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="customer.documentNumber"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="customer-id">Identificación</FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              autoComplete="off"
-              id="customer-id"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <Controller
-        control={form.control}
-        name="customer.name"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="customer-name">Nombre completo</FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              id="customer-name"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <Controller
-        control={form.control}
-        name="customer.email"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="customer-email">Correo electrónico</FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              id="customer-email"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <AddressFields />
-    </FieldGroup>
-  )
-}
 
 function RouteComponent() {
   const {
@@ -224,123 +41,109 @@ function RouteComponent() {
     return <Navigate to="/cart" />
   }
 
+  const summaryProps: OrderSummaryProps = {
+    items,
+    total,
+    deliveryFee: deliveryFee?.fee,
+    isLoadingDeliveryFee,
+  }
+
   return (
     <DefaultPageLayout>
-      <div className="mx-auto flex max-w-7xl flex-col gap-2">
-        <div>
-          <Button size="sm" variant="ghost">
-            <HugeiconsIcon data-icon="inline-start" icon={ArrowLeft01Icon} />
-            Volver
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 lg:max-w-7xl">
+        <div className="flex items-center gap-3">
+          <Button asChild size="icon" variant="ghost">
+            <Link to="/cart">
+              <HugeiconsIcon icon={ArrowLeft01Icon} />
+              <span className="sr-only">Volver al carrito</span>
+            </Link>
           </Button>
+          <div>
+            <h1 className="font-heading font-semibold text-xl tracking-tight lg:text-2xl">
+              Finalizar compra
+            </h1>
+            <p className="text-muted-foreground text-xs lg:text-sm">
+              Completa tus datos para procesar tu pedido
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <div className="col-span-2 lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <TruckIcon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>Datos de envío</CardTitle>
-                    <CardDescription>
-                      Por favor, ingresa tus datos básicos para continuar con el
-                      proceso de compra.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
+          <div className="flex flex-col gap-6">
+            <div className="lg:hidden">
+              <MobileOrderSummary {...summaryProps} />
+            </div>
 
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={onSubmit}>
+            <div className="rounded-md border bg-card p-5 lg:p-6">
+              <Form {...form}>
+                <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+                  <FieldSet>
+                    <FieldLegend>Datos de contacto</FieldLegend>
+                    <FieldDescription>
+                      Ingresa tus datos de contacto para procesar tu pedido.
+                    </FieldDescription>
+
                     <CustomerInfoFields form={form} />
+                  </FieldSet>
 
-                    <small className="text-muted-foreground text-xs">
-                      Recuerda que el costo del envío es cancelado al momento de
-                      la entrega de los productos.
-                    </small>
+                  <Separator />
 
-                    <SubmitButton
-                      className="group mt-6 w-full"
+                  <FieldSet>
+                    <FieldLegend>Dirección de entrega</FieldLegend>
+                    <FieldDescription>
+                      Ingresa la dirección de entrega para el envío de tus
+                      productos.
+                    </FieldDescription>
+                    <FieldGroup>
+                      <AddressFields />
+                    </FieldGroup>
+                  </FieldSet>
+
+                  <div className="rounded-lg bg-muted/50 px-3 py-2.5">
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      El costo del envío se cancela al momento de la entrega de
+                      los productos.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <Button
+                      className="w-full"
                       disabled={isSubmitting || isLoadingDeliveryFee}
-                      isSubmitting={isSubmitting}
                       size="lg"
                       type="submit"
                     >
+                      {isSubmitting && <Spinner data-icon="inline-start" />}
+                      {!isSubmitting && (
+                        <HugeiconsIcon
+                          data-icon="inline-start"
+                          icon={SecurityCheckIcon}
+                        />
+                      )}
                       Continuar al pago
-                    </SubmitButton>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
+                    </Button>
+
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <HugeiconsIcon
+                        className="size-3.5"
+                        icon={SecurityCheckIcon}
+                      />
+                      <span className="text-xs">Pago seguro y protegido</span>
+                    </div>
+                  </div>
+                </form>
+              </Form>
+            </div>
           </div>
 
-          <div className="col-span-1 hidden lg:block">
-            <Card className="sticky top-20">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <PackageIcon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>Resumen de la orden</CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
+          <div className="hidden lg:block">
+            <div className="sticky top-20 rounded-md border bg-card p-6">
+              <div className="mb-2 flex items-center gap-3">
+                <h2 className="font-medium text-base">Resumen del pedido</h2>
+              </div>
 
-              <CardContent className="space-y-4">
-                <ItemGroup className="gap-2">
-                  {items.map((item) => (
-                    <OrderItemView
-                      item={{
-                        id: item.product.slug,
-                        productName: item.product.name,
-                        imageUrl: item.product.imageUrl,
-                        optionValues: item.product.optionValues,
-                        price: item.product.price,
-                        quantity: item.quantity,
-                      }}
-                      key={`${item.product.variantId}-${item.product.name}`}
-                    />
-                  ))}
-                </ItemGroup>
-
-                <Separator />
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">
-                      <Currency currency="COP" value={total} />
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Envío</span>
-                    <span className="font-medium">
-                      {deliveryFee ? (
-                        <Currency currency="COP" value={deliveryFee.fee} />
-                      ) : (
-                        <span>Sin calcular</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span>
-                    <Currency
-                      currency="COP"
-                      value={total + (deliveryFee?.fee ?? 0)}
-                    />
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+              <OrderSummary {...summaryProps} />
+            </div>
           </div>
         </div>
       </div>
