@@ -21,7 +21,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 export const Route = createFileRoute('/app/customers/$customerId')({
   loader: async ({ params, context }) => {
     const { customerId } = params
-    const queryParams = { customerId, page: 1, pageSize: 20 }
+    const queryParams = { page: 1, pageSize: 20 }
 
     const customerPromise = context.queryClient.ensureQueryData(
       customerQueries.detail(customerId),

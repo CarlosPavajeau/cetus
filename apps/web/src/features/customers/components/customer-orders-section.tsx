@@ -23,7 +23,7 @@ export function CustomerOrdersSection({ customerId }: Readonly<Props>) {
   const pageSize = defaultPageSize
 
   const { data, isLoading } = useQuery(
-    customerQueries.listOrders({ customerId, page, pageSize }),
+    customerQueries.listOrders(customerId, { page, pageSize }),
   )
 
   const orders = data?.items ?? []
