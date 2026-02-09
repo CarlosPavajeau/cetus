@@ -1,4 +1,3 @@
-import { api } from '@cetus/api-client'
 import { Avatar, AvatarFallback } from '@cetus/ui/avatar'
 import { Button } from '@cetus/ui/button'
 import { Separator } from '@cetus/ui/separator'
@@ -6,6 +5,7 @@ import { DefaultLoader } from '@cetus/web/components/default-loader'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { CustomerMetricsCards } from '@cetus/web/features/customers/components/customer-metrics-cards'
 import { CustomerOrdersSection } from '@cetus/web/features/customers/components/customer-orders-section'
+import { customerQueries } from '@cetus/web/features/customers/queries'
 import {
   ArrowLeft01Icon,
   Calendar03Icon,
@@ -21,19 +21,22 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 export const Route = createFileRoute('/app/customers/$customerId')({
   loader: async ({ params, context }) => {
     const { customerId } = params
+    const queryParams = { customerId, page: 1, pageSize: 20 }
 
-    const customer = await context.queryClient.ensureQueryData({
-      queryKey: ['customers', customerId],
-      queryFn: () => api.customers.getById(customerId),
-    })
+    const customerPromise = context.queryClient.ensureQueryData(
+      customerQueries.detail(customerId),
+    )
 
-    await context.queryClient.ensureQueryData({
-      queryKey: ['customers', customerId, 'orders', { page: 1, pageSize: 20 }],
-      queryFn: () =>
-        api.customers.listOrders({ customerId, page: 1, pageSize: 20 }),
-    })
+    const ordersPromise = context.queryClient.ensureQueryData(
+      customerQueries.listOrders(queryParams),
+    )
 
-    return customer
+    const [customer, orders] = await Promise.all([
+      customerPromise,
+      ordersPromise,
+    ])
+
+    return { customer, orders }
   },
   component: RouteComponent,
   pendingComponent: () => (
@@ -55,10 +58,9 @@ function getInitials(name: string) {
 
 function RouteComponent() {
   const { customerId } = Route.useParams()
-  const { data: customer } = useSuspenseQuery({
-    queryKey: ['customers', customerId],
-    queryFn: () => api.customers.getById(customerId),
-  })
+  const { data: customer } = useSuspenseQuery(
+    customerQueries.detail(customerId),
+  )
 
   return (
     <div>

@@ -1,3 +1,4 @@
+import { defaultPageSize } from '@cetus/shared/constants/common'
 import { Button } from '@cetus/ui/button'
 import {
   Empty,
@@ -6,9 +7,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@cetus/ui/empty'
-import { Skeleton } from '@cetus/ui/skeleton'
-import { useCustomerOrders } from '@cetus/web/features/customers/hooks/use-customer-orders'
+import { DefaultLoader } from '@cetus/web/components/default-loader'
+import { customerQueries } from '@cetus/web/features/customers/queries'
 import { OrderCard } from '@cetus/web/features/orders/components/order-card'
+import { useQuery } from '@tanstack/react-query'
 import { ChevronLeftIcon, ChevronRightIcon, PackageXIcon } from 'lucide-react'
 import { useState } from 'react'
 
@@ -18,12 +20,11 @@ type Props = {
 
 export function CustomerOrdersSection({ customerId }: Readonly<Props>) {
   const [page, setPage] = useState(1)
-  const pageSize = 20
+  const pageSize = defaultPageSize
 
-  const { data, isLoading } = useCustomerOrders(customerId, {
-    page,
-    pageSize,
-  })
+  const { data, isLoading } = useQuery(
+    customerQueries.listOrders({ customerId, page, pageSize }),
+  )
 
   const orders = data?.items ?? []
   const totalPages = data?.totalPages ?? 0
@@ -31,13 +32,7 @@ export function CustomerOrdersSection({ customerId }: Readonly<Props>) {
   const hasPreviousPage = page > 1
 
   if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton className="h-18 w-full rounded-md" key={i} />
-        ))}
-      </div>
-    )
+    return <DefaultLoader />
   }
 
   if (orders.length === 0) {
