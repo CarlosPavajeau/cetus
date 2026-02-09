@@ -28,7 +28,7 @@ export const Route = createFileRoute('/app/customers/$customerId')({
     )
 
     const ordersPromise = context.queryClient.ensureQueryData(
-      customerQueries.listOrders(queryParams),
+      customerQueries.listOrders(customerId, queryParams),
     )
 
     const [customer, orders] = await Promise.all([

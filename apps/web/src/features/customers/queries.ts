@@ -12,15 +12,15 @@ export const customerQueries = {
       queryFn: () => api.customers.getById(id),
     }),
 
-  listOrders: (params: CustomerOrdersQueryParams) =>
+  listOrders: (customerId: string, params: CustomerOrdersQueryParams) =>
     queryOptions({
       queryKey: [
         ...customerKeys.details(),
-        params.customerId,
+        customerId,
         'orders',
         params.page,
         params.pageSize,
       ],
-      queryFn: () => api.customers.listOrders(params),
+      queryFn: () => api.customers.listOrders(customerId, params),
     }),
 }

@@ -23,9 +23,9 @@ export const customersApi = {
       { params },
     ),
 
-  listOrders: (params: CustomerOrdersQueryParams) =>
+  listOrders: (customerId: string, params: CustomerOrdersQueryParams) =>
     authenticatedClient.get<PaginatedResponse<SimpleOrder>>(
-      `/customers/${params.customerId}/orders`,
+      `/customers/${customerId}/orders`,
       { params },
     ),
 }
