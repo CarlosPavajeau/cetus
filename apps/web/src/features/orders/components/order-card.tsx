@@ -39,10 +39,12 @@ export function OrderCard({ order }: Readonly<Props>) {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-sm">
-            <span className="inline-flex items-center gap-1.5">
-              <MapPinIcon className="size-3.5 shrink-0" />
-              {order.city}, {order.state}
-            </span>
+            {order.city && order.state && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPinIcon className="size-3.5 shrink-0" />
+                {order.city}, {order.state}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5">
               <ClockIcon className="size-3.5 shrink-0" />
               <FormattedDate date={new Date(order.createdAt)} />
