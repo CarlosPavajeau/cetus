@@ -21,6 +21,7 @@ import { AddressFields } from '@cetus/web/components/address-fields'
 import { Currency } from '@cetus/web/components/currency'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { SubmitButton } from '@cetus/web/components/submit-button'
+import { customerQueries } from '@cetus/web/features/customers/queries'
 import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import { useCart } from '@cetus/web/store/cart'
@@ -110,23 +111,18 @@ function useCartCheckout() {
   }
 }
 
-const CUSTOMER_ID_DELAY = 750 // milliseconds
+const debounceDelay = 300
 
 type CustomerInfoFieldsProps = {
   form: ReturnType<typeof useForm<CreateOrder>>
 }
 
 function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
-  const documentNumber = useDebounce(
-    form.watch('customer.documentNumber'),
-    CUSTOMER_ID_DELAY,
-  )
+  const phone = useDebounce(form.watch('customer.phone'), debounceDelay)
 
-  const { data: customer, isLoading } = useQuery({
-    queryKey: ['customers', 'detail', documentNumber],
-    queryFn: () => api.customers.getById(documentNumber ?? ''),
-    enabled: !!documentNumber,
-  })
+  const { data: customer, isLoading } = useQuery(
+    customerQueries.detailByPhone(phone),
+  )
 
   useEffect(() => {
     if (isLoading) {
@@ -136,86 +132,76 @@ function CustomerInfoFields({ form }: Readonly<CustomerInfoFieldsProps>) {
     if (customer) {
       form.setValue('customer.name', customer.name)
       form.setValue('customer.email', customer.email)
-      form.setValue('customer.phone', customer.phone)
+      form.setValue('customer.documentNumber', customer.documentNumber)
+      form.setValue('customer.documentType', customer.documentType)
     }
   }, [customer, form, isLoading])
 
   return (
     <FieldGroup>
-      <div className="space-y-4">
-        <Controller
-          control={form.control}
-          name="customer.documentNumber"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="customer-id">Identificación</FieldLabel>
-              <Input
-                {...field}
-                aria-invalid={fieldState.invalid}
-                autoComplete="off"
-                id="customer-id"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+      <Controller
+        control={form.control}
+        name="customer.phone"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="customer-phone">Teléfono</FieldLabel>
+            <Input
+              {...field}
+              aria-invalid={fieldState.invalid}
+              id="customer-phone"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+      <Controller
+        control={form.control}
+        name="customer.documentNumber"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="customer-id">Identificación</FieldLabel>
+            <Input
+              {...field}
+              aria-invalid={fieldState.invalid}
+              autoComplete="off"
+              id="customer-id"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
 
-        <Controller
-          control={form.control}
-          name="customer.name"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="customer-name">Nombre completo</FieldLabel>
-              <Input
-                {...field}
-                aria-invalid={fieldState.invalid}
-                id="customer-name"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+      <Controller
+        control={form.control}
+        name="customer.name"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="customer-name">Nombre completo</FieldLabel>
+            <Input
+              {...field}
+              aria-invalid={fieldState.invalid}
+              id="customer-name"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Controller
-            control={form.control}
-            name="customer.email"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="customer-email">
-                  Correo electrónico
-                </FieldLabel>
-                <Input
-                  {...field}
-                  aria-invalid={fieldState.invalid}
-                  id="customer-email"
-                />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-
-          <Controller
-            control={form.control}
-            name="customer.phone"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="customer-phone">Teléfono</FieldLabel>
-                <Input
-                  {...field}
-                  aria-invalid={fieldState.invalid}
-                  id="customer-phone"
-                />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-        </div>
-      </div>
+      <Controller
+        control={form.control}
+        name="customer.email"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="customer-email">Correo electrónico</FieldLabel>
+            <Input
+              {...field}
+              aria-invalid={fieldState.invalid}
+              id="customer-email"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
 
       <AddressFields />
     </FieldGroup>
@@ -333,7 +319,11 @@ function RouteComponent() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Envío</span>
                     <span className="font-medium">
-                      <Currency currency="COP" value={deliveryFee?.fee ?? 0} />
+                      {deliveryFee ? (
+                        <Currency currency="COP" value={deliveryFee.fee} />
+                      ) : (
+                        <span>Sin calcular</span>
+                      )}
                     </span>
                   </div>
                 </div>

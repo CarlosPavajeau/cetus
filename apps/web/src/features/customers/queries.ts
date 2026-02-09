@@ -12,6 +12,13 @@ export const customerQueries = {
       queryFn: () => api.customers.getById(id),
     }),
 
+  detailByPhone: (phone: string) =>
+    queryOptions({
+      queryKey: [...customerKeys.details(), 'by-phone', phone],
+      queryFn: () => api.customers.getByPhone(phone),
+      enabled: Boolean(phone),
+    }),
+
   listOrders: (customerId: string, params: CustomerOrdersQueryParams) =>
     queryOptions({
       queryKey: [
