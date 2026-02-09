@@ -101,6 +101,7 @@ function RowActions({ row }: { row: Row<CustomerSummaryResponse> }) {
         to="/app/customers/$customerId"
       >
         <HugeiconsIcon icon={EyeIcon} />
+        <span className="sr-only">Ver cliente</span>
       </Link>
     </Button>
   )
