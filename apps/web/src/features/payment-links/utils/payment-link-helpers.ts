@@ -11,6 +11,10 @@ export function formatTimeRemaining(expiresAt: string): string {
   const now = new Date()
   const expiration = new Date(expiresAt)
 
+  if (Number.isNaN(expiration.getTime())) {
+    return 'Expirado'
+  }
+
   if (expiration <= now) {
     return 'Expirado'
   }
