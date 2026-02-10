@@ -13,6 +13,7 @@ import { ReturnButton } from '@cetus/web/components/return-button'
 import { OrderSummary } from '@cetus/web/features/orders/components/order-summary'
 import { UpdateOrderStatusButton } from '@cetus/web/features/orders/components/update-order-status-button'
 import { orderQueries } from '@cetus/web/features/orders/queries'
+import { OrderPaymentLinkDialog } from '@cetus/web/features/payment-links/components/order-payment-link-dialog'
 import {
   useClientMethod,
   useHub,
@@ -98,7 +99,10 @@ function OrderDetailsComponent() {
               </Badge>
             </div>
 
-            <UpdateOrderStatusButton order={order} />
+            <div className="flex flex-wrap items-center gap-2">
+              <OrderPaymentLinkDialog order={order} />
+              <UpdateOrderStatusButton order={order} />
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
