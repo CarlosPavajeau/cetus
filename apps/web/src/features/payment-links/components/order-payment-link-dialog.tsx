@@ -77,6 +77,14 @@ export function OrderPaymentLinkDialog({ order }: Props) {
       .catch(() => toast.error('Error al copiar el link'))
   }, [data?.activeLink?.url])
 
+  const remainingTime = useMemo(() => {
+    if (data?.activeLink) {
+      return formatTimeRemaining(data.activeLink.expiresAt)
+    }
+
+    return 'Desconocido'
+  }, [data])
+
   const whatsappUrl = useMemo(() => {
     if (!(data?.activeLink && order.customer.phone)) {
       return ''
@@ -89,10 +97,11 @@ export function OrderPaymentLinkDialog({ order }: Props) {
       totalQuantity,
       total: formatter.format(order.total),
       paymentUrl: data.activeLink.url,
+      remainingTime,
     })
 
     return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
-  }, [data?.activeLink, order, formatter])
+  }, [data?.activeLink, order, formatter, remainingTime])
 
   if (isLoading) {
     return <Skeleton className="h-8 w-32" />
@@ -145,7 +154,7 @@ export function OrderPaymentLinkDialog({ order }: Props) {
                 <FormattedDate date={new Date(data.activeLink.expiresAt)} />
               </span>
               <span className="block text-muted-foreground text-xs">
-                En {formatTimeRemaining(data.activeLink.expiresAt)}
+                En {remainingTime}
               </span>
             </div>
 

@@ -60,8 +60,10 @@ export function generateWhatsAppMessage(params: {
   totalQuantity: number
   total: string
   paymentUrl: string
+  remainingTime: string
 }): string {
-  const { customerName, totalQuantity, total, paymentUrl } = params
+  const { customerName, totalQuantity, total, paymentUrl, remainingTime } =
+    params
 
   return `¡Hola ${customerName}! 👋
 
@@ -73,7 +75,7 @@ Aquí está el link para pagar tu pedido:
 Paga de forma segura aquí:
 ${paymentUrl}
 
-El link vence en 24 horas.
+El link vence en ${remainingTime}.
 
 ¡Gracias por tu compra! 🙌`
 }
