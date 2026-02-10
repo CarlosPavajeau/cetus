@@ -1,5 +1,6 @@
 import { api } from '@cetus/api-client'
 import type { Order } from '@cetus/api-client/types/orders'
+import type { PaymentLinkReasons } from '@cetus/api-client/types/payment-links'
 import { Button } from '@cetus/ui/button'
 import {
   Dialog,
@@ -29,6 +30,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { useNumberFormatter } from 'react-aria'
 import { toast } from 'sonner'
+
+const paymentLinkReasons: Record<PaymentLinkReasons, string> = {
+  order_cancelled: 'Orden cancelada',
+  order_already_paid: 'Orden pagada',
+  active_link_exists: 'Ya existe un link activo',
+}
 
 type Props = {
   order: Order
@@ -179,6 +186,15 @@ export function OrderPaymentLinkDialog({ order }: Props) {
                 </a>
               </Button>
             </div>
+          </div>
+        )}
+
+        {!(data.canGenerateLink || data.activeLink) && data.reason && (
+          <div>
+            <p>No se puede generar un link de pago.</p>
+            <p className="font-medium text-sm">
+              Razón: {paymentLinkReasons[data.reason]}
+            </p>
           </div>
         )}
       </DialogContent>
