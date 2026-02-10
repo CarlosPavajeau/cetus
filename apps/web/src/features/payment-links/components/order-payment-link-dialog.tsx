@@ -175,16 +175,21 @@ export function OrderPaymentLinkDialog({ order }: Props) {
                 <HugeiconsIcon data-icon="inline-start" icon={Copy01Icon} />
                 Copiar
               </Button>
-              <Button
-                asChild
-                disabled={!order.customer.phone}
-                variant="default"
-              >
-                <a href={whatsappUrl} rel="noopener noreferrer" target="_blank">
-                  <HugeiconsIcon data-icon="inline-start" icon={WhatsappIcon} />
-                  Enviar por WhatsApp
-                </a>
-              </Button>
+              {order.customer.phone && whatsappUrl && (
+                <Button asChild variant="default">
+                  <a
+                    href={whatsappUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <HugeiconsIcon
+                      data-icon="inline-start"
+                      icon={WhatsappIcon}
+                    />
+                    Enviar por WhatsApp
+                  </a>
+                </Button>
+              )}
             </div>
           </div>
         )}
