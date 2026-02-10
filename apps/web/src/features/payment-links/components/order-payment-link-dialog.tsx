@@ -72,17 +72,6 @@ export function OrderPaymentLinkDialog({ order }: Props) {
     minimumFractionDigits: 0,
   })
 
-  const handleCopyToClipboard = useCallback(() => {
-    if (!data?.activeLink?.url) {
-      return
-    }
-
-    navigator.clipboard
-      .writeText(data.activeLink.url)
-      .then(() => toast.success('Link copiado al portapapeles'))
-      .catch(() => toast.error('Error al copiar el link'))
-  }, [data?.activeLink?.url])
-
   const remainingTime = useMemo(() => {
     if (data?.activeLink) {
       return formatTimeRemaining(data.activeLink.expiresAt)
