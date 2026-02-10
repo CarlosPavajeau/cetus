@@ -11,6 +11,10 @@ export function formatTimeRemaining(expiresAt: string): string {
   const now = new Date()
   const expiration = new Date(expiresAt)
 
+  if (expiration <= now) {
+    return 'Expirado'
+  }
+
   const duration = intervalToDuration({ start: now, end: expiration })
 
   return formatDuration(duration, {
