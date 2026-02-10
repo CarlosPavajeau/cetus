@@ -20,7 +20,6 @@ import {
   generateWhatsAppMessage,
 } from '@cetus/web/features/payment-links/utils/payment-link-helpers'
 import {
-  Copy01Icon,
   Link04Icon,
   Loading03Icon,
   WhatsappIcon,
@@ -171,10 +170,6 @@ export function OrderPaymentLinkDialog({ order }: Props) {
             </Field>
 
             <div className="flex flex-col gap-2">
-              <Button onClick={handleCopyToClipboard} variant="outline">
-                <HugeiconsIcon data-icon="inline-start" icon={Copy01Icon} />
-                Copiar
-              </Button>
               {order.customer.phone && whatsappUrl && (
                 <Button asChild variant="default">
                   <a
