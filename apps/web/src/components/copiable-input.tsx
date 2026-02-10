@@ -6,6 +6,7 @@ import {
 } from '@cetus/ui/input-group'
 import { useCopyToClipboard } from '@uidotdev/usehooks'
 import { CheckIcon, CopyIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 type Props = {
   value: string
@@ -13,7 +14,18 @@ type Props = {
 
 export function CopiableInput({ value }: Props) {
   const [copiedText, copyToClipboard] = useCopyToClipboard()
-  const hasCopiedText = Boolean(copiedText)
+  const [showCopied, setShowCopied] = useState(false)
+
+  useEffect(() => {
+    if (copiedText) {
+      setShowCopied(true)
+      const timer = setTimeout(() => {
+        setShowCopied(false)
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [copiedText])
 
   return (
     <InputGroup>
@@ -31,7 +43,7 @@ export function CopiableInput({ value }: Props) {
           size="icon-xs"
           title="Copy"
         >
-          {hasCopiedText ? <CheckIcon /> : <CopyIcon />}
+          {showCopied ? <CheckIcon /> : <CopyIcon />}
         </InputGroupButton>
       </InputGroupAddon>
     </InputGroup>
