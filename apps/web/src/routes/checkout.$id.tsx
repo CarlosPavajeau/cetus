@@ -15,6 +15,8 @@ import {
   MobilePaymentOrderSummary,
   PaymentOrderSummary,
 } from '@cetus/web/features/checkout/components/payment-order-summary'
+import { setStoreId } from '@cetus/web/functions/store-slug'
+import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import {
   ArrowLeft01Icon,
@@ -23,8 +25,9 @@ import {
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
-export const Route = createFileRoute('/_store-required/checkout/$id')({
+export const Route = createFileRoute('/checkout/$id')({
   loader: async ({ params }) => {
     const { id } = params
     const order = await api.orders.getById(id)
@@ -33,14 +36,32 @@ export const Route = createFileRoute('/_store-required/checkout/$id')({
       throw notFound()
     }
 
-    return { order }
+    const store = await api.stores.getById(order.storeId)
+
+    setStoreId({
+      data: {
+        id: store.id,
+      },
+    })
+
+    setupApiClient(store.id)
+
+    return { order, store }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { order } = Route.useLoaderData()
-  const { store } = useTenantStore()
+  const { order, store } = Route.useLoaderData()
+  const setStore = useTenantStore((state) => state.actions.setStore)
+
+  useEffect(() => {
+    if (!store) {
+      return
+    }
+
+    setStore(store)
+  }, [setStore, store])
 
   if (!store) {
     return (

@@ -27,6 +27,7 @@ import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
 import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as PayTokenRouteImport } from './routes/pay.$token'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
+import { Route as CheckoutIdRouteImport } from './routes/checkout.$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppReviewsRouteImport } from './routes/app/reviews'
@@ -52,7 +53,6 @@ import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
 import { Route as ApiMercadopagoConnectRouteImport } from './routes/api/mercadopago/connect'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as StoreRequiredProductsAllRouteImport } from './routes/_store-required/products/all'
-import { Route as StoreRequiredCheckoutIdRouteImport } from './routes/_store-required/checkout.$id'
 import { Route as AppProductsIdDetailsRouteImport } from './routes/app/products.$id.details'
 import { Route as AppProductsVariantsIdEditRouteImport } from './routes/app/products.variants.$id.edit'
 
@@ -144,6 +144,11 @@ const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => OrdersRoute,
+} as any)
+const CheckoutIdRoute = CheckoutIdRouteImport.update({
+  id: '/checkout/$id',
+  path: '/checkout/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
   id: '/categories/$slug',
@@ -274,11 +279,6 @@ const StoreRequiredProductsAllRoute =
     path: '/products/all',
     getParentRoute: () => StoreRequiredRoute,
   } as any)
-const StoreRequiredCheckoutIdRoute = StoreRequiredCheckoutIdRouteImport.update({
-  id: '/checkout/$id',
-  path: '/checkout/$id',
-  getParentRoute: () => StoreRequiredRoute,
-} as any)
 const AppProductsIdDetailsRoute = AppProductsIdDetailsRouteImport.update({
   id: '/products/$id/details',
   path: '/products/$id/details',
@@ -311,13 +311,13 @@ export interface FileRoutesByFullPath {
   '/app/reviews': typeof AppReviewsRoute
   '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/orders/$id': typeof OrdersIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
-  '/checkout/$id': typeof StoreRequiredCheckoutIdRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
@@ -357,13 +357,13 @@ export interface FileRoutesByTo {
   '/app/reviews': typeof AppReviewsRoute
   '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/orders/$id': typeof OrdersIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
-  '/checkout/$id': typeof StoreRequiredCheckoutIdRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
@@ -406,13 +406,13 @@ export interface FileRoutesById {
   '/app/reviews': typeof AppReviewsRoute
   '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/orders/$id': typeof OrdersIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
-  '/_store-required/checkout/$id': typeof StoreRequiredCheckoutIdRoute
   '/_store-required/products/all': typeof StoreRequiredProductsAllRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
@@ -455,13 +455,13 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/app/settings'
     | '/categories/$slug'
+    | '/checkout/$id'
     | '/orders/$id'
     | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
     | '/app/'
     | '/onboarding'
-    | '/checkout/$id'
     | '/products/all'
     | '/api/auth/$'
     | '/api/mercadopago/connect'
@@ -501,13 +501,13 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/app/settings'
     | '/categories/$slug'
+    | '/checkout/$id'
     | '/orders/$id'
     | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
     | '/app'
     | '/onboarding'
-    | '/checkout/$id'
     | '/products/all'
     | '/api/auth/$'
     | '/api/mercadopago/connect'
@@ -549,13 +549,13 @@ export interface FileRouteTypes {
     | '/app/reviews'
     | '/app/settings'
     | '/categories/$slug'
+    | '/checkout/$id'
     | '/orders/$id'
     | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
     | '/app/'
     | '/onboarding/'
-    | '/_store-required/checkout/$id'
     | '/_store-required/products/all'
     | '/api/auth/$'
     | '/api/mercadopago/connect'
@@ -592,6 +592,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   AcceptInvitationIdRoute: typeof AcceptInvitationIdRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
+  CheckoutIdRoute: typeof CheckoutIdRoute
   PayTokenRoute: typeof PayTokenRoute
   ReviewsNewRoute: typeof ReviewsNewRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
@@ -727,6 +728,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/orders/$id'
       preLoaderRoute: typeof OrdersIdRouteImport
       parentRoute: typeof OrdersRoute
+    }
+    '/checkout/$id': {
+      id: '/checkout/$id'
+      path: '/checkout/$id'
+      fullPath: '/checkout/$id'
+      preLoaderRoute: typeof CheckoutIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/categories/$slug': {
       id: '/categories/$slug'
@@ -903,13 +911,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRequiredProductsAllRouteImport
       parentRoute: typeof StoreRequiredRoute
     }
-    '/_store-required/checkout/$id': {
-      id: '/_store-required/checkout/$id'
-      path: '/checkout/$id'
-      fullPath: '/checkout/$id'
-      preLoaderRoute: typeof StoreRequiredCheckoutIdRouteImport
-      parentRoute: typeof StoreRequiredRoute
-    }
     '/app/products/$id/details': {
       id: '/app/products/$id/details'
       path: '/products/$id/details'
@@ -929,14 +930,12 @@ declare module '@tanstack/react-router' {
 
 interface StoreRequiredRouteChildren {
   StoreRequiredCartRoute: typeof StoreRequiredCartRoute
-  StoreRequiredCheckoutIdRoute: typeof StoreRequiredCheckoutIdRoute
   StoreRequiredProductsAllRoute: typeof StoreRequiredProductsAllRoute
   StoreRequiredCheckoutIndexRoute: typeof StoreRequiredCheckoutIndexRoute
 }
 
 const StoreRequiredRouteChildren: StoreRequiredRouteChildren = {
   StoreRequiredCartRoute: StoreRequiredCartRoute,
-  StoreRequiredCheckoutIdRoute: StoreRequiredCheckoutIdRoute,
   StoreRequiredProductsAllRoute: StoreRequiredProductsAllRoute,
   StoreRequiredCheckoutIndexRoute: StoreRequiredCheckoutIndexRoute,
 }
@@ -1031,6 +1030,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   AcceptInvitationIdRoute: AcceptInvitationIdRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
+  CheckoutIdRoute: CheckoutIdRoute,
   PayTokenRoute: PayTokenRoute,
   ReviewsNewRoute: ReviewsNewRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
