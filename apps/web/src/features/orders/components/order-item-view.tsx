@@ -1,7 +1,5 @@
 import type { ProductOptionValue } from '@cetus/api-client/types/products'
 import { getImageUrl } from '@cetus/shared/utils/image'
-import { Badge } from '@cetus/ui/badge'
-import { Item, ItemContent, ItemMedia, ItemTitle } from '@cetus/ui/item'
 import { Currency } from '@cetus/web/components/currency'
 import { Image } from '@unpic/react'
 
@@ -20,43 +18,41 @@ type Props = {
 
 export function OrderItemView({ item }: Props) {
   return (
-    <Item className="p-0" key={item.id} role="listitem" size="sm">
-      <ItemMedia className="size-20" variant="image">
-        <Image
-          alt={item.productName}
-          className="object-cover"
-          height={128}
-          layout="constrained"
-          objectFit="cover"
-          src={getImageUrl(item.imageUrl || 'placeholder.svg')}
-          width={128}
-        />
-      </ItemMedia>
-      <ItemContent>
-        <ItemTitle className="line-clamp-1">{item.productName}</ItemTitle>
-
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            {item.optionValues.map((value) => (
-              <span className="text-muted-foreground text-xs" key={value.id}>
-                {value.optionTypeName}: {value.value}
-              </span>
-            ))}
-          </div>
-
-          <div className="flex gap-2">
-            <Badge variant="secondary">
-              <span>
-                Precio: <Currency currency="COP" value={item.price} />
-              </span>
-            </Badge>
-
-            <Badge variant="secondary">
-              <span>Cantidad: {item.quantity}</span>
-            </Badge>
-          </div>
+    <div className="flex items-start gap-3 py-2">
+      <div className="relative shrink-0">
+        <div className="size-16 overflow-hidden rounded-lg border bg-muted">
+          <Image
+            alt={item.productName}
+            className="object-cover"
+            height={64}
+            layout="constrained"
+            objectFit="cover"
+            src={getImageUrl(item.imageUrl || 'placeholder.svg')}
+            width={64}
+          />
         </div>
-      </ItemContent>
-    </Item>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-sm leading-tight">
+          {item.productName}
+        </p>
+        {item.optionValues.length > 0 && (
+          <p className="mt-0.5 truncate text-muted-foreground text-xs">
+            {item.optionValues
+              .map((v) => `${v.optionTypeName}: ${v.value}`)
+              .join(' · ')}
+          </p>
+        )}
+
+        <p className="mt-0.5 truncate text-muted-foreground text-xs">
+          <Currency currency="COP" value={item.price} /> x {item.quantity}
+        </p>
+      </div>
+
+      <span className="shrink-0 font-semibold text-sm tabular-nums">
+        <Currency currency="COP" value={item.price * item.quantity} />
+      </span>
+    </div>
   )
 }
