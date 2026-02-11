@@ -60,6 +60,10 @@ export const saleChannels = [
     label: 'Tienda',
   },
   {
+    value: 'ecommerce',
+    label: 'E-commerce',
+  },
+  {
     value: 'other',
     label: 'Otro',
   },
