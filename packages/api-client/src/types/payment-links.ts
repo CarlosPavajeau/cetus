@@ -13,7 +13,7 @@ export type PaymentLink = {
   status: PaymentLinkStatus
   expiresAt: string
   createdAt: string
-  timeRemaining?: number
+  timeRemaining: number
 }
 
 export type PaymentLinkReasons =

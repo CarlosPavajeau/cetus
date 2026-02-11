@@ -68,12 +68,7 @@ export function PaymentMethods({
   }
 
   return (
-    <Accordion
-      className="w-full"
-      collapsible
-      type="single"
-      variant="outline"
-    >
+    <Accordion className="w-full" collapsible type="single" variant="outline">
       {publicKey && (
         <>
           <AccordionItem value="card">
@@ -142,9 +137,7 @@ export function PaymentMethods({
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle>Nequi</ItemTitle>
-                  <ItemDescription>
-                    Paga con tu cuenta Nequi
-                  </ItemDescription>
+                  <ItemDescription>Paga con tu cuenta Nequi</ItemDescription>
                 </ItemContent>
               </Item>
             </AccordionTrigger>

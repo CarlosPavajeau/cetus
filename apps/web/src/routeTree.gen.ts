@@ -25,6 +25,7 @@ import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
 import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
+import { Route as PayTokenRouteImport } from './routes/pay.$token'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
@@ -133,6 +134,11 @@ const ProductsSlugRoute = ProductsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => ProductsRoute,
+} as any)
+const PayTokenRoute = PayTokenRouteImport.update({
+  id: '/pay/$token',
+  path: '/pay/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
+  '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
+  '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app': typeof AppIndexRoute
@@ -399,6 +407,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/orders/$id': typeof OrdersIdRoute
+  '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
@@ -447,6 +456,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/categories/$slug'
     | '/orders/$id'
+    | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
     | '/app/'
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/categories/$slug'
     | '/orders/$id'
+    | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
     | '/app'
@@ -539,6 +550,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/categories/$slug'
     | '/orders/$id'
+    | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
     | '/app/'
@@ -580,6 +592,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   AcceptInvitationIdRoute: typeof AcceptInvitationIdRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
+  PayTokenRoute: typeof PayTokenRoute
   ReviewsNewRoute: typeof ReviewsNewRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -700,6 +713,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/products/$slug'
       preLoaderRoute: typeof ProductsSlugRouteImport
       parentRoute: typeof ProductsRoute
+    }
+    '/pay/$token': {
+      id: '/pay/$token'
+      path: '/pay/$token'
+      fullPath: '/pay/$token'
+      preLoaderRoute: typeof PayTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/orders/$id': {
       id: '/orders/$id'
@@ -1011,6 +1031,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   AcceptInvitationIdRoute: AcceptInvitationIdRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
+  PayTokenRoute: PayTokenRoute,
   ReviewsNewRoute: ReviewsNewRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
