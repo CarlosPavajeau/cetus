@@ -1,5 +1,4 @@
 import { getImageUrl } from '@cetus/shared/utils/image'
-import { Badge } from '@cetus/ui/badge'
 import { Currency } from '@cetus/web/components/currency'
 import type { CartItem } from '@cetus/web/store/cart'
 import { Image } from '@unpic/react'
@@ -27,12 +26,6 @@ export const CheckoutItem = memo(function CheckoutItem({
             width={64}
           />
         </div>
-        <Badge
-          className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
-          variant="default"
-        >
-          {quantity}
-        </Badge>
       </div>
 
       <div className="min-w-0 flex-1">
@@ -46,6 +39,10 @@ export const CheckoutItem = memo(function CheckoutItem({
               .join(' · ')}
           </p>
         )}
+
+        <p className="mt-0.5 truncate text-muted-foreground text-xs">
+          <Currency currency="COP" value={product.price} /> x {quantity}
+        </p>
       </div>
 
       <span className="shrink-0 font-semibold text-sm tabular-nums">
