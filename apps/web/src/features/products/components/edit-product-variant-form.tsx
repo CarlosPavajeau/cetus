@@ -11,7 +11,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@cetus/ui/field'
-import { Input } from '@cetus/ui/input'
 import {
   InputGroup,
   InputGroupAddon,
@@ -40,7 +39,6 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
     resolver: arktypeResolver(updateProductVariantSchema),
     defaultValues: {
       id: variant.id,
-      stock: variant.stock,
       price: variant.price,
       enabled: variant.enabled,
       featured: variant.featured,
@@ -56,7 +54,6 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
 
       form.reset({
         id: data.id,
-        stock: data.stock,
         price: data.price,
         enabled: data.enabled,
         featured: data.featured,
@@ -85,53 +82,31 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
           onSubmit={handleSubmit}
         >
           <FieldGroup>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Controller
-                control={form.control}
-                name="price"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="price">Precio</FieldLabel>
-                    <InputGroup>
-                      <InputGroupAddon>
-                        <InputGroupText>$</InputGroupText>
-                      </InputGroupAddon>
-                      <InputGroupInput
-                        className="tabular-nums"
-                        id="price"
-                        {...field}
-                      />
-                      <InputGroupAddon align="inline-end">
-                        <InputGroupText>COP</InputGroupText>
-                      </InputGroupAddon>
-                    </InputGroup>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                control={form.control}
-                name="stock"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="stock">Stock</FieldLabel>
-                    <Input
+            <Controller
+              control={form.control}
+              name="price"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="price">Precio</FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <InputGroupText>$</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
                       className="tabular-nums"
-                      id="stock"
-                      placeholder="0.00"
-                      type="text"
+                      id="price"
                       {...field}
                     />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </div>
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupText>COP</InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
 
             <Controller
               control={form.control}

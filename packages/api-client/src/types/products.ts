@@ -156,7 +156,6 @@ export type CreateProductVariant = {
 
 export type UpdateProductVariant = {
   id: number
-  stock: number
   price: number
   enabled: boolean
   featured: boolean

@@ -109,12 +109,6 @@ export const updateProductVariantSchema = type({
   id: type('number>0').configure({
     message: 'El id de la variante del producto es requerido',
   }),
-  stock: type('string.integer.parse')
-    .or('number>=0')
-    .to('number>=0')
-    .configure({
-      message: 'El stock del producto debe ser mayor o igual a 0',
-    }),
   price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
