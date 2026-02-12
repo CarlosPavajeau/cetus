@@ -5,7 +5,7 @@ import {
 } from '@cetus/ui/collapsible'
 import { Separator } from '@cetus/ui/separator'
 import { Currency } from '@cetus/web/components/currency'
-import { CheckoutItem } from '@cetus/web/features/checkout/components/checkout-item'
+import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
 import type { CartItem } from '@cetus/web/store/cart'
 import { ArrowDown01Icon, PackageIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -48,7 +48,17 @@ export const OrderSummary = memo(function OrderSummary({
     <div className="space-y-3">
       <div className="divide-y">
         {items.map((item) => (
-          <CheckoutItem item={item} key={item.product.variantId} />
+          <OrderItemView
+            item={{
+              id: item.product.productId,
+              productName: item.product.name,
+              imageUrl: item.product.imageUrl,
+              optionValues: item.product.optionValues,
+              price: item.product.price,
+              quantity: item.quantity,
+            }}
+            key={item.product.variantId}
+          />
         ))}
       </div>
 
