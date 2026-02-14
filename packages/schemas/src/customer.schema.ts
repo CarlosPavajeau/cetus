@@ -17,10 +17,4 @@ export const updateCustomerSchema = type({
   phone: type.string.moreThanLength(1).configure({
     message: 'Proporciona un número de teléfono de contacto',
   }),
-  address: type.string
-    .moreThanLength(1)
-    .configure({
-      message: 'Ingrese una dirección completa',
-    })
-    .optional(),
 })
