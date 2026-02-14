@@ -78,8 +78,22 @@ export function UpdateCustomerDialog({ customer }: Props) {
     await mutateAsync(data)
   })
 
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      form.reset({
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        id: customer.id,
+        documentType: customer.documentType,
+        documentNumber: customer.documentNumber,
+      })
+    }
+    setOpen(next)
+  }
+
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>
         <Button size="sm" type="button" variant="outline">
           <HugeiconsIcon icon={PencilEdit02Icon} />
