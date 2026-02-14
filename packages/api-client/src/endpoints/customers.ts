@@ -30,6 +30,6 @@ export const customersApi = {
       { params },
     ),
 
-  update: (id: string, data: UpdateCustomerRequest) =>
-    authenticatedClient.put<Customer>(`/customers/${id}`, data),
+  update: (data: UpdateCustomerRequest) =>
+    authenticatedClient.put<Customer>(`/customers/${data.id}`, data),
 }
