@@ -5,6 +5,7 @@ import { DefaultLoader } from '@cetus/web/components/default-loader'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { CustomerMetricsCards } from '@cetus/web/features/customers/components/customer-metrics-cards'
 import { CustomerOrdersSection } from '@cetus/web/features/customers/components/customer-orders-section'
+import { UpdateCustomerDialog } from '@cetus/web/features/customers/components/update-customer-dialog'
 import { customerQueries } from '@cetus/web/features/customers/queries'
 import {
   ArrowLeft01Icon,
@@ -118,10 +119,7 @@ function RouteComponent() {
                 </Button>
               )}
 
-              <Button disabled size="sm" variant="outline">
-                <HugeiconsIcon icon={PencilEdit02Icon} />
-                Editar
-              </Button>
+              <UpdateCustomerDialog customer={customer} />
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import type {
   CustomerOrdersQueryParams,
   CustomerQueryParams,
   CustomerSummaryResponse,
+  UpdateCustomerRequest,
 } from '../types/customers'
 import type { SimpleOrder } from '../types/orders'
 
@@ -28,4 +29,7 @@ export const customersApi = {
       `/customers/${customerId}/orders`,
       { params },
     ),
+
+  update: (id: string, data: UpdateCustomerRequest) =>
+    authenticatedClient.put<Customer>(`/customers/${id}`, data),
 }

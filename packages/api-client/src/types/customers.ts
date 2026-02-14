@@ -37,3 +37,13 @@ export type CustomerOrdersQueryParams = {
   page?: number
   pageSize?: number
 }
+
+export type UpdateCustomerRequest = {
+  id: string
+  documentType?: DocumentType
+  documentNumber?: string
+  name: string
+  email?: string
+  phone: string
+  address?: string
+}
