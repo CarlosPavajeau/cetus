@@ -70,7 +70,6 @@ export function UpdateCustomerDialog({ customer }: Props) {
     },
     onError: (error) => {
       toast.error(`Error al actualizar el cliente: ${error.message}`)
-      setOpen(false)
     },
   })
 
