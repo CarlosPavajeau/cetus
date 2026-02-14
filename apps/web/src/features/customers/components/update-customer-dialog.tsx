@@ -80,15 +80,15 @@ export function UpdateCustomerDialog({ customer }: Props) {
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <form id="update-customer-form" onSubmit={handleSubmit}>
-        <DialogTrigger asChild>
-          <Button size="sm" type="button" variant="outline">
-            <HugeiconsIcon icon={PencilEdit02Icon} />
-            Editar
-          </Button>
-        </DialogTrigger>
+      <DialogTrigger asChild>
+        <Button size="sm" type="button" variant="outline">
+          <HugeiconsIcon icon={PencilEdit02Icon} />
+          Editar
+        </Button>
+      </DialogTrigger>
 
-        <DialogContent>
+      <DialogContent>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Actualizar cliente</DialogTitle>
           </DialogHeader>
@@ -186,17 +186,13 @@ export function UpdateCustomerDialog({ customer }: Props) {
               </Button>
             </DialogClose>
 
-            <Button
-              disabled={form.formState.isSubmitting}
-              form="update-customer-form"
-              type="submit"
-            >
+            <Button disabled={form.formState.isSubmitting} type="submit">
               {form.formState.isSubmitting && <Spinner />}
               Actualizar
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </form>
+        </form>
+      </DialogContent>
     </Dialog>
   )
 }
