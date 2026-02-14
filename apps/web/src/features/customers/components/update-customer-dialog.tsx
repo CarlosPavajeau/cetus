@@ -55,7 +55,7 @@ export function UpdateCustomerDialog({ customer }: Props) {
   })
 
   const queryClient = useQueryClient()
-  const { mutateAsync } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationKey: ['customers', customer.id, 'update'],
     mutationFn: api.customers.update,
     onSuccess: async () => {
@@ -69,8 +69,8 @@ export function UpdateCustomerDialog({ customer }: Props) {
     },
   })
 
-  const handleSubmit = form.handleSubmit(async (data) => {
-    await mutateAsync(data)
+  const handleSubmit = form.handleSubmit((data) => {
+    mutate(data)
   })
 
   const handleOpenChange = (next: boolean) => {
@@ -190,12 +190,12 @@ export function UpdateCustomerDialog({ customer }: Props) {
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button disabled={form.formState.isSubmitting} variant="outline">
+              <Button disabled={isPending} variant="outline">
                 Cancelar
               </Button>
             </DialogClose>
 
-            <Button disabled={form.formState.isSubmitting} type="submit">
+            <Button disabled={isPending} type="submit">
               {form.formState.isSubmitting && <Spinner />}
               Actualizar
             </Button>
