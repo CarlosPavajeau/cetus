@@ -4,4 +4,4 @@ export const documentTypes = [
   { value: 'NIT', label: 'Número de identificación tributaria (NIT)' },
   { value: 'PP', label: 'Pasaporte' },
   { value: 'OTHER', label: 'Otros' },
-]
+] as const
