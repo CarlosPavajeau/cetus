@@ -322,6 +322,60 @@ export function AddProductVariantSheet({ product }: Props) {
 
               <Controller
                 control={form.control}
+                name="costPrice"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="costPrice">Costo</FieldLabel>
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <InputGroupText>$</InputGroupText>
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        className="tabular-nums"
+                        id="costPrice"
+                        {...field}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupText>COP</InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="compareAtPrice"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="compareAtPrice">
+                      Precio de venta sugerido
+                    </FieldLabel>
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <InputGroupText>$</InputGroupText>
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        className="tabular-nums"
+                        id="compareAtPrice"
+                        {...field}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupText>COP</InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
                 name="price"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>

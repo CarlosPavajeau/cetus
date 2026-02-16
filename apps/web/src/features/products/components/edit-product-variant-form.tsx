@@ -40,6 +40,8 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
     defaultValues: {
       id: variant.id,
       price: variant.price,
+      costPrice: variant.costPrice ?? undefined,
+      compareAtPrice: variant.compareAtPrice ?? undefined,
       enabled: variant.enabled,
       featured: variant.featured,
     },
@@ -55,6 +57,8 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
       form.reset({
         id: data.id,
         price: data.price,
+        costPrice: data.costPrice,
+        compareAtPrice: data.compareAtPrice,
         enabled: data.enabled,
         featured: data.featured,
       })
@@ -82,6 +86,60 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
           onSubmit={handleSubmit}
         >
           <FieldGroup>
+            <Controller
+              control={form.control}
+              name="costPrice"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="costPrice">Costo</FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <InputGroupText>$</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      className="tabular-nums"
+                      id="costPrice"
+                      {...field}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupText>COP</InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="compareAtPrice"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="compareAtPrice">
+                    Precio de venta sugerido
+                  </FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <InputGroupText>$</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      className="tabular-nums"
+                      id="compareAtPrice"
+                      {...field}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupText>COP</InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
             <Controller
               control={form.control}
               name="price"

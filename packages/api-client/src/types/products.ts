@@ -28,6 +28,8 @@ export type ProductVariantResponse = {
   id: number
   sku: string
   price: number
+  costPrice?: number
+  compareAtPrice?: number
   stock: number
   salesCount: number
   images: ProductImage[]
@@ -145,6 +147,8 @@ export type CreateProductVariant = {
   productId: string
   sku: string
   price: number
+  costPrice?: number
+  compareAtPrice?: number
   stock: number
   optionValueIds: number[]
   images: {
@@ -157,6 +161,8 @@ export type CreateProductVariant = {
 export type UpdateProductVariant = {
   id: number
   price: number
+  costPrice?: number
+  compareAtPrice?: number
   enabled: boolean
   featured: boolean
 }

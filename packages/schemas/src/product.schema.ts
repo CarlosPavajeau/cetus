@@ -64,6 +64,22 @@ export const createProductVariantSchema = type({
   price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
+  costPrice: type('string.integer.parse')
+    .or('number>0')
+    .to('number>0')
+    .configure({
+      message: 'El precio de compra debe ser mayor a 0',
+    })
+    .or('undefined')
+    .optional(),
+  compareAtPrice: type('string.integer.parse')
+    .or('number>0')
+    .to('number>0')
+    .configure({
+      message: 'El precio de comparación debe ser mayor a 0',
+    })
+    .or('undefined')
+    .optional(),
   stock: type('string.integer.parse')
     .or('number>=0')
     .to('number>=0')
@@ -112,6 +128,22 @@ export const updateProductVariantSchema = type({
   price: type('string.integer.parse').or('number>0').to('number>0').configure({
     message: 'El precio del producto debe ser mayor a 0',
   }),
+  costPrice: type('string.integer.parse')
+    .or('number>0')
+    .to('number>0')
+    .configure({
+      message: 'El precio de compra debe ser mayor a 0',
+    })
+    .or('undefined')
+    .optional(),
+  compareAtPrice: type('string.integer.parse')
+    .or('number>0')
+    .to('number>0')
+    .configure({
+      message: 'El precio de comparación debe ser mayor a 0',
+    })
+    .or('undefined')
+    .optional(),
   enabled: type.boolean.default(true),
   featured: type.boolean.default(false),
 })
