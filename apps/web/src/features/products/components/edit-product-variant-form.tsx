@@ -19,6 +19,8 @@ import {
 } from '@cetus/ui/input-group'
 import { Switch } from '@cetus/ui/switch'
 import { SubmitButton } from '@cetus/web/components/submit-button'
+import { Checkbox } from '@cetus/web/components/ui/checkbox'
+import { Label } from '@cetus/web/components/ui/label'
 import {
   ProductVariantImagesManager,
   type ProductVariantImagesManagerHandle,
@@ -26,15 +28,17 @@ import {
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation } from '@tanstack/react-query'
 import { RefreshCwIcon } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { ProfitabilitySection } from './profitability-section'
 
 type Props = {
   variant: ProductVariantResponse
 }
 
 export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
+  const [hasDiscount, setHasDiscount] = useState(false)
   const form = useForm({
     resolver: arktypeResolver(updateProductVariantSchema),
     defaultValues: {
@@ -46,6 +50,9 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
       featured: variant.featured,
     },
   })
+
+  const watchedCostPrice = form.watch('costPrice')
+  const watchedPrice = form.watch('price')
 
   const { mutateAsync } = useMutation({
     mutationKey: ['products', 'variant', 'update', variant.id],
@@ -91,7 +98,9 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
               name="costPrice"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="costPrice">Costo</FieldLabel>
+                  <FieldLabel htmlFor="costPrice">
+                    Costo de adquisición
+                  </FieldLabel>
                   <InputGroup>
                     <InputGroupAddon>
                       <InputGroupText>$</InputGroupText>
@@ -114,38 +123,10 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
 
             <Controller
               control={form.control}
-              name="compareAtPrice"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="compareAtPrice">
-                    Precio de venta sugerido
-                  </FieldLabel>
-                  <InputGroup>
-                    <InputGroupAddon>
-                      <InputGroupText>$</InputGroupText>
-                    </InputGroupAddon>
-                    <InputGroupInput
-                      className="tabular-nums"
-                      id="compareAtPrice"
-                      {...field}
-                    />
-                    <InputGroupAddon align="inline-end">
-                      <InputGroupText>COP</InputGroupText>
-                    </InputGroupAddon>
-                  </InputGroup>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            <Controller
-              control={form.control}
               name="price"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="price">Precio</FieldLabel>
+                  <FieldLabel htmlFor="price">Precio de venta</FieldLabel>
                   <InputGroup>
                     <InputGroupAddon>
                       <InputGroupText>$</InputGroupText>
@@ -165,6 +146,55 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
                 </Field>
               )}
             />
+
+            <ProfitabilitySection
+              costPrice={watchedCostPrice}
+              price={watchedPrice}
+            />
+
+            <Field orientation="horizontal">
+              <Checkbox
+                checked={hasDiscount}
+                id="has-discount"
+                name="has-discount"
+                onCheckedChange={(value) => setHasDiscount(value as boolean)}
+              />
+              <Label htmlFor="has-discount">
+                Este producto tiene descuento
+              </Label>
+            </Field>
+
+            {hasDiscount && (
+              <Controller
+                control={form.control}
+                name="compareAtPrice"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="compareAtPrice">
+                      Precio original
+                    </FieldLabel>
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <InputGroupText>$</InputGroupText>
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        className="tabular-nums"
+                        id="compareAtPrice"
+                        inputMode="numeric"
+                        placeholder="0"
+                        {...field}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupText>COP</InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            )}
 
             <Controller
               control={form.control}
