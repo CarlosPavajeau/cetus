@@ -29,39 +29,47 @@ import { PackageIcon, SquarePenIcon } from 'lucide-react'
 
 const columns: ColumnDef<ProductVariantResponse>[] = [
   {
-    id: 'image',
+    id: 'id',
     cell: ({ row }) => (
-      <Image
-        alt={row.original.sku}
-        className="rounded-md"
-        height={48}
-        src={getImageUrl(
-          row.original.images.at(0)?.imageUrl || 'placeholder.svg',
-        )}
-        width={48}
-      />
-    ),
-    size: 48,
-  },
-  {
-    id: 'sku',
-    header: 'SKU',
-    cell: ({ row }) => <Badge variant="outline">{row.original.sku}</Badge>,
-    size: 150,
-  },
-  {
-    id: 'options',
-    header: 'Opciones',
-    cell: ({ row }) => (
-      <div className="flex flex-wrap items-center gap-2">
-        {row.original.optionValues.map((value) => (
-          <Badge key={value.id}>
-            {value.optionTypeName}: {value.value}
-          </Badge>
-        ))}
+      <div className="flex items-start gap-2">
+        <Image
+          alt={row.original.sku}
+          className="rounded-md"
+          height={48}
+          src={getImageUrl(
+            row.original.images.at(0)?.imageUrl || 'placeholder.svg',
+          )}
+          width={48}
+        />
+        <div className="flex flex-col">
+          <span className="font-medium text-xs">SKU: {row.original.sku}</span>
+          {row.original.optionValues.length > 0 && (
+            <p className="truncate text-muted-foreground text-xs">
+              {row.original.optionValues
+                .map((v) => `${v.optionTypeName}: ${v.value}`)
+                .join(' · ')}
+            </p>
+          )}
+        </div>
       </div>
     ),
-    size: 150,
+    size: 120,
+  },
+  {
+    id: 'costPrice',
+    header: 'Costo',
+    cell: ({ row }) => (
+      <Currency currency="COP" value={row.original.costPrice ?? 0} />
+    ),
+    size: 60,
+  },
+  {
+    id: 'compareAtPrice',
+    header: 'Precio sugerido',
+    cell: ({ row }) => (
+      <Currency currency="COP" value={row.original.compareAtPrice ?? 0} />
+    ),
+    size: 60,
   },
   {
     id: 'price',
