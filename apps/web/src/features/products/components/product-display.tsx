@@ -8,6 +8,7 @@ import { Currency } from '@cetus/web/components/currency'
 import { ProductImages } from '@cetus/web/features/products/components/product-images'
 import { ProductRating } from '@cetus/web/features/products/components/product-rating'
 import { ProductShare } from '@cetus/web/features/products/components/product-share'
+import { cn } from '@cetus/web/shared/utils'
 import { useCart } from '@cetus/web/store/cart'
 import { Link } from '@tanstack/react-router'
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
@@ -301,6 +302,12 @@ export function ProductDisplay({ product, variant }: Readonly<Props>) {
     })
   }, [variant.stock])
 
+  const originalPrice = variant.compareAtPrice
+  const hasDiscount = originalPrice && originalPrice > variant.price
+  const discountPercentage = hasDiscount
+    ? Math.round(((originalPrice - variant.price) / originalPrice) * 100)
+    : 0
+
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <ProductImages images={variant.images} />
@@ -318,9 +325,26 @@ export function ProductDisplay({ product, variant }: Readonly<Props>) {
             />
           </div>
 
-          <div className="mt-4 font-bold text-4xl">
-            <Currency currency="COP" value={variant.price} />
+          <div className="mt-2 flex items-center gap-2">
+            <span
+              className={cn(
+                'font-semibold text-4xl',
+                hasDiscount && 'text-red-600',
+              )}
+            >
+              <Currency currency="COP" value={variant.price} />
+            </span>
+            {hasDiscount && (
+              <span className="text-base text-muted-foreground line-through">
+                <Currency currency="COP" value={originalPrice} />
+              </span>
+            )}
           </div>
+          {hasDiscount && (
+            <span className="text-muted-foreground text-xs">
+              -{discountPercentage}% de descuento
+            </span>
+          )}
         </div>
 
         {product.description && (

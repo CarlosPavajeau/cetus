@@ -21,20 +21,18 @@ import { toast } from 'sonner'
 type Props = {
   product: SimpleProductForSale
   showBadge?: 'featured' | 'popular' | 'sale' | 'new' | null
-  // TODO: Implement discount logic in backend - originalPrice should come from API
-  originalPrice?: number
   priority?: boolean
 }
 
 function ProductCardComponent({
   product,
   showBadge = null,
-  originalPrice,
   priority = false,
 }: Readonly<Props>) {
   const cart = useCart()
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [justAdded, setJustAdded] = useState(false)
+  const originalPrice = product.compareAtPrice
 
   const hasDiscount = originalPrice && originalPrice > product.price
   const discountPercentage = hasDiscount

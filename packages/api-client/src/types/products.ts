@@ -59,6 +59,7 @@ export type SimpleProductForSale = {
   slug: string
   imageUrl: string
   price: number
+  compareAtPrice?: number
   stock: number
   rating: number
   reviewsCount: number
