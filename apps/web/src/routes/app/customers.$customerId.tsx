@@ -12,7 +12,6 @@ import {
   Calendar03Icon,
   Call02Icon,
   Mail01Icon,
-  PencilEdit02Icon,
   WhatsappIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'

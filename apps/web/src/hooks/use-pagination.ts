@@ -42,8 +42,12 @@ export function usePagination({
       adjustedRange.start = totalPages - paginationItemsToDisplay + 1
     }
 
-    if (showLeftEllipsis) adjustedRange.start++
-    if (showRightEllipsis) adjustedRange.end--
+    if (showLeftEllipsis) {
+      adjustedRange.start++
+    }
+    if (showRightEllipsis) {
+      adjustedRange.end--
+    }
 
     return Array.from(
       { length: adjustedRange.end - adjustedRange.start + 1 },
