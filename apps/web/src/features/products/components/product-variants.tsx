@@ -57,7 +57,7 @@ const columns: ColumnDef<ProductVariantResponse>[] = [
   },
   {
     id: 'costPrice',
-    header: 'Costo',
+    header: 'Costo de adquisición',
     cell: ({ row }) => (
       <Currency currency="COP" value={row.original.costPrice ?? 0} />
     ),
@@ -65,7 +65,7 @@ const columns: ColumnDef<ProductVariantResponse>[] = [
   },
   {
     id: 'compareAtPrice',
-    header: 'Precio sugerido',
+    header: 'Precio original',
     cell: ({ row }) => (
       <Currency currency="COP" value={row.original.compareAtPrice ?? 0} />
     ),
@@ -73,7 +73,7 @@ const columns: ColumnDef<ProductVariantResponse>[] = [
   },
   {
     id: 'price',
-    header: 'Precio',
+    header: 'Precio de venta',
     cell: ({ row }) => <Currency currency="COP" value={row.original.price} />,
     size: 60,
   },
