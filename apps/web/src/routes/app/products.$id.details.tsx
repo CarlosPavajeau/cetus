@@ -34,7 +34,7 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-1 flex-col items-center p-4">
-      <div className="w-full max-w-7xl space-y-3">
+      <div className="w-full space-y-3">
         <div className="flex items-center justify-between space-y-2">
           <ReturnButton className="m-0" />
 
@@ -45,7 +45,7 @@ function RouteComponent() {
         </div>
 
         <Tabs defaultValue="basic">
-          <TabsList className="grid h-auto w-full grid-cols-3">
+          <TabsList>
             <TabsTrigger className="flex items-center gap-2" value="basic">
               <PackageIcon className="h-4 w-4" />
               Información básica
