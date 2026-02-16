@@ -2,12 +2,24 @@ import type { Product } from '@cetus/api-client/types/products'
 import { createProductVariantSchema } from '@cetus/schemas/product.schema'
 import { generateImageName } from '@cetus/shared/utils/image'
 import { Button } from '@cetus/ui/button'
+import { Checkbox } from '@cetus/ui/checkbox'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@cetus/ui/drawer'
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
 } from '@cetus/ui/field'
 import { Input } from '@cetus/ui/input'
 import {
@@ -16,6 +28,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '@cetus/ui/input-group'
+import { Label } from '@cetus/ui/label'
 import {
   Select,
   SelectContent,
@@ -36,12 +49,108 @@ import { ProductImagesUploader } from '@cetus/web/features/products/components/p
 import { useCreateProductVariant } from '@cetus/web/features/products/hooks/use-create-product-variant'
 import { productQueries } from '@cetus/web/features/products/queries'
 import type { FileWithPreview } from '@cetus/web/hooks/use-file-upload'
+import { useIsMobile } from '@cetus/web/hooks/use-mobile'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useQuery } from '@tanstack/react-query'
-import { PlusIcon } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { ChevronDownIcon, PlusIcon } from 'lucide-react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { v7 as uuid } from 'uuid'
+
+const MarginThresholds = {
+  healthy: 30,
+  tight: 15,
+} as const
+
+function getProfitabilityIndicator(margin: number): {
+  label: string
+  className: string
+  barColor: string
+} {
+  if (margin <= 0) {
+    return {
+      label: 'Sin ganancia',
+      className: 'text-red-600',
+      barColor: 'bg-red-500',
+    }
+  }
+  if (margin < MarginThresholds.tight) {
+    return {
+      label: 'Margen bajo',
+      className: 'text-orange-600',
+      barColor: 'bg-orange-500',
+    }
+  }
+  if (margin < MarginThresholds.healthy) {
+    return {
+      label: 'Margen ajustado',
+      className: 'text-yellow-600',
+      barColor: 'bg-yellow-500',
+    }
+  }
+  return {
+    label: 'Margen saludable',
+    className: 'text-green-600',
+    barColor: 'bg-green-500',
+  }
+}
+
+function ProfitabilitySection({
+  costPrice,
+  price,
+}: {
+  costPrice: string | number | undefined
+  price: string | number | undefined
+}): ReactNode {
+  const cost = Number(costPrice)
+  const sell = Number(price)
+
+  if (!(costPrice && Number.isFinite(cost)) || cost <= 0) {
+    return null
+  }
+
+  if (!(price && Number.isFinite(sell)) || sell <= 0) {
+    return null
+  }
+
+  const profit = sell - cost
+  const margin = (profit / sell) * 100
+  const clampedMargin = Math.min(Math.max(margin, 0), 100)
+  const { label, className, barColor } = getProfitabilityIndicator(margin)
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="mb-2.5 flex items-center justify-between">
+        <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+          Rentabilidad
+        </span>
+        <span className={`font-semibold text-xs ${className}`}>{label}</span>
+      </div>
+
+      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+          style={{ width: `${clampedMargin}%` }}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-muted-foreground text-xs">Ganancia</p>
+          <p className="font-semibold text-sm tabular-nums">
+            ${profit.toLocaleString('es-CO')}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-muted-foreground text-xs">Margen</p>
+          <p className="font-semibold text-sm tabular-nums">
+            {margin.toFixed(1)}%
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const generateSKU = (
   productName: string,
@@ -76,10 +185,17 @@ type Props = {
   product: Product
 }
 
-export function AddProductVariantSheet({ product }: Props) {
-  const [open, setOpen] = useState(false)
+function AddProductVariantForm({
+  product,
+  onSuccess,
+}: {
+  product: Product
+  onSuccess: () => void
+}) {
+  const [hasDiscount, setHasDiscount] = useState(false)
+  const [showSku, setShowSku] = useState(false)
 
-  const { isLoading: optionsLoading, data: productOptions } = useQuery(
+  const { data: productOptions } = useQuery(
     productQueries.options.list(product.id),
   )
 
@@ -91,9 +207,7 @@ export function AddProductVariantSheet({ product }: Props) {
     return productOptions.flatMap((option) => option.optionType)
   }, [productOptions])
 
-  const { isLoading: variantsLoading, data: variants } = useQuery(
-    productQueries.variants.list(product.id),
-  )
+  const { data: variants } = useQuery(productQueries.variants.list(product.id))
 
   const form = useForm({
     resolver: arktypeResolver(createProductVariantSchema),
@@ -135,7 +249,6 @@ export function AddProductVariantSheet({ product }: Props) {
           [optionId]: value,
         }
 
-        // Check if this combination already exists in variants
         const isDuplicate = variants.some((variant) =>
           Object.entries(hypotheticalVariant).every(([__, val]) =>
             variant.optionValues.map((v) => v.id).includes(val),
@@ -197,18 +310,8 @@ export function AddProductVariantSheet({ product }: Props) {
     }
   }, [options, form])
 
-  const handleOnOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      form.reset({
-        productId: product.id,
-        optionValueIds: [],
-        images: [],
-      })
-      setSelectedOptions({})
-      setVariantImages([])
-    }
-    setOpen(isOpen)
-  }
+  const watchedCostPrice = form.watch('costPrice')
+  const watchedPrice = form.watch('price')
 
   const [variantImages, setVariantImages] = useState<FileWithPreview[]>([])
   const handleFilesChange = (files: FileWithPreview[]) => {
@@ -227,132 +330,205 @@ export function AddProductVariantSheet({ product }: Props) {
 
   const handleSubmit = form.handleSubmit(async (values) => {
     await mutateAsync(values)
-    handleOnOpenChange(false)
+    onSuccess()
   })
 
   return (
-    <Sheet onOpenChange={handleOnOpenChange} open={open}>
-      <SheetTrigger asChild>
-        <Button disabled={optionsLoading || variantsLoading}>
-          <PlusIcon className="h-4 w-4" />
-          Agregar variante
-        </Button>
-      </SheetTrigger>
+    <form
+      className="flex flex-1 flex-col overflow-hidden"
+      id="add-product-variant-form"
+      onSubmit={handleSubmit}
+    >
+      <FieldGroup className="flex-1 overflow-auto px-4">
+        <FieldSet>
+          <FieldLegend>Opciones</FieldLegend>
+          <FieldGroup>
+            {options?.map((option) => {
+              const disabledValues = getDisabledValues(option.id)
+              const isSelected = selectedOptions[option.id] !== undefined
+              const hasError = form.formState.isSubmitted && !isSelected
 
-      <SheetContent className="md:max-w-xl">
-        <SheetHeader>
-          <SheetTitle>Agregar variante del producto</SheetTitle>
-          <SheetDescription>
-            Funcionalidad en construcción. Aún no disponible.
-          </SheetDescription>
-        </SheetHeader>
+              return (
+                <Field data-invalid={hasError} key={option.id}>
+                  <FieldLabel htmlFor={`option-${option.id}`}>
+                    {option.name}
+                  </FieldLabel>
 
-        <div className="overflow-auto px-4">
-          <form id="add-product-variant-form" onSubmit={handleSubmit}>
-            <FieldGroup>
-              {options?.map((option) => {
-                const disabledValues = getDisabledValues(option.id)
-                const isSelected = selectedOptions[option.id] !== undefined
-                const hasError = form.formState.isSubmitted && !isSelected
+                  <Select
+                    onValueChange={onSelectOptionValue(option.id)}
+                    value={
+                      selectedOptions[option.id]
+                        ? String(selectedOptions[option.id])
+                        : undefined
+                    }
+                  >
+                    <SelectTrigger id={`option-${option.id}`}>
+                      <SelectValue placeholder="Selecciona una opción" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {option.values.map((value) => {
+                        const isDisabled = disabledValues.has(value.id)
 
-                return (
-                  <Field data-invalid={hasError} key={option.id}>
-                    <FieldLabel htmlFor={`option-${option.id}`}>
-                      {option.name}
-                    </FieldLabel>
+                        return (
+                          <SelectItem
+                            disabled={isDisabled}
+                            key={value.id}
+                            value={String(value.id)}
+                          >
+                            {value.value}
+                            {isDisabled && (
+                              <span className="ml-2 text-muted-foreground text-xs">
+                                (Ya existe)
+                              </span>
+                            )}
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {hasError && (
+                    <FieldError
+                      errors={[
+                        {
+                          message: `Selecciona ${option.name}`,
+                        },
+                      ]}
+                    />
+                  )}
+                </Field>
+              )
+            })}
 
-                    <Select
-                      onValueChange={onSelectOptionValue(option.id)}
-                      value={
-                        selectedOptions[option.id]
-                          ? String(selectedOptions[option.id])
-                          : undefined
-                      }
-                    >
-                      <SelectTrigger id={`option-${option.id}`}>
-                        <SelectValue placeholder="Selecciona una opción" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {option.values.map((value) => {
-                          const isDisabled = disabledValues.has(value.id)
-
-                          return (
-                            <SelectItem
-                              disabled={isDisabled}
-                              key={value.id}
-                              value={String(value.id)}
-                            >
-                              {value.value}
-                              {isDisabled && (
-                                <span className="ml-2 text-muted-foreground text-xs">
-                                  (Ya existe)
-                                </span>
-                              )}
-                            </SelectItem>
-                          )
-                        })}
-                      </SelectContent>
-                    </Select>
-                    {hasError && (
-                      <FieldError
-                        errors={[
-                          {
-                            message: `Debes seleccionar una opción para ${option.name}`,
-                          },
-                        ]}
-                      />
+            <div>
+              <button
+                className="flex w-full items-center gap-1.5 py-1 text-muted-foreground text-xs hover:text-foreground"
+                onClick={() => setShowSku(!showSku)}
+                type="button"
+              >
+                <ChevronDownIcon
+                  className={`size-3 transition-transform ${showSku ? 'rotate-0' : '-rotate-90'}`}
+                />
+                SKU {form.watch('sku') ? `· ${form.watch('sku')}` : ''}
+              </button>
+              {showSku && (
+                <div className="mt-2">
+                  <Controller
+                    control={form.control}
+                    name="sku"
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel className="sr-only" htmlFor="sku">
+                          SKU
+                        </FieldLabel>
+                        <Input id="sku" type="text" {...field} />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                        <FieldDescription>
+                          Se genera automáticamente. Puedes editarlo si lo
+                          necesitas.
+                        </FieldDescription>
+                      </Field>
                     )}
-                  </Field>
-                )
-              })}
+                  />
+                </div>
+              )}
+            </div>
+          </FieldGroup>
+        </FieldSet>
 
-              <Controller
-                control={form.control}
-                name="sku"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="sku">SKU</FieldLabel>
-                    <Input id="sku" type="text" {...field} />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
+        <FieldSeparator />
+
+        <FieldSet>
+          <FieldLegend>Precios</FieldLegend>
+
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="costPrice"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="costPrice">
+                    Costo de adquisición
+                  </FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <InputGroupText>$</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      className="tabular-nums"
+                      id="costPrice"
+                      inputMode="numeric"
+                      placeholder="0"
+                      {...field}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupText>COP</InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                  <FieldDescription>
+                    Solo visible para ti. Sirve para calcular tu ganancia.
+                  </FieldDescription>
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="price"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="price">Precio de venta</FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <InputGroupText>$</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      className="tabular-nums"
+                      id="price"
+                      inputMode="numeric"
+                      placeholder="0"
+                      {...field}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupText>COP</InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <ProfitabilitySection
+              costPrice={watchedCostPrice}
+              price={watchedPrice}
+            />
+
+            <Field orientation="horizontal">
+              <Checkbox
+                checked={hasDiscount}
+                id="has-discount"
+                name="has-discount"
+                onCheckedChange={(value) => setHasDiscount(value as boolean)}
               />
+              <Label htmlFor="has-discount">
+                Este producto tiene descuento
+              </Label>
+            </Field>
 
-              <Controller
-                control={form.control}
-                name="costPrice"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="costPrice">Costo</FieldLabel>
-                    <InputGroup>
-                      <InputGroupAddon>
-                        <InputGroupText>$</InputGroupText>
-                      </InputGroupAddon>
-                      <InputGroupInput
-                        className="tabular-nums"
-                        id="costPrice"
-                        {...field}
-                      />
-                      <InputGroupAddon align="inline-end">
-                        <InputGroupText>COP</InputGroupText>
-                      </InputGroupAddon>
-                    </InputGroup>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
+            {hasDiscount && (
               <Controller
                 control={form.control}
                 name="compareAtPrice"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="compareAtPrice">
-                      Precio de venta sugerido
+                      Precio original
                     </FieldLabel>
                     <InputGroup>
                       <InputGroupAddon>
@@ -361,6 +537,8 @@ export function AddProductVariantSheet({ product }: Props) {
                       <InputGroupInput
                         className="tabular-nums"
                         id="compareAtPrice"
+                        inputMode="numeric"
+                        placeholder="0"
                         {...field}
                       />
                       <InputGroupAddon align="inline-end">
@@ -373,75 +551,127 @@ export function AddProductVariantSheet({ product }: Props) {
                   </Field>
                 )}
               />
+            )}
+          </FieldGroup>
+        </FieldSet>
 
-              <Controller
-                control={form.control}
-                name="price"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="price">Precio</FieldLabel>
-                    <InputGroup>
-                      <InputGroupAddon>
-                        <InputGroupText>$</InputGroupText>
-                      </InputGroupAddon>
-                      <InputGroupInput
-                        className="tabular-nums"
-                        id="price"
-                        {...field}
-                      />
-                      <InputGroupAddon align="inline-end">
-                        <InputGroupText>COP</InputGroupText>
-                      </InputGroupAddon>
-                    </InputGroup>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
+        <FieldSeparator />
+
+        <FieldSet>
+          <FieldLegend>Inventario</FieldLegend>
+
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="stock"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="stock">Stock disponible</FieldLabel>
+                  <Input
+                    id="stock"
+                    inputMode="numeric"
+                    placeholder="0"
+                    type="text"
+                    {...field}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </FieldSet>
+
+        <FieldSeparator />
+
+        <FieldSet>
+          <FieldLegend>Imágenes</FieldLegend>
+
+          <Controller
+            control={form.control}
+            name="images"
+            render={({ fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <ProductImagesUploader onFilesChange={handleFilesChange} />
+                <FieldDescription>
+                  La primera imagen será la imagen principal de la variante.
+                </FieldDescription>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
                 )}
-              />
+              </Field>
+            )}
+          />
+        </FieldSet>
+      </FieldGroup>
 
-              <Controller
-                control={form.control}
-                name="stock"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="stock">Stock</FieldLabel>
-                    <Input id="stock" type="text" {...field} />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
+      <div className="border-t bg-background p-4">
+        <SubmitButton
+          className="w-full"
+          disabled={form.formState.isSubmitting}
+          isSubmitting={form.formState.isSubmitting}
+        >
+          Agregar variante
+        </SubmitButton>
+      </div>
+    </form>
+  )
+}
 
-              <Controller
-                control={form.control}
-                name="images"
-                render={({ fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="images">Imágenes</FieldLabel>
-                    <ProductImagesUploader onFilesChange={handleFilesChange} />
-                    <FieldDescription>
-                      Las imágenes serán mostradas en el orden en que fueron
-                      subidas. Tomando como imagen principal la primera imagen
-                      subida.
-                    </FieldDescription>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
+export function AddProductVariantSheet({ product }: Props) {
+  const [open, setOpen] = useState(false)
+  const isMobile = useIsMobile()
 
-              <SubmitButton
-                disabled={form.formState.isSubmitting}
-                isSubmitting={form.formState.isSubmitting}
-              >
-                Agregar variante
-              </SubmitButton>
-            </FieldGroup>
-          </form>
-        </div>
+  const { isLoading: optionsLoading } = useQuery(
+    productQueries.options.list(product.id),
+  )
+  const { isLoading: variantsLoading } = useQuery(
+    productQueries.variants.list(product.id),
+  )
+
+  const handleOnOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+  }
+
+  const handleSuccess = () => {
+    setOpen(false)
+  }
+
+  const triggerButton = (
+    <Button disabled={optionsLoading || variantsLoading}>
+      <PlusIcon className="size-4" />
+      Agregar variante
+    </Button>
+  )
+
+  const title = 'Nueva variante'
+  const description = `Configurá una nueva variante para ${product.name}`
+
+  if (isMobile) {
+    return (
+      <Drawer onOpenChange={handleOnOpenChange} open={open}>
+        <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{title}</DrawerTitle>
+            <DrawerDescription>{description}</DrawerDescription>
+          </DrawerHeader>
+          <AddProductVariantForm onSuccess={handleSuccess} product={product} />
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Sheet onOpenChange={handleOnOpenChange} open={open}>
+      <SheetTrigger asChild>{triggerButton}</SheetTrigger>
+      <SheetContent className="flex flex-col md:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{title}</SheetTitle>
+          <SheetDescription>{description}</SheetDescription>
+        </SheetHeader>
+        <AddProductVariantForm onSuccess={handleSuccess} product={product} />
       </SheetContent>
     </Sheet>
   )
