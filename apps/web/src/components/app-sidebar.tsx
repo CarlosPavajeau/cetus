@@ -19,6 +19,7 @@ import { UserMenu } from '@cetus/web/components/user-menu'
 import {
   BadgePercentIcon,
   BoxesIcon,
+  HouseIcon,
   LayoutDashboardIcon,
   PackageIcon,
   SettingsIcon,
@@ -34,7 +35,7 @@ const MAIN_MENU: ReadonlyArray<SidebarMenuElement> = [
     label: 'Inicio',
     href: '/app',
     isNew: false,
-    icon: LayoutDashboardIcon,
+    icon: HouseIcon,
   },
   {
     label: 'Panel de control',
