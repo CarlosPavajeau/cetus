@@ -3,24 +3,51 @@ import { Card, CardContent } from '@cetus/ui/card'
 import { CountingNumber } from '@cetus/ui/counting-number'
 import { cn } from '@cetus/web/shared/utils'
 import { TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
+import { useCallback } from 'react'
 import { useNumberFormatter } from 'react-aria'
+
+type FormatOptions = 'currency' | 'number' | 'percentage'
 
 type Props = {
   title: string
   value: string | number
   className?: string
-  format?: (value: number) => string
+  format?: FormatOptions
   percentageChange?: number | null
 }
+
+const formats: Record<FormatOptions, Intl.NumberFormatOptions> = {
+  currency: {
+    style: 'currency',
+    currency: 'COP',
+  },
+  number: {
+    style: 'decimal',
+    maximumFractionDigits: 2,
+  },
+  percentage: {
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    signDisplay: 'always',
+  },
+} as const
 
 export function StatsCard({
   title,
   value,
-  format,
+  format = 'number',
   className,
   percentageChange,
 }: Props) {
   const numValue = typeof value === 'number' ? value : Number.parseFloat(value)
+
+  const formatOptions = formats[format]
+  const valueFormatter = useNumberFormatter(formatOptions)
+  const formatValue = useCallback(
+    (value: number) => valueFormatter.format(value),
+    [valueFormatter],
+  )
 
   const percentageFormatter = useNumberFormatter({
     style: 'percent',
@@ -38,7 +65,7 @@ export function StatsCard({
             <p className="mt-1 font-bold font-mono text-3xl">
               <CountingNumber
                 duration={0.5}
-                format={format}
+                format={formatValue}
                 from={0}
                 to={Number.isNaN(numValue) ? 0 : numValue}
               />
