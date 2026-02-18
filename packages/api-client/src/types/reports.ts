@@ -83,7 +83,7 @@ export type MonthlyProfitabilityResponse = {
   productsWithoutCost: ProductCostWarning[]
 }
 
-  export type PeriodPreset = 'this_month' | 'last_month' | 'specific_month'
+export type PeriodPreset = 'this_month' | 'last_month' | 'specific_month'
 
 export type MonthlyProfitabilityRequest = {
   preset: PeriodPreset
