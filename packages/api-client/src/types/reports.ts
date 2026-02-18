@@ -45,3 +45,50 @@ export type DailySummaryResponse = {
   byChannel: ChannelMetrics[]
   byPaymentStatus: PaymentStatusMetrics[]
 }
+
+export type ProfitabilitySummary = {
+  totalSales: number
+  totalCost: number
+  grossProfit: number
+  marginPercentage: number
+}
+
+export type MonthComparison = {
+  salesChange: number
+  profitChange: number
+  marginChange: number
+}
+
+export type MonthlyTrend = {
+  year: number
+  month: number
+  totalSales: number
+  totalCost: number
+  grossProfit: number
+  marginPercentage: number
+}
+
+export type ProductCostWarning = {
+  productId: string
+  productName: string
+  variantId: number
+  sku: string
+}
+
+export type MonthlyProfitabilityResponse = {
+  summary: ProfitabilitySummary
+  comparisonSummary?: ProfitabilitySummary
+  previousMonthComparison?: MonthComparison
+  trend: MonthlyTrend[]
+  productsWithoutCost: ProductCostWarning[]
+}
+
+  export type PeriodPreset = 'this_month' | 'last_month' | 'specific_month'
+
+export type MonthlyProfitabilityRequest = {
+  preset: PeriodPreset
+  year?: number
+  month?: number
+  excludeCanceled?: boolean
+  excludeRefunded?: boolean
+}

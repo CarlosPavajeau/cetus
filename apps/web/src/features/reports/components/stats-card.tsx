@@ -1,16 +1,33 @@
+import { Badge } from '@cetus/ui/badge'
 import { Card, CardContent } from '@cetus/ui/card'
 import { CountingNumber } from '@cetus/ui/counting-number'
 import { cn } from '@cetus/web/shared/utils'
+import { TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
+import { useNumberFormatter } from 'react-aria'
 
 type Props = {
   title: string
   value: string | number
   className?: string
   format?: (value: number) => string
+  percentageChange?: number | null
 }
 
-export function StatsCard({ title, value, format, className }: Props) {
+export function StatsCard({
+  title,
+  value,
+  format,
+  className,
+  percentageChange,
+}: Props) {
   const numValue = typeof value === 'number' ? value : Number.parseFloat(value)
+
+  const percentageFormatter = useNumberFormatter({
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    signDisplay: 'always',
+  })
 
   return (
     <Card className={cn('w-full', className)}>
@@ -27,6 +44,21 @@ export function StatsCard({ title, value, format, className }: Props) {
               />
             </p>
           </div>
+          {percentageChange === null && (
+            <Badge variant="outline">
+              <span className="text-muted-foreground">—</span>
+            </Badge>
+          )}
+          {percentageChange != null && percentageChange !== 0 && (
+            <Badge variant="outline">
+              {percentageChange > 0 ? (
+                <TrendingUpIcon className="text-success-base" />
+              ) : (
+                <TrendingDownIcon className="text-destructive" />
+              )}
+              {percentageFormatter.format(percentageChange)}
+            </Badge>
+          )}
         </div>
       </CardContent>
     </Card>

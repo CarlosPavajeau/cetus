@@ -1,0 +1,85 @@
+import type { MonthlyProfitabilityResponse } from '@cetus/api-client/types/reports'
+import { useCallback } from 'react'
+import { useNumberFormatter } from 'react-aria'
+import { ProductsWithoutCostAlert } from './products-without-cost-alert'
+import { ProfitabilityTrendChart } from './profitability-trend-chart'
+import { StatsCard } from './stats-card'
+
+type Props = {
+  data: MonthlyProfitabilityResponse
+}
+
+export function ProfitabilityContent({ data }: Readonly<Props>) {
+  const {
+    summary,
+    previousMonthComparison: comparison,
+    trend,
+    productsWithoutCost,
+  } = data
+
+  const currencyFormat = useNumberFormatter({
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  })
+
+  const percentageFormat = useNumberFormatter({
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+
+  const formatCurrency = useCallback(
+    (value: number) => currencyFormat.format(value),
+    [currencyFormat],
+  )
+
+  const formatPercentage = useCallback(
+    (value: number) => percentageFormat.format(value),
+    [percentageFormat],
+  )
+
+  return (
+    <>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          format={formatCurrency}
+          percentageChange={comparison ? comparison.salesChange : null}
+          title="Ventas totales"
+          value={summary.totalSales}
+        />
+        <StatsCard
+          format={formatCurrency}
+          title="Costo total"
+          value={summary.totalCost}
+        />
+        <StatsCard
+          format={formatCurrency}
+          percentageChange={comparison ? comparison.profitChange : null}
+          title="Ganancia bruta"
+          value={summary.grossProfit}
+        />
+        <StatsCard
+          format={formatPercentage}
+          percentageChange={comparison ? comparison.marginChange : null}
+          title="Margen"
+          value={summary.marginPercentage}
+        />
+      </div>
+
+      {productsWithoutCost.length > 0 && (
+        <ProductsWithoutCostAlert products={productsWithoutCost} />
+      )}
+
+      <section className="space-y-3">
+        <div className="flex flex-col gap-0">
+          <h2 className="font-heading font-medium text-lg">
+            Tendencia de rentabilidad
+          </h2>
+          <span className="text-muted-foreground text-xs">Últimos 6 meses</span>
+        </div>
+        <ProfitabilityTrendChart trend={trend} />
+      </section>
+    </>
+  )
+}
