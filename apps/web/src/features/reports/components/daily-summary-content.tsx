@@ -1,5 +1,6 @@
 import type { DailySummaryResponse } from '@cetus/api-client/types/reports'
 import { getImageUrl } from '@cetus/shared/utils/image'
+import { Currency } from '@cetus/web/components/currency'
 import {
   Item,
   ItemContent,
@@ -12,12 +13,25 @@ import { OrderStatusChart } from '@cetus/web/features/reports/components/order-s
 import { PaymentStatusCard } from '@cetus/web/features/reports/components/payment-status-card'
 import { StatsCard } from '@cetus/web/features/reports/components/stats-card'
 import { Image } from '@unpic/react'
+import { useNumberFormatter } from 'react-aria'
 
 type Props = {
   data: DailySummaryResponse
 }
 
 export function DailySummaryContent({ data }: Readonly<Props>) {
+  const percentageFormat = useNumberFormatter({
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    signDisplay: 'always',
+  })
+
+  const numberFormat = useNumberFormatter({
+    style: 'decimal',
+    maximumFractionDigits: 2,
+  })
+
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -48,7 +62,7 @@ export function DailySummaryContent({ data }: Readonly<Props>) {
           <p className="text-muted-foreground">
             Total del día:{' '}
             <span className="font-semibold text-foreground">
-              {currencyFormat.format(data.revenue.total)}
+              <Currency currency="COP" value={data.revenue.total} />
             </span>
           </p>
           <p className="text-muted-foreground">
@@ -86,7 +100,8 @@ export function DailySummaryContent({ data }: Readonly<Props>) {
               </ItemTitle>
               <ItemDescription>
                 {numberFormat.format(data.topProduct.quantitySold)} vendidos
-                &middot; {currencyFormat.format(data.topProduct.revenue)}
+                &middot;{' '}
+                <Currency currency="COP" value={data.topProduct.revenue} />
               </ItemDescription>
             </ItemContent>
           </Item>
