@@ -12,54 +12,32 @@ import { OrderStatusChart } from '@cetus/web/features/reports/components/order-s
 import { PaymentStatusCard } from '@cetus/web/features/reports/components/payment-status-card'
 import { StatsCard } from '@cetus/web/features/reports/components/stats-card'
 import { Image } from '@unpic/react'
-import { useCallback } from 'react'
-import { useNumberFormatter } from 'react-aria'
 
 type Props = {
   data: DailySummaryResponse
 }
 
 export function DailySummaryContent({ data }: Readonly<Props>) {
-  const currencyFormat = useNumberFormatter({
-    style: 'currency',
-    currency: 'COP',
-  })
-  const numberFormat = useNumberFormatter()
-  const percentageFormat = useNumberFormatter({
-    style: 'percent',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-
-  const formatCurrency = useCallback(
-    (value: number) => currencyFormat.format(value),
-    [currencyFormat],
-  )
-  const formatNumber = useCallback(
-    (value: number) => numberFormat.format(value),
-    [numberFormat],
-  )
-
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          format={formatNumber}
+          format="number"
           title="Ventas del día"
           value={data.orders.total}
         />
         <StatsCard
-          format={formatCurrency}
+          format="currency"
           title="Ingresos confirmados"
           value={data.revenue.confirmed}
         />
         <StatsCard
-          format={formatCurrency}
+          format="currency"
           title="Ingresos pendientes"
           value={data.revenue.pending}
         />
         <StatsCard
-          format={formatNumber}
+          format="number"
           title="Ventas por cobrar"
           value={data.orders.pending}
         />

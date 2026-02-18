@@ -1,6 +1,4 @@
 import type { MonthlyProfitabilityResponse } from '@cetus/api-client/types/reports'
-import { useCallback } from 'react'
-import { useNumberFormatter } from 'react-aria'
 import { ProductsWithoutCostAlert } from './products-without-cost-alert'
 import { ProfitabilityTrendChart } from './profitability-trend-chart'
 import { StatsCard } from './stats-card'
@@ -17,50 +15,40 @@ export function ProfitabilityContent({ data }: Readonly<Props>) {
     productsWithoutCost,
   } = data
 
-  const currencyFormat = useNumberFormatter({
+  const currencyFormat = {
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
-  })
+  } satisfies Intl.NumberFormatOptions
 
-  const percentageFormat = useNumberFormatter({
+  const percentageFormat = {
     style: 'percent',
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })
-
-  const formatCurrency = useCallback(
-    (value: number) => currencyFormat.format(value),
-    [currencyFormat],
-  )
-
-  const formatPercentage = useCallback(
-    (value: number) => percentageFormat.format(value),
-    [percentageFormat],
-  )
+  } satisfies Intl.NumberFormatOptions
 
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          format={formatCurrency}
+          format="currency"
           percentageChange={comparison ? comparison.salesChange : null}
           title="Ventas totales"
           value={summary.totalSales}
         />
         <StatsCard
-          format={formatCurrency}
+          format="currency"
           title="Costo total"
           value={summary.totalCost}
         />
         <StatsCard
-          format={formatCurrency}
+          format="currency"
           percentageChange={comparison ? comparison.profitChange : null}
           title="Ganancia bruta"
           value={summary.grossProfit}
         />
         <StatsCard
-          format={formatPercentage}
+          format="percentage"
           percentageChange={comparison ? comparison.marginChange : null}
           title="Margen"
           value={summary.marginPercentage}
