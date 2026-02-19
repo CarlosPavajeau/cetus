@@ -4,28 +4,25 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@cetus/ui/input-group'
-import { useCopyToClipboard } from '@uidotdev/usehooks'
 import { CheckIcon, CopyIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 
 type Props = {
   value: string
 }
 
 export function CopiableInput({ value }: Props) {
-  const [copiedText, copyToClipboard] = useCopyToClipboard()
   const [showCopied, setShowCopied] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    if (copiedText) {
-      setShowCopied(true)
-      const timer = setTimeout(() => {
-        setShowCopied(false)
-      }, 2000)
-
-      return () => clearTimeout(timer)
+  function handleCopy() {
+    navigator.clipboard.writeText(value)
+    setShowCopied(true)
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
     }
-  }, [copiedText])
+    timerRef.current = setTimeout(() => setShowCopied(false), 2000)
+  }
 
   return (
     <InputGroup>
@@ -37,9 +34,7 @@ export function CopiableInput({ value }: Props) {
       <InputGroupAddon align="inline-end">
         <InputGroupButton
           aria-label="Copy"
-          onClick={() => {
-            copyToClipboard(value)
-          }}
+          onClick={handleCopy}
           size="icon-xs"
           title="Copy"
         >
