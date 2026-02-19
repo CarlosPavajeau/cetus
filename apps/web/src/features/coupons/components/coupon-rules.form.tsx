@@ -35,7 +35,7 @@ export function CouponRulesForm() {
       <div className="flex flex-col gap-2">
         {rules.map((rule, index) => (
           <CouponRule
-            key={`rule-${index}-${rule.ruleType}-${rule.value}`}
+            key={`rule:${rule.ruleType}:${rule.value}`}
             onRemove={() => removeRule(index)}
             rule={rule}
           />
