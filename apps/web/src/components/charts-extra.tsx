@@ -9,12 +9,14 @@ interface CustomTooltipContentProps extends TooltipProps<number, string> {
   valueFormatter?: (value: number) => string
 }
 
+const emptyObject = {}
+
 export function CustomTooltipContent({
   active,
   payload,
   label,
-  colorMap = {},
-  labelMap = {},
+  colorMap = emptyObject,
+  labelMap = emptyObject,
   dataKeys, // If provided, will be used to order the items
   labelFormatter,
   valueFormatter = (value) => `${value.toLocaleString()}`,
@@ -46,7 +48,7 @@ export function CustomTooltipContent({
         {labelFormatter ? labelFormatter(label, orderedPayload) : label}
       </div>
       <div className="grid gap-1.5">
-        {orderedPayload.map((entry, index) => {
+        {orderedPayload.map((entry) => {
           // Skip undefined entries
           if (!entry) {
             return null
@@ -62,7 +64,7 @@ export function CustomTooltipContent({
           return (
             <div
               className="flex items-center justify-between gap-3"
-              key={`item-${index}`}
+              key={`item-${name}-${value}`}
             >
               <div className="flex items-center gap-2">
                 <div
