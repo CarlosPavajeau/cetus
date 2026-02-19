@@ -3,12 +3,15 @@
 import { cn } from '@cetus/web/shared/utils'
 import {
   animate,
-  motion,
+  domAnimation,
+  LazyMotion,
+  m,
   type UseInViewOptions,
   useInView,
   useMotionValue,
+  useTransform,
 } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 type CountingNumberProps = {
   from?: number
@@ -38,12 +41,15 @@ export function CountingNumber({
 }: CountingNumberProps) {
   const ref = useRef<HTMLSpanElement>(null)
   const isInView = useInView(ref, { once, margin: inViewMargin })
-  const [hasAnimated, setHasAnimated] = useState(false)
-  const [display, setDisplay] = useState(from)
+  const hasAnimated = useRef(false)
   const motionValue = useMotionValue(from)
+  const display = useTransform(motionValue, (v) =>
+    format ? format(v) : String(Math.round(v)),
+  )
 
   // Should start animation?
-  const shouldStart = !startOnView || (isInView && !(once && hasAnimated))
+  const shouldStart =
+    !startOnView || (isInView && !(once && hasAnimated.current))
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: don't needed
   useEffect(() => {
@@ -51,11 +57,10 @@ export function CountingNumber({
       return
     }
 
-    setHasAnimated(true)
+    hasAnimated.current = true
     const timeout = setTimeout(() => {
       const controls = animate(motionValue, to, {
         duration,
-        onUpdate: (v) => setDisplay(v),
         onComplete,
       })
       return () => controls.stop()
@@ -64,8 +69,10 @@ export function CountingNumber({
   }, [shouldStart, from, to, duration, delay])
 
   return (
-    <motion.span className={cn('inline-block', className)} ref={ref} {...props}>
-      {format ? format(display) : Math.round(display)}
-    </motion.span>
+    <LazyMotion features={domAnimation}>
+      <m.span className={cn('inline-block', className)} ref={ref} {...props}>
+        {display}
+      </m.span>
+    </LazyMotion>
   )
 }
