@@ -303,9 +303,10 @@ export function ProductDisplaySkeleton() {
             </div>
 
             <div className="hidden gap-2 lg:flex">
-              {Array.from({ length: 4 }, (_, i) => (
-                <Skeleton className="h-16 w-16 rounded-md" key={`thumb-${i}`} />
-              ))}
+              <Skeleton className="h-16 w-16 rounded-md" />
+              <Skeleton className="h-16 w-16 rounded-md" />
+              <Skeleton className="h-16 w-16 rounded-md" />
+              <Skeleton className="h-16 w-16 rounded-md" />
             </div>
           </div>
 
