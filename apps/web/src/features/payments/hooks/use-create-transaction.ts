@@ -34,16 +34,15 @@ async function waitForPaymentUrl(transactionId: string) {
 
 type PaymentValues = typeof paymentSchema.infer
 
-export const usePaymentSignature = (order: Order) => {
+export const usePaymentSignature = (order: Order, integritySecret: string) => {
   const amount = valueToCents(order.total)
   const reference = order.id
-  const integritySecret = import.meta.env.VITE_WOMPI_INTEGRITY_SECRET
 
   return useGenerateIntegritySignature(reference, amount, integritySecret)
 }
 
-export const useCreateTransaction = (order: Order) => {
-  const { signature } = usePaymentSignature(order)
+export const useCreateTransaction = (order: Order, integritySecret: string) => {
+  const { signature } = usePaymentSignature(order, integritySecret)
   const redirect = `${window.location.origin}/orders/${order.id}/confirmation`
 
   const createPaymentTransaction = async (values: PaymentValues) => {

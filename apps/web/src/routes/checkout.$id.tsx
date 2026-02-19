@@ -85,6 +85,7 @@ function RouteComponent() {
   }
 
   const publicKey = store.wompiPublicKey
+  const integritySecret = store.wompiIntegrityKey
   const hasMercadoPago = store.isConnectedToMercadoPago
 
   if (publicKey) {
@@ -133,6 +134,7 @@ function RouteComponent() {
 
               <PaymentMethods
                 hasMercadoPago={hasMercadoPago}
+                integritySecret={integritySecret}
                 order={order}
                 publicKey={publicKey}
               />

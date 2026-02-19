@@ -20,9 +20,14 @@ import { useForm } from 'react-hook-form'
 type Props = {
   order: Order
   publicKey: string
+  integritySecret: string
 }
 
-export const BancolombiaPayment = ({ order, publicKey }: Props) => {
+export const BancolombiaPayment = ({
+  order,
+  publicKey,
+  integritySecret,
+}: Props) => {
   const form = useForm({
     resolver: arktypeResolver(paymentSchema),
     defaultValues: {
@@ -33,7 +38,7 @@ export const BancolombiaPayment = ({ order, publicKey }: Props) => {
     },
   })
 
-  const transactionMutation = useCreateTransaction(order)
+  const transactionMutation = useCreateTransaction(order, integritySecret)
 
   const handleSubmit = form.handleSubmit(async (data) => {
     await transactionMutation.mutateAsync(data)

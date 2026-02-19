@@ -34,16 +34,18 @@ import { BanknoteIcon, Smartphone } from 'lucide-react'
 
 type PaymentMethodsProps = {
   order: Order
-  publicKey: string | undefined
+  publicKey?: string
+  integritySecret?: string
   hasMercadoPago: boolean
 }
 
 export function PaymentMethods({
   order,
   publicKey,
+  integritySecret,
   hasMercadoPago,
 }: PaymentMethodsProps) {
-  const emptyPaymentMethods = !(publicKey || hasMercadoPago)
+  const emptyPaymentMethods = !(publicKey || hasMercadoPago || integritySecret)
 
   if (emptyPaymentMethods) {
     return (
@@ -69,7 +71,7 @@ export function PaymentMethods({
 
   return (
     <Accordion className="w-full" collapsible type="single" variant="outline">
-      {publicKey && (
+      {publicKey && integritySecret && (
         <>
           <AccordionItem value="card">
             <AccordionTrigger>
@@ -87,7 +89,11 @@ export function PaymentMethods({
             </AccordionTrigger>
 
             <AccordionContent>
-              <CardPaymentForm order={order} publicKey={publicKey} />
+              <CardPaymentForm
+                integritySecret={integritySecret}
+                order={order}
+                publicKey={publicKey}
+              />
             </AccordionContent>
           </AccordionItem>
 
@@ -106,7 +112,11 @@ export function PaymentMethods({
               </Item>
             </AccordionTrigger>
             <AccordionContent>
-              <BancolombiaPayment order={order} publicKey={publicKey} />
+              <BancolombiaPayment
+                integritySecret={integritySecret}
+                order={order}
+                publicKey={publicKey}
+              />
             </AccordionContent>
           </AccordionItem>
 
@@ -125,7 +135,11 @@ export function PaymentMethods({
               </Item>
             </AccordionTrigger>
             <AccordionContent>
-              <PsePaymentForm order={order} publicKey={publicKey} />
+              <PsePaymentForm
+                integritySecret={integritySecret}
+                order={order}
+                publicKey={publicKey}
+              />
             </AccordionContent>
           </AccordionItem>
 
@@ -142,7 +156,11 @@ export function PaymentMethods({
               </Item>
             </AccordionTrigger>
             <AccordionContent>
-              <NequiPaymentForm order={order} publicKey={publicKey} />
+              <NequiPaymentForm
+                integritySecret={integritySecret}
+                order={order}
+                publicKey={publicKey}
+              />
             </AccordionContent>
           </AccordionItem>
         </>

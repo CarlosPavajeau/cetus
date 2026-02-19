@@ -24,9 +24,14 @@ import images, { type CardImages } from 'react-payment-inputs/images'
 type Props = {
   order: Order
   publicKey: string
+  integritySecret: string
 }
 
-export const CardPaymentForm = ({ order, publicKey }: Props) => {
+export const CardPaymentForm = ({
+  order,
+  publicKey,
+  integritySecret,
+}: Props) => {
   const {
     meta,
     getCardNumberProps,
@@ -43,7 +48,7 @@ export const CardPaymentForm = ({ order, publicKey }: Props) => {
     },
   })
 
-  const transactionMutation = useCreateTransaction(order)
+  const transactionMutation = useCreateTransaction(order, integritySecret)
 
   const handleSubmit = form.handleSubmit(async (data) => {
     await transactionMutation.mutateAsync(data)
