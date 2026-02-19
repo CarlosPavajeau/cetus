@@ -7,7 +7,7 @@ import { type CartItem, useCart } from '@cetus/web/store/cart'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Image } from '@unpic/react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, domAnimation, LazyMotion, m } from 'framer-motion'
 import {
   MinusIcon,
   PlusIcon,
@@ -27,7 +27,7 @@ function EmptyCart() {
   const hasCustomDomain = Boolean(store?.customDomain)
 
   return (
-    <motion.div
+    <m.div
       animate={{ opacity: 1 }}
       className="flex flex-col items-center justify-center py-12 text-center"
       initial={{ opacity: 0 }}
@@ -52,7 +52,7 @@ function EmptyCart() {
           Explorar productos
         </Link>
       </Button>
-    </motion.div>
+    </m.div>
   )
 }
 
@@ -162,81 +162,85 @@ function CartPage() {
 
   if (isEmpty) {
     return (
-      <DefaultPageLayout>
-        <EmptyCart />
-      </DefaultPageLayout>
+      <LazyMotion features={domAnimation}>
+        <DefaultPageLayout>
+          <EmptyCart />
+        </DefaultPageLayout>
+      </LazyMotion>
     )
   }
 
   return (
-    <DefaultPageLayout>
-      <PageHeader title="Tu carrito de compras" />
+    <LazyMotion features={domAnimation}>
+      <DefaultPageLayout>
+        <PageHeader title="Tu carrito de compras" />
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          initial={{ opacity: 0 }}
-        >
-          <div className="space-y-6">
-            <div className="space-y-4">
-              {cart.items.map((item) => (
-                <CartItemComponent
-                  item={item}
-                  key={`${item.product.productId}:${item.product.variantId}`}
-                />
-              ))}
-            </div>
+        <AnimatePresence mode="wait">
+          <m.div
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+          >
+            <div className="space-y-6">
+              <div className="space-y-4">
+                {cart.items.map((item) => (
+                  <CartItemComponent
+                    item={item}
+                    key={`${item.product.productId}:${item.product.variantId}`}
+                  />
+                ))}
+              </div>
 
-            <div className="space-y-3 rounded-md border bg-card p-4">
-              <h3 className="font-medium">Resumen del pedido</h3>
+              <div className="space-y-3 rounded-md border bg-card p-4">
+                <h3 className="font-medium">Resumen del pedido</h3>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
 
-                  <span>
-                    <Currency currency="COP" value={total} />
-                  </span>
-                </div>
+                    <span>
+                      <Currency currency="COP" value={total} />
+                    </span>
+                  </div>
 
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Envio</span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Envio</span>
 
-                  <span>
-                    <Currency currency="COP" value={5000} /> -{' '}
-                    <Currency currency="COP" value={15_000} />
-                  </span>
-                </div>
+                    <span>
+                      <Currency currency="COP" value={5000} /> -{' '}
+                      <Currency currency="COP" value={15_000} />
+                    </span>
+                  </div>
 
-                <div className="mt-2 flex justify-between border-t pt-2 font-medium">
-                  <span>Total</span>
-                  <span>
-                    <Currency currency="COP" value={total} />
-                  </span>
-                </div>
+                  <div className="mt-2 flex justify-between border-t pt-2 font-medium">
+                    <span>Total</span>
+                    <span>
+                      <Currency currency="COP" value={total} />
+                    </span>
+                  </div>
 
-                <div>
-                  <small className="text-muted-foreground text-xs">
-                    El costo del envio es cancelado al momento de la entrega de
-                    los productos.
-                  </small>
+                  <div>
+                    <small className="text-muted-foreground text-xs">
+                      El costo del envio es cancelado al momento de la entrega
+                      de los productos.
+                    </small>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              <Button asChild className="w-full" size="lg">
-                <Link to="/checkout">Continuar con el pago</Link>
-              </Button>
+              <div className="space-y-3">
+                <Button asChild className="w-full" size="lg">
+                  <Link to="/checkout">Continuar con el pago</Link>
+                </Button>
 
-              <Button asChild className="w-full" variant="secondary">
-                <Link to="/">Seguir comprando</Link>
-              </Button>
+                <Button asChild className="w-full" variant="secondary">
+                  <Link to="/">Seguir comprando</Link>
+                </Button>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    </DefaultPageLayout>
+          </m.div>
+        </AnimatePresence>
+      </DefaultPageLayout>
+    </LazyMotion>
   )
 }
