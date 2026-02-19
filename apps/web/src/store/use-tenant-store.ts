@@ -60,6 +60,3 @@ export const useTenantStore = create<TenantStore>()(
     },
   ),
 )
-
-export const useTenantStoreActions = () =>
-  useTenantStore((state) => state.actions)
