@@ -20,7 +20,7 @@ import { useStates } from '@cetus/web/features/states/hooks/use-state'
 import { useStateCities } from '@cetus/web/features/states/hooks/use-state-cities'
 import { LocationUpdate01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 type Props = {
   onSelectCity: (cityId: string) => void
@@ -49,15 +49,16 @@ export function UpdateSaleLocationDialog({ onSelectCity }: Props) {
     }
   }
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
       setCurrentState(undefined)
       setSelectedCity(undefined)
     }
-  }, [open])
+    setOpen(isOpen)
+  }
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>
         <Button size="xs" type="button" variant="secondary">
           <HugeiconsIcon icon={LocationUpdate01Icon} />
