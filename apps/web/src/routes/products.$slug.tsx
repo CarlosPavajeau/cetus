@@ -284,7 +284,7 @@ function ProductDetailsPage() {
   )
 }
 
-export function ProductDisplaySkeleton() {
+function ProductDisplaySkeleton() {
   return (
     <div className="container mx-auto min-h-screen max-w-7xl">
       <div className="px-4">
