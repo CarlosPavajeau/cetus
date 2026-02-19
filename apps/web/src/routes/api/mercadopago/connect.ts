@@ -2,11 +2,10 @@ import { api } from '@cetus/api-client'
 import { authClient } from '@cetus/auth/client'
 import { env } from '@cetus/env/server'
 import { getSession } from '@cetus/web/functions/get-session'
-import { mercadopago } from '@cetus/web/functions/mercadopago'
 import { setActiveOrg } from '@cetus/web/functions/organizations'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { getRequestHeaders } from '@tanstack/react-start/server'
-import { OAuth } from 'mercadopago'
+import MercadoPagoConfig, { OAuth } from 'mercadopago'
 
 export const Route = createFileRoute('/api/mercadopago/connect')({
   server: {
@@ -59,6 +58,9 @@ export const Route = createFileRoute('/api/mercadopago/connect')({
           })
         }
 
+        const mercadopago = new MercadoPagoConfig({
+          accessToken: env.MP_ACCESS_TOKEN,
+        })
         const oauth = new OAuth(mercadopago)
         const credentials = await oauth.create({
           body: {
