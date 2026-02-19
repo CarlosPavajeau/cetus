@@ -51,7 +51,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { type } from 'arktype'
 import { AlertTriangleIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -73,6 +73,11 @@ type NewPaymentMethod = (typeof UpdateStatusSchema.infer)['paymentMethod']
 type ChecklistItem = {
   id: string
   label: string | ReactNode
+}
+
+type ChecklistChangeState = {
+  hasFailed: boolean
+  allChecked: boolean
 }
 
 function getChecklistItems(
@@ -121,6 +126,16 @@ function getChecklistItems(
   return []
 }
 
+function getToggleValue(
+  isTouched: boolean,
+  isChecked: boolean,
+): 'yes' | 'no' | undefined {
+  if (!isTouched) {
+    return undefined
+  }
+  return isChecked ? 'yes' : 'no'
+}
+
 function getPaymentVerificationMessage(paymentMethod: string | undefined) {
   if (paymentMethod === 'nequi') {
     return 'Abre tu app de Nequi y verifica la transferencia:'
@@ -133,19 +148,103 @@ function getPaymentVerificationMessage(paymentMethod: string | undefined) {
   return ''
 }
 
-type Props = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  order: Order
-  newStatus: OrderStatus | null
+type PaymentVerificationChecklistProps = {
+  items: ChecklistItem[]
+  selectedPaymentMethod: string | undefined
+  onStateChange: (state: ChecklistChangeState) => void
 }
 
-export function UpdateOrderStatusDialog({
-  onOpenChange,
-  open,
+function PaymentVerificationChecklist({
+  items,
+  selectedPaymentMethod,
+  onStateChange,
+}: PaymentVerificationChecklistProps) {
+  const [checklistState, setChecklistState] = useState<Record<string, boolean>>(
+    {},
+  )
+  const [touchedItems, setTouchedItems] = useState<Set<string>>(new Set())
+
+  const hasFailed = items.some(
+    (item) => touchedItems.has(item.id) && !checklistState[item.id],
+  )
+
+  const handleToggle = (itemId: string, value: string) => {
+    const newState = { ...checklistState, [itemId]: value === 'yes' }
+    const newTouched = new Set([...touchedItems, itemId])
+
+    setChecklistState(newState)
+    setTouchedItems(newTouched)
+
+    onStateChange({
+      hasFailed: items.some(
+        (item) => newTouched.has(item.id) && !newState[item.id],
+      ),
+      allChecked: items.length > 0 && items.every((item) => newState[item.id]),
+    })
+  }
+
+  return (
+    <FieldSet>
+      <FieldLegend variant="label">Verificación de pago</FieldLegend>
+      <FieldDescription>
+        {getPaymentVerificationMessage(selectedPaymentMethod)}
+      </FieldDescription>
+
+      <FieldGroup className="gap-3">
+        {items.map((item) => (
+          <Field key={item.id} orientation="horizontal">
+            <FieldLabel className="font-normal" htmlFor={item.id}>
+              {item.label}
+            </FieldLabel>
+
+            <ToggleGroup
+              id={item.id}
+              onValueChange={(value) => handleToggle(item.id, value)}
+              size="sm"
+              type="single"
+              value={getToggleValue(
+                touchedItems.has(item.id),
+                checklistState[item.id] ?? false,
+              )}
+              variant="outline"
+            >
+              <ToggleGroupItem aria-label="si" value="yes">
+                Si
+              </ToggleGroupItem>
+              <ToggleGroupItem aria-label="no" value="no">
+                No
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </Field>
+        ))}
+      </FieldGroup>
+
+      {hasFailed && (
+        <Alert variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>Posible fraude detectado</AlertTitle>
+          <AlertDescription>
+            Uno o más items de verificación no coinciden.
+          </AlertDescription>
+        </Alert>
+      )}
+    </FieldSet>
+  )
+}
+
+type OrderStatusFormProps = {
+  order: Order
+  newStatus: OrderStatus | null
+  onOpenChange: (open: boolean) => void
+  isMobile: boolean
+}
+
+function OrderStatusForm({
   order,
   newStatus,
-}: Readonly<Props>) {
+  onOpenChange,
+  isMobile,
+}: OrderStatusFormProps) {
   const queryClient = useQueryClient()
   const form = useForm({
     resolver: arktypeResolver(UpdateStatusSchema),
@@ -157,69 +256,50 @@ export function UpdateOrderStatusDialog({
     },
   })
 
-  const [checklistState, setChecklistState] = useState<Record<string, boolean>>(
-    {},
-  )
-  const [touchedItems, setTouchedItems] = useState<Set<string>>(new Set())
+  const [checklistStatus, setChecklistStatus] = useState<
+    'idle' | 'failed' | 'allChecked'
+  >('idle')
+  const hasFailed = checklistStatus === 'failed'
+  const allChecked = checklistStatus === 'allChecked'
 
   const selectedPaymentMethod = form.watch('paymentMethod')
   const checklistItems =
     newStatus === 'payment_confirmed'
       ? getChecklistItems(selectedPaymentMethod, order)
       : []
-  const allChecked =
-    checklistItems.length > 0 &&
-    checklistItems.every((item) => checklistState[item.id])
-  const hasFailed = checklistItems.some(
-    (item) => touchedItems.has(item.id) && !checklistState[item.id],
-  )
 
-  useEffect(() => {
-    if (hasFailed) {
+  const handleChecklistChange = ({
+    hasFailed: failed,
+    allChecked: checked,
+  }: ChecklistChangeState) => {
+    if (failed) {
+      setChecklistStatus('failed')
       form.setValue('newStatus', 'canceled')
       form.setValue('notes', 'No se pudo verificar el pago')
       form.setValue('paymentStatus', 'rejected')
-    } else if (allChecked) {
+    } else if (checked) {
+      setChecklistStatus('allChecked')
       form.setValue('newStatus', 'payment_confirmed')
       form.setValue('notes', 'Pago verificado correctamente')
       form.setValue('paymentStatus', 'verified')
-    } else if (newStatus) {
+    } else {
+      setChecklistStatus('idle')
       form.setValue('newStatus', newStatus as unknown as NewStatus)
       form.setValue('notes', '')
       form.setValue('paymentStatus', undefined)
     }
-  }, [hasFailed, allChecked, form.setValue, newStatus])
+  }
 
-  useEffect(() => {
-    const items =
-      newStatus === 'payment_confirmed'
-        ? getChecklistItems(selectedPaymentMethod, order)
-        : []
-
-    // Only reset if the set of items actually changed (different payment method category)
-    setChecklistState((prev) => {
-      const newState: Record<string, boolean> = {}
-      for (const item of items) {
-        newState[item.id] = prev[item.id] ?? false
-      }
-      return newState
-    })
-    setTouchedItems((prev) => {
-      const validIds = new Set(items.map((i) => i.id))
-      return new Set([...prev].filter((id) => validIds.has(id)))
-    })
-  }, [selectedPaymentMethod, order, newStatus])
-
-  useEffect(() => {
-    form.reset({
-      orderId: order.id,
-      newStatus: (newStatus as unknown as NewStatus) ?? undefined,
-      notes: '',
-      paymentMethod: order.paymentMethod as unknown as NewPaymentMethod,
-    })
-    setChecklistState({})
-    setTouchedItems(new Set())
-  }, [newStatus, order, form])
+  const handlePaymentMethodChange = (
+    onChange: (value: string) => void,
+    value: string,
+  ) => {
+    onChange(value)
+    setChecklistStatus('idle')
+    form.setValue('newStatus', newStatus as unknown as NewStatus)
+    form.setValue('notes', '')
+    form.setValue('paymentStatus', undefined)
+  }
 
   const { mutateAsync } = useMutation({
     mutationKey: ['orders', 'status', order.id],
@@ -250,13 +330,11 @@ export function UpdateOrderStatusDialog({
     })
   })
 
-  const isMobile = useIsMobile()
-
   const title = newStatus
     ? `Cambiar estado a "${orderStatusLabels[newStatus]}"`
     : 'Cambiar estado del pedido'
 
-  const formContent = (
+  const formFields = (
     <FieldGroup>
       {newStatus === 'payment_confirmed' && (
         <>
@@ -266,7 +344,12 @@ export function UpdateOrderStatusDialog({
             render={({ field, fieldState }) => (
               <FieldSet className="w-full max-w-xs">
                 <FieldLegend variant="label">Método de pago</FieldLegend>
-                <RadioGroup onValueChange={field.onChange} value={field.value}>
+                <RadioGroup
+                  onValueChange={(value) =>
+                    handlePaymentMethodChange(field.onChange, value)
+                  }
+                  value={field.value}
+                >
                   {Object.entries(manualPaymentMethodLabels).map(
                     ([key, label]) => (
                       <Field
@@ -291,65 +374,12 @@ export function UpdateOrderStatusDialog({
           />
 
           {checklistItems.length > 0 && (
-            <FieldSet>
-              <FieldLegend variant="label">Verificación de pago</FieldLegend>
-              <FieldDescription>
-                {getPaymentVerificationMessage(selectedPaymentMethod)}
-              </FieldDescription>
-
-              <FieldGroup className="gap-3">
-                {checklistItems.map((item) => (
-                  <Field key={item.id} orientation="horizontal">
-                    <FieldLabel className="font-normal" htmlFor={item.id}>
-                      {item.label}
-                    </FieldLabel>
-
-                    <ToggleGroup
-                      id={item.id}
-                      onValueChange={(value) => {
-                        setChecklistState((prev) => ({
-                          ...prev,
-                          [item.id]: value === 'yes',
-                        }))
-
-                        setTouchedItems((prev) => {
-                          const next = new Set(prev)
-                          next.add(item.id)
-                          return next
-                        })
-                      }}
-                      size="sm"
-                      type="single"
-                      value={
-                        touchedItems.has(item.id)
-                          ? checklistState[item.id]
-                            ? 'yes'
-                            : 'no'
-                          : undefined
-                      }
-                      variant="outline"
-                    >
-                      <ToggleGroupItem aria-label="si" value="yes">
-                        Si
-                      </ToggleGroupItem>
-                      <ToggleGroupItem aria-label="no" value="no">
-                        No
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  </Field>
-                ))}
-              </FieldGroup>
-
-              {hasFailed && (
-                <Alert variant="destructive">
-                  <AlertTriangleIcon />
-                  <AlertTitle>Posible fraude detectado</AlertTitle>
-                  <AlertDescription>
-                    Uno o más items de verificación no coinciden.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </FieldSet>
+            <PaymentVerificationChecklist
+              items={checklistItems}
+              key={selectedPaymentMethod}
+              onStateChange={handleChecklistChange}
+              selectedPaymentMethod={selectedPaymentMethod}
+            />
           )}
         </>
       )}
@@ -369,6 +399,10 @@ export function UpdateOrderStatusDialog({
       />
     </FieldGroup>
   )
+
+  const submitLabel = allChecked
+    ? 'Confirmar pago verificado'
+    : 'Actualizar estado'
 
   const footerActions = (
     <>
@@ -400,7 +434,7 @@ export function UpdateOrderStatusDialog({
           isSubmitting={form.formState.isSubmitting}
           type="submit"
         >
-          {allChecked ? 'Confirmar pago verificado' : 'Actualizar estado'}
+          {submitLabel}
         </SubmitButton>
       )}
     </>
@@ -409,41 +443,70 @@ export function UpdateOrderStatusDialog({
   if (isMobile) {
     return (
       <Form {...form}>
-        <Drawer onOpenChange={onOpenChange} open={open}>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>{title}</DrawerTitle>
-            </DrawerHeader>
+        <DrawerHeader>
+          <DrawerTitle>{title}</DrawerTitle>
+        </DrawerHeader>
 
-            <form
-              className="grid gap-4 overflow-y-auto px-4"
-              onSubmit={onSubmit}
-            >
-              {formContent}
+        <form className="grid gap-4 overflow-y-auto px-4" onSubmit={onSubmit}>
+          {formFields}
 
-              <DrawerFooter className="px-0">{footerActions}</DrawerFooter>
-            </form>
-          </DrawerContent>
-        </Drawer>
+          <DrawerFooter className="px-0">{footerActions}</DrawerFooter>
+        </form>
       </Form>
     )
   }
 
   return (
     <Form {...form}>
-      <Dialog onOpenChange={onOpenChange} open={open}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-          </DialogHeader>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+      </DialogHeader>
 
-          <form className="grid gap-4" onSubmit={onSubmit}>
-            {formContent}
+      <form className="grid gap-4" onSubmit={onSubmit}>
+        {formFields}
 
-            <DialogFooter>{footerActions}</DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        <DialogFooter>{footerActions}</DialogFooter>
+      </form>
     </Form>
+  )
+}
+
+type Props = {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  order: Order
+  newStatus: OrderStatus | null
+}
+
+export function UpdateOrderStatusDialog({
+  onOpenChange,
+  open,
+  order,
+  newStatus,
+}: Readonly<Props>) {
+  const isMobile = useIsMobile()
+
+  const formContent = (
+    <OrderStatusForm
+      isMobile={isMobile}
+      key={`${newStatus}-${order.id}`}
+      newStatus={newStatus}
+      onOpenChange={onOpenChange}
+      order={order}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer onOpenChange={onOpenChange} open={open}>
+        <DrawerContent>{formContent}</DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent>{formContent}</DialogContent>
+    </Dialog>
   )
 }
