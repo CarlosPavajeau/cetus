@@ -6,41 +6,20 @@ import { setupApiClient } from '@cetus/web/lib/api/setup'
 import appCss from '@cetus/web/styles/index.css?url'
 import interLatinFont from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
 import outfitLatinFont from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url'
+import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
   Scripts,
 } from '@tanstack/react-router'
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
-import {
-  type ComponentType,
-  lazy,
-  type ReactNode,
-  Suspense,
-  useEffect,
-  useState,
-} from 'react'
+import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
 import { I18nProvider } from 'react-aria'
-
-// bundle-dynamic-imports: Devtools only loaded in development
-const TanStackRouterDevtools = import.meta.env.PROD
-  ? () => null
-  : lazy(() =>
-      import('@tanstack/react-router-devtools').then((m) => ({
-        default: m.TanStackRouterDevtools,
-      })),
-    )
-
-const ReactQueryDevtools = import.meta.env.PROD
-  ? () => null
-  : lazy(() =>
-      import('@tanstack/react-query-devtools').then((m) => ({
-        default: m.ReactQueryDevtools,
-      })),
-    )
 
 type RouterContext = {
   queryClient: QueryClient
@@ -150,10 +129,23 @@ function RootDocument({ children }: Readonly<RootDocumentProps>) {
       </head>
       <body className="bg-background font-sans antialiased">
         {children}
-        <Suspense>
-          <TanStackRouterDevtools position="top-right" />
-          <ReactQueryDevtools buttonPosition="top-right" />
-        </Suspense>
+        <TanStackDevtools
+          config={{
+            position: 'middle-left',
+          }}
+          plugins={[
+            {
+              name: 'TanStack Query',
+              render: <ReactQueryDevtoolsPanel />,
+              defaultOpen: true,
+            },
+            {
+              name: 'TanStack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+              defaultOpen: false,
+            },
+          ]}
+        />
         <Scripts />
       </body>
     </html>
