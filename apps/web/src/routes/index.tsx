@@ -1,7 +1,6 @@
 import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
@@ -13,6 +12,7 @@ import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { lazy, Suspense, useEffect } from 'react'
+import { LandingPage } from '../components/home/landing-page'
 
 const ApplicationHome = lazy(() =>
   import('@cetus/web/components/home/application-home').then((m) => ({
@@ -236,13 +236,7 @@ function IndexPage() {
   }, [isAppUrl, clearStore])
 
   if (isAppUrl) {
-    return (
-      <DefaultPageLayout>
-        <Suspense fallback={null}>
-          <ApplicationHome />
-        </Suspense>
-      </DefaultPageLayout>
-    )
+    return <LandingPage />
   }
 
   if (!(categories && featuredProducts && popularProducts)) {
@@ -252,10 +246,6 @@ function IndexPage() {
   return (
     <DefaultPageLayout>
       <main className="space-y-8 md:space-y-12">
-        <section aria-labelledby="hero-heading">
-          <HeroSection />
-        </section>
-
         <section
           aria-labelledby="trust-badges-heading"
           style={{
