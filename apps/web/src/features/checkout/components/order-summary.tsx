@@ -1,15 +1,8 @@
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@cetus/ui/collapsible'
-import { Separator } from '@cetus/ui/separator'
 import { Currency } from '@cetus/web/components/currency'
-import { OrderItemView } from '@cetus/web/features/orders/components/order-item-view'
 import type { CartItem } from '@cetus/web/store/cart'
-import { ArrowDown01Icon, PackageIcon } from '@hugeicons/core-free-icons'
+import { SecurityCheckIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { memo, useState } from 'react'
+import { memo } from 'react'
 
 export type OrderSummaryProps = {
   items: CartItem[]
@@ -32,7 +25,15 @@ function DeliveryFeeDisplay({
   }
 
   if (deliveryFee !== undefined) {
-    return <Currency currency="COP" value={deliveryFee} />
+    return (
+      <>
+        {deliveryFee === 0 ? (
+          <span className="text-emerald-500">Envió gratis</span>
+        ) : (
+          <Currency currency="COP" value={deliveryFee} />
+        )}
+      </>
+    )
   }
 
   return <span className="text-muted-foreground italic">Selecciona ciudad</span>
@@ -45,34 +46,44 @@ export const OrderSummary = memo(function OrderSummary({
   isLoadingDeliveryFee,
 }: OrderSummaryProps) {
   return (
-    <div className="space-y-3">
-      <div className="divide-y">
+    <div className="rounded-md border border-border bg-card p-5">
+      <p className="mb-4 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+        Resumen del pedido
+      </p>
+
+      <div className="flex flex-col gap-1.5 text-sm">
         {items.map((item) => (
-          <OrderItemView
-            item={{
-              id: item.product.productId,
-              productName: item.product.name,
-              imageUrl: item.product.imageUrl,
-              optionValues: item.product.optionValues,
-              price: item.product.price,
-              quantity: item.quantity,
-            }}
-            key={item.product.variantId}
-          />
+          <div
+            className="flex items-start justify-between gap-2"
+            key={`${item.product.productId}:${item.product.variantId}`}
+          >
+            <span className="truncate text-muted-foreground">
+              {item.product.name}
+              {item.quantity > 1 && (
+                <span className="ml-1 font-mono text-xs">×{item.quantity}</span>
+              )}
+            </span>
+            <span className="shrink-0 font-medium tabular-nums">
+              <Currency
+                currency="COP"
+                value={item.product.price * item.quantity}
+              />
+            </span>
+          </div>
         ))}
       </div>
 
-      <Separator />
+      <div className="my-4 h-px bg-border" />
 
-      <div className="space-y-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Subtotal</span>
-          <span className="tabular-nums">
+          <span className="font-medium tabular-nums">
             <Currency currency="COP" value={total} />
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Envío</span>
+          <span className="text-muted-foreground">Envió</span>
           <span className="tabular-nums">
             <DeliveryFeeDisplay
               deliveryFee={deliveryFee}
@@ -80,68 +91,25 @@ export const OrderSummary = memo(function OrderSummary({
             />
           </span>
         </div>
+        <div className="my-1 h-px bg-border" />
+        <div className="flex justify-between font-bold text-base">
+          <span>Total</span>
+          <span className="tabular-nums">
+            <Currency currency="COP" value={total + (deliveryFee ?? 0)} />
+          </span>
+        </div>
       </div>
 
-      <Separator />
-
-      <div className="flex justify-between font-bold text-base">
-        <span>Total</span>
-        <span className="tabular-nums">
-          <Currency currency="COP" value={total + (deliveryFee ?? 0)} />
-        </span>
+      <div className="mt-4 flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-3 py-2">
+        <HugeiconsIcon
+          className="size-3 shrink-0 text-muted-foreground"
+          data-icon="inline-start"
+          icon={SecurityCheckIcon}
+        />
+        <p className="font-mono text-[10px] text-muted-foreground">
+          Protegido con cifrado SSL
+        </p>
       </div>
     </div>
   )
 })
-
-export function MobileOrderSummary(props: OrderSummaryProps) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <Collapsible onOpenChange={setOpen} open={open}>
-      <div className="rounded-md border bg-card">
-        <CollapsibleTrigger asChild>
-          <button
-            className="flex w-full items-center justify-between p-4 text-left transition-colors active:bg-accent"
-            type="button"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2">
-                <HugeiconsIcon
-                  className="size-4 text-primary"
-                  icon={PackageIcon}
-                />
-              </div>
-              <div>
-                <span className="font-medium text-sm">Resumen del pedido</span>
-                <p className="text-muted-foreground text-xs">
-                  {props.items.length}{' '}
-                  {props.items.length === 1 ? 'producto' : 'productos'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm tabular-nums">
-                <Currency
-                  currency="COP"
-                  value={props.total + (props.deliveryFee ?? 0)}
-                />
-              </span>
-              <HugeiconsIcon
-                className={`size-4 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-                icon={ArrowDown01Icon}
-              />
-            </div>
-          </button>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent className="overflow-hidden">
-          <div className="border-t px-4 pt-3 pb-4">
-            <OrderSummary {...props} />
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  )
-}

@@ -9,23 +9,21 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@cetus/ui/empty'
-import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { PaymentMethods } from '@cetus/web/features/checkout/components/payment-methods'
-import {
-  MobilePaymentOrderSummary,
-  PaymentOrderSummary,
-} from '@cetus/web/features/checkout/components/payment-order-summary'
+import { PaymentOrderSummary } from '@cetus/web/features/checkout/components/payment-order-summary'
 import { setStoreId } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import {
-  ArrowLeft01Icon,
-  SecurityCheckIcon,
+  ChevronLeft,
+  Payment01Icon,
   Store03Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { FrontStoreHeader } from '../components/front-store/front-store-header'
+import { RedeemCoupon } from '../features/coupons/components/redeem-coupon'
 
 export const Route = createFileRoute('/checkout/$id')({
   loader: async ({ params }) => {
@@ -96,41 +94,60 @@ function RouteComponent() {
   }
 
   return (
-    <DefaultPageLayout>
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 lg:max-w-7xl">
-        <div className="flex items-center gap-3">
-          <Button asChild size="icon" variant="ghost">
-            <Link to="/checkout">
-              <HugeiconsIcon icon={ArrowLeft01Icon} />
-              <span className="sr-only">Volver al checkout</span>
-            </Link>
-          </Button>
+    <div className="min-h-screen bg-background text-foreground">
+      <FrontStoreHeader
+        hasCustomDomain={Boolean(store.customDomain)}
+        store={store}
+      />
+
+      <div className="border-border border-b">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <div>
-            <h1 className="font-heading font-semibold text-xl tracking-tight lg:text-2xl">
-              Pago del pedido
-            </h1>
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <HugeiconsIcon className="size-3.5" icon={SecurityCheckIcon} />
-              <span className="text-xs lg:text-sm">
-                Pago seguro y protegido
-              </span>
-            </div>
+            <p className="mb-1 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+              Checkout
+            </p>
           </div>
+          <Link
+            className="flex items-center gap-1.5 font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
+            to="/cart"
+          >
+            <HugeiconsIcon className="size-3.5" icon={ChevronLeft} />
+            Volver al carrito
+          </Link>
         </div>
+      </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="flex flex-col gap-6">
-            <div className="lg:hidden">
-              <MobilePaymentOrderSummary order={order} />
-            </div>
-
-            <div className="rounded-md border bg-card p-5 lg:p-6">
-              <div className="mb-4">
-                <h2 className="font-medium text-base">Método de pago</h2>
-                <p className="text-muted-foreground text-xs">
-                  Seleccione su método de pago
-                </p>
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
+          <div>
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-2">
+                <HugeiconsIcon
+                  className="size-4 text-muted-foreground"
+                  icon={Payment01Icon}
+                />
+                <h2 className="font-bold text-xl tracking-tight">
+                  Información de pago
+                </h2>
               </div>
+
+              <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                      Enviar a
+                    </p>
+                    <p className="mt-0.5 font-medium text-sm">
+                      {order.customer.name}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {order.address}, {order.city}, {order.state}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <RedeemCoupon order={order} />
 
               <PaymentMethods
                 hasMercadoPago={hasMercadoPago}
@@ -141,19 +158,11 @@ function RouteComponent() {
             </div>
           </div>
 
-          <div className="hidden lg:block">
-            <div className="sticky top-20 rounded-md border bg-card p-6">
-              <div className="mb-2 flex items-center gap-3">
-                <h2 className="font-medium text-base">
-                  Resumen de la orden #{order.orderNumber}
-                </h2>
-              </div>
-
-              <PaymentOrderSummary order={order} />
-            </div>
+          <div className="h-fit lg:sticky lg:top-4">
+            <PaymentOrderSummary order={order} />
           </div>
         </div>
       </div>
-    </DefaultPageLayout>
+    </div>
   )
 }

@@ -39,23 +39,49 @@ export function CustomerInfoFields({
 
   return (
     <FieldGroup>
-      <Controller
-        control={form.control}
-        name="customer.phone"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="customer-phone">Teléfono</FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              id="customer-phone"
-              inputMode="tel"
-              placeholder="300 123 4567"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Controller
+          control={form.control}
+          name="customer.phone"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="customer-phone">Teléfono</FieldLabel>
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                id="customer-phone"
+                inputMode="tel"
+                placeholder="300 123 4567"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={form.control}
+          name="customer.email"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="customer-email">
+                Correo electrónico
+                <span className="ml-1 font-normal text-muted-foreground text-xs">
+                  (opcional)
+                </span>
+              </FieldLabel>
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                autoComplete="email"
+                id="customer-email"
+                inputMode="email"
+                placeholder="correo@ejemplo.com"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+      </div>
 
       <Controller
         control={form.control}
@@ -69,30 +95,6 @@ export function CustomerInfoFields({
               autoComplete="name"
               id="customer-name"
               placeholder="Tu nombre y apellido"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <Controller
-        control={form.control}
-        name="customer.email"
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="customer-email">
-              Correo electrónico
-              <span className="ml-1 font-normal text-muted-foreground text-xs">
-                (opcional)
-              </span>
-            </FieldLabel>
-            <Input
-              {...field}
-              aria-invalid={fieldState.invalid}
-              autoComplete="email"
-              id="customer-email"
-              inputMode="email"
-              placeholder="correo@ejemplo.com"
             />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
