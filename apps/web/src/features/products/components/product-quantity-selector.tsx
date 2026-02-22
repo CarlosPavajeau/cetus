@@ -5,7 +5,12 @@ import type {
 import { Button } from '@cetus/ui/button'
 import { Currency } from '@cetus/web/components/currency'
 import { useCart } from '@cetus/web/store/cart'
-import { Minus, Plus, ShoppingBag } from 'lucide-react'
+import {
+  MinusSignIcon,
+  PlusSignIcon,
+  ShoppingBag01Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import React from 'react'
 import { toast } from 'sonner'
 
@@ -53,7 +58,7 @@ export function ProductQuantitySelector({ product, variant }: Props) {
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
             type="button"
           >
-            <Minus className="size-4" />
+            <HugeiconsIcon className="size-4" icon={MinusSignIcon} />
           </button>
           <span className="flex w-10 items-center justify-center font-medium text-foreground text-sm">
             {quantity}
@@ -64,7 +69,7 @@ export function ProductQuantitySelector({ product, variant }: Props) {
             onClick={() => setQuantity(Math.min(variant.stock, quantity + 1))}
             type="button"
           >
-            <Plus className="size-4" />
+            <HugeiconsIcon className="size-4" icon={PlusSignIcon} />
           </button>
         </div>
 
@@ -74,7 +79,11 @@ export function ProductQuantitySelector({ product, variant }: Props) {
           size="lg"
           type="button"
         >
-          <ShoppingBag className="size-4" />
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="size-4"
+            icon={ShoppingBag01Icon}
+          />
           Agregar al carrito —{' '}
           <Currency currency="COP" value={variant.price * quantity} />
         </Button>
