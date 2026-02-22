@@ -16,7 +16,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@cetus/ui/sheet'
-import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
 import { Skeleton } from '@cetus/web/components/ui/skeleton'
 import { useCategories } from '@cetus/web/features/categories/hooks/use-categories'
@@ -166,33 +165,44 @@ function RouteComponent() {
     </div>
   )
 
-  if (isLoadingCategories || !store) {
-    return (
-      <DefaultPageLayout>
-        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-          <aside className="hidden w-64 shrink-0 lg:block">
-            <div className="sticky top-24 flex flex-col gap-4">
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-px w-full" />
-              <Skeleton className="h-6 w-20" />
-              <div className="flex flex-col gap-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton className="h-10 w-full" key={i} />
-                ))}
-              </div>
-            </div>
-          </aside>
+  if (!store) {
+    return null
+  }
 
-          <div className="flex-1">
-            <div className="mb-6 flex items-center justify-between">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-10 w-24 lg:hidden" />
+  if (isLoadingCategories) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <FrontStoreHeader
+          hasCustomDomain={Boolean(store.customDomain)}
+          store={store}
+        />
+
+        <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+            <aside className="hidden w-64 shrink-0 lg:block">
+              <div className="sticky top-24 flex flex-col gap-4">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-px w-full" />
+                <Skeleton className="h-6 w-20" />
+                <div className="flex flex-col gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton className="h-10 w-full" key={i} />
+                  ))}
+                </div>
+              </div>
+            </aside>
+
+            <div className="flex-1">
+              <div className="mb-6 flex items-center justify-between">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-10 w-24 lg:hidden" />
+              </div>
+              <ProductGridSkeleton />
             </div>
-            <ProductGridSkeleton />
           </div>
-        </div>
-      </DefaultPageLayout>
+        </main>
+      </div>
     )
   }
 
