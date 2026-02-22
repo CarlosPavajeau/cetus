@@ -4,38 +4,11 @@ import { Avatar, AvatarFallback } from '@cetus/ui/avatar'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Progress } from '@cetus/ui/progress'
-import { cn } from '@cetus/web/shared/utils'
 import { formatDistance } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Star, ThumbsUp } from 'lucide-react'
 import React from 'react'
-
-function StarRating({
-  rating,
-  size = 'sm',
-}: {
-  rating: number
-  size?: 'sm' | 'xs'
-}) {
-  return (
-    <div
-      aria-label={`${rating} de 5 estrellas`}
-      className="flex items-center gap-0.5"
-    >
-      {[0, 1, 2, 3, 4].map((_, i) => (
-        <Star
-          className={cn(
-            size === 'sm' ? 'size-4' : 'size-3',
-            i < rating
-              ? 'fill-amber-300 text-amber-300'
-              : 'fill-amber-300/20 text-amber-300/20',
-          )}
-          key={i}
-        />
-      ))}
-    </div>
-  )
-}
+import { StarRating } from './star-rating'
 
 function getReviewTitle(review: ProductReview) {
   switch (review.rating) {
@@ -89,7 +62,7 @@ export function ProductReviews({ product, reviews }: Props) {
             <span className="font-bold text-5xl text-foreground tracking-tight">
               {product.rating}
             </span>
-            <StarRating rating={5} />
+            <StarRating rating={product.rating} size={4} spacing={0.5} />
             <span className="text-muted-foreground text-sm">
               Basado en {product.reviewsCount} reviews
             </span>
@@ -144,7 +117,7 @@ export function ProductReviews({ product, reviews }: Props) {
                     </span>
                   </div>
                 </div>
-                <StarRating rating={review.rating} size="xs" />
+                <StarRating rating={review.rating} size={3} spacing={0.5} />
               </div>
 
               <div className="mt-4">

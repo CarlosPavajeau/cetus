@@ -14,9 +14,8 @@ import {
 } from '@cetus/web/components/ui/breadcrumb'
 import { ProductOptionSelector } from '@cetus/web/features/products/components/product-option-selector'
 import { ProductQuantitySelector } from '@cetus/web/features/products/components/product-quantity-selector'
-import { cn } from '@cetus/web/shared/utils'
 import { Link } from '@tanstack/react-router'
-import { Star } from 'lucide-react'
+import { StarRating } from './star-rating'
 
 type Props = {
   product: ProductForSale
@@ -70,22 +69,8 @@ export function ProductInfo({ product, variant }: Props) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div
-          aria-label={`${product.rating} de 5 estrellas`}
-          className="flex items-center gap-1"
-        >
-          {[1, 2, 3, 4, 5].map((_, i) => (
-            <Star
-              className={cn(
-                'size-4',
-                i < product.rating
-                  ? 'fill-amber-300 text-amber-300'
-                  : 'fill-amber-300/40 text-amber-300/40',
-              )}
-              key={i}
-            />
-          ))}
-        </div>
+        <StarRating maxRating={5} rating={product.rating} size={4} />
+
         <span className="font-medium text-foreground text-sm">
           {product.rating}
         </span>
