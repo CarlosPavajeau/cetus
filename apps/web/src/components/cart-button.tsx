@@ -23,8 +23,8 @@ export const CartButton = () => {
         />
         {count > 0 && (
           <span
-            key={count}
             className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 font-medium text-primary-foreground text-xs motion-safe:animate-cart-pop"
+            key={count}
           >
             {count > 99 ? '99+' : count}
           </span>
