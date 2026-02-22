@@ -1,9 +1,10 @@
 import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
+import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
 import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
-import { HeroSection } from '@cetus/web/components/home/hero-section'
 import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
+import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
 import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
@@ -13,19 +14,7 @@ import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { lazy, Suspense, useEffect } from 'react'
-
-const PopularProductsSection = lazy(() =>
-  import('@cetus/web/components/home/popular-products-section').then((m) => ({
-    default: m.PopularProductsSection,
-  })),
-)
-
-const PromoBannerSection = lazy(() =>
-  import('@cetus/web/components/home/promo-banner-section').then((m) => ({
-    default: m.PromoBannerSection,
-  })),
-)
+import { useEffect } from 'react'
 
 const storeBySlugQuery = (slug: string) =>
   queryOptions({
@@ -255,13 +244,24 @@ function RouteComponent() {
   }
 
   return (
-    <DefaultPageLayout>
-      <main className="space-y-8 md:space-y-12">
-        <section aria-labelledby="store-hero-heading">
-          <h1 className="sr-only" id="store-hero-heading">
-            Bienvenido a {store?.name} - Tu Tienda Online Especializada
-          </h1>
-          <HeroSection />
+    <div className="min-h-screen bg-background text-foreground">
+      <FrontStoreHeader
+        hasCustomDomain={Boolean(store.customDomain)}
+        store={store}
+      />
+      <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
+        <section aria-labelledby="store-featured-products-heading">
+          <h2 className="sr-only" id="store-featured-products-heading">
+            Productos destacados en {store?.name}
+          </h2>
+          <FeaturedProductsSection products={featuredProducts} />
+        </section>
+
+        <section aria-labelledby="store-popular-products-heading">
+          <h2 className="sr-only" id="store-popular-products-heading">
+            Productos más populares en {store?.name}
+          </h2>
+          <PopularProductsSection products={popularProducts} />
         </section>
 
         <section aria-labelledby="store-trust-badges-heading">
@@ -269,43 +269,6 @@ function RouteComponent() {
             Por qué comprar en {store?.name}
           </h2>
           <TrustBadgesSection />
-        </section>
-
-        <section aria-labelledby="store-featured-products-heading">
-          <h2 className="sr-only" id="store-featured-products-heading">
-            Productos Destacados en {store?.name}
-          </h2>
-          <FeaturedProductsSection products={featuredProducts} />
-        </section>
-
-        <section
-          aria-labelledby="store-promo-banner-heading"
-          style={{
-            contentVisibility: 'auto',
-            containIntrinsicSize: 'auto 200px',
-          }}
-        >
-          <h2 className="sr-only" id="store-promo-banner-heading">
-            Ofertas y promociones
-          </h2>
-          <Suspense>
-            <PromoBannerSection />
-          </Suspense>
-        </section>
-
-        <section
-          aria-labelledby="store-popular-products-heading"
-          style={{
-            contentVisibility: 'auto',
-            containIntrinsicSize: 'auto 600px',
-          }}
-        >
-          <h2 className="sr-only" id="store-popular-products-heading">
-            Productos Más Populares en {store?.name}
-          </h2>
-          <Suspense>
-            <PopularProductsSection products={popularProducts} />
-          </Suspense>
         </section>
 
         <div className="sr-only">
@@ -368,6 +331,6 @@ function RouteComponent() {
           </div>
         </div>
       </main>
-    </DefaultPageLayout>
+    </div>
   )
 }
