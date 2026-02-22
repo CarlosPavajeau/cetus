@@ -9,8 +9,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@cetus/ui/empty'
+import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
 import { PaymentMethods } from '@cetus/web/features/checkout/components/payment-methods'
 import { PaymentOrderSummary } from '@cetus/web/features/checkout/components/payment-order-summary'
+import { RedeemCoupon } from '@cetus/web/features/coupons/components/redeem-coupon'
 import { setStoreId } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
@@ -22,8 +24,6 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { FrontStoreHeader } from '../components/front-store/front-store-header'
-import { RedeemCoupon } from '../features/coupons/components/redeem-coupon'
 
 export const Route = createFileRoute('/checkout/$id')({
   loader: async ({ params }) => {
