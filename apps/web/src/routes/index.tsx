@@ -11,38 +11,12 @@ import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { lazy, Suspense, useEffect } from 'react'
+import { useEffect } from 'react'
+import { FrontStoreHeader } from '../components/front-store/front-store-header'
+import { FeaturedProductsSection } from '../components/home/featured-products-section'
 import { LandingPage } from '../components/home/landing-page'
-
-const ApplicationHome = lazy(() =>
-  import('@cetus/web/components/home/application-home').then((m) => ({
-    default: m.ApplicationHome,
-  })),
-)
-
-const PopularProductsSection = lazy(() =>
-  import('@cetus/web/components/home/popular-products-section').then((m) => ({
-    default: m.PopularProductsSection,
-  })),
-)
-
-const FeaturedProductsSection = lazy(() =>
-  import('@cetus/web/components/home/featured-products-section').then((m) => ({
-    default: m.FeaturedProductsSection,
-  })),
-)
-
-const TrustBadgesSection = lazy(() =>
-  import('@cetus/web/components/home/trust-badges-section').then((m) => ({
-    default: m.TrustBadgesSection,
-  })),
-)
-
-const PromoBannerSection = lazy(() =>
-  import('@cetus/web/components/home/promo-banner-section').then((m) => ({
-    default: m.PromoBannerSection,
-  })),
-)
+import { PopularProductsSection } from '../components/home/popular-products-section'
+import { TrustBadgesSection } from '../components/home/trust-badges-section'
 
 const storeByDomainQuery = (domain: string) =>
   queryOptions({
@@ -244,97 +218,93 @@ function IndexPage() {
   }
 
   return (
-    <DefaultPageLayout>
-      <main className="space-y-8 md:space-y-12">
-        <section
-          aria-labelledby="trust-badges-heading"
-          style={{
-            contentVisibility: 'auto',
-            containIntrinsicSize: 'auto 180px',
-          }}
-        >
-          <h2 className="sr-only" id="trust-badges-heading">
+    <div className="min-h-screen bg-background text-foreground">
+      <FrontStoreHeader
+        hasCustomDomain={Boolean(store.customDomain)}
+        store={store}
+      />
+      <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
+        <section aria-labelledby="store-featured-products-heading">
+          <h2 className="sr-only" id="store-featured-products-heading">
+            Productos destacados en {store?.name}
+          </h2>
+          <FeaturedProductsSection products={featuredProducts} />
+        </section>
+
+        <section aria-labelledby="store-popular-products-heading">
+          <h2 className="sr-only" id="store-popular-products-heading">
+            Productos más populares en {store?.name}
+          </h2>
+          <PopularProductsSection products={popularProducts} />
+        </section>
+
+        <section aria-labelledby="store-trust-badges-heading">
+          <h2 className="sr-only" id="store-trust-badges-heading">
             Por qué comprar en {store?.name}
           </h2>
-          <Suspense fallback={null}>
-            <TrustBadgesSection />
-          </Suspense>
-        </section>
-
-        <section
-          aria-labelledby="featured-products-heading"
-          style={{
-            contentVisibility: 'auto',
-            containIntrinsicSize: 'auto 520px',
-          }}
-        >
-          <h2 className="sr-only" id="featured-products-heading">
-            Productos Destacados en {store?.name}
-          </h2>
-          <Suspense fallback={null}>
-            <FeaturedProductsSection products={featuredProducts} />
-          </Suspense>
-        </section>
-
-        <section
-          aria-labelledby="promo-banner-heading"
-          style={{
-            contentVisibility: 'auto',
-            containIntrinsicSize: 'auto 200px',
-          }}
-        >
-          <h2 className="sr-only" id="promo-banner-heading">
-            Ofertas y promociones
-          </h2>
-          <Suspense fallback={null}>
-            <PromoBannerSection />
-          </Suspense>
-        </section>
-
-        <section
-          aria-labelledby="popular-products-heading"
-          style={{
-            contentVisibility: 'auto',
-            containIntrinsicSize: 'auto 600px',
-          }}
-        >
-          <h2 className="sr-only" id="popular-products-heading">
-            Productos Populares en {store?.name}
-          </h2>
-          <Suspense fallback={null}>
-            <PopularProductsSection products={popularProducts} />
-          </Suspense>
+          <TrustBadgesSection />
         </section>
 
         <div className="sr-only">
-          <h1>{store?.name} - Tu Tienda Online de Confianza</h1>
-          <p>
-            Bienvenido a {store?.name}, tu destino para compras online en
-            Colombia. Descubre nuestra amplia selección de productos de alta
-            calidad con
-            {featuredProducts.length > 0
-              ? ` ${featuredProducts.length} productos destacados`
-              : null}
-            {popularProducts.length > 0
-              ? ` y ${popularProducts.length} productos populares`
-              : null}
-            .
-            {categories.length > 0
-              ? ` Explora nuestras categorías: ${categories.map((cat) => cat.name).join(', ')}.`
-              : null}
-            Envío rápido a toda Colombia y los mejores precios garantizados.
-          </p>
+          <div itemScope itemType="https://schema.org/Store">
+            <h1 itemProp="name">{store?.name} - Tienda Online Especializada</h1>
+            <p itemProp="description">
+              Descubre {store?.name}, tu tienda online de confianza
+              especializada en productos de calidad. Ofrecemos una cuidadosa
+              selección de productos con
+              {featuredProducts.length > 0
+                ? ` ${featuredProducts.length} productos destacados`
+                : null}
+              {popularProducts.length > 0
+                ? ` y ${popularProducts.length} productos populares`
+                : null}
+              .
+              {categories.length > 0
+                ? ` Explora nuestras categorías especializadas: ${categories.map((cat) => cat.name).join(', ')}.`
+                : null}
+              Envío rápido a toda Colombia, atención personalizada y garantía de
+              satisfacción.
+            </p>
+            <div>
+              <span itemProp="name">Tienda: {store?.name}</span>
+              <span>Especialidades: {categories.length} categorías</span>
+              <span>Productos destacados: {featuredProducts.length}</span>
+              <span>Productos populares: {popularProducts.length}</span>
+              <span itemProp="addressCountry">País: Colombia</span>
+              <span>Idioma: Español</span>
+              <span itemProp="currenciesAccepted">
+                Moneda: Peso Colombiano (COP)
+              </span>
+              <span>Tipo de tienda: Especializada</span>
+              <span>Plataforma: Cetus E-commerce</span>
+            </div>
+          </div>
+
           <div>
-            <span>Tienda: {store?.name}</span>
-            <span>Categorías disponibles: {categories.length}</span>
-            <span>Productos destacados: {featuredProducts.length}</span>
-            <span>Productos populares: {popularProducts.length}</span>
-            <span>País: Colombia</span>
-            <span>Idioma: Español</span>
-            <span>Moneda: Peso Colombiano (COP)</span>
+            <h3>¿Por qué elegir {store?.name}?</h3>
+            <ul>
+              <li>Productos de alta calidad seleccionados cuidadosamente</li>
+              <li>Envío rápido y seguro a toda Colombia</li>
+              <li>Atención al cliente personalizada</li>
+              <li>Precios competitivos y ofertas exclusivas</li>
+              <li>Garantía de satisfacción en todos nuestros productos</li>
+              <li>Plataforma segura para compras online</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3>Información de la tienda</h3>
+            <p>
+              {store?.name} es una tienda online especializada que forma parte
+              de la plataforma Cetus E-commerce. Nos dedicamos a ofrecer
+              productos de calidad con un servicio excepcional.
+              {categories.length > 0
+                ? ` Nos especializamos en: ${categories.map((cat) => cat.name).join(', ')}.`
+                : null}
+            </p>
           </div>
         </div>
       </main>
-    </DefaultPageLayout>
+    </div>
   )
 }
