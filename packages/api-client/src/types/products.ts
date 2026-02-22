@@ -56,6 +56,7 @@ export type ProductForSale = {
 export type SimpleProductForSale = {
   id: string
   name: string
+  description?: string
   slug: string
   imageUrl: string
   price: number
