@@ -4,9 +4,11 @@ import { Avatar, AvatarFallback } from '@cetus/ui/avatar'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Progress } from '@cetus/ui/progress'
+import { ThumbsUpIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { formatDistance } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Star, ThumbsUp } from 'lucide-react'
+import { Star } from 'lucide-react'
 import React from 'react'
 import { StarRating } from './star-rating'
 
@@ -137,7 +139,7 @@ export function ProductReviews({ product, reviews }: Props) {
                   size="sm"
                   variant="ghost"
                 >
-                  <ThumbsUp className="size-3" />
+                  <HugeiconsIcon className="size-3" icon={ThumbsUpIcon} />
                   Útil ({review.rating})
                 </Button>
               </div>
