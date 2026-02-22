@@ -1,20 +1,14 @@
 import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@cetus/ui/breadcrumb'
-import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { ProductGrid } from '@cetus/web/features/products/components/product-grid'
+import { Badge } from '@cetus/ui/badge'
+import { Button } from '@cetus/ui/button'
+import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
+import { FeaturedProductCard } from '@cetus/web/features/products/components/featured-product-card'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { generateCategorySEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
-import { HomeIcon } from 'lucide-react'
 import { useEffect } from 'react'
 
 const categoryBySlugQuery = (slug: string) =>
@@ -212,38 +206,24 @@ function RouteComponent() {
 
   if (!(category && store && products)) {
     return (
-      <DefaultPageLayout>
-        <main>
-          <h1>Hubo un problema al cargar los datos de la categoría</h1>
-        </main>
-      </DefaultPageLayout>
+      <main>
+        <h1>Hubo un problema al cargar los datos de la categoría</h1>
+      </main>
     )
   }
 
   return (
-    <DefaultPageLayout>
-      <main className="flex flex-col gap-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <FrontStoreHeader
+        hasCustomDomain={Boolean(store.customDomain)}
+        store={store}
+      />
+
+      <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
         <section aria-labelledby="category-hero-heading">
           <h1 className="sr-only" id="category-hero-heading">
-            {category.name} en {store.name} - Productos de Calidad
+            {category.name} en {store.name}
           </h1>
-
-          <nav aria-label="Breadcrumb">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="text-xs">
-                  <Link aria-label="Ir al inicio" to="/">
-                    <HomeIcon aria-hidden="true" size={12} />
-                    <span className="sr-only">Inicio</span>
-                  </Link>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem className="text-xs">
-                  <BreadcrumbPage>{category.name}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </nav>
         </section>
 
         <section aria-labelledby="category-products-heading">
@@ -253,8 +233,30 @@ function RouteComponent() {
               ` - ${products.length} productos disponibles`}
           </h2>
 
-          <div className="flex flex-col items-center gap-4">
-            <ProductGrid products={products} />
+          <div className="mb-16 flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+              <Badge className="w-fit rounded-md" variant="outline">
+                Colección
+              </Badge>
+              <h2 className="text-balance font-bold text-3xl tracking-tight sm:text-4xl">
+                {category.name}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {products.map((product) => (
+                <FeaturedProductCard
+                  key={`${product.id}-${product.variantId}-${product.slug}`}
+                  product={product}
+                />
+              ))}
+            </div>
+
+            <div className="grid">
+              <Button asChild variant="link">
+                <Link to="/products/all">Ver todos los productos</Link>
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -338,6 +340,6 @@ function RouteComponent() {
           </div>
         </div>
       </main>
-    </DefaultPageLayout>
+    </div>
   )
 }
