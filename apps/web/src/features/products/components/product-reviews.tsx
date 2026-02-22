@@ -34,10 +34,12 @@ type Props = {
 
 export function ProductReviews({ product, reviews }: Props) {
   const ratingBreakdown = React.useMemo(() => {
-    const breakdown = Array(5).fill(0)
-    reviews.forEach((review) => {
+    const breakdown = new Array(5).fill(0)
+
+    for (const review of reviews) {
       breakdown[review.rating - 1]++
-    })
+    }
+
     return breakdown.map((count, index) => ({
       stars: index + 1,
       count,
