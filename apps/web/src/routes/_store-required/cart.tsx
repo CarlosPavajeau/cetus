@@ -1,21 +1,23 @@
-import { getImageUrl } from '@cetus/shared/utils/image'
-import { Button } from '@cetus/ui/button'
+import { Button, buttonVariants } from '@cetus/ui/button'
 import { Currency } from '@cetus/web/components/currency'
-import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { PageHeader } from '@cetus/web/components/page-header'
-import { type CartItem, useCart } from '@cetus/web/store/cart'
-import { useTenantStore } from '@cetus/web/store/use-tenant-store'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Image } from '@unpic/react'
-import { AnimatePresence, domAnimation, LazyMotion, m } from 'framer-motion'
+import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
+import { Badge } from '@cetus/web/components/ui/badge'
 import {
-  MinusIcon,
-  PlusIcon,
-  ShoppingBagIcon,
-  ShoppingCartIcon,
-  Trash2Icon,
-} from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@cetus/web/components/ui/empty'
+import { CartItemView } from '@cetus/web/features/cart/components/cart-item-view'
+import { cn } from '@cetus/web/shared/utils'
+import { useCart } from '@cetus/web/store/cart'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
+import { ShoppingBag01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useMemo } from 'react'
 
 export const Route = createFileRoute('/_store-required/cart')({
   component: CartPage,
@@ -27,128 +29,39 @@ function EmptyCart() {
   const hasCustomDomain = Boolean(store?.customDomain)
 
   return (
-    <m.div
-      animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center py-12 text-center"
-      initial={{ opacity: 0 }}
-    >
-      <div className="mb-4 rounded-full bg-muted p-6">
-        <ShoppingBagIcon className="text-muted-foreground" size={32} />
-      </div>
-      <h2 className="mb-2 font-semibold text-2xl">Tu carrito está vacío</h2>
-      <p className="mb-6 max-w-md text-muted-foreground">
-        Parece que aún no has agregado productos a tu carrito. Explora nuestra
-        tienda para encontrar lo que necesitas.
-      </p>
-      <Button asChild size="lg">
-        <Link
-          className="flex items-center gap-2"
-          params={{
-            store: store?.slug,
-          }}
-          to={hasStore && !hasCustomDomain ? '/$store' : '/'}
-        >
-          <ShoppingCartIcon className="mr-2" />
-          Explorar productos
-        </Link>
-      </Button>
-    </m.div>
-  )
-}
-
-type CartItemProps = {
-  item: CartItem
-}
-
-function CartItemComponent({ item }: Readonly<CartItemProps>) {
-  const cart = useCart()
-
-  const handleRemoveItem = useCallback(() => {
-    cart.remove(item.product)
-  }, [cart, item.product])
-
-  const handleIncrement = useCallback(() => {
-    cart.add(item.product)
-  }, [cart, item.product])
-
-  const handleDecrement = useCallback(() => {
-    cart.reduce(item.product)
-  }, [cart, item.product])
-
-  return (
-    <div className="overflow-hidden rounded-lg border bg-card">
-      <div className="flex p-3">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
-          <Image
-            alt={item.product.name}
-            className="object-cover"
-            height={80}
-            layout="constrained"
-            objectFit="cover"
-            sizes="80px"
-            src={getImageUrl(item.product.imageUrl || '')}
-            width={80}
-          />
-        </div>
-
-        <div className="ml-3 flex flex-1 flex-col">
-          <div className="flex justify-between">
-            <h3 className="line-clamp-1 font-medium text-sm">
-              {item.product.name}
-            </h3>
-
-            <button
-              className="text-muted-foreground hover:text-red-500"
-              onClick={handleRemoveItem}
-              type="button"
+    <div>
+      <Empty className="border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <HugeiconsIcon aria-hidden="true" icon={ShoppingBag01Icon} />
+          </EmptyMedia>
+          <EmptyTitle>Tu carrito está vacío</EmptyTitle>
+          <EmptyDescription>
+            Parece que aún no has agregado productos a tu carrito. Explora
+            nuestra tienda para encontrar lo que necesitas.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild>
+            <Link
+              className="flex items-center gap-2"
+              params={{
+                store: store?.slug,
+              }}
+              to={hasStore && !hasCustomDomain ? '/$store' : '/'}
             >
-              <Trash2Icon className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="mt-1">
-            <div className="flex items-center gap-2">
-              {item.product.optionValues?.map((value) => (
-                <span className="text-muted-foreground text-xs" key={value.id}>
-                  {value.optionTypeName}: {value.value}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-auto flex items-center justify-between">
-            <div className="flex items-center rounded-md border">
-              <button
-                className="p-1 text-muted-foreground"
-                onClick={handleDecrement}
-                type="button"
-              >
-                <MinusIcon className="h-4 w-4" />
-              </button>
-              <span className="px-2 text-sm">{item.quantity}</span>
-              <button
-                className="p-1 text-muted-foreground"
-                onClick={handleIncrement}
-                type="button"
-              >
-                <PlusIcon className="h-4 w-4" />
-              </button>
-            </div>
-
-            <span className="font-medium text-sm">
-              <Currency
-                currency="COP"
-                value={item.product.price * item.quantity}
-              />
-            </span>
-          </div>
-        </div>
-      </div>
+              Explorar productos
+            </Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
     </div>
   )
 }
 
 function CartPage() {
+  const { store } = useTenantStore()
+
   const cart = useCart()
   const isEmpty = cart.count === 0
   const total = useMemo(
@@ -160,87 +73,133 @@ function CartPage() {
     [cart.items],
   )
 
+  if (!store) {
+    return null
+  }
+
   if (isEmpty) {
     return (
-      <LazyMotion features={domAnimation}>
-        <DefaultPageLayout>
+      <div className="min-h-screen bg-background text-foreground">
+        <FrontStoreHeader
+          hasCustomDomain={Boolean(store.customDomain)}
+          store={store}
+        />
+
+        <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
           <EmptyCart />
-        </DefaultPageLayout>
-      </LazyMotion>
+        </main>
+      </div>
     )
   }
 
   return (
-    <LazyMotion features={domAnimation}>
-      <DefaultPageLayout>
-        <PageHeader title="Tu carrito de compras" />
+    <div className="min-h-screen bg-background text-foreground">
+      <FrontStoreHeader
+        hasCustomDomain={Boolean(store.customDomain)}
+        store={store}
+      />
 
-        <AnimatePresence mode="wait">
-          <m.div
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            initial={{ opacity: 0 }}
-          >
-            <div className="space-y-6">
-              <div className="space-y-4">
-                {cart.items.map((item) => (
-                  <CartItemComponent
-                    item={item}
-                    key={`${item.product.productId}:${item.product.variantId}`}
-                  />
-                ))}
-              </div>
+      <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
+        <div className="mb-16 flex flex-col gap-8">
+          <div className="flex flex-col gap-4">
+            <Badge className="w-fit rounded-md" variant="outline">
+              {cart.count} {cart.count > 1 ? 'productos' : 'producto'}
+            </Badge>
+            <h2 className="text-balance font-bold text-3xl tracking-tight sm:text-4xl">
+              Tu carrito de compras
+            </h2>
+          </div>
 
-              <div className="space-y-3 rounded-md border bg-card p-4">
-                <h3 className="font-medium">Resumen del pedido</h3>
+          <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
+            <div className="flex flex-col divide-y divide-border">
+              {cart.items.map((item) => (
+                <CartItemView
+                  item={item}
+                  key={`${item.product.productId}:${item.product.variantId}`}
+                />
+              ))}
+            </div>
 
-                <div className="space-y-2 text-sm">
+            <div className="h-fit lg:sticky lg:top-4">
+              <div className="rounded-md border border-border bg-card p-6">
+                <p className="mb-4 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+                  Resumen del pedido
+                </p>
+
+                <div className="flex flex-col gap-2 text-sm">
+                  {cart.items.map((item) => (
+                    <div
+                      className="flex items-start justify-between gap-3"
+                      key={`${item.product.productId}:${item.product.variantId}`}
+                    >
+                      <span className="truncate text-muted-foreground">
+                        {item.product.name}
+                        {item.quantity > 1 && (
+                          <span className="ml-1 font-mono text-xs">
+                            ×{item.quantity}
+                          </span>
+                        )}
+                      </span>
+                      <span className="shrink-0 font-medium tabular-nums">
+                        <Currency
+                          currency="COP"
+                          value={item.product.price * item.quantity}
+                        />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="my-4 h-px bg-border" />
+
+                <div className="flex flex-col gap-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-
-                    <span>
+                    <span className="font-medium tabular-nums">
                       <Currency currency="COP" value={total} />
                     </span>
                   </div>
-
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Envio</span>
-
-                    <span>
-                      <Currency currency="COP" value={5000} /> -{' '}
-                      <Currency currency="COP" value={15_000} />
+                    <span className="text-muted-foreground">Envío</span>
+                    <span className="text-muted-foreground italic tabular-nums">
+                      Por calcular
                     </span>
                   </div>
-
-                  <div className="mt-2 flex justify-between border-t pt-2 font-medium">
+                  <div className="my-1 h-px bg-border" />
+                  <div className="flex justify-between font-bold text-base">
                     <span>Total</span>
-                    <span>
+                    <span className="tabular-nums">
                       <Currency currency="COP" value={total} />
                     </span>
-                  </div>
-
-                  <div>
-                    <small className="text-muted-foreground text-xs">
-                      El costo del envio es cancelado al momento de la entrega
-                      de los productos.
-                    </small>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <Button asChild className="w-full" size="lg">
-                  <Link to="/checkout">Continuar con el pago</Link>
-                </Button>
+                <Link
+                  className={cn(
+                    buttonVariants(),
+                    'mt-5 h-10 w-full font-semibold text-sm',
+                  )}
+                  to="/checkout"
+                >
+                  Continuar con la compra
+                </Link>
 
-                <Button asChild className="w-full" variant="secondary">
-                  <Link to="/">Seguir comprando</Link>
-                </Button>
+                <p className="mt-3 text-center text-muted-foreground text-xs">
+                  El costo del envio es cancelado al momento de la entrega de
+                  los productos.
+                </p>
+
+                <Link
+                  className="mt-3 block text-center font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
+                  to="/products/all"
+                >
+                  ← Seguir comprando
+                </Link>
               </div>
             </div>
-          </m.div>
-        </AnimatePresence>
-      </DefaultPageLayout>
-    </LazyMotion>
+          </div>
+        </div>
+      </main>
+    </div>
   )
 }
