@@ -77,7 +77,7 @@ export type CreateTransactionRequest = {
   acceptance_token: string
   amount_in_cents: number
   currency: 'COP'
-  signature: string
+  signature?: string
   customer_email: string
   payment_method: TransactionPaymentMethod
   redirect_url: string

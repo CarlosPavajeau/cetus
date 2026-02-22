@@ -75,5 +75,10 @@ export const ordersApi = {
 
     create: (orderId: string) =>
       anonymousClient.post<string>(`/orders/${orderId}/payments`),
+
+    generateWompiIntegritySignature: (orderId: string) =>
+      anonymousClient.get<string>(
+        `/orders/${orderId}/payment-providers/wompi/integrity-signature`,
+      ),
   },
 }

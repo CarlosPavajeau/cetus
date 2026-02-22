@@ -1,9 +1,9 @@
+import { api } from '@cetus/api-client'
 import type { Order } from '@cetus/api-client/types/orders'
 import { wompi } from '@cetus/integrations-wompi'
 import type { CreateTransactionRequest } from '@cetus/integrations-wompi/types'
 import type { paymentSchema } from '@cetus/schemas/payment.schema'
 import { valueToCents } from '@cetus/web/shared/currency'
-import { useGenerateIntegritySignature } from '@cetus/web/shared/wompi'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 
@@ -34,23 +34,18 @@ async function waitForPaymentUrl(transactionId: string) {
 
 type PaymentValues = typeof paymentSchema.infer
 
-export const usePaymentSignature = (order: Order, integritySecret: string) => {
-  const amount = valueToCents(order.total)
-  const reference = order.id
-
-  return useGenerateIntegritySignature(reference, amount, integritySecret)
-}
-
-export const useCreateTransaction = (order: Order, integritySecret: string) => {
-  const { signature } = usePaymentSignature(order, integritySecret)
+export const useCreateTransaction = (order: Order) => {
   const redirect = `${window.location.origin}/orders/${order.id}/confirmation`
 
   const createPaymentTransaction = async (values: PaymentValues) => {
+    const integritySignature =
+      await api.orders.payments.generateWompiIntegritySignature(order.id)
+
     const baseTransactionRequest = {
       acceptance_token: values.acceptance_token,
       amount_in_cents: valueToCents(order.total),
       currency: 'COP',
-      signature: signature ?? '',
+      signature: integritySignature,
       customer_email: order.customer.email,
       redirect_url: redirect,
       reference: order.id,
