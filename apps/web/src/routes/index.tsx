@@ -1,7 +1,12 @@
 import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
-import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
+import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
+import { FrontStoreSkeleton } from '@cetus/web/components/front-store/front-store-skeleton'
+import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
+import { LandingPage } from '@cetus/web/components/home/landing-page'
+import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
+import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { getServerhost } from '@cetus/web/functions/get-host'
@@ -12,11 +17,6 @@ import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { FrontStoreHeader } from '../components/front-store/front-store-header'
-import { FeaturedProductsSection } from '../components/home/featured-products-section'
-import { LandingPage } from '../components/home/landing-page'
-import { PopularProductsSection } from '../components/home/popular-products-section'
-import { TrustBadgesSection } from '../components/home/trust-badges-section'
 
 const storeByDomainQuery = (domain: string) =>
   queryOptions({
@@ -186,7 +186,7 @@ export const Route = createFileRoute('/')({
     }
   },
   component: IndexPage,
-  pendingComponent: HomeSkeleton,
+  pendingComponent: FrontStoreSkeleton,
 })
 
 function IndexPage() {

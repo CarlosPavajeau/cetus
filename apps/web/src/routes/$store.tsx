@@ -2,8 +2,8 @@ import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
+import { FrontStoreSkeleton } from '@cetus/web/components/front-store/front-store-skeleton'
 import { FeaturedProductsSection } from '@cetus/web/components/home/featured-products-section'
-import { HomeSkeleton } from '@cetus/web/components/home/home-sekeleton'
 import { PopularProductsSection } from '@cetus/web/components/home/popular-products-section'
 import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-section'
 import { PageHeader } from '@cetus/web/components/page-header'
@@ -223,7 +223,7 @@ export const Route = createFileRoute('/$store')({
     }
   },
   component: RouteComponent,
-  pendingComponent: HomeSkeleton,
+  pendingComponent: FrontStoreSkeleton,
 })
 
 function RouteComponent() {
