@@ -21,6 +21,7 @@ export function FeaturedProductCard({ product }: Readonly<Props>) {
     <Link
       className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors"
       params={{ slug: product.slug }}
+      preload="intent"
       search={{ variant: product.variantId }}
       to="/products/$slug"
     >
