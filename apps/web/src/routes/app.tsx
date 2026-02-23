@@ -20,7 +20,7 @@ const storeByExternalIdQuery = (id: string) =>
   })
 
 export const Route = createFileRoute('/app')({
-  beforeLoad: async ({ context }) => {
+  beforeLoad: async () => {
     const session = await getSession()
 
     if (!session) {
@@ -28,8 +28,6 @@ export const Route = createFileRoute('/app')({
         to: '/sign-in',
       })
     }
-
-    setupApiClient()
 
     let organizationId = session.session.activeOrganizationId
     if (!organizationId) {
@@ -42,6 +40,16 @@ export const Route = createFileRoute('/app')({
 
       organizationId = activeOrg.id
     }
+
+    return {
+      session,
+      organizationId,
+    }
+  },
+  loader: async ({ context }) => {
+    setupApiClient()
+
+    const { session, organizationId } = context
 
     const store = await context.queryClient.ensureQueryData(
       storeByExternalIdQuery(organizationId),
@@ -72,6 +80,10 @@ function RouteComponent() {
   useEffect(() => {
     actions.setStore(store)
   }, [store, actions])
+
+  useEffect(() => {
+    setupApiClient()
+  }, [])
 
   return (
     <SidebarProvider>
