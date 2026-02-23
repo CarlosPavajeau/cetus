@@ -6,8 +6,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@cetus/ui/dropdown-menu'
+import { useTheme } from '@cetus/web/hooks/use-theme'
 import { MonitorIcon, MoonIcon, SunIcon } from 'lucide-react'
-import { useTheme } from 'next-themes'
 
 export function ThemeSwitch() {
   const { setTheme } = useTheme()

@@ -1,11 +1,11 @@
 import { env } from '@cetus/env/client'
 import { Toaster } from '@cetus/ui/sonner'
 import { TooltipProvider } from '@cetus/ui/tooltip'
-import { NotFound } from '@cetus/web/components/not-found'
-import { setupApiClient } from '@cetus/web/lib/api/setup'
+import { ThemeProvider } from '@cetus/web/hooks/use-theme'
 import appCss from '@cetus/web/styles/index.css?url'
 import interLatinFont from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
 import outfitLatinFont from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url'
+import { PostHogProvider } from '@posthog/react'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
@@ -16,9 +16,7 @@ import {
   Scripts,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { ThemeProvider } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
-import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
 import { I18nProvider } from 'react-aria'
 
 type RouterContext = {
@@ -56,79 +54,42 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { rel: 'stylesheet', href: appCss },
     ],
   }),
-  notFoundComponent: () => <NotFound />,
-  component: RootComponent,
+  component: RootDocument,
 })
 
 const postHogKey = env.VITE_POSTHOG_KEY
 const postHogOptions = {
   api_host: env.VITE_POSTHOG_HOST,
-}
+  defaults: '2026-01-30',
+} as const
 
-// bundle-defer-third-party: Defer analytics loading until after first paint
-function DeferredAnalytics({ children }: { children: ReactNode }) {
-  const [Provider, setProvider] = useState<ComponentType<{
-    apiKey: string
-    options: Record<string, string>
-    children: ReactNode
-  }> | null>(null)
-
-  useEffect(() => {
-    if (!postHogKey) {
-      return
-    }
-
-    import('posthog-js/react').then((mod) => {
-      setProvider(() => mod.PostHogProvider)
-    })
-  }, [])
-
-  if (!Provider) {
-    return <>{children}</>
-  }
-
+function RootDocument() {
   return (
-    <Provider apiKey={postHogKey} options={postHogOptions}>
-      {children}
-    </Provider>
-  )
-}
-
-function RootComponent() {
-  useEffect(() => {
-    setupApiClient()
-  }, [])
-
-  return (
-    <RootDocument>
-      <NuqsAdapter>
-        <DeferredAnalytics>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <I18nProvider locale="es-CO">
-              <TooltipProvider>
-                <Outlet />
-                <Toaster />
-              </TooltipProvider>
-            </I18nProvider>
-          </ThemeProvider>
-        </DeferredAnalytics>
-      </NuqsAdapter>
-    </RootDocument>
-  )
-}
-
-type RootDocumentProps = {
-  children: ReactNode
-}
-
-function RootDocument({ children }: Readonly<RootDocumentProps>) {
-  return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
+        {/* Anti-flash: set correct theme class before CSS/React hydrate */}
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: intentional anti-flash inline script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('cetus-theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d)}catch(e){}})()`,
+          }}
+        />
         <HeadContent />
       </head>
-      <body className="bg-background font-sans antialiased">
-        {children}
+      <body>
+        <ThemeProvider>
+          <NuqsAdapter>
+            <PostHogProvider apiKey={postHogKey} options={postHogOptions}>
+              <I18nProvider locale="es-CO">
+                <TooltipProvider>
+                  <Outlet />
+                  <Toaster />
+                </TooltipProvider>
+              </I18nProvider>
+            </PostHogProvider>
+          </NuqsAdapter>
+        </ThemeProvider>
+
         <TanStackDevtools
           config={{
             position: 'middle-left',
