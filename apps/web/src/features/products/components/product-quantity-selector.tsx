@@ -50,11 +50,11 @@ export function ProductQuantitySelector({ product, variant }: Props) {
 
   return (
     <div className="flex flex-col gap-3 pt-2">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 items-center rounded-lg border border-border bg-card">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex h-12 items-center self-start rounded-lg border border-border bg-card">
           <button
             aria-label="Decrease quantity"
-            className="flex h-full w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            className="flex h-full w-10 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
             type="button"
           >
@@ -65,7 +65,7 @@ export function ProductQuantitySelector({ product, variant }: Props) {
           </span>
           <button
             aria-label="Increase quantity"
-            className="flex h-full w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            className="flex h-full w-10 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
             onClick={() => setQuantity(Math.min(variant.stock, quantity + 1))}
             type="button"
           >
@@ -74,14 +74,14 @@ export function ProductQuantitySelector({ product, variant }: Props) {
         </div>
 
         <Button
-          className="group h-12 flex-1 rounded-lg px-8 font-semibold text-sm transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+          className="group h-12 w-full cursor-pointer rounded-lg px-4 font-semibold text-sm transition-all sm:w-auto sm:flex-1 sm:px-8 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
           onClick={addToCart}
           size="lg"
           type="button"
         >
           <HugeiconsIcon
             aria-hidden="true"
-            className="size-4"
+            className="size-4 shrink-0"
             icon={ShoppingBag01Icon}
           />
           Agregar al carrito —{' '}

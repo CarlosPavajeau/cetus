@@ -195,12 +195,14 @@ function ProductDetailsPage() {
         store={store}
       />
 
-      <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl overflow-hidden px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
         <section className="pb-8">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
               <ProductImageGallery images={variant.images} />
-              <ProductInfo product={product} variant={variant} />
+              <div className="min-w-0">
+                <ProductInfo product={product} variant={variant} />
+              </div>
             </div>
           </div>
         </section>
