@@ -91,18 +91,18 @@ export function ProductReviews({ product, reviews }: Props) {
         <div className="flex flex-col gap-6">
           {reviews.map((review) => (
             <div
-              className="rounded-xl border border-border bg-card p-6 transition-colors"
+              className="rounded-md border border-border bg-card p-6 transition-colors"
               key={review.id}
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="size-9 border border-border">
+                  <Avatar className="size-9 shrink-0 border border-border">
                     <AvatarFallback className="text-xs">
                       {review.customer.charAt(0).toLocaleUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="font-medium text-foreground text-sm">
                         {review.customer}
                       </span>
