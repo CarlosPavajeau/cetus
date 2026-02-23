@@ -5,7 +5,7 @@ import { getSession } from '@cetus/web/functions/get-session'
 import { setActiveOrg } from '@cetus/web/functions/organizations'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { getRequestHeaders } from '@tanstack/react-start/server'
-import MercadoPagoConfig, { OAuth } from 'mercadopago'
+import { MercadoPagoConfig, OAuth } from 'mercadopago'
 
 export const Route = createFileRoute('/api/mercadopago/connect')({
   server: {
