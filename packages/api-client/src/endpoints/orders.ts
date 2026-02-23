@@ -73,8 +73,10 @@ export const ordersApi = {
     getByOrderId: (orderId: string) =>
       anonymousClient.get<OrderPaymentResponse>(`/orders/${orderId}/payments`),
 
-    create: (orderId: string) =>
-      anonymousClient.post<string>(`/orders/${orderId}/payments`),
+    createMercadoPagoPreference: (orderId: string) =>
+      anonymousClient.post<string>(
+        `/orders/${orderId}/payment-providers/mercado-pago/preference`,
+      ),
 
     generateWompiIntegritySignature: (orderId: string) =>
       anonymousClient.get<string>(

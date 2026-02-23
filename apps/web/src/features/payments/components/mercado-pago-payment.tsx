@@ -19,7 +19,7 @@ type Props = {
 export function MercadoPagoPayment({ order }: Props) {
   const { mutate, isPending } = useMutation({
     mutationKey: ['orders', 'payment', 'create'],
-    mutationFn: api.orders.payments.create,
+    mutationFn: api.orders.payments.createMercadoPagoPreference,
     onSuccess: (paymentUrl) => {
       window.location.href = paymentUrl
     },
