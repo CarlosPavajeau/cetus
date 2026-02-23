@@ -16,7 +16,6 @@ import { generateProductSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { type } from 'arktype'
-import consola from 'consola'
 import { Home } from 'lucide-react'
 import { useEffect } from 'react'
 
@@ -87,8 +86,6 @@ export const Route = createFileRoute('/products/$slug')({
     )
 
     const seoTags = generateSEOTags(seoConfig)
-
-    consola.info('SEO Tags:', seoConfig.title)
 
     return {
       meta: [
