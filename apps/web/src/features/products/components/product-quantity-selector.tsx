@@ -74,7 +74,7 @@ export function ProductQuantitySelector({ product, variant }: Props) {
         </div>
 
         <Button
-          className="group h-12 w-full cursor-pointer rounded-lg px-4 font-semibold text-sm transition-all sm:w-auto sm:flex-1 sm:px-8 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+          className="group h-12 w-full cursor-pointer rounded-lg px-4 font-semibold text-sm transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] sm:w-auto sm:flex-1 sm:px-8"
           onClick={addToCart}
           size="lg"
           type="button"

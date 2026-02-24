@@ -79,10 +79,7 @@ export const Route = createFileRoute('/')({
       const seoTags = generateSEOTags(seoConfig)
 
       return {
-        meta: [
-          { title: seoConfig.title },
-          ...seoTags,
-        ],
+        meta: [{ title: seoConfig.title }, ...seoTags],
         scripts:
           seoConfig.structuredData?.map((data, index) => ({
             type: 'application/ld+json',

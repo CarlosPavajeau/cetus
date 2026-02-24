@@ -397,7 +397,12 @@ export function generateHomepageSEO(
   featuredProducts?: SimpleProductForSale[],
   popularProducts?: SimpleProductForSale[],
   categories?: Category[],
-  store?: { email?: string; phone?: string; address?: string; logoUrl?: string },
+  store?: {
+    email?: string
+    phone?: string
+    address?: string
+    logoUrl?: string
+  },
 ): SEOConfig {
   // Generate optimized homepage title (50-60 chars) — brand + keyword context
   const title = `${storeName} | Tienda Online`.slice(0, 60)
@@ -420,7 +425,8 @@ export function generateHomepageSEO(
   if (categoryNames) {
     description += ` de ${categoryNames}`
   }
-  description += '. Envío a toda Colombia, precios competitivos y compra 100% segura.'
+  description +=
+    '. Envío a toda Colombia, precios competitivos y compra 100% segura.'
 
   // Generate homepage-specific keywords
   const categoryKeywords = categories?.map((cat) => cat.name) || []
