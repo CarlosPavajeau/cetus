@@ -83,45 +83,32 @@ export const Route = createFileRoute('/products/$slug')({
         customerName: review.customer,
         createdAt: review.createdAt,
       })),
+      store,
     )
 
     const seoTags = generateSEOTags(seoConfig)
 
     return {
       meta: [
-        // Essential SEO meta tags
+        { title: seoConfig.title },
         ...seoTags,
-
-        // Page title
-        { title: seoConfig.title, content: seoConfig.title },
-
-        // Additional product-specific meta tags
-        { name: 'product:price:amount', content: variant.price.toString() },
-        { name: 'product:price:currency', content: 'COP' },
+        // Product Open Graph namespace tags (property attribute required)
+        { property: 'product:price:amount', content: variant.price.toString() },
+        { property: 'product:price:currency', content: 'COP' },
         {
-          name: 'product:availability',
+          property: 'product:availability',
           content: variant.stock > 0 ? 'in_stock' : 'out_of_stock',
         },
-        { name: 'product:condition', content: 'new' },
-
-        // Rich snippet meta
-        { name: 'rating', content: product.rating.toString() },
-        {
-          name: 'review_count',
-          content: product.reviewsCount.toString(),
-        },
-
+        { property: 'product:condition', content: 'new' },
         // Mobile optimization
         { name: 'format-detection', content: 'telephone=no' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
-      ].filter((tag) => tag.content), // Remove empty content tags
+      ],
 
       links: [
-        // Canonical URL to prevent duplicate content
         { rel: 'canonical', href: seoConfig.canonicalUrl },
-
-        // Preload main product image for better performance
+        // Preload main product image for LCP
         ...(variant.images?.[0]?.imageUrl
           ? [
               {
@@ -131,23 +118,12 @@ export const Route = createFileRoute('/products/$slug')({
               },
             ]
           : []),
-
-        // Product-specific structured data
-        ...(seoConfig.structuredData
-          ? seoConfig.structuredData.map((data, index) => ({
-              rel: 'structured-data',
-              type: 'application/ld+json',
-              href: `data:application/ld+json,${encodeURIComponent(JSON.stringify(data))}`,
-              key: `structured-data-${index}`,
-            }))
-          : []),
       ],
 
-      // Add structured data scripts
       scripts:
         seoConfig.structuredData?.map((data, index) => ({
           type: 'application/ld+json',
-          children: JSON.stringify(data, null, 2),
+          children: JSON.stringify(data),
           key: `json-ld-${index}`,
         })) || [],
     }

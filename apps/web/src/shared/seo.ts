@@ -21,6 +21,8 @@ export type SEOConfig = {
   ogImage?: string
   ogType?: string
   ogUrl?: string
+  ogLocale?: string
+  ogSiteName?: string
   twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player'
   twitterTitle?: string
   twitterDescription?: string
@@ -40,6 +42,7 @@ export function generateProductSEO(
     customerName: string
     createdAt: string
   }>,
+  store?: { email?: string; phone?: string; address?: string },
 ): SEOConfig {
   const productUrl = `${baseUrl}/products/${product.slug}`
   const mainImage = getImageUrl(
@@ -177,7 +180,11 @@ export function generateProductSEO(
 
   // Generate additional schemas
   const faqSchema = generateProductFAQSchema(product, variant, storeName)
-  const organizationSchema = generateOrganizationSchema(storeName, baseUrl)
+  const organizationSchema = generateOrganizationSchema(storeName, baseUrl, {
+    email: store?.email,
+    phone: store?.phone,
+    address: store?.address,
+  })
 
   return {
     title,
@@ -189,6 +196,8 @@ export function generateProductSEO(
     ogImage: mainImage,
     ogType: 'product',
     ogUrl: productUrl,
+    ogLocale: 'es_CO',
+    ogSiteName: storeName,
     twitterCard: 'summary_large_image',
     twitterTitle: title,
     twitterDescription: description.slice(0, 160),
@@ -253,6 +262,14 @@ export function generateSEOTags(config: SEOConfig) {
 
   if (config.ogUrl) {
     tags.push({ property: 'og:url', content: config.ogUrl })
+  }
+
+  if (config.ogLocale) {
+    tags.push({ property: 'og:locale', content: config.ogLocale })
+  }
+
+  if (config.ogSiteName) {
+    tags.push({ property: 'og:site_name', content: config.ogSiteName })
   }
 
   // Twitter Card tags
@@ -346,16 +363,30 @@ export function generateProductFAQSchema(
 export function generateOrganizationSchema(
   storeName: string,
   baseUrl: string,
+  contact?: { email?: string; phone?: string; address?: string },
 ): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: storeName,
     url: baseUrl,
-    sameAs: [
-      // Add social media links here when available
-      'https://www.instagram.com/teledigital_jya_',
-    ],
+    ...(contact?.email && { email: contact.email }),
+    ...(contact?.phone && {
+      contactPoint: {
+        '@type': 'ContactPoint',
+        telephone: contact.phone,
+        contactType: 'customer service',
+        areaServed: 'CO',
+        availableLanguage: 'Spanish',
+      },
+    }),
+    ...(contact?.address && {
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: contact.address,
+        addressCountry: 'CO',
+      },
+    }),
   }
 }
 
@@ -366,11 +397,12 @@ export function generateHomepageSEO(
   featuredProducts?: SimpleProductForSale[],
   popularProducts?: SimpleProductForSale[],
   categories?: Category[],
+  store?: { email?: string; phone?: string; address?: string; logoUrl?: string },
 ): SEOConfig {
-  // Generate optimized homepage title (recommended 50-60 characters)
-  const title = storeName
+  // Generate optimized homepage title (50-60 chars) — brand + keyword context
+  const title = `${storeName} | Tienda Online`.slice(0, 60)
 
-  // Generate compelling meta description (recommended 150-160 characters)
+  // Generate compelling meta description (150-160 characters)
   const productCount =
     (featuredProducts?.length || 0) + (popularProducts?.length || 0)
   const categoryNames =
@@ -379,16 +411,16 @@ export function generateHomepageSEO(
       .map((cat) => cat.name)
       .join(', ') || ''
 
-  let description = `Descubre ${storeName}, tu tienda online de confianza. `
+  let description = `Bienvenido a ${storeName}. Encuentra `
   if (productCount > 0) {
-    description += `Más de ${productCount} productos`
+    description += `más de ${productCount} productos`
   } else {
-    description += 'Productos'
+    description += 'una cuidadosa selección de productos'
   }
   if (categoryNames) {
-    description += ` en ${categoryNames}`
+    description += ` de ${categoryNames}`
   }
-  description += '. Envío rápido y precios increíbles.'
+  description += '. Envío a toda Colombia, precios competitivos y compra 100% segura.'
 
   // Generate homepage-specific keywords
   const categoryKeywords = categories?.map((cat) => cat.name) || []
@@ -396,11 +428,9 @@ export function generateHomepageSEO(
     storeName,
     'tienda online',
     'comprar en línea',
-    'ecommerce',
-    'productos',
-    'ofertas',
-    'envío gratis',
-    'Colombia',
+    'ecommerce Colombia',
+    'envío a Colombia',
+    'compra segura',
     ...categoryKeywords,
   ].join(', ')
 
@@ -454,8 +484,12 @@ export function generateHomepageSEO(
       }
     : null
 
-  // Create Organization schema
-  const organizationSchema = generateOrganizationSchema(storeName, baseUrl)
+  // Create Organization schema with available store contact info
+  const organizationSchema = generateOrganizationSchema(storeName, baseUrl, {
+    email: store?.email,
+    phone: store?.phone,
+    address: store?.address,
+  })
 
   // Create breadcrumb schema for homepage
   const breadcrumbSchema = {
@@ -521,6 +555,13 @@ export function generateHomepageSEO(
     ...(featuredProductsSchema ? [featuredProductsSchema] : []),
   ]
 
+  // Prefer store logo for homepage OG image, fall back to first featured product
+  const ogImage = store?.logoUrl
+    ? getImageUrl(store.logoUrl)
+    : featuredProducts?.[0]?.imageUrl
+      ? getImageUrl(featuredProducts[0].imageUrl)
+      : undefined
+
   return {
     title,
     description: description.slice(0, 160),
@@ -528,14 +569,86 @@ export function generateHomepageSEO(
     canonicalUrl: baseUrl,
     ogTitle: title,
     ogDescription: description.slice(0, 160),
-    ogImage: featuredProducts?.[0]?.imageUrl || undefined,
+    ogImage,
     ogType: 'website',
     ogUrl: baseUrl,
+    ogLocale: 'es_CO',
+    ogSiteName: storeName,
     twitterCard: 'summary_large_image',
     twitterTitle: title,
     twitterDescription: description.slice(0, 160),
-    twitterImage: featuredProducts?.[0]?.imageUrl || undefined,
+    twitterImage: ogImage,
     structuredData,
+  }
+}
+
+export function generatePlatformSEO(appUrl: string): SEOConfig {
+  const title = 'Cetus | Plataforma de E-commerce para Colombia'
+  const description =
+    'Cetus es la plataforma de e-commerce todo-en-uno para emprendedores y negocios en Colombia. Crea tu tienda online, gestiona productos, pedidos e inventario desde un panel centralizado.'
+  const keywords =
+    'cetus, plataforma ecommerce, tienda online Colombia, crear tienda virtual, gestión de pedidos, inventario online, vender por internet, ecommerce Colombia'
+
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Cetus',
+    url: appUrl,
+    description,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${appUrl}/products?search={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Cetus',
+    url: appUrl,
+    description:
+      'Plataforma de e-commerce todo-en-uno para emprendedores y negocios en Colombia.',
+  }
+
+  const softwareSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Cetus E-commerce',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    description,
+    url: appUrl,
+    featureList: [
+      'Gestión de catálogo de productos',
+      'Inventario en tiempo real',
+      'Gestión de pedidos y envíos',
+      'Múltiples canales de venta',
+      'Reportes y analítica de rentabilidad',
+      'Pagos en línea con Wompi y Mercado Pago',
+    ],
+    applicationSubCategory: 'E-commerce',
+    inLanguage: 'es-CO',
+  }
+
+  return {
+    title,
+    description,
+    keywords,
+    canonicalUrl: appUrl,
+    ogTitle: title,
+    ogDescription: description,
+    ogType: 'website',
+    ogUrl: appUrl,
+    ogLocale: 'es_CO',
+    ogSiteName: 'Cetus',
+    twitterCard: 'summary_large_image',
+    twitterTitle: title,
+    twitterDescription: description,
+    structuredData: [websiteSchema, organizationSchema, softwareSchema],
   }
 }
 
@@ -669,6 +782,10 @@ export function generateCategorySEO(
     categoryFAQSchema,
   ]
 
+  const ogImage = products?.[0]?.imageUrl
+    ? getImageUrl(products[0].imageUrl)
+    : undefined
+
   return {
     title,
     description: description.slice(0, 160),
@@ -676,13 +793,15 @@ export function generateCategorySEO(
     canonicalUrl: categoryUrl,
     ogTitle: title,
     ogDescription: description.slice(0, 160),
-    ogImage: products?.[0]?.imageUrl || undefined,
+    ogImage,
     ogType: 'website',
     ogUrl: categoryUrl,
+    ogLocale: 'es_CO',
+    ogSiteName: storeName,
     twitterCard: 'summary_large_image',
     twitterTitle: title,
     twitterDescription: description.slice(0, 160),
-    twitterImage: products?.[0]?.imageUrl || undefined,
+    twitterImage: ogImage,
     structuredData,
   }
 }

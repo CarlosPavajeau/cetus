@@ -12,7 +12,11 @@ import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { getServerhost } from '@cetus/web/functions/get-host'
 import { setStoreId } from '@cetus/web/functions/store-slug'
 import { setupApiClient } from '@cetus/web/lib/api/setup'
-import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
+import {
+  generateHomepageSEO,
+  generatePlatformSEO,
+  generateSEOTags,
+} from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -68,20 +72,23 @@ export const Route = createFileRoute('/')({
     }
   },
   head: async ({ loaderData }) => {
+    const appUrl = await getAppUrl()
+
     if (!loaderData || loaderData.isAppUrl) {
+      const seoConfig = generatePlatformSEO(appUrl)
+      const seoTags = generateSEOTags(seoConfig)
+
       return {
         meta: [
-          {
-            name: 'description',
-            content:
-              'Cetus es una plataforma moderna de e-commerce para crear y gestionar tu tienda online.',
-          },
-          {
-            name: 'keywords',
-            content:
-              'cetus, ecommerce, plataforma, tienda online, crear tienda',
-          },
+          { title: seoConfig.title },
+          ...seoTags,
         ],
+        scripts:
+          seoConfig.structuredData?.map((data, index) => ({
+            type: 'application/ld+json',
+            children: JSON.stringify(data),
+            key: `json-ld-platform-${index}`,
+          })) || [],
       }
     }
 
@@ -91,92 +98,54 @@ export const Route = createFileRoute('/')({
       return {}
     }
 
-    const appUrl = await getAppUrl()
     const baseUrl =
-      typeof window !== 'undefined' ? window.location.origin : appUrl // fallback URL
+      typeof window !== 'undefined' ? window.location.origin : appUrl
 
-    // Generate comprehensive homepage SEO configuration
     const seoConfig = generateHomepageSEO(
       store.name,
       baseUrl,
       featuredProducts,
       popularProducts,
       categories,
+      store,
     )
 
     const seoTags = generateSEOTags(seoConfig)
 
     return {
       meta: [
-        // Essential SEO meta tags
+        { title: seoConfig.title },
         ...seoTags,
-
-        // Page title
-        { title: seoConfig.title, content: seoConfig.title },
-
-        // Homepage-specific meta tags
+        // Regional signals
         { name: 'geo.region', content: 'CO' },
         { name: 'geo.country', content: 'Colombia' },
         { name: 'language', content: 'es' },
         { name: 'author', content: store.name },
-        { name: 'publisher', content: store.name },
-
-        // Business-specific meta
-        { name: 'category', content: 'E-commerce' },
-        { name: 'coverage', content: 'Colombia' },
-        { name: 'distribution', content: 'Global' },
-        { name: 'rating', content: 'General' },
-
         // Mobile optimization
         { name: 'format-detection', content: 'telephone=no' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
         { name: 'apple-mobile-web-app-title', content: store.name },
-
-        // Additional e-commerce meta
-        {
-          name: 'product-count',
-          content: (
-            (featuredProducts?.length || 0) + (popularProducts?.length || 0)
-          ).toString(),
-        },
-        { name: 'store-type', content: 'online' },
-        { name: 'commerce-engine', content: 'cetus' },
-      ].filter((tag) => tag.content), // Remove empty content tags
+      ],
 
       links: [
-        // Canonical URL
         { rel: 'canonical', href: seoConfig.canonicalUrl },
-
-        // Preload featured product images for better performance
+        // Preload first three featured images for LCP
         ...(featuredProducts?.slice(0, 3).map((product, index) => ({
           rel: 'preload',
           href: getImageUrl(product.imageUrl),
           as: 'image',
           key: `preload-featured-${index}`,
         })) || []),
-
-        // Alternative language versions (if applicable)
         { rel: 'alternate', hrefLang: 'es-CO', href: baseUrl },
         { rel: 'alternate', hrefLang: 'es', href: baseUrl },
-
-        // Sitemap reference
         {
           rel: 'sitemap',
           type: 'application/xml',
           href: `${baseUrl}/sitemap.xml`,
         },
-
-        // RSS feed (if applicable)
-        {
-          rel: 'alternate',
-          type: 'application/rss+xml',
-          title: `${store.name} - Productos`,
-          href: `${baseUrl}/feed.xml`,
-        },
       ],
 
-      // Add structured data scripts
       scripts:
         seoConfig.structuredData?.map((data, index) => ({
           type: 'application/ld+json',

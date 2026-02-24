@@ -73,16 +73,13 @@ export const Route = createFileRoute('/$store')({
   head: ({ loaderData }) => {
     if (!loaderData?.store) {
       return {
-        title: 'Tienda no encontrada',
         meta: [
+          { title: 'Tienda no encontrada' },
           {
             name: 'description',
             content: 'La tienda que buscas no está disponible.',
           },
-          {
-            name: 'robots',
-            content: 'noindex, nofollow',
-          },
+          { name: 'robots', content: 'noindex, nofollow' },
         ],
       }
     }
@@ -93,131 +90,58 @@ export const Route = createFileRoute('/$store')({
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
-        : `${loaderData.appUrl}/${storeSlug}` // Store-specific URL
+        : `${loaderData.appUrl}/${storeSlug}`
 
-    // Generate comprehensive store homepage SEO configuration
     const seoConfig = generateHomepageSEO(
       store.name,
-      baseUrl, // Use store-specific URL
+      baseUrl,
       featuredProducts,
       popularProducts,
       categories,
+      store,
     )
 
-    // Customize title for store-specific page
-    const storeSpecificTitle = `${store.name}`
-
-    // Customize description for store-specific page
-    const storeSpecificDescription = `Descubre ${store.name}, tu tienda online especializada. ${
-      (featuredProducts?.length || 0) + (popularProducts?.length || 0) > 0
-        ? `Más de ${(featuredProducts?.length || 0) + (popularProducts?.length || 0)} productos`
-        : 'Productos exclusivos'
-    }${
-      categories?.length
-        ? ` en ${categories
-            .slice(0, 3)
-            .map((cat) => cat.name)
-            .join(', ')}`
-        : ''
-    }. Envío rápido y garantía.`
-
-    const seoTags = generateSEOTags({
-      ...seoConfig,
-      title: storeSpecificTitle,
-      description: storeSpecificDescription,
-      canonicalUrl: baseUrl,
-      ogTitle: storeSpecificTitle,
-      ogDescription: storeSpecificDescription,
-      ogUrl: baseUrl,
-      twitterTitle: storeSpecificTitle,
-      twitterDescription: storeSpecificDescription,
-    })
+    const seoTags = generateSEOTags(seoConfig)
 
     return {
       meta: [
-        // Essential SEO meta tags
+        { title: seoConfig.title },
         ...seoTags,
-
-        // Page title
-        { title: seoConfig.title, content: seoConfig.title },
-
-        // Store-specific meta tags
-        { name: 'store-name', content: store.name },
-        { name: 'store-slug', content: storeSlug },
+        // Regional signals
         { name: 'geo.region', content: 'CO' },
         { name: 'geo.country', content: 'Colombia' },
         { name: 'language', content: 'es' },
         { name: 'author', content: store.name },
-        { name: 'publisher', content: store.name },
-
-        // Business-specific meta
-        { name: 'category', content: 'E-commerce' },
-        { name: 'coverage', content: 'Colombia' },
-        { name: 'distribution', content: 'Global' },
-        { name: 'rating', content: 'General' },
-
-        // Store branding
-        { name: 'application-name', content: store.name },
-        { name: 'apple-mobile-web-app-title', content: store.name },
-        { name: 'theme-color', content: '#ffffff' },
-
         // Mobile optimization
+        { name: 'application-name', content: store.name },
         { name: 'format-detection', content: 'telephone=no' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
-
-        // Store-specific e-commerce meta
-        {
-          name: 'product-count',
-          content: (
-            (featuredProducts?.length || 0) + (popularProducts?.length || 0)
-          ).toString(),
-        },
-        { name: 'store-type', content: 'specialized' },
-        { name: 'commerce-engine', content: 'cetus' },
-      ].filter((tag) => tag.content), // Remove empty content tags
+        { name: 'apple-mobile-web-app-title', content: store.name },
+      ],
 
       links: [
-        // Canonical URL for store
         { rel: 'canonical', href: baseUrl },
-
-        // Preload featured product images for better performance
+        // Preload first three featured images for LCP
         ...(featuredProducts?.slice(0, 3).map((product, index) => ({
           rel: 'preload',
           href: getImageUrl(product.imageUrl),
           as: 'image',
           key: `preload-store-featured-${index}`,
         })) || []),
-
-        // Alternative language versions
         { rel: 'alternate', hrefLang: 'es-CO', href: baseUrl },
         { rel: 'alternate', hrefLang: 'es', href: baseUrl },
-
-        // Store-specific sitemap
         {
           rel: 'sitemap',
           type: 'application/xml',
           href: `${baseUrl}/sitemap.xml`,
         },
-
-        // Store RSS feed
-        {
-          rel: 'alternate',
-          type: 'application/rss+xml',
-          title: `${store.name} - Productos`,
-          href: `${baseUrl}/feed.xml`,
-        },
-
-        // Favicon and touch icons (store-specific if available)
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
       ],
 
-      // Add structured data scripts with store-specific data
       scripts:
         seoConfig.structuredData?.map((data, index) => ({
           type: 'application/ld+json',
-          children: JSON.stringify(data, null, 2),
+          children: JSON.stringify(data),
           key: `json-ld-store-${index}`,
         })) || [],
     }
