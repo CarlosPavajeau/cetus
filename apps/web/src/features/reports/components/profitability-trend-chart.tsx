@@ -146,18 +146,8 @@ export function ProfitabilityTrendChart({ trend }: Readonly<Props>) {
                 />
               }
             />
-            <Bar
-              dataKey="totalSales"
-              fill="var(--chart-1)"
-              fillOpacity={0.9}
-              radius={[4, 4, 0, 0]}
-            />
-            <Bar
-              dataKey="grossProfit"
-              fill="var(--chart-2)"
-              fillOpacity={0.9}
-              radius={[4, 4, 0, 0]}
-            />
+            <Bar dataKey="totalSales" fill="var(--chart-1)" radius={4} />
+            <Bar dataKey="grossProfit" fill="var(--chart-2)" radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>
