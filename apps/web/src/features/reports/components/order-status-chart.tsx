@@ -78,17 +78,20 @@ export function OrderStatusChart({ orders }: Readonly<Props>) {
         {orders.total > 0 ? (
           <>
             <ChartContainer
-              className="mx-auto aspect-square max-h-62.5"
+              className="mx-auto aspect-square max-h-70"
               config={orderStatusConfig}
             >
-              <PieChart>
+              <PieChart accessibilityLayer>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                 <Pie
+                  cornerRadius={5}
                   data={orderStatusData}
                   dataKey="value"
                   innerRadius={60}
                   nameKey="status"
-                  strokeWidth={5}
+                  paddingAngle={3}
+                  stroke="var(--background)"
+                  strokeWidth={3}
                 >
                   <Label
                     content={({ viewBox }) => {
@@ -101,18 +104,18 @@ export function OrderStatusChart({ orders }: Readonly<Props>) {
                             y={viewBox.cy}
                           >
                             <tspan
-                              className="fill-muted-foreground text-sm"
+                              className="fill-foreground font-bold text-3xl tabular-nums"
                               x={viewBox.cx}
-                              y={(viewBox.cy || 0) - 10}
-                            >
-                              Ventas
-                            </tspan>
-                            <tspan
-                              className="fill-foreground font-medium text-xl"
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) + 15}
+                              y={viewBox.cy}
                             >
                               {numberFormat.format(orders.total)}
+                            </tspan>
+                            <tspan
+                              className="fill-muted-foreground text-xs"
+                              x={viewBox.cx}
+                              y={(viewBox.cy || 0) + 22}
+                            >
+                              Ventas
                             </tspan>
                           </text>
                         )
