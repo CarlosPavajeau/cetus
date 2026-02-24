@@ -18,25 +18,25 @@ export function SecuritySection() {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-md border border-border bg-accent p-3">
+          <div className="rounded-md border border-border bg-muted/30 p-3">
             <p className="text-muted-foreground text-xs">Disponibilidad</p>
             <p className="mt-1 font-semibold text-base text-foreground">
               99.9%
             </p>
           </div>
-          <div className="rounded-md border border-border bg-accent p-3">
+          <div className="rounded-md border border-border bg-muted/30 p-3">
             <p className="text-muted-foreground text-xs">Backups</p>
             <p className="mt-1 font-semibold text-base text-foreground">
               Diarios automaticos
             </p>
           </div>
-          <div className="rounded-md border border-border bg-accent p-3">
+          <div className="rounded-md border border-border bg-muted/30 p-3">
             <p className="text-muted-foreground text-xs">Cifrado</p>
             <p className="mt-1 font-semibold text-base text-foreground">
               En transito y en reposo
             </p>
           </div>
-          <div className="rounded-md border border-border bg-accent p-3">
+          <div className="rounded-md border border-border bg-muted/30 p-3">
             <p className="text-muted-foreground text-xs">Monitoreo</p>
             <p className="mt-1 font-semibold text-base text-foreground">
               Alertas 24/7
