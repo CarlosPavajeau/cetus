@@ -20,9 +20,7 @@ export function ProductImageGallery({ images }: Props) {
           layout="fullWidth"
           priority
           sizes="(min-width: 1024px) 50vw, 100vw"
-          src={getImageUrl(
-            images[selectedImage].imageUrl || 'placeholder.svg',
-          )}
+          src={getImageUrl(images[selectedImage].imageUrl || 'placeholder.svg')}
         />
         <div className="absolute right-4 bottom-4 rounded-md border border-white/10 bg-[#0a0a0a]/80 px-2.5 py-1 text-white text-xs backdrop-blur-sm">
           {selectedImage + 1} / {images.length}
