@@ -39,6 +39,7 @@ export function FeaturedProductCard({
             layout="constrained"
             loading={isLCP ? 'eager' : 'lazy'}
             priority={isLCP}
+            sizes="(min-width: 1024px) calc((min(100vw, 1280px) - 4rem) / 4), (min-width: 640px) calc(50vw - 3rem), calc(100vw - 2rem)"
             src={getImageUrl(product.imageUrl)}
             width={396}
           />
