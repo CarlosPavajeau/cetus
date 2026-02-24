@@ -30,8 +30,10 @@ export function FeaturedProductCard({ product }: Readonly<Props>) {
           <Image
             alt={product.name}
             background="auto"
+            fetchPriority="high"
             height={396}
             layout="constrained"
+            priority
             src={getImageUrl(product.imageUrl)}
             width={396}
           />
