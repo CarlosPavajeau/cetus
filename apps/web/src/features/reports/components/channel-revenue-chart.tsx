@@ -40,6 +40,7 @@ export function ChannelRevenueChart({ byChannel }: Readonly<Props>) {
   const currencyFormat = useNumberFormatter({
     style: 'currency',
     currency: 'COP',
+    notation: 'compact',
   })
 
   const channelChartData = useMemo(
