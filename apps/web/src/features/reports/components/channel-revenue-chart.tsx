@@ -15,7 +15,7 @@ import {
 } from '@cetus/web/components/ui/chart'
 import { useMemo } from 'react'
 import { useNumberFormatter } from 'react-aria'
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, XAxis, YAxis } from 'recharts'
 
 const channelColors = [
   'oklch(0.70 0.17 250)',
@@ -75,20 +75,27 @@ export function ChannelRevenueChart({ byChannel }: Readonly<Props>) {
             config={channelConfig}
           >
             <BarChart
+              accessibilityLayer
+              barCategoryGap="30%"
               data={channelChartData}
               layout="vertical"
               margin={{ left: 0, right: 16 }}
             >
-              <CartesianGrid horizontal={false} />
               <YAxis
                 axisLine={false}
                 dataKey="channel"
                 tickLine={false}
-                tickMargin={8}
+                tickMargin={10}
                 type="category"
                 width={90}
               />
-              <XAxis hide type="number" />
+              <XAxis
+                axisLine={false}
+                hide
+                tickLine={false}
+                tickMargin={10}
+                type="number"
+              />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
@@ -99,11 +106,7 @@ export function ChannelRevenueChart({ byChannel }: Readonly<Props>) {
                   />
                 }
               />
-              <Bar dataKey="revenue" radius={4}>
-                {channelChartData.map((entry) => (
-                  <Cell fill={entry.fill} key={entry.channel} />
-                ))}
-              </Bar>
+              <Bar dataKey="revenue" radius={2} />
             </BarChart>
           </ChartContainer>
         ) : (
