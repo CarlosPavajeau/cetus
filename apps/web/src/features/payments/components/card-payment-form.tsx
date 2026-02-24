@@ -26,11 +26,7 @@ type Props = {
   publicKey: string
 }
 
-export const CardPaymentForm = ({
-  order,
-  publicKey,
-  integritySecret,
-}: Props) => {
+export const CardPaymentForm = ({ order, publicKey }: Props) => {
   const {
     meta,
     getCardNumberProps,
