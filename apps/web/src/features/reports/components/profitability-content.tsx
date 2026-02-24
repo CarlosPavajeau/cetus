@@ -15,18 +15,6 @@ export function ProfitabilityContent({ data }: Readonly<Props>) {
     productsWithoutCost,
   } = data
 
-  const currencyFormat = {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  } satisfies Intl.NumberFormatOptions
-
-  const percentageFormat = {
-    style: 'percent',
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  } satisfies Intl.NumberFormatOptions
-
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
