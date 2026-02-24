@@ -151,7 +151,6 @@ function RouteComponent() {
 
               <PaymentMethods
                 hasMercadoPago={hasMercadoPago}
-                integritySecret={integritySecret}
                 order={order}
                 publicKey={publicKey}
               />
