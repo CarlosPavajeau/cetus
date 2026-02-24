@@ -69,7 +69,11 @@ export function DailySummaryDateSelector({
         <Popover onOpenChange={setCalendarOpen} open={calendarOpen}>
           <PopoverTrigger asChild>
             <Button size="xs" variant={isCustomDate ? 'secondary' : 'outline'}>
-              <HugeiconsIcon data-icon="inline-start" icon={Calendar03Icon} />
+              <HugeiconsIcon
+                data-icon="inline-start"
+                icon={Calendar03Icon}
+                strokeWidth={2}
+              />
               {isCustomDate
                 ? format(selectedDate, 'dd MMM yyyy', { locale: es })
                 : 'Elegir fecha'}
@@ -97,6 +101,7 @@ export function DailySummaryDateSelector({
               <HugeiconsIcon
                 data-icon="inline-start"
                 icon={Refresh01FreeIcons}
+                strokeWidth={2}
               />
               Actualizar
             </Button>
