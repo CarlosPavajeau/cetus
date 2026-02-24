@@ -28,7 +28,7 @@ export function HeroSection({ panelData }: Props) {
         <div className="flex flex-wrap items-center gap-3">
           <Button
             asChild
-            className="h-10 shadow-[0_0_30px_rgba(15,23,42,0.28)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_38px_rgba(15,23,42,0.34)] dark:shadow-[0_0_30px_rgba(255,255,255,0.28)] dark:hover:shadow-[0_0_38px_hsl(255,255,255,0.42)]"
+            className="h-10 transition-all hover:-translate-y-0.5"
           >
             <Link to="/sign-up">
               <span className="text-nowrap">Comenzar gratis</span>
