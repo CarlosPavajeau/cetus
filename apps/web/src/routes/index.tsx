@@ -130,12 +130,13 @@ export const Route = createFileRoute('/')({
 
       links: [
         { rel: 'canonical', href: seoConfig.canonicalUrl },
-        // Preload first three featured images for LCP
-        ...(featuredProducts?.slice(0, 3).map((product, index) => ({
+        // Preload only the first featured image as the LCP candidate
+        ...(featuredProducts?.slice(0, 1).map((product) => ({
           rel: 'preload',
           href: getImageUrl(product.imageUrl),
           as: 'image',
-          key: `preload-featured-${index}`,
+          fetchPriority: 'high',
+          key: 'preload-lcp-featured',
         })) || []),
         { rel: 'alternate', hrefLang: 'es-CO', href: baseUrl },
         { rel: 'alternate', hrefLang: 'es', href: baseUrl },

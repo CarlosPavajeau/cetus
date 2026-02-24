@@ -21,9 +21,10 @@ export function FeaturedProductsSection({ products }: Readonly<Props>) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {products.map((product) => (
+        {products.map((product, index) => (
           <FeaturedProductCard
             key={`${product.id}-${product.variantId}-${product.slug}`}
+            isLCP={index === 0}
             product={product}
           />
         ))}

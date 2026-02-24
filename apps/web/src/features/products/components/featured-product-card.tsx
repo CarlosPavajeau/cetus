@@ -8,9 +8,13 @@ import { ShoppingBag } from 'lucide-react'
 
 type Props = {
   product: SimpleProductForSale
+  isLCP?: boolean
 }
 
-export function FeaturedProductCard({ product }: Readonly<Props>) {
+export function FeaturedProductCard({
+  product,
+  isLCP = false,
+}: Readonly<Props>) {
   const originalPrice = product.compareAtPrice
   const hasDiscount = originalPrice && originalPrice > product.price
   const discountPercentage = hasDiscount
@@ -30,10 +34,11 @@ export function FeaturedProductCard({ product }: Readonly<Props>) {
           <Image
             alt={product.name}
             background="auto"
-            fetchPriority="high"
+            fetchPriority={isLCP ? 'high' : 'auto'}
             height={396}
             layout="constrained"
-            priority
+            loading={isLCP ? 'eager' : 'lazy'}
+            priority={isLCP}
             src={getImageUrl(product.imageUrl)}
             width={396}
           />
