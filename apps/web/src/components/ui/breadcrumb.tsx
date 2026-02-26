@@ -1,17 +1,28 @@
 import { cn } from '@cetus/web/shared/utils'
-import { ChevronRightIcon, MoreHorizontal } from 'lucide-react'
+import {
+  ArrowRight01Icon,
+  MoreHorizontalCircle01Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { Slot } from 'radix-ui'
 import type * as React from 'react'
 
-function Breadcrumb({ ...props }: React.ComponentProps<'nav'>) {
-  return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />
+function Breadcrumb({ className, ...props }: React.ComponentProps<'nav'>) {
+  return (
+    <nav
+      aria-label="breadcrumb"
+      className={cn(className)}
+      data-slot="breadcrumb"
+      {...props}
+    />
+  )
 }
 
 function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
   return (
     <ol
       className={cn(
-        'flex flex-wrap items-center gap-1.5 break-words text-muted-foreground text-sm sm:gap-2.5',
+        'wrap-break-word flex flex-wrap items-center gap-1.5 text-muted-foreground text-sm',
         className,
       )}
       data-slot="breadcrumb-list"
@@ -23,7 +34,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
 function BreadcrumbItem({ className, ...props }: React.ComponentProps<'li'>) {
   return (
     <li
-      className={cn('inline-flex items-center gap-1.5', className)}
+      className={cn('inline-flex items-center gap-1', className)}
       data-slot="breadcrumb-item"
       {...props}
     />
@@ -50,8 +61,6 @@ function BreadcrumbLink({
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<'span'>) {
   return (
-    // biome-ignore lint/a11y/useFocusableInteractive: no needed
-    // biome-ignore lint/a11y/useSemanticElements: no needed
     <span
       aria-current="page"
       aria-disabled="true"
@@ -71,12 +80,12 @@ function BreadcrumbSeparator({
   return (
     <li
       aria-hidden="true"
-      className={className}
+      className={cn('[&>svg]:size-3.5', className)}
       data-slot="breadcrumb-separator"
       role="presentation"
       {...props}
     >
-      {children ?? <ChevronRightIcon size={16} />}
+      {children ?? <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />}
     </li>
   )
 }
@@ -88,12 +97,15 @@ function BreadcrumbEllipsis({
   return (
     <span
       aria-hidden="true"
-      className={cn('flex size-5 items-center justify-center', className)}
+      className={cn(
+        'flex size-5 items-center justify-center [&>svg]:size-4',
+        className,
+      )}
       data-slot="breadcrumb-ellipsis"
       role="presentation"
       {...props}
     >
-      <MoreHorizontal size={16} />
+      <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
       <span className="sr-only">More</span>
     </span>
   )
@@ -101,10 +113,10 @@ function BreadcrumbEllipsis({
 
 export {
   Breadcrumb,
-  BreadcrumbEllipsis,
+  BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,
-  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
+  BreadcrumbEllipsis,
 }
