@@ -46,7 +46,7 @@ import { Route as StoreRequiredCheckoutIndexRouteImport } from './routes/_store-
 import { Route as OrdersOrderIdConfirmationRouteImport } from './routes/orders/$orderId.confirmation'
 import { Route as OnboardingMercadoPagoLinkRouteImport } from './routes/onboarding.mercado-pago.link'
 import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
-import { Route as AppOrdersOrderIdRouteImport } from './routes/app/orders/$orderId'
+import { Route as AppOrdersIdRouteImport } from './routes/app/orders.$id'
 import { Route as AppInventoryAdjustmentRouteImport } from './routes/app/inventory.adjustment'
 import { Route as AppCustomersCustomerIdRouteImport } from './routes/app/customers.$customerId'
 import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
@@ -243,9 +243,9 @@ const AppProductsNewRoute = AppProductsNewRouteImport.update({
   path: '/products/new',
   getParentRoute: () => AppRoute,
 } as any)
-const AppOrdersOrderIdRoute = AppOrdersOrderIdRouteImport.update({
-  id: '/orders/$orderId',
-  path: '/orders/$orderId',
+const AppOrdersIdRoute = AppOrdersIdRouteImport.update({
+  id: '/orders/$id',
+  path: '/orders/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInventoryAdjustmentRoute = AppInventoryAdjustmentRouteImport.update({
@@ -324,7 +324,7 @@ export interface FileRoutesByFullPath {
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
-  '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/app/orders/$id': typeof AppOrdersIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
@@ -370,7 +370,7 @@ export interface FileRoutesByTo {
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
-  '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/app/orders/$id': typeof AppOrdersIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
@@ -419,7 +419,7 @@ export interface FileRoutesById {
   '/app/coupons/new': typeof AppCouponsNewRoute
   '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
-  '/app/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/app/orders/$id': typeof AppOrdersIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
@@ -468,7 +468,7 @@ export interface FileRouteTypes {
     | '/app/coupons/new'
     | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
-    | '/app/orders/$orderId'
+    | '/app/orders/$id'
     | '/app/products/new'
     | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
@@ -514,7 +514,7 @@ export interface FileRouteTypes {
     | '/app/coupons/new'
     | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
-    | '/app/orders/$orderId'
+    | '/app/orders/$id'
     | '/app/products/new'
     | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
@@ -562,7 +562,7 @@ export interface FileRouteTypes {
     | '/app/coupons/new'
     | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
-    | '/app/orders/$orderId'
+    | '/app/orders/$id'
     | '/app/products/new'
     | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
@@ -862,11 +862,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductsNewRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/orders/$orderId': {
-      id: '/app/orders/$orderId'
-      path: '/orders/$orderId'
-      fullPath: '/app/orders/$orderId'
-      preLoaderRoute: typeof AppOrdersOrderIdRouteImport
+    '/app/orders/$id': {
+      id: '/app/orders/$id'
+      path: '/orders/$id'
+      fullPath: '/app/orders/$id'
+      preLoaderRoute: typeof AppOrdersIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/inventory/adjustment': {
@@ -954,7 +954,7 @@ interface AppRouteChildren {
   AppCouponsNewRoute: typeof AppCouponsNewRoute
   AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
   AppInventoryAdjustmentRoute: typeof AppInventoryAdjustmentRoute
-  AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
+  AppOrdersIdRoute: typeof AppOrdersIdRoute
   AppProductsNewRoute: typeof AppProductsNewRoute
   AppCouponsIndexRoute: typeof AppCouponsIndexRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
@@ -976,7 +976,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCouponsNewRoute: AppCouponsNewRoute,
   AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
   AppInventoryAdjustmentRoute: AppInventoryAdjustmentRoute,
-  AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
+  AppOrdersIdRoute: AppOrdersIdRoute,
   AppProductsNewRoute: AppProductsNewRoute,
   AppCouponsIndexRoute: AppCouponsIndexRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,

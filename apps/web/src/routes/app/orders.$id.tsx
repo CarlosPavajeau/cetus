@@ -31,10 +31,6 @@ import { AlertCircleIcon } from 'lucide-react'
 
 const REALTIME_URL = `${env.VITE_API_URL}/realtime/orders`
 
-export const Route = createFileRoute('/app/orders/$orderId')({
-  component: OrderDetailsComponent,
-})
-
 function useRealtimeOrderUpdates(orderId: string) {
   const { connection } = useHub(REALTIME_URL)
   const queryClient = useQueryClient()
@@ -48,11 +44,15 @@ function useRealtimeOrderUpdates(orderId: string) {
   })
 }
 
-function OrderDetailsComponent() {
-  const { orderId } = Route.useParams()
-  const { data: order, isLoading } = useQuery(orderQueries.detail(orderId))
+export const Route = createFileRoute('/app/orders/$id')({
+  component: RouteComponent,
+})
 
-  useRealtimeOrderUpdates(orderId)
+function RouteComponent() {
+  const { id } = Route.useParams()
+  const { data: order, isLoading } = useQuery(orderQueries.detail(id))
+
+  useRealtimeOrderUpdates(id)
 
   if (isLoading) {
     return (
