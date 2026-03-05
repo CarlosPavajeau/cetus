@@ -89,7 +89,7 @@ function RouteComponent() {
                 Orden #{order.orderNumber}
               </h1>
               <Badge
-                className="border-transparent"
+                className="rounded-md border-transparent"
                 style={{
                   backgroundColor: statusColor.replace(')', ' / 0.15)'),
                   color: statusColor,
