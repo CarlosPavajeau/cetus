@@ -1,7 +1,39 @@
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
+import { Button } from '@cetus/ui/button'
+import { Input } from '@cetus/ui/input'
+import { Skeleton } from '@cetus/ui/skeleton'
+import { getApiStatus } from '@cetus/web/functions/get-status'
+import type { StatusResponse } from '@openstatus/react'
+import { useQuery } from '@tanstack/react-query'
+import { useServerFn } from '@tanstack/react-start'
+
+const statusLabels: Record<StatusResponse['status'], string> = {
+  operational: 'Operacional',
+  degraded_performance: 'Desempeño Degradado',
+  partial_outage: 'Corte Parcial',
+  major_outage: 'Corte Mayor',
+  under_maintenance: 'Mantenimiento',
+  unknown: 'Desconocido',
+  incident: 'Incidente',
+}
+
+const statusStyles: Record<StatusResponse['status'], string> = {
+  operational: 'bg-emerald-400',
+  degraded_performance: 'bg-orange-400',
+  partial_outage: 'bg-yellow-400',
+  major_outage: 'bg-red-400',
+  under_maintenance: 'bg-slate-400',
+  unknown: 'bg-gray-400',
+  incident: 'bg-red-400',
+}
 
 export function SiteFooter() {
+  const getPosts = useServerFn(getApiStatus)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['api-status'],
+    queryFn: () => getPosts(),
+  })
+
   return (
     <footer className="border-border border-t bg-card">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
@@ -12,26 +44,32 @@ export function SiteFooter() {
           <p className="text-muted-foreground text-sm">
             Infraestructura SaaS para equipos que venden en multiples canales.
           </p>
-          <output
-            aria-live="polite"
-            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1 text-foreground text-xs"
-          >
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-              <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
-            </span>
-            Estado del sistema: Operativo
-          </output>
+          {isLoading ? (
+            <Skeleton className="h-6.5 w-54.5" />
+          ) : (
+            <a
+              aria-live="polite"
+              className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1 text-foreground text-xs"
+              href="https://cetus.openstatus.dev/"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <span className="relative flex size-2">
+                <span
+                  className={`${statusStyles[data?.status ?? 'unknown']} absolute inline-flex h-full w-full animate-ping rounded-full opacity-70`}
+                />
+                <span
+                  className={`${statusStyles[data?.status ?? 'unknown']} relative inline-flex size-2 rounded-full`}
+                />
+              </span>
+              Estado del sistema:{' '}
+              {data?.status ? statusLabels[data.status] : 'Desconocido'}
+            </a>
+          )}
         </div>
 
         <div className="space-y-3 text-sm">
           <p className="font-medium text-foreground">Plataforma</p>
-          <a
-            className="block text-muted-foreground hover:text-foreground"
-            href="#"
-          >
-            Catalogo
-          </a>
           <a
             className="block text-muted-foreground hover:text-foreground"
             href="#"
