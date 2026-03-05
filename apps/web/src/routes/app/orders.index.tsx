@@ -35,10 +35,31 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { PackageXIcon } from 'lucide-react'
-import { useState } from 'react'
+import {
+  createStandardSchemaV1,
+  parseAsInteger,
+  parseAsNativeArrayOf,
+  parseAsString,
+  useQueryStates,
+} from 'nuqs'
+
+const searchParams = {
+  statuses: parseAsNativeArrayOf(parseAsString).withDefault([
+    'pending_payment',
+    'payment_confirmed',
+    'processing',
+  ]),
+  from: parseAsString,
+  to: parseAsString,
+  page: parseAsInteger.withDefault(1),
+  pageSize: parseAsInteger.withDefault(10),
+}
 
 export const Route = createFileRoute('/app/orders/')({
   component: RouteComponent,
+  validateSearch: createStandardSchemaV1(searchParams, {
+    partialOutput: true,
+  }),
 })
 
 const EmptyState = () => (
@@ -58,42 +79,38 @@ const EmptyState = () => (
 function RouteComponent() {
   useOrderRealtime()
 
-  const [statuses, setStatuses] = useState<OrderStatus[]>([
-    'pending_payment',
-    'payment_confirmed',
-    'processing',
-  ])
-  const [dateRange, setDateRange] = useState<{ from?: string; to?: string }>({})
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [filters, setFilters] = useQueryStates(searchParams)
 
   const orderFilters: OrderQueryParams = {
-    page,
-    pageSize,
-    statuses,
-    from: dateRange.from,
-    to: dateRange.to,
+    page: filters.page,
+    pageSize: filters.pageSize,
+    statuses: filters.statuses as OrderStatus[],
+    from: filters.from ?? undefined,
+    to: filters.to ?? undefined,
   }
 
   const { data, isLoading } = useQuery(orderQueries.list(orderFilters))
 
   const toggleStatus = (status: OrderStatus) => {
-    setStatuses((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status],
-    )
-    setPage(1)
+    const current = filters.statuses as OrderStatus[]
+    setFilters({
+      statuses: current.includes(status)
+        ? current.filter((s) => s !== status)
+        : [...current, status],
+      page: 1,
+    })
   }
 
   const handleDateRangeChange = (range: { from?: string; to?: string }) => {
-    setDateRange(range)
-    setPage(1)
+    setFilters({
+      from: range.from ?? null,
+      to: range.to ?? null,
+      page: 1,
+    })
   }
 
   const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize)
-    setPage(1)
+    setFilters({ pageSize: newPageSize, page: 1 })
   }
 
   const queryClient = useQueryClient()
@@ -123,10 +140,10 @@ function RouteComponent() {
         <OrdersList orders={orders} />
         {totalPages > 1 && (
           <OrdersPagination
-            onPageChange={setPage}
+            onPageChange={(p) => setFilters({ page: p })}
             onPageSizeChange={handlePageSizeChange}
-            page={page}
-            pageSize={pageSize}
+            page={filters.page}
+            pageSize={filters.pageSize}
             totalCount={totalCount}
             totalPages={totalPages}
           />
@@ -145,7 +162,7 @@ function RouteComponent() {
                 {Object.entries(orderStatusColors).map(([key, label]) => (
                   <div
                     className="size-2.5 shrink-0 rounded-full border grayscale transition-all data-[active=true]:border-(--color) data-[active=true]:bg-(--color) data-[active=true]:grayscale-0"
-                    data-active={statuses.includes(
+                    data-active={(filters.statuses as OrderStatus[]).includes(
                       key as unknown as OrderStatus,
                     )}
                     key={key}
@@ -157,7 +174,7 @@ function RouteComponent() {
                   />
                 ))}
               </div>
-              Estados {statuses.length}/
+              Estados {filters.statuses.length}/
               {Object.entries(orderStatusColors).length}
               <HugeiconsIcon icon={ArrowDown01Icon} />
             </Button>
@@ -165,7 +182,7 @@ function RouteComponent() {
 
           <DropdownMenuContent align="end" className="w-56">
             {Object.entries(orderStatusLabels).map(([key, label]) => {
-              const isSelected = statuses.includes(
+              const isSelected = (filters.statuses as OrderStatus[]).includes(
                 key as unknown as OrderStatus,
               )
               const color = orderStatusColors[key as unknown as OrderStatus]
@@ -196,9 +213,9 @@ function RouteComponent() {
         </DropdownMenu>
 
         <DateRangeFilter
-          from={dateRange.from}
+          from={filters.from ?? undefined}
           onChange={handleDateRangeChange}
-          to={dateRange.to}
+          to={filters.to ?? undefined}
         />
 
         <Button onClick={refresh} size="icon" variant="outline">
