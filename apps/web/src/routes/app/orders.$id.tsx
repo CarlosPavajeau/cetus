@@ -10,6 +10,11 @@ import { Currency } from '@cetus/web/components/currency'
 import { DefaultLoader } from '@cetus/web/components/default-loader'
 import { FormattedDate } from '@cetus/web/components/formatted-date'
 import { ReturnButton } from '@cetus/web/components/return-button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@cetus/web/components/ui/tooltip'
 import { OrderSummary } from '@cetus/web/features/orders/components/order-summary'
 import { UpdateOrderStatusButton } from '@cetus/web/features/orders/components/update-order-status-button'
 import { orderQueries } from '@cetus/web/features/orders/queries'
@@ -106,37 +111,52 @@ function RouteComponent() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
-            <span className="inline-flex items-center gap-1.5">
-              <HugeiconsIcon
-                className="size-3.5 shrink-0"
-                icon={Calendar03Icon}
-              />
-              <FormattedDate date={new Date(order.createdAt)} />
-            </span>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="inline-flex items-center gap-1.5">
+                  <HugeiconsIcon
+                    className="size-3.5 shrink-0"
+                    icon={Calendar03Icon}
+                  />
+                  <FormattedDate date={new Date(order.createdAt)} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Fecha de creación</TooltipContent>
+            </Tooltip>
 
             <Separator className="hidden sm:block" orientation="vertical" />
 
             {order.city && (
               <>
-                <span className="inline-flex items-center gap-1.5">
-                  <HugeiconsIcon
-                    className="size-3.5 shrink-0"
-                    icon={MapPinpoint01Icon}
-                  />
-                  {order.city}, {order.state}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <span className="inline-flex items-center gap-1.5">
+                      <HugeiconsIcon
+                        className="size-3.5 shrink-0"
+                        icon={MapPinpoint01Icon}
+                      />
+                      {order.city}, {order.state}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Ciudad y departamento</TooltipContent>
+                </Tooltip>
 
                 <Separator className="hidden sm:block" orientation="vertical" />
               </>
             )}
 
-            <span className="inline-flex items-center gap-1.5">
-              <HugeiconsIcon
-                className="size-3.5 shrink-0"
-                icon={PromotionIcon}
-              />
-              {getSaleChannelLabel(order.channel)}
-            </span>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="inline-flex items-center gap-1.5">
+                  <HugeiconsIcon
+                    className="size-3.5 shrink-0"
+                    icon={PromotionIcon}
+                  />
+                  {getSaleChannelLabel(order.channel)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Canal de venta</TooltipContent>
+            </Tooltip>
 
             <Separator className="hidden sm:block" orientation="vertical" />
 
