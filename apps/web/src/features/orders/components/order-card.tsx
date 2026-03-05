@@ -21,8 +21,8 @@ export function OrderCard({ order }: Readonly<Props>) {
     <Card className="p-0 transition-colors hover:bg-muted/50">
       <Link
         className="flex items-center gap-4 p-4"
-        params={{ orderId: order.id }}
-        to="/app/orders/$orderId"
+        params={{ id: order.id }}
+        to="/app/orders/$id"
       >
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2">

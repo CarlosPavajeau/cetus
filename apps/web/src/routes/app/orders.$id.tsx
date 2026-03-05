@@ -30,7 +30,7 @@ import {
   PromotionIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { AlertCircleIcon } from 'lucide-react'
 
@@ -43,29 +43,26 @@ function useRealtimeOrderUpdates(orderId: string) {
   useHubGroup(connection, 'JoinOrderGroup', orderId)
 
   useClientMethod(connection, 'ReceiveUpdatedOrder', () => {
-    queryClient.invalidateQueries({
-      queryKey: ['orders', orderId],
-    })
+    queryClient.invalidateQueries(orderQueries.detail(orderId))
   })
 }
 
 export const Route = createFileRoute('/app/orders/$id')({
   component: RouteComponent,
+  pendingComponent: () => (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <DefaultLoader />
+    </div>
+  ),
+  loader: async ({ context: { queryClient }, params: { id } }) =>
+    await queryClient.ensureQueryData(orderQueries.detail(id)),
 })
 
 function RouteComponent() {
   const { id } = Route.useParams()
-  const { data: order, isLoading } = useQuery(orderQueries.detail(id))
+  const { data: order } = useSuspenseQuery(orderQueries.detail(id))
 
   useRealtimeOrderUpdates(id)
-
-  if (isLoading) {
-    return (
-      <div className="p-4 sm:p-6 lg:p-8">
-        <DefaultLoader />
-      </div>
-    )
-  }
 
   if (!order) {
     return (
