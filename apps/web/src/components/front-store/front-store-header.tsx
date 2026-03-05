@@ -18,7 +18,7 @@ export function FrontStoreHeader({ store, hasCustomDomain }: Props) {
           className="inline-flex items-center gap-2 font-semibold text-foreground text-sm tracking-tight"
           params={{ store: store.slug }}
           resetScroll
-          to={hasCustomDomain ? '/$store' : '/'}
+          to={hasCustomDomain ? '/' : '/$store'}
         >
           <span className="inline-flex size-6 items-center justify-center rounded-md border border-border bg-accent text-xs">
             {store.name.charAt(0).toUpperCase()}
