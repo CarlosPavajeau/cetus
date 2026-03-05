@@ -1,3 +1,4 @@
+import { DefaultCatchBoundary } from '@cetus/web/components/default-catch-boundary'
 import { NotFound } from '@cetus/web/components/not-found'
 import { QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
@@ -14,6 +15,7 @@ export function getRouter() {
     defaultPendingMs: 0,
     defaultPendingMinMs: 0,
     defaultNotFoundComponent: () => <NotFound />,
+    defaultErrorComponent: DefaultCatchBoundary,
   })
 
   setupRouterSsrQueryIntegration({
