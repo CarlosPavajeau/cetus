@@ -50,6 +50,7 @@ import { useCreateProductVariant } from '@cetus/web/features/products/hooks/use-
 import { productQueries } from '@cetus/web/features/products/queries'
 import type { FileWithPreview } from '@cetus/web/hooks/use-file-upload'
 import { useIsMobile } from '@cetus/web/hooks/use-mobile'
+import { toSlug } from '@cetus/web/lib/to-slug'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDownIcon, PlusIcon } from 'lucide-react'
@@ -62,29 +63,24 @@ const generateSKU = (
   productName: string,
   options: Record<string, string>,
 ): string => {
-  const MaxProductNameChars = 4
-  const normalizedName = productName
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
-    .slice(0, MaxProductNameChars)
+  const maxProductNameChars = 8
+  const normalizedName = toSlug(productName).slice(0, maxProductNameChars)
 
   const optionParts = Object.entries(options)
     .map(([key, value]) => {
-      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '')
-      const normalizedValue = value.toLowerCase().replace(/[^a-z0-9]/g, '')
+      const normalizedKey = toSlug(key)
+      const normalizedValue = toSlug(value)
       return `${normalizedKey}-${normalizedValue}`
     })
     .join('-')
 
-  const MaxFinalPartLength = 8
-  const finalPart = uuid().slice(-MaxFinalPartLength)
-
-  return optionParts
+  const maxFinalPartLength = 8
+  const finalPart = uuid().slice(-maxFinalPartLength)
+  const sku = optionParts
     ? `${normalizedName}-${optionParts}-${finalPart}`
     : `${normalizedName}-${finalPart}`
+
+  return toSlug(sku)
 }
 
 type Props = {
@@ -196,7 +192,7 @@ function AddProductVariantForm({
       {} as Record<string, string>,
     )
 
-    const sku = generateSKU(product.id, optionNames)
+    const sku = generateSKU(product.slug, optionNames)
     form.setValue('sku', sku, {
       shouldValidate: true,
       shouldDirty: true,

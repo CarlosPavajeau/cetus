@@ -15,8 +15,9 @@ import { CategoryCombobox } from '@cetus/web/features/categories/components/cate
 import { ProductImagesUploader } from '@cetus/web/features/products/components/product-images-uploader'
 import { useCreateSimpleProduct } from '@cetus/web/features/products/hooks/use-create-simple-product'
 import type { FileWithPreview } from '@cetus/web/hooks/use-file-upload'
+import { toSlug } from '@cetus/web/lib/to-slug'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Controller, FormProvider, useForm } from 'react-hook-form'
 import { v7 as uuid } from 'uuid'
 
@@ -38,21 +39,7 @@ export function SimpleProductRegistrationForm() {
     form.setValue('images', formImages)
   }
 
-  const productName = form.watch('name')
   const id = useMemo(() => uuid(), [])
-
-  const generateProductSku = useCallback(() => {
-    const baseSku =
-      productName?.trim().replaceAll(/\s+/g, '-').toLowerCase() || ''
-    return `${baseSku}-${id.slice(-4)}`
-  }, [productName, id])
-
-  useEffect(() => {
-    if (productName) {
-      const sku = generateProductSku()
-      form.setValue('sku', sku)
-    }
-  }, [productName])
 
   const { mutateAsync } = useCreateSimpleProduct(productImages)
 
@@ -74,6 +61,13 @@ export function SimpleProductRegistrationForm() {
                   {...field}
                   aria-invalid={fieldState.invalid}
                   autoFocus
+                  onChange={(e) => {
+                    field.onChange(e)
+                    form.setValue(
+                      'sku',
+                      `${toSlug(e.target.value)}-${id.slice(-4)}`,
+                    )
+                  }}
                   placeholder="Ej: Camiseta deportiva"
                   type="text"
                 />

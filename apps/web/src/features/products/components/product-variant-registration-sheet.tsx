@@ -31,6 +31,7 @@ import { SubmitButton } from '@cetus/web/components/submit-button'
 import { ProductImagesUploader } from '@cetus/web/features/products/components/product-images-uploader'
 import { useCreateProductVariant } from '@cetus/web/features/products/hooks/use-create-product-variant'
 import type { FileWithPreview } from '@cetus/web/hooks/use-file-upload'
+import { toSlug } from '@cetus/web/lib/to-slug'
 import { useAdvancedProductRegistrationStore } from '@cetus/web/store/products/advance-product-registration-store'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { PlusIcon } from 'lucide-react'
@@ -92,12 +93,10 @@ export function ProductVariantRegistrationSheet() {
     [currentValues, usedVariantCombinations],
   )
 
-  const skuId = useMemo(() => uuid(), [currentValues])
+  const skuId = useMemo(() => uuid(), [])
 
   const generateVariantSku = (values: number[]) => {
-    const optionNames = selectedOptions
-      .map((opt) => opt.name.toLocaleLowerCase())
-      .join('-')
+    const optionNames = selectedOptions.map((opt) => toSlug(opt.name)).join('-')
 
     return `${productId.slice(0, 4)}-${optionNames}-${values.join('-')}-${skuId.slice(-8)}`
   }
