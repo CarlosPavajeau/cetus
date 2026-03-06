@@ -29,11 +29,11 @@ const statusStyles: Record<StatusResponse['status'], string> = {
 }
 
 export function SiteFooter() {
-  const getPosts = useServerFn(getApiStatus)
+  const getStatus = useServerFn(getApiStatus)
 
   const { data, isLoading } = useQuery({
     queryKey: ['api-status'],
-    queryFn: () => getPosts(),
+    queryFn: () => getStatus(),
   })
 
   return (
