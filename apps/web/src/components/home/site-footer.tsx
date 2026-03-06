@@ -1,8 +1,10 @@
 import { Button } from '@cetus/ui/button'
 import { Input } from '@cetus/ui/input'
 import { Skeleton } from '@cetus/ui/skeleton'
-import { getApiStatus } from '@cetus/web/functions/get-status'
-import type { StatusResponse } from '@openstatus/react'
+import {
+  getApiStatus,
+  type StatusResponse,
+} from '@cetus/web/functions/get-status'
 import { useQuery } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 
