@@ -298,7 +298,12 @@ function OrderStatusForm({
     setChecklistStatus('idle')
     form.setValue('newStatus', newStatus as unknown as NewStatus)
     form.setValue('notes', '')
-    form.setValue('paymentStatus', undefined)
+
+    const paymentMethod = value as unknown as NewPaymentMethod
+    form.setValue(
+      'paymentStatus',
+      paymentMethod === 'cash_on_delivery' ? 'verified' : undefined,
+    )
   }
 
   const { mutateAsync } = useMutation({
