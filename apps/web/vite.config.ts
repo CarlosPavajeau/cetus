@@ -11,16 +11,7 @@ export default defineConfig({
     devtools(),
     tsconfigPaths(),
     tailwindcss(),
-    tanstackStart({
-      pages: [
-        {
-          path: '/',
-          prerender: {
-            enabled: true,
-          },
-        },
-      ],
-    }),
+    tanstackStart(),
     nitro(),
     viteReact(),
   ],

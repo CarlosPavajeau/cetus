@@ -154,8 +154,6 @@ export const Route = createFileRoute('/')({
           children: JSON.stringify(data),
           key: `json-ld-homepage-${index}`,
         })) || [],
-      'Cache-Control':
-        'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
     }
   },
   component: IndexPage,
