@@ -44,7 +44,6 @@ import { Route as AppCustomersIndexRouteImport } from './routes/app/customers.in
 import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
 import { Route as StoreRequiredCheckoutIndexRouteImport } from './routes/_store-required/checkout.index'
 import { Route as OrdersOrderIdConfirmationRouteImport } from './routes/orders/$orderId.confirmation'
-import { Route as OnboardingMercadoPagoLinkRouteImport } from './routes/onboarding.mercado-pago.link'
 import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
 import { Route as AppOrdersIdRouteImport } from './routes/app/orders.$id'
 import { Route as AppInventoryAdjustmentRouteImport } from './routes/app/inventory.adjustment'
@@ -232,12 +231,6 @@ const OrdersOrderIdConfirmationRoute =
     path: '/$orderId/confirmation',
     getParentRoute: () => OrdersRoute,
   } as any)
-const OnboardingMercadoPagoLinkRoute =
-  OnboardingMercadoPagoLinkRouteImport.update({
-    id: '/onboarding/mercado-pago/link',
-    path: '/onboarding/mercado-pago/link',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AppProductsNewRoute = AppProductsNewRouteImport.update({
   id: '/products/new',
   path: '/products/new',
@@ -326,7 +319,6 @@ export interface FileRoutesByFullPath {
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
   '/app/orders/$id': typeof AppOrdersIdRoute
   '/app/products/new': typeof AppProductsNewRoute
-  '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/checkout': typeof StoreRequiredCheckoutIndexRoute
   '/app/coupons': typeof AppCouponsIndexRoute
@@ -372,7 +364,6 @@ export interface FileRoutesByTo {
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
   '/app/orders/$id': typeof AppOrdersIdRoute
   '/app/products/new': typeof AppProductsNewRoute
-  '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/checkout': typeof StoreRequiredCheckoutIndexRoute
   '/app/coupons': typeof AppCouponsIndexRoute
@@ -421,7 +412,6 @@ export interface FileRoutesById {
   '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
   '/app/orders/$id': typeof AppOrdersIdRoute
   '/app/products/new': typeof AppProductsNewRoute
-  '/onboarding/mercado-pago/link': typeof OnboardingMercadoPagoLinkRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
   '/_store-required/checkout/': typeof StoreRequiredCheckoutIndexRoute
   '/app/coupons/': typeof AppCouponsIndexRoute
@@ -470,7 +460,6 @@ export interface FileRouteTypes {
     | '/app/inventory/adjustment'
     | '/app/orders/$id'
     | '/app/products/new'
-    | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
     | '/checkout'
     | '/app/coupons'
@@ -516,7 +505,6 @@ export interface FileRouteTypes {
     | '/app/inventory/adjustment'
     | '/app/orders/$id'
     | '/app/products/new'
-    | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
     | '/checkout'
     | '/app/coupons'
@@ -564,7 +552,6 @@ export interface FileRouteTypes {
     | '/app/inventory/adjustment'
     | '/app/orders/$id'
     | '/app/products/new'
-    | '/onboarding/mercado-pago/link'
     | '/orders/$orderId/confirmation'
     | '/_store-required/checkout/'
     | '/app/coupons/'
@@ -598,7 +585,6 @@ export interface RootRouteChildren {
   OnboardingIndexRoute: typeof OnboardingIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMercadopagoConnectRoute: typeof ApiMercadopagoConnectRoute
-  OnboardingMercadoPagoLinkRoute: typeof OnboardingMercadoPagoLinkRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -848,13 +834,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersOrderIdConfirmationRouteImport
       parentRoute: typeof OrdersRoute
     }
-    '/onboarding/mercado-pago/link': {
-      id: '/onboarding/mercado-pago/link'
-      path: '/onboarding/mercado-pago/link'
-      fullPath: '/onboarding/mercado-pago/link'
-      preLoaderRoute: typeof OnboardingMercadoPagoLinkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/products/new': {
       id: '/app/products/new'
       path: '/products/new'
@@ -1036,7 +1015,6 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingIndexRoute: OnboardingIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMercadopagoConnectRoute: ApiMercadopagoConnectRoute,
-  OnboardingMercadoPagoLinkRoute: OnboardingMercadoPagoLinkRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

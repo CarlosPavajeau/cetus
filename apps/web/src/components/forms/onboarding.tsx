@@ -1,20 +1,25 @@
 import { api } from '@cetus/api-client'
 import { authClient } from '@cetus/auth/client'
+import { Button } from '@cetus/ui/button'
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '@cetus/ui/form'
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@cetus/ui/field'
+import { Form } from '@cetus/ui/form'
 import { Input } from '@cetus/ui/input'
-import { SubmitButton } from '@cetus/web/components/submit-button'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '@cetus/ui/input-group'
+import { Spinner } from '@cetus/ui/spinner'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
-import { useNavigate } from '@tanstack/react-router'
 import { type } from 'arktype'
-import { ArrowRightIcon } from 'lucide-react'
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 const CreateOrganizationSchema = type({
@@ -22,11 +27,32 @@ const CreateOrganizationSchema = type({
   slug: type.string.matching(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 })
 
-export function OnBoardingForm() {
+const DIACRITICS = /[\u0300-\u036f]/g
+const INVALID_CHARS = /[^a-z0-9\s-]/g
+const WHITESPACE = /\s+/g
+const EDGE_HYPHENS = /^-+|-+$/g
+const MULTI_HYPHENS = /-{2,}/g
+
+function toSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(DIACRITICS, '')
+    .replace(INVALID_CHARS, '')
+    .trim()
+    .replace(WHITESPACE, '-')
+    .replace(EDGE_HYPHENS, '')
+    .replace(MULTI_HYPHENS, '-')
+}
+
+type Props = {
+  onSuccess: () => void
+}
+
+export function OnBoardingForm({ onSuccess }: Props) {
   const form = useForm({
     resolver: arktypeResolver(CreateOrganizationSchema),
   })
-  const navigate = useNavigate()
 
   const onSubmit = form.handleSubmit(async (values) => {
     const result = await authClient.organization.create(values)
@@ -49,59 +75,79 @@ export function OnBoardingForm() {
       externalId: organization.id,
     })
 
-    navigate({
-      to: '/onboarding/mercado-pago/link',
-      reloadDocument: true,
-    })
+    onSuccess()
   })
-
-  const name = form.watch('name')
-  useEffect(() => {
-    form.setValue('slug', name?.toLowerCase().replaceAll(/\s+/g, '-'))
-  }, [name])
 
   return (
     <Form {...form}>
-      <form className="flex flex-col space-y-4" onSubmit={onSubmit}>
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+      <form onSubmit={onSubmit}>
+        <FieldGroup>
+          <Controller
+            control={form.control}
+            name="name"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Nombre de la tienda</FieldLabel>
+                <Input
+                  {...field}
+                  autoComplete="off"
+                  onChange={(e) => {
+                    field.onChange(e)
+                    form.setValue('slug', toSlug(e.target.value), {
+                      shouldValidate: form.formState.isSubmitted,
+                    })
+                  }}
+                />
+                {fieldState.error && (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                )}
+              </Field>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="slug"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Slug</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+          <Controller
+            control={form.control}
+            name="slug"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Slug</FieldLabel>
+                <InputGroup>
+                  <InputGroupAddon align="inline-start">
+                    <InputGroupText>/</InputGroupText>
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    autoComplete="off"
+                  />
+                </InputGroup>
+                <FieldDescription>
+                  Identifica tu tienda en la URL. Solo letras, números y
+                  guiones.
+                </FieldDescription>
+                {fieldState.error && (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                )}
+              </Field>
+            )}
+          />
 
-        <SubmitButton
-          disabled={!form.formState.isDirty}
-          isSubmitting={form.formState.isSubmitting}
-        >
-          <div className="group flex w-full items-center space-x-2">
-            <span>Registrar datos</span>
-            <ArrowRightIcon
-              aria-hidden="true"
-              className="-me-1 opacity-60 transition-transform group-hover:translate-x-0.5"
-              size={16}
-            />
-          </div>
-        </SubmitButton>
+          <Button
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+            size="lg"
+            type="submit"
+          >
+            {form.formState.isSubmitting ? (
+              <>
+                <Spinner />
+                Registrando...
+              </>
+            ) : (
+              'Registrar datos'
+            )}
+          </Button>
+        </FieldGroup>
       </form>
     </Form>
   )

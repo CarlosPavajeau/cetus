@@ -2,10 +2,11 @@ import { Button } from '@cetus/ui/button'
 import { Link } from '@tanstack/react-router'
 
 type Props = {
-  isSignedIn: boolean
+  isSignedIn?: boolean
+  showAppButton?: boolean
 }
 
-export function LandingHeader({ isSignedIn }: Props) {
+export function LandingHeader({ isSignedIn, showAppButton = true }: Props) {
   return (
     <header className="sticky top-0 z-50 border-border border-b bg-background/75 backdrop-blur-xl">
       <nav
