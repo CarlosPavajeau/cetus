@@ -53,7 +53,7 @@ const ONBOARDING_STEPS = [
 
 function RouteComponent() {
   const { mercadoPagoUrl } = Route.useLoaderData()
-  const [currentStep, setCurrentStep] = useState(2)
+  const [currentStep, setCurrentStep] = useState(1)
 
   const handleCompleteStep = () => {
     setCurrentStep(currentStep + 1)
