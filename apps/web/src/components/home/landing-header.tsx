@@ -1,7 +1,11 @@
 import { Button } from '@cetus/ui/button'
 import { Link } from '@tanstack/react-router'
 
-export function LandingHeader() {
+type Props = {
+  isSignedIn: boolean
+}
+
+export function LandingHeader({ isSignedIn }: Props) {
   return (
     <header className="sticky top-0 z-50 border-border border-b bg-background/75 backdrop-blur-xl">
       <nav
@@ -20,11 +24,19 @@ export function LandingHeader() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Button asChild>
-            <Link to="/sign-in">
-              <span className="text-nowrap">Iniciar sesión</span>
-            </Link>
-          </Button>
+          {isSignedIn ? (
+            <Button asChild>
+              <Link to="/app">
+                <span className="text-nowrap">Panel de control</span>
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link to="/sign-in">
+                <span className="text-nowrap">Iniciar sesión</span>
+              </Link>
+            </Button>
+          )}
         </div>
       </nav>
     </header>

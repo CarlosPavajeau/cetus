@@ -10,7 +10,11 @@ import { LandingHeader } from './landing-header'
 import { SecuritySection } from './security-section'
 import { SiteFooter } from './site-footer'
 
-export function LandingPage() {
+type Props = {
+  isSignedIn: boolean
+}
+
+export function LandingPage({ isSignedIn }: Props) {
   const [panelIndex, setPanelIndex] = React.useState(0)
 
   React.useEffect(() => {
@@ -26,7 +30,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <BackgroundEffects />
-      <LandingHeader />
+      <LandingHeader isSignedIn={isSignedIn} />
       <main className="mx-auto w-full max-w-7xl px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:px-8">
         <HeroSection panelData={panelData} />
         <SecuritySection />

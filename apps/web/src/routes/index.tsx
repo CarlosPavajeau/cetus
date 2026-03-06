@@ -21,6 +21,7 @@ import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { getSession } from '../functions/get-session'
 
 const storeByDomainQuery = (domain: string) =>
   queryOptions({
@@ -37,10 +38,12 @@ const errorFallback = (
 export const Route = createFileRoute('/')({
   loader: async ({ context }) => {
     const { host, isAppUrl } = await getServerhost()
+    const session = await getSession()
 
     if (isAppUrl) {
       return {
         isAppUrl,
+        session,
       }
     }
 
@@ -69,6 +72,7 @@ export const Route = createFileRoute('/')({
       categories,
       isAppUrl,
       store,
+      session,
     }
   },
   head: async ({ loaderData }) => {
@@ -157,8 +161,16 @@ export const Route = createFileRoute('/')({
 })
 
 function IndexPage() {
-  const { featuredProducts, popularProducts, categories, isAppUrl, store } =
-    Route.useLoaderData()
+  const {
+    featuredProducts,
+    popularProducts,
+    categories,
+    isAppUrl,
+    store,
+    session,
+  } = Route.useLoaderData()
+
+  const isSignedIn = !!session
 
   const setStore = useTenantStore((state) => state.actions.setStore)
   const clearStore = useTenantStore((state) => state.actions.clearStore)
@@ -177,7 +189,7 @@ function IndexPage() {
   }, [isAppUrl, clearStore])
 
   if (isAppUrl) {
-    return <LandingPage />
+    return <LandingPage isSignedIn={isSignedIn} />
   }
 
   if (!(categories && featuredProducts && popularProducts)) {
