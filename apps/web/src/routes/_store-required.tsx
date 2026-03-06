@@ -1,20 +1,29 @@
-import { useTenantStore } from '@cetus/web/store/use-tenant-store'
-import { createFileRoute, Navigate, Outlet } from '@tanstack/react-router'
+import { getCurrentStoreId } from '@cetus/web/functions/store-slug'
+import { setupApiClient } from '@cetus/web/lib/api/setup'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/_store-required')({
+  loader: async () => {
+    const store = getCurrentStoreId()
+
+    if (!store) {
+      throw redirect({
+        to: '/',
+      })
+    }
+
+    return { store }
+  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { store, status } = useTenantStore()
+  const { store } = Route.useLoaderData()
 
-  if (status === 'idle' || status === 'loading') {
-    return null
-  }
-
-  if (!store) {
-    return <Navigate search={{ redirectReason: 'NO_STORE_SELECTED' }} to="/" />
-  }
+  useEffect(() => {
+    setupApiClient(store)
+  }, [store])
 
   return <Outlet />
 }
