@@ -19,12 +19,17 @@ import { Link, useRouteContext, useRouter } from '@tanstack/react-router'
 import { LogOutIcon, User2Icon } from 'lucide-react'
 
 export function UserMenu() {
-  const { user } = useRouteContext({
+  const { session } = useRouteContext({
     from: '/app',
   })
   const router = useRouter()
   const { isMobile } = useSidebar()
 
+  if (!session) {
+    return null
+  }
+
+  const { user } = session
   if (!user) {
     return null
   }
