@@ -17,6 +17,7 @@ import {
   InputGroupText,
 } from '@cetus/ui/input-group'
 import { Spinner } from '@cetus/ui/spinner'
+import { toSlug } from '@cetus/web/lib/to-slug'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { type } from 'arktype'
 import { Controller, useForm } from 'react-hook-form'
@@ -26,24 +27,6 @@ const CreateOrganizationSchema = type({
   name: type.string,
   slug: type.string.matching(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 })
-
-const DIACRITICS = /[\u0300-\u036f]/g
-const INVALID_CHARS = /[^a-z0-9\s-]/g
-const WHITESPACE = /\s+/g
-const EDGE_HYPHENS = /^-+|-+$/g
-const MULTI_HYPHENS = /-{2,}/g
-
-function toSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(DIACRITICS, '')
-    .replace(INVALID_CHARS, '')
-    .trim()
-    .replace(WHITESPACE, '-')
-    .replace(EDGE_HYPHENS, '')
-    .replace(MULTI_HYPHENS, '-')
-}
 
 type Props = {
   onSuccess: () => void
