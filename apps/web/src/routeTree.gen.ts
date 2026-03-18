@@ -310,7 +310,7 @@ export interface FileRoutesByFullPath {
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
   '/app/': typeof AppIndexRoute
-  '/onboarding': typeof OnboardingIndexRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
@@ -320,13 +320,13 @@ export interface FileRoutesByFullPath {
   '/app/orders/$id': typeof AppOrdersIdRoute
   '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
-  '/checkout': typeof StoreRequiredCheckoutIndexRoute
-  '/app/coupons': typeof AppCouponsIndexRoute
-  '/app/customers': typeof AppCustomersIndexRoute
-  '/app/dashboard': typeof AppDashboardIndexRoute
-  '/app/inventory': typeof AppInventoryIndexRoute
-  '/app/orders': typeof AppOrdersIndexRoute
-  '/app/products': typeof AppProductsIndexRoute
+  '/checkout/': typeof StoreRequiredCheckoutIndexRoute
+  '/app/coupons/': typeof AppCouponsIndexRoute
+  '/app/customers/': typeof AppCustomersIndexRoute
+  '/app/dashboard/': typeof AppDashboardIndexRoute
+  '/app/inventory/': typeof AppInventoryIndexRoute
+  '/app/orders/': typeof AppOrdersIndexRoute
+  '/app/products/': typeof AppProductsIndexRoute
   '/app/products/$id/details': typeof AppProductsIdDetailsRoute
   '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
 }
@@ -451,7 +451,7 @@ export interface FileRouteTypes {
     | '/products/$slug'
     | '/reviews/new'
     | '/app/'
-    | '/onboarding'
+    | '/onboarding/'
     | '/products/all'
     | '/api/auth/$'
     | '/api/mercadopago/connect'
@@ -461,13 +461,13 @@ export interface FileRouteTypes {
     | '/app/orders/$id'
     | '/app/products/new'
     | '/orders/$orderId/confirmation'
-    | '/checkout'
-    | '/app/coupons'
-    | '/app/customers'
-    | '/app/dashboard'
-    | '/app/inventory'
-    | '/app/orders'
-    | '/app/products'
+    | '/checkout/'
+    | '/app/coupons/'
+    | '/app/customers/'
+    | '/app/dashboard/'
+    | '/app/inventory/'
+    | '/app/orders/'
+    | '/app/products/'
     | '/app/products/$id/details'
     | '/app/products/variants/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -655,7 +655,7 @@ declare module '@tanstack/react-router' {
     '/_store-required': {
       id: '/_store-required'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof StoreRequiredRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -676,7 +676,7 @@ declare module '@tanstack/react-router' {
     '/onboarding/': {
       id: '/onboarding/'
       path: '/onboarding'
-      fullPath: '/onboarding'
+      fullPath: '/onboarding/'
       preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -781,49 +781,49 @@ declare module '@tanstack/react-router' {
     '/app/products/': {
       id: '/app/products/'
       path: '/products'
-      fullPath: '/app/products'
+      fullPath: '/app/products/'
       preLoaderRoute: typeof AppProductsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/orders/': {
       id: '/app/orders/'
       path: '/orders'
-      fullPath: '/app/orders'
+      fullPath: '/app/orders/'
       preLoaderRoute: typeof AppOrdersIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/inventory/': {
       id: '/app/inventory/'
       path: '/inventory'
-      fullPath: '/app/inventory'
+      fullPath: '/app/inventory/'
       preLoaderRoute: typeof AppInventoryIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/dashboard/': {
       id: '/app/dashboard/'
       path: '/dashboard'
-      fullPath: '/app/dashboard'
+      fullPath: '/app/dashboard/'
       preLoaderRoute: typeof AppDashboardIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/customers/': {
       id: '/app/customers/'
       path: '/customers'
-      fullPath: '/app/customers'
+      fullPath: '/app/customers/'
       preLoaderRoute: typeof AppCustomersIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/coupons/': {
       id: '/app/coupons/'
       path: '/coupons'
-      fullPath: '/app/coupons'
+      fullPath: '/app/coupons/'
       preLoaderRoute: typeof AppCouponsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_store-required/checkout/': {
       id: '/_store-required/checkout/'
       path: '/checkout'
-      fullPath: '/checkout'
+      fullPath: '/checkout/'
       preLoaderRoute: typeof StoreRequiredCheckoutIndexRouteImport
       parentRoute: typeof StoreRequiredRoute
     }

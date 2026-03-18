@@ -46,7 +46,8 @@
       "correctness": {
         "noPrecisionLoss": "error",
         "noUnusedVariables": "off",
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "warn",
+        "useImportExtensions": "off"
       },
       "style": {
         "noInferrableTypes": "error",
