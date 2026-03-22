@@ -5,9 +5,10 @@ import { useMemo, useState } from 'react'
 
 type Props = {
   invitation?: string
+  className?: string
 }
 
-export function GoogleSignIn({ invitation }: Readonly<Props>) {
+export function GoogleSignIn({ invitation, className }: Readonly<Props>) {
   const [isLoading, setIsLoading] = useState(false)
 
   const callbackUrl = useMemo(() => {
@@ -37,7 +38,7 @@ export function GoogleSignIn({ invitation }: Readonly<Props>) {
     }, 2000)
   }
   return (
-    <Button disabled={isLoading} onClick={signIn} size="lg" variant="outline">
+    <Button className={className} disabled={isLoading} onClick={signIn} size="lg" variant="outline">
       <GoogleIcon className="h-5 w-5" />
       <span className="whitespace-nowrap">Google</span>
     </Button>
