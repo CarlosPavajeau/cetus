@@ -1,5 +1,4 @@
 import { Button } from '@cetus/web/components/ui/button'
-
 import { cn } from '@cetus/web/shared/utils'
 import {
   ArrowLeft01Icon,
@@ -68,8 +67,9 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
+  text = 'Previous',
   ...props
-}: React.ComponentProps<typeof PaginationLink>) {
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label="Go to previous page"
@@ -82,15 +82,16 @@ function PaginationPrevious({
         icon={ArrowLeft01Icon}
         strokeWidth={2}
       />
-      <span className="hidden sm:block">Anterior</span>
+      <span className="hidden sm:block">{text}</span>
     </PaginationLink>
   )
 }
 
 function PaginationNext({
   className,
+  text = 'Next',
   ...props
-}: React.ComponentProps<typeof PaginationLink>) {
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label="Go to next page"
@@ -98,7 +99,7 @@ function PaginationNext({
       size="default"
       {...props}
     >
-      <span className="hidden sm:block">Siguiente</span>
+      <span className="hidden sm:block">{text}</span>
       <HugeiconsIcon
         data-icon="inline-end"
         icon={ArrowRight01Icon}

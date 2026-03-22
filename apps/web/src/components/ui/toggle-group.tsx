@@ -1,5 +1,3 @@
-'use client'
-
 import { toggleVariants } from '@cetus/web/components/ui/toggle'
 import { cn } from '@cetus/web/shared/utils'
 import type { VariantProps } from 'class-variance-authority'
@@ -34,7 +32,7 @@ function ToggleGroup({
   return (
     <ToggleGroupPrimitive.Root
       className={cn(
-        'group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch data-[size=sm]:rounded-[min(var(--radius-md),10px)]',
+        'group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-vertical:flex-col data-vertical:items-stretch data-[size=sm]:rounded-[min(var(--radius-md),10px)]',
         className,
       )}
       data-orientation={orientation}

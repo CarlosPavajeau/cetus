@@ -1,11 +1,6 @@
-'use client'
-
 import { cn } from '@cetus/web/shared/utils'
 import { Progress as ProgressPrimitive } from 'radix-ui'
 import type * as React from 'react'
-
-const DEFAULT_VALUE = 0
-const MAX_VALUE = 100
 
 function Progress({
   className,
@@ -15,7 +10,7 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       className={cn(
-        'relative h-2 w-full overflow-hidden rounded-full bg-primary/20',
+        'relative flex h-1 w-full items-center overflow-x-hidden rounded-full bg-muted',
         className,
       )}
       data-slot="progress"
@@ -24,9 +19,7 @@ function Progress({
       <ProgressPrimitive.Indicator
         className="size-full flex-1 bg-primary transition-all"
         data-slot="progress-indicator"
-        style={{
-          transform: `translateX(-${MAX_VALUE - (value || DEFAULT_VALUE)}%)`,
-        }}
+        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>
   )
