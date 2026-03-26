@@ -37,7 +37,7 @@
     "@t3-oss/env-core": "^0.13.10",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/arktype-adapter": "^1.166.9",
-    "@tanstack/devtools-vite": "^0.5.5",
+    "@tanstack/devtools-vite": "^0.6.0",
     "@tanstack/react-devtools": "^0.9.13",
     "@tanstack/react-query": "^5.91.0",
     "@tanstack/react-query-devtools": "^5.91.3",
