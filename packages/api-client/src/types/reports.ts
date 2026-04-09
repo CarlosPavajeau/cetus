@@ -92,3 +92,17 @@ export type MonthlyProfitabilityRequest = {
   excludeCanceled?: boolean
   excludeRefunded?: boolean
 }
+
+export type ProductProfitabilityItem = {
+  productId: string
+  product: string
+  categoryId: string
+  category: string
+  unitsSold: number
+  revenue: number
+  costs: number
+  profit: number
+  marginPercentage: number
+  isStartProduct: boolean
+  isProblematic: boolean
+}

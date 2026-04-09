@@ -3,6 +3,7 @@ import type {
   DailySummaryResponse,
   MonthlyProfitabilityRequest,
   MonthlyProfitabilityResponse,
+  ProductProfitabilityItem,
 } from '../types/reports'
 
 export const reportsApi = {
@@ -17,5 +18,10 @@ export const reportsApi = {
       {
         params,
       },
+    ),
+
+  getProductsProfitabilityRanking: () =>
+    authenticatedClient.get<ProductProfitabilityItem[]>(
+      '/reports/product-profitability-ranking',
     ),
 }

@@ -11,4 +11,10 @@ export const reportQueries = {
       queryKey: [...reportKeys.lists(), 'monthly-profitability', params],
       queryFn: () => api.reports.getMonthlyProfitability(params),
     }),
+
+  productsProfitabilityRanking: () =>
+    queryOptions({
+      queryKey: [...reportKeys.lists(), 'product-profitability-ranking'],
+      queryFn: () => api.reports.getProductsProfitabilityRanking(),
+    }),
 }
