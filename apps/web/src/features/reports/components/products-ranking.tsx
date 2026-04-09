@@ -11,11 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@cetus/web/components/ui/table'
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from '@cetus/web/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@cetus/web/components/ui/tabs'
 import { cn } from '@cetus/web/shared/utils'
 import { useNumberFormatter } from 'react-aria'
 import { useMemo, useState } from 'react'
