@@ -4,7 +4,6 @@ import { TooltipProvider } from '@cetus/ui/tooltip'
 import { ThemeProvider } from '@cetus/web/hooks/use-theme'
 import appCss from '@cetus/web/styles/index.css?url'
 import interLatinFont from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
-import outfitLatinFont from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url'
 import { PostHogProvider } from '@posthog/react'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
@@ -40,13 +39,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       {
         rel: 'preload',
         href: interLatinFont,
-        as: 'font',
-        type: 'font/woff2',
-        crossOrigin: 'anonymous',
-      },
-      {
-        rel: 'preload',
-        href: outfitLatinFont,
         as: 'font',
         type: 'font/woff2',
         crossOrigin: 'anonymous',
