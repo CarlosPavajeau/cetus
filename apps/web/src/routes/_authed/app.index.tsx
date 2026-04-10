@@ -1,8 +1,8 @@
-import { api } from '@cetus/api-client'
 import { Skeleton } from '@cetus/web/components/ui/skeleton'
 import { DailySalesList } from '@cetus/web/features/reports/components/daily-sales-list'
 import { DailySummaryContent } from '@cetus/web/features/reports/components/daily-summary-content'
 import { DailySummaryDateSelector } from '@cetus/web/features/reports/components/daily-summary-date-selector'
+import { api } from '@cetus/web/lib/client-api'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createStandardSchemaV1, parseAsString, useQueryState } from 'nuqs'
@@ -32,10 +32,18 @@ function RouteComponent() {
   const [dateParam] = useQueryState('date', parseAsString)
   const queryClient = useQueryClient()
 
+  const date = dateParam
+    ? new Date(dateParam).toISOString()
+    : new Date().toISOString()
+
   const { data, dataUpdatedAt, refetch, isLoading } = useQuery({
     queryKey: ['reports', 'daily-summary', dateParam ?? 'today'],
     queryFn: () =>
-      api.reports.getDailySummary(dateParam ? new Date(dateParam) : undefined),
+      api.reports.getDailySummary({
+        params: {
+          date,
+        },
+      }),
   })
 
   const handleRefresh = useCallback(() => {

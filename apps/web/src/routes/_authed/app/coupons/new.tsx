@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { CouponDiscountType } from '@cetus/api-client/types/coupons'
 import { createCouponSchema } from '@cetus/schemas/coupon.schema'
 import { couponDiscountTypeLabels } from '@cetus/shared/constants/coupon'

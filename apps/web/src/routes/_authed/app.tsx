@@ -5,7 +5,6 @@ import { QuickSaleProvider } from '@cetus/web/features/quick-sales/components/qu
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { StoreProvider } from '@cetus/web/features/stores/components/store-provider'
 
-
 export const Route = createFileRoute('/_authed/app')({
   component: RouteComponent,
 })

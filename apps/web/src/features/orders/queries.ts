@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { OrderQueryParams } from '@cetus/api-client/types/orders'
 import { createQueryKeys } from '@cetus/web/lib/query/create-query-keys'
 import { queryOptions } from '@tanstack/react-query'
@@ -9,7 +9,12 @@ export const orderQueries = {
   list: (filters?: OrderQueryParams) =>
     queryOptions({
       queryKey: ordersKeys.list(filters),
-      queryFn: () => api.orders.list(filters),
+      queryFn: () =>
+        api.orders.list({
+          params: {
+            ...filters,
+          },
+        }),
     }),
 
   detail: (orderId: string) =>
@@ -21,7 +26,12 @@ export const orderQueries = {
   summary: (month: string) =>
     queryOptions({
       queryKey: [...ordersKeys.lists(), 'summary', month],
-      queryFn: () => api.orders.summary(month),
+      queryFn: () =>
+        api.orders.summary({
+          params: {
+            month,
+          },
+        }),
     }),
 
   timeline: (orderId: string) =>
@@ -34,14 +44,19 @@ export const orderQueries = {
   insights: (month: string) =>
     queryOptions({
       queryKey: [...ordersKeys.lists(), 'insights', month],
-      queryFn: () => api.orders.getInsights(month),
+      queryFn: () =>
+        api.orders.getInsights({
+          params: {
+            month,
+          },
+        }),
     }),
 
   deliveryFees: {
     detail: (cityId: string) =>
       queryOptions({
         queryKey: [...ordersKeys.details(), 'delivery-fees', cityId],
-        queryFn: () => api.orders.deliveryFees.getByCity(cityId),
+        queryFn: () => api.deliveryFees.getByCity(cityId),
         enabled: !!cityId,
       }),
   },
@@ -50,7 +65,7 @@ export const orderQueries = {
     info: (orderId: string) =>
       queryOptions({
         queryKey: [...ordersKeys.details(), 'payment', orderId],
-        queryFn: () => api.orders.payments.getByOrderId(orderId),
+        queryFn: () => api.payments.getByOrderId(orderId),
         staleTime: 300_000, // 5 minutes
         refetchOnReconnect: false,
         refetchOnMount: false,

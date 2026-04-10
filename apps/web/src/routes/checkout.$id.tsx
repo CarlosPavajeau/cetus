@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { setWompiConfig } from '@cetus/integrations-wompi/config'
 import { Button } from '@cetus/ui/button'
 import {
@@ -14,7 +14,6 @@ import { PaymentMethods } from '@cetus/web/features/checkout/components/payment-
 import { PaymentOrderSummary } from '@cetus/web/features/checkout/components/payment-order-summary'
 import { RedeemCoupon } from '@cetus/web/features/coupons/components/redeem-coupon'
 import { setStoreId } from '@cetus/web/functions/store-slug'
-import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import {
   ChevronLeft,
@@ -41,8 +40,6 @@ export const Route = createFileRoute('/checkout/$id')({
         id: store.id,
       },
     })
-
-    setupApiClient(store.id)
 
     return { order, store }
   },
@@ -83,7 +80,6 @@ function RouteComponent() {
   }
 
   const publicKey = store.wompiPublicKey
-  const integritySecret = store.wompiIntegrityKey
   const hasMercadoPago = store.isConnectedToMercadoPago
 
   if (publicKey) {

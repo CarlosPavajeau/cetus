@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getSession } from '../functions/get-session'
 import { redirect } from '@tanstack/react-router'
-import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { setActiveOrg } from '../functions/organizations'
 
 export const Route = createFileRoute('/_authed')({
@@ -24,11 +23,9 @@ export const Route = createFileRoute('/_authed')({
       organizationId = activeOrg.id
     }
 
-    setupApiClient()
-
     return {
       session,
-      organizationId
+      organizationId,
     }
   },
 })

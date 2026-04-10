@@ -1,4 +1,3 @@
-import { api } from '@cetus/api-client'
 import { Button, buttonVariants } from '@cetus/ui/button'
 import {
   Card,
@@ -24,7 +23,7 @@ import { Loading02Icon, Tick02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
-import { setupApiClient } from '../lib/api/setup'
+import { api } from '@cetus/web/lib/client-api'
 
 export const Route = createFileRoute('/onboarding/')({
   beforeLoad: async () => {
@@ -37,8 +36,6 @@ export const Route = createFileRoute('/onboarding/')({
     }
   },
   loader: async () => {
-    setupApiClient()
-
     const mercadoPagoUrl = await api.stores.getMercadoPagoAuthorizationUrl()
     return { mercadoPagoUrl }
   },

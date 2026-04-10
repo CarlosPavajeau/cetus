@@ -181,7 +181,9 @@ function RouteComponent() {
           )}
         </div>
 
-        <OrderSummary isAdmin order={order} />
+        <div className="mt-2">
+          <OrderSummary isAdmin order={order} />
+        </div>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import {
   orderStatusBadgeVariants,
   orderStatusLabels,
@@ -18,7 +18,7 @@ import {
   ShoppingBagIcon,
 } from 'lucide-react'
 
-export const Route = createFileRoute('/orders/$id')({
+export const Route = createFileRoute('/(orders)/orders/$id')({
   component: RouteComponent,
 })
 

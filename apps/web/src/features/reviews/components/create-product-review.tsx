@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { createProductReviewSchema } from '@cetus/schemas/review.schema'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'
 import { RadioGroup, RadioGroupItem } from '@cetus/ui/radio-group'

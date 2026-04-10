@@ -1,22 +1,24 @@
-import { anonymousClient, authenticatedClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type {
   CreatePaymentLinkRequest,
   PaymentLink,
   PaymentLinkState,
 } from '../types/payment-links'
 
-export const paymentLinksApi = {
-  create: (data: CreatePaymentLinkRequest) =>
-    authenticatedClient.post<PaymentLink>(
-      `/orders/${data.orderId}/payment-link`,
-      data,
-    ),
-
-  getByToken: (token: string) =>
-    anonymousClient.get<PaymentLink>(`/payment-links/${token}`),
-
-  getState: (orderId: string) =>
-    authenticatedClient.get<PaymentLinkState>(
-      `/orders/${orderId}/payment-link`,
-    ),
+const definitions = {
+  create: {
+    method: 'POST',
+    path: (id: string) => `/orders/${id}/payment-link`,
+  } as EndpointDefinition<PaymentLink, CreatePaymentLinkRequest, string>,
+  getByToken: {
+    method: 'GET',
+    path: (token: string) => `/payment-links/${token}`,
+  } as EndpointDefinition<PaymentLink, void, string>,
+  getState: {
+    method: 'GET',
+    path: (orderId: string) => `/orders/${orderId}/payment-link`,
+  } as EndpointDefinition<PaymentLinkState, void, string>,
 }
+
+export const paymentLinksApi = defineResource(definitions)

@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { Button } from '@cetus/ui/button'
 import {
   Dialog,
@@ -40,6 +40,8 @@ const CancelOrderSchema = type({
   }),
 })
 
+type FormValues = typeof CancelOrderSchema.infer
+
 export function CancelOrderDialog({
   open,
   onOpenChange,
@@ -54,7 +56,12 @@ export function CancelOrderDialog({
 
   const { mutateAsync } = useMutation({
     mutationKey: ['orders', 'cancel', orderId],
-    mutationFn: api.orders.cancel,
+    mutationFn: (data: FormValues) =>
+      api.orders.updateStatus(orderId, {
+        newStatus: 'canceled',
+        orderId: data.id,
+        notes: data.reason,
+      }),
     onSuccess: (_, __, ___, context) => {
       onOpenChange(false)
       context.client.invalidateQueries({

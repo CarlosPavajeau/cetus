@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { useQuery } from '@tanstack/react-query'
 
 export function useStateCities(stateId?: string) {

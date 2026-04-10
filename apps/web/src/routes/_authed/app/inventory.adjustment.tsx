@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { authClient } from '@cetus/auth/client'
 import { adjustInventoryStockSchema } from '@cetus/schemas/product.schema'
 import { Badge } from '@cetus/ui/badge'

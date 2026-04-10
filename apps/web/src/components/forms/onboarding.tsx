@@ -1,4 +1,3 @@
-import { api } from '@cetus/api-client'
 import { authClient } from '@cetus/auth/client'
 import { Button } from '@cetus/ui/button'
 import {
@@ -17,6 +16,7 @@ import {
   InputGroupText,
 } from '@cetus/ui/input-group'
 import { Spinner } from '@cetus/ui/spinner'
+import { api } from '@cetus/web/lib/client-api'
 import { toSlug } from '@cetus/web/lib/to-slug'
 import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { type } from 'arktype'

@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { UpdateStoreValues } from '@cetus/api-client/types/stores'
 import { updateStoreSchema } from '@cetus/schemas/store.schema'
 import {

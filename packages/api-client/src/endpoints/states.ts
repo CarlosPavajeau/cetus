@@ -1,12 +1,22 @@
-import { anonymousClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type { City, State } from '../types/states'
 
-export const statesApi = {
-  list: () => anonymousClient.get<State[]>('/states'),
+const definitions = {
+  list: {
+    method: 'GET',
+    path: () => '/states',
+  } as EndpointDefinition<State[]>,
 
-  listCities: (stateId: string) =>
-    anonymousClient.get<City[]>(`/states/${stateId}/cities`),
+  listCities: {
+    method: 'GET',
+    path: (stateId: string) => `/states/${stateId}/cities`,
+  } as EndpointDefinition<City[], void, string>,
 
-  getCity: (cityId: string) =>
-    anonymousClient.get<City>(`/states/cities/${cityId}`),
+  getCity: {
+    method: 'GET',
+    path: (cityId: string) => `/states/cities/${cityId}`,
+  } as EndpointDefinition<City, void, string>,
 }
+
+export const statesApi = defineResource(definitions)

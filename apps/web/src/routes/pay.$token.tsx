@@ -1,4 +1,3 @@
-import { api } from '@cetus/api-client'
 import type { PaymentLink } from '@cetus/api-client/types/payment-links'
 import {
   Cancel01Icon,
@@ -9,6 +8,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { DefaultPageLayout } from '../components/default-page-layout'
+import { api } from '@cetus/web/lib/client-api'
 
 export const Route = createFileRoute('/pay/$token')({
   loader: async ({ params }) => {

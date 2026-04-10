@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { CustomerOrdersQueryParams } from '@cetus/api-client/types/customers'
 import { createQueryKeys } from '@cetus/web/lib/query/create-query-keys'
 import { queryOptions } from '@tanstack/react-query'

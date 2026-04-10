@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { env } from '@cetus/env/client'
 import { configureWompiCredentialsSchema } from '@cetus/schemas/store.schema'
 import { Alert, AlertDescription, AlertTitle } from '@cetus/ui/alert'

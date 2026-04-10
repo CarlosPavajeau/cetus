@@ -1,4 +1,5 @@
-import { anonymousClient, authenticatedClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type {
   CreateProductReview,
   PendingForApprovalProductReview,
@@ -7,24 +8,31 @@ import type {
   ReviewRequest,
 } from '../types/reviews'
 
-export const reviewsApi = {
-  list: (productId: string) =>
-    anonymousClient.get<ProductReview[]>(`reviews/products/${productId}`),
-
-  listPendingForApproval: () =>
-    authenticatedClient.get<PendingForApprovalProductReview[]>(
-      'reviews/products/pending',
-    ),
-
-  getByToken: (token: string) =>
-    anonymousClient.get<ReviewRequest>(`reviews/requests/${token}`),
-
-  create: (data: CreateProductReview) =>
-    anonymousClient.post<void>('reviews/products', data),
-
-  approve: (reviewId: string) =>
-    authenticatedClient.post<void>(`reviews/products/${reviewId}/approve`),
-
-  reject: (data: RejectProductReviewRequest) =>
-    authenticatedClient.post<void>(`reviews/products/${data.id}/reject`, data),
+const definitions = {
+  list: {
+    method: 'GET',
+    path: (id: string) => `/reviews/products/${id}`,
+  } as EndpointDefinition<ProductReview[], void, string>,
+  listPendingForApproval: {
+    method: 'GET',
+    path: '/reviews/products/pending',
+  } as EndpointDefinition<PendingForApprovalProductReview[]>,
+  getByToken: {
+    method: 'GET',
+    path: (token: string) => `/reviews/requests/${token}`,
+  } as EndpointDefinition<ReviewRequest, void, string>,
+  create: {
+    method: 'POST',
+    path: '/reviews/products',
+  } as EndpointDefinition<void, CreateProductReview>,
+  approve: {
+    method: 'POST',
+    path: (reviewId: string) => `/reviews/products/${reviewId}/approve`,
+  } as EndpointDefinition<void, void, string>,
+  reject: {
+    method: 'POST',
+    path: (reviewId: string) => `/reviews/products/${reviewId}/reject`,
+  } as EndpointDefinition<void, RejectProductReviewRequest, string>,
 }
+
+export const reviewsApi = defineResource(definitions)

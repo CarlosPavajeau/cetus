@@ -1,4 +1,5 @@
-import { authenticatedClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type { PaginatedResponse } from '../types/common'
 import type {
   AdjustInventoryStock,
@@ -6,18 +7,15 @@ import type {
   InventoryTransactionQueryParams,
 } from '../types/products'
 
-export const inventoryApi = {
-  adjustStock: (data: AdjustInventoryStock) =>
-    authenticatedClient.post<void>('inventory/adjustments', data),
-
-  listTransactions: (params?: InventoryTransactionQueryParams) =>
-    authenticatedClient.get<PaginatedResponse<InventoryTransaction>>(
-      'inventory/transactions',
-      {
-        params,
-        paramsSerializer: {
-          indexes: null,
-        },
-      },
-    ),
+const definitions = {
+  adjustStock: {
+    method: 'POST',
+    path: 'inventory/adjustments',
+  } as EndpointDefinition<void, AdjustInventoryStock>,
+  listTransactions: {
+    method: 'GET',
+    path: 'inventory/transactions',
+  } as EndpointDefinition<PaginatedResponse<InventoryTransaction>>,
 }
+
+export const inventoryApi = defineResource(definitions)

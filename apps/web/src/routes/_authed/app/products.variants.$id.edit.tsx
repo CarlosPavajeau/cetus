@@ -14,23 +14,25 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { PackageIcon, TagIcon } from 'lucide-react'
 
-export const Route = createFileRoute('/_authed/app/products/variants/$id/edit')({
-  loader: async ({ params, context }) => {
-    const { id } = params
+export const Route = createFileRoute('/_authed/app/products/variants/$id/edit')(
+  {
+    loader: async ({ params, context }) => {
+      const { id } = params
 
-    await context.queryClient.ensureQueryData(
-      productQueries.variants.detail(Number(id)),
-    )
+      await context.queryClient.ensureQueryData(
+        productQueries.variants.detail(Number(id)),
+      )
 
-    return { id }
+      return { id }
+    },
+    component: RouteComponent,
+    pendingComponent: () => (
+      <div className="p-4">
+        <DefaultLoader />
+      </div>
+    ),
   },
-  component: RouteComponent,
-  pendingComponent: () => (
-    <div className="p-4">
-      <DefaultLoader />
-    </div>
-  ),
-})
+)
 
 function RouteComponent() {
   const { id } = Route.useParams()

@@ -1,6 +1,9 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { Order } from '@cetus/api-client/types/orders'
-import type { PaymentLinkReasons } from '@cetus/api-client/types/payment-links'
+import type {
+  CreatePaymentLinkRequest,
+  PaymentLinkReasons,
+} from '@cetus/api-client/types/payment-links'
 import { Button } from '@cetus/ui/button'
 import {
   Dialog,
@@ -49,7 +52,8 @@ export function OrderPaymentLinkDialog({ order }: Props) {
   const queryClient = useQueryClient()
   const { mutate, isPending } = useMutation({
     mutationKey: ['orders', order.id, 'payment-link'],
-    mutationFn: api.paymentLinks.create,
+    mutationFn: (data: CreatePaymentLinkRequest) =>
+      api.paymentLinks.create(order.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['orders', order.id, 'payment-link'],

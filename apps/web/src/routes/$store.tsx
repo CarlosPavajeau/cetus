@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
@@ -9,7 +9,6 @@ import { TrustBadgesSection } from '@cetus/web/components/home/trust-badges-sect
 import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { setStoreId } from '@cetus/web/functions/store-slug'
-import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateHomepageSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { queryOptions } from '@tanstack/react-query'
@@ -52,8 +51,6 @@ export const Route = createFileRoute('/$store')({
         id: store.id,
       },
     })
-
-    setupApiClient(store.id)
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),
@@ -210,7 +207,7 @@ function RouteComponent() {
                 : null}
               .
               {categories.length > 0
-                ? ` Explora nuestras categorías especializadas: ${categories.map((cat) => cat.name).join(', ')}.`
+                ? ` Explora nuestras categorías especializadas: ${categories.map((cat) => cat.name).join(`, `)}.`
                 : null}
               Envío rápido a toda Colombia, atención personalizada y garantía de
               satisfacción.
@@ -249,7 +246,7 @@ function RouteComponent() {
               de la plataforma Cetus E-commerce. Nos dedicamos a ofrecer
               productos de calidad con un servicio excepcional.
               {categories.length > 0
-                ? ` Nos especializamos en: ${categories.map((cat) => cat.name).join(', ')}.`
+                ? ` Nos especializamos en: ${categories.map((cat) => cat.name).join(`, `)}.`
                 : null}
             </p>
           </div>

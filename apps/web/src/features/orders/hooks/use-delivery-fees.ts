@@ -1,9 +1,9 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { useQuery } from '@tanstack/react-query'
 
 export function useDeliveryFees() {
   return useQuery({
     queryKey: ['delivery-fees'],
-    queryFn: api.orders.deliveryFees.list,
+    queryFn: api.deliveryFees.list,
   })
 }

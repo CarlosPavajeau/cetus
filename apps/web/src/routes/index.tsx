@@ -1,4 +1,3 @@
-import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { DefaultPageLayout } from '@cetus/web/components/default-page-layout'
 import { FrontStoreHeader } from '@cetus/web/components/front-store/front-store-header'
@@ -11,7 +10,6 @@ import { PageHeader } from '@cetus/web/components/page-header'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { getServerhost } from '@cetus/web/functions/get-host'
 import { setStoreId } from '@cetus/web/functions/store-slug'
-import { setupApiClient } from '@cetus/web/lib/api/setup'
 import {
   generateHomepageSEO,
   generatePlatformSEO,
@@ -22,6 +20,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { getSession } from '../functions/get-session'
+import { api } from '@cetus/web/lib/client-api'
 
 const storeByDomainQuery = (domain: string) =>
   queryOptions({
@@ -57,8 +56,6 @@ export const Route = createFileRoute('/')({
         id: store.id,
       },
     })
-
-    setupApiClient(store.id)
 
     const [featuredProducts, popularProducts, categories] = await Promise.all([
       api.products.listFeatured(),

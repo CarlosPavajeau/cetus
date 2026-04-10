@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { createDeliveryFeeSchema } from '@cetus/schemas/order.schema'
 import { Button } from '@cetus/ui/button'
 import {
@@ -36,6 +36,7 @@ import { arktypeResolver } from '@hookform/resolvers/arktype'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import type { CreateDeliveryFeeRequest } from '@cetus/api-client/types/orders'
 
 export function CreateDeliveryFeeDialog() {
   const [open, setOpen] = useState(false)
@@ -63,7 +64,8 @@ export function CreateDeliveryFeeDialog() {
   const queryClient = useQueryClient()
   const createDeliveryFeeMutation = useMutation({
     mutationKey: ['delivery-fees', 'create'],
-    mutationFn: api.orders.deliveryFees.create,
+    mutationFn: (data: CreateDeliveryFeeRequest) =>
+      api.deliveryFees.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['delivery-fees'],

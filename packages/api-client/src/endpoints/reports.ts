@@ -1,27 +1,24 @@
-import { authenticatedClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type {
   DailySummaryResponse,
-  MonthlyProfitabilityRequest,
   MonthlyProfitabilityResponse,
   ProductProfitabilityItem,
 } from '../types/reports'
 
-export const reportsApi = {
-  getDailySummary: (date?: Date) =>
-    authenticatedClient.get<DailySummaryResponse>('/reports/daily-summary', {
-      params: { date: date?.toISOString() },
-    }),
-
-  getMonthlyProfitability: (params: MonthlyProfitabilityRequest) =>
-    authenticatedClient.get<MonthlyProfitabilityResponse>(
-      '/reports/monthly-profitability',
-      {
-        params,
-      },
-    ),
-
-  getProductsProfitabilityRanking: () =>
-    authenticatedClient.get<ProductProfitabilityItem[]>(
-      '/reports/product-profitability-ranking',
-    ),
+const definitions = {
+  getDailySummary: {
+    method: 'GET',
+    path: '/reports/daily-summary',
+  } as EndpointDefinition<DailySummaryResponse>,
+  getMonthlyProfitability: {
+    method: 'GET',
+    path: '/reports/monthly-profitability',
+  } as EndpointDefinition<MonthlyProfitabilityResponse>,
+  getProductsProfitabilityRanking: {
+    method: 'GET',
+    path: '/reports/product-profitability-ranking',
+  } as EndpointDefinition<ProductProfitabilityItem[]>,
 }
+
+export const reportsApi = defineResource(definitions)

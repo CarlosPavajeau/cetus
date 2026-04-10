@@ -1,4 +1,5 @@
-import { anonymousClient, authenticatedClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type {
   Category,
   CategoryBySlugResponse,
@@ -6,17 +7,27 @@ import type {
   UpdateCategoryRequest,
 } from '../types/categories'
 
-export const categoriesApi = {
-  list: () => anonymousClient.get<Category[]>('/categories'),
-
-  create: (data: CreateCategoryRequest) =>
-    authenticatedClient.post<Category>('/categories', data),
-
-  update: (id: string, data: UpdateCategoryRequest) =>
-    authenticatedClient.put<Category>(`/categories/${id}`, data),
-
-  delete: (id: string) => authenticatedClient.delete(`/categories/${id}`),
-
-  getBySlug: (slug: string) =>
-    anonymousClient.get<CategoryBySlugResponse>(`/categories/${slug}`),
+const definitions = {
+  list: {
+    method: 'GET',
+    path: '/categories',
+  } as EndpointDefinition<Category[]>,
+  create: {
+    method: 'POST',
+    path: '/categories',
+  } as EndpointDefinition<Category, CreateCategoryRequest>,
+  update: {
+    method: 'PUT',
+    path: (id: string) => `/categories/${id}`,
+  } as EndpointDefinition<Category, UpdateCategoryRequest, string>,
+  delete: {
+    method: 'DELETE',
+    path: (id: string) => `/categories/${id}`,
+  } as EndpointDefinition<void, void, string>,
+  getBySlug: {
+    method: 'GET',
+    path: (slug: string) => `/categories/${slug}`,
+  } as EndpointDefinition<CategoryBySlugResponse, void, string>,
 }
+
+export const categoriesApi = defineResource(definitions)

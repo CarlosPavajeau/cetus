@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { ProductImage } from '@cetus/api-client/types/products'
 import { generateImageName, getImageUrl } from '@cetus/shared/utils/image'
 import { Button } from '@cetus/ui/button'

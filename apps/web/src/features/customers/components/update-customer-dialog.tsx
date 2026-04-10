@@ -1,5 +1,8 @@
-import { api } from '@cetus/api-client'
-import type { Customer } from '@cetus/api-client/types/customers'
+import { api } from '@cetus/web/lib/client-api'
+import type {
+  Customer,
+  UpdateCustomerRequest,
+} from '@cetus/api-client/types/customers'
 import { updateCustomerSchema } from '@cetus/schemas/customer.schema'
 import { documentTypes } from '@cetus/shared/constants/customer'
 import { Button } from '@cetus/ui/button'
@@ -57,7 +60,8 @@ export function UpdateCustomerDialog({ customer }: Props) {
   const queryClient = useQueryClient()
   const { mutate, isPending } = useMutation({
     mutationKey: ['customers', customer.id, 'update'],
-    mutationFn: api.customers.update,
+    mutationFn: (data: UpdateCustomerRequest) =>
+      api.customers.update(customer.id, data),
     onSuccess: async () => {
       await queryClient.invalidateQueries(customerQueries.detail(customer.id))
 

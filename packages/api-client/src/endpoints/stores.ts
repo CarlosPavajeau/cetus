@@ -1,4 +1,5 @@
-import { anonymousClient, authenticatedClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type {
   ConfigureMercadoPagoRequest,
   ConfigureWompiCredentialsValues,
@@ -7,38 +8,51 @@ import type {
   UpdateStoreValues,
 } from '../types/stores'
 
-export const storesApi = {
-  create: (data: CreateStoreRequest) =>
-    authenticatedClient.post<void>('/stores', data),
+const definitions = {
+  create: {
+    method: 'POST',
+    path: '/stores',
+  } as EndpointDefinition<void, CreateStoreRequest>,
 
-  update: (id: string, data: UpdateStoreValues) =>
-    authenticatedClient.put<Store>(`/stores/${id}`, data),
+  update: {
+    method: 'PUT',
+    path: (id: string) => `/stores/${id}`,
+  } as EndpointDefinition<Store, UpdateStoreValues, string>,
 
-  configureMercadopago: (config: ConfigureMercadoPagoRequest) =>
-    authenticatedClient.put<void>(
-      '/stores/payment-providers/mercado-pago/credentials',
-      config,
-    ),
+  configureMercadopago: {
+    method: 'PUT',
+    path: '/stores/payment-providers/mercado-pago/credentials',
+  } as EndpointDefinition<void, ConfigureMercadoPagoRequest>,
 
-  configureWompi: (config: ConfigureWompiCredentialsValues) =>
-    authenticatedClient.put<void>(
-      '/stores/payment-providers/wompi/credentials',
-      config,
-    ),
+  configureWompi: {
+    method: 'PUT',
+    path: '/stores/payment-providers/wompi/credentials',
+  } as EndpointDefinition<void, ConfigureWompiCredentialsValues>,
 
-  getByDomain: (domain: string) =>
-    anonymousClient.get<Store>(`/stores/by-domain/${domain}`),
+  getByDomain: {
+    method: 'GET',
+    path: (domain: string) => `/stores/by-domain/${domain}`,
+  } as EndpointDefinition<Store, void, string>,
 
-  getBySlug: (slug: string) =>
-    anonymousClient.get<Store>(`/stores/by-slug/${slug}`),
+  getBySlug: {
+    method: 'GET',
+    path: (slug: string) => `/stores/by-slug/${slug}`,
+  } as EndpointDefinition<Store, void, string>,
 
-  getById: (id: string) => anonymousClient.get<Store>(`/stores/${id}`),
+  getById: {
+    method: 'GET',
+    path: (id: string) => `/stores/${id}`,
+  } as EndpointDefinition<Store, void, string>,
 
-  getByExternalId: (externalId: string) =>
-    authenticatedClient.get<Store>(`/stores/by-external-id/${externalId}`),
+  getByExternalId: {
+    method: 'GET',
+    path: (externalId: string) => `/stores/by-external-id/${externalId}`,
+  } as EndpointDefinition<Store, void, string>,
 
-  getMercadoPagoAuthorizationUrl: () =>
-    authenticatedClient.get<string>(
-      '/stores/payment-providers/mercado-pago/authorization-url',
-    ),
+  getMercadoPagoAuthorizationUrl: {
+    method: 'GET',
+    path: '/stores/payment-providers/mercado-pago/authorization-url',
+  } as EndpointDefinition<string, void>,
 }
+
+export const storesApi = defineResource(definitions)

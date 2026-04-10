@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { Order } from '@cetus/api-client/types/orders'
 import { wompi } from '@cetus/integrations-wompi'
 import type { CreateTransactionRequest } from '@cetus/integrations-wompi/types'

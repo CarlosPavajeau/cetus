@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { createSaleSchema } from '@cetus/schemas/order.schema'
 import {
   defaultCityId,
@@ -49,6 +49,7 @@ import { PlusIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import type { CreateSale } from '@cetus/api-client/types/orders'
 
 const MAX_PRODUCTS = 20
 
@@ -201,7 +202,7 @@ export function QuickSaleSheet({ open, onOpenChange }: Readonly<Props>) {
   const queryClient = useQueryClient()
   const { mutateAsync } = useMutation({
     mutationKey: ['sales'],
-    mutationFn: api.orders.createSale,
+    mutationFn: (data: CreateSale) => api.orders.createSale(data),
     onSuccess: () => {
       toast.success('Venta registrada con éxito')
       queryClient.invalidateQueries({ queryKey: ['orders'] })

@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { Badge } from '@cetus/ui/badge'
 import { Button } from '@cetus/ui/button'
 import { Checkbox } from '@cetus/ui/checkbox'

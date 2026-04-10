@@ -1,11 +1,9 @@
-import { api } from "@cetus/api-client"
-import type { Store } from "@cetus/api-client/types/stores"
-import { authClient } from "@cetus/auth/client"
-import { useTenantStore } from "@cetus/web/store/use-tenant-store"
-import { useQuery } from "@tanstack/react-query"
-import { createContext, useEffect, useMemo } from "react"
-import { setupApiClient } from "@cetus/web/lib/api/setup"
-
+import type { Store } from '@cetus/api-client/types/stores'
+import { authClient } from '@cetus/auth/client'
+import { api } from '@cetus/web/lib/client-api'
+import { useTenantStore } from '@cetus/web/store/use-tenant-store'
+import { useQuery } from '@tanstack/react-query'
+import { createContext, useEffect, useMemo } from 'react'
 
 type StoreContext = {
   store?: Store
@@ -34,17 +32,12 @@ export function StoreProvider({ children }: Props) {
 
   const { actions } = useTenantStore()
 
-  const contextValue = useMemo(
-    () => ({ isLoading, store }),
-    [store, isLoading]
-  )
+  const contextValue = useMemo(() => ({ isLoading, store }), [store, isLoading])
 
   useEffect(() => {
     if (store) {
       actions.setStore(store)
     }
-
-    setupApiClient()
   }, [store, actions])
 
   return (

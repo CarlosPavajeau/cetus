@@ -1,35 +1,29 @@
-import { anonymousClient, authenticatedClient } from '../core/instance'
-import type { PaginatedResponse } from '../types/common'
-import type {
-  Customer,
-  CustomerOrdersQueryParams,
-  CustomerQueryParams,
-  CustomerSummaryResponse,
-  UpdateCustomerRequest,
-} from '../types/customers'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
+import type { Customer, UpdateCustomerRequest } from '../types/customers'
 import type { SimpleOrder } from '../types/orders'
 
-export const customersApi = {
-  getById: (id: string) =>
-    authenticatedClient.get<Customer>(`/customers/${id}`),
-
-  getByPhone: (phone: string) =>
-    anonymousClient.get<Customer>(
-      `/customers/by-phone/${encodeURIComponent(phone)}`,
-    ),
-
-  list: (params?: CustomerQueryParams) =>
-    authenticatedClient.get<PaginatedResponse<CustomerSummaryResponse>>(
-      '/customers',
-      { params },
-    ),
-
-  listOrders: (customerId: string, params: CustomerOrdersQueryParams) =>
-    authenticatedClient.get<PaginatedResponse<SimpleOrder>>(
-      `/customers/${customerId}/orders`,
-      { params },
-    ),
-
-  update: (data: UpdateCustomerRequest) =>
-    authenticatedClient.put<Customer>(`/customers/${data.id}`, data),
+const definitions = {
+  list: {
+    method: 'GET',
+    path: '/customers',
+  } as EndpointDefinition<Customer[]>,
+  listOrders: {
+    method: 'GET',
+    path: (customerId: string) => `/customers/${customerId}/orders`,
+  } as EndpointDefinition<SimpleOrder[], void, string>,
+  getById: {
+    method: 'GET',
+    path: (id: string) => `/customers/${id}`,
+  } as EndpointDefinition<Customer, void, string>,
+  getByPhone: {
+    method: 'GET',
+    path: (phone: string) => `/customers/by-phone/${encodeURIComponent(phone)}`,
+  } as EndpointDefinition<Customer, void, string>,
+  update: {
+    method: 'PUT',
+    path: (id: string) => `/customers/${id}`,
+  } as EndpointDefinition<Customer, UpdateCustomerRequest, string>,
 }
+
+export const customersApi = defineResource(definitions)

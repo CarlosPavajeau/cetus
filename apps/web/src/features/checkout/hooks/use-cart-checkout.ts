@@ -1,5 +1,8 @@
-import { api } from '@cetus/api-client'
-import type { CreateOrderItem } from '@cetus/api-client/types/orders'
+import { api } from '@cetus/web/lib/client-api'
+import type {
+  CreateOrder,
+  CreateOrderItem,
+} from '@cetus/api-client/types/orders'
 import { createOrderSchema } from '@cetus/schemas/order.schema'
 import { orderQueries } from '@cetus/web/features/orders/queries'
 import type { CartItem } from '@cetus/web/store/cart'
@@ -39,7 +42,7 @@ export function useCartCheckout() {
   const navigate = useNavigate()
   const createOrderMutation = useMutation({
     mutationKey: ['orders', 'create'],
-    mutationFn: api.orders.create,
+    mutationFn: (data: CreateOrder) => api.orders.create(data),
     onSuccess: (data) => {
       navigate({
         to: '/checkout/$id',

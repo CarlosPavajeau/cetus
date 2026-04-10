@@ -1,5 +1,9 @@
-import { api } from '@cetus/api-client'
-import type { Order, OrderStatus } from '@cetus/api-client/types/orders'
+import { api } from '@cetus/web/lib/client-api'
+import type {
+  ChangeOrderStatusRequest,
+  Order,
+  OrderStatus,
+} from '@cetus/api-client/types/orders'
 import {
   manualPaymentMethodLabels,
   orderStatusLabels,
@@ -308,7 +312,8 @@ function OrderStatusForm({
 
   const { mutateAsync } = useMutation({
     mutationKey: ['orders', 'status', order.id],
-    mutationFn: api.orders.updateStatus,
+    mutationFn: (data: ChangeOrderStatusRequest) =>
+      api.orders.updateStatus(order.id, data),
     onSuccess: () => {
       onOpenChange(false)
       toast.success('Estado del pedido actualizado')

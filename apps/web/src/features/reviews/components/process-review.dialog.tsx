@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { PendingForApprovalProductReview } from '@cetus/api-client/types/reviews'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { Button } from '@cetus/ui/button'

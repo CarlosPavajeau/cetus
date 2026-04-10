@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { Order } from '@cetus/api-client/types/orders'
 import { redeemCouponSchema } from '@cetus/schemas/coupon.schema'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@cetus/ui/field'

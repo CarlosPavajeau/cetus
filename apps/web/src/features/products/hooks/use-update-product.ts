@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { UpdateProduct } from '@cetus/api-client/types/products'
 import { productQueries } from '@cetus/web/features/products/queries'
 import { useMutation, useQueryClient } from '@tanstack/react-query'

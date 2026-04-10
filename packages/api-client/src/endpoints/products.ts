@@ -1,4 +1,5 @@
-import { anonymousClient, authenticatedClient } from '../core/instance'
+import { defineResource } from '../core/define-resource'
+import type { EndpointDefinition } from '../core/types'
 import type { PaginatedResponse } from '../types/common'
 import type {
   AddVariantImages,
@@ -28,129 +29,80 @@ export type ProductForSaleParams = {
   categoryIds?: string[]
 }
 
-export const productsApi = {
-  list: () => authenticatedClient.get<Product[]>('products'),
+const definitions = {
+  list: {
+    method: 'GET',
+    path: 'products',
+  } as EndpointDefinition<Product[]>,
 
-  listForSale: (params?: ProductForSaleParams) =>
-    anonymousClient.get<PaginatedResponse<SimpleProductForSale>>(
-      'products/for-sale',
-      {
-        params,
-        paramsSerializer: {
-          indexes: null,
-        },
-      },
-    ),
+  listForSale: {
+    method: 'GET',
+    path: 'products/for-sale',
+  } as EndpointDefinition<
+    PaginatedResponse<SimpleProductForSale>,
+    void,
+    ProductForSaleParams
+  >,
 
-  listFeatured: () =>
-    anonymousClient.get<SimpleProductForSale[]>('products/featured'),
+  listFeatured: {
+    method: 'GET',
+    path: 'products/featured',
+  } as EndpointDefinition<SimpleProductForSale[]>,
 
-  listPopular: () =>
-    anonymousClient.get<SimpleProductForSale[]>('products/popular'),
+  listPopular: {
+    method: 'GET',
+    path: 'products/popular',
+  } as EndpointDefinition<SimpleProductForSale[]>,
 
-  listByCategory: (categoryId: string) =>
-    anonymousClient.get<SimpleProductForSale[]>(
-      `products/category/${categoryId}`,
-    ),
+  listByCategory: {
+    method: 'GET',
+    path: (categoryId: string) => `products/category/${categoryId}`,
+  } as EndpointDefinition<SimpleProductForSale[], void, string>,
 
-  listSuggestions: (productId: string) =>
-    anonymousClient.get<SimpleProductForSale[]>('products/suggestions', {
-      params: { productId },
-    }),
+  listSuggestions: {
+    method: 'GET',
+    path: 'products/suggestions',
+  } as EndpointDefinition<SimpleProductForSale[], void>,
 
-  listTopSelling: () =>
-    authenticatedClient.get<TopSellingProduct[]>('products/top-selling'),
+  listTopSelling: {
+    method: 'GET',
+    path: 'products/top-selling',
+  } as EndpointDefinition<TopSellingProduct[]>,
 
-  search: (searchTerm: string) =>
-    anonymousClient.get<SearchProductResponse[]>('products/search', {
-      params: { searchTerm },
-    }),
+  search: {
+    method: 'GET',
+    path: 'products/search',
+  } as EndpointDefinition<SearchProductResponse[]>,
 
-  getById: (id: string) => authenticatedClient.get<Product>(`products/${id}`),
+  getById: {
+    method: 'GET',
+    path: (id: string) => `products/${id}`,
+  } as EndpointDefinition<Product, void, string>,
 
-  getBySlug: (slug: string) =>
-    anonymousClient.get<ProductForSale>(`products/slug/${slug}`),
+  getBySlug: {
+    method: 'GET',
+    path: (slug: string) => `products/slug/${slug}`,
+  } as EndpointDefinition<ProductForSale, void, string>,
 
-  create: (data: CreateProduct) =>
-    authenticatedClient.post<Product>('products', data),
+  create: {
+    method: 'POST',
+    path: 'products',
+  } as EndpointDefinition<Product, CreateProduct>,
 
-  createSimple: (data: CreateSimpleProduct) =>
-    authenticatedClient.post<Product>('products/simple', data),
+  createSimple: {
+    method: 'POST',
+    path: 'products/simple',
+  } as EndpointDefinition<Product, CreateSimpleProduct>,
 
-  update: (id: string, data: UpdateProduct) =>
-    authenticatedClient.put<Product>(`products/${id}`, data),
+  update: {
+    method: 'PUT',
+    path: (id: string) => `products/${id}`,
+  } as EndpointDefinition<Product, UpdateProduct, string>,
 
-  delete: (id: string) => authenticatedClient.delete<void>(`products/${id}`),
-
-  optionTypes: {
-    list: () =>
-      authenticatedClient.get<ProductOptionType[]>('products/option-types'),
-
-    create: (data: CreateProductOptionType) =>
-      authenticatedClient.post<ProductOptionType>(
-        'products/option-types',
-        data,
-      ),
-  },
-
-  options: {
-    list: (productId: string) =>
-      authenticatedClient.get<ProductOptionResponse[]>(
-        `products/${productId}/options`,
-      ),
-
-    create: (data: CreateProductOption) =>
-      authenticatedClient.post<void>(
-        `products/${data.productId}/options`,
-        data,
-      ),
-  },
-
-  variants: {
-    list: (productId: string) =>
-      authenticatedClient.get<ProductVariantResponse[]>(
-        `products/${productId}/variants`,
-      ),
-
-    getById: (id: number) =>
-      authenticatedClient.get<ProductVariantResponse>(
-        `products/variants/${id}`,
-      ),
-
-    create: (data: CreateProductVariant) =>
-      authenticatedClient.post<ProductVariantResponse>(
-        `products/${data.productId}/variants`,
-        data,
-      ),
-
-    update: (id: number, data: UpdateProductVariant) =>
-      authenticatedClient.put<ProductVariantResponse>(
-        `products/variants/${id}`,
-        data,
-      ),
-
-    images: {
-      add: (id: number, data: AddVariantImages) =>
-        authenticatedClient.post<AddVariantImagesResponse>(
-          `products/variants/${id}/images`,
-          data,
-        ),
-
-      order: (data: OrderVariantImages) =>
-        authenticatedClient.put<void>(
-          `products/variants/${data.variantId}/images/order`,
-          data,
-        ),
-
-      delete: (variantId: number, imageId: number) =>
-        authenticatedClient.delete<void>(
-          `products/variants/images/${imageId}`,
-          {
-            params: {
-              variantId,
-            },
-          },
-        ),
-    },
-  },
+  delete: {
+    method: 'DELETE',
+    path: (id: string) => `products/${id}`,
+  } as EndpointDefinition<void, void, string>,
 }
+
+export const productsApi = defineResource(definitions)

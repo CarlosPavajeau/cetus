@@ -1,4 +1,3 @@
-import { api } from '@cetus/api-client'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { Button } from '@cetus/ui/button'
 import { Skeleton } from '@cetus/ui/skeleton'
@@ -11,19 +10,19 @@ import { ProductReviews } from '@cetus/web/features/products/components/product-
 import { SuggestedProducts } from '@cetus/web/features/products/components/suggested-product'
 import { getAppUrl } from '@cetus/web/functions/get-app-url'
 import { setStoreId } from '@cetus/web/functions/store-slug'
-import { setupApiClient } from '@cetus/web/lib/api/setup'
 import { generateProductSEO, generateSEOTags } from '@cetus/web/shared/seo'
 import { useTenantStore } from '@cetus/web/store/use-tenant-store'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { type } from 'arktype'
 import { Home } from 'lucide-react'
 import { useEffect } from 'react'
+import { api } from '@cetus/web/lib/client-api'
 
 const productSearchSchema = type({
   variant: type('number>0'),
 })
 
-export const Route = createFileRoute('/products/$slug')({
+export const Route = createFileRoute('/products/$slug/')({
   validateSearch: productSearchSchema,
   beforeLoad: ({ search }) => ({
     variant: search.variant,
@@ -44,10 +43,10 @@ export const Route = createFileRoute('/products/$slug')({
       },
     })
 
-    setupApiClient(store.id)
-
     const [suggestions, reviews] = await Promise.all([
-      api.products.listSuggestions(product.id),
+      api.products.listSuggestions({
+        params: { productId: product.id },
+      }),
       api.reviews.list(product.id),
     ])
 

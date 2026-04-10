@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { MonthlyProfitabilityRequest } from '@cetus/api-client/types/reports'
 import { createQueryKeys } from '@cetus/web/lib/query/create-query-keys'
 import { queryOptions } from '@tanstack/react-query'
@@ -9,7 +9,12 @@ export const reportQueries = {
   monthlyProfitability: (params: MonthlyProfitabilityRequest) =>
     queryOptions({
       queryKey: [...reportKeys.lists(), 'monthly-profitability', params],
-      queryFn: () => api.reports.getMonthlyProfitability(params),
+      queryFn: () =>
+        api.reports.getMonthlyProfitability({
+          params: {
+            ...params,
+          },
+        }),
     }),
 
   productsProfitabilityRanking: () =>

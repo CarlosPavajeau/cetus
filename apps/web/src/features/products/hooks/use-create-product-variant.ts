@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { createProductVariantSchema } from '@cetus/schemas/product.schema'
 import { uploadProductImages } from '@cetus/web/features/products/hooks/use-create-simple-product'
 import type { FileWithPreview } from '@cetus/web/hooks/use-file-upload'

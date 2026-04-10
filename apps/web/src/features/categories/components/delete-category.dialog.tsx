@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import type { Category } from '@cetus/api-client/types/categories'
 import {
   AlertDialog,

@@ -1,4 +1,4 @@
-import { api } from '@cetus/api-client'
+import { api } from '@cetus/web/lib/client-api'
 import { orderStatusLabels } from '@cetus/shared/constants/order'
 import { getImageUrl } from '@cetus/shared/utils/image'
 import { Currency } from '@cetus/web/components/currency'
@@ -12,7 +12,7 @@ import { Image } from '@unpic/react'
 import { CheckCircle2, ShoppingBag } from 'lucide-react'
 import { useEffect } from 'react'
 
-export const Route = createFileRoute('/orders/$orderId/confirmation')({
+export const Route = createFileRoute('/(orders)/orders/$orderId/confirmation')({
   loader: async ({ params }) => {
     try {
       const { orderId } = params
