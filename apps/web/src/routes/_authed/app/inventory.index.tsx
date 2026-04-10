@@ -22,7 +22,7 @@ import type { PaginationState } from '@tanstack/react-table'
 import { TagIcon } from 'lucide-react'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/app/inventory/')({
+export const Route = createFileRoute('/_authed/app/inventory/')({
   component: RouteComponent,
 })
 

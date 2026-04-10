@@ -16,7 +16,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/app/products/new')({
+export const Route = createFileRoute('/_authed/app/products/new')({
   ssr: false,
   component: CreateProductPage,
 })

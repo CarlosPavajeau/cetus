@@ -18,7 +18,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/app/customers/$customerId')({
+export const Route = createFileRoute('/_authed/app/customers/$customerId')({
   loader: async ({ params, context }) => {
     const { customerId } = params
     const queryParams = { page: 1, pageSize: 20 }
@@ -90,7 +90,7 @@ function RouteComponent() {
               {customer.phone && (
                 <Button asChild size="sm" variant="outline">
                   <a
-                    href={`https://wa.me/57${customer.phone.replace(/\D/g, '')}`}
+                    href={`https://wa.me/57${customer.phone.replace(/\D/g, ``)}`}
                     rel="noopener noreferrer"
                     target="_blank"
                   >

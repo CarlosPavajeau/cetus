@@ -30,7 +30,7 @@ import { Loader2Icon, RefreshCcwIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-export const Route = createFileRoute('/app/coupons/new')({
+export const Route = createFileRoute('/_authed/app/coupons/new')({
   component: RouteComponent,
 })
 

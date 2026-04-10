@@ -17,43 +17,44 @@ import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as FaqRouteImport } from './routes/faq'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as StoreRequiredRouteImport } from './routes/_store-required'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as StoreRouteImport } from './routes/$store'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
-import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as ReviewsNewRouteImport } from './routes/reviews.new'
 import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as PayTokenRouteImport } from './routes/pay.$token'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as CheckoutIdRouteImport } from './routes/checkout.$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
-import { Route as AppSettingsRouteImport } from './routes/app/settings'
-import { Route as AppReviewsRouteImport } from './routes/app/reviews'
-import { Route as AppProductOptionTypesRouteImport } from './routes/app/product-option-types'
-import { Route as AppDeliveryFeesRouteImport } from './routes/app/delivery-fees'
-import { Route as AppCategoriesRouteImport } from './routes/app/categories'
 import { Route as AcceptInvitationIdRouteImport } from './routes/accept-invitation.$id'
 import { Route as StoreRequiredCartRouteImport } from './routes/_store-required/cart'
-import { Route as AppProductsIndexRouteImport } from './routes/app/products/index'
-import { Route as AppOrdersIndexRouteImport } from './routes/app/orders.index'
-import { Route as AppInventoryIndexRouteImport } from './routes/app/inventory.index'
-import { Route as AppDashboardIndexRouteImport } from './routes/app/dashboard/index'
-import { Route as AppCustomersIndexRouteImport } from './routes/app/customers.index'
-import { Route as AppCouponsIndexRouteImport } from './routes/app/coupons/index'
+import { Route as AuthedAppRouteImport } from './routes/_authed/app'
 import { Route as StoreRequiredCheckoutIndexRouteImport } from './routes/_store-required/checkout.index'
+import { Route as AuthedAppIndexRouteImport } from './routes/_authed/app.index'
 import { Route as OrdersOrderIdConfirmationRouteImport } from './routes/orders/$orderId.confirmation'
-import { Route as AppProductsNewRouteImport } from './routes/app/products/new'
-import { Route as AppOrdersIdRouteImport } from './routes/app/orders.$id'
-import { Route as AppInventoryAdjustmentRouteImport } from './routes/app/inventory.adjustment'
-import { Route as AppCustomersCustomerIdRouteImport } from './routes/app/customers.$customerId'
-import { Route as AppCouponsNewRouteImport } from './routes/app/coupons/new'
 import { Route as ApiMercadopagoConnectRouteImport } from './routes/api/mercadopago/connect'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as StoreRequiredProductsAllRouteImport } from './routes/_store-required/products/all'
-import { Route as AppProductsIdDetailsRouteImport } from './routes/app/products.$id.details'
-import { Route as AppProductsVariantsIdEditRouteImport } from './routes/app/products.variants.$id.edit'
+import { Route as AuthedAppSettingsRouteImport } from './routes/_authed/app/settings'
+import { Route as AuthedAppReviewsRouteImport } from './routes/_authed/app/reviews'
+import { Route as AuthedAppProductOptionTypesRouteImport } from './routes/_authed/app/product-option-types'
+import { Route as AuthedAppDeliveryFeesRouteImport } from './routes/_authed/app/delivery-fees'
+import { Route as AuthedAppCategoriesRouteImport } from './routes/_authed/app/categories'
+import { Route as AuthedAppProductsIndexRouteImport } from './routes/_authed/app/products/index'
+import { Route as AuthedAppOrdersIndexRouteImport } from './routes/_authed/app/orders.index'
+import { Route as AuthedAppInventoryIndexRouteImport } from './routes/_authed/app/inventory.index'
+import { Route as AuthedAppDashboardIndexRouteImport } from './routes/_authed/app/dashboard/index'
+import { Route as AuthedAppCustomersIndexRouteImport } from './routes/_authed/app/customers.index'
+import { Route as AuthedAppCouponsIndexRouteImport } from './routes/_authed/app/coupons/index'
+import { Route as AuthedAppProductsNewRouteImport } from './routes/_authed/app/products/new'
+import { Route as AuthedAppOrdersIdRouteImport } from './routes/_authed/app/orders.$id'
+import { Route as AuthedAppInventoryAdjustmentRouteImport } from './routes/_authed/app/inventory.adjustment'
+import { Route as AuthedAppCustomersCustomerIdRouteImport } from './routes/_authed/app/customers.$customerId'
+import { Route as AuthedAppCouponsNewRouteImport } from './routes/_authed/app/coupons/new'
+import { Route as AuthedAppProductsIdDetailsRouteImport } from './routes/_authed/app/products.$id.details'
+import { Route as AuthedAppProductsVariantsIdEditRouteImport } from './routes/_authed/app/products.variants.$id.edit'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -95,13 +96,12 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StoreRequiredRoute = StoreRequiredRouteImport.update({
   id: '/_store-required',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreRoute = StoreRouteImport.update({
@@ -118,11 +118,6 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   id: '/onboarding/',
   path: '/onboarding/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppRoute,
 } as any)
 const ReviewsNewRoute = ReviewsNewRouteImport.update({
   id: '/reviews/new',
@@ -154,31 +149,6 @@ const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
   path: '/categories/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppReviewsRoute = AppReviewsRouteImport.update({
-  id: '/reviews',
-  path: '/reviews',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProductOptionTypesRoute = AppProductOptionTypesRouteImport.update({
-  id: '/product-option-types',
-  path: '/product-option-types',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDeliveryFeesRoute = AppDeliveryFeesRouteImport.update({
-  id: '/delivery-fees',
-  path: '/delivery-fees',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCategoriesRoute = AppCategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
-  getParentRoute: () => AppRoute,
-} as any)
 const AcceptInvitationIdRoute = AcceptInvitationIdRouteImport.update({
   id: '/accept-invitation/$id',
   path: '/accept-invitation/$id',
@@ -189,35 +159,10 @@ const StoreRequiredCartRoute = StoreRequiredCartRouteImport.update({
   path: '/cart',
   getParentRoute: () => StoreRequiredRoute,
 } as any)
-const AppProductsIndexRoute = AppProductsIndexRouteImport.update({
-  id: '/products/',
-  path: '/products/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
-  id: '/orders/',
-  path: '/orders/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppInventoryIndexRoute = AppInventoryIndexRouteImport.update({
-  id: '/inventory/',
-  path: '/inventory/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
-  id: '/customers/',
-  path: '/customers/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCouponsIndexRoute = AppCouponsIndexRouteImport.update({
-  id: '/coupons/',
-  path: '/coupons/',
-  getParentRoute: () => AppRoute,
+const AuthedAppRoute = AuthedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const StoreRequiredCheckoutIndexRoute =
   StoreRequiredCheckoutIndexRouteImport.update({
@@ -225,37 +170,17 @@ const StoreRequiredCheckoutIndexRoute =
     path: '/checkout/',
     getParentRoute: () => StoreRequiredRoute,
   } as any)
+const AuthedAppIndexRoute = AuthedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
 const OrdersOrderIdConfirmationRoute =
   OrdersOrderIdConfirmationRouteImport.update({
     id: '/$orderId/confirmation',
     path: '/$orderId/confirmation',
     getParentRoute: () => OrdersRoute,
   } as any)
-const AppProductsNewRoute = AppProductsNewRouteImport.update({
-  id: '/products/new',
-  path: '/products/new',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppOrdersIdRoute = AppOrdersIdRouteImport.update({
-  id: '/orders/$id',
-  path: '/orders/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppInventoryAdjustmentRoute = AppInventoryAdjustmentRouteImport.update({
-  id: '/inventory/adjustment',
-  path: '/inventory/adjustment',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCustomersCustomerIdRoute = AppCustomersCustomerIdRouteImport.update({
-  id: '/customers/$customerId',
-  path: '/customers/$customerId',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCouponsNewRoute = AppCouponsNewRouteImport.update({
-  id: '/coupons/new',
-  path: '/coupons/new',
-  getParentRoute: () => AppRoute,
-} as any)
 const ApiMercadopagoConnectRoute = ApiMercadopagoConnectRouteImport.update({
   id: '/api/mercadopago/connect',
   path: '/api/mercadopago/connect',
@@ -272,22 +197,105 @@ const StoreRequiredProductsAllRoute =
     path: '/products/all',
     getParentRoute: () => StoreRequiredRoute,
   } as any)
-const AppProductsIdDetailsRoute = AppProductsIdDetailsRouteImport.update({
-  id: '/products/$id/details',
-  path: '/products/$id/details',
-  getParentRoute: () => AppRoute,
+const AuthedAppSettingsRoute = AuthedAppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedAppRoute,
 } as any)
-const AppProductsVariantsIdEditRoute =
-  AppProductsVariantsIdEditRouteImport.update({
+const AuthedAppReviewsRoute = AuthedAppReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppProductOptionTypesRoute =
+  AuthedAppProductOptionTypesRouteImport.update({
+    id: '/product-option-types',
+    path: '/product-option-types',
+    getParentRoute: () => AuthedAppRoute,
+  } as any)
+const AuthedAppDeliveryFeesRoute = AuthedAppDeliveryFeesRouteImport.update({
+  id: '/delivery-fees',
+  path: '/delivery-fees',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppCategoriesRoute = AuthedAppCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppProductsIndexRoute = AuthedAppProductsIndexRouteImport.update({
+  id: '/products/',
+  path: '/products/',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppOrdersIndexRoute = AuthedAppOrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppInventoryIndexRoute = AuthedAppInventoryIndexRouteImport.update({
+  id: '/inventory/',
+  path: '/inventory/',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppDashboardIndexRoute = AuthedAppDashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppCustomersIndexRoute = AuthedAppCustomersIndexRouteImport.update({
+  id: '/customers/',
+  path: '/customers/',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppCouponsIndexRoute = AuthedAppCouponsIndexRouteImport.update({
+  id: '/coupons/',
+  path: '/coupons/',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppProductsNewRoute = AuthedAppProductsNewRouteImport.update({
+  id: '/products/new',
+  path: '/products/new',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppOrdersIdRoute = AuthedAppOrdersIdRouteImport.update({
+  id: '/orders/$id',
+  path: '/orders/$id',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppInventoryAdjustmentRoute =
+  AuthedAppInventoryAdjustmentRouteImport.update({
+    id: '/inventory/adjustment',
+    path: '/inventory/adjustment',
+    getParentRoute: () => AuthedAppRoute,
+  } as any)
+const AuthedAppCustomersCustomerIdRoute =
+  AuthedAppCustomersCustomerIdRouteImport.update({
+    id: '/customers/$customerId',
+    path: '/customers/$customerId',
+    getParentRoute: () => AuthedAppRoute,
+  } as any)
+const AuthedAppCouponsNewRoute = AuthedAppCouponsNewRouteImport.update({
+  id: '/coupons/new',
+  path: '/coupons/new',
+  getParentRoute: () => AuthedAppRoute,
+} as any)
+const AuthedAppProductsIdDetailsRoute =
+  AuthedAppProductsIdDetailsRouteImport.update({
+    id: '/products/$id/details',
+    path: '/products/$id/details',
+    getParentRoute: () => AuthedAppRoute,
+  } as any)
+const AuthedAppProductsVariantsIdEditRoute =
+  AuthedAppProductsVariantsIdEditRouteImport.update({
     id: '/products/variants/$id/edit',
     path: '/products/variants/$id/edit',
-    getParentRoute: () => AppRoute,
+    getParentRoute: () => AuthedAppRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$store': typeof StoreRoute
-  '/app': typeof AppRouteWithChildren
   '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -296,39 +304,40 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
+  '/app': typeof AuthedAppRouteWithChildren
   '/cart': typeof StoreRequiredCartRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
-  '/app/categories': typeof AppCategoriesRoute
-  '/app/delivery-fees': typeof AppDeliveryFeesRoute
-  '/app/product-option-types': typeof AppProductOptionTypesRoute
-  '/app/reviews': typeof AppReviewsRoute
-  '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/orders/$id': typeof OrdersIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
-  '/app/': typeof AppIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/app/categories': typeof AuthedAppCategoriesRoute
+  '/app/delivery-fees': typeof AuthedAppDeliveryFeesRoute
+  '/app/product-option-types': typeof AuthedAppProductOptionTypesRoute
+  '/app/reviews': typeof AuthedAppReviewsRoute
+  '/app/settings': typeof AuthedAppSettingsRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
-  '/app/coupons/new': typeof AppCouponsNewRoute
-  '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
-  '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
-  '/app/orders/$id': typeof AppOrdersIdRoute
-  '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app/': typeof AuthedAppIndexRoute
   '/checkout/': typeof StoreRequiredCheckoutIndexRoute
-  '/app/coupons/': typeof AppCouponsIndexRoute
-  '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/dashboard/': typeof AppDashboardIndexRoute
-  '/app/inventory/': typeof AppInventoryIndexRoute
-  '/app/orders/': typeof AppOrdersIndexRoute
-  '/app/products/': typeof AppProductsIndexRoute
-  '/app/products/$id/details': typeof AppProductsIdDetailsRoute
-  '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
+  '/app/coupons/new': typeof AuthedAppCouponsNewRoute
+  '/app/customers/$customerId': typeof AuthedAppCustomersCustomerIdRoute
+  '/app/inventory/adjustment': typeof AuthedAppInventoryAdjustmentRoute
+  '/app/orders/$id': typeof AuthedAppOrdersIdRoute
+  '/app/products/new': typeof AuthedAppProductsNewRoute
+  '/app/coupons/': typeof AuthedAppCouponsIndexRoute
+  '/app/customers/': typeof AuthedAppCustomersIndexRoute
+  '/app/dashboard/': typeof AuthedAppDashboardIndexRoute
+  '/app/inventory/': typeof AuthedAppInventoryIndexRoute
+  '/app/orders/': typeof AuthedAppOrdersIndexRoute
+  '/app/products/': typeof AuthedAppProductsIndexRoute
+  '/app/products/$id/details': typeof AuthedAppProductsIdDetailsRoute
+  '/app/products/variants/$id/edit': typeof AuthedAppProductsVariantsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -343,44 +352,44 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/cart': typeof StoreRequiredCartRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
-  '/app/categories': typeof AppCategoriesRoute
-  '/app/delivery-fees': typeof AppDeliveryFeesRoute
-  '/app/product-option-types': typeof AppProductOptionTypesRoute
-  '/app/reviews': typeof AppReviewsRoute
-  '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/orders/$id': typeof OrdersIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
-  '/app': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/app/categories': typeof AuthedAppCategoriesRoute
+  '/app/delivery-fees': typeof AuthedAppDeliveryFeesRoute
+  '/app/product-option-types': typeof AuthedAppProductOptionTypesRoute
+  '/app/reviews': typeof AuthedAppReviewsRoute
+  '/app/settings': typeof AuthedAppSettingsRoute
   '/products/all': typeof StoreRequiredProductsAllRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
-  '/app/coupons/new': typeof AppCouponsNewRoute
-  '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
-  '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
-  '/app/orders/$id': typeof AppOrdersIdRoute
-  '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/app': typeof AuthedAppIndexRoute
   '/checkout': typeof StoreRequiredCheckoutIndexRoute
-  '/app/coupons': typeof AppCouponsIndexRoute
-  '/app/customers': typeof AppCustomersIndexRoute
-  '/app/dashboard': typeof AppDashboardIndexRoute
-  '/app/inventory': typeof AppInventoryIndexRoute
-  '/app/orders': typeof AppOrdersIndexRoute
-  '/app/products': typeof AppProductsIndexRoute
-  '/app/products/$id/details': typeof AppProductsIdDetailsRoute
-  '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
+  '/app/coupons/new': typeof AuthedAppCouponsNewRoute
+  '/app/customers/$customerId': typeof AuthedAppCustomersCustomerIdRoute
+  '/app/inventory/adjustment': typeof AuthedAppInventoryAdjustmentRoute
+  '/app/orders/$id': typeof AuthedAppOrdersIdRoute
+  '/app/products/new': typeof AuthedAppProductsNewRoute
+  '/app/coupons': typeof AuthedAppCouponsIndexRoute
+  '/app/customers': typeof AuthedAppCustomersIndexRoute
+  '/app/dashboard': typeof AuthedAppDashboardIndexRoute
+  '/app/inventory': typeof AuthedAppInventoryIndexRoute
+  '/app/orders': typeof AuthedAppOrdersIndexRoute
+  '/app/products': typeof AuthedAppProductsIndexRoute
+  '/app/products/$id/details': typeof AuthedAppProductsIdDetailsRoute
+  '/app/products/variants/$id/edit': typeof AuthedAppProductsVariantsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$store': typeof StoreRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/_store-required': typeof StoreRequiredRouteWithChildren
-  '/app': typeof AppRouteWithChildren
   '/faq': typeof FaqRoute
   '/orders': typeof OrdersRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -389,46 +398,46 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
+  '/_authed/app': typeof AuthedAppRouteWithChildren
   '/_store-required/cart': typeof StoreRequiredCartRoute
   '/accept-invitation/$id': typeof AcceptInvitationIdRoute
-  '/app/categories': typeof AppCategoriesRoute
-  '/app/delivery-fees': typeof AppDeliveryFeesRoute
-  '/app/product-option-types': typeof AppProductOptionTypesRoute
-  '/app/reviews': typeof AppReviewsRoute
-  '/app/settings': typeof AppSettingsRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/orders/$id': typeof OrdersIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/reviews/new': typeof ReviewsNewRoute
-  '/app/': typeof AppIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/_authed/app/categories': typeof AuthedAppCategoriesRoute
+  '/_authed/app/delivery-fees': typeof AuthedAppDeliveryFeesRoute
+  '/_authed/app/product-option-types': typeof AuthedAppProductOptionTypesRoute
+  '/_authed/app/reviews': typeof AuthedAppReviewsRoute
+  '/_authed/app/settings': typeof AuthedAppSettingsRoute
   '/_store-required/products/all': typeof StoreRequiredProductsAllRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/mercadopago/connect': typeof ApiMercadopagoConnectRoute
-  '/app/coupons/new': typeof AppCouponsNewRoute
-  '/app/customers/$customerId': typeof AppCustomersCustomerIdRoute
-  '/app/inventory/adjustment': typeof AppInventoryAdjustmentRoute
-  '/app/orders/$id': typeof AppOrdersIdRoute
-  '/app/products/new': typeof AppProductsNewRoute
   '/orders/$orderId/confirmation': typeof OrdersOrderIdConfirmationRoute
+  '/_authed/app/': typeof AuthedAppIndexRoute
   '/_store-required/checkout/': typeof StoreRequiredCheckoutIndexRoute
-  '/app/coupons/': typeof AppCouponsIndexRoute
-  '/app/customers/': typeof AppCustomersIndexRoute
-  '/app/dashboard/': typeof AppDashboardIndexRoute
-  '/app/inventory/': typeof AppInventoryIndexRoute
-  '/app/orders/': typeof AppOrdersIndexRoute
-  '/app/products/': typeof AppProductsIndexRoute
-  '/app/products/$id/details': typeof AppProductsIdDetailsRoute
-  '/app/products/variants/$id/edit': typeof AppProductsVariantsIdEditRoute
+  '/_authed/app/coupons/new': typeof AuthedAppCouponsNewRoute
+  '/_authed/app/customers/$customerId': typeof AuthedAppCustomersCustomerIdRoute
+  '/_authed/app/inventory/adjustment': typeof AuthedAppInventoryAdjustmentRoute
+  '/_authed/app/orders/$id': typeof AuthedAppOrdersIdRoute
+  '/_authed/app/products/new': typeof AuthedAppProductsNewRoute
+  '/_authed/app/coupons/': typeof AuthedAppCouponsIndexRoute
+  '/_authed/app/customers/': typeof AuthedAppCustomersIndexRoute
+  '/_authed/app/dashboard/': typeof AuthedAppDashboardIndexRoute
+  '/_authed/app/inventory/': typeof AuthedAppInventoryIndexRoute
+  '/_authed/app/orders/': typeof AuthedAppOrdersIndexRoute
+  '/_authed/app/products/': typeof AuthedAppProductsIndexRoute
+  '/_authed/app/products/$id/details': typeof AuthedAppProductsIdDetailsRoute
+  '/_authed/app/products/variants/$id/edit': typeof AuthedAppProductsVariantsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/$store'
-    | '/app'
     | '/faq'
     | '/orders'
     | '/privacy'
@@ -437,31 +446,32 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/terms'
+    | '/app'
     | '/cart'
     | '/accept-invitation/$id'
-    | '/app/categories'
-    | '/app/delivery-fees'
-    | '/app/product-option-types'
-    | '/app/reviews'
-    | '/app/settings'
     | '/categories/$slug'
     | '/checkout/$id'
     | '/orders/$id'
     | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
-    | '/app/'
     | '/onboarding/'
+    | '/app/categories'
+    | '/app/delivery-fees'
+    | '/app/product-option-types'
+    | '/app/reviews'
+    | '/app/settings'
     | '/products/all'
     | '/api/auth/$'
     | '/api/mercadopago/connect'
+    | '/orders/$orderId/confirmation'
+    | '/app/'
+    | '/checkout/'
     | '/app/coupons/new'
     | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
     | '/app/orders/$id'
     | '/app/products/new'
-    | '/orders/$orderId/confirmation'
-    | '/checkout/'
     | '/app/coupons/'
     | '/app/customers/'
     | '/app/dashboard/'
@@ -484,29 +494,29 @@ export interface FileRouteTypes {
     | '/terms'
     | '/cart'
     | '/accept-invitation/$id'
-    | '/app/categories'
-    | '/app/delivery-fees'
-    | '/app/product-option-types'
-    | '/app/reviews'
-    | '/app/settings'
     | '/categories/$slug'
     | '/checkout/$id'
     | '/orders/$id'
     | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
-    | '/app'
     | '/onboarding'
+    | '/app/categories'
+    | '/app/delivery-fees'
+    | '/app/product-option-types'
+    | '/app/reviews'
+    | '/app/settings'
     | '/products/all'
     | '/api/auth/$'
     | '/api/mercadopago/connect'
+    | '/orders/$orderId/confirmation'
+    | '/app'
+    | '/checkout'
     | '/app/coupons/new'
     | '/app/customers/$customerId'
     | '/app/inventory/adjustment'
     | '/app/orders/$id'
     | '/app/products/new'
-    | '/orders/$orderId/confirmation'
-    | '/checkout'
     | '/app/coupons'
     | '/app/customers'
     | '/app/dashboard'
@@ -519,8 +529,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$store'
+    | '/_authed'
     | '/_store-required'
-    | '/app'
     | '/faq'
     | '/orders'
     | '/privacy'
@@ -529,46 +539,47 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/terms'
+    | '/_authed/app'
     | '/_store-required/cart'
     | '/accept-invitation/$id'
-    | '/app/categories'
-    | '/app/delivery-fees'
-    | '/app/product-option-types'
-    | '/app/reviews'
-    | '/app/settings'
     | '/categories/$slug'
     | '/checkout/$id'
     | '/orders/$id'
     | '/pay/$token'
     | '/products/$slug'
     | '/reviews/new'
-    | '/app/'
     | '/onboarding/'
+    | '/_authed/app/categories'
+    | '/_authed/app/delivery-fees'
+    | '/_authed/app/product-option-types'
+    | '/_authed/app/reviews'
+    | '/_authed/app/settings'
     | '/_store-required/products/all'
     | '/api/auth/$'
     | '/api/mercadopago/connect'
-    | '/app/coupons/new'
-    | '/app/customers/$customerId'
-    | '/app/inventory/adjustment'
-    | '/app/orders/$id'
-    | '/app/products/new'
     | '/orders/$orderId/confirmation'
+    | '/_authed/app/'
     | '/_store-required/checkout/'
-    | '/app/coupons/'
-    | '/app/customers/'
-    | '/app/dashboard/'
-    | '/app/inventory/'
-    | '/app/orders/'
-    | '/app/products/'
-    | '/app/products/$id/details'
-    | '/app/products/variants/$id/edit'
+    | '/_authed/app/coupons/new'
+    | '/_authed/app/customers/$customerId'
+    | '/_authed/app/inventory/adjustment'
+    | '/_authed/app/orders/$id'
+    | '/_authed/app/products/new'
+    | '/_authed/app/coupons/'
+    | '/_authed/app/customers/'
+    | '/_authed/app/dashboard/'
+    | '/_authed/app/inventory/'
+    | '/_authed/app/orders/'
+    | '/_authed/app/products/'
+    | '/_authed/app/products/$id/details'
+    | '/_authed/app/products/variants/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   StoreRoute: typeof StoreRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   StoreRequiredRoute: typeof StoreRequiredRouteWithChildren
-  AppRoute: typeof AppRouteWithChildren
   FaqRoute: typeof FaqRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
@@ -645,18 +656,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_store-required': {
       id: '/_store-required'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof StoreRequiredRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$store': {
@@ -679,13 +690,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/onboarding/'
       preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/app/': {
-      id: '/app/'
-      path: '/'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
     }
     '/reviews/new': {
       id: '/reviews/new'
@@ -729,41 +733,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/settings': {
-      id: '/app/settings'
-      path: '/settings'
-      fullPath: '/app/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/reviews': {
-      id: '/app/reviews'
-      path: '/reviews'
-      fullPath: '/app/reviews'
-      preLoaderRoute: typeof AppReviewsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/product-option-types': {
-      id: '/app/product-option-types'
-      path: '/product-option-types'
-      fullPath: '/app/product-option-types'
-      preLoaderRoute: typeof AppProductOptionTypesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/delivery-fees': {
-      id: '/app/delivery-fees'
-      path: '/delivery-fees'
-      fullPath: '/app/delivery-fees'
-      preLoaderRoute: typeof AppDeliveryFeesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/categories': {
-      id: '/app/categories'
-      path: '/categories'
-      fullPath: '/app/categories'
-      preLoaderRoute: typeof AppCategoriesRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/accept-invitation/$id': {
       id: '/accept-invitation/$id'
       path: '/accept-invitation/$id'
@@ -778,47 +747,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRequiredCartRouteImport
       parentRoute: typeof StoreRequiredRoute
     }
-    '/app/products/': {
-      id: '/app/products/'
-      path: '/products'
-      fullPath: '/app/products/'
-      preLoaderRoute: typeof AppProductsIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/orders/': {
-      id: '/app/orders/'
-      path: '/orders'
-      fullPath: '/app/orders/'
-      preLoaderRoute: typeof AppOrdersIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/inventory/': {
-      id: '/app/inventory/'
-      path: '/inventory'
-      fullPath: '/app/inventory/'
-      preLoaderRoute: typeof AppInventoryIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dashboard/': {
-      id: '/app/dashboard/'
-      path: '/dashboard'
-      fullPath: '/app/dashboard/'
-      preLoaderRoute: typeof AppDashboardIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/customers/': {
-      id: '/app/customers/'
-      path: '/customers'
-      fullPath: '/app/customers/'
-      preLoaderRoute: typeof AppCustomersIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/coupons/': {
-      id: '/app/coupons/'
-      path: '/coupons'
-      fullPath: '/app/coupons/'
-      preLoaderRoute: typeof AppCouponsIndexRouteImport
-      parentRoute: typeof AppRoute
+    '/_authed/app': {
+      id: '/_authed/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthedAppRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/_store-required/checkout/': {
       id: '/_store-required/checkout/'
@@ -827,47 +761,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRequiredCheckoutIndexRouteImport
       parentRoute: typeof StoreRequiredRoute
     }
+    '/_authed/app/': {
+      id: '/_authed/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthedAppIndexRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
     '/orders/$orderId/confirmation': {
       id: '/orders/$orderId/confirmation'
       path: '/$orderId/confirmation'
       fullPath: '/orders/$orderId/confirmation'
       preLoaderRoute: typeof OrdersOrderIdConfirmationRouteImport
       parentRoute: typeof OrdersRoute
-    }
-    '/app/products/new': {
-      id: '/app/products/new'
-      path: '/products/new'
-      fullPath: '/app/products/new'
-      preLoaderRoute: typeof AppProductsNewRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/orders/$id': {
-      id: '/app/orders/$id'
-      path: '/orders/$id'
-      fullPath: '/app/orders/$id'
-      preLoaderRoute: typeof AppOrdersIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/inventory/adjustment': {
-      id: '/app/inventory/adjustment'
-      path: '/inventory/adjustment'
-      fullPath: '/app/inventory/adjustment'
-      preLoaderRoute: typeof AppInventoryAdjustmentRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/customers/$customerId': {
-      id: '/app/customers/$customerId'
-      path: '/customers/$customerId'
-      fullPath: '/app/customers/$customerId'
-      preLoaderRoute: typeof AppCustomersCustomerIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/coupons/new': {
-      id: '/app/coupons/new'
-      path: '/coupons/new'
-      fullPath: '/app/coupons/new'
-      preLoaderRoute: typeof AppCouponsNewRouteImport
-      parentRoute: typeof AppRoute
     }
     '/api/mercadopago/connect': {
       id: '/api/mercadopago/connect'
@@ -890,22 +796,193 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRequiredProductsAllRouteImport
       parentRoute: typeof StoreRequiredRoute
     }
-    '/app/products/$id/details': {
-      id: '/app/products/$id/details'
+    '/_authed/app/settings': {
+      id: '/_authed/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AuthedAppSettingsRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/reviews': {
+      id: '/_authed/app/reviews'
+      path: '/reviews'
+      fullPath: '/app/reviews'
+      preLoaderRoute: typeof AuthedAppReviewsRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/product-option-types': {
+      id: '/_authed/app/product-option-types'
+      path: '/product-option-types'
+      fullPath: '/app/product-option-types'
+      preLoaderRoute: typeof AuthedAppProductOptionTypesRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/delivery-fees': {
+      id: '/_authed/app/delivery-fees'
+      path: '/delivery-fees'
+      fullPath: '/app/delivery-fees'
+      preLoaderRoute: typeof AuthedAppDeliveryFeesRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/categories': {
+      id: '/_authed/app/categories'
+      path: '/categories'
+      fullPath: '/app/categories'
+      preLoaderRoute: typeof AuthedAppCategoriesRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/products/': {
+      id: '/_authed/app/products/'
+      path: '/products'
+      fullPath: '/app/products/'
+      preLoaderRoute: typeof AuthedAppProductsIndexRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/orders/': {
+      id: '/_authed/app/orders/'
+      path: '/orders'
+      fullPath: '/app/orders/'
+      preLoaderRoute: typeof AuthedAppOrdersIndexRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/inventory/': {
+      id: '/_authed/app/inventory/'
+      path: '/inventory'
+      fullPath: '/app/inventory/'
+      preLoaderRoute: typeof AuthedAppInventoryIndexRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/dashboard/': {
+      id: '/_authed/app/dashboard/'
+      path: '/dashboard'
+      fullPath: '/app/dashboard/'
+      preLoaderRoute: typeof AuthedAppDashboardIndexRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/customers/': {
+      id: '/_authed/app/customers/'
+      path: '/customers'
+      fullPath: '/app/customers/'
+      preLoaderRoute: typeof AuthedAppCustomersIndexRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/coupons/': {
+      id: '/_authed/app/coupons/'
+      path: '/coupons'
+      fullPath: '/app/coupons/'
+      preLoaderRoute: typeof AuthedAppCouponsIndexRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/products/new': {
+      id: '/_authed/app/products/new'
+      path: '/products/new'
+      fullPath: '/app/products/new'
+      preLoaderRoute: typeof AuthedAppProductsNewRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/orders/$id': {
+      id: '/_authed/app/orders/$id'
+      path: '/orders/$id'
+      fullPath: '/app/orders/$id'
+      preLoaderRoute: typeof AuthedAppOrdersIdRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/inventory/adjustment': {
+      id: '/_authed/app/inventory/adjustment'
+      path: '/inventory/adjustment'
+      fullPath: '/app/inventory/adjustment'
+      preLoaderRoute: typeof AuthedAppInventoryAdjustmentRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/customers/$customerId': {
+      id: '/_authed/app/customers/$customerId'
+      path: '/customers/$customerId'
+      fullPath: '/app/customers/$customerId'
+      preLoaderRoute: typeof AuthedAppCustomersCustomerIdRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/coupons/new': {
+      id: '/_authed/app/coupons/new'
+      path: '/coupons/new'
+      fullPath: '/app/coupons/new'
+      preLoaderRoute: typeof AuthedAppCouponsNewRouteImport
+      parentRoute: typeof AuthedAppRoute
+    }
+    '/_authed/app/products/$id/details': {
+      id: '/_authed/app/products/$id/details'
       path: '/products/$id/details'
       fullPath: '/app/products/$id/details'
-      preLoaderRoute: typeof AppProductsIdDetailsRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AuthedAppProductsIdDetailsRouteImport
+      parentRoute: typeof AuthedAppRoute
     }
-    '/app/products/variants/$id/edit': {
-      id: '/app/products/variants/$id/edit'
+    '/_authed/app/products/variants/$id/edit': {
+      id: '/_authed/app/products/variants/$id/edit'
       path: '/products/variants/$id/edit'
       fullPath: '/app/products/variants/$id/edit'
-      preLoaderRoute: typeof AppProductsVariantsIdEditRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AuthedAppProductsVariantsIdEditRouteImport
+      parentRoute: typeof AuthedAppRoute
     }
   }
 }
+
+interface AuthedAppRouteChildren {
+  AuthedAppCategoriesRoute: typeof AuthedAppCategoriesRoute
+  AuthedAppDeliveryFeesRoute: typeof AuthedAppDeliveryFeesRoute
+  AuthedAppProductOptionTypesRoute: typeof AuthedAppProductOptionTypesRoute
+  AuthedAppReviewsRoute: typeof AuthedAppReviewsRoute
+  AuthedAppSettingsRoute: typeof AuthedAppSettingsRoute
+  AuthedAppIndexRoute: typeof AuthedAppIndexRoute
+  AuthedAppCouponsNewRoute: typeof AuthedAppCouponsNewRoute
+  AuthedAppCustomersCustomerIdRoute: typeof AuthedAppCustomersCustomerIdRoute
+  AuthedAppInventoryAdjustmentRoute: typeof AuthedAppInventoryAdjustmentRoute
+  AuthedAppOrdersIdRoute: typeof AuthedAppOrdersIdRoute
+  AuthedAppProductsNewRoute: typeof AuthedAppProductsNewRoute
+  AuthedAppCouponsIndexRoute: typeof AuthedAppCouponsIndexRoute
+  AuthedAppCustomersIndexRoute: typeof AuthedAppCustomersIndexRoute
+  AuthedAppDashboardIndexRoute: typeof AuthedAppDashboardIndexRoute
+  AuthedAppInventoryIndexRoute: typeof AuthedAppInventoryIndexRoute
+  AuthedAppOrdersIndexRoute: typeof AuthedAppOrdersIndexRoute
+  AuthedAppProductsIndexRoute: typeof AuthedAppProductsIndexRoute
+  AuthedAppProductsIdDetailsRoute: typeof AuthedAppProductsIdDetailsRoute
+  AuthedAppProductsVariantsIdEditRoute: typeof AuthedAppProductsVariantsIdEditRoute
+}
+
+const AuthedAppRouteChildren: AuthedAppRouteChildren = {
+  AuthedAppCategoriesRoute: AuthedAppCategoriesRoute,
+  AuthedAppDeliveryFeesRoute: AuthedAppDeliveryFeesRoute,
+  AuthedAppProductOptionTypesRoute: AuthedAppProductOptionTypesRoute,
+  AuthedAppReviewsRoute: AuthedAppReviewsRoute,
+  AuthedAppSettingsRoute: AuthedAppSettingsRoute,
+  AuthedAppIndexRoute: AuthedAppIndexRoute,
+  AuthedAppCouponsNewRoute: AuthedAppCouponsNewRoute,
+  AuthedAppCustomersCustomerIdRoute: AuthedAppCustomersCustomerIdRoute,
+  AuthedAppInventoryAdjustmentRoute: AuthedAppInventoryAdjustmentRoute,
+  AuthedAppOrdersIdRoute: AuthedAppOrdersIdRoute,
+  AuthedAppProductsNewRoute: AuthedAppProductsNewRoute,
+  AuthedAppCouponsIndexRoute: AuthedAppCouponsIndexRoute,
+  AuthedAppCustomersIndexRoute: AuthedAppCustomersIndexRoute,
+  AuthedAppDashboardIndexRoute: AuthedAppDashboardIndexRoute,
+  AuthedAppInventoryIndexRoute: AuthedAppInventoryIndexRoute,
+  AuthedAppOrdersIndexRoute: AuthedAppOrdersIndexRoute,
+  AuthedAppProductsIndexRoute: AuthedAppProductsIndexRoute,
+  AuthedAppProductsIdDetailsRoute: AuthedAppProductsIdDetailsRoute,
+  AuthedAppProductsVariantsIdEditRoute: AuthedAppProductsVariantsIdEditRoute,
+}
+
+const AuthedAppRouteWithChildren = AuthedAppRoute._addFileChildren(
+  AuthedAppRouteChildren,
+)
+
+interface AuthedRouteChildren {
+  AuthedAppRoute: typeof AuthedAppRouteWithChildren
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAppRoute: AuthedAppRouteWithChildren,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
 
 interface StoreRequiredRouteChildren {
   StoreRequiredCartRoute: typeof StoreRequiredCartRoute
@@ -922,52 +999,6 @@ const StoreRequiredRouteChildren: StoreRequiredRouteChildren = {
 const StoreRequiredRouteWithChildren = StoreRequiredRoute._addFileChildren(
   StoreRequiredRouteChildren,
 )
-
-interface AppRouteChildren {
-  AppCategoriesRoute: typeof AppCategoriesRoute
-  AppDeliveryFeesRoute: typeof AppDeliveryFeesRoute
-  AppProductOptionTypesRoute: typeof AppProductOptionTypesRoute
-  AppReviewsRoute: typeof AppReviewsRoute
-  AppSettingsRoute: typeof AppSettingsRoute
-  AppIndexRoute: typeof AppIndexRoute
-  AppCouponsNewRoute: typeof AppCouponsNewRoute
-  AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
-  AppInventoryAdjustmentRoute: typeof AppInventoryAdjustmentRoute
-  AppOrdersIdRoute: typeof AppOrdersIdRoute
-  AppProductsNewRoute: typeof AppProductsNewRoute
-  AppCouponsIndexRoute: typeof AppCouponsIndexRoute
-  AppCustomersIndexRoute: typeof AppCustomersIndexRoute
-  AppDashboardIndexRoute: typeof AppDashboardIndexRoute
-  AppInventoryIndexRoute: typeof AppInventoryIndexRoute
-  AppOrdersIndexRoute: typeof AppOrdersIndexRoute
-  AppProductsIndexRoute: typeof AppProductsIndexRoute
-  AppProductsIdDetailsRoute: typeof AppProductsIdDetailsRoute
-  AppProductsVariantsIdEditRoute: typeof AppProductsVariantsIdEditRoute
-}
-
-const AppRouteChildren: AppRouteChildren = {
-  AppCategoriesRoute: AppCategoriesRoute,
-  AppDeliveryFeesRoute: AppDeliveryFeesRoute,
-  AppProductOptionTypesRoute: AppProductOptionTypesRoute,
-  AppReviewsRoute: AppReviewsRoute,
-  AppSettingsRoute: AppSettingsRoute,
-  AppIndexRoute: AppIndexRoute,
-  AppCouponsNewRoute: AppCouponsNewRoute,
-  AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
-  AppInventoryAdjustmentRoute: AppInventoryAdjustmentRoute,
-  AppOrdersIdRoute: AppOrdersIdRoute,
-  AppProductsNewRoute: AppProductsNewRoute,
-  AppCouponsIndexRoute: AppCouponsIndexRoute,
-  AppCustomersIndexRoute: AppCustomersIndexRoute,
-  AppDashboardIndexRoute: AppDashboardIndexRoute,
-  AppInventoryIndexRoute: AppInventoryIndexRoute,
-  AppOrdersIndexRoute: AppOrdersIndexRoute,
-  AppProductsIndexRoute: AppProductsIndexRoute,
-  AppProductsIdDetailsRoute: AppProductsIdDetailsRoute,
-  AppProductsVariantsIdEditRoute: AppProductsVariantsIdEditRoute,
-}
-
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface OrdersRouteChildren {
   OrdersIdRoute: typeof OrdersIdRoute
@@ -997,8 +1028,8 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   StoreRoute: StoreRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   StoreRequiredRoute: StoreRequiredRouteWithChildren,
-  AppRoute: AppRouteWithChildren,
   FaqRoute: FaqRoute,
   OrdersRoute: OrdersRouteWithChildren,
   PrivacyRoute: PrivacyRoute,

@@ -9,7 +9,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 
-export const Route = createFileRoute('/app/product-option-types')({
+export const Route = createFileRoute('/_authed/app/product-option-types')({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(productQueries.optionTypes.list())
   },

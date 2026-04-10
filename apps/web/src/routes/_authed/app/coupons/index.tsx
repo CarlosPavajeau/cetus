@@ -4,7 +4,7 @@ import { CouponsTable } from '@cetus/web/features/coupons/components/coupons-tab
 import { useCoupons } from '@cetus/web/features/coupons/hooks/use-coupons'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/app/coupons/')({
+export const Route = createFileRoute('/_authed/app/coupons/')({
   component: RouteComponent,
 })
 

@@ -3,7 +3,7 @@ import { PendingReviewsTable } from '@cetus/web/features/reviews/components/pend
 import { usePendingForApprovalProductReviews } from '@cetus/web/features/reviews/hooks/user-pending-for-approval-product-reviews'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/app/reviews')({
+export const Route = createFileRoute('/_authed/app/reviews')({
   component: RouteComponent,
 })
 

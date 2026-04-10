@@ -20,7 +20,7 @@ import { LogOutIcon, User2Icon } from 'lucide-react'
 
 export function UserMenu() {
   const { session } = useRouteContext({
-    from: '/app',
+    from: '/_authed/app',
   })
   const router = useRouter()
   const { isMobile } = useSidebar()

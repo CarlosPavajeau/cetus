@@ -55,7 +55,7 @@ const searchParams = {
   pageSize: parseAsInteger.withDefault(10),
 }
 
-export const Route = createFileRoute('/app/orders/')({
+export const Route = createFileRoute('/_authed/app/orders/')({
   component: RouteComponent,
   validateSearch: createStandardSchemaV1(searchParams, {
     partialOutput: true,

@@ -6,7 +6,7 @@ import { useCategories } from '@cetus/web/features/categories/hooks/use-categori
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/app/categories')({
+export const Route = createFileRoute('/_authed/app/categories')({
   component: RouteComponent,
 })
 

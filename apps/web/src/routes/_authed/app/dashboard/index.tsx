@@ -8,7 +8,7 @@ import { ProductsRanking } from '@cetus/web/features/reports/components/products
 import { ProfitabilityReport } from '@cetus/web/features/reports/components/profitability-report'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/app/dashboard/')({
+export const Route = createFileRoute('/_authed/app/dashboard/')({
   component: RouteComponent,
 })
 

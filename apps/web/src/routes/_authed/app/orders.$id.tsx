@@ -47,7 +47,7 @@ function useRealtimeOrderUpdates(orderId: string) {
   })
 }
 
-export const Route = createFileRoute('/app/orders/$id')({
+export const Route = createFileRoute('/_authed/app/orders/$id')({
   component: RouteComponent,
   pendingComponent: () => (
     <div className="p-4 sm:p-6 lg:p-8">

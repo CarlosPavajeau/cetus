@@ -10,7 +10,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { PackageIcon, SettingsIcon, TagIcon } from 'lucide-react'
 
-export const Route = createFileRoute('/app/products/$id/details')({
+export const Route = createFileRoute('/_authed/app/products/$id/details')({
   loader: async ({ params, context }) => {
     const { id } = params
 

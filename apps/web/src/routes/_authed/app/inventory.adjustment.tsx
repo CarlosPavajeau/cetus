@@ -70,7 +70,7 @@ import {
 } from 'react-hook-form'
 import { toast } from 'sonner'
 
-export const Route = createFileRoute('/app/inventory/adjustment')({
+export const Route = createFileRoute('/_authed/app/inventory/adjustment')({
   component: RouteComponent,
 })
 
@@ -502,7 +502,7 @@ function RouteComponent() {
       )
 
       if (isAlreadyAdded) {
-        toast.warning(`El producto "${selected.name}" ya está en la lista.`)
+        toast.warning(`El producto ${selected.name} ya está en la lista.`)
         return
       }
 

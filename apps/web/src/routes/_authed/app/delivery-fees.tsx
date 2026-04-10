@@ -4,7 +4,7 @@ import { DeliveryFeesTable } from '@cetus/web/features/orders/components/deliver
 import { useDeliveryFees } from '@cetus/web/features/orders/hooks/use-delivery-fees'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/app/delivery-fees')({
+export const Route = createFileRoute('/_authed/app/delivery-fees')({
   component: RouteComponent,
 })
 

@@ -12,7 +12,7 @@ const searchParams = {
   date: parseAsString,
 }
 
-export const Route = createFileRoute('/app/')({
+export const Route = createFileRoute('/_authed/app/')({
   validateSearch: createStandardSchemaV1(searchParams, {
     partialOutput: true,
   }),

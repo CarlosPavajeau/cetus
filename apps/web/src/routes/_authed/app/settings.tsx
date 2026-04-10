@@ -32,7 +32,7 @@ import {
   UsersIcon,
 } from 'lucide-react'
 
-export const Route = createFileRoute('/app/settings')({
+export const Route = createFileRoute('/_authed/app/settings')({
   component: RouteComponent,
 })
 

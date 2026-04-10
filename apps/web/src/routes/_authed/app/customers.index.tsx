@@ -25,7 +25,7 @@ import type { PaginationState } from '@tanstack/react-table'
 import { useDebounce } from '@uidotdev/usehooks'
 import { useEffect, useState } from 'react'
 
-export const Route = createFileRoute('/app/customers/')({
+export const Route = createFileRoute('/_authed/app/customers/')({
   component: RouteComponent,
 })
 

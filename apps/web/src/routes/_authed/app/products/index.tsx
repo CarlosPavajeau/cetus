@@ -27,7 +27,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
-export const Route = createFileRoute('/app/products/')({
+export const Route = createFileRoute('/_authed/app/products/')({
   component: RouteComponent,
 })
 
