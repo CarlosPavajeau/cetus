@@ -1,31 +1,55 @@
 import type { OrdersMetrics } from '@cetus/api-client/types/reports'
+import { Card, CardContent, CardHeader, CardTitle } from '@cetus/ui/card'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@cetus/ui/card'
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@cetus/ui/empty'
+import { cn } from '@cetus/web/shared/utils'
 import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@cetus/web/components/ui/chart'
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  ClipboardListIcon,
+  ClockIcon,
+  MinusCircleIcon,
+  XCircleIcon,
+} from 'lucide-react'
 import { useMemo } from 'react'
 import { useNumberFormatter } from 'react-aria'
-import { Label, Pie, PieChart } from 'recharts'
 
-const orderStatusConfig = {
-  confirmed: { label: 'Confirmadas', color: 'oklch(0.72 0.19 150)' },
-  pending: { label: 'Pendientes', color: 'oklch(0.80 0.15 85)' },
-  awaitingVerification: {
+const statusConfig = [
+  {
+    key: 'confirmed' as const,
+    label: 'Confirmadas',
+    color: 'oklch(0.72 0.19 150)',
+    Icon: CheckCircle2Icon,
+  },
+  {
+    key: 'pending' as const,
+    label: 'Pendientes',
+    color: 'oklch(0.80 0.15 85)',
+    Icon: ClockIcon,
+  },
+  {
+    key: 'awaitingVerification' as const,
     label: 'Por verificar',
     color: 'oklch(0.70 0.15 250)',
+    Icon: AlertCircleIcon,
   },
-  rejected: { label: 'Rechazadas', color: 'oklch(0.64 0.21 25)' },
-  canceled: { label: 'Canceladas', color: 'oklch(0.55 0.02 260)' },
-} satisfies ChartConfig
+  {
+    key: 'rejected' as const,
+    label: 'Rechazadas',
+    color: 'oklch(0.64 0.21 25)',
+    Icon: XCircleIcon,
+  },
+  {
+    key: 'canceled' as const,
+    label: 'Canceladas',
+    color: 'oklch(0.55 0.02 260)',
+    Icon: MinusCircleIcon,
+  },
+] as const
 
 type Props = {
   orders: OrdersMetrics
@@ -33,36 +57,21 @@ type Props = {
 
 export function OrderStatusChart({ orders }: Readonly<Props>) {
   const numberFormat = useNumberFormatter()
+  const percentageFormat = useNumberFormatter({
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
 
-  const orderStatusData = useMemo(
+  const statusData = useMemo(
     () =>
-      [
-        {
-          status: 'confirmed',
-          value: orders.confirmed,
-          fill: 'var(--color-confirmed)',
-        },
-        {
-          status: 'pending',
-          value: orders.pending,
-          fill: 'var(--color-pending)',
-        },
-        {
-          status: 'awaitingVerification',
-          value: orders.awaitingVerification,
-          fill: 'var(--color-awaitingVerification)',
-        },
-        {
-          status: 'rejected',
-          value: orders.rejected,
-          fill: 'var(--color-rejected)',
-        },
-        {
-          status: 'canceled',
-          value: orders.canceled,
-          fill: 'var(--color-canceled)',
-        },
-      ].filter((d) => d.value > 0),
+      statusConfig
+        .map((s) => ({
+          ...s,
+          count: orders[s.key],
+          percentage: orders.total > 0 ? (orders[s.key] / orders.total) * 100 : 0,
+        }))
+        .filter((s) => s.count > 0),
     [orders],
   )
 
@@ -70,99 +79,79 @@ export function OrderStatusChart({ orders }: Readonly<Props>) {
     <Card>
       <CardHeader>
         <CardTitle>Estado de ventas</CardTitle>
-        <CardDescription>
-          Distribución de {numberFormat.format(orders.total)} ventas
-        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {orders.total > 0 ? (
           <>
-            <ChartContainer
-              className="mx-auto aspect-square max-h-70"
-              config={orderStatusConfig}
-            >
-              <PieChart accessibilityLayer>
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <Pie
-                  cornerRadius={5}
-                  data={orderStatusData}
-                  dataKey="value"
-                  innerRadius={60}
-                  nameKey="status"
-                  paddingAngle={3}
-                  stroke="var(--background)"
-                  strokeWidth={3}
-                >
-                  <Label
-                    content={({ viewBox }) => {
-                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                        return (
-                          <text
-                            dominantBaseline="middle"
-                            textAnchor="middle"
-                            x={viewBox.cx}
-                            y={viewBox.cy}
-                          >
-                            <tspan
-                              className="fill-foreground font-bold text-3xl tabular-nums"
-                              x={viewBox.cx}
-                              y={viewBox.cy}
-                            >
-                              {numberFormat.format(orders.total)}
-                            </tspan>
-                            <tspan
-                              className="fill-muted-foreground text-xs"
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) + 22}
-                            >
-                              Ventas
-                            </tspan>
-                          </text>
-                        )
-                      }
-                    }}
-                  />
-                </Pie>
-              </PieChart>
-            </ChartContainer>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Total de ventas
+              </p>
+              <p className="mt-1 font-bold font-mono text-2xl tabular-nums">
+                {numberFormat.format(orders.total)}
+              </p>
+            </div>
 
-            <div className="flex flex-col gap-3">
-              {orderStatusData.map((item) => (
+            <div className="flex h-2 w-full overflow-hidden rounded-full">
+              {statusData.map((item) => (
                 <div
-                  className="flex items-center justify-between"
-                  key={item.status}
+                  key={item.key}
+                  className="h-full"
+                  style={{
+                    width: `${item.percentage}%`,
+                    backgroundColor: item.color,
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+              {statusData.map((item) => (
+                <div key={item.key} className="flex items-center gap-1.5">
+                  <div
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col">
+              {statusData.map((item, i) => (
+                <div
+                  key={item.key}
+                  className={cn(
+                    'flex items-center gap-3 py-2.5',
+                    i > 0 && 'border-t',
+                  )}
                 >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-4 w-1 rounded-full"
-                      style={{
-                        backgroundColor:
-                          orderStatusConfig[
-                            item.status as keyof typeof orderStatusConfig
-                          ].color,
-                      }}
-                    />
-                    <h6 className="font-medium text-sm leading-tight">
-                      {
-                        orderStatusConfig[
-                          item.status as keyof typeof orderStatusConfig
-                        ].label
-                      }
-                    </h6>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <h6 className="font-medium text-sm">
-                      {numberFormat.format(item.value)}
-                    </h6>
-                  </div>
+                  <item.Icon
+                    className="size-4 shrink-0"
+                    style={{ color: item.color }}
+                  />
+                  <span className="flex-1 text-sm">{item.label}</span>
+                  <span className="font-medium font-mono text-sm tabular-nums">
+                    {numberFormat.format(item.count)}
+                  </span>
+                  <span className="w-12 text-right text-xs text-muted-foreground">
+                    {percentageFormat.format(item.percentage / 100)}
+                  </span>
                 </div>
               ))}
             </div>
           </>
         ) : (
-          <p className="py-8 text-center text-muted-foreground text-sm">
-            Sin ventas registradas hoy.
-          </p>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ClipboardListIcon />
+              </EmptyMedia>
+              <EmptyTitle>Sin ventas registradas</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         )}
       </CardContent>
     </Card>

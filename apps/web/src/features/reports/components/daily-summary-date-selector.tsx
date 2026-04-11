@@ -106,7 +106,7 @@ export function DailySummaryDateSelector({
               Actualizar
             </Button>
             <small className="text-muted-foreground text-xs">
-              Ultima actualización:{' '}
+              Última actualización:{' '}
               <FormattedDate date={new Date(dataUpdatedAt)} />
             </small>
           </>

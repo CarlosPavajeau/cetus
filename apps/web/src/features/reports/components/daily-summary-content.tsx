@@ -10,7 +10,6 @@ import {
 } from '@cetus/web/components/ui/item'
 import { ChannelRevenueChart } from '@cetus/web/features/reports/components/channel-revenue-chart'
 import { OrderStatusChart } from '@cetus/web/features/reports/components/order-status-chart'
-import { PaymentStatusCard } from '@cetus/web/features/reports/components/payment-status-card'
 import { StatsCard } from '@cetus/web/features/reports/components/stats-card'
 import { Image } from '@unpic/react'
 import { useNumberFormatter } from 'react-aria'
@@ -31,6 +30,11 @@ export function DailySummaryContent({ data }: Readonly<Props>) {
     style: 'decimal',
     maximumFractionDigits: 2,
   })
+
+  const confirmationRate =
+    data.orders.total > 0
+      ? percentageFormat.format(data.orders.confirmed / data.orders.total)
+      : '—'
 
   return (
     <>
@@ -57,30 +61,30 @@ export function DailySummaryContent({ data }: Readonly<Props>) {
         />
       </div>
 
-      <div className="rounded-md bg-muted/50 p-4">
-        <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-muted-foreground">
-            Total del día:{' '}
-            <span className="font-semibold text-foreground">
-              <Currency currency="COP" value={data.revenue.total} />
-            </span>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs font-medium text-muted-foreground">
+            Total del día
           </p>
-          <p className="text-muted-foreground">
-            Tasa de confirmación:{' '}
-            <span className="font-semibold text-foreground">
-              {data.orders.total > 0
-                ? percentageFormat.format(
-                    data.orders.confirmed / data.orders.total,
-                  )
-                : '—'}
-            </span>
+          <p className="mt-1.5 font-bold font-mono text-2xl tabular-nums">
+            <Currency currency="COP" value={data.revenue.total} />
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs font-medium text-muted-foreground">
+            Tasa de confirmación
+          </p>
+          <p className="mt-1.5 font-bold font-mono text-2xl tabular-nums">
+            {confirmationRate}
           </p>
         </div>
       </div>
 
-      {data.topProduct && (
+      {data.topProduct ? (
         <div className="flex flex-col gap-2">
-          <p className="font-medium">Producto más vendido</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            Producto más vendido
+          </p>
 
           <Item variant="outline">
             <ItemMedia variant="image">
@@ -106,12 +110,16 @@ export function DailySummaryContent({ data }: Readonly<Props>) {
             </ItemContent>
           </Item>
         </div>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <OrderStatusChart orders={data.orders} />
-        <ChannelRevenueChart byChannel={data.byChannel} />
-        <PaymentStatusCard byPaymentStatus={data.byPaymentStatus} />
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-muted-foreground">
+          Distribución de ventas
+        </p>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <OrderStatusChart orders={data.orders} />
+          <ChannelRevenueChart byChannel={data.byChannel} />
+        </div>
       </div>
     </>
   )

@@ -6,7 +6,7 @@ import { api } from '@cetus/web/lib/client-api'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createStandardSchemaV1, parseAsString, useQueryState } from 'nuqs'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 
 const searchParams = {
   date: parseAsString,
@@ -20,11 +20,22 @@ export const Route = createFileRoute('/_authed/app/')({
 })
 
 const SummarySkeleton = (
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    <Skeleton className="h-25 w-full" />
-    <Skeleton className="h-25 w-full" />
-    <Skeleton className="h-25 w-full" />
-    <Skeleton className="h-25 w-full" />
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-24 w-full" />
+    </div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <Skeleton className="h-16 w-full" />
+      <Skeleton className="h-16 w-full" />
+    </div>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Skeleton className="h-72 w-full" />
+      <Skeleton className="h-72 w-full" />
+      <Skeleton className="col-span-full h-44 w-full" />
+    </div>
   </div>
 )
 
@@ -32,17 +43,19 @@ function RouteComponent() {
   const [dateParam] = useQueryState('date', parseAsString)
   const queryClient = useQueryClient()
 
-  const date = dateParam
-    ? new Date(dateParam).toISOString()
-    : new Date().toISOString()
+  const date = useMemo(
+    () =>
+      dateParam
+        ? new Date(dateParam).toISOString()
+        : new Date().toISOString(),
+    [dateParam],
+  )
 
   const { data, dataUpdatedAt, refetch, isLoading } = useQuery({
     queryKey: ['reports', 'daily-summary', dateParam ?? 'today'],
     queryFn: () =>
       api.reports.getDailySummary({
-        params: {
-          date,
-        },
+        params: { date },
       }),
   })
 
@@ -52,7 +65,7 @@ function RouteComponent() {
   }, [refetch, queryClient])
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-6 p-4 md:p-6">
       <DailySummaryDateSelector
         dataUpdatedAt={dataUpdatedAt}
         onRefresh={handleRefresh}
