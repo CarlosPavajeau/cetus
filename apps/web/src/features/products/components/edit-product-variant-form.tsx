@@ -57,15 +57,15 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
   const { mutateAsync } = useMutation({
     mutationKey: ['products', 'variant', 'update', variant.id],
     mutationFn: (data: UpdateProductVariant) =>
-      api.products.variants.update(variant.id, data),
+      api.productVariants.update(variant.id, data),
     onSuccess: async (data) => {
       toast.success('Variante actualizada correctamente')
 
       form.reset({
         id: data.id,
         price: data.price,
-        costPrice: data.costPrice,
-        compareAtPrice: data.compareAtPrice,
+        costPrice: data.costPrice ?? undefined,
+        compareAtPrice: data.compareAtPrice ?? undefined,
         enabled: data.enabled,
         featured: data.featured,
       })
@@ -109,6 +109,12 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
                       className="tabular-nums"
                       id="costPrice"
                       {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === '' ? undefined : e.target.value,
+                        )
+                      }
                     />
                     <InputGroupAddon align="inline-end">
                       <InputGroupText>COP</InputGroupText>
@@ -183,6 +189,12 @@ export function UpdateProductVariantForm({ variant }: Readonly<Props>) {
                         inputMode="numeric"
                         placeholder="0"
                         {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === '' ? undefined : e.target.value,
+                          )
+                        }
                       />
                       <InputGroupAddon align="inline-end">
                         <InputGroupText>COP</InputGroupText>
