@@ -25,10 +25,11 @@ import { mutationOptions, useMutation } from '@tanstack/react-query'
 import { Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { CreateProductOptionType } from '@cetus/api-client/types/products'
 
 const createProductOptionTypeMutation = mutationOptions({
   mutationKey: ['product-option-types'],
-  mutationFn: api.products.optionTypes.create,
+  mutationFn: (data: CreateProductOptionType) => api.optionTypes.create(data),
 })
 
 type Props = {
