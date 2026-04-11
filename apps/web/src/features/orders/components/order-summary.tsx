@@ -11,14 +11,14 @@ type Props = {
 
 export function OrderSummary({ order, isAdmin = false }: Readonly<Props>) {
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-4">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-6">
         <OrderItemsList order={order} />
       </div>
-      <div className="space-y-4">
+      <div className="space-y-6">
         <OrderCustomerCard address={order.address} customer={order.customer} />
 
-        {isAdmin && <PaymentSummary order={order} />}
+        {isAdmin ? <PaymentSummary order={order} /> : null}
 
         <OrderTimeline order={order} />
       </div>

@@ -14,7 +14,7 @@ export function OrderItemsList({ order }: Readonly<Props>) {
   return (
     <>
       <Card className="gap-3 p-5">
-        <h2 className="font-semibold text-lg">
+        <h2 className="font-heading font-medium text-lg">
           Productos ({order.items.length})
         </h2>
 
@@ -29,7 +29,7 @@ export function OrderItemsList({ order }: Readonly<Props>) {
       </Card>
 
       <Card className="gap-3 p-5">
-        <h2 className="font-semibold text-lg">Resumen de la orden</h2>
+        <h2 className="font-heading font-medium text-lg">Resumen de la orden</h2>
 
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">

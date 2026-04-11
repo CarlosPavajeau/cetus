@@ -111,7 +111,7 @@ export function PaymentSummary({ order }: Readonly<Props>) {
 
       <CardContent className="space-y-4">
         <div>
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">
+          <span className="text-xs font-medium text-muted-foreground">
             Método de pago
           </span>
           <p className="font-medium text-sm">
@@ -119,12 +119,12 @@ export function PaymentSummary({ order }: Readonly<Props>) {
           </p>
         </div>
 
-        {order.paymentProvider !== 'manual' && (
+        {order.paymentProvider !== 'manual' ? (
           <>
             <Separator />
 
             <div>
-              <span className="text-muted-foreground text-xs uppercase tracking-wide">
+              <span className="text-xs font-medium text-muted-foreground">
                 Id de transacción
               </span>
               <div className="flex items-center gap-2">
@@ -146,11 +146,11 @@ export function PaymentSummary({ order }: Readonly<Props>) {
             <Separator />
 
             <div>
-              <span className="text-muted-foreground text-xs uppercase tracking-wide">
+              <span className="text-xs font-medium text-muted-foreground">
                 Proveedor
               </span>
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-sm">
+                <span className="font-medium text-sm">
                   {orderPaymentProviders[payment.paymentProvider] ??
                     payment.paymentProvider}
                 </span>
@@ -158,37 +158,37 @@ export function PaymentSummary({ order }: Readonly<Props>) {
               </div>
             </div>
 
-            {(payment.createdAt || payment.approvedAt) && (
+            {payment.createdAt ?? payment.approvedAt ? (
               <>
                 <Separator />
 
                 <div>
-                  <span className="text-muted-foreground text-xs uppercase tracking-wide">
+                  <span className="text-xs font-medium text-muted-foreground">
                     Eventos
                   </span>
                   <div className="mt-1 space-y-2">
-                    {payment.createdAt && (
+                    {payment.createdAt ? (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Iniciado</span>
                         <span className="font-medium">
                           <FormattedDate date={new Date(payment.createdAt)} />
                         </span>
                       </div>
-                    )}
-                    {payment.approvedAt && (
+                    ) : null}
+                    {payment.approvedAt ? (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Aprobado</span>
                         <span className="font-medium">
                           <FormattedDate date={new Date(payment.approvedAt)} />
                         </span>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </>
-            )}
+            ) : null}
           </>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   )

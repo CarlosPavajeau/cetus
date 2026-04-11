@@ -80,110 +80,106 @@ function RouteComponent() {
   const statusColor = orderStatusColors[order.status]
 
   return (
-    <div>
-      <div className="px-4 pb-4 sm:px-6 lg:px-8">
-        <div className="sticky top-0 z-10 space-y-4 py-4 backdrop-blur-md">
-          <ReturnButton />
+    <div className="px-4 pb-6 sm:px-6 lg:px-8">
+      <div className="sticky top-0 z-10 space-y-3 border-b bg-background/95 py-4 backdrop-blur-md">
+        <ReturnButton />
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <h1 className="font-bold text-2xl text-foreground tracking-tight">
-                Orden #{order.orderNumber}
-              </h1>
-              <Badge
-                className="rounded-md border-transparent"
-                style={{
-                  backgroundColor: statusColor.replace(')', ' / 0.15)'),
-                  color: statusColor,
-                }}
-              >
-                {orderStatusLabels[order.status]}
-              </Badge>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <OrderPaymentLinkDialog order={order} />
-              <UpdateOrderStatusButton order={order} />
-            </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-heading font-semibold text-2xl tracking-tight">
+              Orden #{order.orderNumber}
+            </h1>
+            <Badge
+              className="rounded-md border-transparent"
+              style={{
+                backgroundColor: statusColor.replace(')', ' / 0.15)'),
+                color: statusColor,
+              }}
+            >
+              {orderStatusLabels[order.status]}
+            </Badge>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="inline-flex items-center gap-1.5">
-                  <HugeiconsIcon
-                    className="size-3.5 shrink-0"
-                    icon={Calendar03Icon}
-                  />
-                  <FormattedDate date={new Date(order.createdAt)} />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Fecha de creación</TooltipContent>
-            </Tooltip>
-
-            <Separator className="hidden sm:block" orientation="vertical" />
-
-            {order.city && (
-              <>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <span className="inline-flex items-center gap-1.5">
-                      <HugeiconsIcon
-                        className="size-3.5 shrink-0"
-                        icon={MapPinpoint01Icon}
-                      />
-                      {order.city}, {order.state}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Ciudad y departamento</TooltipContent>
-                </Tooltip>
-
-                <Separator className="hidden sm:block" orientation="vertical" />
-              </>
-            )}
-
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="inline-flex items-center gap-1.5">
-                  <HugeiconsIcon
-                    className="size-3.5 shrink-0"
-                    icon={PromotionIcon}
-                  />
-                  {getSaleChannelLabel(order.channel)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Canal de venta</TooltipContent>
-            </Tooltip>
-
-            <Separator className="hidden sm:block" orientation="vertical" />
-
-            <span className="font-medium">
-              <Currency currency="COP" value={order.total} />
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <OrderPaymentLinkDialog order={order} />
+            <UpdateOrderStatusButton order={order} />
           </div>
+        </div>
 
-          {order.status === 'canceled' && order.cancellationReason && (
-            <div className="flex w-full items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-destructive text-sm">
-              <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
-              <div className="flex flex-col">
-                <span className="font-medium">
-                  Razón: {order.cancellationReason}
-                </span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-muted-foreground text-sm">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex cursor-default items-center gap-1.5">
+                <HugeiconsIcon
+                  className="size-3.5 shrink-0"
+                  icon={Calendar03Icon}
+                />
+                <FormattedDate date={new Date(order.createdAt)} />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>Fecha de creación</TooltipContent>
+          </Tooltip>
 
-                {order.cancelledAt && (
-                  <span className="mt-0.5 text-xs opacity-90">
-                    Cancelado el{' '}
-                    <FormattedDate date={new Date(order.cancelledAt)} />
+          {order.city ? (
+            <>
+              <span aria-hidden className="text-border">·</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-default items-center gap-1.5">
+                    <HugeiconsIcon
+                      className="size-3.5 shrink-0"
+                      icon={MapPinpoint01Icon}
+                    />
+                    {order.city}, {order.state}
                   </span>
-                )}
-              </div>
-            </div>
-          )}
+                </TooltipTrigger>
+                <TooltipContent>Ciudad y departamento</TooltipContent>
+              </Tooltip>
+            </>
+          ) : null}
+
+          <span aria-hidden className="text-border">·</span>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex cursor-default items-center gap-1.5">
+                <HugeiconsIcon
+                  className="size-3.5 shrink-0"
+                  icon={PromotionIcon}
+                />
+                {getSaleChannelLabel(order.channel)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>Canal de venta</TooltipContent>
+          </Tooltip>
+
+          <span aria-hidden className="text-border">·</span>
+
+          <span className="font-medium text-foreground">
+            <Currency currency="COP" value={order.total} />
+          </span>
         </div>
 
-        <div className="mt-2">
-          <OrderSummary isAdmin order={order} />
-        </div>
+        {order.status === 'canceled' && order.cancellationReason ? (
+          <div className="flex w-full items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-destructive text-sm">
+            <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
+            <div className="flex flex-col">
+              <span className="font-medium">
+                Razón: {order.cancellationReason}
+              </span>
+              {order.cancelledAt ? (
+                <span className="mt-0.5 text-xs opacity-90">
+                  Cancelado el{' '}
+                  <FormattedDate date={new Date(order.cancelledAt)} />
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-6">
+        <OrderSummary isAdmin order={order} />
       </div>
     </div>
   )
