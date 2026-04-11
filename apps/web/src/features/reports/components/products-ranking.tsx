@@ -12,7 +12,14 @@ import {
   TableRow,
 } from '@cetus/web/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@cetus/web/components/ui/tabs'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@cetus/ui/empty'
 import { cn } from '@cetus/web/shared/utils'
+import { PackageIcon } from 'lucide-react'
 import { useNumberFormatter } from 'react-aria'
 import { useMemo, useState } from 'react'
 
@@ -68,7 +75,7 @@ export function ProductsRanking() {
     <div className="space-y-4 py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-semibold text-xl tracking-tight">
+          <h1 className="font-heading font-semibold text-xl tracking-tight">
             Ranking de productos
           </h1>
           <p className="text-muted-foreground text-sm">
@@ -128,22 +135,22 @@ export function ProductsRanking() {
                       <span className="truncate font-medium">
                         {product.product}
                       </span>
-                      {product.isStartProduct && (
+                      {product.isStartProduct ? (
                         <Badge
                           title="Producto estrella"
                           className="size-4 justify-center rounded-full border-0 bg-amber-100 px-0 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
                         >
                           ★
                         </Badge>
-                      )}
-                      {product.isProblematic && (
+                      ) : null}
+                      {product.isProblematic ? (
                         <Badge
                           title="Producto problemático"
                           className="size-4 justify-center rounded-full border-0 bg-rose-100 px-0 font-bold text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
                         >
                           !
                         </Badge>
-                      )}
+                      ) : null}
                     </div>
                     <span className="text-xs text-muted-foreground">
                       {product.category}
@@ -200,21 +207,25 @@ export function ProductsRanking() {
               )
             })}
 
-            {(!data || data.length === 0) && (
+            {!data || data.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="py-12 text-center text-muted-foreground"
-                >
-                  No hay datos disponibles
+                <TableCell colSpan={7}>
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <PackageIcon />
+                      </EmptyMedia>
+                      <EmptyTitle>Sin datos disponibles</EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
                 </TableCell>
               </TableRow>
-            )}
+            ) : null}
           </TableBody>
         </Table>
       </div>
 
-      {data && data.length > 0 && (
+      {data && data.length > 0 ? (
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Badge className="size-4 justify-center rounded-full border-0 bg-amber-100 px-0 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
@@ -229,7 +240,7 @@ export function ProductsRanking() {
             Producto problemático
           </span>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

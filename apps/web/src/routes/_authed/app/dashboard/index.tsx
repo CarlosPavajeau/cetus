@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_authed/app/dashboard/')({
 
 function RouteComponent() {
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-6 p-4 md:p-6">
       <Tabs defaultValue="monthly">
         <TabsList>
           <TabsTrigger value="monthly">Rentabilidad mensual</TabsTrigger>

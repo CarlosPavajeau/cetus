@@ -16,7 +16,7 @@ export function ProfitabilityReport() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <ProfitabilityHeader filters={filters} onFiltersChange={setFilters} />
       {isLoading ? PendingComponent : null}
       {data ? <ProfitabilityContent data={data} /> : null}
@@ -25,13 +25,13 @@ export function ProfitabilityReport() {
 }
 
 const PendingComponent = (
-  <div className="space-y-4">
+  <div className="space-y-6">
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Skeleton className="h-25 w-full" />
-      <Skeleton className="h-25 w-full" />
-      <Skeleton className="h-25 w-full" />
-      <Skeleton className="h-25 w-full" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-24 w-full" />
     </div>
-    <Skeleton className="h-87.5 w-full" />
+    <Skeleton className="h-80 w-full" />
   </div>
 )

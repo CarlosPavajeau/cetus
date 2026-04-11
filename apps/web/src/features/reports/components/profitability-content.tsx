@@ -43,16 +43,16 @@ export function ProfitabilityContent({ data }: Readonly<Props>) {
         />
       </div>
 
-      {productsWithoutCost.length > 0 && (
+      {productsWithoutCost.length > 0 ? (
         <ProductsWithoutCostAlert products={productsWithoutCost} />
-      )}
+      ) : null}
 
       <section className="space-y-3">
-        <div className="flex flex-col gap-0">
+        <div>
           <h2 className="font-heading font-medium text-lg">
             Tendencia de rentabilidad
           </h2>
-          <span className="text-muted-foreground text-xs">Últimos 6 meses</span>
+          <p className="text-muted-foreground text-xs">Últimos 6 meses</p>
         </div>
         <ProfitabilityTrendChart trend={trend} />
       </section>
