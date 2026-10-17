@@ -44,7 +44,7 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             abort(request, "Invalid or revoked API key");
             return;
         }
-        principal.set(key.accountId, key.environment);
+        principal.set(key.accountId, key.environment, key.id);
     }
 
     private static void abort(ContainerRequestContext request, String message) {

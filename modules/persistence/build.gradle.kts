@@ -9,4 +9,13 @@ dependencies {
     api(libs.quarkus.hibernate.orm.panache)
     api(libs.quarkus.jdbc.postgresql)
     api(libs.quarkus.jackson)
+
+    // Migrations are verified against a real Postgres (Testcontainers, needs Docker).
+    testImplementation(libs.flyway.core)
+    testImplementation(libs.flyway.postgresql)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.assertj)
+    testRuntimeOnly(libs.junit.launcher)
 }

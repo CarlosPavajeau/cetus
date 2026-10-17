@@ -25,4 +25,7 @@ dependencies {
     implementation(libs.quarkus.smallrye.health)
 
     testImplementation(libs.quarkus.junit5)
+    testImplementation(libs.quarkus.smallrye.jwt.build)
+    testImplementation(libs.rest.assured)
+    testImplementation(libs.assertj)
 }

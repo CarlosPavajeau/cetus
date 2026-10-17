@@ -1,8 +1,11 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.auth.ApiKeys;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.persistence.audit.AuditAction;
+import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.ApiKeyEntity;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -21,6 +24,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Path("/console/api-keys")
@@ -29,6 +33,10 @@ public class ApiKeyResource {
 
     @Inject
     ConsoleContext context;
+    @Inject
+    AuditLog auditLog;
+    @Inject
+    RequestOriginResolver origin;
 
     @GET
     @Transactional
@@ -49,6 +57,7 @@ public class ApiKeyResource {
         key.keyPrefix = ApiKeys.prefix(secret);
         key.keyHash = ApiKeys.hash(secret);
         key.persist();
+        audit(AuditAction.API_KEY_CREATED, key);
         return new CreatedApiKey(ApiKeyView.from(key), secret);
     }
 
@@ -61,7 +70,14 @@ public class ApiKeyResource {
                 .orElseThrow(() -> new NotFoundException("API key not found"));
         if (key.revokedAt == null) {
             key.revokedAt = OffsetDateTime.now();
+            audit(AuditAction.API_KEY_REVOKED, key);
         }
+    }
+
+    /** Never the secret nor its hash: the prefix is enough to identify the key. */
+    private void audit(AuditAction action, ApiKeyEntity key) {
+        auditLog.record(key.accountId, context.actor(), origin.resolve(), action, "api_key", key.id,
+                Map.of("name", key.name, "environment", key.environment, "prefix", key.keyPrefix));
     }
 
     public record CreateApiKeyRequest(@NotBlank @Size(max = 80) String name, @NotNull Environment environment) {

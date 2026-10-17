@@ -1,6 +1,7 @@
 package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.domain.DomainException;
+import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -18,6 +19,11 @@ public class ConsoleContext {
 
     public String userId() {
         return jwt.getSubject();
+    }
+
+    /** The signed-in console user as the actor of an audited action. */
+    public Actor actor() {
+        return new Actor(Actor.ActorType.USER, jwt.getSubject());
     }
 
     public String organizationId() {

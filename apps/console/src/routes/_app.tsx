@@ -38,6 +38,11 @@ function AppLayout() {
               Llaves de API
             </Link>
           </li>
+          <li>
+            <Link to="/activity" activeProps={{ className: "active" }}>
+              Actividad
+            </Link>
+          </li>
         </ul>
         <div className="sidebar-footer">
           <p className="who">{session.user.email}</p>

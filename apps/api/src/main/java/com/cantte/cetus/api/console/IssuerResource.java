@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import jakarta.inject.Inject;
@@ -26,6 +27,8 @@ public class IssuerResource {
     ConsoleContext context;
     @Inject
     IssuerOnboardingService onboarding;
+    @Inject
+    RequestOriginResolver origin;
 
     @GET
     @Transactional
@@ -36,7 +39,8 @@ public class IssuerResource {
     @POST
     @Transactional
     public IssuerViews.IssuerView create(@Valid @NotNull IssuerViews.CreateIssuerRequest request) {
-        return IssuerViews.IssuerView.from(onboarding.create(context.account().id, request));
+        return IssuerViews.IssuerView.from(onboarding.create(context.account().id, request, context.actor(),
+                origin.resolve()));
     }
 
     @PUT
@@ -44,7 +48,7 @@ public class IssuerResource {
     @Transactional
     public IssuerViews.IssuerView setSoftware(@PathParam("id") UUID id, @Valid @NotNull IssuerViews.SoftwareRequest request) {
         IssuerEntity issuer = issuer(id);
-        onboarding.setSoftware(issuer, request);
+        onboarding.setSoftware(issuer, request, context.actor(), origin.resolve());
         return IssuerViews.IssuerView.from(issuer);
     }
 
@@ -54,7 +58,7 @@ public class IssuerResource {
     public IssuerViews.IssuerView setCertificate(@PathParam("id") UUID id,
                                                  @Valid @NotNull IssuerViews.CertificateRequest request) {
         IssuerEntity issuer = issuer(id);
-        onboarding.setCertificate(issuer, request);
+        onboarding.setCertificate(issuer, request, context.actor(), origin.resolve());
         return IssuerViews.IssuerView.from(issuer);
     }
 
@@ -71,7 +75,8 @@ public class IssuerResource {
     @Transactional
     public IssuerViews.NumberingRangeView addRange(@PathParam("id") UUID id,
                                                    @Valid @NotNull IssuerViews.NumberingRangeRequest request) {
-        return IssuerViews.NumberingRangeView.from(onboarding.addRange(issuer(id), request));
+        return IssuerViews.NumberingRangeView.from(
+                onboarding.addRange(issuer(id), request, context.actor(), origin.resolve()));
     }
 
     private IssuerEntity issuer(UUID id) {
