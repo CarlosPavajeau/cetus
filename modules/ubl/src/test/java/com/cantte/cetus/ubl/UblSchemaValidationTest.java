@@ -44,12 +44,7 @@ class UblSchemaValidationTest {
     private static final Path XSD_ROOT = Path.of("src/main/xsd");
     private static final Path OUTPUT = Path.of("build/ubl");
     private static final String STS_NAMESPACE = "dian:gov:co:facturaelectronica:Structures-2-1";
-    private static final Pattern CO_ID2_SCHEME_ID_ERROR = Pattern.compile(
-            "^cvc-attribute\\.3: The value '(\\d)' of attribute 'schemeID' on element "
-                    + "'sts:(?:Authorization)?ProviderID' is not valid with respect to its type, '#AnonType_schemeIDcoID2Type'");
-    private static final Pattern CO_ID2_ENUMERATION_ERROR = Pattern.compile(
-            "^cvc-enumeration-valid: Value '(\\d)' is not facet-valid with respect to enumeration "
-                    + "'\\[11, 12, 13, 21, 22, 31, 32, 41, 42, 50, 91]'");
+    private static final Pattern QUOTED_DIGIT = Pattern.compile("'(\\d)'");
 
     @Test
     void invoiceIsValidAgainstUblSchema() throws Exception {
@@ -127,23 +122,32 @@ class UblSchemaValidationTest {
      * sts:AuthorizationProviderID (see providerIdsCarryTheCheckDigitAsInTheDianExamples). Xerces reports
      * each one as a cvc-attribute.3 error naming the element plus a cvc-enumeration-valid error with the
      * same value; any other error is kept.
+     *
+     * <p>Xerces translates the wording and reorders the arguments with the JVM locale (its locale
+     * property has no effect here), so only the error code and the quoted arguments are checked.
      */
     private static List<String> withoutKnownCoId2Deviations(List<String> errors) {
         Set<String> checkDigits = new HashSet<>();
         List<String> kept = new ArrayList<>();
         for (String error : errors) {
-            Matcher attribute = CO_ID2_SCHEME_ID_ERROR.matcher(error);
-            if (attribute.find()) {
-                checkDigits.add(attribute.group(1));
+            Optional<String> digit = quotedDigit(error);
+            boolean providerId = error.contains("'sts:ProviderID'") || error.contains("'sts:AuthorizationProviderID'");
+            if (error.startsWith("cvc-attribute.3") && providerId && error.contains("'schemeID'")
+                    && error.contains("'#AnonType_schemeIDcoID2Type'") && digit.isPresent()) {
+                checkDigits.add(digit.get());
             } else {
                 kept.add(error);
             }
         }
-        kept.removeIf(error -> {
-            Matcher enumeration = CO_ID2_ENUMERATION_ERROR.matcher(error);
-            return enumeration.find() && checkDigits.contains(enumeration.group(1));
-        });
+        kept.removeIf(error -> error.startsWith("cvc-enumeration-valid")
+                && error.contains("'[11, 12, 13, 21, 22, 31, 32, 41, 42, 50, 91]'")
+                && quotedDigit(error).filter(checkDigits::contains).isPresent());
         return kept;
+    }
+
+    private static Optional<String> quotedDigit(String error) {
+        Matcher matcher = QUOTED_DIGIT.matcher(error);
+        return matcher.find() ? Optional.of(matcher.group(1)) : Optional.empty();
     }
 
     private static Document sampleDocument() {
