@@ -68,7 +68,8 @@ public class ApiKeyResource {
         key.name = request.name();
         key.keyPrefix = ApiKeys.prefix(secret);
         key.keyHash = ApiKeys.hash(secret);
-        key.persist();
+        // Flush so the database-generated createdAt is in the response.
+        key.persistAndFlush();
         audit(AuditAction.API_KEY_CREATED, key);
         return new CreatedApiKey(ApiKeyView.from(key), secret);
     }
