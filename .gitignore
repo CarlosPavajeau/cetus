@@ -1,0 +1,29 @@
+# Gradle / Java
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+*.class
+.idea/
+*.iml
+.vscode/
+out/
+
+# Node
+node_modules/
+.output/
+.vinxi/
+dist/
+.tanstack/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.p12
+*.pfx
+
+# OS
+.DS_Store
+
+# Test-only self-signed certificate (password: cetus-test)
+!**/src/test/resources/test-signer.p12

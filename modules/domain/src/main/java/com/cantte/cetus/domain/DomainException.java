@@ -1,0 +1,16 @@
+package com.cantte.cetus.domain;
+
+/** Business rule violation that the caller can fix (maps to HTTP 422). */
+public class DomainException extends RuntimeException {
+
+    private final String code;
+
+    public DomainException(String code, String message) {
+        super(message);
+        this.code = code;
+    }
+
+    public String code() {
+        return code;
+    }
+}

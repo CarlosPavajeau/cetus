@@ -1,0 +1,44 @@
+# Central catalog of versions. Check for the latest Quarkus LTS before the first build.
+[versions]
+quarkus = "3.20.0"
+awssdk = "2.29.0"
+assertj = "3.26.3"
+
+[libraries]
+# BOMs (platforms) — align transitive versions
+quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
+awssdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "awssdk" }
+
+# Quarkus extensions (versions managed by the Quarkus BOM)
+quarkus-arc = { module = "io.quarkus:quarkus-arc" }
+quarkus-rest = { module = "io.quarkus:quarkus-rest" }
+quarkus-rest-jackson = { module = "io.quarkus:quarkus-rest-jackson" }
+quarkus-jackson = { module = "io.quarkus:quarkus-jackson" }
+quarkus-hibernate-orm-panache = { module = "io.quarkus:quarkus-hibernate-orm-panache" }
+quarkus-hibernate-validator = { module = "io.quarkus:quarkus-hibernate-validator" }
+quarkus-jdbc-postgresql = { module = "io.quarkus:quarkus-jdbc-postgresql" }
+quarkus-flyway = { module = "io.quarkus:quarkus-flyway" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+quarkus-smallrye-jwt = { module = "io.quarkus:quarkus-smallrye-jwt" }
+quarkus-smallrye-openapi = { module = "io.quarkus:quarkus-smallrye-openapi" }
+quarkus-smallrye-health = { module = "io.quarkus:quarkus-smallrye-health" }
+quarkus-scheduler = { module = "io.quarkus:quarkus-scheduler" }
+quarkus-jaxb = { module = "io.quarkus:quarkus-jaxb" }
+quarkus-junit5 = { module = "io.quarkus:quarkus-junit5" }
+
+# AWS SDK v2 (versions managed by the AWS BOM)
+awssdk-kms = { module = "software.amazon.awssdk:kms" }
+awssdk-s3 = { module = "software.amazon.awssdk:s3" }
+awssdk-url-connection = { module = "software.amazon.awssdk:url-connection-client" }
+
+# Testing
+junit-bom = { module = "org.junit:junit-bom", version = "5.11.3" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+
+[bundles]
+aws = ["awssdk-kms", "awssdk-s3", "awssdk-url-connection"]
+
+[plugins]
+quarkus = { id = "io.quarkus", version.ref = "quarkus" }

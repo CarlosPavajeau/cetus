@@ -1,0 +1,27 @@
+# Local development: Postgres (both schemas) + LocalStack (KMS and S3).
+# The apps run on the host: ./gradlew :apps:api:quarkusDev, :apps:worker:quarkusDev, pnpm console:dev
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: cetus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
+      - postgres-data:/var/lib/postgresql/data
+
+  localstack:
+    image: localstack/localstack:3
+    environment:
+      SERVICES: kms,s3
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./infra/localstack:/etc/localstack/init/ready.d:ro
+
+volumes:
+  postgres-data:

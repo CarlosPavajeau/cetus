@@ -1,0 +1,39 @@
+{
+  "name": "@cetus/console",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "build": "vite build",
+    "start": "srvx serve --prod --entry dist/server/server.js --static ../client --port ${PORT:-3000}",
+    "typecheck": "tsc --noEmit",
+    "auth:generate": "auth generate --config src/lib/auth/server.ts --output src/lib/auth/schema.ts --yes",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "api:types": "openapi-typescript ../api/build/openapi/openapi.yaml -o src/lib/api/schema.d.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.170.45",
+    "@tanstack/react-start": "1.169.3",
+    "better-auth": "1.7.10",
+    "dotenv": "^18.0.8",
+    "drizzle-orm": "0.45.4",
+    "postgres": "3.4.9",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "srvx": "^1.0.6",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "auth": "1.7.10",
+    "drizzle-kit": "0.31.11",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vite-tsconfig-paths": "6.1.1"
+  }
+}
