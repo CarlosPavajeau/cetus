@@ -25,6 +25,11 @@ quarkus-smallrye-health = { module = "io.quarkus:quarkus-smallrye-health" }
 quarkus-scheduler = { module = "io.quarkus:quarkus-scheduler" }
 quarkus-jaxb = { module = "io.quarkus:quarkus-jaxb" }
 quarkus-junit5 = { module = "io.quarkus:quarkus-junit5" }
+quarkus-smallrye-jwt-build = { module = "io.quarkus:quarkus-smallrye-jwt-build" }
+rest-assured = { module = "io.rest-assured:rest-assured" }
+flyway-core = { module = "org.flywaydb:flyway-core" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
 
 # AWS SDK v2 (versions managed by the AWS BOM)
 awssdk-kms = { module = "software.amazon.awssdk:kms" }

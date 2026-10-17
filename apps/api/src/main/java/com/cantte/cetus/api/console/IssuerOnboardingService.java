@@ -7,6 +7,10 @@ import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.domain.dian.NitCheckDigit;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.persistence.audit.Actor;
+import com.cantte.cetus.persistence.audit.AuditAction;
+import com.cantte.cetus.persistence.audit.AuditLog;
+import com.cantte.cetus.persistence.audit.RequestOrigin;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
@@ -21,9 +25,15 @@ import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-/** Issuer setup: tax data, DIAN software credentials, certificate and numbering ranges. */
+/**
+ * Issuer setup: tax data, DIAN software credentials, certificate and numbering ranges.
+ * Every change is audited; the audit data never includes the PIN, the certificate or its
+ * password, nor the technical key.
+ */
 @ApplicationScoped
 public class IssuerOnboardingService {
 
@@ -31,9 +41,12 @@ public class IssuerOnboardingService {
     SecretCipher cipher;
     @Inject
     DocumentStorage storage;
+    @Inject
+    AuditLog auditLog;
 
     @Transactional
-    public IssuerEntity create(UUID accountId, IssuerViews.CreateIssuerRequest request) {
+    public IssuerEntity create(UUID accountId, IssuerViews.CreateIssuerRequest request, Actor actor,
+                               RequestOrigin origin) {
         String checkDigit = NitCheckDigit.compute(request.nit());
         if (request.checkDigit() != null && !request.checkDigit().equals(checkDigit)) {
             throw new DomainException("check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");
@@ -55,11 +68,16 @@ public class IssuerOnboardingService {
         issuer.phone = request.phone();
         issuer.operationMode = IssuerEntity.OperationMode.OWN_SOFTWARE;
         issuer.persist();
+        audit(issuer, actor, origin, AuditAction.ISSUER_CREATED, Map.of(
+                "nit", issuer.nit,
+                "environment", issuer.environment,
+                "personType", issuer.personType));
         return issuer;
     }
 
     @Transactional
-    public void setSoftware(IssuerEntity issuer, IssuerViews.SoftwareRequest request) {
+    public void setSoftware(IssuerEntity issuer, IssuerViews.SoftwareRequest request, Actor actor,
+                            RequestOrigin origin) {
         SoftwareCredentialEntity.deactivateAll(issuer.id);
         SoftwareCredentialEntity credential = new SoftwareCredentialEntity();
         credential.id = Ids.newId();
@@ -68,12 +86,16 @@ public class IssuerOnboardingService {
         credential.pinSealed = cipher.sealText(request.pin());
         credential.testSetId = request.testSetId();
         credential.persist();
-        refreshStatus(issuer);
+        audit(issuer, actor, origin, AuditAction.SOFTWARE_CREDENTIALS_SET, Map.of(
+                "softwareId", credential.softwareId,
+                "hasTestSet", credential.testSetId != null && !credential.testSetId.isBlank()));
+        refreshStatus(issuer, actor, origin);
     }
 
     /** Validates the PKCS#12, stores it sealed in S3 and keeps only metadata in the database. */
     @Transactional
-    public SigningCertificateEntity setCertificate(IssuerEntity issuer, IssuerViews.CertificateRequest request) {
+    public SigningCertificateEntity setCertificate(IssuerEntity issuer, IssuerViews.CertificateRequest request,
+                                                   Actor actor, RequestOrigin origin) {
         byte[] pkcs12 = Base64.getDecoder().decode(request.pkcs12Base64());
         KeyMaterial keys;
         try {
@@ -105,12 +127,19 @@ public class IssuerOnboardingService {
         entity.validFrom = certificate.getNotBefore().toInstant().atOffset(ZoneOffset.UTC);
         entity.validTo = validTo;
         entity.persist();
-        refreshStatus(issuer);
+        audit(issuer, actor, origin, AuditAction.CERTIFICATE_UPLOADED, Map.of(
+                "certificateId", entity.id,
+                "subject", entity.subjectDn,
+                "serialNumber", entity.serialNumber,
+                "validTo", entity.validTo,
+                "fingerprintSha256", entity.fingerprintSha256));
+        refreshStatus(issuer, actor, origin);
         return entity;
     }
 
     @Transactional
-    public NumberingRangeEntity addRange(IssuerEntity issuer, IssuerViews.NumberingRangeRequest request) {
+    public NumberingRangeEntity addRange(IssuerEntity issuer, IssuerViews.NumberingRangeRequest request, Actor actor,
+                                         RequestOrigin origin) {
         if (request.from() > request.to()) {
             throw new DomainException("range_invalid", "'from' must be lower than or equal to 'to'");
         }
@@ -130,23 +159,40 @@ public class IssuerOnboardingService {
             range.technicalKeySealed = cipher.sealText(request.technicalKey());
         }
         range.persist();
-        refreshStatus(issuer);
+        // HashMap: validTo is optional and Map.of rejects nulls.
+        Map<String, Object> data = new HashMap<>();
+        data.put("rangeId", range.id);
+        data.put("documentType", range.documentType);
+        data.put("prefix", range.prefix);
+        data.put("from", range.rangeFrom);
+        data.put("to", range.rangeTo);
+        data.put("validTo", range.validTo);
+        audit(issuer, actor, origin, AuditAction.NUMBERING_RANGE_ADDED, data);
+        refreshStatus(issuer, actor, origin);
         return range;
     }
 
     /**
      * An issuer with software, certificate and an active range is ready: TESTING in the test
      * environment (habilitación) or ENABLED in production. Habilitación itself happens in the
-     * DIAN portal; mark LIVE issuers carefully.
+     * DIAN portal; mark LIVE issuers carefully. A status change is audited.
      */
-    private static void refreshStatus(IssuerEntity issuer) {
+    private void refreshStatus(IssuerEntity issuer, Actor actor, RequestOrigin origin) {
         boolean ready = SoftwareCredentialEntity.findActive(issuer.id).isPresent()
                 && SigningCertificateEntity.findActive(issuer.id).isPresent()
                 && NumberingRangeEntity.count("issuerId = ?1 and status = 'ACTIVE'", issuer.id) > 0;
         if (ready && issuer.status == IssuerEntity.Status.ONBOARDING) {
+            IssuerEntity.Status previous = issuer.status;
             issuer.status = issuer.environment == Environment.TEST
                     ? IssuerEntity.Status.TESTING
                     : IssuerEntity.Status.ENABLED;
+            audit(issuer, actor, origin, AuditAction.ISSUER_STATUS_CHANGED,
+                    Map.of("from", previous, "to", issuer.status));
         }
+    }
+
+    private void audit(IssuerEntity issuer, Actor actor, RequestOrigin origin, AuditAction action,
+                       Map<String, Object> data) {
+        auditLog.record(issuer.accountId, actor, origin, action, "issuer", issuer.id, data);
     }
 }

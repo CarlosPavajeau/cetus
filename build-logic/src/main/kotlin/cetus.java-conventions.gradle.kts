@@ -19,4 +19,7 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     systemProperty("user.timezone", "America/Bogota")
+    // Testcontainers (and Quarkus Dev Services) default to Docker API 1.32, which Docker Engine 29+
+    // answers with an empty /info. 1.44 = Docker 25+.
+    systemProperty("api.version", "1.44")
 }
