@@ -7,7 +7,10 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
-/** UBL extensions: the first one carries the DIAN extensions, the second one the signature. */
+/**
+ * UBL extensions: the first one carries the DIAN extensions. The second one, for the signature, is
+ * appended to the DOM by {@code UblMarshaller.signatureSlot}.
+ */
 public final class Ext {
 
     private Ext() {
@@ -28,11 +31,6 @@ public final class Ext {
             UblExtension extension = new UblExtension();
             extension.content.payload = payload;
             return extension;
-        }
-
-        /** Empty extension where the XAdES signature is inserted after marshalling. */
-        public static UblExtension signatureSlot() {
-            return new UblExtension();
         }
     }
 
