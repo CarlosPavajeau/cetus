@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { inArray } from "drizzle-orm";
 import { z } from "zod";
-import { cetusApi } from "~/lib/api/client";
+import { api, unwrap } from "~/lib/api/client";
 import { type AuditEntry, type AuditPage, auditActions } from "~/lib/api/types";
 import { user } from "~/lib/auth/schema";
 import { db } from "~/lib/db";
 
 export type ActivityEntry = AuditEntry & { actorEmail: string | null };
 
-export type ActivityPage = { items: ActivityEntry[]; nextCursor: number | null };
+export type ActivityPage = { items: ActivityEntry[]; nextCursor: AuditPage["nextCursor"] };
 
 /**
  * One page of the account's audit log. The API only knows Better Auth user ids,
@@ -22,14 +22,11 @@ export const listAuditLog = createServerFn({ method: "GET" })
     }),
   )
   .handler(async ({ data }): Promise<ActivityPage> => {
-    const params = new URLSearchParams({ limit: "50" });
-    if (data.action) {
-      params.set("action", data.action);
-    }
-    if (data.before) {
-      params.set("before", String(data.before));
-    }
-    const page = await cetusApi<AuditPage>(`/console/audit-log?${params}`);
+    const page = unwrap(
+      await api.GET("/console/audit-log", {
+        params: { query: { limit: 50, action: data.action, before: data.before } },
+      }),
+    );
 
     const userIds = [
       ...new Set(page.items.filter((entry) => entry.actorType === "USER" && entry.actorId).map((entry) => entry.actorId!)),

@@ -1,6 +1,7 @@
 package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
+import com.cantte.cetus.api.error.ApiError;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
@@ -14,6 +15,9 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +25,12 @@ import java.util.UUID;
 
 @Path("/console/account")
 @Produces(MediaType.APPLICATION_JSON)
+@APIResponse(responseCode = "400", description = "Bad Request",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+@APIResponse(responseCode = "404", description = "Not Found",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+@APIResponse(responseCode = "422", description = "Unprocessable Entity",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
 public class AccountResource {
 
     @Inject
@@ -33,6 +43,7 @@ public class AccountResource {
     /** Called by the console right after the organization is created in Better Auth. Idempotent. */
     @POST
     @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
     public AccountView bootstrap(@Valid BootstrapRequest request) {
         Optional<AccountEntity> existing = AccountEntity.findByOrganization(context.organizationId());
         if (existing.isPresent()) {
@@ -50,6 +61,7 @@ public class AccountResource {
 
     @GET
     @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
     public AccountView get() {
         return AccountView.from(context.account());
     }
@@ -57,7 +69,11 @@ public class AccountResource {
     public record BootstrapRequest(@NotBlank String name) {
     }
 
-    public record AccountView(UUID id, String name, String status, String plan) {
+    public record AccountView(
+            @Schema(required = true) UUID id,
+            @Schema(required = true) String name,
+            @Schema(required = true) String status,
+            @Schema(required = true) String plan) {
         static AccountView from(AccountEntity account) {
             return new AccountView(account.id, account.name, account.status, account.plan);
         }

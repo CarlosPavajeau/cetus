@@ -2,6 +2,7 @@ package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.auth.ApiKeys;
+import com.cantte.cetus.api.error.ApiError;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.audit.AuditAction;
@@ -21,6 +22,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -29,6 +33,12 @@ import java.util.UUID;
 
 @Path("/console/api-keys")
 @Produces(MediaType.APPLICATION_JSON)
+@APIResponse(responseCode = "400", description = "Bad Request",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+@APIResponse(responseCode = "404", description = "Not Found",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+@APIResponse(responseCode = "422", description = "Unprocessable Entity",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
 public class ApiKeyResource {
 
     @Inject
@@ -40,6 +50,7 @@ public class ApiKeyResource {
 
     @GET
     @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
     public List<ApiKeyView> list() {
         return ApiKeyEntity.listByAccount(context.account().id).stream().map(ApiKeyView::from).toList();
     }
@@ -47,6 +58,7 @@ public class ApiKeyResource {
     /** The full key is returned only here, once. */
     @POST
     @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
     public CreatedApiKey create(@Valid @NotNull CreateApiKeyRequest request) {
         String secret = ApiKeys.generate(request.environment());
         ApiKeyEntity key = new ApiKeyEntity();
@@ -64,6 +76,7 @@ public class ApiKeyResource {
     @DELETE
     @Path("/{id}")
     @Transactional
+    @APIResponse(responseCode = "204", description = "No Content")
     public void revoke(@PathParam("id") UUID id) {
         ApiKeyEntity key = ApiKeyEntity.<ApiKeyEntity>findByIdOptional(id)
                 .filter(found -> found.accountId.equals(context.account().id))
@@ -83,14 +96,20 @@ public class ApiKeyResource {
     public record CreateApiKeyRequest(@NotBlank @Size(max = 80) String name, @NotNull Environment environment) {
     }
 
-    public record ApiKeyView(UUID id, String name, Environment environment, String prefix,
-                             OffsetDateTime lastUsedAt, OffsetDateTime revokedAt, OffsetDateTime createdAt) {
+    public record ApiKeyView(
+            @Schema(required = true) UUID id,
+            @Schema(required = true) String name,
+            @Schema(required = true) Environment environment,
+            @Schema(required = true) String prefix,
+            @Schema(required = true, nullable = true) OffsetDateTime lastUsedAt,
+            @Schema(required = true, nullable = true) OffsetDateTime revokedAt,
+            @Schema(required = true) OffsetDateTime createdAt) {
         static ApiKeyView from(ApiKeyEntity key) {
             return new ApiKeyView(key.id, key.name, key.environment, key.keyPrefix, key.lastUsedAt,
                     key.revokedAt, key.createdAt);
         }
     }
 
-    public record CreatedApiKey(ApiKeyView key, String secret) {
+    public record CreatedApiKey(@Schema(required = true) ApiKeyView key, @Schema(required = true) String secret) {
     }
 }

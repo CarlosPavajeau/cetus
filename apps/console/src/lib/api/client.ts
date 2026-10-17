@@ -1,7 +1,9 @@
 import "@tanstack/react-start/server-only";
 import { getRequestHeaders, getRequestIP } from "@tanstack/react-start/server";
+import createClient from "openapi-fetch";
 import { auth } from "../auth/server";
 import { env } from "../env";
+import type { paths } from "./schema";
 
 export class CetusApiError extends Error {
   constructor(
@@ -14,32 +16,43 @@ export class CetusApiError extends Error {
 }
 
 /**
- * Calls the Java API from the console server (BFF). The browser never sees this token:
+ * Typed client for the Java API, used from the console server (BFF). The browser never sees this token:
  * it is minted per request from the Better Auth session cookie and lives for 5 minutes.
  * The end user's IP and user agent are forwarded for the audit log, since the API only sees this server.
  */
-export async function cetusApi<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const headers = new Headers(getRequestHeaders() as HeadersInit);
-  const { token } = await auth.api.getToken({ headers });
+export const api = createClient<paths>({ baseUrl: env.CETUS_API_URL });
 
-  const response = await fetch(`${env.CETUS_API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...clientOriginHeaders(headers),
-      ...init.headers,
-    },
-  });
+api.use({
+  async onRequest({ request }) {
+    for (const [name, value] of Object.entries(await authHeaders())) {
+      request.headers.set(name, value);
+    }
+    return request;
+  },
+});
 
+type ApiResult = { data?: unknown; error?: unknown; response: Response };
+
+/** The body type of the success branch of an openapi-fetch result. */
+type SuccessData<R extends ApiResult> = Extract<R, { error?: never }>["data"];
+
+/** Returns the response body, or throws {@link CetusApiError} with the API's error code and message. */
+export function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
+  const { response } = result;
   if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
+    const body = (typeof result.error === "object" && result.error !== null ? result.error : {}) as {
+      code?: string;
+      message?: string;
+    };
     throw new CetusApiError(response.status, body.code ?? "error", body.message ?? response.statusText);
   }
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  return (await response.json()) as T;
+  return result.data as SuccessData<R>;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const headers = new Headers(getRequestHeaders() as HeadersInit);
+  const { token } = await auth.api.getToken({ headers });
+  return { Authorization: `Bearer ${token}`, ...clientOriginHeaders(headers) };
 }
 
 function clientOriginHeaders(headers: Headers): Record<string, string> {

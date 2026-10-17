@@ -3,6 +3,7 @@ package com.cantte.cetus.api.invoices;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,23 +12,30 @@ import java.util.List;
 import java.util.UUID;
 
 public record InvoiceResponse(
-        UUID id,
-        Environment environment,
-        String number,
-        DocumentStatus status,
-        String cufe,
-        LocalDate issueDate,
-        String currency,
-        Totals totals,
-        Dian dian,
-        String externalReference,
-        OffsetDateTime createdAt) {
+        @Schema(required = true) UUID id,
+        @Schema(required = true) Environment environment,
+        @Schema(required = true) String number,
+        @Schema(required = true) DocumentStatus status,
+        @Schema(required = true, nullable = true) String cufe,
+        @Schema(required = true) LocalDate issueDate,
+        @Schema(required = true) String currency,
+        @Schema(required = true) Totals totals,
+        @Schema(required = true) Dian dian,
+        @Schema(required = true, nullable = true) String externalReference,
+        @Schema(required = true) OffsetDateTime createdAt) {
 
-    public record Totals(BigDecimal lineExtension, BigDecimal taxExclusive, BigDecimal taxInclusive,
-                         BigDecimal payable) {
+    public record Totals(
+            @Schema(required = true) BigDecimal lineExtension,
+            @Schema(required = true) BigDecimal taxExclusive,
+            @Schema(required = true) BigDecimal taxInclusive,
+            @Schema(required = true) BigDecimal payable) {
     }
 
-    public record Dian(String statusCode, String statusMessage, List<String> errors, OffsetDateTime validatedAt) {
+    public record Dian(
+            @Schema(required = true, nullable = true) String statusCode,
+            @Schema(required = true, nullable = true) String statusMessage,
+            @Schema(required = true) List<String> errors,
+            @Schema(required = true, nullable = true) OffsetDateTime validatedAt) {
     }
 
     public static InvoiceResponse from(DocumentEntity doc) {
