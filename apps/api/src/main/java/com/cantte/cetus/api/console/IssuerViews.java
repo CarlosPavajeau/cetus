@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -54,16 +55,29 @@ public final class IssuerViews {
             String technicalKey) {
     }
 
-    public record IssuerView(UUID id, Environment environment, String nit, String checkDigit, String legalName,
-                             String tradeName, IssuerEntity.Status status) {
+    public record IssuerView(
+            @Schema(required = true) UUID id,
+            @Schema(required = true) Environment environment,
+            @Schema(required = true) String nit,
+            @Schema(required = true) String checkDigit,
+            @Schema(required = true) String legalName,
+            @Schema(required = true, nullable = true) String tradeName,
+            @Schema(required = true) IssuerEntity.Status status) {
         static IssuerView from(IssuerEntity issuer) {
             return new IssuerView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit, issuer.legalName,
                     issuer.tradeName, issuer.status);
         }
     }
 
-    public record NumberingRangeView(UUID id, DocumentType documentType, String prefix, long from, long to,
-                                     long nextNumber, LocalDate validTo, String status) {
+    public record NumberingRangeView(
+            @Schema(required = true) UUID id,
+            @Schema(required = true) DocumentType documentType,
+            @Schema(required = true) String prefix,
+            @Schema(required = true) long from,
+            @Schema(required = true) long to,
+            @Schema(required = true) long nextNumber,
+            @Schema(required = true, nullable = true) LocalDate validTo,
+            @Schema(required = true) String status) {
         static NumberingRangeView from(NumberingRangeEntity range) {
             return new NumberingRangeView(range.id, range.documentType, range.prefix, range.rangeFrom,
                     range.rangeTo, range.nextNumber, range.validTo, range.status);

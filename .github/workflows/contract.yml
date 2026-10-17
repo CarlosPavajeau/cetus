@@ -1,0 +1,48 @@
+# Keeps the console in sync with the API contract: the TypeScript types in schema.d.ts are generated
+# from the OpenAPI spec that Quarkus builds from the Java DTOs.
+name: API contract
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Build the API and its OpenAPI spec
+        run: ./gradlew :apps:api:build -x test
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate TypeScript types from the spec
+        run: pnpm --filter @cetus/console api:types:file
+
+      - name: Check that schema.d.ts is up to date
+        run: |
+          if ! git diff --exit-code apps/console/src/lib/api/schema.d.ts; then
+            echo "::error file=apps/console/src/lib/api/schema.d.ts::schema.d.ts does not match the API's OpenAPI spec. Run './gradlew :apps:api:build -x test' and 'pnpm --filter @cetus/console api:types:file', then commit the result."
+            exit 1
+          fi
+
+      - name: Typecheck the console
+        run: pnpm --filter @cetus/console typecheck

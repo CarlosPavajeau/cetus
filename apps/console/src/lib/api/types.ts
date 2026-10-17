@@ -1,30 +1,25 @@
-// Hand-written for now. Replace with types generated from the OpenAPI spec (`pnpm api:types`).
-export type Environment = "TEST" | "LIVE";
+// Aliases over the types generated from the API's OpenAPI spec (`pnpm api:types`). Do not write contract types here.
+import type { components } from "./schema";
 
-export type Account = { id: string; name: string; status: string; plan: string };
+type Schemas = components["schemas"];
 
-export type ApiKey = {
-  id: string;
-  name: string;
-  environment: Environment;
-  prefix: string;
-  lastUsedAt: string | null;
-  revokedAt: string | null;
-  createdAt: string;
-};
+export type Environment = Schemas["Environment"];
 
-export type CreatedApiKey = { key: ApiKey; secret: string };
+export type Account = Schemas["AccountView"];
 
-export type Issuer = {
-  id: string;
-  environment: Environment;
-  nit: string;
-  checkDigit: string;
-  legalName: string;
-  tradeName: string | null;
-  status: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
-};
+export type ApiKey = Schemas["ApiKeyView"];
 
+export type CreatedApiKey = Schemas["CreatedApiKey"];
+
+export type Issuer = Schemas["IssuerView"];
+
+export type AuditAction = Schemas["AuditAction"];
+
+export type AuditEntry = Schemas["AuditEntry"];
+
+export type AuditPage = Schemas["AuditPage"];
+
+/** Runtime list of audit actions for the filter and its validator. Must list every value of the API enum. */
 export const auditActions = [
   "ACCOUNT_CREATED",
   "API_KEY_CREATED",
@@ -34,21 +29,9 @@ export const auditActions = [
   "CERTIFICATE_UPLOADED",
   "NUMBERING_RANGE_ADDED",
   "ISSUER_STATUS_CHANGED",
-] as const;
+] as const satisfies readonly AuditAction[];
 
-export type AuditAction = (typeof auditActions)[number];
-
-export type AuditEntry = {
-  id: number;
-  action: AuditAction;
-  actorType: "USER" | "API_KEY" | "SYSTEM";
-  actorId: string | null;
-  resourceType: string | null;
-  resourceId: string | null;
-  /** Flat metadata, never secrets. */
-  data: Record<string, string | number | boolean | null>;
-  ipAddress: string | null;
-  createdAt: string;
-};
-
-export type AuditPage = { items: AuditEntry[]; nextCursor: number | null };
+// Fails to compile when the API adds an action that is missing above.
+type MissingAuditActions = Exclude<AuditAction, (typeof auditActions)[number]>;
+const _allAuditActionsListed: MissingAuditActions extends never ? true : MissingAuditActions = true;
+void _allAuditActionsListed;
