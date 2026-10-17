@@ -16,7 +16,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.generator.EventType;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
@@ -97,6 +99,8 @@ public class DocumentEntity extends PanacheEntityBase {
     public String requestPayload;
     @Column(name = "external_reference")
     public String externalReference;
+    /** Set by the database; read back after the insert, so it is available once the entity is flushed. */
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", insertable = false, updatable = false)
     public OffsetDateTime createdAt;
     @Column(name = "updated_at")

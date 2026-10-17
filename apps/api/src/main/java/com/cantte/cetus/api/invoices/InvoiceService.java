@@ -105,7 +105,8 @@ public class InvoiceService {
         }
         calculation.taxTotals().forEach(total -> total.subtotals().forEach(sub -> doc.taxes.add(tax(doc, null, sub))));
 
-        doc.persist();
+        // Flush so the database-generated createdAt is in the response.
+        doc.persistAndFlush();
         jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id);
         return doc;
     }

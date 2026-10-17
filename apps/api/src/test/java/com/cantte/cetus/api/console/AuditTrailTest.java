@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.support.ConsoleFixtures.Onboarding;
 import com.cantte.cetus.api.support.ConsoleUser;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
@@ -7,31 +8,32 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.cantte.cetus.api.support.ConsoleFixtures.CERTIFICATE_PASSWORD;
+import static com.cantte.cetus.api.support.ConsoleFixtures.PIN;
+import static com.cantte.cetus.api.support.ConsoleFixtures.SOFTWARE_ID;
+import static com.cantte.cetus.api.support.ConsoleFixtures.TECHNICAL_KEY;
+import static com.cantte.cetus.api.support.ConsoleFixtures.addRange;
+import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
+import static com.cantte.cetus.api.support.ConsoleFixtures.certificateBase64;
+import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
+import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Every audited action writes exactly one row with the expected metadata, and never a secret. */
 @QuarkusTest
 class AuditTrailTest {
-
-    static final String PIN = "pin-7f3a91-never-audit";
-    static final String TECHNICAL_KEY = "tk-5b2e88c1-never-audit";
-    static final String CERTIFICATE_PASSWORD = "cetus-test";
-    static final String SOFTWARE_ID = "56f2ae4e-9812-4fad-9255-643fc2bc5d43";
 
     @Inject
     DataSource dataSource;
@@ -155,50 +157,6 @@ class AuditTrailTest {
                 .satisfies(entry -> assertThat(entry.get("ipAddress")).isNull());
     }
 
-    record Onboarding(String issuerId, String rangeId) {
-    }
-
-    private Onboarding onboard(ConsoleUser user) {
-        String issuerId = createIssuer(user);
-        user.request()
-                .body(Map.of("softwareId", SOFTWARE_ID, "pin", PIN, "testSetId", UUID.randomUUID().toString()))
-                .put("/console/issuers/" + issuerId + "/software")
-                .then().statusCode(200);
-        user.request()
-                .body(Map.of("pkcs12Base64", certificateBase64(), "password", CERTIFICATE_PASSWORD))
-                .put("/console/issuers/" + issuerId + "/certificate")
-                .then().statusCode(200);
-        String rangeId = addRange(user, issuerId, "SETP");
-        return new Onboarding(issuerId, rangeId);
-    }
-
-    static String bootstrap(ConsoleUser user, String name) {
-        return user.request().body(Map.of("name", name)).post("/console/account")
-                .then().statusCode(200).extract().path("id");
-    }
-
-    static String createIssuer(ConsoleUser user) {
-        Map<String, Object> address = Map.of(
-                "municipalityCode", "11001", "cityName", "Bogotá", "departmentCode", "11",
-                "departmentName", "Bogotá", "postalCode", "110111", "line", "Calle 1 # 2-3",
-                "countryCode", "CO", "countryName", "Colombia");
-        Map<String, Object> request = Map.of(
-                "environment", "TEST", "nit", "900123456", "legalName", "Acme SAS",
-                "personType", "LEGAL_ENTITY", "taxLevelCodes", List.of("O-13"), "responsibleForIva", true,
-                "address", address, "email", "facturas@acme.test");
-        return user.request().body(request).post("/console/issuers")
-                .then().statusCode(200).extract().path("id");
-    }
-
-    static String addRange(ConsoleUser user, String issuerId, String prefix) {
-        Map<String, Object> request = Map.of(
-                "documentType", "INVOICE", "resolutionNumber", "18760000001", "resolutionDate", "2026-01-01",
-                "prefix", prefix, "from", 990000000, "to", 995000000, "validFrom", "2026-01-01",
-                "validTo", "2030-12-31", "technicalKey", TECHNICAL_KEY);
-        return user.request().body(request).post("/console/issuers/" + issuerId + "/numbering-ranges")
-                .then().statusCode(200).extract().path("id");
-    }
-
     static List<Map<String, Object>> entries(ConsoleUser user, String action) {
         var request = user.request().queryParam("limit", 100);
         if (action != null) {
@@ -210,14 +168,6 @@ class AuditTrailTest {
     @SuppressWarnings("unchecked")
     static Map<String, Object> data(Map<String, Object> entry) {
         return (Map<String, Object>) entry.get("data");
-    }
-
-    static String certificateBase64() {
-        try (InputStream in = AuditTrailTest.class.getResourceAsStream("/test-signer.p12")) {
-            return Base64.getEncoder().encodeToString(in.readAllBytes());
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     /** Everything stored for the account that could leak a secret: data and user agent of every row. */

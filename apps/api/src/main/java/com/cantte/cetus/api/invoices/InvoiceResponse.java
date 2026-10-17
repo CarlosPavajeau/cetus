@@ -50,6 +50,6 @@ public record InvoiceResponse(
                 new Totals(doc.lineExtensionAmount, doc.taxExclusiveAmount, doc.taxInclusiveAmount, doc.payableAmount),
                 new Dian(doc.dianStatusCode, doc.dianStatusMessage, List.copyOf(doc.dianErrors), doc.validatedAt),
                 doc.externalReference,
-                doc.createdAt != null ? doc.createdAt : OffsetDateTime.now());
+                doc.createdAt);
     }
 }

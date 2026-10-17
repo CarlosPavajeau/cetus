@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static com.cantte.cetus.api.console.AuditTrailTest.bootstrap;
+import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
