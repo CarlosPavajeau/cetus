@@ -1,11 +1,11 @@
 # Local development shortcuts. The heavy lifting lives in scripts/dev.sh.
 .DEFAULT_GOAL := help
-.PHONY: help setup dev dev-mock console api worker mock infra infra-down infra-logs migrate
+.PHONY: help setup dev dev-mock console api worker mock infra infra-down infra-logs migrate test-console
 
 DEV := scripts/dev.sh
 
 help: ## Show this help
-	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{ printf "  \033[36m%-11s\033[0m %s\n", $$1, $$2 }'
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{ printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }'
 
 setup: ## First-time setup: pnpm install, containers, auth migrations, Java build
 	@$(DEV) setup
@@ -39,3 +39,6 @@ infra-logs: ## Follow the container logs
 
 migrate: ## Apply the console's auth-schema migrations (Flyway runs when the API starts)
 	pnpm --filter @cetus/console db:migrate
+
+test-console: ## Console integration (Vitest) and e2e (Playwright) tests; needs `make dev-mock` running
+	pnpm --filter @cetus/console test

@@ -139,6 +139,21 @@ curl -X POST http://localhost:8080/v1/invoices \
 4. Consulta `GET /v1/invoices/{id}` hasta ver `ACCEPTED` o `REJECTED` con los errores de la DIAN.
    Los XML firmados y las respuestas quedan en S3 (`documents/test/{nit}/...`).
 
+## Pruebas
+
+- **API y worker:** `./gradlew test` (Quarkus con Testcontainers; no necesita el stack levantado).
+- **Consola:** corre contra el stack real, sin mocks. Levántalo con `make dev-mock` y en otra terminal ejecuta
+  `make test-console`. Cada prueba crea su propia organización, así que no hay que limpiar datos.
+  - `pnpm --filter @cetus/console test:integration`: Vitest (`apps/console/tests/integration`). Prueba el contrato
+    entre la consola y la API (JWT de Better Auth, aislamiento por organización) y el catálogo DIVIPOLA.
+  - `pnpm --filter @cetus/console test:e2e`: Playwright (`apps/console/tests/e2e`). Prueba el navegador de punta a
+    punta, por ejemplo el asistente de configuración completo. La primera vez instala el navegador con
+    `pnpm --filter @cetus/console exec playwright install chromium`.
+  - `CONSOLE_URL` y `CETUS_API_URL` apuntan las pruebas a otro entorno (por defecto `:3000` y `:8080`).
+  - En CI, `.github/workflows/console-tests.yml` levanta el mismo stack con `scripts/dev.sh --mock` y corre ambas
+    suites en cada PR que toque las apps, los módulos o la infraestructura. Si fallan, adjunta el reporte de
+    Playwright (con trazas) y los logs de cada servicio.
+
 ## Despliegue en Railway
 
 Cuatro servicios desde el mismo repositorio, con el directorio raíz en la raíz del repo:
