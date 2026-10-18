@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { type } from "arktype";
 import { inArray } from "drizzle-orm";
 
-import { api, unwrap } from "~/lib/api/client";
+import { api } from "~/lib/api/client";
 import { type AuditEntry, type AuditPage, auditActions } from "~/lib/api/types";
 import { user } from "~/lib/auth/schema";
 import { db } from "~/lib/db";
@@ -23,11 +23,9 @@ export const listAuditLog = createServerFn({ method: "GET" })
     }),
   )
   .handler(async ({ data }): Promise<ActivityPage> => {
-    const page = unwrap(
-      await api.GET("/console/audit-log", {
-        params: { query: { limit: 50, action: data.action, before: data.before } },
-      }),
-    );
+    const page = await api.get("/console/audit-log", {
+      params: { query: { limit: 50, action: data.action, before: data.before } },
+    });
 
     const userIds = [
       ...new Set(

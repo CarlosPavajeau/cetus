@@ -21,9 +21,9 @@ export class CetusApiError extends Error {
  * it is minted per request from the Better Auth session cookie and lives for 5 minutes.
  * The end user's IP and user agent are forwarded for the audit log, since the API only sees this server.
  */
-export const api = createClient<paths>({ baseUrl: env.CETUS_API_URL });
+const client = createClient<paths>({ baseUrl: env.CETUS_API_URL });
 
-api.use({
+client.use({
   async onRequest({ request }) {
     for (const [name, value] of Object.entries(await authHeaders())) {
       request.headers.set(name, value);
@@ -38,7 +38,7 @@ type ApiResult = { data?: unknown; error?: unknown; response: Response };
 type SuccessData<R extends ApiResult> = Extract<R, { error?: never }>["data"];
 
 /** Returns the response body, or throws {@link CetusApiError} with the API's error code and message. */
-export function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
+function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
   const { response } = result;
   if (!response.ok) {
     const body = (
@@ -55,6 +55,25 @@ export function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
   }
   return result.data as SuccessData<R>;
 }
+
+/**
+ * Wraps an openapi-fetch method so it resolves to the success body. The method's generics carry over,
+ * so the path, params and body are still checked against the OpenAPI schema.
+ */
+function unwrapped<A extends unknown[], R extends ApiResult>(
+  method: (...args: A) => Promise<R>,
+): (...args: A) => Promise<SuccessData<R>> {
+  return async (...args) => unwrap(await method(...args));
+}
+
+/** The API client: each method resolves to the response body or throws {@link CetusApiError}. */
+export const api = {
+  get: unwrapped(client.GET),
+  post: unwrapped(client.POST),
+  put: unwrapped(client.PUT),
+  patch: unwrapped(client.PATCH),
+  delete: unwrapped(client.DELETE),
+};
 
 async function authHeaders(): Promise<Record<string, string>> {
   const headers = new Headers(getRequestHeaders() as HeadersInit);

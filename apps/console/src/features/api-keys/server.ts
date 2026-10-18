@@ -1,20 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type } from "arktype";
 
-import { api, unwrap } from "~/lib/api/client";
+import { api } from "~/lib/api/client";
 
 import { createApiKeySchema } from "./schema";
 
-export const listApiKeys = createServerFn({ method: "GET" }).handler(async () =>
-  unwrap(await api.GET("/console/api-keys")),
+export const listApiKeys = createServerFn({ method: "GET" }).handler(() =>
+  api.get("/console/api-keys"),
 );
 
 export const createApiKey = createServerFn({ method: "POST" })
   .validator(createApiKeySchema)
-  .handler(async ({ data }) => unwrap(await api.POST("/console/api-keys", { body: data })));
+  .handler(({ data }) => api.post("/console/api-keys", { body: data }));
 
 export const revokeApiKey = createServerFn({ method: "POST" })
   .validator(type({ id: "string.uuid" }))
-  .handler(async ({ data }) =>
-    unwrap(await api.DELETE("/console/api-keys/{id}", { params: { path: { id: data.id } } })),
+  .handler(({ data }) =>
+    api.delete("/console/api-keys/{id}", { params: { path: { id: data.id } } }),
   );

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { api, unwrap } from "~/lib/api/client";
+import { api } from "~/lib/api/client";
 
-export const listIssuers = createServerFn({ method: "GET" }).handler(async () =>
-  unwrap(await api.GET("/console/issuers")),
+export const listIssuers = createServerFn({ method: "GET" }).handler(() =>
+  api.get("/console/issuers"),
 );
