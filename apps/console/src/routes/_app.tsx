@@ -1,5 +1,13 @@
-import { Link, Outlet, createFileRoute, redirect, useMatchRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Link,
+  Outlet,
+  createFileRoute,
+  redirect,
+  useMatchRoute,
+  useNavigate,
+} from "@tanstack/react-router";
 import { HistoryIcon, KeyRoundIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
+
 import { Separator } from "~/components/ui/separator";
 import {
   Sidebar,
@@ -58,7 +66,10 @@ function AppLayout() {
               <SidebarMenu>
                 {navigation.map((item) => (
                   <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton render={<Link to={item.to} />} isActive={Boolean(matchRoute({ to: item.to }))}>
+                    <SidebarMenuButton
+                      render={<Link to={item.to} />}
+                      isActive={Boolean(matchRoute({ to: item.to }))}
+                    >
                       <item.icon />
                       <span>{item.label}</span>
                     </SidebarMenuButton>

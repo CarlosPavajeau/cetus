@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type } from "arktype";
+
 import { api, unwrap } from "~/lib/api/client";
 
 /** Creates (or returns) the Cetus account linked to the active Better Auth organization. */

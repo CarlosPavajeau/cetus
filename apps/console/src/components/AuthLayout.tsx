@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 
-export function AuthLayout({ title, lead, children }: { title: string; lead: string; children: ReactNode }) {
+export function AuthLayout({
+  title,
+  lead,
+  children,
+}: {
+  title: string;
+  lead: string;
+  children: ReactNode;
+}) {
   return (
     <main className="grid min-h-svh lg:grid-cols-2">
       <section className="flex flex-col justify-center gap-6 p-6 md:p-10">
@@ -15,7 +23,8 @@ export function AuthLayout({ title, lead, children }: { title: string; lead: str
       </section>
       <aside className="hidden items-end bg-muted p-10 lg:flex" aria-hidden="true">
         <p className="max-w-md font-heading text-lg text-muted-foreground">
-          Factura electrónica para Colombia, como una API. Tú construyes el producto; nosotros hablamos con la DIAN.
+          Factura electrónica para Colombia, como una API. Tú construyes el producto; nosotros
+          hablamos con la DIAN.
         </p>
       </aside>
     </main>

@@ -1,14 +1,42 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HistoryIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+
 import { PageHeader } from "~/components/PageHeader";
 import { Button } from "~/components/ui/button";
-import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "~/components/ui/empty";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
 import { Field, FieldLabel } from "~/components/ui/field";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { type ActivityEntry, listAuditLog } from "~/features/audit-log/server";
 import { type AuditAction, auditActions } from "~/lib/api/types";
 
@@ -177,7 +205,9 @@ function Activity() {
                 </EmptyMedia>
                 <EmptyTitle>Sin actividad</EmptyTitle>
                 <EmptyDescription>
-                  {action ? "No hay actividad de este tipo." : "Todavía no hay actividad registrada."}
+                  {action
+                    ? "No hay actividad de este tipo."
+                    : "Todavía no hay actividad registrada."}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -194,12 +224,16 @@ function Activity() {
               <TableBody>
                 {entries.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="tabular-nums">{dateFormat.format(new Date(entry.createdAt))}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {dateFormat.format(new Date(entry.createdAt))}
+                    </TableCell>
                     <TableCell>{actionLabel[entry.action]}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span>{actor(entry)}</span>
-                        {entry.ipAddress && <span className="text-xs text-muted-foreground">{entry.ipAddress}</span>}
+                        {entry.ipAddress && (
+                          <span className="text-xs text-muted-foreground">{entry.ipAddress}</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="whitespace-normal">{detail(entry)}</TableCell>

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { inArray } from "drizzle-orm";
 import { type } from "arktype";
+import { inArray } from "drizzle-orm";
+
 import { api, unwrap } from "~/lib/api/client";
 import { type AuditEntry, type AuditPage, auditActions } from "~/lib/api/types";
 import { user } from "~/lib/auth/schema";
@@ -29,11 +30,18 @@ export const listAuditLog = createServerFn({ method: "GET" })
     );
 
     const userIds = [
-      ...new Set(page.items.filter((entry) => entry.actorType === "USER" && entry.actorId).map((entry) => entry.actorId!)),
+      ...new Set(
+        page.items
+          .filter((entry) => entry.actorType === "USER" && entry.actorId)
+          .map((entry) => entry.actorId!),
+      ),
     ];
     const emails = new Map<string, string>();
     if (userIds.length > 0) {
-      const rows = await db.select({ id: user.id, email: user.email }).from(user).where(inArray(user.id, userIds));
+      const rows = await db
+        .select({ id: user.id, email: user.email })
+        .from(user)
+        .where(inArray(user.id, userIds));
       for (const row of rows) {
         emails.set(row.id, row.email);
       }
@@ -42,7 +50,8 @@ export const listAuditLog = createServerFn({ method: "GET" })
     return {
       items: page.items.map((entry) => ({
         ...entry,
-        actorEmail: entry.actorType === "USER" && entry.actorId ? (emails.get(entry.actorId) ?? null) : null,
+        actorEmail:
+          entry.actorType === "USER" && entry.actorId ? (emails.get(entry.actorId) ?? null) : null,
       })),
       nextCursor: page.nextCursor,
     };

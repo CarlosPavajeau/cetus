@@ -1,11 +1,32 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { BuildingIcon } from "lucide-react";
+
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "~/components/ui/empty";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { getAccount } from "~/features/account/server";
 import { listIssuers } from "~/features/issuers/server";
 import type { Issuer } from "~/lib/api/types";
@@ -49,8 +70,9 @@ function Overview() {
                 </EmptyMedia>
                 <EmptyTitle>Aún no tienes emisores</EmptyTitle>
                 <EmptyDescription>
-                  Un emisor es la empresa que factura: su NIT, su certificado de firma y su resolución de numeración.
-                  Por ahora se registran con la API de consola; el asistente visual es el siguiente paso.
+                  Un emisor es la empresa que factura: su NIT, su certificado de firma y su
+                  resolución de numeración. Por ahora se registran con la API de consola; el
+                  asistente visual es el siguiente paso.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -87,8 +109,9 @@ function Overview() {
         <CardHeader>
           <CardTitle>Integra tu sistema</CardTitle>
           <CardDescription>
-            Crea una llave de pruebas y envía tu primera factura a <code>POST /v1/invoices</code>. Las llaves de pruebas
-            envían a la habilitación de la DIAN; las de producción, a facturación real.
+            Crea una llave de pruebas y envía tu primera factura a <code>POST /v1/invoices</code>.
+            Las llaves de pruebas envían a la habilitación de la DIAN; las de producción, a
+            facturación real.
           </CardDescription>
         </CardHeader>
         <CardFooter>

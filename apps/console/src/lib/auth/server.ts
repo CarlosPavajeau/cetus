@@ -1,8 +1,9 @@
 import "@tanstack/react-start/server-only";
-import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
+import { betterAuth } from "better-auth";
 import { jwt, organization } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+
 import { db } from "../db";
 import { env } from "../env";
 import * as schema from "./schema";

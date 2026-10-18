@@ -1,6 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
+
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
@@ -37,7 +38,9 @@ function SignUp() {
   const onSubmit = form.handleSubmit(async ({ name, company, email, password }) => {
     const { error: signUpError } = await authClient.signUp.email({ name, email, password });
     if (signUpError) {
-      form.setError("root", { message: signUpError.message ?? "No pudimos crear la cuenta. Revisa los datos." });
+      form.setError("root", {
+        message: signUpError.message ?? "No pudimos crear la cuenta. Revisa los datos.",
+      });
       return;
     }
 
@@ -47,7 +50,9 @@ function SignUp() {
       slug: slugify(company),
     });
     if (orgError || !organization) {
-      form.setError("root", { message: "Tu usuario quedó creado, pero no la empresa. Inicia sesión para terminar." });
+      form.setError("root", {
+        message: "Tu usuario quedó creado, pero no la empresa. Inicia sesión para terminar.",
+      });
       return;
     }
     await authClient.organization.setActive({ organizationId: organization.id });
@@ -56,7 +61,10 @@ function SignUp() {
   });
 
   return (
-    <AuthLayout title="Crea tu cuenta" lead="Empieza en el ambiente de pruebas; pasar a producción es un cambio de llave.">
+    <AuthLayout
+      title="Crea tu cuenta"
+      lead="Empieza en el ambiente de pruebas; pasar a producción es un cambio de llave."
+    >
       <form onSubmit={onSubmit} noValidate>
         <FieldGroup>
           <Controller
@@ -65,7 +73,12 @@ function SignUp() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="sign-up-name">Tu nombre</FieldLabel>
-                <Input {...field} id="sign-up-name" autoComplete="name" aria-invalid={fieldState.invalid} />
+                <Input
+                  {...field}
+                  id="sign-up-name"
+                  autoComplete="name"
+                  aria-invalid={fieldState.invalid}
+                />
                 <FieldError errors={[fieldState.error]} />
               </Field>
             )}
@@ -76,7 +89,12 @@ function SignUp() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="sign-up-company">Empresa</FieldLabel>
-                <Input {...field} id="sign-up-company" autoComplete="organization" aria-invalid={fieldState.invalid} />
+                <Input
+                  {...field}
+                  id="sign-up-company"
+                  autoComplete="organization"
+                  aria-invalid={fieldState.invalid}
+                />
                 <FieldError errors={[fieldState.error]} />
               </Field>
             )}

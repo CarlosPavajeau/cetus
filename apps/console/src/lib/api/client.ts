@@ -1,6 +1,7 @@
 import "@tanstack/react-start/server-only";
 import { getRequestHeaders, getRequestIP } from "@tanstack/react-start/server";
 import createClient from "openapi-fetch";
+
 import { auth } from "../auth/server";
 import { env } from "../env";
 import type { paths } from "./schema";
@@ -40,11 +41,17 @@ type SuccessData<R extends ApiResult> = Extract<R, { error?: never }>["data"];
 export function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
   const { response } = result;
   if (!response.ok) {
-    const body = (typeof result.error === "object" && result.error !== null ? result.error : {}) as {
+    const body = (
+      typeof result.error === "object" && result.error !== null ? result.error : {}
+    ) as {
       code?: string;
       message?: string;
     };
-    throw new CetusApiError(response.status, body.code ?? "error", body.message ?? response.statusText);
+    throw new CetusApiError(
+      response.status,
+      body.code ?? "error",
+      body.message ?? response.statusText,
+    );
   }
   return result.data as SuccessData<R>;
 }

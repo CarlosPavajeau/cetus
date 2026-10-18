@@ -3,8 +3,10 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { CheckIcon, CopyIcon, KeyRoundIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,19 +18,43 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "~/components/ui/empty";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "~/components/ui/input-group";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "~/components/ui/input-group";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { createApiKey, listApiKeys, revokeApiKey } from "~/features/api-keys/server";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { createApiKeySchema } from "~/features/api-keys/schema";
+import { createApiKey, listApiKeys, revokeApiKey } from "~/features/api-keys/server";
 import type { ApiKey, Environment } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/developers/api-keys")({
@@ -75,7 +101,8 @@ function ApiKeys() {
         title="Llaves de API"
         lead={
           <>
-            Cada llave pertenece a un ambiente. Úsala en el encabezado <code>Authorization: Bearer …</code>.
+            Cada llave pertenece a un ambiente. Úsala en el encabezado{" "}
+            <code>Authorization: Bearer …</code>.
           </>
         }
       />
@@ -87,10 +114,19 @@ function ApiKeys() {
           <AlertDescription className="flex flex-col gap-2">
             <p>Por seguridad solo la mostramos una vez. Si la pierdes, revócala y crea otra.</p>
             <InputGroup>
-              <InputGroupInput value={secret} readOnly aria-label="Llave de API" className="font-mono" />
+              <InputGroupInput
+                value={secret}
+                readOnly
+                aria-label="Llave de API"
+                className="font-mono"
+              />
               <InputGroupAddon align="inline-end">
                 <InputGroupButton onClick={copySecret}>
-                  {copied ? <CheckIcon data-icon="inline-start" /> : <CopyIcon data-icon="inline-start" />}
+                  {copied ? (
+                    <CheckIcon data-icon="inline-start" />
+                  ) : (
+                    <CopyIcon data-icon="inline-start" />
+                  )}
                   {copied ? "Copiada" : "Copiar"}
                 </InputGroupButton>
               </InputGroupAddon>
@@ -102,7 +138,9 @@ function ApiKeys() {
       <Card>
         <CardHeader>
           <CardTitle>Nueva llave</CardTitle>
-          <CardDescription>Las llaves de pruebas envían a la habilitación de la DIAN.</CardDescription>
+          <CardDescription>
+            Las llaves de pruebas envían a la habilitación de la DIAN.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onCreate} noValidate>
@@ -198,7 +236,10 @@ function ApiKeys() {
               </TableHeader>
               <TableBody>
                 {keys.map((key) => (
-                  <TableRow key={key.id} className={key.revokedAt ? "text-muted-foreground" : undefined}>
+                  <TableRow
+                    key={key.id}
+                    className={key.revokedAt ? "text-muted-foreground" : undefined}
+                  >
                     <TableCell>{key.name}</TableCell>
                     <TableCell>
                       <code>{key.prefix}…</code>
@@ -206,7 +247,9 @@ function ApiKeys() {
                     <TableCell>
                       <EnvironmentBadge environment={key.environment} />
                     </TableCell>
-                    <TableCell>{key.lastUsedAt ? dateFormat.format(new Date(key.lastUsedAt)) : "Nunca"}</TableCell>
+                    <TableCell>
+                      {key.lastUsedAt ? dateFormat.format(new Date(key.lastUsedAt)) : "Nunca"}
+                    </TableCell>
                     <TableCell className="text-right">
                       {key.revokedAt ? (
                         <Badge variant="outline">Revocada</Badge>
@@ -242,7 +285,9 @@ function RevokeApiKey({ apiKey, onRevoked }: { apiKey: ApiKey; onRevoked: () => 
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>Revocar</AlertDialogTrigger>
+      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
+        Revocar
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>¿Revocar la llave "{apiKey.name}"?</AlertDialogTitle>

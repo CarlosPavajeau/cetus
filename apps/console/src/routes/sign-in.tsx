@@ -1,6 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
+
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
@@ -25,7 +26,9 @@ function SignIn() {
   const onSubmit = form.handleSubmit(async (values) => {
     const { error: signInError } = await authClient.signIn.email(values);
     if (signInError) {
-      form.setError("root", { message: "El correo o la contraseña no coinciden. Revísalos e intenta de nuevo." });
+      form.setError("root", {
+        message: "El correo o la contraseña no coinciden. Revísalos e intenta de nuevo.",
+      });
       return;
     }
 
@@ -39,7 +42,10 @@ function SignIn() {
   });
 
   return (
-    <AuthLayout title="Inicia sesión" lead="Entra para gestionar tus emisores, llaves y documentos.">
+    <AuthLayout
+      title="Inicia sesión"
+      lead="Entra para gestionar tus emisores, llaves y documentos."
+    >
       <form onSubmit={onSubmit} noValidate>
         <FieldGroup>
           <Controller
