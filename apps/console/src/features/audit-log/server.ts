@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { inArray } from "drizzle-orm";
-import { z } from "zod";
+import { type } from "arktype";
 import { api, unwrap } from "~/lib/api/client";
 import { type AuditEntry, type AuditPage, auditActions } from "~/lib/api/types";
 import { user } from "~/lib/auth/schema";
@@ -16,9 +16,9 @@ export type ActivityPage = { items: ActivityEntry[]; nextCursor: AuditPage["next
  */
 export const listAuditLog = createServerFn({ method: "GET" })
   .validator(
-    z.object({
-      action: z.enum(auditActions).optional(),
-      before: z.number().int().positive().optional(),
+    type({
+      "action?": type.enumerated(...auditActions),
+      "before?": "number.integer > 0",
     }),
   )
   .handler(async ({ data }): Promise<ActivityPage> => {

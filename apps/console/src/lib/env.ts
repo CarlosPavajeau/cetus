@@ -1,12 +1,13 @@
 import "@tanstack/react-start/server-only";
-import { z } from "zod";
+import { type } from "arktype";
 
-const schema = z.object({
-  DATABASE_URL: z.string().url(),
-  BETTER_AUTH_SECRET: z.string().min(16),
-  BETTER_AUTH_URL: z.string().url(),
-  CETUS_API_URL: z.string().url(),
+const schema = type({
+  "+": "delete",
+  DATABASE_URL: "string.url",
+  BETTER_AUTH_SECRET: "string >= 16",
+  BETTER_AUTH_URL: "string.url",
+  CETUS_API_URL: "string.url",
 });
 
 /** Server-only environment, validated once at startup. */
-export const env = schema.parse(process.env);
+export const env = schema.assert(process.env);
