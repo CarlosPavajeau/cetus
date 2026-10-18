@@ -35,6 +35,9 @@ public class ApiKeyEntity extends PanacheEntityBase {
     public OffsetDateTime lastUsedAt;
     @Column(name = "revoked_at")
     public OffsetDateTime revokedAt;
+    /** Better Auth user id of the creator; null for keys whose creation was not recorded. */
+    @Column(name = "created_by")
+    public String createdBy;
     /** Set by the database; read back after the insert, so it is available once the entity is flushed. */
     @Generated(event = EventType.INSERT)
     @Column(name = "created_at", insertable = false, updatable = false)
@@ -42,6 +45,10 @@ public class ApiKeyEntity extends PanacheEntityBase {
 
     public static Optional<ApiKeyEntity> findActiveByHash(String hash) {
         return find("keyHash = ?1 and revokedAt is null", hash).firstResultOptional();
+    }
+
+    public static Optional<ApiKeyEntity> findForAccount(UUID accountId, UUID id) {
+        return find("id = ?1 and accountId = ?2", id, accountId).firstResultOptional();
     }
 
     public static List<ApiKeyEntity> listByAccount(UUID accountId) {
