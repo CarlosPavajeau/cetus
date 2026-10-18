@@ -9,6 +9,10 @@ export type Account = Schemas["AccountView"];
 
 export type ApiKey = Schemas["ApiKeyView"];
 
+export type ApiKeyDetail = Schemas["ApiKeyDetail"];
+
+export type ApiKeyRequest = Schemas["ApiKeyRequestEntry"];
+
 export type CreatedApiKey = Schemas["CreatedApiKey"];
 
 export type Issuer = Schemas["IssuerView"];

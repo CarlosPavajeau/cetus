@@ -1,5 +1,5 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   CheckIcon,
@@ -16,18 +16,6 @@ import { Controller, useForm } from "react-hook-form";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -82,25 +70,20 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { ApiKeyStatusBadge } from "~/features/api-keys/ApiKeyStatusBadge";
+import { dateFormat, dateTimeFormat } from "~/features/api-keys/formats";
 import { apiKeysQuery } from "~/features/api-keys/queries";
+import { RevokeApiKey, useInvalidateApiKeys } from "~/features/api-keys/RevokeApiKey";
 import { createApiKeySchema } from "~/features/api-keys/schema";
-import { createApiKey, revokeApiKey } from "~/features/api-keys/server";
-import { auditLogKey } from "~/features/audit-log/queries";
+import { createApiKey } from "~/features/api-keys/server";
 import type { ApiKey, Environment } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
-export const Route = createFileRoute("/_app/developers/api-keys")({
+export const Route = createFileRoute("/_app/developers/api-keys/")({
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(apiKeysQuery),
   component: ApiKeys,
 });
 
-// A fixed zone keeps server and browser renders identical and matches the note under the table.
-const timeZone = "America/Bogota";
-const dateFormat = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeZone });
-const dateTimeFormat = new Intl.DateTimeFormat("es-CO", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone,
-});
 const relativeFormat = new Intl.RelativeTimeFormat("es-CO", { numeric: "auto" });
 
 const relativeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -121,16 +104,6 @@ function formatRelative(date: Date) {
     }
   }
   return "ahora";
-}
-
-/** Refetches the key list and marks the audit log stale, since it records every create and revoke. */
-function useInvalidateApiKeys() {
-  const queryClient = useQueryClient();
-  return () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: apiKeysQuery.queryKey }),
-      queryClient.invalidateQueries({ queryKey: auditLogKey }),
-    ]);
 }
 
 const environmentItems: { label: string; value: Environment }[] = [
@@ -315,7 +288,16 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
     <TableRow>
       <TableCell className="px-5 py-5">
         <div className="flex flex-col gap-0.75">
-          <span className={revoked ? "text-muted-foreground" : "font-medium"}>{apiKey.name}</span>
+          <Link
+            to="/developers/api-keys/$keyId"
+            params={{ keyId: apiKey.id }}
+            className={cn(
+              "w-fit hover:underline hover:underline-offset-4",
+              revoked ? "text-muted-foreground" : "font-medium",
+            )}
+          >
+            {apiKey.name}
+          </Link>
           <span className="text-2xs text-muted-foreground">
             Creada el {dateFormat.format(new Date(apiKey.createdAt))}
           </span>
@@ -328,17 +310,7 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
         <EnvironmentBadge environment={apiKey.environment} />
       </TableCell>
       <TableCell>
-        {revoked ? (
-          <Badge variant="outline" className="text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-muted-foreground" aria-hidden />
-            Revocada
-          </Badge>
-        ) : (
-          <Badge variant="outline">
-            <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
-            Activa
-          </Badge>
-        )}
+        <ApiKeyStatusBadge apiKey={apiKey} />
       </TableCell>
       <TableCell>
         {lastUsed ? (
@@ -360,7 +332,7 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
       <TableCell className="pr-5">
         {!revoked && (
           <div className="flex justify-end">
-            <RevokeApiKey apiKey={apiKey} />
+            <RevokeApiKey apiKey={apiKey}>Revocar</RevokeApiKey>
           </div>
         )}
       </TableCell>
@@ -516,45 +488,5 @@ function CreateApiKey() {
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function RevokeApiKey({ apiKey }: { apiKey: ApiKey }) {
-  const [open, setOpen] = useState(false);
-  const invalidateApiKeys = useInvalidateApiKeys();
-  const revoke = useMutation({
-    mutationFn: revokeApiKey,
-    onSuccess: async () => {
-      await invalidateApiKeys();
-      setOpen(false);
-    },
-  });
-  const pending = revoke.isPending;
-
-  return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
-        Revocar
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Revocar la llave "{apiKey.name}"?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Las integraciones que la usen dejarán de funcionar. Esta acción no se puede deshacer.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            onClick={() => revoke.mutate({ data: { id: apiKey.id } })}
-            disabled={pending}
-          >
-            {pending && <Spinner data-icon="inline-start" />}
-            Revocar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }

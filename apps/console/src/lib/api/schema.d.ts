@@ -47,7 +47,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get */
+        get: operations["ApiKeyResource_get"];
         put?: never;
         post?: never;
         /** Revoke */
@@ -232,6 +233,23 @@ export interface components {
             message: string;
             details: string[] | null;
         };
+        ApiKeyDetail: {
+            key: components["schemas"]["ApiKeyView"];
+            /** Format: int64 */
+            requestsLast24Hours: number;
+            /** @description Newest first */
+            recentRequests: components["schemas"]["ApiKeyRequestEntry"][];
+        };
+        ApiKeyRequestEntry: {
+            id: components["schemas"]["UUID"];
+            method: string;
+            path: string;
+            /** Format: int32 */
+            status: number;
+            /** Format: int32 */
+            durationMs: number;
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
         ApiKeyView: {
             id: components["schemas"]["UUID"];
             name: string;
@@ -240,6 +258,8 @@ export interface components {
             lastUsedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             revokedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Better Auth user id of the creator */
+            createdBy: string | null;
         };
         /** @enum {string} */
         AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED";
@@ -599,6 +619,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreatedApiKey"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    ApiKeyResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyDetail"];
                 };
             };
             /** @description Bad Request */
