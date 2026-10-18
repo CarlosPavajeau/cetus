@@ -110,6 +110,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/issuers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["IssuerResource_get"];
+        /** Update */
+        put: operations["IssuerResource_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/issuers/{id}/certificate": {
         parameters: {
             query?: never;
@@ -262,7 +280,7 @@ export interface components {
             createdBy: string | null;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -289,6 +307,12 @@ export interface components {
         CertificateRequest: {
             pkcs12Base64: string;
             password: string;
+        };
+        CertificateView: {
+            subject: string;
+            serialNumber: string;
+            validFrom: components["schemas"]["OffsetDateTime"];
+            validTo: components["schemas"]["OffsetDateTime"];
         };
         CreateApiKeyRequest: {
             name: string;
@@ -362,6 +386,24 @@ export interface components {
             externalReference: string | null;
             createdAt: components["schemas"]["OffsetDateTime"];
         };
+        IssuerDetailView: {
+            id: components["schemas"]["UUID"];
+            environment: components["schemas"]["Environment"];
+            nit: string;
+            checkDigit: string;
+            legalName: string;
+            tradeName: string | null;
+            status: components["schemas"]["Status"];
+            personType: components["schemas"]["PersonType"];
+            taxLevelCodes: string[];
+            responsibleForIva: boolean;
+            address: components["schemas"]["Address"];
+            email: string;
+            phone: string | null;
+            software: components["schemas"]["SoftwareView"] | null;
+            certificate: components["schemas"]["CertificateView"] | null;
+            ranges: components["schemas"]["NumberingRangeView"][];
+        };
         IssuerView: {
             id: components["schemas"]["UUID"];
             environment: components["schemas"]["Environment"];
@@ -433,6 +475,10 @@ export interface components {
             pin: string;
             testSetId?: string;
         };
+        SoftwareView: {
+            softwareId: string;
+            testSetId: string | null;
+        };
         /** @enum {string} */
         Status: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
         /** @enum {string} */
@@ -445,6 +491,16 @@ export interface components {
         };
         /** Format: uuid */
         UUID: string;
+        UpdateIssuerRequest: {
+            legalName: string;
+            tradeName?: string;
+            personType: components["schemas"]["PersonType"];
+            taxLevelCodes: string[];
+            responsibleForIva?: boolean;
+            address: components["schemas"]["Address"];
+            email: string;
+            phone?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -913,6 +969,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IssuerView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    IssuerResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    IssuerResource_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIssuerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerDetailView"];
                 };
             };
             /** @description Bad Request */

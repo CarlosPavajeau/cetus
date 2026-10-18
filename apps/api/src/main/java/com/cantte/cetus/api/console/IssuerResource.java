@@ -55,6 +55,24 @@ public class IssuerResource {
                 origin.resolve()));
     }
 
+    @GET
+    @Path("/{id}")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public IssuerViews.IssuerDetailView get(@PathParam("id") UUID id) {
+        return IssuerViews.IssuerDetailView.from(issuer(id));
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public IssuerViews.IssuerDetailView update(@PathParam("id") UUID id,
+                                               @Valid @NotNull IssuerViews.UpdateIssuerRequest request) {
+        return IssuerViews.IssuerDetailView.from(
+                onboarding.update(issuer(id), request, context.actor(), origin.resolve()));
+    }
+
     @PUT
     @Path("/{id}/software")
     @Transactional

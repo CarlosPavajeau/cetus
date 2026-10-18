@@ -17,6 +17,10 @@ export type CreatedApiKey = Schemas["CreatedApiKey"];
 
 export type Issuer = Schemas["IssuerView"];
 
+export type IssuerDetail = Schemas["IssuerDetailView"];
+
+export type NumberingRange = Schemas["NumberingRangeView"];
+
 export type AuditAction = Schemas["AuditAction"];
 
 export type AuditEntry = Schemas["AuditEntry"];
@@ -29,6 +33,7 @@ export const auditActions = [
   "API_KEY_CREATED",
   "API_KEY_REVOKED",
   "ISSUER_CREATED",
+  "ISSUER_UPDATED",
   "SOFTWARE_CREDENTIALS_SET",
   "CERTIFICATE_UPLOADED",
   "NUMBERING_RANGE_ADDED",
