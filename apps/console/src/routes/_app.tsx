@@ -71,7 +71,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
   const queryClient = useQueryClient();
-  const current = navigation.find((item) => matchRoute({ to: item.to }));
+  const current = navigation.find((item) => matchRoute({ to: item.to, fuzzy: true }));
 
   async function signOut() {
     await authClient.signOut();
@@ -94,7 +94,7 @@ function AppLayout() {
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
                       render={<Link to={item.to} />}
-                      isActive={Boolean(matchRoute({ to: item.to }))}
+                      isActive={Boolean(matchRoute({ to: item.to, fuzzy: true }))}
                     >
                       <item.icon />
                       <span>{item.label}</span>

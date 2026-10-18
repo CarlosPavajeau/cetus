@@ -1,33 +1,18 @@
-import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { HistoryIcon } from "lucide-react";
+import { useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ChevronDownIcon, ListFilterIcon } from "lucide-react";
 
 import { PageHeader } from "~/components/PageHeader";
 import { Button } from "~/components/ui/button";
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "~/components/ui/empty";
-import { Field, FieldLabel } from "~/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Spinner } from "~/components/ui/spinner";
 import {
   Table,
@@ -37,35 +22,31 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { apiKeysQuery } from "~/features/api-keys/queries";
+import { AuditRecordNotice } from "~/features/audit-log/AuditRecordNotice";
+import { actionLabel, actorTypeLabel, dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { auditLogQuery } from "~/features/audit-log/queries";
 import type { ActivityEntry } from "~/features/audit-log/server";
 import { type AuditAction, auditActions } from "~/lib/api/types";
 
 type ActivitySearch = { action?: AuditAction };
 
-export const Route = createFileRoute("/_app/activity")({
+export const Route = createFileRoute("/_app/activity/")({
   validateSearch: (search: Record<string, unknown>): ActivitySearch => ({
     action: auditActions.find((action) => action === search.action),
   }),
   loaderDeps: ({ search }) => ({ action: search.action }),
+  // The key list names the API keys that acted; the log only carries their ids.
   loader: ({ context: { queryClient }, deps }) =>
-    queryClient.ensureInfiniteQueryData(auditLogQuery(deps.action)),
+    Promise.all([
+      queryClient.ensureInfiniteQueryData(auditLogQuery(deps.action)),
+      queryClient.ensureQueryData(apiKeysQuery),
+    ]),
   component: Activity,
 });
 
-const actionLabel: Record<AuditAction, string> = {
-  ACCOUNT_CREATED: "Cuenta creada",
-  API_KEY_CREATED: "Llave de API creada",
-  API_KEY_REVOKED: "Llave de API revocada",
-  ISSUER_CREATED: "Emisor creado",
-  SOFTWARE_CREDENTIALS_SET: "Software DIAN configurado",
-  CERTIFICATE_UPLOADED: "Certificado cargado",
-  NUMBERING_RANGE_ADDED: "Rango de numeración agregado",
-  ISSUER_STATUS_CHANGED: "Estado del emisor cambiado",
-};
-
-const actionItems: { label: string; value: AuditAction | null }[] = [
-  { label: "Todas", value: null },
+const actionItems: { label: string; value: AuditAction | "ALL" }[] = [
+  { label: "Todas", value: "ALL" },
   ...auditActions.map((value) => ({ label: actionLabel[value], value })),
 ];
 
@@ -89,15 +70,16 @@ const personTypeLabel: Record<string, string> = {
   NATURAL_PERSON: "Persona natural",
 };
 
-const dateFormat = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" });
-const dayFormat = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" });
-
 function text(value: unknown): string {
   return value === null || value === undefined ? "" : String(value);
 }
 
 function label(labels: Record<string, string>, value: unknown): string {
   return labels[text(value)] ?? text(value);
+}
+
+function plural(count: number, singular: string, pluralForm: string) {
+  return `${count} ${count === 1 ? singular : pluralForm}`;
 }
 
 function detail(entry: ActivityEntry): string {
@@ -123,17 +105,6 @@ function detail(entry: ActivityEntry): string {
   }
 }
 
-function actor(entry: ActivityEntry): string {
-  switch (entry.actorType) {
-    case "USER":
-      return entry.actorEmail ?? "Usuario eliminado";
-    case "API_KEY":
-      return "Llave de API";
-    case "SYSTEM":
-      return "Cetus";
-  }
-}
-
 function Activity() {
   const { action } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -141,100 +112,152 @@ function Activity() {
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     auditLogQuery(action),
   );
+  const { data: keys } = useSuspenseQuery(apiKeysQuery);
+  const keyNames = new Map(keys.map((key) => [key.id, key.name]));
   const entries = data.pages.flatMap((page) => page.items);
+
+  function actor(entry: ActivityEntry): string {
+    switch (entry.actorType) {
+      case "USER":
+        return entry.actorEmail ?? "Usuario eliminado";
+      case "API_KEY":
+        return (entry.actorId && keyNames.get(entry.actorId)) ?? "Llave eliminada";
+      case "SYSTEM":
+        return "Cetus";
+    }
+  }
 
   return (
     <>
       <PageHeader
-        title="Actividad"
-        lead="Cambios sensibles en la cuenta: quién los hizo y cuándo. El registro es permanente y no se puede editar."
+        title="Registro de actividad"
+        lead="Consulta qué cambió, cuándo ocurrió y quién lo hizo en tu cuenta."
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Registro</CardTitle>
-          <CardAction>
-            <Field orientation="horizontal">
-              <FieldLabel htmlFor="activity-action" className="whitespace-nowrap">
-                Tipo de acción
-              </FieldLabel>
-              <Select
-                items={actionItems}
-                value={action ?? null}
-                onValueChange={(value) => navigate({ search: { action: value ?? undefined } })}
-              >
-                <SelectTrigger id="activity-action" className="w-56">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {actionItems.map((item) => (
-                      <SelectItem key={item.label} value={item.value}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {entries.length === 0 ? (
-            <Empty className="border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <HistoryIcon />
-                </EmptyMedia>
-                <EmptyTitle>Sin actividad</EmptyTitle>
-                <EmptyDescription>
-                  {action
-                    ? "No hay actividad de este tipo."
-                    : "Todavía no hay actividad registrada."}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <Table>
-              <TableHeader>
+      <section className="flex flex-col gap-4" aria-label="Historial de eventos">
+        <div className="flex items-center justify-between gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="outline" className="group" />}>
+              <ListFilterIcon data-icon="inline-start" />
+              Tipo de acción: {action ? actionLabel[action] : "Todas"}
+              <ChevronDownIcon
+                data-icon="inline-end"
+                className="transition-transform group-data-popup-open:rotate-180"
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-auto">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Tipo de acción</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={action ?? "ALL"}
+                  onValueChange={(value: AuditAction | "ALL") =>
+                    navigate({ search: { action: value === "ALL" ? undefined : value } })
+                  }
+                >
+                  {actionItems.map((item) => (
+                    <DropdownMenuRadioItem key={item.value} value={item.value}>
+                      {item.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <p className="text-2xs text-muted-foreground">Más recientes primero</p>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted/50 [&_th]:h-11">
+              <TableRow>
+                <TableHead className="w-25 px-4" aria-sort="descending">
+                  Fecha y hora ↓
+                </TableHead>
+                <TableHead>Acción</TableHead>
+                <TableHead>Quién</TableHead>
+                <TableHead className="pr-4">Detalle</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {entries.length === 0 ? (
                 <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Acción</TableHead>
-                  <TableHead>Quién</TableHead>
-                  <TableHead>Detalle</TableHead>
+                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    {action
+                      ? "No hay actividad de este tipo."
+                      : "Todavía no hay actividad registrada."}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="tabular-nums">
-                      {dateFormat.format(new Date(entry.createdAt))}
-                    </TableCell>
-                    <TableCell>{actionLabel[entry.action]}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span>{actor(entry)}</span>
-                        {entry.ipAddress && (
-                          <span className="text-xs text-muted-foreground">{entry.ipAddress}</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">{detail(entry)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
+              ) : (
+                entries.map((entry) => {
+                  const createdAt = new Date(entry.createdAt);
+                  return (
+                    <TableRow key={entry.id}>
+                      <TableCell className="px-4 py-4">
+                        <div className="flex flex-col tabular-nums">
+                          <span className="text-xs">{dayFormat.format(createdAt)}</span>
+                          <span className="text-2xs text-muted-foreground">
+                            {timeFormat.format(createdAt)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium">{actionLabel[entry.action]}</span>
+                          <Link
+                            to="/activity/$eventId"
+                            params={{ eventId: String(entry.id) }}
+                            className="text-2xs text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                          >
+                            Ver evento #{entry.id} →
+                          </Link>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="text-xs">{actor(entry)}</span>
+                          <span className="text-2xs text-muted-foreground">
+                            {actorTypeLabel[entry.actorType]}
+                          </span>
+                          <span className="text-[10px] leading-normal text-muted-foreground">
+                            {entry.ipAddress ? `IP ${entry.ipAddress}` : "IP no registrada"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="pr-4 whitespace-normal">
+                        <div className="flex flex-col">
+                          <span className="text-xs">{detail(entry)}</span>
+                          <span className="text-2xs text-muted-foreground">
+                            {entry.resourceId ?? "Sin recurso asociado"}
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
         {hasNextPage && (
-          <CardFooter className="justify-center">
+          <div className="flex justify-center">
             <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
               {isFetchingNextPage && <Spinner data-icon="inline-start" />}
               {isFetchingNextPage ? "Cargando…" : "Ver más"}
             </Button>
-          </CardFooter>
+          </div>
         )}
-      </Card>
+
+        <div className="flex flex-wrap justify-between gap-2 text-2xs text-muted-foreground">
+          <p>
+            {plural(entries.length, "evento", "eventos")} ·{" "}
+            {action ? actionLabel[action] : "Todas las acciones"}
+          </p>
+          <p>Horarios de Colombia (UTC−5)</p>
+        </div>
+      </section>
+
+      <AuditRecordNotice />
     </>
   );
 }

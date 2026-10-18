@@ -13,8 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as AppActivityRouteImport } from './routes/_app/activity'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
+import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
+import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
 import { Route as AppDevelopersApiKeysRouteImport } from './routes/_app/developers/api-keys'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -37,14 +38,19 @@ const SignUpRoute = SignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppActivityRoute = AppActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppActivityIndexRoute = AppActivityIndexRouteImport.update({
+  id: '/activity/',
+  path: '/activity/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppActivityEventIdRoute = AppActivityEventIdRouteImport.update({
+  id: '/activity/$eventId',
+  path: '/activity/$eventId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDevelopersApiKeysRoute = AppDevelopersApiKeysRouteImport.update({
@@ -62,19 +68,21 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/activity': typeof AppActivityRoute
   '/overview': typeof AppOverviewRoute
+  '/activity/$eventId': typeof AppActivityEventIdRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/activity/': typeof AppActivityIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/activity': typeof AppActivityRoute
   '/overview': typeof AppOverviewRoute
+  '/activity/$eventId': typeof AppActivityEventIdRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/activity': typeof AppActivityIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -82,10 +90,11 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/_app/activity': typeof AppActivityRoute
   '/_app/overview': typeof AppOverviewRoute
+  '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/developers/api-keys': typeof AppDevelopersApiKeysRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_app/activity/': typeof AppActivityIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -93,29 +102,32 @@ export interface FileRouteTypes {
     | '/'
     | '/sign-in'
     | '/sign-up'
-    | '/activity'
     | '/overview'
+    | '/activity/$eventId'
     | '/developers/api-keys'
     | '/api/auth/$'
+    | '/activity/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/sign-in'
     | '/sign-up'
-    | '/activity'
     | '/overview'
+    | '/activity/$eventId'
     | '/developers/api-keys'
     | '/api/auth/$'
+    | '/activity'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/sign-in'
     | '/sign-up'
-    | '/_app/activity'
     | '/_app/overview'
+    | '/_app/activity/$eventId'
     | '/_app/developers/api-keys'
     | '/api/auth/$'
+    | '/_app/activity/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -156,18 +168,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/activity': {
-      id: '/_app/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof AppActivityRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/overview': {
       id: '/_app/overview'
       path: '/overview'
       fullPath: '/overview'
       preLoaderRoute: typeof AppOverviewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/activity/': {
+      id: '/_app/activity/'
+      path: '/activity'
+      fullPath: '/activity/'
+      preLoaderRoute: typeof AppActivityIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/activity/$eventId': {
+      id: '/_app/activity/$eventId'
+      path: '/activity/$eventId'
+      fullPath: '/activity/$eventId'
+      preLoaderRoute: typeof AppActivityEventIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/developers/api-keys': {
@@ -188,15 +207,17 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
-  AppActivityRoute: typeof AppActivityRoute
   AppOverviewRoute: typeof AppOverviewRoute
+  AppActivityEventIdRoute: typeof AppActivityEventIdRoute
   AppDevelopersApiKeysRoute: typeof AppDevelopersApiKeysRoute
+  AppActivityIndexRoute: typeof AppActivityIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppActivityRoute: AppActivityRoute,
   AppOverviewRoute: AppOverviewRoute,
+  AppActivityEventIdRoute: AppActivityEventIdRoute,
   AppDevelopersApiKeysRoute: AppDevelopersApiKeysRoute,
+  AppActivityIndexRoute: AppActivityIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
