@@ -5,11 +5,14 @@ import { Badge } from "~/components/ui/badge";
 export function PageHeader({
   title,
   count,
+  status,
   lead,
   action,
 }: {
   title: string;
   count?: number;
+  /** Shown next to the title, e.g. the state of the resource. */
+  status?: ReactNode;
   lead: ReactNode;
   action?: ReactNode;
 }) {
@@ -19,6 +22,7 @@ export function PageHeader({
         <div className="flex items-center gap-3">
           <h1 className="font-heading text-3xl font-normal tracking-tight">{title}</h1>
           {count !== undefined && <Badge variant="outline">{count}</Badge>}
+          {status}
         </div>
         <p className="text-sm text-muted-foreground">{lead}</p>
       </div>

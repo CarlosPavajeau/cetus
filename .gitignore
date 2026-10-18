@@ -27,3 +27,6 @@ dist/
 
 # Test-only self-signed certificate (password: cetus-test)
 !**/src/test/resources/test-signer.p12
+
+# Local development logs (scripts/dev.sh)
+.logs/

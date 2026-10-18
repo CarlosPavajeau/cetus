@@ -10,6 +10,7 @@ import java.util.Map;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
@@ -56,6 +57,21 @@ class AuditLogResourceTest {
         JsonPath filtered = page(user, Map.of("action", "ACCOUNT_CREATED"));
         assertThat(filtered.getList("items.action")).containsExactly("ACCOUNT_CREATED");
         assertThat(filtered.<Object>get("nextCursor")).isNull();
+    }
+
+    @Test
+    void returnsOneEntryOfTheActiveAccount() {
+        ConsoleUser alice = ConsoleUser.newOrganization();
+        ConsoleUser bob = ConsoleUser.newOrganization();
+        String aliceAccount = bootstrap(alice, "Alice One SAS");
+        bootstrap(bob, "Bob One SAS");
+        long id = ((Number) AuditTrailTest.entries(alice, null).getFirst().get("id")).longValue();
+
+        alice.request().get("/console/audit-log/{id}", id).then().statusCode(200)
+                .body("action", equalTo("ACCOUNT_CREATED"))
+                .body("resourceId", equalTo(aliceAccount));
+        bob.request().get("/console/audit-log/{id}", id).then().statusCode(404);
+        alice.request().get("/console/audit-log/{id}", Long.MAX_VALUE).then().statusCode(404);
     }
 
     @Test

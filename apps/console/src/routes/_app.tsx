@@ -5,6 +5,7 @@ import {
   createFileRoute,
   redirect,
   useMatchRoute,
+  useMatches,
   useNavigate,
 } from "@tanstack/react-router";
 import {
@@ -20,6 +21,7 @@ import {
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -42,6 +44,7 @@ import {
 } from "~/components/ui/sidebar";
 import { getSession } from "~/features/session/server";
 import { authClient } from "~/lib/auth/client";
+import { cn } from "~/lib/utils";
 
 /** Protected layout: every child route requires a session. */
 export const Route = createFileRoute("/_app")({
@@ -71,7 +74,15 @@ function AppLayout() {
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
   const queryClient = useQueryClient();
-  const current = navigation.find((item) => matchRoute({ to: item.to }));
+  const current = navigation.find((item) => matchRoute({ to: item.to, fuzzy: true }));
+  // A detail page names what it shows by returning { crumb } from its loader.
+  const crumb = useMatches({
+    select: (matches) =>
+      matches.reduce<string | undefined>(
+        (found, match) => (match.loaderData as { crumb?: string } | undefined)?.crumb ?? found,
+        undefined,
+      ),
+  });
 
   async function signOut() {
     await authClient.signOut();
@@ -94,7 +105,7 @@ function AppLayout() {
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
                       render={<Link to={item.to} />}
-                      isActive={Boolean(matchRoute({ to: item.to }))}
+                      isActive={Boolean(matchRoute({ to: item.to, fuzzy: true }))}
                     >
                       <item.icon />
                       <span>{item.label}</span>
@@ -125,13 +136,31 @@ function AppLayout() {
             <BreadcrumbList className="gap-3 text-xs">
               {current && "section" in current && (
                 <>
-                  <BreadcrumbItem>{current.section}</BreadcrumbItem>
-                  <BreadcrumbSeparator>/</BreadcrumbSeparator>
+                  <BreadcrumbItem className={cn(crumb && "max-sm:hidden")}>
+                    {current.section}
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className={cn(crumb && "max-sm:hidden")}>
+                    /
+                  </BreadcrumbSeparator>
                 </>
               )}
-              <BreadcrumbItem>
-                <BreadcrumbPage>{current?.label ?? "Consola"}</BreadcrumbPage>
-              </BreadcrumbItem>
+              {current && crumb ? (
+                <>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink render={<Link to={current.to} />}>
+                      {current.label}
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator>/</BreadcrumbSeparator>
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{crumb}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              ) : (
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{current?.label ?? "Consola"}</BreadcrumbPage>
+                </BreadcrumbItem>
+              )}
             </BreadcrumbList>
           </Breadcrumb>
           {/* Placeholders until the documentation and help center exist. */}
