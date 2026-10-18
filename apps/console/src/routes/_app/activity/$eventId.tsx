@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
-import { HistoryIcon, LockKeyholeIcon } from "lucide-react";
+import { ArrowLeftIcon, HistoryIcon, LockKeyholeIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { PageHeader } from "~/components/PageHeader";
@@ -56,9 +56,13 @@ const actorNote: Record<ActivityEntry["actorType"], string> = {
 
 function BackToActivity() {
   return (
-    <Button variant="outline" render={<Link to="/activity" />} nativeButton={false}>
-      Volver al registro de actividad
-    </Button>
+    <Link
+      to="/activity"
+      className="flex w-fit items-center gap-1.75 text-xs text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeftIcon className="size-3.5" />
+      Todo el registro de actividad
+    </Link>
   );
 }
 
@@ -97,9 +101,7 @@ function ActivityEvent() {
 
   return (
     <>
-      <div>
-        <BackToActivity />
-      </div>
+      <BackToActivity />
 
       <PageHeader
         title="Detalle del evento"
@@ -245,7 +247,9 @@ function EventNotFound() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <BackToActivity />
+        <Button variant="outline" render={<Link to="/activity" />} nativeButton={false}>
+          Volver al registro de actividad
+        </Button>
       </EmptyContent>
     </Empty>
   );

@@ -170,12 +170,10 @@ function Activity() {
           <Table>
             <TableHeader className="bg-muted/50 [&_th]:h-11">
               <TableRow>
-                <TableHead className="w-25 px-4" aria-sort="descending">
-                  Fecha y hora ↓
-                </TableHead>
-                <TableHead>Acción</TableHead>
+                <TableHead className="px-5">Acción</TableHead>
+                <TableHead aria-sort="descending">Fecha y hora ↓</TableHead>
                 <TableHead>Quién</TableHead>
-                <TableHead className="pr-4">Detalle</TableHead>
+                <TableHead className="pr-5">Detalle</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -192,8 +190,22 @@ function Activity() {
                   const createdAt = new Date(entry.createdAt);
                   return (
                     <TableRow key={entry.id}>
-                      <TableCell className="px-4 py-4">
-                        <div className="flex flex-col tabular-nums">
+                      <TableCell className="px-5 py-5">
+                        <div className="flex flex-col gap-0.75">
+                          <Link
+                            to="/activity/$eventId"
+                            params={{ eventId: String(entry.id) }}
+                            className="w-fit font-medium hover:underline hover:underline-offset-4"
+                          >
+                            {actionLabel[entry.action]}
+                          </Link>
+                          <span className="text-2xs text-muted-foreground">
+                            Evento #{entry.id}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5 tabular-nums">
                           <span className="text-xs">{dayFormat.format(createdAt)}</span>
                           <span className="text-2xs text-muted-foreground">
                             {timeFormat.format(createdAt)}
@@ -201,19 +213,7 @@ function Activity() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-medium">{actionLabel[entry.action]}</span>
-                          <Link
-                            to="/activity/$eventId"
-                            params={{ eventId: String(entry.id) }}
-                            className="text-2xs text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
-                          >
-                            Ver evento #{entry.id} →
-                          </Link>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-0.5">
                           <span className="text-xs">{actor(entry)}</span>
                           <span className="text-2xs text-muted-foreground">
                             {actorTypeLabel[entry.actorType]}
@@ -223,8 +223,8 @@ function Activity() {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="pr-4 whitespace-normal">
-                        <div className="flex flex-col">
+                      <TableCell className="pr-5 whitespace-normal">
+                        <div className="flex flex-col gap-0.5">
                           <span className="text-xs">{detail(entry)}</span>
                           <span className="text-2xs text-muted-foreground">
                             {entry.resourceId ?? "Sin recurso asociado"}
