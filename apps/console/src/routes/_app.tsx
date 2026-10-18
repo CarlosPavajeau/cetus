@@ -3,7 +3,6 @@ import {
   Link,
   Outlet,
   createFileRoute,
-  redirect,
   useMatchRoute,
   useMatches,
   useNavigate,
@@ -42,19 +41,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
-import { getSession } from "~/features/session/server";
+import { requireSession } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
 
 /** Protected layout: every child route requires a session. */
 export const Route = createFileRoute("/_app")({
-  beforeLoad: async () => {
-    const session = await getSession();
-    if (!session) {
-      throw redirect({ to: "/sign-in" });
-    }
-    return { session };
-  },
+  beforeLoad: requireSession,
   component: AppLayout,
 });
 

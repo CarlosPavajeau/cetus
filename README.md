@@ -107,11 +107,13 @@ de GetStatusZip que responden "en proceso" antes del resultado).
 ## Probar el flujo completo en habilitación
 
 1. Crea tu cuenta en `http://localhost:3000/sign-up` (crea usuario, organización y cuenta en la API).
-2. Registra el emisor y su configuración con los endpoints de consola (el asistente visual está pendiente):
-   `POST /console/issuers`, `PUT /console/issuers/{id}/software` (Software ID, PIN y TestSetId del portal DIAN),
-   `PUT /console/issuers/{id}/certificate` (`.p12` en base64 y contraseña) y
-   `POST /console/issuers/{id}/numbering-ranges` (en habilitación: prefijo `SETP`, rango y clave técnica del set de pruebas).
-   Con las tres piezas, el emisor pasa a `TESTING`.
+2. La consola te lleva al asistente de configuración (`http://localhost:3000/setup`), que registra el emisor en
+   cuatro pasos: datos del RUT, software DIAN (Software ID, PIN y TestSetId del portal de habilitación),
+   certificado `.p12` con su contraseña y numeración (ya trae la del set de pruebas: prefijo `SETP`,
+   990000000 a 995000000; solo falta la clave técnica). Cada paso se guarda al continuar, así que puedes
+   retomarlo donde lo dejaste. Con las tres piezas, el emisor pasa a `TESTING`.
+   También puedes hacerlo con los endpoints de consola: `POST /console/issuers`, `PUT /console/issuers/{id}/software`,
+   `PUT /console/issuers/{id}/certificate` (`.p12` en base64 y contraseña) y `POST /console/issuers/{id}/numbering-ranges`.
 3. Crea una llave de pruebas en la consola y envía una factura:
 
 ```bash
@@ -163,5 +165,5 @@ Los XSD de la caja de herramientas van en `modules/ubl/src/main/xsd` para valida
 ## Siguientes pasos
 
 Notas crédito y débito (CUDE), `AttachedDocument`, PDF con QR, envío por correo (SES), webhooks,
-asistente de onboarding en la consola, tipos TypeScript generados desde OpenAPI (`pnpm --filter @cetus/console api:types`)
+panel de configuración del emisor en la consola, tipos TypeScript generados desde OpenAPI (`pnpm --filter @cetus/console api:types`)
 y roles por organización en los endpoints de consola.
