@@ -64,7 +64,7 @@ class InvoiceUblMapperTest {
         assertThat(xml).contains("ds:SignatureValue").contains("xades:SignedProperties");
     }
 
-    private static ElectronicInvoice sampleInvoice() {
+    static ElectronicInvoice sampleInvoice() {
         var calc = new InvoiceCalculator().calculate(List.of(new LineInput("SKU-1", "Servicio de consultoría",
                 new BigDecimal("1"), "94", new BigDecimal("100000"),
                 List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19"))))));

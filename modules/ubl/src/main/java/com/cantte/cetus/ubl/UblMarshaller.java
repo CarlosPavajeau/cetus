@@ -32,13 +32,24 @@ public final class UblMarshaller {
         }
     }
 
-    /** The empty ExtensionContent of the second UBLExtension, where the signature goes. */
+    /**
+     * The ExtensionContent of the second UBLExtension, where the signature goes. The schema forbids an
+     * empty ExtensionContent, so the slot is not marshalled: it is appended here, right before signing.
+     */
     public static Element signatureSlot(Document document) {
         NodeList contents = document.getElementsByTagNameNS(Ns.EXT, "ExtensionContent");
-        if (contents.getLength() < 2) {
-            throw new IllegalStateException("UBL document has no signature extension");
+        if (contents.getLength() >= 2) {
+            return (Element) contents.item(1);
         }
-        return (Element) contents.item(1);
+        NodeList extensions = document.getElementsByTagNameNS(Ns.EXT, "UBLExtensions");
+        if (extensions.getLength() == 0) {
+            throw new IllegalStateException("UBL document has no UBLExtensions");
+        }
+        Element extension = document.createElementNS(Ns.EXT, "ext:UBLExtension");
+        Element content = document.createElementNS(Ns.EXT, "ext:ExtensionContent");
+        extension.appendChild(content);
+        extensions.item(0).appendChild(extension);
+        return content;
     }
 
     private static JAXBContext createContext() {

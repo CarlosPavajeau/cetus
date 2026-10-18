@@ -33,7 +33,6 @@ public final class InvoiceUblMapper {
         UblInvoice ubl = new UblInvoice();
         ubl.ublExtensions = new Ext.UblExtensions();
         ubl.ublExtensions.extensions.add(Ext.UblExtension.of(dianExtensions(invoice)));
-        ubl.ublExtensions.extensions.add(Ext.UblExtension.signatureSlot());
 
         ubl.ublVersionId = DianCodes.UBL_VERSION;
         ubl.customizationId = invoice.operationType();
