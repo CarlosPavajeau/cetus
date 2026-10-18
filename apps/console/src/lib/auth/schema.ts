@@ -1,8 +1,4 @@
-/**
- * Generated with `pnpm auth:generate` (Better Auth CLI) and moved to the "auth" schema.
- * After regenerating, replace pgTable with authSchema.table again, then run `pnpm db:generate`.
- */
-import { relations } from "drizzle-orm";
+import { defineRelations } from "drizzle-orm";
 import { pgSchema, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
 
 
@@ -141,50 +137,32 @@ export const jwks = authSchema.table("jwks", {
   crv: text("crv"),
 });
 
-export const userRelations = relations(user, ({ many }) => ({
-  sessions: many(session),
-  accounts: many(account),
-  members: many(member),
-  invitations: many(invitation),
-}));
-
-export const sessionRelations = relations(session, ({ one }) => ({
-  user: one(user, {
-    fields: [session.userId],
-    references: [user.id],
+export const relations = defineRelations(
+  { user, session, account, verification, organization, member, invitation, jwks },
+  (r) => ({
+    user: {
+      sessions: r.many.session(),
+      accounts: r.many.account(),
+      members: r.many.member(),
+      invitations: r.many.invitation(),
+    },
+    session: {
+      user: r.one.user({ from: r.session.userId, to: r.user.id, optional: false }),
+    },
+    account: {
+      user: r.one.user({ from: r.account.userId, to: r.user.id, optional: false }),
+    },
+    organization: {
+      members: r.many.member(),
+      invitations: r.many.invitation(),
+    },
+    member: {
+      organization: r.one.organization({ from: r.member.organizationId, to: r.organization.id, optional: false }),
+      user: r.one.user({ from: r.member.userId, to: r.user.id, optional: false }),
+    },
+    invitation: {
+      organization: r.one.organization({ from: r.invitation.organizationId, to: r.organization.id, optional: false }),
+      user: r.one.user({ from: r.invitation.inviterId, to: r.user.id, optional: false }),
+    },
   }),
-}));
-
-export const accountRelations = relations(account, ({ one }) => ({
-  user: one(user, {
-    fields: [account.userId],
-    references: [user.id],
-  }),
-}));
-
-export const organizationRelations = relations(organization, ({ many }) => ({
-  members: many(member),
-  invitations: many(invitation),
-}));
-
-export const memberRelations = relations(member, ({ one }) => ({
-  organization: one(organization, {
-    fields: [member.organizationId],
-    references: [organization.id],
-  }),
-  user: one(user, {
-    fields: [member.userId],
-    references: [user.id],
-  }),
-}));
-
-export const invitationRelations = relations(invitation, ({ one }) => ({
-  organization: one(organization, {
-    fields: [invitation.organizationId],
-    references: [organization.id],
-  }),
-  user: one(user, {
-    fields: [invitation.inviterId],
-    references: [user.id],
-  }),
-}));
+);
