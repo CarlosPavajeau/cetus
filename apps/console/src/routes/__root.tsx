@@ -1,12 +1,20 @@
 /// <reference types="vite/client" />
-import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import type { QueryClient } from "@tanstack/react-query";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import { type ReactNode, Suspense, lazy } from "react";
 
 import { TooltipProvider } from "~/components/ui/tooltip";
 
 import appCss from "~/styles.css?url";
 
-export const Route = createRootRoute({
+// Dev-only: the dynamic import keeps the devtools out of the production bundle.
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import("@tanstack/react-query-devtools").then((m) => ({ default: m.ReactQueryDevtools })),
+    )
+  : () => null;
+
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -27,6 +35,9 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         <TooltipProvider>{children}</TooltipProvider>
+        <Suspense>
+          <ReactQueryDevtools buttonPosition="bottom-left" />
+        </Suspense>
         <Scripts />
       </body>
     </html>
