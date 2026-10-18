@@ -1,4 +1,11 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { BuildingIcon } from "lucide-react";
+import { EnvironmentBadge } from "~/components/EnvironmentBadge";
+import { PageHeader } from "~/components/PageHeader";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "~/components/ui/empty";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { getAccount } from "~/features/account/server";
 import { listIssuers } from "~/features/issuers/server";
 import type { Issuer } from "~/lib/api/types";
@@ -23,61 +30,73 @@ function Overview() {
 
   return (
     <>
-      <header className="page-header">
-        <h1>{account.name}</h1>
-        <p className="lead">Plan {account.plan.toLowerCase()} · cuenta {account.status.toLowerCase()}</p>
-      </header>
+      <PageHeader
+        title={account.name}
+        lead={`Plan ${account.plan.toLowerCase()} · cuenta ${account.status.toLowerCase()}`}
+      />
 
-      <section className="panel">
-        <h2>Emisores</h2>
-        {issuers.length === 0 ? (
-          <div className="empty">
-            <p>
-              Aún no tienes emisores. Un emisor es la empresa que factura: su NIT, su certificado de firma y su
-              resolución de numeración.
-            </p>
-            <p className="hint">Por ahora se registran con la API de consola; el asistente visual es el siguiente paso.</p>
-          </div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Razón social</th>
-                <th scope="col">NIT</th>
-                <th scope="col">Ambiente</th>
-                <th scope="col">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {issuers.map((issuer) => (
-                <tr key={issuer.id}>
-                  <td>{issuer.tradeName ?? issuer.legalName}</td>
-                  <td className="num">
-                    {issuer.nit}-{issuer.checkDigit}
-                  </td>
-                  <td>
-                    <span className={`env env-${issuer.environment.toLowerCase()}`}>
-                      {issuer.environment === "TEST" ? "Pruebas" : "Producción"}
-                    </span>
-                  </td>
-                  <td>{statusLabel[issuer.status]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Emisores</CardTitle>
+          <CardDescription>Las empresas que facturan desde esta cuenta.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {issuers.length === 0 ? (
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BuildingIcon />
+                </EmptyMedia>
+                <EmptyTitle>Aún no tienes emisores</EmptyTitle>
+                <EmptyDescription>
+                  Un emisor es la empresa que factura: su NIT, su certificado de firma y su resolución de numeración.
+                  Por ahora se registran con la API de consola; el asistente visual es el siguiente paso.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Razón social</TableHead>
+                  <TableHead>NIT</TableHead>
+                  <TableHead>Ambiente</TableHead>
+                  <TableHead>Estado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {issuers.map((issuer) => (
+                  <TableRow key={issuer.id}>
+                    <TableCell>{issuer.tradeName ?? issuer.legalName}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {issuer.nit}-{issuer.checkDigit}
+                    </TableCell>
+                    <TableCell>
+                      <EnvironmentBadge environment={issuer.environment} />
+                    </TableCell>
+                    <TableCell>{statusLabel[issuer.status]}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-      <section className="panel">
-        <h2>Integra tu sistema</h2>
-        <p>
-          Crea una llave de pruebas y envía tu primera factura a <code>POST /v1/invoices</code>. Las llaves de pruebas
-          envían a la habilitación de la DIAN; las de producción, a facturación real.
-        </p>
-        <Link className="button primary" to="/developers/api-keys">
-          Crear llave de API
-        </Link>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Integra tu sistema</CardTitle>
+          <CardDescription>
+            Crea una llave de pruebas y envía tu primera factura a <code>POST /v1/invoices</code>. Las llaves de pruebas
+            envían a la habilitación de la DIAN; las de producción, a facturación real.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button render={<Link to="/developers/api-keys" />} nativeButton={false}>
+            Crear llave de API
+          </Button>
+        </CardFooter>
+      </Card>
     </>
   );
 }

@@ -1,7 +1,35 @@
+import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { type FormEvent, useState } from "react";
+import { CheckIcon, CopyIcon, KeyRoundIcon } from "lucide-react";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { EnvironmentBadge } from "~/components/EnvironmentBadge";
+import { PageHeader } from "~/components/PageHeader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "~/components/ui/empty";
+import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
+import { Input } from "~/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "~/components/ui/input-group";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Spinner } from "~/components/ui/spinner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { createApiKey, listApiKeys, revokeApiKey } from "~/features/api-keys/server";
-import type { Environment } from "~/lib/api/types";
+import { createApiKeySchema } from "~/features/api-keys/schema";
+import type { ApiKey, Environment } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/developers/api-keys")({
   loader: () => listApiKeys(),
@@ -10,35 +38,29 @@ export const Route = createFileRoute("/_app/developers/api-keys")({
 
 const dateFormat = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" });
 
+const environmentItems: { label: string; value: Environment }[] = [
+  { label: "Pruebas (habilitación DIAN)", value: "TEST" },
+  { label: "Producción", value: "LIVE" },
+];
+
 function ApiKeys() {
   const keys = Route.useLoaderData();
   const router = useRouter();
   const [secret, setSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [pending, setPending] = useState(false);
+  const form = useForm({
+    resolver: arktypeResolver(createApiKeySchema),
+    defaultValues: { name: "", environment: "TEST" as Environment },
+  });
+  const { isSubmitting } = form.formState;
 
-  async function onCreate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    setPending(true);
-    const created = await createApiKey({
-      data: { name: String(data.get("name")), environment: String(data.get("environment")) as Environment },
-    });
-    setPending(false);
+  const onCreate = form.handleSubmit(async (values) => {
+    const created = await createApiKey({ data: values });
     setSecret(created.secret);
     setCopied(false);
     form.reset();
     await router.invalidate();
-  }
-
-  async function onRevoke(id: string, name: string) {
-    if (!window.confirm(`¿Revocar la llave "${name}"? Las integraciones que la usen dejarán de funcionar.`)) {
-      return;
-    }
-    await revokeApiKey({ data: { id } });
-    await router.invalidate();
-  }
+  });
 
   async function copySecret() {
     if (secret) {
@@ -49,91 +71,193 @@ function ApiKeys() {
 
   return (
     <>
-      <header className="page-header">
-        <h1>Llaves de API</h1>
-        <p className="lead">
-          Cada llave pertenece a un ambiente. Úsala en el encabezado <code>Authorization: Bearer …</code>.
-        </p>
-      </header>
+      <PageHeader
+        title="Llaves de API"
+        lead={
+          <>
+            Cada llave pertenece a un ambiente. Úsala en el encabezado <code>Authorization: Bearer …</code>.
+          </>
+        }
+      />
 
       {secret && (
-        <section className="panel reveal" aria-live="polite">
-          <h2>Copia tu llave ahora</h2>
-          <p>Por seguridad solo la mostramos una vez. Si la pierdes, revócala y crea otra.</p>
-          <div className="secret">
-            <code>{secret}</code>
-            <button className="button" type="button" onClick={copySecret}>
-              {copied ? "Copiada" : "Copiar"}
-            </button>
-          </div>
-        </section>
+        <Alert aria-live="polite">
+          <KeyRoundIcon />
+          <AlertTitle>Copia tu llave ahora</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>Por seguridad solo la mostramos una vez. Si la pierdes, revócala y crea otra.</p>
+            <InputGroup>
+              <InputGroupInput value={secret} readOnly aria-label="Llave de API" className="font-mono" />
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton onClick={copySecret}>
+                  {copied ? <CheckIcon data-icon="inline-start" /> : <CopyIcon data-icon="inline-start" />}
+                  {copied ? "Copiada" : "Copiar"}
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+          </AlertDescription>
+        </Alert>
       )}
 
-      <section className="panel">
-        <h2>Nueva llave</h2>
-        <form className="form inline" onSubmit={onCreate}>
-          <label>
-            Nombre
-            <input name="name" placeholder="ERP de producción" maxLength={80} required />
-          </label>
-          <label>
-            Ambiente
-            <select name="environment" defaultValue="TEST">
-              <option value="TEST">Pruebas (habilitación DIAN)</option>
-              <option value="LIVE">Producción</option>
-            </select>
-          </label>
-          <button className="button primary" type="submit" disabled={pending}>
-            {pending ? "Creando…" : "Crear llave"}
-          </button>
-        </form>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Nueva llave</CardTitle>
+          <CardDescription>Las llaves de pruebas envían a la habilitación de la DIAN.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onCreate} noValidate>
+            <FieldGroup className="md:flex-row md:items-start">
+              <Controller
+                name="name"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="api-key-name">Nombre</FieldLabel>
+                    <Input
+                      {...field}
+                      id="api-key-name"
+                      placeholder="ERP de producción"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    <FieldError errors={[fieldState.error]} />
+                  </Field>
+                )}
+              />
+              <Controller
+                name="environment"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="api-key-environment">Ambiente</FieldLabel>
+                    <Select
+                      items={environmentItems}
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                    >
+                      <SelectTrigger
+                        id="api-key-environment"
+                        className="w-full"
+                        aria-invalid={fieldState.invalid}
+                        onBlur={field.onBlur}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {environmentItems.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldError errors={[fieldState.error]} />
+                  </Field>
+                )}
+              />
+              <Field className="md:w-auto md:pt-6">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Spinner data-icon="inline-start" />}
+                  {isSubmitting ? "Creando…" : "Crear llave"}
+                </Button>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
 
-      <section className="panel">
-        <h2>Tus llaves</h2>
-        {keys.length === 0 ? (
-          <p className="empty">Todavía no hay llaves. Crea una de pruebas para empezar a integrar.</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Nombre</th>
-                <th scope="col">Llave</th>
-                <th scope="col">Ambiente</th>
-                <th scope="col">Último uso</th>
-                <th scope="col">
-                  <span className="sr-only">Acciones</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {keys.map((key) => (
-                <tr key={key.id} className={key.revokedAt ? "revoked" : undefined}>
-                  <td>{key.name}</td>
-                  <td>
-                    <code>{key.prefix}…</code>
-                  </td>
-                  <td>
-                    <span className={`env env-${key.environment.toLowerCase()}`}>
-                      {key.environment === "TEST" ? "Pruebas" : "Producción"}
-                    </span>
-                  </td>
-                  <td>{key.lastUsedAt ? dateFormat.format(new Date(key.lastUsedAt)) : "Nunca"}</td>
-                  <td className="actions">
-                    {key.revokedAt ? (
-                      <span className="hint">Revocada</span>
-                    ) : (
-                      <button className="button danger" type="button" onClick={() => onRevoke(key.id, key.name)}>
-                        Revocar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tus llaves</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {keys.length === 0 ? (
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <KeyRoundIcon />
+                </EmptyMedia>
+                <EmptyTitle>Todavía no hay llaves</EmptyTitle>
+                <EmptyDescription>Crea una de pruebas para empezar a integrar.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Llave</TableHead>
+                  <TableHead>Ambiente</TableHead>
+                  <TableHead>Último uso</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Acciones</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {keys.map((key) => (
+                  <TableRow key={key.id} className={key.revokedAt ? "text-muted-foreground" : undefined}>
+                    <TableCell>{key.name}</TableCell>
+                    <TableCell>
+                      <code>{key.prefix}…</code>
+                    </TableCell>
+                    <TableCell>
+                      <EnvironmentBadge environment={key.environment} />
+                    </TableCell>
+                    <TableCell>{key.lastUsedAt ? dateFormat.format(new Date(key.lastUsedAt)) : "Nunca"}</TableCell>
+                    <TableCell className="text-right">
+                      {key.revokedAt ? (
+                        <Badge variant="outline">Revocada</Badge>
+                      ) : (
+                        <RevokeApiKey apiKey={key} onRevoked={() => router.invalidate()} />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </>
+  );
+}
+
+function RevokeApiKey({ apiKey, onRevoked }: { apiKey: ApiKey; onRevoked: () => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+
+  async function revoke() {
+    setPending(true);
+    try {
+      await revokeApiKey({ data: { id: apiKey.id } });
+      await onRevoked();
+      setOpen(false);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>Revocar</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Revocar la llave "{apiKey.name}"?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Las integraciones que la usen dejarán de funcionar. Esta acción no se puede deshacer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onClick={revoke} disabled={pending}>
+            {pending && <Spinner data-icon="inline-start" />}
+            Revocar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
