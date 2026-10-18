@@ -11,7 +11,9 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -47,6 +49,15 @@ public class AuditLogResource {
                           @QueryParam("before") Long before,
                           @QueryParam("limit") @DefaultValue("50") int limit) {
         return AuditPage.from(auditLog.list(context.account().id, parseAction(action), before, limit));
+    }
+
+    @GET
+    @Path("/{id}")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public AuditEntry get(@PathParam("id") long id) {
+        return auditLog.find(context.account().id, id).map(AuditEntry::from)
+                .orElseThrow(() -> new NotFoundException("Audit entry not found"));
     }
 
     private static AuditAction parseAction(String action) {

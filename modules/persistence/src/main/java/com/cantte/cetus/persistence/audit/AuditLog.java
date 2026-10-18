@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -31,6 +32,13 @@ import java.util.UUID;
 public class AuditLog {
 
     public static final int MAX_PAGE_SIZE = 100;
+
+    private static final String SELECT = """
+            SELECT id, action, actor_type, actor_id, resource_type, resource_id, CAST(data AS text),
+                   host(ip_address), created_at
+            FROM billing.audit_log
+            WHERE account_id = :account
+            """;
 
     private static final TypeReference<Map<String, Object>> DATA_TYPE = new TypeReference<>() {
     };
@@ -70,12 +78,7 @@ public class AuditLog {
     /** Newest first, paginated by id: pass the previous page's {@code nextCursor} as {@code beforeId}. */
     public AuditPage list(UUID accountId, AuditAction actionFilter, Long beforeId, int limit) {
         int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
-        StringBuilder sql = new StringBuilder("""
-                SELECT id, action, actor_type, actor_id, resource_type, resource_id, CAST(data AS text),
-                       host(ip_address), created_at
-                FROM billing.audit_log
-                WHERE account_id = :account
-                """);
+        StringBuilder sql = new StringBuilder(SELECT);
         if (actionFilter != null) {
             sql.append(" AND action = :action");
         }
@@ -99,19 +102,33 @@ public class AuditLog {
         List<Object[]> rows = query.getResultList();
         List<AuditEntryView> items = new ArrayList<>(Math.min(rows.size(), size));
         for (Object[] row : rows.subList(0, Math.min(rows.size(), size))) {
-            items.add(new AuditEntryView(
-                    ((Number) row[0]).longValue(),
-                    AuditAction.valueOf((String) row[1]),
-                    Actor.ActorType.valueOf((String) row[2]),
-                    (String) row[3],
-                    (String) row[4],
-                    (UUID) row[5],
-                    deserialize((String) row[6]),
-                    (String) row[7],
-                    toOffsetDateTime(row[8])));
+            items.add(toView(row));
         }
         Long nextCursor = rows.size() > size ? items.get(items.size() - 1).id() : null;
         return new AuditPage(items, nextCursor);
+    }
+
+    /** One entry of the account; empty when the id does not exist or belongs to another account. */
+    public Optional<AuditEntryView> find(UUID accountId, long id) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = em.createNativeQuery(SELECT + " AND id = :id")
+                .setParameter("account", accountId)
+                .setParameter("id", id)
+                .getResultList();
+        return rows.stream().findFirst().map(this::toView);
+    }
+
+    private AuditEntryView toView(Object[] row) {
+        return new AuditEntryView(
+                ((Number) row[0]).longValue(),
+                AuditAction.valueOf((String) row[1]),
+                Actor.ActorType.valueOf((String) row[2]),
+                (String) row[3],
+                (String) row[4],
+                (UUID) row[5],
+                deserialize((String) row[6]),
+                (String) row[7],
+                toOffsetDateTime(row[8]));
     }
 
     private String serialize(Map<String, Object> data) {
