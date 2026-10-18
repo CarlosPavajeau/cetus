@@ -1,0 +1,5 @@
+# Commits that `git blame` should skip: mechanical reformatting with no behavior change.
+# Enable locally with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# [console] Format with oxfmt
+dce618067684fb8002d3b1761275f6a8c75a063c
