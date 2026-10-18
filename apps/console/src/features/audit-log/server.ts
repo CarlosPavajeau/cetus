@@ -17,8 +17,8 @@ export type ActivityPage = { items: ActivityEntry[]; nextCursor: AuditPage["next
 export const listAuditLog = createServerFn({ method: "GET" })
   .validator(
     type({
-      "action?": type.enumerated(...auditActions),
-      "before?": "number.integer > 0",
+      "action?": type.enumerated(...auditActions).or("undefined"),
+      "before?": "number.integer > 0 | undefined",
     }),
   )
   .handler(async ({ data }): Promise<ActivityPage> => {
