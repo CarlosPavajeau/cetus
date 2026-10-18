@@ -35,6 +35,23 @@ cetus/
 
 Java 21, Node 22 con pnpm, Docker. Gradle solo para generar el wrapper la primera vez.
 
+## Desarrollo local con `make`
+
+```bash
+make setup      # una vez: pnpm install, contenedores, migraciones de auth y compilación
+make dev        # infra + consola (:3000), API (:8080) y worker (:8081) en una sola terminal
+make dev-mock   # lo mismo más el mock de la DIAN (:8090), con el worker apuntando a él
+make api        # un solo servicio (también console, worker, mock), por si lo quieres en otra pestaña
+make            # lista todos los comandos
+```
+
+`make dev` levanta Postgres y LocalStack y espera a que estén listos, exporta las credenciales ficticias de AWS,
+compila una vez los módulos compartidos y arranca la consola antes que la API (por el JWKS). Cada línea sale con
+el nombre del servicio y queda también en `.logs/<servicio>.log`. Ctrl+C detiene los servicios; los contenedores
+siguen arriba hasta `make infra-down`. El worker escucha el depurador en el puerto 5006 (la API en el 5005).
+
+Los pasos manuales equivalentes:
+
 ## Primer arranque local
 
 ```bash
