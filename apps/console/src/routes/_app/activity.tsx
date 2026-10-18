@@ -1,6 +1,6 @@
+import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HistoryIcon } from "lucide-react";
-import { useState } from "react";
 
 import { PageHeader } from "~/components/PageHeader";
 import { Button } from "~/components/ui/button";
@@ -37,7 +37,8 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { type ActivityEntry, listAuditLog } from "~/features/audit-log/server";
+import { auditLogQuery } from "~/features/audit-log/queries";
+import type { ActivityEntry } from "~/features/audit-log/server";
 import { type AuditAction, auditActions } from "~/lib/api/types";
 
 type ActivitySearch = { action?: AuditAction };
@@ -47,7 +48,8 @@ export const Route = createFileRoute("/_app/activity")({
     action: auditActions.find((action) => action === search.action),
   }),
   loaderDeps: ({ search }) => ({ action: search.action }),
-  loader: ({ deps }) => listAuditLog({ data: { action: deps.action } }),
+  loader: ({ context: { queryClient }, deps }) =>
+    queryClient.ensureInfiniteQueryData(auditLogQuery(deps.action)),
   component: Activity,
 });
 
@@ -133,38 +135,13 @@ function actor(entry: ActivityEntry): string {
 }
 
 function Activity() {
-  const firstPage = Route.useLoaderData();
   const { action } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const [more, setMore] = useState<{
-    firstPage: typeof firstPage;
-    items: ActivityEntry[];
-    cursor: typeof firstPage.nextCursor;
-  } | null>(null);
-  const [pending, setPending] = useState(false);
-
-  // The pages appended with "Ver más" belong to the first page they were loaded from: a new filter
-  // loads a new first page and drops them.
-  const appended = more?.firstPage === firstPage ? more : null;
-  const entries = appended ? [...firstPage.items, ...appended.items] : firstPage.items;
-  const cursor = appended ? appended.cursor : firstPage.nextCursor;
-
-  async function loadMore() {
-    if (cursor === null) {
-      return;
-    }
-    setPending(true);
-    try {
-      const page = await listAuditLog({ data: { action, before: cursor } });
-      setMore({
-        firstPage,
-        items: [...(appended?.items ?? []), ...page.items],
-        cursor: page.nextCursor,
-      });
-    } finally {
-      setPending(false);
-    }
-  }
+  // Each filter is its own query, so the pages appended with "Ver más" never mix across filters.
+  const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
+    auditLogQuery(action),
+  );
+  const entries = data.pages.flatMap((page) => page.items);
 
   return (
     <>
@@ -249,11 +226,11 @@ function Activity() {
             </Table>
           )}
         </CardContent>
-        {cursor !== null && (
+        {hasNextPage && (
           <CardFooter className="justify-center">
-            <Button variant="outline" onClick={loadMore} disabled={pending}>
-              {pending && <Spinner data-icon="inline-start" />}
-              {pending ? "Cargando…" : "Ver más"}
+            <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+              {isFetchingNextPage && <Spinner data-icon="inline-start" />}
+              {isFetchingNextPage ? "Cargando…" : "Ver más"}
             </Button>
           </CardFooter>
         )}

@@ -1,3 +1,4 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { BuildingIcon } from "lucide-react";
 
@@ -27,15 +28,16 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { getAccount } from "~/features/account/server";
-import { listIssuers } from "~/features/issuers/server";
+import { accountQuery } from "~/features/account/queries";
+import { issuersQuery } from "~/features/issuers/queries";
 import type { Issuer } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/overview")({
-  loader: async () => {
-    const [account, issuers] = await Promise.all([getAccount(), listIssuers()]);
-    return { account, issuers };
-  },
+  loader: ({ context: { queryClient } }) =>
+    Promise.all([
+      queryClient.ensureQueryData(accountQuery),
+      queryClient.ensureQueryData(issuersQuery),
+    ]),
   component: Overview,
 });
 
@@ -47,7 +49,8 @@ const statusLabel: Record<Issuer["status"], string> = {
 };
 
 function Overview() {
-  const { account, issuers } = Route.useLoaderData();
+  const { data: account } = useSuspenseQuery(accountQuery);
+  const { data: issuers } = useSuspenseQuery(issuersQuery);
 
   return (
     <>

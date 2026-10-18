@@ -1,4 +1,5 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
 
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/sign-in")({
 
 function SignIn() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: arktypeResolver(signInSchema),
     defaultValues: { email: "", password: "" },
@@ -38,6 +40,8 @@ function SignIn() {
     if (first) {
       await authClient.organization.setActive({ organizationId: first.id });
     }
+    // Drop anything cached by a previous session in this tab (e.g. one that expired).
+    queryClient.clear();
     await navigate({ to: "/overview" });
   });
 

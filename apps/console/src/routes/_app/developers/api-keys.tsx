@@ -1,5 +1,6 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { CheckIcon, CopyIcon, KeyRoundIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -53,16 +54,28 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { apiKeysQuery } from "~/features/api-keys/queries";
 import { createApiKeySchema } from "~/features/api-keys/schema";
-import { createApiKey, listApiKeys, revokeApiKey } from "~/features/api-keys/server";
+import { createApiKey, revokeApiKey } from "~/features/api-keys/server";
+import { auditLogKey } from "~/features/audit-log/queries";
 import type { ApiKey, Environment } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/developers/api-keys")({
-  loader: () => listApiKeys(),
+  loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(apiKeysQuery),
   component: ApiKeys,
 });
 
 const dateFormat = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" });
+
+/** Refetches the key list and marks the audit log stale, since it records every create and revoke. */
+function useInvalidateApiKeys() {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: apiKeysQuery.queryKey }),
+      queryClient.invalidateQueries({ queryKey: auditLogKey }),
+    ]);
+}
 
 const environmentItems: { label: string; value: Environment }[] = [
   { label: "Pruebas (habilitación DIAN)", value: "TEST" },
@@ -70,8 +83,12 @@ const environmentItems: { label: string; value: Environment }[] = [
 ];
 
 function ApiKeys() {
-  const keys = Route.useLoaderData();
-  const router = useRouter();
+  const { data: keys } = useSuspenseQuery(apiKeysQuery);
+  const invalidateApiKeys = useInvalidateApiKeys();
+  const create = useMutation({
+    mutationFn: createApiKey,
+    onSuccess: invalidateApiKeys,
+  });
   const [secret, setSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const form = useForm({
@@ -81,11 +98,10 @@ function ApiKeys() {
   const { isSubmitting } = form.formState;
 
   const onCreate = form.handleSubmit(async (values) => {
-    const created = await createApiKey({ data: values });
+    const created = await create.mutateAsync({ data: values });
     setSecret(created.secret);
     setCopied(false);
     form.reset();
-    await router.invalidate();
   });
 
   async function copySecret() {
@@ -254,7 +270,7 @@ function ApiKeys() {
                       {key.revokedAt ? (
                         <Badge variant="outline">Revocada</Badge>
                       ) : (
-                        <RevokeApiKey apiKey={key} onRevoked={() => router.invalidate()} />
+                        <RevokeApiKey apiKey={key} />
                       )}
                     </TableCell>
                   </TableRow>
@@ -268,20 +284,17 @@ function ApiKeys() {
   );
 }
 
-function RevokeApiKey({ apiKey, onRevoked }: { apiKey: ApiKey; onRevoked: () => Promise<void> }) {
+function RevokeApiKey({ apiKey }: { apiKey: ApiKey }) {
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(false);
-
-  async function revoke() {
-    setPending(true);
-    try {
-      await revokeApiKey({ data: { id: apiKey.id } });
-      await onRevoked();
+  const invalidateApiKeys = useInvalidateApiKeys();
+  const revoke = useMutation({
+    mutationFn: revokeApiKey,
+    onSuccess: async () => {
+      await invalidateApiKeys();
       setOpen(false);
-    } finally {
-      setPending(false);
-    }
-  }
+    },
+  });
+  const pending = revoke.isPending;
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -297,7 +310,11 @@ function RevokeApiKey({ apiKey, onRevoked }: { apiKey: ApiKey; onRevoked: () => 
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={revoke} disabled={pending}>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={() => revoke.mutate({ data: { id: apiKey.id } })}
+            disabled={pending}
+          >
             {pending && <Spinner data-icon="inline-start" />}
             Revocar
           </AlertDialogAction>

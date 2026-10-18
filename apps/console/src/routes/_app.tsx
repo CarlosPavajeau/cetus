@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Link,
   Outlet,
@@ -48,9 +49,12 @@ function AppLayout() {
   const { session } = Route.useRouteContext();
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
+  const queryClient = useQueryClient();
 
   async function signOut() {
     await authClient.signOut();
+    // The cache belongs to this user's organization: the next session must not see it.
+    queryClient.clear();
     await navigate({ to: "/sign-in" });
   }
 

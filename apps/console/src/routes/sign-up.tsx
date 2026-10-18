@@ -1,4 +1,5 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
 
@@ -29,6 +30,7 @@ function slugify(value: string) {
 
 function SignUp() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: arktypeResolver(signUpSchema),
     defaultValues: { name: "", company: "", email: "", password: "" },
@@ -57,6 +59,8 @@ function SignUp() {
     }
     await authClient.organization.setActive({ organizationId: organization.id });
     await bootstrapAccount({ data: { name: company } });
+    // Drop anything cached by a previous session in this tab (e.g. one that expired).
+    queryClient.clear();
     await navigate({ to: "/overview" });
   });
 
