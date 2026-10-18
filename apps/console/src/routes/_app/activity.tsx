@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HistoryIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { PageHeader } from "~/components/PageHeader";
 import { Button } from "~/components/ui/button";
@@ -136,15 +136,18 @@ function Activity() {
   const firstPage = Route.useLoaderData();
   const { action } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const [entries, setEntries] = useState(firstPage.items);
-  const [cursor, setCursor] = useState(firstPage.nextCursor);
+  const [more, setMore] = useState<{
+    firstPage: typeof firstPage;
+    items: ActivityEntry[];
+    cursor: typeof firstPage.nextCursor;
+  } | null>(null);
   const [pending, setPending] = useState(false);
 
-  // A new filter loads a new first page: drop the pages appended with "Ver más".
-  useEffect(() => {
-    setEntries(firstPage.items);
-    setCursor(firstPage.nextCursor);
-  }, [firstPage]);
+  // The pages appended with "Ver más" belong to the first page they were loaded from: a new filter
+  // loads a new first page and drops them.
+  const appended = more?.firstPage === firstPage ? more : null;
+  const entries = appended ? [...firstPage.items, ...appended.items] : firstPage.items;
+  const cursor = appended ? appended.cursor : firstPage.nextCursor;
 
   async function loadMore() {
     if (cursor === null) {
@@ -153,8 +156,11 @@ function Activity() {
     setPending(true);
     try {
       const page = await listAuditLog({ data: { action, before: cursor } });
-      setEntries((current) => [...current, ...page.items]);
-      setCursor(page.nextCursor);
+      setMore({
+        firstPage,
+        items: [...(appended?.items ?? []), ...page.items],
+        cursor: page.nextCursor,
+      });
     } finally {
       setPending(false);
     }
