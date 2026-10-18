@@ -7,8 +7,24 @@ import {
   useMatchRoute,
   useNavigate,
 } from "@tanstack/react-router";
-import { HistoryIcon, KeyRoundIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
+import {
+  ArrowUpRightIcon,
+  BookOpenIcon,
+  CircleHelpIcon,
+  HistoryIcon,
+  KeyRoundIcon,
+  LayoutDashboardIcon,
+  LogOutIcon,
+} from "lucide-react";
 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
+import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
   Sidebar,
@@ -41,7 +57,12 @@ export const Route = createFileRoute("/_app")({
 
 const navigation = [
   { to: "/overview", label: "Resumen", icon: LayoutDashboardIcon },
-  { to: "/developers/api-keys", label: "Llaves de API", icon: KeyRoundIcon },
+  {
+    to: "/developers/api-keys",
+    label: "Llaves de API",
+    icon: KeyRoundIcon,
+    section: "Desarrolladores",
+  },
   { to: "/activity", label: "Actividad", icon: HistoryIcon },
 ] as const;
 
@@ -50,6 +71,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
   const queryClient = useQueryClient();
+  const current = navigation.find((item) => matchRoute({ to: item.to }));
 
   async function signOut() {
     await authClient.signOut();
@@ -96,12 +118,36 @@ function AppLayout() {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-10">
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="h-4" />
-          <span className="text-sm text-muted-foreground">Consola</span>
+          <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
+          <Breadcrumb>
+            <BreadcrumbList className="gap-3 text-xs">
+              {current && "section" in current && (
+                <>
+                  <BreadcrumbItem>{current.section}</BreadcrumbItem>
+                  <BreadcrumbSeparator>/</BreadcrumbSeparator>
+                </>
+              )}
+              <BreadcrumbItem>
+                <BreadcrumbPage>{current?.label ?? "Consola"}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          {/* Placeholders until the documentation and help center exist. */}
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="ghost" size="sm" disabled>
+              <BookOpenIcon data-icon="inline-start" />
+              Documentación
+              <ArrowUpRightIcon data-icon="inline-end" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" disabled>
+              <CircleHelpIcon />
+              <span className="sr-only">Ayuda</span>
+            </Button>
+          </div>
         </header>
-        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 p-4 md:p-6">
+        <div className="flex w-full flex-1 flex-col gap-7 p-4 md:px-10 md:pt-9.5 md:pb-6">
           <Outlet />
         </div>
       </SidebarInset>
