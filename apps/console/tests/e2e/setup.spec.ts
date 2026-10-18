@@ -58,10 +58,13 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   // Every step is saved: a reload resumes where the person left off, with the data in place.
   await open(page, "/setup");
   await expect(stepTitle(page, 2)).toBeVisible();
-  await page.getByRole("button", { name: "Atrás" }).click();
+  // A step ahead is not reachable yet; a saved one links back to its form.
+  await expect(page.getByRole("link", { name: /Certificado digital/ })).toHaveCount(0);
+  await page.getByRole("link", { name: "1. Datos del emisor · Completado" }).click();
   await expect(page.getByLabel("Nombre o razón social")).toHaveValue("PAVAJEAU MAX CARLOS ANDRES");
   await expect(page.getByLabel("Municipio")).toHaveValue("Valledupar");
   await expect(page.getByLabel("NIT")).toHaveAttribute("readonly", "");
+  await page.getByRole("button", { name: "Volver a configuración" }).waitFor();
   await page.getByLabel("Teléfono").fill("3000000000");
   await page.getByRole("button", { name: "Continuar" }).click();
 

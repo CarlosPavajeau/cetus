@@ -1,11 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { CheckIcon } from "lucide-react";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
 import { type Step, steps } from "./steps";
 
-/** The four steps of the assistant. Completed and reachable steps link back to their form. */
+/**
+ * "Paso n de 4" over a bar with one segment per step: filled up to the current step and for the
+ * ones already saved. Each segment names its step in a tooltip, and the reachable ones link back to it.
+ */
 export function SetupProgress({
   current,
   completed,
@@ -17,53 +20,44 @@ export function SetupProgress({
   reachable: Step;
 }) {
   return (
-    <nav aria-label="Pasos de la configuración" className="border-y py-5">
-      <ol className="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <nav aria-label="Pasos de la configuración" className="flex flex-col gap-1">
+      <p className="text-[10px] text-muted-foreground uppercase">
+        Paso {current} de {steps.length}
+      </p>
+      <ol className="flex gap-1.5">
         {steps.map((step, index) => {
           const number = (index + 1) as Step;
           const isCurrent = number === current;
-          const isDone = completed[index] && !isCurrent;
-          const content = (
-            <>
-              <span
-                className={cn(
-                  "flex size-7.5 shrink-0 items-center justify-center rounded-full border text-xs font-medium",
-                  isCurrent && "border-primary bg-primary text-primary-foreground",
-                  isDone && "bg-accent text-foreground",
-                  !isCurrent && !isDone && "bg-background text-muted-foreground",
-                )}
-              >
-                {isDone ? <CheckIcon className="size-3.5" aria-hidden /> : number}
-              </span>
-              <span className="flex min-w-0 flex-col gap-1">
-                <span
-                  className={cn(
-                    "truncate text-xs",
-                    isCurrent && "font-semibold",
-                    !isCurrent && !isDone && "text-muted-foreground",
-                  )}
-                >
-                  {step.title}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {isCurrent ? "En este paso" : isDone ? "Completado" : "Pendiente"}
-                </span>
-              </span>
-            </>
-          );
-          return (
-            <li key={step.title} aria-current={isCurrent ? "step" : undefined}>
-              {!isCurrent && number <= reachable ? (
-                <Link
-                  to="/setup"
-                  search={{ step: number }}
-                  className="flex items-center gap-3 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  {content}
-                </Link>
-              ) : (
-                <div className="flex items-center gap-3">{content}</div>
+          const status = isCurrent ? "En este paso" : completed[index] ? "Completado" : "Pendiente";
+          const label = `${number}. ${step.title} · ${status}`;
+          const segment = (
+            <span
+              className={cn(
+                "block h-1 w-full rounded-full",
+                isCurrent || completed[index] ? "bg-primary" : "bg-border",
               )}
+            />
+          );
+          // The segment is 4px tall; the padding gives it a comfortable target to hover and click.
+          const target =
+            "flex w-full py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm";
+          return (
+            <li key={step.title} className="flex-1" aria-current={isCurrent ? "step" : undefined}>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    !isCurrent && number <= reachable ? (
+                      <Link to="/setup" search={{ step: number }} className={target} />
+                    ) : (
+                      <span className={target} />
+                    )
+                  }
+                >
+                  {segment}
+                  <span className="sr-only">{label}</span>
+                </TooltipTrigger>
+                <TooltipContent>{label}</TooltipContent>
+              </Tooltip>
             </li>
           );
         })}

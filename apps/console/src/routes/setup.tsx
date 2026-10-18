@@ -88,7 +88,8 @@ function Setup() {
               Configura tu facturación electrónica
             </h1>
             <p className="text-sm text-muted-foreground">
-              Completa estos cuatro pasos para preparar tu emisor en Cetus.
+              Completa estos cuatro pasos para preparar tu emisor en Cetus: datos del emisor,
+              software DIAN, certificado digital y numeración.
             </p>
           </div>
           <div className="flex flex-col gap-1.5 sm:items-end">
@@ -145,7 +146,7 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
   }
 
   return (
-    <>
+    <div className="flex flex-1 flex-col gap-2.5">
       <SetupProgress current={step} completed={completedSteps(issuer)} reachable={reachable} />
       {step === 1 || !issuer ? (
         <IssuerStep key={issuer?.id ?? "new"} issuer={issuer} onBack={back} onSaved={saved} />
@@ -156,6 +157,6 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
       ) : (
         <NumberingStep issuer={issuer} onBack={back} onSaved={() => saved(issuer.id)} />
       )}
-    </>
+    </div>
   );
 }

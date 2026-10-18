@@ -39,9 +39,6 @@ export function StepLayout({
     <form onSubmit={onSubmit} noValidate className="flex flex-1 flex-col">
       <div className="flex flex-col gap-5.5">
         <div className="flex flex-col gap-1.75">
-          <p className="text-[10px] text-muted-foreground uppercase">
-            Paso {step} de {steps.length}
-          </p>
           <h2 className="font-heading text-[22px] font-normal tracking-tight">
             {steps.at(step - 1)?.title}
           </h2>
