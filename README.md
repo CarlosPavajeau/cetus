@@ -107,11 +107,13 @@ de GetStatusZip que responden "en proceso" antes del resultado).
 ## Probar el flujo completo en habilitación
 
 1. Crea tu cuenta en `http://localhost:3000/sign-up` (crea usuario, organización y cuenta en la API).
-2. Registra el emisor y su configuración con los endpoints de consola (el asistente visual está pendiente):
-   `POST /console/issuers`, `PUT /console/issuers/{id}/software` (Software ID, PIN y TestSetId del portal DIAN),
-   `PUT /console/issuers/{id}/certificate` (`.p12` en base64 y contraseña) y
-   `POST /console/issuers/{id}/numbering-ranges` (en habilitación: prefijo `SETP`, rango y clave técnica del set de pruebas).
-   Con las tres piezas, el emisor pasa a `TESTING`.
+2. La consola te lleva al asistente de configuración (`http://localhost:3000/setup`), que registra el emisor en
+   cuatro pasos: datos del RUT, software DIAN (Software ID, PIN y TestSetId del portal de habilitación),
+   certificado `.p12` con su contraseña y numeración (ya trae la del set de pruebas: prefijo `SETP`,
+   990000000 a 995000000; solo falta la clave técnica). Cada paso se guarda al continuar, así que puedes
+   retomarlo donde lo dejaste. Con las tres piezas, el emisor pasa a `TESTING`.
+   También puedes hacerlo con los endpoints de consola: `POST /console/issuers`, `PUT /console/issuers/{id}/software`,
+   `PUT /console/issuers/{id}/certificate` (`.p12` en base64 y contraseña) y `POST /console/issuers/{id}/numbering-ranges`.
 3. Crea una llave de pruebas en la consola y envía una factura:
 
 ```bash
@@ -136,6 +138,21 @@ curl -X POST http://localhost:8080/v1/invoices \
 
 4. Consulta `GET /v1/invoices/{id}` hasta ver `ACCEPTED` o `REJECTED` con los errores de la DIAN.
    Los XML firmados y las respuestas quedan en S3 (`documents/test/{nit}/...`).
+
+## Pruebas
+
+- **API y worker:** `./gradlew test` (Quarkus con Testcontainers; no necesita el stack levantado).
+- **Consola:** corre contra el stack real, sin mocks. Levántalo con `make dev-mock` y en otra terminal ejecuta
+  `make test-console`. Cada prueba crea su propia organización, así que no hay que limpiar datos.
+  - `pnpm --filter @cetus/console test:integration`: Vitest (`apps/console/tests/integration`). Prueba el contrato
+    entre la consola y la API (JWT de Better Auth, aislamiento por organización) y el catálogo DIVIPOLA.
+  - `pnpm --filter @cetus/console test:e2e`: Playwright (`apps/console/tests/e2e`). Prueba el navegador de punta a
+    punta, por ejemplo el asistente de configuración completo. La primera vez instala el navegador con
+    `pnpm --filter @cetus/console exec playwright install chromium`.
+  - `CONSOLE_URL` y `CETUS_API_URL` apuntan las pruebas a otro entorno (por defecto `:3000` y `:8080`).
+  - En CI, `.github/workflows/console-tests.yml` levanta el mismo stack con `scripts/dev.sh --mock` y corre ambas
+    suites en cada PR que toque las apps, los módulos o la infraestructura. Si fallan, adjunta el reporte de
+    Playwright (con trazas) y los logs de cada servicio.
 
 ## Despliegue en Railway
 
@@ -163,5 +180,5 @@ Los XSD de la caja de herramientas van en `modules/ubl/src/main/xsd` para valida
 ## Siguientes pasos
 
 Notas crédito y débito (CUDE), `AttachedDocument`, PDF con QR, envío por correo (SES), webhooks,
-asistente de onboarding en la consola, tipos TypeScript generados desde OpenAPI (`pnpm --filter @cetus/console api:types`)
+panel de configuración del emisor en la consola, tipos TypeScript generados desde OpenAPI (`pnpm --filter @cetus/console api:types`)
 y roles por organización en los endpoints de consola.

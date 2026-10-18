@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { BuildingIcon } from "lucide-react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/card";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -33,11 +34,16 @@ import { issuersQuery } from "~/features/issuers/queries";
 import type { Issuer } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/overview")({
-  loader: ({ context: { queryClient } }) =>
-    Promise.all([
+  loader: async ({ context: { queryClient } }) => {
+    const [, issuers] = await Promise.all([
       queryClient.ensureQueryData(accountQuery),
       queryClient.ensureQueryData(issuersQuery),
-    ]),
+    ]);
+    // A new organization starts by setting up its issuer.
+    if (issuers.length === 0) {
+      throw redirect({ to: "/setup" });
+    }
+  },
   component: Overview,
 });
 
@@ -74,10 +80,14 @@ function Overview() {
                 <EmptyTitle>Aún no tienes emisores</EmptyTitle>
                 <EmptyDescription>
                   Un emisor es la empresa que factura: su NIT, su certificado de firma y su
-                  resolución de numeración. Por ahora se registran con la API de consola; el
-                  asistente visual es el siguiente paso.
+                  resolución de numeración. El asistente te guía para configurarlo.
                 </EmptyDescription>
               </EmptyHeader>
+              <EmptyContent>
+                <Button render={<Link to="/setup" />} nativeButton={false}>
+                  Configurar emisor
+                </Button>
+              </EmptyContent>
             </Empty>
           ) : (
             <Table>
@@ -99,7 +109,21 @@ function Overview() {
                     <TableCell>
                       <EnvironmentBadge environment={issuer.environment} />
                     </TableCell>
-                    <TableCell>{statusLabel[issuer.status]}</TableCell>
+                    <TableCell>
+                      {issuer.status === "ONBOARDING" ? (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto px-0"
+                          render={<Link to="/setup" />}
+                          nativeButton={false}
+                        >
+                          Continuar configuración
+                        </Button>
+                      ) : (
+                        statusLabel[issuer.status]
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

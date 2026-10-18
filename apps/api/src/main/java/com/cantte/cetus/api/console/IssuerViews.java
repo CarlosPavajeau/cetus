@@ -6,6 +6,8 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.PersonType;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
+import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
+import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -15,6 +17,7 @@ import jakarta.validation.constraints.Positive;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +30,18 @@ public final class IssuerViews {
             @NotNull Environment environment,
             @NotBlank @Pattern(regexp = "\\d{5,15}") String nit,
             @Pattern(regexp = "\\d") String checkDigit,
+            @NotBlank String legalName,
+            String tradeName,
+            @NotNull PersonType personType,
+            @NotEmpty List<String> taxLevelCodes,
+            boolean responsibleForIva,
+            @NotNull Address address,
+            @NotBlank @Email String email,
+            String phone) {
+    }
+
+    /** The tax data that can change while the issuer is being set up: everything but its NIT and environment. */
+    public record UpdateIssuerRequest(
             @NotBlank String legalName,
             String tradeName,
             @NotNull PersonType personType,
@@ -66,6 +81,60 @@ public final class IssuerViews {
         static IssuerView from(IssuerEntity issuer) {
             return new IssuerView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit, issuer.legalName,
                     issuer.tradeName, issuer.status);
+        }
+    }
+
+    /**
+     * An issuer with everything the console needs to resume its setup. It never includes the PIN,
+     * the certificate or its password, nor the technical key.
+     */
+    public record IssuerDetailView(
+            @Schema(required = true) UUID id,
+            @Schema(required = true) Environment environment,
+            @Schema(required = true) String nit,
+            @Schema(required = true) String checkDigit,
+            @Schema(required = true) String legalName,
+            @Schema(required = true, nullable = true) String tradeName,
+            @Schema(required = true) IssuerEntity.Status status,
+            @Schema(required = true) PersonType personType,
+            @Schema(required = true) List<String> taxLevelCodes,
+            @Schema(required = true) boolean responsibleForIva,
+            @Schema(required = true) Address address,
+            @Schema(required = true) String email,
+            @Schema(required = true, nullable = true) String phone,
+            @Schema(required = true, nullable = true) SoftwareView software,
+            @Schema(required = true, nullable = true) CertificateView certificate,
+            @Schema(required = true) List<NumberingRangeView> ranges) {
+        static IssuerDetailView from(IssuerEntity issuer) {
+            List<String> taxLevelCodes = issuer.taxLevelCodes == null || issuer.taxLevelCodes.isBlank()
+                    ? List.of() : List.of(issuer.taxLevelCodes.split(";"));
+            return new IssuerDetailView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit,
+                    issuer.legalName, issuer.tradeName, issuer.status, issuer.personType, taxLevelCodes,
+                    "01".equals(issuer.taxSchemeId), issuer.address, issuer.email, issuer.phone,
+                    SoftwareCredentialEntity.findActive(issuer.id).map(SoftwareView::from).orElse(null),
+                    SigningCertificateEntity.findActive(issuer.id).map(CertificateView::from).orElse(null),
+                    NumberingRangeEntity.listByIssuer(issuer.id).stream().map(NumberingRangeView::from).toList());
+        }
+    }
+
+    /** The active DIAN software credentials, without the PIN. */
+    public record SoftwareView(
+            @Schema(required = true) String softwareId,
+            @Schema(required = true, nullable = true) String testSetId) {
+        static SoftwareView from(SoftwareCredentialEntity credential) {
+            return new SoftwareView(credential.softwareId, credential.testSetId);
+        }
+    }
+
+    /** Metadata of the active signing certificate. */
+    public record CertificateView(
+            @Schema(required = true) String subject,
+            @Schema(required = true) String serialNumber,
+            @Schema(required = true) OffsetDateTime validFrom,
+            @Schema(required = true) OffsetDateTime validTo) {
+        static CertificateView from(SigningCertificateEntity certificate) {
+            return new CertificateView(certificate.subjectDn, certificate.serialNumber, certificate.validFrom,
+                    certificate.validTo);
         }
     }
 

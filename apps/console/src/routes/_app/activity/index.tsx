@@ -70,6 +70,17 @@ const personTypeLabel: Record<string, string> = {
   NATURAL_PERSON: "Persona natural",
 };
 
+const issuerFieldLabel: Record<string, string> = {
+  legalName: "razón social",
+  tradeName: "nombre comercial",
+  personType: "tipo de persona",
+  taxLevelCodes: "responsabilidades tributarias",
+  responsibleForIva: "responsabilidad de IVA",
+  address: "dirección",
+  email: "correo",
+  phone: "teléfono",
+};
+
 function text(value: unknown): string {
   return value === null || value === undefined ? "" : String(value);
 }
@@ -92,6 +103,10 @@ function detail(entry: ActivityEntry): string {
       return `${text(data.name)} · ${text(data.prefix)}… · ${label(environmentLabel, data.environment)}`;
     case "ISSUER_CREATED":
       return `NIT ${text(data.nit)} · ${label(environmentLabel, data.environment)} · ${label(personTypeLabel, data.personType)}`;
+    case "ISSUER_UPDATED":
+      return Array.isArray(data.fields)
+        ? `Cambió ${data.fields.map((field) => label(issuerFieldLabel, field)).join(", ")}`
+        : "";
     case "SOFTWARE_CREDENTIALS_SET":
       return `Software ${text(data.softwareId)}${data.hasTestSet ? " · con set de pruebas" : ""}`;
     case "CERTIFICATE_UPLOADED":

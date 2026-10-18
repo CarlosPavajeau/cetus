@@ -5,6 +5,7 @@ export const actionLabel: Record<AuditAction, string> = {
   API_KEY_CREATED: "Llave de API creada",
   API_KEY_REVOKED: "Llave de API revocada",
   ISSUER_CREATED: "Emisor creado",
+  ISSUER_UPDATED: "Emisor actualizado",
   SOFTWARE_CREDENTIALS_SET: "Software DIAN configurado",
   CERTIFICATE_UPLOADED: "Certificado cargado",
   NUMBERING_RANGE_ADDED: "Rango de numeración agregado",

@@ -26,7 +26,10 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -57,21 +60,37 @@ public class IssuerOnboardingService {
         issuer.environment = request.environment();
         issuer.nit = request.nit();
         issuer.checkDigit = checkDigit;
-        issuer.legalName = request.legalName();
-        issuer.tradeName = request.tradeName();
-        issuer.personType = request.personType();
-        issuer.taxLevelCodes = String.join(";", request.taxLevelCodes());
-        issuer.taxSchemeId = request.responsibleForIva() ? "01" : "ZZ";
-        issuer.taxSchemeName = request.responsibleForIva() ? "IVA" : "No aplica";
-        issuer.address = request.address();
-        issuer.email = request.email();
-        issuer.phone = request.phone();
+        apply(issuer, new IssuerViews.UpdateIssuerRequest(request.legalName(), request.tradeName(),
+                request.personType(), request.taxLevelCodes(), request.responsibleForIva(), request.address(),
+                request.email(), request.phone()));
         issuer.operationMode = IssuerEntity.OperationMode.OWN_SOFTWARE;
         issuer.persist();
         audit(issuer, actor, origin, AuditAction.ISSUER_CREATED, Map.of(
                 "nit", issuer.nit,
                 "environment", issuer.environment,
                 "personType", issuer.personType));
+        return issuer;
+    }
+
+    /**
+     * Updates the tax data of an issuer that is still being set up. The NIT and the environment
+     * identify the issuer and cannot change; once it is in habilitación or production it is locked.
+     */
+    @Transactional
+    public IssuerEntity update(IssuerEntity issuer, IssuerViews.UpdateIssuerRequest request, Actor actor,
+                               RequestOrigin origin) {
+        if (issuer.status != IssuerEntity.Status.ONBOARDING) {
+            throw new DomainException("issuer_locked", "The issuer can only be edited while it is being set up");
+        }
+        Map<String, Object> before = snapshot(issuer);
+        apply(issuer, request);
+        Map<String, Object> after = snapshot(issuer);
+        List<String> changed = after.keySet().stream()
+                .filter(field -> !Objects.equals(before.get(field), after.get(field)))
+                .toList();
+        if (!changed.isEmpty()) {
+            audit(issuer, actor, origin, AuditAction.ISSUER_UPDATED, Map.of("fields", changed));
+        }
         return issuer;
     }
 
@@ -189,6 +208,32 @@ public class IssuerOnboardingService {
             audit(issuer, actor, origin, AuditAction.ISSUER_STATUS_CHANGED,
                     Map.of("from", previous, "to", issuer.status));
         }
+    }
+
+    private static void apply(IssuerEntity issuer, IssuerViews.UpdateIssuerRequest request) {
+        issuer.legalName = request.legalName();
+        issuer.tradeName = request.tradeName();
+        issuer.personType = request.personType();
+        issuer.taxLevelCodes = String.join(";", request.taxLevelCodes());
+        issuer.taxSchemeId = request.responsibleForIva() ? "01" : "ZZ";
+        issuer.taxSchemeName = request.responsibleForIva() ? "IVA" : "No aplica";
+        issuer.address = request.address();
+        issuer.email = request.email();
+        issuer.phone = request.phone();
+    }
+
+    /** The editable fields, keyed by their request name, to audit which ones changed (never their values). */
+    private static Map<String, Object> snapshot(IssuerEntity issuer) {
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("legalName", issuer.legalName);
+        fields.put("tradeName", issuer.tradeName);
+        fields.put("personType", issuer.personType);
+        fields.put("taxLevelCodes", issuer.taxLevelCodes);
+        fields.put("responsibleForIva", issuer.taxSchemeId);
+        fields.put("address", issuer.address);
+        fields.put("email", issuer.email);
+        fields.put("phone", issuer.phone);
+        return fields;
     }
 
     private void audit(IssuerEntity issuer, Actor actor, RequestOrigin origin, AuditAction action,
