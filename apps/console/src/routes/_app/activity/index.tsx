@@ -199,9 +199,7 @@ function Activity() {
                           >
                             {actionLabel[entry.action]}
                           </Link>
-                          <span className="text-2xs text-muted-foreground">
-                            Evento #{entry.id}
-                          </span>
+                          <span className="text-2xs text-muted-foreground">Evento #{entry.id}</span>
                         </div>
                       </TableCell>
                       <TableCell>
