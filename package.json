@@ -4,6 +4,8 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "console:dev": "pnpm --filter @cetus/console dev",
-    "console:build": "pnpm --filter @cetus/console build"
+    "console:build": "pnpm --filter @cetus/console build",
+    "console:lint": "pnpm --filter @cetus/console lint",
+    "console:format": "pnpm --filter @cetus/console format"
   }
 }

@@ -7,6 +7,10 @@
     "build": "vite build",
     "start": "srvx serve --prod --entry dist/server/server.js --static ../client --port ${PORT:-3000}",
     "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "auth:generate": "auth generate --config src/lib/auth/server.ts --output src/lib/auth/schema.ts --yes",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -48,8 +52,13 @@
     "auth": "1.7.10",
     "drizzle-kit": "1.0.0-rc.4",
     "openapi-typescript": "7.13.0",
+    "oxfmt": "0.73.0",
+    "oxlint": "1.88.0",
     "typescript": "5.9.3",
     "vite": "8.3.4",
     "vite-tsconfig-paths": "6.1.1"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

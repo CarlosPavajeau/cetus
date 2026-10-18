@@ -1,0 +1,37 @@
+# Lints the console with oxlint and checks that it is formatted with oxfmt.
+name: Console
+
+on:
+  pull_request:
+    paths:
+      - "apps/console/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/console.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # The oxlint and oxfmt configs are TypeScript files, which need Node.js >= 22.18.
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm --filter @cetus/console format:check
+
+      - name: Lint
+        run: pnpm --filter @cetus/console lint
