@@ -2,6 +2,7 @@ package com.cantte.cetus.dian;
 
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.SigningException;
+import com.cantte.cetus.signing.XadesSigner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -40,6 +41,11 @@ final class WsSecuritySigner {
     private static final String X509_TOKEN =
             "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3";
     private static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ISO_INSTANT;
+
+    static {
+        // Must be set before the first signature in the JVM; see XadesSigner.
+        System.setProperty(XadesSigner.IGNORE_LINE_BREAKS, "true");
+    }
 
     private final Clock clock;
     private final long timestampTtlSeconds;

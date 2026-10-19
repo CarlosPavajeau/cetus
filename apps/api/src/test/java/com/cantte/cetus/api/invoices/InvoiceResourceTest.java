@@ -87,6 +87,24 @@ class InvoiceResourceTest {
                 .body("code", equalTo("issuer_not_found"));
     }
 
+    @Test
+    void everyLineNeedsAnItemCode() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Item code SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+        Map<String, Object> invoice = invoice(issuerId);
+        // The DIAN rejects lines without StandardItemIdentification (FAZ09), so it is caught here instead.
+        invoice.put("lines", List.of(Map.of("description", "Servicio", "quantity", 1, "unitPrice", 100000)));
+
+        List<String> details = api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice)
+                .post("/v1/invoices")
+                .then().statusCode(400)
+                .body("code", equalTo("invalid_request"))
+                .extract().jsonPath().getList("details", String.class);
+        assertThat(details).anyMatch(detail -> detail.contains("itemCode"));
+    }
+
     private static String testKey(ConsoleUser user) {
         return user.request().body(Map.of("name", "ERP", "environment", "TEST"))
                 .post("/console/api-keys")
@@ -107,6 +125,7 @@ class InvoiceResourceTest {
                         "legalName", "Consumidor Final"),
                 "payment", Map.of("method", "CASH", "meansCode", "10"),
                 "lines", List.of(Map.of(
+                        "itemCode", "SERV-1",
                         "description", "Servicio",
                         "quantity", 1,
                         "unitPrice", 100000,

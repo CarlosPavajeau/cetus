@@ -48,7 +48,7 @@ public final class InvoiceUblMapper {
         ubl.documentCurrencyCode = currency;
         ubl.lineCountNumeric = calc.lines().size();
 
-        ubl.supplier = supplier(invoice.supplier());
+        ubl.supplier = supplier(invoice.supplier(), invoice.authorization().prefix());
         ubl.customer = customer(invoice.customer());
         ubl.paymentMeans.add(paymentMeans(invoice));
         calc.taxTotals().forEach(total -> ubl.taxTotals.add(taxTotal(total, currency)));
@@ -96,7 +96,7 @@ public final class InvoiceUblMapper {
         return ext;
     }
 
-    private Cac.PartyRole supplier(Party party) {
+    private Cac.PartyRole supplier(Party party, String prefix) {
         Cac.PartyRole role = new Cac.PartyRole();
         role.additionalAccountId = IdentifierType.of(party.personType().dianCode()).agency(DianCodes.AGENCY_ID, null);
         role.party = new Cac.Party();
@@ -104,7 +104,13 @@ public final class InvoiceUblMapper {
         role.party.physicalLocation = new Cac.Location();
         role.party.physicalLocation.address = address(party.address());
         role.party.partyTaxSchemes.add(partyTaxScheme(party));
-        role.party.partyLegalEntities.add(legalEntity(party));
+        Cac.PartyLegalEntity legalEntity = legalEntity(party);
+        if (prefix != null && !prefix.isBlank()) {
+            // FAB10a: CorporateRegistrationScheme/ID is the billing point's prefix and must equal sts:Prefix.
+            legalEntity.corporateRegistrationScheme = new Cac.CorporateRegistrationScheme();
+            legalEntity.corporateRegistrationScheme.id = prefix;
+        }
+        role.party.partyLegalEntities.add(legalEntity);
         role.party.contact = contact(party);
         return role;
     }

@@ -131,7 +131,7 @@ curl -X POST http://localhost:8080/v1/invoices \
                    "departmentName": "Bogotá", "line": "Calle 100 # 10-20" }
     },
     "payment": { "method": "CASH", "meansCode": "10" },
-    "lines": [{ "description": "Consultoría", "quantity": 1, "unitPrice": 100000,
+    "lines": [{ "itemCode": "CONS-001", "description": "Consultoría", "quantity": 1, "unitPrice": 100000,
                 "taxes": [{ "type": "IVA", "percent": 19 }] }]
   }'
 ```

@@ -466,7 +466,7 @@ export interface components {
             status: components["schemas"]["Status"];
         };
         Line: {
-            itemCode?: string;
+            itemCode: string;
             description: string;
             quantity: number;
             unitCode?: string;
