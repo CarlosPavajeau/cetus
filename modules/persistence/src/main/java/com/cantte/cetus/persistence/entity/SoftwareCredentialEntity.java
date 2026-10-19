@@ -5,7 +5,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,9 +28,25 @@ public class SoftwareCredentialEntity extends PanacheEntityBase {
     @Column(name = "test_set_id")
     public String testSetId;
     public boolean active = true;
+    @Generated(event = EventType.INSERT)
+    @Column(name = "created_at", insertable = false, updatable = false)
+    public OffsetDateTime createdAt;
 
     public static Optional<SoftwareCredentialEntity> findActive(UUID issuerId) {
         return find("issuerId = ?1 and active = true", issuerId).firstResultOptional();
+    }
+
+    /**
+     * When the issuer first registered this test set: saving the software again with the same
+     * TestSetId keeps counting from there, and a different one starts over.
+     */
+    public static OffsetDateTime testSetStart(UUID issuerId, String testSetId) {
+        return getEntityManager().createQuery("""
+                        select min(c.createdAt) from SoftwareCredentialEntity c
+                        where c.issuerId = :issuerId and c.testSetId = :testSetId""", OffsetDateTime.class)
+                .setParameter("issuerId", issuerId)
+                .setParameter("testSetId", testSetId)
+                .getSingleResult();
     }
 
     public static void deactivateAll(UUID issuerId) {
