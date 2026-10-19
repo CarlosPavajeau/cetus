@@ -41,7 +41,7 @@ public record ProcessingContext(
         CertificateRef certificate,
         String existingCufe,
         String trackId,
-        boolean lastSendTimedOut) {
+        boolean lastSendUnanswered) {
 
     public String fullNumber() {
         return prefix + number;

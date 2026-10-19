@@ -38,11 +38,14 @@ public class DianSubmissionEntity extends PanacheEntityBase {
     @Column(name = "duration_ms")
     public Integer durationMs;
 
-    /** True when the last send may have reached the DIAN without us receiving the answer. */
-    public static boolean lastSendTimedOut(UUID documentId) {
+    /**
+     * True when the last send may have reached the DIAN without us receiving the answer: a timeout,
+     * an I/O error, an HTTP error or a SOAP fault. The DIAN may still have registered the document.
+     */
+    public static boolean lastSendUnanswered(UUID documentId) {
         Optional<DianSubmissionEntity> last = find("documentId = ?1 and operation in ('SendBillSync', 'SendTestSetAsync') "
                 + "order by createdAt desc", documentId).firstResultOptional();
-        return last.map(s -> s.timedOut).orElse(false);
+        return last.map(s -> s.valid == null && s.trackId == null).orElse(false);
     }
 
     @Column(name = "created_at", insertable = false, updatable = false)

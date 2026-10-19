@@ -46,8 +46,9 @@ import java.util.Optional;
 /**
  * Full pipeline for one document: CUFE → UBL → XAdES signature → zip → DIAN → result.
  *
- * <p>Idempotency towards the DIAN: if the previous attempt timed out, the document may already
- * be registered, so the status is queried with the CUFE before sending again.
+ * <p>Idempotency towards the DIAN: if the previous attempt got no answer (timeout, I/O error, HTTP
+ * error or SOAP fault), the document may already be registered, so the status is queried with the
+ * CUFE before sending again.
  */
 @ApplicationScoped
 public class ProcessDocumentHandler implements JobHandler {
@@ -96,7 +97,7 @@ public class ProcessDocumentHandler implements JobHandler {
         DianSoapClient dian = dianClients.forEnvironment(ctx.environment());
         boolean testSet = ctx.environment() == Environment.TEST && ctx.testSetId() != null;
 
-        if (!testSet && ctx.lastSendTimedOut() && ctx.existingCufe() != null && alreadyRegistered(ctx, dian, keys)) {
+        if (!testSet && ctx.lastSendUnanswered() && ctx.existingCufe() != null && alreadyRegistered(ctx, dian, keys)) {
             return;
         }
 
@@ -120,6 +121,11 @@ public class ProcessDocumentHandler implements JobHandler {
         } else {
             sendSync(ctx, dian, keys, zipName, zip);
         }
+    }
+
+    @Override
+    public void onDead(JobEntity job, String reason) {
+        recorder.failed(job.referenceId, "Gave up after " + job.attempts + " attempts: " + reason);
     }
 
     private ElectronicInvoice assemble(ProcessingContext ctx, String pin, String technicalKey) {

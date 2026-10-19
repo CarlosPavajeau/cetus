@@ -20,4 +20,8 @@ dependencies {
     implementation(libs.quarkus.smallrye.health)
 
     testImplementation(libs.quarkus.junit5)
+    // The worker never migrates in production; tests create the schema the same way the API does.
+    testImplementation(libs.quarkus.flyway)
+    testImplementation(libs.flyway.postgresql)
+    testImplementation(libs.assertj)
 }

@@ -73,6 +73,11 @@ public class CheckTestSetStatusHandler implements JobHandler {
         }
     }
 
+    @Override
+    public void onDead(JobEntity job, String reason) {
+        recorder.failed(job.referenceId, "Gave up checking the test set status: " + reason);
+    }
+
     /**
      * Heuristic until the codes are confirmed with real habilitación responses: a response with
      * no status code, or a description saying the batch is in process, means "try again later".
