@@ -4,6 +4,8 @@ import { type } from "arktype";
 import { CetusApiError, api } from "~/lib/api/client";
 import type { IssuerDetail } from "~/lib/api/types";
 
+import { noteRangeSchema } from "./noteRangeSchema";
+
 export const listIssuers = createServerFn({ method: "GET" }).handler(() =>
   api.get("/console/issuers"),
 );
@@ -38,6 +40,33 @@ export const promoteIssuer = createServerFn({ method: "POST" })
         throw new Error(
           promotionMessages[error.code] ??
             "No pudimos crear el emisor de producción. Inténtalo de nuevo en unos minutos.",
+          { cause: error },
+        );
+      }
+      throw error;
+    }
+  });
+
+/** Adds a range for credit or debit notes, which need no resolution. */
+export const addNoteRange = createServerFn({ method: "POST" })
+  .validator(type({ id: "string.uuid", range: noteRangeSchema }))
+  .handler(async ({ data: { id, range } }) => {
+    try {
+      return await api.post("/console/issuers/{id}/numbering-ranges", {
+        params: { path: { id } },
+        body: {
+          documentType: range.documentType,
+          prefix: range.prefix.toUpperCase(),
+          from: Number(range.from),
+          to: Number(range.to),
+        },
+      });
+    } catch (error) {
+      if (error instanceof CetusApiError) {
+        throw new Error(
+          error.code === "range_invalid"
+            ? "El número inicial debe ser menor o igual al número final."
+            : "No pudimos agregar el rango. Inténtalo de nuevo en unos minutos.",
           { cause: error },
         );
       }

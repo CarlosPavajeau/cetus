@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeftIcon, BuildingIcon, FingerprintIcon, PencilIcon } from "lucide-react";
-import type { ReactNode } from "react";
 
 import { CopyButton } from "~/components/CopyButton";
+import { Entry, Section } from "~/components/DetailSection";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { Button } from "~/components/ui/button";
@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { dateFormat } from "~/features/api-keys/formats";
+import { AddNoteRange } from "~/features/issuers/AddNoteRange";
 import { IssuerStatusBadge } from "~/features/issuers/IssuerStatusBadge";
 import { issuerName, personTypeLabel } from "~/features/issuers/labels";
 import { PromoteIssuer } from "~/features/issuers/PromoteIssuer";
@@ -52,6 +53,12 @@ export const Route = createFileRoute("/_app/issuers/$issuerId")({
 
 const countFormat = new Intl.NumberFormat("es-CO");
 
+const rangeTypeLabel: Record<IssuerDetail["ranges"][number]["documentType"], string> = {
+  INVOICE: "Factura",
+  CREDIT_NOTE: "Nota crédito",
+  DEBIT_NOTE: "Nota débito",
+};
+
 const statusLead: Record<IssuerDetail["status"], string> = {
   ONBOARDING: "Le faltan pasos de configuración antes de poder facturar.",
   TESTING: "Listo para enviar facturas a la habilitación de la DIAN con una llave de pruebas.",
@@ -73,39 +80,6 @@ function BackToIssuers() {
       <ArrowLeftIcon className="size-3.5" />
       Todos los emisores
     </Link>
-  );
-}
-
-function Entry({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <dt className="text-2xs text-muted-foreground">{label}</dt>
-      <dd className="text-2xs break-words">{children}</dd>
-    </div>
-  );
-}
-
-function Section({
-  id,
-  title,
-  action,
-  children,
-}: {
-  id: string;
-  title: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-4 rounded-lg border p-5" aria-labelledby={id}>
-      <div className="flex items-center justify-between gap-3">
-        <h2 id={id} className="text-[14px] font-medium">
-          {title}
-        </h2>
-        {action}
-      </div>
-      {children}
-    </section>
   );
 }
 
@@ -133,6 +107,9 @@ function IssuerDetailPage() {
   );
   const example = invoiceExample(issuer.id);
   const keyKind = issuer.environment === "TEST" ? "de pruebas" : "de producción";
+  const hasCreditNoteRange = issuer.ranges.some(
+    (range) => range.documentType === "CREDIT_NOTE" && range.status === "ACTIVE",
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-5">
@@ -193,6 +170,16 @@ function IssuerDetailPage() {
         <CopyButton value={issuer.id} label="Copiar ID del emisor" />
       </section>
 
+      <p className="text-2xs text-muted-foreground">
+        <Link
+          to="/documents"
+          search={{ issuerId: issuer.id }}
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Ver los documentos de este emisor
+        </Link>
+      </p>
+
       {issuer.testSet && (
         <Section id="test-set" title="Avance del set de pruebas">
           <TestSetProgress testSet={issuer.testSet} />
@@ -251,7 +238,11 @@ function IssuerDetailPage() {
         </dl>
       </Section>
 
-      <Section id="dian" title="Configuración DIAN">
+      <Section
+        id="dian"
+        title="Configuración DIAN"
+        action={issuer.status !== "ONBOARDING" && <AddNoteRange issuerId={issuer.id} />}
+      >
         <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
           <Entry label="Software ID">{issuer.software?.softwareId ?? "Pendiente"}</Entry>
           {issuer.environment === "TEST" && (
@@ -265,11 +256,20 @@ function IssuerDetailPage() {
           )}
         </dl>
 
+        {issuer.status !== "ONBOARDING" && !hasCreditNoteRange && (
+          <p className="text-2xs text-muted-foreground">
+            Este emisor no tiene un rango para notas crédito: sin él no puede anular ni corregir
+            facturas. Agrégalo con{" "}
+            <span className="font-medium text-foreground">Rango de notas</span>.
+          </p>
+        )}
+
         <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader className="bg-sidebar [&_th]:h-8.75">
               <TableRow>
-                <TableHead className="pl-4">Prefijo</TableHead>
+                <TableHead className="pl-4">Tipo</TableHead>
+                <TableHead>Prefijo</TableHead>
                 <TableHead>Rango</TableHead>
                 <TableHead>Siguiente número</TableHead>
                 <TableHead>Vigente hasta</TableHead>
@@ -279,14 +279,17 @@ function IssuerDetailPage() {
             <TableBody>
               {issuer.ranges.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-16 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
                     Todavía no hay rangos de numeración.
                   </TableCell>
                 </TableRow>
               ) : (
                 issuer.ranges.map((range) => (
                   <TableRow key={range.id}>
-                    <TableCell className="pl-4 text-2xs font-medium">
+                    <TableCell className="pl-4 text-2xs">
+                      {rangeTypeLabel[range.documentType]}
+                    </TableCell>
+                    <TableCell className="text-2xs font-medium">
                       {range.prefix || "Sin prefijo"}
                     </TableCell>
                     <TableCell className="text-2xs tabular-nums">

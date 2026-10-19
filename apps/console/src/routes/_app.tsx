@@ -12,10 +12,12 @@ import {
   BookOpenIcon,
   BuildingIcon,
   CircleHelpIcon,
+  FileTextIcon,
   HistoryIcon,
   KeyRoundIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  WebhookIcon,
 } from "lucide-react";
 
 import {
@@ -54,11 +56,18 @@ export const Route = createFileRoute("/_app")({
 
 const navigation = [
   { to: "/overview", label: "Resumen", icon: LayoutDashboardIcon },
+  { to: "/documents", label: "Documentos", icon: FileTextIcon },
   { to: "/issuers", label: "Emisores", icon: BuildingIcon },
   {
     to: "/developers/api-keys",
     label: "Llaves de API",
     icon: KeyRoundIcon,
+    section: "Desarrolladores",
+  },
+  {
+    to: "/developers/webhooks",
+    label: "Webhooks",
+    icon: WebhookIcon,
     section: "Desarrolladores",
   },
   { to: "/activity", label: "Actividad", icon: HistoryIcon },

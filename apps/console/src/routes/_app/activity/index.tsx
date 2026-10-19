@@ -125,6 +125,8 @@ function detail(entry: ActivityEntry): string {
     case "WEBHOOK_ENDPOINT_ENABLED":
     case "WEBHOOK_DELIVERY_RETRIED":
       return `${text(data.url)} · ${label(environmentLabel, data.environment)}`;
+    case "CREDIT_NOTE_ISSUED":
+      return `${text(data.number)} anula la factura ${text(data.invoiceNumber)} · ${label(environmentLabel, data.environment)}`;
   }
 }
 

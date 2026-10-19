@@ -15,6 +15,7 @@ export const actionLabel: Record<AuditAction, string> = {
   WEBHOOK_ENDPOINT_DISABLED: "Webhook desactivado",
   WEBHOOK_ENDPOINT_ENABLED: "Webhook reactivado",
   WEBHOOK_DELIVERY_RETRIED: "Webhook reenviado",
+  CREDIT_NOTE_ISSUED: "Nota crédito emitida",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

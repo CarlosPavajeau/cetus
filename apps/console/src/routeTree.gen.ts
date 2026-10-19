@@ -17,11 +17,15 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
+import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/index'
+import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
+import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
+import { Route as AppDevelopersWebhooksEndpointIdRouteImport } from './routes/_app/developers/webhooks/$endpointId'
 import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuers/$issuerId_.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -63,6 +67,16 @@ const AppActivityEventIdRoute = AppActivityEventIdRouteImport.update({
   path: '/activity/$eventId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsIndexRoute = AppDocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
+  id: '/documents/$documentId',
+  path: '/documents/$documentId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
   id: '/issuers/',
   path: '/issuers/',
@@ -90,6 +104,18 @@ const AppDevelopersApiKeysKeyIdRoute =
     path: '/developers/api-keys/$keyId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppDevelopersWebhooksIndexRoute =
+  AppDevelopersWebhooksIndexRouteImport.update({
+    id: '/developers/webhooks/',
+    path: '/developers/webhooks/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppDevelopersWebhooksEndpointIdRoute =
+  AppDevelopersWebhooksEndpointIdRouteImport.update({
+    id: '/developers/webhooks/$endpointId',
+    path: '/developers/webhooks/$endpointId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppIssuersIssuerIdEditRoute = AppIssuersIssuerIdEditRouteImport.update({
   id: '/issuers/$issuerId_/edit',
   path: '/issuers/$issuerId/edit',
@@ -103,13 +129,17 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity/': typeof AppActivityIndexRoute
+  '/documents/': typeof AppDocumentsIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
+  '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
+  '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,13 +148,17 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity': typeof AppActivityIndexRoute
+  '/documents': typeof AppDocumentsIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
+  '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
+  '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -135,13 +169,17 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
+  '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/activity/': typeof AppActivityIndexRoute
+  '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
+  '/_app/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
+  '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -152,13 +190,17 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/overview'
     | '/activity/$eventId'
+    | '/documents/$documentId'
     | '/issuers/$issuerId'
     | '/api/auth/$'
     | '/activity/'
+    | '/documents/'
     | '/issuers/'
     | '/developers/api-keys/$keyId'
+    | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/developers/api-keys/'
+    | '/developers/webhooks/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -167,13 +209,17 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/overview'
     | '/activity/$eventId'
+    | '/documents/$documentId'
     | '/issuers/$issuerId'
     | '/api/auth/$'
     | '/activity'
+    | '/documents'
     | '/issuers'
     | '/developers/api-keys/$keyId'
+    | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/developers/api-keys'
+    | '/developers/webhooks'
   id:
     | '__root__'
     | '/'
@@ -183,13 +229,17 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_app/overview'
     | '/_app/activity/$eventId'
+    | '/_app/documents/$documentId'
     | '/_app/issuers/$issuerId'
     | '/api/auth/$'
     | '/_app/activity/'
+    | '/_app/documents/'
     | '/_app/issuers/'
     | '/_app/developers/api-keys/$keyId'
+    | '/_app/developers/webhooks/$endpointId'
     | '/_app/issuers/$issuerId_/edit'
     | '/_app/developers/api-keys/'
+    | '/_app/developers/webhooks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -259,6 +309,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActivityEventIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/documents/': {
+      id: '/_app/documents/'
+      path: '/documents'
+      fullPath: '/documents/'
+      preLoaderRoute: typeof AppDocumentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents/$documentId': {
+      id: '/_app/documents/$documentId'
+      path: '/documents/$documentId'
+      fullPath: '/documents/$documentId'
+      preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/issuers/': {
       id: '/_app/issuers/'
       path: '/issuers'
@@ -294,6 +358,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDevelopersApiKeysKeyIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/developers/webhooks/': {
+      id: '/_app/developers/webhooks/'
+      path: '/developers/webhooks'
+      fullPath: '/developers/webhooks/'
+      preLoaderRoute: typeof AppDevelopersWebhooksIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/developers/webhooks/$endpointId': {
+      id: '/_app/developers/webhooks/$endpointId'
+      path: '/developers/webhooks/$endpointId'
+      fullPath: '/developers/webhooks/$endpointId'
+      preLoaderRoute: typeof AppDevelopersWebhooksEndpointIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/issuers/$issuerId_/edit': {
       id: '/_app/issuers/$issuerId_/edit'
       path: '/issuers/$issuerId/edit'
@@ -307,23 +385,31 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppOverviewRoute: typeof AppOverviewRoute
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
+  AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
+  AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
+  AppDevelopersWebhooksEndpointIdRoute: typeof AppDevelopersWebhooksEndpointIdRoute
   AppIssuersIssuerIdEditRoute: typeof AppIssuersIssuerIdEditRoute
   AppDevelopersApiKeysIndexRoute: typeof AppDevelopersApiKeysIndexRoute
+  AppDevelopersWebhooksIndexRoute: typeof AppDevelopersWebhooksIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppOverviewRoute: AppOverviewRoute,
   AppActivityEventIdRoute: AppActivityEventIdRoute,
+  AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
+  AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
+  AppDevelopersWebhooksEndpointIdRoute: AppDevelopersWebhooksEndpointIdRoute,
   AppIssuersIssuerIdEditRoute: AppIssuersIssuerIdEditRoute,
   AppDevelopersApiKeysIndexRoute: AppDevelopersApiKeysIndexRoute,
+  AppDevelopersWebhooksIndexRoute: AppDevelopersWebhooksIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

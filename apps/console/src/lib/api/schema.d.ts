@@ -92,6 +92,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["DocumentResource_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["DocumentResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/documents/{id}/cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["DocumentResource_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/documents/{id}/files/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** File */
+        get: operations["DocumentResource_file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/issuers": {
         parameters: {
             query?: never;
@@ -554,7 +622,7 @@ export interface components {
             createdBy: string | null;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "CREDIT_NOTE_ISSUED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -577,6 +645,14 @@ export interface components {
         AuditValue: string | number | boolean | null;
         BootstrapRequest: {
             name: string;
+        };
+        CancellationRequest: {
+            description: string;
+        };
+        CancellationResponse: {
+            /** @description The credit note */
+            id: components["schemas"]["UUID"];
+            number: string;
         };
         CertificateRequest: {
             pkcs12Base64: string;
@@ -714,7 +790,7 @@ export interface components {
             id: components["schemas"]["UUID"];
             channel: components["schemas"]["Channel"];
             recipient: string | null;
-            status: components["schemas"]["Status3"];
+            status: components["schemas"]["Status"];
             error: string | null;
             sentAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             lastEventAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
@@ -727,13 +803,127 @@ export interface components {
         };
         /** @enum {string} */
         DisabledReason: "MANUAL" | "AUTOMATIC";
+        DocumentCustomer: {
+            identificationType: string;
+            identificationNumber: string;
+            checkDigit: string | null;
+            legalName: string;
+            email: string | null;
+        };
+        DocumentDetail: {
+            id: components["schemas"]["UUID"];
+            environment: components["schemas"]["Environment"];
+            documentType: components["schemas"]["DocumentType"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            /** @description CUFE of an invoice, CUDE of a note */
+            cufe: string | null;
+            issueDate: components["schemas"]["LocalDate"];
+            dueDate: ((string | components["schemas"]["LocalDate"] | null) | null) | components["schemas"]["LocalDate"] | null;
+            currency: string;
+            issuer: components["schemas"]["DocumentIssuer"];
+            customer: components["schemas"]["DocumentCustomer"];
+            lines: components["schemas"]["DocumentLine"][];
+            /** @description Document-level subtotals by tax */
+            taxes: components["schemas"]["DocumentTax"][];
+            totals: components["schemas"]["Totals"];
+            dian: components["schemas"]["Dian"];
+            externalReference: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Notes issued against an invoice; empty for a note */
+            creditNotes: components["schemas"]["DocumentNote"][];
+            /** @description Notes issued against an invoice; empty for a note */
+            debitNotes: components["schemas"]["DocumentNote"][];
+            /** @description What credit notes can still take; only for invoices */
+            balance: number | null;
+            /** @description The invoice a note corrects */
+            invoice: ((components["schemas"]["DocumentInvoice"] | null) | null) | components["schemas"]["DocumentInvoice"] | null;
+            /** @description Correction concept of a note */
+            concept: string | null;
+            /** @description The integrator's reason for a note */
+            description: string | null;
+            deliveries: components["schemas"]["DeliveryView"][];
+            /** @description Oldest first */
+            events: components["schemas"]["DocumentEvent"][];
+        };
+        DocumentEvent: {
+            at: components["schemas"]["OffsetDateTime"];
+            kind: components["schemas"]["DocumentEventKind"];
+            status: string | null;
+            /** @description DIAN operation, e.g. SendBillSync */
+            operation: string | null;
+            /** @description DIAN status code */
+            code: string | null;
+            message: string | null;
+            /** Format: int32 */
+            durationMs: number | null;
+        };
+        /** @enum {string} */
+        DocumentEventKind: "CREATED" | "DIAN_SUBMISSION" | "VALIDATED" | "PROCESSING_FAILED" | "DELIVERY_SENT" | "DELIVERY_UPDATED" | "WEBHOOK_EVENT";
         DocumentFileResponse: {
             /** @description Presigned URL; download it without the API key */
             url: string;
             expiresAt: components["schemas"]["OffsetDateTime"];
         };
+        DocumentInvoice: {
+            id: components["schemas"]["UUID"];
+            number: string;
+            cufe: string | null;
+        };
+        DocumentIssuer: {
+            id: components["schemas"]["UUID"];
+            legalName: string;
+            nit: string;
+            checkDigit: string | null;
+        };
+        DocumentLine: {
+            /** Format: int32 */
+            lineNumber: number;
+            itemCode: string | null;
+            description: string;
+            quantity: number;
+            unitPrice: number;
+            /** @description Quantity times unit price, before taxes */
+            lineExtension: number;
+        };
+        DocumentNote: {
+            id: components["schemas"]["UUID"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            concept: string;
+            payable: number;
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
+        DocumentPage: {
+            /** @description Newest first */
+            items: components["schemas"]["DocumentSummary"][];
+            /** @description Pass as before to get the next page */
+            nextCursor: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+        };
         /** @enum {string} */
         DocumentStatus: "RECEIVED" | "PROCESSING" | "SUBMITTED" | "ACCEPTED" | "REJECTED" | "FAILED";
+        DocumentSummary: {
+            id: components["schemas"]["UUID"];
+            environment: components["schemas"]["Environment"];
+            documentType: components["schemas"]["DocumentType"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            issueDate: components["schemas"]["LocalDate"];
+            issuerId: components["schemas"]["UUID"];
+            issuerName: string;
+            customerName: string;
+            customerIdentification: string;
+            payable: number;
+            currency: string;
+            externalReference: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
+        DocumentTax: {
+            type: string;
+            percent: number;
+            taxable: number;
+            amount: number;
+        };
         /** @enum {string} */
         DocumentType: "INVOICE" | "CREDIT_NOTE" | "DEBIT_NOTE";
         /** @enum {string} */
@@ -781,7 +971,7 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status1"];
             personType: components["schemas"]["PersonType"];
             taxLevelCodes: string[];
             responsibleForIva: boolean;
@@ -800,7 +990,7 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status1"];
         };
         Line: {
             itemCode: string;
@@ -866,7 +1056,7 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status1"];
             /** @description Whether its status lets it issue with this key */
             readyToIssue: boolean;
         };
@@ -880,13 +1070,13 @@ export interface components {
             testSetId: string | null;
         };
         /** @enum {string} */
-        Status: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
+        Status: "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "SKIPPED" | "FAILED";
         /** @enum {string} */
-        Status1: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        Status1: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
         /** @enum {string} */
-        Status2: "ACTIVE" | "DISABLED";
+        Status2: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
         /** @enum {string} */
-        Status3: "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "SKIPPED" | "FAILED";
+        Status3: "ACTIVE" | "DISABLED";
         /** @enum {string} */
         TaxType: "IVA" | "ICA" | "INC";
         TestSetCountView: {
@@ -937,7 +1127,7 @@ export interface components {
             eventId: components["schemas"]["UUID"];
             eventType: string;
             documentId: components["schemas"]["UUID"];
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status2"];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
@@ -956,7 +1146,7 @@ export interface components {
             environment: components["schemas"]["Environment"];
             /** @description Empty means all event types */
             eventTypes: string[];
-            status: components["schemas"]["Status2"];
+            status: components["schemas"]["Status3"];
             disabledAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description AUTOMATIC when Cetus disabled it after failing for days */
             disabledReason: ((string | components["schemas"]["DisabledReason"] | null) | null) | components["schemas"]["DisabledReason"] | null;
@@ -1341,6 +1531,217 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditEntry"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    DocumentResource_list: {
+        parameters: {
+            query?: {
+                before?: components["schemas"]["UUID"];
+                environment?: components["schemas"]["Environment"];
+                from?: components["schemas"]["LocalDate"];
+                issuerId?: components["schemas"]["UUID"];
+                limit?: number;
+                q?: string;
+                status?: components["schemas"]["DocumentStatus"];
+                to?: components["schemas"]["LocalDate"];
+                type?: components["schemas"]["DocumentType"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    DocumentResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    DocumentResource_cancel: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancellationRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CancellationResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    DocumentResource_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: "xml" | "pdf" | "attached-document";
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFileResponse"];
                 };
             };
             /** @description Bad Request */
