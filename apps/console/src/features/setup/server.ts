@@ -12,7 +12,8 @@ const messages: Record<string, string> = {
     "No pudimos abrir el certificado: revisa que el archivo sea el .p12 original y que la contraseña sea correcta.",
   certificate_expired: "El certificado está vencido. Solicita uno vigente a tu proveedor.",
   range_invalid: "El número inicial debe ser menor o igual al número final.",
-  issuer_locked: "Este emisor ya terminó su configuración y no se puede editar desde el asistente.",
+  person_type_locked:
+    "El tipo de persona viene con el NIT: no cambia una vez configurado el emisor.",
   invalid_request: "Revisa los datos del formulario: alguno no tiene el formato esperado.",
 };
 

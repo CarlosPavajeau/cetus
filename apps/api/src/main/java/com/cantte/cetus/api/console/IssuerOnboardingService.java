@@ -73,14 +73,17 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * Updates the tax data of an issuer that is still being set up. The NIT and the environment
-     * identify the issuer and cannot change; once it is in habilitación or production it is locked.
+     * Updates the tax data of an issuer, at any stage: the RUT changes (address, responsibilities,
+     * name) and the documents must follow it. The NIT and the environment identify the issuer and
+     * never change. The person type comes with the NIT, so it can only be fixed during the setup.
+     * Documents not yet sent to the DIAN go out with the new data.
      */
     @Transactional
     public IssuerEntity update(IssuerEntity issuer, IssuerViews.UpdateIssuerRequest request, Actor actor,
                                RequestOrigin origin) {
-        if (issuer.status != IssuerEntity.Status.ONBOARDING) {
-            throw new DomainException("issuer_locked", "The issuer can only be edited while it is being set up");
+        if (issuer.status != IssuerEntity.Status.ONBOARDING && request.personType() != issuer.personType) {
+            throw new DomainException("person_type_locked",
+                    "The person type can only change while the issuer is being set up");
         }
         Map<String, Object> before = snapshot(issuer);
         apply(issuer, request);
