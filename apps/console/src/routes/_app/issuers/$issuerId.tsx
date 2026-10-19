@@ -168,11 +168,13 @@ function IssuerDetailPage() {
           <FingerprintIcon className="size-4 shrink-0" />
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-2xs text-muted-foreground">ID para la API</span>
-            <code className="truncate text-sm" data-testid="issuer-id">
-              {issuer.id}
-            </code>
+            <div className="flex min-w-0 items-center gap-2">
+              <code className="truncate text-sm" data-testid="issuer-id">
+                {issuer.id}
+              </code>
+              <EnvironmentBadge environment={issuer.environment} />
+            </div>
           </div>
-          <EnvironmentBadge environment={issuer.environment} />
         </div>
         <CopyButton value={issuer.id} label="Copiar ID del emisor" />
       </section>
