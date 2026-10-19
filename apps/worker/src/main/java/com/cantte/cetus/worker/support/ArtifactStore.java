@@ -2,10 +2,14 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-/** Stores a file in S3 under a predictable key and records it as a document artifact. */
+import java.util.Optional;
+import java.util.UUID;
+
+/** Stores a file in S3 under a predictable key and records it as a document artifact; reads them back. */
 @ApplicationScoped
 public class ArtifactStore {
 
@@ -24,5 +28,15 @@ public class ArtifactStore {
                 ctx.documentId(),
                 fileName);
         recorder.artifact(ctx.documentId(), kind, storage.put(key, content, contentType));
+    }
+
+    /** The newest artifact of a kind with its file name, read from S3 outside any transaction. */
+    public Optional<Stored> latest(UUID documentId, DocumentArtifactEntity.Kind kind) {
+        Optional<String> key = QuarkusTransaction.requiringNew().call(() ->
+                DocumentArtifactEntity.findLatest(documentId, kind).map(artifact -> artifact.s3Key));
+        return key.map(k -> new Stored(k.substring(k.lastIndexOf('/') + 1), storage.get(k)));
+    }
+
+    public record Stored(String fileName, byte[] content) {
     }
 }

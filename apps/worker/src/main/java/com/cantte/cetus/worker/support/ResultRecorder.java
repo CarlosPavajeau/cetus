@@ -82,6 +82,10 @@ public class ResultRecorder {
         doc.dianStatusMessage = response.statusDescription();
         doc.dianErrors = new ArrayList<>(response.errors());
         doc.validatedAt = OffsetDateTime.now();
+        if (response.valid()) {
+            // Same transaction as the status change: an accepted document is always delivered.
+            jobs.enqueue(JobTypes.DELIVER_DOCUMENT, documentId);
+        }
     }
 
     /** The DIAN accepted the issuer's test set; the API stops taking test invoices for it. */

@@ -1,6 +1,7 @@
 package com.cantte.cetus.api.invoices;
 
 import com.cantte.cetus.api.auth.ApiPrincipal;
+import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.documents.IdempotentCreation;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
@@ -18,6 +19,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import java.util.UUID;
 
@@ -31,6 +34,8 @@ public class InvoiceResource {
     InvoiceService service;
     @Inject
     IdempotentCreation idempotentCreation;
+    @Inject
+    DocumentFiles files;
 
     /**
      * Creates an invoice and processes it asynchronously. Returns 202 with the document in
@@ -53,5 +58,19 @@ public class InvoiceResource {
                 .filter(doc -> doc.documentType == DocumentType.INVOICE)
                 .map(InvoiceResponse::from)
                 .orElseThrow(() -> new NotFoundException("Invoice not found"));
+    }
+
+    /**
+     * A short-lived URL to download one of the invoice's files: {@code xml} (signed, as validated by the
+     * DIAN), {@code pdf} or {@code attached-document} (what the customer receives). 404 file_not_available
+     * until the file exists.
+     */
+    @GET
+    @Path("/{id}/files/{file}")
+    @Transactional
+    public DocumentFiles.DocumentFileResponse file(@PathParam("id") UUID id,
+                                                   @Parameter(schema = @Schema(enumeration = {"xml", "pdf", "attached-document"}))
+                                                   @PathParam("file") String file) {
+        return files.presign(principal.accountId(), principal.environment(), id, DocumentType.INVOICE, file);
     }
 }

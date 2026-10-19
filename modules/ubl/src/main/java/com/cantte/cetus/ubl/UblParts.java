@@ -91,6 +91,15 @@ final class UblParts {
         return role;
     }
 
+    /** Sender or receiver of an AttachedDocument: only its tax scheme, without the registration address. */
+    static Cac.Party taxParty(Party party) {
+        Cac.PartyTaxScheme scheme = partyTaxScheme(party);
+        scheme.registrationAddress = null;
+        Cac.Party taxParty = new Cac.Party();
+        taxParty.partyTaxSchemes.add(scheme);
+        return taxParty;
+    }
+
     private static Cac.PartyName partyName(Party party) {
         Cac.PartyName name = new Cac.PartyName();
         name.name = party.tradeName() != null ? party.tradeName() : party.legalName();

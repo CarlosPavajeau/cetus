@@ -231,6 +231,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/credit-notes/{id}/files/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** File */
+        get: operations["CreditNoteResource_file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/invoices": {
         parameters: {
             query?: never;
@@ -257,6 +274,23 @@ export interface paths {
         };
         /** Get */
         get: operations["InvoiceResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/invoices/{id}/files/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** File */
+        get: operations["InvoiceResource_file"];
         put?: never;
         post?: never;
         delete?: never;
@@ -399,6 +433,8 @@ export interface components {
             validFrom: components["schemas"]["OffsetDateTime"];
             validTo: components["schemas"]["OffsetDateTime"];
         };
+        /** @enum {string} */
+        Channel: "EMAIL";
         CreateApiKeyRequest: {
             name: string;
             environment: components["schemas"]["Environment"];
@@ -446,6 +482,8 @@ export interface components {
             dian: components["schemas"]["Dian"];
             externalReference: string | null;
             createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Deliveries of the accepted note to the customer */
+            deliveries: components["schemas"]["DeliveryView"][];
         };
         CreditNoteSummary: {
             id: components["schemas"]["UUID"];
@@ -469,11 +507,25 @@ export interface components {
         };
         /** @enum {string} */
         CustomerTaxScheme: "IVA" | "NOT_APPLICABLE";
+        DeliveryView: {
+            id: components["schemas"]["UUID"];
+            channel: components["schemas"]["Channel"];
+            recipient: string | null;
+            status: components["schemas"]["Status1"];
+            error: string | null;
+            sentAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            lastEventAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
         Dian: {
             statusCode: string | null;
             statusMessage: string | null;
             errors: string[];
             validatedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
+        DocumentFileResponse: {
+            /** @description Presigned URL; download it without the API key */
+            url: string;
+            expiresAt: components["schemas"]["OffsetDateTime"];
         };
         /** @enum {string} */
         DocumentStatus: "RECEIVED" | "PROCESSING" | "SUBMITTED" | "ACCEPTED" | "REJECTED" | "FAILED";
@@ -513,6 +565,8 @@ export interface components {
             creditNotes: components["schemas"]["CreditNoteSummary"][];
             /** @description Payable amount not yet credited by accepted or in-flight credit notes */
             balance: number;
+            /** @description Deliveries of the accepted invoice to the customer */
+            deliveries: components["schemas"]["DeliveryView"][];
         };
         IssuerDetailView: {
             id: components["schemas"]["UUID"];
@@ -621,6 +675,8 @@ export interface components {
         };
         /** @enum {string} */
         Status: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
+        /** @enum {string} */
+        Status1: "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "SKIPPED" | "FAILED";
         /** @enum {string} */
         TaxType: "IVA" | "ICA" | "INC";
         TestSetCountView: {
@@ -1570,6 +1626,29 @@ export interface operations {
             };
         };
     };
+    CreditNoteResource_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: "xml" | "pdf" | "attached-document";
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFileResponse"];
+                };
+            };
+        };
+    };
     InvoiceResource_create: {
         parameters: {
             query?: never;
@@ -1619,6 +1698,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceResponse"];
+                };
+            };
+        };
+    };
+    InvoiceResource_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: "xml" | "pdf" | "attached-document";
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFileResponse"];
                 };
             };
         };

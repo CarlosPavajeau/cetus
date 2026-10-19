@@ -241,7 +241,9 @@ public final class Cac {
         public DocumentReference invoiceDocumentReference;
     }
 
-    @XmlType(name = "DocumentReference", propOrder = {"id", "uuid", "issueDate"})
+    /** The last three elements are only used by the AttachedDocument, to embed the DIAN's ApplicationResponse. */
+    @XmlType(name = "DocumentReference", propOrder = {"id", "uuid", "issueDate", "documentType", "attachment",
+            "resultOfVerification"})
     public static class DocumentReference {
         @XmlElement(name = "ID", namespace = Ns.CBC)
         public String id;
@@ -249,6 +251,50 @@ public final class Cac {
         public IdentifierType uuid;
         @XmlElement(name = "IssueDate", namespace = Ns.CBC)
         public String issueDate;
+        @XmlElement(name = "DocumentType", namespace = Ns.CBC)
+        public String documentType;
+        @XmlElement(name = "Attachment", namespace = Ns.CAC)
+        public Attachment attachment;
+        @XmlElement(name = "ResultOfVerification", namespace = Ns.CAC)
+        public ResultOfVerification resultOfVerification;
+    }
+
+    @XmlType(name = "Attachment", propOrder = {"externalReference"})
+    public static class Attachment {
+        @XmlElement(name = "ExternalReference", namespace = Ns.CAC)
+        public ExternalReference externalReference;
+    }
+
+    /** An embedded XML document: Description holds it as text (CDATA once marshalled). */
+    @XmlType(name = "ExternalReference", propOrder = {"mimeCode", "encodingCode", "description"})
+    public static class ExternalReference {
+        @XmlElement(name = "MimeCode", namespace = Ns.CBC)
+        public String mimeCode;
+        @XmlElement(name = "EncodingCode", namespace = Ns.CBC)
+        public String encodingCode;
+        @XmlElement(name = "Description", namespace = Ns.CBC)
+        public String description;
+    }
+
+    @XmlType(name = "LineReference", propOrder = {"lineId", "documentReference"})
+    public static class LineReference {
+        @XmlElement(name = "LineID", namespace = Ns.CBC)
+        public String lineId;
+        @XmlElement(name = "DocumentReference", namespace = Ns.CAC)
+        public DocumentReference documentReference;
+    }
+
+    @XmlType(name = "ResultOfVerification", propOrder = {"validatorId", "validationResultCode", "validationDate",
+            "validationTime"})
+    public static class ResultOfVerification {
+        @XmlElement(name = "ValidatorID", namespace = Ns.CBC)
+        public String validatorId;
+        @XmlElement(name = "ValidationResultCode", namespace = Ns.CBC)
+        public String validationResultCode;
+        @XmlElement(name = "ValidationDate", namespace = Ns.CBC)
+        public String validationDate;
+        @XmlElement(name = "ValidationTime", namespace = Ns.CBC)
+        public String validationTime;
     }
 
     @XmlType(name = "Item", propOrder = {"description", "sellersItemIdentification", "standardItemIdentification"})

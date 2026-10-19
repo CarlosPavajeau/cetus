@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.error;
 
+import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.domain.DomainException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.NotFoundException;
@@ -29,6 +30,11 @@ public class ErrorMappers {
     @ServerExceptionMapper
     public Response notFound(NotFoundException e) {
         return Response.status(404).entity(new ApiError("not_found", e.getMessage(), null)).build();
+    }
+
+    @ServerExceptionMapper
+    public Response fileNotAvailable(DocumentFiles.FileNotAvailable e) {
+        return e.getResponse();
     }
 
     @ServerExceptionMapper

@@ -22,6 +22,10 @@ public class ProviderSettings {
     Optional<String> checkDigit;
     @ConfigProperty(name = "cetus.provider.file-code")
     Optional<String> fileCode;
+    @ConfigProperty(name = "cetus.provider.name")
+    Optional<String> name;
+    @ConfigProperty(name = "cetus.provider.software-name", defaultValue = "Cetus")
+    String softwareName;
 
     public String providerNit(Party supplier) {
         return nit.orElse(supplier.identificationNumber());
@@ -29,6 +33,15 @@ public class ProviderSettings {
 
     public String providerCheckDigit(Party supplier) {
         return checkDigit.orElse(supplier.checkDigit());
+    }
+
+    /** Name printed on the graphic representation as the software provider. */
+    public String providerName(Party supplier) {
+        return name.orElse(supplier.legalName());
+    }
+
+    public String softwareName() {
+        return softwareName;
     }
 
     public String fileCode() {

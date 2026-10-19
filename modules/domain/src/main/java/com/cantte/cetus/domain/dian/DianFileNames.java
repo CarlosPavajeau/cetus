@@ -24,6 +24,14 @@ public final class DianFileNames {
         return "z" + base(nit, providerCode, year, sequence) + ".zip";
     }
 
+    /**
+     * The AttachedDocument that delivers a document: "ad" in place of its type prefix, so both share the
+     * sequence and no number is spent on it. The DIAN does not regulate these names (annex section 9.1).
+     */
+    public static String attachedDocument(String documentXmlName) {
+        return "ad" + documentXmlName.substring(2);
+    }
+
     private static String base(String nit, String providerCode, int year, long sequence) {
         return String.format("%010d", Long.parseLong(nit))
                 + providerCode
