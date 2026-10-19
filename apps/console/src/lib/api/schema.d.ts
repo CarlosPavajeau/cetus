@@ -231,6 +231,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/issuers/{id}/numbering-ranges/{rangeId}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Range */
+        post: operations["IssuerResource_verifyRange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/issuers/{id}/promote": {
         parameters: {
             query?: never;
@@ -1034,6 +1051,11 @@ export interface components {
             nextNumber: number;
             validTo: ((string | components["schemas"]["LocalDate"] | null) | null) | components["schemas"]["LocalDate"] | null;
             status: string;
+            /** @description GetNumberingRange outcome; invoice ranges only */
+            verificationStatus: ((string | components["schemas"]["VerificationStatus"] | null) | null) | components["schemas"]["VerificationStatus"] | null;
+            verifiedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            /** @description What differs from the DIAN, or why it could not be checked */
+            verificationError: string | null;
         };
         /**
          * Format: date-time
@@ -1115,6 +1137,8 @@ export interface components {
             email: string;
             phone?: string;
         };
+        /** @enum {string} */
+        VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";
         WebhookDeliveryPage: {
             /** @description Newest first */
             items: components["schemas"]["WebhookDeliveryView"][];
@@ -2089,6 +2113,56 @@ export interface operations {
                 "application/json": components["schemas"]["NumberingRangeRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingRangeView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    IssuerResource_verifyRange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+                rangeId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

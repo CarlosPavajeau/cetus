@@ -5,7 +5,8 @@ public enum DianOperation {
     SEND_BILL_SYNC("SendBillSync"),
     SEND_TEST_SET_ASYNC("SendTestSetAsync"),
     GET_STATUS("GetStatus"),
-    GET_STATUS_ZIP("GetStatusZip");
+    GET_STATUS_ZIP("GetStatusZip"),
+    GET_NUMBERING_RANGE("GetNumberingRange");
 
     public static final String SERVICE_NS = "http://wcf.dian.colombia";
 

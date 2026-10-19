@@ -13,9 +13,14 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 
-/** Authenticates /v1/** with "Authorization: Bearer cetus_{env}_...". */
+/**
+ * Authenticates /v1/** with "Authorization: Bearer cetus_{env}_..." and applies the per-key rate limit
+ * (429 rate_limited with Retry-After).
+ */
 @Provider
 @Priority(Priorities.AUTHENTICATION)
 public class ApiKeyFilter implements ContainerRequestFilter {
@@ -24,6 +29,8 @@ public class ApiKeyFilter implements ContainerRequestFilter {
 
     @Inject
     ApiPrincipal principal;
+    @Inject
+    ApiKeyRateLimiter rateLimiter;
 
     @Override
     public void filter(ContainerRequestContext request) {
@@ -54,6 +61,15 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             return;
         }
         ApiKeyEntity key = resolved.key();
+        Optional<Duration> wait = rateLimiter.acquire(key.id);
+        if (wait.isPresent()) {
+            long seconds = Math.max(1, (long) Math.ceil(wait.get().toMillis() / 1000.0));
+            request.abortWith(Response.status(429)
+                    .header("Retry-After", seconds)
+                    .entity(new ApiError("rate_limited", "Too many requests for this API key; retry in " + seconds + " s", null))
+                    .build());
+            return;
+        }
         principal.set(key.accountId, key.environment, key.id);
     }
 

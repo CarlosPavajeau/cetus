@@ -9,7 +9,10 @@ import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Stores a file in S3 under a predictable key and records it as a document artifact; reads them back. */
+/**
+ * Stores a file in S3 under a predictable key, locked for the legal retention period, and records it as a
+ * document artifact; reads them back.
+ */
 @ApplicationScoped
 public class ArtifactStore {
 
@@ -27,7 +30,7 @@ public class ArtifactStore {
                 ctx.issueDate().getMonthValue(),
                 ctx.documentId(),
                 fileName);
-        recorder.artifact(ctx.documentId(), kind, storage.put(key, content, contentType));
+        recorder.artifact(ctx.documentId(), kind, storage.putRetained(key, content, contentType));
     }
 
     /** The newest artifact of a kind with its file name, read from S3 outside any transaction. */

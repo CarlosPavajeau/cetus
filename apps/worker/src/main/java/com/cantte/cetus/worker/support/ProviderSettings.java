@@ -28,7 +28,11 @@ public class ProviderSettings {
     String softwareName;
 
     public String providerNit(Party supplier) {
-        return nit.orElse(supplier.identificationNumber());
+        return providerNit(supplier.identificationNumber());
+    }
+
+    public String providerNit(String issuerNit) {
+        return nit.orElse(issuerNit);
     }
 
     public String providerCheckDigit(Party supplier) {

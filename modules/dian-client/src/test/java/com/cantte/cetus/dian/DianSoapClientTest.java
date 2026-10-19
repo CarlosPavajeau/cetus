@@ -67,6 +67,41 @@ class DianSoapClientTest {
     }
 
     @Test
+    void parsesTheNumberingRangesOfAnIssuer() {
+        String raw = """
+                <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"><s:Body>
+                <GetNumberingRangeResponse xmlns="http://wcf.dian.colombia"><GetNumberingRangeResult
+                    xmlns:b="http://schemas.datacontract.org/2004/07/NumberRangeResponseList"
+                    xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+                  <b:OperationCode>100</b:OperationCode>
+                  <b:OperationDescription>Acción completada OK.</b:OperationDescription>
+                  <b:ResponseList xmlns:c="http://schemas.datacontract.org/2004/07/NumberRangeResponse">
+                    <c:NumberRangeResponse>
+                      <c:ResolutionNumber>18760000001</c:ResolutionNumber>
+                      <c:ResolutionDate>2019-01-19</c:ResolutionDate>
+                      <c:Prefix>SETP</c:Prefix>
+                      <c:FromNumber>990000000</c:FromNumber>
+                      <c:ToNumber>995000000</c:ToNumber>
+                      <c:ValidDateFrom>2019-01-19</c:ValidDateFrom>
+                      <c:ValidDateTo>2030-01-19</c:ValidDateTo>
+                      <c:TechnicalKey>fc8eac422eba16e22ffd8c6f94b3f40a6e38162c</c:TechnicalKey>
+                    </c:NumberRangeResponse>
+                  </b:ResponseList>
+                </GetNumberingRangeResult></GetNumberingRangeResponse></s:Body></s:Envelope>""";
+
+        NumberingRangeResponse response = DianResponseParser.numberingRanges(raw, "GetNumberingRangeResult");
+
+        assertThat(response.succeeded()).isTrue();
+        assertThat(response.find("SETP", "18760000001")).hasValueSatisfying(range -> {
+            assertThat(range.fromNumber()).isEqualTo(990000000L);
+            assertThat(range.toNumber()).isEqualTo(995000000L);
+            assertThat(range.technicalKey()).isEqualTo("fc8eac422eba16e22ffd8c6f94b3f40a6e38162c");
+        });
+        assertThat(response.find("SETP", "999")).isEmpty();
+        assertThat(response.find("FE", null)).isEmpty();
+    }
+
+    @Test
     void parsesAClientFaultAsNotRetryable() {
         String raw = """
                 <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"><s:Body><s:Fault>

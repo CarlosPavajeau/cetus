@@ -73,3 +73,29 @@ export const addNoteRange = createServerFn({ method: "POST" })
       throw error;
     }
   });
+
+const verificationMessages: Record<string, string> = {
+  issuer_not_ready:
+    "El emisor necesita su software DIAN y su certificado antes de consultar a la DIAN.",
+  range_not_verifiable: "Solo los rangos de factura están autorizados por la DIAN.",
+};
+
+/** Asks the worker to compare an invoice range with the DIAN's record (GetNumberingRange) again. */
+export const verifyRange = createServerFn({ method: "POST" })
+  .validator(type({ id: "string.uuid", rangeId: "string.uuid" }))
+  .handler(async ({ data }) => {
+    try {
+      return await api.post("/console/issuers/{id}/numbering-ranges/{rangeId}/verification", {
+        params: { path: { id: data.id, rangeId: data.rangeId } },
+      });
+    } catch (error) {
+      if (error instanceof CetusApiError) {
+        throw new Error(
+          verificationMessages[error.code] ??
+            "No pudimos pedir la verificación. Inténtalo de nuevo en unos minutos.",
+          { cause: error },
+        );
+      }
+      throw error;
+    }
+  });

@@ -29,6 +29,7 @@ import { IssuerStatusBadge } from "~/features/issuers/IssuerStatusBadge";
 import { issuerName, personTypeLabel } from "~/features/issuers/labels";
 import { PromoteIssuer } from "~/features/issuers/PromoteIssuer";
 import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
+import { RangeVerification } from "~/features/issuers/RangeVerification";
 import { TestSetProgress } from "~/features/issuers/TestSetProgress";
 import type { IssuerDetail } from "~/lib/api/types";
 import { uuidPattern } from "~/lib/utils";
@@ -273,13 +274,14 @@ function IssuerDetailPage() {
                 <TableHead>Rango</TableHead>
                 <TableHead>Siguiente número</TableHead>
                 <TableHead>Vigente hasta</TableHead>
+                <TableHead>DIAN</TableHead>
                 <TableHead className="pr-4">Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {issuer.ranges.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-16 text-center text-muted-foreground">
                     Todavía no hay rangos de numeración.
                   </TableCell>
                 </TableRow>
@@ -300,6 +302,9 @@ function IssuerDetailPage() {
                     </TableCell>
                     <TableCell className="text-2xs">
                       {range.validTo ? formatDay(range.validTo) : "—"}
+                    </TableCell>
+                    <TableCell className="text-2xs">
+                      <RangeVerification issuerId={issuer.id} range={range} />
                     </TableCell>
                     <TableCell className="pr-4 text-2xs">
                       {range.status === "ACTIVE" ? "Activo" : "Inactivo"}
