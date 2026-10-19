@@ -112,6 +112,24 @@ class UblSchemaValidationTest {
         assertThat(errors).as("XSD errors, see build/ubl/sample-credit-note-signed.xml").isEmpty();
     }
 
+    @Test
+    void signedDebitNoteIsValidAgainstUblSchema() throws Exception {
+        Optional<Path> debitNoteXsd = findByName("UBL-DebitNote-2.1.xsd");
+        assumeTrue(debitNoteXsd.isPresent(), "UBL-DebitNote-2.1.xsd not found in src/main/xsd");
+
+        Document document = sampleDebitNoteDocument();
+        try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
+            var keys = Pkcs12Loader.load(in.readAllBytes(), "cetus-test".toCharArray());
+            new XadesSigner().sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+        }
+        byte[] xml = XmlSupport.serialize(document);
+        Files.createDirectories(OUTPUT);
+        Files.write(OUTPUT.resolve("sample-debit-note-signed.xml"), xml);
+
+        List<String> errors = validate(debitNoteXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
+        assertThat(errors).as("XSD errors, see build/ubl/sample-debit-note-signed.xml").isEmpty();
+    }
+
     /** The container is only valid once signed: its single UBLExtension is the signature slot. */
     @Test
     void signedAttachedDocumentIsValidAgainstUblSchema() throws Exception {
@@ -217,6 +235,10 @@ class UblSchemaValidationTest {
 
     private static Document sampleCreditNoteDocument() {
         return new UblMarshaller().toDocument(new CreditNoteUblMapper().map(CreditNoteUblMapperTest.sampleCreditNote()));
+    }
+
+    private static Document sampleDebitNoteDocument() {
+        return new UblMarshaller().toDocument(new DebitNoteUblMapper().map(DebitNoteUblMapperTest.sampleDebitNote()));
     }
 
     private static List<String> validate(Path xsd, Source source) throws Exception {

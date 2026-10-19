@@ -245,6 +245,26 @@ class DeliverDocumentHandlerTest {
     }
 
     @Test
+    void debitNotesAreDeliveredWithTheirCude() {
+        dian.reply("SendBillSync", Reply.fixture("send-bill-sync-accepted.xml"), Reply.fixture("send-bill-sync-accepted.xml"));
+        UUID invoiceId = fixtures.invoice();
+        processor.handle(fixtures.job(invoiceId, 1));
+        UUID id = fixtures.debitNote(invoiceId);
+        processor.handle(fixtures.job(id, 1));
+
+        deliver(id);
+
+        DocumentEntity note = document(id);
+        assertThat(singleDelivery(id).status).isEqualTo(Status.SENT);
+        assertThat(resend.requests().get(0).body().get("subject").asText()).contains(";" + note.fullNumber() + ";92;");
+        Document attached = XmlSupport.parse(storage.get(artifact(id, Kind.ATTACHED_DOCUMENT).s3Key));
+        Element uuid = (Element) attached.getElementsByTagNameNS("*", "UUID").item(0);
+        assertThat(uuid.getAttribute("schemeName")).isEqualTo("CUDE-SHA384");
+        assertThat(uuid.getTextContent()).isEqualTo(note.cufe);
+        assertThat(storage.get(artifact(id, Kind.ATTACHED_DOCUMENT).s3Key)).asString().contains("DebitNote");
+    }
+
+    @Test
     void documentsThatAreNotAcceptedAreLeftAlone() {
         UUID id = fixtures.invoice();
 

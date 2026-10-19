@@ -226,7 +226,7 @@ public final class PdfRenderer {
         String qrContent = ctx.documentType() == DocumentType.INVOICE
                 ? QrCode.invoice(ctx.fullNumber(), ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
                         ctx.customer().identificationNumber(), ctx.calculation(), uniqueCode, ctx.environment())
-                : QrCode.creditNote(ctx.fullNumber(), ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
+                : QrCode.note(ctx.fullNumber(), ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
                         ctx.customer().identificationNumber(), ctx.calculation(), uniqueCode, ctx.environment());
 
         PdfPTable table = table(new float[]{1, 4});

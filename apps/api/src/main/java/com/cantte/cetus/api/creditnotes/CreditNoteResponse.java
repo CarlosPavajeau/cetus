@@ -50,7 +50,7 @@ public record CreditNoteResponse(
                 note.issueDate,
                 note.currency,
                 new InvoiceRef(invoice.id, invoice.fullNumber(), invoice.cufe),
-                note.correctionConcept,
+                (CreditNoteConcept) note.concept(),
                 note.correctionDescription,
                 new InvoiceResponse.Totals(note.lineExtensionAmount, note.taxExclusiveAmount, note.taxInclusiveAmount,
                         note.payableAmount),

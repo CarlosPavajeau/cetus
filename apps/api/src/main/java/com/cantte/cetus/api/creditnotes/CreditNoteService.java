@@ -47,7 +47,7 @@ public class CreditNoteService {
         drafts.ensureReady(issuer, environment);
 
         CalculationResult calculation = calculator.calculate(lines(request, invoice));
-        BigDecimal balance = invoice.payableAmount.subtract(DocumentEntity.committedCreditTotal(invoice.id));
+        BigDecimal balance = DocumentEntity.creditableBalance(invoice);
         if (calculation.totals().payableAmount().compareTo(balance) > 0) {
             throw new DomainException("credit_note_exceeds_balance",
                     "The credit note totals " + calculation.totals().payableAmount()
@@ -56,7 +56,7 @@ public class CreditNoteService {
 
         DocumentEntity note = drafts.draft(accountId, issuer, environment, DocumentType.CREDIT_NOTE, calculation);
         note.referencedDocumentId = invoice.id;
-        note.correctionConcept = request.concept();
+        note.correctionConcept = request.concept().name();
         note.correctionDescription = request.description();
         note.currency = invoice.currency;
         note.customer = invoice.customer;

@@ -143,6 +143,14 @@ curl -X POST http://localhost:8080/v1/invoices \
 4. Consulta `GET /v1/invoices/{id}` hasta ver `ACCEPTED` o `REJECTED` con los errores de la DIAN.
    Los XML firmados y las respuestas quedan en S3 (`documents/test/{nit}/...`).
 
+5. Sobre una factura aceptada se emiten notas con `POST /v1/credit-notes` y `POST /v1/debit-notes`, cada una con
+   su propio rango de numeración sin resolución (por ejemplo, prefijos `NC` y `ND`, creados con
+   `POST /console/issuers/{id}/numbering-ranges`). La nota crédito acepta los conceptos de la tabla 13.2.4 y, si es
+   una `CANCELLATION` sin líneas, copia las de la factura; la nota débito (`INTEREST`, `EXPENSES`, `VALUE_CHANGE`,
+   `OTHER`, tabla 13.2.5) siempre lleva sus líneas. `GET /v1/invoices/{id}` lista `creditNotes`, `debitNotes` y el
+   `balance` que aún pueden acreditar las notas crédito: el total más las notas débito aceptadas, menos las notas
+   crédito aceptadas o en curso.
+
 ## Pruebas
 
 - **API y worker:** `./gradlew test` (Quarkus con Testcontainers; no necesita el stack levantado).
@@ -197,8 +205,8 @@ En Resend:
 2. Crea el webhook hacia `https://<api>/internal/email-events` con los eventos `email.delivered`,
    `email.bounced`, `email.complained` y `email.failed`. Copia su secreto en `RESEND_WEBHOOK_SECRET`.
 
-Las entregas aparecen en `deliveries` de `GET /v1/invoices/{id}` y `GET /v1/credit-notes/{id}`. Los archivos
-se descargan con `GET /v1/{invoices|credit-notes}/{id}/files/{xml|pdf|attached-document}`, que responde una URL
+Las entregas aparecen en `deliveries` de `GET /v1/{invoices|credit-notes|debit-notes}/{id}`. Los
+archivos se descargan con `GET /v1/{invoices|credit-notes|debit-notes}/{id}/files/{xml|pdf|attached-document}`, que responde una URL
 prefirmada de S3 válida por 5 minutos.
 
 ## Pendiente de validar contra la DIAN

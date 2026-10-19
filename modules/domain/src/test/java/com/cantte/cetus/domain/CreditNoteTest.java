@@ -30,7 +30,7 @@ class CreditNoteTest {
         var calc = new InvoiceCalculator().calculate(List.of(new LineInput("A1", "Consultoría", BigDecimal.ONE, "94",
                 new BigDecimal("100000"), List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19"))))));
 
-        String qr = QrCode.creditNote("NC1", LocalDate.of(2026, 10, 18), LocalTime.of(9, 15), "900123456",
+        String qr = QrCode.note("NC1", LocalDate.of(2026, 10, 18), LocalTime.of(9, 15), "900123456",
                 "1020304050", calc, "cude-value", Environment.TEST);
 
         assertThat(qr).contains("NumFac: NC1\n", "ValTolFac: 119000.00\n", "CUDE: cude-value\n")

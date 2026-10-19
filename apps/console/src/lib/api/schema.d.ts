@@ -248,6 +248,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/debit-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create */
+        post: operations["DebitNoteResource_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/debit-notes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["DebitNoteResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/debit-notes/{id}/files/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** File */
+        get: operations["DebitNoteResource_file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/invoices": {
         parameters: {
             query?: never;
@@ -507,6 +558,42 @@ export interface components {
         };
         /** @enum {string} */
         CustomerTaxScheme: "IVA" | "NOT_APPLICABLE";
+        /** @enum {string} */
+        DebitNoteConcept: "INTEREST" | "EXPENSES" | "VALUE_CHANGE" | "OTHER";
+        DebitNoteRequest: {
+            invoiceId: components["schemas"]["UUID"];
+            concept: components["schemas"]["DebitNoteConcept"];
+            description: string;
+            lines: components["schemas"]["Line"][];
+            externalReference?: string;
+            notes?: string[];
+        };
+        DebitNoteResponse: {
+            id: components["schemas"]["UUID"];
+            environment: components["schemas"]["Environment"];
+            issuerId: components["schemas"]["UUID"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            cude: string | null;
+            issueDate: components["schemas"]["LocalDate"];
+            currency: string;
+            invoice: components["schemas"]["InvoiceRef"];
+            concept: components["schemas"]["DebitNoteConcept"];
+            description: string;
+            totals: components["schemas"]["Totals"];
+            dian: components["schemas"]["Dian"];
+            externalReference: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Deliveries of the accepted note to the customer */
+            deliveries: components["schemas"]["DeliveryView"][];
+        };
+        DebitNoteSummary: {
+            id: components["schemas"]["UUID"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            concept: components["schemas"]["DebitNoteConcept"];
+            payable: number;
+        };
         DeliveryView: {
             id: components["schemas"]["UUID"];
             channel: components["schemas"]["Channel"];
@@ -563,7 +650,8 @@ export interface components {
             externalReference: string | null;
             createdAt: components["schemas"]["OffsetDateTime"];
             creditNotes: components["schemas"]["CreditNoteSummary"][];
-            /** @description Payable amount not yet credited by accepted or in-flight credit notes */
+            debitNotes: components["schemas"]["DebitNoteSummary"][];
+            /** @description What credit notes can still take: the payable amount plus accepted debit notes, minus accepted or in-flight credit notes */
             balance: number;
             /** @description Deliveries of the accepted invoice to the customer */
             deliveries: components["schemas"]["DeliveryView"][];
@@ -1627,6 +1715,82 @@ export interface operations {
         };
     };
     CreditNoteResource_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: "xml" | "pdf" | "attached-document";
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFileResponse"];
+                };
+            };
+        };
+    };
+    DebitNoteResource_create: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DebitNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DebitNoteResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebitNoteResponse"];
+                };
+            };
+        };
+    };
+    DebitNoteResource_file: {
         parameters: {
             query?: never;
             header?: never;

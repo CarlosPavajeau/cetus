@@ -10,6 +10,7 @@ import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.DebitNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -131,6 +132,17 @@ public class WorkerFixtures {
      * numbered in its own NC range without resolution or technical key. Returns the note id.
      */
     public UUID creditNote(UUID invoiceId) {
+        return note(invoiceId, DocumentType.CREDIT_NOTE, "NC", CreditNoteConcept.CANCELLATION.name(),
+                "Anulación por error en el valor");
+    }
+
+    /** Like {@link #creditNote}, but a debit note charging interest, numbered in its own ND range. */
+    public UUID debitNote(UUID invoiceId) {
+        return note(invoiceId, DocumentType.DEBIT_NOTE, "ND", DebitNoteConcept.INTEREST.name(),
+                "Intereses de mora");
+    }
+
+    private UUID note(UUID invoiceId, DocumentType type, String prefix, String concept, String description) {
         return QuarkusTransaction.requiringNew().call(() -> {
             DocumentEntity invoice = DocumentEntity.findById(invoiceId);
             invoice.status = DocumentStatus.ACCEPTED;
@@ -139,18 +151,18 @@ public class WorkerFixtures {
             NumberingRangeEntity range = new NumberingRangeEntity();
             range.id = Ids.newId();
             range.issuerId = invoice.issuerId;
-            range.documentType = DocumentType.CREDIT_NOTE;
-            range.prefix = "NC";
+            range.documentType = type;
+            range.prefix = prefix;
             range.rangeFrom = 1;
             range.rangeTo = 99999999;
             // CUDEs are unique too, and every seeded issuer shares the NIT.
             range.nextNumber = ThreadLocalRandom.current().nextLong(1, 99999999);
             range.persist();
 
-            DocumentEntity note = document(invoice.accountId, invoice.issuerId, range, DocumentType.CREDIT_NOTE);
+            DocumentEntity note = document(invoice.accountId, invoice.issuerId, range, type);
             note.referencedDocumentId = invoice.id;
-            note.correctionConcept = CreditNoteConcept.CANCELLATION;
-            note.correctionDescription = "Anulación por error en el valor";
+            note.correctionConcept = concept;
+            note.correctionDescription = description;
             return note.id;
         });
     }

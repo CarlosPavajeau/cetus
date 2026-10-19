@@ -6,6 +6,8 @@ import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.calc.TaxTotal;
 import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.Address;
+import com.cantte.cetus.domain.model.BillingReference;
+import com.cantte.cetus.domain.model.CorrectionConcept;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PaymentInfo;
@@ -52,6 +54,28 @@ final class UblParts {
 
         ext.qrCode = qrCode;
         return ext;
+    }
+
+    /**
+     * Why a note corrects the invoice. The Description is the concept's own name, since the DIAN checks it
+     * against the code (CBF04, DBF04); the issuer's reason goes in a cbc:Note.
+     */
+    static Cac.DiscrepancyResponse discrepancyResponse(BillingReference reference, CorrectionConcept concept) {
+        Cac.DiscrepancyResponse response = new Cac.DiscrepancyResponse();
+        response.referenceId = reference.number();
+        response.responseCode = concept.dianCode();
+        response.description = concept.dianName();
+        return response;
+    }
+
+    /** The invoice a note corrects, identified by its number, CUFE and issue date. */
+    static Cac.BillingReference billingReference(BillingReference reference) {
+        Cac.BillingReference billing = new Cac.BillingReference();
+        billing.invoiceDocumentReference = new Cac.DocumentReference();
+        billing.invoiceDocumentReference.id = reference.number();
+        billing.invoiceDocumentReference.uuid = IdentifierType.of(reference.cufe()).scheme(null, "CUFE-SHA384");
+        billing.invoiceDocumentReference.issueDate = DianTime.date(reference.issueDate());
+        return billing;
     }
 
     static Cac.PartyRole supplier(Party party, String prefix) {

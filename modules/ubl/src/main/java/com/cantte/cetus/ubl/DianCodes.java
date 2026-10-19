@@ -12,6 +12,9 @@ public final class DianCodes {
     public static final String CREDIT_NOTE_PROFILE = "DIAN 2.1: Nota Crédito de Factura Electrónica de Venta";
     /** Credit note that references an electronic invoice (annex table 13.1.5.2). */
     public static final String CREDIT_NOTE_CUSTOMIZATION = "20";
+    public static final String DEBIT_NOTE_PROFILE = "DIAN 2.1: Nota Débito de Factura Electrónica de Venta";
+    /** Debit note that references an electronic invoice (annex table 13.1.5.3). */
+    public static final String DEBIT_NOTE_CUSTOMIZATION = "30";
     /** Literals of the AttachedDocument (annex section 6.4), the same for invoices and notes. */
     public static final String ATTACHED_CUSTOMIZATION = "Documentos adjuntos";
     public static final String ATTACHED_PROFILE = "Factura Electrónica de Venta";

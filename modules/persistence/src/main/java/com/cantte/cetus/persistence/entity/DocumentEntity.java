@@ -1,6 +1,6 @@
 package com.cantte.cetus.persistence.entity;
 
-import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.CorrectionConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -83,9 +83,9 @@ public class DocumentEntity extends PanacheEntityBase {
     /** The invoice a note corrects. */
     @Column(name = "referenced_document_id")
     public UUID referencedDocumentId;
-    @Enumerated(EnumType.STRING)
+    /** Name of the note's {@link CorrectionConcept}; read it with {@link #concept()}. */
     @Column(name = "correction_concept")
-    public CreditNoteConcept correctionConcept;
+    public String correctionConcept;
     @Column(name = "correction_description")
     public String correctionDescription;
     /** CUFE for invoices, CUDE for notes. */
@@ -162,10 +162,22 @@ public class DocumentEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
-    /** Credit notes that reference the invoice, oldest first. */
-    public static List<DocumentEntity> creditNotesFor(UUID invoiceId) {
-        return list("referencedDocumentId = ?1 and documentType = ?2 order by createdAt, number",
-                invoiceId, DocumentType.CREDIT_NOTE);
+    /** The correction concept of a note, or null for an invoice. */
+    public CorrectionConcept concept() {
+        return CorrectionConcept.of(documentType, correctionConcept);
+    }
+
+    /** Notes of the type that reference the invoice, oldest first. */
+    public static List<DocumentEntity> notesFor(UUID invoiceId, DocumentType type) {
+        return list("referencedDocumentId = ?1 and documentType = ?2 order by createdAt, number", invoiceId, type);
+    }
+
+    /**
+     * What credit notes can still take from the invoice: its payable amount plus its accepted debit notes,
+     * minus the credit notes that count against it.
+     */
+    public static BigDecimal creditableBalance(DocumentEntity invoice) {
+        return invoice.payableAmount.add(acceptedDebitTotal(invoice.id)).subtract(committedCreditTotal(invoice.id));
     }
 
     /**
@@ -182,6 +194,23 @@ public class DocumentEntity extends PanacheEntityBase {
                 .setParameter("type", DocumentType.CREDIT_NOTE)
                 .setParameter("rejected", DocumentStatus.REJECTED)
                 .setParameter("failed", DocumentStatus.FAILED)
+                .getSingleResult();
+        return total == null ? BigDecimal.ZERO : total;
+    }
+
+    /**
+     * Total of the debit notes accepted against the invoice. Only accepted ones count, since a debit note
+     * still in flight may be rejected and would then never have raised the invoice.
+     */
+    public static BigDecimal acceptedDebitTotal(UUID invoiceId) {
+        BigDecimal total = getEntityManager().createQuery("""
+                        select coalesce(sum(d.payableAmount), 0)
+                        from DocumentEntity d
+                        where d.referencedDocumentId = :invoiceId and d.documentType = :type
+                          and d.status = :accepted""", BigDecimal.class)
+                .setParameter("invoiceId", invoiceId)
+                .setParameter("type", DocumentType.DEBIT_NOTE)
+                .setParameter("accepted", DocumentStatus.ACCEPTED)
                 .getSingleResult();
         return total == null ? BigDecimal.ZERO : total;
     }

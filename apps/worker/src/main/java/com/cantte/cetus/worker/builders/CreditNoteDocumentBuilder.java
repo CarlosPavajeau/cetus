@@ -2,6 +2,7 @@ package com.cantte.cetus.worker.builders;
 
 import com.cantte.cetus.domain.dian.Cufe;
 import com.cantte.cetus.domain.dian.QrCode;
+import com.cantte.cetus.domain.model.CreditNoteConcept;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.ElectronicCreditNote;
 import com.cantte.cetus.ubl.CreditNoteUblMapper;
@@ -28,7 +29,7 @@ public class CreditNoteDocumentBuilder implements DocumentBuilder {
 
     @Override
     public BuiltDocument build(ProcessingContext ctx, DocumentSecrets secrets) {
-        if (ctx.reference() == null || ctx.correctionConcept() == null) {
+        if (ctx.reference() == null || !(ctx.correctionConcept() instanceof CreditNoteConcept concept)) {
             throw new IllegalStateException("Credit note " + ctx.documentId() + " has no referenced invoice or concept");
         }
         String number = ctx.fullNumber();
@@ -36,12 +37,12 @@ public class CreditNoteDocumentBuilder implements DocumentBuilder {
         String cude = Cufe.compute(new Cufe.Input(number, ctx.issueDate(), ctx.issueTime(), ctx.calculation(),
                 ctx.supplier().identificationNumber(), ctx.customer().identificationNumber(), secrets.pin(),
                 ctx.environment()));
-        String qr = QrCode.creditNote(number, ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
+        String qr = QrCode.note(number, ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
                 ctx.customer().identificationNumber(), ctx.calculation(), cude, ctx.environment());
 
         ElectronicCreditNote note = new ElectronicCreditNote(ctx.environment(), ctx.prefix(), ctx.number(),
                 ctx.issueDate(), ctx.issueTime(), ctx.currency(), ctx.supplier(), ctx.customer(), ctx.payment(),
-                ctx.calculation(), ctx.reference(), ctx.correctionConcept(), ctx.correctionDescription(),
+                ctx.calculation(), ctx.reference(), concept, ctx.correctionDescription(),
                 provider.software(ctx, secrets.pin()), cude, qr, ctx.notes());
         return new BuiltDocument(marshaller.toDocument(mapper.map(note)), cude);
     }

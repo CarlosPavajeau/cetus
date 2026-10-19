@@ -225,6 +225,23 @@ public final class Cac {
         public Price price;
     }
 
+    @XmlType(name = "DebitNoteLine", propOrder = {"id", "debitedQuantity", "lineExtensionAmount",
+            "taxTotals", "item", "price"})
+    public static class DebitNoteLine {
+        @XmlElement(name = "ID", namespace = Ns.CBC)
+        public String id;
+        @XmlElement(name = "DebitedQuantity", namespace = Ns.CBC)
+        public QuantityType debitedQuantity;
+        @XmlElement(name = "LineExtensionAmount", namespace = Ns.CBC)
+        public AmountType lineExtensionAmount;
+        @XmlElement(name = "TaxTotal", namespace = Ns.CAC)
+        public List<TaxTotal> taxTotals = new ArrayList<>();
+        @XmlElement(name = "Item", namespace = Ns.CAC)
+        public Item item;
+        @XmlElement(name = "Price", namespace = Ns.CAC)
+        public Price price;
+    }
+
     @XmlType(name = "DiscrepancyResponse", propOrder = {"referenceId", "responseCode", "description"})
     public static class DiscrepancyResponse {
         @XmlElement(name = "ReferenceID", namespace = Ns.CBC)
