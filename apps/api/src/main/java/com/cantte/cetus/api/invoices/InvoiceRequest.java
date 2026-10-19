@@ -20,9 +20,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-/** Public contract of POST /v1/invoices. Business language, no UBL details. */
+/**
+ * Public contract of POST /v1/invoices. Business language, no UBL details. The issuer can be left
+ * out when the account has a single one able to issue in the key's environment.
+ */
 public record InvoiceRequest(
-        @NotNull UUID issuerId,
+        UUID issuerId,
         @Size(max = 100) String externalReference,
         @Pattern(regexp = "[A-Z]{3}") String currency,
         @NotNull @Valid Customer customer,

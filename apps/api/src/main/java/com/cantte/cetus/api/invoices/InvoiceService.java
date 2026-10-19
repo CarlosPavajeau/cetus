@@ -49,10 +49,7 @@ public class InvoiceService {
 
     @Transactional(Transactional.TxType.MANDATORY)
     public DocumentEntity create(UUID accountId, Environment environment, InvoiceRequest request, String rawJson) {
-        IssuerEntity issuer = IssuerEntity.findForAccount(accountId, request.issuerId())
-                .filter(found -> found.environment == environment)
-                .orElseThrow(() -> new DomainException("issuer_not_found",
-                        "Issuer not found in the " + environment + " environment"));
+        IssuerEntity issuer = resolveIssuer(accountId, environment, request.issuerId());
         ensureReady(issuer, environment);
 
         CalculationResult calculation = calculator.calculate(toLines(request.lines()));
@@ -111,10 +108,39 @@ public class InvoiceService {
         return doc;
     }
 
-    private static void ensureReady(IssuerEntity issuer, Environment environment) {
-        boolean statusOk = issuer.status == IssuerEntity.Status.ENABLED
+    /**
+     * The issuer named in the request, or, when the request names none, the only one of the account
+     * that can issue in this environment. With several, the request has to say which.
+     */
+    private static IssuerEntity resolveIssuer(UUID accountId, Environment environment, UUID issuerId) {
+        if (issuerId != null) {
+            return IssuerEntity.findForAccount(accountId, issuerId)
+                    .filter(found -> found.environment == environment)
+                    .orElseThrow(() -> new DomainException("issuer_not_found",
+                            "Issuer not found in the " + environment + " environment"));
+        }
+        List<IssuerEntity> candidates = IssuerEntity.listByAccount(accountId).stream()
+                .filter(issuer -> issuer.environment == environment && canIssue(issuer, environment))
+                .toList();
+        if (candidates.isEmpty()) {
+            throw new DomainException("issuer_not_found",
+                    "No issuer can issue documents in the " + environment + " environment");
+        }
+        if (candidates.size() > 1) {
+            throw new DomainException("issuer_required",
+                    "The account has several issuers in the " + environment + " environment; send issuerId");
+        }
+        return candidates.get(0);
+    }
+
+    /** Whether the issuer's status lets it issue in the environment: ENABLED, or TESTING with a test key. */
+    public static boolean canIssue(IssuerEntity issuer, Environment environment) {
+        return issuer.status == IssuerEntity.Status.ENABLED
                 || (environment == Environment.TEST && issuer.status == IssuerEntity.Status.TESTING);
-        if (!statusOk) {
+    }
+
+    private static void ensureReady(IssuerEntity issuer, Environment environment) {
+        if (!canIssue(issuer, environment)) {
             throw new DomainException("issuer_not_ready", "The issuer is not enabled to issue documents yet");
         }
         if (SoftwareCredentialEntity.findActive(issuer.id).isEmpty()) {

@@ -136,6 +136,10 @@ curl -X POST http://localhost:8080/v1/invoices \
   }'
 ```
 
+   El `issuerId` aparece en la consola (sección Emisores) y en `GET /v1/issuers`, que lista los emisores
+   de la cuenta en el ambiente de la llave. Puedes omitirlo si la cuenta tiene un solo emisor habilitado en
+   ese ambiente; con varios, la API responde `422 issuer_required`. La respuesta trae el `issuerId` usado.
+
 4. Consulta `GET /v1/invoices/{id}` hasta ver `ACCEPTED` o `REJECTED` con los errores de la DIAN.
    Los XML firmados y las respuestas quedan en S3 (`documents/test/{nit}/...`).
 

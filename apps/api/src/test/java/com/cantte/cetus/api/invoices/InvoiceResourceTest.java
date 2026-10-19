@@ -8,12 +8,14 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 @QuarkusTest
 class InvoiceResourceTest {
@@ -43,13 +45,61 @@ class InvoiceResourceTest {
         assertThat(replayed.getString("createdAt")).isEqualTo(createdAt);
     }
 
+    @Test
+    void theIssuerCanBeLeftOutWhenOnlyOneCanIssue() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Single issuer SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        // Still being set up: it cannot issue, so it is not a candidate.
+        ConsoleFixtures.createIssuer(user, "800197268");
+        String apiKey = testKey(user);
+
+        api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice(null))
+                .post("/v1/invoices")
+                .then().statusCode(202)
+                .body("issuerId", equalTo(issuerId));
+    }
+
+    @Test
+    void theIssuerIsRequiredWhenSeveralCanIssue() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Several issuers SAS");
+        ConsoleFixtures.onboard(user);
+        ConsoleFixtures.onboard(user, "800197268");
+        String apiKey = testKey(user);
+
+        api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice(null))
+                .post("/v1/invoices")
+                .then().statusCode(422)
+                .body("code", equalTo("issuer_required"));
+    }
+
+    @Test
+    void withoutAnIssuerAbleToIssueTheIssuerIsNotFound() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "No issuer SAS");
+        ConsoleFixtures.createIssuer(user);
+        String apiKey = testKey(user);
+
+        api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice(null))
+                .post("/v1/invoices")
+                .then().statusCode(422)
+                .body("code", equalTo("issuer_not_found"));
+    }
+
+    private static String testKey(ConsoleUser user) {
+        return user.request().body(Map.of("name", "ERP", "environment", "TEST"))
+                .post("/console/api-keys")
+                .then().statusCode(200).extract().path("secret");
+    }
+
     private static RequestSpecification api(String apiKey) {
         return given().header("Authorization", "Bearer " + apiKey).contentType(ContentType.JSON);
     }
 
+    /** An invoice for the issuer, or without one when it is null. */
     private static Map<String, Object> invoice(String issuerId) {
-        return Map.of(
-                "issuerId", issuerId,
+        Map<String, Object> invoice = new HashMap<>(Map.of(
                 "customer", Map.of(
                         "personType", "NATURAL_PERSON",
                         "identificationType", "CITIZEN_ID",
@@ -60,6 +110,10 @@ class InvoiceResourceTest {
                         "description", "Servicio",
                         "quantity", 1,
                         "unitPrice", 100000,
-                        "taxes", List.of(Map.of("type", "IVA", "percent", 19)))));
+                        "taxes", List.of(Map.of("type", "IVA", "percent", 19))))));
+        if (issuerId != null) {
+            invoice.put("issuerId", issuerId);
+        }
+        return invoice;
     }
 }

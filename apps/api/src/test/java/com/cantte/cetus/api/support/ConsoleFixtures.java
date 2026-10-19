@@ -22,7 +22,11 @@ public final class ConsoleFixtures {
     }
 
     public static Onboarding onboard(ConsoleUser user) {
-        String issuerId = createIssuer(user);
+        return onboard(user, "900123456");
+    }
+
+    public static Onboarding onboard(ConsoleUser user, String nit) {
+        String issuerId = createIssuer(user, nit);
         user.request()
                 .body(Map.of("softwareId", SOFTWARE_ID, "pin", PIN, "testSetId", UUID.randomUUID().toString()))
                 .put("/console/issuers/" + issuerId + "/software")
@@ -41,12 +45,16 @@ public final class ConsoleFixtures {
     }
 
     public static String createIssuer(ConsoleUser user) {
+        return createIssuer(user, "900123456");
+    }
+
+    public static String createIssuer(ConsoleUser user, String nit) {
         Map<String, Object> address = Map.of(
                 "municipalityCode", "11001", "cityName", "Bogotá", "departmentCode", "11",
                 "departmentName", "Bogotá", "postalCode", "110111", "line", "Calle 1 # 2-3",
                 "countryCode", "CO", "countryName", "Colombia");
         Map<String, Object> request = Map.of(
-                "environment", "TEST", "nit", "900123456", "legalName", "Acme SAS",
+                "environment", "TEST", "nit", nit, "legalName", "Acme SAS",
                 "personType", "LEGAL_ENTITY", "taxLevelCodes", List.of("O-13"), "responsibleForIva", true,
                 "address", address, "email", "facturas@acme.test");
         return user.request().body(request).post("/console/issuers")

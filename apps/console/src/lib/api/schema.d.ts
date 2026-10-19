@@ -214,6 +214,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/issuers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["PublicIssuerResource_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["PublicIssuerResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -365,7 +399,7 @@ export interface components {
         /** @enum {string} */
         IdentificationType: "CIVIL_REGISTRY" | "IDENTITY_CARD" | "CITIZEN_ID" | "FOREIGNER_CARD" | "FOREIGNER_ID" | "NIT" | "PASSPORT" | "FOREIGN_DOCUMENT" | "PEP" | "FOREIGN_NIT" | "NUIP";
         InvoiceRequest: {
-            issuerId: components["schemas"]["UUID"];
+            issuerId?: components["schemas"]["UUID"];
             externalReference?: string;
             currency?: string;
             customer: components["schemas"]["Customer"];
@@ -376,6 +410,7 @@ export interface components {
         InvoiceResponse: {
             id: components["schemas"]["UUID"];
             environment: components["schemas"]["Environment"];
+            issuerId: components["schemas"]["UUID"];
             number: string;
             status: components["schemas"]["DocumentStatus"];
             cufe: string | null;
@@ -470,6 +505,17 @@ export interface components {
         PaymentMethod: "CASH" | "CREDIT";
         /** @enum {string} */
         PersonType: "LEGAL_ENTITY" | "NATURAL_PERSON";
+        PublicIssuerView: {
+            id: components["schemas"]["UUID"];
+            environment: components["schemas"]["Environment"];
+            nit: string;
+            checkDigit: string;
+            legalName: string;
+            tradeName: string | null;
+            status: components["schemas"]["Status"];
+            /** @description Whether its status lets it issue with this key */
+            readyToIssue: boolean;
+        };
         SoftwareRequest: {
             softwareId: string;
             pin: string;
@@ -1359,6 +1405,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceResponse"];
+                };
+            };
+        };
+    };
+    PublicIssuerResource_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIssuerView"][];
+                };
+            };
+        };
+    };
+    PublicIssuerResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIssuerView"];
                 };
             };
         };
