@@ -12,6 +12,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +46,25 @@ public class NumberingRangeEntity extends PanacheEntityBase {
     @Column(name = "technical_key_sealed")
     public byte[] technicalKeySealed;
     public String status = "ACTIVE";
+    /** GetNumberingRange outcome for invoice ranges; null until it is requested. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status")
+    public VerificationStatus verificationStatus;
+    @Column(name = "verified_at")
+    public OffsetDateTime verifiedAt;
+    @Column(name = "verification_error")
+    public String verificationError;
+
+    public enum VerificationStatus {
+        /** Queued: the worker will ask the DIAN. */
+        PENDING,
+        /** The DIAN has this prefix, numbers, dates and technical key. */
+        VERIFIED,
+        /** The DIAN answered with something else; documents would be rejected or carry an invalid CUFE. */
+        MISMATCH,
+        /** The DIAN could not be asked (missing software or certificate, or it kept failing). */
+        ERROR
+    }
 
     /**
      * Locks the active range (SELECT ... FOR UPDATE). Must run inside the transaction that

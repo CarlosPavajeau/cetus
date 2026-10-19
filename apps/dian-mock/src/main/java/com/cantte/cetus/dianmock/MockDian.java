@@ -25,7 +25,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * In-memory DIAN: answers SendBillSync, SendTestSetAsync, GetStatus and GetStatusZip.
+ * In-memory DIAN: answers SendBillSync, SendTestSetAsync, GetStatus, GetStatusZip and GetNumberingRange
+ * (always the habilitación range).
  * Error texts produced by the mock's own checks start with "Mock:" so they are never
  * mistaken for real DIAN validation rules.
  */
@@ -126,6 +127,8 @@ final class MockDian {
             case "SendTestSetAsync" -> delayed(sendTestSetAsync(params));
             case "GetStatus" -> getStatus(params.get("trackId"));
             case "GetStatusZip" -> getStatusZip(params.get("trackId"));
+            case "GetNumberingRange" -> new Reply(200, Soap.testNumberingRange(),
+                    "GetNumberingRange " + params.get("accountCode") + " -> SETP 990000000-995000000");
             default -> new Reply(500, Soap.fault("s:Sender", "a:ActionNotSupported",
                     "The message with Action '' cannot be processed at the receiver."),
                     operation + " -> s:Sender fault (unknown operation)");

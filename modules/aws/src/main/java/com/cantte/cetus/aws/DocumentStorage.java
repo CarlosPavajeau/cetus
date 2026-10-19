@@ -5,17 +5,23 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectLockMode;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URL;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Optional;
 
 /**
- * Immutable document storage on S3. Enable Object Lock (compliance mode) on the bucket so
- * signed XML and DIAN responses cannot be altered or deleted during the retention period.
+ * Document storage on S3. Signed documents and DIAN responses go through {@link #putRetained}, which
+ * locks each object in Object Lock compliance mode for {@code cetus.storage.retention-days}: nobody, not
+ * even the account root, can alter or delete it before then. The bucket must be created with Object Lock
+ * enabled and without a default retention, so other objects (sealed certificates) stay replaceable.
  */
 @ApplicationScoped
 public class DocumentStorage {
@@ -27,10 +33,30 @@ public class DocumentStorage {
 
     @ConfigProperty(name = "cetus.storage.bucket")
     String bucket;
+    /** Empty: objects are not locked (development, tests and buckets without Object Lock). */
+    @ConfigProperty(name = "cetus.storage.retention-days")
+    Optional<Integer> retentionDays;
 
     public StoredObject put(String key, byte[] content, String contentType) {
-        s3.putObject(r -> r.bucket(bucket).key(key).contentType(contentType), RequestBody.fromBytes(content));
-        return new StoredObject(key, sha256(content), content.length, contentType);
+        return put(key, content, contentType, false);
+    }
+
+    /** Stores an object that must be kept unaltered for the retention period. */
+    public StoredObject putRetained(String key, byte[] content, String contentType) {
+        return put(key, content, contentType, true);
+    }
+
+    private StoredObject put(String key, byte[] content, String contentType, boolean retain) {
+        byte[] digest = sha256(content);
+        PutObjectRequest.Builder request = PutObjectRequest.builder().bucket(bucket).key(key).contentType(contentType);
+        if (retain && retentionDays.isPresent()) {
+            // S3 requires an integrity checksum on writes that set a retention.
+            request.objectLockMode(ObjectLockMode.COMPLIANCE)
+                    .objectLockRetainUntilDate(Instant.now().plus(Duration.ofDays(retentionDays.get())))
+                    .checksumSHA256(Base64.getEncoder().encodeToString(digest));
+        }
+        s3.putObject(request.build(), RequestBody.fromBytes(content));
+        return new StoredObject(key, HexFormat.of().formatHex(digest), content.length, contentType);
     }
 
     public byte[] get(String key) {
@@ -48,9 +74,9 @@ public class DocumentStorage {
         return new PresignedUrl(url.toString(), Instant.now().plus(ttl));
     }
 
-    private static String sha256(byte[] content) {
+    private static byte[] sha256(byte[] content) {
         try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(content));
+            return MessageDigest.getInstance("SHA-256").digest(content);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

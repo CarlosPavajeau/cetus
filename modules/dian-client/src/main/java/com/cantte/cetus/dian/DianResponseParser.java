@@ -47,6 +47,35 @@ final class DianResponseParser {
         return new UploadResponse(text(result, "ZipKey"), errors, rawXml);
     }
 
+    /** GetNumberingRange: OperationCode 100 and one NumberRangeResponse per authorized range. */
+    static NumberingRangeResponse numberingRanges(String rawXml, String resultElement) {
+        Element result = requireResult(rawXml, resultElement);
+        List<NumberingRangeResponse.Range> ranges = new ArrayList<>();
+        NodeList items = result.getElementsByTagNameNS("*", "NumberRangeResponse");
+        for (int i = 0; i < items.getLength(); i++) {
+            Element item = (Element) items.item(i);
+            ranges.add(new NumberingRangeResponse.Range(
+                    text(item, "ResolutionNumber"),
+                    text(item, "ResolutionDate"),
+                    text(item, "Prefix"),
+                    number(text(item, "FromNumber")),
+                    number(text(item, "ToNumber")),
+                    text(item, "ValidDateFrom"),
+                    text(item, "ValidDateTo"),
+                    text(item, "TechnicalKey")));
+        }
+        return new NumberingRangeResponse(text(result, "OperationCode"), text(result, "OperationDescription"),
+                List.copyOf(ranges), rawXml);
+    }
+
+    private static Long number(String value) {
+        try {
+            return value == null ? null : Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private static Element requireResult(String rawXml, String resultElement) {
         Document doc = XmlSupport.parse(rawXml.getBytes(StandardCharsets.UTF_8));
         NodeList faults = doc.getElementsByTagNameNS(SoapEnvelopeBuilder.SOAP_NS, "Fault");

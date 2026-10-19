@@ -10,6 +10,8 @@ public final class JobTypes {
     public static final String DELIVER_DOCUMENT = "DELIVER_DOCUMENT";
     /** POST a webhook event to one endpoint. reference_id = webhook delivery id. */
     public static final String DELIVER_WEBHOOK = "DELIVER_WEBHOOK";
+    /** Compare an invoice range with GetNumberingRange. reference_id = numbering range id. */
+    public static final String VERIFY_NUMBERING_RANGE = "VERIFY_NUMBERING_RANGE";
 
     private JobTypes() {
     }

@@ -6,13 +6,17 @@ import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.domain.dian.NitCheckDigit;
+import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.jobs.JobQueue;
+import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.audit.RequestOrigin;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
+import com.cantte.cetus.persistence.entity.NumberingRangeEntity.VerificationStatus;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.signing.KeyMaterial;
@@ -21,6 +25,7 @@ import com.cantte.cetus.signing.SigningException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotFoundException;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -46,6 +51,8 @@ public class IssuerOnboardingService {
     DocumentStorage storage;
     @Inject
     AuditLog auditLog;
+    @Inject
+    JobQueue jobs;
 
     @Transactional
     public IssuerEntity create(UUID accountId, IssuerViews.CreateIssuerRequest request, Actor actor,
@@ -197,6 +204,38 @@ public class IssuerOnboardingService {
     }
 
     /**
+     * Compares an invoice range with the DIAN again (GetNumberingRange), e.g. after fixing its technical key
+     * or the DIAN software. It is also requested on its own once the issuer has software and certificate.
+     */
+    @Transactional
+    public NumberingRangeEntity verifyRange(IssuerEntity issuer, UUID rangeId) {
+        NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("id = ?1 and issuerId = ?2", rangeId, issuer.id)
+                .firstResultOptional()
+                .orElseThrow(() -> new NotFoundException("Numbering range not found"));
+        if (range.documentType != DocumentType.INVOICE) {
+            throw new DomainException("range_not_verifiable", "Only invoice ranges are authorized by the DIAN");
+        }
+        if (!canSign(issuer)) {
+            throw new DomainException("issuer_not_ready", "The issuer needs its DIAN software and certificate first");
+        }
+        if (range.verificationStatus != VerificationStatus.PENDING) {
+            requestVerification(range);
+        }
+        return range;
+    }
+
+    private static boolean canSign(IssuerEntity issuer) {
+        return SoftwareCredentialEntity.findActive(issuer.id).isPresent()
+                && SigningCertificateEntity.findActive(issuer.id).isPresent();
+    }
+
+    private void requestVerification(NumberingRangeEntity range) {
+        range.verificationStatus = VerificationStatus.PENDING;
+        range.verificationError = null;
+        jobs.enqueue(JobTypes.VERIFY_NUMBERING_RANGE, range.id);
+    }
+
+    /**
      * Starts the production issuer of a test issuer that finished habilitación: same NIT and tax
      * data, the same DIAN software (production keeps its ID and PIN, without a test set) and, when it
      * has one, a copy of its certificate. Only the production numbering is left, so the new issuer
@@ -277,9 +316,12 @@ public class IssuerOnboardingService {
      * DIAN portal; mark LIVE issuers carefully. A status change is audited.
      */
     private void refreshStatus(IssuerEntity issuer, Actor actor, RequestOrigin origin) {
-        boolean ready = SoftwareCredentialEntity.findActive(issuer.id).isPresent()
-                && SigningCertificateEntity.findActive(issuer.id).isPresent()
-                && NumberingRangeEntity.count("issuerId = ?1 and status = 'ACTIVE'", issuer.id) > 0;
+        boolean canSign = canSign(issuer);
+        boolean ready = canSign && NumberingRangeEntity.count("issuerId = ?1 and status = 'ACTIVE'", issuer.id) > 0;
+        if (canSign) {
+            NumberingRangeEntity.<NumberingRangeEntity>list("issuerId = ?1 and documentType = ?2 and status = 'ACTIVE' "
+                    + "and verificationStatus is null", issuer.id, DocumentType.INVOICE).forEach(this::requestVerification);
+        }
         if (ready && issuer.status == IssuerEntity.Status.ONBOARDING) {
             IssuerEntity.Status previous = issuer.status;
             issuer.status = issuer.environment == Environment.TEST

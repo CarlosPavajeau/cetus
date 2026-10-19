@@ -203,10 +203,16 @@ public final class IssuerViews {
             @Schema(required = true) long to,
             @Schema(required = true) long nextNumber,
             @Schema(required = true, nullable = true) LocalDate validTo,
-            @Schema(required = true) String status) {
+            @Schema(required = true) String status,
+            @Schema(required = true, nullable = true, description = "GetNumberingRange outcome; invoice ranges only")
+            NumberingRangeEntity.VerificationStatus verificationStatus,
+            @Schema(required = true, nullable = true) OffsetDateTime verifiedAt,
+            @Schema(required = true, nullable = true, description = "What differs from the DIAN, or why it could not be checked")
+            String verificationError) {
         static NumberingRangeView from(NumberingRangeEntity range) {
             return new NumberingRangeView(range.id, range.documentType, range.prefix, range.rangeFrom,
-                    range.rangeTo, range.nextNumber, range.validTo, range.status);
+                    range.rangeTo, range.nextNumber, range.validTo, range.status, range.verificationStatus,
+                    range.verifiedAt, range.verificationError);
         }
     }
 }

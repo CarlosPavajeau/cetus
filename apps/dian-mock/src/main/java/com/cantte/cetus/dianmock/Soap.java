@@ -52,6 +52,20 @@ final class Soap {
         return envelope(responseAction(operation), body);
     }
 
+    /** GetNumberingRange with the range every habilitación software gets (SETP, fixed technical key). */
+    static String testNumberingRange() {
+        String body = "<GetNumberingRangeResponse xmlns=\"" + SERVICE_NS + "\"><GetNumberingRangeResult xmlns:b=\""
+                + "http://schemas.datacontract.org/2004/07/NumberRangeResponseList\"><b:OperationCode>100</b:OperationCode>"
+                + "<b:OperationDescription>Acción completada OK.</b:OperationDescription><b:ResponseList xmlns:c=\""
+                + "http://schemas.datacontract.org/2004/07/NumberRangeResponse\"><c:NumberRangeResponse>"
+                + "<c:ResolutionNumber>18760000001</c:ResolutionNumber><c:ResolutionDate>2019-01-19</c:ResolutionDate>"
+                + "<c:Prefix>SETP</c:Prefix><c:FromNumber>990000000</c:FromNumber><c:ToNumber>995000000</c:ToNumber>"
+                + "<c:ValidDateFrom>2019-01-19</c:ValidDateFrom><c:ValidDateTo>2030-01-19</c:ValidDateTo>"
+                + "<c:TechnicalKey>fc8eac422eba16e22ffd8c6f94b3f40a6e38162c</c:TechnicalKey>"
+                + "</c:NumberRangeResponse></b:ResponseList></GetNumberingRangeResult></GetNumberingRangeResponse>";
+        return envelope(responseAction("GetNumberingRange"), body);
+    }
+
     static String fault(String code, String subcode, String reason) {
         String subcodeXml = subcode == null ? "" : "<s:Subcode><s:Value>" + escape(subcode) + "</s:Value></s:Subcode>";
         String body = "<s:Fault><s:Code><s:Value>" + escape(code) + "</s:Value>" + subcodeXml + "</s:Code>"

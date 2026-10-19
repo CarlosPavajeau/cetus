@@ -122,6 +122,15 @@ public class IssuerResource {
                 onboarding.addRange(issuer(id), request, context.actor(), origin.resolve()));
     }
 
+    /** Asks the worker to compare an invoice range with the DIAN again. */
+    @POST
+    @Path("/{id}/numbering-ranges/{rangeId}/verification")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public IssuerViews.NumberingRangeView verifyRange(@PathParam("id") UUID id, @PathParam("rangeId") UUID rangeId) {
+        return IssuerViews.NumberingRangeView.from(onboarding.verifyRange(issuer(id), rangeId));
+    }
+
     private IssuerEntity issuer(UUID id) {
         return IssuerEntity.findForAccount(context.account().id, id)
                 .orElseThrow(() -> new NotFoundException("Issuer not found"));

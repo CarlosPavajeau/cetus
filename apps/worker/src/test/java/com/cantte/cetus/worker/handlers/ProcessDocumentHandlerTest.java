@@ -15,6 +15,7 @@ import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.support.FakeDian;
 import com.cantte.cetus.worker.support.FakeDian.Reply;
 import com.cantte.cetus.worker.support.FakeDianResource;
+import com.cantte.cetus.worker.support.FakeDocumentStorage;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -73,6 +74,9 @@ class ProcessDocumentHandlerTest {
                 Kind.SIGNED_XML, Kind.ZIP, Kind.DIAN_RESPONSE, Kind.APPLICATION_RESPONSE);
         assertThat(dian.operations()).containsExactly(SEND);
         assertThat(dian.calls().get(0).body()).contains("<wcf:fileName>z0900123456");
+        // Every artifact is written with the legal retention (Object Lock).
+        assertThat(QuarkusTransaction.requiringNew().call(() -> DocumentArtifactEntity.listByDocument(id)))
+                .allSatisfy(a -> assertThat(((FakeDocumentStorage) storage).isRetained(a.s3Key)).isTrue());
     }
 
     @Test

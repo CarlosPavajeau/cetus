@@ -36,6 +36,7 @@ rest-assured = { module = "io.rest-assured:rest-assured" }
 flyway-core = { module = "org.flywaydb:flyway-core" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
+testcontainers-localstack = { module = "org.testcontainers:localstack" }
 
 # AWS SDK v2 (versions managed by the AWS BOM)
 awssdk-kms = { module = "software.amazon.awssdk:kms" }

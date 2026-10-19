@@ -73,6 +73,23 @@ public final class DianSoapClient {
         return DianResponseParser.list(raw, "GetStatusZipResult");
     }
 
+    /**
+     * The numbering ranges the DIAN authorized for an issuer and software, with their technical keys.
+     *
+     * @param accountCode  NIT of the issuer
+     * @param accountCodeT NIT of the software provider: the issuer itself with "software propio"
+     * @param softwareCode the software ID registered in the DIAN portal
+     */
+    public NumberingRangeResponse getNumberingRange(String accountCode, String accountCodeT, String softwareCode,
+                                                    KeyMaterial keys) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("accountCode", accountCode);
+        params.put("accountCodeT", accountCodeT);
+        params.put("softwareCode", softwareCode);
+        String raw = call(DianOperation.GET_NUMBERING_RANGE, params, keys);
+        return DianResponseParser.numberingRanges(raw, "GetNumberingRangeResult");
+    }
+
     /** Builds and signs the envelope without sending it. Useful for tests and debugging. */
     public byte[] buildSignedEnvelope(DianOperation operation, Map<String, String> params, KeyMaterial keys) {
         SoapEnvelopeBuilder.Envelope envelope = SoapEnvelopeBuilder.build(url, operation, params);

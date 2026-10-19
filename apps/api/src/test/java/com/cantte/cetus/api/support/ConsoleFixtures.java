@@ -26,7 +26,11 @@ public final class ConsoleFixtures {
     }
 
     public static Onboarding onboard(ConsoleUser user, String nit) {
-        String issuerId = createIssuer(user, nit);
+        return completeSetup(user, createIssuer(user, nit));
+    }
+
+    /** Software, certificate and an invoice range for an issuer that already exists. */
+    public static Onboarding completeSetup(ConsoleUser user, String issuerId) {
         user.request()
                 .body(Map.of("softwareId", SOFTWARE_ID, "pin", PIN, "testSetId", UUID.randomUUID().toString()))
                 .put("/console/issuers/" + issuerId + "/software")

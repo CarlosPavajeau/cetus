@@ -80,7 +80,7 @@ así que arranca la consola primero.
 
 ## Mock local de la DIAN
 
-`apps/dian-mock` imita `WcfDianCustomerServices.svc` (SendBillSync, SendTestSetAsync, GetStatus, GetStatusZip)
+`apps/dian-mock` imita `WcfDianCustomerServices.svc` (SendBillSync, SendTestSetAsync, GetStatus, GetStatusZip, GetNumberingRange)
 para probar el flujo sin la DIAN ni un certificado de una CA acreditada:
 
 ```bash
@@ -273,6 +273,38 @@ link-local, CGNAT), no usa proxy y no sigue redirecciones. La verificación vive
 HTTP (OkHttp), así que se revisan las mismas IPs a las que se conecta: un host que responde una IP pública al
 validar y una interna al conectar (DNS rebinding) queda bloqueado. En dev y en pruebas,
 `cetus.webhooks.allow-private-targets=true` permite `localhost`.
+
+### Operación
+
+| Variable | Servicio | Uso |
+|---|---|---|
+| `CETUS_OPS_ALERT_EMAIL` | worker | Buzón de alertas operativas. Sin él, las alertas solo quedan en el log (`WARN`) |
+| `CETUS_STORAGE_RETENTION_DAYS` | worker | Días de bloqueo (Object Lock) de cada documento. En `prod`, 1826 por defecto |
+| `CETUS_RATE_LIMIT_REQUESTS_PER_SECOND`, `CETUS_RATE_LIMIT_BURST` | api | Límite por llave de API en `/v1/**` (por defecto 10 y 20) |
+
+- **Alertas.** El worker envía un correo (con la misma configuración de Resend) cuando algo necesita una
+  persona:
+  - Cada 5 minutos revisa jobs `DEAD`, documentos que llevan más de 15 minutos sin llegar a la DIAN y rangos
+    que no coinciden con los de la DIAN.
+  - Cada día a las 7:00 revisa certificados a menos de 30 días de vencer, y rangos con menos del 10 %
+    disponible o a menos de 30 días de su fin.
+  - Cada condición se avisa una vez y se repite como máximo cada 24 horas mientras siga (tabla `ops_alerts`).
+    Una condición resuelta se olvida, así que se avisa de nuevo si vuelve.
+  - Con varias réplicas, un advisory lock de Postgres hace que corra una sola a la vez.
+- **Retención.** Los artefactos de cada documento (XML firmado, zip, respuestas de la DIAN,
+  AttachedDocument, PDF) se escriben con Object Lock en modo compliance. Nadie puede alterarlos ni borrarlos
+  antes de que venza la retención, ni siquiera el root de AWS.
+  - El bucket debe crearse con Object Lock habilitado y **sin** retención por defecto. Los certificados
+    sellados de `certificates/` quedan sin bloquear.
+  - En local, LocalStack crea el bucket igual, pero sin retención.
+- **Límite de tasa.** Cada llave de API tiene un token bucket en memoria. Al pasarlo, la API responde
+  `429 rate_limited` con `Retry-After`. El límite es por réplica de la API.
+- **Verificación del rango.** Cuando el emisor ya tiene software y certificado, el worker consulta
+  `GetNumberingRange` por cada rango de factura y lo compara con lo registrado: prefijo, números, vigencia y
+  clave técnica.
+  - Una clave técnica mal digitada haría inválidos todos los CUFE. La consola muestra el resultado en la
+    columna "DIAN" y permite consultar de nuevo, y una diferencia genera una alerta.
+  - El mock local responde siempre con el rango de habilitación (`SETP`).
 
 ## Pendiente de validar contra la DIAN
 
