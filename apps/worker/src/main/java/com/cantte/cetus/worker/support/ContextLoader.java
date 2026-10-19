@@ -5,6 +5,7 @@ import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.MonetaryTotals;
 import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.calc.TaxTotal;
+import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
@@ -74,6 +75,9 @@ public class ContextLoader {
                 List.copyOf(doc.notes),
                 calculation(doc),
                 range.toAuthorization(),
+                reference(doc),
+                doc.correctionConcept,
+                doc.correctionDescription,
                 range.technicalKeySealed,
                 software.softwareId,
                 software.pinSealed,
@@ -82,6 +86,15 @@ public class ContextLoader {
                 doc.cufe,
                 doc.dianTrackId,
                 DianSubmissionEntity.lastSendUnanswered(doc.id));
+    }
+
+    /** The invoice a note corrects, or null for an invoice. */
+    private static BillingReference reference(DocumentEntity doc) {
+        if (doc.referencedDocumentId == null) {
+            return null;
+        }
+        DocumentEntity invoice = DocumentEntity.findById(doc.referencedDocumentId);
+        return new BillingReference(invoice.fullNumber(), invoice.cufe, invoice.issueDate);
     }
 
     /** Rebuilds the calculation stored at creation time. Never recalculated, so totals cannot drift. */

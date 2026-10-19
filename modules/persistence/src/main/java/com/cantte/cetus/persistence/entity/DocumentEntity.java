@@ -1,5 +1,6 @@
 package com.cantte.cetus.persistence.entity;
 
+import com.cantte.cetus.domain.model.CreditNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -12,6 +13,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PreUpdate;
@@ -78,6 +80,15 @@ public class DocumentEntity extends PanacheEntityBase {
     public BigDecimal prepaidAmount = BigDecimal.ZERO;
     @Column(name = "payable_amount")
     public BigDecimal payableAmount;
+    /** The invoice a note corrects. */
+    @Column(name = "referenced_document_id")
+    public UUID referencedDocumentId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "correction_concept")
+    public CreditNoteConcept correctionConcept;
+    @Column(name = "correction_description")
+    public String correctionDescription;
+    /** CUFE for invoices, CUDE for notes. */
     public String cufe;
     @Column(name = "dian_track_id")
     public String dianTrackId;
@@ -142,5 +153,36 @@ public class DocumentEntity extends PanacheEntityBase {
     public static Optional<DocumentEntity> findForAccount(UUID accountId, UUID documentId, Environment environment) {
         return find("id = ?1 and accountId = ?2 and environment = ?3", documentId, accountId, environment)
                 .firstResultOptional();
+    }
+
+    /** The document, locked until the transaction ends. Serializes the notes created against an invoice. */
+    public static Optional<DocumentEntity> lockForAccount(UUID accountId, UUID documentId, Environment environment) {
+        return find("id = ?1 and accountId = ?2 and environment = ?3", documentId, accountId, environment)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
+    }
+
+    /** Credit notes that reference the invoice, oldest first. */
+    public static List<DocumentEntity> creditNotesFor(UUID invoiceId) {
+        return list("referencedDocumentId = ?1 and documentType = ?2 order by createdAt, number",
+                invoiceId, DocumentType.CREDIT_NOTE);
+    }
+
+    /**
+     * Total of the credit notes that count against the invoice: accepted ones and those still in
+     * flight. Rejected or failed notes never reached the DIAN as valid documents, so they free their amount.
+     */
+    public static BigDecimal committedCreditTotal(UUID invoiceId) {
+        BigDecimal total = getEntityManager().createQuery("""
+                        select coalesce(sum(d.payableAmount), 0)
+                        from DocumentEntity d
+                        where d.referencedDocumentId = :invoiceId and d.documentType = :type
+                          and d.status not in (:rejected, :failed)""", BigDecimal.class)
+                .setParameter("invoiceId", invoiceId)
+                .setParameter("type", DocumentType.CREDIT_NOTE)
+                .setParameter("rejected", DocumentStatus.REJECTED)
+                .setParameter("failed", DocumentStatus.FAILED)
+                .getSingleResult();
+        return total == null ? BigDecimal.ZERO : total;
     }
 }

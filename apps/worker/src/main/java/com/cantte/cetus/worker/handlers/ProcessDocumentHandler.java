@@ -7,14 +7,9 @@ import com.cantte.cetus.dian.DianSoapClient;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.DianZip;
 import com.cantte.cetus.dian.UploadResponse;
-import com.cantte.cetus.domain.dian.Cufe;
 import com.cantte.cetus.domain.dian.DianFileNames;
-import com.cantte.cetus.domain.dian.QrCode;
-import com.cantte.cetus.domain.dian.SoftwareSecurityCode;
 import com.cantte.cetus.domain.model.DocumentType;
-import com.cantte.cetus.domain.model.ElectronicInvoice;
 import com.cantte.cetus.domain.model.Environment;
-import com.cantte.cetus.domain.model.SoftwareInfo;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.FileSequence;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
@@ -22,8 +17,10 @@ import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
-import com.cantte.cetus.ubl.InvoiceUblMapper;
 import com.cantte.cetus.ubl.UblMarshaller;
+import com.cantte.cetus.worker.builders.BuiltDocument;
+import com.cantte.cetus.worker.builders.DocumentBuilder;
+import com.cantte.cetus.worker.builders.DocumentSecrets;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.support.ArtifactStore;
@@ -34,6 +31,7 @@ import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.ResultRecorder;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 import org.w3c.dom.Document;
@@ -41,22 +39,24 @@ import org.w3c.dom.Document;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * Full pipeline for one document: CUFE → UBL → XAdES signature → zip → DIAN → result.
+ * Full pipeline for one document: CUFE/CUDE → UBL → XAdES signature → zip → DIAN → result. Only the
+ * first two steps depend on the document type; each type has its {@link DocumentBuilder}.
  *
  * <p>Idempotency towards the DIAN: if the previous attempt got no answer (timeout, I/O error, HTTP
  * error or SOAP fault), the document may already be registered, so the status is queried with the
- * CUFE before sending again.
+ * CUFE or CUDE before sending again.
  */
 @ApplicationScoped
 public class ProcessDocumentHandler implements JobHandler {
 
     private static final Logger LOG = Logger.getLogger(ProcessDocumentHandler.class);
 
-    private final InvoiceUblMapper mapper = new InvoiceUblMapper();
-    private final UblMarshaller marshaller = new UblMarshaller();
     private final XadesSigner signer = new XadesSigner();
 
     @Inject
@@ -75,6 +75,10 @@ public class ProcessDocumentHandler implements JobHandler {
     FileSequence fileSequence;
     @Inject
     ProviderSettings provider;
+    @Inject
+    Instance<DocumentBuilder> builderInstances;
+
+    private Map<DocumentType, DocumentBuilder> builders;
 
     @Override
     public String type() {
@@ -88,7 +92,8 @@ public class ProcessDocumentHandler implements JobHandler {
             return;
         }
         ProcessingContext ctx = loaded.get();
-        if (ctx.documentType() != DocumentType.INVOICE) {
+        DocumentBuilder builder = builders().get(ctx.documentType());
+        if (builder == null) {
             recorder.failed(ctx.documentId(), "Document type not supported yet: " + ctx.documentType());
             return;
         }
@@ -103,13 +108,13 @@ public class ProcessDocumentHandler implements JobHandler {
 
         String pin = cipher.openText(ctx.pinSealed());
         String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());
-        ElectronicInvoice invoice = assemble(ctx, pin, technicalKey);
-        recorder.cufe(ctx.documentId(), invoice.cufe());
+        BuiltDocument built = builder.build(ctx, new DocumentSecrets(pin, technicalKey));
+        recorder.cufe(ctx.documentId(), built.uniqueCode());
 
-        byte[] signedXml = buildSignedXml(invoice, keys);
+        byte[] signedXml = sign(built.unsigned(), keys);
         long sequence = fileSequence.next(ctx.issuerId(), ctx.issueDate().getYear());
         String nit = ctx.supplier().identificationNumber();
-        String xmlName = DianFileNames.xml(DocumentType.INVOICE, nit, provider.fileCode(), ctx.issueDate().getYear(), sequence);
+        String xmlName = DianFileNames.xml(ctx.documentType(), nit, provider.fileCode(), ctx.issueDate().getYear(), sequence);
         String zipName = DianFileNames.zip(nit, provider.fileCode(), ctx.issueDate().getYear(), sequence);
         byte[] zip = DianZip.single(xmlName, signedXml);
 
@@ -128,28 +133,16 @@ public class ProcessDocumentHandler implements JobHandler {
         recorder.failed(job.referenceId, "Gave up after " + job.attempts + " attempts: " + reason);
     }
 
-    private ElectronicInvoice assemble(ProcessingContext ctx, String pin, String technicalKey) {
-        String number = ctx.fullNumber();
-        String cufe = Cufe.compute(new Cufe.Input(number, ctx.issueDate(), ctx.issueTime(), ctx.calculation(),
-                ctx.supplier().identificationNumber(), ctx.customer().identificationNumber(), technicalKey,
-                ctx.environment()));
-        String qr = QrCode.invoice(number, ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
-                ctx.customer().identificationNumber(), ctx.calculation(), cufe, ctx.environment());
-        SoftwareInfo software = new SoftwareInfo(
-                provider.providerNit(ctx.supplier()),
-                provider.providerCheckDigit(ctx.supplier()),
-                ctx.softwareId(),
-                SoftwareSecurityCode.compute(ctx.softwareId(), pin, number));
-
-        return new ElectronicInvoice(ctx.environment(), ctx.operationType(), ctx.prefix(), ctx.number(),
-                ctx.issueDate(), ctx.issueTime(), ctx.dueDate(), ctx.currency(), ctx.supplier(), ctx.customer(),
-                ctx.payment(), ctx.calculation(), ctx.authorization(), software, cufe, qr, ctx.notes());
-    }
-
-    private byte[] buildSignedXml(ElectronicInvoice invoice, KeyMaterial keys) {
-        Document document = marshaller.toDocument(mapper.map(invoice));
+    private byte[] sign(Document document, KeyMaterial keys) {
         signer.sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         return XmlSupport.serialize(document);
+    }
+
+    private Map<DocumentType, DocumentBuilder> builders() {
+        if (builders == null) {
+            builders = builderInstances.stream().collect(Collectors.toMap(DocumentBuilder::type, Function.identity()));
+        }
+        return builders;
     }
 
     private void sendSync(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys, String zipName, byte[] zip) {

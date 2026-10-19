@@ -7,7 +7,10 @@ import com.cantte.cetus.domain.calc.CalculatedLine;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.calc.TaxAmount;
+import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.domain.model.Address;
+import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.IdentificationType;
@@ -43,7 +46,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Seeds, straight into the database, a TEST issuer ready to send with SendBillSync (software
- * without a test set id) and one invoice waiting to be processed.
+ * without a test set id) and one invoice, or a credit note on it, waiting to be processed.
  */
 @ApplicationScoped
 public class WorkerFixtures {
@@ -119,8 +122,46 @@ public class WorkerFixtures {
             range.technicalKeySealed = cipher.sealText("fc8eac422eba16e22ffd8c6f94b3f40a6e38162c");
             range.persist();
 
-            return document(account, issuer, range).id;
+            return document(account.id, issuer.id, range, DocumentType.INVOICE).id;
         });
+    }
+
+    /**
+     * Marks the invoice as accepted by the DIAN and creates, in RECEIVED, a credit note that cancels it,
+     * numbered in its own NC range without resolution or technical key. Returns the note id.
+     */
+    public UUID creditNote(UUID invoiceId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            DocumentEntity invoice = DocumentEntity.findById(invoiceId);
+            invoice.status = DocumentStatus.ACCEPTED;
+            invoice.cufe = Hashing.sha384Hex("cufe-" + invoice.id);
+
+            NumberingRangeEntity range = new NumberingRangeEntity();
+            range.id = Ids.newId();
+            range.issuerId = invoice.issuerId;
+            range.documentType = DocumentType.CREDIT_NOTE;
+            range.prefix = "NC";
+            range.rangeFrom = 1;
+            range.rangeTo = 99999999;
+            // CUDEs are unique too, and every seeded issuer shares the NIT.
+            range.nextNumber = ThreadLocalRandom.current().nextLong(1, 99999999);
+            range.persist();
+
+            DocumentEntity note = document(invoice.accountId, invoice.issuerId, range, DocumentType.CREDIT_NOTE);
+            note.referencedDocumentId = invoice.id;
+            note.correctionConcept = CreditNoteConcept.CANCELLATION;
+            note.correctionDescription = "Anulación por error en el valor";
+            return note.id;
+        });
+    }
+
+    /** The calculation of every seeded document. */
+    public static CalculationResult calculation() {
+        return new InvoiceCalculator().calculate(List.of(
+                new LineInput("SKU-1", "Servicio de consultoría", new BigDecimal("1"), "94", new BigDecimal("100000"),
+                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
+                new LineInput("SKU-2", "Libro", new BigDecimal("2"), "94", new BigDecimal("50"),
+                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("5"))))));
     }
 
     /** A job for the document as the claimer hands it over: RUNNING, on the given attempt. */
@@ -139,19 +180,15 @@ public class WorkerFixtures {
         });
     }
 
-    private static DocumentEntity document(AccountEntity account, IssuerEntity issuer, NumberingRangeEntity range) {
-        CalculationResult calculation = new InvoiceCalculator().calculate(List.of(
-                new LineInput("SKU-1", "Servicio de consultoría", new BigDecimal("1"), "94", new BigDecimal("100000"),
-                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
-                new LineInput("SKU-2", "Libro", new BigDecimal("2"), "94", new BigDecimal("50"),
-                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("5"))))));
+    private static DocumentEntity document(UUID accountId, UUID issuerId, NumberingRangeEntity range, DocumentType type) {
+        CalculationResult calculation = calculation();
 
         DocumentEntity doc = new DocumentEntity();
         doc.id = Ids.newId();
-        doc.accountId = account.id;
-        doc.issuerId = issuer.id;
+        doc.accountId = accountId;
+        doc.issuerId = issuerId;
         doc.environment = Environment.TEST;
-        doc.documentType = DocumentType.INVOICE;
+        doc.documentType = type;
         doc.numberingRangeId = range.id;
         doc.prefix = range.prefix;
         doc.number = range.take();

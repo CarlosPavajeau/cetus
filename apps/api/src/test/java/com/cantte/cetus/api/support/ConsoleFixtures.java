@@ -70,6 +70,13 @@ public final class ConsoleFixtures {
                 .then().statusCode(200).extract().path("id");
     }
 
+    /** A credit note range as the DIAN expects it: own prefix and consecutive, no resolution or technical key. */
+    public static String addCreditNoteRange(ConsoleUser user, String issuerId) {
+        Map<String, Object> request = Map.of("documentType", "CREDIT_NOTE", "prefix", "NC", "from", 1, "to", 99999999);
+        return user.request().body(request).post("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then().statusCode(200).extract().path("id");
+    }
+
     public static String certificateBase64() {
         try (InputStream in = ConsoleFixtures.class.getResourceAsStream("/test-signer.p12")) {
             return Base64.getEncoder().encodeToString(in.readAllBytes());

@@ -2,11 +2,15 @@ package com.cantte.cetus.worker.handlers;
 
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianTransportException;
+import com.cantte.cetus.aws.DocumentStorage;
+import com.cantte.cetus.domain.dian.Cufe;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.signing.XmlSupport;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.support.FakeDian;
 import com.cantte.cetus.worker.support.FakeDian.Reply;
@@ -18,6 +22,8 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +48,8 @@ class ProcessDocumentHandlerTest {
     FakeDian dian;
     @Inject
     WorkerFixtures fixtures;
+    @Inject
+    DocumentStorage storage;
 
     @BeforeEach
     void reset() {
@@ -65,6 +73,31 @@ class ProcessDocumentHandlerTest {
                 Kind.SIGNED_XML, Kind.ZIP, Kind.DIAN_RESPONSE, Kind.APPLICATION_RESPONSE);
         assertThat(dian.operations()).containsExactly(SEND);
         assertThat(dian.calls().get(0).body()).contains("<wcf:fileName>z0900123456");
+    }
+
+    @Test
+    void acceptedCreditNoteReferencesItsInvoiceAndUsesACude() {
+        dian.reply(SEND, Reply.fixture("send-bill-sync-accepted.xml"));
+        UUID invoiceId = fixtures.invoice();
+        UUID id = fixtures.creditNote(invoiceId);
+
+        process(id);
+
+        DocumentEntity note = document(id);
+        DocumentEntity invoice = document(invoiceId);
+        assertThat(note.status).isEqualTo(DocumentStatus.ACCEPTED);
+        // The CUDE takes the software PIN where the CUFE takes the technical key.
+        assertThat(note.cufe).isEqualTo(Cufe.compute(new Cufe.Input(note.fullNumber(), note.issueDate,
+                note.issueTime, WorkerFixtures.calculation(), "900123456", "900108281", "12345", Environment.TEST)));
+
+        DocumentArtifactEntity signed = artifact(id, Kind.SIGNED_XML);
+        assertThat(signed.s3Key).contains("/nc0900123456");
+        Document xml = XmlSupport.parse(storage.get(signed.s3Key));
+        assertThat(xml.getDocumentElement().getLocalName()).isEqualTo("CreditNote");
+        Element reference = (Element) xml.getElementsByTagNameNS("*", "InvoiceDocumentReference").item(0);
+        assertThat(reference.getElementsByTagNameNS("*", "ID").item(0).getTextContent()).isEqualTo(invoice.fullNumber());
+        assertThat(reference.getElementsByTagNameNS("*", "UUID").item(0).getTextContent()).isEqualTo(invoice.cufe);
+        assertThat(xml.getElementsByTagNameNS("*", "InvoiceControl").getLength()).isZero();
     }
 
     @Test
@@ -197,6 +230,11 @@ class ProcessDocumentHandlerTest {
     private static List<Kind> artifacts(UUID id) {
         return QuarkusTransaction.requiringNew().call(() ->
                 DocumentArtifactEntity.listByDocument(id).stream().map(a -> a.kind).toList());
+    }
+
+    private static DocumentArtifactEntity artifact(UUID id, Kind kind) {
+        return QuarkusTransaction.requiringNew().call(() -> DocumentArtifactEntity.listByDocument(id).stream()
+                .filter(a -> a.kind == kind).findFirst().orElseThrow());
     }
 
     private static List<DianSubmissionEntity> submissions(UUID id) {
