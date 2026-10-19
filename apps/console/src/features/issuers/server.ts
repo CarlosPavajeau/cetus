@@ -21,3 +21,26 @@ export const getIssuer = createServerFn({ method: "GET" })
       throw error;
     }
   });
+
+const promotionMessages: Record<string, string> = {
+  issuer_not_promotable: "Solo un emisor de pruebas en habilitación puede pasar a producción.",
+  issuer_already_promoted: "Este NIT ya tiene su emisor de producción.",
+};
+
+/** Creates the production issuer of a test issuer in habilitación and returns it. */
+export const promoteIssuer = createServerFn({ method: "POST" })
+  .validator(type({ id: "string.uuid" }))
+  .handler(async ({ data }) => {
+    try {
+      return await api.post("/console/issuers/{id}/promote", { params: { path: { id: data.id } } });
+    } catch (error) {
+      if (error instanceof CetusApiError) {
+        throw new Error(
+          promotionMessages[error.code] ??
+            "No pudimos crear el emisor de producción. Inténtalo de nuevo en unos minutos.",
+          { cause: error },
+        );
+      }
+      throw error;
+    }
+  });

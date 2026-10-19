@@ -108,7 +108,11 @@ export function IssuerStep({
               text: "Los códigos geográficos acompañan a cada ubicación para ayudarte a revisar la correspondencia.",
             },
           ]}
-          note="El entorno TEST es informativo. Cetus lo asigna automáticamente; no necesitas elegirlo."
+          note={
+            issuer?.environment === "LIVE"
+              ? "Este es el emisor de producción: sus facturas tienen validez fiscal ante la DIAN."
+              : "El entorno TEST es informativo. Cetus lo asigna automáticamente; no necesitas elegirlo."
+          }
         />
       }
     >

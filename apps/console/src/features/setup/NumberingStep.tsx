@@ -26,6 +26,18 @@ const habilitacion: NumberingValues = {
   technicalKey: "",
 };
 
+/** Production numbering is the issuer's own resolution: nothing comes filled in. */
+const empty: NumberingValues = {
+  resolutionNumber: "",
+  resolutionDate: "",
+  prefix: "",
+  from: "",
+  to: "",
+  validFrom: "",
+  validTo: "",
+  technicalKey: "",
+};
+
 /** Step 4: the resolution and the invoice numbering range. Saving it completes the setup. */
 export function NumberingStep({
   issuer,
@@ -39,7 +51,7 @@ export function NumberingStep({
   const add = useMutation({ mutationFn: addNumberingRange });
   const form = useForm({
     resolver: arktypeResolver(numberingSchema),
-    defaultValues: habilitacion,
+    defaultValues: issuer.environment === "TEST" ? habilitacion : empty,
   });
   const range = useWatch({ control: form.control });
   const { isSubmitting, errors } = form.formState;

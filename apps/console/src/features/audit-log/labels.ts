@@ -10,6 +10,7 @@ export const actionLabel: Record<AuditAction, string> = {
   CERTIFICATE_UPLOADED: "Certificado cargado",
   NUMBERING_RANGE_ADDED: "Rango de numeración agregado",
   ISSUER_STATUS_CHANGED: "Estado del emisor cambiado",
+  ISSUER_PROMOTED: "Emisor pasado a producción",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

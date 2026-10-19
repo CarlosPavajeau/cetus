@@ -192,6 +192,81 @@ public class IssuerOnboardingService {
     }
 
     /**
+     * Starts the production issuer of a test issuer that finished habilitación: same NIT and tax
+     * data, the same DIAN software (production keeps its ID and PIN, without a test set) and, when it
+     * has one, a copy of its certificate. Only the production numbering is left, so the new issuer
+     * stays in setup. Habilitación itself happens in the DIAN portal; Cetus cannot verify it.
+     */
+    @Transactional
+    public IssuerEntity promote(IssuerEntity test, Actor actor, RequestOrigin origin) {
+        if (test.environment != Environment.TEST || test.status != IssuerEntity.Status.TESTING) {
+            throw new DomainException("issuer_not_promotable",
+                    "Only a test issuer in habilitación can be promoted to production");
+        }
+        boolean promoted = IssuerEntity.count("accountId = ?1 and environment = ?2 and nit = ?3",
+                test.accountId, Environment.LIVE, test.nit) > 0;
+        if (promoted) {
+            throw new DomainException("issuer_already_promoted", "This NIT already has a production issuer");
+        }
+
+        IssuerEntity live = new IssuerEntity();
+        live.id = Ids.newId();
+        live.accountId = test.accountId;
+        live.environment = Environment.LIVE;
+        live.nit = test.nit;
+        live.checkDigit = test.checkDigit;
+        live.legalName = test.legalName;
+        live.tradeName = test.tradeName;
+        live.personType = test.personType;
+        live.taxLevelCodes = test.taxLevelCodes;
+        live.taxSchemeId = test.taxSchemeId;
+        live.taxSchemeName = test.taxSchemeName;
+        live.address = test.address;
+        live.email = test.email;
+        live.phone = test.phone;
+        live.operationMode = test.operationMode;
+        live.persist();
+
+        SoftwareCredentialEntity.findActive(test.id).ifPresent(software -> {
+            SoftwareCredentialEntity copy = new SoftwareCredentialEntity();
+            copy.id = Ids.newId();
+            copy.issuerId = live.id;
+            copy.softwareId = software.softwareId;
+            copy.pinSealed = software.pinSealed;
+            copy.persist();
+        });
+        boolean certificateCopied = SigningCertificateEntity.findActive(test.id)
+                .filter(certificate -> certificate.validTo.isAfter(OffsetDateTime.now()))
+                .map(certificate -> {
+                    SigningCertificateEntity copy = new SigningCertificateEntity();
+                    copy.id = Ids.newId();
+                    copy.issuerId = live.id;
+                    copy.s3Key = "certificates/" + live.id + "/" + copy.id + ".p12.sealed";
+                    // Still sealed: the bytes are copied as they are, never opened.
+                    storage.put(copy.s3Key, storage.get(certificate.s3Key), "application/octet-stream");
+                    copy.passwordSealed = certificate.passwordSealed;
+                    copy.subjectDn = certificate.subjectDn;
+                    copy.issuerDn = certificate.issuerDn;
+                    copy.serialNumber = certificate.serialNumber;
+                    copy.fingerprintSha256 = certificate.fingerprintSha256;
+                    copy.validFrom = certificate.validFrom;
+                    copy.validTo = certificate.validTo;
+                    copy.persist();
+                    return true;
+                })
+                .orElse(false);
+
+        audit(test, actor, origin, AuditAction.ISSUER_PROMOTED, Map.of("liveIssuerId", live.id));
+        audit(live, actor, origin, AuditAction.ISSUER_CREATED, Map.of(
+                "nit", live.nit,
+                "environment", live.environment,
+                "personType", live.personType,
+                "promotedFrom", test.id,
+                "certificateCopied", certificateCopied));
+        return live;
+    }
+
+    /**
      * An issuer with software, certificate and an active range is ready: TESTING in the test
      * environment (habilitación) or ENABLED in production. Habilitación itself happens in the
      * DIAN portal; mark LIVE issuers carefully. A status change is audited.
