@@ -2,7 +2,7 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.model.BillingReference;
-import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.CorrectionConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -39,7 +39,7 @@ public record ProcessingContext(
         CalculationResult calculation,
         NumberingAuthorization authorization,
         BillingReference reference,
-        CreditNoteConcept correctionConcept,
+        CorrectionConcept correctionConcept,
         String correctionDescription,
         byte[] technicalKeySealed,
         String softwareId,

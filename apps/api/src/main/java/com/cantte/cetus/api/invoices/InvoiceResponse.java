@@ -2,7 +2,9 @@ package com.cantte.cetus.api.invoices;
 
 import com.cantte.cetus.api.documents.DeliveryView;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.DebitNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -27,7 +29,9 @@ public record InvoiceResponse(
         @Schema(required = true, nullable = true) String externalReference,
         @Schema(required = true) OffsetDateTime createdAt,
         @Schema(required = true) List<CreditNoteSummary> creditNotes,
-        @Schema(required = true, description = "Payable amount not yet credited by accepted or in-flight credit notes")
+        @Schema(required = true) List<DebitNoteSummary> debitNotes,
+        @Schema(required = true, description = "What credit notes can still take: the payable amount plus accepted "
+                + "debit notes, minus accepted or in-flight credit notes")
         BigDecimal balance,
         @Schema(required = true, description = "Deliveries of the accepted invoice to the customer")
         List<DeliveryView> deliveries) {
@@ -52,13 +56,31 @@ public record InvoiceResponse(
             @Schema(required = true) DocumentStatus status,
             @Schema(required = true) CreditNoteConcept concept,
             @Schema(required = true) BigDecimal payable) {
+
+        static List<CreditNoteSummary> of(UUID invoiceId) {
+            return DocumentEntity.notesFor(invoiceId, DocumentType.CREDIT_NOTE).stream()
+                    .map(note -> new CreditNoteSummary(note.id, note.fullNumber(), note.status,
+                            (CreditNoteConcept) note.concept(), note.payableAmount))
+                    .toList();
+        }
+    }
+
+    public record DebitNoteSummary(
+            @Schema(required = true) UUID id,
+            @Schema(required = true) String number,
+            @Schema(required = true) DocumentStatus status,
+            @Schema(required = true) DebitNoteConcept concept,
+            @Schema(required = true) BigDecimal payable) {
+
+        static List<DebitNoteSummary> of(UUID invoiceId) {
+            return DocumentEntity.notesFor(invoiceId, DocumentType.DEBIT_NOTE).stream()
+                    .map(note -> new DebitNoteSummary(note.id, note.fullNumber(), note.status,
+                            (DebitNoteConcept) note.concept(), note.payableAmount))
+                    .toList();
+        }
     }
 
     public static InvoiceResponse from(DocumentEntity doc) {
-        List<CreditNoteSummary> creditNotes = DocumentEntity.creditNotesFor(doc.id).stream()
-                .map(note -> new CreditNoteSummary(note.id, note.fullNumber(), note.status, note.correctionConcept,
-                        note.payableAmount))
-                .toList();
         return new InvoiceResponse(
                 doc.id,
                 doc.environment,
@@ -72,8 +94,9 @@ public record InvoiceResponse(
                 new Dian(doc.dianStatusCode, doc.dianStatusMessage, List.copyOf(doc.dianErrors), doc.validatedAt),
                 doc.externalReference,
                 doc.createdAt,
-                creditNotes,
-                doc.payableAmount.subtract(DocumentEntity.committedCreditTotal(doc.id)),
+                CreditNoteSummary.of(doc.id),
+                DebitNoteSummary.of(doc.id),
+                DocumentEntity.creditableBalance(doc),
                 DeliveryView.of(doc.id));
     }
 }

@@ -101,6 +101,31 @@ class ProcessDocumentHandlerTest {
     }
 
     @Test
+    void acceptedDebitNoteReferencesItsInvoiceAndUsesACude() {
+        dian.reply(SEND, Reply.fixture("send-bill-sync-accepted.xml"));
+        UUID invoiceId = fixtures.invoice();
+        UUID id = fixtures.debitNote(invoiceId);
+
+        process(id);
+
+        DocumentEntity note = document(id);
+        DocumentEntity invoice = document(invoiceId);
+        assertThat(note.status).isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(note.cufe).isEqualTo(Cufe.compute(new Cufe.Input(note.fullNumber(), note.issueDate,
+                note.issueTime, WorkerFixtures.calculation(), "900123456", "900108281", "12345", Environment.TEST)));
+
+        DocumentArtifactEntity signed = artifact(id, Kind.SIGNED_XML);
+        assertThat(signed.s3Key).contains("/nd0900123456");
+        Document xml = XmlSupport.parse(storage.get(signed.s3Key));
+        assertThat(xml.getDocumentElement().getLocalName()).isEqualTo("DebitNote");
+        Element discrepancy = (Element) xml.getElementsByTagNameNS("*", "DiscrepancyResponse").item(0);
+        assertThat(discrepancy.getElementsByTagNameNS("*", "ResponseCode").item(0).getTextContent()).isEqualTo("1");
+        Element reference = (Element) xml.getElementsByTagNameNS("*", "InvoiceDocumentReference").item(0);
+        assertThat(reference.getElementsByTagNameNS("*", "UUID").item(0).getTextContent()).isEqualTo(invoice.cufe);
+        assertThat(xml.getElementsByTagNameNS("*", "RequestedMonetaryTotal").getLength()).isEqualTo(1);
+    }
+
+    @Test
     void acceptedWithNotificationsKeepsThem() {
         dian.reply(SEND, Reply.fixture("send-bill-sync-accepted-with-notifications.xml"));
         UUID id = fixtures.invoice();

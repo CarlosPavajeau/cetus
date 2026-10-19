@@ -25,8 +25,9 @@ public final class QrCode {
         return content(number, date, time, supplierNit, customerId, calc, "CUFE", cufe, env);
     }
 
-    public static String creditNote(String number, LocalDate date, LocalTime time, String supplierNit,
-                                    String customerId, CalculationResult calc, String cude, Environment env) {
+    /** QR of a credit or debit note, which carries its CUDE. */
+    public static String note(String number, LocalDate date, LocalTime time, String supplierNit,
+                              String customerId, CalculationResult calc, String cude, Environment env) {
         return content(number, date, time, supplierNit, customerId, calc, "CUDE", cude, env);
     }
 

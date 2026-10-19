@@ -3,7 +3,9 @@ package com.cantte.cetus.worker.delivery;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.BillingReference;
+import com.cantte.cetus.domain.model.CorrectionConcept;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.DebitNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -71,6 +73,21 @@ class PdfRendererTest {
                 .doesNotContain("Autorización de numeración");
     }
 
+    @Test
+    void aDebitNoteShowsTheInvoiceItAddsToAndItsConcept() throws IOException {
+        BillingReference reference = new BillingReference("SETP990000001", "b".repeat(96), LocalDate.of(2026, 10, 17));
+        byte[] pdf = new PdfRenderer().render(context(DocumentType.DEBIT_NOTE, "ND", 1, reference), CUFE, LEGEND);
+        write("sample-debit-note.pdf", pdf);
+
+        String text = text(pdf);
+        assertThat(text)
+                .contains("NOTA DÉBITO ELECTRÓNICA", "No. ND1")
+                .contains("SETP990000001", "b".repeat(96))
+                .contains("1 - Intereses", "Intereses de mora")
+                .contains("Total nota", "CUDE:")
+                .doesNotContain("Autorización de numeración");
+    }
+
     /** Kept in build/pdf/ to look at the template when changing it. */
     private static void write(String name, byte[] pdf) throws IOException {
         Files.createDirectories(OUTPUT);
@@ -93,13 +110,23 @@ class PdfRendererTest {
                 "Cetus Pruebas SAS", null, List.of("O-13"), "01", "IVA", ADDRESS, "facturas@cetus.test", "3001234567");
         Party customer = new Party(PersonType.LEGAL_ENTITY, IdentificationType.NIT, "900108281", "3",
                 "OPTICAS GMO COLOMBIA S A S", null, List.of("R-99-PN"), "01", "IVA", ADDRESS, "compras@example.com", null);
-        boolean note = type == DocumentType.CREDIT_NOTE;
+        boolean note = type != DocumentType.INVOICE;
+        CorrectionConcept concept = switch (type) {
+            case INVOICE -> null;
+            case CREDIT_NOTE -> CreditNoteConcept.CANCELLATION;
+            case DEBIT_NOTE -> DebitNoteConcept.INTEREST;
+        };
+        String reason = switch (type) {
+            case INVOICE -> null;
+            case CREDIT_NOTE -> "Anulación por error en el valor";
+            case DEBIT_NOTE -> "Intereses de mora";
+        };
         return new ProcessingContext(Ids.newId(), Ids.newId(), Environment.TEST, type, "10", prefix, number,
                 LocalDate.of(2026, 10, 18), LocalTime.of(10, 30), null, "COP", supplier, customer,
                 new PaymentInfo("1", "10", null), List.of(), WorkerFixtures.calculation(),
                 note ? null : new NumberingAuthorization("18760000001", LocalDate.of(2019, 1, 19), LocalDate.of(2030, 1, 19),
                         "SETP", 990000000, 995000000),
-                reference, note ? CreditNoteConcept.CANCELLATION : null, note ? "Anulación por error en el valor" : null,
+                reference, concept, reason,
                 null, "software-id", null, null, null, CUFE, null, false, DocumentStatus.ACCEPTED,
                 OffsetDateTime.of(2026, 10, 19, 2, 5, 9, 0, ZoneOffset.UTC));
     }

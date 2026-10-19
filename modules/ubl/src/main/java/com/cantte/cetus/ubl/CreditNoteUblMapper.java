@@ -3,7 +3,6 @@ package com.cantte.cetus.ubl;
 import com.cantte.cetus.domain.calc.CalculatedLine;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.dian.DianTime;
-import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.ElectronicCreditNote;
 import com.cantte.cetus.ubl.model.AmountType;
@@ -42,17 +41,8 @@ public final class CreditNoteUblMapper {
         ubl.documentCurrencyCode = currency;
         ubl.lineCountNumeric = calc.lines().size();
 
-        BillingReference reference = note.reference();
-        ubl.discrepancyResponse = new Cac.DiscrepancyResponse();
-        ubl.discrepancyResponse.referenceId = reference.number();
-        ubl.discrepancyResponse.responseCode = note.concept().dianCode();
-        ubl.discrepancyResponse.description = note.concept().dianName();
-
-        ubl.billingReference = new Cac.BillingReference();
-        ubl.billingReference.invoiceDocumentReference = new Cac.DocumentReference();
-        ubl.billingReference.invoiceDocumentReference.id = reference.number();
-        ubl.billingReference.invoiceDocumentReference.uuid = IdentifierType.of(reference.cufe()).scheme(null, "CUFE-SHA384");
-        ubl.billingReference.invoiceDocumentReference.issueDate = DianTime.date(reference.issueDate());
+        ubl.discrepancyResponse = UblParts.discrepancyResponse(note.reference(), note.concept());
+        ubl.billingReference = UblParts.billingReference(note.reference());
 
         ubl.supplier = UblParts.supplier(note.supplier(), note.prefix());
         ubl.customer = UblParts.customer(note.customer());

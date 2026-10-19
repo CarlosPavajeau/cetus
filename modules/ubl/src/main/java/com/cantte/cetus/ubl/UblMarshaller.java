@@ -4,6 +4,7 @@ import com.cantte.cetus.ubl.model.DianExtensions;
 import com.cantte.cetus.ubl.model.Ns;
 import com.cantte.cetus.ubl.model.UblAttachedDocument;
 import com.cantte.cetus.ubl.model.UblCreditNote;
+import com.cantte.cetus.ubl.model.UblDebitNote;
 import com.cantte.cetus.ubl.model.UblInvoice;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
@@ -26,6 +27,12 @@ public final class UblMarshaller {
 
     public Document toDocument(UblCreditNote creditNote) {
         Document document = marshal(creditNote);
+        useDefaultNamespace(document);
+        return document;
+    }
+
+    public Document toDocument(UblDebitNote debitNote) {
+        Document document = marshal(debitNote);
         useDefaultNamespace(document);
         return document;
     }
@@ -103,8 +110,8 @@ public final class UblMarshaller {
 
     private static JAXBContext createContext() {
         try {
-            return JAXBContext.newInstance(UblInvoice.class, UblCreditNote.class, UblAttachedDocument.class,
-                    DianExtensions.class);
+            return JAXBContext.newInstance(UblInvoice.class, UblCreditNote.class, UblDebitNote.class,
+                    UblAttachedDocument.class, DianExtensions.class);
         } catch (JAXBException e) {
             throw new ExceptionInInitializerError(e);
         }

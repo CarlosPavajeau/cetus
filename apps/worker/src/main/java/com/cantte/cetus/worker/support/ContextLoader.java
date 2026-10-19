@@ -76,7 +76,7 @@ public class ContextLoader {
                 calculation(doc),
                 range.toAuthorization(),
                 reference(doc),
-                doc.correctionConcept,
+                doc.concept(),
                 doc.correctionDescription,
                 range.technicalKeySealed,
                 software.softwareId,
