@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.quarkus.arc)
     implementation(libs.quarkus.scheduler)
     implementation(libs.quarkus.smallrye.health)
+    implementation(libs.quarkus.logging.json)
     // Graphic representation (PDF) and its QR code.
     implementation(libs.openpdf)
     implementation(libs.zxing.core)

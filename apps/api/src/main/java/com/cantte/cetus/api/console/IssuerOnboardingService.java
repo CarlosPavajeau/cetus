@@ -123,7 +123,9 @@ public class IssuerOnboardingService {
         try {
             keys = Pkcs12Loader.load(pkcs12, request.password().toCharArray());
         } catch (SigningException e) {
-            throw new DomainException("certificate_invalid", e.getMessage());
+            // Low-level keystore errors stay out of the response; only our own messages are shown.
+            throw new DomainException("certificate_invalid", e.getCause() == null ? e.getMessage()
+                    : "Could not read the PKCS#12 file: check the file and its password");
         }
         var certificate = keys.certificate();
         OffsetDateTime validTo = certificate.getNotAfter().toInstant().atOffset(ZoneOffset.UTC);

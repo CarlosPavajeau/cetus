@@ -1,0 +1,24 @@
+# Build context for apps/*/Dockerfile (built from the repository root).
+.git
+.github
+.idea
+.vscode
+.gradle
+**/build
+**/node_modules
+apps/console/dist
+apps/console/.output
+apps/console/.tanstack
+**/test-results
+**/playwright-report
+.logs
+
+# Never ship secrets or local certificates in an image.
+.env
+.env.*
+**/.env
+**/.env.*
+*.p12
+*.pfx
+*.pem
+!**/src/test/resources/**

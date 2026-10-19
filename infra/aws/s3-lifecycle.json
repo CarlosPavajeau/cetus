@@ -1,0 +1,25 @@
+{
+  "Rules": [
+    {
+      "ID": "documents-tiering",
+      "Filter": { "Prefix": "documents/" },
+      "Status": "Enabled",
+      "Transitions": [
+        { "Days": 90, "StorageClass": "STANDARD_IA" },
+        { "Days": 365, "StorageClass": "GLACIER_IR" }
+      ]
+    },
+    {
+      "ID": "noncurrent-versions",
+      "Filter": {},
+      "Status": "Enabled",
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 30 }
+    },
+    {
+      "ID": "incomplete-uploads",
+      "Filter": {},
+      "Status": "Enabled",
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+    }
+  ]
+}

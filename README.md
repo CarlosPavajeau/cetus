@@ -168,19 +168,29 @@ curl -X POST http://localhost:8080/v1/invoices \
 
 ## Despliegue en Railway
 
-Cuatro servicios desde el mismo repositorio, con el directorio raíz en la raíz del repo:
+Tres servicios desde el mismo repositorio, con el directorio raíz en la raíz del repo. Cada uno define su
+build y su despliegue en un `railway.json` (en Railway: *Settings → Config-as-code*):
 
-| Servicio | Dockerfile | Pre-deploy |
-|---|---|---|
-| api | `apps/api/Dockerfile` | migraciones Flyway (o `migrate-at-start`) |
-| worker | `apps/worker/Dockerfile` | — |
-| console | `apps/console/Dockerfile` | `pnpm db:migrate` |
+| Servicio | Config | Health check | Pre-deploy |
+|---|---|---|---|
+| api | `apps/api/railway.json` | `/q/health/ready` | — (Flyway migra al arrancar) |
+| worker | `apps/worker/railway.json` | `/q/health/ready` | — |
+| console | `apps/console/railway.json` | `/sign-in` | `pnpm db:migrate` |
 
 Variables principales: `CETUS_DB_URL`, `CETUS_DB_USER`, `CETUS_DB_PASSWORD`, `CETUS_KMS_KEY_ID`,
-`CETUS_DOCUMENTS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (API y worker);
-`CETUS_AUTH_JWKS_URL` (URL privada de la consola) y `CETUS_AUTH_ISSUER` (URL pública) en la API;
-`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CETUS_API_URL` (URL privada de la API) en la consola.
-Los endpoints `/console/*` solo deberían ser accesibles por la red privada.
+`CETUS_DOCUMENTS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (API y worker, cada uno
+con su propio usuario IAM); `CETUS_AUTH_JWKS_URL` (URL privada de la consola) y `CETUS_AUTH_ISSUER` (URL
+pública) en la API; `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CETUS_API_URL` (URL privada de
+la API) en la consola. Las URL privadas se arman con referencias, p. ej.
+`http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`.
+
+- En el perfil `prod`, la API y el worker escuchan en `::` (la red privada de Railway es IPv6) y escriben
+  logs en JSON.
+- `infra/aws/` tiene las políticas IAM de mínimo privilegio de cada servicio (`iam-cetus-prod-*.json`) y el
+  ciclo de vida del bucket (`s3-lifecycle.json`). La API solo sella secretos (`kms:GenerateDataKey`) y el
+  worker solo los abre (`kms:Decrypt`).
+- Los endpoints `/console/*` y `/q/*` solo deberían ser accesibles por la red privada: bloquéalos en el
+  proxy delante de la API (p. ej. una regla WAF de Cloudflare).
 
 ### Entrega por correo (Resend)
 

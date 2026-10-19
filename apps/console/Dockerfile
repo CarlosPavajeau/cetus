@@ -2,9 +2,9 @@
 FROM node:22-slim AS build
 WORKDIR /app
 RUN corepack enable
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/console/package.json apps/console/
-RUN pnpm install --filter @cetus/console...
+RUN pnpm install --frozen-lockfile --filter @cetus/console...
 COPY apps/console apps/console
 RUN pnpm --filter @cetus/console build
 
