@@ -119,6 +119,12 @@ function detail(entry: ActivityEntry): string {
       return `${label(issuerStatusLabel, data.from)} → ${label(issuerStatusLabel, data.to)}`;
     case "ISSUER_PROMOTED":
       return "Se creó su emisor de producción";
+    case "WEBHOOK_ENDPOINT_DISABLED":
+      return `${text(data.url)} · ${label(environmentLabel, data.environment)}${data.reason === "AUTOMATIC" ? ` · por ${text(data.consecutiveFailures)} fallas seguidas` : ""}`;
+    case "WEBHOOK_ENDPOINT_CREATED":
+    case "WEBHOOK_ENDPOINT_ENABLED":
+    case "WEBHOOK_DELIVERY_RETRIED":
+      return `${text(data.url)} · ${label(environmentLabel, data.environment)}`;
   }
 }
 

@@ -94,7 +94,7 @@ public class ProcessDocumentHandler implements JobHandler {
         ProcessingContext ctx = loaded.get();
         DocumentBuilder builder = builders().get(ctx.documentType());
         if (builder == null) {
-            recorder.failed(ctx.documentId(), "Document type not supported yet: " + ctx.documentType());
+            recorder.gaveUp(ctx.documentId(), "Document type not supported yet: " + ctx.documentType());
             return;
         }
 
@@ -130,7 +130,7 @@ public class ProcessDocumentHandler implements JobHandler {
 
     @Override
     public void onDead(JobEntity job, String reason) {
-        recorder.failed(job.referenceId, "Gave up after " + job.attempts + " attempts: " + reason);
+        recorder.gaveUp(job.referenceId, "Gave up after " + job.attempts + " attempts: " + reason);
     }
 
     private byte[] sign(Document document, KeyMaterial keys) {
@@ -182,7 +182,7 @@ public class ProcessDocumentHandler implements JobHandler {
         recorder.submission(ctx.documentId(), "SendTestSetAsync", upload.zipKey(), false, null, upload.errors(),
                 System.currentTimeMillis() - start);
         if (upload.zipKey() == null) {
-            recorder.failed(ctx.documentId(), "DIAN did not return a ZipKey: " + String.join("; ", upload.errors()));
+            recorder.gaveUp(ctx.documentId(), "DIAN did not return a ZipKey: " + String.join("; ", upload.errors()));
             return;
         }
         recorder.submitted(ctx.documentId(), upload.zipKey());

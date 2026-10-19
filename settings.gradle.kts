@@ -23,6 +23,7 @@ include(
     "modules:dian-client",
     "modules:aws",
     "modules:email",
+    "modules:webhooks",
     "apps:api",
     "apps:worker",
     "apps:dian-mock",

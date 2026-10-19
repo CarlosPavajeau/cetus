@@ -25,7 +25,11 @@ public final class IssuedDocuments {
     }
 
     public static Issuer issuer(String name) {
-        ConsoleUser user = ConsoleUser.newOrganization();
+        return issuer(ConsoleUser.newOrganization(), name);
+    }
+
+    /** Like {@link #issuer(String)}, for a console user the test keeps using. */
+    public static Issuer issuer(ConsoleUser user, String name) {
         ConsoleFixtures.bootstrap(user, name);
         String issuerId = ConsoleFixtures.onboard(user).issuerId();
         String key = user.request().body(Map.of("name", "ERP", "environment", "TEST"))

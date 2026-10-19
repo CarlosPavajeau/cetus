@@ -75,7 +75,7 @@ public class CheckTestSetStatusHandler implements JobHandler {
 
     @Override
     public void onDead(JobEntity job, String reason) {
-        recorder.failed(job.referenceId, "Gave up checking the test set status: " + reason);
+        recorder.gaveUp(job.referenceId, "Gave up checking the test set status: " + reason);
     }
 
     /**

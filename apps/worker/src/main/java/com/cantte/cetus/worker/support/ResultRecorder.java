@@ -10,6 +10,9 @@ import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import com.cantte.cetus.webhooks.WebhookEventType;
+import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
+import com.cantte.cetus.webhooks.WebhookPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -26,6 +29,8 @@ public class ResultRecorder {
 
     @Inject
     JobQueue jobs;
+    @Inject
+    WebhookPublisher webhooks;
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void artifact(UUID documentId, DocumentArtifactEntity.Kind kind, DocumentStorage.StoredObject stored) {
@@ -86,6 +91,8 @@ public class ResultRecorder {
             // Same transaction as the status change: an accepted document is always delivered.
             jobs.enqueue(JobTypes.DELIVER_DOCUMENT, documentId);
         }
+        webhooks.publish(WebhookEventType.forDocument(doc.documentType,
+                response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED), doc);
     }
 
     /** The DIAN accepted the issuer's test set; the API stops taking test invoices for it. */
@@ -94,6 +101,10 @@ public class ResultRecorder {
         SoftwareCredentialEntity.markTestSetAccepted(issuerId, testSetId);
     }
 
+    /**
+     * A failed attempt. The job may still retry it (and the document go back to PROCESSING), so integrators
+     * are not told yet: {@link #gaveUp} does that once nothing will run again.
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void failed(UUID documentId, String message) {
         DocumentEntity doc = DocumentEntity.findById(documentId);
@@ -101,5 +112,17 @@ public class ResultRecorder {
             doc.status = DocumentStatus.FAILED;
             doc.dianStatusMessage = message;
         }
+    }
+
+    /** The document stays FAILED for good: no job will process it again. Publishes the failed event once. */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void gaveUp(UUID documentId, String message) {
+        DocumentEntity doc = DocumentEntity.findById(documentId);
+        if (doc.status.isFinal()) {
+            return;
+        }
+        doc.status = DocumentStatus.FAILED;
+        doc.dianStatusMessage = message;
+        webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
     }
 }

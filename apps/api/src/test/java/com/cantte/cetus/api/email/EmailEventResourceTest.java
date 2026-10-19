@@ -1,9 +1,13 @@
 package com.cantte.cetus.api.email;
 
+import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.api.support.IssuedDocuments.Issuer;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity.Status;
+import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
+import com.cantte.cetus.persistence.entity.WebhookEventEntity;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
@@ -12,6 +16,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.cantte.cetus.api.support.IssuedDocuments.api;
@@ -71,6 +77,33 @@ class EmailEventResourceTest {
     }
 
     @Test
+    void deliveryOutcomesArePublishedOnceToWebhooks() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        Issuer issuer = IssuedDocuments.issuer(user, "Webhooks SAS");
+        user.request().body(Map.of("url", "https://hooks.example.com", "environment", "TEST"))
+                .post("/console/webhook-endpoints").then().statusCode(200);
+        UUID delivered = IssuedDocuments.invoice(issuer);
+        String deliveredEmail = "email-" + UUID.randomUUID();
+        IssuedDocuments.sentDelivery(delivered, deliveredEmail);
+        UUID bounced = IssuedDocuments.invoice(issuer);
+        String bouncedEmail = "email-" + UUID.randomUUID();
+        IssuedDocuments.sentDelivery(bounced, bouncedEmail);
+
+        post(event("email.delivered", deliveredEmail, "")).then().statusCode(200);
+        post(event("email.delivered", deliveredEmail, "")).then().statusCode(200);
+        post(event("email.bounced", bouncedEmail, ",\"bounce\":{\"message\":\"Mailbox full\"}")).then().statusCode(200);
+
+        assertThat(eventTypes(delivered)).containsExactly("document.delivered");
+        assertThat(eventTypes(bounced)).containsExactly("document.delivery_failed");
+        String payload = QuarkusTransaction.requiringNew().call(() ->
+                WebhookEventEntity.<WebhookEventEntity>find("documentId", bounced).singleResult().payload);
+        assertThat(payload).contains("\"status\":\"BOUNCED\"").contains("Mailbox full");
+        assertThat(QuarkusTransaction.requiringNew().call(() -> WebhookDeliveryEntity.count(
+                "eventId in (select e.id from WebhookEventEntity e where e.documentId in ?1)", List.of(delivered, bounced))))
+                .isEqualTo(2);
+    }
+
+    @Test
     void otherEventsAndUnknownEmailsAreAcknowledged() {
         post(event("email.opened", "email-unknown", "")).then().statusCode(200);
         post(event("email.delivered", "email-" + UUID.randomUUID(), "")).then().statusCode(200);
@@ -98,6 +131,11 @@ class EmailEventResourceTest {
         given().contentType(ContentType.JSON).body(body).post("/internal/email-events").then().statusCode(401);
 
         assertThat(IssuedDocuments.delivery(deliveryId).status).isEqualTo(Status.SENT);
+    }
+
+    private static List<String> eventTypes(UUID documentId) {
+        return QuarkusTransaction.requiringNew().call(() -> WebhookEventEntity.<WebhookEventEntity>list("documentId", documentId)
+                .stream().map(e -> e.type).toList());
     }
 
     private static io.restassured.response.Response post(String body) {

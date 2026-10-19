@@ -4,6 +4,10 @@ import com.cantte.cetus.api.error.ApiError;
 import com.cantte.cetus.email.ResendWebhookVerifier;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity.Status;
+import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.webhooks.WebhookEventType;
+import com.cantte.cetus.webhooks.WebhookPublisher;
+import com.cantte.cetus.webhooks.WebhookPublisher.DeliveryInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -35,6 +39,8 @@ public class EmailEventResource {
 
     @Inject
     ObjectMapper json;
+    @Inject
+    WebhookPublisher webhooks;
 
     private final Optional<ResendWebhookVerifier> verifier;
 
@@ -70,7 +76,7 @@ public class EmailEventResource {
         return Response.ok().build();
     }
 
-    private static void apply(String emailId, Status status, String reason, OffsetDateTime at) {
+    private void apply(String emailId, Status status, String reason, OffsetDateTime at) {
         QuarkusTransaction.requiringNew().run(() -> {
             Optional<DocumentDeliveryEntity> found = DocumentDeliveryEntity.findByProviderMessageId(emailId);
             if (found.isEmpty()) {
@@ -82,11 +88,19 @@ public class EmailEventResource {
             // Events can arrive out of order: a late "delivered" never hides a bounce or a complaint.
             boolean downgrade = status == Status.DELIVERED
                     && (delivery.status == Status.BOUNCED || delivery.status == Status.COMPLAINED || delivery.status == Status.FAILED);
+            boolean changed = !downgrade && delivery.status != status;
             if (!downgrade) {
                 delivery.status = status;
                 if (reason != null) {
                     delivery.error = reason;
                 }
+            }
+            if (changed) {
+                // Same transaction as the change; a repeated event changes nothing and publishes nothing.
+                webhooks.publish(status == Status.DELIVERED ? WebhookEventType.DOCUMENT_DELIVERED
+                                : WebhookEventType.DOCUMENT_DELIVERY_FAILED,
+                        DocumentEntity.findById(delivery.documentId),
+                        new DeliveryInfo(status.name(), delivery.recipient, delivery.error));
             }
             if (delivery.lastEventAt == null || at.isAfter(delivery.lastEventAt)) {
                 delivery.lastEventAt = at;
