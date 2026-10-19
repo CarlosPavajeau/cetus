@@ -54,6 +54,20 @@ class InvoiceUblMapperTest {
     }
 
     @Test
+    void theSupplierCarriesTheNumberingPrefixAsItsBillingPoint() throws Exception {
+        Document doc = new UblMarshaller().toDocument(new InvoiceUblMapper().map(sampleInvoice()));
+
+        // FAB10a: sts:Prefix must equal the supplier's CorporateRegistrationScheme/ID.
+        Element supplier = (Element) doc.getElementsByTagNameNS(Ns.CAC, "AccountingSupplierParty").item(0);
+        Element scheme = (Element) supplier.getElementsByTagNameNS(Ns.CAC, "CorporateRegistrationScheme").item(0);
+        assertThat(scheme.getElementsByTagNameNS(Ns.CBC, "ID").item(0).getTextContent())
+                .isEqualTo(text(doc, Ns.STS, "Prefix"))
+                .isEqualTo("SETP");
+        Element customer = (Element) doc.getElementsByTagNameNS(Ns.CAC, "AccountingCustomerParty").item(0);
+        assertThat(customer.getElementsByTagNameNS(Ns.CAC, "CorporateRegistrationScheme").getLength()).isZero();
+    }
+
+    @Test
     void theSignedDocumentKeepsItsSignatureAfterSerialization() throws Exception {
         Document doc = new UblMarshaller().toDocument(new InvoiceUblMapper().map(sampleInvoice()));
         try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
