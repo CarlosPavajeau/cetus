@@ -30,6 +30,8 @@ import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
+import com.cantte.cetus.webhooks.WebhookSignature;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -164,6 +166,27 @@ public class WorkerFixtures {
             note.correctionConcept = concept;
             note.correctionDescription = description;
             return note.id;
+        });
+    }
+
+    /** A webhook endpoint registered as the console does it, with its secret in clear for the test. */
+    public record Endpoint(UUID id, String secret) {
+    }
+
+    /** Registers an active endpoint for the document's account; no event types means all of them. */
+    public Endpoint webhookEndpoint(UUID documentId, Environment environment, String url, String... eventTypes) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            DocumentEntity doc = DocumentEntity.findById(documentId);
+            String secret = WebhookSignature.newSecret();
+            WebhookEndpointEntity endpoint = new WebhookEndpointEntity();
+            endpoint.id = Ids.newId();
+            endpoint.accountId = doc.accountId;
+            endpoint.environment = environment;
+            endpoint.url = url;
+            endpoint.eventTypes = eventTypes;
+            endpoint.secretSealed = cipher.sealText(secret);
+            endpoint.persist();
+            return new Endpoint(endpoint.id, secret);
         });
     }
 

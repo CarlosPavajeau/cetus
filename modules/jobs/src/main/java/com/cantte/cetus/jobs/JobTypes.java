@@ -8,6 +8,8 @@ public final class JobTypes {
     public static final String CHECK_TEST_SET_STATUS = "CHECK_TEST_SET_STATUS";
     /** Build the AttachedDocument and the PDF, and email them to the customer. reference_id = document id. */
     public static final String DELIVER_DOCUMENT = "DELIVER_DOCUMENT";
+    /** POST a webhook event to one endpoint. reference_id = webhook delivery id. */
+    public static final String DELIVER_WEBHOOK = "DELIVER_WEBHOOK";
 
     private JobTypes() {
     }

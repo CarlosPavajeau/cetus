@@ -209,6 +209,52 @@ Las entregas aparecen en `deliveries` de `GET /v1/{invoices|credit-notes|debit-n
 archivos se descargan con `GET /v1/{invoices|credit-notes|debit-notes}/{id}/files/{xml|pdf|attached-document}`, que responde una URL
 prefirmada de S3 válida por 5 minutos.
 
+### Webhooks
+
+Los integradores registran URLs que reciben un `POST` firmado cuando cambia uno de sus documentos, sin
+consultar en ciclo. Se administran desde `/console/webhook-endpoints` (por ambiente, con un filtro opcional de
+eventos). El secreto `whsec_…` se muestra una sola vez, al crear el endpoint, y se guarda sellado con KMS.
+
+| Evento | Cuándo |
+|---|---|
+| `invoice.accepted`, `credit_note.accepted`, `debit_note.accepted` | La DIAN validó el documento |
+| `invoice.rejected`, `credit_note.rejected`, `debit_note.rejected` | La DIAN lo rechazó |
+| `invoice.failed`, `credit_note.failed`, `debit_note.failed` | El worker se rindió (sin más reintentos) |
+| `document.delivered` | El correo con el `AttachedDocument` y el PDF llegó al adquiriente |
+| `document.delivery_failed` | El correo rebotó, fue marcado como spam, falló o no había a quién enviarlo: hay que entregar el documento por otro medio |
+
+Cada hecho se publica una sola vez. El cuerpo es el mismo en todos los reintentos:
+
+```json
+{ "id": "…", "type": "invoice.accepted", "createdAt": "…", "environment": "TEST",
+  "data": { "id": "…", "documentType": "INVOICE", "number": "SETP990000005", "status": "ACCEPTED",
+            "cufe": "…", "issueDate": "2026-10-19", "externalReference": "…", "referencedInvoiceId": null,
+            "dian": { "statusCode": "00", "statusMessage": "…", "errors": [] },
+            "delivery": { "status": "BOUNCED", "recipient": "…", "reason": "…" } } }
+```
+
+`delivery` solo viene en los eventos `document.*`. La firma sigue
+[Standard Webhooks](https://www.standardwebhooks.com/), así que sirve cualquiera de sus librerías (o la de
+Svix). Los encabezados son:
+
+- `webhook-id`: el id del evento, igual en cada reintento. Úsalo para descartar repetidos.
+- `webhook-timestamp`: los segundos Unix del envío. Rechaza los que tengan más de 5 minutos.
+- `webhook-signature`: `v1,<base64>`, donde el valor es el HMAC-SHA256 de `<webhook-id>.<webhook-timestamp>.<cuerpo>`
+  con la parte base64 del secreto (sin `whsec_`) como llave.
+
+```text
+key      = base64_decode(secret.removePrefix("whsec_"))
+expected = "v1," + base64(hmac_sha256(key, id + "." + timestamp + "." + rawBody))
+valid    = constant_time_equals(expected, header) && |now - timestamp| <= 300
+```
+
+Cualquier respuesta 2xx confirma la entrega. Un timeout, un error de red o cualquier otro código se reintenta
+con backoff exponencial: hasta 10 intentos durante unas 4 o 5 horas. Un `410 Gone` detiene los reintentos. El
+historial queda en `GET /console/webhook-endpoints/{id}/deliveries`, y
+`POST …/deliveries/{deliveryId}/retry` reenvía una entrega. En LIVE la URL debe ser `https`. El worker no envía
+a direcciones internas (loopback, redes privadas, link-local) ni sigue redirecciones; en dev y en pruebas,
+`cetus.webhooks.allow-private-targets=true` permite `localhost`.
+
 ## Pendiente de validar contra la DIAN
 
 Todo lo marcado en comentarios como "confirm/verify" debe revisarse con el anexo técnico vigente y con
@@ -218,6 +264,6 @@ Los XSD de la caja de herramientas van en `modules/ubl/src/main/xsd` para valida
 
 ## Siguientes pasos
 
-Notas crédito y débito (CUDE), `AttachedDocument`, PDF con QR, envío por correo (SES), webhooks,
+Notas crédito y débito (CUDE), `AttachedDocument`, PDF con QR, envío por correo (SES),
 panel de configuración del emisor en la consola, tipos TypeScript generados desde OpenAPI (`pnpm --filter @cetus/console api:types`)
 y roles por organización en los endpoints de consola.

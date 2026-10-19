@@ -41,6 +41,9 @@ export const auditActions = [
   "NUMBERING_RANGE_ADDED",
   "ISSUER_STATUS_CHANGED",
   "ISSUER_PROMOTED",
+  "WEBHOOK_ENDPOINT_CREATED",
+  "WEBHOOK_ENDPOINT_DISABLED",
+  "WEBHOOK_DELIVERY_RETRIED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.

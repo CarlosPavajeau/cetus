@@ -3,7 +3,12 @@ package com.cantte.cetus.worker.support;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity.Status;
+import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.webhooks.WebhookEventType;
+import com.cantte.cetus.webhooks.WebhookPublisher;
+import com.cantte.cetus.webhooks.WebhookPublisher.DeliveryInfo;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.time.OffsetDateTime;
@@ -12,6 +17,9 @@ import java.util.UUID;
 /** Short transactions that track the delivery of a document to its customer. */
 @ApplicationScoped
 public class DeliveryRecorder {
+
+    @Inject
+    WebhookPublisher webhooks;
 
     /** Whether the document already has a delivery that is not pending: sent, skipped or failed. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -37,6 +45,7 @@ public class DeliveryRecorder {
         DocumentDeliveryEntity delivery = pendingOrNew(documentId);
         delivery.status = Status.SKIPPED;
         delivery.error = reason;
+        publishFailure(delivery);
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -67,6 +76,13 @@ public class DeliveryRecorder {
         DocumentDeliveryEntity delivery = pendingOrNew(documentId);
         delivery.status = Status.FAILED;
         delivery.error = error;
+        publishFailure(delivery);
+    }
+
+    /** Tells the integrator to deliver the document by its own means. */
+    private void publishFailure(DocumentDeliveryEntity delivery) {
+        webhooks.publish(WebhookEventType.DOCUMENT_DELIVERY_FAILED, DocumentEntity.findById(delivery.documentId),
+                new DeliveryInfo(delivery.status.name(), delivery.recipient, delivery.error));
     }
 
     private static boolean hasResolved(UUID documentId) {

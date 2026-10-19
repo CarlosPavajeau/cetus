@@ -11,6 +11,9 @@ export const actionLabel: Record<AuditAction, string> = {
   NUMBERING_RANGE_ADDED: "Rango de numeración agregado",
   ISSUER_STATUS_CHANGED: "Estado del emisor cambiado",
   ISSUER_PROMOTED: "Emisor pasado a producción",
+  WEBHOOK_ENDPOINT_CREATED: "Webhook registrado",
+  WEBHOOK_ENDPOINT_DISABLED: "Webhook desactivado",
+  WEBHOOK_DELIVERY_RETRIED: "Webhook reenviado",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {
