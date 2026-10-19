@@ -1,4 +1,4 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, BookOpenIcon, CircleHelpIcon } from "lucide-react";
 
@@ -12,36 +12,57 @@ import {
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
 import { Button } from "~/components/ui/button";
-import { issuersQuery } from "~/features/issuers/queries";
+import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
 import { requireSession } from "~/features/session/guard";
 import { CertificateStep } from "~/features/setup/CertificateStep";
 import { IssuerStep } from "~/features/setup/IssuerStep";
 import { NumberingStep } from "~/features/setup/NumberingStep";
-import { issuerDetailQuery } from "~/features/setup/queries";
 import { SetupProgress } from "~/features/setup/SetupProgress";
 import { SoftwareStep } from "~/features/setup/SoftwareStep";
 import { type Step, completedSteps, firstIncompleteStep } from "~/features/setup/steps";
 import type { IssuerDetail } from "~/lib/api/types";
+import { uuidPattern } from "~/lib/utils";
 
-type SetupSearch = { step?: Step };
+type SetupSearch = { step?: Step; issuerId?: string; new?: true };
 
 /**
- * The setup assistant: tax data, DIAN software, certificate and numbering of the organization's
- * issuer in habilitación. Each step is saved as soon as the person continues, so it can be left
- * and resumed at the first step still missing.
+ * The setup assistant: tax data, DIAN software, certificate and numbering of an issuer. Each step
+ * is saved as soon as the person continues, so it can be left and resumed at the first step still
+ * missing. `?issuerId=` resumes that issuer and `?new` starts another one; with neither, it resumes
+ * the organization's first issuer still being set up, which is how a new organization starts.
  */
 export const Route = createFileRoute("/setup")({
   validateSearch: (search): SetupSearch => {
     const step = Number(search.step);
-    return [1, 2, 3, 4].includes(step) ? { step: step as Step } : {};
+    const issuerId = typeof search.issuerId === "string" ? search.issuerId : "";
+    return {
+      ...([1, 2, 3, 4].includes(step) && { step: step as Step }),
+      ...(uuidPattern.test(issuerId)
+        ? { issuerId }
+        : (search.new === true || search.new === "true") && { new: true as const }),
+    };
   },
   beforeLoad: requireSession,
-  loader: async ({ context: { queryClient } }) => {
+  loaderDeps: ({ search }) => ({ issuerId: search.issuerId, new: search.new }),
+  loader: async ({ context: { queryClient }, deps }) => {
+    if (deps.issuerId) {
+      const issuer = await queryClient.ensureQueryData(issuerDetailQuery(deps.issuerId));
+      if (!issuer) {
+        throw redirect({ to: "/issuers" });
+      }
+      // Once it is in habilitación or production there is nothing left to set up here.
+      if (issuer.status !== "ONBOARDING") {
+        throw redirect({ to: "/issuers/$issuerId", params: { issuerId: issuer.id } });
+      }
+      return;
+    }
+    if (deps.new) {
+      return;
+    }
     const issuers = await queryClient.ensureQueryData(issuersQuery);
     const pending = issuers.find((issuer) => issuer.status === "ONBOARDING");
-    // The assistant sets up the first issuer; once it is in habilitación there is nothing left here.
     if (!pending && issuers.length > 0) {
-      throw redirect({ to: "/overview" });
+      throw redirect({ to: "/issuers" });
     }
     if (pending) {
       await queryClient.ensureQueryData(issuerDetailQuery(pending.id));
@@ -51,16 +72,30 @@ export const Route = createFileRoute("/setup")({
 });
 
 function Setup() {
-  const { data: issuers } = useSuspenseQuery(issuersQuery);
-  const pending = issuers.find((issuer) => issuer.status === "ONBOARDING");
+  const search = Route.useSearch();
+  const { data: issuers } = useQuery({ ...issuersQuery, enabled: !search.issuerId && !search.new });
+  const issuerId =
+    search.issuerId ??
+    (search.new ? undefined : issuers?.find((issuer) => issuer.status === "ONBOARDING")?.id);
 
+  return issuerId ? <ResumedSetup issuerId={issuerId} /> : <SetupPage issuer={null} />;
+}
+
+function ResumedSetup({ issuerId }: { issuerId: string }) {
+  const { data: issuer } = useSuspenseQuery(issuerDetailQuery(issuerId));
+  return <SetupPage issuer={issuer} />;
+}
+
+const environmentLabel = { TEST: "TEST · Pruebas", LIVE: "LIVE · Producción" } as const;
+
+function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b px-4 md:px-10">
         <Breadcrumb>
           <BreadcrumbList className="gap-3 text-xs">
             <BreadcrumbItem>
-              <BreadcrumbLink render={<Link to="/overview" />}>Configuración</BreadcrumbLink>
+              <BreadcrumbLink render={<Link to="/issuers" />}>Emisores</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator>/</BreadcrumbSeparator>
             <BreadcrumbItem>
@@ -94,20 +129,15 @@ function Setup() {
           </div>
           <div className="flex flex-col gap-1.5 sm:items-end">
             <Badge variant="outline" className="text-muted-foreground">
-              TEST · Pruebas
+              {environmentLabel[issuer?.environment ?? "TEST"]}
             </Badge>
             <p className="text-[10px] text-muted-foreground">Asignado por la aplicación</p>
           </div>
         </div>
-        {pending ? <ResumedAssistant issuerId={pending.id} /> : <Assistant issuer={null} />}
+        <Assistant issuer={issuer} />
       </main>
     </div>
   );
-}
-
-function ResumedAssistant({ issuerId }: { issuerId: string }) {
-  const { data: issuer } = useSuspenseQuery(issuerDetailQuery(issuerId));
-  return <Assistant issuer={issuer} />;
 }
 
 function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
@@ -118,31 +148,35 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
   // A step ahead of the first missing piece cannot be filled yet.
   const step = Math.min(search.step ?? reachable, reachable) as Step;
 
-  function goTo(next: Step) {
-    return navigate({ search: { step: next } });
+  function goTo(next: Step, issuerId = issuer?.id) {
+    return navigate({ search: { issuerId, step: next } });
   }
 
   function back() {
     if (step === 1) {
-      void navigate({ to: "/overview" });
+      // A new organization without issuers has nowhere else to go: the overview sends it back here.
+      void navigate({ to: issuer || search.new ? "/issuers" : "/overview" });
     } else {
       void goTo((step - 1) as Step);
     }
   }
 
-  /** After a step is saved: on to the next one, or to the overview once the issuer is ready. */
+  /**
+   * After a step is saved: on to the next one, or to the issuer's page, with the ID to integrate,
+   * once it is ready.
+   */
   async function saved(issuerId: string) {
     const detail = await queryClient.fetchQuery({ ...issuerDetailQuery(issuerId), staleTime: 0 });
     if (detail && detail.status !== "ONBOARDING") {
-      await navigate({ to: "/overview" });
+      await navigate({ to: "/issuers/$issuerId", params: { issuerId } });
       await queryClient.invalidateQueries({ queryKey: ["issuers"] });
       return;
     }
     if (!issuer) {
-      // The issuer was just created: the list now has it, and with it the assistant resumes.
       await queryClient.invalidateQueries({ queryKey: issuersQuery.queryKey, exact: true });
     }
-    await goTo(Math.min(step + 1, 4) as Step);
+    // The URL names the issuer from now on, so a reload resumes this one and not another.
+    await goTo(Math.min(step + 1, 4) as Step, issuerId);
   }
 
   return (

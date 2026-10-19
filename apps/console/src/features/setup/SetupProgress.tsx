@@ -47,7 +47,11 @@ export function SetupProgress({
                 <TooltipTrigger
                   render={
                     !isCurrent && number <= reachable ? (
-                      <Link to="/setup" search={{ step: number }} className={target} />
+                      <Link
+                        to="/setup"
+                        search={(prev) => ({ ...prev, step: number })}
+                        className={target}
+                      />
                     ) : (
                       <span className={target} />
                     )
