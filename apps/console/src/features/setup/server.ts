@@ -91,7 +91,7 @@ export const setSoftware = createServerFn({ method: "POST" })
         body: {
           softwareId: data.software.softwareId.trim(),
           pin: data.software.pin.trim(),
-          testSetId: data.software.testSetId.trim(),
+          testSetId: data.software.testSetId.trim() || undefined,
         },
       }),
     ),

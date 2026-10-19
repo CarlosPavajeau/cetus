@@ -102,7 +102,7 @@ function detail(entry: ActivityEntry): string {
     case "API_KEY_REVOKED":
       return `${text(data.name)} · ${text(data.prefix)}… · ${label(environmentLabel, data.environment)}`;
     case "ISSUER_CREATED":
-      return `NIT ${text(data.nit)} · ${label(environmentLabel, data.environment)} · ${label(personTypeLabel, data.personType)}`;
+      return `NIT ${text(data.nit)} · ${label(environmentLabel, data.environment)} · ${label(personTypeLabel, data.personType)}${data.promotedFrom ? " · desde la habilitación" : ""}`;
     case "ISSUER_UPDATED":
       return Array.isArray(data.fields)
         ? `Cambió ${data.fields.map((field) => label(issuerFieldLabel, field)).join(", ")}`
@@ -117,6 +117,8 @@ function detail(entry: ActivityEntry): string {
       return `${label(documentTypeLabel, data.documentType)} ${text(data.prefix)}${text(data.from)} a ${text(data.prefix)}${text(data.to)}`;
     case "ISSUER_STATUS_CHANGED":
       return `${label(issuerStatusLabel, data.from)} → ${label(issuerStatusLabel, data.to)}`;
+    case "ISSUER_PROMOTED":
+      return "Se creó su emisor de producción";
   }
 }
 

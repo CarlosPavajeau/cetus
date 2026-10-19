@@ -21,6 +21,7 @@ export function SoftwareStep({
   onSaved: () => Promise<void>;
 }) {
   const configured = issuer.software !== null;
+  const habilitacion = issuer.environment === "TEST";
   const save = useMutation({ mutationFn: setSoftware });
   const form = useForm({
     resolver: arktypeResolver(softwareSchema),
@@ -33,6 +34,12 @@ export function SoftwareStep({
   const { isSubmitting, isDirty, errors } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {
+    if (habilitacion && !values.testSetId) {
+      form.setError("testSetId", {
+        message: "Pega el TestSetId completo, como aparece en el portal de la DIAN.",
+      });
+      return;
+    }
     // The API never returns the PIN: saved credentials are kept unless the person changes them.
     if (!configured || isDirty) {
       if (!values.pin.trim()) {
@@ -52,7 +59,11 @@ export function SoftwareStep({
   return (
     <StepLayout
       step={2}
-      lead="Copia las credenciales de tu software desde el portal de habilitación de la DIAN."
+      lead={
+        habilitacion
+          ? "Copia las credenciales de tu software desde el portal de habilitación de la DIAN."
+          : "Revisa las credenciales del software con el que facturarás en producción."
+      }
       error={errors.root?.message}
       submitting={isSubmitting}
       onSubmit={onSubmit}
@@ -70,10 +81,14 @@ export function SoftwareStep({
               title: "2. Copia sus credenciales",
               text: "Localiza el Software ID y el PIN del software. Conserva los valores completos.",
             },
-            {
-              title: "3. Ubica el set de pruebas",
-              text: "Busca el identificador del set de pruebas asignado a tu proceso y cópialo en TestSetId.",
-            },
+            ...(habilitacion
+              ? [
+                  {
+                    title: "3. Ubica el set de pruebas",
+                    text: "Busca el identificador del set de pruebas asignado a tu proceso y cópialo en TestSetId.",
+                  },
+                ]
+              : []),
           ]}
           note="Los nombres y la ubicación de las opciones pueden variar en el portal DIAN."
         />
@@ -109,14 +124,17 @@ export function SoftwareStep({
               : "Ingresa el PIN asociado a ese mismo software."
           }
         />
-        <TextField
-          control={form.control}
-          name="testSetId"
-          label="TestSetId / ID del set de pruebas"
-          spellCheck={false}
-          autoComplete="off"
-          hint="Identificador del set de pruebas asignado en el proceso de habilitación."
-        />
+        {/* Production has no test set. */}
+        {habilitacion && (
+          <TextField
+            control={form.control}
+            name="testSetId"
+            label="TestSetId / ID del set de pruebas"
+            spellCheck={false}
+            autoComplete="off"
+            hint="Identificador del set de pruebas asignado en el proceso de habilitación."
+          />
+        )}
       </FieldSection>
       <SecretNotice
         icon={<LockKeyholeIcon />}

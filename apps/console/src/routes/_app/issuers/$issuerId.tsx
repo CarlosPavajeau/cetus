@@ -26,7 +26,8 @@ import {
 import { dateFormat } from "~/features/api-keys/formats";
 import { IssuerStatusBadge } from "~/features/issuers/IssuerStatusBadge";
 import { issuerName, personTypeLabel } from "~/features/issuers/labels";
-import { issuerDetailQuery } from "~/features/issuers/queries";
+import { PromoteIssuer } from "~/features/issuers/PromoteIssuer";
+import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
 import type { IssuerDetail } from "~/lib/api/types";
 import { uuidPattern } from "~/lib/utils";
 
@@ -35,7 +36,10 @@ export const Route = createFileRoute("/_app/issuers/$issuerId")({
     if (!uuidPattern.test(params.issuerId)) {
       throw notFound();
     }
-    const issuer = await queryClient.ensureQueryData(issuerDetailQuery(params.issuerId));
+    const [issuer] = await Promise.all([
+      queryClient.ensureQueryData(issuerDetailQuery(params.issuerId)),
+      queryClient.ensureQueryData(issuersQuery),
+    ]);
     if (!issuer) {
       throw notFound();
     }
@@ -108,6 +112,11 @@ function IssuerDetailPage() {
   const { issuerId } = Route.useParams();
   // The loader already returned notFound for a missing issuer.
   const issuer = useSuspenseQuery(issuerDetailQuery(issuerId)).data!;
+  const { data: issuers } = useSuspenseQuery(issuersQuery);
+  // The same NIT in the other environment: the production issuer of a test one, or the other way round.
+  const counterpart = issuers.find(
+    (other) => other.nit === issuer.nit && other.environment !== issuer.environment,
+  );
   const example = invoiceExample(issuer.id);
   const keyKind = issuer.environment === "TEST" ? "de pruebas" : "de producción";
 
@@ -120,16 +129,36 @@ function IssuerDetailPage() {
         status={<IssuerStatusBadge status={issuer.status} />}
         lead={statusLead[issuer.status]}
         action={
-          issuer.status === "ONBOARDING" && (
+          issuer.status === "ONBOARDING" ? (
             <Button
               render={<Link to="/setup" search={{ issuerId: issuer.id }} />}
               nativeButton={false}
             >
               Continuar configuración
             </Button>
+          ) : (
+            issuer.environment === "TEST" &&
+            issuer.status === "TESTING" &&
+            !counterpart && <PromoteIssuer issuer={issuer} />
           )
         }
       />
+
+      {counterpart && (
+        <p className="text-2xs text-muted-foreground">
+          {counterpart.environment === "LIVE"
+            ? "Este NIT ya tiene su emisor de producción: "
+            : "Este emisor viene de la habilitación en pruebas: "}
+          <Link
+            to="/issuers/$issuerId"
+            params={{ issuerId: counterpart.id }}
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            ver emisor de {counterpart.environment === "LIVE" ? "producción" : "pruebas"}
+          </Link>
+          .
+        </p>
+      )}
 
       <section
         className="flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-md border bg-card px-5 py-3"

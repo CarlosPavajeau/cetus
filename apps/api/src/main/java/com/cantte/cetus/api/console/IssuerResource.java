@@ -94,6 +94,15 @@ public class IssuerResource {
         return IssuerViews.IssuerView.from(issuer);
     }
 
+    /** Creates the production issuer of a test issuer in habilitación, and returns it. */
+    @POST
+    @Path("/{id}/promote")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public IssuerViews.IssuerView promote(@PathParam("id") UUID id) {
+        return IssuerViews.IssuerView.from(onboarding.promote(issuer(id), context.actor(), origin.resolve()));
+    }
+
     @GET
     @Path("/{id}/numbering-ranges")
     @Transactional

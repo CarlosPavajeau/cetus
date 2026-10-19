@@ -38,6 +38,7 @@ export const auditActions = [
   "CERTIFICATE_UPLOADED",
   "NUMBERING_RANGE_ADDED",
   "ISSUER_STATUS_CHANGED",
+  "ISSUER_PROMOTED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.
