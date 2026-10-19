@@ -14,6 +14,7 @@ import java.util.UUID;
 public record InvoiceResponse(
         @Schema(required = true) UUID id,
         @Schema(required = true) Environment environment,
+        @Schema(required = true) UUID issuerId,
         @Schema(required = true) String number,
         @Schema(required = true) DocumentStatus status,
         @Schema(required = true, nullable = true) String cufe,
@@ -42,6 +43,7 @@ public record InvoiceResponse(
         return new InvoiceResponse(
                 doc.id,
                 doc.environment,
+                doc.issuerId,
                 doc.fullNumber(),
                 doc.status,
                 doc.cufe,
