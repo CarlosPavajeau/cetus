@@ -22,6 +22,17 @@ public final class QrCode {
 
     public static String invoice(String number, LocalDate date, LocalTime time, String supplierNit,
                                  String customerId, CalculationResult calc, String cufe, Environment env) {
+        return content(number, date, time, supplierNit, customerId, calc, "CUFE", cufe, env);
+    }
+
+    public static String creditNote(String number, LocalDate date, LocalTime time, String supplierNit,
+                                    String customerId, CalculationResult calc, String cude, Environment env) {
+        return content(number, date, time, supplierNit, customerId, calc, "CUDE", cude, env);
+    }
+
+    private static String content(String number, LocalDate date, LocalTime time, String supplierNit,
+                                  String customerId, CalculationResult calc, String keyName, String key,
+                                  Environment env) {
         var otherTaxes = calc.taxAmount(TaxType.INC).add(calc.taxAmount(TaxType.ICA));
         return "NumFac: " + number + "\n"
                 + "FecFac: " + DianTime.date(date) + "\n"
@@ -32,8 +43,8 @@ public final class QrCode {
                 + "ValIva: " + Amounts.format(calc.taxAmount(TaxType.IVA)) + "\n"
                 + "ValOtroIm: " + Amounts.format(otherTaxes) + "\n"
                 + "ValTolFac: " + Amounts.format(calc.totals().payableAmount()) + "\n"
-                + "CUFE: " + cufe + "\n"
-                + url(env) + cufe;
+                + keyName + ": " + key + "\n"
+                + url(env) + key;
     }
 
     public static String url(Environment env) {

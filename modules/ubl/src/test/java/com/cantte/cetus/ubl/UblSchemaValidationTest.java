@@ -81,6 +81,48 @@ class UblSchemaValidationTest {
         assertThat(errors).as("XSD errors, see build/ubl/sample-invoice-signed.xml").isEmpty();
     }
 
+    @Test
+    void creditNoteIsValidAgainstUblSchema() throws Exception {
+        Optional<Path> creditNoteXsd = findByName("UBL-CreditNote-2.1.xsd");
+        assumeTrue(creditNoteXsd.isPresent(), "UBL-CreditNote-2.1.xsd not found in src/main/xsd");
+
+        byte[] xml = XmlSupport.serialize(sampleCreditNoteDocument());
+        Files.createDirectories(OUTPUT);
+        Files.write(OUTPUT.resolve("sample-credit-note.xml"), xml);
+
+        List<String> errors = validate(creditNoteXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
+        assertThat(errors).as("XSD errors, see build/ubl/sample-credit-note.xml").isEmpty();
+    }
+
+    @Test
+    void signedCreditNoteIsValidAgainstUblSchema() throws Exception {
+        Optional<Path> creditNoteXsd = findByName("UBL-CreditNote-2.1.xsd");
+        assumeTrue(creditNoteXsd.isPresent(), "UBL-CreditNote-2.1.xsd not found in src/main/xsd");
+
+        Document document = sampleCreditNoteDocument();
+        try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
+            var keys = Pkcs12Loader.load(in.readAllBytes(), "cetus-test".toCharArray());
+            new XadesSigner().sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+        }
+        byte[] xml = XmlSupport.serialize(document);
+        Files.createDirectories(OUTPUT);
+        Files.write(OUTPUT.resolve("sample-credit-note-signed.xml"), xml);
+
+        List<String> errors = validate(creditNoteXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
+        assertThat(errors).as("XSD errors, see build/ubl/sample-credit-note-signed.xml").isEmpty();
+    }
+
+    /** Credit notes carry no InvoiceControl; the DIAN schema must accept the extensions without it. */
+    @Test
+    void creditNoteDianExtensionsAreValidAgainstDianSchema() throws Exception {
+        Optional<Path> dianXsd = findByTargetNamespace(STS_NAMESPACE);
+        assumeTrue(dianXsd.isPresent(), "No XSD with the DIAN structures namespace in src/main/xsd");
+
+        Node extensions = sampleCreditNoteDocument().getElementsByTagNameNS(STS_NAMESPACE, "DianExtensions").item(0);
+        List<String> errors = withoutKnownCoId2Deviations(validate(dianXsd.get(), new DOMSource(extensions)));
+        assertThat(errors).as("XSD errors in the credit note sts:DianExtensions").isEmpty();
+    }
+
     /**
      * UBL usually declares ExtensionContent as xs:any with processContents="skip", so the
      * validation above does not look inside it. This test validates sts:DianExtensions on its own.
@@ -152,6 +194,10 @@ class UblSchemaValidationTest {
 
     private static Document sampleDocument() {
         return new UblMarshaller().toDocument(new InvoiceUblMapper().map(InvoiceUblMapperTest.sampleInvoice()));
+    }
+
+    private static Document sampleCreditNoteDocument() {
+        return new UblMarshaller().toDocument(new CreditNoteUblMapper().map(CreditNoteUblMapperTest.sampleCreditNote()));
     }
 
     private static List<String> validate(Path xsd, Source source) throws Exception {

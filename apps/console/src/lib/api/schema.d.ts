@@ -197,6 +197,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/credit-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create */
+        post: operations["CreditNoteResource_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/credit-notes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["CreditNoteResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/invoices": {
         parameters: {
             query?: never;
@@ -386,6 +420,40 @@ export interface components {
             key: components["schemas"]["ApiKeyView"];
             secret: string;
         };
+        /** @enum {string} */
+        CreditNoteConcept: "PARTIAL_RETURN" | "CANCELLATION" | "REBATE" | "PRICE_ADJUSTMENT" | "EARLY_PAYMENT_DISCOUNT" | "VOLUME_DISCOUNT";
+        CreditNoteRequest: {
+            invoiceId: components["schemas"]["UUID"];
+            concept: components["schemas"]["CreditNoteConcept"];
+            description: string;
+            lines?: components["schemas"]["Line"][];
+            externalReference?: string;
+            notes?: string[];
+        };
+        CreditNoteResponse: {
+            id: components["schemas"]["UUID"];
+            environment: components["schemas"]["Environment"];
+            issuerId: components["schemas"]["UUID"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            cude: string | null;
+            issueDate: components["schemas"]["LocalDate"];
+            currency: string;
+            invoice: components["schemas"]["InvoiceRef"];
+            concept: components["schemas"]["CreditNoteConcept"];
+            description: string;
+            totals: components["schemas"]["Totals"];
+            dian: components["schemas"]["Dian"];
+            externalReference: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
+        CreditNoteSummary: {
+            id: components["schemas"]["UUID"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            concept: components["schemas"]["CreditNoteConcept"];
+            payable: number;
+        };
         Customer: {
             personType: components["schemas"]["PersonType"];
             identificationType: components["schemas"]["IdentificationType"];
@@ -415,6 +483,11 @@ export interface components {
         Environment: "LIVE" | "TEST";
         /** @enum {string} */
         IdentificationType: "CIVIL_REGISTRY" | "IDENTITY_CARD" | "CITIZEN_ID" | "FOREIGNER_CARD" | "FOREIGNER_ID" | "NIT" | "PASSPORT" | "FOREIGN_DOCUMENT" | "PEP" | "FOREIGN_NIT" | "NUIP";
+        InvoiceRef: {
+            id: components["schemas"]["UUID"];
+            number: string;
+            cufe: string;
+        };
         InvoiceRequest: {
             issuerId?: components["schemas"]["UUID"];
             externalReference?: string;
@@ -437,6 +510,9 @@ export interface components {
             dian: components["schemas"]["Dian"];
             externalReference: string | null;
             createdAt: components["schemas"]["OffsetDateTime"];
+            creditNotes: components["schemas"]["CreditNoteSummary"][];
+            /** @description Payable amount not yet credited by accepted or in-flight credit notes */
+            balance: number;
         };
         IssuerDetailView: {
             id: components["schemas"]["UUID"];
@@ -1437,6 +1513,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    CreditNoteResource_create: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CreditNoteResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditNoteResponse"];
                 };
             };
         };

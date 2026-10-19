@@ -78,7 +78,7 @@ class GoldenInvoiceTest {
         return parse(new ByteArrayInputStream(XmlSupport.serialize(doc)));
     }
 
-    private static ElectronicInvoice sample() {
+    static ElectronicInvoice sample() {
         var calc = new InvoiceCalculator().calculate(List.of(
                 new LineInput("AOHV84-225", "AV OASYS -2.25 (8.4) LENTE DE CONTATO", new BigDecimal("1"), "EA",
                         new BigDecimal("12600.06"), List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
@@ -109,7 +109,7 @@ class GoldenInvoiceTest {
      * Every element path with its attribute names, in document order. Repeated siblings (lines,
      * tax subtotals, certificates) collapse into their first occurrence.
      */
-    private static List<String> skeleton(Document doc) {
+    static List<String> skeleton(Document doc) {
         Set<String> paths = new LinkedHashSet<>();
         collect(doc.getDocumentElement(), "", paths);
         return new ArrayList<>(paths);
@@ -134,7 +134,7 @@ class GoldenInvoiceTest {
         }
     }
 
-    private static Element rootChild(Document doc, String localName) {
+    static Element rootChild(Document doc, String localName) {
         for (Node child = doc.getDocumentElement().getFirstChild(); child != null; child = child.getNextSibling()) {
             if (child instanceof Element element && localName.equals(element.getLocalName())) {
                 return element;
@@ -143,11 +143,11 @@ class GoldenInvoiceTest {
         throw new AssertionError("No " + localName);
     }
 
-    private static String text(Document doc, String localName) {
+    static String text(Document doc, String localName) {
         return rootChild(doc, localName).getTextContent();
     }
 
-    private static Document parse(InputStream in) throws Exception {
+    static Document parse(InputStream in) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         try (in) {

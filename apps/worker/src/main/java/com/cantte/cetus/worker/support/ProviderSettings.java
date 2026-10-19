@@ -1,7 +1,9 @@
 package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.domain.dian.DianFileNames;
+import com.cantte.cetus.domain.dian.SoftwareSecurityCode;
 import com.cantte.cetus.domain.model.Party;
+import com.cantte.cetus.domain.model.SoftwareInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -31,5 +33,14 @@ public class ProviderSettings {
 
     public String fileCode() {
         return fileCode.orElse(DianFileNames.OWN_SOFTWARE_CODE);
+    }
+
+    /** Software data of the DIAN extensions for one document. */
+    public SoftwareInfo software(ProcessingContext ctx, String pin) {
+        return new SoftwareInfo(
+                providerNit(ctx.supplier()),
+                providerCheckDigit(ctx.supplier()),
+                ctx.softwareId(),
+                SoftwareSecurityCode.compute(ctx.softwareId(), pin, ctx.fullNumber()));
     }
 }

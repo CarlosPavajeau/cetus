@@ -1,7 +1,7 @@
 package com.cantte.cetus.api.issuers;
 
 import com.cantte.cetus.api.auth.ApiPrincipal;
-import com.cantte.cetus.api.invoices.InvoiceService;
+import com.cantte.cetus.api.documents.DocumentDrafts;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import jakarta.inject.Inject;
@@ -41,7 +41,7 @@ public class PublicIssuerResource {
 
         static PublicIssuerView from(IssuerEntity issuer) {
             return new PublicIssuerView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit, issuer.legalName,
-                    issuer.tradeName, issuer.status, InvoiceService.canIssue(issuer, issuer.environment));
+                    issuer.tradeName, issuer.status, DocumentDrafts.canIssue(issuer, issuer.environment));
         }
     }
 

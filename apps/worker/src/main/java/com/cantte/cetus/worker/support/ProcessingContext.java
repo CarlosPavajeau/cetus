@@ -1,6 +1,8 @@
 package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.domain.calc.CalculationResult;
+import com.cantte.cetus.domain.model.BillingReference;
+import com.cantte.cetus.domain.model.CreditNoteConcept;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.NumberingAuthorization;
@@ -34,6 +36,9 @@ public record ProcessingContext(
         List<String> notes,
         CalculationResult calculation,
         NumberingAuthorization authorization,
+        BillingReference reference,
+        CreditNoteConcept correctionConcept,
+        String correctionDescription,
         byte[] technicalKeySealed,
         String softwareId,
         byte[] pinSealed,

@@ -208,6 +208,49 @@ public final class Cac {
         public Price price;
     }
 
+    @XmlType(name = "CreditNoteLine", propOrder = {"id", "creditedQuantity", "lineExtensionAmount",
+            "taxTotals", "item", "price"})
+    public static class CreditNoteLine {
+        @XmlElement(name = "ID", namespace = Ns.CBC)
+        public String id;
+        @XmlElement(name = "CreditedQuantity", namespace = Ns.CBC)
+        public QuantityType creditedQuantity;
+        @XmlElement(name = "LineExtensionAmount", namespace = Ns.CBC)
+        public AmountType lineExtensionAmount;
+        @XmlElement(name = "TaxTotal", namespace = Ns.CAC)
+        public List<TaxTotal> taxTotals = new ArrayList<>();
+        @XmlElement(name = "Item", namespace = Ns.CAC)
+        public Item item;
+        @XmlElement(name = "Price", namespace = Ns.CAC)
+        public Price price;
+    }
+
+    @XmlType(name = "DiscrepancyResponse", propOrder = {"referenceId", "responseCode", "description"})
+    public static class DiscrepancyResponse {
+        @XmlElement(name = "ReferenceID", namespace = Ns.CBC)
+        public String referenceId;
+        @XmlElement(name = "ResponseCode", namespace = Ns.CBC)
+        public String responseCode;
+        @XmlElement(name = "Description", namespace = Ns.CBC)
+        public String description;
+    }
+
+    @XmlType(name = "BillingReference", propOrder = {"invoiceDocumentReference"})
+    public static class BillingReference {
+        @XmlElement(name = "InvoiceDocumentReference", namespace = Ns.CAC)
+        public DocumentReference invoiceDocumentReference;
+    }
+
+    @XmlType(name = "DocumentReference", propOrder = {"id", "uuid", "issueDate"})
+    public static class DocumentReference {
+        @XmlElement(name = "ID", namespace = Ns.CBC)
+        public String id;
+        @XmlElement(name = "UUID", namespace = Ns.CBC)
+        public IdentifierType uuid;
+        @XmlElement(name = "IssueDate", namespace = Ns.CBC)
+        public String issueDate;
+    }
+
     @XmlType(name = "Item", propOrder = {"description", "sellersItemIdentification", "standardItemIdentification"})
     public static class Item {
         @XmlElement(name = "Description", namespace = Ns.CBC)
