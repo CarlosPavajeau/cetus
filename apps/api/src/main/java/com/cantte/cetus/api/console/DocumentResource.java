@@ -3,23 +3,38 @@ package com.cantte.cetus.api.console;
 import com.cantte.cetus.api.console.DocumentViews.DocumentDetail;
 import com.cantte.cetus.api.console.DocumentViews.DocumentPage;
 import com.cantte.cetus.api.console.DocumentViews.DocumentSummary;
+import com.cantte.cetus.api.audit.RequestOriginResolver;
+import com.cantte.cetus.api.creditnotes.CreditNoteRequest;
+import com.cantte.cetus.api.creditnotes.CreditNoteService;
 import com.cantte.cetus.api.documents.DocumentFiles;
+import com.cantte.cetus.api.documents.IdempotentCreation;
 import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.domain.model.CreditNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.persistence.audit.AuditAction;
+import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -31,7 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/** The account's invoices and notes, in both environments, as the console shows them. */
+/** The account's invoices and notes, in both environments, as the console shows them, and their cancellation. */
 @Path("/console/documents")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "400", description = "Bad Request",
@@ -48,6 +63,14 @@ public class DocumentResource {
     ConsoleContext context;
     @Inject
     DocumentFiles files;
+    @Inject
+    IdempotentCreation idempotentCreation;
+    @Inject
+    CreditNoteService creditNotes;
+    @Inject
+    AuditLog auditLog;
+    @Inject
+    RequestOriginResolver origin;
 
     /**
      * Newest first: pass the previous page's {@code nextCursor} as {@code before}. {@code from} and {@code to}
@@ -103,6 +126,45 @@ public class DocumentResource {
                                                    @PathParam("file") String file) {
         DocumentEntity doc = find(id);
         return files.presign(doc.accountId, doc.environment, doc.id, doc.documentType, file);
+    }
+
+    /**
+     * Cancels an accepted invoice with a credit note for all of it (concept CANCELLATION, every line of the
+     * invoice). The console sends one Idempotency-Key per dialog, so a double click issues a single note.
+     */
+    @POST
+    @Path("/{id}/cancellation")
+    @Transactional
+    @APIResponse(responseCode = "202", description = "Accepted",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = CancellationResponse.class)))
+    public Response cancel(@PathParam("id") UUID id,
+                           @HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
+                           @Valid @NotNull CancellationRequest request) throws JsonProcessingException {
+        DocumentEntity invoice = find(id);
+        UUID accountId = invoice.accountId;
+        CreditNoteRequest noteRequest = new CreditNoteRequest(invoice.id, CreditNoteConcept.CANCELLATION,
+                request.description().strip(), null, null, null);
+        // Its own namespace, so a key of the console never meets one sent by an integrator to /v1.
+        return idempotentCreation.accept(accountId, "console:" + idempotencyKey, noteRequest, rawJson -> {
+            DocumentEntity note = creditNotes.create(accountId, invoice.environment, noteRequest, rawJson);
+            auditLog.record(accountId, context.actor(), origin.resolve(), AuditAction.CREDIT_NOTE_ISSUED,
+                    "document", note.id, Map.of(
+                            "number", note.fullNumber(),
+                            "invoiceId", invoice.id,
+                            "invoiceNumber", invoice.fullNumber(),
+                            "concept", CreditNoteConcept.CANCELLATION.name(),
+                            "environment", invoice.environment));
+            return new CancellationResponse(note.id, note.fullNumber());
+        });
+    }
+
+    public record CancellationRequest(@NotBlank @Size(max = 500) String description) {
+    }
+
+    public record CancellationResponse(
+            @Schema(required = true, description = "The credit note") UUID id,
+            @Schema(required = true) String number) {
     }
 
     private DocumentEntity find(UUID id) {

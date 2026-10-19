@@ -148,6 +148,81 @@ class DocumentResourceTest {
         assertThat(url).contains(key);
     }
 
+    @Test
+    void cancellingAnAcceptedInvoiceIssuesACreditNoteForAllOfItOnce() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        Issuer issuer = IssuedDocuments.issuer(user, "Anular SAS");
+        ConsoleFixtures.addCreditNoteRange(user, issuer.id());
+        UUID invoiceId = IssuedDocuments.invoice(issuer);
+        IssuedDocuments.accept(invoiceId);
+        String key = UUID.randomUUID().toString();
+
+        JsonPath created = cancel(user, invoiceId, key, "Error en el valor facturado")
+                .then().statusCode(202).extract().jsonPath();
+        String noteId = created.getString("id");
+        assertThat(created.getString("number")).startsWith("NC");
+
+        // A second click with the same key replays the first answer instead of issuing another note.
+        cancel(user, invoiceId, key, "Error en el valor facturado")
+                .then().statusCode(202).header("Idempotent-Replayed", "true").body("id", equalTo(noteId));
+
+        JsonPath note = user.request().get("/console/documents/" + noteId).then().statusCode(200).extract().jsonPath();
+        assertThat(note.getString("concept")).isEqualTo("CANCELLATION");
+        assertThat(note.getString("description")).isEqualTo("Error en el valor facturado");
+        assertThat(note.getString("invoice.id")).isEqualTo(invoiceId.toString());
+        assertThat(note.getDouble("totals.payable")).isEqualTo(119000.0);
+        assertThat(note.getList("lines")).hasSize(1);
+
+        JsonPath invoice = user.request().get("/console/documents/" + invoiceId).then().statusCode(200).extract().jsonPath();
+        assertThat(invoice.getList("creditNotes.id")).containsExactly(noteId);
+        assertThat(invoice.getDouble("balance")).isZero();
+
+        List<Map<String, Object>> audited = user.request().get("/console/audit-log?action=CREDIT_NOTE_ISSUED")
+                .then().statusCode(200).extract().jsonPath().getList("items");
+        assertThat(audited).hasSize(1);
+        assertThat(audited.get(0)).containsEntry("resourceId", noteId).containsEntry("actorType", "USER");
+
+        // Nothing is left to credit.
+        cancel(user, invoiceId, UUID.randomUUID().toString(), "Otra vez")
+                .then().statusCode(422).body("code", equalTo("credit_note_exceeds_balance"));
+    }
+
+    @Test
+    void onlyAcceptedInvoicesOfTheAccountCanBeCancelled() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        Issuer issuer = IssuedDocuments.issuer(user, "Pendiente SAS");
+        ConsoleFixtures.addCreditNoteRange(user, issuer.id());
+        UUID invoiceId = IssuedDocuments.invoice(issuer);
+
+        cancel(user, invoiceId, UUID.randomUUID().toString(), "Error")
+                .then().statusCode(422).body("code", equalTo("invoice_not_accepted"));
+        cancel(user, invoiceId, UUID.randomUUID().toString(), " ")
+                .then().statusCode(400);
+        user.request().body(Map.of("description", "Error")).post("/console/documents/" + invoiceId + "/cancellation")
+                .then().statusCode(400);
+
+        UUID foreign = IssuedDocuments.invoice(IssuedDocuments.issuer("Otra Ajena SAS"));
+        IssuedDocuments.accept(foreign);
+        cancel(user, foreign, UUID.randomUUID().toString(), "Error").then().statusCode(404);
+    }
+
+    @Test
+    void withoutACreditNoteRangeTheCancellationIsRefused() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        Issuer issuer = IssuedDocuments.issuer(user, "Sin Rango SAS");
+        UUID invoiceId = IssuedDocuments.invoice(issuer);
+        IssuedDocuments.accept(invoiceId);
+
+        cancel(user, invoiceId, UUID.randomUUID().toString(), "Error")
+                .then().statusCode(422).body("code", equalTo("no_active_numbering_range"));
+    }
+
+    private static io.restassured.response.Response cancel(ConsoleUser user, UUID invoiceId, String key,
+                                                           String description) {
+        return user.request().header("Idempotency-Key", key).body(Map.of("description", description))
+                .post("/console/documents/" + invoiceId + "/cancellation");
+    }
+
     private static JsonPath list(ConsoleUser user, String query) {
         return user.request().get("/console/documents" + query).then().statusCode(200).extract().jsonPath();
     }

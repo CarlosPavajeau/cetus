@@ -15,5 +15,7 @@ public enum AuditAction {
     WEBHOOK_ENDPOINT_CREATED,
     WEBHOOK_ENDPOINT_DISABLED,
     WEBHOOK_ENDPOINT_ENABLED,
-    WEBHOOK_DELIVERY_RETRIED
+    WEBHOOK_DELIVERY_RETRIED,
+    /** A credit note issued from the console; those issued through the API are not audited. */
+    CREDIT_NOTE_ISSUED
 }

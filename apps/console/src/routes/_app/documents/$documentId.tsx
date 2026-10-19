@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { formatDateTime } from "~/features/api-keys/formats";
+import { CancelInvoice } from "~/features/documents/CancelInvoice";
 import { DianErrors } from "~/features/documents/DianErrors";
 import { DocumentDownloads } from "~/features/documents/DocumentDownloads";
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
@@ -87,7 +88,12 @@ function DocumentDetailPage() {
         title={`${documentTypeLabel[document.documentType]} ${document.number}`}
         status={<DocumentStatusBadge status={document.status} />}
         lead={documentStatusLead[document.status]}
-        action={<DocumentDownloads documentId={document.id} />}
+        action={
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            {isInvoice && document.status === "ACCEPTED" && <CancelInvoice invoice={document} />}
+            <DocumentDownloads documentId={document.id} />
+          </div>
+        }
       />
 
       <DianErrors document={document} />

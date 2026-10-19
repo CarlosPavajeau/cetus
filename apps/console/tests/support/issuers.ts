@@ -3,6 +3,14 @@ import { readFile } from "node:fs/promises";
 import type { TestOrganization } from "./organization";
 import { apiUrl, testCertificate } from "./stack";
 
+/**
+ * A NIT no other test uses. The CUFE depends on the NIT, the number and the issue time, and is unique
+ * across Cetus: two tests issuing SETP1 for the same NIT in the same second would collide.
+ */
+export function uniqueNit() {
+  return `9${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
+}
+
 /** Creates an issuer through the API, as step 1 of the assistant would. */
 export async function createIssuer(organization: TestOrganization, nit: string, legalName: string) {
   const response = await organization.api("/console/issuers", {
@@ -30,15 +38,23 @@ export async function createIssuer(organization: TestOrganization, nit: string, 
   return ((await response.json()) as { id: string }).id;
 }
 
-/** Sets up a test issuer through the API until it is in habilitación. */
-export async function onboardIssuer(organization: TestOrganization, nit: string, legalName: string) {
+/**
+ * Sets up a test issuer through the API until it is in habilitación. Without a test set, the worker
+ * validates its documents one by one with SendBillSync, which the DIAN mock answers at once.
+ */
+export async function onboardIssuer(
+  organization: TestOrganization,
+  nit: string,
+  legalName: string,
+  { testSet = true }: { testSet?: boolean } = {},
+) {
   const id = await createIssuer(organization, nit, legalName);
   await organization.api(`/console/issuers/${id}/software`, {
     method: "PUT",
     body: JSON.stringify({
       softwareId: "381db121-bc49-4286-9067-ef982e3874e4",
       pin: "12345",
-      testSetId: "a09e2744-f1d7-4697-bbcf-613bc312450d",
+      testSetId: testSet ? "a09e2744-f1d7-4697-bbcf-613bc312450d" : undefined,
     }),
   });
   await organization.api(`/console/issuers/${id}/certificate`, {
@@ -114,4 +130,28 @@ export async function issueInvoice(apiKey: string, issuerId: string, customerNam
     throw new Error(`Issuing the invoice answered ${response.status}: ${await response.text()}`);
   }
   return (await response.json()) as { id: string; number: string };
+}
+
+/** Adds the range credit notes are numbered from, with no resolution, as the issuer page does. */
+export async function addCreditNoteRange(organization: TestOrganization, id: string) {
+  const response = await organization.api(`/console/issuers/${id}/numbering-ranges`, {
+    method: "POST",
+    body: JSON.stringify({ documentType: "CREDIT_NOTE", prefix: "NC", from: 1, to: 99999999 }),
+  });
+  if (!response.ok) {
+    throw new Error(`Adding the credit note range answered ${response.status}`);
+  }
+}
+
+/** Waits until the worker leaves the document in a final status, and returns it. */
+export async function waitForStatus(organization: TestOrganization, documentId: string) {
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const response = await organization.api(`/console/documents/${documentId}`);
+    const document = (await response.json()) as { status: string };
+    if (document.status !== "RECEIVED" && document.status !== "PROCESSING") {
+      return document.status;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error(`Document ${documentId} is still being processed`);
 }
