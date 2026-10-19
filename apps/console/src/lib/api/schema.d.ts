@@ -455,6 +455,7 @@ export interface components {
             software: components["schemas"]["SoftwareView"] | null;
             certificate: components["schemas"]["CertificateView"] | null;
             ranges: components["schemas"]["NumberingRangeView"][];
+            testSet: components["schemas"]["TestSetProgressView"] | null;
         };
         IssuerView: {
             id: components["schemas"]["UUID"];
@@ -546,6 +547,22 @@ export interface components {
         Status: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
         /** @enum {string} */
         TaxType: "IVA" | "ICA" | "INC";
+        TestSetCountView: {
+            documentType: components["schemas"]["DocumentType"];
+            /** Format: int64 */
+            accepted: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: int64 */
+            inProgress: number;
+            /** Format: int64 */
+            failed: number;
+        };
+        TestSetProgressView: {
+            testSetId: string;
+            since: components["schemas"]["OffsetDateTime"];
+            documents: components["schemas"]["TestSetCountView"][];
+        };
         Totals: {
             lineExtension: number;
             taxExclusive: number;

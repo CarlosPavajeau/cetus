@@ -28,6 +28,7 @@ import { IssuerStatusBadge } from "~/features/issuers/IssuerStatusBadge";
 import { issuerName, personTypeLabel } from "~/features/issuers/labels";
 import { PromoteIssuer } from "~/features/issuers/PromoteIssuer";
 import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
+import { TestSetProgress } from "~/features/issuers/TestSetProgress";
 import type { IssuerDetail } from "~/lib/api/types";
 import { uuidPattern } from "~/lib/utils";
 
@@ -178,6 +179,12 @@ function IssuerDetailPage() {
         </div>
         <CopyButton value={issuer.id} label="Copiar ID del emisor" />
       </section>
+
+      {issuer.testSet && (
+        <Section id="test-set" title="Avance del set de pruebas">
+          <TestSetProgress testSet={issuer.testSet} />
+        </Section>
+      )}
 
       <Section id="integration" title="Facturar por este emisor">
         <p className="text-2xs text-muted-foreground">

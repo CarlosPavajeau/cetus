@@ -122,6 +122,23 @@ public class DocumentEntity extends PanacheEntityBase {
         return prefix + number;
     }
 
+    /** The issuer's test documents created since {@code since}, counted by type and status. */
+    public static List<StatusCount> countTestDocuments(UUID issuerId, OffsetDateTime since) {
+        return getEntityManager().createQuery("""
+                        select new com.cantte.cetus.persistence.entity.DocumentEntity$StatusCount(
+                            d.documentType, d.status, count(d))
+                        from DocumentEntity d
+                        where d.issuerId = :issuerId and d.environment = :environment and d.createdAt >= :since
+                        group by d.documentType, d.status""", StatusCount.class)
+                .setParameter("issuerId", issuerId)
+                .setParameter("environment", Environment.TEST)
+                .setParameter("since", since)
+                .getResultList();
+    }
+
+    public record StatusCount(DocumentType documentType, DocumentStatus status, long count) {
+    }
+
     public static Optional<DocumentEntity> findForAccount(UUID accountId, UUID documentId, Environment environment) {
         return find("id = ?1 and accountId = ?2 and environment = ?3", documentId, accountId, environment)
                 .firstResultOptional();

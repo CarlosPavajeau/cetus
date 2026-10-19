@@ -4,6 +4,7 @@ import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.PersonType;
+import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
@@ -18,6 +19,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -104,16 +106,67 @@ public final class IssuerViews {
             @Schema(required = true, nullable = true) String phone,
             @Schema(required = true, nullable = true) SoftwareView software,
             @Schema(required = true, nullable = true) CertificateView certificate,
-            @Schema(required = true) List<NumberingRangeView> ranges) {
+            @Schema(required = true) List<NumberingRangeView> ranges,
+            @Schema(required = true, nullable = true) TestSetProgressView testSet) {
         static IssuerDetailView from(IssuerEntity issuer) {
             List<String> taxLevelCodes = issuer.taxLevelCodes == null || issuer.taxLevelCodes.isBlank()
                     ? List.of() : List.of(issuer.taxLevelCodes.split(";"));
+            SoftwareCredentialEntity software = SoftwareCredentialEntity.findActive(issuer.id).orElse(null);
             return new IssuerDetailView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit,
                     issuer.legalName, issuer.tradeName, issuer.status, issuer.personType, taxLevelCodes,
                     "01".equals(issuer.taxSchemeId), issuer.address, issuer.email, issuer.phone,
-                    SoftwareCredentialEntity.findActive(issuer.id).map(SoftwareView::from).orElse(null),
+                    software == null ? null : SoftwareView.from(software),
                     SigningCertificateEntity.findActive(issuer.id).map(CertificateView::from).orElse(null),
-                    NumberingRangeEntity.listByIssuer(issuer.id).stream().map(NumberingRangeView::from).toList());
+                    NumberingRangeEntity.listByIssuer(issuer.id).stream().map(NumberingRangeView::from).toList(),
+                    TestSetProgressView.of(issuer, software));
+        }
+    }
+
+    /**
+     * What Cetus sent to the issuer's current test set, by document type. Only the DIAN portal knows
+     * how many documents the set asks for and whether habilitación is done; this is what to compare
+     * it against.
+     */
+    public record TestSetProgressView(
+            @Schema(required = true) String testSetId,
+            @Schema(required = true) OffsetDateTime since,
+            @Schema(required = true) List<TestSetCountView> documents) {
+        /** Null unless the issuer sends to a test set: a test issuer whose software has a TestSetId. */
+        static TestSetProgressView of(IssuerEntity issuer, SoftwareCredentialEntity software) {
+            if (issuer.environment != Environment.TEST || software == null
+                    || software.testSetId == null || software.testSetId.isBlank()) {
+                return null;
+            }
+            OffsetDateTime since = SoftwareCredentialEntity.testSetStart(issuer.id, software.testSetId);
+            List<DocumentEntity.StatusCount> counts = DocumentEntity.countTestDocuments(issuer.id, since);
+            List<TestSetCountView> documents = Arrays.stream(DocumentType.values())
+                    .map(type -> TestSetCountView.of(type, counts))
+                    .toList();
+            return new TestSetProgressView(software.testSetId, since, documents);
+        }
+    }
+
+    /** Documents of one type in the test set: accepted and rejected by the DIAN, in progress, or failed to send. */
+    public record TestSetCountView(
+            @Schema(required = true) DocumentType documentType,
+            @Schema(required = true) long accepted,
+            @Schema(required = true) long rejected,
+            @Schema(required = true) long inProgress,
+            @Schema(required = true) long failed) {
+        static TestSetCountView of(DocumentType type, List<DocumentEntity.StatusCount> counts) {
+            long accepted = 0, rejected = 0, inProgress = 0, failed = 0;
+            for (DocumentEntity.StatusCount count : counts) {
+                if (count.documentType() != type) {
+                    continue;
+                }
+                switch (count.status()) {
+                    case ACCEPTED -> accepted += count.count();
+                    case REJECTED -> rejected += count.count();
+                    case FAILED -> failed += count.count();
+                    case RECEIVED, PROCESSING, SUBMITTED -> inProgress += count.count();
+                }
+            }
+            return new TestSetCountView(type, accepted, rejected, inProgress, failed);
         }
     }
 

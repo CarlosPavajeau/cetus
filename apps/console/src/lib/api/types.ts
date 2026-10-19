@@ -21,6 +21,8 @@ export type IssuerDetail = Schemas["IssuerDetailView"];
 
 export type NumberingRange = Schemas["NumberingRangeView"];
 
+export type TestSetProgress = Schemas["TestSetProgressView"];
+
 export type AuditAction = Schemas["AuditAction"];
 
 export type AuditEntry = Schemas["AuditEntry"];
