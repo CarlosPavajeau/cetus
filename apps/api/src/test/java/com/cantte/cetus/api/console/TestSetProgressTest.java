@@ -3,10 +3,12 @@ package com.cantte.cetus.api.console;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
+import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -20,6 +22,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /** The issuer detail counts what was sent to its current test set, so the console can show the progress. */
 @QuarkusTest
@@ -64,6 +67,32 @@ class TestSetProgressTest {
     }
 
     @Test
+    void anAcceptedTestSetTakesNoMoreTestInvoicesUntilANewOne() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Accepted test set SAS");
+        String issuerId = onboard(user).issuerId();
+        String apiKey = testKey(user);
+        assertThat(detail(user, issuerId).getString("testSet.acceptedAt")).isNull();
+        String testSetId = detail(user, issuerId).getString("software.testSetId");
+
+        // What the worker records when GetStatusZip says the set "se encuentra Aceptado".
+        QuarkusTransaction.requiringNew().run(() ->
+                SoftwareCredentialEntity.markTestSetAccepted(UUID.fromString(issuerId), testSetId));
+
+        assertThat(detail(user, issuerId).getString("testSet.acceptedAt")).isNotBlank();
+        invoiceRequest(apiKey, issuerId).post("/v1/invoices")
+                .then().statusCode(422)
+                .body("code", equalTo("test_set_accepted"));
+
+        // Saving the same set again keeps it accepted; a new set takes invoices again.
+        setSoftware(user, issuerId, testSetId);
+        invoiceRequest(apiKey, issuerId).post("/v1/invoices").then().statusCode(422);
+        setSoftware(user, issuerId, UUID.randomUUID().toString());
+        assertThat(detail(user, issuerId).getString("testSet.acceptedAt")).isNull();
+        invoiceRequest(apiKey, issuerId).post("/v1/invoices").then().statusCode(202);
+    }
+
+    @Test
     void withoutATestSetThereIsNoProgress() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "No test set SAS");
@@ -90,6 +119,11 @@ class TestSetProgressTest {
     }
 
     private static String sendInvoice(String apiKey, String issuerId) {
+        return invoiceRequest(apiKey, issuerId).post("/v1/invoices")
+                .then().statusCode(202).extract().path("id");
+    }
+
+    private static RequestSpecification invoiceRequest(String apiKey, String issuerId) {
         Map<String, Object> invoice = Map.of(
                 "issuerId", issuerId,
                 "customer", Map.of(
@@ -104,9 +138,7 @@ class TestSetProgressTest {
                         "quantity", 1,
                         "unitPrice", 100000)));
         return given().header("Authorization", "Bearer " + apiKey).contentType(ContentType.JSON)
-                .header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice)
-                .post("/v1/invoices")
-                .then().statusCode(202).extract().path("id");
+                .header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice);
     }
 
     /** What the worker records once the DIAN answers. */

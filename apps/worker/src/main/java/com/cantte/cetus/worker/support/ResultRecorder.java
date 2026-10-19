@@ -9,6 +9,7 @@ import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -81,6 +82,12 @@ public class ResultRecorder {
         doc.dianStatusMessage = response.statusDescription();
         doc.dianErrors = new ArrayList<>(response.errors());
         doc.validatedAt = OffsetDateTime.now();
+    }
+
+    /** The DIAN accepted the issuer's test set; the API stops taking test invoices for it. */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void testSetAccepted(UUID issuerId, String testSetId) {
+        SoftwareCredentialEntity.markTestSetAccepted(issuerId, testSetId);
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)

@@ -68,6 +68,9 @@ public class CheckTestSetStatusHandler implements JobHandler {
                     Base64.getDecoder().decode(response.applicationResponse()), "application/xml");
         }
         recorder.completed(ctx.documentId(), response);
+        if (response.testSetAlreadyAccepted() && ctx.testSetId() != null) {
+            recorder.testSetAccepted(ctx.issuerId(), ctx.testSetId());
+        }
     }
 
     /**
