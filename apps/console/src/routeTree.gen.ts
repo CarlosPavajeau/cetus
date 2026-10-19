@@ -17,6 +17,8 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
+import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/index'
+import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -63,6 +65,16 @@ const AppActivityEventIdRoute = AppActivityEventIdRouteImport.update({
   path: '/activity/$eventId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsIndexRoute = AppDocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
+  id: '/documents/$documentId',
+  path: '/documents/$documentId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
   id: '/issuers/',
   path: '/issuers/',
@@ -103,9 +115,11 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity/': typeof AppActivityIndexRoute
+  '/documents/': typeof AppDocumentsIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
@@ -118,9 +132,11 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity': typeof AppActivityIndexRoute
+  '/documents': typeof AppDocumentsIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
@@ -135,9 +151,11 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
+  '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/activity/': typeof AppActivityIndexRoute
+  '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
@@ -152,9 +170,11 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/overview'
     | '/activity/$eventId'
+    | '/documents/$documentId'
     | '/issuers/$issuerId'
     | '/api/auth/$'
     | '/activity/'
+    | '/documents/'
     | '/issuers/'
     | '/developers/api-keys/$keyId'
     | '/issuers/$issuerId/edit'
@@ -167,9 +187,11 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/overview'
     | '/activity/$eventId'
+    | '/documents/$documentId'
     | '/issuers/$issuerId'
     | '/api/auth/$'
     | '/activity'
+    | '/documents'
     | '/issuers'
     | '/developers/api-keys/$keyId'
     | '/issuers/$issuerId/edit'
@@ -183,9 +205,11 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_app/overview'
     | '/_app/activity/$eventId'
+    | '/_app/documents/$documentId'
     | '/_app/issuers/$issuerId'
     | '/api/auth/$'
     | '/_app/activity/'
+    | '/_app/documents/'
     | '/_app/issuers/'
     | '/_app/developers/api-keys/$keyId'
     | '/_app/issuers/$issuerId_/edit'
@@ -259,6 +283,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActivityEventIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/documents/': {
+      id: '/_app/documents/'
+      path: '/documents'
+      fullPath: '/documents/'
+      preLoaderRoute: typeof AppDocumentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents/$documentId': {
+      id: '/_app/documents/$documentId'
+      path: '/documents/$documentId'
+      fullPath: '/documents/$documentId'
+      preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/issuers/': {
       id: '/_app/issuers/'
       path: '/issuers'
@@ -307,8 +345,10 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppOverviewRoute: typeof AppOverviewRoute
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
+  AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
+  AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
   AppIssuersIssuerIdEditRoute: typeof AppIssuersIssuerIdEditRoute
@@ -318,8 +358,10 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppOverviewRoute: AppOverviewRoute,
   AppActivityEventIdRoute: AppActivityEventIdRoute,
+  AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
+  AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
   AppIssuersIssuerIdEditRoute: AppIssuersIssuerIdEditRoute,

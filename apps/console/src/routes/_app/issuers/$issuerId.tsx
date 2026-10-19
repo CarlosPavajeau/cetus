@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeftIcon, BuildingIcon, FingerprintIcon, PencilIcon } from "lucide-react";
-import type { ReactNode } from "react";
 
 import { CopyButton } from "~/components/CopyButton";
+import { Entry, Section } from "~/components/DetailSection";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { Button } from "~/components/ui/button";
@@ -73,39 +73,6 @@ function BackToIssuers() {
       <ArrowLeftIcon className="size-3.5" />
       Todos los emisores
     </Link>
-  );
-}
-
-function Entry({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <dt className="text-2xs text-muted-foreground">{label}</dt>
-      <dd className="text-2xs break-words">{children}</dd>
-    </div>
-  );
-}
-
-function Section({
-  id,
-  title,
-  action,
-  children,
-}: {
-  id: string;
-  title: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-4 rounded-lg border p-5" aria-labelledby={id}>
-      <div className="flex items-center justify-between gap-3">
-        <h2 id={id} className="text-[14px] font-medium">
-          {title}
-        </h2>
-        {action}
-      </div>
-      {children}
-    </section>
   );
 }
 
@@ -192,6 +159,16 @@ function IssuerDetailPage() {
         </div>
         <CopyButton value={issuer.id} label="Copiar ID del emisor" />
       </section>
+
+      <p className="text-2xs text-muted-foreground">
+        <Link
+          to="/documents"
+          search={{ issuerId: issuer.id }}
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Ver los documentos de este emisor
+        </Link>
+      </p>
 
       {issuer.testSet && (
         <Section id="test-set" title="Avance del set de pruebas">

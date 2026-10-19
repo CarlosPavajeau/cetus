@@ -1,0 +1,117 @@
+import { readFile } from "node:fs/promises";
+
+import type { TestOrganization } from "./organization";
+import { apiUrl, testCertificate } from "./stack";
+
+/** Creates an issuer through the API, as step 1 of the assistant would. */
+export async function createIssuer(organization: TestOrganization, nit: string, legalName: string) {
+  const response = await organization.api("/console/issuers", {
+    method: "POST",
+    body: JSON.stringify({
+      environment: "TEST",
+      nit,
+      legalName,
+      personType: "LEGAL_ENTITY",
+      taxLevelCodes: ["O-13"],
+      responsibleForIva: true,
+      address: {
+        municipalityCode: "11001",
+        cityName: "Bogotá, D.C.",
+        departmentCode: "11",
+        departmentName: "Bogotá, D.C.",
+        postalCode: "110111",
+        line: "Calle 1 # 2-3",
+        countryCode: "CO",
+        countryName: "Colombia",
+      },
+      email: "facturas@emisores.test",
+    }),
+  });
+  return ((await response.json()) as { id: string }).id;
+}
+
+/** Sets up a test issuer through the API until it is in habilitación. */
+export async function onboardIssuer(organization: TestOrganization, nit: string, legalName: string) {
+  const id = await createIssuer(organization, nit, legalName);
+  await organization.api(`/console/issuers/${id}/software`, {
+    method: "PUT",
+    body: JSON.stringify({
+      softwareId: "381db121-bc49-4286-9067-ef982e3874e4",
+      pin: "12345",
+      testSetId: "a09e2744-f1d7-4697-bbcf-613bc312450d",
+    }),
+  });
+  await organization.api(`/console/issuers/${id}/certificate`, {
+    method: "PUT",
+    body: JSON.stringify({
+      pkcs12Base64: (await readFile(testCertificate.path)).toString("base64"),
+      password: testCertificate.password,
+    }),
+  });
+  await addRange(organization, id, "SETP");
+  return id;
+}
+
+export async function addRange(organization: TestOrganization, id: string, prefix: string) {
+  const response = await organization.api(`/console/issuers/${id}/numbering-ranges`, {
+    method: "POST",
+    body: JSON.stringify({
+      documentType: "INVOICE",
+      resolutionNumber: "18760000001",
+      resolutionDate: "2026-01-01",
+      prefix,
+      from: 1,
+      to: 5000,
+      validFrom: "2026-01-01",
+      validTo: "2030-12-31",
+      technicalKey: "fc8eac422eba16e22ffd8c6f94b3f40a6e38162c",
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Adding the range answered ${response.status}`);
+  }
+}
+
+/** Creates a TEST API key for the organization and returns its secret. */
+export async function createTestApiKey(organization: TestOrganization) {
+  const response = await organization.api("/console/api-keys", {
+    method: "POST",
+    body: JSON.stringify({ name: "ERP", environment: "TEST" }),
+  });
+  return ((await response.json()) as { secret: string }).secret;
+}
+
+/** Issues an invoice through the integrator API, as an ERP would; returns its id and number. */
+export async function issueInvoice(apiKey: string, issuerId: string, customerName: string) {
+  const response = await fetch(`${apiUrl}/v1/invoices`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Idempotency-Key": crypto.randomUUID(),
+    },
+    body: JSON.stringify({
+      issuerId,
+      customer: {
+        personType: "NATURAL_PERSON",
+        identificationType: "CITIZEN_ID",
+        identificationNumber: "1020304050",
+        legalName: customerName,
+      },
+      payment: { method: "CASH", meansCode: "10" },
+      lines: [
+        {
+          itemCode: "SERV-1",
+          description: "Servicio de consultoría",
+          quantity: 1,
+          unitPrice: 100000,
+          taxes: [{ type: "IVA", percent: 19 }],
+        },
+      ],
+    }),
+  });
+  if (response.status !== 202) {
+    throw new Error(`Issuing the invoice answered ${response.status}: ${await response.text()}`);
+  }
+  return (await response.json()) as { id: string; number: string };
+}

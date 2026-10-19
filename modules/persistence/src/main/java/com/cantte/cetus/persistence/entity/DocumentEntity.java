@@ -17,6 +17,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Query;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -213,5 +214,78 @@ public class DocumentEntity extends PanacheEntityBase {
                 .setParameter("accepted", DocumentStatus.ACCEPTED)
                 .getSingleResult();
         return total == null ? BigDecimal.ZERO : total;
+    }
+
+    /** Optional criteria of {@link #pageForAccount}; null fields do not filter. */
+    public record Search(Environment environment, DocumentType type, DocumentStatus status, UUID issuerId,
+                         LocalDate issuedFrom, LocalDate issuedTo, String text) {
+    }
+
+    /**
+     * The account's documents, newest first, paginated by id (UUID v7, so creation order): pass the last id
+     * of the previous page as {@code beforeId}. {@code text} matches the number, the external reference and
+     * the customer's identification or name.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<DocumentEntity> pageForAccount(UUID accountId, Search search, UUID beforeId, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT d.* FROM billing.documents d WHERE d.account_id = :account");
+        if (search.environment() != null) {
+            sql.append(" AND d.environment = :environment");
+        }
+        if (search.type() != null) {
+            sql.append(" AND d.document_type = :type");
+        }
+        if (search.status() != null) {
+            sql.append(" AND d.status = :status");
+        }
+        if (search.issuerId() != null) {
+            sql.append(" AND d.issuer_id = :issuer");
+        }
+        if (search.issuedFrom() != null) {
+            sql.append(" AND d.issue_date >= :from");
+        }
+        if (search.issuedTo() != null) {
+            sql.append(" AND d.issue_date <= :to");
+        }
+        String text = search.text() == null ? "" : search.text().strip();
+        if (!text.isEmpty()) {
+            sql.append(" AND (d.prefix || d.number ILIKE :text"
+                    + " OR d.external_reference ILIKE :text"
+                    + " OR d.customer ->> 'identificationNumber' ILIKE :text"
+                    + " OR d.customer ->> 'legalName' ILIKE :text)");
+        }
+        if (beforeId != null) {
+            sql.append(" AND d.id < :before");
+        }
+        sql.append(" ORDER BY d.id DESC LIMIT :limit");
+
+        Query query = getEntityManager().createNativeQuery(sql.toString(), DocumentEntity.class)
+                .setParameter("account", accountId)
+                .setParameter("limit", limit);
+        if (search.environment() != null) {
+            query.setParameter("environment", search.environment().name());
+        }
+        if (search.type() != null) {
+            query.setParameter("type", search.type().name());
+        }
+        if (search.status() != null) {
+            query.setParameter("status", search.status().name());
+        }
+        if (search.issuerId() != null) {
+            query.setParameter("issuer", search.issuerId());
+        }
+        if (search.issuedFrom() != null) {
+            query.setParameter("from", search.issuedFrom());
+        }
+        if (search.issuedTo() != null) {
+            query.setParameter("to", search.issuedTo());
+        }
+        if (!text.isEmpty()) {
+            query.setParameter("text", "%" + text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%");
+        }
+        if (beforeId != null) {
+            query.setParameter("before", beforeId);
+        }
+        return query.getResultList();
     }
 }

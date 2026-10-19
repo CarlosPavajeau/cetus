@@ -1,0 +1,77 @@
+import { format, parseISO } from "date-fns";
+import { CalendarIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { useState } from "react";
+import type { DateRange } from "react-day-picker";
+import { es } from "react-day-picker/locale";
+
+import { Button } from "~/components/ui/button";
+import { Calendar } from "~/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+
+import { formatDay } from "./labels";
+
+const isoFormat = "yyyy-MM-dd";
+
+/** Issue date range, as ISO dates; either end may be open. */
+export function IssueDateFilter({
+  from,
+  to,
+  onChange,
+}: {
+  from?: string;
+  to?: string;
+  onChange: (range: { from?: string; to?: string }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected: DateRange | undefined = from
+    ? { from: parseISO(from), to: to ? parseISO(to) : undefined }
+    : undefined;
+  const label =
+    from && to
+      ? `${formatDay(from)} – ${formatDay(to)}`
+      : from
+        ? `Desde el ${formatDay(from)}`
+        : to
+          ? `Hasta el ${formatDay(to)}`
+          : "Fecha de emisión";
+
+  return (
+    <div className="flex items-center gap-1">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger render={<Button variant="outline" className="font-normal" />}>
+          <CalendarIcon data-icon="inline-start" className="text-muted-foreground" />
+          {label}
+          <ChevronDownIcon data-icon="inline-end" className="text-muted-foreground" />
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="range"
+            locale={es}
+            numberOfMonths={2}
+            selected={selected}
+            defaultMonth={selected?.from}
+            onSelect={(range) => {
+              onChange({
+                from: range?.from ? format(range.from, isoFormat) : undefined,
+                to: range?.to ? format(range.to, isoFormat) : undefined,
+              });
+              if (range?.from && range.to) {
+                setOpen(false);
+              }
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+      {(from || to) && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => onChange({})}
+          aria-label="Quitar filtro de fecha"
+        >
+          <XIcon />
+        </Button>
+      )}
+    </div>
+  );
+}

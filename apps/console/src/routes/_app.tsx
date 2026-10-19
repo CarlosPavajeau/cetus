@@ -12,6 +12,7 @@ import {
   BookOpenIcon,
   BuildingIcon,
   CircleHelpIcon,
+  FileTextIcon,
   HistoryIcon,
   KeyRoundIcon,
   LayoutDashboardIcon,
@@ -54,6 +55,7 @@ export const Route = createFileRoute("/_app")({
 
 const navigation = [
   { to: "/overview", label: "Resumen", icon: LayoutDashboardIcon },
+  { to: "/documents", label: "Documentos", icon: FileTextIcon },
   { to: "/issuers", label: "Emisores", icon: BuildingIcon },
   {
     to: "/developers/api-keys",
