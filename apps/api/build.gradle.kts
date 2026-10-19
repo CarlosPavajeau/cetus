@@ -11,6 +11,8 @@ dependencies {
     implementation(project(":modules:persistence"))
     implementation(project(":modules:jobs"))
     implementation(project(":modules:aws"))
+    // Only to verify the signature of Resend's delivery webhooks; the API never sends email.
+    implementation(project(":modules:email"))
     // Only to validate uploaded certificates; the API never signs nor calls the DIAN.
     implementation(project(":modules:signing"))
 

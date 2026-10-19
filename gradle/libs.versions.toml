@@ -3,6 +3,9 @@
 quarkus = "3.20.0"
 awssdk = "2.29.0"
 assertj = "3.26.3"
+resend = "4.28.0"
+openpdf = "3.0.5"
+zxing = "3.5.4"
 
 [libraries]
 # BOMs (platforms) — align transitive versions
@@ -35,6 +38,11 @@ testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
 awssdk-kms = { module = "software.amazon.awssdk:kms" }
 awssdk-s3 = { module = "software.amazon.awssdk:s3" }
 awssdk-url-connection = { module = "software.amazon.awssdk:url-connection-client" }
+
+# Email delivery (official Resend SDK), PDF rendering and QR codes
+resend-java = { module = "com.resend:resend-java", version.ref = "resend" }
+openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 # Testing
 junit-bom = { module = "org.junit:junit-bom", version = "5.11.3" }

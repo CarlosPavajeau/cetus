@@ -9,6 +9,8 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 import java.util.Optional;
@@ -49,11 +51,27 @@ public class AwsClients {
         return builder.build();
     }
 
+    /** Signs short-lived download URLs; makes no network call itself. */
+    @Produces
+    @ApplicationScoped
+    S3Presigner s3Presigner() {
+        var builder = S3Presigner.builder()
+                .region(Region.of(region))
+                .credentialsProvider(DefaultCredentialsProvider.create());
+        endpointOverride.ifPresent(uri -> builder.endpointOverride(uri)
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()));
+        return builder.build();
+    }
+
     void closeKms(@Disposes KmsClient client) {
         client.close();
     }
 
     void closeS3(@Disposes S3Client client) {
         client.close();
+    }
+
+    void closePresigner(@Disposes S3Presigner presigner) {
+        presigner.close();
     }
 }

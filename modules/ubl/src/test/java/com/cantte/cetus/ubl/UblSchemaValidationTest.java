@@ -112,6 +112,25 @@ class UblSchemaValidationTest {
         assertThat(errors).as("XSD errors, see build/ubl/sample-credit-note-signed.xml").isEmpty();
     }
 
+    /** The container is only valid once signed: its single UBLExtension is the signature slot. */
+    @Test
+    void signedAttachedDocumentIsValidAgainstUblSchema() throws Exception {
+        Optional<Path> attachedXsd = findByName("UBL-AttachedDocument-2.1.xsd");
+        assumeTrue(attachedXsd.isPresent(), "UBL-AttachedDocument-2.1.xsd not found in src/main/xsd");
+
+        Document document = AttachedDocumentMapperTest.sampleDocument();
+        try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
+            var keys = Pkcs12Loader.load(in.readAllBytes(), "cetus-test".toCharArray());
+            new XadesSigner().sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+        }
+        byte[] xml = XmlSupport.serialize(document);
+        Files.createDirectories(OUTPUT);
+        Files.write(OUTPUT.resolve("sample-attached-document-signed.xml"), xml);
+
+        List<String> errors = validate(attachedXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
+        assertThat(errors).as("XSD errors, see build/ubl/sample-attached-document-signed.xml").isEmpty();
+    }
+
     /** Credit notes carry no InvoiceControl; the DIAN schema must accept the extensions without it. */
     @Test
     void creditNoteDianExtensionsAreValidAgainstDianSchema() throws Exception {

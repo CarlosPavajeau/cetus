@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.invoices;
 
+import com.cantte.cetus.api.documents.DeliveryView;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
@@ -27,7 +28,9 @@ public record InvoiceResponse(
         @Schema(required = true) OffsetDateTime createdAt,
         @Schema(required = true) List<CreditNoteSummary> creditNotes,
         @Schema(required = true, description = "Payable amount not yet credited by accepted or in-flight credit notes")
-        BigDecimal balance) {
+        BigDecimal balance,
+        @Schema(required = true, description = "Deliveries of the accepted invoice to the customer")
+        List<DeliveryView> deliveries) {
 
     public record Totals(
             @Schema(required = true) BigDecimal lineExtension,
@@ -70,6 +73,7 @@ public record InvoiceResponse(
                 doc.externalReference,
                 doc.createdAt,
                 creditNotes,
-                doc.payableAmount.subtract(DocumentEntity.committedCreditTotal(doc.id)));
+                doc.payableAmount.subtract(DocumentEntity.committedCreditTotal(doc.id)),
+                DeliveryView.of(doc.id));
     }
 }

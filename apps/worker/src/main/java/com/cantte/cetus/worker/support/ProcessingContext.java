@@ -3,6 +3,7 @@ package com.cantte.cetus.worker.support;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.NumberingAuthorization;
@@ -11,6 +12,7 @@ import com.cantte.cetus.domain.model.PaymentInfo;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,7 +48,9 @@ public record ProcessingContext(
         CertificateRef certificate,
         String existingCufe,
         String trackId,
-        boolean lastSendUnanswered) {
+        boolean lastSendUnanswered,
+        DocumentStatus status,
+        OffsetDateTime validatedAt) {
 
     public String fullNumber() {
         return prefix + number;

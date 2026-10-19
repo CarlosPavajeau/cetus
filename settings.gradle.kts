@@ -22,6 +22,7 @@ include(
     "modules:signing",
     "modules:dian-client",
     "modules:aws",
+    "modules:email",
     "apps:api",
     "apps:worker",
     "apps:dian-mock",

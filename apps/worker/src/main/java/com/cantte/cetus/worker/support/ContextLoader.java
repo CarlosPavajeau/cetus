@@ -85,7 +85,9 @@ public class ContextLoader {
                 new ProcessingContext.CertificateRef(certificate.id, certificate.s3Key, certificate.passwordSealed),
                 doc.cufe,
                 doc.dianTrackId,
-                DianSubmissionEntity.lastSendUnanswered(doc.id));
+                DianSubmissionEntity.lastSendUnanswered(doc.id),
+                doc.status,
+                doc.validatedAt);
     }
 
     /** The invoice a note corrects, or null for an invoice. */

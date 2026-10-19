@@ -5,8 +5,12 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
+import java.net.URL;
 import java.security.MessageDigest;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HexFormat;
 
 /**
@@ -18,6 +22,8 @@ public class DocumentStorage {
 
     @Inject
     S3Client s3;
+    @Inject
+    S3Presigner presigner;
 
     @ConfigProperty(name = "cetus.storage.bucket")
     String bucket;
@@ -31,6 +37,17 @@ public class DocumentStorage {
         return s3.getObjectAsBytes(r -> r.bucket(bucket).key(key)).asByteArray();
     }
 
+    /**
+     * A URL that downloads the object for {@code ttl} without credentials, so files never pass through
+     * the API. The browser saves it as {@code downloadName}.
+     */
+    public PresignedUrl presignGet(String key, Duration ttl, String downloadName) {
+        URL url = presigner.presignGetObject(r -> r.signatureDuration(ttl)
+                .getObjectRequest(get -> get.bucket(bucket).key(key)
+                        .responseContentDisposition("attachment; filename=\"" + downloadName + "\""))).url();
+        return new PresignedUrl(url.toString(), Instant.now().plus(ttl));
+    }
+
     private static String sha256(byte[] content) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(content));
@@ -40,5 +57,8 @@ public class DocumentStorage {
     }
 
     public record StoredObject(String key, String sha256, long size, String contentType) {
+    }
+
+    public record PresignedUrl(String url, Instant expiresAt) {
     }
 }

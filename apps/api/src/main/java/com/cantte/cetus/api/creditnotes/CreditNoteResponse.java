@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.creditnotes;
 
+import com.cantte.cetus.api.documents.DeliveryView;
 import com.cantte.cetus.api.invoices.InvoiceResponse;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
@@ -27,7 +28,9 @@ public record CreditNoteResponse(
         @Schema(required = true) InvoiceResponse.Totals totals,
         @Schema(required = true) InvoiceResponse.Dian dian,
         @Schema(required = true, nullable = true) String externalReference,
-        @Schema(required = true) OffsetDateTime createdAt) {
+        @Schema(required = true) OffsetDateTime createdAt,
+        @Schema(required = true, description = "Deliveries of the accepted note to the customer")
+        List<DeliveryView> deliveries) {
 
     public record InvoiceRef(
             @Schema(required = true) UUID id,
@@ -54,6 +57,7 @@ public record CreditNoteResponse(
                 new InvoiceResponse.Dian(note.dianStatusCode, note.dianStatusMessage, List.copyOf(note.dianErrors),
                         note.validatedAt),
                 note.externalReference,
-                note.createdAt);
+                note.createdAt,
+                DeliveryView.of(note.id));
     }
 }

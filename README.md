@@ -174,6 +174,33 @@ Variables principales: `CETUS_DB_URL`, `CETUS_DB_USER`, `CETUS_DB_PASSWORD`, `CE
 `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CETUS_API_URL` (URL privada de la API) en la consola.
 Los endpoints `/console/*` solo deberían ser accesibles por la red privada.
 
+### Entrega por correo (Resend)
+
+Cuando la DIAN acepta un documento, el worker arma el `AttachedDocument` firmado y el PDF, y los envía en un
+zip al adquiriente. Las llaves solo se leen del entorno y nunca van en el código:
+
+| Variable | Servicio | Uso |
+|---|---|---|
+| `RESEND_API_KEY` | worker | Llave con permiso solo de envío, una por ambiente |
+| `CETUS_EMAIL_FROM` | worker | Remitente en el dominio verificado, p. ej. `Facturas <facturas@facturas.midominio.com>` |
+| `CETUS_EMAIL_TEST_RECIPIENT` | worker | Buzón que recibe los documentos TEST en lugar del adquiriente |
+| `RESEND_WEBHOOK_SECRET` | api | Secreto `whsec_…` del webhook de eventos |
+
+Sin `RESEND_API_KEY` o `CETUS_EMAIL_FROM`, la entrega queda `SKIPPED`. En local, copia
+`apps/worker/.env.example` a `apps/worker/.env` (y `apps/api/.env.example` a `apps/api/.env`): Quarkus en modo
+dev los lee y git los ignora.
+
+En Resend:
+
+1. Verifica un subdominio dedicado (p. ej. `facturas.midominio.com`) con los registros SPF y DKIM que muestra el
+   panel, y agrega una política DMARC.
+2. Crea el webhook hacia `https://<api>/internal/email-events` con los eventos `email.delivered`,
+   `email.bounced`, `email.complained` y `email.failed`. Copia su secreto en `RESEND_WEBHOOK_SECRET`.
+
+Las entregas aparecen en `deliveries` de `GET /v1/invoices/{id}` y `GET /v1/credit-notes/{id}`. Los archivos
+se descargan con `GET /v1/{invoices|credit-notes}/{id}/files/{xml|pdf|attached-document}`, que responde una URL
+prefirmada de S3 válida por 5 minutos.
+
 ## Pendiente de validar contra la DIAN
 
 Todo lo marcado en comentarios como "confirm/verify" debe revisarse con el anexo técnico vigente y con
