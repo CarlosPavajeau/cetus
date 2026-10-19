@@ -22,6 +22,7 @@ import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$i
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
+import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuers/$issuerId_.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -89,6 +90,11 @@ const AppDevelopersApiKeysKeyIdRoute =
     path: '/developers/api-keys/$keyId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppIssuersIssuerIdEditRoute = AppIssuersIssuerIdEditRouteImport.update({
+  id: '/issuers/$issuerId_/edit',
+  path: '/issuers/$issuerId/edit',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/activity/': typeof AppActivityIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
+  '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
 }
 export interface FileRoutesByTo {
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/activity': typeof AppActivityIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
+  '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
 }
 export interface FileRoutesById {
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/_app/activity/': typeof AppActivityIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
+  '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
 }
 export interface FileRouteTypes {
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/activity/'
     | '/issuers/'
     | '/developers/api-keys/$keyId'
+    | '/issuers/$issuerId/edit'
     | '/developers/api-keys/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/issuers'
     | '/developers/api-keys/$keyId'
+    | '/issuers/$issuerId/edit'
     | '/developers/api-keys'
   id:
     | '__root__'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/_app/activity/'
     | '/_app/issuers/'
     | '/_app/developers/api-keys/$keyId'
+    | '/_app/issuers/$issuerId_/edit'
     | '/_app/developers/api-keys/'
   fileRoutesById: FileRoutesById
 }
@@ -282,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDevelopersApiKeysKeyIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/issuers/$issuerId_/edit': {
+      id: '/_app/issuers/$issuerId_/edit'
+      path: '/issuers/$issuerId/edit'
+      fullPath: '/issuers/$issuerId/edit'
+      preLoaderRoute: typeof AppIssuersIssuerIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -292,6 +311,7 @@ interface AppRouteChildren {
   AppActivityIndexRoute: typeof AppActivityIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
+  AppIssuersIssuerIdEditRoute: typeof AppIssuersIssuerIdEditRoute
   AppDevelopersApiKeysIndexRoute: typeof AppDevelopersApiKeysIndexRoute
 }
 
@@ -302,6 +322,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppActivityIndexRoute: AppActivityIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
+  AppIssuersIssuerIdEditRoute: AppIssuersIssuerIdEditRoute,
   AppDevelopersApiKeysIndexRoute: AppDevelopersApiKeysIndexRoute,
 }
 

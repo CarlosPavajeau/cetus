@@ -174,3 +174,26 @@ test("a test issuer in habilitación is promoted to production", async ({ page, 
   await expect(page.getByRole("button", { name: "Pasar a producción" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "ver emisor de producción" })).toBeVisible();
 });
+
+test("an issuer in habilitación keeps its tax data in line with its RUT", async ({
+  page,
+  organization,
+}) => {
+  const id = await onboardIssuer(organization, "900123456", "Rut SAS");
+
+  await open(page, `/issuers/${id}`);
+  await page.getByRole("button", { name: "Editar" }).click();
+  await expect(page).toHaveURL(new RegExp(`/issuers/${id}/edit$`));
+  await expect(page.getByLabel("NIT")).toHaveAttribute("readonly");
+  // The person type comes with the NIT: it is fixed once the issuer is set up.
+  await expect(page.getByLabel("Tipo de persona")).toBeDisabled();
+
+  await page.getByLabel("Nombre o razón social").fill("Rut Colombia SAS");
+  await page.getByLabel("Responsabilidades tributarias").fill("R-99-PN");
+  await page.getByRole("button", { name: "Guardar cambios" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/issuers/${id}$`));
+  await expect(page.getByRole("heading", { name: "Rut Colombia SAS" })).toBeVisible();
+  await expect(page.getByText("R-99-PN")).toBeVisible();
+  await expect(page.getByText("En habilitación")).toBeVisible();
+});

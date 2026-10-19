@@ -6,6 +6,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-/** The issuer detail and update that let the console resume the setup assistant. */
+/** The issuer detail, and the update that resumes the setup assistant and keeps the issuer in line with its RUT. */
 @QuarkusTest
 class IssuerResourceTest {
 
@@ -99,14 +100,31 @@ class IssuerResourceTest {
     }
 
     @Test
-    void issuerInHabilitacionCannotBeEdited() {
+    void issuerInHabilitacionCanFollowItsRut() {
         ConsoleUser user = ConsoleUser.newOrganization();
-        bootstrap(user, "Locked SAS");
+        bootstrap(user, "Rut SAS");
         Onboarding onboarding = onboard(user);
 
-        user.request().body(update("Changed SAS")).put("/console/issuers/" + onboarding.issuerId())
+        user.request().body(update("Acme Colombia SAS")).put("/console/issuers/" + onboarding.issuerId())
+                .then().statusCode(200)
+                .body("legalName", equalTo("Acme Colombia SAS"))
+                .body("status", equalTo("TESTING"))
+                .body("taxLevelCodes", equalTo(List.of("O-47")));
+        assertThat(AuditTrailTest.entries(user, "ISSUER_UPDATED")).hasSize(1);
+    }
+
+    @Test
+    void personTypeIsLockedOnceTheIssuerIsSetUp() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Person SAS");
+        Onboarding onboarding = onboard(user);
+        Map<String, Object> naturalPerson = new HashMap<>(update("Changed SAS"));
+        naturalPerson.put("personType", "NATURAL_PERSON");
+
+        user.request().body(naturalPerson).put("/console/issuers/" + onboarding.issuerId())
                 .then().statusCode(422)
-                .body("code", equalTo("issuer_locked"));
+                .body("code", equalTo("person_type_locked"));
+        assertThat(detail(user, onboarding.issuerId()).getString("legalName")).isNotEqualTo("Changed SAS");
     }
 
     private static JsonPath detail(ConsoleUser user, String issuerId) {

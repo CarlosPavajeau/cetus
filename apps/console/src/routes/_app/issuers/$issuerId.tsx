@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
-import { ArrowLeftIcon, BuildingIcon, FingerprintIcon } from "lucide-react";
+import { ArrowLeftIcon, BuildingIcon, FingerprintIcon, PencilIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CopyButton } from "~/components/CopyButton";
@@ -85,12 +85,25 @@ function Entry({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+function Section({
+  id,
+  title,
+  action,
+  children,
+}: {
+  id: string;
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="flex flex-col gap-4 rounded-lg border p-5" aria-labelledby={id}>
-      <h2 id={id} className="text-[14px] font-medium">
-        {title}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id={id} className="text-[14px] font-medium">
+          {title}
+        </h2>
+        {action}
+      </div>
       {children}
     </section>
   );
@@ -204,7 +217,21 @@ function IssuerDetailPage() {
         </div>
       </Section>
 
-      <Section id="tax-data" title="Datos tributarios">
+      <Section
+        id="tax-data"
+        title="Datos tributarios"
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link to="/issuers/$issuerId/edit" params={{ issuerId: issuer.id }} />}
+            nativeButton={false}
+          >
+            <PencilIcon data-icon="inline-start" />
+            Editar
+          </Button>
+        }
+      >
         <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
           <Entry label="Nombre o razón social">{issuer.legalName}</Entry>
           <Entry label="Nombre comercial">{issuer.tradeName ?? "—"}</Entry>
