@@ -41,7 +41,7 @@ public class JobRunner {
         }
     }
 
-    private void run(JobEntity job) {
+    void run(JobEntity job) {
         JobHandler handler = handlers().get(job.jobType);
         if (handler == null) {
             claimer.fail(job, "No handler for job type " + job.jobType);
@@ -56,9 +56,14 @@ public class JobRunner {
             LOG.errorf("Job %s (%s) failed permanently on attempt %d, not retrying: %s",
                     job.id, job.jobType, job.attempts, giveUp.getMessage());
             claimer.kill(job.id, giveUp.getMessage());
+            handler.onDead(job, giveUp.getMessage());
         } catch (Exception e) {
             LOG.warnf(e, "Job %s (%s) failed on attempt %d", job.id, job.jobType, job.attempts);
-            claimer.fail(job, e.getClass().getSimpleName() + ": " + e.getMessage());
+            String error = e.getClass().getSimpleName() + ": " + e.getMessage();
+            if (claimer.fail(job, error)) {
+                LOG.errorf("Job %s (%s) is dead after %d attempts", job.id, job.jobType, job.attempts);
+                handler.onDead(job, error);
+            }
         }
     }
 

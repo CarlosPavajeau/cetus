@@ -32,8 +32,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Golden-path test of the UBL pipeline. When the DIAN XSDs are in src/main/xsd, add schema
- * validation here, and keep a known-good XML accepted in habilitación as a golden file.
+ * Golden-path test of the UBL pipeline. Schema validation lives in {@link UblSchemaValidationTest}
+ * and the comparison with an invoice accepted in habilitación in {@link GoldenInvoiceTest}.
  */
 class InvoiceUblMapperTest {
 

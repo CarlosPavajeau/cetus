@@ -1,6 +1,7 @@
 package com.cantte.cetus.api.auth;
 
 import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.ApiKeyEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Priority;
@@ -19,6 +20,8 @@ import java.time.OffsetDateTime;
 @Priority(Priorities.AUTHENTICATION)
 public class ApiKeyFilter implements ContainerRequestFilter {
 
+    private static final String ACTIVE = "ACTIVE";
+
     @Inject
     ApiPrincipal principal;
 
@@ -33,23 +36,37 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             return;
         }
         String hash = ApiKeys.hash(header.substring("Bearer ".length()).trim());
-        ApiKeyEntity key = QuarkusTransaction.requiringNew().call(() -> {
+        Resolved resolved = QuarkusTransaction.requiringNew().call(() -> {
             ApiKeyEntity found = ApiKeyEntity.findActiveByHash(hash).orElse(null);
-            if (found != null) {
-                found.lastUsedAt = OffsetDateTime.now();
+            if (found == null) {
+                return null;
             }
-            return found;
+            found.lastUsedAt = OffsetDateTime.now();
+            AccountEntity account = AccountEntity.findById(found.accountId);
+            return new Resolved(found, account.status);
         });
-        if (key == null) {
+        if (resolved == null) {
             abort(request, "Invalid or revoked API key");
             return;
         }
+        if (!ACTIVE.equals(resolved.accountStatus())) {
+            abort(request, Response.Status.FORBIDDEN, "account_suspended", "This account is suspended");
+            return;
+        }
+        ApiKeyEntity key = resolved.key();
         principal.set(key.accountId, key.environment, key.id);
     }
 
     private static void abort(ContainerRequestContext request, String message) {
-        request.abortWith(Response.status(Response.Status.UNAUTHORIZED)
-                .entity(new ApiError("unauthorized", message, null))
+        abort(request, Response.Status.UNAUTHORIZED, "unauthorized", message);
+    }
+
+    private static void abort(ContainerRequestContext request, Response.Status status, String code, String message) {
+        request.abortWith(Response.status(status)
+                .entity(new ApiError(code, message, null))
                 .build());
+    }
+
+    private record Resolved(ApiKeyEntity key, String accountStatus) {
     }
 }

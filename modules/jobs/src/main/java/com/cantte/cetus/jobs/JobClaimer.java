@@ -49,9 +49,13 @@ public class JobClaimer {
                 .executeUpdate();
     }
 
-    /** Schedules a retry with exponential backoff, or marks the job DEAD after max attempts. */
+    /**
+     * Schedules a retry with exponential backoff, or marks the job DEAD after max attempts.
+     *
+     * @return true if the job is now DEAD
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void fail(JobEntity job, String error) {
+    public boolean fail(JobEntity job, String error) {
         boolean dead = job.attempts >= job.maxAttempts;
         long backoffSeconds = Math.min(3600, (long) Math.pow(2, job.attempts) * 5);
         em.createNativeQuery("""
@@ -65,6 +69,7 @@ public class JobClaimer {
                 .setParameter("backoff", (double) backoffSeconds)
                 .setParameter("id", job.id)
                 .executeUpdate();
+        return dead;
     }
 
     /** Marks the job DEAD without further attempts: retrying cannot fix the error. */

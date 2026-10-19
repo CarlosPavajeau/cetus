@@ -81,7 +81,7 @@ public class ContextLoader {
                 new ProcessingContext.CertificateRef(certificate.id, certificate.s3Key, certificate.passwordSealed),
                 doc.cufe,
                 doc.dianTrackId,
-                DianSubmissionEntity.lastSendTimedOut(doc.id));
+                DianSubmissionEntity.lastSendUnanswered(doc.id));
     }
 
     /** Rebuilds the calculation stored at creation time. Never recalculated, so totals cannot drift. */
