@@ -32,7 +32,7 @@ import { apiKeyQuery } from "~/features/api-keys/queries";
 import { statusLabel } from "~/features/api-keys/requests";
 import { RevokeApiKey } from "~/features/api-keys/RevokeApiKey";
 import type { ApiKeyRequest } from "~/lib/api/types";
-import { cn } from "~/lib/utils";
+import { cn, uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/developers/api-keys/$keyId")({
   loader: async ({ context: { queryClient }, params }) => {
@@ -48,8 +48,6 @@ export const Route = createFileRoute("/_app/developers/api-keys/$keyId")({
   component: ApiKeyDetail,
   notFoundComponent: ApiKeyNotFound,
 });
-
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const countFormat = new Intl.NumberFormat("es-CO");
 

@@ -86,12 +86,14 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   await page.getByLabel("Clave técnica").fill("fc8eac422eba16e22ffd8c6f94b3f40a6e38162c");
   await page.getByRole("button", { name: "Guardar y finalizar" }).click();
 
-  await expect(page).toHaveURL(/\/overview$/);
-  await expect(page.getByRole("cell", { name: "En habilitación" })).toBeVisible();
+  // The issuer's page, with the ID to send to the API.
+  await expect(page).toHaveURL(/\/issuers\/[0-9a-f-]{36}$/);
+  await expect(page.getByText("En habilitación")).toBeVisible();
+  await expect(page.getByTestId("issuer-id")).toHaveText(page.url().split("/").at(-1)!);
 
   // Nothing is left to set up.
   await open(page, "/setup");
-  await expect(page).toHaveURL(/\/overview$/);
+  await expect(page).toHaveURL(/\/issuers$/);
 
   await open(page, "/activity");
   await expect(page.getByText("Emisor actualizado")).toBeVisible();

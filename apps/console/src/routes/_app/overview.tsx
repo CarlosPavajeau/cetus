@@ -30,8 +30,8 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { accountQuery } from "~/features/account/queries";
+import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
-import type { Issuer } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/overview")({
   loader: async ({ context: { queryClient } }) => {
@@ -46,13 +46,6 @@ export const Route = createFileRoute("/_app/overview")({
   },
   component: Overview,
 });
-
-const statusLabel: Record<Issuer["status"], string> = {
-  ONBOARDING: "Configuración pendiente",
-  TESTING: "En habilitación",
-  ENABLED: "Habilitado",
-  DISABLED: "Deshabilitado",
-};
 
 function Overview() {
   const { data: account } = useSuspenseQuery(accountQuery);
@@ -102,7 +95,15 @@ function Overview() {
               <TableBody>
                 {issuers.map((issuer) => (
                   <TableRow key={issuer.id}>
-                    <TableCell>{issuer.tradeName ?? issuer.legalName}</TableCell>
+                    <TableCell>
+                      <Link
+                        to="/issuers/$issuerId"
+                        params={{ issuerId: issuer.id }}
+                        className="hover:underline hover:underline-offset-4"
+                      >
+                        {issuerName(issuer)}
+                      </Link>
+                    </TableCell>
                     <TableCell className="tabular-nums">
                       {issuer.nit}-{issuer.checkDigit}
                     </TableCell>
@@ -115,7 +116,7 @@ function Overview() {
                           variant="link"
                           size="sm"
                           className="h-auto px-0"
-                          render={<Link to="/setup" />}
+                          render={<Link to="/setup" search={{ issuerId: issuer.id }} />}
                           nativeButton={false}
                         >
                           Continuar configuración

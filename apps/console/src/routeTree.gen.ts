@@ -17,6 +17,8 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
+import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
+import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
@@ -60,6 +62,16 @@ const AppActivityEventIdRoute = AppActivityEventIdRouteImport.update({
   path: '/activity/$eventId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
+  id: '/issuers/',
+  path: '/issuers/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIssuersIssuerIdRoute = AppIssuersIssuerIdRouteImport.update({
+  id: '/issuers/$issuerId',
+  path: '/issuers/$issuerId',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -85,8 +97,10 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity/': typeof AppActivityIndexRoute
+  '/issuers/': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
 }
@@ -97,8 +111,10 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity': typeof AppActivityIndexRoute
+  '/issuers': typeof AppIssuersIndexRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
 }
@@ -111,8 +127,10 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
+  '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/activity/': typeof AppActivityIndexRoute
+  '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
 }
@@ -125,8 +143,10 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/overview'
     | '/activity/$eventId'
+    | '/issuers/$issuerId'
     | '/api/auth/$'
     | '/activity/'
+    | '/issuers/'
     | '/developers/api-keys/$keyId'
     | '/developers/api-keys/'
   fileRoutesByTo: FileRoutesByTo
@@ -137,8 +157,10 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/overview'
     | '/activity/$eventId'
+    | '/issuers/$issuerId'
     | '/api/auth/$'
     | '/activity'
+    | '/issuers'
     | '/developers/api-keys/$keyId'
     | '/developers/api-keys'
   id:
@@ -150,8 +172,10 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_app/overview'
     | '/_app/activity/$eventId'
+    | '/_app/issuers/$issuerId'
     | '/api/auth/$'
     | '/_app/activity/'
+    | '/_app/issuers/'
     | '/_app/developers/api-keys/$keyId'
     | '/_app/developers/api-keys/'
   fileRoutesById: FileRoutesById
@@ -223,6 +247,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActivityEventIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/issuers/': {
+      id: '/_app/issuers/'
+      path: '/issuers'
+      fullPath: '/issuers/'
+      preLoaderRoute: typeof AppIssuersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/issuers/$issuerId': {
+      id: '/_app/issuers/$issuerId'
+      path: '/issuers/$issuerId'
+      fullPath: '/issuers/$issuerId'
+      preLoaderRoute: typeof AppIssuersIssuerIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -250,7 +288,9 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppOverviewRoute: typeof AppOverviewRoute
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
+  AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
+  AppIssuersIndexRoute: typeof AppIssuersIndexRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
   AppDevelopersApiKeysIndexRoute: typeof AppDevelopersApiKeysIndexRoute
 }
@@ -258,7 +298,9 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppOverviewRoute: AppOverviewRoute,
   AppActivityEventIdRoute: AppActivityEventIdRoute,
+  AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
+  AppIssuersIndexRoute: AppIssuersIndexRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
   AppDevelopersApiKeysIndexRoute: AppDevelopersApiKeysIndexRoute,
 }
