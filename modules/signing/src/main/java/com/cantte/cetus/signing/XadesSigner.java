@@ -50,6 +50,17 @@ public final class XadesSigner {
     static final String POLICY_HASH = "dMoMvtcG5aIzgYo0tIsSQeVJBDnUnfSOfBpxXrmor0Y=";
     private static final String SIGNED_PROPERTIES_TYPE = "http://uri.etsi.org/01903#SignedProperties";
 
+    /** JDK system property that makes XML DSig write base64 values without line breaks. */
+    public static final String IGNORE_LINE_BREAKS = "com.sun.org.apache.xml.internal.security.ignoreLineBreaks";
+
+    static {
+        // By default the JDK wraps SignatureValue and X509Certificate every 76 chars with CRLF, which ends up
+        // serialized as "&#13;". The signature is still valid, but the DIAN validator rejects it (ZE02), so
+        // the base64 must be a single line. Read once when the JDK XML security classes load: keep it here
+        // and in WsSecuritySigner, whichever signs first.
+        System.setProperty(IGNORE_LINE_BREAKS, "true");
+    }
+
     private final Clock clock;
 
     public XadesSigner() {

@@ -32,7 +32,10 @@ class XadesSignerTest {
         new XadesSigner().sign(doc, slot, keys, XadesSigner.SignerRole.SUPPLIER);
 
         // Serialize and parse again, as the DIAN would.
-        Document received = XmlSupport.parse(XmlSupport.serialize(doc));
+        byte[] serialized = XmlSupport.serialize(doc);
+        // Wrapped base64 (CRLF serialized as "&#13;") is valid XML DSig, but the DIAN rejects it with ZE02.
+        assertThat(new String(serialized, StandardCharsets.UTF_8)).doesNotContain("&#13;", "\r", "\n");
+        Document received = XmlSupport.parse(serialized);
         assertThat(validate(received, keys)).isTrue();
         assertThat(received.getElementsByTagNameNS(XadesSigner.XADES_NS, "SigPolicyHash").getLength()).isEqualTo(1);
     }
