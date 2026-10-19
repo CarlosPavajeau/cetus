@@ -69,7 +69,7 @@ public record InvoiceRequest(
     public enum PaymentMethod { CASH, CREDIT }
 
     public record Line(
-            @Size(max = 50) String itemCode,
+            @NotBlank @Size(max = 50) String itemCode,
             @NotBlank @Size(max = 300) String description,
             @NotNull @Positive BigDecimal quantity,
             String unitCode,
