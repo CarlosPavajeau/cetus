@@ -19,12 +19,14 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.http.HttpTimeoutException;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +48,8 @@ class DeliverWebhookHandlerTest {
     FakeWebhookReceiver receiver;
     @Inject
     WorkerFixtures fixtures;
+    @Inject
+    EntityManager em;
 
     private Endpoint endpoint;
 
@@ -109,11 +113,11 @@ class DeliverWebhookHandlerTest {
         UUID deliveryId = acceptedInvoiceDelivery();
         receiver.reply(FakeWebhookReceiver.Reply.late());
 
-        catchThrowableOfType(HttpTimeoutException.class, () -> handler.handle(job(deliveryId)));
+        catchThrowableOfType(IOException.class, () -> handler.handle(job(deliveryId)));
 
         WebhookDeliveryEntity delivery = delivery(deliveryId);
         assertThat(delivery.status).isEqualTo(Status.PENDING);
-        assertThat(delivery.lastError).contains("HttpTimeoutException");
+        assertThat(delivery.lastError).containsIgnoringCase("timeout");
     }
 
     @Test
@@ -164,6 +168,73 @@ class DeliverWebhookHandlerTest {
         handler.onDead(job(deliveryId), "late duplicate");
 
         assertThat(delivery(deliveryId).status).isEqualTo(Status.SUCCEEDED);
+    }
+
+    @Test
+    void anEndpointFailingForDaysIsDisabledAutomatically() {
+        UUID deliveryId = acceptedInvoiceDelivery();
+        failingSince(OffsetDateTime.now().minusDays(4), 9);
+        receiver.reply(FakeWebhookReceiver.Reply.status(503));
+
+        catchThrowableOfType(IllegalStateException.class, () -> deliver(deliveryId));
+
+        WebhookEndpointEntity disabled = endpoint();
+        assertThat(disabled.status).isEqualTo(WebhookEndpointEntity.Status.DISABLED);
+        assertThat(disabled.disabledReason).isEqualTo(WebhookEndpointEntity.DisabledReason.AUTOMATIC);
+        assertThat(disabled.consecutiveFailures).isEqualTo(10);
+        assertThat(auditedReasons(disabled)).containsExactly("AUTOMATIC");
+
+        // Its next attempt finds it disabled and stops instead of calling it again.
+        deliver(deliveryId);
+        assertThat(delivery(deliveryId).status).isEqualTo(Status.CANCELED);
+        assertThat(receiver.requests()).hasSize(1);
+    }
+
+    @Test
+    void manyRecentFailuresAreNotEnoughToDisable() {
+        UUID deliveryId = acceptedInvoiceDelivery();
+        failingSince(OffsetDateTime.now().minusHours(1), 50);
+        receiver.reply(FakeWebhookReceiver.Reply.status(500));
+
+        catchThrowableOfType(IllegalStateException.class, () -> deliver(deliveryId));
+
+        WebhookEndpointEntity endpoint = endpoint();
+        assertThat(endpoint.status).isEqualTo(WebhookEndpointEntity.Status.ACTIVE);
+        assertThat(endpoint.consecutiveFailures).isEqualTo(51);
+    }
+
+    @Test
+    void aSuccessEndsTheStreakOfFailures() {
+        UUID deliveryId = acceptedInvoiceDelivery();
+        receiver.reply(FakeWebhookReceiver.Reply.status(500));
+        catchThrowableOfType(IllegalStateException.class, () -> deliver(deliveryId));
+        assertThat(endpoint().consecutiveFailures).isEqualTo(1);
+        assertThat(endpoint().failingSince).isNotNull();
+
+        deliver(deliveryId);
+
+        assertThat(endpoint().consecutiveFailures).isZero();
+        assertThat(endpoint().failingSince).isNull();
+    }
+
+    private void failingSince(OffsetDateTime since, int failures) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            WebhookEndpointEntity failing = WebhookEndpointEntity.findById(endpoint.id());
+            failing.failingSince = since;
+            failing.consecutiveFailures = failures;
+        });
+    }
+
+    private WebhookEndpointEntity endpoint() {
+        return QuarkusTransaction.requiringNew().call(() -> WebhookEndpointEntity.findById(endpoint.id()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> auditedReasons(WebhookEndpointEntity endpoint) {
+        return QuarkusTransaction.requiringNew().call(() -> em.createNativeQuery("""
+                        SELECT data->>'reason' FROM billing.audit_log
+                        WHERE resource_id = :id AND action = 'WEBHOOK_ENDPOINT_DISABLED' AND actor_type = 'SYSTEM'""")
+                .setParameter("id", endpoint.id).getResultList());
     }
 
     /** An accepted invoice with one endpoint on the fake receiver; returns its pending delivery. */

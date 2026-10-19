@@ -43,6 +43,7 @@ export const auditActions = [
   "ISSUER_PROMOTED",
   "WEBHOOK_ENDPOINT_CREATED",
   "WEBHOOK_ENDPOINT_DISABLED",
+  "WEBHOOK_ENDPOINT_ENABLED",
   "WEBHOOK_DELIVERY_RETRIED",
 ] as const satisfies readonly AuditAction[];
 

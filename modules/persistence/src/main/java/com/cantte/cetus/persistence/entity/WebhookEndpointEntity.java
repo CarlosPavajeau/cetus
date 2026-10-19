@@ -27,6 +27,9 @@ public class WebhookEndpointEntity extends PanacheEntityBase {
 
     public enum Status { ACTIVE, DISABLED }
 
+    /** Who disabled the endpoint: a console user, or Cetus after it kept failing. */
+    public enum DisabledReason { MANUAL, AUTOMATIC }
+
     @Id
     public UUID id;
     @Column(name = "account_id")
@@ -46,6 +49,15 @@ public class WebhookEndpointEntity extends PanacheEntityBase {
     public Status status = Status.ACTIVE;
     @Column(name = "disabled_at")
     public OffsetDateTime disabledAt;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "disabled_reason")
+    public DisabledReason disabledReason;
+    /** Failed attempts since the last 2xx. */
+    @Column(name = "consecutive_failures")
+    public int consecutiveFailures;
+    /** When the current streak of failures started; null while the endpoint answers. */
+    @Column(name = "failing_since")
+    public OffsetDateTime failingSince;
     /** Better Auth user id of the creator. */
     @Column(name = "created_by")
     public String createdBy;

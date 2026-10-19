@@ -13,6 +13,7 @@ export const actionLabel: Record<AuditAction, string> = {
   ISSUER_PROMOTED: "Emisor pasado a producción",
   WEBHOOK_ENDPOINT_CREATED: "Webhook registrado",
   WEBHOOK_ENDPOINT_DISABLED: "Webhook desactivado",
+  WEBHOOK_ENDPOINT_ENABLED: "Webhook reactivado",
   WEBHOOK_DELIVERY_RETRIED: "Webhook reenviado",
 };
 

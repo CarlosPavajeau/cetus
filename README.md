@@ -251,8 +251,17 @@ valid    = constant_time_equals(expected, header) && |now - timestamp| <= 300
 Cualquier respuesta 2xx confirma la entrega. Un timeout, un error de red o cualquier otro código se reintenta
 con backoff exponencial: hasta 10 intentos durante unas 4 o 5 horas. Un `410 Gone` detiene los reintentos. El
 historial queda en `GET /console/webhook-endpoints/{id}/deliveries`, y
-`POST …/deliveries/{deliveryId}/retry` reenvía una entrega. En LIVE la URL debe ser `https`. El worker no envía
-a direcciones internas (loopback, redes privadas, link-local) ni sigue redirecciones; en dev y en pruebas,
+`POST …/deliveries/{deliveryId}/retry` reenvía una entrega.
+
+Un endpoint que lleva 3 días fallando (`cetus.webhooks.auto-disable.after`), con al menos 10 intentos fallidos
+(`…min-failures`) y ningún 2xx en medio, se desactiva solo, con `disabledReason: AUTOMATIC`. Sus entregas
+pendientes se cancelan y la desactivación queda en la actividad de la cuenta. `POST /console/webhook-endpoints/{id}/enable`
+lo reactiva y pone en cero el conteo de fallas.
+
+En LIVE la URL debe ser `https`. El worker no envía a direcciones internas (loopback, redes privadas,
+link-local, CGNAT), no usa proxy y no sigue redirecciones. La verificación vive en el DNS del propio cliente
+HTTP (OkHttp), así que se revisan las mismas IPs a las que se conecta: un host que responde una IP pública al
+validar y una interna al conectar (DNS rebinding) queda bloqueado. En dev y en pruebas,
 `cetus.webhooks.allow-private-targets=true` permite `localhost`.
 
 ## Pendiente de validar contra la DIAN

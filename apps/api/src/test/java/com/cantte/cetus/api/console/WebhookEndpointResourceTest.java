@@ -15,6 +15,7 @@ import io.restassured.path.json.JsonPath;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -107,9 +108,35 @@ class WebhookEndpointResourceTest {
         user.request().delete("/console/webhook-endpoints/" + id).then().statusCode(204);
 
         user.request().get("/console/webhook-endpoints/" + id).then().statusCode(200)
-                .body("status", equalTo("DISABLED"));
+                .body("status", equalTo("DISABLED"))
+                .body("disabledReason", equalTo("MANUAL"));
         user.request().post("/console/webhook-endpoints/" + id + "/deliveries/" + UUID.randomUUID() + "/retry")
                 .then().statusCode(422).body("code", equalTo("endpoint_disabled"));
+    }
+
+    @Test
+    void enablingStartsTheFailureCountOver() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Enable SAS");
+        String id = create(user, Map.of("url", "https://hooks.example.com", "environment", "TEST")).getString("endpoint.id");
+        QuarkusTransaction.requiringNew().run(() -> {
+            WebhookEndpointEntity endpoint = WebhookEndpointEntity.findById(UUID.fromString(id));
+            endpoint.status = WebhookEndpointEntity.Status.DISABLED;
+            endpoint.disabledReason = WebhookEndpointEntity.DisabledReason.AUTOMATIC;
+            endpoint.disabledAt = OffsetDateTime.now();
+            endpoint.consecutiveFailures = 12;
+            endpoint.failingSince = OffsetDateTime.now().minusDays(4);
+        });
+        user.request().get("/console/webhook-endpoints/" + id).then().statusCode(200)
+                .body("disabledReason", equalTo("AUTOMATIC"))
+                .body("consecutiveFailures", equalTo(12));
+
+        user.request().post("/console/webhook-endpoints/" + id + "/enable").then().statusCode(200)
+                .body("status", equalTo("ACTIVE"))
+                .body("disabledReason", nullValue())
+                .body("consecutiveFailures", equalTo(0))
+                .body("failingSince", nullValue());
+        user.request().post("/console/webhook-endpoints/" + id + "/enable").then().statusCode(200);
     }
 
     @Test

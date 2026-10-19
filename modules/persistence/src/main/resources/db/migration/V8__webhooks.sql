@@ -16,6 +16,11 @@ CREATE TABLE webhook_endpoints (
     secret_sealed   BYTEA       NOT NULL,
     status          TEXT        NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'DISABLED')),
     disabled_at     TIMESTAMPTZ,
+    -- MANUAL from the console; AUTOMATIC when the endpoint kept failing (see consecutive_failures).
+    disabled_reason TEXT        CHECK (disabled_reason IN ('MANUAL', 'AUTOMATIC')),
+    -- Failed attempts since the last 2xx, and when that streak started. A 2xx resets both.
+    consecutive_failures INT    NOT NULL DEFAULT 0,
+    failing_since   TIMESTAMPTZ,
     created_by      TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()

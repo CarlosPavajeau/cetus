@@ -143,8 +143,30 @@ public class WebhookEndpointResource {
         if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE) {
             endpoint.status = WebhookEndpointEntity.Status.DISABLED;
             endpoint.disabledAt = OffsetDateTime.now();
-            audit(AuditAction.WEBHOOK_ENDPOINT_DISABLED, endpoint, Map.of());
+            endpoint.disabledReason = WebhookEndpointEntity.DisabledReason.MANUAL;
+            audit(AuditAction.WEBHOOK_ENDPOINT_DISABLED, endpoint, Map.of("reason", "MANUAL"));
         }
+    }
+
+    /**
+     * Sends to the endpoint again, e.g. once the integrator fixed what made Cetus disable it. The failure
+     * count starts over; deliveries canceled meanwhile can be sent again one by one.
+     */
+    @POST
+    @Path("/{id}/enable")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public WebhookEndpointView enable(@PathParam("id") UUID id) {
+        WebhookEndpointEntity endpoint = find(context.account().id, id);
+        if (endpoint.status == WebhookEndpointEntity.Status.DISABLED) {
+            endpoint.status = WebhookEndpointEntity.Status.ACTIVE;
+            endpoint.disabledAt = null;
+            endpoint.disabledReason = null;
+            endpoint.consecutiveFailures = 0;
+            endpoint.failingSince = null;
+            audit(AuditAction.WEBHOOK_ENDPOINT_ENABLED, endpoint, Map.of());
+        }
+        return WebhookEndpointView.from(endpoint);
     }
 
     /** Newest first: pass the previous page's {@code nextCursor} as {@code before}. */
@@ -221,13 +243,18 @@ public class WebhookEndpointResource {
             @Schema(required = true, description = "Empty means all event types") List<String> eventTypes,
             @Schema(required = true) WebhookEndpointEntity.Status status,
             @Schema(required = true, nullable = true) OffsetDateTime disabledAt,
+            @Schema(required = true, nullable = true, description = "AUTOMATIC when Cetus disabled it after failing for days")
+            WebhookEndpointEntity.DisabledReason disabledReason,
+            @Schema(required = true, description = "Failed attempts since the last 2xx") int consecutiveFailures,
+            @Schema(required = true, nullable = true, description = "When the current streak of failures started")
+            OffsetDateTime failingSince,
             @Schema(required = true) OffsetDateTime createdAt,
             @Schema(required = true, nullable = true, description = "Better Auth user id of the creator")
             String createdBy) {
         static WebhookEndpointView from(WebhookEndpointEntity endpoint) {
             return new WebhookEndpointView(endpoint.id, endpoint.url, endpoint.description, endpoint.environment,
-                    List.of(endpoint.eventTypes), endpoint.status, endpoint.disabledAt, endpoint.createdAt,
-                    endpoint.createdBy);
+                    List.of(endpoint.eventTypes), endpoint.status, endpoint.disabledAt, endpoint.disabledReason,
+                    endpoint.consecutiveFailures, endpoint.failingSince, endpoint.createdAt, endpoint.createdBy);
         }
     }
 

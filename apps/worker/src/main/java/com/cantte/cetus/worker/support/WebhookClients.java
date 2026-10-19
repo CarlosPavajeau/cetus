@@ -4,31 +4,35 @@ import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.webhooks.WebhookTargets;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import okhttp3.Dns;
+import okhttp3.OkHttpClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.net.InetAddress;
-import java.net.URI;
+import java.net.Proxy;
 import java.net.UnknownHostException;
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * HTTP client and settings for webhook deliveries. Redirects are never followed (a redirect could lead to
- * an internal address), and decrypted signing secrets are kept in memory for a few minutes so KMS is not
- * hit on every delivery.
+ * HTTP client and settings for webhook deliveries.
+ *
+ * <p>Internal addresses are refused by the client's own DNS lookup, so the address checked is the one the
+ * connection uses: resolving first and connecting later would let a host answer a public address to the
+ * check and an internal one to the connection (DNS rebinding). Redirects are never followed and no proxy is
+ * used, since either would connect somewhere the lookup did not check. Decrypted signing secrets are kept
+ * in memory for a few minutes so KMS is not hit on every delivery.
  */
 @ApplicationScoped
 public class WebhookClients {
 
     private static final Duration SECRET_TTL = Duration.ofMinutes(10);
 
-    private final HttpClient http;
-    private final Duration requestTimeout;
+    private final OkHttpClient http;
     private final boolean allowPrivateTargets;
     private final Map<UUID, CachedSecret> secrets = new ConcurrentHashMap<>();
 
@@ -39,42 +43,24 @@ public class WebhookClients {
     public WebhookClients(@ConfigProperty(name = "cetus.webhooks.connect-timeout") Duration connectTimeout,
                           @ConfigProperty(name = "cetus.webhooks.request-timeout") Duration requestTimeout,
                           @ConfigProperty(name = "cetus.webhooks.allow-private-targets") boolean allowPrivateTargets) {
-        this.http = HttpClient.newBuilder()
-                .connectTimeout(connectTimeout)
-                .followRedirects(HttpClient.Redirect.NEVER)
-                .build();
-        this.requestTimeout = requestTimeout;
         this.allowPrivateTargets = allowPrivateTargets;
+        this.http = new OkHttpClient.Builder()
+                .dns(allowPrivateTargets ? Dns.SYSTEM : new PublicOnlyDns(Dns.SYSTEM))
+                .proxy(Proxy.NO_PROXY)
+                .followRedirects(false)
+                .followSslRedirects(false)
+                .retryOnConnectionFailure(false)
+                .connectTimeout(connectTimeout)
+                .callTimeout(requestTimeout)
+                .build();
     }
 
-    public HttpClient http() {
+    public OkHttpClient http() {
         return http;
-    }
-
-    public Duration requestTimeout() {
-        return requestTimeout;
     }
 
     public boolean allowPrivateTargets() {
         return allowPrivateTargets;
-    }
-
-    /**
-     * Resolves the host and checks none of its addresses is internal.
-     *
-     * @return why the URL must not be called, or empty when it can be
-     * @throws UnknownHostException when the host does not resolve (possibly a transient DNS failure)
-     */
-    public Optional<String> blockedTarget(URI uri) throws UnknownHostException {
-        if (allowPrivateTargets) {
-            return Optional.empty();
-        }
-        for (InetAddress address : InetAddress.getAllByName(uri.getHost())) {
-            if (WebhookTargets.isPrivate(address)) {
-                return Optional.of(uri.getHost() + " resolves to an internal address (" + address.getHostAddress() + ")");
-            }
-        }
-        return Optional.empty();
     }
 
     public String secret(UUID endpointId, byte[] sealed) {
@@ -85,6 +71,39 @@ public class WebhookClients {
         String secret = cipher.openText(sealed);
         secrets.put(endpointId, new CachedSecret(secret, Instant.now()));
         return secret;
+    }
+
+    /** Thrown by the lookup when a webhook host resolves to an internal address. */
+    public static class BlockedTargetException extends UnknownHostException {
+
+        public BlockedTargetException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Resolves like {@code delegate} but fails when any address is internal. All of them are checked, not
+     * only the first: the client may fall back to the others.
+     */
+    static final class PublicOnlyDns implements Dns {
+
+        private final Dns delegate;
+
+        PublicOnlyDns(Dns delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+            List<InetAddress> addresses = delegate.lookup(hostname);
+            for (InetAddress address : addresses) {
+                if (WebhookTargets.isPrivate(address)) {
+                    throw new BlockedTargetException(
+                            hostname + " resolves to an internal address (" + address.getHostAddress() + ")");
+                }
+            }
+            return addresses;
+        }
     }
 
     private record CachedSecret(String secret, Instant loadedAt) {
