@@ -125,3 +125,33 @@ test("an issuer in habilitación keeps its tax data in line with its RUT", async
   await expect(page.getByText("R-99-PN")).toBeVisible();
   await expect(page.getByText("En habilitación")).toBeVisible();
 });
+
+test("credit and debit note ranges are added from the issuer page", async ({
+  page,
+  organization,
+}) => {
+  const id = await onboardIssuer(organization, "900123456", "Notas SAS");
+
+  await open(page, `/issuers/${id}`);
+  await expect(page.getByText(/no tiene un rango para notas crédito/)).toBeVisible();
+
+  await page.getByRole("button", { name: "Rango de notas" }).click();
+  let dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Prefijo")).toHaveValue("NC");
+  await dialog.getByRole("button", { name: "Agregar rango" }).click();
+  await expect(page.getByRole("row", { name: /Nota crédito\s*NC/ })).toBeVisible();
+  await expect(page.getByText(/no tiene un rango para notas crédito/)).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Rango de notas" }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Tipo de documento").click();
+  await page.getByRole("option", { name: "Nota débito" }).click();
+  await expect(dialog.getByLabel("Prefijo")).toHaveValue("ND");
+  await dialog.getByLabel("Desde").fill("10");
+  await dialog.getByLabel("Hasta").fill("1");
+  await dialog.getByRole("button", { name: "Agregar rango" }).click();
+  await expect(dialog.getByText(/menor o igual al número final/)).toBeVisible();
+  await dialog.getByLabel("Hasta").fill("500");
+  await dialog.getByRole("button", { name: "Agregar rango" }).click();
+  await expect(page.getByRole("row", { name: /Nota débito\s*ND/ })).toBeVisible();
+});

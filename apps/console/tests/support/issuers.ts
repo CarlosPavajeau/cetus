@@ -143,15 +143,20 @@ export async function addCreditNoteRange(organization: TestOrganization, id: str
   }
 }
 
-/** Waits until the worker leaves the document in a final status, and returns it. */
-export async function waitForStatus(organization: TestOrganization, documentId: string) {
-  for (let attempt = 0; attempt < 60; attempt++) {
-    const response = await organization.api(`/console/documents/${documentId}`);
-    const document = (await response.json()) as { status: string };
-    if (document.status !== "RECEIVED" && document.status !== "PROCESSING") {
-      return document.status;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
+/** Waits until the worker leaves the document in a final status, and returns it. Polls every 500 ms. */
+export async function waitForStatus(
+  organization: TestOrganization,
+  documentId: string,
+  attemptsLeft = 60,
+): Promise<string> {
+  const response = await organization.api(`/console/documents/${documentId}`);
+  const { status } = (await response.json()) as { status: string };
+  if (status !== "RECEIVED" && status !== "PROCESSING") {
+    return status;
   }
-  throw new Error(`Document ${documentId} is still being processed`);
+  if (attemptsLeft <= 1) {
+    throw new Error(`Document ${documentId} is still being processed`);
+  }
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return waitForStatus(organization, documentId, attemptsLeft - 1);
 }

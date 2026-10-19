@@ -17,6 +17,7 @@ import {
   KeyRoundIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  WebhookIcon,
 } from "lucide-react";
 
 import {
@@ -61,6 +62,12 @@ const navigation = [
     to: "/developers/api-keys",
     label: "Llaves de API",
     icon: KeyRoundIcon,
+    section: "Desarrolladores",
+  },
+  {
+    to: "/developers/webhooks",
+    label: "Webhooks",
+    icon: WebhookIcon,
     section: "Desarrolladores",
   },
   { to: "/activity", label: "Actividad", icon: HistoryIcon },

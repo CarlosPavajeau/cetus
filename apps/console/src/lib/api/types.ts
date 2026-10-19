@@ -55,6 +55,14 @@ export const documentStatuses = [
   "FAILED",
 ] as const satisfies readonly DocumentStatus[];
 
+export type WebhookEndpoint = Schemas["WebhookEndpointView"];
+
+export type CreatedWebhookEndpoint = Schemas["CreatedWebhookEndpoint"];
+
+export type WebhookDelivery = Schemas["WebhookDeliveryView"];
+
+export type WebhookDeliveryPage = Schemas["WebhookDeliveryPage"];
+
 export type AuditAction = Schemas["AuditAction"];
 
 export type AuditEntry = Schemas["AuditEntry"];
