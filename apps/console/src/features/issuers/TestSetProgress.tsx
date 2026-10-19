@@ -1,3 +1,6 @@
+import { CircleCheckIcon } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -30,6 +33,19 @@ function Count({ value, className }: { value: number; className?: string }) {
 export function TestSetProgress({ testSet }: { testSet: Progress }) {
   return (
     <div className="flex flex-col gap-3" data-testid="test-set-progress">
+      {testSet.acceptedAt && (
+        <Alert data-testid="test-set-accepted">
+          <CircleCheckIcon />
+          <AlertTitle>
+            La DIAN aceptó este set de pruebas el {dateFormat.format(new Date(testSet.acceptedAt))}
+          </AlertTitle>
+          <AlertDescription>
+            La habilitación terminó y el set ya no recibe más documentos, así que la API rechaza las
+            facturas de prueba de este emisor (<code>test_set_accepted</code>). Pasa a producción y
+            factura con una llave de producción.
+          </AlertDescription>
+        </Alert>
+      )}
       <p className="text-2xs text-muted-foreground">
         Documentos enviados al set de pruebas desde el {dateFormat.format(new Date(testSet.since))}.
         Compáralos con lo que pide el set en el portal de habilitación de la DIAN: allí se ve

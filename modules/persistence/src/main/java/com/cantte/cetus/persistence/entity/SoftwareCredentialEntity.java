@@ -31,6 +31,9 @@ public class SoftwareCredentialEntity extends PanacheEntityBase {
     @Generated(event = EventType.INSERT)
     @Column(name = "created_at", insertable = false, updatable = false)
     public OffsetDateTime createdAt;
+    /** When the DIAN reported the test set as accepted: habilitación is done and the set takes no more documents. */
+    @Column(name = "test_set_accepted_at")
+    public OffsetDateTime testSetAcceptedAt;
 
     public static Optional<SoftwareCredentialEntity> findActive(UUID issuerId) {
         return find("issuerId = ?1 and active = true", issuerId).firstResultOptional();
@@ -47,6 +50,22 @@ public class SoftwareCredentialEntity extends PanacheEntityBase {
                 .setParameter("issuerId", issuerId)
                 .setParameter("testSetId", testSetId)
                 .getSingleResult();
+    }
+
+    /** When the DIAN reported this test set as accepted, whichever of the issuer's credentials recorded it; null if not yet. */
+    public static OffsetDateTime testSetAcceptedAt(UUID issuerId, String testSetId) {
+        return getEntityManager().createQuery("""
+                        select min(c.testSetAcceptedAt) from SoftwareCredentialEntity c
+                        where c.issuerId = :issuerId and c.testSetId = :testSetId""", OffsetDateTime.class)
+                .setParameter("issuerId", issuerId)
+                .setParameter("testSetId", testSetId)
+                .getSingleResult();
+    }
+
+    /** Records the first time the DIAN reported this test set as accepted, on every credential that uses it. */
+    public static void markTestSetAccepted(UUID issuerId, String testSetId) {
+        update("testSetAcceptedAt = ?1 where issuerId = ?2 and testSetId = ?3 and testSetAcceptedAt is null",
+                OffsetDateTime.now(), issuerId, testSetId);
     }
 
     public static void deactivateAll(UUID issuerId) {

@@ -130,6 +130,9 @@ public final class IssuerViews {
     public record TestSetProgressView(
             @Schema(required = true) String testSetId,
             @Schema(required = true) OffsetDateTime since,
+            @Schema(required = true, nullable = true,
+                    description = "When the DIAN reported the set as accepted: habilitación is done")
+            OffsetDateTime acceptedAt,
             @Schema(required = true) List<TestSetCountView> documents) {
         /** Null unless the issuer sends to a test set: a test issuer whose software has a TestSetId. */
         static TestSetProgressView of(IssuerEntity issuer, SoftwareCredentialEntity software) {
@@ -142,7 +145,8 @@ public final class IssuerViews {
             List<TestSetCountView> documents = Arrays.stream(DocumentType.values())
                     .map(type -> TestSetCountView.of(type, counts))
                     .toList();
-            return new TestSetProgressView(software.testSetId, since, documents);
+            return new TestSetProgressView(software.testSetId, since,
+                    SoftwareCredentialEntity.testSetAcceptedAt(issuer.id, software.testSetId), documents);
         }
     }
 

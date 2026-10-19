@@ -561,6 +561,8 @@ export interface components {
         TestSetProgressView: {
             testSetId: string;
             since: components["schemas"]["OffsetDateTime"];
+            /** @description When the DIAN reported the set as accepted: habilitación is done */
+            acceptedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             documents: components["schemas"]["TestSetCountView"][];
         };
         Totals: {
