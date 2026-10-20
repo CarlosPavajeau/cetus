@@ -23,6 +23,8 @@ playwright-report/
 !.env.example
 *.p12
 *.pfx
+# Test certificates, made for the tests: never a real one.
+!**/src/test/resources/**/*.p12
 
 # OS
 .DS_Store
