@@ -81,6 +81,21 @@ public record InvoiceResponse(
     }
 
     public static InvoiceResponse from(DocumentEntity doc) {
+        return of(doc, CreditNoteSummary.of(doc.id), DebitNoteSummary.of(doc.id),
+                DocumentEntity.creditableBalance(doc), DeliveryView.of(doc.id));
+    }
+
+    /**
+     * An invoice created in the current transaction: nothing can reference it before it commits, so it has
+     * no notes nor deliveries and its balance is its payable amount, with no queries to find that out.
+     */
+    public static InvoiceResponse created(DocumentEntity doc) {
+        return of(doc, List.of(), List.of(), doc.payableAmount, List.of());
+    }
+
+    private static InvoiceResponse of(DocumentEntity doc, List<CreditNoteSummary> creditNotes,
+                                      List<DebitNoteSummary> debitNotes, BigDecimal balance,
+                                      List<DeliveryView> deliveries) {
         return new InvoiceResponse(
                 doc.id,
                 doc.environment,
@@ -94,9 +109,9 @@ public record InvoiceResponse(
                 new Dian(doc.dianStatusCode, doc.dianStatusMessage, List.copyOf(doc.dianErrors), doc.validatedAt),
                 doc.externalReference,
                 doc.createdAt,
-                CreditNoteSummary.of(doc.id),
-                DebitNoteSummary.of(doc.id),
-                DocumentEntity.creditableBalance(doc),
-                DeliveryView.of(doc.id));
+                creditNotes,
+                debitNotes,
+                balance,
+                deliveries);
     }
 }

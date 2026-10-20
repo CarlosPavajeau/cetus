@@ -46,7 +46,7 @@ public class InvoiceResource {
     public Response create(@HeaderParam("Idempotency-Key") @NotNull String idempotencyKey,
                            @Valid @NotNull InvoiceRequest request) throws JsonProcessingException {
         return idempotentCreation.accept(principal.accountId(), idempotencyKey, request, rawJson ->
-                InvoiceResponse.from(service.create(principal.accountId(), principal.environment(), request, rawJson)));
+                InvoiceResponse.created(service.create(principal.accountId(), principal.environment(), request, rawJson)));
     }
 
     /** The invoice, with the credit notes issued against it and the balance they leave. */
