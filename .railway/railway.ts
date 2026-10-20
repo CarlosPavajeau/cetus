@@ -13,6 +13,13 @@ const repo = "CarlosPavajeau/cetus";
 /** One replica in Virginia, next to PlanetScale (AWS us-east-1), S3 and KMS. */
 const replicas = { "us-east4-eqdc4a": 1 };
 
+const MB = 1024 * 1024;
+/**
+ * Resource ceilings. Railway bills actual usage, but the JVM sizes its heap from the container memory
+ * (MaxRAMPercentage=75), so a lower ceiling also keeps the Java services from growing into it.
+ */
+const limits = (cpu: number, memoryMB: number) => ({ containers: { cpu, memoryBytes: memoryMB * MB } });
+
 /** What makes a Java service rebuild: its app, the shared modules and the Gradle build. */
 const javaWatch = (app: string) => [
   `apps/${app}/**`,
@@ -55,6 +62,7 @@ export default defineRailway((ctx) => {
       healthcheckTimeout: 120,
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
+      limitOverride: limits(1, 512),
     },
     replicas,
     env: {
@@ -81,6 +89,7 @@ export default defineRailway((ctx) => {
       healthcheckTimeout: 300,
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
+      limitOverride: limits(1, 1024),
     },
     replicas,
     env: {
@@ -108,6 +117,7 @@ export default defineRailway((ctx) => {
       healthcheckTimeout: 300,
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
+      limitOverride: limits(1, 1024),
     },
     replicas,
     env: {
