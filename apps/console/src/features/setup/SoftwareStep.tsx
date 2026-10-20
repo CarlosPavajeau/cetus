@@ -34,12 +34,6 @@ export function SoftwareStep({
   const { isSubmitting, isDirty, errors } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    if (habilitacion && !values.testSetId) {
-      form.setError("testSetId", {
-        message: "Pega el TestSetId completo, como aparece en el portal de la DIAN.",
-      });
-      return;
-    }
     // The API never returns the PIN: saved credentials are kept unless the person changes them.
     if (!configured || isDirty) {
       if (!values.pin.trim()) {
@@ -85,7 +79,7 @@ export function SoftwareStep({
               ? [
                   {
                     title: "3. Ubica el set de pruebas",
-                    text: "Busca el identificador del set de pruebas asignado a tu proceso y cópialo en TestSetId.",
+                    text: "Si aún no terminas el set de pruebas, copia su identificador en TestSetId. Si ya lo terminaste, déjalo vacío.",
                   },
                 ]
               : []),
@@ -132,7 +126,7 @@ export function SoftwareStep({
             label="TestSetId / ID del set de pruebas"
             spellCheck={false}
             autoComplete="off"
-            hint="Identificador del set de pruebas asignado en el proceso de habilitación."
+            hint="Opcional: déjalo vacío si ya terminaste el set de pruebas."
           />
         )}
       </FieldSection>

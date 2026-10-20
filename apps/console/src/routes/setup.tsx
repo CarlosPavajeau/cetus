@@ -127,12 +127,12 @@ function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
               software DIAN, certificado digital y numeración.
             </p>
           </div>
-          <div className="flex flex-col gap-1.5 sm:items-end">
+          {/* A new issuer picks its environment in the first step. */}
+          {issuer && (
             <Badge variant="outline" className="text-muted-foreground">
-              {environmentLabel[issuer?.environment ?? "TEST"]}
+              {environmentLabel[issuer.environment]}
             </Badge>
-            <p className="text-[10px] text-muted-foreground">Asignado por la aplicación</p>
-          </div>
+          )}
         </div>
         <Assistant issuer={issuer} />
       </main>

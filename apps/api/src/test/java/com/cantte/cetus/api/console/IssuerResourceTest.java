@@ -71,6 +71,22 @@ class IssuerResourceTest {
     }
 
     @Test
+    void aNitHasOneIssuerPerEnvironment() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Duplicate SAS");
+        createIssuer(user, "900123456", "TEST");
+        // An issuer already enabled at the DIAN starts directly in production, next to its test issuer.
+        createIssuer(user, "900123456", "LIVE");
+
+        Map<String, Object> again = new HashMap<>(update("Acme SAS"));
+        again.put("environment", "LIVE");
+        again.put("nit", "900123456");
+        user.request().body(again).post("/console/issuers")
+                .then().statusCode(422)
+                .body("code", equalTo("issuer_already_exists"));
+    }
+
+    @Test
     void issuerOfAnotherOrganizationIsNotFound() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         bootstrap(owner, "Owner SAS");

@@ -61,6 +61,11 @@ public class IssuerOnboardingService {
         if (request.checkDigit() != null && !request.checkDigit().equals(checkDigit)) {
             throw new DomainException("check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");
         }
+        boolean exists = IssuerEntity.count("accountId = ?1 and environment = ?2 and nit = ?3",
+                accountId, request.environment(), request.nit()) > 0;
+        if (exists) {
+            throw new DomainException("issuer_already_exists", "This NIT already has an issuer in " + request.environment());
+        }
         IssuerEntity issuer = new IssuerEntity();
         issuer.id = Ids.newId();
         issuer.accountId = accountId;

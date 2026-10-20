@@ -38,7 +38,7 @@ export const softwareSchema = type({
   }),
   // Empty when the software is already configured and the PIN is kept.
   pin: "string",
-  // Only habilitación has a test set: the step requires it for a test issuer.
+  // Only habilitación has a test set, and only until it is accepted: empty once it is done.
   testSetId: type("string.uuid | ''").configure({
     message: "Pega el TestSetId completo, como aparece en el portal de la DIAN.",
   }),
