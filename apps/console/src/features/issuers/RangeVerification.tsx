@@ -1,12 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { RefreshCwIcon } from "lucide-react";
 
-import { Badge } from "~/components/ui/badge";
+import { type BadgeStatus, StatusBadge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import type { IssuerDetail, NumberingRange } from "~/lib/api/types";
-import { cn } from "~/lib/utils";
 
 import { verifyRange } from "./server";
 
@@ -19,11 +18,11 @@ const label: Record<Status, string> = {
   ERROR: "Sin respuesta",
 };
 
-const dot: Record<Status, string> = {
-  PENDING: "bg-sky-500",
-  VERIFIED: "bg-emerald-500",
-  MISMATCH: "bg-destructive",
-  ERROR: "bg-amber-500",
+const badgeStatus: Record<Status, BadgeStatus> = {
+  PENDING: "pending",
+  VERIFIED: "success",
+  MISMATCH: "error",
+  ERROR: "warning",
 };
 
 /**
@@ -56,10 +55,9 @@ export function RangeVerification({
   const status = range.verificationStatus;
   const failed = status === "MISMATCH" || status === "ERROR";
   const badge = (
-    <Badge variant="outline" className={cn(!status && "text-muted-foreground")}>
-      {status && <span className={cn("size-1.5 rounded-full", dot[status])} aria-hidden />}
+    <StatusBadge status={status ? badgeStatus[status] : "idle"}>
       {status ? label[status] : "Sin consultar"}
-    </Badge>
+    </StatusBadge>
   );
 
   return (
