@@ -696,7 +696,7 @@ export interface components {
             personType: components["schemas"]["PersonType"];
             taxLevelCodes: string[];
             responsibleForIva?: boolean;
-            address: components["schemas"]["Address"];
+            address: components["schemas"]["AddressInput"];
             email: string;
             phone?: string;
         };
@@ -1133,7 +1133,7 @@ export interface components {
             personType: components["schemas"]["PersonType"];
             taxLevelCodes: string[];
             responsibleForIva?: boolean;
-            address: components["schemas"]["Address"];
+            address: components["schemas"]["AddressInput"];
             email: string;
             phone?: string;
         };

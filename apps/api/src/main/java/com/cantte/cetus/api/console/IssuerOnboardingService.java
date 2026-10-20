@@ -130,10 +130,15 @@ public class IssuerOnboardingService {
     @Transactional
     public SigningCertificateEntity setCertificate(IssuerEntity issuer, IssuerViews.CertificateRequest request,
                                                    Actor actor, RequestOrigin origin) {
-        byte[] pkcs12 = Base64.getDecoder().decode(request.pkcs12Base64());
+        byte[] pkcs12;
+        try {
+            pkcs12 = Base64.getDecoder().decode(request.pkcs12Base64());
+        } catch (IllegalArgumentException e) {
+            throw new DomainException("certificate_invalid", "The certificate is not valid base64");
+        }
         KeyMaterial keys;
         try {
-            keys = Pkcs12Loader.load(pkcs12, request.password().toCharArray());
+            keys = Pkcs12Loader.loadUntrusted(pkcs12, request.password().toCharArray());
         } catch (SigningException e) {
             // Low-level keystore errors stay out of the response; only our own messages are shown.
             throw new DomainException("certificate_invalid", e.getCause() == null ? e.getMessage()
@@ -351,7 +356,7 @@ public class IssuerOnboardingService {
         issuer.taxLevelCodes = String.join(";", request.taxLevelCodes());
         issuer.taxSchemeId = request.responsibleForIva() ? "01" : "ZZ";
         issuer.taxSchemeName = request.responsibleForIva() ? "IVA" : "No aplica";
-        issuer.address = request.address();
+        issuer.address = request.address().toAddress();
         issuer.email = request.email();
         issuer.phone = request.phone();
     }

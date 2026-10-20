@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -66,7 +67,7 @@ public class AccountResource {
         return AccountView.from(context.account());
     }
 
-    public record BootstrapRequest(@NotBlank String name) {
+    public record BootstrapRequest(@NotBlank @Size(max = 200) String name) {
     }
 
     public record AccountView(

@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.invoices;
 
+import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.PersonType;
 import com.cantte.cetus.domain.model.TaxType;
@@ -35,14 +36,14 @@ public record InvoiceRequest(
         @Size(max = 20) List<@Size(max = 500) String> notes) {
 
     /** Fiscal responsibilities a customer can declare (annex table 13.2.6.1). */
-    static final String TAX_LEVEL_CODE = "O-13|O-15|O-23|O-47|R-99-PN";
+    public static final String TAX_LEVEL_CODE = "O-13|O-15|O-23|O-47|R-99-PN";
     /** A code of a DIAN list: payment means, unit of measure. */
-    static final String DIAN_CODE = "[0-9A-Z]{1,3}";
+    public static final String DIAN_CODE = "[0-9A-Z]{1,3}";
     /** Municipality, department or postal code; foreign addresses use their own codes. */
-    static final String CODE = "[0-9A-Za-z-]{1,10}";
-    static final String PHONE = "[0-9+() -]*";
+    public static final String CODE = "[0-9A-Za-z-]{1,10}";
+    public static final String PHONE = "[0-9+() -]*";
     /** Stricter than @Email alone: no quoted local part, no comments, a dotted domain. */
-    static final String EMAIL = "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}";
+    public static final String EMAIL = "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}";
 
     public record Customer(
             @NotNull PersonType personType,
@@ -69,6 +70,12 @@ public record InvoiceRequest(
             @NotBlank @Size(max = 300) String line,
             @Pattern(regexp = "[A-Z]{2}") String countryCode,
             @Size(max = 100) String countryName) {
+
+        /** Colombia unless the country is given. */
+        public Address toAddress() {
+            return new Address(municipalityCode, cityName, departmentCode, departmentName, postalCode, line,
+                    countryCode != null ? countryCode : "CO", countryName != null ? countryName : "Colombia");
+        }
     }
 
     public record Payment(

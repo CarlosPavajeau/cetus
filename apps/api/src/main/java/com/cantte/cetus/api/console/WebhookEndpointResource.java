@@ -232,7 +232,7 @@ public class WebhookEndpointResource {
             @NotNull Environment environment,
             @Size(max = 200) String description,
             @Schema(description = "Event types to receive; empty or missing means all of them")
-            List<@NotBlank String> eventTypes) {
+            @Size(max = 50) List<@NotBlank @Size(max = 100) String> eventTypes) {
     }
 
     public record WebhookEndpointView(
