@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 
 import { addRange, createIssuer, uniqueNit } from "../support/issuers";
 import { testCertificate } from "../support/stack";
-import { expect, open, test } from "./fixtures";
+import { expect, open, pickTaxLevel, test } from "./fixtures";
 
 const softwareId = "381db121-bc49-4286-9067-ef982e3874e4";
 const testSetId = "a09e2744-f1d7-4697-bbcf-613bc312450d";
@@ -12,7 +12,7 @@ const stepTitle = (page: Page, step: number) => page.getByText(`Paso ${step} de 
 async function fillIssuer(page: Page) {
   await page.getByLabel("Nombre o razón social").fill("PAVAJEAU MAX CARLOS ANDRES");
   await page.getByLabel("NIT").fill("1007870923");
-  await page.getByLabel("Responsabilidades tributarias").fill("O-47");
+  await pickTaxLevel(page, "O-47");
   await page.getByLabel("Dirección", { exact: true }).fill("Carrera 11 #13B-62");
   await page.getByLabel("Código postal").fill("200001");
   await page.getByLabel("Departamento").fill("Cesa");

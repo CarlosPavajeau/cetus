@@ -43,10 +43,7 @@ function issuerBody(values: IssuerValues) {
     legalName: values.legalName.trim(),
     tradeName: values.tradeName ?? undefined,
     personType: values.personType,
-    taxLevelCodes: values.taxLevelCodes
-      .split(/[,;]/)
-      .map((code) => code.trim().toUpperCase())
-      .filter(Boolean),
+    taxLevelCodes: values.taxLevelCodes,
     responsibleForIva: values.responsibleForIva,
     address: {
       line: values.line.trim(),

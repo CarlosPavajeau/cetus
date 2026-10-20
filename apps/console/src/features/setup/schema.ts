@@ -1,5 +1,7 @@
 import { type } from "arktype";
 
+import { taxLevelCodes } from "./taxLevels";
+
 // One schema per step of the assistant, shared by its form and the server function that receives it.
 
 const required = (message: string) => type("string > 0").configure({ message });
@@ -14,10 +16,11 @@ export const issuerSchema = type({
     message: "Escribe el NIT sin dígito de verificación: de 5 a 15 números.",
   }),
   personType: "'NATURAL_PERSON' | 'LEGAL_ENTITY'",
-  // As written in the RUT, e.g. "O-13, O-15". The server function splits them.
-  taxLevelCodes: type(/^\s*[A-Za-z0-9-]+(\s*[,;]\s*[A-Za-z0-9-]+)*\s*$/).configure({
-    message: "Escribe los códigos separados por comas, por ejemplo O-13, O-15.",
-  }),
+  taxLevelCodes: type
+    .enumerated(...taxLevelCodes)
+    .array()
+    .atLeastLength(1)
+    .configure({ message: "Elige al menos una responsabilidad, como aparece en tu RUT." }),
   responsibleForIva: "boolean",
   line: required("Escribe la dirección."),
   postalCode: type(/^\d{6}$/).configure({ message: "El código postal tiene 6 números." }),
