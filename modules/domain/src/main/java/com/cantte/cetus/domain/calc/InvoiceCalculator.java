@@ -22,6 +22,8 @@ import java.util.TreeMap;
 public final class InvoiceCalculator {
 
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+    /** The largest amount the database stores (NUMERIC(20,2)). The payable amount is the largest total. */
+    private static final BigDecimal MAX_AMOUNT = new BigDecimal("999999999999999999.99");
 
     public CalculationResult calculate(List<LineInput> inputs) {
         if (inputs == null || inputs.isEmpty()) {
@@ -79,6 +81,10 @@ public final class InvoiceCalculator {
                 zero,
                 taxInclusive);
 
+        if (totals.payableAmount().compareTo(MAX_AMOUNT) > 0) {
+            throw new DomainException("amount_too_large",
+                    "The document total cannot exceed " + MAX_AMOUNT.toPlainString());
+        }
         return new CalculationResult(List.copyOf(lines), taxTotals, totals);
     }
 

@@ -2,6 +2,7 @@ package com.cantte.cetus.ubl;
 
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.ElectronicInvoice;
+import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XadesSigner;
@@ -99,6 +100,36 @@ class AttachedDocumentMapperTest {
         assertThat(text(reference, Ns.CBC, "ValidationResultCode")).isEqualTo("02");
         assertThat(text(reference, Ns.CBC, "ValidationDate")).isEqualTo("2026-10-18");
         assertThat(text(reference, Ns.CBC, "ValidationTime")).isEqualTo("21:05:09-05:00");
+    }
+
+    @Test
+    void customerTextCannotBreakOutOfTheCdata() {
+        ElectronicInvoice sample = InvoiceUblMapperTest.sampleInvoice();
+        Party c = sample.customer();
+        String hostile = "Ana ]]><cbc:Injected>x</cbc:Injected><![CDATA[ & <b>";
+        Party customer = new Party(c.personType(), c.identificationType(), c.identificationNumber(), c.checkDigit(),
+                hostile, c.tradeName(), c.taxLevelCodes(), c.taxSchemeId(), c.taxSchemeName(), c.address(),
+                c.email(), c.phone());
+        ElectronicInvoice invoice = new ElectronicInvoice(sample.environment(), sample.operationType(),
+                sample.prefix(), sample.number(), sample.issueDate(), sample.issueTime(), sample.dueDate(),
+                sample.currency(), sample.supplier(), customer, sample.payment(), sample.calculation(),
+                sample.authorization(), sample.software(), sample.cufe(), sample.qrCode(), sample.notes());
+        Document signed = new UblMarshaller().toDocument(new InvoiceUblMapper().map(invoice));
+        new XadesSigner().sign(signed, UblMarshaller.signatureSlot(signed), keys(), XadesSigner.SignerRole.SUPPLIER);
+        byte[] signedXml = XmlSupport.serialize(signed);
+
+        Document container = new UblMarshaller().toDocument(new AttachedDocumentMapper().map(contents(signedXml)));
+        Document received = XmlSupport.parse(XmlSupport.serialize(container));
+
+        assertThat(received.getElementsByTagNameNS(Ns.CBC, "Injected").getLength()).isZero();
+        Element attachment = directChild(received.getDocumentElement(), Ns.CAC, "Attachment");
+        String embedded = text(attachment, Ns.CBC, "Description");
+        assertThat(embedded).isEqualTo(new String(signedXml, StandardCharsets.UTF_8));
+        Document embeddedInvoice = XmlSupport.parse(embedded.getBytes(StandardCharsets.UTF_8));
+        assertThat(embeddedInvoice.getElementsByTagNameNS(Ns.CBC, "Injected").getLength()).isZero();
+        Element accountingCustomer = (Element) embeddedInvoice
+                .getElementsByTagNameNS(Ns.CAC, "AccountingCustomerParty").item(0);
+        assertThat(text(accountingCustomer, Ns.CBC, "RegistrationName")).isEqualTo(hostile);
     }
 
     @Test

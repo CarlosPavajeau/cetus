@@ -37,6 +37,16 @@ class InvoiceCalculatorTest {
     }
 
     @Test
+    void rejectsTotalsTheDatabaseCannotStore() {
+        var lines = List.of(new LineInput("A1", "Consultoría", new BigDecimal("99999999999999"), "94",
+                new BigDecimal("99999999999999"), List.of()));
+
+        assertThatThrownBy(() -> calculator.calculate(lines))
+                .isInstanceOf(DomainException.class)
+                .extracting(e -> ((DomainException) e).code()).isEqualTo("amount_too_large");
+    }
+
+    @Test
     void computesNitCheckDigit() {
         // DIAN's own NIT: 800197268-4
         assertThat(NitCheckDigit.compute("800197268")).isEqualTo("4");

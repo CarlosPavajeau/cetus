@@ -9,7 +9,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotFoundException;
@@ -43,7 +45,7 @@ public class InvoiceResource {
      */
     @POST
     @Transactional
-    public Response create(@HeaderParam("Idempotency-Key") @NotNull String idempotencyKey,
+    public Response create(@HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
                            @Valid @NotNull InvoiceRequest request) throws JsonProcessingException {
         return idempotentCreation.accept(principal.accountId(), idempotencyKey, request, rawJson ->
                 InvoiceResponse.created(service.create(principal.accountId(), principal.environment(), request, rawJson)));
