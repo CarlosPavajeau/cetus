@@ -11,7 +11,9 @@ import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -154,6 +156,48 @@ class CreditNoteResourceTest {
                 .then().statusCode(202).header("Idempotent-Replayed", "true").extract().path("id");
 
         assertThat(replayed).isEqualTo(first);
+    }
+
+    @Test
+    @Timeout(30)
+    void hugeExponentsInTheLinesAreRefusedBeforeAnyArithmetic() {
+        Issuer issuer = issuer("Credit exponent SAS");
+        String invoiceId = acceptedInvoice(issuer).getString("id");
+        // The lines are the invoice's: a dozen characters of JSON must not reach BigDecimal.setScale.
+        for (String line : List.of(
+                "\"quantity\": 1e999999999, \"unitPrice\": 1",
+                "\"quantity\": 1, \"unitPrice\": 1e999999999",
+                "\"quantity\": 1, \"unitPrice\": 1, \"taxes\": [{\"type\": \"IVA\", \"percent\": 1e-999999999}]")) {
+            String body = """
+                    {"invoiceId": "%s", "concept": "CANCELLATION", "description": "Ajuste",
+                     "lines": [{"itemCode": "SERV-1", "description": "Servicio", %s}]}
+                    """.formatted(invoiceId, line);
+            api(issuer.apiKey()).header("Idempotency-Key", UUID.randomUUID().toString()).body(body)
+                    .post("/v1/credit-notes")
+                    .then().statusCode(400)
+                    .body("code", equalTo("invalid_request"));
+        }
+    }
+
+    @Test
+    void theDescriptionAndNotesAreBounded() {
+        Issuer issuer = issuer("Credit bounds SAS");
+        String invoiceId = acceptedInvoice(issuer).getString("id");
+
+        // The description goes verbatim into a cbc:Note and the PDF.
+        for (String description : List.of("Ajuste\u0001", "Ajuste\u0000", "Ajuste \u202Efdp.exe")) {
+            Map<String, Object> request = cancellation(invoiceId);
+            request.put("description", description);
+            create(issuer.apiKey(), request).then().statusCode(400);
+        }
+
+        Map<String, Object> manyNotes = cancellation(invoiceId);
+        manyNotes.put("notes", Collections.nCopies(21, "Nota"));
+        create(issuer.apiKey(), manyNotes).then().statusCode(400);
+
+        api(issuer.apiKey()).header("Idempotency-Key", "k".repeat(101)).body(cancellation(invoiceId))
+                .post("/v1/credit-notes")
+                .then().statusCode(400);
     }
 
     private record Issuer(String id, String apiKey) {
