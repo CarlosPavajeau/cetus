@@ -137,10 +137,10 @@ class IssuerResourceTest {
     }
 
     @Test
-    void invoiceRangesAreQueuedForVerificationOnceTheIssuerCanSign() {
+    void productionInvoiceRangesAreQueuedForVerificationOnceTheIssuerCanSign() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Verify SAS");
-        String issuerId = createIssuer(user);
+        String issuerId = createIssuer(user, "900123456", "LIVE");
         // Without software and certificate the worker cannot ask the DIAN yet.
         String early = addRange(user, issuerId, "EARLY");
         assertThat(verificationJobs(early)).isZero();
@@ -163,6 +163,19 @@ class IssuerResourceTest {
         assertThat(verificationJobs(early)).isEqualTo(2);
 
         verify(user, issuerId, notes).statusCode(422).body("code", equalTo("range_not_verifiable"));
+    }
+
+    @Test
+    void habilitacionRangesAreNotVerified() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Habilitacion SAS");
+        Onboarding onboarding = onboard(user);
+
+        // The shared test range (SETP) is not registered per NIT: GetNumberingRange always answers 301.
+        assertThat(detail(user, onboarding.issuerId()).getString("ranges[0].verificationStatus")).isNull();
+        assertThat(verificationJobs(onboarding.rangeId())).isZero();
+        verify(user, onboarding.issuerId(), onboarding.rangeId()).statusCode(422)
+                .body("code", equalTo("range_not_verifiable"));
     }
 
     private static ValidatableResponse verify(ConsoleUser user, String issuerId, String rangeId) {

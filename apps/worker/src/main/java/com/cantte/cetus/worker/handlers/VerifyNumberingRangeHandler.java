@@ -69,12 +69,15 @@ public class VerifyNumberingRangeHandler implements JobHandler {
             throw e;
         }
         if (!response.succeeded()) {
+            LOG.warnf("GetNumberingRange for range %s answered %s: %s", job.referenceId, response.operationCode(),
+                    response.operationDescription());
             record(job.referenceId, VerificationStatus.ERROR, "La DIAN respondió %s: %s"
                     .formatted(response.operationCode(), response.operationDescription()));
             return;
         }
         List<String> differences = differences(target, response);
         if (differences.isEmpty()) {
+            LOG.infof("Numbering range %s matches the DIAN", job.referenceId);
             record(job.referenceId, VerificationStatus.VERIFIED, null);
         } else {
             LOG.warnf("Numbering range %s differs from the DIAN: %s", job.referenceId, differences);

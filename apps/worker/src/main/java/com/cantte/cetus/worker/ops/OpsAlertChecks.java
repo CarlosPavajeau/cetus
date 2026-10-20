@@ -73,7 +73,7 @@ public class OpsAlertChecks {
                        coalesce(r.verification_error, '')
                 FROM billing.numbering_ranges r
                 JOIN billing.issuers i ON i.id = r.issuer_id
-                WHERE r.status = 'ACTIVE' AND r.verification_status IN ('MISMATCH', 'ERROR')
+                WHERE r.status = 'ACTIVE' AND i.environment = 'LIVE' AND r.verification_status IN ('MISMATCH', 'ERROR')
                 """, Map.of()).stream()
                 .map(r -> OpsAlert.of(Category.RANGE_UNVERIFIED, r[0], true,
                         "%s %s (NIT %s): el rango %s no coincide con la DIAN (%s): %s".formatted(
