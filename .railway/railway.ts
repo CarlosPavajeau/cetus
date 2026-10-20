@@ -2,6 +2,8 @@
 // own Dockerfile at the repository root. Applied with the Railway CLI, never on push:
 //   railway config plan    (preview)
 //   railway config apply   (asks for confirmation)
+// The restart policy is Railway's default (ON_FAILURE, 10 retries), so it is not set here: Railway reports
+// the default as null and plan would always show it as a change.
 // Secrets are preserve(): their values live only in Railway (set them sealed in the dashboard), so this
 // file never holds a password or key. Every variable a service uses must be listed here: plan shows
 // any variable that exists in Railway but not here as a removal. Custom domains (cetus.cantte.com for the
@@ -60,8 +62,6 @@ export default defineRailway((ctx) => {
       preDeployCommand: ["pnpm db:migrate"],
       healthcheckPath: "/sign-in",
       healthcheckTimeout: 120,
-      restartPolicyType: "ON_FAILURE",
-      restartPolicyMaxRetries: 10,
       limitOverride: limits(1, 512),
     },
     replicas,
@@ -87,8 +87,6 @@ export default defineRailway((ctx) => {
     deploy: {
       healthcheckPath: "/q/health/ready",
       healthcheckTimeout: 300,
-      restartPolicyType: "ON_FAILURE",
-      restartPolicyMaxRetries: 10,
       limitOverride: limits(1, 1024),
     },
     replicas,
@@ -115,8 +113,6 @@ export default defineRailway((ctx) => {
     deploy: {
       healthcheckPath: "/q/health/ready",
       healthcheckTimeout: 300,
-      restartPolicyType: "ON_FAILURE",
-      restartPolicyMaxRetries: 10,
       limitOverride: limits(1, 1024),
     },
     replicas,
@@ -124,8 +120,8 @@ export default defineRailway((ctx) => {
       PORT: "8081",
       ...billingDatabase,
       ...aws,
-      // Days each document stays locked (S3 Object Lock). Unset: 1826. "1" only to try the bucket first.
-      CETUS_STORAGE_RETENTION_DAYS: "1",
+      // Documents stay locked (S3 Object Lock, compliance) for the prod default of 1826 days; set
+      // CETUS_STORAGE_RETENTION_DAYS here only to change that period. It cannot be shortened afterwards.
       RESEND_API_KEY: preserve(),
       CETUS_EMAIL_FROM: "Facturas <facturas@cetus.cantte.com>",
       CETUS_EMAIL_TEST_RECIPIENT: preserve(),
