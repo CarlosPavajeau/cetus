@@ -18,6 +18,7 @@ import { TextField } from "./fields";
 import { LocationFields } from "./LocationFields";
 import type { IssuerValues } from "./schema";
 import { FieldRow, FieldSection } from "./StepLayout";
+import { isTaxLevelCode, nextTaxLevels, taxLevelItems } from "./taxLevels";
 
 const personTypeItems = [
   { value: "LEGAL_ENTITY", label: "Persona jurídica" },
@@ -30,7 +31,8 @@ export function issuerDefaults(issuer: IssuerDetail | null): IssuerValues {
     tradeName: issuer?.tradeName ?? null,
     nit: issuer?.nit ?? "",
     personType: issuer?.personType ?? "LEGAL_ENTITY",
-    taxLevelCodes: issuer?.taxLevelCodes.join(", ") ?? "",
+    // Codes outside the DIAN table (older issuers) are dropped: the person picks them again.
+    taxLevelCodes: issuer?.taxLevelCodes.filter(isTaxLevelCode) ?? [],
     responsibleForIva: issuer?.responsibleForIva ?? false,
     line: issuer?.address.line ?? "",
     postalCode: issuer?.address.postalCode ?? "",
@@ -57,6 +59,7 @@ export function IssuerFields({
 }) {
   const ivaId = useId();
   const personTypeId = useId();
+  const taxLevelsId = useId();
   const personTypeLocked = issuer !== null && issuer.status !== "ONBOARDING";
   const personType = useWatch({ control: form.control, name: "personType" });
 
@@ -127,11 +130,45 @@ export function IssuerFields({
               </Field>
             )}
           />
-          <TextField
-            control={form.control}
+          <Controller
             name="taxLevelCodes"
-            label="Responsabilidades tributarias"
-            placeholder="O-13, O-15"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid} className="gap-1.75">
+                <FieldLabel htmlFor={taxLevelsId} className="text-xs">
+                  Responsabilidades tributarias
+                </FieldLabel>
+                <Select
+                  multiple
+                  items={taxLevelItems}
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={(value) => field.onChange(nextTaxLevels(field.value, value))}
+                >
+                  <SelectTrigger
+                    id={taxLevelsId}
+                    className="w-full"
+                    aria-invalid={fieldState.invalid}
+                    onBlur={field.onBlur}
+                  >
+                    <SelectValue>
+                      {(codes: string[]) => (codes.length > 0 ? codes.join(", ") : "Elige del RUT")}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectGroup>
+                      {taxLevelItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          <span className="font-mono text-xs">{item.value}</span>
+                          <span className="text-muted-foreground">{item.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldError errors={[fieldState.error]} className="text-[10px]" />
+              </Field>
+            )}
           />
         </FieldRow>
       </FieldSection>

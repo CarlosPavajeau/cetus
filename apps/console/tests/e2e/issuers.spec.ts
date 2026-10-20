@@ -1,5 +1,5 @@
 import { addRange, createIssuer, onboardIssuer } from "../support/issuers";
-import { expect, open, test } from "./fixtures";
+import { expect, open, pickTaxLevel, test } from "./fixtures";
 
 test("the issuers page shows each issuer's ID for the API", async ({ page, organization }) => {
   const id = await createIssuer(organization, "900123456", "Primero SAS");
@@ -33,7 +33,7 @@ test("a second issuer is set up from the issuers page and resumed by its ID", as
 
   await page.getByLabel("Nombre o razón social").fill("Segundo SAS");
   await page.getByLabel("NIT").fill("800197268");
-  await page.getByLabel("Responsabilidades tributarias").fill("O-13");
+  await pickTaxLevel(page, "O-13");
   await page.getByLabel("Dirección", { exact: true }).fill("Calle 10 # 5-20");
   await page.getByLabel("Código postal").fill("110111");
   await page.getByLabel("Departamento").fill("Bogot");
@@ -117,7 +117,7 @@ test("an issuer in habilitación keeps its tax data in line with its RUT", async
   await expect(page.getByLabel("Tipo de persona")).toBeDisabled();
 
   await page.getByLabel("Nombre o razón social").fill("Rut Colombia SAS");
-  await page.getByLabel("Responsabilidades tributarias").fill("R-99-PN");
+  await pickTaxLevel(page, "R-99-PN");
   await page.getByRole("button", { name: "Guardar cambios" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/issuers/${id}$`));

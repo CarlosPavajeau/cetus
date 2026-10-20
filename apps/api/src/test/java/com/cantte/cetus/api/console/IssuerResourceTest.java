@@ -158,7 +158,7 @@ class IssuerResourceTest {
         bootstrap(user, "Verify SAS");
         String issuerId = createIssuer(user, "900123456", "LIVE");
         // Without software and certificate the worker cannot ask the DIAN yet.
-        String early = addRange(user, issuerId, "EARLY");
+        String early = addRange(user, issuerId, "EARL");
         assertThat(verificationJobs(early)).isZero();
 
         Onboarding onboarding = completeSetup(user, issuerId);

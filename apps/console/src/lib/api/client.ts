@@ -81,9 +81,13 @@ async function authHeaders(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${token}`, ...clientOriginHeaders(headers) };
 }
 
+/**
+ * The IP comes from CF-Connecting-IP, which Cloudflare sets for every request it proxies. Not from
+ * X-Forwarded-For: its first entry is whatever the browser sent, so anyone could pick the IP of the audit log.
+ */
 function clientOriginHeaders(headers: Headers): Record<string, string> {
   const origin: Record<string, string> = {};
-  const ip = getRequestIP({ xForwardedFor: true });
+  const ip = headers.get("cf-connecting-ip") ?? getRequestIP();
   const userAgent = headers.get("user-agent");
   if (ip) {
     origin["X-Cetus-Client-IP"] = ip;

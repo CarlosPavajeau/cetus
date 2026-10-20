@@ -15,6 +15,15 @@ public final class Pkcs12Loader {
     private Pkcs12Loader() {
     }
 
+    /**
+     * Loads a file uploaded by a user: its key derivations are bounded first (see {@link Pkcs12Iterations}),
+     * so a crafted file cannot keep the CPU busy for seconds.
+     */
+    public static KeyMaterial loadUntrusted(byte[] pkcs12, char[] password) {
+        Pkcs12Iterations.check(pkcs12, password);
+        return load(pkcs12, password);
+    }
+
     public static KeyMaterial load(byte[] pkcs12, char[] password) {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");

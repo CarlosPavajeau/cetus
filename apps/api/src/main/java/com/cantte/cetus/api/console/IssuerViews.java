@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.invoices.InvoiceRequest;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -9,12 +10,15 @@ import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -28,48 +32,69 @@ public final class IssuerViews {
     private IssuerViews() {
     }
 
+    /**
+     * The name of the issuer goes on one line: it is a field of the delivery email's subject, where a line
+     * break would end the header.
+     */
+    static final String ONE_LINE = "[^\\r\\n]*";
+    /** Software ID and TestSetId, as the DIAN portal shows them. */
+    static final String DIAN_UUID = "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}";
+    /** A .p12 is a few KB; the limit leaves room for long chains and keeps base64 decoding cheap. */
+    static final int MAX_PKCS12_BASE64 = 200_000;
+    /** Consecutive numbers have up to 15 digits, as the console asks. */
+    static final long MAX_NUMBER = 999_999_999_999_999L;
+
     public record CreateIssuerRequest(
             @NotNull Environment environment,
             @NotBlank @Pattern(regexp = "\\d{5,15}") String nit,
             @Pattern(regexp = "\\d") String checkDigit,
-            @NotBlank String legalName,
-            String tradeName,
+            @NotBlank @Size(max = 450) @Pattern(regexp = ONE_LINE) String legalName,
+            @Size(max = 450) @Pattern(regexp = ONE_LINE) String tradeName,
             @NotNull PersonType personType,
-            @NotEmpty List<String> taxLevelCodes,
+            @NotEmpty @Size(max = 5) List<@NotNull @Pattern(regexp = InvoiceRequest.TAX_LEVEL_CODE) String> taxLevelCodes,
             boolean responsibleForIva,
-            @NotNull Address address,
-            @NotBlank @Email String email,
-            String phone) {
+            @NotNull @Valid InvoiceRequest.AddressInput address,
+            @NotBlank @Size(max = 254) @Email(regexp = InvoiceRequest.EMAIL) String email,
+            @Size(max = 50) @Pattern(regexp = InvoiceRequest.PHONE) String phone) {
     }
 
     /** The tax data that can change while the issuer is being set up: everything but its NIT and environment. */
     public record UpdateIssuerRequest(
-            @NotBlank String legalName,
-            String tradeName,
+            @NotBlank @Size(max = 450) @Pattern(regexp = ONE_LINE) String legalName,
+            @Size(max = 450) @Pattern(regexp = ONE_LINE) String tradeName,
             @NotNull PersonType personType,
-            @NotEmpty List<String> taxLevelCodes,
+            @NotEmpty @Size(max = 5) List<@NotNull @Pattern(regexp = InvoiceRequest.TAX_LEVEL_CODE) String> taxLevelCodes,
             boolean responsibleForIva,
-            @NotNull Address address,
-            @NotBlank @Email String email,
-            String phone) {
+            @NotNull @Valid InvoiceRequest.AddressInput address,
+            @NotBlank @Size(max = 254) @Email(regexp = InvoiceRequest.EMAIL) String email,
+            @Size(max = 50) @Pattern(regexp = InvoiceRequest.PHONE) String phone) {
     }
 
-    public record SoftwareRequest(@NotBlank String softwareId, @NotBlank String pin, String testSetId) {
+    public record SoftwareRequest(
+            @NotBlank @Pattern(regexp = DIAN_UUID) String softwareId,
+            @NotBlank @Size(max = 100) String pin,
+            @Pattern(regexp = DIAN_UUID) String testSetId) {
     }
 
-    public record CertificateRequest(@NotBlank String pkcs12Base64, @NotBlank String password) {
+    public record CertificateRequest(
+            @NotBlank @Size(max = MAX_PKCS12_BASE64) String pkcs12Base64,
+            @NotBlank @Size(max = 256) String password) {
     }
 
+    /**
+     * The prefix goes into the document number, its QR and file names; the resolution number and the technical
+     * key into the XML and the CUFE. None of them carries spaces or line breaks.
+     */
     public record NumberingRangeRequest(
             @NotNull DocumentType documentType,
-            String resolutionNumber,
+            @Pattern(regexp = "\\d{1,20}") String resolutionNumber,
             LocalDate resolutionDate,
-            String prefix,
-            @Positive long from,
-            @Positive long to,
+            @Pattern(regexp = "[A-Za-z0-9]{0,4}") String prefix,
+            @Positive @Max(MAX_NUMBER) long from,
+            @Positive @Max(MAX_NUMBER) long to,
             LocalDate validFrom,
             LocalDate validTo,
-            String technicalKey) {
+            @Pattern(regexp = "[0-9A-Za-z-]{1,100}") String technicalKey) {
     }
 
     public record IssuerView(

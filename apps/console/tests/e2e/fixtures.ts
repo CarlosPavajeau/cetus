@@ -27,3 +27,10 @@ export { expect } from "@playwright/test";
 export async function open(page: Page, path: string) {
   await page.goto(path, { waitUntil: "networkidle" });
 }
+
+/** Picks one fiscal responsibility in the multiple select of the issuer form, and closes it. */
+export async function pickTaxLevel(page: Page, code: string) {
+  await page.getByLabel("Responsabilidades tributarias").click();
+  await page.getByRole("option", { name: code }).click();
+  await page.keyboard.press("Escape");
+}

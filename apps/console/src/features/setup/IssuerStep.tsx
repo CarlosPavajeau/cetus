@@ -91,7 +91,7 @@ export function IssuerStep({
             },
             {
               title: "Responsabilidades tributarias",
-              text: "Conserva los códigos que aparecen en tu RUT, por ejemplo O-13 u O-47.",
+              text: "Elige las que aparecen en la casilla 53 de tu RUT. Si no tienes ninguna, elige R-99-PN.",
             },
             {
               title: "Ubicación sin complicaciones",

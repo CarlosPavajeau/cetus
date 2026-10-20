@@ -107,15 +107,7 @@ public class InvoiceService {
         boolean iva = customer.taxScheme() == InvoiceRequest.CustomerTaxScheme.IVA;
         List<String> taxLevels = customer.taxLevelCodes() == null || customer.taxLevelCodes().isEmpty()
                 ? List.of("R-99-PN") : customer.taxLevelCodes();
-        Address address = customer.address() == null ? null : new Address(
-                customer.address().municipalityCode(),
-                customer.address().cityName(),
-                customer.address().departmentCode(),
-                customer.address().departmentName(),
-                customer.address().postalCode(),
-                customer.address().line(),
-                customer.address().countryCode() != null ? customer.address().countryCode() : "CO",
-                customer.address().countryName() != null ? customer.address().countryName() : "Colombia");
+        Address address = customer.address() == null ? null : customer.address().toAddress();
         return new Party(customer.personType(), customer.identificationType(), customer.identificationNumber(),
                 checkDigit, customer.legalName(), customer.tradeName(), taxLevels,
                 iva ? "01" : "ZZ", iva ? "IVA" : "No aplica", address, customer.email(), customer.phone());
