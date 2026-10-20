@@ -113,6 +113,21 @@ class OpsAlertsTest {
     }
 
     @Test
+    void onlyProductionRangesThatDifferFromTheDianAreReported() {
+        UUID documentId = fixtures.invoice();
+        DocumentEntity doc = QuarkusTransaction.requiringNew().call(() -> DocumentEntity.findById(documentId));
+        String key = "range_unverified:" + doc.numberingRangeId;
+        sql("UPDATE billing.numbering_ranges SET verification_status = 'ERROR', verification_error = '301' WHERE id = ?1",
+                doc.numberingRangeId);
+
+        // Habilitación: the shared test range always answers 301, so it is not an operator's problem.
+        assertThat(keys(alerts.run(Run.FREQUENT))).doesNotContain(key);
+
+        sql("UPDATE billing.issuers SET environment = 'LIVE' WHERE id = ?1", doc.issuerId);
+        assertThat(keys(alerts.run(Run.FREQUENT))).contains(key);
+    }
+
+    @Test
     void anAlertThatCouldNotBeEmailedIsSentOnTheNextRun() {
         UUID documentId = fixtures.invoice();
         JobEntity job = fixtures.job(documentId, 10);

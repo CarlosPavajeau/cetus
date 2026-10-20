@@ -5,7 +5,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
-import type { NumberingRange } from "~/lib/api/types";
+import type { IssuerDetail, NumberingRange } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 import { verifyRange } from "./server";
@@ -27,15 +27,17 @@ const dot: Record<Status, string> = {
 };
 
 /**
- * Whether the DIAN has this invoice range as registered (GetNumberingRange): same prefix, numbers,
+ * Whether the DIAN has this production invoice range as registered (GetNumberingRange): same prefix, numbers,
  * validity and technical key. A difference means rejected invoices or invalid CUFEs, so it can be
  * checked again after fixing it in the DIAN portal or here.
  */
 export function RangeVerification({
   issuerId,
+  environment,
   range,
 }: {
   issuerId: string;
+  environment: IssuerDetail["environment"];
   range: NumberingRange;
 }) {
   const queryClient = useQueryClient();
@@ -46,6 +48,10 @@ export function RangeVerification({
 
   if (range.documentType !== "INVOICE") {
     return <span className="text-muted-foreground">—</span>;
+  }
+  // Habilitación numbers from the DIAN's shared test range, which GetNumberingRange does not know.
+  if (environment !== "LIVE") {
+    return <span className="text-muted-foreground">No aplica</span>;
   }
   const status = range.verificationStatus;
   const failed = status === "MISMATCH" || status === "ERROR";

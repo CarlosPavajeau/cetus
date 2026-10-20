@@ -304,7 +304,11 @@ function IssuerDetailPage() {
                       {range.validTo ? formatDay(range.validTo) : "—"}
                     </TableCell>
                     <TableCell className="text-2xs">
-                      <RangeVerification issuerId={issuer.id} range={range} />
+                      <RangeVerification
+                        issuerId={issuer.id}
+                        environment={issuer.environment}
+                        range={range}
+                      />
                     </TableCell>
                     <TableCell className="pr-4 text-2xs">
                       {range.status === "ACTIVE" ? "Activo" : "Inactivo"}

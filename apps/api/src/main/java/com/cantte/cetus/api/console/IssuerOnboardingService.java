@@ -204,8 +204,9 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * Compares an invoice range with the DIAN again (GetNumberingRange), e.g. after fixing its technical key
-     * or the DIAN software. It is also requested on its own once the issuer has software and certificate.
+     * Compares a production invoice range with the DIAN again (GetNumberingRange), e.g. after fixing its
+     * technical key or the DIAN software. It is also requested on its own once a production issuer has
+     * software and certificate.
      */
     @Transactional
     public NumberingRangeEntity verifyRange(IssuerEntity issuer, UUID rangeId) {
@@ -214,6 +215,10 @@ public class IssuerOnboardingService {
                 .orElseThrow(() -> new NotFoundException("Numbering range not found"));
         if (range.documentType != DocumentType.INVOICE) {
             throw new DomainException("range_not_verifiable", "Only invoice ranges are authorized by the DIAN");
+        }
+        if (issuer.environment != Environment.LIVE) {
+            throw new DomainException("range_not_verifiable",
+                    "Habilitación uses the DIAN's shared test range, which is not registered per NIT");
         }
         if (!canSign(issuer)) {
             throw new DomainException("issuer_not_ready", "The issuer needs its DIAN software and certificate first");
@@ -318,7 +323,9 @@ public class IssuerOnboardingService {
     private void refreshStatus(IssuerEntity issuer, Actor actor, RequestOrigin origin) {
         boolean canSign = canSign(issuer);
         boolean ready = canSign && NumberingRangeEntity.count("issuerId = ?1 and status = 'ACTIVE'", issuer.id) > 0;
-        if (canSign) {
+        // Habilitación numbers from a shared test range (SETP) the DIAN does not register per NIT, so
+        // GetNumberingRange only answers for production resolutions.
+        if (canSign && issuer.environment == Environment.LIVE) {
             NumberingRangeEntity.<NumberingRangeEntity>list("issuerId = ?1 and documentType = ?2 and status = 'ACTIVE' "
                     + "and verificationStatus is null", issuer.id, DocumentType.INVOICE).forEach(this::requestVerification);
         }

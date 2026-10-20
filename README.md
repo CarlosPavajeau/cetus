@@ -311,12 +311,13 @@ validar y una interna al conectar (DNS rebinding) queda bloqueado. En dev y en p
   - En local, LocalStack crea el bucket igual, pero sin retención.
 - **Límite de tasa.** Cada llave de API tiene un token bucket en memoria. Al pasarlo, la API responde
   `429 rate_limited` con `Retry-After`. El límite es por réplica de la API.
-- **Verificación del rango.** Cuando el emisor ya tiene software y certificado, el worker consulta
-  `GetNumberingRange` por cada rango de factura y lo compara con lo registrado: prefijo, números, vigencia y
-  clave técnica.
+- **Verificación del rango.** Cuando un emisor de **producción** ya tiene software y certificado, el worker
+  consulta `GetNumberingRange` por cada rango de factura y lo compara con lo registrado: prefijo, números,
+  vigencia y clave técnica. En habilitación no aplica: el rango de prueba (`SETP`) es compartido, la DIAN no
+  lo registra por NIT y siempre responde `301`.
   - Una clave técnica mal digitada haría inválidos todos los CUFE. La consola muestra el resultado en la
     columna "DIAN" y permite consultar de nuevo, y una diferencia genera una alerta.
-  - El mock local responde siempre con el rango de habilitación (`SETP`).
+  - El mock local responde siempre con el rango de habilitación (`SETP`); sirve para probar emisores LIVE en local.
 
 ## Pendiente de validar contra la DIAN
 
