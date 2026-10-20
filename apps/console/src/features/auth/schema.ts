@@ -12,10 +12,14 @@ export const signInSchema = type({
 });
 
 export const signUpSchema = type({
-  name: required("Escribe tu nombre."),
-  company: required("Escribe el nombre de la empresa."),
+  name: required("Escribe tu nombre completo."),
   email,
   password: type("string >= 10").configure({
     message: "La contraseña debe tener mínimo 10 caracteres.",
   }),
-});
+  confirmPassword: type("string > 0").configure({ message: "Repite tu contraseña." }),
+}).narrow((values, ctx) =>
+  values.password === values.confirmPassword
+    ? true
+    : ctx.reject({ path: ["confirmPassword"], message: "Las contraseñas no coinciden." }),
+);

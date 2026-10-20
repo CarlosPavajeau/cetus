@@ -10,6 +10,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/c
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { bootstrapAccount } from "~/features/account/server";
+import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
 import { authClient } from "~/lib/auth/client";
 
@@ -33,11 +34,11 @@ function SignUp() {
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: arktypeResolver(signUpSchema),
-    defaultValues: { name: "", company: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
   const { errors, isSubmitting } = form.formState;
 
-  const onSubmit = form.handleSubmit(async ({ name, company, email, password }) => {
+  const onSubmit = form.handleSubmit(async ({ name, email, password }) => {
     const { error: signUpError } = await authClient.signUp.email({ name, email, password });
     if (signUpError) {
       form.setError("root", {
@@ -46,10 +47,11 @@ function SignUp() {
       return;
     }
 
-    // 1. Organization in Better Auth  2. Make it active  3. Matching account in the Java API
+    // 1. Organization in Better Auth  2. Make it active  3. Matching account in the Java API.
+    // Sign-up does not ask for the company, so the workspace starts with the person's name.
     const { data: organization, error: orgError } = await authClient.organization.create({
-      name: company,
-      slug: slugify(company),
+      name,
+      slug: slugify(name),
     });
     if (orgError || !organization) {
       form.setError("root", {
@@ -58,7 +60,7 @@ function SignUp() {
       return;
     }
     await authClient.organization.setActive({ organizationId: organization.id });
-    await bootstrapAccount({ data: { name: company } });
+    await bootstrapAccount({ data: { name } });
     // Drop anything cached by a previous session in this tab (e.g. one that expired).
     queryClient.clear();
     await navigate({ to: "/overview" });
@@ -66,37 +68,25 @@ function SignUp() {
 
   return (
     <AuthLayout
-      title="Crea tu cuenta"
-      lead="Empieza en el ambiente de pruebas; pasar a producción es un cambio de llave."
+      title="Crear cuenta"
+      eyebrow="EMPIEZA A INTEGRAR"
+      lead="Empieza en ambiente de pruebas; pasar a producción es un cambio de llave."
+      headline={["De pruebas a producción.", "Un cambio de llave."]}
     >
       <form onSubmit={onSubmit} noValidate>
-        <FieldGroup>
+        <FieldGroup className="gap-4.5">
           <Controller
             name="name"
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="sign-up-name">Tu nombre</FieldLabel>
+                <FieldLabel htmlFor="sign-up-name">Nombre completo</FieldLabel>
                 <Input
                   {...field}
                   id="sign-up-name"
                   autoComplete="name"
-                  aria-invalid={fieldState.invalid}
-                />
-                <FieldError errors={[fieldState.error]} />
-              </Field>
-            )}
-          />
-          <Controller
-            name="company"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="sign-up-company">Empresa</FieldLabel>
-                <Input
-                  {...field}
-                  id="sign-up-company"
-                  autoComplete="organization"
+                  placeholder="Tu nombre y apellido"
+                  className="h-11 px-3"
                   aria-invalid={fieldState.invalid}
                 />
                 <FieldError errors={[fieldState.error]} />
@@ -108,12 +98,14 @@ function SignUp() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="sign-up-email">Correo de trabajo</FieldLabel>
+                <FieldLabel htmlFor="sign-up-email">Correo electrónico</FieldLabel>
                 <Input
                   {...field}
                   id="sign-up-email"
                   type="email"
                   autoComplete="email"
+                  placeholder="tu@empresa.com"
+                  className="h-11 px-3"
                   aria-invalid={fieldState.invalid}
                 />
                 <FieldError errors={[fieldState.error]} />
@@ -126,11 +118,11 @@ function SignUp() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="sign-up-password">Contraseña</FieldLabel>
-                <Input
+                <PasswordInput
                   {...field}
                   id="sign-up-password"
-                  type="password"
                   autoComplete="new-password"
+                  placeholder="Crea una contraseña"
                   aria-invalid={fieldState.invalid}
                 />
                 {fieldState.invalid ? (
@@ -141,20 +133,41 @@ function SignUp() {
               </Field>
             )}
           />
+          <Controller
+            name="confirmPassword"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="sign-up-confirm-password">Confirmar contraseña</FieldLabel>
+                <PasswordInput
+                  {...field}
+                  id="sign-up-confirm-password"
+                  autoComplete="new-password"
+                  placeholder="Repite tu contraseña"
+                  aria-invalid={fieldState.invalid}
+                />
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
           {errors.root && (
             <Alert variant="destructive">
               <AlertDescription>{errors.root.message}</AlertDescription>
             </Alert>
           )}
-          <Field>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Spinner data-icon="inline-start" />}
-              {isSubmitting ? "Creando cuenta…" : "Crear cuenta"}
-            </Button>
-            <FieldDescription className="text-center">
-              ¿Ya tienes cuenta? <Link to="/sign-in">Inicia sesión</Link>
-            </FieldDescription>
-          </Field>
+          <Button type="submit" size="lg" className="h-11" disabled={isSubmitting}>
+            {isSubmitting && <Spinner data-icon="inline-start" />}
+            {isSubmitting ? "Creando cuenta…" : "Crear cuenta"}
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            ¿Ya tienes cuenta?{" "}
+            <Link
+              to="/sign-in"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Inicia sesión
+            </Link>
+          </p>
         </FieldGroup>
       </form>
     </AuthLayout>
