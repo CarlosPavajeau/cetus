@@ -4,7 +4,8 @@
 //   railway config apply   (asks for confirmation)
 // Secrets are preserve(): their values live only in Railway (set them sealed in the dashboard), so this
 // file never holds a password or key. Every variable a service uses must be listed here: plan shows
-// any variable that exists in Railway but not here as a removal.
+// any variable that exists in Railway but not here as a removal. Custom domains (cetus.cantte.com for the
+// console, cetus-api.cantte.com for the API) are added in the dashboard: the CLI cannot register them.
 import { defineRailway, github, preserve, project, service } from "railway/iac";
 
 const repo = "CarlosPavajeau/cetus";
@@ -53,7 +54,6 @@ export default defineRailway((ctx) => {
       restartPolicyMaxRetries: 10,
     },
     replicas: 1,
-    domains: [{ domain: "cetus.cantte.com", port: 3000 }],
     env: {
       PORT: "3000",
       // PlanetScale role that owns the auth schema.
@@ -80,7 +80,6 @@ export default defineRailway((ctx) => {
       restartPolicyMaxRetries: 10,
     },
     replicas: 1,
-    domains: [{ domain: "cetus-api.cantte.com", port: 8080 }],
     env: {
       PORT: "8080",
       ...billingDatabase,
