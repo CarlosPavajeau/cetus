@@ -34,10 +34,11 @@ async function fillSoftware(page: Page, { testSet = true }: { testSet?: boolean 
 test("signing up takes a new organization to the assistant", async ({ page }) => {
   const id = crypto.randomUUID().slice(0, 8);
   await open(page, "/sign-up");
-  await page.getByLabel("Tu nombre").fill("Persona de pruebas");
-  await page.getByLabel("Empresa").fill("Registro SAS");
-  await page.getByLabel("Correo de trabajo").fill(`e2e-signup-${id}@cetus.test`);
-  await page.getByLabel("Contraseña").fill(`clave-${id}-segura`);
+  await page.getByLabel("Nombre completo").fill("Persona de pruebas");
+  await page.getByLabel("Correo electrónico").fill(`e2e-signup-${id}@cetus.test`);
+  // Exact: "Confirmar contraseña" and the "Mostrar contraseña" buttons match too.
+  await page.getByLabel("Contraseña", { exact: true }).fill(`clave-${id}-segura`);
+  await page.getByLabel("Confirmar contraseña").fill(`clave-${id}-segura`);
   await page.getByRole("button", { name: /crear/i }).click();
 
   await expect(page).toHaveURL(/\/setup$/);
