@@ -67,7 +67,7 @@ class TestSetProgressTest {
     }
 
     @Test
-    void anAcceptedTestSetTakesNoMoreTestInvoicesUntilANewOne() {
+    void anAcceptedTestSetStillTakesTestInvoicesThroughSendBillSync() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Accepted test set SAS");
         String issuerId = onboard(user).issuerId();
@@ -79,17 +79,15 @@ class TestSetProgressTest {
         QuarkusTransaction.requiringNew().run(() ->
                 SoftwareCredentialEntity.markTestSetAccepted(UUID.fromString(issuerId), testSetId));
 
+        // The worker sends these with SendBillSync instead of to the set (ProcessDocumentHandlerTest).
         assertThat(detail(user, issuerId).getString("testSet.acceptedAt")).isNotBlank();
-        invoiceRequest(apiKey, issuerId).post("/v1/invoices")
-                .then().statusCode(422)
-                .body("code", equalTo("test_set_accepted"));
+        invoiceRequest(apiKey, issuerId).post("/v1/invoices").then().statusCode(202);
 
-        // Saving the same set again keeps it accepted; a new set takes invoices again.
+        // Saving the same set again keeps it accepted; a new set starts over.
         setSoftware(user, issuerId, testSetId);
-        invoiceRequest(apiKey, issuerId).post("/v1/invoices").then().statusCode(422);
+        assertThat(detail(user, issuerId).getString("testSet.acceptedAt")).isNotBlank();
         setSoftware(user, issuerId, UUID.randomUUID().toString());
         assertThat(detail(user, issuerId).getString("testSet.acceptedAt")).isNull();
-        invoiceRequest(apiKey, issuerId).post("/v1/invoices").then().statusCode(202);
     }
 
     @Test

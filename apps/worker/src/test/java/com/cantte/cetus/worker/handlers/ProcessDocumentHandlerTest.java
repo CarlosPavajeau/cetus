@@ -10,6 +10,7 @@ import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.signing.XmlSupport;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.support.FakeDian;
@@ -26,10 +27,12 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 /**
@@ -77,6 +80,38 @@ class ProcessDocumentHandlerTest {
         // Every artifact is written with the legal retention (Object Lock).
         assertThat(QuarkusTransaction.requiringNew().call(() -> DocumentArtifactEntity.listByDocument(id)))
                 .allSatisfy(a -> assertThat(((FakeDocumentStorage) storage).isRetained(a.s3Key)).isTrue());
+    }
+
+    @Test
+    void aTestSetInProgressReceivesTheDocument() {
+        UUID id = fixtures.invoice();
+        useTestSet(id, "set-in-progress", null);
+
+        catchThrowable(() -> process(id));
+
+        assertThat(dian.operations()).containsExactly("SendTestSetAsync");
+    }
+
+    @Test
+    void onceTheDianAcceptedTheTestSetDocumentsGoThroughSendBillSync() {
+        dian.reply(SEND, Reply.fixture("send-bill-sync-accepted.xml"));
+        UUID id = fixtures.invoice();
+        useTestSet(id, "set-already-accepted", OffsetDateTime.now().minusDays(1));
+
+        process(id);
+
+        assertThat(document(id).status).isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(dian.operations()).containsExactly(SEND);
+    }
+
+    /** Gives the document's issuer a software with this TestSetId, accepted by the DIAN at {@code acceptedAt}. */
+    private static void useTestSet(UUID documentId, String testSetId, OffsetDateTime acceptedAt) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            DocumentEntity doc = DocumentEntity.findById(documentId);
+            SoftwareCredentialEntity software = SoftwareCredentialEntity.findActive(doc.issuerId).orElseThrow();
+            software.testSetId = testSetId;
+            software.testSetAcceptedAt = acceptedAt;
+        });
     }
 
     @Test
