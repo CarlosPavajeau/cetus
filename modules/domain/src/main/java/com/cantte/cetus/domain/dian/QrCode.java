@@ -34,6 +34,12 @@ public final class QrCode {
     private static String content(String number, LocalDate date, LocalTime time, String supplierNit,
                                   String customerId, CalculationResult calc, String keyName, String key,
                                   Environment env) {
+        for (String field : new String[]{number, supplierNit, customerId, key}) {
+            if (field.indexOf('\n') >= 0 || field.indexOf('\r') >= 0) {
+                // Each field is one line of the QR: a line break would let it add lines (or URLs) of its own.
+                throw new IllegalArgumentException("QR fields cannot contain line breaks");
+            }
+        }
         var otherTaxes = calc.taxAmount(TaxType.INC).add(calc.taxAmount(TaxType.ICA));
         return "NumFac: " + number + "\n"
                 + "FecFac: " + DianTime.date(date) + "\n"

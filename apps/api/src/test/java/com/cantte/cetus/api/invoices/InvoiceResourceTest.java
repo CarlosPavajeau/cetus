@@ -7,7 +7,9 @@ import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +107,112 @@ class InvoiceResourceTest {
         assertThat(details).anyMatch(detail -> detail.contains("itemCode"));
     }
 
+    @Test
+    @Timeout(30)
+    void hugeExponentsAreRefusedBeforeAnyArithmetic() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Exponent SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+        // A dozen characters of JSON that would make BigDecimal.setScale build a number of a billion digits.
+        for (String line : List.of(
+                "\"quantity\": 1e999999999, \"unitPrice\": 1",
+                "\"quantity\": 1, \"unitPrice\": 1e999999999",
+                "\"quantity\": 1, \"unitPrice\": 1, \"taxes\": [{\"type\": \"IVA\", \"percent\": 1e-999999999}]")) {
+            String body = """
+                    {"issuerId": "%s",
+                     "customer": {"personType": "NATURAL_PERSON", "identificationType": "CITIZEN_ID",
+                                  "identificationNumber": "1020304050", "legalName": "Consumidor Final"},
+                     "payment": {"method": "CASH", "meansCode": "10"},
+                     "lines": [{"itemCode": "SERV-1", "description": "Servicio", %s}]}
+                    """.formatted(issuerId, line);
+            api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(body)
+                    .post("/v1/invoices")
+                    .then().statusCode(400)
+                    .body("code", equalTo("invalid_request"));
+        }
+    }
+
+    @Test
+    void aTotalTheDatabaseCannotStoreIsRefused() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Big total SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+        Map<String, Object> invoice = invoice(issuerId);
+        invoice.put("lines", List.of(Map.of("itemCode", "SERV-1", "description", "Servicio",
+                "quantity", 99999999999999L, "unitPrice", 99999999999999L)));
+
+        api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice)
+                .post("/v1/invoices")
+                .then().statusCode(422)
+                .body("code", equalTo("amount_too_large"));
+    }
+
+    @Test
+    void theIdentificationNumberFollowsTheFormatOfItsType() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Identification SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+
+        // A line break would add a line of its own to the QR, such as a URL scanners open before the DIAN's.
+        for (Map.Entry<String, String> id : List.of(Map.entry("PASSPORT", "1\nhttps://ev.il"),
+                Map.entry("NIT", "90012A"), Map.entry("CITIZEN_ID", "10 20 30"))) {
+            api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString())
+                    .body(invoiceWithCustomer(issuerId, Map.of(
+                            "identificationType", id.getKey(), "identificationNumber", id.getValue())))
+                    .post("/v1/invoices")
+                    .then().statusCode(422)
+                    .body("code", equalTo("customer_identification_invalid"));
+        }
+
+        api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoiceWithCustomer(issuerId, Map.of(
+                        "identificationType", "PASSPORT", "identificationNumber", "AB-123456")))
+                .post("/v1/invoices")
+                .then().statusCode(202);
+    }
+
+    @Test
+    void textCannotCarryControlCharactersOrBidirectionalOverrides() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Control chars SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+
+        for (String legalName : List.of("Acme\u0001", "Acme\u0000", "Acme ‮moc.live")) {
+            api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString())
+                    .body(invoiceWithCustomer(issuerId, Map.of("legalName", legalName)))
+                    .post("/v1/invoices")
+                    .then().statusCode(400);
+        }
+    }
+
+    @Test
+    void listsAndTheIdempotencyKeyAreBounded() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Bounds SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+
+        api(apiKey).header("Idempotency-Key", "k".repeat(101)).body(invoice(issuerId))
+                .post("/v1/invoices")
+                .then().statusCode(400);
+
+        Map<String, Object> manyNotes = invoice(issuerId);
+        manyNotes.put("notes", Collections.nCopies(21, "Nota"));
+        api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(manyNotes)
+                .post("/v1/invoices")
+                .then().statusCode(400);
+
+        // Tax level codes are joined with ";" in the XML: one code cannot smuggle in another.
+        api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoiceWithCustomer(issuerId, Map.of("taxLevelCodes", List.of("O-13;O-15"))))
+                .post("/v1/invoices")
+                .then().statusCode(400);
+    }
+
     private static String testKey(ConsoleUser user) {
         return user.request().body(Map.of("name", "ERP", "environment", "TEST"))
                 .post("/console/api-keys")
@@ -133,6 +241,16 @@ class InvoiceResourceTest {
         if (issuerId != null) {
             invoice.put("issuerId", issuerId);
         }
+        return invoice;
+    }
+
+    /** The invoice with some customer fields replaced. */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> invoiceWithCustomer(String issuerId, Map<String, Object> fields) {
+        Map<String, Object> invoice = invoice(issuerId);
+        Map<String, Object> customer = new HashMap<>((Map<String, Object>) invoice.get("customer"));
+        customer.putAll(fields);
+        invoice.put("customer", customer);
         return invoice;
     }
 }

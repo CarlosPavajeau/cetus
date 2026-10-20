@@ -20,5 +20,5 @@ public record CreditNoteRequest(
         @NotBlank @Size(max = 500) String description,
         @Size(max = 500) List<InvoiceRequest.@Valid Line> lines,
         @Size(max = 100) String externalReference,
-        List<@Size(max = 500) String> notes) {
+        @Size(max = 20) List<@Size(max = 500) String> notes) {
 }

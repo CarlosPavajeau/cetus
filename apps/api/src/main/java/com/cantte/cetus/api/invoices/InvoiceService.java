@@ -91,6 +91,10 @@ public class InvoiceService {
     }
 
     private static Party toParty(InvoiceRequest.Customer customer) {
+        if (!customer.identificationNumber().matches(identificationPattern(customer.identificationType()))) {
+            throw new DomainException("customer_identification_invalid",
+                    "The identification number does not match the format of " + customer.identificationType());
+        }
         String checkDigit = customer.checkDigit();
         if (customer.identificationType() == IdentificationType.NIT) {
             String expected = NitCheckDigit.compute(customer.identificationNumber());
@@ -115,6 +119,18 @@ public class InvoiceService {
         return new Party(customer.personType(), customer.identificationType(), customer.identificationNumber(),
                 checkDigit, customer.legalName(), customer.tradeName(), taxLevels,
                 iva ? "01" : "ZZ", iva ? "IVA" : "No aplica", address, customer.email(), customer.phone());
+    }
+
+    /**
+     * Colombian documents are numbers only; foreign ones may carry letters and dashes. Never spaces or line
+     * breaks: the number goes verbatim into the QR, the CUFE and the PDF.
+     */
+    private static String identificationPattern(IdentificationType type) {
+        return switch (type) {
+            case NIT -> "\\d{1,15}";
+            case CIVIL_REGISTRY, IDENTITY_CARD, CITIZEN_ID, FOREIGNER_ID, NUIP -> "\\d{1,20}";
+            case FOREIGNER_CARD, PASSPORT, FOREIGN_DOCUMENT, PEP, FOREIGN_NIT -> "[A-Za-z0-9-]{1,20}";
+        };
     }
 
     private static PaymentInfo toPayment(InvoiceRequest.Payment payment) {

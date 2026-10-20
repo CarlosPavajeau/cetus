@@ -6,6 +6,7 @@ import com.cantte.cetus.domain.model.TaxType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -31,7 +32,17 @@ public record InvoiceRequest(
         @NotNull @Valid Customer customer,
         @NotNull @Valid Payment payment,
         @NotEmpty @Size(max = 500) List<@Valid Line> lines,
-        List<@Size(max = 500) String> notes) {
+        @Size(max = 20) List<@Size(max = 500) String> notes) {
+
+    /** Fiscal responsibilities a customer can declare (annex table 13.2.6.1). */
+    static final String TAX_LEVEL_CODE = "O-13|O-15|O-23|O-47|R-99-PN";
+    /** A code of a DIAN list: payment means, unit of measure. */
+    static final String DIAN_CODE = "[0-9A-Z]{1,3}";
+    /** Municipality, department or postal code; foreign addresses use their own codes. */
+    static final String CODE = "[0-9A-Za-z-]{1,10}";
+    static final String PHONE = "[0-9+() -]*";
+    /** Stricter than @Email alone: no quoted local part, no comments, a dotted domain. */
+    static final String EMAIL = "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}";
 
     public record Customer(
             @NotNull PersonType personType,
@@ -40,29 +51,29 @@ public record InvoiceRequest(
             @Pattern(regexp = "\\d") String checkDigit,
             @NotBlank @Size(max = 450) String legalName,
             @Size(max = 450) String tradeName,
-            List<String> taxLevelCodes,
+            @Size(max = 5) List<@NotNull @Pattern(regexp = TAX_LEVEL_CODE) String> taxLevelCodes,
             CustomerTaxScheme taxScheme,
             @Valid AddressInput address,
-            @Email String email,
-            String phone) {
+            @Size(max = 254) @Email(regexp = EMAIL) String email,
+            @Size(max = 50) @Pattern(regexp = PHONE) String phone) {
     }
 
     public enum CustomerTaxScheme { IVA, NOT_APPLICABLE }
 
     public record AddressInput(
-            @NotBlank String municipalityCode,
-            @NotBlank String cityName,
-            @NotBlank String departmentCode,
-            @NotBlank String departmentName,
-            String postalCode,
-            @NotBlank String line,
+            @NotBlank @Pattern(regexp = CODE) String municipalityCode,
+            @NotBlank @Size(max = 100) String cityName,
+            @NotBlank @Pattern(regexp = CODE) String departmentCode,
+            @NotBlank @Size(max = 100) String departmentName,
+            @Pattern(regexp = CODE) String postalCode,
+            @NotBlank @Size(max = 300) String line,
             @Pattern(regexp = "[A-Z]{2}") String countryCode,
-            String countryName) {
+            @Size(max = 100) String countryName) {
     }
 
     public record Payment(
             @NotNull PaymentMethod method,
-            @NotBlank String meansCode,
+            @NotBlank @Pattern(regexp = DIAN_CODE) String meansCode,
             LocalDate dueDate) {
     }
 
@@ -71,14 +82,14 @@ public record InvoiceRequest(
     public record Line(
             @NotBlank @Size(max = 50) String itemCode,
             @NotBlank @Size(max = 300) String description,
-            @NotNull @Positive BigDecimal quantity,
-            String unitCode,
-            @NotNull @PositiveOrZero BigDecimal unitPrice,
-            List<@Valid LineTax> taxes) {
+            @NotNull @Positive @Digits(integer = 14, fraction = 6) BigDecimal quantity,
+            @Pattern(regexp = DIAN_CODE) String unitCode,
+            @NotNull @PositiveOrZero @Digits(integer = 14, fraction = 6) BigDecimal unitPrice,
+            @Size(max = 5) List<@Valid LineTax> taxes) {
     }
 
     public record LineTax(
             @NotNull TaxType type,
-            @NotNull @DecimalMin("0") @DecimalMax("100") BigDecimal percent) {
+            @NotNull @DecimalMin("0") @DecimalMax("100") @Digits(integer = 3, fraction = 4) BigDecimal percent) {
     }
 }
