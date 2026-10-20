@@ -26,6 +26,8 @@ import java.util.Optional;
 public class ApiKeyFilter implements ContainerRequestFilter {
 
     private static final String ACTIVE = "ACTIVE";
+    /** lastUsedAt is shown to the minute: refreshing it more often would write the key row on every request. */
+    private static final Duration LAST_USED_PRECISION = Duration.ofMinutes(1);
 
     @Inject
     ApiPrincipal principal;
@@ -48,7 +50,10 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             if (found == null) {
                 return null;
             }
-            found.lastUsedAt = OffsetDateTime.now();
+            OffsetDateTime now = OffsetDateTime.now();
+            if (found.lastUsedAt == null || found.lastUsedAt.isBefore(now.minus(LAST_USED_PRECISION))) {
+                found.lastUsedAt = now;
+            }
             AccountEntity account = AccountEntity.findById(found.accountId);
             return new Resolved(found, account.status);
         });
