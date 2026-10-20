@@ -81,13 +81,24 @@ public class ContextLoader {
                 range.technicalKeySealed,
                 software.softwareId,
                 software.pinSealed,
-                software.testSetId,
+                activeTestSet(issuer.id, software.testSetId),
                 new ProcessingContext.CertificateRef(certificate.id, certificate.s3Key, certificate.passwordSealed),
                 doc.cufe,
                 doc.dianTrackId,
                 DianSubmissionEntity.lastSendUnanswered(doc.id),
                 doc.status,
                 doc.validatedAt);
+    }
+
+    /**
+     * The test set documents still go to, or null once the DIAN accepted it: from then on the issuer's
+     * documents are sent with SendBillSync, even if the software keeps its TestSetId.
+     */
+    private static String activeTestSet(UUID issuerId, String testSetId) {
+        if (testSetId == null || testSetId.isBlank()) {
+            return null;
+        }
+        return SoftwareCredentialEntity.testSetAcceptedAt(issuerId, testSetId) == null ? testSetId : null;
     }
 
     /** The invoice a note corrects, or null for an invoice. */

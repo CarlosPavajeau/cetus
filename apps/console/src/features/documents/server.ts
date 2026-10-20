@@ -71,8 +71,6 @@ const cancellationMessages: Record<string, string> = {
   issuer_not_ready: "El emisor no está habilitado para emitir documentos.",
   issuer_missing_software: "Al emisor le falta configurar el software de la DIAN.",
   issuer_missing_certificate: "Al emisor le falta el certificado de firma.",
-  test_set_accepted:
-    "El set de pruebas de este emisor ya fue aceptado: la habilitación no recibe más documentos suyos.",
   idempotency_in_progress: "La anulación ya se está procesando. Espera unos segundos.",
 };
 

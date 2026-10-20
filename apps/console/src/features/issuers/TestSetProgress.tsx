@@ -40,9 +40,9 @@ export function TestSetProgress({ testSet }: { testSet: Progress }) {
             La DIAN aceptó este set de pruebas el {dateFormat.format(new Date(testSet.acceptedAt))}
           </AlertTitle>
           <AlertDescription>
-            La habilitación terminó y el set ya no recibe más documentos, así que la API rechaza las
-            facturas de prueba de este emisor (<code>test_set_accepted</code>). Pasa a producción y
-            factura con una llave de producción.
+            La habilitación terminó y el set ya no recibe más documentos. Las facturas de prueba de
+            este emisor se siguen validando en habilitación, ahora fuera del set. Cuando tengas la
+            resolución, pasa a producción y factura con una llave de producción.
           </AlertDescription>
         </Alert>
       )}

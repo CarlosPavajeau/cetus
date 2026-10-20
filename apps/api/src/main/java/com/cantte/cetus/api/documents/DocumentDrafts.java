@@ -45,16 +45,11 @@ public class DocumentDrafts {
         if (!canIssue(issuer, environment)) {
             throw new DomainException("issuer_not_ready", "The issuer is not enabled to issue documents yet");
         }
-        SoftwareCredentialEntity software = SoftwareCredentialEntity.findActive(issuer.id)
+        SoftwareCredentialEntity.findActive(issuer.id)
                 .orElseThrow(() -> new DomainException("issuer_missing_software",
                         "The issuer has no DIAN software credentials"));
-        // The DIAN refuses anything sent to an accepted test set, so the invoice would only burn a number.
-        if (environment == Environment.TEST && software.testSetId != null && !software.testSetId.isBlank()
-                && SoftwareCredentialEntity.testSetAcceptedAt(issuer.id, software.testSetId) != null) {
-            throw new DomainException("test_set_accepted",
-                    "The DIAN already accepted this issuer's test set, so habilitación is done and it takes no "
-                            + "more test invoices. Issue from the production issuer with a live API key.");
-        }
+        // An accepted test set takes no more documents, but habilitación still validates them with
+        // SendBillSync: the worker switches to it on its own once the set is accepted.
         if (SigningCertificateEntity.findActive(issuer.id).isEmpty()) {
             throw new DomainException("issuer_missing_certificate", "The issuer has no signing certificate");
         }
