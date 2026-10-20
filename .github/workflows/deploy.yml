@@ -1,0 +1,84 @@
+# Deploys to Railway in order, so the console never reaches production before the API it calls:
+#   api → worker and console (in parallel)
+# The API goes first because it migrates the billing schema (Flyway) and serves /console/* to the console.
+# Each service deploys only when the push touched its files; run the workflow by hand to deploy all three.
+# Railway does not deploy on push: autodeploy is off in each service, which builds from its GitHub source.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits instead of cancelling a rollout halfway.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  RAILWAY_CLI_VERSION: "5.70.0"
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.api == 'true' }}
+      worker: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.worker == 'true' }}
+      console: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.console == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            java: &java
+              - modules/**
+              - build-logic/**
+              - gradle/**
+              - gradlew
+              - "*.gradle.kts"
+              - gradle.properties
+            api:
+              - *java
+              - apps/api/**
+            worker:
+              - *java
+              - apps/worker/**
+            console:
+              - apps/console/**
+              - package.json
+              - pnpm-lock.yaml
+              - pnpm-workspace.yaml
+
+  api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @railway/cli@${{ env.RAILWAY_CLI_VERSION }}
+      - run: scripts/railway-deploy.sh api
+
+  worker:
+    needs: [changes, api]
+    # Runs when the API was skipped (nothing changed there), never after a failed API deploy.
+    if: always() && needs.changes.outputs.worker == 'true' && needs.api.result != 'failure' && needs.api.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @railway/cli@${{ env.RAILWAY_CLI_VERSION }}
+      - run: scripts/railway-deploy.sh worker
+
+  console:
+    needs: [changes, api]
+    if: always() && needs.changes.outputs.console == 'true' && needs.api.result != 'failure' && needs.api.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @railway/cli@${{ env.RAILWAY_CLI_VERSION }}
+      - run: scripts/railway-deploy.sh console

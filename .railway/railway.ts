@@ -1,5 +1,7 @@
 // Railway infrastructure for Cetus (production): three services from this repository, each built from its
-// own Dockerfile at the repository root. Applied with the Railway CLI, never on push:
+// own Dockerfile at the repository root. Autodeploy is off in each service's settings (the IaC has no field
+// for it): .github/workflows/deploy.yml deploys them in order (api, then worker and console), so the console
+// never goes live before the API it calls. Applied with the Railway CLI, never on push:
 //   railway config plan    (preview)
 //   railway config apply   (asks for confirmation)
 // The restart policy is Railway's default (ON_FAILURE, 10 retries), so it is not set here: Railway reports
