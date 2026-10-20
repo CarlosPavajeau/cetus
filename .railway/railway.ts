@@ -10,6 +10,9 @@ import { defineRailway, github, preserve, project, service } from "railway/iac";
 
 const repo = "CarlosPavajeau/cetus";
 
+/** One replica in Virginia, next to PlanetScale (AWS us-east-1), S3 and KMS. */
+const replicas = { "us-east4-eqdc4a": 1 };
+
 /** What makes a Java service rebuild: its app, the shared modules and the Gradle build. */
 const javaWatch = (app: string) => [
   `apps/${app}/**`,
@@ -53,7 +56,7 @@ export default defineRailway((ctx) => {
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
     },
-    replicas: 1,
+    replicas,
     env: {
       PORT: "3000",
       // PlanetScale role that owns the auth schema.
@@ -79,7 +82,7 @@ export default defineRailway((ctx) => {
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
     },
-    replicas: 1,
+    replicas,
     env: {
       PORT: "8080",
       ...billingDatabase,
@@ -106,7 +109,7 @@ export default defineRailway((ctx) => {
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
     },
-    replicas: 1,
+    replicas,
     env: {
       PORT: "8081",
       ...billingDatabase,
