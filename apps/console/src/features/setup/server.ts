@@ -14,6 +14,8 @@ const messages: Record<string, string> = {
   range_invalid: "El número inicial debe ser menor o igual al número final.",
   person_type_locked:
     "El tipo de persona viene con el NIT: no cambia una vez configurado el emisor.",
+  issuer_already_exists:
+    "Ya tienes un emisor con este NIT en este entorno. Búscalo en la lista de emisores.",
   invalid_request: "Revisa los datos del formulario: alguno no tiene el formato esperado.",
 };
 
@@ -61,13 +63,16 @@ function issuerBody(values: IssuerValues) {
   };
 }
 
-/** The assistant always creates the issuer in the test environment (habilitación). */
+/**
+ * Creates the issuer in habilitación (TEST) or, when its software is already enabled at the DIAN,
+ * directly in production (LIVE). The environment never changes afterwards.
+ */
 export const createIssuer = createServerFn({ method: "POST" })
-  .validator(issuerSchema)
+  .validator(type({ environment: "'TEST' | 'LIVE'", issuer: issuerSchema }))
   .handler(({ data }) =>
     call(() =>
       api.post("/console/issuers", {
-        body: { ...issuerBody(data), environment: "TEST", nit: data.nit },
+        body: { ...issuerBody(data.issuer), environment: data.environment, nit: data.issuer.nit },
       }),
     ),
   );

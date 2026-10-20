@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 
+import { addRange, createIssuer, uniqueNit } from "../support/issuers";
 import { testCertificate } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
@@ -22,10 +23,12 @@ async function fillIssuer(page: Page) {
   await page.getByLabel("Teléfono").fill("3167040705");
 }
 
-async function fillSoftware(page: Page) {
+async function fillSoftware(page: Page, { testSet = true }: { testSet?: boolean } = {}) {
   await page.getByLabel("Software ID").fill(softwareId);
   await page.getByLabel("PIN del software").fill("12345");
-  await page.getByLabel("TestSetId / ID del set de pruebas").fill(testSetId);
+  if (testSet) {
+    await page.getByLabel("TestSetId / ID del set de pruebas").fill(testSetId);
+  }
 }
 
 test("signing up takes a new organization to the assistant", async ({ page }) => {
@@ -39,7 +42,8 @@ test("signing up takes a new organization to the assistant", async ({ page }) =>
 
   await expect(page).toHaveURL(/\/setup$/);
   await expect(stepTitle(page, 1)).toBeVisible();
-  await expect(page.getByText("TEST · Pruebas")).toBeVisible();
+  // Habilitación is where a new issuer usually starts.
+  await expect(page.getByRole("radio", { name: /Empiezo la habilitación/ })).toBeChecked();
 });
 
 test("the assistant sets up the issuer and leaves it in habilitación", async ({
@@ -99,6 +103,53 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   await expect(page.getByText("Emisor actualizado")).toBeVisible();
   await expect(page.getByText("Cambió teléfono")).toBeVisible();
   await expect(page.getByText("Estado del emisor cambiado")).toBeVisible();
+});
+
+test("an issuer already enabled at the DIAN starts directly in production", async ({
+  page,
+  organization,
+}) => {
+  await open(page, "/setup");
+  await page.getByRole("radio", { name: /Ya facturo electrónicamente/ }).click();
+  await fillIssuer(page);
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  // Production has no test set.
+  await expect(stepTitle(page, 2)).toBeVisible();
+  await expect(page.getByText("LIVE · Producción")).toBeVisible();
+  await expect(page.getByLabel("TestSetId / ID del set de pruebas")).toHaveCount(0);
+  await fillSoftware(page, { testSet: false });
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  await expect(stepTitle(page, 3)).toBeVisible();
+  await page.locator('input[type="file"]').setInputFiles(testCertificate.path);
+  await page.getByLabel("Contraseña del certificado").fill(testCertificate.password);
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  // The issuer's own resolution: nothing from habilitación comes filled in.
+  await expect(stepTitle(page, 4)).toBeVisible();
+  await expect(page.getByLabel("Prefijo")).toHaveValue("");
+  const issuerId = new URL(page.url()).searchParams.get("issuerId")!;
+  await addRange(organization, issuerId, "FE");
+  await open(page, `/issuers/${issuerId}`);
+  await expect(page.getByText("Habilitado", { exact: true })).toBeVisible();
+});
+
+test("a test issuer that finished its test set leaves the TestSetId empty", async ({
+  page,
+  organization,
+}) => {
+  const id = await createIssuer(organization, uniqueNit(), "Set Terminado SAS");
+
+  await open(page, `/setup?issuerId=${id}`);
+  await expect(stepTitle(page, 2)).toBeVisible();
+  await fillSoftware(page, { testSet: false });
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  await expect(stepTitle(page, 3)).toBeVisible();
+  const detail = await organization.api(`/console/issuers/${id}`);
+  const { software } = (await detail.json()) as { software: { testSetId: string | null } };
+  expect(software.testSetId).toBeNull();
 });
 
 test("each step says what to fix before saving", async ({ page, organization: _ }) => {

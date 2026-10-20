@@ -1,15 +1,43 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import type { IssuerDetail } from "~/lib/api/types";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  FieldTitle,
+} from "~/components/ui/field";
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import { Separator } from "~/components/ui/separator";
+import type { Environment, IssuerDetail } from "~/lib/api/types";
 
 import { IssuerFields, issuerDefaults } from "./IssuerFields";
 import { issuerSchema } from "./schema";
 import { createIssuer, updateIssuer } from "./server";
-import { StepGuide, StepLayout } from "./StepLayout";
+import { FieldSection, StepGuide, StepLayout } from "./StepLayout";
 
-/** Step 1: the tax data of the issuer, as it appears in its RUT. Creates the issuer the first time. */
+const startingPoints = [
+  {
+    value: "TEST",
+    title: "Empiezo la habilitación en la DIAN",
+    description:
+      "Tu software aún no está habilitado: Cetus te acompaña en el set de pruebas antes de pasar a producción.",
+  },
+  {
+    value: "LIVE",
+    title: "Ya facturo electrónicamente con este software",
+    description:
+      "El Software ID y el PIN que usarás ya están habilitados en producción para este emisor. Si hoy facturas con un proveedor tecnológico, empieza la habilitación.",
+  },
+] as const;
+
+/**
+ * Step 1: the tax data of the issuer, as it appears in its RUT. Creates the issuer the first time,
+ * in habilitación or, when its software is already enabled at the DIAN, directly in production.
+ */
 export function IssuerStep({
   issuer,
   onBack,
@@ -21,6 +49,7 @@ export function IssuerStep({
 }) {
   const create = useMutation({ mutationFn: createIssuer });
   const update = useMutation({ mutationFn: updateIssuer });
+  const [environment, setEnvironment] = useState<Environment>("TEST");
   const form = useForm({
     resolver: arktypeResolver(issuerSchema),
     defaultValues: issuerDefaults(issuer),
@@ -30,7 +59,7 @@ export function IssuerStep({
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       if (!issuer) {
-        const created = await create.mutateAsync({ data: values });
+        const created = await create.mutateAsync({ data: { environment, issuer: values } });
         await onSaved(created.id);
       } else {
         if (isDirty) {
@@ -72,11 +101,39 @@ export function IssuerStep({
           note={
             issuer?.environment === "LIVE"
               ? "Este es el emisor de producción: sus facturas tienen validez fiscal ante la DIAN."
-              : "El entorno TEST es informativo. Cetus lo asigna automáticamente; no necesitas elegirlo."
+              : issuer
+                ? "Este emisor está en habilitación: sus documentos no tienen validez fiscal."
+                : "El punto de partida no cambia después: un emisor en habilitación pasa a producción con «Pasar a producción»."
           }
         />
       }
     >
+      {!issuer && (
+        <>
+          <FieldSection title="Punto de partida">
+            <RadioGroup
+              value={environment}
+              onValueChange={(value) => setEnvironment(value as Environment)}
+              className="sm:grid-cols-2"
+            >
+              {startingPoints.map((option) => (
+                <FieldLabel key={option.value} htmlFor={`environment-${option.value}`}>
+                  <Field orientation="horizontal">
+                    <FieldContent>
+                      <FieldTitle className="text-xs">{option.title}</FieldTitle>
+                      <FieldDescription className="text-[10px]">
+                        {option.description}
+                      </FieldDescription>
+                    </FieldContent>
+                    <RadioGroupItem value={option.value} id={`environment-${option.value}`} />
+                  </Field>
+                </FieldLabel>
+              ))}
+            </RadioGroup>
+          </FieldSection>
+          <Separator />
+        </>
+      )}
       <IssuerFields form={form} issuer={issuer} />
     </StepLayout>
   );
