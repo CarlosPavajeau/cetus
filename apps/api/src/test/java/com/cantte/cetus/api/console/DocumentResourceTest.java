@@ -70,6 +70,17 @@ class DocumentResourceTest {
     }
 
     @Test
+    void searchTextWithControlCharactersIsRefused() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        IssuedDocuments.issuer(user, "Nulos SAS");
+
+        // Postgres refuses \u0000 in text: it used to reach the query and answer 500.
+        user.request().urlEncodingEnabled(false).get("/console/documents?q=FE%001").then().statusCode(400)
+                .body("code", equalTo("invalid_request"));
+        user.request().get("/console/documents?q=" + "a".repeat(201)).then().statusCode(400);
+    }
+
+    @Test
     void theDetailShowsTotalsDianAnswerNotesAndTimeline() {
         ConsoleUser user = ConsoleUser.newOrganization();
         Issuer issuer = IssuedDocuments.issuer(user, "Detalle SAS");

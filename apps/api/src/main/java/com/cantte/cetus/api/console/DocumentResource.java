@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -74,7 +75,9 @@ public class DocumentResource {
 
     /**
      * Newest first: pass the previous page's {@code nextCursor} as {@code before}. {@code from} and {@code to}
-     * bound the issue date; {@code q} matches the number, the external reference and the customer.
+     * bound the issue date; {@code q} matches the number, the external reference and the customer. Query
+     * parameters skip the JSON checks of {@code SafeStrings}: control characters are refused here, since
+     * Postgres rejects a NUL character in text.
      */
     @GET
     @Transactional
@@ -85,7 +88,7 @@ public class DocumentResource {
                              @QueryParam("issuerId") UUID issuerId,
                              @QueryParam("from") LocalDate from,
                              @QueryParam("to") LocalDate to,
-                             @QueryParam("q") String q,
+                             @QueryParam("q") @Size(max = 200) @Pattern(regexp = "[^\\p{Cntrl}]*") String q,
                              @QueryParam("before") UUID before,
                              @QueryParam("limit") @DefaultValue("50") int limit) {
         UUID accountId = context.account().id;
