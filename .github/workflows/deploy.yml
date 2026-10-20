@@ -24,15 +24,15 @@ env:
 
 jobs:
   changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       api: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.api == 'true' }}
       worker: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.worker == 'true' }}
       console: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.console == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
           filters: |
@@ -58,9 +58,9 @@ jobs:
   api:
     needs: changes
     if: needs.changes.outputs.api == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: npm install -g @railway/cli@${{ env.RAILWAY_CLI_VERSION }}
       - run: scripts/railway-deploy.sh api
 
@@ -68,17 +68,17 @@ jobs:
     needs: [changes, api]
     # Runs when the API was skipped (nothing changed there), never after a failed API deploy.
     if: always() && needs.changes.outputs.worker == 'true' && needs.api.result != 'failure' && needs.api.result != 'cancelled'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: npm install -g @railway/cli@${{ env.RAILWAY_CLI_VERSION }}
       - run: scripts/railway-deploy.sh worker
 
   console:
     needs: [changes, api]
     if: always() && needs.changes.outputs.console == 'true' && needs.api.result != 'failure' && needs.api.result != 'cancelled'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: npm install -g @railway/cli@${{ env.RAILWAY_CLI_VERSION }}
       - run: scripts/railway-deploy.sh console
