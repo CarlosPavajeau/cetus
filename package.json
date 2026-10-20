@@ -8,5 +8,8 @@
     "console:lint": "pnpm --filter @cetus/console lint",
     "console:format": "pnpm --filter @cetus/console format",
     "console:test": "pnpm --filter @cetus/console test"
+  },
+  "devDependencies": {
+    "railway": "3.16.0"
   }
 }

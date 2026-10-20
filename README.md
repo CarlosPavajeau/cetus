@@ -168,14 +168,26 @@ curl -X POST http://localhost:8080/v1/invoices \
 
 ## Despliegue en Railway
 
-Tres servicios desde el mismo repositorio, con el directorio raíz en la raíz del repo. Cada uno define su
-build y su despliegue en un `railway.json` (en Railway: *Settings → Config-as-code*):
+Tres servicios (`console`, `api` y `worker`) desde el mismo repositorio, cada uno construido con su Dockerfile
+desde la raíz. Todo el proyecto se describe en `.railway/railway.ts` (Infrastructure as Code de Railway):
+fuente, Dockerfile, rutas vigiladas, health checks, pre-deploy, réplicas, dominios y variables. Railway **no**
+lo lee al desplegar; se aplica con su CLI (5.42.1 o superior):
 
-| Servicio | Config | Health check | Pre-deploy |
-|---|---|---|---|
-| api | `apps/api/railway.json` | `/q/health/ready` | — (Flyway migra al arrancar) |
-| worker | `apps/worker/railway.json` | `/q/health/ready` | — |
-| console | `apps/console/railway.json` | `/sign-in` | `pnpm db:migrate` |
+```bash
+railway login && railway link          # una vez: elige el proyecto y el entorno
+railway config plan                    # muestra qué cambiaría
+railway config apply                   # lo aplica, pidiendo confirmación
+```
+
+| Servicio | Dockerfile | Health check | Pre-deploy | Dominio |
+|---|---|---|---|---|
+| console | `apps/console/Dockerfile` | `/sign-in` | `pnpm db:migrate` | `cetus.cantte.com` |
+| api | `apps/api/Dockerfile` | `/q/health/ready` | — (Flyway migra al arrancar) | `cetus-api.cantte.com` |
+| worker | `apps/worker/Dockerfile` | `/q/health/ready` | — | — |
+
+Los secretos van como `preserve()`: su valor solo vive en Railway (cárgalos *sealed* en el panel), nunca en
+el archivo. Toda variable que use un servicio debe estar en `railway.ts`; `plan` muestra como eliminación
+cualquier variable que exista en Railway y no esté ahí.
 
 Variables principales: `CETUS_DB_URL`, `CETUS_DB_USER`, `CETUS_DB_PASSWORD`, `CETUS_KMS_KEY_ID`,
 `CETUS_DOCUMENTS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (API y worker, cada uno
