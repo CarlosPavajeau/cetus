@@ -82,7 +82,8 @@ class DocumentResourceTest {
             doc.dianStatusCode = "00";
             doc.dianStatusMessage = "Procesado Correctamente.";
             doc.dianErrors = List.of("Regla: FAJ43b, Notificación: Nombre informado No corresponde al registrado en el RUT");
-            doc.validatedAt = OffsetDateTime.now();
+            // After the submission, whose created_at comes from the database clock, not the JVM's.
+            doc.validatedAt = OffsetDateTime.now().plusSeconds(1);
             DianSubmissionEntity submission = new DianSubmissionEntity();
             submission.id = Ids.newId();
             submission.documentId = invoiceId;

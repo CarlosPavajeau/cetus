@@ -201,8 +201,8 @@ la API) en la consola. Las URL privadas se arman con referencias, p. ej.
 - `infra/aws/` tiene las políticas IAM de mínimo privilegio de cada servicio (`iam-cetus-prod-*.json`) y el
   ciclo de vida del bucket (`s3-lifecycle.json`). La API solo sella secretos (`kms:GenerateDataKey`) y el
   worker solo los abre (`kms:Decrypt`).
-- Los endpoints `/console/*` y `/q/*` solo deberían ser accesibles por la red privada: bloquéalos en el
-  proxy delante de la API (p. ej. una regla WAF de Cloudflare).
+- `/console/*` y `/q/*` solo responden a hosts privados (`cetus.private-hosts`): la red privada de Railway
+  (`*.railway.internal`), `localhost` y el health check de Railway. Por el dominio público responden 404.
 
 ### Entrega por correo (Resend)
 
