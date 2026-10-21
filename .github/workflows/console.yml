@@ -1,4 +1,4 @@
-# Lints the console with oxlint and checks that it is formatted with oxfmt.
+# Checks the console with Vite+: formatting (Oxfmt), lint (Oxlint) and type checking in one `vp check`.
 name: Console
 
 on:
@@ -23,15 +23,12 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          # The oxlint and oxfmt configs are TypeScript files, which need Node.js >= 22.18.
+          # vite.config.ts holds the lint and format config, and loading it needs Node.js >= 22.18.
           node-version: "22"
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check formatting
-        run: pnpm --filter @cetus/console format:check
-
-      - name: Lint
-        run: pnpm --filter @cetus/console lint
+      - name: Check formatting, lint and types
+        run: pnpm --filter @cetus/console check
