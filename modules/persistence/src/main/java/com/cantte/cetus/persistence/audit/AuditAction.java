@@ -22,5 +22,8 @@ public enum AuditAction {
     ACCOUNT_REACTIVATED,
     /** A person banned from the console by the Cetus team; recorded without an account. */
     USER_BANNED,
-    USER_UNBANNED
+    USER_UNBANNED,
+    /** A Cetus admin started acting as a console user of the account. */
+    IMPERSONATION_STARTED,
+    IMPERSONATION_ENDED
 }

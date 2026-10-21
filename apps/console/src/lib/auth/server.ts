@@ -7,7 +7,7 @@ import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 import { db } from "../db";
 import { env } from "../env";
-import { ac, platformRole, roles } from "./permissions";
+import { ac, impersonationSeconds, platformRole, roles } from "./permissions";
 import * as schema from "./schema";
 
 const adminReads = new Set([
@@ -15,6 +15,27 @@ const adminReads = new Set([
   "/admin/get-user",
   "/admin/list-user-sessions",
   "/admin/has-permission",
+]);
+
+/** While impersonating, the person's credentials, sessions and memberships stay theirs to change. */
+const forbiddenWhileImpersonating = new Set([
+  "/change-password",
+  "/change-email",
+  "/set-password",
+  "/update-user",
+  "/delete-user",
+  "/revoke-session",
+  "/revoke-sessions",
+  "/revoke-other-sessions",
+  "/two-factor/enable",
+  "/two-factor/disable",
+  "/two-factor/generate-backup-codes",
+  "/organization/update",
+  "/organization/delete",
+  "/organization/leave",
+  "/organization/invite-member",
+  "/organization/remove-member",
+  "/organization/update-member-role",
 ]);
 
 /**
@@ -34,6 +55,16 @@ export const auth = betterAuth({
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      if (forbiddenWhileImpersonating.has(ctx.path)) {
+        const session = await getSessionFromCtx(ctx);
+        if (session?.session.impersonatedBy) {
+          throw new APIError("FORBIDDEN", {
+            code: "IMPERSONATION_FORBIDDEN",
+            message: "Esta acción no está disponible mientras ves la consola como otra persona.",
+          });
+        }
+        return;
+      }
       if (!ctx.path.startsWith("/admin/")) {
         return;
       }
@@ -44,6 +75,10 @@ export const auth = betterAuth({
           code: "USE_THE_ADMINISTRATION",
           message: "Esta acción solo se hace desde la administración de la consola.",
         });
+      }
+      // The impersonated person's session ends the impersonation: it is not staff, and has no 2FA.
+      if (ctx.path === "/admin/stop-impersonating") {
+        return;
       }
       const session = await getSessionFromCtx(ctx);
       if (session && !session.user.twoFactorEnabled) {
@@ -62,7 +97,7 @@ export const auth = betterAuth({
       defaultRole: "user",
       // Staff cannot be impersonated (nor banned by the plugin's own admin check).
       adminRoles: ["admin", "support"],
-      impersonationSessionDuration: 30 * 60,
+      impersonationSessionDuration: impersonationSeconds,
       bannedUserMessage:
         "Tu acceso a Cetus está bloqueado. Si crees que es un error, escríbenos a soporte.",
     }),

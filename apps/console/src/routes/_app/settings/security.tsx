@@ -67,7 +67,14 @@ function Security() {
           </AlertDescription>
         </Alert>
       )}
-      {backupCodes ? (
+      {session.impersonatedBy ? (
+        <Alert>
+          <AlertTitle>No disponible durante la sesión de soporte</AlertTitle>
+          <AlertDescription>
+            La verificación en dos pasos solo la cambia la persona dueña de la cuenta.
+          </AlertDescription>
+        </Alert>
+      ) : backupCodes ? (
         <BackupCodes codes={backupCodes} />
       ) : enrollment ? (
         <VerifyEnrollment

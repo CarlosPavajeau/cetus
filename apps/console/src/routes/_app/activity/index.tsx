@@ -172,6 +172,7 @@ function Activity() {
                           <span className="text-xs">{actor(entry)}</span>
                           <span className="text-2xs text-muted-foreground">
                             {actorTypeLabel[entry.actorType]}
+                            {entry.impersonatedBy && " · vía Soporte de Cetus"}
                           </span>
                           <span className="text-[10px] leading-normal text-muted-foreground">
                             {entry.ipAddress ? `IP ${entry.ipAddress}` : "IP no registrada"}

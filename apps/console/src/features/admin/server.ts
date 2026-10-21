@@ -153,7 +153,10 @@ export const reactivateAccount = createServerFn({ method: "POST" })
     });
   });
 
-export type AdminActivityEntry = AdminAuditEntry & { actorEmail: string | null };
+export type AdminActivityEntry = AdminAuditEntry & {
+  actorEmail: string | null;
+  impersonatorEmail: string | null;
+};
 
 export type AdminActivityPage = {
   items: AdminActivityEntry[];
@@ -178,13 +181,19 @@ export const listAdminAuditLog = createServerFn({ method: "GET" })
     });
     const emails = await emailsOf(
       page.items
-        .filter((entry) => entry.actorType === "USER" || entry.actorType === "PLATFORM")
-        .flatMap((entry) => (entry.actorId ? [entry.actorId] : [])),
+        .flatMap((entry) => [
+          ...(entry.actorType === "USER" || entry.actorType === "PLATFORM" ? [entry.actorId] : []),
+          entry.impersonatedBy,
+        ])
+        .filter((id): id is string => Boolean(id)),
     );
     return {
       items: page.items.map((entry) => ({
         ...entry,
         actorEmail: entry.actorId ? (emails.get(entry.actorId) ?? null) : null,
+        impersonatorEmail: entry.impersonatedBy
+          ? (emails.get(entry.impersonatedBy) ?? entry.impersonatedBy)
+          : null,
       })),
       nextCursor: page.nextCursor,
     };

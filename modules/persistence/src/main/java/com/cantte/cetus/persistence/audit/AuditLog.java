@@ -34,8 +34,8 @@ public class AuditLog {
     public static final int MAX_PAGE_SIZE = 100;
 
     private static final String SELECT_ALL = """
-            SELECT id, account_id, action, actor_type, actor_id, resource_type, resource_id, CAST(data AS text),
-                   host(ip_address), created_at
+            SELECT id, account_id, action, actor_type, actor_id, impersonated_by, resource_type, resource_id,
+                   CAST(data AS text), host(ip_address), created_at
             FROM billing.audit_log
             WHERE true
             """;
@@ -57,9 +57,9 @@ public class AuditLog {
         RequestOrigin from = origin == null ? RequestOrigin.unknown() : origin;
         NativeQuery<?> insert = em.createNativeQuery("""
                         INSERT INTO billing.audit_log
-                            (account_id, actor_type, actor_id, action, resource_type, resource_id, data,
-                             ip_address, user_agent)
-                        VALUES (:account, :actorType, :actorId, :action, :resourceType, :resourceId,
+                            (account_id, actor_type, actor_id, impersonated_by, action, resource_type, resource_id,
+                             data, ip_address, user_agent)
+                        VALUES (:account, :actorType, :actorId, :impersonatedBy, :action, :resourceType, :resourceId,
                                 CAST(:data AS jsonb), CAST(:ip AS inet), :userAgent)
                         """)
                 .unwrap(NativeQuery.class);
@@ -67,6 +67,7 @@ public class AuditLog {
         insert.setParameter("account", accountId, UUID.class)
                 .setParameter("actorType", actor.type().name(), String.class)
                 .setParameter("actorId", actor.id(), String.class)
+                .setParameter("impersonatedBy", actor.impersonatedBy(), String.class)
                 .setParameter("action", action.name(), String.class)
                 .setParameter("resourceType", resourceType, String.class)
                 .setParameter("resourceId", resourceId, UUID.class)
@@ -84,7 +85,7 @@ public class AuditLog {
 
     /**
      * Across every account, for the Cetus team. Each filter is optional; {@code actorId} matches who acted
-     * (a Better Auth user id, for USER and PLATFORM actors).
+     * (a Better Auth user id, for USER and PLATFORM actors), impersonating someone or not.
      */
     public AuditPage listAll(UUID accountId, AuditAction actionFilter, String actorId, Long beforeId, int limit) {
         return page(new Filter(accountId, actionFilter, actorId), beforeId, limit);
@@ -100,7 +101,7 @@ public class AuditLog {
             sql.append(" AND action = :action");
         }
         if (filter.actorId() != null) {
-            sql.append(" AND actor_id = :actorId");
+            sql.append(" AND (actor_id = :actorId OR impersonated_by = :actorId)");
         }
         if (beforeId != null) {
             sql.append(" AND id < :before");
@@ -150,10 +151,11 @@ public class AuditLog {
                 Actor.ActorType.valueOf((String) row[3]),
                 (String) row[4],
                 (String) row[5],
-                (UUID) row[6],
-                deserialize((String) row[7]),
-                (String) row[8],
-                toOffsetDateTime(row[9]));
+                (String) row[6],
+                (UUID) row[7],
+                deserialize((String) row[8]),
+                (String) row[9],
+                toOffsetDateTime(row[10]));
     }
 
     private String serialize(Map<String, Object> data) {

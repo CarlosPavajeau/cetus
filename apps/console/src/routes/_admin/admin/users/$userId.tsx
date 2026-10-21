@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { ImpersonateDialog } from "~/features/admin/ImpersonateDialog";
 import { memberRoleLabel } from "~/features/admin/labels";
 import { adminUserQuery } from "~/features/admin/queries";
 import { BanBadge, PlatformRoleBadge } from "~/features/admin/UserBadges";
@@ -39,6 +40,9 @@ function UserDetail() {
   const banActive = person.banActive;
   // The Cetus team is never banned from here, the acting admin included.
   const canBan = platformRole === "admin" && !person.platformRole && !person.isSelf;
+  // Only organizations with a Cetus account can be entered: the console needs one.
+  const enterable = person.memberships.filter((membership) => membership.accountId);
+  const canImpersonate = canBan && !banActive && enterable.length > 0;
 
   return (
     <>
@@ -53,11 +57,10 @@ function UserDetail() {
         lead={person.email}
         action={
           canBan ? (
-            banActive ? (
-              <UnbanUserDialog target={person} />
-            ) : (
-              <BanUserDialog target={person} />
-            )
+            <div className="flex flex-wrap gap-2">
+              {canImpersonate && <ImpersonateDialog target={person} organizations={enterable} />}
+              {banActive ? <UnbanUserDialog target={person} /> : <BanUserDialog target={person} />}
+            </div>
           ) : undefined
         }
       />

@@ -15,6 +15,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { auditLogKey } from "~/features/audit-log/queries";
+import { useImpersonation } from "~/features/session/useImpersonation";
 import type { ApiKey } from "~/lib/api/types";
 
 import { apiKeysQuery } from "./queries";
@@ -52,6 +53,11 @@ export function RevokeApiKey({
     },
   });
   const pending = revoke.isPending;
+  const impersonation = useImpersonation();
+  // Keys stay the customer's to revoke, also while the Cetus team acts as them.
+  if (impersonation) {
+    return null;
+  }
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>

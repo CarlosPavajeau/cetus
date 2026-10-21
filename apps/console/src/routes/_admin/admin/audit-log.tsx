@@ -166,6 +166,7 @@ function AdminAuditLog() {
                           <span className="text-xs">{actor(entry)}</span>
                           <span className="text-2xs text-muted-foreground">
                             {actorTypeLabel[entry.actorType]}
+                            {entry.impersonatorEmail && ` · vía ${entry.impersonatorEmail}`}
                             {entry.ipAddress ? ` · IP ${entry.ipAddress}` : ""}
                           </span>
                         </div>

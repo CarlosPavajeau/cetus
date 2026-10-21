@@ -25,8 +25,11 @@ import java.util.Set;
 public class SuspendedAccountFilter implements ContainerRequestFilter {
 
     private static final Set<String> READS = Set.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS);
-    /** Bootstrapping is idempotent: it returns the existing account, whatever its status. */
-    private static final String BOOTSTRAP = "/console/account";
+    /**
+     * Bootstrapping is idempotent (it returns the existing account, whatever its status), and ending an
+     * impersonation only records it.
+     */
+    private static final Set<String> ALLOWED = Set.of("/console/account", "/console/impersonation/end");
 
     @Inject
     JsonWebToken jwt;
@@ -34,7 +37,7 @@ public class SuspendedAccountFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext request) {
         String path = request.getUriInfo().getPath();
-        if (!path.startsWith("/console/") || READS.contains(request.getMethod()) || path.equals(BOOTSTRAP)) {
+        if (!path.startsWith("/console/") || READS.contains(request.getMethod()) || ALLOWED.contains(path)) {
             return;
         }
         String organizationId = jwt.getClaim("org");

@@ -20,6 +20,8 @@ export const actionLabel: Record<AuditAction, string> = {
   ACCOUNT_REACTIVATED: "Cuenta reactivada",
   USER_BANNED: "Usuario bloqueado",
   USER_UNBANNED: "Usuario desbloqueado",
+  IMPERSONATION_STARTED: "Soporte entró como usuario",
+  IMPERSONATION_ENDED: "Soporte salió de la sesión",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

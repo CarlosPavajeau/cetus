@@ -161,7 +161,9 @@ function ActivityEvent() {
             </DetailField>
           </div>
           <p className="text-2xs leading-relaxed text-muted-foreground">
-            {actorNote[entry.actorType]}
+            {entry.impersonatedBy
+              ? "La acción la hizo el equipo de soporte de Cetus mientras veía la consola como este usuario."
+              : actorNote[entry.actorType]}
           </p>
         </section>
 

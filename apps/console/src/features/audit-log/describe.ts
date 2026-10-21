@@ -1,6 +1,6 @@
 import type { AuditEntry } from "~/lib/api/types";
 
-import { dayFormat } from "./labels";
+import { dayFormat, timeFormat } from "./labels";
 
 const issuerStatusLabel: Record<string, string> = {
   ONBOARDING: "Configuración pendiente",
@@ -83,5 +83,9 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${text(data.email)} · ${data.expiresAt ? `hasta el ${dayFormat.format(new Date(text(data.expiresAt)))}` : "indefinido"} · Motivo: ${text(data.reason)}`;
     case "USER_UNBANNED":
       return `${text(data.email)} · Motivo: ${text(data.reason)}`;
+    case "IMPERSONATION_STARTED":
+      return `Como ${text(data.email)} hasta las ${timeFormat.format(new Date(text(data.expiresAt)))} · Motivo: ${text(data.reason)}`;
+    case "IMPERSONATION_ENDED":
+      return "Terminó de ver la consola como el usuario";
   }
 }

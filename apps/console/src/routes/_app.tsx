@@ -48,6 +48,7 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { accountQuery } from "~/features/account/queries";
+import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { requireSession } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
@@ -157,6 +158,7 @@ function AppLayout() {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
+        <ImpersonationBanner />
         <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-10">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 /** One audit log row. The user agent is stored but not exposed. */
 public record AuditEntryView(long id, UUID accountId, AuditAction action, Actor.ActorType actorType, String actorId,
+                             String impersonatedBy,
                              String resourceType, UUID resourceId, Map<String, Object> data,
                              String ipAddress, OffsetDateTime createdAt) {
 }

@@ -84,6 +84,7 @@ public class AdminAuditLogResource {
             @Schema(required = true) AuditAction action,
             @Schema(required = true) Actor.ActorType actorType,
             @Schema(required = true, nullable = true) String actorId,
+            @Schema(required = true, nullable = true) String impersonatedBy,
             @Schema(required = true, nullable = true) String resourceType,
             @Schema(required = true, nullable = true) UUID resourceId,
             @Schema(required = true, additionalProperties = AuditValue.class) Map<String, Object> data,
@@ -91,7 +92,7 @@ public class AdminAuditLogResource {
             @Schema(required = true) OffsetDateTime createdAt) {
         static AdminAuditEntry from(AuditEntryView entry, String accountName) {
             return new AdminAuditEntry(entry.id(), entry.accountId(), accountName, entry.action(), entry.actorType(),
-                    entry.actorId(), entry.resourceType(), entry.resourceId(), entry.data(), entry.ipAddress(),
+                    entry.actorId(), entry.impersonatedBy(), entry.resourceType(), entry.resourceId(), entry.data(), entry.ipAddress(),
                     entry.createdAt());
         }
     }

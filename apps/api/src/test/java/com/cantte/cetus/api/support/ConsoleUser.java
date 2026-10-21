@@ -3,6 +3,7 @@ package com.cantte.cetus.api.support;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.smallrye.jwt.build.Jwt;
+import jakarta.json.JsonValue;
 
 import java.util.Set;
 import java.util.UUID;
@@ -29,17 +30,36 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
     }
 
     public String token() {
+        // The console always sends the claim; null outside an impersonation.
+        return token(JsonValue.NULL);
+    }
+
+    /** A token of this user's session while the Cetus admin {@code adminId} impersonates them. */
+    public String impersonatedToken(String adminId) {
+        return token(adminId);
+    }
+
+    private String token(Object impersonatedBy) {
         return Jwt.issuer("https://console.test")
                 .subject(userId)
                 .audience("cetus-api")
                 .claim("org", organizationId)
+                .claim("impersonatedBy", impersonatedBy)
                 .groups(groups)
                 .sign();
     }
 
     public RequestSpecification request() {
+        return request(token());
+    }
+
+    public RequestSpecification impersonatedBy(String adminId) {
+        return request(impersonatedToken(adminId));
+    }
+
+    private static RequestSpecification request(String token) {
         return given()
-                .auth().oauth2(token())
+                .auth().oauth2(token)
                 .contentType(ContentType.JSON)
                 .header("X-Cetus-Client-IP", CLIENT_IP)
                 .header("X-Cetus-Client-User-Agent", CLIENT_USER_AGENT);

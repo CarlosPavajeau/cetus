@@ -18,3 +18,8 @@ export const banDurations = [1, 7, 30] as const;
 export const banSchema = statusChangeSchema.and({
   days: type.enumerated(...banDurations, null),
 });
+
+export const impersonationSchema = statusChangeSchema.and({
+  userId: "0 < string <= 64",
+  organizationId: "0 < string <= 64",
+});

@@ -21,5 +21,6 @@ export const getSession = createServerFn({ method: "GET" }).handler(async () => 
     },
     activeOrganizationId: session.session.activeOrganizationId ?? null,
     impersonatedBy: session.session.impersonatedBy ?? null,
+    expiresAt: new Date(session.session.expiresAt).toISOString(),
   };
 });

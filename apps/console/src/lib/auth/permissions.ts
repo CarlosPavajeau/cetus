@@ -21,3 +21,6 @@ export function platformRole(role: string | null | undefined): PlatformRole | nu
   const assigned = (role ?? "").split(",").map((r) => r.trim());
   return platformRoles.find((r) => assigned.includes(r)) ?? null;
 }
+
+/** How long a Cetus admin can act as a console user before signing in again. */
+export const impersonationSeconds = 30 * 60;
