@@ -21,6 +21,8 @@ import java.io.IOException;
 @Singleton
 public class SafeStrings implements ObjectMapperCustomizer {
 
+    public static final String MESSAGE = "Text cannot contain control characters or bidirectional overrides";
+
     @Override
     public void customize(ObjectMapper mapper) {
         mapper.registerModule(new SimpleModule("safe-strings").addDeserializer(String.class, new Deserializer()));
@@ -47,8 +49,7 @@ public class SafeStrings implements ObjectMapperCustomizer {
             String value = StringDeserializer.instance.deserialize(parser, context);
             if (value != null && !value.codePoints().allMatch(SafeStrings::allowed)) {
                 // The value itself is left out of the message: it holds the characters being refused.
-                throw InvalidFormatException.from(parser,
-                        "Text cannot contain control characters or bidirectional overrides", null, String.class);
+                throw InvalidFormatException.from(parser, MESSAGE, null, String.class);
             }
             return value;
         }
