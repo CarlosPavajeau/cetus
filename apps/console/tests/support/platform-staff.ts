@@ -23,15 +23,19 @@ export async function createPlatformStaff(
     await pool.end();
   }
 
-  let secret = "";
-  if (twoFactor) {
-    const { totpURI } = await staff.auth<{ totpURI: string }>("/two-factor/enable", {
-      password: staff.password,
-    });
-    secret = new URL(totpURI).searchParams.get("secret") ?? "";
-    await staff.auth("/two-factor/verify-totp", { code: totp(secret) });
-  }
+  const secret = twoFactor ? await enableTwoFactor(staff) : "";
   return { ...staff, totp: () => totp(secret) };
+}
+
+/** Enrolls and verifies TOTP, as the security page does; returns the authenticator's secret. */
+export async function enableTwoFactor(person: TestOrganization): Promise<string> {
+  const { totpURI } = await person.auth<{ totpURI: string }>("/two-factor/enable", {
+    password: person.password,
+  });
+  const secret = new URL(totpURI).searchParams.get("secret") ?? "";
+  // 2FA stays off until the first code is verified.
+  await person.auth("/two-factor/verify-totp", { code: totp(secret) });
+  return secret;
 }
 
 /** The current RFC 6238 code (SHA-1, 6 digits, 30 s) of a base32 secret, as an authenticator shows it. */
