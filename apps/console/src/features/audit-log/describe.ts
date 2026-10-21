@@ -34,7 +34,10 @@ const issuerFieldLabel: Record<string, string> = {
 };
 
 function text(value: unknown): string {
-  return value === null || value === undefined ? "" : String(value);
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return typeof value === "string" ? value : JSON.stringify(value);
 }
 
 function label(labels: Record<string, string>, value: unknown): string {
