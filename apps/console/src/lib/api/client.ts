@@ -14,7 +14,7 @@ export class CetusApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly errors: ProblemDetail["errors"] = undefined,
+    readonly errors?: ProblemDetail["errors"],
   ) {
     super(message);
   }
