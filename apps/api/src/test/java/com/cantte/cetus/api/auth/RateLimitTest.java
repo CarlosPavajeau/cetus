@@ -38,6 +38,9 @@ class RateLimitTest {
         call(busy).statusCode(404);
         call(busy).statusCode(429)
                 .header("Retry-After", notNullValue())
+                .contentType("application/problem+json")
+                .body("status", equalTo(429))
+                .body("title", equalTo("Too Many Requests"))
                 .body("code", equalTo("rate_limited"));
 
         call(other).statusCode(404);

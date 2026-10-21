@@ -1,6 +1,6 @@
 package com.cantte.cetus.api.documents;
 
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.persistence.IdempotencyStore;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -44,11 +44,11 @@ public class IdempotentCreation {
                 return Response.status(outcome.responseStatus()).entity(outcome.responseBody())
                         .type(MediaType.APPLICATION_JSON).header("Idempotent-Replayed", "true").build();
             case IN_PROGRESS:
-                return Response.status(409).entity(new ApiError("idempotency_in_progress",
-                        "A request with this Idempotency-Key is still being processed", null)).build();
+                return ProblemDetail.response(409, "idempotency_in_progress",
+                        "A request with this Idempotency-Key is still being processed");
             case MISMATCH:
-                return Response.status(422).entity(new ApiError("idempotency_mismatch",
-                        "This Idempotency-Key was used with a different request body", null)).build();
+                return ProblemDetail.response(422, "idempotency_mismatch",
+                        "This Idempotency-Key was used with a different request body");
             default:
                 break;
         }

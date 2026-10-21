@@ -1,6 +1,6 @@
 package com.cantte.cetus.api.documents;
 
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -10,7 +10,6 @@ import com.cantte.cetus.persistence.entity.DocumentEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -65,9 +64,7 @@ public class DocumentFiles {
     public static class FileNotAvailable extends jakarta.ws.rs.WebApplicationException {
 
         FileNotAvailable(String file) {
-            super(Response.status(404)
-                    .entity(new ApiError("file_not_available", "The " + file + " file is not available yet", null))
-                    .build());
+            super(ProblemDetail.response(404, "file_not_available", "The " + file + " file is not available yet"));
         }
     }
 }

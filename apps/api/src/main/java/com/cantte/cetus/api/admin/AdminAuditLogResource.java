@@ -1,7 +1,7 @@
 package com.cantte.cetus.api.admin;
 
 import com.cantte.cetus.api.console.AuditLogResource.AuditValue;
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditEntryView;
@@ -32,9 +32,9 @@ import java.util.stream.Collectors;
 @Path("/admin/audit-log")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class AdminAuditLogResource {
 
     @Inject

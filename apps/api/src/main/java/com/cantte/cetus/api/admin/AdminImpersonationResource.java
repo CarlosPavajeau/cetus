@@ -2,7 +2,7 @@ package com.cantte.cetus.api.admin;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.console.ConsoleContext;
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -35,11 +35,11 @@ import java.util.UUID;
 @Path("/admin/impersonations")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class AdminImpersonationResource {
 
     @Inject

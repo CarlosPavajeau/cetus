@@ -31,7 +31,8 @@ class IssuerInputHardeningTest {
         request.put("legalName", "Acme SAS\r\nBcc: someone@example.com");
 
         user.request().body(request).post("/console/issuers")
-                .then().statusCode(400).body("details", hasItem("create.request.legalName: must match \"[^\\r\\n]*\""));
+                .then().statusCode(400).body("errors.field", hasItem("legalName"))
+                .body("errors.message", hasItem("must match \"[^\\r\\n]*\""));
     }
 
     @Test

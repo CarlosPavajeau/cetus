@@ -99,12 +99,12 @@ class InvoiceResourceTest {
         // The DIAN rejects lines without StandardItemIdentification (FAZ09), so it is caught here instead.
         invoice.put("lines", List.of(Map.of("description", "Servicio", "quantity", 1, "unitPrice", 100000)));
 
-        List<String> details = api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice)
+        List<String> fields = api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice)
                 .post("/v1/invoices")
                 .then().statusCode(400)
                 .body("code", equalTo("invalid_request"))
-                .extract().jsonPath().getList("details", String.class);
-        assertThat(details).anyMatch(detail -> detail.contains("itemCode"));
+                .extract().jsonPath().getList("errors.field", String.class);
+        assertThat(fields).anyMatch(field -> field.endsWith("itemCode"));
     }
 
     @Test

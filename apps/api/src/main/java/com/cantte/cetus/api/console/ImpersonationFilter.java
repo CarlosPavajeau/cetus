@@ -1,13 +1,12 @@
 package com.cantte.cetus.api.console;
 
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 
 import java.util.List;
@@ -41,10 +40,8 @@ public class ImpersonationFilter implements ContainerRequestFilter {
         boolean forbidden = FORBIDDEN.stream()
                 .anyMatch(rule -> rule.method().equals(request.getMethod()) && rule.path().matcher(path).matches());
         if (forbidden && context.impersonatedBy().isPresent()) {
-            request.abortWith(Response.status(Response.Status.FORBIDDEN)
-                    .entity(new ApiError("impersonation_forbidden",
-                            "This action is not available while impersonating a user", null))
-                    .build());
+            request.abortWith(ProblemDetail.response(403, "impersonation_forbidden",
+                    "This action is not available while impersonating a user"));
         }
     }
 }

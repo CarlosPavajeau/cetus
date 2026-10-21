@@ -2,7 +2,7 @@ package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.auth.ApiKeys;
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.audit.Actor;
@@ -35,9 +35,9 @@ import java.time.OffsetDateTime;
 @Path("/console/certificate-uploads/{token}")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class CertificateUploadResource {
 
     /** Base64url of 32 random bytes. */
