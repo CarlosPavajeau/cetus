@@ -2,11 +2,19 @@ package com.cantte.cetus.api.admin;
 
 import com.cantte.cetus.api.support.ConsoleFixtures;
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.persistence.entity.IssuerEntity;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.CERTIFICATE_PASSWORD;
 import static com.cantte.cetus.api.support.ConsoleFixtures.PIN;
@@ -86,6 +94,50 @@ class AssistedOnboardingTest {
         String detail = SUPPORT.request().get("/admin/accounts/" + accountId + "/issuers/" + issuerId)
                 .then().extract().asString();
         assertThat(detail).doesNotContain(certificateBase64().substring(0, 40)).doesNotContain(CERTIFICATE_PASSWORD);
+    }
+
+    /**
+     * Creating a link expires the issuer's earlier ones; two creations at once must not both survive, so
+     * a creation waits for whoever holds the issuer. Checked by holding its lock from another transaction.
+     */
+    @Test
+    void linkCreationWaitsForOthersOnTheSameIssuer() throws Exception {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        String accountId = bootstrap(customer, "Concurrente SAS");
+        String issuerId = createIssuer(customer);
+        String links = "/admin/accounts/" + accountId + "/issuers/" + issuerId + "/certificate-upload-links";
+        String earlier = SUPPORT.request().post(links).then().extract().path("token");
+
+        CountDownLatch held = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            CompletableFuture<Void> holder = CompletableFuture.runAsync(() -> QuarkusTransaction.requiringNew().run(() -> {
+                IssuerEntity.findForAccountForUpdate(UUID.fromString(accountId), UUID.fromString(issuerId))
+                        .orElseThrow();
+                held.countDown();
+                try {
+                    release.await(10, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
+            }), pool);
+            assertThat(held.await(10, TimeUnit.SECONDS)).isTrue();
+
+            CompletableFuture<String> creation = CompletableFuture.supplyAsync(() ->
+                    SUPPORT.request().post(links).then().statusCode(200).extract().<String>path("token"), pool);
+            Thread.sleep(1_000);
+            assertThat(creation).as("waits while another transaction holds the issuer").isNotDone();
+
+            release.countDown();
+            holder.get(10, TimeUnit.SECONDS);
+            String latest = creation.get(10, TimeUnit.SECONDS);
+            given().get("/console/certificate-uploads/" + latest).then().statusCode(200);
+            given().get("/console/certificate-uploads/" + earlier).then().statusCode(404);
+        } finally {
+            release.countDown();
+            pool.shutdownNow();
+        }
     }
 
     @Test

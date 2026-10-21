@@ -103,7 +103,9 @@ public class AdminIssuerResource {
     @APIResponse(responseCode = "200", description = "OK")
     public CertificateUploadLinkView createUploadLink(@PathParam("accountId") UUID accountId,
                                                       @PathParam("issuerId") UUID issuerId) {
-        IssuerEntity issuer = issuer(accountId, issuerId);
+        // Locked so two links created at once cannot both survive: each expires the other's in turn.
+        IssuerEntity issuer = IssuerEntity.findForAccountForUpdate(accountId, issuerId)
+                .orElseThrow(() -> new NotFoundException("Issuer not found"));
         byte[] secret = new byte[32];
         RANDOM.nextBytes(secret);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(secret);
