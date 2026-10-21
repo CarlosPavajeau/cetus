@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 
 import { createOrganization } from "../support/organization";
 import { createPlatformStaff, enableTwoFactor, jwtClaims } from "../support/platform-staff";

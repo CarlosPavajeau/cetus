@@ -5,11 +5,25 @@
   "scripts": {
     "console:dev": "pnpm --filter @cetus/console dev",
     "console:build": "pnpm --filter @cetus/console build",
+    "console:check": "pnpm --filter @cetus/console check",
     "console:lint": "pnpm --filter @cetus/console lint",
     "console:format": "pnpm --filter @cetus/console format",
     "console:test": "pnpm --filter @cetus/console test"
   },
   "devDependencies": {
     "railway": "3.16.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite@*": "npm:@voidzero-dev/vite-plus-core@1.3.0"
+    },
+    "peerDependencyRules": {
+      "allowAny": [
+        "vite"
+      ],
+      "allowedVersions": {
+        "vite": "*"
+      }
+    }
   }
 }
