@@ -34,7 +34,7 @@ public class AwsClients {
     KmsClient kmsClient() {
         var builder = KmsClient.builder()
                 .region(Region.of(region))
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
                 .httpClientBuilder(UrlConnectionHttpClient.builder());
         endpointOverride.ifPresent(builder::endpointOverride);
         return builder.build();
@@ -45,7 +45,7 @@ public class AwsClients {
     S3Client s3Client() {
         var builder = S3Client.builder()
                 .region(Region.of(region))
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
                 .httpClientBuilder(UrlConnectionHttpClient.builder());
         endpointOverride.ifPresent(uri -> builder.endpointOverride(uri).forcePathStyle(true));
         return builder.build();
@@ -57,7 +57,7 @@ public class AwsClients {
     S3Presigner s3Presigner() {
         var builder = S3Presigner.builder()
                 .region(Region.of(region))
-                .credentialsProvider(DefaultCredentialsProvider.create());
+                .credentialsProvider(DefaultCredentialsProvider.builder().build());
         endpointOverride.ifPresent(uri -> builder.endpointOverride(uri)
                 .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()));
         return builder.build();

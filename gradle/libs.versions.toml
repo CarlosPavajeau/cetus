@@ -1,8 +1,8 @@
-# Central catalog of versions. Check for the latest Quarkus LTS before the first build.
+# Central catalog of versions.
 [versions]
-quarkus = "3.20.0"
-awssdk = "2.29.0"
-assertj = "3.26.3"
+quarkus = "3.40.1"
+awssdk = "2.56.0"
+assertj = "3.27.7"
 resend = "4.28.0"
 # Same version resend-java brings, so there is a single OkHttp on the classpath.
 okhttp = "5.4.0"
@@ -30,13 +30,13 @@ quarkus-smallrye-health = { module = "io.quarkus:quarkus-smallrye-health" }
 quarkus-logging-json = { module = "io.quarkus:quarkus-logging-json" }
 quarkus-scheduler = { module = "io.quarkus:quarkus-scheduler" }
 quarkus-jaxb = { module = "io.quarkus:quarkus-jaxb" }
-quarkus-junit5 = { module = "io.quarkus:quarkus-junit5" }
+quarkus-junit = { module = "io.quarkus:quarkus-junit" }
 quarkus-smallrye-jwt-build = { module = "io.quarkus:quarkus-smallrye-jwt-build" }
 rest-assured = { module = "io.rest-assured:rest-assured" }
 flyway-core = { module = "org.flywaydb:flyway-core" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
-testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
-testcontainers-localstack = { module = "org.testcontainers:localstack" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
+testcontainers-junit = { module = "org.testcontainers:testcontainers-junit-jupiter" }
+testcontainers-localstack = { module = "org.testcontainers:testcontainers-localstack" }
 
 # AWS SDK v2 (versions managed by the AWS BOM)
 awssdk-kms = { module = "software.amazon.awssdk:kms" }
@@ -50,7 +50,7 @@ openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 # Testing
-junit-bom = { module = "org.junit:junit-bom", version = "5.11.3" }
+junit-bom = { module = "org.junit:junit-bom", version = "6.1.3" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
