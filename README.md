@@ -311,6 +311,13 @@ validar y una interna al conectar (DNS rebinding) queda bloqueado. En dev y en p
   - En local, LocalStack crea el bucket igual, pero sin retención.
 - **Límite de tasa.** Cada llave de API tiene un token bucket en memoria. Al pasarlo, la API responde
   `429 rate_limited` con `Retry-After`. El límite es por réplica de la API.
+- **Equipo de Cetus.** Los roles de plataforma (`admin` y `support`) viven en `auth.user.role` (plugin
+  `admin` de Better Auth) y no tienen nada que ver con los roles dentro de una organización.
+  - Se asignan a mano y nunca desde la API. La persona se registra normalmente en la consola y luego:
+    `UPDATE auth."user" SET role = 'admin' WHERE email = 'persona@cantte.com';`
+  - El rol solo tiene efecto con la verificación en dos pasos activa (Seguridad, en la consola). Sin
+    ella, el JWT no lleva el claim `groups` y Better Auth rechaza sus endpoints `/api/auth/admin/*`.
+  - `support` lee y hace acciones asistidas. Solo `admin` bloquea usuarios, suspende cuentas y suplanta.
 - **Verificación del rango.** Cuando un emisor de **producción** ya tiene software y certificado, el worker
   consulta `GetNumberingRange` por cada rango de factura y lo compara con lo registrado: prefijo, números,
   vigencia y clave técnica. En habilitación no aplica: el rango de prueba (`SETP`) es compartido, la DIAN no

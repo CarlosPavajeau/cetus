@@ -11,6 +11,7 @@ import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signInSchema } from "~/features/auth/schema";
+import { startSession } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
 
 export const Route = createFileRoute("/sign-in")({
@@ -27,22 +28,23 @@ function SignIn() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const { error: signInError } = await authClient.signIn.email(values);
+    const { data, error: signInError } = await authClient.signIn.email(values);
     if (signInError) {
       form.setError("root", {
-        message: "El correo o la contraseña no coinciden. Revísalos e intenta de nuevo.",
+        message:
+          signInError.code === "BANNED_USER"
+            ? (signInError.message ?? "Tu acceso a Cetus está bloqueado.")
+            : "El correo o la contraseña no coinciden. Revísalos e intenta de nuevo.",
       });
       return;
     }
-
-    // Make sure there is an active organization: the API scopes everything by it.
-    const { data: organizations } = await authClient.organization.list();
-    const first = organizations?.[0];
-    if (first) {
-      await authClient.organization.setActive({ organizationId: first.id });
+    // The password was right but the account has 2FA: the session starts after the code.
+    if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
+      await navigate({ to: "/two-factor" });
+      return;
     }
-    // Drop anything cached by a previous session in this tab (e.g. one that expired).
-    queryClient.clear();
+
+    await startSession(queryClient);
     await navigate({ to: "/overview" });
   });
 

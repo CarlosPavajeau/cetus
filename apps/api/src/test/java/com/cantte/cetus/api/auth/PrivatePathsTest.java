@@ -21,6 +21,7 @@ class PrivatePathsTest {
         given().header("Host", PUBLIC).get("/q/health/ready").then().statusCode(404).body("code", equalTo("not_found"));
         given().header("Host", PUBLIC).get("/q/openapi").then().statusCode(404);
         given().header("Host", PUBLIC).get("/console/account").then().statusCode(404);
+        given().header("Host", PUBLIC).get("/admin/me").then().statusCode(404);
         // Encoded or doubled slashes and dot segments do not slip past.
         given().header("Host", PUBLIC).urlEncodingEnabled(false).get("/%63onsole/account").then().statusCode(404);
         given().header("Host", PUBLIC).urlEncodingEnabled(false).get("//console/account").then().statusCode(404);
@@ -51,5 +52,7 @@ class PrivatePathsTest {
         assertThat(PrivatePaths.isPrivatePath("/consoles/x")).isFalse();
         assertThat(PrivatePaths.isPrivatePath("/q/health")).isTrue();
         assertThat(PrivatePaths.isPrivatePath("//Console/account")).isTrue();
+        assertThat(PrivatePaths.isPrivatePath("/admin/accounts")).isTrue();
+        assertThat(PrivatePaths.isPrivatePath("/administrators")).isFalse();
     }
 }

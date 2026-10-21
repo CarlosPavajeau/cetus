@@ -4,18 +4,28 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.smallrye.jwt.build.Jwt;
 
+import java.util.Set;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 
 /** A console user with its own organization, calling the API the way the console BFF does. */
-public record ConsoleUser(String userId, String organizationId) {
+public record ConsoleUser(String userId, String organizationId, Set<String> groups) {
 
     public static final String CLIENT_IP = "203.0.113.10";
     public static final String CLIENT_USER_AGENT = "Mozilla/5.0 (CetusTest)";
 
+    public ConsoleUser(String userId, String organizationId) {
+        this(userId, organizationId, Set.of());
+    }
+
     public static ConsoleUser newOrganization() {
         return new ConsoleUser("user_" + UUID.randomUUID(), "org_" + UUID.randomUUID());
+    }
+
+    /** A member of the Cetus team with the given platform roles (2FA already checked by the console). */
+    public static ConsoleUser platformStaff(String... roles) {
+        return new ConsoleUser("user_" + UUID.randomUUID(), "org_" + UUID.randomUUID(), Set.of(roles));
     }
 
     public String token() {
@@ -23,6 +33,7 @@ public record ConsoleUser(String userId, String organizationId) {
                 .subject(userId)
                 .audience("cetus-api")
                 .claim("org", organizationId)
+                .groups(groups)
                 .sign();
     }
 

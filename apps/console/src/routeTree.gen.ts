@@ -15,6 +15,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
@@ -22,6 +23,7 @@ import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/i
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
+import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
@@ -58,6 +60,11 @@ const SignUpRoute = SignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TwoFactorRoute = TwoFactorRouteImport.update({
+  id: '/two-factor',
+  path: '/two-factor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -91,6 +98,11 @@ const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
 const AppIssuersIssuerIdRoute = AppIssuersIssuerIdRouteImport.update({
   id: '/issuers/$issuerId',
   path: '/issuers/$issuerId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
+  id: '/settings/security',
+  path: '/settings/security',
   getParentRoute: () => AppRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -134,10 +146,12 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity/': typeof AppActivityIndexRoute
   '/documents/': typeof AppDocumentsIndexRoute
@@ -154,10 +168,12 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/activity': typeof AppActivityIndexRoute
   '/documents': typeof AppDocumentsIndexRoute
@@ -176,10 +192,12 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/two-factor': typeof TwoFactorRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/activity/': typeof AppActivityIndexRoute
   '/_app/documents/': typeof AppDocumentsIndexRoute
@@ -198,10 +216,12 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/overview'
     | '/activity/$eventId'
     | '/documents/$documentId'
     | '/issuers/$issuerId'
+    | '/settings/security'
     | '/api/auth/$'
     | '/activity/'
     | '/documents/'
@@ -218,10 +238,12 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/overview'
     | '/activity/$eventId'
     | '/documents/$documentId'
     | '/issuers/$issuerId'
+    | '/settings/security'
     | '/api/auth/$'
     | '/activity'
     | '/documents'
@@ -239,10 +261,12 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/_app/overview'
     | '/_app/activity/$eventId'
     | '/_app/documents/$documentId'
     | '/_app/issuers/$issuerId'
+    | '/_app/settings/security'
     | '/api/auth/$'
     | '/_app/activity/'
     | '/_app/documents/'
@@ -261,6 +285,7 @@ export interface RootRouteChildren {
   SetupRoute: typeof SetupRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  TwoFactorRoute: typeof TwoFactorRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -306,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-up'
       fullPath: '/sign-up'
       preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/two-factor': {
+      id: '/two-factor'
+      path: '/two-factor'
+      fullPath: '/two-factor'
+      preLoaderRoute: typeof TwoFactorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/overview': {
@@ -355,6 +387,13 @@ declare module '@tanstack/react-router' {
       path: '/issuers/$issuerId'
       fullPath: '/issuers/$issuerId'
       preLoaderRoute: typeof AppIssuersIssuerIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/security': {
+      id: '/_app/settings/security'
+      path: '/settings/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AppSettingsSecurityRouteImport
       parentRoute: typeof AppRoute
     }
     '/api/auth/$': {
@@ -407,6 +446,7 @@ interface AppRouteChildren {
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
+  AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
@@ -422,6 +462,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppActivityEventIdRoute: AppActivityEventIdRoute,
   AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
+  AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
@@ -441,6 +482,7 @@ const rootRouteChildren: RootRouteChildren = {
   SetupRoute: SetupRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  TwoFactorRoute: TwoFactorRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

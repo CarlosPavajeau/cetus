@@ -7,6 +7,8 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+import java.util.Optional;
+
 /**
  * Identity of a console request. The JWT is minted by Better Auth in the console server;
  * the "org" claim carries the active organization, which maps 1:1 to a Cetus account.
@@ -19,6 +21,12 @@ public class ConsoleContext {
 
     public String userId() {
         return jwt.getSubject();
+    }
+
+    /** The Cetus admin acting as this user, while an impersonation session lasts. */
+    public Optional<String> impersonatedBy() {
+        String admin = jwt.getClaim("impersonatedBy");
+        return admin == null || admin.isBlank() ? Optional.empty() : Optional.of(admin);
     }
 
     /** The signed-in console user as the actor of an audited action. */

@@ -17,6 +17,7 @@ import {
   KeyRoundIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  ShieldIcon,
   WebhookIcon,
 } from "lucide-react";
 
@@ -123,6 +124,15 @@ function AppLayout() {
         <SidebarFooter>
           <p className="truncate px-2 text-xs text-muted-foreground">{session.user.email}</p>
           <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to="/settings/security" />}
+                isActive={Boolean(matchRoute({ to: "/settings/security" }))}
+              >
+                <ShieldIcon />
+                <span>Seguridad</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton onClick={signOut}>
                 <LogOutIcon />

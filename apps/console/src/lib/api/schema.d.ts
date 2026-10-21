@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/admin/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["AdminSessionResource_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/account": {
         parameters: {
             query?: never;
@@ -605,6 +622,10 @@ export interface components {
             countryCode?: string;
             countryName?: string;
         };
+        AdminSessionView: {
+            userId?: string;
+            roles?: string[];
+        };
         ApiError: {
             code: string;
             message: string;
@@ -1194,6 +1215,40 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    AdminSessionResource_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSessionView"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Allowed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AccountResource_get: {
         parameters: {
             query?: never;
