@@ -63,6 +63,10 @@ test("support sets up an issuer and the customer uploads the certificate through
 
   await context.clearCookies();
   await context.addCookies(customer.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await open(page, "/activity?action=CERTIFICATE_UPLOAD_LINK_CREATED");
+  await expect(
+    page.getByRole("row", { name: /Enlace de carga de certificado enviado/ }),
+  ).toBeVisible();
   await open(page, "/activity?action=CERTIFICATE_UPLOADED");
   await expect(page.getByRole("row", { name: /Certificado cargado/ })).toContainText(
     "Enlace de carga",
