@@ -108,8 +108,6 @@ export const auditActions = [
 export const userAuditActions = [
   "USER_BANNED",
   "USER_UNBANNED",
-  "IMPERSONATION_STARTED",
-  "IMPERSONATION_ENDED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.
