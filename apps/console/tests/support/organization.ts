@@ -79,7 +79,10 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   return {
     email,
     password,
-    cookies: [...jar].map(([cookieName, value]) => ({ name: cookieName, value })),
+    // A getter: Better Auth rotates the session cookie on some calls (e.g. verifying 2FA).
+    get cookies() {
+      return [...jar].map(([cookieName, value]) => ({ name: cookieName, value }));
+    },
     token,
     api,
     auth,

@@ -100,6 +100,6 @@ public class AuditLogResource {
      * annotations cannot express that inside {@code oneOf}, so {@link OpenApiFilter} adds it.
      */
     @Schema(name = "AuditValue", oneOf = {String.class, Number.class, Boolean.class})
-    interface AuditValue {
+    public interface AuditValue {
     }
 }

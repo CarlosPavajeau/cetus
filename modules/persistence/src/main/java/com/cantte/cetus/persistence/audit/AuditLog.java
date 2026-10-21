@@ -33,12 +33,13 @@ public class AuditLog {
 
     public static final int MAX_PAGE_SIZE = 100;
 
-    private static final String SELECT = """
-            SELECT id, action, actor_type, actor_id, resource_type, resource_id, CAST(data AS text),
+    private static final String SELECT_ALL = """
+            SELECT id, account_id, action, actor_type, actor_id, resource_type, resource_id, CAST(data AS text),
                    host(ip_address), created_at
             FROM billing.audit_log
-            WHERE account_id = :account
+            WHERE true
             """;
+    private static final String SELECT = SELECT_ALL + " AND account_id = :account";
 
     private static final TypeReference<Map<String, Object>> DATA_TYPE = new TypeReference<>() {
     };
@@ -77,22 +78,45 @@ public class AuditLog {
 
     /** Newest first, paginated by id: pass the previous page's {@code nextCursor} as {@code beforeId}. */
     public AuditPage list(UUID accountId, AuditAction actionFilter, Long beforeId, int limit) {
+        Objects.requireNonNull(accountId, "accountId");
+        return page(new Filter(accountId, actionFilter, null), beforeId, limit);
+    }
+
+    /**
+     * Across every account, for the Cetus team. Each filter is optional; {@code actorId} matches who acted
+     * (a Better Auth user id, for USER and PLATFORM actors).
+     */
+    public AuditPage listAll(UUID accountId, AuditAction actionFilter, String actorId, Long beforeId, int limit) {
+        return page(new Filter(accountId, actionFilter, actorId), beforeId, limit);
+    }
+
+    private record Filter(UUID accountId, AuditAction action, String actorId) {
+    }
+
+    private AuditPage page(Filter filter, Long beforeId, int limit) {
         int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
-        StringBuilder sql = new StringBuilder(SELECT);
-        if (actionFilter != null) {
+        StringBuilder sql = new StringBuilder(filter.accountId() != null ? SELECT : SELECT_ALL);
+        if (filter.action() != null) {
             sql.append(" AND action = :action");
+        }
+        if (filter.actorId() != null) {
+            sql.append(" AND actor_id = :actorId");
         }
         if (beforeId != null) {
             sql.append(" AND id < :before");
         }
         sql.append(" ORDER BY id DESC LIMIT :limit");
 
-        Query query = em.createNativeQuery(sql.toString())
-                .setParameter("account", accountId)
-                // One extra row tells whether there is a next page.
-                .setParameter("limit", size + 1);
-        if (actionFilter != null) {
-            query.setParameter("action", actionFilter.name());
+        // One extra row tells whether there is a next page.
+        Query query = em.createNativeQuery(sql.toString()).setParameter("limit", size + 1);
+        if (filter.accountId() != null) {
+            query.setParameter("account", filter.accountId());
+        }
+        if (filter.action() != null) {
+            query.setParameter("action", filter.action().name());
+        }
+        if (filter.actorId() != null) {
+            query.setParameter("actorId", filter.actorId());
         }
         if (beforeId != null) {
             query.setParameter("before", beforeId);
@@ -121,14 +145,15 @@ public class AuditLog {
     private AuditEntryView toView(Object[] row) {
         return new AuditEntryView(
                 ((Number) row[0]).longValue(),
-                AuditAction.valueOf((String) row[1]),
-                Actor.ActorType.valueOf((String) row[2]),
-                (String) row[3],
+                (UUID) row[1],
+                AuditAction.valueOf((String) row[2]),
+                Actor.ActorType.valueOf((String) row[3]),
                 (String) row[4],
-                (UUID) row[5],
-                deserialize((String) row[6]),
-                (String) row[7],
-                toOffsetDateTime(row[8]));
+                (String) row[5],
+                (UUID) row[6],
+                deserialize((String) row[7]),
+                (String) row[8],
+                toOffsetDateTime(row[9]));
     }
 
     private String serialize(Map<String, Object> data) {

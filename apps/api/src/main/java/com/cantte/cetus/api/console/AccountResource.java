@@ -74,9 +74,12 @@ public class AccountResource {
             @Schema(required = true) UUID id,
             @Schema(required = true) String name,
             @Schema(required = true) String status,
-            @Schema(required = true) String plan) {
+            @Schema(required = true) String plan,
+            @Schema(required = true, nullable = true, description = "Why the account is suspended, when it is")
+            String statusReason) {
         static AccountView from(AccountEntity account) {
-            return new AccountView(account.id, account.name, account.status, account.plan);
+            return new AccountView(account.id, account.name, account.status, account.plan,
+                    "ACTIVE".equals(account.status) ? null : account.statusReason);
         }
     }
 }

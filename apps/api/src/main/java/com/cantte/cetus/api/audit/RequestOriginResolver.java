@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
 /**
  * IP address and user agent of the current request, for the audit log.
  *
- * <p>Console requests come from the console server (BFF), not from the browser, so on /console/*
- * the BFF forwards the end user's values in X-Cetus-Client-IP and X-Cetus-Client-User-Agent.
+ * <p>Console requests come from the console server (BFF), not from the browser, so on /console/* and
+ * /admin/* the BFF forwards the end user's values in X-Cetus-Client-IP and X-Cetus-Client-User-Agent.
  * Those headers reach the API over the private network only; elsewhere they are ignored.
  */
 @RequestScoped
@@ -32,7 +32,7 @@ public class RequestOriginResolver {
     HttpServerRequest request;
 
     public RequestOrigin resolve() {
-        if (isConsole(request.path())) {
+        if (isBff(request.path())) {
             return new RequestOrigin(normalizeIp(request.getHeader(CLIENT_IP_HEADER)),
                     truncate(request.getHeader(CLIENT_USER_AGENT_HEADER)));
         }
@@ -41,8 +41,9 @@ public class RequestOriginResolver {
                 truncate(request.getHeader(HttpHeaders.USER_AGENT)));
     }
 
-    private static boolean isConsole(String path) {
-        return path != null && (path.equals("/console") || path.startsWith("/console/"));
+    private static boolean isBff(String path) {
+        return path != null && (path.equals("/console") || path.startsWith("/console/")
+                || path.equals("/admin") || path.startsWith("/admin/"));
     }
 
     /**

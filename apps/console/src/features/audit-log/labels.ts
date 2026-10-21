@@ -16,11 +16,14 @@ export const actionLabel: Record<AuditAction, string> = {
   WEBHOOK_ENDPOINT_ENABLED: "Webhook reactivado",
   WEBHOOK_DELIVERY_RETRIED: "Webhook reenviado",
   CREDIT_NOTE_ISSUED: "Nota crédito emitida",
+  ACCOUNT_SUSPENDED: "Cuenta suspendida",
+  ACCOUNT_REACTIVATED: "Cuenta reactivada",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {
   USER: "Usuario",
   API_KEY: "Llave de API",
+  PLATFORM: "Equipo Cetus",
   SYSTEM: "Sistema",
 };
 

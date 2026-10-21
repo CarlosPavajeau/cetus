@@ -318,6 +318,9 @@ validar y una interna al conectar (DNS rebinding) queda bloqueado. En dev y en p
   - El rol solo tiene efecto con la verificación en dos pasos activa (Seguridad, en la consola). Sin
     ella, el JWT no lleva el claim `groups` y Better Auth rechaza sus endpoints `/api/auth/admin/*`.
   - `support` lee y hace acciones asistidas. Solo `admin` bloquea usuarios, suspende cuentas y suplanta.
+  - La administración está en `/admin` de la consola. Una cuenta suspendida no puede usar sus llaves de
+    API (`403 account_suspended`) y su consola queda en solo lectura, con el motivo visible. Los documentos
+    que ya estaban en cola se terminan de procesar, porque ya tienen número asignado.
 - **Verificación del rango.** Cuando un emisor de **producción** ya tiene software y certificado, el worker
   consulta `GetNumberingRange` por cada rango de factura y lo compara con lo registrado: prefijo, números,
   vigencia y clave técnica. En habilitación no aplica: el rango de prueba (`SETP`) es compartido, la DIAN no

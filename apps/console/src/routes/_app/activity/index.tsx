@@ -24,6 +24,7 @@ import {
 } from "~/components/ui/table";
 import { apiKeysQuery } from "~/features/api-keys/queries";
 import { AuditRecordNotice } from "~/features/audit-log/AuditRecordNotice";
+import { describeEntry } from "~/features/audit-log/describe";
 import { actionLabel, actorTypeLabel, dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { auditLogQuery } from "~/features/audit-log/queries";
 import type { ActivityEntry } from "~/features/audit-log/server";
@@ -50,84 +51,8 @@ const actionItems: { label: string; value: AuditAction | "ALL" }[] = [
   ...auditActions.map((value) => ({ label: actionLabel[value], value })),
 ];
 
-const issuerStatusLabel: Record<string, string> = {
-  ONBOARDING: "Configuración pendiente",
-  TESTING: "En habilitación",
-  ENABLED: "Habilitado",
-  DISABLED: "Deshabilitado",
-};
-
-const environmentLabel: Record<string, string> = { TEST: "Pruebas", LIVE: "Producción" };
-
-const documentTypeLabel: Record<string, string> = {
-  INVOICE: "Factura",
-  CREDIT_NOTE: "Nota crédito",
-  DEBIT_NOTE: "Nota débito",
-};
-
-const personTypeLabel: Record<string, string> = {
-  LEGAL_ENTITY: "Persona jurídica",
-  NATURAL_PERSON: "Persona natural",
-};
-
-const issuerFieldLabel: Record<string, string> = {
-  legalName: "razón social",
-  tradeName: "nombre comercial",
-  personType: "tipo de persona",
-  taxLevelCodes: "responsabilidades tributarias",
-  responsibleForIva: "responsabilidad de IVA",
-  address: "dirección",
-  email: "correo",
-  phone: "teléfono",
-};
-
-function text(value: unknown): string {
-  return value === null || value === undefined ? "" : String(value);
-}
-
-function label(labels: Record<string, string>, value: unknown): string {
-  return labels[text(value)] ?? text(value);
-}
-
 function plural(count: number, singular: string, pluralForm: string) {
   return `${count} ${count === 1 ? singular : pluralForm}`;
-}
-
-function detail(entry: ActivityEntry): string {
-  const data = entry.data;
-  switch (entry.action) {
-    case "ACCOUNT_CREATED":
-      return text(data.name);
-    case "API_KEY_CREATED":
-    case "API_KEY_REVOKED":
-      return `${text(data.name)} · ${text(data.prefix)}… · ${label(environmentLabel, data.environment)}`;
-    case "ISSUER_CREATED":
-      return `NIT ${text(data.nit)} · ${label(environmentLabel, data.environment)} · ${label(personTypeLabel, data.personType)}${data.promotedFrom ? " · desde la habilitación" : ""}`;
-    case "ISSUER_UPDATED":
-      return Array.isArray(data.fields)
-        ? `Cambió ${data.fields.map((field) => label(issuerFieldLabel, field)).join(", ")}`
-        : "";
-    case "SOFTWARE_CREDENTIALS_SET":
-      return `Software ${text(data.softwareId)}${data.hasTestSet ? " · con set de pruebas" : ""}`;
-    case "CERTIFICATE_UPLOADED":
-      return data.validTo
-        ? `${text(data.subject)} · vence el ${dayFormat.format(new Date(text(data.validTo)))}`
-        : text(data.subject);
-    case "NUMBERING_RANGE_ADDED":
-      return `${label(documentTypeLabel, data.documentType)} ${text(data.prefix)}${text(data.from)} a ${text(data.prefix)}${text(data.to)}`;
-    case "ISSUER_STATUS_CHANGED":
-      return `${label(issuerStatusLabel, data.from)} → ${label(issuerStatusLabel, data.to)}`;
-    case "ISSUER_PROMOTED":
-      return "Se creó su emisor de producción";
-    case "WEBHOOK_ENDPOINT_DISABLED":
-      return `${text(data.url)} · ${label(environmentLabel, data.environment)}${data.reason === "AUTOMATIC" ? ` · por ${text(data.consecutiveFailures)} fallas seguidas` : ""}`;
-    case "WEBHOOK_ENDPOINT_CREATED":
-    case "WEBHOOK_ENDPOINT_ENABLED":
-    case "WEBHOOK_DELIVERY_RETRIED":
-      return `${text(data.url)} · ${label(environmentLabel, data.environment)}`;
-    case "CREDIT_NOTE_ISSUED":
-      return `${text(data.number)} anula la factura ${text(data.invoiceNumber)} · ${label(environmentLabel, data.environment)}`;
-  }
 }
 
 function Activity() {
@@ -147,6 +72,8 @@ function Activity() {
         return entry.actorEmail ?? "Usuario eliminado";
       case "API_KEY":
         return (entry.actorId && keyNames.get(entry.actorId)) ?? "Llave eliminada";
+      case "PLATFORM":
+        return "Soporte de Cetus";
       case "SYSTEM":
         return "Cetus";
     }
@@ -248,7 +175,7 @@ function Activity() {
                       </TableCell>
                       <TableCell className="pr-5 whitespace-normal">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-xs">{detail(entry)}</span>
+                          <span className="text-xs">{describeEntry(entry)}</span>
                           <span className="text-2xs text-muted-foreground">
                             {entry.resourceId ?? "Sin recurso asociado"}
                           </span>

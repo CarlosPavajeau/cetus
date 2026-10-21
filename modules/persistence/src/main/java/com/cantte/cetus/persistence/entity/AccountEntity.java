@@ -21,6 +21,14 @@ public class AccountEntity extends PanacheEntityBase {
     public String name;
     public String status = "ACTIVE";
     public String plan = "FREE";
+    /** Why the status last changed (e.g. the suspension reason); null while it never changed. */
+    @Column(name = "status_reason")
+    public String statusReason;
+    @Column(name = "status_changed_at")
+    public OffsetDateTime statusChangedAt;
+    /** Better Auth user id of the Cetus team member who changed it. */
+    @Column(name = "status_changed_by")
+    public String statusChangedBy;
     @Column(name = "created_at", insertable = false, updatable = false)
     public OffsetDateTime createdAt;
 

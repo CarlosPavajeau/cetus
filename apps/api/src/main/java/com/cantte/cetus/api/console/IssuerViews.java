@@ -105,7 +105,7 @@ public final class IssuerViews {
             @Schema(required = true) String legalName,
             @Schema(required = true, nullable = true) String tradeName,
             @Schema(required = true) IssuerEntity.Status status) {
-        static IssuerView from(IssuerEntity issuer) {
+        public static IssuerView from(IssuerEntity issuer) {
             return new IssuerView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit, issuer.legalName,
                     issuer.tradeName, issuer.status);
         }

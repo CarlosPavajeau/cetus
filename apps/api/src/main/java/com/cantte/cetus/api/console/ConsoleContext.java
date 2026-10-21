@@ -34,6 +34,11 @@ public class ConsoleContext {
         return new Actor(Actor.ActorType.USER, jwt.getSubject());
     }
 
+    /** A member of the Cetus team acting from the administration (the caller holds a platform role). */
+    public Actor platformActor() {
+        return new Actor(Actor.ActorType.PLATFORM, jwt.getSubject());
+    }
+
     public String organizationId() {
         String org = jwt.getClaim("org");
         if (org == null || org.isBlank()) {

@@ -6,6 +6,7 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.domain.dian.Cufe;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
@@ -80,6 +81,20 @@ class ProcessDocumentHandlerTest {
         // Every artifact is written with the legal retention (Object Lock).
         assertThat(QuarkusTransaction.requiringNew().call(() -> DocumentArtifactEntity.listByDocument(id)))
                 .allSatisfy(a -> assertThat(((FakeDocumentStorage) storage).isRetained(a.s3Key)).isTrue());
+    }
+
+    @Test
+    void documentsAlreadyQueuedFinishWhenTheAccountIsSuspended() {
+        // They hold their number already: dropping them would leave a gap in the issuer's numbering.
+        dian.reply(SEND, Reply.fixture("send-bill-sync-accepted.xml"));
+        UUID id = fixtures.invoice();
+        QuarkusTransaction.requiringNew().run(() ->
+                AccountEntity.<AccountEntity>findById(DocumentEntity.<DocumentEntity>findById(id).accountId)
+                        .status = "SUSPENDED");
+
+        process(id);
+
+        assertThat(document(id).status).isEqualTo(DocumentStatus.ACCEPTED);
     }
 
     @Test
