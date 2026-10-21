@@ -4,6 +4,7 @@
 .idea
 .vscode
 .gradle
+**/.gradle
 **/build
 **/node_modules
 apps/console/dist

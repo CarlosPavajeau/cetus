@@ -173,7 +173,9 @@ curl -X POST http://localhost:8080/v1/invoices \
 ## Despliegue en Railway
 
 Tres servicios (`console`, `api` y `worker`) desde el mismo repositorio, cada uno construido con su Dockerfile
-desde la raíz. Todo el proyecto se describe en `.railway/railway.ts` (Infrastructure as Code de Railway):
+desde la raíz. Los Dockerfiles de Java separan en capas el wrapper de Gradle, las dependencias
+(`resolveDependencies`, que solo cambian con los `build.gradle.kts`) y el código, así que un cambio en la
+consola o en otra app no recompila nada, y uno en el código Java no vuelve a descargar dependencias. Todo el proyecto se describe en `.railway/railway.ts` (Infrastructure as Code de Railway):
 fuente, Dockerfile, rutas vigiladas, health checks, pre-deploy, réplicas, dominios y variables. Railway **no**
 lo lee al desplegar; se aplica con su CLI (5.42.1 o superior):
 
