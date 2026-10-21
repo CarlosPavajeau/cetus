@@ -28,6 +28,10 @@ cetus/
 - Better Auth es dueño de usuarios, organizaciones y membresías (esquema `auth`, migrado con Drizzle).
   `billing.accounts.organization_id` guarda el ID de la organización, sin llave foránea entre esquemas.
 - Flyway solo gestiona `billing`; Drizzle solo gestiona `auth` (`schemaFilter`). Nunca uses `drizzle-kit push` en producción.
+- `apps/console/src/lib/auth/schema.ts` se mantiene **a mano**. `pnpm auth:generate` reescribe el archivo
+  completo con `pgTable` (schema `public`, no `auth`) y cambia el export de las relaciones. Úsalo solo para
+  ver qué columnas pide un plugin nuevo, cópialas con `authSchema.table` y descarta el resto
+  (`git checkout src/lib/auth/schema.ts`). Luego `pnpm db:generate` crea la migración y `make migrate` la aplica.
 - Los secretos (PIN, clave técnica, contraseña y archivo del certificado) se guardan "sellados" con KMS.
   El `.p12` vive en S3; en la base de datos solo hay metadatos.
 

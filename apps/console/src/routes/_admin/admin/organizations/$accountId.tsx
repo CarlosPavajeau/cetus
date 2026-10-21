@@ -111,7 +111,13 @@ function AccountDetail() {
                 <TableRow key={member.userId}>
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-xs">{member.name || member.email}</span>
+                      <Link
+                        to="/admin/users/$userId"
+                        params={{ userId: member.userId }}
+                        className="w-fit text-xs hover:underline hover:underline-offset-4"
+                      >
+                        {member.name || member.email}
+                      </Link>
                       <span className="text-2xs text-muted-foreground">{member.email}</span>
                     </div>
                   </TableCell>

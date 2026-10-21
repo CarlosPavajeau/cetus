@@ -28,13 +28,18 @@ import { describeEntry } from "~/features/audit-log/describe";
 import { actionLabel, actorTypeLabel, dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { auditLogQuery } from "~/features/audit-log/queries";
 import type { ActivityEntry } from "~/features/audit-log/server";
-import { type AuditAction, auditActions } from "~/lib/api/types";
+import { type AuditAction, auditActions, userAuditActions } from "~/lib/api/types";
 
 type ActivitySearch = { action?: AuditAction };
 
+// Bans are recorded on the person, never on an account.
+const accountAuditActions = auditActions.filter(
+  (action) => !(userAuditActions as readonly AuditAction[]).includes(action),
+);
+
 export const Route = createFileRoute("/_app/activity/")({
   validateSearch: (search: Record<string, unknown>): ActivitySearch => ({
-    action: auditActions.find((action) => action === search.action),
+    action: accountAuditActions.find((action) => action === search.action),
   }),
   loaderDeps: ({ search }) => ({ action: search.action }),
   // The key list names the API keys that acted; the log only carries their ids.
@@ -48,7 +53,7 @@ export const Route = createFileRoute("/_app/activity/")({
 
 const actionItems: { label: string; value: AuditAction | "ALL" }[] = [
   { label: "Todas", value: "ALL" },
-  ...auditActions.map((value) => ({ label: actionLabel[value], value })),
+  ...accountAuditActions.map((value) => ({ label: actionLabel[value], value })),
 ];
 
 function plural(count: number, singular: string, pluralForm: string) {

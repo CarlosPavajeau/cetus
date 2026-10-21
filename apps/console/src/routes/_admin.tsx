@@ -7,7 +7,7 @@ import {
   useMatches,
   useNavigate,
 } from "@tanstack/react-router";
-import { ArrowLeftIcon, BuildingIcon, HistoryIcon, LogOutIcon } from "lucide-react";
+import { ArrowLeftIcon, BuildingIcon, HistoryIcon, LogOutIcon, UsersIcon } from "lucide-react";
 
 import { Badge } from "~/components/ui/badge";
 import {
@@ -44,6 +44,7 @@ export const Route = createFileRoute("/_admin")({
 
 const navigation = [
   { to: "/admin/organizations", label: "Organizaciones", icon: BuildingIcon },
+  { to: "/admin/users", label: "Usuarios", icon: UsersIcon },
   { to: "/admin/audit-log", label: "Auditoría", icon: HistoryIcon },
 ] as const;
 

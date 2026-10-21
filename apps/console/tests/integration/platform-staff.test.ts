@@ -42,6 +42,26 @@ describe("platform staff", () => {
     expect(ban.status).toBe(403);
   });
 
+  test("admin changes are refused over HTTP: they go through the console, which audits them", async () => {
+    const admin = await createPlatformStaff("admin");
+    const customer = await createOrganization("Cliente SAS");
+    const { users } = await admin.auth<{ users: { id: string; email: string }[] }>(
+      `/admin/list-users?searchField=email&searchValue=${encodeURIComponent(customer.email)}`,
+    );
+
+    for (const [path, body] of [
+      ["/admin/ban-user", { userId: users[0]!.id }],
+      ["/admin/set-role", { userId: users[0]!.id, role: "admin" }],
+      ["/admin/impersonate-user", { userId: users[0]!.id }],
+      ["/admin/remove-user", { userId: users[0]!.id }],
+    ] as const) {
+      const response = await admin.authResponse(path, body);
+      expect(response.status, path).toBe(403);
+      expect(await response.json()).toMatchObject({ code: "USE_THE_ADMINISTRATION" });
+    }
+    expect((await customer.api("/console/account")).status).toBe(200);
+  });
+
   test("a customer with 2FA is still not staff", async () => {
     const customer = await createOrganization("Cliente SAS");
     const { totpURI } = await customer.auth<{ totpURI: string }>("/two-factor/enable", {

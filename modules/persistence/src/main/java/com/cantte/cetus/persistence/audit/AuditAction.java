@@ -19,5 +19,8 @@ public enum AuditAction {
     /** A credit note issued from the console; those issued through the API are not audited. */
     CREDIT_NOTE_ISSUED,
     ACCOUNT_SUSPENDED,
-    ACCOUNT_REACTIVATED
+    ACCOUNT_REACTIVATED,
+    /** A person banned from the console by the Cetus team; recorded without an account. */
+    USER_BANNED,
+    USER_UNBANNED
 }

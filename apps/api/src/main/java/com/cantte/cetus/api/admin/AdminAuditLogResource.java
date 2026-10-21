@@ -57,7 +57,8 @@ public class AdminAuditLogResource {
                 : AccountEntity.<AccountEntity>list("id in ?1", accountIds).stream()
                 .collect(Collectors.toMap(account -> account.id, account -> account.name));
         return new AdminAuditPage(page.items().stream()
-                .map(entry -> AdminAuditEntry.from(entry, names.get(entry.accountId()))).toList(),
+                .map(entry -> AdminAuditEntry.from(entry,
+                        entry.accountId() == null ? null : names.get(entry.accountId()))).toList(),
                 page.nextCursor());
     }
 

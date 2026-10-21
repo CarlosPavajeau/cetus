@@ -30,6 +30,8 @@ import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
 import { Route as AdminAdminOrganizationsAccountIdRouteImport } from './routes/_admin/admin/organizations/$accountId'
+import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
+import { Route as AdminAdminUsersUserIdRouteImport } from './routes/_admin/admin/users/$userId'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
 import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
@@ -141,6 +143,16 @@ const AdminAdminOrganizationsAccountIdRoute =
     path: '/admin/organizations/$accountId',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAdminUsersIndexRoute = AdminAdminUsersIndexRouteImport.update({
+  id: '/admin/users/',
+  path: '/admin/users/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminUsersUserIdRoute = AdminAdminUsersUserIdRouteImport.update({
+  id: '/admin/users/$userId',
+  path: '/admin/users/$userId',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AppDevelopersApiKeysIndexRoute =
   AppDevelopersApiKeysIndexRouteImport.update({
     id: '/developers/api-keys/',
@@ -190,10 +202,12 @@ export interface FileRoutesByFullPath {
   '/documents/': typeof AppDocumentsIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
 }
@@ -216,10 +230,12 @@ export interface FileRoutesByTo {
   '/documents': typeof AppDocumentsIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/users': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
 }
@@ -245,10 +261,12 @@ export interface FileRoutesById {
   '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_admin/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/_admin/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/_app/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
 }
@@ -273,10 +291,12 @@ export interface FileRouteTypes {
     | '/documents/'
     | '/issuers/'
     | '/admin/organizations/$accountId'
+    | '/admin/users/$userId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations/'
+    | '/admin/users/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
   fileRoutesByTo: FileRoutesByTo
@@ -299,10 +319,12 @@ export interface FileRouteTypes {
     | '/documents'
     | '/issuers'
     | '/admin/organizations/$accountId'
+    | '/admin/users/$userId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations'
+    | '/admin/users'
     | '/developers/api-keys'
     | '/developers/webhooks'
   id:
@@ -327,10 +349,12 @@ export interface FileRouteTypes {
     | '/_app/documents/'
     | '/_app/issuers/'
     | '/_admin/admin/organizations/$accountId'
+    | '/_admin/admin/users/$userId'
     | '/_app/developers/api-keys/$keyId'
     | '/_app/developers/webhooks/$endpointId'
     | '/_app/issuers/$issuerId_/edit'
     | '/_admin/admin/organizations/'
+    | '/_admin/admin/users/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
   fileRoutesById: FileRoutesById
@@ -496,6 +520,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminOrganizationsAccountIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/users/': {
+      id: '/_admin/admin/users/'
+      path: '/admin/users'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AdminAdminUsersIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/users/$userId': {
+      id: '/_admin/admin/users/$userId'
+      path: '/admin/users/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AdminAdminUsersUserIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_app/developers/api-keys/': {
       id: '/_app/developers/api-keys/'
       path: '/developers/api-keys'
@@ -538,14 +576,18 @@ interface AdminRouteChildren {
   AdminAdminAuditLogRoute: typeof AdminAdminAuditLogRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminOrganizationsAccountIdRoute: typeof AdminAdminOrganizationsAccountIdRoute
+  AdminAdminUsersUserIdRoute: typeof AdminAdminUsersUserIdRoute
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
+  AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminAuditLogRoute: AdminAdminAuditLogRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminOrganizationsAccountIdRoute: AdminAdminOrganizationsAccountIdRoute,
+  AdminAdminUsersUserIdRoute: AdminAdminUsersUserIdRoute,
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
+  AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

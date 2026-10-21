@@ -79,5 +79,9 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "ACCOUNT_SUSPENDED":
     case "ACCOUNT_REACTIVATED":
       return `Motivo: ${text(data.reason)}`;
+    case "USER_BANNED":
+      return `${text(data.email)} · ${data.expiresAt ? `hasta el ${dayFormat.format(new Date(text(data.expiresAt)))}` : "indefinido"} · Motivo: ${text(data.reason)}`;
+    case "USER_UNBANNED":
+      return `${text(data.email)} · Motivo: ${text(data.reason)}`;
   }
 }

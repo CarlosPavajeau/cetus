@@ -10,6 +10,13 @@ import { env } from "../env";
 import { ac, platformRole, roles } from "./permissions";
 import * as schema from "./schema";
 
+const adminReads = new Set([
+  "/admin/list-users",
+  "/admin/get-user",
+  "/admin/list-user-sessions",
+  "/admin/has-permission",
+]);
+
 /**
  * Better Auth owns users, organizations and memberships (schema "auth").
  * The JWT plugin mints short-lived RS256 tokens that the Java API validates through /api/auth/jwks.
@@ -29,6 +36,14 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       if (!ctx.path.startsWith("/admin/")) {
         return;
+      }
+      // Changes go through the console's server functions, which also record them in the audit log;
+      // only reads answer over HTTP. Server-side `auth.api` calls carry no request.
+      if (ctx.request && !adminReads.has(ctx.path)) {
+        throw new APIError("FORBIDDEN", {
+          code: "USE_THE_ADMINISTRATION",
+          message: "Esta acción solo se hace desde la administración de la consola.",
+        });
       }
       const session = await getSessionFromCtx(ctx);
       if (session && !session.user.twoFactorEnabled) {

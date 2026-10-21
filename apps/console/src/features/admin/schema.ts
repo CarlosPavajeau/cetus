@@ -11,3 +11,10 @@ export const statusChangeSchema = type({
     }),
   ),
 });
+
+/** How long a ban lasts, in days; null bans until someone lifts it. */
+export const banDurations = [1, 7, 30] as const;
+
+export const banSchema = statusChangeSchema.and({
+  days: type.enumerated(...banDurations, null),
+});

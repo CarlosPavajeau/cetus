@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 import { eq, ilike, inArray } from "drizzle-orm";
@@ -11,7 +11,7 @@ import type {
   AdminAuditPage,
 } from "~/lib/api/types";
 import { auditActions } from "~/lib/api/types";
-import { platformRole } from "~/lib/auth/permissions";
+import { type PlatformRole, platformRole } from "~/lib/auth/permissions";
 import { member, organization, user } from "~/lib/auth/schema";
 import { auth } from "~/lib/auth/server";
 import { db } from "~/lib/db";
@@ -22,19 +22,21 @@ import { accountStatuses, statusChangeSchema } from "./schema";
  * Server functions are reachable by anyone with a session, so each one checks the platform role (and 2FA)
  * before reading Better Auth's tables. The API checks it again from the JWT's `groups`.
  */
-async function requireStaff() {
-  const session = await auth.api.getSession({
-    headers: new Headers(getRequestHeaders() as HeadersInit),
-  });
+export const requireStaff = createServerOnlyFn(async (only?: PlatformRole) => {
+  const headers = new Headers(getRequestHeaders() as HeadersInit);
+  const session = await auth.api.getSession({ headers });
+  const role = platformRole(session?.user.role);
   if (
     !session ||
-    !platformRole(session.user.role) ||
+    !role ||
+    (only && role !== only) ||
     !session.user.twoFactorEnabled ||
     session.session.impersonatedBy
   ) {
     throw new CetusApiError(403, "forbidden", "Solo para el equipo de Cetus.");
   }
-}
+  return { session, role, headers };
+});
 
 const emptyPage: AdminAccountPage = { items: [], nextCursor: null };
 
@@ -134,7 +136,7 @@ export const getAdminAccount = createServerFn({ method: "GET" })
 export const suspendAccount = createServerFn({ method: "POST" })
   .validator(statusChangeSchema.and({ id: "string.uuid" }))
   .handler(async ({ data }) => {
-    await requireStaff();
+    await requireStaff("admin");
     return api.post("/admin/accounts/{id}/suspension", {
       params: { path: { id: data.id } },
       body: { reason: data.reason },
@@ -144,7 +146,7 @@ export const suspendAccount = createServerFn({ method: "POST" })
 export const reactivateAccount = createServerFn({ method: "POST" })
   .validator(statusChangeSchema.and({ id: "string.uuid" }))
   .handler(async ({ data }) => {
-    await requireStaff();
+    await requireStaff("admin");
     return api.post("/admin/accounts/{id}/reactivation", {
       params: { path: { id: data.id } },
       body: { reason: data.reason },
