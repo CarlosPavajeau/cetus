@@ -1,7 +1,7 @@
 {
   "name": "cetus",
   "private": true,
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@10.34.7",
   "scripts": {
     "console:dev": "pnpm --filter @cetus/console dev",
     "console:build": "pnpm --filter @cetus/console build",
