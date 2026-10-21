@@ -22,6 +22,7 @@ export const actionLabel: Record<AuditAction, string> = {
   USER_UNBANNED: "Usuario desbloqueado",
   IMPERSONATION_STARTED: "Soporte entró como usuario",
   IMPERSONATION_ENDED: "Soporte salió de la sesión",
+  CERTIFICATE_UPLOAD_LINK_CREATED: "Enlace de carga de certificado enviado",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

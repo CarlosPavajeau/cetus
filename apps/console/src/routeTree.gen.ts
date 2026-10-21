@@ -18,6 +18,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
+import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
@@ -37,6 +38,7 @@ import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/dev
 import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
 import { Route as AppDevelopersWebhooksEndpointIdRouteImport } from './routes/_app/developers/webhooks/$endpointId'
 import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuers/$issuerId_.edit'
+import { Route as AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport } from './routes/_admin/admin/organizations/$accountId_.issuers.$issuerId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -80,6 +82,11 @@ const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
   getParentRoute: () => AppRoute,
+} as any)
+const CertificateUploadTokenRoute = CertificateUploadTokenRouteImport.update({
+  id: '/certificate-upload/$token',
+  path: '/certificate-upload/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   id: '/admin/',
@@ -182,6 +189,12 @@ const AppIssuersIssuerIdEditRoute = AppIssuersIssuerIdEditRouteImport.update({
   path: '/issuers/$issuerId/edit',
   getParentRoute: () => AppRoute,
 } as any)
+const AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute =
+  AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport.update({
+    id: '/admin/organizations/$accountId_/issuers/$issuerId',
+    path: '/admin/organizations/$accountId/issuers/$issuerId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -191,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
+  '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -210,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -219,6 +234,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
+  '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -238,6 +254,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
+  '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -250,6 +267,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
   '/_app/overview': typeof AppOverviewRoute
+  '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -269,6 +287,7 @@ export interface FileRoutesById {
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/_admin/admin/organizations/$accountId_/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -280,6 +299,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/two-factor'
     | '/overview'
+    | '/certificate-upload/$token'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
@@ -299,6 +319,7 @@ export interface FileRouteTypes {
     | '/admin/users/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
+    | '/admin/organizations/$accountId/issuers/$issuerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -308,6 +329,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/two-factor'
     | '/overview'
+    | '/certificate-upload/$token'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
@@ -327,6 +349,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/developers/api-keys'
     | '/developers/webhooks'
+    | '/admin/organizations/$accountId/issuers/$issuerId'
   id:
     | '__root__'
     | '/'
@@ -338,6 +361,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/two-factor'
     | '/_app/overview'
+    | '/certificate-upload/$token'
     | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
     | '/_app/documents/$documentId'
@@ -357,6 +381,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/users/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
+    | '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -368,6 +393,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   TwoFactorRoute: typeof TwoFactorRoute
+  CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -435,6 +461,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/overview'
       preLoaderRoute: typeof AppOverviewRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/certificate-upload/$token': {
+      id: '/certificate-upload/$token'
+      path: '/certificate-upload/$token'
+      fullPath: '/certificate-upload/$token'
+      preLoaderRoute: typeof CertificateUploadTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_admin/admin/': {
       id: '/_admin/admin/'
@@ -569,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIssuersIssuerIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_admin/admin/organizations/$accountId_/issuers/$issuerId': {
+      id: '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
+      path: '/admin/organizations/$accountId/issuers/$issuerId'
+      fullPath: '/admin/organizations/$accountId/issuers/$issuerId'
+      preLoaderRoute: typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -579,6 +619,7 @@ interface AdminRouteChildren {
   AdminAdminUsersUserIdRoute: typeof AdminAdminUsersUserIdRoute
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
   AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
+  AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute: typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -588,6 +629,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminUsersUserIdRoute: AdminAdminUsersUserIdRoute,
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
   AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,
+  AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute:
+    AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -635,6 +678,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   TwoFactorRoute: TwoFactorRoute,
+  CertificateUploadTokenRoute: CertificateUploadTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

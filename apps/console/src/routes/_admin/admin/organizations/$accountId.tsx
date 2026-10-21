@@ -152,7 +152,13 @@ function AccountDetail() {
                   <TableRow key={issuer.id}>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-xs">{issuerName(issuer)}</span>
+                        <Link
+                          to="/admin/organizations/$accountId/issuers/$issuerId"
+                          params={{ accountId: account.id, issuerId: issuer.id }}
+                          className="w-fit text-xs hover:underline hover:underline-offset-4"
+                        >
+                          {issuerName(issuer)}
+                        </Link>
                         <span className="text-2xs text-muted-foreground">
                           NIT {issuer.nit}-{issuer.checkDigit}
                         </span>

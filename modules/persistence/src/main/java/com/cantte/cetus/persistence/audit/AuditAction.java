@@ -25,5 +25,7 @@ public enum AuditAction {
     USER_UNBANNED,
     /** A Cetus admin started acting as a console user of the account. */
     IMPERSONATION_STARTED,
-    IMPERSONATION_ENDED
+    IMPERSONATION_ENDED,
+    /** A one-time link for the customer to upload an issuer's certificate. */
+    CERTIFICATE_UPLOAD_LINK_CREATED
 }

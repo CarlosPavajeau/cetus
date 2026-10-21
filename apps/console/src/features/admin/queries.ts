@@ -2,6 +2,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 
 import type { AuditAction } from "~/lib/api/types";
 
+import { getAdminIssuer } from "./issuers";
 import type { AccountStatus } from "./schema";
 import { getAdminAccount, listAdminAccounts, listAdminAuditLog } from "./server";
 import { getAdminUser, listAdminUsers } from "./users";
@@ -52,5 +53,13 @@ export function adminUserQuery(id: string) {
   return queryOptions({
     queryKey: [...adminKey, "users", "detail", id],
     queryFn: () => getAdminUser({ data: { id } }),
+  });
+}
+
+/** One issuer of an account; null when it does not exist. */
+export function adminIssuerQuery(accountId: string, issuerId: string) {
+  return queryOptions({
+    queryKey: [...adminKey, "accounts", "detail", accountId, "issuers", issuerId],
+    queryFn: () => getAdminIssuer({ data: { accountId, issuerId } }),
   });
 }

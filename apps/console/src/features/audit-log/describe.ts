@@ -87,5 +87,7 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `Como ${text(data.email)} hasta las ${timeFormat.format(new Date(text(data.expiresAt)))} · Motivo: ${text(data.reason)}`;
     case "IMPERSONATION_ENDED":
       return "Terminó de ver la consola como el usuario";
+    case "CERTIFICATE_UPLOAD_LINK_CREATED":
+      return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
   }
 }

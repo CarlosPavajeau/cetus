@@ -21,6 +21,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/accounts/{accountId}/issuers/{issuerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["AdminIssuerResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/issuers/{issuerId}/certificate-upload-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Upload Link */
+        post: operations["AdminIssuerResource_createUploadLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/issuers/{issuerId}/numbering-ranges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Range */
+        post: operations["AdminIssuerResource_addRange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/issuers/{issuerId}/software": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Software */
+        put: operations["AdminIssuerResource_setSoftware"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/accounts/{id}": {
         parameters: {
             query?: never;
@@ -221,6 +289,24 @@ export interface paths {
         /** Get */
         get: operations["AuditLogResource_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/certificate-uploads/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["CertificateUploadResource_get"];
+        /** Upload */
+        put: operations["CertificateUploadResource_upload"];
         post?: never;
         delete?: never;
         options?: never;
@@ -866,7 +952,7 @@ export interface components {
             createdBy: string | null;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "CREDIT_NOTE_ISSUED" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "CREDIT_NOTE_ISSUED" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -912,6 +998,11 @@ export interface components {
         CertificateRequest: {
             pkcs12Base64: string;
             password: string;
+        };
+        CertificateUploadLinkView: {
+            /** @description Shown once; only its hash is stored */
+            token: string;
+            expiresAt: components["schemas"]["OffsetDateTime"];
         };
         CertificateView: {
             subject: string;
@@ -1398,6 +1489,16 @@ export interface components {
             email: string;
             phone?: string;
         };
+        UploadLinkView: {
+            legalName: string;
+            nit: string;
+            environment: components["schemas"]["Environment"];
+            expiresAt: components["schemas"]["OffsetDateTime"];
+        };
+        UploadedCertificateView: {
+            subject: string;
+            validTo: components["schemas"]["OffsetDateTime"];
+        };
         UsageCountView: {
             environment: components["schemas"]["Environment"];
             documentType: components["schemas"]["DocumentType"];
@@ -1483,6 +1584,278 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_createUploadLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateUploadLinkView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_addRange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NumberingRangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingRangeView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_setSoftware: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SoftwareRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerDetailView"];
                 };
             };
             /** @description Bad Request */
@@ -2294,6 +2667,97 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ApiError"];
                 };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    CertificateUploadResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadLinkView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    CertificateUploadResource_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertificateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadedCertificateView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Not Found */
             404: {

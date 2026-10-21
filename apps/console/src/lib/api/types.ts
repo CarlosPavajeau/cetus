@@ -79,6 +79,8 @@ export type AdminAuditEntry = Schemas["AdminAuditEntry"];
 
 export type AdminAuditPage = Schemas["AdminAuditPage"];
 
+export type CertificateUploadLink = Schemas["UploadLinkView"];
+
 /** Runtime list of audit actions for the filter and its validator. Must list every value of the API enum. */
 export const auditActions = [
   "ACCOUNT_CREATED",
@@ -102,6 +104,7 @@ export const auditActions = [
   "USER_UNBANNED",
   "IMPERSONATION_STARTED",
   "IMPERSONATION_ENDED",
+  "CERTIFICATE_UPLOAD_LINK_CREATED",
 ] as const satisfies readonly AuditAction[];
 
 /** Actions on a person rather than an account: only the administration's log has them. */
@@ -110,6 +113,7 @@ export const userAuditActions = [
   "USER_UNBANNED",
   "IMPERSONATION_STARTED",
   "IMPERSONATION_ENDED",
+  "CERTIFICATE_UPLOAD_LINK_CREATED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.

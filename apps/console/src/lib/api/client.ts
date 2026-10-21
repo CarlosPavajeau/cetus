@@ -75,6 +75,27 @@ export const api = {
   delete: unwrapped(client.DELETE),
 };
 
+const publicClient = createClient<paths>({ baseUrl: env.CETUS_API_URL });
+
+publicClient.use({
+  onRequest({ request }) {
+    const headers = new Headers(getRequestHeaders() as HeadersInit);
+    for (const [name, value] of Object.entries(clientOriginHeaders(headers))) {
+      request.headers.set(name, value);
+    }
+    return request;
+  },
+});
+
+/**
+ * For the few console pages without a session, whose request carries its own credential (a one-time
+ * certificate upload link). Sends no token.
+ */
+export const publicApi = {
+  get: unwrapped(publicClient.GET),
+  put: unwrapped(publicClient.PUT),
+};
+
 async function authHeaders(): Promise<Record<string, string>> {
   const headers = new Headers(getRequestHeaders() as HeadersInit);
   const { token } = await auth.api.getToken({ headers });
