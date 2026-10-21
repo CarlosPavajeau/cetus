@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 
 @QuarkusTest
@@ -185,8 +186,38 @@ class InvoiceResourceTest {
             api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString())
                     .body(invoiceWithCustomer(issuerId, Map.of("legalName", legalName)))
                     .post("/v1/invoices")
-                    .then().statusCode(400);
+                    .then().statusCode(400)
+                    .body("code", equalTo("invalid_request"))
+                    .body("errors.field", contains("customer.legalName"))
+                    .body("errors.message", contains("Text cannot contain control characters or bidirectional overrides"));
         }
+    }
+
+    @Test
+    void aValueOfTheWrongTypeNamesTheFieldAsSent() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Wrong type SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+        Map<String, Object> wrongQuantity = invoice(issuerId);
+        wrongQuantity.put("lines", List.of(Map.of("itemCode", "SERV-1", "description", "Servicio",
+                "quantity", "one", "unitPrice", 100000)));
+        Map<String, Object> wrongIssuer = invoice("not-a-uuid");
+        Map<String, Object> wrongLines = invoice(issuerId);
+        wrongLines.put("lines", Map.of("itemCode", "SERV-1"));
+
+        Map<Map<String, Object>, List<String>> cases = Map.of(
+                wrongQuantity, List.of("lines[0].quantity", "must be a number"),
+                wrongIssuer, List.of("issuerId", "must be a UUID"),
+                wrongLines, List.of("lines", "must be a list"));
+        cases.forEach((invoice, error) -> api(apiKey).header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoice)
+                .post("/v1/invoices")
+                .then().statusCode(400)
+                .contentType("application/problem+json")
+                .body("code", equalTo("invalid_request"))
+                .body("errors.field", contains(error.get(0)))
+                .body("errors.message", contains(error.get(1))));
     }
 
     @Test

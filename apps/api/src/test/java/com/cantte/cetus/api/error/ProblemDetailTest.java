@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
@@ -41,5 +42,39 @@ class ProblemDetailTest {
                 .then().statusCode(404)
                 .contentType(ProblemDetail.MEDIA_TYPE)
                 .body("instance", equalTo(path));
+    }
+
+    @Test
+    void aBodyThatIsNotJsonIsAnInvalidRequest() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Syntax SAS");
+
+        for (String body : new String[] {"{\"name\": ", "hello"}) {
+            user.request().body(body).post("/console/api-keys")
+                    .then().statusCode(400)
+                    .contentType(ProblemDetail.MEDIA_TYPE)
+                    .body("code", equalTo("invalid_request"))
+                    .body("detail", equalTo("The request body is not valid JSON"));
+        }
+        user.request().body("[]").post("/console/api-keys")
+                .then().statusCode(400)
+                .contentType(ProblemDetail.MEDIA_TYPE)
+                .body("code", equalTo("invalid_request"))
+                .body("detail", equalTo("The request body must be a JSON object"));
+    }
+
+    /** Quarkus answers these with its own JSON, which echoes the value; they are field errors like any other. */
+    @Test
+    void aValueThatDoesNotBindIsAFieldError() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Enum SAS");
+
+        user.request().body("{\"name\": \"ERP\", \"environment\": \"STAGING\"}").post("/console/api-keys")
+                .then().statusCode(400)
+                .contentType(ProblemDetail.MEDIA_TYPE)
+                .body("code", equalTo("invalid_request"))
+                .body("errors.field", contains("environment"))
+                .body("errors.message", contains("must be one of: LIVE, TEST"))
+                .body("$", not(hasKey("value")));
     }
 }
