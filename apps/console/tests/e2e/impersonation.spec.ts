@@ -33,10 +33,18 @@ test("an admin sees the console as a person, without touching their credentials,
   });
   expect(changePassword.status()).toBe(403);
 
-  await open(page, "/activity");
+  // The visit is in the account's activity, and its filter finds it.
+  await open(page, "/activity?action=IMPERSONATION_STARTED");
+  await expect(
+    page.getByRole("button", { name: /Tipo de acción: Soporte entró como usuario/ }),
+  ).toBeVisible();
   const started = page.getByRole("row", { name: /Soporte entró como usuario/ });
   await expect(started).toContainText("Motivo: Caso 123: no encuentra su llave");
   await expect(started).toContainText("Soporte de Cetus");
+
+  // The banner stays in view on a long page.
+  await page.mouse.wheel(0, 5000);
+  await expect(banner).toBeInViewport();
 
   await banner.getByRole("button", { name: "Terminar" }).click();
   await page.waitForURL("**/admin/users/**");

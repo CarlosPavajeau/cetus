@@ -8,7 +8,10 @@ import { useImpersonation } from "~/features/session/useImpersonation";
 
 import { stopImpersonation } from "./impersonation";
 
-/** Always visible while a Cetus admin acts as this user, with the way back to the administration. */
+/**
+ * Always visible while a Cetus admin acts as this user (it stays on top while the page scrolls), with the
+ * way back to the administration.
+ */
 export function ImpersonationBanner() {
   const impersonation = useImpersonation();
   const stop = useMutation({
@@ -23,7 +26,7 @@ export function ImpersonationBanner() {
   return (
     <aside
       aria-label="Sesión de soporte"
-      className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 bg-amber-400 px-4 py-2 text-xs text-amber-950"
+      className="sticky top-0 z-20 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 bg-amber-400 px-4 py-2 text-xs text-amber-950"
     >
       <span className="flex items-center gap-2">
         <EyeIcon className="size-3.5" aria-hidden />
