@@ -1,6 +1,6 @@
 package com.cantte.cetus.api.auth;
 
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.ApiKeyEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -69,9 +69,9 @@ public class ApiKeyFilter implements ContainerRequestFilter {
         Optional<Duration> wait = rateLimiter.acquire(key.id);
         if (wait.isPresent()) {
             long seconds = Math.max(1, (long) Math.ceil(wait.get().toMillis() / 1000.0));
-            request.abortWith(Response.status(429)
+            request.abortWith(ProblemDetail.builder(429, "rate_limited",
+                            "Too many requests for this API key; retry in " + seconds + " s")
                     .header("Retry-After", seconds)
-                    .entity(new ApiError("rate_limited", "Too many requests for this API key; retry in " + seconds + " s", null))
                     .build());
             return;
         }
@@ -83,9 +83,7 @@ public class ApiKeyFilter implements ContainerRequestFilter {
     }
 
     private static void abort(ContainerRequestContext request, Response.Status status, String code, String message) {
-        request.abortWith(Response.status(status)
-                .entity(new ApiError(code, message, null))
-                .build());
+        request.abortWith(ProblemDetail.response(status.getStatusCode(), code, message));
     }
 
     private record Resolved(ApiKeyEntity key, String accountStatus) {

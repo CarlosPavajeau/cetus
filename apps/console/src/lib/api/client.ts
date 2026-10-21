@@ -4,13 +4,17 @@ import createClient from "openapi-fetch";
 
 import { auth } from "../auth/server";
 import { env } from "../env";
-import type { paths } from "./schema";
+import type { components, paths } from "./schema";
 
+type ProblemDetail = components["schemas"]["ProblemDetail"];
+
+/** An RFC 9457 problem detail from the API; {@link code} is the stable value to branch on. */
 export class CetusApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly errors?: ProblemDetail["errors"],
   ) {
     super(message);
   }
@@ -43,14 +47,12 @@ function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
   if (!response.ok) {
     const body = (
       typeof result.error === "object" && result.error !== null ? result.error : {}
-    ) as {
-      code?: string;
-      message?: string;
-    };
+    ) as Partial<ProblemDetail>;
     throw new CetusApiError(
       response.status,
       body.code ?? "error",
-      body.message ?? response.statusText,
+      body.detail ?? body.title ?? response.statusText,
+      body.errors,
     );
   }
   return result.data as SuccessData<R>;

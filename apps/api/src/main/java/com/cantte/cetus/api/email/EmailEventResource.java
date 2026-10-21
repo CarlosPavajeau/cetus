@@ -1,6 +1,6 @@
 package com.cantte.cetus.api.email;
 
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.email.ResendWebhookVerifier;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity.Status;
@@ -126,6 +126,6 @@ public class EmailEventResource {
     }
 
     private static Response error(Response.Status status, String code, String message) {
-        return Response.status(status).type(MediaType.APPLICATION_JSON).entity(new ApiError(code, message, null)).build();
+        return ProblemDetail.response(status.getStatusCode(), code, message);
     }
 }

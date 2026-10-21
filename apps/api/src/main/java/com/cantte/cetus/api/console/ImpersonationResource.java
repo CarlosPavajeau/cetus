@@ -1,7 +1,7 @@
 package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
@@ -26,7 +26,7 @@ import java.util.Map;
 @Path("/console/impersonation/end")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class ImpersonationResource {
 
     @Inject

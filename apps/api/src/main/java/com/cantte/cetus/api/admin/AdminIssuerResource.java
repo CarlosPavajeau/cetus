@@ -5,7 +5,7 @@ import com.cantte.cetus.api.auth.ApiKeys;
 import com.cantte.cetus.api.console.ConsoleContext;
 import com.cantte.cetus.api.console.IssuerOnboardingService;
 import com.cantte.cetus.api.console.IssuerViews;
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
@@ -43,13 +43,13 @@ import java.util.UUID;
 @Path("/admin/accounts/{accountId}/issuers/{issuerId}")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
 public class AdminIssuerResource {
 

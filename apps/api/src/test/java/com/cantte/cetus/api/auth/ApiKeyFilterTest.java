@@ -13,6 +13,7 @@ import java.util.UUID;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 
 @QuarkusTest
 class ApiKeyFilterTest {
@@ -22,6 +23,11 @@ class ApiKeyFilterTest {
         given().header("Authorization", "Bearer cetus_test_unknown")
                 .get("/v1/invoices/" + UUID.randomUUID())
                 .then().statusCode(401)
+                .contentType("application/problem+json")
+                .body("type", equalTo("about:blank"))
+                .body("title", equalTo("Unauthorized"))
+                .body("status", equalTo(401))
+                .body("instance", startsWith("/v1/invoices/"))
                 .body("code", equalTo("unauthorized"));
     }
 

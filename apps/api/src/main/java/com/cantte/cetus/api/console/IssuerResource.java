@@ -1,7 +1,7 @@
 package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
-import com.cantte.cetus.api.error.ApiError;
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import jakarta.inject.Inject;
@@ -26,11 +26,11 @@ import java.util.UUID;
 @Path("/console/issuers")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiError.class)))
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class IssuerResource {
 
     @Inject
