@@ -17,5 +17,15 @@ public enum AuditAction {
     WEBHOOK_ENDPOINT_ENABLED,
     WEBHOOK_DELIVERY_RETRIED,
     /** A credit note issued from the console; those issued through the API are not audited. */
-    CREDIT_NOTE_ISSUED
+    CREDIT_NOTE_ISSUED,
+    ACCOUNT_SUSPENDED,
+    ACCOUNT_REACTIVATED,
+    /** A person banned from the console by the Cetus team; recorded without an account. */
+    USER_BANNED,
+    USER_UNBANNED,
+    /** A Cetus admin started acting as a console user of the account. */
+    IMPERSONATION_STARTED,
+    IMPERSONATION_ENDED,
+    /** A one-time link for the customer to upload an issuer's certificate. */
+    CERTIFICATE_UPLOAD_LINK_CREATED
 }

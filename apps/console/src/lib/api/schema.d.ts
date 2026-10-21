@@ -4,6 +4,210 @@
  */
 
 export interface paths {
+    "/admin/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["AdminAccountResource_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/issuers/{issuerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["AdminIssuerResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/issuers/{issuerId}/certificate-upload-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Upload Link */
+        post: operations["AdminIssuerResource_createUploadLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/issuers/{issuerId}/numbering-ranges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Range */
+        post: operations["AdminIssuerResource_addRange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/issuers/{issuerId}/software": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Software */
+        put: operations["AdminIssuerResource_setSoftware"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["AdminAccountResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{id}/reactivation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reactivate */
+        post: operations["AdminAccountResource_reactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{id}/suspension": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend */
+        post: operations["AdminAccountResource_suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["AdminAuditLogResource_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/impersonations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start */
+        post: operations["AdminImpersonationResource_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["AdminSessionResource_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{userId}/ban-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record */
+        post: operations["AdminUserResource_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/account": {
         parameters: {
             query?: never;
@@ -92,6 +296,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/certificate-uploads/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["CertificateUploadResource_get"];
+        /** Upload */
+        put: operations["CertificateUploadResource_upload"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/documents": {
         parameters: {
             query?: never;
@@ -154,6 +376,23 @@ export interface paths {
         get: operations["DocumentResource_file"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/impersonation/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End */
+        post: operations["ImpersonationResource_end"];
         delete?: never;
         options?: never;
         head?: never;
@@ -577,14 +816,62 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountDetailView: {
+            id: components["schemas"]["UUID"];
+            organizationId: string;
+            name: string;
+            status: string;
+            plan: string;
+            statusReason: string | null;
+            statusChangedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            /** @description Better Auth user id */
+            statusChangedBy: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            issuers: components["schemas"]["IssuerView"][];
+            usageThisMonth: components["schemas"]["UsageCountView"][];
+            recentFailures: components["schemas"]["FailedDocumentView"][];
+        };
+        AccountPage: {
+            items: components["schemas"]["AccountSummaryView"][];
+            nextCursor: components["schemas"]["UUID"] | null;
+        };
+        AccountSummaryView: {
+            id: components["schemas"]["UUID"];
+            /** @description Better Auth organization id */
+            organizationId: string;
+            name: string;
+            status: string;
+            plan: string;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            /** Format: int64 */
+            issuers: number;
+            /**
+             * Format: int64
+             * @description Production issuers already enabled at the DIAN
+             */
+            liveIssuersEnabled: number;
+            /**
+             * Format: int64
+             * @description Production documents created this month (Colombia time)
+             */
+            liveDocumentsThisMonth: number;
+            /**
+             * Format: int64
+             * @description Documents rejected or failed in the last 7 days
+             */
+            recentFailures: number;
+            lastFailureAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
         AccountView: {
             id: components["schemas"]["UUID"];
             name: string;
             status: string;
             plan: string;
+            /** @description Why the account is suspended, when it is */
+            statusReason: string | null;
         };
         /** @enum {string} */
-        ActorType: "USER" | "API_KEY" | "SYSTEM";
+        ActorType: "USER" | "API_KEY" | "PLATFORM" | "SYSTEM";
         Address: {
             municipalityCode?: string;
             cityName?: string;
@@ -604,6 +891,32 @@ export interface components {
             line: string;
             countryCode?: string;
             countryName?: string;
+        };
+        AdminAuditEntry: {
+            /** Format: int64 */
+            id: number;
+            accountId: components["schemas"]["UUID"] | null;
+            accountName: string | null;
+            action: components["schemas"]["AuditAction"];
+            actorType: components["schemas"]["ActorType"];
+            actorId: string | null;
+            impersonatedBy: string | null;
+            resourceType: string | null;
+            resourceId: components["schemas"]["UUID"] | null;
+            data: {
+                [key: string]: components["schemas"]["AuditValue"];
+            };
+            ipAddress: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
+        AdminAuditPage: {
+            items: components["schemas"]["AdminAuditEntry"][];
+            /** Format: int64 */
+            nextCursor: number | null;
+        };
+        AdminSessionView: {
+            userId?: string;
+            roles?: string[];
         };
         ApiError: {
             code: string;
@@ -639,13 +952,15 @@ export interface components {
             createdBy: string | null;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "CREDIT_NOTE_ISSUED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "CREDIT_NOTE_ISSUED" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
             action: components["schemas"]["AuditAction"];
             actorType: components["schemas"]["ActorType"];
             actorId: string | null;
+            /** @description Better Auth id of the Cetus admin who acted as this user, if one did */
+            impersonatedBy: string | null;
             resourceType: string | null;
             resourceId: components["schemas"]["UUID"] | null;
             data: {
@@ -660,6 +975,15 @@ export interface components {
             nextCursor: number | null;
         };
         AuditValue: string | number | boolean | null;
+        BanEventRequest: {
+            type: components["schemas"]["BanEventType"];
+            email: string;
+            reason: string;
+            /** @description When a ban ends on its own; null for an indefinite ban */
+            expiresAt?: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
+        /** @enum {string} */
+        BanEventType: "BANNED" | "UNBANNED";
         BootstrapRequest: {
             name: string;
         };
@@ -674,6 +998,11 @@ export interface components {
         CertificateRequest: {
             pkcs12Base64: string;
             password: string;
+        };
+        CertificateUploadLinkView: {
+            /** @description Shown once; only its hash is stored */
+            token: string;
+            expiresAt: components["schemas"]["OffsetDateTime"];
         };
         CertificateView: {
             subject: string;
@@ -807,7 +1136,7 @@ export interface components {
             id: components["schemas"]["UUID"];
             channel: components["schemas"]["Channel"];
             recipient: string | null;
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status1"];
             error: string | null;
             sentAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             lastEventAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
@@ -945,8 +1274,28 @@ export interface components {
         DocumentType: "INVOICE" | "CREDIT_NOTE" | "DEBIT_NOTE";
         /** @enum {string} */
         Environment: "LIVE" | "TEST";
+        FailedDocumentView: {
+            id: components["schemas"]["UUID"];
+            issuerId: components["schemas"]["UUID"];
+            environment: components["schemas"]["Environment"];
+            documentType: components["schemas"]["DocumentType"];
+            /** @description Prefix and consecutive, e.g. SETP990000001 */
+            number: string;
+            status: string;
+            dianStatusCode: string | null;
+            dianStatusMessage: string | null;
+            dianErrors: string[];
+            updatedAt: components["schemas"]["OffsetDateTime"];
+        };
         /** @enum {string} */
         IdentificationType: "CIVIL_REGISTRY" | "IDENTITY_CARD" | "CITIZEN_ID" | "FOREIGNER_CARD" | "FOREIGNER_ID" | "NIT" | "PASSPORT" | "FOREIGN_DOCUMENT" | "PEP" | "FOREIGN_NIT" | "NUIP";
+        ImpersonationRequest: {
+            userId: string;
+            email: string;
+            accountId: components["schemas"]["UUID"];
+            reason: string;
+            expiresAt: components["schemas"]["OffsetDateTime"];
+        };
         InvoiceRef: {
             id: components["schemas"]["UUID"];
             number: string;
@@ -988,7 +1337,7 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status"];
             personType: components["schemas"]["PersonType"];
             taxLevelCodes: string[];
             responsibleForIva: boolean;
@@ -1007,7 +1356,7 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status"];
         };
         Line: {
             itemCode: string;
@@ -1078,7 +1427,7 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status"];
             /** @description Whether its status lets it issue with this key */
             readyToIssue: boolean;
         };
@@ -1092,13 +1441,16 @@ export interface components {
             testSetId: string | null;
         };
         /** @enum {string} */
-        Status: "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "SKIPPED" | "FAILED";
+        Status: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
         /** @enum {string} */
-        Status1: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
+        Status1: "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "SKIPPED" | "FAILED";
         /** @enum {string} */
         Status2: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
         /** @enum {string} */
         Status3: "ACTIVE" | "DISABLED";
+        StatusChangeRequest: {
+            reason: string;
+        };
         /** @enum {string} */
         TaxType: "IVA" | "ICA" | "INC";
         TestSetCountView: {
@@ -1136,6 +1488,23 @@ export interface components {
             address: components["schemas"]["AddressInput"];
             email: string;
             phone?: string;
+        };
+        UploadLinkView: {
+            legalName: string;
+            nit: string;
+            environment: components["schemas"]["Environment"];
+            expiresAt: components["schemas"]["OffsetDateTime"];
+        };
+        UploadedCertificateView: {
+            subject: string;
+            validTo: components["schemas"]["OffsetDateTime"];
+        };
+        UsageCountView: {
+            environment: components["schemas"]["Environment"];
+            documentType: components["schemas"]["DocumentType"];
+            status: string;
+            /** Format: int64 */
+            count: number;
         };
         /** @enum {string} */
         VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";
@@ -1194,6 +1563,739 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    AdminAccountResource_list: {
+        parameters: {
+            query?: {
+                before?: components["schemas"]["UUID"];
+                limit?: number;
+                organizationId?: string[];
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_createUploadLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateUploadLinkView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_addRange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NumberingRangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingRangeView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminIssuerResource_setSoftware: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                issuerId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SoftwareRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminAccountResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminAccountResource_reactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminAccountResource_suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminAuditLogResource_list: {
+        parameters: {
+            query?: {
+                accountId?: components["schemas"]["UUID"];
+                action?: string;
+                actorId?: string;
+                before?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAuditPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminImpersonationResource_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImpersonationRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    AdminSessionResource_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSessionView"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Allowed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminUserResource_record: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BanEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     AccountResource_get: {
         parameters: {
             query?: never;
@@ -1586,6 +2688,97 @@ export interface operations {
             };
         };
     };
+    CertificateUploadResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadLinkView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    CertificateUploadResource_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertificateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadedCertificateView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     DocumentResource_list: {
         parameters: {
             query?: {
@@ -1788,6 +2981,33 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    ImpersonationResource_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recorded */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

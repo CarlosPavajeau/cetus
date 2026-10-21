@@ -84,6 +84,9 @@ public class AuditLogResource {
             @Schema(required = true) AuditAction action,
             @Schema(required = true) Actor.ActorType actorType,
             @Schema(required = true, nullable = true) String actorId,
+            @Schema(required = true, nullable = true,
+                    description = "Better Auth id of the Cetus admin who acted as this user, if one did")
+            String impersonatedBy,
             @Schema(required = true, nullable = true) String resourceType,
             @Schema(required = true, nullable = true) UUID resourceId,
             @Schema(required = true, additionalProperties = AuditValue.class) Map<String, Object> data,
@@ -91,7 +94,7 @@ public class AuditLogResource {
             @Schema(required = true) OffsetDateTime createdAt) {
         static AuditEntry from(AuditEntryView entry) {
             return new AuditEntry(entry.id(), entry.action(), entry.actorType(), entry.actorId(),
-                    entry.resourceType(), entry.resourceId(), entry.data(), entry.ipAddress(), entry.createdAt());
+                    entry.impersonatedBy(), entry.resourceType(), entry.resourceId(), entry.data(), entry.ipAddress(), entry.createdAt());
         }
     }
 
@@ -100,6 +103,6 @@ public class AuditLogResource {
      * annotations cannot express that inside {@code oneOf}, so {@link OpenApiFilter} adds it.
      */
     @Schema(name = "AuditValue", oneOf = {String.class, Number.class, Boolean.class})
-    interface AuditValue {
+    public interface AuditValue {
     }
 }

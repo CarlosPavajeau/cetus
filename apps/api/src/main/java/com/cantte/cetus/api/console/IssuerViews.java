@@ -105,7 +105,7 @@ public final class IssuerViews {
             @Schema(required = true) String legalName,
             @Schema(required = true, nullable = true) String tradeName,
             @Schema(required = true) IssuerEntity.Status status) {
-        static IssuerView from(IssuerEntity issuer) {
+        public static IssuerView from(IssuerEntity issuer) {
             return new IssuerView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit, issuer.legalName,
                     issuer.tradeName, issuer.status);
         }
@@ -133,7 +133,7 @@ public final class IssuerViews {
             @Schema(required = true, nullable = true) CertificateView certificate,
             @Schema(required = true) List<NumberingRangeView> ranges,
             @Schema(required = true, nullable = true) TestSetProgressView testSet) {
-        static IssuerDetailView from(IssuerEntity issuer) {
+        public static IssuerDetailView from(IssuerEntity issuer) {
             List<String> taxLevelCodes = issuer.taxLevelCodes == null || issuer.taxLevelCodes.isBlank()
                     ? List.of() : List.of(issuer.taxLevelCodes.split(";"));
             SoftwareCredentialEntity software = SoftwareCredentialEntity.findActive(issuer.id).orElse(null);
@@ -234,7 +234,7 @@ public final class IssuerViews {
             @Schema(required = true, nullable = true) OffsetDateTime verifiedAt,
             @Schema(required = true, nullable = true, description = "What differs from the DIAN, or why it could not be checked")
             String verificationError) {
-        static NumberingRangeView from(NumberingRangeEntity range) {
+        public static NumberingRangeView from(NumberingRangeEntity range) {
             return new NumberingRangeView(range.id, range.documentType, range.prefix, range.rangeFrom,
                     range.rangeTo, range.nextNumber, range.validTo, range.status, range.verificationStatus,
                     range.verifiedAt, range.verificationError);

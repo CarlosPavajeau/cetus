@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 
+import { platformRole } from "~/lib/auth/permissions";
 import { auth } from "~/lib/auth/server";
 
 /** Current session (user + active organization) or null. Used by route guards. */
@@ -11,7 +12,15 @@ export const getSession = createServerFn({ method: "GET" }).handler(async () => 
     return null;
   }
   return {
-    user: { id: session.user.id, name: session.user.name, email: session.user.email },
+    user: {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      platformRole: platformRole(session.user.role),
+      twoFactorEnabled: Boolean(session.user.twoFactorEnabled),
+    },
     activeOrganizationId: session.session.activeOrganizationId ?? null,
+    impersonatedBy: session.session.impersonatedBy ?? null,
+    expiresAt: new Date(session.session.expiresAt).toISOString(),
   };
 });

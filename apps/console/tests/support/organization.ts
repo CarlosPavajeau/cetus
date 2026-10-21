@@ -10,6 +10,10 @@ export type TestOrganization = {
   token: () => Promise<string>;
   /** Calls the Java API as this organization. */
   api: (path: string, init?: RequestInit) => Promise<Response>;
+  /** Calls Better Auth (`/api/auth/*`) with this user's session; throws unless it answers 2xx. */
+  auth: <T = unknown>(path: string, body?: unknown) => Promise<T>;
+  /** Like `auth`, but returns the raw response whatever its status. */
+  authResponse: (path: string, body?: unknown) => Promise<Response>;
 };
 
 /**
@@ -22,7 +26,7 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   const password = `clave-${id}-segura`;
   const jar = new Map<string, string>();
 
-  async function auth(path: string, body?: unknown) {
+  async function authResponse(path: string, body?: unknown) {
     const response = await fetch(`${consoleUrl}/api/auth${path}`, {
       method: body === undefined ? "GET" : "POST",
       headers: {
@@ -38,6 +42,11 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
       const separator = pair.indexOf("=");
       jar.set(pair.slice(0, separator), pair.slice(separator + 1));
     }
+    return response;
+  }
+
+  async function auth<T = unknown>(path: string, body?: unknown): Promise<T> {
+    const response = await authResponse(path, body);
     if (!response.ok) {
       throw new Error(`${path} answered ${response.status}: ${await response.text()}`);
     }
@@ -45,13 +54,13 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   }
 
   await auth("/sign-up/email", { name: "Persona de pruebas", email, password });
-  const organization = await auth("/organization/create", {
+  const organization = await auth<{ id: string }>("/organization/create", {
     name,
     slug: `${name}-${id}`.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"),
   });
   await auth("/organization/set-active", { organizationId: organization.id });
 
-  const token = async () => ((await auth("/token")) as { token: string }).token;
+  const token = async () => (await auth<{ token: string }>("/token")).token;
   const api = async (path: string, init: RequestInit = {}) => {
     const headers = new Headers({
       "Content-Type": "application/json",
@@ -69,8 +78,13 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   return {
     email,
     password,
-    cookies: [...jar].map(([cookieName, value]) => ({ name: cookieName, value })),
+    // A getter: Better Auth rotates the session cookie on some calls (e.g. verifying 2FA).
+    get cookies() {
+      return [...jar].map(([cookieName, value]) => ({ name: cookieName, value }));
+    },
     token,
     api,
+    auth,
+    authResponse,
   };
 }

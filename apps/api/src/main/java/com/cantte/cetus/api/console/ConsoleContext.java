@@ -5,7 +5,10 @@ import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.json.JsonString;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+
+import java.util.Optional;
 
 /**
  * Identity of a console request. The JWT is minted by Better Auth in the console server;
@@ -21,9 +24,24 @@ public class ConsoleContext {
         return jwt.getSubject();
     }
 
+    /** The Cetus admin acting as this user, while an impersonation session lasts. */
+    public Optional<String> impersonatedBy() {
+        // A JSON null may come back as a JsonValue rather than null: only a non-blank string counts.
+        Object admin = jwt.getClaim("impersonatedBy");
+        if (admin instanceof JsonString json) {
+            admin = json.getString();
+        }
+        return admin instanceof String id && !id.isBlank() ? Optional.of(id) : Optional.empty();
+    }
+
     /** The signed-in console user as the actor of an audited action. */
     public Actor actor() {
-        return new Actor(Actor.ActorType.USER, jwt.getSubject());
+        return new Actor(Actor.ActorType.USER, jwt.getSubject(), impersonatedBy().orElse(null));
+    }
+
+    /** A member of the Cetus team acting from the administration (the caller holds a platform role). */
+    public Actor platformActor() {
+        return new Actor(Actor.ActorType.PLATFORM, jwt.getSubject());
     }
 
     public String organizationId() {

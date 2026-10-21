@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Link,
   Outlet,
@@ -17,9 +17,12 @@ import {
   KeyRoundIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  ShieldCheckIcon,
+  ShieldIcon,
   WebhookIcon,
 } from "lucide-react";
 
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -44,6 +47,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
+import { accountQuery } from "~/features/account/queries";
+import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { requireSession } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
@@ -78,6 +83,9 @@ function AppLayout() {
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
   const queryClient = useQueryClient();
+  // Not suspense: the layout must render even if the account cannot be read.
+  const { data: account } = useQuery(accountQuery);
+  const isStaff = Boolean(session.user.platformRole) && !session.impersonatedBy;
   const current = navigation.find((item) => matchRoute({ to: item.to, fuzzy: true }));
   // A detail page names what it shows by returning { crumb } from its loader.
   const crumb = useMatches({
@@ -123,6 +131,23 @@ function AppLayout() {
         <SidebarFooter>
           <p className="truncate px-2 text-xs text-muted-foreground">{session.user.email}</p>
           <SidebarMenu>
+            {isStaff && (
+              <SidebarMenuItem>
+                <SidebarMenuButton render={<Link to="/admin/organizations" />}>
+                  <ShieldCheckIcon />
+                  <span>Administración</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to="/settings/security" />}
+                isActive={Boolean(matchRoute({ to: "/settings/security" }))}
+              >
+                <ShieldIcon />
+                <span>Seguridad</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton onClick={signOut}>
                 <LogOutIcon />
@@ -133,6 +158,7 @@ function AppLayout() {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
+        <ImpersonationBanner />
         <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-10">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
@@ -181,6 +207,19 @@ function AppLayout() {
           </div>
         </header>
         <div className="flex w-full flex-1 flex-col gap-7 p-4 md:px-10 md:pt-9.5 md:pb-6">
+          {account && account.status !== "ACTIVE" && (
+            <Alert variant="destructive">
+              <AlertTitle>
+                Tu cuenta está {account.status === "CLOSED" ? "cerrada" : "suspendida"}
+              </AlertTitle>
+              <AlertDescription>
+                Puedes consultar tus documentos, pero no hacer cambios, y tus llaves de API no
+                funcionan.
+                {account.statusReason && ` Motivo: ${account.statusReason}.`} Escríbenos a soporte
+                si necesitas ayuda.
+              </AlertDescription>
+            </Alert>
+          )}
           <Outlet />
         </div>
       </SidebarInset>

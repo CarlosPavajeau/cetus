@@ -15,7 +15,7 @@ import { FieldRow, FieldSection, StepGuide, StepLayout } from "./StepLayout";
  * The numbering the DIAN assigns to every habilitación test set. Only the technical key changes
  * from one software to another, so it is the one value left for the person to copy.
  */
-const habilitacion: NumberingValues = {
+export const habilitacionRange: NumberingValues = {
   resolutionNumber: "18760000001",
   resolutionDate: "2019-01-19",
   prefix: "SETP",
@@ -27,7 +27,7 @@ const habilitacion: NumberingValues = {
 };
 
 /** Production numbering is the issuer's own resolution: nothing comes filled in. */
-const empty: NumberingValues = {
+export const emptyRange: NumberingValues = {
   resolutionNumber: "",
   resolutionDate: "",
   prefix: "",
@@ -51,7 +51,7 @@ export function NumberingStep({
   const add = useMutation({ mutationFn: addNumberingRange });
   const form = useForm({
     resolver: arktypeResolver(numberingSchema),
-    defaultValues: issuer.environment === "TEST" ? habilitacion : empty,
+    defaultValues: issuer.environment === "TEST" ? habilitacionRange : emptyRange,
   });
   const range = useWatch({ control: form.control });
   const { isSubmitting, errors } = form.formState;

@@ -12,6 +12,7 @@ import {
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
 import { Button } from "~/components/ui/button";
+import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
 import { requireSession } from "~/features/session/guard";
 import { CertificateStep } from "~/features/setup/CertificateStep";
@@ -78,7 +79,12 @@ function Setup() {
     search.issuerId ??
     (search.new ? undefined : issuers?.find((issuer) => issuer.status === "ONBOARDING")?.id);
 
-  return issuerId ? <ResumedSetup issuerId={issuerId} /> : <SetupPage issuer={null} />;
+  return (
+    <>
+      <ImpersonationBanner />
+      {issuerId ? <ResumedSetup issuerId={issuerId} /> : <SetupPage issuer={null} />}
+    </>
+  );
 }
 
 function ResumedSetup({ issuerId }: { issuerId: string }) {

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * /console/** (the console's BFF) and /q/** (health, OpenAPI) are only served to private hosts: Railway's
+ * /console/** and /admin/** (the console's BFF) and /q/** (health, OpenAPI) are only served to private hosts: Railway's
  * private network (*.railway.internal), localhost and Railway's health check. Through the public domain
  * they answer 404, so they do not depend on a proxy rule. Cloudflare and Railway's edge route by Host, so
  * a request cannot reach the public domain carrying a private Host.
@@ -20,7 +20,7 @@ import java.util.Locale;
 @ApplicationScoped
 public class PrivatePaths {
 
-    private static final List<String> PRIVATE_PREFIXES = List.of("/console/", "/q/");
+    private static final List<String> PRIVATE_PREFIXES = List.of("/console/", "/admin/", "/q/");
     private static final byte[] NOT_FOUND = "{\"code\":\"not_found\",\"message\":\"Not found\",\"details\":null}".getBytes(StandardCharsets.UTF_8);
 
     @ConfigProperty(name = "cetus.private-hosts")

@@ -76,6 +76,7 @@ import { apiKeysQuery } from "~/features/api-keys/queries";
 import { RevokeApiKey, useInvalidateApiKeys } from "~/features/api-keys/RevokeApiKey";
 import { createApiKeySchema } from "~/features/api-keys/schema";
 import { createApiKey } from "~/features/api-keys/server";
+import { useImpersonation } from "~/features/session/useImpersonation";
 import type { ApiKey, Environment } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
@@ -340,7 +341,19 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
   );
 }
 
+/** Creating keys stays with the customer, also while the Cetus team acts as them. */
 function CreateApiKey() {
+  return useImpersonation() ? (
+    <Button disabled title="No disponible mientras ves la consola como otra persona">
+      <PlusIcon data-icon="inline-start" />
+      Crear llave
+    </Button>
+  ) : (
+    <CreateApiKeyDialog />
+  );
+}
+
+function CreateApiKeyDialog() {
   const [open, setOpen] = useState(false);
   const invalidateApiKeys = useInvalidateApiKeys();
   const create = useMutation({

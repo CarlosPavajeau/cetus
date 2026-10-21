@@ -23,3 +23,27 @@ export const signUpSchema = type({
     ? true
     : ctx.reject({ path: ["confirmPassword"], message: "Las contraseñas no coinciden." }),
 );
+
+const trustDevice = type("boolean");
+
+export const totpCodeSchema = type({
+  code: type("string.trim").to(
+    type(/^\d{6}$/).configure({ message: "El código tiene 6 dígitos." }),
+  ),
+  trustDevice,
+});
+
+export const backupCodeSchema = type({
+  code: required("Escribe un código de respaldo."),
+  trustDevice,
+});
+
+export const enableTwoFactorSchema = type({
+  password: type("string > 0").configure({ message: "Ingresa tu contraseña." }),
+});
+
+export const verifyTotpSchema = type({
+  code: type("string.trim").to(
+    type(/^\d{6}$/).configure({ message: "El código tiene 6 dígitos." }),
+  ),
+});

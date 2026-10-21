@@ -10,28 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
+import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
+import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
+import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
 import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/index'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
+import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
+import { Route as AdminAdminOrganizationsAccountIdRouteImport } from './routes/_admin/admin/organizations/$accountId'
+import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
+import { Route as AdminAdminUsersUserIdRouteImport } from './routes/_admin/admin/users/$userId'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
 import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
 import { Route as AppDevelopersWebhooksEndpointIdRouteImport } from './routes/_app/developers/webhooks/$endpointId'
 import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuers/$issuerId_.edit'
+import { Route as AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport } from './routes/_admin/admin/organizations/$accountId_.issuers.$issuerId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -58,10 +73,30 @@ const SignUpRoute = SignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TwoFactorRoute = TwoFactorRouteImport.update({
+  id: '/two-factor',
+  path: '/two-factor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
   getParentRoute: () => AppRoute,
+} as any)
+const CertificateUploadTokenRoute = CertificateUploadTokenRouteImport.update({
+  id: '/certificate-upload/$token',
+  path: '/certificate-upload/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminAuditLogRoute = AdminAdminAuditLogRouteImport.update({
+  id: '/admin/audit-log',
+  path: '/admin/audit-log',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AppActivityIndexRoute = AppActivityIndexRouteImport.update({
   id: '/activity/',
@@ -93,10 +128,37 @@ const AppIssuersIssuerIdRoute = AppIssuersIssuerIdRouteImport.update({
   path: '/issuers/$issuerId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
+  id: '/settings/security',
+  path: '/settings/security',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAdminOrganizationsIndexRoute =
+  AdminAdminOrganizationsIndexRouteImport.update({
+    id: '/admin/organizations/',
+    path: '/admin/organizations/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminOrganizationsAccountIdRoute =
+  AdminAdminOrganizationsAccountIdRouteImport.update({
+    id: '/admin/organizations/$accountId',
+    path: '/admin/organizations/$accountId',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminUsersIndexRoute = AdminAdminUsersIndexRouteImport.update({
+  id: '/admin/users/',
+  path: '/admin/users/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminUsersUserIdRoute = AdminAdminUsersUserIdRouteImport.update({
+  id: '/admin/users/$userId',
+  path: '/admin/users/$userId',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AppDevelopersApiKeysIndexRoute =
   AppDevelopersApiKeysIndexRouteImport.update({
@@ -127,6 +189,12 @@ const AppIssuersIssuerIdEditRoute = AppIssuersIssuerIdEditRouteImport.update({
   path: '/issuers/$issuerId/edit',
   getParentRoute: () => AppRoute,
 } as any)
+const AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute =
+  AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport.update({
+    id: '/admin/organizations/$accountId_/issuers/$issuerId',
+    path: '/admin/organizations/$accountId/issuers/$issuerId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -134,19 +202,29 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
+  '/certificate-upload/$token': typeof CertificateUploadTokenRoute
+  '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/admin/': typeof AdminAdminIndexRoute
   '/activity/': typeof AppActivityIndexRoute
   '/documents/': typeof AppDocumentsIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
+  '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
+  '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -154,41 +232,62 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
+  '/certificate-upload/$token': typeof CertificateUploadTokenRoute
+  '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/admin': typeof AdminAdminIndexRoute
   '/activity': typeof AppActivityIndexRoute
   '/documents': typeof AppDocumentsIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
+  '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
+  '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/users': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
+  '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_admin': typeof AdminRouteWithChildren
   '/_app': typeof AppRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/two-factor': typeof TwoFactorRoute
   '/_app/overview': typeof AppOverviewRoute
+  '/certificate-upload/$token': typeof CertificateUploadTokenRoute
+  '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_app/activity/': typeof AppActivityIndexRoute
   '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
+  '/_admin/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/_admin/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/_app/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
+  '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/_admin/admin/organizations/$accountId_/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -198,19 +297,29 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/overview'
+    | '/certificate-upload/$token'
+    | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
     | '/issuers/$issuerId'
+    | '/settings/security'
     | '/api/auth/$'
+    | '/admin/'
     | '/activity/'
     | '/documents/'
     | '/issuers/'
+    | '/admin/organizations/$accountId'
+    | '/admin/users/$userId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
+    | '/admin/organizations/'
+    | '/admin/users/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
+    | '/admin/organizations/$accountId/issuers/$issuerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -218,49 +327,73 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/overview'
+    | '/certificate-upload/$token'
+    | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
     | '/issuers/$issuerId'
+    | '/settings/security'
     | '/api/auth/$'
+    | '/admin'
     | '/activity'
     | '/documents'
     | '/issuers'
+    | '/admin/organizations/$accountId'
+    | '/admin/users/$userId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
+    | '/admin/organizations'
+    | '/admin/users'
     | '/developers/api-keys'
     | '/developers/webhooks'
+    | '/admin/organizations/$accountId/issuers/$issuerId'
   id:
     | '__root__'
     | '/'
+    | '/_admin'
     | '/_app'
     | '/forgot-password'
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/_app/overview'
+    | '/certificate-upload/$token'
+    | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
     | '/_app/documents/$documentId'
     | '/_app/issuers/$issuerId'
+    | '/_app/settings/security'
     | '/api/auth/$'
+    | '/_admin/admin/'
     | '/_app/activity/'
     | '/_app/documents/'
     | '/_app/issuers/'
+    | '/_admin/admin/organizations/$accountId'
+    | '/_admin/admin/users/$userId'
     | '/_app/developers/api-keys/$keyId'
     | '/_app/developers/webhooks/$endpointId'
     | '/_app/issuers/$issuerId_/edit'
+    | '/_admin/admin/organizations/'
+    | '/_admin/admin/users/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
+    | '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   SetupRoute: typeof SetupRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  TwoFactorRoute: typeof TwoFactorRoute
+  CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -271,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -308,12 +448,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/two-factor': {
+      id: '/two-factor'
+      path: '/two-factor'
+      fullPath: '/two-factor'
+      preLoaderRoute: typeof TwoFactorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/overview': {
       id: '/_app/overview'
       path: '/overview'
       fullPath: '/overview'
       preLoaderRoute: typeof AppOverviewRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/certificate-upload/$token': {
+      id: '/certificate-upload/$token'
+      path: '/certificate-upload/$token'
+      fullPath: '/certificate-upload/$token'
+      preLoaderRoute: typeof CertificateUploadTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_admin/admin/': {
+      id: '/_admin/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminAdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/audit-log': {
+      id: '/_admin/admin/audit-log'
+      path: '/admin/audit-log'
+      fullPath: '/admin/audit-log'
+      preLoaderRoute: typeof AdminAdminAuditLogRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_app/activity/': {
       id: '/_app/activity/'
@@ -357,12 +525,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIssuersIssuerIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/security': {
+      id: '/_app/settings/security'
+      path: '/settings/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AppSettingsSecurityRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_admin/admin/organizations/': {
+      id: '/_admin/admin/organizations/'
+      path: '/admin/organizations'
+      fullPath: '/admin/organizations/'
+      preLoaderRoute: typeof AdminAdminOrganizationsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/organizations/$accountId': {
+      id: '/_admin/admin/organizations/$accountId'
+      path: '/admin/organizations/$accountId'
+      fullPath: '/admin/organizations/$accountId'
+      preLoaderRoute: typeof AdminAdminOrganizationsAccountIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/users/': {
+      id: '/_admin/admin/users/'
+      path: '/admin/users'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AdminAdminUsersIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/users/$userId': {
+      id: '/_admin/admin/users/$userId'
+      path: '/admin/users/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AdminAdminUsersUserIdRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_app/developers/api-keys/': {
       id: '/_app/developers/api-keys/'
@@ -399,14 +602,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIssuersIssuerIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_admin/admin/organizations/$accountId_/issuers/$issuerId': {
+      id: '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
+      path: '/admin/organizations/$accountId/issuers/$issuerId'
+      fullPath: '/admin/organizations/$accountId/issuers/$issuerId'
+      preLoaderRoute: typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminAdminAuditLogRoute: typeof AdminAdminAuditLogRoute
+  AdminAdminIndexRoute: typeof AdminAdminIndexRoute
+  AdminAdminOrganizationsAccountIdRoute: typeof AdminAdminOrganizationsAccountIdRoute
+  AdminAdminUsersUserIdRoute: typeof AdminAdminUsersUserIdRoute
+  AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
+  AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
+  AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute: typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAdminAuditLogRoute: AdminAdminAuditLogRoute,
+  AdminAdminIndexRoute: AdminAdminIndexRoute,
+  AdminAdminOrganizationsAccountIdRoute: AdminAdminOrganizationsAccountIdRoute,
+  AdminAdminUsersUserIdRoute: AdminAdminUsersUserIdRoute,
+  AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
+  AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,
+  AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute:
+    AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppRouteChildren {
   AppOverviewRoute: typeof AppOverviewRoute
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
+  AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
@@ -422,6 +656,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppActivityEventIdRoute: AppActivityEventIdRoute,
   AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
+  AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
@@ -436,11 +671,14 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   SetupRoute: SetupRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  TwoFactorRoute: TwoFactorRoute,
+  CertificateUploadTokenRoute: CertificateUploadTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

@@ -51,6 +51,7 @@ export const Route = createFileRoute("/_app/activity/$eventId")({
 const actorNote: Record<ActivityEntry["actorType"], string> = {
   USER: "La acción se hizo desde la consola con la sesión de este usuario.",
   API_KEY: "La acción se hizo a través de la API con esta llave.",
+  PLATFORM: "La acción la hizo el equipo de soporte de Cetus desde su administración.",
   SYSTEM: "Este evento fue generado por el sistema, sin intervención de un usuario.",
 };
 
@@ -148,7 +149,11 @@ function ActivityEvent() {
             ) : (
               <DetailField label="Correo electrónico">
                 {entry.actorEmail ??
-                  (entry.actorType === "USER" ? "Usuario eliminado" : "No registrado")}
+                  (entry.actorType === "USER"
+                    ? "Usuario eliminado"
+                    : entry.actorType === "PLATFORM"
+                      ? "Equipo de soporte de Cetus"
+                      : "No registrado")}
               </DetailField>
             )}
             <DetailField label="Dirección IP" mono={Boolean(entry.ipAddress)}>
@@ -156,7 +161,9 @@ function ActivityEvent() {
             </DetailField>
           </div>
           <p className="text-2xs leading-relaxed text-muted-foreground">
-            {actorNote[entry.actorType]}
+            {entry.impersonatedBy
+              ? "La acción la hizo el equipo de soporte de Cetus mientras veía la consola como este usuario."
+              : actorNote[entry.actorType]}
           </p>
         </section>
 

@@ -2,6 +2,8 @@ package com.cantte.cetus.api.error;
 
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.domain.DomainException;
+import io.quarkus.security.ForbiddenException;
+import io.quarkus.security.UnauthorizedException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
@@ -30,6 +32,17 @@ public class ErrorMappers {
     @ServerExceptionMapper
     public Response notFound(NotFoundException e) {
         return Response.status(404).entity(new ApiError("not_found", e.getMessage(), null)).build();
+    }
+
+    /** {@code @RolesAllowed} refused an authenticated caller (e.g. a console user on /admin/**). */
+    @ServerExceptionMapper
+    public Response forbidden(ForbiddenException e) {
+        return Response.status(403).entity(new ApiError("forbidden", "You are not allowed to do this", null)).build();
+    }
+
+    @ServerExceptionMapper
+    public Response unauthorized(UnauthorizedException e) {
+        return Response.status(401).entity(new ApiError("unauthorized", "Authentication required", null)).build();
     }
 
     @ServerExceptionMapper

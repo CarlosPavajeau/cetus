@@ -11,6 +11,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -62,6 +63,13 @@ public class IssuerEntity extends PanacheEntityBase {
 
     public static Optional<IssuerEntity> findForAccount(UUID accountId, UUID issuerId) {
         return find("id = ?1 and accountId = ?2", issuerId, accountId).firstResultOptional();
+    }
+
+    /** Like {@link #findForAccount}, holding the row until the transaction ends to serialize changes to it. */
+    public static Optional<IssuerEntity> findForAccountForUpdate(UUID accountId, UUID issuerId) {
+        return find("id = ?1 and accountId = ?2", issuerId, accountId)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
     }
 
     public static List<IssuerEntity> listByAccount(UUID accountId) {

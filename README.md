@@ -28,6 +28,10 @@ cetus/
 - Better Auth es dueño de usuarios, organizaciones y membresías (esquema `auth`, migrado con Drizzle).
   `billing.accounts.organization_id` guarda el ID de la organización, sin llave foránea entre esquemas.
 - Flyway solo gestiona `billing`; Drizzle solo gestiona `auth` (`schemaFilter`). Nunca uses `drizzle-kit push` en producción.
+- `apps/console/src/lib/auth/schema.ts` se mantiene **a mano**. `pnpm auth:generate` reescribe el archivo
+  completo con `pgTable` (schema `public`, no `auth`) y cambia el export de las relaciones. Úsalo solo para
+  ver qué columnas pide un plugin nuevo, cópialas con `authSchema.table` y descarta el resto
+  (`git checkout src/lib/auth/schema.ts`). Luego `pnpm db:generate` crea la migración y `make migrate` la aplica.
 - Los secretos (PIN, clave técnica, contraseña y archivo del certificado) se guardan "sellados" con KMS.
   El `.p12` vive en S3; en la base de datos solo hay metadatos.
 
@@ -313,6 +317,16 @@ validar y una interna al conectar (DNS rebinding) queda bloqueado. En dev y en p
   - En local, LocalStack crea el bucket igual, pero sin retención.
 - **Límite de tasa.** Cada llave de API tiene un token bucket en memoria. Al pasarlo, la API responde
   `429 rate_limited` con `Retry-After`. El límite es por réplica de la API.
+- **Equipo de Cetus.** Los roles de plataforma (`admin` y `support`) viven en `auth.user.role` (plugin
+  `admin` de Better Auth) y no tienen nada que ver con los roles dentro de una organización.
+  - Se asignan a mano y nunca desde la API. La persona se registra normalmente en la consola y luego:
+    `UPDATE auth."user" SET role = 'admin' WHERE email = 'persona@cantte.com';`
+  - El rol solo tiene efecto con la verificación en dos pasos activa (Seguridad, en la consola). Sin
+    ella, el JWT no lleva el claim `groups` y Better Auth rechaza sus endpoints `/api/auth/admin/*`.
+  - `support` lee y hace acciones asistidas. Solo `admin` bloquea usuarios, suspende cuentas y suplanta.
+  - La administración está en `/admin` de la consola. Una cuenta suspendida no puede usar sus llaves de
+    API (`403 account_suspended`) y su consola queda en solo lectura, con el motivo visible. Los documentos
+    que ya estaban en cola se terminan de procesar, porque ya tienen número asignado.
 - **Verificación del rango.** Cuando un emisor de **producción** ya tiene software y certificado, el worker
   consulta `GetNumberingRange` por cada rango de factura y lo compara con lo registrado: prefijo, números,
   vigencia y clave técnica. En habilitación no aplica: el rango de prueba (`SETP`) es compartido, la DIAN no

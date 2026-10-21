@@ -1,5 +1,5 @@
 import { defineRelations } from "drizzle-orm";
-import { pgSchema, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgSchema, text, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
 
 
 export const authSchema = pgSchema("auth");
@@ -15,6 +15,11 @@ export const user = authSchema.table("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+  role: text("role"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
 });
 
 export const session = authSchema.table(
@@ -33,6 +38,7 @@ export const session = authSchema.table(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     activeOrganizationId: text("active_organization_id"),
+    impersonatedBy: text("impersonated_by"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
@@ -127,6 +133,25 @@ export const invitation = authSchema.table(
   ],
 );
 
+export const twoFactor = authSchema.table(
+  "two_factor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true),
+    failedVerificationCount: integer("failed_verification_count").default(0),
+    lockedUntil: timestamp("locked_until"),
+  },
+  (table) => [
+    index("twoFactor_secret_idx").on(table.secret),
+    index("twoFactor_userId_idx").on(table.userId),
+  ],
+);
+
 export const jwks = authSchema.table("jwks", {
   id: text("id").primaryKey(),
   publicKey: text("public_key").notNull(),
@@ -138,13 +163,14 @@ export const jwks = authSchema.table("jwks", {
 });
 
 export const relations = defineRelations(
-  { user, session, account, verification, organization, member, invitation, jwks },
+  { user, session, account, verification, organization, member, invitation, twoFactor, jwks },
   (r) => ({
     user: {
       sessions: r.many.session(),
       accounts: r.many.account(),
       members: r.many.member(),
       invitations: r.many.invitation(),
+      twoFactors: r.many.twoFactor(),
     },
     session: {
       user: r.one.user({ from: r.session.userId, to: r.user.id, optional: false }),
@@ -163,6 +189,9 @@ export const relations = defineRelations(
     invitation: {
       organization: r.one.organization({ from: r.invitation.organizationId, to: r.organization.id, optional: false }),
       user: r.one.user({ from: r.invitation.inviterId, to: r.user.id, optional: false }),
+    },
+    twoFactor: {
+      user: r.one.user({ from: r.twoFactor.userId, to: r.user.id, optional: false }),
     },
   }),
 );

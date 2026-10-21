@@ -4,9 +4,11 @@ import { FileKeyIcon, LockKeyholeIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useController, useForm, useWatch } from "react-hook-form";
 
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { FieldError } from "~/components/ui/field";
 import { dayFormat } from "~/features/audit-log/labels";
+import { useImpersonation } from "~/features/session/useImpersonation";
 import type { IssuerDetail } from "~/lib/api/types";
 
 import { CertificateDropzone } from "./CertificateDropzone";
@@ -26,6 +28,7 @@ export function CertificateStep({
   onSaved: () => Promise<void>;
 }) {
   const fileId = useId();
+  const impersonation = useImpersonation();
   const saved = issuer.certificate;
   const [replacing, setReplacing] = useState(saved === null);
   const upload = useMutation({ mutationFn: setCertificate });
@@ -102,11 +105,21 @@ export function CertificateStep({
                 </p>
               </div>
             </div>
-            <Button type="button" variant="outline" onClick={() => setReplacing(true)}>
-              Reemplazar certificado
-            </Button>
+            {!impersonation && (
+              <Button type="button" variant="outline" onClick={() => setReplacing(true)}>
+                Reemplazar certificado
+              </Button>
+            )}
           </div>
         </FieldSection>
+      ) : impersonation ? (
+        <Alert>
+          <AlertTitle>El certificado lo carga el cliente</AlertTitle>
+          <AlertDescription>
+            Mientras ves la consola como otra persona no puedes cargar certificados. Desde la
+            administración puedes generarle un enlace de carga.
+          </AlertDescription>
+        </Alert>
       ) : (
         <>
           <FieldSection title="Archivo del certificado">

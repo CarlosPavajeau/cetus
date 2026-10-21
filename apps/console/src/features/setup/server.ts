@@ -1,41 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type } from "arktype";
 
-import { CetusApiError, api } from "~/lib/api/client";
+import { api } from "~/lib/api/client";
 
 import { certificateSchema, issuerSchema, numberingSchema, softwareSchema } from "./schema";
 import type { IssuerValues } from "./schema";
-
-const messages: Record<string, string> = {
-  check_digit_invalid: "El NIT no coincide con su dígito de verificación.",
-  certificate_invalid:
-    "No pudimos abrir el certificado: revisa que el archivo sea el .p12 original y que la contraseña sea correcta.",
-  certificate_expired: "El certificado está vencido. Solicita uno vigente a tu proveedor.",
-  range_invalid: "El número inicial debe ser menor o igual al número final.",
-  person_type_locked:
-    "El tipo de persona viene con el NIT: no cambia una vez configurado el emisor.",
-  issuer_already_exists:
-    "Ya tienes un emisor con este NIT en este entorno. Búscalo en la lista de emisores.",
-  invalid_request: "Revisa los datos del formulario: alguno no tiene el formato esperado.",
-};
-
-/** Calls the API and turns its errors into a message the person can act on. */
-async function call<T>(request: () => Promise<T>): Promise<T> {
-  try {
-    return await request();
-  } catch (error) {
-    if (error instanceof CetusApiError) {
-      throw new Error(
-        messages[error.code] ??
-          (error.status === 404
-            ? "No encontramos este emisor. Recarga la página."
-            : "No pudimos guardar este paso. Inténtalo de nuevo en unos minutos."),
-        { cause: error },
-      );
-    }
-    throw error;
-  }
-}
+import { call, rangeBody, softwareBody } from "./server-helpers";
 
 /** The form values as the API expects them. Cetus only operates in Colombia. */
 function issuerBody(values: IssuerValues) {
@@ -91,11 +61,7 @@ export const setSoftware = createServerFn({ method: "POST" })
     call(() =>
       api.put("/console/issuers/{id}/software", {
         params: { path: { id: data.id } },
-        body: {
-          softwareId: data.software.softwareId.trim(),
-          pin: data.software.pin.trim(),
-          testSetId: data.software.testSetId.trim() || undefined,
-        },
+        body: softwareBody(data.software),
       }),
     ),
   );
@@ -120,17 +86,7 @@ export const addNumberingRange = createServerFn({ method: "POST" })
     call(() =>
       api.post("/console/issuers/{id}/numbering-ranges", {
         params: { path: { id } },
-        body: {
-          documentType: "INVOICE",
-          resolutionNumber: range.resolutionNumber,
-          resolutionDate: range.resolutionDate,
-          prefix: range.prefix.toUpperCase(),
-          from: Number(range.from),
-          to: Number(range.to),
-          validFrom: range.validFrom,
-          validTo: range.validTo,
-          technicalKey: range.technicalKey.trim(),
-        },
+        body: rangeBody(range),
       }),
     ),
   );
