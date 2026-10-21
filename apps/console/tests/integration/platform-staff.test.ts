@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { createOrganization } from "../support/organization";
-import { createPlatformStaff, jwtClaims } from "../support/platform-staff";
+import { createPlatformStaff, enableTwoFactor, jwtClaims } from "../support/platform-staff";
 
 // Platform roles reach the API only through the JWT's `groups` claim, and only with 2FA enabled.
 describe("platform staff", () => {
@@ -44,10 +44,9 @@ describe("platform staff", () => {
 
   test("a customer with 2FA is still not staff", async () => {
     const customer = await createOrganization("Cliente SAS");
-    const { totpURI } = await customer.auth<{ totpURI: string }>("/two-factor/enable", {
-      password: customer.password,
-    });
-    expect(totpURI).toContain("otpauth://totp/");
+    await enableTwoFactor(customer);
+    const session = await customer.auth<{ user: { twoFactorEnabled: boolean } }>("/get-session");
+    expect(session.user.twoFactorEnabled).toBe(true);
 
     expect(jwtClaims(await customer.token())).toMatchObject({ groups: [] });
     expect((await customer.api("/admin/me")).status).toBe(403);
