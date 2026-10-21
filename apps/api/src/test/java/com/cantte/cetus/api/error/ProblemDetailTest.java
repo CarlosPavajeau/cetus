@@ -30,4 +30,16 @@ class ProblemDetailTest {
                 .body("instance", equalTo(path))
                 .body("$", not(hasKey("errors")));
     }
+
+    @Test
+    void instanceKeepsThePathEscaped() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Escaped SAS");
+        String path = "/console/documents/a%23b";
+
+        user.request().urlEncodingEnabled(false).get(path)
+                .then().statusCode(404)
+                .contentType(ProblemDetail.MEDIA_TYPE)
+                .body("instance", equalTo(path));
+    }
 }
