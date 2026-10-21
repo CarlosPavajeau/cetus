@@ -1,0 +1,147 @@
+# Benchmark stack: the production images with Railway's limits (.railway/railway.ts), the DIAN mock and
+# their own Postgres and LocalStack. It runs as project "cetus-bench" on its own ports, so `make dev-mock`
+# can stay up next to it. Driven by bench/bench.sh (make bench-up / bench-down).
+#
+#   console :3100   api :8180   worker :8181   dian-mock :8190   postgres :5532
+name: cetus-bench
+
+x-aws: &aws
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  AWS_REGION: us-east-1
+  CETUS_AWS_ENDPOINT_OVERRIDE: http://localstack:4566
+
+x-java: &java
+  CETUS_DB_URL: jdbc:postgresql://postgres:5432/cetus
+  # Same flags as the Dockerfiles; set here so a run can change them without rebuilding.
+  JAVA_OPTS: ${BENCH_JAVA_OPTS:--XX:MaxRAMPercentage=75 -Duser.timezone=America/Bogota}
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: cetus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    command: ["postgres", "-c", "max_connections=200"]
+    ports:
+      - "5532:5432"
+    volumes:
+      - ../infra/postgres:/docker-entrypoint-initdb.d:ro
+      - postgres-data:/var/lib/postgresql/data
+    # PlanetScale is not in Railway's limits; keep the database from taking the whole machine instead.
+    cpus: ${BENCH_POSTGRES_CPUS:-2}
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-q"]
+      interval: 2s
+      retries: 30
+
+  localstack:
+    image: localstack/localstack:3
+    environment:
+      SERVICES: kms,s3
+      AWS_DEFAULT_REGION: us-east-1
+    volumes:
+      - ../infra/localstack:/etc/localstack/init/ready.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:4566/_localstack/init/ready | grep -q '\"completed\": true'"]
+      interval: 3s
+      retries: 40
+
+  dian-mock:
+    build:
+      context: ..
+      dockerfile: bench/dian-mock.Dockerfile
+    environment:
+      DIAN_MOCK_LATENCY: ${DIAN_MOCK_LATENCY:-PT0S}
+    ports:
+      - "8190:8090"
+
+  console-migrate:
+    build:
+      context: ..
+      dockerfile: apps/console/Dockerfile
+    image: cetus-bench-console
+    environment:
+      DATABASE_URL: postgres://cetus_auth:cetus@postgres:5432/cetus
+    command: ["pnpm", "db:migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  console:
+    image: cetus-bench-console
+    environment:
+      DATABASE_URL: postgres://cetus_auth:cetus@postgres:5432/cetus
+      BETTER_AUTH_SECRET: bench-only-secret-not-used-anywhere-else
+      # The URL k6 and the browser use; it is also the JWT issuer the API checks.
+      BETTER_AUTH_URL: http://localhost:3100
+      CETUS_API_URL: http://api:8080
+      PORT: "3000"
+    ports:
+      - "3100:3000"
+    cpus: 1
+    mem_limit: 512m
+    depends_on:
+      console-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/auth/jwks').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 2s
+      retries: 60
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      <<: [*aws, *java]
+      CETUS_AUTH_JWKS_URL: http://console:3000/api/auth/jwks
+      CETUS_AUTH_ISSUER: http://localhost:3100
+      # The console reaches the API as http://api:8080, which plays the role of *.railway.internal.
+      CETUS_PRIVATE_HOSTS: api,localhost,127.0.0.1
+      # Measure the server, not the per-key limiter (bench.sh can put the production values back).
+      CETUS_RATE_LIMIT_REQUESTS_PER_SECOND: ${BENCH_RATE_LIMIT_RPS:-100000}
+      CETUS_RATE_LIMIT_BURST: ${BENCH_RATE_LIMIT_BURST:-100000}
+    ports:
+      - "8180:8080"
+    cpus: 1
+    mem_limit: 1g
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      console:
+        condition: service_healthy
+    healthcheck:
+      # Flyway runs before the port opens, so an open port means the schema is ready for the worker.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080"]
+      interval: 2s
+      retries: 90
+
+  worker:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      <<: [*aws, *java]
+      CETUS_DIAN_TEST_URL: http://dian-mock:8090/WcfDianCustomerServices.svc
+      # Object Lock retention would make LocalStack keep every benchmark object; 1 day is enough.
+      CETUS_STORAGE_RETENTION_DAYS: "1"
+      # The job runner's knobs, to try them without rebuilding (defaults: 2s and 5).
+      CETUS_JOBS_POLL_INTERVAL: ${BENCH_JOBS_POLL_INTERVAL:-2s}
+      CETUS_JOBS_BATCH_SIZE: ${BENCH_JOBS_BATCH_SIZE:-5}
+    ports:
+      - "8181:8081"
+    cpus: 1
+    mem_limit: 1g
+    depends_on:
+      api:
+        condition: service_healthy
+      dian-mock:
+        condition: service_started
+
+volumes:
+  postgres-data:

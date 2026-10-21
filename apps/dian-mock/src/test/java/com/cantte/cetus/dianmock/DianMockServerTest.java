@@ -76,6 +76,21 @@ class DianMockServerTest {
     }
 
     @Test
+    void delaysEverySoapAnswerByTheConfiguredLatency() throws Exception {
+        URI control = URI.create("http://localhost:" + server.getAddress().getPort() + "/__mock/latency?value=PT0.3S");
+        HttpResponse<String> set = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(control).POST(HttpRequest.BodyPublishers.noBody()).build(),
+                HttpResponse.BodyHandlers.ofString());
+        long started = System.nanoTime();
+
+        DianResponse response = client.sendBillSync("z1.zip", invoiceZip("SETP1", "cufe-1"), keys);
+
+        assertThat(set.statusCode()).isEqualTo(200);
+        assertThat(response.valid()).isTrue();
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isGreaterThanOrEqualTo(Duration.ofMillis(300));
+    }
+
+    @Test
     void rejectsADuplicateButKeepsTheOriginalStatus() {
         client.sendBillSync("z1.zip", invoiceZip("SETP1", "cufe-1"), keys);
 

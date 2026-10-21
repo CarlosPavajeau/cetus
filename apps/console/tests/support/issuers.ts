@@ -46,7 +46,7 @@ export async function onboardIssuer(
   organization: TestOrganization,
   nit: string,
   legalName: string,
-  { testSet = true }: { testSet?: boolean } = {},
+  { testSet = true, rangeTo = 5000 }: { testSet?: boolean; rangeTo?: number } = {},
 ) {
   const id = await createIssuer(organization, nit, legalName);
   await organization.api(`/console/issuers/${id}/software`, {
@@ -64,11 +64,11 @@ export async function onboardIssuer(
       password: testCertificate.password,
     }),
   });
-  await addRange(organization, id, "SETP");
+  await addRange(organization, id, "SETP", rangeTo);
   return id;
 }
 
-export async function addRange(organization: TestOrganization, id: string, prefix: string) {
+export async function addRange(organization: TestOrganization, id: string, prefix: string, to = 5000) {
   const response = await organization.api(`/console/issuers/${id}/numbering-ranges`, {
     method: "POST",
     body: JSON.stringify({
@@ -77,7 +77,7 @@ export async function addRange(organization: TestOrganization, id: string, prefi
       resolutionDate: "2026-01-01",
       prefix,
       from: 1,
-      to: 5000,
+      to,
       validFrom: "2026-01-01",
       validTo: "2030-12-31",
       technicalKey: "fc8eac422eba16e22ffd8c6f94b3f40a6e38162c",

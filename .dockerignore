@@ -23,3 +23,7 @@ apps/console/.tanstack
 *.pfx
 *.pem
 !**/src/test/resources/**
+
+# Benchmark output (bench/)
+bench/results
+bench/.state.json

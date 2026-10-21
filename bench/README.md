@@ -1,0 +1,125 @@
+# Benchmark de capacidad
+
+Mide cuánto aguanta Cetus con los recursos que tiene en Railway (`.railway/railway.ts`): el API y el worker con
+1 vCPU / 1 GB cada uno y la consola con 1 vCPU / 512 MB. Corre las imágenes de producción (no `quarkusDev`) con
+esos límites, contra el mock de la DIAN, y genera la carga con [k6](https://k6.io).
+
+## Uso
+
+```sh
+brew install k6
+make bench-up      # construye y levanta el stack (proyecto cetus-bench, puertos propios: convive con make dev-mock)
+make bench-seed    # organizaciones, emisores, API keys (bench/.state.json) e historial de documentos
+make bench SCENARIO=public-api PROFILE=smoke
+make bench SCENARIO=public-api PROFILE=load RATE=200
+bench/bench.sh drain  # entre corridas: vacía la cola que dejó la anterior
+make bench-down    # bench/bench.sh down -v borra también su base de datos
+```
+
+Cada corrida deja en `bench/results/<fecha>-<escenario>-<perfil>/` (no versionado):
+
+| Archivo | Contenido |
+|---|---|
+| `report.html` | Dashboard de k6: tasa, latencias y errores en el tiempo |
+| `summary.json`, `k6.log` | Resumen final por endpoint (`name`) y umbrales |
+| `containers.csv` | CPU y memoria de cada contenedor cada 5 s |
+| `jobs.csv` | Cola de jobs pendientes por tipo y antigüedad del más viejo (el backlog del worker) |
+| `connections.csv` | Conexiones a Postgres por estado |
+| `run.txt`, `services.log` | Parámetros de la corrida, límites aplicados y logs del API, el worker y la consola |
+
+## Escenarios (`bench/scenarios/`)
+
+| Escenario | Qué mide | Mezcla |
+|---|---|---|
+| `public-api` | Recepción del API para integradores (`/v1`) | 25% `POST /v1/invoices`, 70% `GET /v1/invoices/{id}`, 5% `GET /v1/issuers` |
+| `end-to-end` | Documentos por segundo que el worker lleva a ACCEPTED y cuánto espera el integrador | `POST` + polling hasta estado final |
+| `console-api` | El API detrás de la consola (`/console`), con el JWT que emite la consola | listado, paginación, búsqueda, detalle, emisores, auditoría |
+| `console-pages` | Páginas SSR de la consola con sesión, incluyendo su llamada al API | `/overview`, `/documents`, `/documents/{id}`, `/issuers` |
+| `mixed` | Todo a la vez (`SHARES=60,25,15` por defecto) | las tres anteriores |
+
+Perfiles (`PROFILE`, modelo abierto: k6 mantiene la tasa aunque el servidor se ponga lento):
+
+- `smoke`: 2 req/s durante 30 s; solo comprueba que el escenario funciona.
+- `load`: sube del 10% al 100% de `RATE` en escalones de 1 minuto y lo mantiene 2 minutos. Sirve para encontrar la rodilla.
+- `stress`: llega a 2× `RATE`. Muestra cómo falla y si se recupera.
+- `soak`: 70% de `RATE` durante `DURATION` (15m). Sirve para detectar fugas, pausas de GC y agotamiento del pool.
+- `constant`: `RATE` fija durante `DURATION` (2m). Es un punto de la curva; corre varios para acotar la rodilla.
+
+Antes de medir, calienta con un `smoke`: la JVM recién arrancada rinde mucho menos durante los primeros minutos.
+Las corridas de `public-api` encolan más de lo que el worker procesa; `bench/bench.sh drain` borra ese backlog
+para que no afecte la corrida siguiente. `SEARCH_WEIGHT` (15) define qué parte de `console-api` son búsquedas.
+
+Umbrales: p95 < 500 ms para llamadas al API, p95 < 1 s para páginas y errores < 1%. La capacidad máxima de una
+superficie es la mayor `RATE` sostenida que los cumple **y** en la que k6 no reporta `dropped_iterations`.
+
+### Latencia de la DIAN
+
+El mock responde al instante por defecto. La DIAN real tarda entre 1 y 3 s, y el worker procesa en serie, así
+que conviene correr `end-to-end` con ambas latencias:
+
+```sh
+make bench SCENARIO=end-to-end RATE=1 DURATION=5m                       # mock instantáneo
+DIAN_LATENCY=PT1.5S make bench SCENARIO=end-to-end RATE=1 DURATION=5m   # aproximación a la DIAN
+bench/bench.sh latency PT0S                                             # volver a instantáneo
+```
+
+### Palancas sin recompilar
+
+Variables leídas por `bench/docker-compose.yml`, que se aplican con `bench/bench.sh up`:
+`BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_JOBS_BATCH_SIZE` (5), `BENCH_JAVA_OPTS`,
+`BENCH_RATE_LIMIT_RPS`/`BENCH_RATE_LIMIT_BURST` (el límite por API key está desactivado por defecto para medir el
+servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
+
+## Supuestos y límites
+
+- **Postgres es local** (2 CPU, sin red) y en producción es PlanetScale a través de la red. Cada round trip real
+  cuesta más, así que estos números son una **cota optimista**.
+- La carga se genera en la misma máquina. Los límites de Docker aíslan a los servicios medidos, pero vigila
+  que k6 no sature la CPU del host (`top`); si lo hace, la cifra es del generador, no de Cetus.
+- No se envían correos (sin `RESEND_API_KEY`). Aun así, el worker genera el PDF y el AttachedDocument de cada
+  documento aceptado antes de marcar la entrega como SKIPPED, así que su costo de CPU sí se mide.
+- Las emisiones de un mismo emisor se serializan en el lock de su rango de numeración (`SELECT ... FOR
+  UPDATE`). El seed crea 5 emisores (`BENCH_ORGS`); con un único emisor la recepción sería menor.
+- Las cookies de sesión de `.state.json` duran lo que dura una sesión de Better Auth (7 días). Si vencen, vuelve a correr `make bench-seed`.
+
+## Resultados (2026-10-21)
+
+Corridas en un Mac de 14 núcleos con Docker al que se le asignaron 7,7 GB. Se usaron 5 tenants y ~52 000 documentos por cuenta
+(~262 000 en total, porque las corridas de recepción dejan sus documentos), con perfiles `constant` de 2 minutos y el
+API ya caliente. La capacidad es la mayor tasa sostenida con p95 dentro del umbral y sin `dropped_iterations`.
+
+| Superficie | Capacidad sostenida | Qué se satura primero | Evidencia |
+|---|---|---|---|
+| API pública `/v1` (25% emisión) | **~1200 req/s** (≈300 facturas/s recibidas) | CPU del API | 1200/s: p95 2,7 ms, API 64%. 1400/s: CPU 100%, el throughput cae a ~965/s y el p95 sube a 1,95 s |
+| API de consola `/console` (mezcla con 15% de búsqueda) | **~110 req/s** | **Postgres** (2 CPU al 100%) | Sin búsqueda (`SEARCH_WEIGHT=0`) llega a 600 req/s (p95 2,3 ms, API 49%) |
+| Páginas SSR de la consola | **~75 páginas/s** | CPU de la consola (Node, 1 hilo) | 75/s: p95 98 ms, CPU 85%. 100/s: CPU 100%, p95 8,9 s |
+| Todo mezclado (60/25/15) | **~300 req/s** | Consola (88%) y Postgres (99% p90) | 300/s: p95 de 3,6 ms en `/v1`, 101 ms en `/console` y 73 ms en páginas |
+| **Worker, de punta a punta** (config actual) | **~1,4 docs/s** con el mock instantáneo, **~0,5 docs/s** con la DIAN a 1,5 s | **Configuración del polling**, no la CPU (worker al 5%) | A 2/s el backlog crece sin parar y el p95 llega a 52 s |
+| Worker con `poll-interval=200ms`, `batch-size=20` | **~12–14 docs/s** con el mock instantáneo | Procesamiento en serie (CPU al 14%) | 8/s: p95 1,1 s. 20/s: el backlog crece |
+
+### Hallazgos
+
+1. **El cuello de botella del producto es el worker, no el API.** El API recibe ~300 facturas/s y el worker
+   procesa 1,4/s. Cada documento genera dos jobs (`PROCESS_DOCUMENT` y `DELIVER_DOCUMENT`), y el runner toma 5 cada 2 s
+   y los ejecuta en serie. Con la DIAN real (1–3 s por envío) el techo baja a unos 0,5 docs/s, es decir
+   ~1800 facturas por hora. Un cliente que emita en lote verá esperas de minutos.
+2. **Con solo ajustar la configuración, el worker rinde ~9× más** (`cetus.jobs.poll-interval`, `cetus.jobs.batch-size`), sin
+   cambiar código ni recursos. El siguiente techo es la ejecución en serie, que deja la CPU casi ociosa
+   mientras espera E/S. Con latencia de la DIAN, lo que escala es procesar varios jobs a la vez (p. ej. virtual threads
+   por job reclamado) o tener más réplicas del worker (el claim con `SKIP LOCKED` ya lo permite).
+3. **La búsqueda de la consola recorre toda la tabla.** `pageForAccount` con `q` usa `ILIKE '%…%'` sobre cuatro
+   expresiones, así que Postgres hace un *parallel seq scan* de `billing.documents` completo (todas las cuentas): 161 ms y
+   3 procesos por búsqueda con 262 000 filas. Su costo crece con el total de la plataforma. Bastan ~17 búsquedas/s
+   para saturar 2 CPU de Postgres. Solución típica: índices GIN `pg_trgm` sobre esas expresiones.
+4. **La consola es la superficie más chica:** ~75 páginas/s por CPU, y en carga su memoria llegó a 400 MB
+   de 512 MB. Equivale a unos cientos de personas usándola a la vez, pero es lo primero que se satura con tráfico mixto.
+5. **El arranque en frío pesa.** Las primeras corridas, con la JVM recién iniciada, tuvieron picos de 2–4,6 s a 700–850
+   req/s, que desaparecieron al repetirlas. Después de cada despliegue en Railway, los primeros minutos rinden bastante menos.
+6. **Better Auth limita `/api/auth/*` por IP** (~10/s). En producción no afecta, porque la consola emite el JWT en
+   proceso, pero obliga a que k6 reparta las renovaciones de token (`setup()` en `lib/flows.js`).
+
+### Siguientes pasos sugeridos
+
+- Correr `soak` (15 min) en `public-api` y en `mixed` para revisar memoria y GC sostenidos.
+- Repetir con latencia de red hacia Postgres (p. ej. `toxiproxy` o `tc netem` de 5–10 ms) para aproximar PlanetScale.
+- Medir de nuevo después de ajustar el worker y de agregar el índice de búsqueda.

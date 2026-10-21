@@ -35,3 +35,7 @@ playwright-report/
 
 # Local development logs (scripts/dev.sh)
 .logs/
+
+# Benchmark output (bench/README.md)
+bench/results/
+bench/.state.json

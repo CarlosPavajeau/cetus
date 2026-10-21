@@ -23,12 +23,14 @@ import java.util.stream.Collectors;
  * <pre>
  * GET  /__mock                      current scenario and counters
  * POST /__mock/scenario?name=reject accept | reject | client-fault | server-fault | timeout
+ * POST /__mock/latency?value=PT1S  delay before every SOAP answer (ISO-8601 duration)
  * GET  /__mock/documents            documents received
  * POST /__mock/reset                forget every document
  * </pre>
  *
  * Environment: DIAN_MOCK_PORT (8090), DIAN_MOCK_SCENARIO (accept), DIAN_MOCK_REJECT_SELF_SIGNED (false),
- * DIAN_MOCK_TIMEOUT_DELAY (PT90S, above the worker's request timeout), DIAN_MOCK_PROCESSING_POLLS (1).
+ * DIAN_MOCK_TIMEOUT_DELAY (PT90S, above the worker's request timeout), DIAN_MOCK_PROCESSING_POLLS (1),
+ * DIAN_MOCK_LATENCY (PT0S, the delay before every SOAP answer; benchmarks use it to stand in for the real DIAN).
  */
 public final class DianMockServer {
 
@@ -43,6 +45,7 @@ public final class DianMockServer {
                 Duration.parse(env("DIAN_MOCK_TIMEOUT_DELAY", "PT90S")),
                 Integer.parseInt(env("DIAN_MOCK_PROCESSING_POLLS", "1")),
                 Clock.systemUTC());
+        dian.latency(Duration.parse(env("DIAN_MOCK_LATENCY", "PT0S")));
         HttpServer server = start(port, dian);
         log("DIAN mock listening on http://localhost:" + server.getAddress().getPort()
                 + "/WcfDianCustomerServices.svc (scenario " + dian.scenario().label() + ")");
@@ -74,8 +77,14 @@ public final class DianMockServer {
                 return;
             }
             MockDian.Reply reply = dian.handle(exchange.getRequestBody().readAllBytes());
+            Duration latency = dian.latency();
+            if (!latency.isZero()) {
+                Thread.sleep(latency);
+            }
             log(reply.summary());
             send(exchange, reply.status(), "application/soap+xml; charset=utf-8", reply.body());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (RuntimeException e) {
             log("internal error: " + e);
             send(exchange, 500, "application/soap+xml; charset=utf-8", Soap.fault("s:Receiver",
@@ -86,8 +95,8 @@ public final class DianMockServer {
     private static void control(HttpExchange exchange, MockDian dian, String method, URI uri) throws IOException {
         String path = uri.getPath();
         if ("GET".equals(method) && ("/__mock".equals(path) || "/__mock/".equals(path))) {
-            send(exchange, 200, "text/plain", "scenario: " + dian.scenario().label() + "\nreceived: "
-                    + dian.received().size() + "\n");
+            send(exchange, 200, "text/plain", "scenario: " + dian.scenario().label() + "\nlatency: "
+                    + dian.latency() + "\nreceived: " + dian.received().size() + "\n");
         } else if ("POST".equals(method) && "/__mock/scenario".equals(path)) {
             String name = query(uri, "name");
             try {
@@ -99,6 +108,17 @@ public final class DianMockServer {
             }
             log("scenario set to " + dian.scenario().label());
             send(exchange, 200, "text/plain", "scenario: " + dian.scenario().label() + "\n");
+        } else if ("POST".equals(method) && "/__mock/latency".equals(path)) {
+            String value = query(uri, "value");
+            try {
+                dian.latency(Duration.parse(value == null ? "" : value));
+            } catch (RuntimeException e) {
+                send(exchange, 400, "text/plain", "invalid latency '" + value + "', use an ISO-8601 duration such as"
+                        + " PT1.5S\n");
+                return;
+            }
+            log("latency set to " + dian.latency());
+            send(exchange, 200, "text/plain", "latency: " + dian.latency() + "\n");
         } else if ("GET".equals(method) && "/__mock/documents".equals(path)) {
             String lines = dian.received().stream()
                     .map(r -> r.at() + "  " + r.operation() + "  " + r.fileName() + "  " + r.number() + "  "

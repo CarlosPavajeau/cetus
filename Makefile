@@ -1,6 +1,7 @@
 # Local development shortcuts. The heavy lifting lives in scripts/dev.sh.
 .DEFAULT_GOAL := help
-.PHONY: help setup dev dev-mock console api worker mock infra infra-down infra-logs migrate test-console
+.PHONY: help setup dev dev-mock console api worker mock infra infra-down infra-logs migrate test-console \
+	bench-up bench-seed bench bench-down
 
 DEV := scripts/dev.sh
 
@@ -42,3 +43,15 @@ migrate: ## Apply the console's auth-schema migrations (Flyway runs when the API
 
 test-console: ## Console integration (Vitest) and e2e (Playwright) tests; needs `make dev-mock` running
 	pnpm --filter @cetus/console test
+
+bench-up: ## Benchmark: build and start the production images with Railway's limits (bench/README.md)
+	@bench/bench.sh up
+
+bench-seed: ## Benchmark: create tenants and a document history in the benchmark stack
+	@bench/bench.sh seed
+
+bench: ## Benchmark: run a k6 scenario, e.g. make bench SCENARIO=public-api PROFILE=load RATE=200
+	@bench/bench.sh run $(or $(SCENARIO),public-api)
+
+bench-down: ## Benchmark: stop the stack (its database volume is kept)
+	@bench/bench.sh down
