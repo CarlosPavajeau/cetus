@@ -52,15 +52,14 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   await auth("/organization/set-active", { organizationId: organization.id });
 
   const token = async () => ((await auth("/token")) as { token: string }).token;
-  const api = async (path: string, init: RequestInit = {}) =>
-    fetch(`${apiUrl}${path}`, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${await token()}`,
-        ...init.headers,
-      },
+  const api = async (path: string, init: RequestInit = {}) => {
+    const headers = new Headers({
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await token()}`,
     });
+    new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+    return fetch(`${apiUrl}${path}`, { ...init, headers });
+  };
 
   const account = await api("/console/account", { method: "POST", body: JSON.stringify({ name }) });
   if (!account.ok) {
