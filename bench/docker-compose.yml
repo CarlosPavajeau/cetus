@@ -130,9 +130,9 @@ services:
       CETUS_DIAN_TEST_URL: http://dian-mock:8090/WcfDianCustomerServices.svc
       # Object Lock retention would make LocalStack keep every benchmark object; 1 day is enough.
       CETUS_STORAGE_RETENTION_DAYS: "1"
-      # The job runner's knobs, to try them without rebuilding (defaults: 2s and 5).
+      # The job runner's knobs, to try them without rebuilding (defaults: 8 jobs at once, a 2s poll).
+      CETUS_JOBS_CONCURRENCY: ${BENCH_JOBS_CONCURRENCY:-8}
       CETUS_JOBS_POLL_INTERVAL: ${BENCH_JOBS_POLL_INTERVAL:-2s}
-      CETUS_JOBS_BATCH_SIZE: ${BENCH_JOBS_BATCH_SIZE:-5}
     ports:
       - "8181:8081"
     cpus: 1

@@ -66,7 +66,7 @@ bench/bench.sh latency PT0S                                             # volver
 ### Palancas sin recompilar
 
 Variables leídas por `bench/docker-compose.yml`, que se aplican con `bench/bench.sh up`:
-`BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_JOBS_BATCH_SIZE` (5), `BENCH_JAVA_OPTS`,
+`BENCH_JOBS_CONCURRENCY` (8), `BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_JAVA_OPTS`,
 `BENCH_RATE_LIMIT_RPS`/`BENCH_RATE_LIMIT_BURST` (el límite por API key está desactivado por defecto para medir el
 servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
 
@@ -117,6 +117,22 @@ API ya caliente. La capacidad es la mayor tasa sostenida con p95 dentro del umbr
    req/s, que desaparecieron al repetirlas. Después de cada despliegue en Railway, los primeros minutos rinden bastante menos.
 6. **Better Auth limita `/api/auth/*` por IP** (~10/s). En producción no afecta, porque la consola emite el JWT en
    proceso, pero obliga a que k6 reparta las renovaciones de token (`setup()` en `lib/flows.js`).
+
+### Después de los cambios (índice de búsqueda y worker concurrente)
+
+Mismo stack y datos. Cambios: migración V14, que agrega un índice trigram para la búsqueda y `(account_id, id DESC)` para paginar; worker
+con 8 jobs simultáneos (`cetus.jobs.concurrency`) que arranca cada job apenas se encola (`LISTEN/NOTIFY`, migración V15).
+
+| Superficie | Antes | Después |
+|---|---|---|
+| API de consola con 15% de búsqueda | ~110 req/s (p95 206 ms a 100/s, Postgres al 100%) | **~400–500 req/s** (p95 8,8 ms a 400/s; ahora limita la CPU del API) |
+| Una búsqueda (`q=Cliente 42`, 262 000 filas) | 161 ms, seq scan con 3 procesos | 18,8 ms con el índice (1,2 ms buscando un número) |
+| Worker, mock instantáneo | 1,4 docs/s, ~2 s de espera por el polling | **~60–70 docs/s** (CPU al 100% a 70/s); p95 de 29 ms hasta la validación a 20/s |
+| Worker, DIAN a 1,5 s | 0,5 docs/s | **~5 docs/s** con concurrencia 8; **16 docs/s** con concurrencia 32 (CPU 23%) |
+
+Con latencia de la DIAN, el throughput ≈ concurrencia ÷ tiempo de respuesta de la DIAN. Para subir la concurrencia,
+sube el pool junto con ella (`CETUS_DB_POOL_SIZE` ≥ concurrencia + 4). Con concurrencia 32 y un pool de 20, un arranque en frío
+con backlog saturó la CPU, alargó las transacciones y agotó el pool (*acquisition timeout*).
 
 ### Siguientes pasos sugeridos
 

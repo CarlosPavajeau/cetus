@@ -215,6 +215,20 @@ public class WorkerFixtures {
         });
     }
 
+    /** A PROCESS_DOCUMENT job ready to be claimed, as the API leaves it. */
+    public JobEntity pendingJob(UUID documentId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            JobEntity job = new JobEntity();
+            job.id = Ids.newId();
+            job.jobType = JobTypes.PROCESS_DOCUMENT;
+            job.referenceId = documentId;
+            job.runAt = OffsetDateTime.now().minusSeconds(1);
+            job.updatedAt = OffsetDateTime.now();
+            job.persist();
+            return job;
+        });
+    }
+
     private static DocumentEntity document(UUID accountId, UUID issuerId, NumberingRangeEntity range, DocumentType type) {
         CalculationResult calculation = calculation();
 

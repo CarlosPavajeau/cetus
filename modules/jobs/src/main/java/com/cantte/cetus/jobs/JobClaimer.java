@@ -22,7 +22,7 @@ public class JobClaimer {
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     @SuppressWarnings("unchecked")
-    public List<JobEntity> claim(String workerId, int batchSize, Duration lease) {
+    public List<JobEntity> claim(String workerId, int limit, Duration lease) {
         return em.createNativeQuery("""
                         UPDATE billing.jobs
                         SET status = 'RUNNING', attempts = attempts + 1, locked_by = :worker,
@@ -38,7 +38,7 @@ public class JobClaimer {
                         """, JobEntity.class)
                 .setParameter("worker", workerId)
                 .setParameter("lease", (double) lease.toSeconds())
-                .setParameter("limit", batchSize)
+                .setParameter("limit", limit)
                 .getResultList();
     }
 

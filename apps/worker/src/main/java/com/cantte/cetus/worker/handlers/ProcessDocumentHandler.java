@@ -30,6 +30,7 @@ import com.cantte.cetus.worker.support.KeyMaterialCache;
 import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.ResultRecorder;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -80,6 +81,11 @@ public class ProcessDocumentHandler implements JobHandler {
 
     private Map<DocumentType, DocumentBuilder> builders;
 
+    @PostConstruct
+    void init() {
+        builders = builderInstances.stream().collect(Collectors.toMap(DocumentBuilder::type, Function.identity()));
+    }
+
     @Override
     public String type() {
         return JobTypes.PROCESS_DOCUMENT;
@@ -92,7 +98,7 @@ public class ProcessDocumentHandler implements JobHandler {
             return;
         }
         ProcessingContext ctx = loaded.get();
-        DocumentBuilder builder = builders().get(ctx.documentType());
+        DocumentBuilder builder = builders.get(ctx.documentType());
         if (builder == null) {
             recorder.gaveUp(ctx.documentId(), "Document type not supported yet: " + ctx.documentType());
             return;
@@ -136,13 +142,6 @@ public class ProcessDocumentHandler implements JobHandler {
     private byte[] sign(Document document, KeyMaterial keys) {
         signer.sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         return XmlSupport.serialize(document);
-    }
-
-    private Map<DocumentType, DocumentBuilder> builders() {
-        if (builders == null) {
-            builders = builderInstances.stream().collect(Collectors.toMap(DocumentBuilder::type, Function.identity()));
-        }
-        return builders;
     }
 
     private void sendSync(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys, String zipName, byte[] zip) {
