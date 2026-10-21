@@ -65,6 +65,14 @@ class DocumentResourceTest {
         assertThat(list(user, "?q=consumidor").getList("items")).hasSize(2);
         assertThat(list(user, "?q=1020304050").getList("items")).hasSize(2);
         assertThat(list(user, "?q=100%25").getList("items")).isEmpty();
+        String acceptedNumber = QuarkusTransaction.requiringNew().call(() -> {
+            DocumentEntity doc = DocumentEntity.findById(accepted);
+            doc.externalReference = "PEDIDO-7781";
+            return doc.fullNumber();
+        });
+        assertThat(list(user, "?q=pedido-77").getList("items.id")).containsExactly(accepted.toString());
+        // The fields are searched as one text, but a match never spans two of them.
+        assertThat(list(user, "?q=" + acceptedNumber + "PEDIDO").getList("items")).isEmpty();
         assertThat(list(user, "?from=2000-01-01&to=2000-12-31").getList("items")).isEmpty();
         assertThat(list(user, "?from=2000-01-01").getList("items")).hasSize(2);
     }

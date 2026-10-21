@@ -216,6 +216,15 @@ public class DocumentEntity extends PanacheEntityBase {
         return total == null ? BigDecimal.ZERO : total;
     }
 
+    /**
+     * What the text search matches: the number, the external reference and the customer's identification and
+     * name, joined by newlines (a search cannot contain one, so no match spans two fields). Identical to the
+     * expression of idx_documents_search (V14), so the trigram index serves it.
+     */
+    static final String SEARCH_TEXT = "(d.prefix || d.number::text || E'\\n' || coalesce(d.external_reference, '')"
+            + " || E'\\n' || coalesce(d.customer ->> 'identificationNumber', '')"
+            + " || E'\\n' || coalesce(d.customer ->> 'legalName', ''))";
+
     /** Optional criteria of {@link #pageForAccount}; null fields do not filter. */
     public record Search(Environment environment, DocumentType type, DocumentStatus status, UUID issuerId,
                          LocalDate issuedFrom, LocalDate issuedTo, String text) {
@@ -249,10 +258,7 @@ public class DocumentEntity extends PanacheEntityBase {
         }
         String text = search.text() == null ? "" : search.text().strip();
         if (!text.isEmpty()) {
-            sql.append(" AND (d.prefix || d.number ILIKE :text"
-                    + " OR d.external_reference ILIKE :text"
-                    + " OR d.customer ->> 'identificationNumber' ILIKE :text"
-                    + " OR d.customer ->> 'legalName' ILIKE :text)");
+            sql.append(" AND ").append(SEARCH_TEXT).append(" ILIKE :text");
         }
         if (beforeId != null) {
             sql.append(" AND d.id < :before");
