@@ -44,7 +44,7 @@ for (const [time, type, , jobs] of rows("jobs.csv")) {
   backlog.set(time, (backlog.get(time) ?? 0) + Number(jobs));
 }
 const samples = [...backlog.values()];
-if (samples.length > 0) {
+if (samples.some((jobs) => jobs > 0)) {
   console.log(`worker backlog: max ${Math.max(...samples)} pending jobs, at the end ${samples.at(-1)}`);
 } else {
   console.log("worker backlog: empty throughout");

@@ -1,7 +1,7 @@
 // What one user does per iteration, for each surface. The scenarios combine these with a load profile.
 import { check, sleep } from "k6";
 import http from "k6/http";
-import { Counter, Trend } from "k6/metrics";
+import { Counter, Rate, Trend } from "k6/metrics";
 
 import {
   apiUrl,
@@ -100,6 +100,8 @@ const timeToFinal = new Trend("time_to_final_status", true);
 // rounding of the polling interval.
 const serverProcessing = new Trend("server_time_to_validation", true);
 const finalStatus = new Counter("final_status");
+// One sample per invoice: true only when the DIAN accepted it.
+const accepted = new Rate("accepted");
 const final = new Set(["ACCEPTED", "REJECTED", "FAILED"]);
 
 /**
@@ -111,6 +113,8 @@ export function endToEnd() {
   const started = Date.now();
   const id = issueInvoice(organization);
   if (!id) {
+    finalStatus.add(1, { status: "NOT_RECEIVED" });
+    accepted.add(false);
     return;
   }
   const pollSeconds = Number(__ENV.POLL_SECONDS || 1);
@@ -126,10 +130,12 @@ export function endToEnd() {
         serverProcessing.add(Date.parse(validatedAt) - Date.parse(response.json("createdAt")));
       }
       finalStatus.add(1, { status });
+      accepted.add(status === "ACCEPTED");
       return;
     }
   }
   finalStatus.add(1, { status: "TIMED_OUT" });
+  accepted.add(false);
 }
 
 // --- Console: the Java API behind the BFF (/console) ------------------------------------------------------------------

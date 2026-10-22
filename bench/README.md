@@ -49,8 +49,10 @@ Antes de medir, calienta con un `smoke`: la JVM recién arrancada rinde mucho me
 Las corridas de `public-api` encolan más de lo que el worker procesa; `bench/bench.sh drain` borra ese backlog
 para que no afecte la corrida siguiente. `SEARCH_WEIGHT` (15) define qué parte de `console-api` son búsquedas.
 
-Umbrales: p95 < 500 ms para llamadas al API, p95 < 1 s para páginas y errores < 1%. La capacidad máxima de una
-superficie es la mayor `RATE` sostenida que los cumple **y** en la que k6 no reporta `dropped_iterations`.
+Umbrales: p95 < 500 ms para llamadas al API y < 1 s para páginas; menos del 1% de requests y checks fallidos; k6
+debe iniciar al menos el 99% de las iteraciones pedidas (`dropped_iterations`), y en `end-to-end` la DIAN debe aceptar
+más del 99% de las facturas (`accepted`). La capacidad máxima de una superficie es la mayor `RATE` sostenida
+que los cumple todos.
 
 ### Latencia de la DIAN
 

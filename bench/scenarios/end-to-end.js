@@ -4,6 +4,7 @@
 //   DIAN_LATENCY=PT1.5S RATE=2 DURATION=5m bench/bench.sh run end-to-end
 // RATE is invoices per second, held constant for DURATION; a backlog that keeps growing means RATE is
 // above what the worker sustains.
+import { holds } from "../lib/common.js";
 import { endToEnd } from "../lib/flows.js";
 
 export { endToEnd };
@@ -24,6 +25,9 @@ export const options = {
     },
   },
   thresholds: {
+    ...holds(rate),
+    // Fast rejections or failed POSTs must not pass for capacity.
+    accepted: ["rate>0.99"],
     "http_req_duration{name:POST /v1/invoices}": ["p(95)<500"],
     time_to_final_status: ["p(95)<30000"],
     "final_status{status:TIMED_OUT}": ["count==0"],

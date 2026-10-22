@@ -86,8 +86,21 @@ export function profile(exec, { rate = Number(__ENV.RATE || 50), maxVUs = Number
   }
 }
 
-/** What "holds" means for an interactive request: p95 under 500 ms and under 1% errors. */
+/**
+ * What "holds" means, besides latency: under 1% of requests and checks failing, and k6 starting all but 1%
+ * of the iterations asked for (a target too slow to keep up shows as dropped iterations, not as errors).
+ * `rate` is the scenario's target, in iterations per second.
+ */
+export function holds(rate = Number(__ENV.RATE || 50)) {
+  return {
+    http_req_failed: ["rate<0.01"],
+    checks: ["rate>0.99"],
+    dropped_iterations: [`rate<${rate / 100}`],
+  };
+}
+
+/** For an interactive request: p95 under 500 ms. */
 export const thresholds = {
-  http_req_failed: ["rate<0.01"],
+  ...holds(),
   http_req_duration: ["p(95)<500"],
 };

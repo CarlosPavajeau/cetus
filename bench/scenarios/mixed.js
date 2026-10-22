@@ -2,7 +2,7 @@
 // RATE is the total; SHARES splits it (default 60% public API, 25% console pages, 15% console API calls
 // made outside page loads). Use it to confirm the capacity found by the single-surface scenarios.
 //   PROFILE=load RATE=120 bench/bench.sh run mixed
-import { profile } from "../lib/common.js";
+import { holds, profile } from "../lib/common.js";
 
 export { consoleApi, consolePages, publicApi, setup } from "../lib/flows.js";
 
@@ -17,7 +17,7 @@ export const options = {
     console_api: profile("consoleApi", share(apiShare)),
   },
   thresholds: {
-    http_req_failed: ["rate<0.01"],
+    ...holds(rate),
     "http_req_duration{scenario:public_api}": ["p(95)<500"],
     "http_req_duration{scenario:console_api}": ["p(95)<500"],
     "http_req_duration{scenario:console_pages}": ["p(95)<1000"],

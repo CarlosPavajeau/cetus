@@ -84,10 +84,12 @@ collect() {
     now=$(date +%H:%M:%S)
     docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}}" \
       $("${COMPOSE[@]}" ps -q) 2>/dev/null | sed "s/^/$now,/" >>"$out/containers.csv" || true
-    psql_bench -At -F, -c "
+    local jobs
+    jobs=$(psql_bench -At -F, -c "
       SELECT job_type, status, count(*), coalesce(extract(epoch FROM now() - min(run_at))::int, 0)
-      FROM billing.jobs WHERE status IN ('PENDING', 'RUNNING') GROUP BY 1, 2" 2>/dev/null |
-      sed "s/^/$now,/" >>"$out/jobs.csv" || true
+      FROM billing.jobs WHERE status IN ('PENDING', 'RUNNING') GROUP BY 1, 2" 2>/dev/null) || true
+    # An empty queue is a sample too, or the report would end on the last non-empty one.
+    printf '%s\n' "${jobs:--,-,0,0}" | sed "s/^/$now,/" >>"$out/jobs.csv"
     psql_bench -At -F, -c "
       SELECT coalesce(state, 'background'), count(*) FROM pg_stat_activity
       WHERE datname = 'cetus' GROUP BY 1" 2>/dev/null | sed "s/^/$now,/" >>"$out/connections.csv" || true
@@ -118,7 +120,8 @@ run() {
 
   collect "$out" &
   local collector=$!
-  trap 'kill $collector 2>/dev/null || true' EXIT
+  # The PID goes into the trap now: the local is gone by the time the shell exits.
+  trap "kill $collector 2>/dev/null || true" EXIT
 
   info "Running $scenario (${PROFILE:-smoke}); results in ${out#"$ROOT"/}"
   local status=0
@@ -129,6 +132,7 @@ run() {
     ${awake[@]+"${awake[@]}"} k6 run --quiet --summary-export "$out/summary.json" \
     -e API_URL=$API_URL -e CONSOLE_URL=$CONSOLE_URL "$script" 2>&1 | tee "$out/k6.log" || status=$?
   kill $collector 2>/dev/null || true
+  trap - EXIT
   "${COMPOSE[@]}" logs --no-color --since 30m api worker console >"$out/services.log" 2>&1 || true
   node "$BENCH/lib/summarize.mjs" "$out" | tee "$out/resources.txt"
   ok "Report: ${out#"$ROOT"/}/report.html"
