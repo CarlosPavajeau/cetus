@@ -37,7 +37,7 @@ cetus/
 
 ## Requisitos
 
-Java 21, Node 22 con pnpm, Docker. Gradle solo para generar el wrapper la primera vez.
+Java 25, Node 22 con pnpm, Docker. Gradle solo para generar el wrapper la primera vez.
 
 ## Desarrollo local con `make`
 
