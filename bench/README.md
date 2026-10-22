@@ -76,6 +76,9 @@ servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
 
 - **Postgres es local** (2 CPU, sin red) y en producción es PlanetScale a través de la red. Cada round trip real
   cuesta más, así que estos números son una **cota optimista**.
+- **Los pools pasan por PgBouncer**, como en producción (`pgbouncer`, modo transacción, 20 conexiones al servidor por
+  usuario y base). Flyway y el `LISTEN` del worker van directo a Postgres. Las corridas anteriores a este cambio iban
+  todas directo, así que no son comparables una a una.
 - La carga se genera en la misma máquina. Los límites de Docker aíslan a los servicios medidos, pero vigila
   que k6 no sature la CPU del host (`top`); si lo hace, la cifra es del generador, no de Cetus.
 - No se envían correos (sin `RESEND_API_KEY`). Aun así, el worker genera el PDF y el AttachedDocument de cada

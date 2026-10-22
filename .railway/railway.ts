@@ -44,7 +44,13 @@ const aws = {
   CETUS_DOCUMENTS_BUCKET: "cetus-prod-documents-434227",
 };
 
-/** PlanetScale role that owns the billing schema (pscale_api_…), shared by the API and the worker. */
+/**
+ * PlanetScale role that owns the billing schema (pscale_api_…), shared by the API and the worker.
+ * CETUS_DB_URL goes through PgBouncer (port 6432, transaction mode) and carries the pools. Only what needs a
+ * session takes a direct connection (port 5432): Flyway in the API (CETUS_DB_MIGRATION_URL), the worker's
+ * LISTEN (CETUS_JOBS_LISTEN_URL) and the console. That is about 7, twice during a deploy, under the 25 direct
+ * connections; PgBouncer takes up to 400 clients.
+ */
 const billingDatabase = {
   CETUS_DB_URL: preserve(),
   CETUS_DB_USER: preserve(),
@@ -95,6 +101,8 @@ export default defineRailway((ctx) => {
     env: {
       PORT: "8080",
       ...billingDatabase,
+      // The same database on port 5432, for Flyway.
+      CETUS_DB_MIGRATION_URL: preserve(),
       ...aws,
       CETUS_AUTH_JWKS_URL: "http://${{console.RAILWAY_PRIVATE_DOMAIN}}:${{console.PORT}}/api/auth/jwks",
       // Must equal the console's BETTER_AUTH_URL, without a trailing slash.
@@ -121,6 +129,8 @@ export default defineRailway((ctx) => {
     env: {
       PORT: "8081",
       ...billingDatabase,
+      // The same database on port 5432, for the LISTEN that starts jobs as soon as they are enqueued.
+      CETUS_JOBS_LISTEN_URL: preserve(),
       ...aws,
       // Documents stay locked (S3 Object Lock, compliance) for the prod default of 1826 days; set
       // CETUS_STORAGE_RETENTION_DAYS here only to change that period. It cannot be shortened afterwards.
