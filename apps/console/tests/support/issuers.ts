@@ -68,7 +68,12 @@ export async function onboardIssuer(
   return id;
 }
 
-export async function addRange(organization: TestOrganization, id: string, prefix: string, to = 5000) {
+export async function addRange(
+  organization: TestOrganization,
+  id: string,
+  prefix: string,
+  to = 5000,
+) {
   const response = await organization.api(`/console/issuers/${id}/numbering-ranges`, {
     method: "POST",
     body: JSON.stringify({
