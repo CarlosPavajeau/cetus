@@ -217,10 +217,14 @@ public class WorkerFixtures {
 
     /** A PROCESS_DOCUMENT job ready to be claimed, as the API leaves it. */
     public JobEntity pendingJob(UUID documentId) {
+        return pendingJob(JobTypes.PROCESS_DOCUMENT, documentId);
+    }
+
+    public JobEntity pendingJob(String type, UUID documentId) {
         return QuarkusTransaction.requiringNew().call(() -> {
             JobEntity job = new JobEntity();
             job.id = Ids.newId();
-            job.jobType = JobTypes.PROCESS_DOCUMENT;
+            job.jobType = type;
             job.referenceId = documentId;
             job.runAt = OffsetDateTime.now().minusSeconds(1);
             job.updatedAt = OffsetDateTime.now();

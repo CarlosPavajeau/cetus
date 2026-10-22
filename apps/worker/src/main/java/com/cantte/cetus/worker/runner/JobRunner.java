@@ -11,12 +11,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,6 +35,11 @@ import java.util.stream.Collectors;
  * Claims ready jobs and runs up to {@code cetus.jobs.concurrency} of them at once: most of a job is waiting on
  * the DIAN, S3 or the database, so several overlap their waits on a single CPU. Safe to run on many replicas
  * (the claim skips rows another worker locked).
+ *
+ * <p>Each type also has its own limit, {@code cetus.jobs.limit.<TYPE>} (default: the total), so one type
+ * cannot take every slot: a slow or unreachable DIAN holds at most its documents' slots while emails and
+ * webhooks keep going, CPU-heavy deliveries (PDFs) leave room for the documents customers wait for, and no
+ * type pushes a provider past its rate limit.
  *
  * <p>Platform threads, not virtual ones: on Java 21 a virtual thread doing I/O inside a {@code synchronized}
  * block pins its carrier, and with one vCPU there is a single carrier, so one library doing that would stall
@@ -56,12 +64,17 @@ public class JobRunner {
     @Inject
     Instance<JobHandler> handlerInstances;
 
+    @Inject
+    Config config;
+
     @ConfigProperty(name = "cetus.jobs.concurrency")
     int concurrency;
     @ConfigProperty(name = "cetus.jobs.lease")
     Duration lease;
 
     private Semaphore slots;
+    /** Free slots of each job type; only types with a handler are claimed. */
+    private final Map<String, Semaphore> typeSlots = new HashMap<>();
     private ExecutorService executor;
     private volatile boolean stopping;
     private Map<String, JobHandler> handlers;
@@ -71,6 +84,14 @@ public class JobRunner {
         slots = new Semaphore(concurrency);
         executor = Executors.newFixedThreadPool(concurrency, Thread.ofPlatform().name("job-", 0).factory());
         handlers = handlerInstances.stream().collect(Collectors.toMap(JobHandler::type, Function.identity()));
+        Map<String, Integer> limits = new TreeMap<>();
+        for (String type : handlers.keySet()) {
+            int limit = Math.min(concurrency,
+                    config.getOptionalValue("cetus.jobs.limit." + type, Integer.class).orElse(concurrency));
+            limits.put(type, limit);
+            typeSlots.put(type, new Semaphore(limit));
+        }
+        LOG.infof("Running up to %d jobs at once; per type: %s", concurrency, limits);
     }
 
     @Scheduled(every = "${cetus.jobs.poll-interval}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
@@ -97,30 +118,37 @@ public class JobRunner {
 
     private void claimAndStart() {
         int free = slots.availablePermits();
-        if (free == 0 || !slots.tryAcquire(free)) {
+        if (free == 0) {
             return;
         }
+        Map<String, Integer> wanted = new HashMap<>();
+        typeSlots.forEach((type, typeFree) -> wanted.put(type, Math.min(free, typeFree.availablePermits())));
         List<JobEntity> jobs;
         try {
-            jobs = claimer.claim(workerId, free, lease);
+            jobs = claimer.claim(workerId, wanted, free, lease);
         } catch (RuntimeException e) {
-            slots.release(free);
             LOG.warnf(e, "Could not claim jobs");
             return;
         }
-        slots.release(free - jobs.size());
         for (JobEntity job : jobs) {
+            Semaphore typeSlot = typeSlots.get(job.jobType);
+            // Only the claiming thread takes permits and running jobs only give them back, so the ones counted
+            // before the claim are still there: these never wait.
+            slots.acquireUninterruptibly();
+            typeSlot.acquireUninterruptibly();
             try {
                 executor.execute(() -> {
                     try {
                         runInRequestContext(job);
                     } finally {
+                        typeSlot.release();
                         slots.release();
                         wake();
                     }
                 });
             } catch (RejectedExecutionException e) {
                 // Shutting down: the job stays claimed and runs again when its lease expires.
+                typeSlot.release();
                 slots.release();
             }
         }

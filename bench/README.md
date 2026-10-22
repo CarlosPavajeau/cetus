@@ -66,7 +66,7 @@ bench/bench.sh latency PT0S                                             # volver
 ### Palancas sin recompilar
 
 Variables leídas por `bench/docker-compose.yml`, que se aplican con `bench/bench.sh up`:
-`BENCH_JOBS_CONCURRENCY` (8), `BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_JAVA_OPTS`,
+`BENCH_JOBS_CONCURRENCY` (12), `BENCH_JOBS_LIMIT_PROCESS_DOCUMENT` (8), `BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_JAVA_OPTS`,
 `BENCH_RATE_LIMIT_RPS`/`BENCH_RATE_LIMIT_BURST` (el límite por API key está desactivado por defecto para medir el
 servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
 
@@ -80,6 +80,9 @@ servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
   documento aceptado antes de marcar la entrega como SKIPPED, así que su costo de CPU sí se mide.
 - Las emisiones de un mismo emisor se serializan en el lock de su rango de numeración (`SELECT ... FOR
   UPDATE`). El seed crea 5 emisores (`BENCH_ORGS`); con un único emisor la recepción sería menor.
+- LocalStack no guarda estado. Si su contenedor se reinicia (por ejemplo, porque `up` recrea servicios después
+  de cambiar el compose), se pierden la llave KMS y los certificados en S3, y el worker falla con `NoSuchKey`.
+  En ese caso, `bench/bench.sh down -v`, `make bench-up` y `make bench-seed`.
 - Las cookies de sesión de `.state.json` duran lo que dura una sesión de Better Auth (7 días). Si vencen, vuelve a correr `make bench-seed`.
 
 ## Resultados (2026-10-21)

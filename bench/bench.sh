@@ -122,8 +122,11 @@ run() {
 
   info "Running $scenario (${PROFILE:-smoke}); results in ${out#"$ROOT"/}"
   local status=0
+  # A Mac left alone sleeps mid-run, which freezes Docker too and shows up as minutes-long latencies.
+  local awake=()
+  command -v caffeinate >/dev/null && awake=(caffeinate -i)
   K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT="$out/report.html" K6_WEB_DASHBOARD_OPEN=false \
-    k6 run --quiet --summary-export "$out/summary.json" \
+    ${awake[@]+"${awake[@]}"} k6 run --quiet --summary-export "$out/summary.json" \
     -e API_URL=$API_URL -e CONSOLE_URL=$CONSOLE_URL "$script" 2>&1 | tee "$out/k6.log" || status=$?
   kill $collector 2>/dev/null || true
   "${COMPOSE[@]}" logs --no-color --since 30m api worker console >"$out/services.log" 2>&1 || true

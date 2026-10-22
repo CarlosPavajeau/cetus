@@ -4,15 +4,20 @@ import com.cantte.cetus.persistence.entity.JobEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Claims ready jobs with FOR UPDATE SKIP LOCKED, so several workers never take the same job.
- * A RUNNING job whose lock expired (worker crashed) becomes claimable again.
+ * A RUNNING job whose lock expired (worker crashed) becomes claimable again. Locks taken on rows beyond
+ * the total are released when the claim's transaction ends.
  */
 @ApplicationScoped
 public class JobClaimer {
@@ -20,26 +25,48 @@ public class JobClaimer {
     @Inject
     EntityManager em;
 
+    /**
+     * Claims up to {@code limits.get(type)} ready jobs of each type, oldest first, and at most {@code total}
+     * in all. Types not in {@code limits} are not claimed.
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     @SuppressWarnings("unchecked")
-    public List<JobEntity> claim(String workerId, int limit, Duration lease) {
-        return em.createNativeQuery("""
+    public List<JobEntity> claim(String workerId, Map<String, Integer> limits, int total, Duration lease) {
+        List<Map.Entry<String, Integer>> wanted = limits.entrySet().stream().filter(e -> e.getValue() > 0).toList();
+        if (wanted.isEmpty() || total <= 0) {
+            return List.of();
+        }
+        // One row per type: (:type0, :limit0), (:type1, :limit1)...
+        String values = IntStream.range(0, wanted.size())
+                .mapToObj(i -> "(CAST(:type" + i + " AS text), CAST(:limit" + i + " AS int))")
+                .collect(Collectors.joining(", "));
+        Query query = em.createNativeQuery("""
                         UPDATE billing.jobs
                         SET status = 'RUNNING', attempts = attempts + 1, locked_by = :worker,
                             locked_until = now() + make_interval(secs => :lease), updated_at = now()
                         WHERE id IN (
-                            SELECT id FROM billing.jobs
-                            WHERE (status = 'PENDING' AND run_at <= now())
-                               OR (status = 'RUNNING' AND locked_until < now())
-                            ORDER BY run_at
-                            LIMIT :limit
-                            FOR UPDATE SKIP LOCKED)
+                            SELECT ready.id
+                            FROM (VALUES %s) AS limits(job_type, max_jobs)
+                            CROSS JOIN LATERAL (
+                                SELECT j.id, j.run_at FROM billing.jobs j
+                                WHERE j.job_type = limits.job_type
+                                  AND ((j.status = 'PENDING' AND j.run_at <= now())
+                                    OR (j.status = 'RUNNING' AND j.locked_until < now()))
+                                ORDER BY j.run_at
+                                LIMIT limits.max_jobs
+                                FOR UPDATE SKIP LOCKED) ready
+                            ORDER BY ready.run_at
+                            LIMIT :total)
                         RETURNING *
-                        """, JobEntity.class)
+                        """.formatted(values), JobEntity.class)
                 .setParameter("worker", workerId)
                 .setParameter("lease", (double) lease.toSeconds())
-                .setParameter("limit", limit)
-                .getResultList();
+                .setParameter("total", total);
+        for (int i = 0; i < wanted.size(); i++) {
+            query.setParameter("type" + i, wanted.get(i).getKey());
+            query.setParameter("limit" + i, wanted.get(i).getValue());
+        }
+        return query.getResultList();
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
