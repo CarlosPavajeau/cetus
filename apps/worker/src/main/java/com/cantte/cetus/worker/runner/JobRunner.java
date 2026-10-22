@@ -41,9 +41,9 @@ import java.util.stream.Collectors;
  * webhooks keep going, CPU-heavy deliveries (PDFs) leave room for the documents customers wait for, and no
  * type pushes a provider past its rate limit.
  *
- * <p>Platform threads, not virtual ones: on Java 21 a virtual thread doing I/O inside a {@code synchronized}
- * block pins its carrier, and with one vCPU there is a single carrier, so one library doing that would stall
- * every job. For a few dozen jobs a fixed pool costs about the same. Revisit with Java 24+ (JEP 491).
+ * <p>Each job runs on a virtual thread of its own. Since Java 24 (JEP 491) one that waits inside a
+ * {@code synchronized} block no longer pins its carrier thread, the only one with one vCPU. The semaphores,
+ * not the threads, set how many jobs run at once, so raising the limits needs no pool to resize.
  *
  * <p>It claims when woken: by {@link JobListener} as soon as a job is enqueued, when a running job ends (so a
  * backlog drains without waiting), and by the poll, which also picks up delayed jobs, retries and expired
@@ -82,7 +82,7 @@ public class JobRunner {
     @PostConstruct
     void init() {
         slots = new Semaphore(concurrency);
-        executor = Executors.newFixedThreadPool(concurrency, Thread.ofPlatform().name("job-", 0).factory());
+        executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("job-", 0).factory());
         handlers = handlerInstances.stream().collect(Collectors.toMap(JobHandler::type, Function.identity()));
         Map<String, Integer> limits = new TreeMap<>();
         for (String type : handlers.keySet()) {
