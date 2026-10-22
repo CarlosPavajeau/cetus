@@ -71,7 +71,6 @@ public class OpsAlerts {
             concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void daily() {
         run(Run.DAILY);
-        deleteExpiredIdempotencyKeys();
     }
 
     /**
@@ -172,12 +171,6 @@ public class OpsAlerts {
             LOG.errorf("Could not email %d ops alerts, retrying on the next run: %s", alerts.size(), e.getMessage());
             throw e;
         }
-    }
-
-    @Transactional
-    void deleteExpiredIdempotencyKeys() {
-        int deleted = em.createNativeQuery("DELETE FROM billing.idempotency_keys WHERE expires_at < now()").executeUpdate();
-        LOG.debugf("Deleted %d expired idempotency keys", deleted);
     }
 
     private static String shorten(String subject) {
