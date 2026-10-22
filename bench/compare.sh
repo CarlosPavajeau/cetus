@@ -6,6 +6,7 @@
 #   docker build -f apps/api/Dockerfile -t cetus-bench-api:java21 .     (and the worker, from each checkout)
 #   bench/compare.sh "java21:java21:-XX:MaxRAMPercentage=75" "java25:java25:-XX:MaxRAMPercentage=40"
 #
+# JAVA_OPTS replaces the image's, so it needs -XX:AOTCache=app.aot for images that carry the cache.
 # About an hour per variant; BASELINE_STEPS runs only some steps (see bench/baseline.sh), e.g.
 # BASELINE_STEPS="coldstart coldstart steady". Keep the Mac on AC power with the lid open.
 set -uo pipefail
@@ -13,7 +14,7 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 [ $# -gt 0 ] || {
-  sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
 }
 for variant in "$@"; do
