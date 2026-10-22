@@ -18,7 +18,7 @@ x-java: &java
 
 services:
   postgres:
-    image: postgres:16
+    image: postgres:18
     environment:
       POSTGRES_DB: cetus
       POSTGRES_USER: postgres
@@ -30,7 +30,8 @@ services:
       - "5532:5432"
     volumes:
       - ../infra/postgres:/docker-entrypoint-initdb.d:ro
-      - postgres-data:/var/lib/postgresql/data
+      # Postgres 18 keeps its data under /var/lib/postgresql/18; a new volume, since 16's data does not upgrade in place.
+      - postgres18-data:/var/lib/postgresql
     # PlanetScale is not in Railway's limits; keep the database from taking the whole machine instead.
     cpus: ${BENCH_POSTGRES_CPUS:-2}
     mem_limit: 2g
@@ -148,4 +149,4 @@ services:
         condition: service_started
 
 volumes:
-  postgres-data:
+  postgres18-data:

@@ -54,6 +54,11 @@ compila una vez los módulos compartidos y arranca la consola antes que la API (
 el nombre del servicio y queda también en `.logs/<servicio>.log`. Ctrl+C detiene los servicios; los contenedores
 siguen arriba hasta `make infra-down`. El worker escucha el depurador en el puerto 5006 (la API en el 5005).
 
+Postgres corre en la versión 18, la misma de PlanetScale. Si tu entorno venía de Postgres 16, sus datos
+quedaron en el volumen anterior (`postgres-data`), que el 18 no puede abrir. `make dev` arranca con una base
+vacía, Flyway la migra al iniciar la API, y `make migrate` crea el esquema de auth. El volumen viejo se borra con
+`docker volume rm cetus_postgres-data`.
+
 Los pasos manuales equivalentes:
 
 ## Primer arranque local
