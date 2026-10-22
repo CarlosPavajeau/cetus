@@ -20,7 +20,7 @@ const replicas = { "us-east4-eqdc4a": 1 };
 const MB = 1024 * 1024;
 /**
  * Resource ceilings. Railway bills actual usage, but the JVM sizes its heap from the container memory
- * (MaxRAMPercentage=75), so a lower ceiling also keeps the Java services from growing into it.
+ * (MaxRAMPercentage=40), so a lower ceiling also keeps the Java services from growing into it.
  */
 const limits = (cpu: number, memoryMB: number) => ({ containers: { cpu, memoryBytes: memoryMB * MB } });
 

@@ -145,7 +145,7 @@ infra_up() {
 
 setup() {
   command -v pnpm >/dev/null || die "pnpm is not installed (corepack enable)"
-  command -v java >/dev/null || die "Java 21 is not installed"
+  command -v java >/dev/null || die "Java 25 is not installed"
   [ -f gradle/wrapper/gradle-wrapper.jar ] || die "Missing Gradle wrapper: gradle wrapper --gradle-version 8.10.2"
   if [ ! -f apps/console/.env ]; then
     local secret
