@@ -13,6 +13,7 @@ make bench-seed    # organizaciones, emisores, API keys (bench/.state.json) e hi
 make bench SCENARIO=public-api PROFILE=smoke
 make bench SCENARIO=public-api PROFILE=load RATE=200
 bench/bench.sh drain  # entre corridas: vacía la cola que dejó la anterior
+make bench-coldstart SCENARIO=public-api   # reinicia el API y el worker y los carga en frío (700/s durante 2 min)
 make bench-down    # bench/bench.sh down -v borra también su base de datos
 ```
 
@@ -46,6 +47,8 @@ Perfiles (`PROFILE`, modelo abierto: k6 mantiene la tasa aunque el servidor se p
 - `constant`: `RATE` fija durante `DURATION` (2m). Es un punto de la curva; corre varios para acotar la rodilla.
 
 Antes de medir, calienta con un `smoke`: la JVM recién arrancada rinde mucho menos durante los primeros minutos.
+Para medir justamente eso, `coldstart` reinicia el API y el worker, anota en `run.txt` cuánto tardó cada uno en arrancar
+(`started in`) y corre el escenario apenas responden (`PROFILE=constant RATE=700 DURATION=2m`, salvo que se indique otra cosa).
 Las corridas de `public-api` encolan más de lo que el worker procesa; `bench/bench.sh drain` borra ese backlog
 para que no afecte la corrida siguiente. `SEARCH_WEIGHT` (15) define qué parte de `console-api` son búsquedas.
 
@@ -64,6 +67,24 @@ make bench SCENARIO=end-to-end RATE=1 DURATION=5m                       # mock i
 DIAN_LATENCY=PT1.5S make bench SCENARIO=end-to-end RATE=1 DURATION=5m   # aproximación a la DIAN
 bench/bench.sh latency PT0S                                             # volver a instantáneo
 ```
+
+### Comparar versiones
+
+Para comparar dos versiones de los servicios (un JVM, un flag, un cambio de código) hay dos scripts:
+
+- `bench/baseline.sh <etiqueta>` corre siempre la misma batería sobre el stack actual (~50 min): `coldstart`,
+  `public-api` a 1200/s, `console-api` a 400/s, `end-to-end` a 40/s y los soaks de 15 min de `public-api` y `mixed`.
+  Anota cada medición en `bench/results/baseline-index.txt`.
+- `bench/compare.sh "etiqueta:tag:JAVA_OPTS" ...` recrea el stack desde cero para cada variante (`down -v`, `up`,
+  `seed`), así todas ven los mismos datos. Corre `baseline.sh` con las imágenes `cetus-bench-api:<tag>` y
+  `cetus-bench-worker:<tag>`, que se construyen antes.
+
+Para que las corridas sean comparables:
+
+- Durante `public-api` y `console-api` el worker queda detenido. En Railway cada servicio tiene su vCPU; aquí su
+  backlog le quitaría CPU al host al API y llenaría la memoria de LocalStack.
+- Entre corridas hay 45 s de pausa, para que una corrida que satura no afecte a la siguiente.
+- La batería aborta si LocalStack se reinicia o si un `end-to-end` de prueba no acepta documentos.
 
 ### Palancas sin recompilar
 

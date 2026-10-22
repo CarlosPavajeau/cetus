@@ -1,12 +1,12 @@
 # Local development shortcuts. The heavy lifting lives in scripts/dev.sh.
 .DEFAULT_GOAL := help
 .PHONY: help setup dev dev-mock console api worker mock infra infra-down infra-logs migrate test-console \
-	bench-up bench-seed bench bench-down
+	bench-up bench-seed bench bench-coldstart bench-down
 
 DEV := scripts/dev.sh
 
 help: ## Show this help
-	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{ printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }'
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{ printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2 }'
 
 setup: ## First-time setup: pnpm install, containers, auth migrations, Java build
 	@$(DEV) setup
@@ -52,6 +52,9 @@ bench-seed: ## Benchmark: create tenants and a document history in the benchmark
 
 bench: ## Benchmark: run a k6 scenario, e.g. make bench SCENARIO=public-api PROFILE=load RATE=200
 	@bench/bench.sh run $(or $(SCENARIO),public-api)
+
+bench-coldstart: ## Benchmark: restart the API and the worker and load them cold, e.g. make bench-coldstart SCENARIO=public-api
+	@bench/bench.sh coldstart $(or $(SCENARIO),public-api)
 
 bench-down: ## Benchmark: stop the stack (its database volume is kept)
 	@bench/bench.sh down
