@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.runner;
 
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.worker.support.FakeDian;
@@ -14,7 +15,11 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,11 +65,68 @@ class JobRunnerTest {
         assertThat(doc.dianStatusMessage).startsWith("Gave up after 10 attempts: DianTransportException");
     }
 
+    @Test
+    void runsSeveralJobsAtOnceUpToTheirTypesLimit() {
+        // Six answers of 700 ms: 4.2 s one after the other, 0.7 s all at once, and 1.4 s three at a time,
+        // the limit of PROCESS_DOCUMENT in tests.
+        List<UUID> documents = slowDocuments(6);
+        long started = System.nanoTime();
+
+        runner.wake();
+
+        await(() -> documents.stream().allMatch(id -> document(id).status == DocumentStatus.ACCEPTED));
+        assertThat(Duration.ofNanos(System.nanoTime() - started))
+                .isGreaterThanOrEqualTo(Duration.ofMillis(1400))
+                .isLessThan(Duration.ofMillis(2500));
+        await(runner::idle);
+    }
+
+    @Test
+    void aTypeAtItsLimitLeavesTheOtherSlotsToTheRest() {
+        List<UUID> documents = slowDocuments(6);
+        // A delivery of a document that is not accepted yet: the handler has nothing to do and returns.
+        JobEntity delivery = fixtures.pendingJob(JobTypes.DELIVER_DOCUMENT, fixtures.invoice());
+
+        runner.wake();
+
+        await(() -> "DONE".equals(job(delivery.id).status));
+        assertThat(documents).anyMatch(id -> document(id).status != DocumentStatus.ACCEPTED);
+        await(() -> documents.stream().allMatch(id -> document(id).status == DocumentStatus.ACCEPTED));
+        await(runner::idle);
+    }
+
+    /** Invoices with a pending job each, whose SendBillSync answers after 700 ms. */
+    private List<UUID> slowDocuments(int count) {
+        Reply accepted = Reply.fixture("send-bill-sync-accepted.xml");
+        List<UUID> documents = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            dian.reply("SendBillSync", new Reply(accepted.status(), accepted.body(), Duration.ofMillis(700), false));
+            UUID id = fixtures.invoice();
+            fixtures.pendingJob(id);
+            documents.add(id);
+        }
+        return documents;
+    }
+
+    /** Polls until the condition holds, for at most 10 s. */
+    static void await(BooleanSupplier condition) {
+        long deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+        while (!condition.getAsBoolean()) {
+            assertThat(System.nanoTime()).as("condition still false after 10 s").isLessThan(deadline);
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
     private static JobEntity job(UUID id) {
         return QuarkusTransaction.requiringNew().call(() -> JobEntity.findById(id));
     }
 
-    private static DocumentEntity document(UUID id) {
+    static DocumentEntity document(UUID id) {
         return QuarkusTransaction.requiringNew().call(() -> DocumentEntity.findById(id));
     }
 }

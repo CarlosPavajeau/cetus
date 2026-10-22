@@ -55,6 +55,7 @@ final class MockDian {
     private final Duration timeoutDelay;
     private final int pollsBeforeDone;
     private volatile Scenario scenario;
+    private volatile Duration latency = Duration.ZERO;
 
     private final Map<String, Soap.Result> byDocumentKey = new ConcurrentHashMap<>();
     private final Map<String, PendingZip> byZipKey = new ConcurrentHashMap<>();
@@ -74,6 +75,18 @@ final class MockDian {
 
     void scenario(Scenario scenario) {
         this.scenario = scenario;
+    }
+
+    /** How long every SOAP answer waits, to approximate the real DIAN's response time under load. */
+    Duration latency() {
+        return latency;
+    }
+
+    void latency(Duration latency) {
+        if (latency.isNegative()) {
+            throw new IllegalArgumentException("latency must not be negative");
+        }
+        this.latency = latency;
     }
 
     List<Received> received() {
