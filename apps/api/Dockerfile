@@ -22,14 +22,26 @@ COPY --from=gradle-files /out ./
 RUN ./gradlew :apps:api:resolveDependencies --no-daemon
 COPY modules modules
 COPY apps/api apps/api
-RUN ./gradlew :apps:api:build -x test --no-daemon
+# AOT enabled: packages an aot-jar (every class on the JDK's class loader, which the AOT cache needs) and makes
+# the app stop after static init when quarkus.appcds.generate is set. The cache Quarkus makes here, with the
+# JDK, is dropped: the one that counts is made below with the runtime JVM.
+RUN ./gradlew :apps:api:build -x test --no-daemon \
+    -Dquarkus.package.jar.aot.enabled=true -Dquarkus.package.jar.aot.phase=build \
+    && rm -f apps/api/build/quarkus-app/app.aot
 
 FROM eclipse-temurin:25.0.4_7-jre
 WORKDIR /app
 COPY --from=build /workspace/apps/api/build/quarkus-app/ ./
+# AOT cache (JEP 483/514): the classes the app loads, already parsed and linked, so it starts and warms up faster.
+# Quarkus stops right after static init when quarkus.appcds.generate is set, before it opens the database or
+# AWS, so this runs without them. It runs in this image because the cache only works with the exact JVM that
+# made it, and with SerialGC, the collector the service runs with.
+RUN java -XX:+UseSerialGC -XX:AOTCacheOutput=app.aot -Dquarkus.appcds.generate=true -jar quarkus-run.jar
 # The heap gets 40% of the container (410 MB of 1 GB): the JVM takes ~500 MB more outside it (metaspace, JIT
 # code, threads, malloc), and on Java 25 SerialGC grows the heap up to its maximum, so 75% filled the container.
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=40 -Duser.timezone=America/Bogota"
+# SerialGC is what the JVM picks with one vCPU; it is explicit because the AOT cache was made with it.
+# Without -XX:AOTCache the service runs as before, only without the cache.
+ENV JAVA_OPTS="-XX:AOTCache=app.aot -XX:+UseSerialGC -XX:MaxRAMPercentage=40 -Duser.timezone=America/Bogota"
 EXPOSE 8080
 # exec: java replaces the shell as PID 1 and gets the SIGTERM of a deploy, so Quarkus shuts down cleanly
 # instead of being killed when the stop timeout runs out.
