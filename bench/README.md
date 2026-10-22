@@ -13,6 +13,7 @@ make bench-seed    # organizaciones, emisores, API keys (bench/.state.json) e hi
 make bench SCENARIO=public-api PROFILE=smoke
 make bench SCENARIO=public-api PROFILE=load RATE=200
 bench/bench.sh drain  # entre corridas: vacía la cola que dejó la anterior
+make bench-coldstart SCENARIO=public-api   # reinicia el API y el worker y los carga en frío (700/s durante 2 min)
 make bench-down    # bench/bench.sh down -v borra también su base de datos
 ```
 
@@ -46,6 +47,8 @@ Perfiles (`PROFILE`, modelo abierto: k6 mantiene la tasa aunque el servidor se p
 - `constant`: `RATE` fija durante `DURATION` (2m). Es un punto de la curva; corre varios para acotar la rodilla.
 
 Antes de medir, calienta con un `smoke`: la JVM recién arrancada rinde mucho menos durante los primeros minutos.
+Para medir justamente eso, `coldstart` reinicia el API y el worker, anota en `run.txt` cuánto tardó cada uno en arrancar
+(`started in`) y corre el escenario apenas responden (`PROFILE=constant RATE=700 DURATION=2m`, salvo que se indique otra cosa).
 Las corridas de `public-api` encolan más de lo que el worker procesa; `bench/bench.sh drain` borra ese backlog
 para que no afecte la corrida siguiente. `SEARCH_WEIGHT` (15) define qué parte de `console-api` son búsquedas.
 

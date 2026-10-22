@@ -5,6 +5,8 @@
 #   bench/bench.sh up                 build and start the stack (project cetus-bench, its own ports and volume)
 #   bench/bench.sh seed               tenants + API keys (bench/.state.json) and a document history to list
 #   bench/bench.sh run <scenario>     run bench/scenarios/<scenario>.js; output in bench/results/<time>-<scenario>/
+#   bench/bench.sh coldstart <scen.>  restart the API and the worker and run the scenario on the cold JVMs
+#                                     (PROFILE=constant RATE=700 DURATION=2m unless set)
 #   bench/bench.sh latency <ISO>      set the DIAN mock's answer delay, e.g. PT1.5S (PT0S: instant)
 #   bench/bench.sh drain              drop the worker's backlog left by a run, so it does not skew the next one
 #   bench/bench.sh down [-v]          stop the stack (-v also drops its database)
@@ -111,6 +113,7 @@ run() {
   {
     echo "scenario=$scenario profile=${PROFILE:-smoke} rate=${RATE:-} duration=${DURATION:-} max_vus=${MAX_VUS:-}"
     curl -sf "$MOCK_URL/__mock" || true
+    [ -n "${COLDSTART:-}" ] && printf '%s\n' "$COLDSTART"
     "${COMPOSE[@]}" config --format json | node -e '
       const c = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
       for (const [name, s] of Object.entries(c.services)) {
@@ -125,9 +128,10 @@ run() {
 
   info "Running $scenario (${PROFILE:-smoke}); results in ${out#"$ROOT"/}"
   local status=0
-  # A Mac left alone sleeps mid-run, which freezes Docker too and shows up as minutes-long latencies.
+  # A Mac left alone sleeps mid-run, which freezes Docker too and shows up as minutes-long latencies. -s keeps
+  # the system awake on AC power even with the display off; closing the lid still sleeps it.
   local awake=()
-  command -v caffeinate >/dev/null && awake=(caffeinate -i)
+  command -v caffeinate >/dev/null && awake=(caffeinate -is)
   K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT="$out/report.html" K6_WEB_DASHBOARD_OPEN=false \
     ${awake[@]+"${awake[@]}"} k6 run --quiet --summary-export "$out/summary.json" \
     -e API_URL=$API_URL -e CONSOLE_URL=$CONSOLE_URL "$script" 2>&1 | tee "$out/k6.log" || status=$?
@@ -139,15 +143,36 @@ run() {
   return $status
 }
 
+# The first minutes after a deploy: restart both JVMs, wait until they are up and load them right away.
+coldstart() {
+  local scenario=${1:?usage: bench.sh coldstart <scenario>}
+  [ -f "$BENCH/scenarios/$scenario.js" ] || die "No scenario $scenario"
+  info "Restarting the API and the worker"
+  local since start
+  since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  start=$(date +%s)
+  "${COMPOSE[@]}" restart api worker >/dev/null
+  "${COMPOSE[@]}" up -d --wait api worker >/dev/null
+  local ready=$(($(date +%s) - start))
+  # Quarkus logs "... started in 2.345s." once it listens; in JSON (prod) it is inside the message.
+  local api worker
+  api=$("${COMPOSE[@]}" logs --no-color --since "$since" api | grep -o 'started in [0-9.]*s' | tail -1)
+  worker=$("${COMPOSE[@]}" logs --no-color --since "$since" worker | grep -o 'started in [0-9.]*s' | tail -1)
+  COLDSTART="coldstart: api ${api:-?}, worker ${worker:-?}, both ready ${ready}s after the restart"
+  ok "$COLDSTART"
+  COLDSTART=$COLDSTART PROFILE=${PROFILE:-constant} RATE=${RATE:-700} DURATION=${DURATION:-2m} run "$scenario"
+}
+
 case ${1:-} in
   up) up ;;
   seed) seed ;;
   run) run "${2:-}" ;;
+  coldstart) coldstart "${2:-}" ;;
   latency) latency "${2:-}" ;;
   drain) drain ;;
   down)
     shift
     "${COMPOSE[@]}" down ${@+"$@"}
     ;;
-  *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac
