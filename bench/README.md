@@ -68,6 +68,24 @@ DIAN_LATENCY=PT1.5S make bench SCENARIO=end-to-end RATE=1 DURATION=5m   # aproxi
 bench/bench.sh latency PT0S                                             # volver a instantáneo
 ```
 
+### Comparar versiones
+
+Para comparar dos versiones de los servicios (un JVM, un flag, un cambio de código) hay dos scripts:
+
+- `bench/baseline.sh <etiqueta>` corre siempre la misma batería sobre el stack actual (~50 min): `coldstart`,
+  `public-api` a 1200/s, `console-api` a 400/s, `end-to-end` a 40/s y los soaks de 15 min de `public-api` y `mixed`.
+  Anota cada medición en `bench/results/baseline-index.txt`.
+- `bench/compare.sh "etiqueta:tag:JAVA_OPTS" ...` recrea el stack desde cero para cada variante (`down -v`, `up`,
+  `seed`), así todas ven los mismos datos. Corre `baseline.sh` con las imágenes `cetus-bench-api:<tag>` y
+  `cetus-bench-worker:<tag>`, que se construyen antes.
+
+Para que las corridas sean comparables:
+
+- Durante `public-api` y `console-api` el worker queda detenido. En Railway cada servicio tiene su vCPU; aquí su
+  backlog le quitaría CPU al host al API y llenaría la memoria de LocalStack.
+- Entre corridas hay 45 s de pausa, para que una corrida que satura no afecte a la siguiente.
+- La batería aborta si LocalStack se reinicia o si un `end-to-end` de prueba no acepta documentos.
+
 ### Palancas sin recompilar
 
 Variables leídas por `bench/docker-compose.yml`, que se aplican con `bench/bench.sh up`:
