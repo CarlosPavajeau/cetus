@@ -162,6 +162,8 @@ services:
       CETUS_JOBS_CONCURRENCY: ${BENCH_JOBS_CONCURRENCY:-12}
       CETUS_JOBS_LIMIT_PROCESS_DOCUMENT: ${BENCH_JOBS_LIMIT_PROCESS_DOCUMENT:-8}
       CETUS_JOBS_POLL_INTERVAL: ${BENCH_JOBS_POLL_INTERVAL:-2s}
+      # At least the concurrency + 4 (apps/worker application.properties).
+      CETUS_DB_POOL_SIZE: ${BENCH_DB_POOL_SIZE:-20}
     ports:
       - "8181:8081"
     cpus: 1

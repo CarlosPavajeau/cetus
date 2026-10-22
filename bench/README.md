@@ -89,7 +89,7 @@ Para que las corridas sean comparables:
 ### Palancas sin recompilar
 
 Variables leídas por `bench/docker-compose.yml`, que se aplican con `bench/bench.sh up`:
-`BENCH_JOBS_CONCURRENCY` (12), `BENCH_JOBS_LIMIT_PROCESS_DOCUMENT` (8), `BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_JAVA_OPTS`,
+`BENCH_JOBS_CONCURRENCY` (12), `BENCH_JOBS_LIMIT_PROCESS_DOCUMENT` (8), `BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_DB_POOL_SIZE` (20), `BENCH_JAVA_OPTS`,
 `BENCH_RATE_LIMIT_RPS`/`BENCH_RATE_LIMIT_BURST` (el límite por API key está desactivado por defecto para medir el
 servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
 
