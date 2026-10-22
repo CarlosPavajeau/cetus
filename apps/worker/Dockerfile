@@ -29,4 +29,6 @@ WORKDIR /app
 COPY --from=build /workspace/apps/worker/build/quarkus-app/ ./
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -Duser.timezone=America/Bogota"
 EXPOSE 8081
-CMD ["sh", "-c", "java $JAVA_OPTS -jar quarkus-run.jar"]
+# exec: java replaces the shell as PID 1 and gets the SIGTERM of a deploy, so Quarkus shuts down cleanly
+# instead of being killed when the stop timeout runs out.
+CMD ["sh", "-c", "exec java $JAVA_OPTS -jar quarkus-run.jar"]
