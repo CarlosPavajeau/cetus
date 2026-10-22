@@ -2,7 +2,7 @@
 # The apps run on the host: make dev (scripts/dev.sh) starts these containers and every app in one terminal.
 services:
   postgres:
-    image: postgres:16
+    image: postgres:18
     environment:
       POSTGRES_DB: cetus
       POSTGRES_USER: postgres
@@ -11,7 +11,8 @@ services:
       - "5432:5432"
     volumes:
       - ./infra/postgres:/docker-entrypoint-initdb.d:ro
-      - postgres-data:/var/lib/postgresql/data
+      # Postgres 18 keeps its data under /var/lib/postgresql/18; a new volume, since 16's data does not upgrade in place.
+      - postgres18-data:/var/lib/postgresql
 
   localstack:
     image: localstack/localstack:3
@@ -24,4 +25,4 @@ services:
       - ./infra/localstack:/etc/localstack/init/ready.d:ro
 
 volumes:
-  postgres-data:
+  postgres18-data:
