@@ -12,7 +12,11 @@ x-aws: &aws
   CETUS_AWS_ENDPOINT_OVERRIDE: http://localstack:4566
 
 x-java: &java
-  CETUS_DB_URL: jdbc:postgresql://postgres:5432/cetus
+  # As in production: the pools go through PgBouncer in transaction mode, and Flyway and the worker's LISTEN
+  # take a direct connection.
+  CETUS_DB_URL: jdbc:postgresql://pgbouncer:6432/cetus
+  CETUS_DB_MIGRATION_URL: jdbc:postgresql://postgres:5432/cetus
+  CETUS_JOBS_LISTEN_URL: jdbc:postgresql://postgres:5432/cetus
   # Same flags as the Dockerfiles; set here so a run can change them without rebuilding.
   JAVA_OPTS: ${BENCH_JAVA_OPTS:--XX:MaxRAMPercentage=75 -Duser.timezone=America/Bogota}
 
@@ -38,6 +42,24 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres", "-q"]
       interval: 2s
       retries: 30
+
+  # Stands in for PlanetScale's PgBouncer, with its defaults (transaction mode, 20 server connections per
+  # user and database, prepared statements tracked).
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.26.0-p0
+    environment:
+      DB_HOST: postgres
+      LISTEN_PORT: "6432"
+      DB_USER: cetus_billing
+      DB_PASSWORD: cetus
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "400"
+      DEFAULT_POOL_SIZE: "20"
+      MAX_PREPARED_STATEMENTS: "200"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   localstack:
     image: localstack/localstack:3
@@ -113,6 +135,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      pgbouncer:
+        condition: service_started
       localstack:
         condition: service_healthy
       console:
