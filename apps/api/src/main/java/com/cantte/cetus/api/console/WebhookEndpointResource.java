@@ -155,14 +155,17 @@ public class WebhookEndpointResource {
     /**
      * Sends to the endpoint again, e.g. once the integrator fixed what made Cetus disable it. The failure
      * count starts over. With {@code redeliver}, the events it missed while failing or disabled are sent
-     * again (see WebhookRedeliveries); otherwise they can be sent again one by one.
+     * again (see WebhookRedeliveries); without it, the failed deliveries can still be sent again one by one.
      */
     @POST
     @Path("/{id}/enable")
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public WebhookEndpointView enable(@PathParam("id") UUID id, @Valid EnableWebhookEndpointRequest request) {
-        WebhookEndpointEntity endpoint = find(context.account().id, id);
+        // Locked: a second enabling waits and finds it active, and the events being published are committed
+        // before the missed ones are read (see WebhookEndpointEntity.listSubscribed).
+        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findForAccountForUpdate(context.account().id, id)
+                .orElseThrow(() -> new NotFoundException("Webhook endpoint not found"));
         if (endpoint.status == WebhookEndpointEntity.Status.DISABLED) {
             int redelivered = request != null && request.redeliver() ? redeliveries.redeliver(endpoint) : 0;
             endpoint.status = WebhookEndpointEntity.Status.ACTIVE;

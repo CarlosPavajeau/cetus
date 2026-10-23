@@ -1,9 +1,6 @@
 package com.cantte.cetus.api.console;
 
-import com.cantte.cetus.domain.Ids;
-import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
-import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
 import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -12,33 +9,38 @@ import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
 
 /**
- * The events a disabled endpoint missed: those whose delivery failed or was canceled while it was failing,
- * and those published while it was disabled, which never got a delivery. Re-enabling it can send them
- * all again, oldest first, with the same event id and body.
+ * The events a disabled endpoint missed since its window opened (see {@link #windowStart}):
+ * <ul>
+ *     <li>deliveries that failed or were canceled since then, whatever the time of their event: the one that
+ *     started the streak of failures was published before it;</li>
+ *     <li>events published since then that never got a delivery, because the endpoint was disabled.</li>
+ * </ul>
+ * Re-enabling it can send them all again, with the same event id and body. The deliveries and their jobs are
+ * written set-based, so there is no limit: every missed event ends up with a delivery the integrator can
+ * follow, and retry one by one if needed.
  */
 @ApplicationScoped
 public class WebhookRedeliveries {
 
-    /** At most this many per re-enabling; the rest can still be retried one by one. */
-    static final int MAX = 10_000;
+    /** Failed or canceled deliveries of the endpoint since the window opened. */
+    private static final String FAILED = """
+            FROM billing.webhook_deliveries d
+            WHERE d.endpoint_id = :endpoint AND d.status IN ('FAILED', 'CANCELED') AND d.updated_at >= :since
+            """;
 
-    /** The events of the endpoint's account and environment it subscribes to, since the window opened. */
-    private static final String MISSED = """
+    /** Events of the endpoint's account and environment it subscribes to, published since then without a delivery. */
+    private static final String UNDELIVERED = """
             FROM billing.webhook_events e
-            LEFT JOIN billing.webhook_deliveries d ON d.event_id = e.id AND d.endpoint_id = :endpoint
             WHERE e.account_id = :account AND e.environment = :environment AND e.created_at >= :since
               AND (:types = '' OR e.type = ANY (string_to_array(:types, ',')))
-              AND (d.id IS NULL OR d.status IN ('FAILED', 'CANCELED'))
+              AND NOT EXISTS (SELECT 1 FROM billing.webhook_deliveries d
+                              WHERE d.event_id = e.id AND d.endpoint_id = :endpoint)
             """;
 
     @Inject
     EntityManager em;
-    @Inject
-    JobQueue jobs;
 
     /** Since when the endpoint misses events: the start of its streak of failures, or when it was disabled. */
     static OffsetDateTime windowStart(WebhookEndpointEntity endpoint) {
@@ -51,41 +53,58 @@ public class WebhookRedeliveries {
         if (since == null) {
             return 0;
         }
-        return ((Number) parameters(em.createNativeQuery("SELECT count(*) " + MISSED), endpoint, since)
+        long failed = ((Number) failedParameters(em.createNativeQuery("SELECT count(*) " + FAILED), endpoint, since)
                 .getSingleResult()).longValue();
+        long undelivered = ((Number) parameters(em.createNativeQuery("SELECT count(*) " + UNDELIVERED), endpoint, since)
+                .getSingleResult()).longValue();
+        return failed + undelivered;
     }
 
-    /** Queues them again; call it before the endpoint's window is cleared. */
+    /**
+     * Queues them again, oldest first; call it with the endpoint locked and before its window is cleared.
+     *
+     * @return how many deliveries were queued
+     */
     @Transactional(Transactional.TxType.MANDATORY)
-    @SuppressWarnings("unchecked")
     public int redeliver(WebhookEndpointEntity endpoint) {
         OffsetDateTime since = windowStart(endpoint);
         if (since == null) {
             return 0;
         }
-        List<Object[]> missed = parameters(em.createNativeQuery(
-                "SELECT e.id, d.id " + MISSED + " ORDER BY e.created_at, e.id LIMIT " + MAX, Object[].class),
-                endpoint, since).getResultList();
-        for (Object[] row : missed) {
-            WebhookDeliveryEntity delivery;
-            if (row[1] == null) {
-                delivery = new WebhookDeliveryEntity();
-                delivery.id = Ids.newId();
-                delivery.eventId = (UUID) row[0];
-                delivery.endpointId = endpoint.id;
-                delivery.persist();
-            } else {
-                delivery = WebhookDeliveryEntity.findById(row[1]);
-                delivery.status = WebhookDeliveryEntity.Status.PENDING;
-                delivery.lastError = null;
-            }
-            jobs.enqueue(JobTypes.DELIVER_WEBHOOK, delivery.id);
-        }
-        return missed.size();
+        // Entities of this transaction must be in the database before the statements below read it.
+        em.flush();
+        int again = failedParameters(em.createNativeQuery("""
+                WITH again AS (
+                    UPDATE billing.webhook_deliveries SET status = 'PENDING', last_error = NULL, updated_at = now()
+                    WHERE id IN (SELECT d.id %s)
+                    RETURNING id, event_id)
+                INSERT INTO billing.jobs (id, job_type, reference_id)
+                SELECT uuidv7(), :type, again.id
+                FROM again JOIN billing.webhook_events e ON e.id = again.event_id
+                ORDER BY e.created_at, e.id
+                """.formatted(FAILED)), endpoint, since)
+                .setParameter("type", JobTypes.DELIVER_WEBHOOK)
+                .executeUpdate();
+        // uuidv7() is monotonic within the statement, so the new deliveries sort like their events.
+        int created = parameters(em.createNativeQuery("""
+                WITH created AS (
+                    INSERT INTO billing.webhook_deliveries (id, event_id, endpoint_id)
+                    SELECT uuidv7(), e.id, :endpoint %s
+                    ORDER BY e.created_at, e.id
+                    RETURNING id)
+                INSERT INTO billing.jobs (id, job_type, reference_id)
+                SELECT uuidv7(), :type, created.id FROM created
+                """.formatted(UNDELIVERED)), endpoint, since)
+                .setParameter("type", JobTypes.DELIVER_WEBHOOK)
+                .executeUpdate();
+        return again + created;
     }
 
-    private static Query parameters(Query query, WebhookEndpointEntity endpoint,
-                                    OffsetDateTime since) {
+    private static Query failedParameters(Query query, WebhookEndpointEntity endpoint, OffsetDateTime since) {
+        return query.setParameter("endpoint", endpoint.id).setParameter("since", since);
+    }
+
+    private static Query parameters(Query query, WebhookEndpointEntity endpoint, OffsetDateTime since) {
         return query.setParameter("endpoint", endpoint.id)
                 .setParameter("account", endpoint.accountId)
                 .setParameter("environment", endpoint.environment.name())
