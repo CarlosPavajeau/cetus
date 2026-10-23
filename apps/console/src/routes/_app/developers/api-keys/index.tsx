@@ -368,7 +368,7 @@ function CreateApiKeyDialog() {
   const [copied, setCopied] = useState(false);
   const form = useForm({
     resolver: arktypeResolver(createApiKeySchema),
-    defaultValues: { name: "", environment: "TEST" as Environment },
+    defaultValues: { name: "", environment: "SANDBOX" as Environment },
   });
   const { isSubmitting } = form.formState;
 
