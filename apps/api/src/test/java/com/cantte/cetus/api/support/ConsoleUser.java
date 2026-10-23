@@ -29,6 +29,11 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
         return new ConsoleUser("user_" + UUID.randomUUID(), "org_" + UUID.randomUUID(), Set.of(roles));
     }
 
+    /** The address the user signs in with: the console puts it in every token. */
+    public String email() {
+        return userId.toLowerCase() + "@example.test";
+    }
+
     public String token() {
         // The console always sends the claim; null outside an impersonation.
         return token(JsonValue.NULL);
@@ -43,6 +48,7 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
         return Jwt.issuer("https://console.test")
                 .subject(userId)
                 .audience("cetus-api")
+                .claim("email", email())
                 .claim("org", organizationId)
                 .claim("impersonatedBy", impersonatedBy)
                 .groups(groups)

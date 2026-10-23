@@ -105,6 +105,9 @@ export const auditActions = [
   "IMPERSONATION_STARTED",
   "IMPERSONATION_ENDED",
   "CERTIFICATE_UPLOAD_LINK_CREATED",
+  "CONTACT_CHANGE_REQUESTED",
+  "CONTACT_CHANGE_CANCELED",
+  "CONTACT_VERIFIED",
 ] as const satisfies readonly AuditAction[];
 
 /** Actions on a person rather than an account: only the administration's log has them. */
@@ -128,3 +131,9 @@ const _allDocumentStatusesListed: MissingDocumentStatuses extends never
   ? true
   : MissingDocumentStatuses = true;
 void _allDocumentStatusesListed;
+
+export type ContactCategory = Schemas["Category"];
+
+export type Contact = Schemas["ContactView"];
+
+export type ContactVerification = Schemas["VerificationView"];

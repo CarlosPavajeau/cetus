@@ -91,11 +91,12 @@ publicClient.use({
 
 /**
  * For the few console pages without a session, whose request carries its own credential (a one-time
- * certificate upload link). Sends no token.
+ * certificate upload or contact verification link). Sends no token.
  */
 export const publicApi = {
   get: unwrapped(publicClient.GET),
   put: unwrapped(publicClient.PUT),
+  post: unwrapped(publicClient.POST),
 };
 
 async function authHeaders(): Promise<Record<string, string>> {

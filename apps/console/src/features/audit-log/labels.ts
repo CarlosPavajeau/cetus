@@ -23,6 +23,9 @@ export const actionLabel: Record<AuditAction, string> = {
   IMPERSONATION_STARTED: "Soporte entró como usuario",
   IMPERSONATION_ENDED: "Soporte salió de la sesión",
   CERTIFICATE_UPLOAD_LINK_CREATED: "Enlace de carga de certificado enviado",
+  CONTACT_CHANGE_REQUESTED: "Cambio de contacto solicitado",
+  CONTACT_CHANGE_CANCELED: "Cambio de contacto cancelado",
+  CONTACT_VERIFIED: "Contacto verificado",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

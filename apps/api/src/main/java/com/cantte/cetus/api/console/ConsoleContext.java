@@ -24,6 +24,12 @@ public class ConsoleContext {
         return jwt.getSubject();
     }
 
+    /** The address the user signs in with, as Better Auth put it in the token. */
+    public Optional<String> email() {
+        String email = jwt.getClaim("email");
+        return Optional.ofNullable(email).filter(value -> !value.isBlank());
+    }
+
     /** The Cetus admin acting as this user, while an impersonation session lasts. */
     public Optional<String> impersonatedBy() {
         // A JSON null may come back as a JsonValue rather than null: only a non-blank string counts.

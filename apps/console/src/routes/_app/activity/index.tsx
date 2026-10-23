@@ -80,7 +80,12 @@ function Activity() {
       case "PLATFORM":
         return "Soporte de Cetus";
       case "SYSTEM":
-        return entry.actorId?.startsWith("certificate-upload-link:") ? "Enlace de carga" : "Cetus";
+        if (entry.actorId?.startsWith("certificate-upload-link:")) {
+          return "Enlace de carga";
+        }
+        return entry.actorId?.startsWith("contact-verification-link:")
+          ? "Enlace de verificación"
+          : "Cetus";
     }
   }
 

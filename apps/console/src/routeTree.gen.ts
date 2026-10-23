@@ -19,6 +19,7 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
+import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
@@ -27,6 +28,7 @@ import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/i
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
+import { Route as AppSettingsContactsRouteImport } from './routes/_app/settings/contacts'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
@@ -88,6 +90,12 @@ const CertificateUploadTokenRoute = CertificateUploadTokenRouteImport.update({
   path: '/certificate-upload/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactVerificationTokenRoute =
+  ContactVerificationTokenRouteImport.update({
+    id: '/contact-verification/$token',
+    path: '/contact-verification/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -126,6 +134,11 @@ const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
 const AppIssuersIssuerIdRoute = AppIssuersIssuerIdRouteImport.update({
   id: '/issuers/$issuerId',
   path: '/issuers/$issuerId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsContactsRoute = AppSettingsContactsRouteImport.update({
+  id: '/settings/contacts',
+  path: '/settings/contacts',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
@@ -205,10 +218,12 @@ export interface FileRoutesByFullPath {
   '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
+  '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/': typeof AdminAdminIndexRoute
@@ -235,10 +250,12 @@ export interface FileRoutesByTo {
   '/two-factor': typeof TwoFactorRoute
   '/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
+  '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin': typeof AdminAdminIndexRoute
@@ -268,10 +285,12 @@ export interface FileRoutesById {
   '/two-factor': typeof TwoFactorRoute
   '/_app/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
+  '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
+  '/_app/settings/contacts': typeof AppSettingsContactsRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
@@ -300,10 +319,12 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/overview'
     | '/certificate-upload/$token'
+    | '/contact-verification/$token'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
     | '/issuers/$issuerId'
+    | '/settings/contacts'
     | '/settings/security'
     | '/api/auth/$'
     | '/admin/'
@@ -330,10 +351,12 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/overview'
     | '/certificate-upload/$token'
+    | '/contact-verification/$token'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
     | '/issuers/$issuerId'
+    | '/settings/contacts'
     | '/settings/security'
     | '/api/auth/$'
     | '/admin'
@@ -362,10 +385,12 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/_app/overview'
     | '/certificate-upload/$token'
+    | '/contact-verification/$token'
     | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
     | '/_app/documents/$documentId'
     | '/_app/issuers/$issuerId'
+    | '/_app/settings/contacts'
     | '/_app/settings/security'
     | '/api/auth/$'
     | '/_admin/admin/'
@@ -394,6 +419,7 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   TwoFactorRoute: typeof TwoFactorRoute
   CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
+  ContactVerificationTokenRoute: typeof ContactVerificationTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -469,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CertificateUploadTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact-verification/$token': {
+      id: '/contact-verification/$token'
+      path: '/contact-verification/$token'
+      fullPath: '/contact-verification/$token'
+      preLoaderRoute: typeof ContactVerificationTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_admin/admin/': {
       id: '/_admin/admin/'
       path: '/admin'
@@ -523,6 +556,13 @@ declare module '@tanstack/react-router' {
       path: '/issuers/$issuerId'
       fullPath: '/issuers/$issuerId'
       preLoaderRoute: typeof AppIssuersIssuerIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/contacts': {
+      id: '/_app/settings/contacts'
+      path: '/settings/contacts'
+      fullPath: '/settings/contacts'
+      preLoaderRoute: typeof AppSettingsContactsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/security': {
@@ -640,6 +680,7 @@ interface AppRouteChildren {
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
+  AppSettingsContactsRoute: typeof AppSettingsContactsRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
@@ -656,6 +697,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppActivityEventIdRoute: AppActivityEventIdRoute,
   AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
+  AppSettingsContactsRoute: AppSettingsContactsRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
@@ -679,6 +721,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   TwoFactorRoute: TwoFactorRoute,
   CertificateUploadTokenRoute: CertificateUploadTokenRoute,
+  ContactVerificationTokenRoute: ContactVerificationTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
