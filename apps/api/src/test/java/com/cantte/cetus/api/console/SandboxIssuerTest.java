@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.CERTIFICATE_PASSWORD;
 import static com.cantte.cetus.api.support.ConsoleFixtures.PIN;
@@ -139,6 +140,37 @@ class SandboxIssuerTest {
                 .then().statusCode(422).body("code", equalTo("sandbox_issuer_limit"));
         // Other environments are not capped.
         createIssuer(user, "900123455", "TEST");
+    }
+
+    @Test
+    void parallelRequestsDoNotGoPastTheSandboxIssuerLimit() throws Exception {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Parallel issuers SAS");
+        for (String nit : List.of("900123451", "900123452", "900123453")) {
+            createIssuer(user, nit, "SANDBOX");
+        }
+
+        // Ten at once for the last slot: exactly one gets it.
+        List<String> nits = IntStream.range(0, 10).mapToObj(i -> "90012346" + i).toList();
+        try (ExecutorService pool = Executors.newFixedThreadPool(nits.size())) {
+            List<Future<Response>> responses = new ArrayList<>();
+            for (String nit : nits) {
+                responses.add(pool.submit(() -> user.request().body(issuerRequest(nit, "SANDBOX"))
+                        .post("/console/issuers")));
+            }
+            List<Response> done = new ArrayList<>();
+            for (Future<Response> response : responses) {
+                done.add(response.get());
+            }
+            assertThat(done).filteredOn(response -> response.statusCode() == 200).hasSize(1);
+            assertThat(done).filteredOn(response -> response.statusCode() == 422)
+                    .hasSize(nits.size() - 1)
+                    .allSatisfy(response -> assertThat(response.jsonPath().getString("code"))
+                            .isEqualTo("sandbox_issuer_limit"));
+        }
+        List<Map<String, Object>> issuers = user.request().get("/console/issuers")
+                .then().statusCode(200).extract().jsonPath().getList("");
+        assertThat(issuers).filteredOn(issuer -> "SANDBOX".equals(issuer.get("environment"))).hasSize(5);
     }
 
     @Test
