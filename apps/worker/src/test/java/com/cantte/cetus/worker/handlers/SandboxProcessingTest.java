@@ -4,11 +4,14 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
+import com.cantte.cetus.persistence.entity.WebhookEventEntity;
 import com.cantte.cetus.worker.support.FakeDian;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeDocumentStorage;
@@ -99,6 +102,26 @@ class SandboxProcessingTest {
         assertThat(document(first).status).isEqualTo(DocumentStatus.ACCEPTED);
         assertThat(document(second).status).isEqualTo(DocumentStatus.ACCEPTED);
         assertThat(document(second).cufe).isNotEqualTo(document(first).cufe);
+    }
+
+    @Test
+    void theAcceptanceIsPublishedToTheSandboxEndpointsOnly() {
+        UUID id = fixtures.sandboxInvoice("900108281");
+        // Plain http is fine outside production.
+        WorkerFixtures.Endpoint sandbox = fixtures.webhookEndpoint(id, Environment.SANDBOX, "http://localhost:4000/hooks");
+        fixtures.webhookEndpoint(id, Environment.TEST, "https://hooks.example.com/test");
+
+        process(id);
+
+        List<WebhookEventEntity> events = QuarkusTransaction.requiringNew().call(() ->
+                WebhookEventEntity.list("documentId", id));
+        assertThat(events).singleElement().satisfies(event -> {
+            assertThat(event.type).isEqualTo("invoice.accepted");
+            assertThat(event.payload).contains("\"environment\":\"SANDBOX\"");
+            List<WebhookDeliveryEntity> deliveries = QuarkusTransaction.requiringNew().call(() ->
+                    WebhookDeliveryEntity.listByEvent(event.id));
+            assertThat(deliveries).extracting(delivery -> delivery.endpointId).containsExactly(sandbox.id());
+        });
     }
 
     @Test
