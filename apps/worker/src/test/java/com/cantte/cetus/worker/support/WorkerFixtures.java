@@ -183,6 +183,17 @@ public class WorkerFixtures {
         });
     }
 
+    /** Another SANDBOX invoice of the account, from the issuer and range {@link #sandboxInvoice} created. */
+    public UUID sandboxInvoiceFor(UUID accountId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            IssuerEntity issuer = IssuerEntity.<IssuerEntity>find("accountId = ?1 and environment = ?2", accountId,
+                    Environment.SANDBOX).singleResult();
+            NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("issuerId", issuer.id)
+                    .singleResult();
+            return document(accountId, issuer.id, range, DocumentType.INVOICE, Environment.SANDBOX, "900108281").id;
+        });
+    }
+
     /**
      * Marks the invoice as accepted by the DIAN and creates, in RECEIVED, a credit note that cancels it,
      * numbered in its own NC range without resolution or technical key. Returns the note id.

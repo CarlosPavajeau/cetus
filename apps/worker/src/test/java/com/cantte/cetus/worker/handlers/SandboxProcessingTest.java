@@ -12,6 +12,7 @@ import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.worker.support.FakeDian;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeDocumentStorage;
+import com.cantte.cetus.worker.support.FakeResend;
 import com.cantte.cetus.worker.support.FakeResendResource;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -42,6 +43,8 @@ class SandboxProcessingTest {
     @Inject
     FakeDian dian;
     @Inject
+    FakeResend resend;
+    @Inject
     WorkerFixtures fixtures;
     @Inject
     DocumentStorage storage;
@@ -49,6 +52,7 @@ class SandboxProcessingTest {
     @BeforeEach
     void reset() {
         dian.reset();
+        resend.reset();
     }
 
     @AfterEach
@@ -150,17 +154,44 @@ class SandboxProcessingTest {
     }
 
     @Test
-    void anAcceptedDocumentGetsItsFilesButNoEmailToItsCustomer() {
+    void withoutATechnicalContactNothingIsEmailed() {
         UUID id = fixtures.sandboxInvoice("900108281");
         process(id);
 
         delivery.handle(fixtures.job(id, 1));
 
         assertThat(artifacts(id)).extracting(a -> a.kind).contains(Kind.ATTACHED_DOCUMENT, Kind.PDF);
-        DocumentDeliveryEntity skipped = QuarkusTransaction.requiringNew().call(() ->
-                DocumentDeliveryEntity.listByDocument(id)).getFirst();
+        DocumentDeliveryEntity skipped = deliveries(id).getFirst();
         assertThat(skipped.status).isEqualTo(DocumentDeliveryEntity.Status.SKIPPED);
-        assertThat(skipped.error).isEqualTo("SANDBOX documents are never emailed to their customer");
+        assertThat(skipped.error).contains("technical contact");
+        assertThat(resend.requests()).isEmpty();
+    }
+
+    @Test
+    void theTechnicalContactGetsTheEmailInsteadOfTheCustomerAFewTimesADay() {
+        // The test profile allows two SANDBOX emails a day per account.
+        UUID first = fixtures.sandboxInvoice("900108281");
+        UUID accountId = document(first).accountId;
+        fixtures.contacts(accountId, "dev@cliente.test", "fiscal@cliente.test", null);
+        List<UUID> invoices = List.of(first, fixtures.sandboxInvoiceFor(accountId), fixtures.sandboxInvoiceFor(accountId));
+
+        for (UUID id : invoices) {
+            process(id);
+            delivery.handle(fixtures.job(id, 1));
+        }
+
+        assertThat(resend.requests()).hasSize(2).allSatisfy(request -> {
+            assertThat(request.body().get("to").get(0).asText()).isEqualTo("dev@cliente.test");
+            assertThat(request.body().get("subject").asText()).startsWith("[Simulación] ");
+            assertThat(request.body().get("text").asText()).contains("no fue enviado a la DIAN");
+        });
+        DocumentDeliveryEntity third = deliveries(invoices.get(2)).getFirst();
+        assertThat(third.status).isEqualTo(DocumentDeliveryEntity.Status.SKIPPED);
+        assertThat(third.error).contains("2 SANDBOX emails of the day");
+    }
+
+    private static List<DocumentDeliveryEntity> deliveries(UUID id) {
+        return QuarkusTransaction.requiringNew().call(() -> DocumentDeliveryEntity.listByDocument(id));
     }
 
     private void process(UUID documentId) {

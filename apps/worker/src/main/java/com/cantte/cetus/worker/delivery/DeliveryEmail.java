@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.delivery;
 
 import com.cantte.cetus.domain.model.DocumentType;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.worker.support.ProcessingContext;
 
@@ -13,6 +14,13 @@ import java.util.Locale;
 
 /** Subject and body of the email that delivers a document (annex section 9.1). */
 public record DeliveryEmail(String subject, String html, String text) {
+
+    /**
+     * A SANDBOX document reaches the account's technical contact instead of its customer, as the email the
+     * customer would get, marked as a simulation.
+     */
+    static final String SANDBOX_NOTICE = "Simulación de Cetus: así recibiría este correo su cliente. El documento no tiene "
+            + "validez fiscal y no fue enviado a la DIAN.";
 
     /**
      * The subject is fixed by the annex: "NIT;Name;Number;Type code;Trade name" (the optional line of
@@ -57,6 +65,10 @@ public record DeliveryEmail(String subject, String html, String text) {
                 """.formatted(escape(ctx.customer().legalName()), escape(supplier.legalName()), kind,
                 escape(ctx.fullNumber()), escape(reference), total,
                 escape(contact(tradeName, supplier.email(), supplier.phone())));
+        if (ctx.environment() == Environment.SANDBOX) {
+            return new DeliveryEmail("[Simulación] " + subject, "<p><strong>" + SANDBOX_NOTICE + "</strong></p>\n" + html,
+                    SANDBOX_NOTICE + "\n\n" + text);
+        }
         return new DeliveryEmail(subject, html, text);
     }
 
