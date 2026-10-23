@@ -66,7 +66,7 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             return;
         }
         ApiKeyEntity key = resolved.key();
-        Optional<Duration> wait = rateLimiter.acquire(key.id);
+        Optional<Duration> wait = rateLimiter.acquire(key.id, key.environment);
         if (wait.isPresent()) {
             long seconds = Math.max(1, (long) Math.ceil(wait.get().toMillis() / 1000.0));
             request.abortWith(ProblemDetail.builder(429, "rate_limited",

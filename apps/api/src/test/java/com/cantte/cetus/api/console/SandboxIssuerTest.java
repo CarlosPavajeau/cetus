@@ -5,6 +5,7 @@ import com.cantte.cetus.api.support.ConsoleUser;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
+import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 /** A new account issues in the sandbox right away, without software, certificate or ranges of its own. */
 @QuarkusTest
@@ -64,6 +66,23 @@ class SandboxIssuerTest {
         assertThat(created.getString("environment")).isEqualTo("SANDBOX");
         assertThat(created.getString("status")).isEqualTo("RECEIVED");
         assertThat(created.getString("number")).isEqualTo("SIM1");
+    }
+
+    @Test
+    void anAccountIssuesAFewSandboxDocumentsADay() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Busy sandbox SAS");
+        String apiKey = user.request().body(Map.of("name", "ERP", "environment", "SANDBOX"))
+                .post("/console/api-keys")
+                .then().statusCode(200).extract().path("secret");
+
+        // The test profile allows three a day.
+        for (int i = 0; i < 3; i++) {
+            issue(apiKey).then().statusCode(202);
+        }
+        issue(apiKey).then().statusCode(429)
+                .body("code", equalTo("sandbox_daily_limit"))
+                .header("Retry-After", notNullValue());
     }
 
     @Test
@@ -116,6 +135,13 @@ class SandboxIssuerTest {
                 .body(invoice())
                 .post("/v1/invoices")
                 .then().statusCode(202).body("environment", equalTo("TEST"));
+    }
+
+    private static Response issue(String apiKey) {
+        return given().header("Authorization", "Bearer " + apiKey).contentType(ContentType.JSON)
+                .header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoice())
+                .post("/v1/invoices");
     }
 
     private static Map<String, Object> invoice() {

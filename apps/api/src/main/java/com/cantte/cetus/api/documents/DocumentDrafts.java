@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.documents;
 
+import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.calc.CalculatedLine;
@@ -20,6 +21,8 @@ import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.WebApplicationException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -36,6 +39,9 @@ public class DocumentDrafts {
 
     @Inject
     JobQueue jobs;
+
+    @ConfigProperty(name = "cetus.sandbox.daily-documents")
+    int sandboxDailyDocuments;
 
     /** Whether the issuer's status lets it issue in the environment: ENABLED, or TESTING with a test key. */
     public static boolean canIssue(IssuerEntity issuer, Environment environment) {
@@ -69,6 +75,9 @@ public class DocumentDrafts {
     public DocumentEntity draft(UUID accountId, IssuerEntity issuer, Environment environment, DocumentType type,
                                 CalculationResult calculation) {
         ZonedDateTime now = ZonedDateTime.now(DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS);
+        if (environment == Environment.SANDBOX) {
+            requireSandboxQuota(accountId, now);
+        }
         NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, now.toLocalDate())
                 .orElseThrow(() -> new DomainException("no_active_numbering_range",
                         "The issuer has no active numbering range for " + label(type)));
@@ -122,6 +131,27 @@ public class DocumentDrafts {
                 ? Duration.ofMillis(ThreadLocalRandom.current().nextLong(1000, 3001))
                 : Duration.ZERO;
         jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id, delay);
+    }
+
+    /** The sandbox is free, so an account issues at most {@code cetus.sandbox.daily-documents} a day there. */
+    private void requireSandboxQuota(UUID accountId, ZonedDateTime now) {
+        ZonedDateTime midnight = now.toLocalDate().atStartOfDay(DianTime.ZONE);
+        long issuedToday = DocumentEntity.count("accountId = ?1 and environment = ?2 and createdAt >= ?3",
+                accountId, Environment.SANDBOX, midnight.toOffsetDateTime());
+        if (issuedToday >= sandboxDailyDocuments) {
+            throw new SandboxDailyLimit(sandboxDailyDocuments, Duration.between(now, midnight.plusDays(1)));
+        }
+    }
+
+    /** 429 until midnight in Colombia, when the account's sandbox quota starts again. */
+    public static class SandboxDailyLimit extends WebApplicationException {
+
+        SandboxDailyLimit(int limit, Duration untilMidnight) {
+            super(ProblemDetail.builder(429, "sandbox_daily_limit",
+                            "This account already issued its " + limit + " sandbox documents of the day")
+                    .header("Retry-After", Math.max(1, untilMidnight.toSeconds()))
+                    .build());
+        }
     }
 
     private static String label(DocumentType type) {
