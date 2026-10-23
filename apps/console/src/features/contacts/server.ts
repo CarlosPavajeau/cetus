@@ -1,8 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 
 import { CetusApiError, api, publicApi } from "~/lib/api/client";
 import type { ContactVerification } from "~/lib/api/types";
+import { contactManagerRoles, roleList } from "~/lib/auth/permissions";
+import { auth } from "~/lib/auth/server";
 
 import { changeContactSchema, contactCategory } from "./schema";
 
@@ -10,11 +13,19 @@ export const listContacts = createServerFn({ method: "GET" }).handler(() =>
   api.get("/console/contacts"),
 );
 
+/** Whether the signed-in member may change the contacts: the organization's owners and admins. */
+export const canManageContacts = createServerFn({ method: "GET" }).handler(async () => {
+  const member = await auth.api.getActiveMember({ headers: getRequestHeaders() });
+  return roleList(member?.role).some((role) => contactManagerRoles.includes(role));
+});
+
 const messages: Record<string, string> = {
   verification_recently_sent:
     "Acabamos de enviar un correo de verificación. Espera un minuto antes de pedir otro.",
   no_pending_change: "Este contacto no tiene un cambio pendiente.",
   impersonation_forbidden: "Los contactos solo los cambia la persona dueña de la cuenta.",
+  organization_role_forbidden:
+    "Solo los dueños y administradores de la organización pueden cambiar los contactos.",
   account_suspended: "La cuenta está suspendida: no se pueden hacer cambios.",
 };
 

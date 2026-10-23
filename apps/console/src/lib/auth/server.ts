@@ -4,10 +4,11 @@ import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { admin, jwt, organization, twoFactor } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { env } from "../env";
-import { ac, impersonationSeconds, platformRole, roles } from "./permissions";
+import { ac, impersonationSeconds, platformRole, roleList, roles } from "./permissions";
 import * as schema from "./schema";
 
 const adminReads = new Set([
@@ -110,11 +111,15 @@ export const auth = betterAuth({
         issuer: env.BETTER_AUTH_URL,
         audience: "cetus-api",
         expirationTime: "5m",
-        definePayload: ({ user, session }) => {
+        definePayload: async ({ user, session }) => {
           const role = platformRole(user.role);
+          const org = session.activeOrganizationId ?? null;
           return {
             email: user.email,
-            org: session.activeOrganizationId ?? null,
+            org,
+            // The member's roles in the active organization (owner, admin, member): the API limits some
+            // changes to some of them. Read on every token, so a role change applies within one request.
+            orgRoles: org ? await organizationRoles(user.id, org) : [],
             // SmallRye JWT reads `groups` as the caller's roles. Only staff with 2FA get them.
             groups: role && user.twoFactorEnabled ? [role] : [],
             impersonatedBy: session.impersonatedBy ?? null,
@@ -128,3 +133,11 @@ export const auth = betterAuth({
 });
 
 export type Session = typeof auth.$Infer.Session;
+
+async function organizationRoles(userId: string, organizationId: string): Promise<string[]> {
+  const [membership] = await db
+    .select({ role: schema.member.role })
+    .from(schema.member)
+    .where(and(eq(schema.member.userId, userId), eq(schema.member.organizationId, organizationId)));
+  return roleList(membership?.role);
+}

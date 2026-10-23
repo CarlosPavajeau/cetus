@@ -5,12 +5,15 @@ import { PageHeader } from "~/components/PageHeader";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { ContactCard } from "~/features/contacts/ContactCard";
 import { categories } from "~/features/contacts/labels";
-import { contactsQuery } from "~/features/contacts/queries";
+import { canManageContactsQuery, contactsQuery } from "~/features/contacts/queries";
 
 /** Who receives the account's notices, per category. */
 export const Route = createFileRoute("/_app/settings/contacts")({
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(contactsQuery);
+    await Promise.all([
+      queryClient.ensureQueryData(contactsQuery),
+      queryClient.ensureQueryData(canManageContactsQuery),
+    ]);
     return { crumb: "Contactos" };
   },
   component: Contacts,
@@ -19,6 +22,7 @@ export const Route = createFileRoute("/_app/settings/contacts")({
 function Contacts() {
   const { session } = Route.useRouteContext();
   const { data: contacts } = useSuspenseQuery(contactsQuery);
+  const { data: canManage } = useSuspenseQuery(canManageContactsQuery);
   const impersonating = Boolean(session.impersonatedBy);
   // A new account's contacts wait for the owner to confirm their address.
   const unverified = contacts.length > 0 && contacts.every((contact) => !contact.email);
@@ -30,13 +34,22 @@ function Contacts() {
         title="Contactos"
         lead="Elige quién recibe los avisos de Cetus antes de que un problema detenga tu facturación. Cada correo se verifica con un enlace antes de usarlo."
       />
-      {impersonating && (
+      {impersonating ? (
         <Alert>
           <AlertTitle>No disponible durante la sesión de soporte</AlertTitle>
           <AlertDescription>
             Los contactos solo los cambia la persona dueña de la cuenta.
           </AlertDescription>
         </Alert>
+      ) : (
+        !canManage && (
+          <Alert>
+            <AlertTitle>Solo lectura</AlertTitle>
+            <AlertDescription>
+              Los contactos los cambian los dueños y administradores de la organización.
+            </AlertDescription>
+          </Alert>
+        )
       )}
       {unverified && waitingFor && (
         <Alert>
@@ -55,7 +68,7 @@ function Contacts() {
             title={category.title}
             description={category.description}
             contact={contacts.find((contact) => contact.category === category.value)}
-            readOnly={impersonating}
+            readOnly={impersonating || !canManage}
           />
         ))}
       </div>

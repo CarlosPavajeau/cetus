@@ -1,3 +1,5 @@
+import { createOrganization } from "../support/organization";
+import { consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 test("every category waits for the owner to confirm their address, and can point elsewhere", async ({
@@ -38,4 +40,47 @@ test("every category waits for the owner to confirm their address, and can point
 test("an unknown verification link says it is no longer valid", async ({ page }) => {
   await open(page, `/contact-verification/${"a".repeat(43)}`);
   await expect(page.getByText("Enlace no válido")).toBeVisible();
+});
+
+test("only the organization's owners and admins change the contacts", async ({
+  page,
+  organization: owner,
+}) => {
+  // Someone with an account of their own joins the owner's organization as a plain member.
+  const colleague = await createOrganization("Colega SAS");
+  const invitation = await owner.auth<{ id: string; organizationId: string }>(
+    "/organization/invite-member",
+    { email: colleague.email, role: "member" },
+  );
+  await colleague.auth("/organization/accept-invitation", { invitationId: invitation.id });
+  await colleague.auth("/organization/set-active", { organizationId: invitation.organizationId });
+
+  const change = (person: typeof colleague) =>
+    person.api("/console/contacts/FISCAL", {
+      method: "PUT",
+      body: JSON.stringify({ email: "colega@cetus.test" }),
+    });
+  const refused = await change(colleague);
+  expect(refused.status).toBe(403);
+  expect(await refused.json()).toMatchObject({ code: "organization_role_forbidden" });
+
+  await page.context().clearCookies();
+  await page
+    .context()
+    .addCookies(colleague.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await open(page, "/settings/contacts");
+  await expect(page.getByText("Solo lectura")).toBeVisible();
+  await expect(page.getByText(owner.email).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cambiar" })).toHaveCount(0);
+
+  // Made an admin, the next token carries the new role.
+  const members = await owner.auth<{ members: { id: string; userId: string; role: string }[] }>(
+    "/organization/get-full-organization",
+  );
+  const membership = members.members.find((member) => member.role === "member");
+  await owner.auth("/organization/update-member-role", {
+    memberId: membership?.id,
+    role: "admin",
+  });
+  expect((await change(colleague)).status).toBe(200);
 });

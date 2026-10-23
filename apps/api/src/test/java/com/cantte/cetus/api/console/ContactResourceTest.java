@@ -131,6 +131,27 @@ class ContactResourceTest {
     }
 
     @Test
+    void onlyOwnersAndAdminsChangeTheContacts() {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        bootstrap(owner, "Roles SAS");
+        ConsoleUser member = owner.member("member");
+        ConsoleUser admin = owner.member("member", "admin");
+
+        // Every member sees them.
+        member.request().get("/console/contacts").then().statusCode(200).body("size()", equalTo(3));
+        for (var call : List.of(
+                member.request().body(Map.of("email", "x@example.com")).put("/console/contacts/FISCAL"),
+                member.request().post("/console/contacts/FISCAL/verification"),
+                member.request().delete("/console/contacts/FISCAL/pending"))) {
+            call.then().statusCode(403).body("code", equalTo("organization_role_forbidden"));
+        }
+
+        admin.request().body(Map.of("email", "admin-elige@example.com")).put("/console/contacts/FISCAL")
+                .then().statusCode(200).body("pendingEmail", equalTo("admin-elige@example.com"));
+        admin.request().delete("/console/contacts/FISCAL/pending").then().statusCode(200);
+    }
+
+    @Test
     void contactsStayWithTheCustomerDuringAnImpersonation() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         bootstrap(owner, "Suplantada SAS");
