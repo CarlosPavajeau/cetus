@@ -26,6 +26,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -55,6 +56,8 @@ public class IssuerOnboardingService {
     JobQueue jobs;
     @Inject
     SandboxIssuers sandboxIssuers;
+    @ConfigProperty(name = "cetus.sandbox.max-issuers")
+    int sandboxMaxIssuers;
 
     @Transactional
     public IssuerEntity create(UUID accountId, IssuerViews.CreateIssuerRequest request, Actor actor,
@@ -73,6 +76,9 @@ public class IssuerOnboardingService {
         String checkDigit = NitCheckDigit.compute(request.nit());
         if (request.checkDigit() != null && !request.checkDigit().equals(checkDigit)) {
             throw new DomainException("check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");
+        }
+        if (request.environment() == Environment.SANDBOX) {
+            requireSandboxIssuerSlot(accountId);
         }
         boolean exists = IssuerEntity.count("accountId = ?1 and environment = ?2 and nit = ?3",
                 accountId, request.environment(), request.nit()) > 0;
@@ -94,6 +100,22 @@ public class IssuerOnboardingService {
             sandboxIssuers.enable(issuer);
         }
         return issuer;
+    }
+
+    /**
+     * Sandbox issuers are free, so an account has at most {@code cetus.sandbox.max-issuers}, the sample included.
+     * A lock per account until the transaction ends keeps two requests from both taking the last one.
+     */
+    private void requireSandboxIssuerSlot(UUID accountId) {
+        IssuerEntity.getEntityManager()
+                .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                .setParameter("key", "sandbox-issuers:" + accountId)
+                .getSingleResult();
+        long issuers = IssuerEntity.count("accountId = ?1 and environment = ?2", accountId, Environment.SANDBOX);
+        if (issuers >= sandboxMaxIssuers) {
+            throw new DomainException("sandbox_issuer_limit",
+                    "This account already has its " + sandboxMaxIssuers + " sandbox issuers");
+        }
     }
 
     /**
