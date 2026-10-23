@@ -16,8 +16,11 @@ ALTER TABLE webhook_events DROP CONSTRAINT webhook_events_environment_check,
 -- progress inside its own uncommitted transaction, so the fallback is for rows that cannot exist.
 ALTER TABLE idempotency_keys ADD COLUMN environment TEXT
     CHECK (environment IN ('TEST', 'LIVE', 'SANDBOX'));
+-- The id is compared as a uuid so the lookup uses the primary key; CASE casts only values shaped like one.
 UPDATE idempotency_keys k SET environment = COALESCE(
-    (SELECT d.environment FROM documents d WHERE d.id::text = k.response_body ->> 'id'), 'TEST');
+    (SELECT d.environment FROM documents d
+     WHERE d.id = CASE WHEN k.response_body ->> 'id' ~ '^[0-9a-fA-F-]{36}$'
+                       THEN CAST(k.response_body ->> 'id' AS uuid) END), 'TEST');
 ALTER TABLE idempotency_keys ALTER COLUMN environment SET NOT NULL,
     DROP CONSTRAINT idempotency_keys_pkey,
     ADD PRIMARY KEY (account_id, environment, idem_key);
