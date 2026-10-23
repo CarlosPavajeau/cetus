@@ -1368,6 +1368,10 @@ export interface components {
         };
         /** @enum {string} */
         DocumentType: "INVOICE" | "CREDIT_NOTE" | "DEBIT_NOTE";
+        EnableWebhookEndpointRequest: {
+            /** @description Send again the events it missed while failing or disabled */
+            redeliver?: boolean;
+        };
         /** @enum {string} */
         Environment: "LIVE" | "TEST";
         FailedDocumentView: {
@@ -1668,6 +1672,11 @@ export interface components {
             createdAt: components["schemas"]["OffsetDateTime"];
             /** @description Better Auth user id of the creator */
             createdBy: string | null;
+            /**
+             * Format: int64
+             * @description Events it missed while failing or disabled; only in the detail of a disabled endpoint
+             */
+            missedEvents: number | null;
         };
     };
     responses: never;
@@ -4269,7 +4278,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnableWebhookEndpointRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

@@ -38,6 +38,7 @@ test("a webhook is registered, shows its secret once, and is disabled and enable
   await expect(page.getByText("Desactivado", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Reactivar" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Reactivar" }).click();
   await expect(page.getByText("Activo", { exact: true })).toBeVisible();
 });
 

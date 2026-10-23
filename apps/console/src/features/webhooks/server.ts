@@ -59,10 +59,14 @@ export const disableWebhookEndpoint = createServerFn({ method: "POST" })
     api.delete("/console/webhook-endpoints/{id}", { params: { path: { id: data.id } } }),
   );
 
+/** With `redeliver`, the events it missed while failing or disabled are sent again. */
 export const enableWebhookEndpoint = createServerFn({ method: "POST" })
-  .validator(type({ id: "string.uuid" }))
+  .validator(type({ id: "string.uuid", redeliver: "boolean" }))
   .handler(({ data }) =>
-    api.post("/console/webhook-endpoints/{id}/enable", { params: { path: { id: data.id } } }),
+    api.post("/console/webhook-endpoints/{id}/enable", {
+      params: { path: { id: data.id } },
+      body: { redeliver: data.redeliver },
+    }),
   );
 
 /** One page of the endpoint's deliveries, newest first. */

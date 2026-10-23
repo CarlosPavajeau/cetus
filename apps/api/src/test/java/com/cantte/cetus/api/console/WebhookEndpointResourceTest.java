@@ -6,7 +6,9 @@ import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
 import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
+import com.cantte.cetus.persistence.entity.WebhookEventEntity;
 import com.cantte.cetus.webhooks.WebhookEventType;
 import com.cantte.cetus.webhooks.WebhookPublisher;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -176,6 +178,55 @@ class WebhookEndpointResourceTest {
         assertThat(QuarkusTransaction.requiringNew().call(() -> JobEntity.count(
                 "jobType = ?1 and referenceId = ?2 and status = 'PENDING'", JobTypes.DELIVER_WEBHOOK, UUID.fromString(deliveryId))))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void enablingCanSendAgainWhatTheEndpointMissed() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        IssuedDocuments.Issuer issuer = IssuedDocuments.issuer(user, "Missed SAS");
+        UUID endpointId = UUID.fromString(create(user, Map.of("url", "https://hooks.example.com", "environment", "TEST"))
+                .getString("endpoint.id"));
+        UUID invoice = IssuedDocuments.invoice(issuer);
+        OffsetDateTime failingSince = OffsetDateTime.now().minusHours(1);
+        // Failed before the streak started: not part of what it missed.
+        QuarkusTransaction.requiringNew().run(() -> {
+            publisher.publish(WebhookEventType.INVOICE_FAILED, DocumentEntity.findById(invoice));
+            WebhookEventEntity.update("createdAt = ?1 where documentId = ?2", failingSince.minusHours(1), invoice);
+            WebhookDeliveryEntity.update("status = ?1 where endpointId = ?2", WebhookDeliveryEntity.Status.FAILED, endpointId);
+        });
+        // Canceled while failing, then disabled; what was published afterwards never got a delivery.
+        QuarkusTransaction.requiringNew().run(() -> {
+            publisher.publish(WebhookEventType.INVOICE_ACCEPTED, DocumentEntity.findById(invoice));
+            WebhookDeliveryEntity.update("status = ?1 where endpointId = ?2 and status = ?3",
+                    WebhookDeliveryEntity.Status.CANCELED, endpointId, WebhookDeliveryEntity.Status.PENDING);
+            WebhookEndpointEntity endpoint = WebhookEndpointEntity.findById(endpointId);
+            endpoint.status = WebhookEndpointEntity.Status.DISABLED;
+            endpoint.disabledReason = WebhookEndpointEntity.DisabledReason.AUTOMATIC;
+            endpoint.disabledAt = OffsetDateTime.now();
+            endpoint.failingSince = failingSince;
+            endpoint.consecutiveFailures = 12;
+        });
+        QuarkusTransaction.requiringNew().run(() ->
+                publisher.publish(WebhookEventType.DOCUMENT_DELIVERED, DocumentEntity.findById(invoice)));
+
+        user.request().get("/console/webhook-endpoints/" + endpointId).then().statusCode(200)
+                .body("missedEvents", equalTo(2));
+        user.request().get("/console/webhook-endpoints").then().statusCode(200)
+                .body("[0].missedEvents", nullValue());
+
+        user.request().body(Map.of("redeliver", true)).post("/console/webhook-endpoints/" + endpointId + "/enable")
+                .then().statusCode(200).body("status", equalTo("ACTIVE")).body("missedEvents", nullValue());
+
+        Map<String, WebhookDeliveryEntity.Status> statuses = QuarkusTransaction.requiringNew().call(() ->
+                WebhookDeliveryEntity.<WebhookDeliveryEntity>list("endpointId", endpointId).stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                d -> WebhookEventEntity.<WebhookEventEntity>findById(d.eventId).type, d -> d.status)));
+        assertThat(statuses).containsExactlyInAnyOrderEntriesOf(Map.of(
+                "invoice.failed", WebhookDeliveryEntity.Status.FAILED,
+                "invoice.accepted", WebhookDeliveryEntity.Status.PENDING,
+                "document.delivered", WebhookDeliveryEntity.Status.PENDING));
+        user.request().get("/console/audit-log?action=WEBHOOK_ENDPOINT_ENABLED").then().statusCode(200)
+                .body("items[0].data.redelivered", equalTo(2));
     }
 
     private static JsonPath create(ConsoleUser user, Map<String, Object> body) {

@@ -79,8 +79,9 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return "Se creó su emisor de producción";
     case "WEBHOOK_ENDPOINT_DISABLED":
       return `${text(data.url)} · ${label(environmentLabel, data.environment)}${data.reason === "AUTOMATIC" ? ` · por ${text(data.consecutiveFailures)} fallas seguidas` : ""}`;
-    case "WEBHOOK_ENDPOINT_CREATED":
     case "WEBHOOK_ENDPOINT_ENABLED":
+      return `${text(data.url)} · ${label(environmentLabel, data.environment)}${Number(data.redelivered) > 0 ? ` · ${text(data.redelivered)} eventos reenviados` : ""}`;
+    case "WEBHOOK_ENDPOINT_CREATED":
     case "WEBHOOK_DELIVERY_RETRIED":
       return `${text(data.url)} · ${label(environmentLabel, data.environment)}`;
     case "CREDIT_NOTE_ISSUED":
