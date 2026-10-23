@@ -3,6 +3,7 @@ package com.cantte.cetus.api.support;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.smallrye.jwt.build.Jwt;
+import io.smallrye.jwt.build.JwtClaimsBuilder;
 import jakarta.json.JsonValue;
 
 import java.util.List;
@@ -26,6 +27,11 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
 
     public ConsoleUser(String userId, String organizationId, Set<String> groups) {
         this(userId, organizationId, groups, List.of("owner"));
+    }
+
+    /** This user with a token minted before the console added "orgRoles": the claim is left out. */
+    public ConsoleUser withoutOrganizationRoles() {
+        return new ConsoleUser(userId, organizationId, groups, null);
     }
 
     /** Another person in this user's organization, with the given member roles (owner, admin, member). */
@@ -58,15 +64,17 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
     }
 
     private String token(Object impersonatedBy) {
-        return Jwt.issuer("https://console.test")
+        JwtClaimsBuilder claims = Jwt.issuer("https://console.test")
                 .subject(userId)
                 .audience("cetus-api")
                 .claim("email", email())
                 .claim("org", organizationId)
-                .claim("orgRoles", orgRoles)
                 .claim("impersonatedBy", impersonatedBy)
-                .groups(groups)
-                .sign();
+                .groups(groups);
+        if (orgRoles != null) {
+            claims.claim("orgRoles", orgRoles);
+        }
+        return claims.sign();
     }
 
     public RequestSpecification request() {

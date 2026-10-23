@@ -152,6 +152,22 @@ class ContactResourceTest {
     }
 
     @Test
+    void aTokenWithoutOrganizationRolesCannotChangeTheContacts() {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        bootstrap(owner, "Token Viejo SAS");
+        // A token the console minted before it added "orgRoles", during a deploy.
+        ConsoleUser older = owner.withoutOrganizationRoles();
+
+        older.request().get("/console/contacts").then().statusCode(200).body("size()", equalTo(3));
+        for (var call : List.of(
+                older.request().body(Map.of("email", "x@example.com")).put("/console/contacts/FISCAL"),
+                older.request().post("/console/contacts/FISCAL/verification"),
+                older.request().delete("/console/contacts/FISCAL/pending"))) {
+            call.then().statusCode(403).body("code", equalTo("organization_role_forbidden"));
+        }
+    }
+
+    @Test
     void contactsStayWithTheCustomerDuringAnImpersonation() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         bootstrap(owner, "Suplantada SAS");
