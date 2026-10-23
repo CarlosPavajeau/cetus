@@ -9,6 +9,8 @@ import com.cantte.cetus.api.console.ConsoleContext;
 import com.cantte.cetus.api.console.IssuerViews;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.DomainException;
+import com.cantte.cetus.notifications.NotificationKind;
+import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -67,6 +69,8 @@ public class AdminAccountResource {
     AuditLog auditLog;
     @Inject
     RequestOriginResolver origin;
+    @Inject
+    Notifications notifications;
 
     @GET
     @Transactional
@@ -110,6 +114,10 @@ public class AdminAccountResource {
             throw new DomainException("account_not_active", "Only an active account can be suspended");
         }
         changeStatus(account, "SUSPENDED", request.reason(), AuditAction.ACCOUNT_SUSPENDED);
+        // The billing contact hears it from Cetus, with the same reason the console banner shows.
+        notifications.request(account.id, NotificationKind.ACCOUNT_SUSPENDED,
+                "account_suspended:%s:%d".formatted(account.id, account.statusChangedAt.toInstant().toEpochMilli()),
+                Map.of("reason", account.statusReason));
         return detail(account);
     }
 

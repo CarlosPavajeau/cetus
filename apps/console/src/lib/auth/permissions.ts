@@ -18,9 +18,23 @@ export type PlatformRole = (typeof platformRoles)[number];
 
 /** The strongest platform role in a Better Auth role string ("admin,support" → "admin"), or null. */
 export function platformRole(role: string | null | undefined): PlatformRole | null {
-  const assigned = (role ?? "").split(",").map((r) => r.trim());
+  const assigned = roleList(role);
   return platformRoles.find((r) => assigned.includes(r)) ?? null;
 }
+
+/** The roles in a Better Auth role string ("owner,admin" → ["owner", "admin"]). */
+export function roleList(role: string | null | undefined): string[] {
+  return (role ?? "")
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Organization member roles (`auth.member.role`, unrelated to the platform roles) that may change who
+ * receives the account's notices. The API checks the same list against the token's `orgRoles`.
+ */
+export const contactManagerRoles = ["owner", "admin"];
 
 /** How long a Cetus admin can act as a console user before signing in again. */
 export const impersonationSeconds = 30 * 60;

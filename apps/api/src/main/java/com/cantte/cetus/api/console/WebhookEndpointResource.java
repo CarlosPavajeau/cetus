@@ -74,6 +74,8 @@ public class WebhookEndpointResource {
     SecretCipher cipher;
     @Inject
     JobQueue jobs;
+    @Inject
+    WebhookRedeliveries redeliveries;
 
     /** Only true in development and tests, where receivers run on localhost. */
     @ConfigProperty(name = "cetus.webhooks.allow-private-targets")
@@ -99,7 +101,9 @@ public class WebhookEndpointResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public WebhookEndpointView get(@PathParam("id") UUID id) {
-        return WebhookEndpointView.from(find(context.account().id, id));
+        WebhookEndpointEntity endpoint = find(context.account().id, id);
+        return WebhookEndpointView.from(endpoint,
+                endpoint.status == WebhookEndpointEntity.Status.DISABLED ? redeliveries.count(endpoint) : null);
     }
 
     /** The signing secret is returned only here, once. */
@@ -150,21 +154,26 @@ public class WebhookEndpointResource {
 
     /**
      * Sends to the endpoint again, e.g. once the integrator fixed what made Cetus disable it. The failure
-     * count starts over; deliveries canceled meanwhile can be sent again one by one.
+     * count starts over. With {@code redeliver}, the events it missed while failing or disabled are sent
+     * again (see WebhookRedeliveries); without it, the failed deliveries can still be sent again one by one.
      */
     @POST
     @Path("/{id}/enable")
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public WebhookEndpointView enable(@PathParam("id") UUID id) {
-        WebhookEndpointEntity endpoint = find(context.account().id, id);
+    public WebhookEndpointView enable(@PathParam("id") UUID id, @Valid EnableWebhookEndpointRequest request) {
+        // Locked: a second enabling waits and finds it active, and the events being published are committed
+        // before the missed ones are read (see WebhookEndpointEntity.listSubscribed).
+        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findForAccountForUpdate(context.account().id, id)
+                .orElseThrow(() -> new NotFoundException("Webhook endpoint not found"));
         if (endpoint.status == WebhookEndpointEntity.Status.DISABLED) {
+            int redelivered = request != null && request.redeliver() ? redeliveries.redeliver(endpoint) : 0;
             endpoint.status = WebhookEndpointEntity.Status.ACTIVE;
             endpoint.disabledAt = null;
             endpoint.disabledReason = null;
             endpoint.consecutiveFailures = 0;
             endpoint.failingSince = null;
-            audit(AuditAction.WEBHOOK_ENDPOINT_ENABLED, endpoint, Map.of());
+            audit(AuditAction.WEBHOOK_ENDPOINT_ENABLED, endpoint, Map.of("redelivered", redelivered));
         }
         return WebhookEndpointView.from(endpoint);
     }
@@ -235,6 +244,10 @@ public class WebhookEndpointResource {
             @Size(max = 50) List<@NotBlank @Size(max = 100) String> eventTypes) {
     }
 
+    public record EnableWebhookEndpointRequest(
+            @Schema(description = "Send again the events it missed while failing or disabled") boolean redeliver) {
+    }
+
     public record WebhookEndpointView(
             @Schema(required = true) UUID id,
             @Schema(required = true) String url,
@@ -250,11 +263,19 @@ public class WebhookEndpointResource {
             OffsetDateTime failingSince,
             @Schema(required = true) OffsetDateTime createdAt,
             @Schema(required = true, nullable = true, description = "Better Auth user id of the creator")
-            String createdBy) {
+            String createdBy,
+            @Schema(required = true, nullable = true,
+                    description = "Events it missed while failing or disabled; only in the detail of a disabled endpoint")
+            Long missedEvents) {
         static WebhookEndpointView from(WebhookEndpointEntity endpoint) {
+            return from(endpoint, null);
+        }
+
+        static WebhookEndpointView from(WebhookEndpointEntity endpoint, Long missedEvents) {
             return new WebhookEndpointView(endpoint.id, endpoint.url, endpoint.description, endpoint.environment,
                     List.of(endpoint.eventTypes), endpoint.status, endpoint.disabledAt, endpoint.disabledReason,
-                    endpoint.consecutiveFailures, endpoint.failingSince, endpoint.createdAt, endpoint.createdBy);
+                    endpoint.consecutiveFailures, endpoint.failingSince, endpoint.createdAt, endpoint.createdBy,
+                    missedEvents);
         }
     }
 

@@ -1,0 +1,122 @@
+package com.cantte.cetus.api.console;
+
+import com.cantte.cetus.api.audit.RequestOriginResolver;
+import com.cantte.cetus.api.auth.ApiKeys;
+import com.cantte.cetus.api.error.ProblemDetail;
+import com.cantte.cetus.domain.DomainException;
+import com.cantte.cetus.persistence.audit.Actor;
+import com.cantte.cetus.persistence.audit.AuditAction;
+import com.cantte.cetus.persistence.audit.AuditLog;
+import com.cantte.cetus.persistence.entity.AccountContactEntity;
+import com.cantte.cetus.persistence.entity.AccountContactEntity.Category;
+import com.cantte.cetus.persistence.entity.AccountEntity;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Pattern;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * The page behind a contact's verification link. No session: the token proves the address receives
+ * email, so these paths are open to the console server (they stay private, like all of /console/**).
+ * Opening the page does not spend the link; confirming does, so a mail scanner that follows links
+ * cannot verify an address on its own.
+ */
+@Path("/console/contact-verifications/{token}")
+@Produces(MediaType.APPLICATION_JSON)
+@APIResponse(responseCode = "404", description = "Not Found",
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(responseCode = "422", description = "Unprocessable Entity",
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+public class ContactVerificationResource {
+
+    @Inject
+    AuditLog auditLog;
+    @Inject
+    RequestOriginResolver origin;
+
+    @GET
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public VerificationView get(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
+        AccountContactEntity contact = AccountContactEntity.findByPendingToken(ApiKeys.hash(token))
+                .orElseThrow(VerificationLinkNotFound::new);
+        return view(contact, contact.pendingEmail, verifies(contact));
+    }
+
+    /**
+     * Verifies the address for the link's category and for those waiting for it since the same request. Every
+     * category of the account is locked first and then read, so a change committed meanwhile is seen, and
+     * kept, instead of being overwritten with the confirmed address.
+     */
+    @POST
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public VerificationView confirm(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
+        String hash = ApiKeys.hash(token);
+        UUID accountId = AccountContactEntity.accountOfPendingToken(hash).orElseThrow(VerificationLinkNotFound::new);
+        OffsetDateTime now = OffsetDateTime.now();
+        AccountContactEntity contact = AccountContactEntity.listForUpdate(accountId).stream()
+                .filter(each -> hash.equals(each.pendingTokenHash) && each.pendingExpiresAt.isAfter(now))
+                .findFirst().orElseThrow(VerificationLinkNotFound::new);
+        // No session here, so SuspendedAccountFilter does not apply: a suspended account stays read-only.
+        AccountEntity account = AccountEntity.findById(contact.accountId);
+        if (!"ACTIVE".equals(account.status)) {
+            throw new DomainException("account_suspended", "This account is suspended");
+        }
+        String email = contact.pendingEmail;
+        List<AccountContactEntity> verified = verifies(contact);
+        Actor link = new Actor(Actor.ActorType.SYSTEM, "contact-verification-link:" + contact.id);
+        for (AccountContactEntity each : verified) {
+            Map<String, Object> data = new HashMap<>(Map.of("category", each.category, "email", email));
+            if (each.email != null) {
+                data.put("previous", each.email);
+            }
+            each.email = email;
+            each.verifiedAt = now;
+            each.clearPending();
+            auditLog.record(each.accountId, link, origin.resolve(), AuditAction.CONTACT_VERIFIED, "account_contact",
+                    each.id, data);
+        }
+        return view(contact, email, verified);
+    }
+
+    private static List<AccountContactEntity> verifies(AccountContactEntity contact) {
+        List<AccountContactEntity> contacts = new ArrayList<>(List.of(contact));
+        contacts.addAll(AccountContacts.sameRequest(contact));
+        return contacts;
+    }
+
+    private static VerificationView view(AccountContactEntity contact, String email, List<AccountContactEntity> contacts) {
+        AccountEntity account = AccountEntity.findById(contact.accountId);
+        return new VerificationView(account.name, contacts.stream().map(each -> each.category).sorted().toList(), email);
+    }
+
+    /** Unknown, expired, replaced or already used: the page says the same for all. */
+    static class VerificationLinkNotFound extends NotFoundException {
+        VerificationLinkNotFound() {
+            super("This link is no longer valid");
+        }
+    }
+
+    public record VerificationView(
+            @Schema(required = true) String accountName,
+            @Schema(required = true) List<Category> categories,
+            @Schema(required = true) String email) {
+    }
+}

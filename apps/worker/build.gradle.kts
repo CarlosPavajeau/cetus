@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":modules:persistence"))
     implementation(project(":modules:jobs"))
     implementation(project(":modules:webhooks"))
+    implementation(project(":modules:notifications"))
     implementation(project(":modules:ubl"))
     implementation(project(":modules:signing"))
     implementation(project(":modules:dian-client"))

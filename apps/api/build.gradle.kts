@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":modules:persistence"))
     implementation(project(":modules:jobs"))
     implementation(project(":modules:webhooks"))
+    implementation(project(":modules:notifications"))
     implementation(project(":modules:aws"))
     // Only to verify the signature of Resend's delivery webhooks; the API never sends email.
     implementation(project(":modules:email"))

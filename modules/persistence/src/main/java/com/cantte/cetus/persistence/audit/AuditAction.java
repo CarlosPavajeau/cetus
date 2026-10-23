@@ -27,5 +27,10 @@ public enum AuditAction {
     IMPERSONATION_STARTED,
     IMPERSONATION_ENDED,
     /** A one-time link for the customer to upload an issuer's certificate. */
-    CERTIFICATE_UPLOAD_LINK_CREATED
+    CERTIFICATE_UPLOAD_LINK_CREATED,
+    /** A new address for a contact category, waiting for its verification link to be followed. */
+    CONTACT_CHANGE_REQUESTED,
+    CONTACT_CHANGE_CANCELED,
+    /** The new address followed its link and now receives the category's notices. */
+    CONTACT_VERIFIED
 }

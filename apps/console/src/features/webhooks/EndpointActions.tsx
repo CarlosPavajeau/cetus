@@ -15,6 +15,8 @@ import {
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Field, FieldLabel } from "~/components/ui/field";
 import { Spinner } from "~/components/ui/spinner";
 import { auditLogKey } from "~/features/audit-log/queries";
 import type { WebhookDelivery, WebhookEndpoint } from "~/lib/api/types";
@@ -85,28 +87,71 @@ export function DisableWebhookEndpoint({ endpoint }: { endpoint: WebhookEndpoint
 }
 
 export function EnableWebhookEndpoint({ endpoint }: { endpoint: WebhookEndpoint }) {
+  const [open, setOpen] = useState(false);
+  const [redeliver, setRedeliver] = useState(true);
   const invalidate = useInvalidateWebhooks();
-  const enable = useMutation({ mutationFn: enableWebhookEndpoint, onSuccess: invalidate });
+  const enable = useMutation({
+    mutationFn: enableWebhookEndpoint,
+    onSuccess: async () => {
+      await invalidate();
+      setOpen(false);
+    },
+  });
+  const missed = endpoint.missedEvents ?? 0;
 
   return (
-    <div className="flex flex-col items-start gap-2 sm:items-end">
-      <Button
-        onClick={() => enable.mutate({ data: { id: endpoint.id } })}
-        disabled={enable.isPending}
-      >
-        {enable.isPending ? (
-          <Spinner data-icon="inline-start" />
-        ) : (
-          <PowerIcon data-icon="inline-start" />
-        )}
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        setRedeliver(true);
+        enable.reset();
+      }}
+    >
+      <AlertDialogTrigger render={<Button />}>
+        <PowerIcon data-icon="inline-start" />
         Reactivar
-      </Button>
-      {enable.isError && (
-        <output className="text-2xs text-destructive">
-          No pudimos reactivarlo. Inténtalo de nuevo.
-        </output>
-      )}
-    </div>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Reactivar este webhook?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Cetus volverá a enviar los eventos nuevos a {endpoint.url} y el conteo de fallas empieza
+            de cero.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {/* Always offered: the count was read when the page loaded, and events may have arrived since. */}
+        <Field orientation="horizontal">
+          <Checkbox
+            id="webhook-redeliver"
+            checked={redeliver}
+            onCheckedChange={(checked) => setRedeliver(checked)}
+          />
+          <FieldLabel htmlFor="webhook-redeliver" className="font-normal">
+            {missed === 1
+              ? "Reenviar el evento que no recibió mientras fallaba o estaba desactivado"
+              : missed > 1
+                ? `Reenviar los ${missed.toLocaleString("es-CO")} eventos que no recibió mientras fallaba o estaba desactivado`
+                : "Reenviar los eventos que no recibió mientras fallaba o estaba desactivado"}
+          </FieldLabel>
+        </Field>
+        {enable.error && (
+          <Alert variant="destructive">
+            <AlertDescription>No pudimos reactivarlo. Inténtalo de nuevo.</AlertDescription>
+          </Alert>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={enable.isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => enable.mutate({ data: { id: endpoint.id, redeliver } })}
+            disabled={enable.isPending}
+          >
+            {enable.isPending && <Spinner data-icon="inline-start" />}
+            Reactivar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

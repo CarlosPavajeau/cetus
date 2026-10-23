@@ -3,21 +3,40 @@ package com.cantte.cetus.api.support;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.smallrye.jwt.build.Jwt;
+import io.smallrye.jwt.build.JwtClaimsBuilder;
 import jakarta.json.JsonValue;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 
-/** A console user with its own organization, calling the API the way the console BFF does. */
-public record ConsoleUser(String userId, String organizationId, Set<String> groups) {
+/**
+ * A console user with its own organization, calling the API the way the console BFF does. They own the
+ * organization unless created with {@link #member}.
+ */
+public record ConsoleUser(String userId, String organizationId, Set<String> groups, List<String> orgRoles) {
 
     public static final String CLIENT_IP = "203.0.113.10";
     public static final String CLIENT_USER_AGENT = "Mozilla/5.0 (CetusTest)";
 
     public ConsoleUser(String userId, String organizationId) {
         this(userId, organizationId, Set.of());
+    }
+
+    public ConsoleUser(String userId, String organizationId, Set<String> groups) {
+        this(userId, organizationId, groups, List.of("owner"));
+    }
+
+    /** This user with a token minted before the console added "orgRoles": the claim is left out. */
+    public ConsoleUser withoutOrganizationRoles() {
+        return new ConsoleUser(userId, organizationId, groups, null);
+    }
+
+    /** Another person in this user's organization, with the given member roles (owner, admin, member). */
+    public ConsoleUser member(String... roles) {
+        return new ConsoleUser("user_" + UUID.randomUUID(), organizationId, Set.of(), List.of(roles));
     }
 
     public static ConsoleUser newOrganization() {
@@ -27,6 +46,11 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
     /** A member of the Cetus team with the given platform roles (2FA already checked by the console). */
     public static ConsoleUser platformStaff(String... roles) {
         return new ConsoleUser("user_" + UUID.randomUUID(), "org_" + UUID.randomUUID(), Set.of(roles));
+    }
+
+    /** The address the user signs in with: the console puts it in every token. */
+    public String email() {
+        return userId.toLowerCase() + "@example.test";
     }
 
     public String token() {
@@ -40,13 +64,17 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
     }
 
     private String token(Object impersonatedBy) {
-        return Jwt.issuer("https://console.test")
+        JwtClaimsBuilder claims = Jwt.issuer("https://console.test")
                 .subject(userId)
                 .audience("cetus-api")
+                .claim("email", email())
                 .claim("org", organizationId)
                 .claim("impersonatedBy", impersonatedBy)
-                .groups(groups)
-                .sign();
+                .groups(groups);
+        if (orgRoles != null) {
+            claims.claim("orgRoles", orgRoles);
+        }
+        return claims.sign();
     }
 
     public RequestSpecification request() {

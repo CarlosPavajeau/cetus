@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Generated;
@@ -85,10 +86,23 @@ public class WebhookEndpointEntity extends PanacheEntityBase {
         return list("accountId = ?1 order by createdAt desc, id desc", accountId);
     }
 
-    /** The active endpoints of the account and environment that receive the event type. */
+    /** The endpoint, locked until the transaction ends: enabling it waits for the events being published. */
+    public static Optional<WebhookEndpointEntity> findForAccountForUpdate(UUID accountId, UUID id) {
+        return find("id = ?1 and accountId = ?2", id, accountId).withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
+    }
+
+    /**
+     * The active endpoints of the account and environment that receive the event type. Every endpoint of the
+     * account and environment is share-locked, disabled ones too, so the event and the endpoint's enabling
+     * never pass each other: an endpoint being enabled is seen once enabled, and enabling one waits for the
+     * events being published, so it can send them again.
+     */
     public static List<WebhookEndpointEntity> listSubscribed(UUID accountId, Environment environment, String eventType) {
-        List<WebhookEndpointEntity> active = list("accountId = ?1 and environment = ?2 and status = ?3 order by id",
-                accountId, environment, Status.ACTIVE);
-        return active.stream().filter(endpoint -> endpoint.receives(eventType)).toList();
+        List<WebhookEndpointEntity> endpoints = find("accountId = ?1 and environment = ?2 order by id", accountId, environment)
+                .withLock(LockModeType.PESSIMISTIC_READ).list();
+        return endpoints.stream()
+                .filter(endpoint -> endpoint.status == Status.ACTIVE && endpoint.receives(eventType))
+                .toList();
     }
 }

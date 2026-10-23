@@ -5,10 +5,14 @@ import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonString;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Identity of a console request. The JWT is minted by Better Auth in the console server;
@@ -22,6 +26,25 @@ public class ConsoleContext {
 
     public String userId() {
         return jwt.getSubject();
+    }
+
+    /** The address the user signs in with, as Better Auth put it in the token. */
+    public Optional<String> email() {
+        String email = jwt.getClaim("email");
+        return Optional.ofNullable(email).filter(value -> !value.isBlank());
+    }
+
+    /** The user's roles in the active organization (owner, admin, member), as the console put them in the token. */
+    public Set<String> organizationRoles() {
+        Object roles = jwt.getClaim("orgRoles");
+        if (roles instanceof JsonArray array) {
+            return array.stream().filter(JsonString.class::isInstance).map(value -> ((JsonString) value).getString())
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+        if (roles instanceof Collection<?> values) {
+            return values.stream().map(String::valueOf).collect(Collectors.toUnmodifiableSet());
+        }
+        return Set.of();
     }
 
     /** The Cetus admin acting as this user, while an impersonation session lasts. */

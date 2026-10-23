@@ -40,6 +40,8 @@ public class AccountResource {
     AuditLog auditLog;
     @Inject
     RequestOriginResolver origin;
+    @Inject
+    AccountContacts contacts;
 
     /** Called by the console right after the organization is created in Better Auth. Idempotent. */
     @POST
@@ -55,6 +57,8 @@ public class AccountResource {
         account.organizationId = context.organizationId();
         account.name = request.name();
         account.persist();
+        // The creator is the organization's owner: every category waits for them to verify their address.
+        context.email().ifPresent(email -> contacts.seedOwner(account.id, email));
         auditLog.record(account.id, context.actor(), origin.resolve(), AuditAction.ACCOUNT_CREATED,
                 "account", account.id, Map.of("name", account.name));
         return AccountView.from(account);

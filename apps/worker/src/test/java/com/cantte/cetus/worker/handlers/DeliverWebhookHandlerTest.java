@@ -2,6 +2,7 @@ package com.cantte.cetus.worker.handlers;
 
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
 import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity.Status;
 import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
@@ -13,6 +14,7 @@ import com.cantte.cetus.worker.support.FakeDian.Reply;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeWebhookReceiver;
 import com.cantte.cetus.worker.support.FakeWebhookReceiverResource;
+import com.cantte.cetus.worker.support.WebhookDeliveryRecorder;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import com.cantte.cetus.worker.support.WorkerFixtures.Endpoint;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -48,6 +50,8 @@ class DeliverWebhookHandlerTest {
     FakeWebhookReceiver receiver;
     @Inject
     WorkerFixtures fixtures;
+    @Inject
+    WebhookDeliveryRecorder recorder;
     @Inject
     EntityManager em;
 
@@ -183,11 +187,28 @@ class DeliverWebhookHandlerTest {
         assertThat(disabled.disabledReason).isEqualTo(WebhookEndpointEntity.DisabledReason.AUTOMATIC);
         assertThat(disabled.consecutiveFailures).isEqualTo(10);
         assertThat(auditedReasons(disabled)).containsExactly("AUTOMATIC");
+        // The technical contact hears that it reached 10 failures and that it was disabled, once each.
+        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity
+                .<NotificationEntity>list("accountId", disabled.accountId).stream().map(n -> n.kind).toList()))
+                .containsExactlyInAnyOrder("WEBHOOK_FAILING", "WEBHOOK_DISABLED");
 
         // Its next attempt finds it disabled and stops instead of calling it again.
         deliver(deliveryId);
         assertThat(delivery(deliveryId).status).isEqualTo(Status.CANCELED);
         assertThat(receiver.requests()).hasSize(1);
+    }
+
+    @Test
+    void aDeliveryIsOnlyCanceledWhileItsEndpointIsStillDisabled() {
+        UUID deliveryId = acceptedInvoiceDelivery();
+        // The endpoint was enabled again between reading it disabled and canceling: the delivery goes out.
+        assertThat(recorder.canceled(deliveryId)).isFalse();
+        assertThat(delivery(deliveryId).status).isEqualTo(Status.PENDING);
+
+        QuarkusTransaction.requiringNew().run(() -> WebhookEndpointEntity.<WebhookEndpointEntity>findById(endpoint.id())
+                .status = WebhookEndpointEntity.Status.DISABLED);
+        assertThat(recorder.canceled(deliveryId)).isTrue();
+        assertThat(delivery(deliveryId).status).isEqualTo(Status.CANCELED);
     }
 
     @Test
@@ -201,6 +222,9 @@ class DeliverWebhookHandlerTest {
         WebhookEndpointEntity endpoint = endpoint();
         assertThat(endpoint.status).isEqualTo(WebhookEndpointEntity.Status.ACTIVE);
         assertThat(endpoint.consecutiveFailures).isEqualTo(51);
+        // Past the 10th failure already: the notice went out then, not again.
+        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity.count("accountId", endpoint.accountId)))
+                .isZero();
     }
 
     @Test

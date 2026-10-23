@@ -17,6 +17,7 @@ import {
   KeyRoundIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  MailIcon,
   ShieldCheckIcon,
   ShieldIcon,
   WebhookIcon,
@@ -139,6 +140,15 @@ function AppLayout() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to="/settings/contacts" />}
+                isActive={Boolean(matchRoute({ to: "/settings/contacts" }))}
+              >
+                <MailIcon />
+                <span>Contactos</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 render={<Link to="/settings/security" />}

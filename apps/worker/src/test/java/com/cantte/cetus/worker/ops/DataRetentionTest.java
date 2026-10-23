@@ -2,12 +2,15 @@ package com.cantte.cetus.worker.ops;
 
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.worker.support.WorkerFixtures;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +24,8 @@ class DataRetentionTest {
     DataRetention retention;
     @Inject
     EntityManager em;
+    @Inject
+    WorkerFixtures fixtures;
 
     @Test
     void deletesOnlyWhatIsPastItsRetention() {
@@ -44,6 +49,58 @@ class DataRetentionTest {
         assertThat(idempotencyKeys(account)).containsExactly("valid");
         assertThat(existing("jobs", List.of(oldDone, recentDone, oldDead, oldPending)))
                 .containsExactlyInAnyOrder(recentDone, oldDead, oldPending);
+    }
+
+    @Test
+    void noticesGoAfterAYearUnlessTheirKeyStillHoldsBackARepeat() {
+        OffsetDateTime now = OffsetDateTime.now();
+        UUID documentId = fixtures.invoice();
+        DocumentEntity document = QuarkusTransaction.requiringNew().call(() -> DocumentEntity.findById(documentId));
+        UUID account = document.accountId;
+        UUID range = document.numberingRangeId;
+        UUID oldCertificate = notice(account, "CERTIFICATE_EXPIRING", "cert_expiring:" + Ids.newId() + ":7d",
+                now.minusDays(400));
+        UUID recent = notice(account, "ACCOUNT_SUSPENDED", "account_suspended:" + account + ":1", now.minusDays(300));
+        UUID activeRange = notice(account, "RANGE_RUNNING_OUT", "range_usage:" + range + ":80", now.minusDays(400));
+        UUID goneRange = notice(account, "RANGE_RUNNING_OUT", "range_usage:" + Ids.newId() + ":95", now.minusDays(400));
+
+        retention.run();
+
+        assertThat(existing("notification_log", List.of(oldCertificate, recent, activeRange, goneRange)))
+                .containsExactlyInAnyOrder(recent, activeRange);
+
+        // Once the range is used up, its notice can go: it will not cross 80 % again.
+        QuarkusTransaction.requiringNew().run(() -> em.createNativeQuery(
+                "UPDATE billing.numbering_ranges SET status = 'EXHAUSTED' WHERE id = :id")
+                .setParameter("id", range).executeUpdate());
+        retention.run();
+        assertThat(existing("notification_log", List.of(activeRange))).isEmpty();
+    }
+
+    @Test
+    void aShortRetentionStillKeepsTheNoticesThatHoldBackAnExpiryReminder() {
+        OffsetDateTime now = OffsetDateTime.now();
+        UUID account = account();
+        // Still requested every day until its certificate reaches 7 days.
+        UUID thirtyDays = notice(account, "CERTIFICATE_EXPIRING", "cert_expiring:" + Ids.newId() + ":30d",
+                now.minusDays(20));
+        UUID older = notice(account, "CERTIFICATE_EXPIRING", "cert_expiring:" + Ids.newId() + ":30d",
+                now.minusDays(40));
+        retention.run(Duration.ofDays(7));
+
+        assertThat(existing("notification_log", List.of(thirtyDays, older))).containsExactly(thirtyDays);
+    }
+
+    private UUID notice(UUID account, String kind, String key, OffsetDateTime at) {
+        UUID id = Ids.newId();
+        QuarkusTransaction.requiringNew().run(() -> em.createNativeQuery("""
+                        INSERT INTO billing.notification_log (id, account_id, kind, dedup_key, status, created_at)
+                        VALUES (:id, :account, :kind, :key, 'SENT', :at)
+                        """)
+                .setParameter("id", id).setParameter("account", account).setParameter("kind", kind)
+                .setParameter("key", key).setParameter("at", at)
+                .executeUpdate());
+        return id;
     }
 
     private UUID account() {

@@ -1,0 +1,99 @@
+package com.cantte.cetus.persistence.entity;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/** The address that receives an account's notices of one category; see V18. */
+@Entity
+@Table(name = "account_contacts")
+public class AccountContactEntity extends PanacheEntityBase {
+
+    public enum Category {
+        /** Webhooks and integration errors. */
+        TECHNICAL,
+        /** Certificate, numbering ranges and DIAN rejections. */
+        FISCAL,
+        /** Plan and payments of the Cetus service. */
+        BILLING
+    }
+
+    @Id
+    public UUID id;
+    @Column(name = "account_id")
+    public UUID accountId;
+    @Enumerated(EnumType.STRING)
+    public Category category;
+    /** The verified address the notices go to; null until one is verified. */
+    public String email;
+    @Column(name = "verified_at")
+    public OffsetDateTime verifiedAt;
+    /** A change waiting for its address to be verified. */
+    @Column(name = "pending_email")
+    public String pendingEmail;
+    @Column(name = "pending_token_hash")
+    public String pendingTokenHash;
+    @Column(name = "pending_expires_at")
+    public OffsetDateTime pendingExpiresAt;
+    /** When the pending change was requested; categories requested together share it. */
+    @Column(name = "pending_requested_at")
+    public OffsetDateTime pendingRequestedAt;
+    @Column(name = "updated_at")
+    public OffsetDateTime updatedAt = OffsetDateTime.now();
+
+    @PreUpdate
+    void touch() {
+        updatedAt = OffsetDateTime.now();
+    }
+
+    public void clearPending() {
+        pendingEmail = null;
+        pendingTokenHash = null;
+        pendingExpiresAt = null;
+        pendingRequestedAt = null;
+    }
+
+    public static List<AccountContactEntity> listByAccount(UUID accountId) {
+        return list("accountId = ?1 order by category", accountId);
+    }
+
+    /**
+     * Every category of the account, locked in id order. Changes lock them all, since one link can verify
+     * several: always in the same order, so two changes never wait for each other.
+     */
+    public static List<AccountContactEntity> listForUpdate(UUID accountId) {
+        return find("accountId = ?1 order by id", accountId).withLock(LockModeType.PESSIMISTIC_WRITE).list();
+    }
+
+    /** The account behind a verification link, without loading (and so without locking) its contact. */
+    public static Optional<UUID> accountOfPendingToken(String tokenHash) {
+        return find("select accountId from AccountContactEntity where pendingTokenHash = ?1", tokenHash)
+                .project(UUID.class).firstResultOptional();
+    }
+
+    /** The verified addresses of the categories, without repeating one that serves several, in a stable order. */
+    public static List<String> emails(UUID accountId, Collection<Category> categories) {
+        return find("""
+                        select distinct email from AccountContactEntity
+                        where accountId = ?1 and category in ?2 and email is not null order by email""",
+                accountId, categories).project(String.class).list();
+    }
+
+    /** The contact behind a verification link while it can still be used. Not locked: only to read it. */
+    public static Optional<AccountContactEntity> findByPendingToken(String tokenHash) {
+        return find("pendingTokenHash = ?1 and pendingExpiresAt > ?2", tokenHash, OffsetDateTime.now())
+                .firstResultOptional();
+    }
+}

@@ -6,6 +6,7 @@ import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import com.cantte.cetus.persistence.entity.NotificationEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -117,6 +119,10 @@ class AdminAccountResourceTest {
                 .body("statusChangedBy", equalTo(ADMIN.userId()));
         ADMIN.request().body(Map.of("reason", "Otra vez")).post("/admin/accounts/" + accountId + "/suspension")
                 .then().statusCode(422).body("code", equalTo("account_not_active"));
+        // The billing contact hears it once, with the reason.
+        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity
+                .<NotificationEntity>list("accountId = ?1 and kind = 'ACCOUNT_SUSPENDED'", UUID.fromString(accountId))))
+                .singleElement().satisfies(notice -> assertThat(notice.data).containsEntry("reason", "Pago vencido"));
 
         // Its API keys stop working and its console turns read-only, with the reason.
         IssuedDocuments.api(issuer.apiKey()).get("/v1/invoices/" + UUID.randomUUID()).then()
