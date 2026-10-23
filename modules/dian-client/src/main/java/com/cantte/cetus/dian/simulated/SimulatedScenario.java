@@ -27,6 +27,9 @@ public enum SimulatedScenario {
             "1000000005", CREDIT_NOTE_REJECTED);
 
     public static SimulatedScenario of(SimulatedDocument document) {
+        if (document.customerId() == null) {
+            return ACCEPTED;
+        }
         SimulatedScenario scenario = BY_CUSTOMER.getOrDefault(document.customerId(), ACCEPTED);
         if (scenario == CREDIT_NOTE_REJECTED && document.kind() != SimulatedDocument.Kind.CREDIT_NOTE) {
             return ACCEPTED;

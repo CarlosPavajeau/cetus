@@ -1,13 +1,19 @@
 package com.cantte.cetus.dianmock;
 
+import com.cantte.cetus.dian.simulated.SimulatedDian;
+import com.cantte.cetus.signing.KeyMaterial;
+import com.cantte.cetus.signing.Pkcs12Loader;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalTime;
@@ -30,7 +36,9 @@ import java.util.stream.Collectors;
  *
  * Environment: DIAN_MOCK_PORT (8090), DIAN_MOCK_SCENARIO (accept), DIAN_MOCK_REJECT_SELF_SIGNED (false),
  * DIAN_MOCK_TIMEOUT_DELAY (PT90S, above the worker's request timeout), DIAN_MOCK_PROCESSING_POLLS (1),
- * DIAN_MOCK_LATENCY (PT0S, the delay before every SOAP answer; benchmarks use it to stand in for the real DIAN).
+ * DIAN_MOCK_LATENCY (PT0S, the delay before every SOAP answer; benchmarks use it to stand in for the real DIAN),
+ * DIAN_MOCK_SIGNER (a PKCS#12 file to sign the ApplicationResponse with; the test certificate packaged in the jar
+ * by default) and DIAN_MOCK_SIGNER_PASSWORD (cetus-test).
  */
 public final class DianMockServer {
 
@@ -39,16 +47,36 @@ public final class DianMockServer {
 
     public static void main(String[] args) {
         int port = Integer.parseInt(env("DIAN_MOCK_PORT", "8090"));
+        Clock clock = Clock.systemUTC();
         MockDian dian = new MockDian(
                 Scenario.parse(env("DIAN_MOCK_SCENARIO", "accept")),
                 Boolean.parseBoolean(env("DIAN_MOCK_REJECT_SELF_SIGNED", "false")),
                 Duration.parse(env("DIAN_MOCK_TIMEOUT_DELAY", "PT90S")),
                 Integer.parseInt(env("DIAN_MOCK_PROCESSING_POLLS", "1")),
-                Clock.systemUTC());
+                new SimulatedDian(signer(), clock),
+                clock);
         dian.latency(Duration.parse(env("DIAN_MOCK_LATENCY", "PT0S")));
         HttpServer server = start(port, dian);
         log("DIAN mock listening on http://localhost:" + server.getAddress().getPort()
                 + "/WcfDianCustomerServices.svc (scenario " + dian.scenario().label() + ")");
+    }
+
+    private static KeyMaterial signer() {
+        char[] password = env("DIAN_MOCK_SIGNER_PASSWORD", "cetus-test").toCharArray();
+        String file = env("DIAN_MOCK_SIGNER", null);
+        try {
+            if (file != null) {
+                return Pkcs12Loader.load(Files.readAllBytes(Path.of(file)), password);
+            }
+            try (InputStream in = DianMockServer.class.getResourceAsStream("/signer/test-signer.p12")) {
+                if (in == null) {
+                    throw new IllegalStateException("The DIAN mock's jar has no signer/test-signer.p12");
+                }
+                return Pkcs12Loader.load(in.readAllBytes(), password);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not read the DIAN mock's signer", e);
+        }
     }
 
     static HttpServer start(int port, MockDian dian) {

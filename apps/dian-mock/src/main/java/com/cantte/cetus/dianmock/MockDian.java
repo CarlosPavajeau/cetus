@@ -1,5 +1,10 @@
 package com.cantte.cetus.dianmock;
 
+import com.cantte.cetus.dian.DianFaultException;
+import com.cantte.cetus.dian.DianResponse;
+import com.cantte.cetus.dian.DianTransportException;
+import com.cantte.cetus.dian.simulated.SimulatedDian;
+import com.cantte.cetus.dian.simulated.SimulatedDocument;
 import com.cantte.cetus.signing.XmlSupport;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -17,6 +22,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -27,6 +33,9 @@ import java.util.zip.ZipInputStream;
 /**
  * In-memory DIAN: answers SendBillSync, SendTestSetAsync, GetStatus, GetStatusZip and GetNumberingRange
  * (always the habilitación range).
+ * A document that passes the mock's own checks is answered by {@link SimulatedDian}, the sandbox's simulator: its
+ * outcome depends on the customer's identification number, like in SANDBOX, with the DIAN's signed
+ * ApplicationResponse.
  * Error texts produced by the mock's own checks start with "Mock:" so they are never
  * mistaken for real DIAN validation rules.
  */
@@ -44,13 +53,20 @@ final class MockDian {
                     String outcome) {
     }
 
-    private record Submission(String fileName, String number, String documentKey, List<String> errors) {
+    /** {@code simulated} is null when the XML could not be read, and then {@code errors} says why. */
+    private record Submission(String fileName, String number, String documentKey, SimulatedDocument simulated,
+                              List<String> errors) {
+    }
+
+    /** {@code late}: the simulator timed out this send, so the answer comes after the worker gave up. */
+    private record Decision(Soap.Result result, boolean late) {
     }
 
     private record PendingZip(Soap.Result result, AtomicInteger polls) {
     }
 
     private final WsSecurityVerifier verifier;
+    private final SimulatedDian simulator;
     private final boolean rejectSelfSigned;
     private final Duration timeoutDelay;
     private final int pollsBeforeDone;
@@ -59,10 +75,13 @@ final class MockDian {
 
     private final Map<String, Soap.Result> byDocumentKey = new ConcurrentHashMap<>();
     private final Map<String, PendingZip> byZipKey = new ConcurrentHashMap<>();
+    private final Map<String, AtomicInteger> sends = new ConcurrentHashMap<>();
     private final List<Received> received = new CopyOnWriteArrayList<>();
 
-    MockDian(Scenario scenario, boolean rejectSelfSigned, Duration timeoutDelay, int pollsBeforeDone, Clock clock) {
+    MockDian(Scenario scenario, boolean rejectSelfSigned, Duration timeoutDelay, int pollsBeforeDone,
+             SimulatedDian simulator, Clock clock) {
         this.scenario = scenario;
+        this.simulator = simulator;
         this.rejectSelfSigned = rejectSelfSigned;
         this.timeoutDelay = timeoutDelay;
         this.pollsBeforeDone = pollsBeforeDone;
@@ -96,6 +115,7 @@ final class MockDian {
     void reset() {
         byDocumentKey.clear();
         byZipKey.clear();
+        sends.clear();
         received.clear();
     }
 
@@ -136,8 +156,8 @@ final class MockDian {
             }
         }
         return switch (operation) {
-            case "SendBillSync" -> delayed(sendBillSync(params));
-            case "SendTestSetAsync" -> delayed(sendTestSetAsync(params));
+            case "SendBillSync" -> sendBillSync(params);
+            case "SendTestSetAsync" -> sendTestSetAsync(params);
             case "GetStatus" -> getStatus(params.get("trackId"));
             case "GetStatusZip" -> getStatusZip(params.get("trackId"));
             case "GetNumberingRange" -> new Reply(200, Soap.testNumberingRange(),
@@ -150,11 +170,17 @@ final class MockDian {
 
     private Reply sendBillSync(Map<String, String> params) {
         Submission submission = inspect(params.get("fileName"), params.get("contentFile"));
-        Soap.Result result = decide(submission);
+        Decision decision;
+        try {
+            decision = decide(submission);
+        } catch (DianFaultException e) {
+            return simulatedFault("SendBillSync", submission, e);
+        }
+        Soap.Result result = decision.result();
         remember(submission, result);
         record("SendBillSync", submission, result);
-        return new Reply(200, Soap.single("SendBillSync", result),
-                "SendBillSync " + submission.number() + " -> " + outcome(result));
+        return delayed(new Reply(200, Soap.single("SendBillSync", result),
+                "SendBillSync " + submission.number() + " -> " + outcome(result)), decision.late());
     }
 
     private Reply sendTestSetAsync(Map<String, String> params) {
@@ -163,13 +189,20 @@ final class MockDian {
                     "SendTestSetAsync -> no ZipKey (missing testSetId)");
         }
         Submission submission = inspect(params.get("fileName"), params.get("contentFile"));
-        Soap.Result result = decide(submission);
+        Decision decision;
+        try {
+            decision = decide(submission);
+        } catch (DianFaultException e) {
+            return simulatedFault("SendTestSetAsync", submission, e);
+        }
+        Soap.Result result = decision.result();
         String zipKey = UUID.randomUUID().toString();
         byZipKey.put(zipKey, new PendingZip(result, new AtomicInteger()));
         remember(submission, result);
         record("SendTestSetAsync", submission, result);
-        return new Reply(200, Soap.upload("SendTestSetAsync", zipKey, List.of()),
-                "SendTestSetAsync " + submission.number() + " -> ZipKey " + zipKey + " (will be " + outcome(result) + ")");
+        return delayed(new Reply(200, Soap.upload("SendTestSetAsync", zipKey, List.of()),
+                "SendTestSetAsync " + submission.number() + " -> ZipKey " + zipKey + " (will be " + outcome(result)
+                        + ")"), decision.late());
     }
 
     private Reply getStatus(String trackId) {
@@ -202,12 +235,14 @@ final class MockDian {
             errors.add("Mock: fileName debe terminar en .zip (recibido: " + fileName + ")");
         }
         byte[] xml = null;
+        String entryName = null;
         int xmlEntries = 0;
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(
                 Base64.getMimeDecoder().decode(contentFile == null ? "" : contentFile)))) {
             for (ZipEntry entry; (entry = zip.getNextEntry()) != null; ) {
                 if (entry.getName().toLowerCase().endsWith(".xml")) {
                     xmlEntries++;
+                    entryName = entry.getName().replaceFirst("(?i)\\.xml$", "");
                     xml = zip.readAllBytes();
                 }
             }
@@ -218,7 +253,7 @@ final class MockDian {
             errors.add("Mock: el zip debe contener exactamente un XML (contiene " + xmlEntries + ")");
         }
         if (xml == null) {
-            return new Submission(fileName, null, null, errors);
+            return new Submission(fileName, null, null, null, errors);
         }
 
         Document document;
@@ -226,7 +261,7 @@ final class MockDian {
             document = XmlSupport.parse(xml);
         } catch (IllegalArgumentException e) {
             errors.add("Mock: el XML del zip no es válido: " + e.getMessage());
-            return new Submission(fileName, null, null, errors);
+            return new Submission(fileName, null, null, null, errors);
         }
         Element root = document.getDocumentElement();
         String number = text(root, "ID");
@@ -243,10 +278,21 @@ final class MockDian {
         if (document.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").getLength() == 0) {
             errors.add("Mock: el documento no tiene firma ds:Signature");
         }
-        return new Submission(fileName, number, documentKey, errors);
+        SimulatedDocument simulated = null;
+        if (errors.isEmpty()) {
+            try {
+                simulated = SimulatedDocument.fromXml(entryName, xml);
+            } catch (IllegalArgumentException e) {
+                errors.add("Mock: el simulador no pudo leer el documento: " + e.getMessage());
+            }
+        }
+        return new Submission(fileName, number, documentKey, simulated, errors);
     }
 
-    private Soap.Result decide(Submission submission) {
+    /**
+     * @throws DianFaultException the simulator's server fault, for a customer that asks for one
+     */
+    private Decision decide(Submission submission) {
         List<String> errors = new ArrayList<>(submission.errors());
         Soap.Result previous = submission.documentKey() == null ? null : byDocumentKey.get(submission.documentKey());
         if (previous != null && previous.valid()) {
@@ -255,23 +301,62 @@ final class MockDian {
         if (scenario == Scenario.REJECT) {
             errors.add("Mock: rechazo forzado por el escenario reject");
         }
-        boolean valid = errors.isEmpty();
+        if (errors.isEmpty()) {
+            return simulate(submission);
+        }
         String applicationResponse = submission.documentKey() == null ? null : Base64.getEncoder().encodeToString(
-                Soap.applicationResponse(submission.documentKey(), valid, errors).getBytes(StandardCharsets.UTF_8));
-        String number = submission.number() == null ? "" : submission.number();
-        return valid
-                ? new Soap.Result(true, "00", "Procesado Correctamente.",
-                        "La Factura electrónica " + number + ", ha sido autorizada.", List.of(),
-                        applicationResponse, submission.documentKey(), submission.fileName())
-                : new Soap.Result(false, "99", "Validación contiene errores en campos mandatorios.",
-                        "Documento con errores en campos mandatorios.", List.copyOf(errors),
-                        applicationResponse, submission.documentKey(), submission.fileName());
+                Soap.applicationResponse(submission.documentKey(), false, errors).getBytes(StandardCharsets.UTF_8));
+        return new Decision(new Soap.Result(false, "99", "Validación contiene errores en campos mandatorios.",
+                "Documento con errores en campos mandatorios.", List.copyOf(errors),
+                applicationResponse, submission.documentKey(), submission.fileName()), false);
     }
 
-    /** In the timeout scenario the work is done (as the DIAN may do) but the answer comes too late. */
-    private Reply delayed(Reply reply) {
-        if (scenario == Scenario.TIMEOUT) {
-            DianMockServer.log("scenario timeout: holding the answer for " + timeoutDelay.toSeconds() + "s");
+    /**
+     * The sandbox's answer. A timed-out send is still registered, as the simulator's GetStatus reports it, so
+     * the mock answers with that result, late.
+     */
+    private Decision simulate(Submission submission) {
+        // A global scenario wins over the customer's: under it, the document is answered as a plain acceptance.
+        SimulatedDocument document = scenario == Scenario.ACCEPT
+                ? submission.simulated()
+                : withoutCustomer(submission.simulated());
+        int previousSends = sends.computeIfAbsent(submission.documentKey(), key -> new AtomicInteger())
+                .getAndIncrement();
+        try {
+            return new Decision(result(simulator.sendBillSync(document, previousSends), submission), false);
+        } catch (DianTransportException e) {
+            DianResponse registered = simulator.getStatus(submission.documentKey(), Optional.of(document),
+                    previousSends + 1);
+            return new Decision(result(registered, submission), true);
+        }
+    }
+
+    /** The simulator picks its scenario by customer; with none, it accepts. */
+    private static SimulatedDocument withoutCustomer(SimulatedDocument document) {
+        return new SimulatedDocument(document.kind(), document.number(), document.uniqueCode(), document.fileName(),
+                document.supplierNit(), document.supplierName(), null);
+    }
+
+    private static Soap.Result result(DianResponse response, Submission submission) {
+        return new Soap.Result(response.valid(), response.statusCode(), response.statusDescription(),
+                response.statusMessage(), response.errors(), response.applicationResponse(), response.documentKey(),
+                submission.fileName());
+    }
+
+    /** A fault is not registered: the document stays unknown to GetStatus, as with the DIAN. */
+    private Reply simulatedFault(String operation, Submission submission, DianFaultException fault) {
+        record(operation, submission, "fault (" + fault.code() + ")");
+        return new Reply(500, fault.rawXml(), operation + " " + submission.number() + " -> " + fault.code()
+                + " fault (simulated for the customer)");
+    }
+
+    /**
+     * In the timeout scenario, or when the simulator times out this send, the work is done (as the DIAN may do)
+     * but the answer comes too late.
+     */
+    private Reply delayed(Reply reply, boolean late) {
+        if (scenario == Scenario.TIMEOUT || late) {
+            DianMockServer.log("timeout: holding the answer for " + timeoutDelay.toSeconds() + "s");
             try {
                 Thread.sleep(timeoutDelay);
             } catch (InterruptedException e) {
@@ -299,8 +384,12 @@ final class MockDian {
     }
 
     private void record(String operation, Submission submission, Soap.Result result) {
+        record(operation, submission, outcome(result));
+    }
+
+    private void record(String operation, Submission submission, String outcome) {
         received.add(new Received(Instant.now(), operation, submission.fileName(), submission.number(),
-                submission.documentKey(), outcome(result)));
+                submission.documentKey(), outcome));
     }
 
     private static String outcome(Soap.Result result) {
