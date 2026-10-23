@@ -47,6 +47,10 @@ public class DocumentDrafts {
         if (!canIssue(issuer, environment)) {
             throw new DomainException("issuer_not_ready", "The issuer is not enabled to issue documents yet");
         }
+        if (environment == Environment.SANDBOX) {
+            // Signed with Cetus' sandbox credentials, never with the issuer's.
+            return;
+        }
         SoftwareCredentialEntity.findActive(issuer.id)
                 .orElseThrow(() -> new DomainException("issuer_missing_software",
                         "The issuer has no DIAN software credentials"));

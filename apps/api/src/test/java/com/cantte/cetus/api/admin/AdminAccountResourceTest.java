@@ -65,8 +65,9 @@ class AdminAccountResourceTest {
         SUPPORT.request().get("/admin/accounts/" + accountId).then()
                 .statusCode(200)
                 .body("organizationId", equalTo(customer.organizationId()))
-                .body("issuers", hasSize(1))
-                .body("issuers[0].id", equalTo(issuer.id()))
+                // The sandbox sample every account starts with, and the issuer it set up.
+                .body("issuers.environment", contains("SANDBOX", "TEST"))
+                .body("issuers[1].id", equalTo(issuer.id()))
                 .body("usageThisMonth.find { it.status == 'RECEIVED' }.count", equalTo(1))
                 .body("usageThisMonth.find { it.status == 'REJECTED' }.count", equalTo(1))
                 .body("recentFailures", hasSize(1))

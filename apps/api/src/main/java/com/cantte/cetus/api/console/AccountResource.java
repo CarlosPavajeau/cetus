@@ -6,6 +6,7 @@ import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.IssuerEntity;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -42,6 +43,8 @@ public class AccountResource {
     RequestOriginResolver origin;
     @Inject
     AccountContacts contacts;
+    @Inject
+    SandboxIssuers sandboxIssuers;
 
     /** Called by the console right after the organization is created in Better Auth. Idempotent. */
     @POST
@@ -59,8 +62,10 @@ public class AccountResource {
         account.persist();
         // The creator is the organization's owner: every category waits for them to verify their address.
         context.email().ifPresent(email -> contacts.seedOwner(account.id, email));
+        // Ready to issue in the sandbox from the first minute, before any setup with the DIAN.
+        IssuerEntity sample = sandboxIssuers.createSample(account.id);
         auditLog.record(account.id, context.actor(), origin.resolve(), AuditAction.ACCOUNT_CREATED,
-                "account", account.id, Map.of("name", account.name));
+                "account", account.id, Map.of("name", account.name, "sandboxIssuerId", sample.id));
         return AccountView.from(account);
     }
 
