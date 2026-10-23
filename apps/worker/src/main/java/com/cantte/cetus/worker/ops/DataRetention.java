@@ -129,10 +129,13 @@ public class DataRetention {
             List<String> keys = new ArrayList<>();
             batch = QuarkusTransaction.requiringNew().call(() -> {
                 @SuppressWarnings("unchecked")
+                // Locked like a note's creation locks its invoice (DocumentEntity.lockForAccount): a note being
+                // issued on one of them commits before its notes are read below, or finds the invoice gone.
                 List<UUID> expired = em.createNativeQuery("""
                                 SELECT id FROM billing.documents
                                 WHERE environment = 'SANDBOX' AND created_at < :before
                                 LIMIT :limit
+                                FOR UPDATE
                                 """, UUID.class)
                         .setParameter("before", before)
                         .setParameter("limit", batchSize)
