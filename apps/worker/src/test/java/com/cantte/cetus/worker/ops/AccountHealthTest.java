@@ -80,12 +80,16 @@ class AccountHealthTest {
     void liveRangesAreNotifiedAt80And95PercentAndBeforeTheirResolutionEnds() {
         Seeded seeded = seed();
         sql("UPDATE billing.issuers SET environment = 'LIVE' WHERE id = ?1", seeded.issuerId());
-        sql("UPDATE billing.numbering_ranges SET range_from = 1, range_to = 100, next_number = 86, valid_to = ?2 "
-                + "WHERE issuer_id = ?1", seeded.issuerId(), today.plusDays(20));
+        // A range can be saved without its resolution number.
+        sql("UPDATE billing.numbering_ranges SET range_from = 1, range_to = 100, next_number = 86, valid_to = ?2, "
+                + "resolution_number = NULL WHERE issuer_id = ?1", seeded.issuerId(), today.plusDays(20));
 
         assertThat(forAccount(health.run(today), seeded.accountId())).extracting(Notice::dedupKey)
                 .containsExactlyInAnyOrder("range_usage:%s:80".formatted(seeded.rangeId()),
                         "resolution_expiring:%s:30d".formatted(seeded.rangeId()));
+        send(seeded.accountId());
+        assertThat(resend.requests()).extracting(request -> request.body().get("text").asText())
+                .anySatisfy(text -> assertThat(text).contains("La resolución del rango SETP"));
 
         sql("UPDATE billing.numbering_ranges SET next_number = 97 WHERE issuer_id = ?1", seeded.issuerId());
         assertThat(forAccount(health.run(today), seeded.accountId())).extracting(Notice::dedupKey)
@@ -97,17 +101,20 @@ class AccountHealthTest {
         UUID documentId = fixtures.invoice();
         UUID accountId = account(documentId);
         fixtures.contacts(accountId, "ops@cetus.test", "ops@cetus.test", "billing@cetus.test");
-        // 5 rejected out of 8 verdicts yesterday.
+        // 5 rejected out of 8 verdicts yesterday, for documents created the day before: a verdict counts on
+        // its own day, even when the document waited past a run.
         sql("""
                 INSERT INTO billing.documents (id, account_id, issuer_id, environment, document_type, operation_type,
                     numbering_range_id, prefix, number, issue_date, issue_time, customer, payment, line_extension_amount,
-                    tax_exclusive_amount, tax_inclusive_amount, payable_amount, status, request_payload, created_at)
+                    tax_exclusive_amount, tax_inclusive_amount, payable_amount, status, request_payload, created_at,
+                    validated_at)
                 SELECT gen_random_uuid(), account_id, issuer_id, 'LIVE', document_type, operation_type,
                     numbering_range_id, prefix, number + g, issue_date, issue_time, customer, payment,
                     line_extension_amount, tax_exclusive_amount, tax_inclusive_amount, payable_amount,
-                    CASE WHEN g <= 5 THEN 'REJECTED' ELSE 'ACCEPTED' END, request_payload, ?2
+                    CASE WHEN g <= 5 THEN 'REJECTED' ELSE 'ACCEPTED' END, request_payload, ?2, ?3
                 FROM billing.documents, generate_series(1, 8) g WHERE id = ?1
-                """, documentId, today.minusDays(1).atTime(12, 0).atZone(Dates.BOGOTA).toOffsetDateTime());
+                """, documentId, today.minusDays(2).atTime(12, 0).atZone(Dates.BOGOTA).toOffsetDateTime(),
+                today.minusDays(1).atTime(9, 0).atZone(Dates.BOGOTA).toOffsetDateTime());
 
         assertThat(forAccount(health.run(today), accountId)).singleElement().satisfies(notice -> {
             assertThat(notice.dedupKey()).isEqualTo("rejections_spike:%s:%s".formatted(accountId, today.minusDays(1)));

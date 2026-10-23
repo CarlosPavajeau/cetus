@@ -88,9 +88,9 @@ public record NotificationEmail(String subject, String html, String text) {
             case RESOLUTION_EXPIRING -> new Body(
                     "La resolución del rango %s de %s vence en %s".formatted(prefix(data.get("prefix")),
                             data.get("issuer"), days(data.get("days"))),
-                    "La resolución %s del rango %s de %s (NIT %s) está vigente hasta el %s.".formatted(
-                            data.get("resolution"), prefix(data.get("prefix")), data.get("issuer"), data.get("nit"),
-                            data.get("validTo")),
+                    "La resolución %sdel rango %s de %s (NIT %s) está vigente hasta el %s.".formatted(
+                            data.getOrDefault("resolution", "").isEmpty() ? "" : data.get("resolution") + " ",
+                            prefix(data.get("prefix")), data.get("issuer"), data.get("nit"), data.get("validTo")),
                     "Después de esa fecha no se podrán emitir documentos con ese rango. Solicita una nueva resolución "
                             + "en el portal de la DIAN y agrégala en la consola.",
                     "Ver el emisor", "/issuers/" + data.get("issuerId"));

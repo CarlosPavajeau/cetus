@@ -6,16 +6,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Stream;
+import java.util.function.Supplier;
 
 /**
  * What each account's contacts should hear about today. Each notice is named by the fact and the
@@ -23,6 +25,8 @@ import java.util.stream.Stream;
  */
 @ApplicationScoped
 public class AccountHealthChecks {
+
+    private static final Logger LOG = Logger.getLogger(AccountHealthChecks.class);
 
     /** Days before a certificate expires when its contacts hear about it, the earliest first. */
     static final List<Integer> CERTIFICATE_DAYS = List.of(30, 7, 1);
@@ -43,9 +47,19 @@ public class AccountHealthChecks {
     @ConfigProperty(name = "cetus.account-health.rejections-rate")
     double rejectionsRate;
 
+    /** Every check; one that fails is logged and skipped, so it does not hold back the notices of the others. */
     List<Notice> all(LocalDate today) {
-        return Stream.of(expiringCertificates(today), rangesRunningOut(), expiringResolutions(today),
-                rejectionSpikes(today)).flatMap(List::stream).toList();
+        List<Supplier<List<Notice>>> checks = List.of(() -> expiringCertificates(today), this::rangesRunningOut,
+                () -> expiringResolutions(today), () -> rejectionSpikes(today));
+        List<Notice> notices = new ArrayList<>();
+        for (Supplier<List<Notice>> check : checks) {
+            try {
+                notices.addAll(check.get());
+            } catch (RuntimeException e) {
+                LOG.errorf(e, "An account health check failed; the others still run");
+            }
+        }
+        return notices;
     }
 
     /** Active certificates of issuers in use, from 30 days before they expire. */
@@ -115,15 +129,18 @@ public class AccountHealthChecks {
                     return new Notice((UUID) r[0], NotificationKind.RESOLUTION_EXPIRING,
                             "resolution_expiring:%s:%dd".formatted(r[1], mark),
                             Map.of("issuerId", r[2].toString(), "issuer", (String) r[3], "nit", (String) r[4],
-                                    "prefix", r[5] == null ? "" : (String) r[5], "resolution", (String) r[6],
+                                    "prefix", r[5] == null ? "" : (String) r[5],
+                                    // A range can be saved without its resolution number.
+                                    "resolution", r[6] == null ? "" : (String) r[6],
                                     "validTo", Dates.day(validTo), "days", String.valueOf(days)));
                 })
                 .toList();
     }
 
     /**
-     * Accounts whose LIVE documents of yesterday (Bogotá) the DIAN rejected at least {@code rejections-min}
-     * times and at {@code rejections-rate} or more of its verdicts.
+     * Accounts whose LIVE documents the DIAN rejected yesterday (Bogotá) at least {@code rejections-min} times
+     * and at {@code rejections-rate} or more of its verdicts that day. Counted by the day of the verdict
+     * (validated_at), so a document created one day and rejected after the next run still counts once.
      */
     List<Notice> rejectionSpikes(LocalDate today) {
         LocalDate day = today.minusDays(1);
@@ -132,7 +149,7 @@ public class AccountHealthChecks {
                 FROM billing.documents d
                 JOIN billing.accounts a ON a.id = d.account_id
                 WHERE d.environment = 'LIVE' AND d.status IN ('ACCEPTED', 'REJECTED') AND a.status <> 'CLOSED'
-                  AND d.created_at >= :from AND d.created_at < :to
+                  AND d.validated_at >= :from AND d.validated_at < :to
                 GROUP BY d.account_id
                 HAVING count(*) FILTER (WHERE d.status = 'REJECTED') >= :min
                    AND count(*) FILTER (WHERE d.status = 'REJECTED') >= :rate * count(*)
