@@ -21,6 +21,9 @@ import java.util.Map;
  *     <li>expired idempotency keys (24 hours after their request);</li>
  *     <li>DONE jobs older than {@code cetus.retention.done-jobs}. DEAD jobs stay: they are few, a document's
  *     timeline shows them and the ops alerts are about them.</li>
+ *     <li>notices older than {@code cetus.retention.notifications}, except those whose dedup key still
+ *     holds back a repeat: a range at 80 % or 95 % stays there while it is active, so its notice stays too.
+ *     The other keys name something that does not come back (an expiry already past, a day, a moment).</li>
  * </ul>
  * In batches of {@code cetus.retention.batch-size}, each in its own short transaction, so a large backlog
  * never holds locks or writes a huge transaction. Two replicas running it at once only share the work.
@@ -37,6 +40,8 @@ public class DataRetention {
     Duration apiKeyRequests;
     @ConfigProperty(name = "cetus.retention.done-jobs")
     Duration doneJobs;
+    @ConfigProperty(name = "cetus.retention.notifications")
+    Duration notifications;
     @ConfigProperty(name = "cetus.retention.batch-size")
     int batchSize;
 
@@ -54,6 +59,11 @@ public class DataRetention {
                 now.minus(apiKeyRequests)));
         deleted.put("idempotency_keys", deleteInBatches("idempotency_keys", "expires_at < :before", now));
         deleted.put("jobs", deleteInBatches("jobs", "status = 'DONE' AND updated_at < :before", now.minus(doneJobs)));
+        deleted.put("notification_log", deleteInBatches("notification_log", """
+                created_at < :before AND NOT (kind = 'RANGE_RUNNING_OUT' AND EXISTS (
+                    SELECT 1 FROM billing.numbering_ranges r
+                    WHERE r.id::text = split_part(dedup_key, ':', 2) AND r.status = 'ACTIVE'))
+                """, now.minus(notifications)));
         LOG.infof("Data retention deleted %s", deleted);
         return deleted;
     }
