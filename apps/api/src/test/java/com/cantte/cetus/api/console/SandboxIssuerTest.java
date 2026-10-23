@@ -23,6 +23,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.SOFTWARE_ID;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.certificateBase64;
 import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
+import static com.cantte.cetus.api.support.ConsoleFixtures.issuerRequest;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -123,6 +124,21 @@ class SandboxIssuerTest {
                 .then().statusCode(200).extract().jsonPath();
         assertThat(detail.getString("status")).isEqualTo("ENABLED");
         assertThat(detail.getList("ranges.prefix")).containsExactlyInAnyOrder("SIM", "NCS", "NDS");
+    }
+
+    @Test
+    void anAccountHasAtMostFiveSandboxIssuers() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Many issuers SAS");
+        // The sample is the first of the five.
+        for (String nit : List.of("900123451", "900123452", "900123453", "900123454")) {
+            createIssuer(user, nit, "SANDBOX");
+        }
+
+        user.request().body(issuerRequest("900123455", "SANDBOX")).post("/console/issuers")
+                .then().statusCode(422).body("code", equalTo("sandbox_issuer_limit"));
+        // Other environments are not capped.
+        createIssuer(user, "900123455", "TEST");
     }
 
     @Test
