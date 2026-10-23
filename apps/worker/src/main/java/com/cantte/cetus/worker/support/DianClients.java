@@ -18,17 +18,20 @@ public class DianClients {
 
     private final DianSoapClient test;
     private final DianSoapClient live;
+    private final SimulatedDianGateway sandbox;
 
     /** {@code cetus.dian.test-url} redirects only the TEST environment (e.g. to the local mock); LIVE is fixed. */
     public DianClients(@ConfigProperty(name = "cetus.dian.connect-timeout") Duration connectTimeout,
                        @ConfigProperty(name = "cetus.dian.request-timeout") Duration requestTimeout,
-                       @ConfigProperty(name = "cetus.dian.test-url") Optional<String> testUrl) {
+                       @ConfigProperty(name = "cetus.dian.test-url") Optional<String> testUrl,
+                       SimulatedDianGateway sandbox) {
         String testEndpoint = testUrl.filter(url -> !url.isBlank()).orElse(DianEndpoint.TEST.url());
         if (!testEndpoint.equals(DianEndpoint.TEST.url())) {
             LOG.warnf("DIAN TEST environment redirected to %s", testEndpoint);
         }
         this.test = new DianSoapClient(testEndpoint, connectTimeout, requestTimeout);
         this.live = new DianSoapClient(DianEndpoint.LIVE, connectTimeout, requestTimeout);
+        this.sandbox = sandbox;
     }
 
     /** SANDBOX never reaches the DIAN, not even its habilitación environment. */
@@ -36,7 +39,7 @@ public class DianClients {
         return switch (environment) {
             case LIVE -> live;
             case TEST -> test;
-            case SANDBOX -> throw new IllegalStateException("The sandbox has no DIAN gateway yet");
+            case SANDBOX -> sandbox;
         };
     }
 }

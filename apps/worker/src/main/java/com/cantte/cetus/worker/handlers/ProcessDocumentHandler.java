@@ -30,6 +30,7 @@ import com.cantte.cetus.worker.support.KeyMaterialCache;
 import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.ResultRecorder;
+import com.cantte.cetus.worker.support.SandboxCredentials;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -77,6 +78,8 @@ public class ProcessDocumentHandler implements JobHandler {
     @Inject
     ProviderSettings provider;
     @Inject
+    SandboxCredentials sandbox;
+    @Inject
     Instance<DocumentBuilder> builderInstances;
 
     private Map<DocumentType, DocumentBuilder> builders;
@@ -112,9 +115,7 @@ public class ProcessDocumentHandler implements JobHandler {
             return;
         }
 
-        String pin = cipher.openText(ctx.pinSealed());
-        String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());
-        BuiltDocument built = builder.build(ctx, new DocumentSecrets(pin, technicalKey));
+        BuiltDocument built = builder.build(ctx, secrets(ctx));
         recorder.cufe(ctx.documentId(), built.uniqueCode());
 
         byte[] signedXml = sign(built.unsigned(), keys);
@@ -137,6 +138,15 @@ public class ProcessDocumentHandler implements JobHandler {
     @Override
     public void onDead(JobEntity job, String reason) {
         recorder.gaveUp(job.referenceId, "Gave up after " + job.attempts + " attempts: " + reason);
+    }
+
+    private DocumentSecrets secrets(ProcessingContext ctx) {
+        if (ctx.environment() == Environment.SANDBOX) {
+            return sandbox.secrets();
+        }
+        String pin = cipher.openText(ctx.pinSealed());
+        String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());
+        return new DocumentSecrets(pin, technicalKey);
     }
 
     private byte[] sign(Document document, KeyMaterial keys) {

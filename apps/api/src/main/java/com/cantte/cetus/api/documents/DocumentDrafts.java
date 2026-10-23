@@ -21,9 +21,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * The steps every document type shares at creation: the issuer can issue, the document takes the
@@ -103,12 +105,19 @@ public class DocumentDrafts {
         return doc;
     }
 
-    /** Persists the document and enqueues its processing, in the caller's transaction. */
+    /**
+     * Persists the document and enqueues its processing, in the caller's transaction. A SANDBOX document
+     * waits one to three seconds first, about what the DIAN takes, so an integration does not count on an
+     * answer faster than production will give.
+     */
     @Transactional(Transactional.TxType.MANDATORY)
     public void submit(DocumentEntity doc) {
         // Flush so the database-generated createdAt is in the response.
         doc.persistAndFlush();
-        jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id);
+        Duration delay = doc.environment == Environment.SANDBOX
+                ? Duration.ofMillis(ThreadLocalRandom.current().nextLong(1000, 3001))
+                : Duration.ZERO;
+        jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id, delay);
     }
 
     private static String label(DocumentType type) {

@@ -8,16 +8,16 @@ import java.time.Duration;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DianClientsTest {
 
-    private final DianClients clients = new DianClients(Duration.ofSeconds(1), Duration.ofSeconds(1), Optional.empty());
+    private final DianClients clients = new DianClients(Duration.ofSeconds(1), Duration.ofSeconds(1), Optional.empty(),
+            new SimulatedDianGateway());
 
     @Test
     void theSandboxNeverReachesTheDian() {
         assertThat(clients.forEnvironment(Environment.LIVE)).isInstanceOf(DianSoapClient.class);
         assertThat(clients.forEnvironment(Environment.TEST)).isInstanceOf(DianSoapClient.class);
-        assertThatThrownBy(() -> clients.forEnvironment(Environment.SANDBOX)).isInstanceOf(IllegalStateException.class);
+        assertThat(clients.forEnvironment(Environment.SANDBOX)).isInstanceOf(SimulatedDianGateway.class);
     }
 }

@@ -7,6 +7,7 @@ import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.calc.TaxTotal;
 import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
@@ -17,6 +18,7 @@ import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
@@ -30,6 +32,9 @@ import java.util.UUID;
 
 @ApplicationScoped
 public class ContextLoader {
+
+    @Inject
+    SandboxCredentials sandbox;
 
     /** Marks the document as PROCESSING and returns its snapshot, or empty if there is nothing to do. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -52,10 +57,22 @@ public class ContextLoader {
     private ProcessingContext load(DocumentEntity doc) {
         IssuerEntity issuer = IssuerEntity.findById(doc.issuerId);
         NumberingRangeEntity range = NumberingRangeEntity.findById(doc.numberingRangeId);
+        if (doc.environment == Environment.SANDBOX) {
+            // Built with the sandbox credentials: no sealed PIN or technical key, no test set.
+            return context(doc, issuer, range, null, sandbox.softwareId(), null, null, sandbox.certificate());
+        }
         SoftwareCredentialEntity software = SoftwareCredentialEntity.findActive(issuer.id)
                 .orElseThrow(() -> new IllegalStateException("Issuer has no software credentials"));
         SigningCertificateEntity certificate = SigningCertificateEntity.findActive(issuer.id)
                 .orElseThrow(() -> new IllegalStateException("Issuer has no signing certificate"));
+        return context(doc, issuer, range, range.technicalKeySealed, software.softwareId, software.pinSealed,
+                activeTestSet(issuer.id, software.testSetId),
+                new ProcessingContext.CertificateRef(certificate.id, certificate.s3Key, certificate.passwordSealed));
+    }
+
+    private ProcessingContext context(DocumentEntity doc, IssuerEntity issuer, NumberingRangeEntity range,
+                                      byte[] technicalKeySealed, String softwareId, byte[] pinSealed,
+                                      String testSetId, ProcessingContext.CertificateRef certificate) {
 
         return new ProcessingContext(
                 doc.id,
@@ -78,11 +95,11 @@ public class ContextLoader {
                 reference(doc),
                 doc.concept(),
                 doc.correctionDescription,
-                range.technicalKeySealed,
-                software.softwareId,
-                software.pinSealed,
-                activeTestSet(issuer.id, software.testSetId),
-                new ProcessingContext.CertificateRef(certificate.id, certificate.s3Key, certificate.passwordSealed),
+                technicalKeySealed,
+                softwareId,
+                pinSealed,
+                testSetId,
+                certificate,
                 doc.cufe,
                 doc.dianTrackId,
                 DianSubmissionEntity.lastSendUnanswered(doc.id),
