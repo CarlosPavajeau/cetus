@@ -7,7 +7,6 @@ import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity.Status;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 
 import java.nio.charset.StandardCharsets;
@@ -16,6 +15,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,24 +54,38 @@ public class NotificationRecorder {
     }
 
     /**
-     * Makes a new link for the change the notice was requested for and keeps only its hash. Empty when that
-     * change was verified, canceled or replaced since: the email would only confuse.
+     * Makes a new link for the change the notice was requested for and keeps only its hash, on one of the
+     * categories still waiting for that address since that request: the one the notice names if it still is,
+     * so a category that left a shared request does not take the others' link with it. Empty when none is
+     * (verified, canceled or replaced since): the email would only confuse.
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public Optional<VerificationLink> verificationLink(Pending notice) {
-        AccountContactEntity contact = AccountContactEntity.findById(UUID.fromString(notice.data().get("contactId")),
-                LockModeType.PESSIMISTIC_WRITE);
-        if (contact == null || contact.pendingEmail == null || contact.pendingRequestedAt == null
-                || !contact.pendingEmail.equals(notice.data().get("email"))
-                || !contact.pendingRequestedAt.toInstant().equals(Instant.parse(notice.data().get("requestedAt")))) {
+        String email = notice.data().get("email");
+        Instant requestedAt = Instant.parse(notice.data().get("requestedAt"));
+        UUID named = UUID.fromString(notice.data().get("contactId"));
+        // Locked in the same order as the console's changes (AccountContactEntity.listForUpdate).
+        List<AccountContactEntity> waiting = AccountContactEntity.listForUpdate(notice.accountId()).stream()
+                .filter(contact -> email.equals(contact.pendingEmail) && contact.pendingRequestedAt != null
+                        && contact.pendingRequestedAt.toInstant().equals(requestedAt))
+                .toList();
+        if (waiting.isEmpty()) {
             return Optional.empty();
         }
+        AccountContactEntity holder = waiting.stream().filter(contact -> contact.id.equals(named)).findFirst()
+                .orElseGet(() -> waiting.stream().min(Comparator.comparing(contact -> contact.category)).orElseThrow());
         byte[] secret = new byte[32];
         RANDOM.nextBytes(secret);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(secret);
-        contact.pendingTokenHash = Hashing.sha256Hex(token.getBytes(StandardCharsets.UTF_8));
-        contact.pendingExpiresAt = OffsetDateTime.now().plus(VERIFICATION_LIFETIME);
-        return Optional.of(new VerificationLink(token, contact.pendingTokenHash, contact.pendingEmail));
+        // One link per request: a token left on another category by an earlier attempt stops working.
+        waiting.forEach(contact -> {
+            contact.pendingTokenHash = null;
+            contact.pendingExpiresAt = null;
+        });
+        AccountContactEntity.flush();
+        holder.pendingTokenHash = Hashing.sha256Hex(token.getBytes(StandardCharsets.UTF_8));
+        holder.pendingExpiresAt = OffsetDateTime.now().plus(VERIFICATION_LIFETIME);
+        return Optional.of(new VerificationLink(token, holder.pendingTokenHash, email));
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)

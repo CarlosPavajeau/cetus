@@ -69,10 +69,18 @@ public class AccountContactEntity extends PanacheEntityBase {
         return list("accountId = ?1 order by category", accountId);
     }
 
-    public static Optional<AccountContactEntity> findForUpdate(UUID accountId, Category category) {
-        return find("accountId = ?1 and category = ?2", accountId, category)
-                .withLock(LockModeType.PESSIMISTIC_WRITE)
-                .firstResultOptional();
+    /**
+     * Every category of the account, locked in id order. Changes lock them all, since one link can verify
+     * several: always in the same order, so two changes never wait for each other.
+     */
+    public static List<AccountContactEntity> listForUpdate(UUID accountId) {
+        return find("accountId = ?1 order by id", accountId).withLock(LockModeType.PESSIMISTIC_WRITE).list();
+    }
+
+    /** The account behind a verification link, without loading (and so without locking) its contact. */
+    public static Optional<UUID> accountOfPendingToken(String tokenHash) {
+        return find("select accountId from AccountContactEntity where pendingTokenHash = ?1", tokenHash)
+                .project(UUID.class).firstResultOptional();
     }
 
     /** The verified addresses of the categories, without repeating one that serves several, in a stable order. */
@@ -83,9 +91,9 @@ public class AccountContactEntity extends PanacheEntityBase {
                 accountId, categories).project(String.class).list();
     }
 
-    /** The contact behind a verification link while it can still be used, locked so it is spent once. */
-    public static Optional<AccountContactEntity> findByPendingToken(String tokenHash, boolean lock) {
-        var query = find("pendingTokenHash = ?1 and pendingExpiresAt > ?2", tokenHash, OffsetDateTime.now());
-        return (lock ? query.withLock(LockModeType.PESSIMISTIC_WRITE) : query).firstResultOptional();
+    /** The contact behind a verification link while it can still be used. Not locked: only to read it. */
+    public static Optional<AccountContactEntity> findByPendingToken(String tokenHash) {
+        return find("pendingTokenHash = ?1 and pendingExpiresAt > ?2", tokenHash, OffsetDateTime.now())
+                .firstResultOptional();
     }
 }

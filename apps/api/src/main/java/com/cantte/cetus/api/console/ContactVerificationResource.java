@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * The page behind a contact's verification link. No session: the token proves the address receives
@@ -53,18 +54,26 @@ public class ContactVerificationResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public VerificationView get(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
-        AccountContactEntity contact = AccountContactEntity.findByPendingToken(ApiKeys.hash(token), false)
+        AccountContactEntity contact = AccountContactEntity.findByPendingToken(ApiKeys.hash(token))
                 .orElseThrow(VerificationLinkNotFound::new);
         return view(contact, contact.pendingEmail, verifies(contact));
     }
 
-    /** Verifies the address for the link's category and for those waiting for it since the same request. */
+    /**
+     * Verifies the address for the link's category and for those waiting for it since the same request. Every
+     * category of the account is locked first and then read, so a change committed meanwhile is seen, and
+     * kept, instead of being overwritten with the confirmed address.
+     */
     @POST
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public VerificationView confirm(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
-        AccountContactEntity contact = AccountContactEntity.findByPendingToken(ApiKeys.hash(token), true)
-                .orElseThrow(VerificationLinkNotFound::new);
+        String hash = ApiKeys.hash(token);
+        UUID accountId = AccountContactEntity.accountOfPendingToken(hash).orElseThrow(VerificationLinkNotFound::new);
+        OffsetDateTime now = OffsetDateTime.now();
+        AccountContactEntity contact = AccountContactEntity.listForUpdate(accountId).stream()
+                .filter(each -> hash.equals(each.pendingTokenHash) && each.pendingExpiresAt.isAfter(now))
+                .findFirst().orElseThrow(VerificationLinkNotFound::new);
         // No session here, so SuspendedAccountFilter does not apply: a suspended account stays read-only.
         AccountEntity account = AccountEntity.findById(contact.accountId);
         if (!"ACTIVE".equals(account.status)) {
@@ -72,7 +81,6 @@ public class ContactVerificationResource {
         }
         String email = contact.pendingEmail;
         List<AccountContactEntity> verified = verifies(contact);
-        OffsetDateTime now = OffsetDateTime.now();
         Actor link = new Actor(Actor.ActorType.SYSTEM, "contact-verification-link:" + contact.id);
         for (AccountContactEntity each : verified) {
             Map<String, Object> data = new HashMap<>(Map.of("category", each.category, "email", email));

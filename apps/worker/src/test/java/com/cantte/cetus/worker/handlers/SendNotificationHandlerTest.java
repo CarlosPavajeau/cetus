@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -147,6 +148,30 @@ class SendNotificationHandlerTest {
             assertThat(contact.pendingExpiresAt).isAfter(OffsetDateTime.now().plusHours(47));
             assertThat(contact.email).isEqualTo("fiscal@cetus.test");
         });
+    }
+
+    @Test
+    void aSharedVerificationGoesOnWhenTheCategoryItNamesLeftTheRequest() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
+        // The three categories wait for the owner's address since the same request, as on signing up.
+        OffsetDateTime requestedAt = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+        QuarkusTransaction.requiringNew().run(() -> AccountContactEntity.update(
+                "pendingEmail = ?1, pendingRequestedAt = ?2 where accountId = ?3", "owner@cetus.test", requestedAt,
+                accountId));
+        UUID id = verification(accountId, "owner@cetus.test", requestedAt, "TECHNICAL,FISCAL,BILLING");
+        // The category the notice names (FISCAL) moved to another address before the email went out.
+        pending(accountId, "other@cetus.test");
+
+        handler.handle(fixtures.notificationJob(id));
+
+        assertThat(resend.requests()).singleElement().satisfies(request ->
+                assertThat(request.body().get("to").get(0).asText()).isEqualTo("owner@cetus.test"));
+        List<AccountContactEntity> contacts = QuarkusTransaction.requiringNew().call(() ->
+                AccountContactEntity.<AccountContactEntity>list("accountId", accountId));
+        assertThat(contacts).filteredOn(contact -> contact.pendingTokenHash != null)
+                .singleElement().satisfies(contact -> assertThat(contact.category)
+                        .isEqualTo(AccountContactEntity.Category.TECHNICAL));
     }
 
     @Test

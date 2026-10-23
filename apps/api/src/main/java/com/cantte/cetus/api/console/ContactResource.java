@@ -87,7 +87,7 @@ public class ContactResource {
         }
         contacts.checkNotRecentlySent(account.id, email);
         String previous = contact.pendingEmail;
-        contact.clearPending();
+        contacts.leaveRequest(contact);
         contact.pendingEmail = email;
         contact.pendingRequestedAt = AccountContacts.now();
         contacts.requestVerification(contact, List.of(category));
@@ -143,7 +143,7 @@ public class ContactResource {
 
     private void cancel(AccountContactEntity contact) {
         String pending = contact.pendingEmail;
-        contact.clearPending();
+        contacts.leaveRequest(contact);
         audit(contact, AuditAction.CONTACT_CHANGE_CANCELED, Map.of("category", contact.category, "email", pending));
     }
 

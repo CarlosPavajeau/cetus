@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -114,9 +115,31 @@ public class AccountContacts {
         return email.strip().toLowerCase(Locale.ROOT);
     }
 
+    /** The category's contact, with every category of the account locked (see AccountContactEntity.listForUpdate). */
     static AccountContactEntity require(UUID accountId, Category category) {
-        return AccountContactEntity.findForUpdate(accountId, category)
+        return AccountContactEntity.listForUpdate(accountId).stream()
+                .filter(contact -> contact.category == category).findFirst()
                 .orElseThrow(() -> new NotFoundException("The account has no " + category + " contact"));
+    }
+
+    /**
+     * Drops the contact's pending change. When it held the link that also verifies other categories (the
+     * owner's address, at first), the link moves to one of them, so it keeps working for those still waiting.
+     * The categories must be locked.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public void leaveRequest(AccountContactEntity contact) {
+        String tokenHash = contact.pendingTokenHash;
+        OffsetDateTime expiresAt = contact.pendingExpiresAt;
+        List<AccountContactEntity> others = sameRequest(contact);
+        contact.clearPending();
+        if (tokenHash != null && !others.isEmpty()) {
+            // The hash is unique: it leaves this row before it reaches the next.
+            em.flush();
+            AccountContactEntity heir = others.stream().min(Comparator.comparing(other -> other.category)).orElseThrow();
+            heir.pendingTokenHash = tokenHash;
+            heir.pendingExpiresAt = expiresAt;
+        }
     }
 
     /** Milliseconds survive the round trip through the database, so the worker can tell one request from another. */

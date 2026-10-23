@@ -77,6 +77,28 @@ class ContactVerificationResourceTest {
     }
 
     @Test
+    void theOwnersLinkKeepsWorkingForTheCategoriesStillWaitingForIt() {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        String accountId = bootstrap(owner, "Compartida SAS");
+        String token = link(accountId, Category.TECHNICAL, OffsetDateTime.now().plusHours(48));
+
+        // The category holding the link points elsewhere: the link stays with the other two.
+        owner.request().body(Map.of("email", "tech@example.com")).put("/console/contacts/TECHNICAL").then().statusCode(200);
+        given().get("/console/contact-verifications/" + token).then().statusCode(200)
+                .body("categories", contains("FISCAL", "BILLING"));
+        // And again when the next holder cancels.
+        owner.request().delete("/console/contacts/FISCAL/pending").then().statusCode(200);
+        given().post("/console/contact-verifications/" + token).then().statusCode(200)
+                .body("categories", contains("BILLING"));
+
+        owner.request().get("/console/contacts").then().statusCode(200)
+                .body("find { it.category == 'BILLING' }.email", equalTo(owner.email()))
+                .body("find { it.category == 'FISCAL' }.email", nullValue())
+                .body("find { it.category == 'FISCAL' }.pendingEmail", nullValue())
+                .body("find { it.category == 'TECHNICAL' }.pendingEmail", equalTo("tech@example.com"));
+    }
+
+    @Test
     void aSuspendedAccountKeepsItsContacts() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         String accountId = bootstrap(owner, "Suspendida SAS");
