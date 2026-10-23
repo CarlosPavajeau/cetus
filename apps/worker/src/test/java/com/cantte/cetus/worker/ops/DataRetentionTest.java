@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -74,6 +75,20 @@ class DataRetentionTest {
                 .setParameter("id", range).executeUpdate());
         retention.run();
         assertThat(existing("notification_log", List.of(activeRange))).isEmpty();
+    }
+
+    @Test
+    void aShortRetentionStillKeepsTheNoticesThatHoldBackAnExpiryReminder() {
+        OffsetDateTime now = OffsetDateTime.now();
+        UUID account = account();
+        // Still requested every day until its certificate reaches 7 days.
+        UUID thirtyDays = notice(account, "CERTIFICATE_EXPIRING", "cert_expiring:" + Ids.newId() + ":30d",
+                now.minusDays(20));
+        UUID older = notice(account, "CERTIFICATE_EXPIRING", "cert_expiring:" + Ids.newId() + ":30d",
+                now.minusDays(40));
+        retention.run(Duration.ofDays(7));
+
+        assertThat(existing("notification_log", List.of(thirtyDays, older))).containsExactly(thirtyDays);
     }
 
     private UUID notice(UUID account, String kind, String key, OffsetDateTime at) {
