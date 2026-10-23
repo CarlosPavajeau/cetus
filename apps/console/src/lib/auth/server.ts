@@ -50,6 +50,12 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: "pg", schema }),
+  advanced: {
+    ipAddress: {
+      // Same source as the audit log (lib/api/client.ts): Cloudflare sets it on every request it proxies.
+      ipAddressHeaders: ["cf-connecting-ip"],
+    },
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 10,
