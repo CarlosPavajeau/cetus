@@ -5,6 +5,7 @@ import com.cantte.cetus.domain.dian.Hashing;
 import io.quarkus.test.Mock;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,5 +37,19 @@ public class FakeDocumentStorage extends DocumentStorage {
     @Override
     public byte[] get(String key) {
         return objects.get(key).clone();
+    }
+
+    @Override
+    public void delete(List<String> keys) {
+        keys.forEach(key -> {
+            if (retained.contains(key)) {
+                throw new IllegalStateException("Object Lock keeps " + key);
+            }
+            objects.remove(key);
+        });
+    }
+
+    public boolean exists(String key) {
+        return objects.containsKey(key);
     }
 }

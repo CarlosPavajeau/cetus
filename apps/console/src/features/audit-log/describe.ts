@@ -9,7 +9,11 @@ const issuerStatusLabel: Record<string, string> = {
   DISABLED: "Deshabilitado",
 };
 
-const environmentLabel: Record<string, string> = { TEST: "Pruebas", LIVE: "Producción" };
+const environmentLabel: Record<string, string> = {
+  TEST: "Pruebas",
+  LIVE: "Producción",
+  SANDBOX: "Simulación",
+};
 
 const documentTypeLabel: Record<string, string> = {
   INVOICE: "Factura",

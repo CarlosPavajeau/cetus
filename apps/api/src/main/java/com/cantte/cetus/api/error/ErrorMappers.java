@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.error;
 
+import com.cantte.cetus.api.documents.DocumentDrafts;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.json.SafeStrings;
 import com.cantte.cetus.domain.DomainException;
@@ -86,6 +87,11 @@ public class ErrorMappers {
 
     @ServerExceptionMapper
     public Response fileNotAvailable(DocumentFiles.FileNotAvailable e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response sandboxDailyLimit(DocumentDrafts.SandboxDailyLimit e) {
         return e.getResponse();
     }
 

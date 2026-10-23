@@ -45,7 +45,8 @@ function Webhooks() {
   const visible = endpoints.filter(
     (endpoint) => environment === "ALL" || endpoint.environment === environment,
   );
-  const liveCount = endpoints.filter((endpoint) => endpoint.environment === "LIVE").length;
+  const count = (value: Environment) =>
+    endpoints.filter((endpoint) => endpoint.environment === value).length;
 
   return (
     <>
@@ -83,11 +84,13 @@ function Webhooks() {
                 Todos <span className="text-muted-foreground">{endpoints.length}</span>
               </TabsTrigger>
               <TabsTrigger value="LIVE">
-                Producción <span className="text-muted-foreground">{liveCount}</span>
+                Producción <span className="text-muted-foreground">{count("LIVE")}</span>
               </TabsTrigger>
               <TabsTrigger value="TEST">
-                Pruebas{" "}
-                <span className="text-muted-foreground">{endpoints.length - liveCount}</span>
+                Pruebas <span className="text-muted-foreground">{count("TEST")}</span>
+              </TabsTrigger>
+              <TabsTrigger value="SANDBOX">
+                Simulación <span className="text-muted-foreground">{count("SANDBOX")}</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>

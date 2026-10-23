@@ -51,7 +51,9 @@ describe("console tokens in the API", () => {
     expect(created.status).toBe(200);
     const { id } = (await created.json()) as { id: string };
 
-    expect(await (await other.api("/console/issuers")).json()).toEqual([]);
+    // The other organization only has the sandbox sample every account starts with.
+    const visible = (await (await other.api("/console/issuers")).json()) as { id: string }[];
+    expect(visible.map((each) => each.id)).not.toContain(id);
     expect((await other.api(`/console/issuers/${id}`)).status).toBe(404);
     const { environment: _, nit: __, ...update } = issuer;
     const edited = await other.api(`/console/issuers/${id}`, {

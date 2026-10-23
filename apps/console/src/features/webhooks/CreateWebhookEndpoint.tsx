@@ -51,6 +51,7 @@ import { createWebhookEndpointSchema } from "./schema";
 import { createWebhookEndpoint } from "./server";
 
 const environmentItems: { label: string; value: Environment }[] = [
+  { label: "Simulación (sin la DIAN)", value: "SANDBOX" },
   { label: "Pruebas (habilitación DIAN)", value: "TEST" },
   { label: "Producción", value: "LIVE" },
 ];

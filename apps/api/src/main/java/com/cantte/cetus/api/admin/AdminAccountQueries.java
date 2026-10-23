@@ -45,15 +45,16 @@ public class AdminAccountQueries {
     public List<AccountSummaryView> list(String status, List<String> organizationIds, UUID before, int size) {
         StringBuilder sql = new StringBuilder("""
                 SELECT a.id, a.organization_id, a.name, a.status, a.plan, a.created_at,
-                       (SELECT count(*) FROM billing.issuers i WHERE i.account_id = a.id),
+                       (SELECT count(*) FROM billing.issuers i WHERE i.account_id = a.id AND i.environment <> 'SANDBOX'),
                        (SELECT count(*) FROM billing.issuers i
                         WHERE i.account_id = a.id AND i.environment = 'LIVE' AND i.status = 'ENABLED'),
                        (SELECT count(*) FROM billing.documents d
                         WHERE d.account_id = a.id AND d.environment = 'LIVE' AND d.created_at >= :monthStart),
                        (SELECT count(*) FROM billing.documents d
-                        WHERE d.account_id = a.id AND d.status IN ('REJECTED', 'FAILED') AND d.created_at >= :weekAgo),
+                        WHERE d.account_id = a.id AND d.environment <> 'SANDBOX' AND d.status IN ('REJECTED', 'FAILED')
+                          AND d.created_at >= :weekAgo),
                        (SELECT max(d.updated_at) FROM billing.documents d
-                        WHERE d.account_id = a.id AND d.status IN ('REJECTED', 'FAILED'))
+                        WHERE d.account_id = a.id AND d.environment <> 'SANDBOX' AND d.status IN ('REJECTED', 'FAILED'))
                 FROM billing.accounts a
                 WHERE true
                 """);
@@ -107,14 +108,14 @@ public class AdminAccountQueries {
                 count(row[3]))).toList();
     }
 
-    /** The latest documents the DIAN rejected or that could not be sent, with the DIAN's errors. */
+    /** The latest documents the DIAN rejected or that could not be sent, with the DIAN's errors; the sandbox's are practice. */
     public List<FailedDocumentView> recentFailures(UUID accountId) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = em.createNativeQuery("""
                         SELECT id, issuer_id, environment, document_type, prefix, number, status,
                                dian_status_code, dian_status_message, CAST(dian_errors AS text), updated_at
                         FROM billing.documents
-                        WHERE account_id = :account AND status IN ('REJECTED', 'FAILED')
+                        WHERE account_id = :account AND status IN ('REJECTED', 'FAILED') AND environment <> 'SANDBOX'
                         ORDER BY updated_at DESC
                         LIMIT :limit
                         """)

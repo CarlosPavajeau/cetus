@@ -3,7 +3,7 @@ package com.cantte.cetus.worker.handlers;
 import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianResponse;
-import com.cantte.cetus.dian.DianSoapClient;
+import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.DianZip;
 import com.cantte.cetus.dian.UploadResponse;
@@ -30,6 +30,7 @@ import com.cantte.cetus.worker.support.KeyMaterialCache;
 import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.ResultRecorder;
+import com.cantte.cetus.worker.support.SandboxCredentials;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -77,6 +78,8 @@ public class ProcessDocumentHandler implements JobHandler {
     @Inject
     ProviderSettings provider;
     @Inject
+    SandboxCredentials sandbox;
+    @Inject
     Instance<DocumentBuilder> builderInstances;
 
     private Map<DocumentType, DocumentBuilder> builders;
@@ -105,16 +108,14 @@ public class ProcessDocumentHandler implements JobHandler {
         }
 
         KeyMaterial keys = keyCache.get(ctx.certificate());
-        DianSoapClient dian = dianClients.forEnvironment(ctx.environment());
+        DianGateway dian = dianClients.forEnvironment(ctx.environment());
         boolean testSet = ctx.environment() == Environment.TEST && ctx.testSetId() != null;
 
         if (!testSet && ctx.lastSendUnanswered() && ctx.existingCufe() != null && alreadyRegistered(ctx, dian, keys)) {
             return;
         }
 
-        String pin = cipher.openText(ctx.pinSealed());
-        String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());
-        BuiltDocument built = builder.build(ctx, new DocumentSecrets(pin, technicalKey));
+        BuiltDocument built = builder.build(ctx, secrets(ctx));
         recorder.cufe(ctx.documentId(), built.uniqueCode());
 
         byte[] signedXml = sign(built.unsigned(), keys);
@@ -139,12 +140,21 @@ public class ProcessDocumentHandler implements JobHandler {
         recorder.gaveUp(job.referenceId, "Gave up after " + job.attempts + " attempts: " + reason);
     }
 
+    private DocumentSecrets secrets(ProcessingContext ctx) {
+        if (ctx.environment() == Environment.SANDBOX) {
+            return sandbox.secrets(ctx.issuerId());
+        }
+        String pin = cipher.openText(ctx.pinSealed());
+        String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());
+        return new DocumentSecrets(pin, technicalKey);
+    }
+
     private byte[] sign(Document document, KeyMaterial keys) {
         signer.sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         return XmlSupport.serialize(document);
     }
 
-    private void sendSync(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys, String zipName, byte[] zip) {
+    private void sendSync(ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String zipName, byte[] zip) {
         long start = System.currentTimeMillis();
         DianResponse response;
         try {
@@ -165,7 +175,7 @@ public class ProcessDocumentHandler implements JobHandler {
                 response.statusCode());
     }
 
-    private void sendTestSet(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys, String zipName, byte[] zip) {
+    private void sendTestSet(ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String zipName, byte[] zip) {
         long start = System.currentTimeMillis();
         UploadResponse upload;
         try {
@@ -187,7 +197,7 @@ public class ProcessDocumentHandler implements JobHandler {
         recorder.submitted(ctx.documentId(), upload.zipKey());
     }
 
-    private boolean alreadyRegistered(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys) {
+    private boolean alreadyRegistered(ProcessingContext ctx, DianGateway dian, KeyMaterial keys) {
         DianResponse status = dian.getStatus(ctx.existingCufe(), keys);
         recorder.submission(ctx.documentId(), "GetStatus", ctx.existingCufe(), false, status, status.errors(), 0);
         if (status.valid()) {

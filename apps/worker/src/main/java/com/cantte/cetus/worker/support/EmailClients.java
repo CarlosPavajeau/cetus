@@ -79,13 +79,14 @@ public class EmailClients {
 
     /**
      * Who receives the document: the customer in LIVE; in TEST, whose customers are usually test data,
-     * the configured test mailbox instead.
+     * the configured test mailbox instead. A SANDBOX document never reaches its customer.
      */
     public Optional<String> recipient(Environment environment, Party customer) {
-        if (environment == Environment.TEST) {
-            return testRecipient;
-        }
-        return Optional.ofNullable(customer.email()).filter(email -> !email.isBlank());
+        return switch (environment) {
+            case LIVE -> Optional.ofNullable(customer.email()).filter(email -> !email.isBlank());
+            case TEST -> testRecipient;
+            case SANDBOX -> Optional.empty();
+        };
     }
 
     public Duration rateLimitDelay() {

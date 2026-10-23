@@ -2,6 +2,7 @@ package com.cantte.cetus.api.documents;
 
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.dian.Hashing;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.IdempotencyStore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,12 +34,13 @@ public class IdempotentCreation {
      *               returns the response body
      */
     @Transactional(Transactional.TxType.MANDATORY)
-    public Response accept(UUID accountId, String idempotencyKey, Object request, Function<String, Object> create)
+    public Response accept(UUID accountId, Environment environment, String idempotencyKey, Object request,
+                           Function<String, Object> create)
             throws JsonProcessingException {
         String rawJson = mapper.writeValueAsString(request);
         String requestHash = Hashing.sha256Hex(rawJson.getBytes(StandardCharsets.UTF_8));
 
-        var outcome = idempotency.begin(accountId, idempotencyKey, requestHash);
+        var outcome = idempotency.begin(accountId, environment, idempotencyKey, requestHash);
         switch (outcome.state()) {
             case REPLAY:
                 return Response.status(outcome.responseStatus()).entity(outcome.responseBody())
@@ -54,7 +56,7 @@ public class IdempotentCreation {
         }
 
         Object body = create.apply(rawJson);
-        idempotency.complete(accountId, idempotencyKey, 202, mapper.writeValueAsString(body));
+        idempotency.complete(accountId, environment, idempotencyKey, 202, mapper.writeValueAsString(body));
         return Response.accepted(body).build();
     }
 }

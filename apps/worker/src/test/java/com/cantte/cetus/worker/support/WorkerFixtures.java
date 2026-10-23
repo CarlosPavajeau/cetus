@@ -128,7 +128,69 @@ public class WorkerFixtures {
             range.technicalKeySealed = cipher.sealText("fc8eac422eba16e22ffd8c6f94b3f40a6e38162c");
             range.persist();
 
-            return document(account.id, issuer.id, range, DocumentType.INVOICE).id;
+            return document(account.id, issuer.id, range, DocumentType.INVOICE, Environment.TEST, "900108281").id;
+        });
+    }
+
+    /**
+     * A SANDBOX invoice in RECEIVED for a customer with this identification number, which picks the
+     * simulator's scenario. Its issuer has no credentials of its own: the sandbox certificate is stored
+     * where the worker looks for it.
+     */
+    public UUID sandboxInvoice(String customerId) {
+        storage.put("certificates/sandbox/cetus-sandbox.p12.sealed", cipher.seal(testSigner()), "application/octet-stream");
+        storage.put("certificates/sandbox/cetus-sandbox.password.sealed", cipher.sealText("cetus-test"),
+                "application/octet-stream");
+        return QuarkusTransaction.requiringNew().call(() -> {
+            AccountEntity account = new AccountEntity();
+            account.id = Ids.newId();
+            account.organizationId = "org_" + account.id;
+            account.name = "Sandbox SAS";
+            account.persist();
+
+            IssuerEntity issuer = new IssuerEntity();
+            issuer.id = Ids.newId();
+            issuer.accountId = account.id;
+            issuer.environment = Environment.SANDBOX;
+            issuer.nit = "900123456";
+            issuer.checkDigit = "8";
+            issuer.legalName = "Cetus Simulación SAS";
+            issuer.personType = PersonType.LEGAL_ENTITY;
+            issuer.taxLevelCodes = "O-13";
+            issuer.taxSchemeId = "01";
+            issuer.taxSchemeName = "IVA";
+            issuer.address = ADDRESS;
+            issuer.email = "facturas@cetus.test";
+            issuer.operationMode = IssuerEntity.OperationMode.OWN_SOFTWARE;
+            issuer.status = IssuerEntity.Status.ENABLED;
+            issuer.persist();
+
+            NumberingRangeEntity range = new NumberingRangeEntity();
+            range.id = Ids.newId();
+            range.issuerId = issuer.id;
+            range.documentType = DocumentType.INVOICE;
+            range.resolutionNumber = "18760000001";
+            range.resolutionDate = LocalDate.of(2026, 1, 1);
+            range.prefix = "SIM";
+            range.rangeFrom = 1;
+            range.rangeTo = 999999999;
+            range.nextNumber = ThreadLocalRandom.current().nextLong(1, 999999999);
+            range.validFrom = LocalDate.of(2026, 1, 1);
+            range.validTo = LocalDate.of(2036, 1, 1);
+            range.persist();
+
+            return document(account.id, issuer.id, range, DocumentType.INVOICE, Environment.SANDBOX, customerId).id;
+        });
+    }
+
+    /** Another SANDBOX invoice of the account, from the issuer and range {@link #sandboxInvoice} created. */
+    public UUID sandboxInvoiceFor(UUID accountId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            IssuerEntity issuer = IssuerEntity.<IssuerEntity>find("accountId = ?1 and environment = ?2", accountId,
+                    Environment.SANDBOX).singleResult();
+            NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("issuerId = ?1 and documentType = ?2",
+                    issuer.id, DocumentType.INVOICE).singleResult();
+            return document(accountId, issuer.id, range, DocumentType.INVOICE, Environment.SANDBOX, "900108281").id;
         });
     }
 
@@ -164,7 +226,8 @@ public class WorkerFixtures {
             range.nextNumber = ThreadLocalRandom.current().nextLong(1, 99999999);
             range.persist();
 
-            DocumentEntity note = document(invoice.accountId, invoice.issuerId, range, type);
+            DocumentEntity note = document(invoice.accountId, invoice.issuerId, range, type, invoice.environment,
+                    invoice.customer.identificationNumber());
             note.referencedDocumentId = invoice.id;
             note.correctionConcept = concept;
             note.correctionDescription = description;
@@ -261,21 +324,22 @@ public class WorkerFixtures {
         });
     }
 
-    private static DocumentEntity document(UUID accountId, UUID issuerId, NumberingRangeEntity range, DocumentType type) {
+    private static DocumentEntity document(UUID accountId, UUID issuerId, NumberingRangeEntity range, DocumentType type,
+                                           Environment environment, String customerId) {
         CalculationResult calculation = calculation();
 
         DocumentEntity doc = new DocumentEntity();
         doc.id = Ids.newId();
         doc.accountId = accountId;
         doc.issuerId = issuerId;
-        doc.environment = Environment.TEST;
+        doc.environment = environment;
         doc.documentType = type;
         doc.numberingRangeId = range.id;
         doc.prefix = range.prefix;
         doc.number = range.take();
         doc.issueDate = LocalDate.now();
         doc.issueTime = LocalTime.of(10, 30);
-        doc.customer = new Party(PersonType.LEGAL_ENTITY, IdentificationType.NIT, "900108281", "3",
+        doc.customer = new Party(PersonType.LEGAL_ENTITY, IdentificationType.NIT, customerId, "3",
                 "OPTICAS GMO COLOMBIA S A S", null, List.of("R-99-PN"), "01", "IVA", ADDRESS,
                 "compras@example.com", null);
         doc.payment = new PaymentInfo("1", "10", null);

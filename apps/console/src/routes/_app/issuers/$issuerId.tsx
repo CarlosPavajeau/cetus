@@ -60,6 +60,15 @@ const rangeTypeLabel: Record<IssuerDetail["ranges"][number]["documentType"], str
   DEBIT_NOTE: "Nota débito",
 };
 
+const keyKindLabel: Record<IssuerDetail["environment"], string> = {
+  LIVE: "de producción",
+  TEST: "de pruebas",
+  SANDBOX: "de simulación",
+};
+
+const sandboxLead =
+  "Listo para emitir documentos simulados con una llave de simulación: Cetus responde como la DIAN, sin validez fiscal.";
+
 const statusLead: Record<IssuerDetail["status"], string> = {
   ONBOARDING: "Le faltan pasos de configuración antes de poder facturar.",
   TESTING: "Listo para enviar facturas a la habilitación de la DIAN con una llave de pruebas.",
@@ -102,12 +111,18 @@ function IssuerDetailPage() {
   // The loader already returned notFound for a missing issuer.
   const issuer = useSuspenseQuery(issuerDetailQuery(issuerId)).data!;
   const { data: issuers } = useSuspenseQuery(issuersQuery);
-  // The same NIT in the other environment: the production issuer of a test one, or the other way round.
-  const counterpart = issuers.find(
-    (other) => other.nit === issuer.nit && other.environment !== issuer.environment,
-  );
+  const sandbox = issuer.environment === "SANDBOX";
+  // The same NIT in the other DIAN environment: the production issuer of a test one, or the other way round.
+  const counterpart = sandbox
+    ? undefined
+    : issuers.find(
+        (other) =>
+          other.nit === issuer.nit &&
+          other.environment !== "SANDBOX" &&
+          other.environment !== issuer.environment,
+      );
   const example = invoiceExample(issuer.id);
-  const keyKind = issuer.environment === "TEST" ? "de pruebas" : "de producción";
+  const keyKind = keyKindLabel[issuer.environment];
   const hasCreditNoteRange = issuer.ranges.some(
     (range) => range.documentType === "CREDIT_NOTE" && range.status === "ACTIVE",
   );
@@ -119,7 +134,7 @@ function IssuerDetailPage() {
       <PageHeader
         title={issuerName(issuer)}
         status={<IssuerStatusBadge status={issuer.status} />}
-        lead={statusLead[issuer.status]}
+        lead={sandbox ? sandboxLead : statusLead[issuer.status]}
         action={
           issuer.status === "ONBOARDING" ? (
             <Button
@@ -241,23 +256,30 @@ function IssuerDetailPage() {
 
       <Section
         id="dian"
-        title="Configuración DIAN"
-        action={issuer.status !== "ONBOARDING" && <AddNoteRange issuerId={issuer.id} />}
+        title={sandbox ? "Numeración simulada" : "Configuración DIAN"}
+        action={!sandbox && issuer.status !== "ONBOARDING" && <AddNoteRange issuerId={issuer.id} />}
       >
-        <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
-          <Entry label="Software ID">{issuer.software?.softwareId ?? "Pendiente"}</Entry>
-          {issuer.environment === "TEST" && (
-            <Entry label="Set de pruebas">{issuer.software?.testSetId ?? "—"}</Entry>
-          )}
-          <Entry label="Certificado de firma">{issuer.certificate?.subject ?? "Pendiente"}</Entry>
-          {issuer.certificate && (
-            <Entry label="Vigencia del certificado">
-              Hasta el {dateFormat.format(new Date(issuer.certificate.validTo))}
-            </Entry>
-          )}
-        </dl>
+        {sandbox ? (
+          <p className="text-2xs text-muted-foreground">
+            Los emisores de simulación firman con el certificado de prueba de Cetus y numeran con
+            estos rangos, así que no necesitan software, certificado ni resolución propios.
+          </p>
+        ) : (
+          <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
+            <Entry label="Software ID">{issuer.software?.softwareId ?? "Pendiente"}</Entry>
+            {issuer.environment === "TEST" && (
+              <Entry label="Set de pruebas">{issuer.software?.testSetId ?? "—"}</Entry>
+            )}
+            <Entry label="Certificado de firma">{issuer.certificate?.subject ?? "Pendiente"}</Entry>
+            {issuer.certificate && (
+              <Entry label="Vigencia del certificado">
+                Hasta el {dateFormat.format(new Date(issuer.certificate.validTo))}
+              </Entry>
+            )}
+          </dl>
+        )}
 
-        {issuer.status !== "ONBOARDING" && !hasCreditNoteRange && (
+        {!sandbox && issuer.status !== "ONBOARDING" && !hasCreditNoteRange && (
           <p className="text-2xs text-muted-foreground">
             Este emisor no tiene un rango para notas crédito: sin él no puede anular ni corregir
             facturas. Agrégalo con{" "}

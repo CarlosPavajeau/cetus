@@ -128,7 +128,11 @@ public record NotificationEmail(String subject, String html, String text) {
     }
 
     private static String environment(String environment) {
-        return "LIVE".equals(environment) ? "producción" : "pruebas";
+        return switch (environment) {
+            case "LIVE" -> "producción";
+            case "SANDBOX" -> "simulación";
+            default -> "pruebas";
+        };
     }
 
     private static String days(String days) {

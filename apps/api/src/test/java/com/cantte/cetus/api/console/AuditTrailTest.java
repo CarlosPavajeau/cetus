@@ -52,7 +52,7 @@ class AuditTrailTest {
                 .containsEntry("resourceType", "account")
                 .containsEntry("resourceId", accountId)
                 .containsEntry("ipAddress", ConsoleUser.CLIENT_IP);
-        assertThat(data(entry)).isEqualTo(Map.of("name", "Acme SAS"));
+        assertThat(data(entry)).containsEntry("name", "Acme SAS").containsKey("sandboxIssuerId");
         assertThat(userAgents(accountId)).containsOnly(ConsoleUser.CLIENT_USER_AGENT);
     }
 

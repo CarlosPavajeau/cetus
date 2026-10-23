@@ -212,6 +212,12 @@ la API) en la consola. Las URL privadas se arman con referencias, p. ej.
 - `infra/aws/` tiene las políticas IAM de mínimo privilegio de cada servicio (`iam-cetus-prod-*.json`) y el
   ciclo de vida del bucket (`s3-lifecycle.json`). La API solo sella secretos (`kms:GenerateDataKey`) y el
   worker solo los abre (`kms:Decrypt`).
+- El sandbox firma con un certificado autofirmado de Cetus, sellado en el bucket en
+  `certificates/sandbox/cetus-sandbox.p12.sealed` y su contraseña en
+  `certificates/sandbox/cetus-sandbox.password.sealed`. Sus documentos se guardan sin Object Lock en
+  `documents/sandbox/`: el worker los borra a los 10 días (`CETUS_RETENTION_SANDBOX_DOCUMENTS`, con
+  `s3:DeleteObject` solo sobre ese prefijo) y la regla `sandbox-documents` del ciclo de vida recoge lo que
+  quede. El bucket tiene versionado: borrar deja una versión anterior, que esa regla elimina al día siguiente.
 - `/console/*` y `/q/*` solo responden a hosts privados (`cetus.private-hosts`): la red privada de Railway
   (`*.railway.internal`), `localhost` y el health check de Railway. Por el dominio público responden 404.
 

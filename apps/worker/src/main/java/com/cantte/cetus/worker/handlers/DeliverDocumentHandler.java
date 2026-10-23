@@ -2,6 +2,7 @@ package com.cantte.cetus.worker.handlers;
 
 import com.cantte.cetus.domain.dian.DianFileNames;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.email.EmailMessage;
 import com.cantte.cetus.email.EmailRateLimited;
 import com.cantte.cetus.email.EmailRejectedException;
@@ -27,6 +28,7 @@ import com.cantte.cetus.worker.support.EmailClients;
 import com.cantte.cetus.worker.support.KeyMaterialCache;
 import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ProviderSettings;
+import com.cantte.cetus.worker.support.SandboxDeliveries;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -73,6 +75,8 @@ public class DeliverDocumentHandler implements JobHandler {
     EmailClients email;
     @Inject
     ProviderSettings provider;
+    @Inject
+    SandboxDeliveries sandboxDeliveries;
 
     @Override
     public String type() {
@@ -94,11 +98,22 @@ public class DeliverDocumentHandler implements JobHandler {
             deliveries.skipped(ctx.documentId(), "Email delivery is not configured");
             return;
         }
-        Optional<String> recipient = email.recipient(ctx.environment(), ctx.customer());
+        Optional<String> recipient;
+        if (ctx.environment() == Environment.SANDBOX) {
+            SandboxDeliveries.Recipient sandbox = sandboxDeliveries.recipient(ctx.documentId());
+            if (sandbox.skipReason() != null) {
+                deliveries.skipped(ctx.documentId(), sandbox.skipReason());
+                return;
+            }
+            recipient = Optional.of(sandbox.email());
+        } else {
+            recipient = email.recipient(ctx.environment(), ctx.customer());
+        }
         if (recipient.isEmpty()) {
             deliveries.skipped(ctx.documentId(), switch (ctx.environment()) {
                 case TEST -> "TEST documents are only emailed to CETUS_EMAIL_TEST_RECIPIENT, which is not set";
                 case LIVE -> "The customer has no email address";
+                case SANDBOX -> "SANDBOX documents are never emailed to their customer";
             });
             return;
         }

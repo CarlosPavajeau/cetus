@@ -54,6 +54,8 @@ const countFormat = new Intl.NumberFormat("es-CO");
 const environmentLead = {
   LIVE: "Llave de producción: emite documentos con validez fiscal ante la DIAN.",
   TEST: "Llave de pruebas: envía a la habilitación de la DIAN, sin validez fiscal.",
+  SANDBOX:
+    "Llave de simulación: Cetus responde como la DIAN, sin enviarle nada y sin validez fiscal.",
 } as const;
 
 function BackToKeys() {

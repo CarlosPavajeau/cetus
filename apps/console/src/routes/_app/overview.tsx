@@ -39,8 +39,8 @@ export const Route = createFileRoute("/_app/overview")({
       queryClient.ensureQueryData(accountQuery),
       queryClient.ensureQueryData(issuersQuery),
     ]);
-    // A new organization starts by setting up its issuer.
-    if (issuers.length === 0) {
+    // A new organization starts by setting up its issuer; the sandbox sample it gets needs no setup.
+    if (!issuers.some((issuer) => issuer.environment !== "SANDBOX")) {
       throw redirect({ to: "/setup" });
     }
   },

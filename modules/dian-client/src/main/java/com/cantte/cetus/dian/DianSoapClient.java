@@ -21,7 +21,7 @@ import java.util.Map;
  * Client for IWcfDianCustomerServices. Stateless and thread-safe; one instance per endpoint.
  * The caller provides the key material of the issuer (or of the technology provider).
  */
-public final class DianSoapClient {
+public final class DianSoapClient implements DianGateway {
 
     private final String url;
     private final HttpClient http;
@@ -44,6 +44,7 @@ public final class DianSoapClient {
         this.signer = new WsSecuritySigner(clock, 60);
     }
 
+    @Override
     public DianResponse sendBillSync(String zipFileName, byte[] zip, KeyMaterial keys) {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("fileName", zipFileName);
@@ -52,6 +53,7 @@ public final class DianSoapClient {
         return DianResponseParser.single(raw, "SendBillSyncResult");
     }
 
+    @Override
     public UploadResponse sendTestSetAsync(String zipFileName, byte[] zip, String testSetId, KeyMaterial keys) {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("fileName", zipFileName);
@@ -61,25 +63,19 @@ public final class DianSoapClient {
         return DianResponseParser.upload(raw, "SendTestSetAsyncResult");
     }
 
-    /** Status by trackId; for documents sent with SendBillSync the trackId is the CUFE/CUDE. */
+    @Override
     public DianResponse getStatus(String trackId, KeyMaterial keys) {
         String raw = call(DianOperation.GET_STATUS, Map.of("trackId", trackId), keys);
         return DianResponseParser.single(raw, "GetStatusResult");
     }
 
-    /** Status of an asynchronous upload, by the ZipKey returned by SendTestSetAsync. */
+    @Override
     public List<DianResponse> getStatusZip(String zipKey, KeyMaterial keys) {
         String raw = call(DianOperation.GET_STATUS_ZIP, Map.of("trackId", zipKey), keys);
         return DianResponseParser.list(raw, "GetStatusZipResult");
     }
 
-    /**
-     * The numbering ranges the DIAN authorized for an issuer and software, with their technical keys.
-     *
-     * @param accountCode  NIT of the issuer
-     * @param accountCodeT NIT of the software provider: the issuer itself with "software propio"
-     * @param softwareCode the software ID registered in the DIAN portal
-     */
+    @Override
     public NumberingRangeResponse getNumberingRange(String accountCode, String accountCodeT, String softwareCode,
                                                     KeyMaterial keys) {
         Map<String, String> params = new LinkedHashMap<>();

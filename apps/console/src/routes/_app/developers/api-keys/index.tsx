@@ -108,6 +108,7 @@ function formatRelative(date: Date) {
 }
 
 const environmentItems: { label: string; value: Environment }[] = [
+  { label: "Simulación (sin la DIAN)", value: "SANDBOX" },
   { label: "Pruebas (habilitación DIAN)", value: "TEST" },
   { label: "Producción", value: "LIVE" },
 ];
@@ -138,7 +139,7 @@ function ApiKeys() {
       (status === "ALL" || (status === "REVOKED") === Boolean(key.revokedAt)) &&
       (!term || key.name.toLowerCase().includes(term) || key.prefix.toLowerCase().includes(term)),
   );
-  const liveCount = keys.filter((key) => key.environment === "LIVE").length;
+  const count = (value: Environment) => keys.filter((key) => key.environment === value).length;
   const revokedCount = keys.filter((key) => key.revokedAt).length;
 
   return (
@@ -175,10 +176,13 @@ function ApiKeys() {
                   Todas <span className="text-muted-foreground">{keys.length}</span>
                 </TabsTrigger>
                 <TabsTrigger value="LIVE">
-                  Producción <span className="text-muted-foreground">{liveCount}</span>
+                  Producción <span className="text-muted-foreground">{count("LIVE")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="TEST">
-                  Pruebas <span className="text-muted-foreground">{keys.length - liveCount}</span>
+                  Pruebas <span className="text-muted-foreground">{count("TEST")}</span>
+                </TabsTrigger>
+                <TabsTrigger value="SANDBOX">
+                  Simulación <span className="text-muted-foreground">{count("SANDBOX")}</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -364,7 +368,7 @@ function CreateApiKeyDialog() {
   const [copied, setCopied] = useState(false);
   const form = useForm({
     resolver: arktypeResolver(createApiKeySchema),
-    defaultValues: { name: "", environment: "TEST" as Environment },
+    defaultValues: { name: "", environment: "SANDBOX" as Environment },
   });
   const { isSubmitting } = form.formState;
 

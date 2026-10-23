@@ -49,6 +49,30 @@ class InvoiceResourceTest {
     }
 
     @Test
+    void anIdempotencyKeyUsedInTestDoesNotReplayInLive() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Two environments SAS");
+        String testIssuer = ConsoleFixtures.onboard(user).issuerId();
+        String liveIssuer = ConsoleFixtures.completeSetup(user,
+                ConsoleFixtures.createIssuer(user, "900123456", "LIVE")).issuerId();
+        String testKey = testKey(user);
+        String liveKey = user.request().body(Map.of("name", "ERP", "environment", "LIVE"))
+                .post("/console/api-keys")
+                .then().statusCode(200).extract().path("secret");
+        String idempotencyKey = "order-" + UUID.randomUUID();
+
+        JsonPath inTest = api(testKey).header("Idempotency-Key", idempotencyKey).body(invoice(testIssuer))
+                .post("/v1/invoices")
+                .then().statusCode(202).extract().jsonPath();
+        JsonPath inLive = api(liveKey).header("Idempotency-Key", idempotencyKey).body(invoice(liveIssuer))
+                .post("/v1/invoices")
+                .then().statusCode(202).header("Idempotent-Replayed", (String) null).extract().jsonPath();
+
+        assertThat(inLive.getString("id")).isNotEqualTo(inTest.getString("id"));
+        assertThat(inLive.getString("environment")).isEqualTo("LIVE");
+    }
+
+    @Test
     void theIssuerCanBeLeftOutWhenOnlyOneCanIssue() {
         ConsoleUser user = ConsoleUser.newOrganization();
         ConsoleFixtures.bootstrap(user, "Single issuer SAS");

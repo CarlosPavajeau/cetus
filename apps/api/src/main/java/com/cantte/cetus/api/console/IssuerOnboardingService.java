@@ -53,10 +53,23 @@ public class IssuerOnboardingService {
     AuditLog auditLog;
     @Inject
     JobQueue jobs;
+    @Inject
+    SandboxIssuers sandboxIssuers;
 
     @Transactional
     public IssuerEntity create(UUID accountId, IssuerViews.CreateIssuerRequest request, Actor actor,
                                RequestOrigin origin) {
+        IssuerEntity issuer = persist(accountId, request);
+        audit(issuer, actor, origin, AuditAction.ISSUER_CREATED, Map.of(
+                "nit", issuer.nit,
+                "environment", issuer.environment,
+                "personType", issuer.personType));
+        return issuer;
+    }
+
+    /** Creates the issuer without auditing it, for the caller that records it as part of something else. */
+    @Transactional(Transactional.TxType.MANDATORY)
+    IssuerEntity persist(UUID accountId, IssuerViews.CreateIssuerRequest request) {
         String checkDigit = NitCheckDigit.compute(request.nit());
         if (request.checkDigit() != null && !request.checkDigit().equals(checkDigit)) {
             throw new DomainException("check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");
@@ -77,10 +90,9 @@ public class IssuerOnboardingService {
                 request.email(), request.phone()));
         issuer.operationMode = IssuerEntity.OperationMode.OWN_SOFTWARE;
         issuer.persist();
-        audit(issuer, actor, origin, AuditAction.ISSUER_CREATED, Map.of(
-                "nit", issuer.nit,
-                "environment", issuer.environment,
-                "personType", issuer.personType));
+        if (issuer.environment == Environment.SANDBOX) {
+            sandboxIssuers.enable(issuer);
+        }
         return issuer;
     }
 
@@ -112,6 +124,7 @@ public class IssuerOnboardingService {
     @Transactional
     public void setSoftware(IssuerEntity issuer, IssuerViews.SoftwareRequest request, Actor actor,
                             RequestOrigin origin) {
+        requireOwnSetup(issuer);
         SoftwareCredentialEntity.deactivateAll(issuer.id);
         SoftwareCredentialEntity credential = new SoftwareCredentialEntity();
         credential.id = Ids.newId();
@@ -130,6 +143,7 @@ public class IssuerOnboardingService {
     @Transactional
     public SigningCertificateEntity setCertificate(IssuerEntity issuer, IssuerViews.CertificateRequest request,
                                                    Actor actor, RequestOrigin origin) {
+        requireOwnSetup(issuer);
         byte[] pkcs12;
         try {
             pkcs12 = Base64.getDecoder().decode(request.pkcs12Base64());
@@ -181,6 +195,7 @@ public class IssuerOnboardingService {
     @Transactional
     public NumberingRangeEntity addRange(IssuerEntity issuer, IssuerViews.NumberingRangeRequest request, Actor actor,
                                          RequestOrigin origin) {
+        requireOwnSetup(issuer);
         if (request.from() > request.to()) {
             throw new DomainException("range_invalid", "'from' must be lower than or equal to 'to'");
         }
@@ -220,6 +235,7 @@ public class IssuerOnboardingService {
      */
     @Transactional
     public NumberingRangeEntity verifyRange(IssuerEntity issuer, UUID rangeId) {
+        requireOwnSetup(issuer);
         NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("id = ?1 and issuerId = ?2", rangeId, issuer.id)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Numbering range not found"));
@@ -237,6 +253,14 @@ public class IssuerOnboardingService {
             requestVerification(range);
         }
         return range;
+    }
+
+    /** Sandbox issuers sign and number with what Cetus gives them, so their setup never changes. */
+    private static void requireOwnSetup(IssuerEntity issuer) {
+        if (issuer.environment == Environment.SANDBOX) {
+            throw new DomainException("sandbox_issuer",
+                    "Sandbox issuers use Cetus' sandbox credentials and numbering; they need no setup");
+        }
     }
 
     private static boolean canSign(IssuerEntity issuer) {
@@ -258,6 +282,7 @@ public class IssuerOnboardingService {
      */
     @Transactional
     public IssuerEntity promote(IssuerEntity test, Actor actor, RequestOrigin origin) {
+        requireOwnSetup(test);
         if (test.environment != Environment.TEST || test.status != IssuerEntity.Status.TESTING) {
             throw new DomainException("issuer_not_promotable",
                     "Only a test issuer in habilitación can be promoted to production");

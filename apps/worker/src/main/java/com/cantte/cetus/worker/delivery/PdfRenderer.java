@@ -8,6 +8,7 @@ import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.dian.QrCode;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.DocumentType;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.NumberingAuthorization;
 import com.cantte.cetus.domain.model.Party;
@@ -28,9 +29,12 @@ import org.openpdf.text.PageSize;
 import org.openpdf.text.Paragraph;
 import org.openpdf.text.Phrase;
 import org.openpdf.text.Rectangle;
+import org.openpdf.text.pdf.ColumnText;
 import org.openpdf.text.pdf.PdfContentByte;
+import org.openpdf.text.pdf.PdfGState;
 import org.openpdf.text.pdf.PdfPCell;
 import org.openpdf.text.pdf.PdfPTable;
+import org.openpdf.text.pdf.PdfPageEventHelper;
 import org.openpdf.text.pdf.PdfTemplate;
 import org.openpdf.text.pdf.PdfWriter;
 
@@ -43,6 +47,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Graphic representation of a validated invoice or credit note: a single plain template with the minimum
@@ -76,6 +81,7 @@ public final class PdfRenderer {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document pdf = new Document(PageSize.LETTER, 36, 36, 36, 36);
         PdfWriter writer = PdfWriter.getInstance(pdf, out);
+        watermark(ctx.environment()).ifPresent(text -> writer.setPageEvent(new Watermark(text)));
         pdf.addTitle(title(ctx.documentType()) + " " + ctx.fullNumber());
         pdf.addAuthor(ctx.supplier().legalName());
         pdf.addCreator(legend.softwareName());
@@ -97,6 +103,41 @@ public final class PdfRenderer {
         pdf.add(validation(ctx, uniqueCode, legend, writer.getDirectContent()));
         pdf.close();
         return out.toByteArray();
+    }
+
+    /** Documents without fiscal value say so across every page, so nobody takes them for real ones. */
+    static Optional<String> watermark(Environment environment) {
+        return switch (environment) {
+            case LIVE -> Optional.empty();
+            case TEST -> Optional.of("Documento de pruebas, sin validez fiscal");
+            case SANDBOX -> Optional.of("Documento simulado, sin validez fiscal");
+        };
+    }
+
+    /** Light diagonal text over the page, drawn once the page's content is laid out. */
+    private static final class Watermark extends PdfPageEventHelper {
+
+        private static final Font FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 34, Font.NORMAL,
+                new Color(0xc6, 0x28, 0x28));
+
+        private final String text;
+
+        Watermark(String text) {
+            this.text = text;
+        }
+
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            PdfContentByte canvas = writer.getDirectContent();
+            canvas.saveState();
+            PdfGState translucent = new PdfGState();
+            translucent.setFillOpacity(0.15f);
+            canvas.setGState(translucent);
+            Rectangle page = document.getPageSize();
+            ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, new Phrase(text, FONT),
+                    page.getWidth() / 2, page.getHeight() / 2, 45);
+            canvas.restoreState();
+        }
     }
 
     private static PdfPTable header(ProcessingContext ctx) {
@@ -239,13 +280,17 @@ public final class PdfRenderer {
         String codeName = ctx.documentType() == DocumentType.INVOICE ? "CUFE" : "CUDE";
         details.addElement(line(codeName + ":", SMALL_BOLD));
         details.addElement(line(uniqueCode, SMALL));
+        boolean sandbox = ctx.environment() == Environment.SANDBOX;
         OffsetDateTime validated = ctx.validatedAt();
         if (validated != null) {
             OffsetDateTime colombia = validated.atZoneSameInstant(DianTime.ZONE).toOffsetDateTime();
-            details.addElement(line("Validada por la DIAN el " + DianTime.date(colombia.toLocalDate()) + " "
+            String by = sandbox ? "Validación simulada por Cetus el " : "Validada por la DIAN el ";
+            details.addElement(line(by + DianTime.date(colombia.toLocalDate()) + " "
                     + DianTime.time(colombia.toLocalTime()), SMALL));
         }
-        details.addElement(line("Escanee el código QR para consultar el documento en el catálogo de la DIAN.", SMALL));
+        details.addElement(line(sandbox
+                ? "Documento simulado: no fue enviado a la DIAN y no aparece en su catálogo."
+                : "Escanee el código QR para consultar el documento en el catálogo de la DIAN.", SMALL));
         details.addElement(line("Representación gráfica de " + title(ctx.documentType()).toLowerCase(COLOMBIA)
                 + ". Software: " + legend.softwareName() + " · Proveedor tecnológico: " + legend.providerName()
                 + " NIT " + legend.providerNit(), SMALL));
