@@ -99,6 +99,7 @@ public class DeliverDocumentHandler implements JobHandler {
             deliveries.skipped(ctx.documentId(), switch (ctx.environment()) {
                 case TEST -> "TEST documents are only emailed to CETUS_EMAIL_TEST_RECIPIENT, which is not set";
                 case LIVE -> "The customer has no email address";
+                case SANDBOX -> "SANDBOX documents are never emailed to their customer";
             });
             return;
         }

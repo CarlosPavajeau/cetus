@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.dian.DianEndpoint;
+import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianSoapClient;
 import com.cantte.cetus.domain.model.Environment;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -30,7 +31,12 @@ public class DianClients {
         this.live = new DianSoapClient(DianEndpoint.LIVE, connectTimeout, requestTimeout);
     }
 
-    public DianSoapClient forEnvironment(Environment environment) {
-        return environment == Environment.LIVE ? live : test;
+    /** SANDBOX never reaches the DIAN, not even its habilitación environment. */
+    public DianGateway forEnvironment(Environment environment) {
+        return switch (environment) {
+            case LIVE -> live;
+            case TEST -> test;
+            case SANDBOX -> throw new IllegalStateException("The sandbox has no DIAN gateway yet");
+        };
     }
 }

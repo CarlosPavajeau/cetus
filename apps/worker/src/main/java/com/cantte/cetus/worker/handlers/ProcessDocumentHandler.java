@@ -3,7 +3,7 @@ package com.cantte.cetus.worker.handlers;
 import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianResponse;
-import com.cantte.cetus.dian.DianSoapClient;
+import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.DianZip;
 import com.cantte.cetus.dian.UploadResponse;
@@ -105,7 +105,7 @@ public class ProcessDocumentHandler implements JobHandler {
         }
 
         KeyMaterial keys = keyCache.get(ctx.certificate());
-        DianSoapClient dian = dianClients.forEnvironment(ctx.environment());
+        DianGateway dian = dianClients.forEnvironment(ctx.environment());
         boolean testSet = ctx.environment() == Environment.TEST && ctx.testSetId() != null;
 
         if (!testSet && ctx.lastSendUnanswered() && ctx.existingCufe() != null && alreadyRegistered(ctx, dian, keys)) {
@@ -144,7 +144,7 @@ public class ProcessDocumentHandler implements JobHandler {
         return XmlSupport.serialize(document);
     }
 
-    private void sendSync(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys, String zipName, byte[] zip) {
+    private void sendSync(ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String zipName, byte[] zip) {
         long start = System.currentTimeMillis();
         DianResponse response;
         try {
@@ -165,7 +165,7 @@ public class ProcessDocumentHandler implements JobHandler {
                 response.statusCode());
     }
 
-    private void sendTestSet(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys, String zipName, byte[] zip) {
+    private void sendTestSet(ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String zipName, byte[] zip) {
         long start = System.currentTimeMillis();
         UploadResponse upload;
         try {
@@ -187,7 +187,7 @@ public class ProcessDocumentHandler implements JobHandler {
         recorder.submitted(ctx.documentId(), upload.zipKey());
     }
 
-    private boolean alreadyRegistered(ProcessingContext ctx, DianSoapClient dian, KeyMaterial keys) {
+    private boolean alreadyRegistered(ProcessingContext ctx, DianGateway dian, KeyMaterial keys) {
         DianResponse status = dian.getStatus(ctx.existingCufe(), keys);
         recorder.submission(ctx.documentId(), "GetStatus", ctx.existingCufe(), false, status, status.errors(), 0);
         if (status.valid()) {

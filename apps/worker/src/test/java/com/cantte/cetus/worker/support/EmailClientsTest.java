@@ -55,6 +55,12 @@ class EmailClientsTest {
         assertThat(withoutMailbox.recipient(Environment.TEST, CUSTOMER)).isEmpty();
     }
 
+    @Test
+    void sandboxDocumentsNeverGoToTheirCustomer() {
+        EmailClients withMailbox = clients(Optional.of("re_key"), Optional.of("from@cetus.test"), Optional.of("qa@cetus.test"));
+        assertThat(withMailbox.recipient(Environment.SANDBOX, CUSTOMER)).isEmpty();
+    }
+
     private static EmailClients clients(Optional<String> apiKey, Optional<String> from, Optional<String> testRecipient) {
         return new EmailClients(apiKey, "https://api.resend.com", Duration.ofSeconds(1), Duration.ofSeconds(1), from,
                 Optional.empty(), testRecipient, Duration.ofSeconds(2));
