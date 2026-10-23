@@ -20,6 +20,9 @@ function Contacts() {
   const { session } = Route.useRouteContext();
   const { data: contacts } = useSuspenseQuery(contactsQuery);
   const impersonating = Boolean(session.impersonatedBy);
+  // A new account's contacts wait for the owner to confirm their address.
+  const unverified = contacts.length > 0 && contacts.every((contact) => !contact.email);
+  const waitingFor = contacts.find((contact) => contact.pendingEmail)?.pendingEmail;
 
   return (
     <>
@@ -32,6 +35,15 @@ function Contacts() {
           <AlertTitle>No disponible durante la sesión de soporte</AlertTitle>
           <AlertDescription>
             Los contactos solo los cambia la persona dueña de la cuenta.
+          </AlertDescription>
+        </Alert>
+      )}
+      {unverified && waitingFor && (
+        <Alert>
+          <AlertTitle>Confirma tu correo para recibir los avisos</AlertTitle>
+          <AlertDescription>
+            Enviamos un enlace a {waitingFor}. Hasta que lo abras y confirmes el correo, Cetus no
+            envía avisos de esta cuenta.
           </AlertDescription>
         </Alert>
       )}

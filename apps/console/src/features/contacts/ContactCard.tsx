@@ -66,12 +66,12 @@ export function ContactCard({
         <CardDescription>{description}</CardDescription>
         {!readOnly && (
           <CardAction>
-            <ChangeContact category={category} current={contact?.email} />
+            <ChangeContact category={category} current={contact?.email ?? undefined} />
           </CardAction>
         )}
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {contact ? (
+        {contact?.email ? (
           <p className="flex flex-wrap items-center gap-2 text-sm">
             <MailCheckIcon className="size-4 text-muted-foreground" aria-hidden />
             <span className="font-medium break-all">{contact.email}</span>
@@ -79,7 +79,7 @@ export function ContactCard({
           </p>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Sin contacto: estos avisos no se envían a nadie.
+            Sin correo verificado: estos avisos no se envían hasta que se confirme uno.
           </p>
         )}
         {contact?.pendingEmail && (

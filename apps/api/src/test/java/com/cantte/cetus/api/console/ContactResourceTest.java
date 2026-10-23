@@ -25,44 +25,49 @@ import static org.hamcrest.Matchers.nullValue;
 class ContactResourceTest {
 
     @Test
-    void theOwnerReceivesEveryCategoryFromTheStart() {
+    void theOwnersAddressWaitsForOneLinkThatVerifiesEveryCategory() {
         ConsoleUser owner = ConsoleUser.newOrganization();
-        bootstrap(owner, "Contactos SAS");
+        String accountId = bootstrap(owner, "Contactos SAS");
         bootstrap(owner, "Contactos SAS");
 
+        // Signing up does not prove the address receives email: nothing is verified yet.
         JsonPath contacts = owner.request().get("/console/contacts").then().statusCode(200).extract().jsonPath();
         assertThat(contacts.getList("category")).containsExactlyInAnyOrder("TECHNICAL", "FISCAL", "BILLING");
-        assertThat(contacts.getList("email")).containsOnly(owner.email());
-        assertThat(contacts.getList("verifiedAt")).doesNotContainNull();
-        assertThat(contacts.getList("pendingEmail")).containsOnlyNulls();
+        assertThat(contacts.getList("email")).containsOnlyNulls();
+        assertThat(contacts.getList("verifiedAt")).containsOnlyNulls();
+        assertThat(contacts.getList("pendingEmail")).containsOnly(owner.email());
+
+        assertThat(verifications(accountId)).singleElement().satisfies(notice -> assertThat(notice.data)
+                .containsEntry("email", owner.email())
+                .containsEntry("categories", "TECHNICAL,FISCAL,BILLING"));
     }
 
     @Test
     void aNewAddressWaitsForItsVerificationWhileTheCurrentOneKeepsTheNotices() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         String accountId = bootstrap(owner, "Cambios SAS");
+        verifyOwner(accountId);
 
         owner.request().body(Map.of("email", "Fiscal@Example.com")).put("/console/contacts/FISCAL")
                 .then().statusCode(200)
                 .body("email", equalTo(owner.email()))
                 .body("pendingEmail", equalTo("fiscal@example.com"));
 
-        NotificationEntity notice = QuarkusTransaction.requiringNew().call(() ->
-                NotificationEntity.<NotificationEntity>find("accountId = ?1 and kind = 'CONTACT_VERIFICATION'",
-                        UUID.fromString(accountId)).singleResult());
-        assertThat(notice.data).containsEntry("email", "fiscal@example.com").containsEntry("category", "FISCAL");
+        NotificationEntity notice = verifications(accountId).stream()
+                .filter(n -> "fiscal@example.com".equals(n.data.get("email"))).findFirst().orElseThrow();
+        assertThat(notice.data).containsEntry("categories", "FISCAL");
         assertThat(QuarkusTransaction.requiringNew().call(() -> JobEntity.count("jobType = ?1 and referenceId = ?2",
                 JobTypes.SEND_NOTIFICATION, notice.id))).isEqualTo(1);
 
-        // Only one request a minute, so the console cannot be used to flood an address.
-        owner.request().body(Map.of("email", "otro@example.com")).put("/console/contacts/FISCAL")
-                .then().statusCode(422).body("code", equalTo("verification_recently_sent"));
+        // One email a minute to an address, so the console cannot be used to flood it.
         owner.request().post("/console/contacts/FISCAL/verification")
                 .then().statusCode(422).body("code", equalTo("verification_recently_sent"));
-
         // The same address again is not a new request.
         owner.request().body(Map.of("email", "fiscal@example.com")).put("/console/contacts/FISCAL")
                 .then().statusCode(200).body("pendingEmail", equalTo("fiscal@example.com"));
+        // Another address replaces the pending one.
+        owner.request().body(Map.of("email", "otro@example.com")).put("/console/contacts/FISCAL")
+                .then().statusCode(200).body("pendingEmail", equalTo("otro@example.com"));
 
         // Going back to the current address cancels the change.
         owner.request().body(Map.of("email", owner.email())).put("/console/contacts/FISCAL")
@@ -72,27 +77,21 @@ class ContactResourceTest {
     }
 
     @Test
-    void aVerificationCanBeResentAfterAMinuteAndCanceled() {
+    void aVerificationCanBeResentAfterAMinuteForEveryCategoryItCovers() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         String accountId = bootstrap(owner, "Reenvios SAS");
-        owner.request().body(Map.of("email", "tech@example.com")).put("/console/contacts/TECHNICAL")
-                .then().statusCode(200);
-        QuarkusTransaction.requiringNew().run(() -> AccountContactEntity.update(
-                "pendingRequestedAt = ?1, pendingTokenHash = 'old' where accountId = ?2 and category = ?3",
-                OffsetDateTime.now().minusMinutes(2), UUID.fromString(accountId), AccountContactEntity.Category.TECHNICAL));
+        olderThanAMinute(accountId);
 
-        owner.request().post("/console/contacts/TECHNICAL/verification").then().statusCode(200)
-                .body("pendingEmail", equalTo("tech@example.com"));
-        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity.count(
-                "accountId = ?1 and kind = 'CONTACT_VERIFICATION'", UUID.fromString(accountId)))).isEqualTo(2);
-        // The earlier link stops working.
-        assertThat(QuarkusTransaction.requiringNew().call(() -> AccountContactEntity
-                .<AccountContactEntity>find("accountId = ?1 and category = ?2", UUID.fromString(accountId),
-                        AccountContactEntity.Category.TECHNICAL).singleResult().pendingTokenHash)).isNull();
+        // From any of the categories the owner's link covers, the new link covers them all again.
+        owner.request().post("/console/contacts/BILLING/verification").then().statusCode(200)
+                .body("pendingEmail", equalTo(owner.email()));
+        List<NotificationEntity> sent = verifications(accountId);
+        assertThat(sent).hasSize(2);
+        assertThat(sent.get(1).data).containsEntry("categories", "TECHNICAL,FISCAL,BILLING");
 
-        owner.request().delete("/console/contacts/TECHNICAL/pending").then().statusCode(200)
+        owner.request().delete("/console/contacts/BILLING/pending").then().statusCode(200)
                 .body("pendingEmail", nullValue());
-        owner.request().post("/console/contacts/TECHNICAL/verification")
+        owner.request().post("/console/contacts/BILLING/verification")
                 .then().statusCode(422).body("code", equalTo("no_pending_change"));
     }
 
@@ -109,7 +108,7 @@ class ContactResourceTest {
     }
 
     @Test
-    void anAccountWithoutContactsStartsFromTheMemberMakingTheChange() {
+    void anAccountWithoutContactsGetsItsCategoriesOnTheFirstChange() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         String accountId = bootstrap(owner, "Antigua SAS");
         QuarkusTransaction.requiringNew().run(() -> AccountContactEntity.delete("accountId", UUID.fromString(accountId)));
@@ -117,7 +116,7 @@ class ContactResourceTest {
 
         owner.request().body(Map.of("email", "billing@example.com")).put("/console/contacts/BILLING")
                 .then().statusCode(200)
-                .body("email", equalTo(owner.email()))
+                .body("email", nullValue())
                 .body("pendingEmail", equalTo("billing@example.com"));
         assertThat(owner.request().get("/console/contacts").then().statusCode(200).extract().jsonPath()
                 .getList("category")).hasSize(3);
@@ -144,5 +143,23 @@ class ContactResourceTest {
                 owner.impersonatedBy(admin).delete("/console/contacts/FISCAL/pending"))) {
             call.then().statusCode(403).body("code", equalTo("impersonation_forbidden"));
         }
+    }
+
+    /** What following the owner's link does, without the link. */
+    static void verifyOwner(String accountId) {
+        QuarkusTransaction.requiringNew().run(() -> AccountContactEntity.update("""
+                        email = pendingEmail, verifiedAt = ?1, pendingEmail = null, pendingTokenHash = null,
+                        pendingExpiresAt = null, pendingRequestedAt = null where accountId = ?2""",
+                OffsetDateTime.now(), UUID.fromString(accountId)));
+    }
+
+    private static void olderThanAMinute(String accountId) {
+        QuarkusTransaction.requiringNew().run(() -> NotificationEntity.update("createdAt = ?1 where accountId = ?2",
+                OffsetDateTime.now().minusMinutes(2), UUID.fromString(accountId)));
+    }
+
+    private static List<NotificationEntity> verifications(String accountId) {
+        return QuarkusTransaction.requiringNew().call(() -> NotificationEntity.list(
+                "accountId = ?1 and kind = 'CONTACT_VERIFICATION' order by createdAt, id", UUID.fromString(accountId)));
     }
 }

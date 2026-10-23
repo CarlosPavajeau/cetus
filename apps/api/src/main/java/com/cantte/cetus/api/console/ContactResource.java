@@ -3,8 +3,6 @@ package com.cantte.cetus.api.console;
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.DomainException;
-import com.cantte.cetus.notifications.NotificationKind;
-import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.AccountContactEntity;
@@ -29,9 +27,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,15 +49,10 @@ import java.util.UUID;
         content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class ContactResource {
 
-    /** At most one verification email per category this often, so the console cannot be used to spam an address. */
-    static final Duration RESEND_AFTER = Duration.ofSeconds(60);
-
     @Inject
     ConsoleContext context;
     @Inject
     AccountContacts contacts;
-    @Inject
-    Notifications notifications;
     @Inject
     AuditLog auditLog;
     @Inject
@@ -80,8 +72,8 @@ public class ContactResource {
     @APIResponse(responseCode = "200", description = "OK")
     public ContactView change(@PathParam("category") Category category, @Valid @NotNull ChangeContactRequest request) {
         AccountEntity account = context.account();
-        // An account created before contacts existed starts from the member making the change.
-        context.email().ifPresent(email -> contacts.seed(account.id, email));
+        // An account created before contacts existed gets its categories now, without an address.
+        contacts.ensure(account.id);
         AccountContactEntity contact = AccountContacts.require(account.id, category);
         String email = AccountContacts.normalize(request.email());
         if (email.equals(contact.email)) {
@@ -93,12 +85,16 @@ public class ContactResource {
         if (email.equals(contact.pendingEmail)) {
             return ContactView.from(contact);
         }
-        checkNotRecentlySent(contact);
+        contacts.checkNotRecentlySent(account.id, email);
         String previous = contact.pendingEmail;
         contact.clearPending();
         contact.pendingEmail = email;
-        requestVerification(contact);
-        Map<String, Object> data = new HashMap<>(Map.of("category", category, "email", email, "current", contact.email));
+        contact.pendingRequestedAt = AccountContacts.now();
+        contacts.requestVerification(contact, List.of(category));
+        Map<String, Object> data = new HashMap<>(Map.of("category", category, "email", email));
+        if (contact.email != null) {
+            data.put("current", contact.email);
+        }
         if (previous != null) {
             data.put("replacedPending", previous);
         }
@@ -106,7 +102,10 @@ public class ContactResource {
         return ContactView.from(contact);
     }
 
-    /** Emails the verification link of the pending change again; earlier links stop working. */
+    /**
+     * Emails the verification link of the pending change again; earlier links stop working. The categories
+     * waiting for the same address since the same request get the new link too.
+     */
     @POST
     @Path("/{category}/verification")
     @Transactional
@@ -116,10 +115,17 @@ public class ContactResource {
         if (contact.pendingEmail == null) {
             throw new DomainException("no_pending_change", "The contact has no change waiting for verification");
         }
-        checkNotRecentlySent(contact);
-        contact.pendingTokenHash = null;
-        contact.pendingExpiresAt = null;
-        requestVerification(contact);
+        contacts.checkNotRecentlySent(contact.accountId, contact.pendingEmail);
+        List<AccountContactEntity> same = AccountContacts.sameRequest(contact);
+        contact.pendingRequestedAt = AccountContacts.now();
+        for (AccountContactEntity other : same) {
+            other.pendingTokenHash = null;
+            other.pendingExpiresAt = null;
+            other.pendingRequestedAt = contact.pendingRequestedAt;
+        }
+        List<Category> categories = new ArrayList<>(List.of(category));
+        same.forEach(other -> categories.add(other.category));
+        contacts.requestVerification(contact, categories);
         return ContactView.from(contact);
     }
 
@@ -133,26 +139,6 @@ public class ContactResource {
             cancel(contact);
         }
         return ContactView.from(contact);
-    }
-
-    private static void checkNotRecentlySent(AccountContactEntity contact) {
-        // Also after a cancellation: canceling and asking again must not send more than one email a minute.
-        if (contact.pendingRequestedAt != null
-                && contact.pendingRequestedAt.plus(RESEND_AFTER).isAfter(OffsetDateTime.now())) {
-            throw new DomainException("verification_recently_sent",
-                    "A verification email was just sent; wait a minute before asking for another");
-        }
-    }
-
-    /** The worker makes the link when it sends the email, so the token never rests in the database. */
-    private void requestVerification(AccountContactEntity contact) {
-        // Milliseconds survive the round trip through the database, so the worker can tell it is this request.
-        contact.pendingRequestedAt = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-        notifications.request(contact.accountId, NotificationKind.CONTACT_VERIFICATION,
-                "contact_verification:%s:%d".formatted(contact.id, contact.pendingRequestedAt.toInstant().toEpochMilli()),
-                Map.of("contactId", contact.id.toString(), "category", contact.category.name(),
-                        "email", contact.pendingEmail,
-                        "requestedAt", contact.pendingRequestedAt.toInstant().toString()));
     }
 
     private void cancel(AccountContactEntity contact) {
@@ -171,8 +157,10 @@ public class ContactResource {
     public record ContactView(
             @Schema(required = true) UUID id,
             @Schema(required = true) Category category,
-            @Schema(required = true, description = "The verified address that receives the notices") String email,
-            @Schema(required = true) OffsetDateTime verifiedAt,
+            @Schema(required = true, nullable = true,
+                    description = "The verified address that receives the notices; null until one is verified")
+            String email,
+            @Schema(required = true, nullable = true) OffsetDateTime verifiedAt,
             @Schema(required = true, nullable = true, description = "A new address waiting for its verification")
             String pendingEmail,
             @Schema(required = true, nullable = true) OffsetDateTime pendingRequestedAt) {

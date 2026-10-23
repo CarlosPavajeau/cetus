@@ -57,8 +57,8 @@ public class AccountResource {
         account.organizationId = context.organizationId();
         account.name = request.name();
         account.persist();
-        // The creator is the organization's owner: every notice goes to them until they name other contacts.
-        context.email().ifPresent(email -> contacts.seed(account.id, email));
+        // The creator is the organization's owner: every category waits for them to verify their address.
+        context.email().ifPresent(email -> contacts.seedOwner(account.id, email));
         auditLog.record(account.id, context.actor(), origin.resolve(), AuditAction.ACCOUNT_CREATED,
                 "account", account.id, Map.of("name", account.name));
         return AccountView.from(account);

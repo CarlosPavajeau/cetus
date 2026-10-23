@@ -1,5 +1,6 @@
 -- One-off, after V18: points every category of the accounts created before contacts existed to the
--- organization's owner, as verified. New accounts get them on bootstrap (AccountResource).
+-- organization's owner, as verified. Those are the customers the Cetus team onboarded by hand, so their
+-- owners' addresses are known; new accounts start pending and verify theirs with a link (AccountResource).
 --
 -- It reads the "auth" schema, which cetus_billing cannot: run it as a role that sees both schemas
 -- (the database owner), e.g. psql "$OWNER_DATABASE_URL" -f scripts/backfill-account-contacts.sql

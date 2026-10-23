@@ -25,3 +25,11 @@ export const categoryTitle: Record<ContactCategory, string> = {
   TECHNICAL: "técnicos",
   BILLING: "de facturación",
 };
+
+/** ["TECHNICAL", "FISCAL"] → "técnicos y fiscales". */
+export function categoriesTitle(values: ContactCategory[]): string {
+  const titles = values.map((value) => categoryTitle[value]);
+  return titles.length <= 1
+    ? (titles[0] ?? "")
+    : `${titles.slice(0, -1).join(", ")} y ${titles[titles.length - 1]}`;
+}

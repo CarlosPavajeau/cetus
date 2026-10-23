@@ -25,6 +25,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,9 +55,10 @@ public class ContactVerificationResource {
     public VerificationView get(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
         AccountContactEntity contact = AccountContactEntity.findByPendingToken(ApiKeys.hash(token), false)
                 .orElseThrow(VerificationLinkNotFound::new);
-        return view(contact, contact.pendingEmail);
+        return view(contact, contact.pendingEmail, verifies(contact));
     }
 
+    /** Verifies the address for the link's category and for those waiting for it since the same request. */
     @POST
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
@@ -66,19 +70,33 @@ public class ContactVerificationResource {
         if (!"ACTIVE".equals(account.status)) {
             throw new DomainException("account_suspended", "This account is suspended");
         }
-        String previous = contact.email;
-        contact.email = contact.pendingEmail;
-        contact.verifiedAt = OffsetDateTime.now();
-        contact.clearPending();
-        auditLog.record(contact.accountId, new Actor(Actor.ActorType.SYSTEM, "contact-verification-link:" + contact.id),
-                origin.resolve(), AuditAction.CONTACT_VERIFIED, "account_contact", contact.id,
-                Map.of("category", contact.category, "email", contact.email, "previous", previous));
-        return view(contact, contact.email);
+        String email = contact.pendingEmail;
+        List<AccountContactEntity> verified = verifies(contact);
+        OffsetDateTime now = OffsetDateTime.now();
+        Actor link = new Actor(Actor.ActorType.SYSTEM, "contact-verification-link:" + contact.id);
+        for (AccountContactEntity each : verified) {
+            Map<String, Object> data = new HashMap<>(Map.of("category", each.category, "email", email));
+            if (each.email != null) {
+                data.put("previous", each.email);
+            }
+            each.email = email;
+            each.verifiedAt = now;
+            each.clearPending();
+            auditLog.record(each.accountId, link, origin.resolve(), AuditAction.CONTACT_VERIFIED, "account_contact",
+                    each.id, data);
+        }
+        return view(contact, email, verified);
     }
 
-    private static VerificationView view(AccountContactEntity contact, String email) {
+    private static List<AccountContactEntity> verifies(AccountContactEntity contact) {
+        List<AccountContactEntity> contacts = new ArrayList<>(List.of(contact));
+        contacts.addAll(AccountContacts.sameRequest(contact));
+        return contacts;
+    }
+
+    private static VerificationView view(AccountContactEntity contact, String email, List<AccountContactEntity> contacts) {
         AccountEntity account = AccountEntity.findById(contact.accountId);
-        return new VerificationView(account.name, contact.category, email);
+        return new VerificationView(account.name, contacts.stream().map(each -> each.category).sorted().toList(), email);
     }
 
     /** Unknown, expired, replaced or already used: the page says the same for all. */
@@ -90,7 +108,7 @@ public class ContactVerificationResource {
 
     public record VerificationView(
             @Schema(required = true) String accountName,
-            @Schema(required = true) Category category,
+            @Schema(required = true) List<Category> categories,
             @Schema(required = true) String email) {
     }
 }

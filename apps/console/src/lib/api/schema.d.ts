@@ -1101,9 +1101,9 @@ export interface components {
         ContactView: {
             id: components["schemas"]["UUID"];
             category: components["schemas"]["Category"];
-            /** @description The verified address that receives the notices */
-            email: string;
-            verifiedAt: components["schemas"]["OffsetDateTime"];
+            /** @description The verified address that receives the notices; null until one is verified */
+            email: string | null;
+            verifiedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description A new address waiting for its verification */
             pendingEmail: string | null;
             pendingRequestedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
@@ -1620,7 +1620,7 @@ export interface components {
         VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";
         VerificationView: {
             accountName: string;
-            category: components["schemas"]["Category"];
+            categories: components["schemas"]["Category"][];
             email: string;
         };
         WebhookDeliveryPage: {

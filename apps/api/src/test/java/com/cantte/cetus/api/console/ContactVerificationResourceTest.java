@@ -7,6 +7,7 @@ import com.cantte.cetus.persistence.entity.AccountContactEntity;
 import com.cantte.cetus.persistence.entity.AccountContactEntity.Category;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.path.json.JsonPath;
 import org.junit.jupiter.api.Test;
 
 import java.security.SecureRandom;
@@ -17,6 +18,8 @@ import java.util.UUID;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -35,7 +38,7 @@ class ContactVerificationResourceTest {
         // Opening the page does not spend the link, so a mail scanner cannot verify on its own.
         given().get("/console/contact-verifications/" + token).then().statusCode(200)
                 .body("accountName", equalTo("Verificada SAS"))
-                .body("category", equalTo("FISCAL"))
+                .body("categories", contains("FISCAL"))
                 .body("email", equalTo("fiscal@example.com"));
         given().get("/console/contact-verifications/" + token).then().statusCode(200);
 
@@ -47,9 +50,30 @@ class ContactVerificationResourceTest {
         owner.request().get("/console/contacts").then().statusCode(200)
                 .body("find { it.category == 'FISCAL' }.email", equalTo("fiscal@example.com"))
                 .body("find { it.category == 'FISCAL' }.pendingEmail", nullValue())
-                .body("find { it.category == 'TECHNICAL' }.email", equalTo(owner.email()));
+                .body("find { it.category == 'TECHNICAL' }.email", nullValue())
+                .body("find { it.category == 'TECHNICAL' }.pendingEmail", equalTo(owner.email()));
         owner.request().get("/console/audit-log?action=CONTACT_VERIFIED").then().statusCode(200)
                 .body("items[0].actorType", equalTo("SYSTEM"));
+    }
+
+    @Test
+    void theOwnersLinkVerifiesEveryCategory() {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        String accountId = bootstrap(owner, "Nueva SAS");
+        // The worker puts the link on the first category of the request.
+        String token = link(accountId, Category.TECHNICAL, OffsetDateTime.now().plusHours(48));
+
+        given().get("/console/contact-verifications/" + token).then().statusCode(200)
+                .body("categories", contains("TECHNICAL", "FISCAL", "BILLING"))
+                .body("email", equalTo(owner.email()));
+        given().post("/console/contact-verifications/" + token).then().statusCode(200);
+
+        JsonPath contacts = owner.request().get("/console/contacts").then().statusCode(200).extract().jsonPath();
+        assertThat(contacts.getList("email")).containsOnly(owner.email());
+        assertThat(contacts.getList("verifiedAt")).doesNotContainNull();
+        assertThat(contacts.getList("pendingEmail")).containsOnlyNulls();
+        owner.request().get("/console/audit-log?action=CONTACT_VERIFIED").then().statusCode(200)
+                .body("items.size()", equalTo(3));
     }
 
     @Test
@@ -64,7 +88,8 @@ class ContactVerificationResourceTest {
         given().post("/console/contact-verifications/" + token).then().statusCode(422)
                 .body("code", equalTo("account_suspended"));
         owner.request().get("/console/contacts").then().statusCode(200)
-                .body("find { it.category == 'FISCAL' }.email", equalTo(owner.email()));
+                .body("find { it.category == 'FISCAL' }.email", nullValue())
+                .body("find { it.category == 'FISCAL' }.pendingEmail", equalTo("fiscal@example.com"));
     }
 
     @Test

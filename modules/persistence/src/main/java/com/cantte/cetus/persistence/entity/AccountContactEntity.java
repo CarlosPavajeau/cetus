@@ -47,10 +47,7 @@ public class AccountContactEntity extends PanacheEntityBase {
     public String pendingTokenHash;
     @Column(name = "pending_expires_at")
     public OffsetDateTime pendingExpiresAt;
-    /**
-     * When the last verification email was requested. It outlives the change it was for (canceled or
-     * verified), so the limit of one email a minute cannot be reset by canceling.
-     */
+    /** When the pending change was requested; categories requested together share it. */
     @Column(name = "pending_requested_at")
     public OffsetDateTime pendingRequestedAt;
     @Column(name = "updated_at")
@@ -61,11 +58,11 @@ public class AccountContactEntity extends PanacheEntityBase {
         updatedAt = OffsetDateTime.now();
     }
 
-    /** Drops the change waiting for verification; {@link #pendingRequestedAt} stays. */
     public void clearPending() {
         pendingEmail = null;
         pendingTokenHash = null;
         pendingExpiresAt = null;
+        pendingRequestedAt = null;
     }
 
     public static List<AccountContactEntity> listByAccount(UUID accountId) {

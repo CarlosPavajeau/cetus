@@ -6,7 +6,7 @@ import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
-import { categoryTitle } from "~/features/contacts/labels";
+import { categoriesTitle } from "~/features/contacts/labels";
 import { confirmContactVerification, getContactVerification } from "~/features/contacts/server";
 
 /**
@@ -37,7 +37,7 @@ function ContactVerification() {
     );
   }
 
-  const what = `los avisos ${categoryTitle[verification.category]} de ${verification.accountName}`;
+  const what = `los avisos ${categoriesTitle(verification.categories)} de ${verification.accountName}`;
   if (confirm.isSuccess) {
     return (
       <AuthLayout title="Correo verificado" lead={`${verification.email} recibirá ${what}.`}>

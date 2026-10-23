@@ -97,11 +97,11 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "IMPERSONATION_ENDED":
       return "Terminó de ver la consola como el usuario";
     case "CONTACT_CHANGE_REQUESTED":
-      return `${label(contactCategoryLabel, data.category)} · ${text(data.current)} → ${text(data.email)}, pendiente de verificación`;
+      return `${label(contactCategoryLabel, data.category)} · ${data.current ? `${text(data.current)} → ` : ""}${text(data.email)}, pendiente de verificación`;
     case "CONTACT_CHANGE_CANCELED":
       return `${label(contactCategoryLabel, data.category)} · ${text(data.email)}`;
     case "CONTACT_VERIFIED":
-      return `${label(contactCategoryLabel, data.category)} · ${text(data.previous)} → ${text(data.email)}`;
+      return `${label(contactCategoryLabel, data.category)} · ${data.previous ? `${text(data.previous)} → ` : ""}${text(data.email)}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":
       return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
   }
