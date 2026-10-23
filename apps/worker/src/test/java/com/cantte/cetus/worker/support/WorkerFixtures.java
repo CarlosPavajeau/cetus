@@ -21,6 +21,7 @@ import com.cantte.cetus.domain.model.PaymentInfo;
 import com.cantte.cetus.domain.model.PersonType;
 import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.persistence.entity.AccountContactEntity;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.DocumentLineEntity;
@@ -44,6 +45,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -197,6 +200,31 @@ public class WorkerFixtures {
                         List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
                 new LineInput("SKU-2", "Libro", new BigDecimal("2"), "94", new BigDecimal("50"),
                         List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("5"))))));
+    }
+
+    /** Points the account's categories to these addresses, verified (null leaves a category without contact). */
+    public void contacts(UUID accountId, String technical, String fiscal, String billing) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            for (var entry : Map.of(AccountContactEntity.Category.TECHNICAL, Optional.ofNullable(technical),
+                    AccountContactEntity.Category.FISCAL, Optional.ofNullable(fiscal),
+                    AccountContactEntity.Category.BILLING, Optional.ofNullable(billing)).entrySet()) {
+                entry.getValue().ifPresent(email -> {
+                    AccountContactEntity contact = new AccountContactEntity();
+                    contact.id = Ids.newId();
+                    contact.accountId = accountId;
+                    contact.category = entry.getKey();
+                    contact.email = email;
+                    contact.verifiedAt = OffsetDateTime.now();
+                    contact.persist();
+                });
+            }
+        });
+    }
+
+    /** The SEND_NOTIFICATION job of a notice, as the claimer hands it over. */
+    public JobEntity notificationJob(UUID notificationId) {
+        return QuarkusTransaction.requiringNew().call(() -> JobEntity.<JobEntity>find("jobType = ?1 and referenceId = ?2",
+                JobTypes.SEND_NOTIFICATION, notificationId).singleResult());
     }
 
     /** A job for the document as the claimer hands it over: RUNNING, on the given attempt. */

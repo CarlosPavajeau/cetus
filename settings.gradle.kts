@@ -24,6 +24,7 @@ include(
     "modules:aws",
     "modules:email",
     "modules:webhooks",
+    "modules:notifications",
     "apps:api",
     "apps:worker",
     "apps:dian-mock",

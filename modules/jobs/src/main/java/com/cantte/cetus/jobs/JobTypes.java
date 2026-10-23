@@ -12,6 +12,8 @@ public final class JobTypes {
     public static final String DELIVER_WEBHOOK = "DELIVER_WEBHOOK";
     /** Compare an invoice range with GetNumberingRange. reference_id = numbering range id. */
     public static final String VERIFY_NUMBERING_RANGE = "VERIFY_NUMBERING_RANGE";
+    /** Email a notice to the account's contacts. reference_id = notification_log id. */
+    public static final String SEND_NOTIFICATION = "SEND_NOTIFICATION";
 
     private JobTypes() {
     }
