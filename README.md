@@ -119,7 +119,8 @@ curl -X POST localhost:8090/__mock/reset                    # olvida todo
 Variables: `DIAN_MOCK_PORT` (8090), `DIAN_MOCK_SCENARIO` (accept), `DIAN_MOCK_REJECT_SELF_SIGNED` (false; en true
 rechaza los autofirmados como la DIAN), `DIAN_MOCK_TIMEOUT_DELAY` (PT90S), `DIAN_MOCK_PROCESSING_POLLS` (1, consultas
 de GetStatusZip que responden "en proceso" antes del resultado) y `DIAN_MOCK_SIGNER` / `DIAN_MOCK_SIGNER_PASSWORD`
-(`src/test/resources/test-signer.p12` / `cetus-test`, el certificado que firma el ApplicationResponse).
+(el PKCS#12 que firma el ApplicationResponse; por defecto, el certificado de prueba empaquetado en el jar, con
+`cetus-test`).
 
 ## Probar el flujo completo en habilitación
 

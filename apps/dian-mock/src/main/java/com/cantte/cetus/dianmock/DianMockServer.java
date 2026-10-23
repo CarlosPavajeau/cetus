@@ -7,6 +7,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -36,8 +37,8 @@ import java.util.stream.Collectors;
  * Environment: DIAN_MOCK_PORT (8090), DIAN_MOCK_SCENARIO (accept), DIAN_MOCK_REJECT_SELF_SIGNED (false),
  * DIAN_MOCK_TIMEOUT_DELAY (PT90S, above the worker's request timeout), DIAN_MOCK_PROCESSING_POLLS (1),
  * DIAN_MOCK_LATENCY (PT0S, the delay before every SOAP answer; benchmarks use it to stand in for the real DIAN),
- * DIAN_MOCK_SIGNER (src/test/resources/test-signer.p12, the certificate that signs the ApplicationResponse) and
- * DIAN_MOCK_SIGNER_PASSWORD (cetus-test).
+ * DIAN_MOCK_SIGNER (a PKCS#12 file to sign the ApplicationResponse with; the test certificate packaged in the jar
+ * by default) and DIAN_MOCK_SIGNER_PASSWORD (cetus-test).
  */
 public final class DianMockServer {
 
@@ -61,12 +62,20 @@ public final class DianMockServer {
     }
 
     private static KeyMaterial signer() {
-        Path file = Path.of(env("DIAN_MOCK_SIGNER", "src/test/resources/test-signer.p12"));
+        char[] password = env("DIAN_MOCK_SIGNER_PASSWORD", "cetus-test").toCharArray();
+        String file = env("DIAN_MOCK_SIGNER", null);
         try {
-            return Pkcs12Loader.load(Files.readAllBytes(file),
-                    env("DIAN_MOCK_SIGNER_PASSWORD", "cetus-test").toCharArray());
+            if (file != null) {
+                return Pkcs12Loader.load(Files.readAllBytes(Path.of(file)), password);
+            }
+            try (InputStream in = DianMockServer.class.getResourceAsStream("/signer/test-signer.p12")) {
+                if (in == null) {
+                    throw new IllegalStateException("The DIAN mock's jar has no signer/test-signer.p12");
+                }
+                return Pkcs12Loader.load(in.readAllBytes(), password);
+            }
         } catch (IOException e) {
-            throw new IllegalStateException("Could not read the DIAN mock's signer " + file.toAbsolutePath(), e);
+            throw new IllegalStateException("Could not read the DIAN mock's signer", e);
         }
     }
 

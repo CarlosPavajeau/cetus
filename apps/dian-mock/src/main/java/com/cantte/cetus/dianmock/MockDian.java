@@ -316,16 +316,25 @@ final class MockDian {
      * the mock answers with that result, late.
      */
     private Decision simulate(Submission submission) {
+        // A global scenario wins over the customer's: under it, the document is answered as a plain acceptance.
+        SimulatedDocument document = scenario == Scenario.ACCEPT
+                ? submission.simulated()
+                : withoutCustomer(submission.simulated());
         int previousSends = sends.computeIfAbsent(submission.documentKey(), key -> new AtomicInteger())
                 .getAndIncrement();
         try {
-            return new Decision(result(simulator.sendBillSync(submission.simulated(), previousSends), submission),
-                    false);
+            return new Decision(result(simulator.sendBillSync(document, previousSends), submission), false);
         } catch (DianTransportException e) {
-            DianResponse registered = simulator.getStatus(submission.documentKey(),
-                    Optional.of(submission.simulated()), previousSends + 1);
+            DianResponse registered = simulator.getStatus(submission.documentKey(), Optional.of(document),
+                    previousSends + 1);
             return new Decision(result(registered, submission), true);
         }
+    }
+
+    /** The simulator picks its scenario by customer; with none, it accepts. */
+    private static SimulatedDocument withoutCustomer(SimulatedDocument document) {
+        return new SimulatedDocument(document.kind(), document.number(), document.uniqueCode(), document.fileName(),
+                document.supplierNit(), document.supplierName(), null);
     }
 
     private static Soap.Result result(DianResponse response, Submission submission) {

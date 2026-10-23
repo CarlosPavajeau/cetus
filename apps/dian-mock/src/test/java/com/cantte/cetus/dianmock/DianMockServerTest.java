@@ -190,6 +190,18 @@ class DianMockServerTest {
     }
 
     @Test
+    void letsTheGlobalTimeoutWinOverTheCustomersScenario() {
+        restart(false, Duration.ofMillis(300));
+        dian.scenario(Scenario.TIMEOUT);
+        long started = System.nanoTime();
+
+        DianResponse late = client.sendBillSync("z1.zip", invoiceZip("SETP1", "cufe-1", "1000000004"), keys);
+
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isGreaterThanOrEqualTo(Duration.ofMillis(300));
+        assertThat(late.valid()).isTrue();
+    }
+
+    @Test
     void answersTheClientFaultScenarioLikeTheDian() {
         dian.scenario(Scenario.CLIENT_FAULT);
 

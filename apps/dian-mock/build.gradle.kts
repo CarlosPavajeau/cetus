@@ -14,6 +14,11 @@ dependencies {
     testRuntimeOnly(libs.junit.launcher)
 }
 
+// The test certificate signs the mock's ApplicationResponses. Packaged in the jar so installDist (bench) runs anywhere.
+tasks.processResources {
+    from("src/test/resources/test-signer.p12") { into("signer") }
+}
+
 application {
     mainClass = "com.cantte.cetus.dianmock.DianMockServer"
 }
