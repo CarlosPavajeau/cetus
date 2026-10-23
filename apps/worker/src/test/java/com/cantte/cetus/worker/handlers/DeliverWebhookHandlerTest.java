@@ -14,6 +14,7 @@ import com.cantte.cetus.worker.support.FakeDian.Reply;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeWebhookReceiver;
 import com.cantte.cetus.worker.support.FakeWebhookReceiverResource;
+import com.cantte.cetus.worker.support.WebhookDeliveryRecorder;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import com.cantte.cetus.worker.support.WorkerFixtures.Endpoint;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -49,6 +50,8 @@ class DeliverWebhookHandlerTest {
     FakeWebhookReceiver receiver;
     @Inject
     WorkerFixtures fixtures;
+    @Inject
+    WebhookDeliveryRecorder recorder;
     @Inject
     EntityManager em;
 
@@ -193,6 +196,19 @@ class DeliverWebhookHandlerTest {
         deliver(deliveryId);
         assertThat(delivery(deliveryId).status).isEqualTo(Status.CANCELED);
         assertThat(receiver.requests()).hasSize(1);
+    }
+
+    @Test
+    void aDeliveryIsOnlyCanceledWhileItsEndpointIsStillDisabled() {
+        UUID deliveryId = acceptedInvoiceDelivery();
+        // The endpoint was enabled again between reading it disabled and canceling: the delivery goes out.
+        assertThat(recorder.canceled(deliveryId)).isFalse();
+        assertThat(delivery(deliveryId).status).isEqualTo(Status.PENDING);
+
+        QuarkusTransaction.requiringNew().run(() -> WebhookEndpointEntity.<WebhookEndpointEntity>findById(endpoint.id())
+                .status = WebhookEndpointEntity.Status.DISABLED);
+        assertThat(recorder.canceled(deliveryId)).isTrue();
+        assertThat(delivery(deliveryId).status).isEqualTo(Status.CANCELED);
     }
 
     @Test

@@ -109,12 +109,23 @@ public class WebhookDeliveryRecorder {
         }
     }
 
-    /** The endpoint was disabled before the delivery went out. */
+    /**
+     * Cancels the delivery if its endpoint is still disabled. The endpoint is share-locked and read again: an
+     * enabling in progress is waited for, and once committed the delivery goes out instead (false), since it
+     * read the missed events before this one was canceled; a cancellation committed first is among them.
+     *
+     * @return whether the delivery was canceled
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void canceled(UUID deliveryId) {
+    public boolean canceled(UUID deliveryId) {
         WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId);
+        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findById(delivery.endpointId, LockModeType.PESSIMISTIC_READ);
+        if (endpoint.status != WebhookEndpointEntity.Status.DISABLED) {
+            return false;
+        }
         delivery.status = Status.CANCELED;
         delivery.lastError = "The endpoint was disabled";
+        return true;
     }
 
     /** Counts the failure; locked, since several deliveries to the endpoint can fail at once. */

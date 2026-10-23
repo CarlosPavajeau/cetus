@@ -55,8 +55,7 @@ public class DeliverWebhookHandler implements JobHandler {
             return;
         }
         Target target = loaded.get();
-        if (target.endpointStatus() == WebhookEndpointEntity.Status.DISABLED) {
-            deliveries.canceled(target.deliveryId());
+        if (target.endpointStatus() == WebhookEndpointEntity.Status.DISABLED && deliveries.canceled(target.deliveryId())) {
             return;
         }
         // Literal addresses never reach the client's DNS lookup, so they are checked here.

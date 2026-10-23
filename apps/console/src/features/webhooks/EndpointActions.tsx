@@ -120,20 +120,21 @@ export function EnableWebhookEndpoint({ endpoint }: { endpoint: WebhookEndpoint 
             de cero.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {missed > 0 && (
-          <Field orientation="horizontal">
-            <Checkbox
-              id="webhook-redeliver"
-              checked={redeliver}
-              onCheckedChange={(checked) => setRedeliver(checked)}
-            />
-            <FieldLabel htmlFor="webhook-redeliver" className="font-normal">
-              {missed === 1
-                ? "Reenviar el evento que no recibió mientras fallaba o estaba desactivado"
-                : `Reenviar los ${missed.toLocaleString("es-CO")} eventos que no recibió mientras fallaba o estaba desactivado`}
-            </FieldLabel>
-          </Field>
-        )}
+        {/* Always offered: the count was read when the page loaded, and events may have arrived since. */}
+        <Field orientation="horizontal">
+          <Checkbox
+            id="webhook-redeliver"
+            checked={redeliver}
+            onCheckedChange={(checked) => setRedeliver(checked)}
+          />
+          <FieldLabel htmlFor="webhook-redeliver" className="font-normal">
+            {missed === 1
+              ? "Reenviar el evento que no recibió mientras fallaba o estaba desactivado"
+              : missed > 1
+                ? `Reenviar los ${missed.toLocaleString("es-CO")} eventos que no recibió mientras fallaba o estaba desactivado`
+                : "Reenviar los eventos que no recibió mientras fallaba o estaba desactivado"}
+          </FieldLabel>
+        </Field>
         {enable.error && (
           <Alert variant="destructive">
             <AlertDescription>No pudimos reactivarlo. Inténtalo de nuevo.</AlertDescription>
@@ -142,9 +143,7 @@ export function EnableWebhookEndpoint({ endpoint }: { endpoint: WebhookEndpoint 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={enable.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() =>
-              enable.mutate({ data: { id: endpoint.id, redeliver: missed > 0 && redeliver } })
-            }
+            onClick={() => enable.mutate({ data: { id: endpoint.id, redeliver } })}
             disabled={enable.isPending}
           >
             {enable.isPending && <Spinner data-icon="inline-start" />}

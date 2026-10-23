@@ -258,6 +258,15 @@ class WebhookEndpointResourceTest {
         user.request().get("/console/audit-log?action=WEBHOOK_ENDPOINT_ENABLED").then().statusCode(200)
                 .body("items.size()", equalTo(1))
                 .body("items[0].data.redelivered", equalTo(3));
+        // Claimed oldest event first: the jobs' run_at follows the time of their events, across both groups.
+        List<OffsetDateTime> eventTimes = QuarkusTransaction.requiringNew().call(() -> JobEntity
+                .<JobEntity>list("jobType = ?1 and status = 'PENDING' and referenceId in "
+                        + "(select id from WebhookDeliveryEntity where endpointId = ?2) order by runAt",
+                        JobTypes.DELIVER_WEBHOOK, endpointId).stream()
+                .map(job -> WebhookEventEntity.<WebhookEventEntity>findById(
+                        WebhookDeliveryEntity.<WebhookDeliveryEntity>findById(job.referenceId).eventId).createdAt)
+                .toList());
+        assertThat(eventTimes).hasSize(3).isSorted();
     }
 
     @Test

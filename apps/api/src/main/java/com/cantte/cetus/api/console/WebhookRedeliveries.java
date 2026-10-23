@@ -71,33 +71,30 @@ public class WebhookRedeliveries {
         if (since == null) {
             return 0;
         }
-        // Entities of this transaction must be in the database before the statements below read it.
+        // Entities of this transaction must be in the database before the statement below reads it.
         em.flush();
-        int again = failedParameters(em.createNativeQuery("""
+        // One statement for both groups, so their jobs interleave by the time of their events: the claim sorts
+        // by run_at, which is spaced a microsecond apart in that order (now() is the same for the whole
+        // transaction). uuidv7() is monotonic within the statement, so the new deliveries sort the same way.
+        return parameters(em.createNativeQuery("""
                 WITH again AS (
                     UPDATE billing.webhook_deliveries SET status = 'PENDING', last_error = NULL, updated_at = now()
                     WHERE id IN (SELECT d.id %s)
-                    RETURNING id, event_id)
-                INSERT INTO billing.jobs (id, job_type, reference_id)
-                SELECT uuidv7(), :type, again.id
-                FROM again JOIN billing.webhook_events e ON e.id = again.event_id
-                ORDER BY e.created_at, e.id
-                """.formatted(FAILED)), endpoint, since)
-                .setParameter("type", JobTypes.DELIVER_WEBHOOK)
-                .executeUpdate();
-        // uuidv7() is monotonic within the statement, so the new deliveries sort like their events.
-        int created = parameters(em.createNativeQuery("""
-                WITH created AS (
+                    RETURNING id, event_id),
+                created AS (
                     INSERT INTO billing.webhook_deliveries (id, event_id, endpoint_id)
                     SELECT uuidv7(), e.id, :endpoint %s
                     ORDER BY e.created_at, e.id
-                    RETURNING id)
-                INSERT INTO billing.jobs (id, job_type, reference_id)
-                SELECT uuidv7(), :type, created.id FROM created
-                """.formatted(UNDELIVERED)), endpoint, since)
+                    RETURNING id, event_id),
+                queued AS (
+                    SELECT id, event_id FROM again UNION ALL SELECT id, event_id FROM created)
+                INSERT INTO billing.jobs (id, job_type, reference_id, run_at)
+                SELECT uuidv7(), :type, queued.id,
+                       now() + make_interval(secs => (row_number() OVER (ORDER BY e.created_at, e.id)) / 1000000.0)
+                FROM queued JOIN billing.webhook_events e ON e.id = queued.event_id
+                """.formatted(FAILED, UNDELIVERED)), endpoint, since)
                 .setParameter("type", JobTypes.DELIVER_WEBHOOK)
                 .executeUpdate();
-        return again + created;
     }
 
     private static Query failedParameters(Query query, WebhookEndpointEntity endpoint, OffsetDateTime since) {
