@@ -217,7 +217,7 @@ la API) en la consola. Las URL privadas se arman con referencias, p. ej.
   `certificates/sandbox/cetus-sandbox.password.sealed`. Sus documentos se guardan sin Object Lock en
   `documents/sandbox/`: el worker los borra a los 10 días (`CETUS_RETENTION_SANDBOX_DOCUMENTS`, con
   `s3:DeleteObject` solo sobre ese prefijo) y la regla `sandbox-documents` del ciclo de vida recoge lo que
-  quede.
+  quede. El bucket tiene versionado: borrar deja una versión anterior, que esa regla elimina al día siguiente.
 - `/console/*` y `/q/*` solo responden a hosts privados (`cetus.private-hosts`): la red privada de Railway
   (`*.railway.internal`), `localhost` y el health check de Railway. Por el dominio público responden 404.
 

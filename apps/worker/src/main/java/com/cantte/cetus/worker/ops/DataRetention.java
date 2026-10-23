@@ -30,7 +30,8 @@ import java.util.UUID;
  *     The other keys name something that does not come back (an expiry already past, a day, a moment).</li>
  *     <li>SANDBOX documents older than {@code cetus.retention.sandbox-documents}, with everything about them
  *     (submissions, deliveries, webhook events, jobs) and their files in S3, stored without Object Lock for
- *     this. They have no fiscal value; an invoice stays while a note still refers to it.</li>
+ *     this. They have no fiscal value; an invoice goes with the notes that refer to it, however recent, so no
+ *     document outlives the bucket's lifecycle rule on its files.</li>
  * </ul>
  * In batches of {@code cetus.retention.batch-size}, each in its own short transaction, so a large backlog
  * never holds locks or writes a huge transaction. Two replicas running it at once only share the work.
@@ -48,6 +49,8 @@ public class DataRetention {
 
     /** What refers to a document, in the order the foreign keys let it go, and the document last. */
     private static final List<String> SANDBOX_DOCUMENT_ROWS = List.of(
+            "DELETE FROM billing.jobs WHERE reference_id IN (SELECT d.id FROM billing.webhook_deliveries d "
+                    + "JOIN billing.webhook_events e ON e.id = d.event_id WHERE e.document_id IN (:ids))",
             "DELETE FROM billing.webhook_deliveries WHERE event_id IN "
                     + "(SELECT id FROM billing.webhook_events WHERE document_id IN (:ids))",
             "DELETE FROM billing.webhook_events WHERE document_id IN (:ids)",
@@ -126,18 +129,25 @@ public class DataRetention {
             List<String> keys = new ArrayList<>();
             batch = QuarkusTransaction.requiringNew().call(() -> {
                 @SuppressWarnings("unchecked")
-                List<UUID> ids = em.createNativeQuery("""
-                                SELECT d.id FROM billing.documents d
-                                WHERE d.environment = 'SANDBOX' AND d.created_at < :before
-                                  AND NOT EXISTS (SELECT 1 FROM billing.documents n WHERE n.referenced_document_id = d.id)
+                List<UUID> expired = em.createNativeQuery("""
+                                SELECT id FROM billing.documents
+                                WHERE environment = 'SANDBOX' AND created_at < :before
                                 LIMIT :limit
                                 """, UUID.class)
                         .setParameter("before", before)
                         .setParameter("limit", batchSize)
                         .getResultList();
-                if (ids.isEmpty()) {
+                if (expired.isEmpty()) {
                     return 0;
                 }
+                // Their notes go with them; one statement deletes both, so the reference holds until it ends.
+                @SuppressWarnings("unchecked")
+                List<UUID> notes = em.createNativeQuery(
+                                "SELECT id FROM billing.documents WHERE referenced_document_id IN (:ids)", UUID.class)
+                        .setParameter("ids", expired)
+                        .getResultList();
+                List<UUID> ids = new ArrayList<>(expired);
+                notes.stream().filter(note -> !expired.contains(note)).forEach(ids::add);
                 @SuppressWarnings("unchecked")
                 List<String> artifactKeys = em.createNativeQuery(
                                 "SELECT s3_key FROM billing.document_artifacts WHERE document_id IN (:ids)", String.class)
@@ -158,7 +168,6 @@ public class DataRetention {
                 }
             }
             total += batch;
-            // Until a batch finds nothing: deleting a note can free the invoice it referred to.
         } while (batch > 0);
         return total;
     }

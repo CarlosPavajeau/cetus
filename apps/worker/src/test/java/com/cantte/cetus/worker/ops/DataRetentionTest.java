@@ -2,6 +2,7 @@ package com.cantte.cetus.worker.ops;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.domain.Ids;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -73,37 +75,51 @@ class DataRetentionTest {
     @Test
     void sandboxDocumentsGoWithTheirRecordsAndFilesAfterTenDays() {
         UUID invoice = fixtures.sandboxInvoice("900108281");
+        fixtures.webhookEndpoint(invoice, Environment.SANDBOX, "http://localhost:4000/hooks");
         processAndDeliver(invoice);
         UUID note = fixtures.creditNote(invoice);
         processAndDeliver(note);
+        UUID recent = fixtures.sandboxInvoiceFor(document(invoice).accountId);
         UUID testInvoice = fixtures.invoice();
         age(invoice, 11);
         age(testInvoice, 400);
-        List<String> invoiceFiles = files(invoice);
-        assertThat(invoiceFiles).isNotEmpty().allSatisfy(key -> assertThat(storage.exists(key)).isTrue());
+        List<String> files = new ArrayList<>(files(invoice));
+        files.addAll(files(note));
+        assertThat(files).isNotEmpty().allSatisfy(key -> assertThat(storage.exists(key)).isTrue());
+        List<UUID> webhookJobs = webhookJobs(invoice);
+        assertThat(webhookJobs).isNotEmpty();
 
         retention.run();
 
-        // The note still refers to the invoice, so both stay; TEST documents are never deleted.
-        assertThat(existing("documents", List.of(invoice, note, testInvoice)))
-                .containsExactlyInAnyOrder(invoice, note, testInvoice);
-
-        age(note, 11);
-        List<String> noteFiles = files(note);
-        retention.run();
-
-        assertThat(existing("documents", List.of(invoice, note, testInvoice))).containsExactly(testInvoice);
-        assertThat(files(invoice)).isEmpty();
-        assertThat(invoiceFiles).noneSatisfy(key -> assertThat(storage.exists(key)).isTrue());
-        assertThat(noteFiles).noneSatisfy(key -> assertThat(storage.exists(key)).isTrue());
+        // The note goes with its expired invoice, though it is recent: the bucket expires the invoice's files
+        // either way. A recent document stays, and TEST documents are never deleted.
+        assertThat(existing("documents", List.of(invoice, note, recent, testInvoice)))
+                .containsExactlyInAnyOrder(recent, testInvoice);
+        assertThat(files).noneSatisfy(key -> assertThat(storage.exists(key)).isTrue());
         assertThat(QuarkusTransaction.requiringNew().call(() -> ((Number) em.createNativeQuery(
                 "SELECT count(*) FROM billing.dian_submissions WHERE document_id IN (:ids)")
                 .setParameter("ids", List.of(invoice, note)).getSingleResult()).longValue())).isZero();
+        assertThat(existing("jobs", webhookJobs)).isEmpty();
     }
 
     private void processAndDeliver(UUID documentId) {
         processor.handle(fixtures.job(documentId, 1));
         delivery.handle(fixtures.job(documentId, 1));
+    }
+
+    /** The DELIVER_WEBHOOK jobs of the document's events: they refer to a webhook delivery, not to it. */
+    @SuppressWarnings("unchecked")
+    private List<UUID> webhookJobs(UUID documentId) {
+        return QuarkusTransaction.requiringNew().call(() -> em.createNativeQuery("""
+                        SELECT j.id FROM billing.jobs j
+                        JOIN billing.webhook_deliveries d ON d.id = j.reference_id
+                        JOIN billing.webhook_events e ON e.id = d.event_id
+                        WHERE j.job_type = 'DELIVER_WEBHOOK' AND e.document_id = :document
+                        """, UUID.class).setParameter("document", documentId).getResultList());
+    }
+
+    private static DocumentEntity document(UUID id) {
+        return QuarkusTransaction.requiringNew().call(() -> DocumentEntity.findById(id));
     }
 
     private void age(UUID documentId, int days) {

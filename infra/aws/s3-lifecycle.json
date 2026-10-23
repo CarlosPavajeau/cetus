@@ -13,7 +13,8 @@
       "ID": "sandbox-documents",
       "Filter": { "Prefix": "documents/sandbox/" },
       "Status": "Enabled",
-      "Expiration": { "Days": 14 }
+      "Expiration": { "Days": 14 },
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 1 }
     },
     {
       "ID": "noncurrent-versions",

@@ -12,6 +12,7 @@ import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
 import com.cantte.cetus.persistence.entity.WebhookEventEntity;
+import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.FakeDian;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeDocumentStorage;
@@ -211,6 +212,24 @@ class SandboxProcessingTest {
         DocumentDeliveryEntity third = deliveries(invoices.get(2)).getFirst();
         assertThat(third.status).isEqualTo(DocumentDeliveryEntity.Status.SKIPPED);
         assertThat(third.error).contains("2 SANDBOX emails of the day");
+    }
+
+    @Test
+    void aRetryAfterARateLimitKeepsItsEmailSlot() {
+        // The test profile allows two a day: the second keeps its slot while the provider makes it wait.
+        UUID first = fixtures.sandboxInvoice("900108281");
+        UUID accountId = document(first).accountId;
+        fixtures.contacts(accountId, "dev@cliente.test", null, null);
+        UUID second = fixtures.sandboxInvoiceFor(accountId);
+        process(first);
+        process(second);
+        delivery.handle(fixtures.job(first, 1));
+        resend.reply(FakeResend.Reply.error(429, "rate_limit_exceeded", "Too many requests"));
+        catchThrowableOfType(RetryLater.class, () -> delivery.handle(fixtures.job(second, 1)));
+
+        delivery.handle(fixtures.job(second, 2));
+
+        assertThat(deliveries(second).getFirst().status).isEqualTo(DocumentDeliveryEntity.Status.SENT);
     }
 
     private static List<DocumentDeliveryEntity> deliveries(UUID id) {

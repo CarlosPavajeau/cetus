@@ -39,7 +39,7 @@ public class SandboxDeliveries {
             if (technical.isEmpty()) {
                 return new Recipient(null, "SANDBOX documents go to the account's technical contact, which has no verified address");
             }
-            if (sentToday(accountId) >= dailyEmails) {
+            if (sentToday(accountId, documentId) >= dailyEmails) {
                 return new Recipient(null, "The account already received its " + dailyEmails
                         + " SANDBOX emails of the day");
             }
@@ -47,16 +47,21 @@ public class SandboxDeliveries {
         });
     }
 
-    /** SANDBOX deliveries handed to the email provider since midnight in Colombia. */
-    private long sentToday(UUID accountId) {
+    /**
+     * SANDBOX deliveries handed to the email provider since midnight in Colombia, other than this document's:
+     * a retry after a provider rate limit keeps the slot its first attempt took.
+     */
+    private long sentToday(UUID accountId, UUID documentId) {
         OffsetDateTime midnight = LocalDate.now(DianTime.ZONE).atStartOfDay(DianTime.ZONE).toOffsetDateTime();
         return ((Number) em.createNativeQuery("""
                         SELECT count(*) FROM billing.document_deliveries x
                         JOIN billing.documents d ON d.id = x.document_id
                         WHERE d.account_id = :account AND d.environment = 'SANDBOX'
                           AND x.status NOT IN ('SKIPPED', 'FAILED') AND x.created_at >= :midnight
+                          AND x.document_id <> :document
                         """)
                 .setParameter("account", accountId)
+                .setParameter("document", documentId)
                 .setParameter("midnight", midnight)
                 .getSingleResult()).longValue();
     }

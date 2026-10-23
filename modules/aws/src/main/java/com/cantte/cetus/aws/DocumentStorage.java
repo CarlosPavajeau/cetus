@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.ObjectLockMode;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -18,6 +19,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Document storage on S3. Signed documents and DIAN responses go through {@link #putRetained}, which
@@ -67,14 +69,20 @@ public class DocumentStorage {
 
     /**
      * Deletes objects that were stored without a retention (a locked one cannot be deleted before its date).
-     * Up to 1000 keys per call, S3's limit for one request.
+     * Up to 1000 keys per call, S3's limit for one request. S3 answers a request that deleted only some of
+     * them with the others' errors, which are thrown here naming each key.
      */
     public void delete(List<String> keys) {
         if (keys.isEmpty()) {
             return;
         }
         List<ObjectIdentifier> objects = keys.stream().map(key -> ObjectIdentifier.builder().key(key).build()).toList();
-        s3.deleteObjects(r -> r.bucket(bucket).delete(d -> d.objects(objects).quiet(true)));
+        DeleteObjectsResponse response = s3.deleteObjects(r -> r.bucket(bucket).delete(d -> d.objects(objects).quiet(true)));
+        if (response.hasErrors() && !response.errors().isEmpty()) {
+            throw new IllegalStateException("Could not delete " + response.errors().size() + " objects: "
+                    + response.errors().stream().map(error -> error.key() + " (" + error.code() + ")")
+                    .collect(Collectors.joining(", ")));
+        }
     }
 
     /**

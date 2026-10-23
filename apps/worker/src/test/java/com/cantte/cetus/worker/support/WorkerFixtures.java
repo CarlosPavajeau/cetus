@@ -188,8 +188,8 @@ public class WorkerFixtures {
         return QuarkusTransaction.requiringNew().call(() -> {
             IssuerEntity issuer = IssuerEntity.<IssuerEntity>find("accountId = ?1 and environment = ?2", accountId,
                     Environment.SANDBOX).singleResult();
-            NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("issuerId", issuer.id)
-                    .singleResult();
+            NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("issuerId = ?1 and documentType = ?2",
+                    issuer.id, DocumentType.INVOICE).singleResult();
             return document(accountId, issuer.id, range, DocumentType.INVOICE, Environment.SANDBOX, "900108281").id;
         });
     }
