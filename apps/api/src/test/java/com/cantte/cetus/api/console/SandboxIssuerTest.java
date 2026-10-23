@@ -9,9 +9,13 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.CERTIFICATE_PASSWORD;
 import static com.cantte.cetus.api.support.ConsoleFixtures.PIN;
@@ -83,6 +87,29 @@ class SandboxIssuerTest {
         issue(apiKey).then().statusCode(429)
                 .body("code", equalTo("sandbox_daily_limit"))
                 .header("Retry-After", notNullValue());
+    }
+
+    @Test
+    void parallelRequestsDoNotGoPastTheDailyQuota() throws Exception {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Parallel sandbox SAS");
+        String apiKey = user.request().body(Map.of("name", "ERP", "environment", "SANDBOX"))
+                .post("/console/api-keys")
+                .then().statusCode(200).extract().path("secret");
+
+        // Six at once against the test profile's three a day: exactly three get through.
+        try (ExecutorService pool = Executors.newFixedThreadPool(6)) {
+            List<Future<Integer>> statuses = new ArrayList<>();
+            for (int i = 0; i < 6; i++) {
+                statuses.add(pool.submit(() -> issue(apiKey).statusCode()));
+            }
+            List<Integer> codes = new ArrayList<>();
+            for (Future<Integer> status : statuses) {
+                codes.add(status.get());
+            }
+            assertThat(codes).filteredOn(code -> code == 202).hasSize(3);
+            assertThat(codes).filteredOn(code -> code == 429).hasSize(3);
+        }
     }
 
     @Test

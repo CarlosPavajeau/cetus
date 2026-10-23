@@ -133,8 +133,15 @@ public class DocumentDrafts {
         jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id, delay);
     }
 
-    /** The sandbox is free, so an account issues at most {@code cetus.sandbox.daily-documents} a day there. */
+    /**
+     * The sandbox is free, so an account issues at most {@code cetus.sandbox.daily-documents} a day there.
+     * A lock per account until the transaction ends keeps two requests from both counting one slot left.
+     */
     private void requireSandboxQuota(UUID accountId, ZonedDateTime now) {
+        DocumentEntity.getEntityManager()
+                .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                .setParameter("key", "sandbox-quota:" + accountId)
+                .getSingleResult();
         ZonedDateTime midnight = now.toLocalDate().atStartOfDay(DianTime.ZONE);
         long issuedToday = DocumentEntity.count("accountId = ?1 and environment = ?2 and createdAt >= ?3",
                 accountId, Environment.SANDBOX, midnight.toOffsetDateTime());
