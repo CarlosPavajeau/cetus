@@ -14,17 +14,19 @@ import java.time.Duration;
 import java.util.Optional;
 
 /**
- * Email delivery settings. The API key and the sender only come from the environment (RESEND_API_KEY,
- * CETUS_EMAIL_FROM), never from the code; without them deliveries are skipped, so local development works
- * without a key. The key is handed to the SDK and not kept here, so it cannot end up in a log.
+ * Email delivery settings. The API key and the senders only come from the environment (RESEND_API_KEY,
+ * CETUS_EMAIL_FROM, CETUS_NOTIFICATIONS_FROM), never from the code; without them deliveries are skipped, so
+ * local development works without a key. The key is handed to the SDK and not kept here, so it cannot end
+ * up in a log.
  */
 @ApplicationScoped
 public class EmailClients {
 
     private static final Logger LOG = Logger.getLogger(EmailClients.class);
 
-    private final EmailSender sender;
+    private final EmailSender client;
     private final String from;
+    private final String notificationsFrom;
     private final Optional<String> testRecipient;
     private final Duration rateLimitDelay;
 
@@ -34,30 +36,45 @@ public class EmailClients {
                         @ConfigProperty(name = "cetus.email.connect-timeout") Duration connectTimeout,
                         @ConfigProperty(name = "cetus.email.read-timeout") Duration readTimeout,
                         @ConfigProperty(name = "cetus.email.from") Optional<String> from,
+                        @ConfigProperty(name = "cetus.notifications.from") Optional<String> notificationsFrom,
                         @ConfigProperty(name = "cetus.email.test-recipient") Optional<String> testRecipient,
                         @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay) {
-        boolean configured = apiKey.filter(key -> !key.isBlank()).isPresent() && from.filter(f -> !f.isBlank()).isPresent();
-        this.sender = configured ? new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout) : null;
-        this.from = from.orElse(null);
+        this.client = apiKey.filter(key -> !key.isBlank()).isPresent()
+                ? new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout) : null;
+        this.from = from.filter(f -> !f.isBlank()).orElse(null);
+        this.notificationsFrom = notificationsFrom.filter(f -> !f.isBlank()).orElse(this.from);
         this.testRecipient = testRecipient.filter(recipient -> !recipient.isBlank());
         this.rateLimitDelay = rateLimitDelay;
     }
 
     void logSettings(@Observes StartupEvent event) {
-        if (sender == null) {
+        if (sender().isEmpty()) {
             LOG.warn("Email delivery is not configured (RESEND_API_KEY and CETUS_EMAIL_FROM): deliveries are skipped");
         } else if (testRecipient.isEmpty()) {
             LOG.info("No CETUS_EMAIL_TEST_RECIPIENT: TEST documents are not emailed");
         }
     }
 
-    /** Empty when RESEND_API_KEY or CETUS_EMAIL_FROM is missing. */
+    /** Sends documents and ops alerts from {@link #from()}; empty when RESEND_API_KEY or CETUS_EMAIL_FROM is missing. */
     public Optional<EmailSender> sender() {
-        return Optional.ofNullable(sender);
+        return Optional.ofNullable(from == null ? null : client);
     }
 
     public String from() {
         return from;
+    }
+
+    /**
+     * Sends the notices to the accounts' contacts from {@link #notificationsFrom()}; empty when RESEND_API_KEY
+     * is missing, or both CETUS_NOTIFICATIONS_FROM and CETUS_EMAIL_FROM.
+     */
+    public Optional<EmailSender> notificationSender() {
+        return Optional.ofNullable(notificationsFrom == null ? null : client);
+    }
+
+    /** CETUS_NOTIFICATIONS_FROM, or CETUS_EMAIL_FROM without it. */
+    public String notificationsFrom() {
+        return notificationsFrom;
     }
 
     /**

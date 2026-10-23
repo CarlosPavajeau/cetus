@@ -28,6 +28,24 @@ class EmailClientsTest {
     }
 
     @Test
+    void noticesGoFromTheirOwnSenderOrTheDocumentsOne() {
+        EmailClients onlyNotices = new EmailClients(Optional.of("re_key"), "https://api.resend.com", Duration.ofSeconds(1),
+                Duration.ofSeconds(1), Optional.empty(), Optional.of("avisos@cetus.test"), Optional.empty(),
+                Duration.ofSeconds(2));
+        assertThat(onlyNotices.sender()).isEmpty();
+        assertThat(onlyNotices.notificationSender()).isPresent();
+        assertThat(onlyNotices.notificationsFrom()).isEqualTo("avisos@cetus.test");
+
+        EmailClients shared = clients(Optional.of("re_key"), Optional.of("from@cetus.test"), Optional.empty());
+        assertThat(shared.notificationSender()).isPresent();
+        assertThat(shared.notificationsFrom()).isEqualTo("from@cetus.test");
+
+        assertThat(clients(Optional.of("re_key"), Optional.empty(), Optional.empty()).notificationSender()).isEmpty();
+        assertThat(clients(Optional.empty(), Optional.of("from@cetus.test"), Optional.empty()).notificationSender())
+                .isEmpty();
+    }
+
+    @Test
     void testDocumentsOnlyGoToTheTestMailbox() {
         EmailClients withMailbox = clients(Optional.of("re_key"), Optional.of("from@cetus.test"), Optional.of("qa@cetus.test"));
         assertThat(withMailbox.recipient(Environment.TEST, CUSTOMER)).contains("qa@cetus.test");
@@ -39,6 +57,6 @@ class EmailClientsTest {
 
     private static EmailClients clients(Optional<String> apiKey, Optional<String> from, Optional<String> testRecipient) {
         return new EmailClients(apiKey, "https://api.resend.com", Duration.ofSeconds(1), Duration.ofSeconds(1), from,
-                testRecipient, Duration.ofSeconds(2));
+                Optional.empty(), testRecipient, Duration.ofSeconds(2));
     }
 }

@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 @QuarkusTest
@@ -70,6 +71,32 @@ class SendNotificationHandlerTest {
         NotificationEntity sent = notice(id);
         assertThat(sent.status).isEqualTo(NotificationEntity.Status.SENT);
         assertThat(sent.recipients).containsExactly("same@cetus.test");
+    }
+
+    @Test
+    void aRetryAfterAPartialFailureReusesTheKeysOfTheEmailsAlreadySent() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "a-tech@cetus.test", "b-fiscal@cetus.test", "billing@cetus.test");
+        UUID id = request(accountId, NotificationKind.REJECTIONS_SPIKE, Map.of("date", "22/10/2026", "rejected", "5",
+                "total", "8", "rate", "63"));
+        // The first address gets its email; Resend fails on the second.
+        resend.reply(new Reply(200, "{\"id\":\"email-1\"}"),
+                Reply.error(500, "internal_server_error", "Resend is down"));
+
+        assertThat(catchThrowable(() -> handler.handle(fixtures.notificationJob(id)))).isNotNull();
+        assertThat(notice(id).status).isEqualTo(NotificationEntity.Status.PENDING);
+
+        handler.handle(fixtures.notificationJob(id));
+
+        var requests = resend.requests();
+        assertThat(requests).extracting(request -> request.body().get("to").get(0).asText())
+                .containsExactly("a-tech@cetus.test", "b-fiscal@cetus.test", "a-tech@cetus.test", "b-fiscal@cetus.test");
+        // Resend answers a repeated key with the email it already sent instead of sending it again.
+        assertThat(requests.get(2).idempotencyKey()).isEqualTo(requests.get(0).idempotencyKey());
+        assertThat(requests.get(3).idempotencyKey()).isEqualTo(requests.get(1).idempotencyKey());
+        NotificationEntity sent = notice(id);
+        assertThat(sent.status).isEqualTo(NotificationEntity.Status.SENT);
+        assertThat(sent.recipients).containsExactly("a-tech@cetus.test", "b-fiscal@cetus.test");
     }
 
     @Test

@@ -74,9 +74,9 @@ public class AccountContactEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
-    /** The verified addresses of the categories, without repeating one that serves several. */
+    /** The verified addresses of the categories, without repeating one that serves several, in a stable order. */
     public static List<String> emails(UUID accountId, Collection<Category> categories) {
-        return find("select distinct email from AccountContactEntity where accountId = ?1 and category in ?2",
+        return find("select distinct email from AccountContactEntity where accountId = ?1 and category in ?2 order by email",
                 accountId, categories).project(String.class).list();
     }
 

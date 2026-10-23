@@ -41,8 +41,6 @@ public class SendNotificationHandler implements JobHandler {
 
     @ConfigProperty(name = "cetus.console.url")
     String consoleUrl;
-    @ConfigProperty(name = "cetus.notifications.from")
-    Optional<String> from;
 
     @Override
     public String type() {
@@ -55,7 +53,7 @@ public class SendNotificationHandler implements JobHandler {
         if (notice == null) {
             return;
         }
-        Optional<EmailSender> sender = email.sender();
+        Optional<EmailSender> sender = email.notificationSender();
         if (notice.kind() == NotificationKind.CONTACT_VERIFICATION) {
             VerificationLink link = notifications.verificationLink(notice).orElse(null);
             if (link == null) {
@@ -99,7 +97,7 @@ public class SendNotificationHandler implements JobHandler {
     private void send(EmailSender sender, Pending notice, String recipient, String token, String idempotencyKey) {
         NotificationEmail content = NotificationEmail.of(notice.kind(), notice.accountName(), notice.data(),
                 stripSlash(consoleUrl), token);
-        EmailMessage message = new EmailMessage(from.filter(f -> !f.isBlank()).orElse(email.from()), recipient, null,
+        EmailMessage message = new EmailMessage(email.notificationsFrom(), recipient, null,
                 content.subject(), content.html(), content.text(), null);
         try {
             sender.send(message, idempotencyKey);
