@@ -80,6 +80,24 @@ class SandboxProcessingTest {
     }
 
     @Test
+    void twoAccountsIssuingTheSameInvoiceInTheSameSecondGetDifferentCufes() {
+        // Every sample issuer shares its NIT and numbering, and these two invoices match in every field.
+        UUID first = fixtures.sandboxInvoice("900108281");
+        UUID second = fixtures.sandboxInvoice("900108281");
+        QuarkusTransaction.requiringNew().run(() -> {
+            DocumentEntity copy = DocumentEntity.findById(second);
+            copy.number = DocumentEntity.<DocumentEntity>findById(first).number;
+        });
+
+        process(first);
+        process(second);
+
+        assertThat(document(first).status).isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(document(second).status).isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(document(second).cufe).isNotEqualTo(document(first).cufe);
+    }
+
+    @Test
     void rejectedWithTheRulesOfARealRejection() {
         UUID id = fixtures.sandboxInvoice("1000000002");
 

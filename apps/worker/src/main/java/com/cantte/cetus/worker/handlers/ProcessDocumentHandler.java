@@ -142,7 +142,7 @@ public class ProcessDocumentHandler implements JobHandler {
 
     private DocumentSecrets secrets(ProcessingContext ctx) {
         if (ctx.environment() == Environment.SANDBOX) {
-            return sandbox.secrets();
+            return sandbox.secrets(ctx.issuerId());
         }
         String pin = cipher.openText(ctx.pinSealed());
         String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());

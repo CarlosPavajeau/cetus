@@ -7,6 +7,7 @@ import com.cantte.cetus.signing.Pkcs12Loader;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -33,6 +34,8 @@ public class KeyMaterialCache {
     @Inject
     SecretCipher cipher;
 
+    Clock clock = Clock.systemUTC();
+
     public KeyMaterial get(ProcessingContext.CertificateRef ref) {
         Entry entry = fresh(ref.id());
         if (entry != null) {
@@ -46,9 +49,10 @@ public class KeyMaterialCache {
                 return entry.keys();
             }
             byte[] pkcs12 = cipher.open(storage.get(ref.s3Key()));
-            char[] password = cipher.openText(ref.passwordSealed()).toCharArray();
+            byte[] passwordSealed = ref.passwordSealed() != null ? ref.passwordSealed() : storage.get(ref.passwordS3Key());
+            char[] password = cipher.openText(passwordSealed).toCharArray();
             KeyMaterial keys = Pkcs12Loader.load(pkcs12, password);
-            cache.put(ref.id(), new Entry(keys, Instant.now()));
+            cache.put(ref.id(), new Entry(keys, clock.instant()));
             return keys;
         } finally {
             lock.unlock();
@@ -57,7 +61,7 @@ public class KeyMaterialCache {
 
     private Entry fresh(UUID certificateId) {
         Entry entry = cache.get(certificateId);
-        return entry != null && entry.loadedAt().plus(TTL).isAfter(Instant.now()) ? entry : null;
+        return entry != null && entry.loadedAt().plus(TTL).isAfter(clock.instant()) ? entry : null;
     }
 
     private record Entry(KeyMaterial keys, Instant loadedAt) {

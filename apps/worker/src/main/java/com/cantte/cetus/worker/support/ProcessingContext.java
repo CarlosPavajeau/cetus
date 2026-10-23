@@ -56,6 +56,14 @@ public record ProcessingContext(
         return prefix + number;
     }
 
-    public record CertificateRef(UUID id, String s3Key, byte[] passwordSealed) {
+    /**
+     * An issuer's certificate comes with its sealed password from the database; the sandbox one has its
+     * password in S3 too ({@code passwordS3Key}), read whenever the certificate is.
+     */
+    public record CertificateRef(UUID id, String s3Key, byte[] passwordSealed, String passwordS3Key) {
+
+        public CertificateRef(UUID id, String s3Key, byte[] passwordSealed) {
+            this(id, s3Key, passwordSealed, null);
+        }
     }
 }
