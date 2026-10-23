@@ -129,12 +129,16 @@ class SendNotificationHandlerTest {
         UUID accountId = account();
         fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
         OffsetDateTime requestedAt = pending(accountId, "new@cetus.test");
-        UUID id = verification(accountId, "new@cetus.test", requestedAt);
+        // One link can verify several categories, as the owner's address when the account is created.
+        UUID id = verification(accountId, "new@cetus.test", requestedAt, "TECHNICAL,FISCAL,BILLING");
 
         handler.handle(fixtures.notificationJob(id));
 
         assertThat(resend.requests()).singleElement().satisfies(request -> {
             assertThat(request.body().get("to").get(0).asText()).isEqualTo("new@cetus.test");
+            assertThat(request.body().get("text").asText())
+                    .contains("los avisos técnicos (webhooks y errores de integración), fiscales (")
+                    .contains(" y de facturación (plan y pagos) de Cetus");
             Matcher link = LINK.matcher(request.body().get("text").asText());
             assertThat(link.find()).isTrue();
             AccountContactEntity contact = contact(accountId);
@@ -180,8 +184,12 @@ class SendNotificationHandlerTest {
     }
 
     private UUID verification(UUID accountId, String email, OffsetDateTime requestedAt) {
+        return verification(accountId, email, requestedAt, "FISCAL");
+    }
+
+    private UUID verification(UUID accountId, String email, OffsetDateTime requestedAt, String categories) {
         return request(accountId, NotificationKind.CONTACT_VERIFICATION, Map.of(
-                "contactId", contact(accountId).id.toString(), "category", "FISCAL", "email", email,
+                "contactId", contact(accountId).id.toString(), "categories", categories, "email", email,
                 "requestedAt", requestedAt.toInstant().toString()));
     }
 

@@ -2,6 +2,8 @@ package com.cantte.cetus.worker.notifications;
 
 import com.cantte.cetus.notifications.NotificationKind;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,7 +50,7 @@ public record NotificationEmail(String subject, String html, String text) {
             case CONTACT_VERIFICATION -> new Body(
                     "Confirma tu correo para los avisos de " + account,
                     "Alguien de %s pidió que %s reciba los avisos %s de Cetus.".formatted(account, data.get("email"),
-                            category(data.get("category"))),
+                            categories(data.get("categories"))),
                     "Si fuiste tú o te lo pidieron, confirma el correo con el enlace; vence en 48 horas. Si no esperabas "
                             + "este mensaje, ignóralo: no recibirás avisos.",
                     "Confirmar el correo", "/contact-verification/" + link);
@@ -107,6 +109,13 @@ public record NotificationEmail(String subject, String html, String text) {
                             + "para reactivarla.",
                     "Abrir la consola", "/");
         };
+    }
+
+    /** "TECHNICAL,FISCAL" → "técnicos (…) y fiscales (…)". */
+    private static String categories(String categories) {
+        List<String> names = Arrays.stream(categories.split(",")).map(NotificationEmail::category).toList();
+        return names.size() == 1 ? names.get(0)
+                : String.join(", ", names.subList(0, names.size() - 1)) + " y " + names.get(names.size() - 1);
     }
 
     private static String category(String category) {

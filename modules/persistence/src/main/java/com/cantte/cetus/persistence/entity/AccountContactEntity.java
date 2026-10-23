@@ -36,7 +36,7 @@ public class AccountContactEntity extends PanacheEntityBase {
     public UUID accountId;
     @Enumerated(EnumType.STRING)
     public Category category;
-    /** Always verified: notices go here. */
+    /** The verified address the notices go to; null until one is verified. */
     public String email;
     @Column(name = "verified_at")
     public OffsetDateTime verifiedAt;
@@ -76,7 +76,9 @@ public class AccountContactEntity extends PanacheEntityBase {
 
     /** The verified addresses of the categories, without repeating one that serves several, in a stable order. */
     public static List<String> emails(UUID accountId, Collection<Category> categories) {
-        return find("select distinct email from AccountContactEntity where accountId = ?1 and category in ?2 order by email",
+        return find("""
+                        select distinct email from AccountContactEntity
+                        where accountId = ?1 and category in ?2 and email is not null order by email""",
                 accountId, categories).project(String.class).list();
     }
 
