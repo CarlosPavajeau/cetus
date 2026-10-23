@@ -1,6 +1,8 @@
 package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.notifications.NotificationKind;
+import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
@@ -8,6 +10,7 @@ import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
 import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity.Status;
 import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
 import com.cantte.cetus.persistence.entity.WebhookEventEntity;
+import com.cantte.cetus.worker.notifications.Dates;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.LockModeType;
@@ -25,7 +28,8 @@ import java.util.UUID;
  * Short transactions that track the delivery of a webhook event to one endpoint, and the health of the
  * endpoint: one that keeps failing for {@code cetus.webhooks.auto-disable.after}, with at least
  * {@code cetus.webhooks.auto-disable.min-failures} failed attempts and no 2xx in between, is disabled so its
- * deliveries stop filling the queue.
+ * deliveries stop filling the queue. The account's technical contact hears about it twice: when the streak
+ * reaches {@code cetus.webhooks.failing-notice-after} failures, and when the endpoint is disabled.
  */
 @ApplicationScoped
 public class WebhookDeliveryRecorder {
@@ -43,11 +47,15 @@ public class WebhookDeliveryRecorder {
 
     @Inject
     AuditLog auditLog;
+    @Inject
+    Notifications notifications;
 
     @ConfigProperty(name = "cetus.webhooks.auto-disable.after")
     Duration autoDisableAfter;
     @ConfigProperty(name = "cetus.webhooks.auto-disable.min-failures")
     int autoDisableMinFailures;
+    @ConfigProperty(name = "cetus.webhooks.failing-notice-after")
+    int failingNoticeAfter;
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public Optional<Target> load(UUID deliveryId) {
@@ -117,6 +125,9 @@ public class WebhookDeliveryRecorder {
         if (endpoint.failingSince == null) {
             endpoint.failingSince = now;
         }
+        if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE && endpoint.consecutiveFailures == failingNoticeAfter) {
+            notify(endpoint, NotificationKind.WEBHOOK_FAILING, "webhook_failing", endpoint.failingSince);
+        }
         boolean longEnough = !endpoint.failingSince.plus(autoDisableAfter).isAfter(now);
         if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE && longEnough
                 && endpoint.consecutiveFailures >= autoDisableMinFailures) {
@@ -129,7 +140,18 @@ public class WebhookDeliveryRecorder {
                             "failingSince", endpoint.failingSince.toString()));
             LOG.warnf("Disabled webhook endpoint %s: %d failed attempts since %s", endpoint.id,
                     endpoint.consecutiveFailures, endpoint.failingSince);
+            notify(endpoint, NotificationKind.WEBHOOK_DISABLED, "webhook_disabled", endpoint.disabledAt);
         }
+    }
+
+    /** Once per streak (or per disabling), named by when it started. */
+    private void notify(WebhookEndpointEntity endpoint, NotificationKind kind, String key, OffsetDateTime since) {
+        notifications.request(endpoint.accountId, kind,
+                "%s:%s:%d".formatted(key, endpoint.id, since.toInstant().toEpochMilli()),
+                Map.of("endpointId", endpoint.id.toString(), "url", endpoint.url,
+                        "environment", endpoint.environment.name(),
+                        "failures", String.valueOf(endpoint.consecutiveFailures),
+                        "failingSince", Dates.bogota(endpoint.failingSince)));
     }
 
     private static String truncate(String body) {

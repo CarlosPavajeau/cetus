@@ -2,6 +2,7 @@ package com.cantte.cetus.worker.handlers;
 
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
 import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity.Status;
 import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
@@ -183,6 +184,10 @@ class DeliverWebhookHandlerTest {
         assertThat(disabled.disabledReason).isEqualTo(WebhookEndpointEntity.DisabledReason.AUTOMATIC);
         assertThat(disabled.consecutiveFailures).isEqualTo(10);
         assertThat(auditedReasons(disabled)).containsExactly("AUTOMATIC");
+        // The technical contact hears that it reached 10 failures and that it was disabled, once each.
+        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity
+                .<NotificationEntity>list("accountId", disabled.accountId).stream().map(n -> n.kind).toList()))
+                .containsExactlyInAnyOrder("WEBHOOK_FAILING", "WEBHOOK_DISABLED");
 
         // Its next attempt finds it disabled and stops instead of calling it again.
         deliver(deliveryId);
@@ -201,6 +206,9 @@ class DeliverWebhookHandlerTest {
         WebhookEndpointEntity endpoint = endpoint();
         assertThat(endpoint.status).isEqualTo(WebhookEndpointEntity.Status.ACTIVE);
         assertThat(endpoint.consecutiveFailures).isEqualTo(51);
+        // Past the 10th failure already: the notice went out then, not again.
+        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity.count("accountId", endpoint.accountId)))
+                .isZero();
     }
 
     @Test
