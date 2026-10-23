@@ -12,7 +12,7 @@ import {
 } from "~/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Separator } from "~/components/ui/separator";
-import type { Environment, IssuerDetail } from "~/lib/api/types";
+import type { DianEnvironment, IssuerDetail } from "~/lib/api/types";
 
 import { IssuerFields, issuerDefaults } from "./IssuerFields";
 import { issuerSchema } from "./schema";
@@ -49,7 +49,7 @@ export function IssuerStep({
 }) {
   const create = useMutation({ mutationFn: createIssuer });
   const update = useMutation({ mutationFn: updateIssuer });
-  const [environment, setEnvironment] = useState<Environment>("TEST");
+  const [environment, setEnvironment] = useState<DianEnvironment>("TEST");
   const form = useForm({
     resolver: arktypeResolver(issuerSchema),
     defaultValues: issuerDefaults(issuer),
@@ -113,7 +113,7 @@ export function IssuerStep({
           <FieldSection title="Punto de partida">
             <RadioGroup
               value={environment}
-              onValueChange={(value) => setEnvironment(value as Environment)}
+              onValueChange={(value) => setEnvironment(value as DianEnvironment)}
               className="sm:grid-cols-2"
             >
               {startingPoints.map((option) => (

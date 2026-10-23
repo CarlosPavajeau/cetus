@@ -5,6 +5,9 @@ type Schemas = components["schemas"];
 
 export type Environment = Schemas["Environment"];
 
+/** The environments that talk to the DIAN: the setup assistant only prepares issuers for these. */
+export type DianEnvironment = Exclude<Environment, "SANDBOX">;
+
 export type Account = Schemas["AccountView"];
 
 export type ApiKey = Schemas["ApiKeyView"];

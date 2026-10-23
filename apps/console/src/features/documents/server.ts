@@ -11,7 +11,7 @@ import {
 } from "~/lib/api/types";
 
 export const documentFilters = type({
-  "environment?": "'TEST' | 'LIVE' | undefined",
+  "environment?": "'SANDBOX' | 'TEST' | 'LIVE' | undefined",
   "type?": type.enumerated(...documentTypes).or("undefined"),
   "status?": type.enumerated(...documentStatuses).or("undefined"),
   "issuerId?": "string.uuid | undefined",

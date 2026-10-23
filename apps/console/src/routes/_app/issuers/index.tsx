@@ -61,7 +61,8 @@ function Issuers() {
         issuer.nit.includes(term) ||
         issuer.id.includes(term)),
   );
-  const liveCount = issuers.filter((issuer) => issuer.environment === "LIVE").length;
+  const count = (value: Environment) =>
+    issuers.filter((issuer) => issuer.environment === value).length;
 
   return (
     <>
@@ -100,11 +101,13 @@ function Issuers() {
                   Todos <span className="text-muted-foreground">{issuers.length}</span>
                 </TabsTrigger>
                 <TabsTrigger value="LIVE">
-                  Producción <span className="text-muted-foreground">{liveCount}</span>
+                  Producción <span className="text-muted-foreground">{count("LIVE")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="TEST">
-                  Pruebas{" "}
-                  <span className="text-muted-foreground">{issuers.length - liveCount}</span>
+                  Pruebas <span className="text-muted-foreground">{count("TEST")}</span>
+                </TabsTrigger>
+                <TabsTrigger value="SANDBOX">
+                  Simulación <span className="text-muted-foreground">{count("SANDBOX")}</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>

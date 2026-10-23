@@ -1373,7 +1373,7 @@ export interface components {
             redeliver?: boolean;
         };
         /** @enum {string} */
-        Environment: "LIVE" | "TEST";
+        Environment: "LIVE" | "TEST" | "SANDBOX";
         FailedDocumentView: {
             id: components["schemas"]["UUID"];
             issuerId: components["schemas"]["UUID"];

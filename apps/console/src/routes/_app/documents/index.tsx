@@ -43,7 +43,12 @@ import {
 } from "~/features/documents/labels";
 import { documentsQuery } from "~/features/documents/queries";
 import { type DocumentFilters, documentFilters } from "~/features/documents/server";
-import { type DocumentSummary, documentStatuses, documentTypes } from "~/lib/api/types";
+import {
+  type DocumentSummary,
+  documentStatuses,
+  documentTypes,
+  type Environment,
+} from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/documents/")({
   // Unknown or malformed params are dropped instead of failing the page.
@@ -175,13 +180,14 @@ function Documents() {
           <Tabs
             value={filters.environment ?? "ALL"}
             onValueChange={(value) =>
-              update({ environment: value === "ALL" ? undefined : (value as "TEST" | "LIVE") })
+              update({ environment: value === "ALL" ? undefined : (value as Environment) })
             }
           >
             <TabsList className="gap-0.75">
               <TabsTrigger value="ALL">Todos</TabsTrigger>
               <TabsTrigger value="LIVE">Producción</TabsTrigger>
               <TabsTrigger value="TEST">Pruebas</TabsTrigger>
+              <TabsTrigger value="SANDBOX">Simulación</TabsTrigger>
             </TabsList>
           </Tabs>
           <div className="flex flex-wrap items-center gap-2">

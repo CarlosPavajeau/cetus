@@ -62,7 +62,8 @@ export const Route = createFileRoute("/setup")({
     }
     const issuers = await queryClient.ensureQueryData(issuersQuery);
     const pending = issuers.find((issuer) => issuer.status === "ONBOARDING");
-    if (!pending && issuers.length > 0) {
+    // The sandbox sample needs no setup: an organization with only that one starts a new issuer here.
+    if (!pending && issuers.some((issuer) => issuer.environment !== "SANDBOX")) {
       throw redirect({ to: "/issuers" });
     }
     if (pending) {
@@ -92,7 +93,11 @@ function ResumedSetup({ issuerId }: { issuerId: string }) {
   return <SetupPage issuer={issuer} />;
 }
 
-const environmentLabel = { TEST: "TEST · Pruebas", LIVE: "LIVE · Producción" } as const;
+const environmentLabel = {
+  TEST: "TEST · Pruebas",
+  LIVE: "LIVE · Producción",
+  SANDBOX: "SANDBOX · Simulación",
+} as const;
 
 function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
   return (

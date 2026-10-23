@@ -6,5 +6,5 @@ export const createApiKeySchema = type({
   name: type("0 < string <= 80").configure({
     message: "Escribe un nombre de hasta 80 caracteres.",
   }),
-  environment: "'TEST' | 'LIVE'",
+  environment: "'SANDBOX' | 'TEST' | 'LIVE'",
 });
