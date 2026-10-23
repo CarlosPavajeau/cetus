@@ -116,8 +116,8 @@ function PendingChange({
         <Badge variant="outline">Pendiente de verificación</Badge>
       </p>
       <p className="text-xs text-muted-foreground">
-        Le enviamos un enlace que vence en 48 horas. Hasta que lo abra, los avisos siguen llegando
-        al correo verificado.
+        Le enviamos un enlace que vence en 48 horas. Hasta que lo abra y confirme el correo, los
+        avisos siguen llegando al correo verificado.
       </p>
       {!readOnly && (
         <div className="flex flex-wrap gap-2">
@@ -196,7 +196,8 @@ function ChangeContact({ category, current }: { category: ContactCategory; curre
         <DialogHeader>
           <DialogTitle>Cambiar el contacto de avisos {categoryTitle[category]}</DialogTitle>
           <DialogDescription>
-            Enviaremos un enlace al correo nuevo. Los avisos le llegarán cuando lo abra
+            Enviaremos un enlace al correo nuevo. Los avisos le llegarán cuando lo abra y confirme
+            el correo
             {current ? `; mientras tanto siguen llegando a ${current}` : ""}.
           </DialogDescription>
         </DialogHeader>

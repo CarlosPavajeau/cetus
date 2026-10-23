@@ -136,7 +136,8 @@ public class ContactResource {
     }
 
     private static void checkNotRecentlySent(AccountContactEntity contact) {
-        if (contact.pendingEmail != null && contact.pendingRequestedAt != null
+        // Also after a cancellation: canceling and asking again must not send more than one email a minute.
+        if (contact.pendingRequestedAt != null
                 && contact.pendingRequestedAt.plus(RESEND_AFTER).isAfter(OffsetDateTime.now())) {
             throw new DomainException("verification_recently_sent",
                     "A verification email was just sent; wait a minute before asking for another");

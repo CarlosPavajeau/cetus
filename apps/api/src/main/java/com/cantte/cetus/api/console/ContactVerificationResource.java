@@ -3,6 +3,7 @@ package com.cantte.cetus.api.console;
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.auth.ApiKeys;
 import com.cantte.cetus.api.error.ProblemDetail;
+import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
@@ -36,6 +37,8 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(responseCode = "404", description = "Not Found",
         content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(responseCode = "422", description = "Unprocessable Entity",
+        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class ContactVerificationResource {
 
     @Inject
@@ -58,6 +61,11 @@ public class ContactVerificationResource {
     public VerificationView confirm(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
         AccountContactEntity contact = AccountContactEntity.findByPendingToken(ApiKeys.hash(token), true)
                 .orElseThrow(VerificationLinkNotFound::new);
+        // No session here, so SuspendedAccountFilter does not apply: a suspended account stays read-only.
+        AccountEntity account = AccountEntity.findById(contact.accountId);
+        if (!"ACTIVE".equals(account.status)) {
+            throw new DomainException("account_suspended", "This account is suspended");
+        }
         String previous = contact.email;
         contact.email = contact.pendingEmail;
         contact.verifiedAt = OffsetDateTime.now();

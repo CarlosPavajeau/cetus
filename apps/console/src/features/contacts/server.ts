@@ -97,6 +97,11 @@ export const confirmContactVerification = createServerFn({ method: "POST" })
           cause: error,
         });
       }
+      if (error instanceof CetusApiError && error.code === "account_suspended") {
+        throw new Error("La cuenta está suspendida: no se pueden cambiar sus contactos.", {
+          cause: error,
+        });
+      }
       throw error;
     }
   });

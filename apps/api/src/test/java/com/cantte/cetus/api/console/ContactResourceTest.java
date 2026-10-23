@@ -97,6 +97,18 @@ class ContactResourceTest {
     }
 
     @Test
+    void cancelingDoesNotResetTheLimitOfOneEmailAMinute() {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        bootstrap(owner, "Insistente SAS");
+        owner.request().body(Map.of("email", "victima@example.com")).put("/console/contacts/FISCAL")
+                .then().statusCode(200);
+        owner.request().delete("/console/contacts/FISCAL/pending").then().statusCode(200);
+
+        owner.request().body(Map.of("email", "victima@example.com")).put("/console/contacts/FISCAL")
+                .then().statusCode(422).body("code", equalTo("verification_recently_sent"));
+    }
+
+    @Test
     void anAccountWithoutContactsStartsFromTheMemberMakingTheChange() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         String accountId = bootstrap(owner, "Antigua SAS");

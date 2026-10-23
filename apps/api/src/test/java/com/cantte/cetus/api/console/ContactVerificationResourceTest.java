@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.admin.PlatformRoles;
 import com.cantte.cetus.api.auth.ApiKeys;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.persistence.entity.AccountContactEntity;
@@ -49,6 +50,21 @@ class ContactVerificationResourceTest {
                 .body("find { it.category == 'TECHNICAL' }.email", equalTo(owner.email()));
         owner.request().get("/console/audit-log?action=CONTACT_VERIFIED").then().statusCode(200)
                 .body("items[0].actorType", equalTo("SYSTEM"));
+    }
+
+    @Test
+    void aSuspendedAccountKeepsItsContacts() {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        String accountId = bootstrap(owner, "Suspendida SAS");
+        owner.request().body(Map.of("email", "fiscal@example.com")).put("/console/contacts/FISCAL").then().statusCode(200);
+        String token = link(accountId, Category.FISCAL, OffsetDateTime.now().plusHours(48));
+        ConsoleUser.platformStaff(PlatformRoles.ADMIN).request().body(Map.of("reason", "Pago vencido"))
+                .post("/admin/accounts/" + accountId + "/suspension").then().statusCode(200);
+
+        given().post("/console/contact-verifications/" + token).then().statusCode(422)
+                .body("code", equalTo("account_suspended"));
+        owner.request().get("/console/contacts").then().statusCode(200)
+                .body("find { it.category == 'FISCAL' }.email", equalTo(owner.email()));
     }
 
     @Test
