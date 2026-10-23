@@ -57,6 +57,10 @@ public class IssuerOnboardingService {
     @Transactional
     public IssuerEntity create(UUID accountId, IssuerViews.CreateIssuerRequest request, Actor actor,
                                RequestOrigin origin) {
+        if (request.environment() == Environment.SANDBOX) {
+            // Until the simulator issues documents, a sandbox issuer could never get past its first one.
+            throw new DomainException("sandbox_not_available", "The sandbox is not available yet");
+        }
         String checkDigit = NitCheckDigit.compute(request.nit());
         if (request.checkDigit() != null && !request.checkDigit().equals(checkDigit)) {
             throw new DomainException("check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");

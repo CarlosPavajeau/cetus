@@ -74,7 +74,7 @@ class ProblemDetailTest {
                 .contentType(ProblemDetail.MEDIA_TYPE)
                 .body("code", equalTo("invalid_request"))
                 .body("errors.field", contains("environment"))
-                .body("errors.message", contains("must be one of: LIVE, TEST"))
+                .body("errors.message", contains("must be one of: LIVE, TEST, SANDBOX"))
                 .body("$", not(hasKey("value")));
     }
 }

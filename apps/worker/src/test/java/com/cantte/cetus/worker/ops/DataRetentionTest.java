@@ -138,8 +138,8 @@ class DataRetentionTest {
 
     private void idempotencyKey(UUID account, String key, OffsetDateTime expiresAt) {
         QuarkusTransaction.requiringNew().run(() -> em.createNativeQuery("""
-                        INSERT INTO billing.idempotency_keys (account_id, idem_key, request_hash, status, expires_at)
-                        VALUES (:account, :key, 'hash', 'COMPLETED', :expires)
+                        INSERT INTO billing.idempotency_keys (account_id, environment, idem_key, request_hash, status, expires_at)
+                        VALUES (:account, 'TEST', :key, 'hash', 'COMPLETED', :expires)
                         """)
                 .setParameter("account", account).setParameter("key", key).setParameter("expires", expiresAt)
                 .executeUpdate());

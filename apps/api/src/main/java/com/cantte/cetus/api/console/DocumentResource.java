@@ -149,7 +149,7 @@ public class DocumentResource {
         CreditNoteRequest noteRequest = new CreditNoteRequest(invoice.id, CreditNoteConcept.CANCELLATION,
                 request.description().strip(), null, null, null);
         // Its own namespace, so a key of the console never meets one sent by an integrator to /v1.
-        return idempotentCreation.accept(accountId, "console:" + idempotencyKey, noteRequest, rawJson -> {
+        return idempotentCreation.accept(accountId, invoice.environment, "console:" + idempotencyKey, noteRequest, rawJson -> {
             DocumentEntity note = creditNotes.create(accountId, invoice.environment, noteRequest, rawJson);
             auditLog.record(accountId, context.actor(), origin.resolve(), AuditAction.CREDIT_NOTE_ISSUED,
                     "document", note.id, Map.of(

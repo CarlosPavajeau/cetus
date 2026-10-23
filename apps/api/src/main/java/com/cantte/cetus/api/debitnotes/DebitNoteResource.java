@@ -47,7 +47,7 @@ public class DebitNoteResource {
     @Transactional
     public Response create(@HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
                            @Valid @NotNull DebitNoteRequest request) throws JsonProcessingException {
-        return idempotentCreation.accept(principal.accountId(), idempotencyKey, request, rawJson ->
+        return idempotentCreation.accept(principal.accountId(), principal.environment(), idempotencyKey, request, rawJson ->
                 DebitNoteResponse.from(service.create(principal.accountId(), principal.environment(), request, rawJson)));
     }
 
