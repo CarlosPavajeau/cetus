@@ -80,6 +80,8 @@ export default defineRailway((ctx) => {
       BETTER_AUTH_SECRET: preserve(),
       BETTER_AUTH_URL: "https://cetus.cantte.com",
       CETUS_API_URL: "http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}",
+      // Cloudflare sends it in X-Cetus-Edge-Secret (Transform Rule); without it the public domain answers 403.
+      CETUS_EDGE_SECRET: preserve(),
     },
   });
 

@@ -204,7 +204,7 @@ Variables principales: `CETUS_DB_URL`, `CETUS_DB_USER`, `CETUS_DB_PASSWORD`, `CE
 `CETUS_DOCUMENTS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (API y worker, cada uno
 con su propio usuario IAM); `CETUS_AUTH_JWKS_URL` (URL privada de la consola) y `CETUS_AUTH_ISSUER` (URL
 pública) en la API; `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CETUS_API_URL` (URL privada de
-la API) en la consola. Las URL privadas se arman con referencias, p. ej.
+la API) y `CETUS_EDGE_SECRET` en la consola. Las URL privadas se arman con referencias, p. ej.
 `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`.
 
 - En el perfil `prod`, la API y el worker escuchan en `::` (la red privada de Railway es IPv6) y escriben
@@ -218,6 +218,11 @@ la API) en la consola. Las URL privadas se arman con referencias, p. ej.
   `documents/sandbox/`: el worker los borra a los 10 días (`CETUS_RETENTION_SANDBOX_DOCUMENTS`, con
   `s3:DeleteObject` solo sobre ese prefijo) y la regla `sandbox-documents` del ciclo de vida recoge lo que
   quede. El bucket tiene versionado: borrar deja una versión anterior, que esa regla elimina al día siguiente.
+- La consola solo atiende el dominio público si la petición pasó por Cloudflare: una Transform Rule de
+  `cetus.cantte.com` agrega el header `X-Cetus-Edge-Secret` con el valor de `CETUS_EDGE_SECRET`, y sin él la
+  consola responde 403 (el edge de Railway también responde a ese dominio si se le llama directo). La red
+  privada, `localhost` y el health check no lo necesitan. Así `CF-Connecting-IP`, que alimenta el rate limit de
+  Better Auth y el audit log, no se puede falsificar.
 - `/console/*` y `/q/*` solo responden a hosts privados (`cetus.private-hosts`): la red privada de Railway
   (`*.railway.internal`), `localhost` y el health check de Railway. Por el dominio público responden 404.
 
