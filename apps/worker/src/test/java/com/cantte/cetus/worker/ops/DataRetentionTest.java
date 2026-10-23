@@ -1,13 +1,19 @@
 package com.cantte.cetus.worker.ops;
 
+import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.worker.handlers.DeliverDocumentHandler;
+import com.cantte.cetus.worker.handlers.ProcessDocumentHandler;
+import com.cantte.cetus.worker.support.FakeDocumentStorage;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -26,6 +32,19 @@ class DataRetentionTest {
     EntityManager em;
     @Inject
     WorkerFixtures fixtures;
+    @Inject
+    ProcessDocumentHandler processor;
+    @Inject
+    DeliverDocumentHandler delivery;
+    @Inject
+    DocumentStorage documentStorage;
+
+    private FakeDocumentStorage storage;
+
+    @BeforeEach
+    void storage() {
+        storage = (FakeDocumentStorage) documentStorage;
+    }
 
     @Test
     void deletesOnlyWhatIsPastItsRetention() {
@@ -49,6 +68,53 @@ class DataRetentionTest {
         assertThat(idempotencyKeys(account)).containsExactly("valid");
         assertThat(existing("jobs", List.of(oldDone, recentDone, oldDead, oldPending)))
                 .containsExactlyInAnyOrder(recentDone, oldDead, oldPending);
+    }
+
+    @Test
+    void sandboxDocumentsGoWithTheirRecordsAndFilesAfterTenDays() {
+        UUID invoice = fixtures.sandboxInvoice("900108281");
+        processAndDeliver(invoice);
+        UUID note = fixtures.creditNote(invoice);
+        processAndDeliver(note);
+        UUID testInvoice = fixtures.invoice();
+        age(invoice, 11);
+        age(testInvoice, 400);
+        List<String> invoiceFiles = files(invoice);
+        assertThat(invoiceFiles).isNotEmpty().allSatisfy(key -> assertThat(storage.exists(key)).isTrue());
+
+        retention.run();
+
+        // The note still refers to the invoice, so both stay; TEST documents are never deleted.
+        assertThat(existing("documents", List.of(invoice, note, testInvoice)))
+                .containsExactlyInAnyOrder(invoice, note, testInvoice);
+
+        age(note, 11);
+        List<String> noteFiles = files(note);
+        retention.run();
+
+        assertThat(existing("documents", List.of(invoice, note, testInvoice))).containsExactly(testInvoice);
+        assertThat(files(invoice)).isEmpty();
+        assertThat(invoiceFiles).noneSatisfy(key -> assertThat(storage.exists(key)).isTrue());
+        assertThat(noteFiles).noneSatisfy(key -> assertThat(storage.exists(key)).isTrue());
+        assertThat(QuarkusTransaction.requiringNew().call(() -> ((Number) em.createNativeQuery(
+                "SELECT count(*) FROM billing.dian_submissions WHERE document_id IN (:ids)")
+                .setParameter("ids", List.of(invoice, note)).getSingleResult()).longValue())).isZero();
+    }
+
+    private void processAndDeliver(UUID documentId) {
+        processor.handle(fixtures.job(documentId, 1));
+        delivery.handle(fixtures.job(documentId, 1));
+    }
+
+    private void age(UUID documentId, int days) {
+        QuarkusTransaction.requiringNew().run(() -> em.createNativeQuery(
+                        "UPDATE billing.documents SET created_at = now() - make_interval(days => :days) WHERE id = :id")
+                .setParameter("days", days).setParameter("id", documentId).executeUpdate());
+    }
+
+    private List<String> files(UUID documentId) {
+        return QuarkusTransaction.requiringNew().call(() -> DocumentArtifactEntity.listByDocument(documentId).stream()
+                .map(artifact -> artifact.s3Key).toList());
     }
 
     @Test

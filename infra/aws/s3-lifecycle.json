@@ -10,6 +10,12 @@
       ]
     },
     {
+      "ID": "sandbox-documents",
+      "Filter": { "Prefix": "documents/sandbox/" },
+      "Status": "Enabled",
+      "Expiration": { "Days": 14 }
+    },
+    {
       "ID": "noncurrent-versions",
       "Filter": {},
       "Status": "Enabled",

@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.ObjectLockMode;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -15,6 +16,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -61,6 +63,18 @@ public class DocumentStorage {
 
     public byte[] get(String key) {
         return s3.getObjectAsBytes(r -> r.bucket(bucket).key(key)).asByteArray();
+    }
+
+    /**
+     * Deletes objects that were stored without a retention (a locked one cannot be deleted before its date).
+     * Up to 1000 keys per call, S3's limit for one request.
+     */
+    public void delete(List<String> keys) {
+        if (keys.isEmpty()) {
+            return;
+        }
+        List<ObjectIdentifier> objects = keys.stream().map(key -> ObjectIdentifier.builder().key(key).build()).toList();
+        s3.deleteObjects(r -> r.bucket(bucket).delete(d -> d.objects(objects).quiet(true)));
     }
 
     /**

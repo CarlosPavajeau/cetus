@@ -1,5 +1,6 @@
 package com.cantte.cetus.worker.ops;
 
+import com.cantte.cetus.aws.DocumentStorage;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -10,8 +11,11 @@ import org.jboss.logging.Logger;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Deletes what is only kept for a while, once a day while traffic is low:
@@ -24,6 +28,9 @@ import java.util.Map;
  *     <li>notices older than {@code cetus.retention.notifications}, except those whose dedup key still
  *     holds back a repeat: a range at 80 % or 95 % stays there while it is active, so its notice stays too.
  *     The other keys name something that does not come back (an expiry already past, a day, a moment).</li>
+ *     <li>SANDBOX documents older than {@code cetus.retention.sandbox-documents}, with everything about them
+ *     (submissions, deliveries, webhook events, jobs) and their files in S3, stored without Object Lock for
+ *     this. They have no fiscal value; an invoice stays while a note still refers to it.</li>
  * </ul>
  * In batches of {@code cetus.retention.batch-size}, each in its own short transaction, so a large backlog
  * never holds locks or writes a huge transaction. Two replicas running it at once only share the work.
@@ -39,6 +46,17 @@ public class DataRetention {
     static final Duration MIN_NOTIFICATIONS = Duration.ofDays(
             Math.max(AccountHealthChecks.CERTIFICATE_DAYS.get(0), AccountHealthChecks.RESOLUTION_DAYS.get(0)) + 1);
 
+    /** What refers to a document, in the order the foreign keys let it go, and the document last. */
+    private static final List<String> SANDBOX_DOCUMENT_ROWS = List.of(
+            "DELETE FROM billing.webhook_deliveries WHERE event_id IN "
+                    + "(SELECT id FROM billing.webhook_events WHERE document_id IN (:ids))",
+            "DELETE FROM billing.webhook_events WHERE document_id IN (:ids)",
+            "DELETE FROM billing.document_deliveries WHERE document_id IN (:ids)",
+            "DELETE FROM billing.dian_submissions WHERE document_id IN (:ids)",
+            "DELETE FROM billing.document_artifacts WHERE document_id IN (:ids)",
+            "DELETE FROM billing.jobs WHERE reference_id IN (:ids)",
+            "DELETE FROM billing.documents WHERE id IN (:ids)");
+
     @Inject
     EntityManager em;
 
@@ -48,8 +66,12 @@ public class DataRetention {
     Duration doneJobs;
     @ConfigProperty(name = "cetus.retention.notifications")
     Duration notifications;
+    @ConfigProperty(name = "cetus.retention.sandbox-documents")
+    Duration sandboxDocuments;
     @ConfigProperty(name = "cetus.retention.batch-size")
     int batchSize;
+    @Inject
+    DocumentStorage storage;
 
     @Scheduled(cron = "${cetus.retention.cron}", timeZone = "America/Bogota",
             concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
@@ -79,6 +101,7 @@ public class DataRetention {
                                       THEN CAST(split_part(dedup_key, ':', 2) AS uuid) END
                       AND r.status = 'ACTIVE'))
                 """, now.minus(atLeastTheMinimum(notifications))));
+        deleted.put("sandbox_documents", deleteSandboxDocuments(now.minus(sandboxDocuments)));
         LOG.infof("Data retention deleted %s", deleted);
         return deleted;
     }
@@ -90,6 +113,54 @@ public class DataRetention {
             return MIN_NOTIFICATIONS;
         }
         return notifications;
+    }
+
+    /**
+     * One batch per transaction: the rows go first, then the batch's files. A file left behind when S3 fails
+     * is caught by the bucket's lifecycle rule on documents/sandbox/.
+     */
+    private long deleteSandboxDocuments(OffsetDateTime before) {
+        long total = 0;
+        int batch;
+        do {
+            List<String> keys = new ArrayList<>();
+            batch = QuarkusTransaction.requiringNew().call(() -> {
+                @SuppressWarnings("unchecked")
+                List<UUID> ids = em.createNativeQuery("""
+                                SELECT d.id FROM billing.documents d
+                                WHERE d.environment = 'SANDBOX' AND d.created_at < :before
+                                  AND NOT EXISTS (SELECT 1 FROM billing.documents n WHERE n.referenced_document_id = d.id)
+                                LIMIT :limit
+                                """, UUID.class)
+                        .setParameter("before", before)
+                        .setParameter("limit", batchSize)
+                        .getResultList();
+                if (ids.isEmpty()) {
+                    return 0;
+                }
+                @SuppressWarnings("unchecked")
+                List<String> artifactKeys = em.createNativeQuery(
+                                "SELECT s3_key FROM billing.document_artifacts WHERE document_id IN (:ids)", String.class)
+                        .setParameter("ids", ids)
+                        .getResultList();
+                keys.addAll(artifactKeys);
+                for (String statement : SANDBOX_DOCUMENT_ROWS) {
+                    em.createNativeQuery(statement).setParameter("ids", ids).executeUpdate();
+                }
+                return ids.size();
+            });
+            for (int from = 0; from < keys.size(); from += 1000) {
+                List<String> chunk = keys.subList(from, Math.min(keys.size(), from + 1000));
+                try {
+                    storage.delete(chunk);
+                } catch (RuntimeException e) {
+                    LOG.warnf(e, "Could not delete %d files of expired sandbox documents", chunk.size());
+                }
+            }
+            total += batch;
+            // Until a batch finds nothing: deleting a note can free the invoice it referred to.
+        } while (batch > 0);
+        return total;
     }
 
     private long deleteInBatches(String table, String condition, OffsetDateTime before) {
