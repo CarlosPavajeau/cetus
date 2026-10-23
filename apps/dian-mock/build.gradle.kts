@@ -6,8 +6,8 @@ plugins {
 
 dependencies {
     implementation(project(":modules:signing"))
+    implementation(project(":modules:dian-client"))
 
-    testImplementation(project(":modules:dian-client"))
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj)

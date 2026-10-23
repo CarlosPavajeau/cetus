@@ -103,6 +103,13 @@ responde el mismo `s:Client` sin razón que la DIAN y deja la causa real en su l
 estructura (zip con un XML firmado, `cbc:ID`, `cbc:UUID`) y rechaza los CUFE repetidos (regla 90); no aplica las
 reglas de validación de la DIAN. Los mensajes que genera empiezan por `Mock:`.
 
+Lo que pasa esas revisiones lo responde el mismo simulador del sandbox (`SimulatedDian`), con el ApplicationResponse
+firmado y con la estructura del de la DIAN, y con los mismos escenarios según el adquiriente: `1000000001` aceptado
+con FAJ43b, `1000000002` rechazado con FAK26 y FAB10a, `1000000003` responde tarde el primer envío (tras
+`DIAN_MOCK_TIMEOUT_DELAY`) pero queda aceptado, `1000000004` falla de servidor en los dos primeros envíos y
+`1000000005` rechaza las notas crédito por CBF04. Cualquier otro se acepta. Los escenarios globales de abajo se
+imponen sobre estos.
+
 ```bash
 curl -X POST "localhost:8090/__mock/scenario?name=reject"   # accept | reject | client-fault | server-fault | timeout
 curl localhost:8090/__mock/documents                        # documentos recibidos y su resultado
@@ -110,8 +117,9 @@ curl -X POST localhost:8090/__mock/reset                    # olvida todo
 ```
 
 Variables: `DIAN_MOCK_PORT` (8090), `DIAN_MOCK_SCENARIO` (accept), `DIAN_MOCK_REJECT_SELF_SIGNED` (false; en true
-rechaza los autofirmados como la DIAN), `DIAN_MOCK_TIMEOUT_DELAY` (PT90S) y `DIAN_MOCK_PROCESSING_POLLS` (1, consultas
-de GetStatusZip que responden "en proceso" antes del resultado).
+rechaza los autofirmados como la DIAN), `DIAN_MOCK_TIMEOUT_DELAY` (PT90S), `DIAN_MOCK_PROCESSING_POLLS` (1, consultas
+de GetStatusZip que responden "en proceso" antes del resultado) y `DIAN_MOCK_SIGNER` / `DIAN_MOCK_SIGNER_PASSWORD`
+(`src/test/resources/test-signer.p12` / `cetus-test`, el certificado que firma el ApplicationResponse).
 
 ## Probar el flujo completo en habilitación
 
