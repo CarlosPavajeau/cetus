@@ -146,6 +146,9 @@ test("an accepted invoice is emailed again at most once a minute", async ({
   // Enabled once the first delivery is over; the page refreshes itself until then.
   await deliveries.getByRole("button", { name: "Reenviar correo" }).click({ timeout: 20_000 });
   const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Enviar a").fill("contabilidad");
+  await dialog.getByRole("button", { name: "Reenviar" }).click();
+  await expect(dialog.getByText("Escribe un correo válido.")).toBeVisible();
   await dialog.getByLabel("Enviar a").fill("contabilidad@cliente.test");
   await dialog.getByRole("button", { name: "Reenviar" }).click();
 

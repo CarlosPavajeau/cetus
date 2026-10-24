@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { type } from "arktype";
 import { MailIcon } from "lucide-react";
 import { useId, useState } from "react";
 
@@ -14,14 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { Field, FieldDescription, FieldLabel } from "~/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { auditLogKey } from "~/features/audit-log/queries";
 import type { DocumentDetail } from "~/lib/api/types";
 
 import { documentsKey } from "./queries";
-import { resendDocument } from "./server";
+import { resendDocument, resendEmail } from "./server";
 
 /**
  * Emails an accepted document again, once its last delivery is over. A simulated document only ever goes
@@ -30,6 +31,7 @@ import { resendDocument } from "./server";
 export function ResendDocument({ document }: { document: DocumentDetail }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const emailId = useId();
   const queryClient = useQueryClient();
   const resend = useMutation({
@@ -65,6 +67,7 @@ export function ResendDocument({ document }: { document: DocumentDetail }) {
         setOpen(next);
         if (next) {
           setEmail("");
+          setEmailError(null);
           resend.reset();
         }
       }}
@@ -79,7 +82,13 @@ export function ResendDocument({ document }: { document: DocumentDetail }) {
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
-            resend.mutate({ data: { id: document.id, email: sandbox ? "" : email } });
+            const checked = resendEmail(sandbox ? "" : email);
+            if (checked instanceof type.errors) {
+              setEmailError("Escribe un correo válido.");
+              return;
+            }
+            setEmailError(null);
+            resend.mutate({ data: { id: document.id, email: checked } });
           }}
         >
           <DialogHeader>
@@ -91,12 +100,13 @@ export function ResendDocument({ document }: { document: DocumentDetail }) {
             </DialogDescription>
           </DialogHeader>
           {!sandbox && (
-            <Field>
+            <Field data-invalid={emailError !== null}>
               <FieldLabel htmlFor={emailId}>Enviar a</FieldLabel>
               <Input
                 id={emailId}
                 type="email"
                 value={email}
+                aria-invalid={emailError !== null}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder={document.customer.email ?? "correo@cliente.com"}
                 disabled={resend.isPending}
@@ -106,6 +116,7 @@ export function ResendDocument({ document }: { document: DocumentDetail }) {
                   ? `Déjalo vacío para enviarlo a ${document.customer.email}.`
                   : "El cliente no tiene correo registrado: escribe a dónde enviarlo."}
               </FieldDescription>
+              {emailError && <FieldError>{emailError}</FieldError>}
             </Field>
           )}
           {failure && (

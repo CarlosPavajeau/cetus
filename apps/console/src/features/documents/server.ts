@@ -122,18 +122,16 @@ const resendMessages: Record<string, string> = {
   invalid_request: "Escribe un correo válido.",
 };
 
+/** Another address for a resend, or empty for the first delivery's; checked by the dialog too. */
+export const resendEmail = type("string.trim").to(
+  type("string.email | ''").configure({ message: "Escribe un correo válido." }),
+);
+
 export type ResendResult = { ok: true } | { ok: false; message: string };
 
 /** Emails an accepted document again, to another address or to whom it went the first time. */
 export const resendDocument = createServerFn({ method: "POST" })
-  .validator(
-    type({
-      id: "string.uuid",
-      email: type("string.trim").to(
-        type("string.email | ''").configure({ message: "Escribe un correo válido." }),
-      ),
-    }),
-  )
+  .validator(type({ id: "string.uuid", email: resendEmail }))
   .handler(async ({ data }): Promise<ResendResult> => {
     try {
       await api.post("/console/documents/{id}/deliveries", {

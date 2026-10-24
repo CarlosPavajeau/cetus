@@ -75,6 +75,10 @@ const copy = {
   },
 };
 
+type NoteValues = NoteHeaderValues & LinesFormValues;
+
+type Confirmation = { note: NoteValues; total: number };
+
 /**
  * A credit or debit note against an accepted invoice: the customer and payment come from the invoice, so
  * only the concept, the reason and the lines are asked for.
@@ -93,7 +97,7 @@ export function NoteForm({
   const descriptionId = useId();
   // One key while the form lives: a double click or a retry issues a single note.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
-  const [confirmTotal, setConfirmTotal] = useState<number | null>(null);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const concepts = noteType === "CREDIT_NOTE" ? creditConcepts : debitConcepts;
   const header = useForm<NoteHeaderValues>({
     resolver: arktypeResolver(noteHeaderSchema),
@@ -104,8 +108,7 @@ export function NoteForm({
     defaultValues: { lines: [emptyLine] },
   });
   const issue = useMutation({
-    mutationFn: async (): Promise<IssueResult> => {
-      const note = { ...header.getValues(), lines: lines.getValues().lines };
+    mutationFn: async (note: NoteValues): Promise<IssueResult> => {
       if (noteType === "CREDIT_NOTE") {
         const parsed = creditNoteSchema(note);
         if (parsed instanceof type.errors) {
@@ -120,7 +123,7 @@ export function NoteForm({
       return issueDebitNote({ data: { invoiceId: invoice.id, idempotencyKey, note: parsed } });
     },
     onSuccess: async (result) => {
-      setConfirmTotal(null);
+      setConfirmation(null);
       if (!result.ok) {
         return;
       }
@@ -131,7 +134,7 @@ export function NoteForm({
       await navigate({ to: "/documents/$documentId", params: { documentId: result.id } });
     },
     // The form's alert explains the failure; the dialog would hide it.
-    onError: () => setConfirmTotal(null),
+    onError: () => setConfirmation(null),
   });
   const [previewFailure, setPreviewFailure] = useState<string | null>(null);
   // An answer of the API explains itself; a thrown error is an outage or a lost connection, and a retry
@@ -150,11 +153,13 @@ export function NoteForm({
       return;
     }
     setPreviewFailure(null);
+    // What is previewed and confirmed is what is issued, even if the form changes meanwhile.
+    const note: NoteValues = { ...header.getValues(), lines: lines.getValues().lines };
     if (invoice.environment === "LIVE") {
       // A LIVE note is only issued from the confirmation, which needs its total.
       let preview: DocumentPreview | null;
       try {
-        preview = await previewDocument({ data: { lines: lines.getValues().lines } });
+        preview = await previewDocument({ data: { lines: note.lines } });
       } catch {
         setPreviewFailure(
           "No pudimos calcular el total para confirmar. Revisa tu conexión e inténtalo de nuevo.",
@@ -165,10 +170,10 @@ export function NoteForm({
         setPreviewFailure("No pudimos calcular el total de estas líneas. Revisa sus valores.");
         return;
       }
-      setConfirmTotal(preview.totals.payable);
+      setConfirmation({ note, total: preview.totals.payable });
       return;
     }
-    issue.mutate();
+    issue.mutate(note);
   }
 
   return (
@@ -248,10 +253,10 @@ export function NoteForm({
       </div>
 
       <AlertDialog
-        open={confirmTotal !== null}
+        open={confirmation !== null}
         onOpenChange={(open) => {
           if (!open) {
-            setConfirmTotal(null);
+            setConfirmation(null);
           }
         }}
       >
@@ -260,13 +265,16 @@ export function NoteForm({
             <AlertDialogTitle>¿Emitir esta {copy[noteType].title} en producción?</AlertDialogTitle>
             <AlertDialogDescription>
               Corrige la factura {invoice.number} de {invoice.customer.legalName} por{" "}
-              {confirmTotal === null ? "" : money(confirmTotal)}. Se envía a la DIAN con validez
-              fiscal.
+              {confirmation === null ? "" : money(confirmation.total)}. Se envía a la DIAN con
+              validez fiscal.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={issue.isPending}>Revisar</AlertDialogCancel>
-            <Button disabled={issue.isPending} onClick={() => issue.mutate()}>
+            <Button
+              disabled={issue.isPending}
+              onClick={() => confirmation && issue.mutate(confirmation.note)}
+            >
               {issue.isPending && <Spinner data-icon="inline-start" />}
               Emitir en producción
             </Button>
