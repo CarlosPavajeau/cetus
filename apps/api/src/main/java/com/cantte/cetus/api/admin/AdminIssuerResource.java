@@ -152,8 +152,8 @@ public class AdminIssuerResource {
     }
 
     public record CertificateUploadLinkView(
-            @Schema(required = true, description = "Shown once; only its hash is stored")
+            @Schema(description = "Shown once; only its hash is stored")
             String token,
 
-            @Schema(required = true) OffsetDateTime expiresAt) {}
+            OffsetDateTime expiresAt) {}
 }

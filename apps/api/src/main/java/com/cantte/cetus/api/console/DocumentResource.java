@@ -203,10 +203,7 @@ public class DocumentResource {
             @NotBlank @Size(max = 500) String description) {}
 
     public record CancellationResponse(
-            @Schema(required = true, description = "The credit note")
-            UUID id,
-
-            @Schema(required = true) String number) {}
+            @Schema(description = "The credit note") UUID id, String number) {}
 
     private DocumentEntity find(UUID id) {
         return DocumentEntity.<DocumentEntity>find("id = ?1 and accountId = ?2", id, context.account().id)

@@ -132,8 +132,5 @@ public class ContactVerificationResource {
         }
     }
 
-    public record VerificationView(
-            @Schema(required = true) String accountName,
-            @Schema(required = true) List<Category> categories,
-            @Schema(required = true) String email) {}
+    public record VerificationView(String accountName, List<Category> categories, String email) {}
 }

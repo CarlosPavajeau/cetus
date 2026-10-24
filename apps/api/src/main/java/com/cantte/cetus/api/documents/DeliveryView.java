@@ -11,13 +11,13 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  * integrator has to deliver it by its own means.
  */
 public record DeliveryView(
-        @Schema(required = true) UUID id,
-        @Schema(required = true) DocumentDeliveryEntity.Channel channel,
-        @Schema(required = true, nullable = true) String recipient,
-        @Schema(required = true) DocumentDeliveryEntity.Status status,
-        @Schema(required = true, nullable = true) String error,
-        @Schema(required = true, nullable = true) OffsetDateTime sentAt,
-        @Schema(required = true, nullable = true) OffsetDateTime lastEventAt) {
+        UUID id,
+        DocumentDeliveryEntity.Channel channel,
+        @Schema(nullable = true) String recipient,
+        DocumentDeliveryEntity.Status status,
+        @Schema(nullable = true) String error,
+        @Schema(nullable = true) OffsetDateTime sentAt,
+        @Schema(nullable = true) OffsetDateTime lastEventAt) {
 
     public static List<DeliveryView> of(UUID documentId) {
         return DocumentDeliveryEntity.listByDocument(documentId).stream()

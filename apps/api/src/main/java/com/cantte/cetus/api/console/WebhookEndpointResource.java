@@ -277,36 +277,32 @@ public class WebhookEndpointResource {
             boolean redeliver) {}
 
     public record WebhookEndpointView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String url,
-            @Schema(required = true, nullable = true) String description,
-            @Schema(required = true) Environment environment,
+            UUID id,
+            String url,
+            @Schema(nullable = true) String description,
+            Environment environment,
 
-            @Schema(required = true, description = "Empty means all event types")
+            @Schema(description = "Empty means all event types")
             List<String> eventTypes,
 
-            @Schema(required = true) WebhookEndpointEntity.Status status,
-            @Schema(required = true, nullable = true) OffsetDateTime disabledAt,
+            WebhookEndpointEntity.Status status,
+            @Schema(nullable = true) OffsetDateTime disabledAt,
 
-            @Schema(
-                    required = true,
-                    nullable = true,
-                    description = "AUTOMATIC when Cetus disabled it after failing for days")
+            @Schema(nullable = true, description = "AUTOMATIC when Cetus disabled it after failing for days")
             WebhookEndpointEntity.DisabledReason disabledReason,
 
-            @Schema(required = true, description = "Failed attempts since the last 2xx")
+            @Schema(description = "Failed attempts since the last 2xx")
             int consecutiveFailures,
 
-            @Schema(required = true, nullable = true, description = "When the current streak of failures started")
+            @Schema(nullable = true, description = "When the current streak of failures started")
             OffsetDateTime failingSince,
 
-            @Schema(required = true) OffsetDateTime createdAt,
+            OffsetDateTime createdAt,
 
-            @Schema(required = true, nullable = true, description = "Better Auth user id of the creator")
+            @Schema(nullable = true, description = "Better Auth user id of the creator")
             String createdBy,
 
             @Schema(
-                    required = true,
                     nullable = true,
                     description =
                             "Events it missed while failing or disabled; only in the detail of a disabled endpoint")
@@ -334,30 +330,29 @@ public class WebhookEndpointResource {
     }
 
     public record CreatedWebhookEndpoint(
-            @Schema(required = true) WebhookEndpointView endpoint,
+            WebhookEndpointView endpoint,
 
-            @Schema(required = true, description = "whsec_ signing secret; it is not shown again")
+            @Schema(description = "whsec_ signing secret; it is not shown again")
             String secret) {}
 
     public record WebhookDeliveryView(
-            @Schema(required = true) UUID id,
+            UUID id,
 
-            @Schema(required = true, description = "Sent as webhook-id")
-            UUID eventId,
+            @Schema(description = "Sent as webhook-id") UUID eventId,
 
-            @Schema(required = true) String eventType,
-            @Schema(required = true) UUID documentId,
-            @Schema(required = true) WebhookDeliveryEntity.Status status,
-            @Schema(required = true) int attempts,
-            @Schema(required = true, nullable = true) Integer lastResponseStatus,
+            String eventType,
+            UUID documentId,
+            WebhookDeliveryEntity.Status status,
+            int attempts,
+            @Schema(nullable = true) Integer lastResponseStatus,
 
-            @Schema(required = true, nullable = true, description = "First KB of the endpoint's answer")
+            @Schema(nullable = true, description = "First KB of the endpoint's answer")
             String lastResponseBody,
 
-            @Schema(required = true, nullable = true) String lastError,
-            @Schema(required = true, nullable = true) OffsetDateTime lastAttemptAt,
-            @Schema(required = true, nullable = true) OffsetDateTime deliveredAt,
-            @Schema(required = true) OffsetDateTime createdAt) {
+            @Schema(nullable = true) String lastError,
+            @Schema(nullable = true) OffsetDateTime lastAttemptAt,
+            @Schema(nullable = true) OffsetDateTime deliveredAt,
+            OffsetDateTime createdAt) {
         static WebhookDeliveryView from(WebhookDeliveryEntity delivery, WebhookEventEntity event) {
             return new WebhookDeliveryView(
                     delivery.id,
@@ -376,9 +371,8 @@ public class WebhookEndpointResource {
     }
 
     public record WebhookDeliveryPage(
-            @Schema(required = true, description = "Newest first")
-            List<WebhookDeliveryView> items,
+            @Schema(description = "Newest first") List<WebhookDeliveryView> items,
 
-            @Schema(required = true, nullable = true, description = "Pass as before to get the next page")
+            @Schema(nullable = true, description = "Pass as before to get the next page")
             UUID nextCursor) {}
 }

@@ -15,48 +15,40 @@ import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record InvoiceResponse(
-        @Schema(required = true) UUID id,
-        @Schema(required = true) Environment environment,
-        @Schema(required = true) UUID issuerId,
-        @Schema(required = true) String number,
-        @Schema(required = true) DocumentStatus status,
-        @Schema(required = true, nullable = true) String cufe,
-        @Schema(required = true) LocalDate issueDate,
-        @Schema(required = true) String currency,
-        @Schema(required = true) Totals totals,
-        @Schema(required = true) Dian dian,
-        @Schema(required = true, nullable = true) String externalReference,
-        @Schema(required = true) OffsetDateTime createdAt,
-        @Schema(required = true) List<CreditNoteSummary> creditNotes,
-        @Schema(required = true) List<DebitNoteSummary> debitNotes,
+        UUID id,
+        Environment environment,
+        UUID issuerId,
+        String number,
+        DocumentStatus status,
+        @Schema(nullable = true) String cufe,
+        LocalDate issueDate,
+        String currency,
+        Totals totals,
+        Dian dian,
+        @Schema(nullable = true) String externalReference,
+        OffsetDateTime createdAt,
+        List<CreditNoteSummary> creditNotes,
+        List<DebitNoteSummary> debitNotes,
 
         @Schema(
-                required = true,
                 description = "What credit notes can still take: the payable amount plus accepted "
                         + "debit notes, minus accepted or in-flight credit notes")
         BigDecimal balance,
 
-        @Schema(required = true, description = "Deliveries of the accepted invoice to the customer")
+        @Schema(description = "Deliveries of the accepted invoice to the customer")
         List<DeliveryView> deliveries) {
 
     public record Totals(
-            @Schema(required = true) BigDecimal lineExtension,
-            @Schema(required = true) BigDecimal taxExclusive,
-            @Schema(required = true) BigDecimal taxInclusive,
-            @Schema(required = true) BigDecimal payable) {}
+            BigDecimal lineExtension, BigDecimal taxExclusive, BigDecimal taxInclusive, BigDecimal payable) {}
 
     public record Dian(
-            @Schema(required = true, nullable = true) String statusCode,
-            @Schema(required = true, nullable = true) String statusMessage,
-            @Schema(required = true) List<String> errors,
-            @Schema(required = true, nullable = true) OffsetDateTime validatedAt) {}
+            @Schema(nullable = true) String statusCode,
+            @Schema(nullable = true) String statusMessage,
+            List<String> errors,
+            @Schema(nullable = true) OffsetDateTime validatedAt) {}
 
     public record CreditNoteSummary(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String number,
-            @Schema(required = true) DocumentStatus status,
-            @Schema(required = true) CreditNoteConcept concept,
-            @Schema(required = true) BigDecimal payable) {
+            UUID id, String number, DocumentStatus status, CreditNoteConcept concept, BigDecimal payable) {
 
         static List<CreditNoteSummary> of(UUID invoiceId) {
             return DocumentEntity.notesFor(invoiceId, DocumentType.CREDIT_NOTE).stream()
@@ -71,11 +63,7 @@ public record InvoiceResponse(
     }
 
     public record DebitNoteSummary(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String number,
-            @Schema(required = true) DocumentStatus status,
-            @Schema(required = true) DebitNoteConcept concept,
-            @Schema(required = true) BigDecimal payable) {
+            UUID id, String number, DocumentStatus status, DebitNoteConcept concept, BigDecimal payable) {
 
         static List<DebitNoteSummary> of(UUID invoiceId) {
             return DocumentEntity.notesFor(invoiceId, DocumentType.DEBIT_NOTE).stream()

@@ -959,14 +959,14 @@ export interface components {
         /** @enum {string} */
         ActorType: "USER" | "API_KEY" | "PLATFORM" | "SYSTEM";
         Address: {
-            municipalityCode?: string;
-            cityName?: string;
-            departmentCode?: string;
-            departmentName?: string;
-            postalCode?: string;
-            line?: string;
-            countryCode?: string;
-            countryName?: string;
+            municipalityCode: string;
+            cityName: string;
+            departmentCode: string;
+            departmentName: string;
+            postalCode: string | null;
+            line: string;
+            countryCode: string;
+            countryName: string;
         };
         AddressInput: {
             municipalityCode: string;
@@ -1001,8 +1001,8 @@ export interface components {
             nextCursor: number | null;
         };
         AdminSessionView: {
-            userId?: string;
-            roles?: string[];
+            userId: string;
+            roles: string[];
         };
         ApiKeyDetail: {
             key: components["schemas"]["ApiKeyView"];
@@ -1530,7 +1530,7 @@ export interface components {
             /** Format: int32 */
             status: number;
             detail?: string;
-            instance?: string;
+            instance: string;
             code: string;
             errors?: components["schemas"]["FieldError"][];
         };

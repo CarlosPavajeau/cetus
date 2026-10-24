@@ -40,18 +40,18 @@ public final class DocumentTimeline {
      * upload, TIMED_OUT or NO_ANSWER when the answer never came.
      */
     public record DocumentEvent(
-            @Schema(required = true) OffsetDateTime at,
-            @Schema(required = true) DocumentEventKind kind,
-            @Schema(required = true, nullable = true) String status,
+            OffsetDateTime at,
+            DocumentEventKind kind,
+            @Schema(nullable = true) String status,
 
-            @Schema(required = true, nullable = true, description = "DIAN operation, e.g. SendBillSync")
+            @Schema(nullable = true, description = "DIAN operation, e.g. SendBillSync")
             String operation,
 
-            @Schema(required = true, nullable = true, description = "DIAN status code")
+            @Schema(nullable = true, description = "DIAN status code")
             String code,
 
-            @Schema(required = true, nullable = true) String message,
-            @Schema(required = true, nullable = true) Integer durationMs) {}
+            @Schema(nullable = true) String message,
+            @Schema(nullable = true) Integer durationMs) {}
 
     private DocumentTimeline() {}
 

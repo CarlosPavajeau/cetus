@@ -106,6 +106,9 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
   columns a new plugin needs, copy them with `authSchema.table`, and discard
   the rest. Then `pnpm db:generate` creates the migration and
   `mise run migrate` applies it.
+- `OpenApiFilter` marks every member of a response schema as required; do not
+  add `@Schema(required = true)`. Mark members that can be null with
+  `@Schema(nullable = true)`. Requests take `required` from Bean Validation.
 - Secrets (PIN, technical key, certificate password and file) are sealed with
   KMS. The `.p12` lives in S3; the database only holds metadata.
 

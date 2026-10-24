@@ -16,48 +16,48 @@ public final class AdminViews {
     private AdminViews() {}
 
     public record AccountSummaryView(
-            @Schema(required = true) UUID id,
+            UUID id,
 
-            @Schema(required = true, description = "Better Auth organization id")
+            @Schema(description = "Better Auth organization id")
             String organizationId,
 
-            @Schema(required = true) String name,
-            @Schema(required = true) String status,
-            @Schema(required = true) String plan,
-            @Schema(required = true) OffsetDateTime createdAt,
-            @Schema(required = true) long issuers,
+            String name,
+            String status,
+            String plan,
+            OffsetDateTime createdAt,
+            long issuers,
 
-            @Schema(required = true, description = "Production issuers already enabled at the DIAN")
+            @Schema(description = "Production issuers already enabled at the DIAN")
             long liveIssuersEnabled,
 
-            @Schema(required = true, description = "Production documents created this month (Colombia time)")
+            @Schema(description = "Production documents created this month (Colombia time)")
             long liveDocumentsThisMonth,
 
-            @Schema(required = true, description = "Documents rejected or failed in the last 7 days")
+            @Schema(description = "Documents rejected or failed in the last 7 days")
             long recentFailures,
 
-            @Schema(required = true, nullable = true) OffsetDateTime lastFailureAt) {}
+            @Schema(nullable = true) OffsetDateTime lastFailureAt) {}
 
     public record AccountPage(
-            @Schema(required = true) List<AccountSummaryView> items,
-            @Schema(required = true, nullable = true) UUID nextCursor) {}
+            List<AccountSummaryView> items,
+            @Schema(nullable = true) UUID nextCursor) {}
 
     public record AccountDetailView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String organizationId,
-            @Schema(required = true) String name,
-            @Schema(required = true) String status,
-            @Schema(required = true) String plan,
-            @Schema(required = true, nullable = true) String statusReason,
-            @Schema(required = true, nullable = true) OffsetDateTime statusChangedAt,
+            UUID id,
+            String organizationId,
+            String name,
+            String status,
+            String plan,
+            @Schema(nullable = true) String statusReason,
+            @Schema(nullable = true) OffsetDateTime statusChangedAt,
 
-            @Schema(required = true, nullable = true, description = "Better Auth user id")
+            @Schema(nullable = true, description = "Better Auth user id")
             String statusChangedBy,
 
-            @Schema(required = true) OffsetDateTime createdAt,
-            @Schema(required = true) List<IssuerViews.IssuerView> issuers,
-            @Schema(required = true) List<UsageCountView> usageThisMonth,
-            @Schema(required = true) List<FailedDocumentView> recentFailures) {
+            OffsetDateTime createdAt,
+            List<IssuerViews.IssuerView> issuers,
+            List<UsageCountView> usageThisMonth,
+            List<FailedDocumentView> recentFailures) {
         static AccountDetailView of(
                 AccountEntity account,
                 List<IssuerViews.IssuerView> issuers,
@@ -79,26 +79,22 @@ public final class AdminViews {
         }
     }
 
-    public record UsageCountView(
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) DocumentType documentType,
-            @Schema(required = true) String status,
-            @Schema(required = true) long count) {}
+    public record UsageCountView(Environment environment, DocumentType documentType, String status, long count) {}
 
     public record FailedDocumentView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) UUID issuerId,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) DocumentType documentType,
+            UUID id,
+            UUID issuerId,
+            Environment environment,
+            DocumentType documentType,
 
-            @Schema(required = true, description = "Prefix and consecutive, e.g. SETP990000001")
+            @Schema(description = "Prefix and consecutive, e.g. SETP990000001")
             String number,
 
-            @Schema(required = true) String status,
-            @Schema(required = true, nullable = true) String dianStatusCode,
-            @Schema(required = true, nullable = true) String dianStatusMessage,
-            @Schema(required = true) List<String> dianErrors,
-            @Schema(required = true) OffsetDateTime updatedAt) {}
+            String status,
+            @Schema(nullable = true) String dianStatusCode,
+            @Schema(nullable = true) String dianStatusMessage,
+            List<String> dianErrors,
+            OffsetDateTime updatedAt) {}
 
     /** Suspending or reactivating an account always says why; the account's members see the reason. */
     public record StatusChangeRequest(

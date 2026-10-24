@@ -94,13 +94,7 @@ public class CertificateUploadResource {
         }
     }
 
-    public record UploadLinkView(
-            @Schema(required = true) String legalName,
-            @Schema(required = true) String nit,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) OffsetDateTime expiresAt) {}
+    public record UploadLinkView(String legalName, String nit, Environment environment, OffsetDateTime expiresAt) {}
 
-    public record UploadedCertificateView(
-            @Schema(required = true) String subject,
-            @Schema(required = true) OffsetDateTime validTo) {}
+    public record UploadedCertificateView(String subject, OffsetDateTime validTo) {}
 }

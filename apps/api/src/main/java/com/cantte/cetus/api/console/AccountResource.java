@@ -98,12 +98,12 @@ public class AccountResource {
             @NotBlank @Size(max = 200) String name) {}
 
     public record AccountView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String name,
-            @Schema(required = true) String status,
-            @Schema(required = true) String plan,
+            UUID id,
+            String name,
+            String status,
+            String plan,
 
-            @Schema(required = true, nullable = true, description = "Why the account is suspended, when it is")
+            @Schema(nullable = true, description = "Why the account is suspended, when it is")
             String statusReason) {
         static AccountView from(AccountEntity account) {
             return new AccountView(
