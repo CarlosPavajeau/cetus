@@ -148,7 +148,7 @@ public class DocumentResource {
         List<DocumentSummary> items = page.stream()
                 .map(doc -> DocumentSummary.from(doc, issuerNames.getOrDefault(doc.issuerId, "")))
                 .toList();
-        UUID next = rows.size() > size ? page.get(page.size() - 1).id : null;
+        UUID next = rows.size() > size ? page.getLast().id : null;
         return new DocumentPage(items, next);
     }
 

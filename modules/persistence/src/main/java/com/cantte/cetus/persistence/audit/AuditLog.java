@@ -130,7 +130,7 @@ public class AuditLog {
         for (Object[] row : rows.subList(0, Math.min(rows.size(), size))) {
             items.add(toView(row));
         }
-        Long nextCursor = rows.size() > size ? items.get(items.size() - 1).id() : null;
+        Long nextCursor = rows.size() > size ? items.getLast().id() : null;
         return new AuditPage(items, nextCursor);
     }
 

@@ -220,7 +220,7 @@ public class WebhookEndpointResource {
         List<WebhookDeliveryView> items = page.stream()
                 .map(d -> WebhookDeliveryView.from(d, events.get(d.eventId)))
                 .toList();
-        UUID next = rows.size() > size ? page.get(page.size() - 1).id : null;
+        UUID next = rows.size() > size ? page.getLast().id : null;
         return new WebhookDeliveryPage(items, next);
     }
 

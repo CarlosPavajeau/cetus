@@ -156,7 +156,7 @@ public record NotificationEmail(String subject, String html, String text) {
                 .toList();
         return names.size() == 1
                 ? names.get(0)
-                : String.join(", ", names.subList(0, names.size() - 1)) + " y " + names.get(names.size() - 1);
+                : String.join(", ", names.subList(0, names.size() - 1)) + " y " + names.getLast();
     }
 
     private static String category(String category) {

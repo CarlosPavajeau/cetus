@@ -106,7 +106,7 @@ public class AdminAccountResource {
         // One extra row tells whether there is a next page.
         List<AccountSummaryView> rows = queries.list(status, organizationIds, before, size + 1);
         List<AccountSummaryView> items = rows.subList(0, Math.min(rows.size(), size));
-        UUID nextCursor = rows.size() > size ? items.get(items.size() - 1).id() : null;
+        UUID nextCursor = rows.size() > size ? items.getLast().id() : null;
         return new AccountPage(items, nextCursor);
     }
 
