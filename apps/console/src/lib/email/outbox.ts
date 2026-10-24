@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import type { EmailMessage, EmailSender } from "./sender";
@@ -25,10 +25,10 @@ export class OutboxEmailSender implements EmailSender {
       sentAt: new Date().toISOString(),
     };
     await mkdir(this.#dir, { recursive: true });
-    await writeFile(
-      join(this.#dir, `${Date.now()}-${crypto.randomUUID()}.json`),
-      JSON.stringify(email),
-    );
+    // Readers only take *.json, and a rename is atomic: none ever sees a message half written.
+    const name = join(this.#dir, `${Date.now()}-${crypto.randomUUID()}`);
+    await writeFile(`${name}.tmp`, JSON.stringify(email));
+    await rename(`${name}.tmp`, `${name}.json`);
     console.info(`Email to ${message.to}: ${message.subject} (outbox)`);
   }
 }

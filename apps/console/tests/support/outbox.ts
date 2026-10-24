@@ -19,7 +19,8 @@ export async function latestEmailTo(address: string, attemptsLeft = 20): Promise
   if (!dir) {
     throw new Error("Set CETUS_EMAIL_OUTBOX_DIR in apps/console/.env (see .env.example)");
   }
-  const files = await readdir(dir).catch(() => []);
+  // Only finished messages: the console writes each one as *.tmp and renames it when complete.
+  const files = (await readdir(dir).catch(() => [])).filter((file) => file.endsWith(".json"));
   const emails = await Promise.all(
     files.map(async (file) =>
       outboxEmail.assert(JSON.parse(await readFile(join(dir, file), "utf8"))),
