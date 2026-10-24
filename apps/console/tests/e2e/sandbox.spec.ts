@@ -33,7 +33,7 @@ test("a new organization issues a simulated invoice without any setup", async ({
   expect(invoice.number).toMatch(/^SIM\d+$/);
   expect(await waitForStatus(organization, invoice.id)).toBe("ACCEPTED");
 
-  await open(page, "/documents?environment=SANDBOX");
+  await open(page, "/documents");
   await expect(page.getByRole("link", { name: invoice.number })).toBeVisible();
   await expect(page.getByText("Simulación").first()).toBeVisible();
 });

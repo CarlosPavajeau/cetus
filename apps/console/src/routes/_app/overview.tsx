@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { BuildingIcon } from "lucide-react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
@@ -34,22 +34,19 @@ import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 
 export const Route = createFileRoute("/_app/overview")({
-  loader: async ({ context: { queryClient } }) => {
-    const [, issuers] = await Promise.all([
+  loader: ({ context: { queryClient } }) =>
+    Promise.all([
       queryClient.ensureQueryData(accountQuery),
       queryClient.ensureQueryData(issuersQuery),
-    ]);
-    // A new organization starts by setting up its issuer; the sandbox sample it gets needs no setup.
-    if (!issuers.some((issuer) => issuer.environment !== "SANDBOX")) {
-      throw redirect({ to: "/setup" });
-    }
-  },
+    ]),
   component: Overview,
 });
 
 function Overview() {
   const { data: account } = useSuspenseQuery(accountQuery);
   const { data: issuers } = useSuspenseQuery(issuersQuery);
+  // A new organization only has the sandbox sample, which needs no setup.
+  const fiscal = issuers.some((issuer) => issuer.environment !== "SANDBOX");
 
   return (
     <>
@@ -57,6 +54,24 @@ function Overview() {
         title={account.name}
         lead={`Plan ${account.plan.toLowerCase()} · cuenta ${account.status.toLowerCase()}`}
       />
+
+      {!fiscal && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Factura con validez fiscal</CardTitle>
+            <CardDescription>
+              Cuando quieras facturar ante la DIAN, configura tu empresa: su NIT, el software
+              registrado en la DIAN, el certificado de firma y la resolución de numeración. El
+              asistente te guía paso a paso.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button variant="outline" render={<Link to="/setup" />} nativeButton={false}>
+              Configurar emisor
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

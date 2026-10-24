@@ -50,6 +50,9 @@ import {
 } from "~/components/ui/sidebar";
 import { accountQuery } from "~/features/account/queries";
 import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
+import { EnvironmentSelect } from "~/features/environment/EnvironmentSelect";
+import { activeEnvironmentQuery } from "~/features/environment/queries";
+import { SandboxBanner } from "~/features/environment/SandboxBanner";
 import { requireSession } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
@@ -57,6 +60,7 @@ import { cn } from "~/lib/utils";
 /** Protected layout: every child route requires a session. */
 export const Route = createFileRoute("/_app")({
   beforeLoad: requireSession,
+  loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(activeEnvironmentQuery),
   component: AppLayout,
 });
 
@@ -169,6 +173,7 @@ function AppLayout() {
       </Sidebar>
       <SidebarInset>
         <ImpersonationBanner />
+        <SandboxBanner />
         <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-10">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
@@ -203,9 +208,10 @@ function AppLayout() {
               )}
             </BreadcrumbList>
           </Breadcrumb>
-          {/* Placeholders until the documentation and help center exist. */}
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" disabled>
+            <EnvironmentSelect />
+            {/* Placeholders until the documentation and help center exist. */}
+            <Button variant="ghost" size="sm" className="max-sm:hidden" disabled>
               <BookOpenIcon data-icon="inline-start" />
               Documentación
               <ArrowUpRightIcon data-icon="inline-end" />
