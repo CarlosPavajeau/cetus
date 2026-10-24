@@ -20,12 +20,15 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldLabel } from "~/components/ui/field";
 import { Spinner } from "~/components/ui/spinner";
 import { auditLogKey } from "~/features/audit-log/queries";
+import { CatalogPicker } from "~/features/catalog/CatalogPicker";
+import { catalogKey } from "~/features/catalog/queries";
+import { toCustomerValues } from "~/features/catalog/schema";
 import { formatMoney } from "~/features/documents/labels";
 import { documentsKey } from "~/features/documents/queries";
 import { issuerName } from "~/features/issuers/labels";
 import { DateField, TextField } from "~/features/setup/fields";
 import { FieldRow, FieldSection } from "~/features/setup/StepLayout";
-import type { DocumentPreview, Environment, Issuer } from "~/lib/api/types";
+import type { Customer, DocumentPreview, Environment, Issuer, Product } from "~/lib/api/types";
 
 import { finalConsumer, identificationTypes, paymentMeans, personTypes } from "./catalogs";
 import { SelectField } from "./fields";
@@ -88,12 +91,17 @@ export function InvoiceForm({
   environment,
   issuers,
   sample,
+  customers,
+  products,
   blockedReason,
 }: {
   environment: Environment;
   /** The issuers that can issue in the environment. */
   issuers: Issuer[];
   sample: boolean;
+  /** The catalog of the environment, to fill in the customer and the lines. */
+  customers: Customer[];
+  products: Product[];
   /** Why the person cannot issue here, if they cannot. */
   blockedReason: string | null;
 }) {
@@ -102,6 +110,7 @@ export function InvoiceForm({
   // One key while the form lives: a double click or a retry issues a single invoice.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [saveCustomer, setSaveCustomer] = useState(false);
   const header = useForm<InvoiceHeaderValues>({
     resolver: arktypeResolver(invoiceHeaderSchema),
     defaultValues: {
@@ -124,6 +133,7 @@ export function InvoiceForm({
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: documentsKey }),
         queryClient.invalidateQueries({ queryKey: auditLogKey }),
+        queryClient.invalidateQueries({ queryKey: catalogKey }),
       ]);
       await navigate({ to: "/documents/$documentId", params: { documentId: result.id } });
     },
@@ -180,7 +190,16 @@ export function InvoiceForm({
       setConfirmation({ header: parsedHeader, lines: parsedLines, total });
       return;
     }
-    issue.mutate({ data: { idempotencyKey, invoice: parsedHeader, lines: parsedLines.lines } });
+    issue.mutate({ data: request(parsedHeader, parsedLines) });
+  }
+
+  function request(invoice: InvoiceHeaderValues, values: LinesFormValues) {
+    return {
+      idempotencyKey,
+      invoice,
+      lines: values.lines,
+      saveCustomer: saveCustomer ? environment : null,
+    };
   }
 
   function fillFinalConsumer() {
@@ -218,7 +237,26 @@ export function InvoiceForm({
       </FieldSection>
 
       <FieldSection title="Cliente">
-        <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          {customers.length > 0 && (
+            <div className="sm:w-80">
+              <CatalogPicker
+                label="Cliente guardado"
+                placeholder="Busca por nombre o documento"
+                empty="No hay clientes con ese nombre."
+                items={customers}
+                itemLabel={(customer) => `${customer.legalName} · ${customer.identificationNumber}`}
+                onPick={(customer) => {
+                  const values = toCustomerValues(customer);
+                  if (values) {
+                    header.setValue("customer", values, {
+                      shouldValidate: header.formState.isSubmitted,
+                    });
+                  }
+                }}
+              />
+            </div>
+          )}
           <Button type="button" variant="outline" size="sm" onClick={fillFinalConsumer}>
             Venta a consumidor final
           </Button>
@@ -292,8 +330,19 @@ export function InvoiceForm({
         </FieldRow>
       </FieldSection>
 
+      <Field orientation="horizontal" className="-mt-4 gap-2">
+        <Checkbox
+          id="save-customer"
+          checked={saveCustomer}
+          onCheckedChange={(checked) => setSaveCustomer(checked)}
+        />
+        <FieldLabel htmlFor="save-customer" className="text-xs font-normal">
+          Guardar este cliente para la próxima factura
+        </FieldLabel>
+      </Field>
+
       <FieldSection title="Productos o servicios">
-        <LinesEditor form={lines} currency="COP" />
+        <LinesEditor form={lines} currency="COP" products={products} />
       </FieldSection>
 
       <FieldSection title="Pago">
@@ -372,13 +421,7 @@ export function InvoiceForm({
               disabled={issue.isPending}
               onClick={() =>
                 confirmation &&
-                issue.mutate({
-                  data: {
-                    idempotencyKey,
-                    invoice: confirmation.header,
-                    lines: confirmation.lines.lines,
-                  },
-                })
+                issue.mutate({ data: request(confirmation.header, confirmation.lines) })
               }
             >
               {issue.isPending && <Spinner data-icon="inline-start" />}

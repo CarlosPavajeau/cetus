@@ -10,6 +10,7 @@ import {
 import {
   ArrowUpRightIcon,
   BookOpenIcon,
+  BookUserIcon,
   BuildingIcon,
   CircleHelpIcon,
   FileTextIcon,
@@ -67,6 +68,7 @@ export const Route = createFileRoute("/_app")({
 const navigation = [
   { to: "/overview", label: "Resumen", icon: LayoutDashboardIcon },
   { to: "/documents", label: "Documentos", icon: FileTextIcon },
+  { to: "/catalog", label: "Catálogo", icon: BookUserIcon },
   { to: "/issuers", label: "Emisores", icon: BuildingIcon },
   {
     to: "/developers/api-keys",

@@ -11,6 +11,7 @@ import { nitCheckDigit } from "./nitCheckDigit";
 export const trimmed = (
   constraint:
     | "string > 0"
+    | "0 < string <= 50"
     | "0 < string <= 300"
     | "0 < string <= 450"
     | "0 < string <= 500"

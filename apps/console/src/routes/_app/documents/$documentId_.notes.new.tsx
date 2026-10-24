@@ -3,6 +3,8 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { PageHeader } from "~/components/PageHeader";
+import { productsQuery } from "~/features/catalog/queries";
+import { toLineValues } from "~/features/catalog/schema";
 import { documentDetailQuery } from "~/features/documents/queries";
 import { NoteForm, type NoteType } from "~/features/issuance/NoteForm";
 import { canIssueLiveQuery } from "~/features/issuance/queries";
@@ -21,6 +23,9 @@ export const Route = createFileRoute("/_app/documents/$documentId_/notes/new")({
       queryClient.ensureQueryData(documentDetailQuery(params.documentId)),
       queryClient.ensureQueryData(canIssueLiveQuery),
     ]);
+    if (invoice) {
+      await queryClient.ensureQueryData(productsQuery(invoice.environment));
+    }
     // Notes only correct accepted invoices.
     if (!invoice || invoice.documentType !== "INVOICE" || invoice.status !== "ACCEPTED") {
       throw notFound();
@@ -39,6 +44,7 @@ function NewNote() {
     throw notFound();
   }
   const blockedReason = useBlockedReason(invoice.environment);
+  const { data: products } = useSuspenseQuery(productsQuery(invoice.environment));
   const noun = noteType === "CREDIT_NOTE" ? "nota crédito" : "nota débito";
 
   return (
@@ -60,6 +66,7 @@ function NewNote() {
         key={noteType}
         invoice={invoice}
         noteType={noteType}
+        products={products.items.filter((product) => toLineValues(product) !== null)}
         blockedReason={blockedReason}
       />
     </div>

@@ -16,7 +16,10 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
+import { CatalogPicker } from "~/features/catalog/CatalogPicker";
+import { toLineValues } from "~/features/catalog/schema";
 import { formatMoney } from "~/features/documents/labels";
+import type { Product } from "~/lib/api/types";
 
 import { taxPresetIds, taxPresets } from "./catalogs";
 import { type LineValues, type LinesFormValues, linesFormSchema } from "./schema";
@@ -50,11 +53,17 @@ function useSettled<T>(value: T, delayMs: number) {
 export function LinesEditor({
   form,
   currency,
+  products,
 }: {
   form: UseFormReturn<LinesFormValues>;
   currency: string;
+  /** The saved products with taxes the form offers. */
+  products: Product[];
 }) {
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: "lines" });
+  const { fields, append, remove, update } = useFieldArray({
+    control: form.control,
+    name: "lines",
+  });
   const lines = useWatch({ control: form.control, name: "lines" });
   const settled = useSettled(lines, 400);
   const valid = linesFormSchema({ lines: settled });
@@ -160,11 +169,35 @@ export function LinesEditor({
         })}
       </ol>
       <FieldError errors={[form.formState.errors.lines?.root ?? form.formState.errors.lines]} />
-      <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <Button type="button" variant="outline" size="sm" onClick={() => append(emptyLine)}>
           <PlusIcon data-icon="inline-start" />
           Agregar línea
         </Button>
+        {products.length > 0 && (
+          <div className="sm:w-80">
+            <CatalogPicker
+              label="Agregar un producto guardado"
+              placeholder="Busca por código o descripción"
+              empty="No hay productos con ese nombre."
+              items={products}
+              itemLabel={(product) => `${product.code} · ${product.description}`}
+              onPick={(product) => {
+                const line = toLineValues(product);
+                if (!line) {
+                  return;
+                }
+                // The blank line a form starts with gives way to the product.
+                const blank = lines.findIndex((item) => !item.description && !item.unitPrice);
+                if (blank === -1) {
+                  append(line);
+                } else {
+                  update(blank, line);
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <dl

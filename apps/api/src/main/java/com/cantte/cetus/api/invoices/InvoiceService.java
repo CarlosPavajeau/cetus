@@ -92,7 +92,8 @@ public class InvoiceService {
                 .toList();
     }
 
-    private static Party toParty(InvoiceRequest.Customer customer) {
+    /** Validates the customer and normalizes it as documents store it, with the NIT check digit computed. */
+    public static Party toParty(InvoiceRequest.Customer customer) {
         if (!customer.identificationNumber().matches(identificationPattern(customer.identificationType()))) {
             throw new DomainException(
                     "customer_identification_invalid",

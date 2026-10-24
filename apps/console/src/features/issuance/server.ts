@@ -3,7 +3,7 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 
 import { CetusApiError, api } from "~/lib/api/client";
-import type { DocumentPreview } from "~/lib/api/types";
+import type { DocumentPreview, Environment, InvoiceRequest } from "~/lib/api/types";
 import { liveIssuerRoles, roleList } from "~/lib/auth/permissions";
 import { auth } from "~/lib/auth/server";
 
@@ -70,19 +70,46 @@ function failure(error: unknown, fallback: string): IssueResult {
 /** Issues an invoice from the console form. The form sends one key while it lives: one invoice per form. */
 export const issueInvoice = createServerFn({ method: "POST" })
   .validator(
-    type({ idempotencyKey: "string.uuid", invoice: invoiceHeaderSchema, lines: linesSchema }),
+    type({
+      idempotencyKey: "string.uuid",
+      invoice: invoiceHeaderSchema,
+      lines: linesSchema,
+      saveCustomer: type("'SANDBOX' | 'TEST' | 'LIVE'").or("null"),
+    }),
   )
   .handler(async ({ data }): Promise<IssueResult> => {
+    const request = toInvoiceRequest(data.invoice, data.lines);
+    let issued: IssueResult;
     try {
-      const issued = await api.post("/console/documents/invoices", {
-        params: { header: { "Idempotency-Key": data.idempotencyKey } },
-        body: toInvoiceRequest(data.invoice, data.lines),
-      });
-      return { ok: true, ...issued };
+      issued = {
+        ok: true,
+        ...(await api.post("/console/documents/invoices", {
+          params: { header: { "Idempotency-Key": data.idempotencyKey } },
+          body: request,
+        })),
+      };
     } catch (error) {
       return failure(error, "No pudimos emitir la factura. Inténtalo de nuevo en unos minutos.");
     }
+    if (data.saveCustomer) {
+      await saveCustomer(data.saveCustomer, request.customer);
+    }
+    return issued;
   });
+
+/**
+ * Keeps the invoice's customer in the catalog of its environment. One already saved with that document is
+ * left as it is: the invoice is issued either way, so the catalog never fails it.
+ */
+async function saveCustomer(environment: Environment, customer: InvoiceRequest["customer"]) {
+  try {
+    await api.post("/console/customers", { params: { query: { environment } }, body: customer });
+  } catch (error) {
+    if (!(error instanceof CetusApiError && error.code === "customer_exists")) {
+      console.error("Invoice issued but its customer not saved", { environment, error });
+    }
+  }
+}
 
 const creditNoteConcept = type(
   "'PARTIAL_RETURN' | 'CANCELLATION' | 'REBATE' | 'PRICE_ADJUSTMENT' | 'EARLY_PAYMENT_DISCOUNT' | 'VOLUME_DISCOUNT'",
