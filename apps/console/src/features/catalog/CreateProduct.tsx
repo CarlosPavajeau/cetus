@@ -47,7 +47,12 @@ export function CreateProduct({ environment }: { environment: Environment }) {
       setOpen(false);
     },
   });
-  const failure = create.data && !create.data.ok ? create.data : null;
+  const failure =
+    create.data && !create.data.ok
+      ? create.data.message
+      : create.error
+        ? "No pudimos comunicarnos con Cetus. Revisa tu conexión e inténtalo de nuevo."
+        : null;
 
   return (
     <Dialog
@@ -95,7 +100,7 @@ export function CreateProduct({ environment }: { environment: Environment }) {
           <SelectField control={form.control} name="tax" label="Impuesto" items={taxItems} />
           {failure && (
             <Alert variant="destructive">
-              <AlertDescription>{failure.message}</AlertDescription>
+              <AlertDescription>{failure}</AlertDescription>
             </Alert>
           )}
           <DialogFooter>
