@@ -11,7 +11,7 @@ export default defineConfig({
       },
       {
         extends: true,
-        // Integration tests: they call the running stack (`make dev-mock`) over HTTP, without mocks.
+        // Integration tests: they call the running stack (`mise run dev-mock`) over HTTP, without mocks.
         test: {
           name: "integration",
           include: ["tests/integration/**/*.test.ts"],

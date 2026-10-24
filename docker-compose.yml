@@ -1,5 +1,5 @@
 # Local development: Postgres (both schemas) + LocalStack (KMS and S3).
-# The apps run on the host: make dev (scripts/dev.sh) starts these containers and every app in one terminal.
+# The apps run on the host: mise run dev (scripts/dev.sh) starts these containers and every app in one terminal.
 services:
   postgres:
     image: postgres:18

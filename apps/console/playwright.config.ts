@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 import { consoleUrl } from "./tests/support/stack";
 
-// End-to-end tests: a real browser against the running stack (`make dev-mock`).
+// End-to-end tests: a real browser against the running stack (`mise run dev-mock`).
 export default defineConfig({
   testDir: "tests/e2e",
   globalSetup: "./tests/support/global-setup.ts",
