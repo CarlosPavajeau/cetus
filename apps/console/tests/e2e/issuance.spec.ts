@@ -157,3 +157,18 @@ test("an accepted invoice is emailed again at most once a minute", async ({
     dialog.getByText("Acabamos de enviarlo. Espera un minuto antes de reenviarlo."),
   ).toBeVisible();
 });
+
+test("the customer's location is optional as a whole", async ({ page, organization: _ }) => {
+  // The first sandbox invoice comes with Bogotá and an address.
+  await open(page, "/documents/new");
+  await page.getByLabel("Dirección (opcional)").fill("");
+  await page.getByRole("button", { name: "Emitir factura" }).click();
+  await expect(
+    page.getByText("Escribe la dirección, o quita el municipio para no indicar ubicación."),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Quitar el municipio" }).click();
+  await expect(page.getByLabel("Municipio (opcional)")).toHaveValue("");
+  await page.getByRole("button", { name: "Emitir factura" }).click();
+  await expect(page.getByRole("heading", { name: /^Factura SIM\d+$/ })).toBeVisible();
+});

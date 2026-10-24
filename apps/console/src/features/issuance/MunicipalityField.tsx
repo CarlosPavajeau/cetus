@@ -56,7 +56,7 @@ export function MunicipalityField({ form }: { form: UseFormReturn<InvoiceHeaderV
   return (
     <Field data-invalid={fieldState.invalid} className="gap-1.75">
       <FieldLabel htmlFor={id} className="text-xs">
-        Municipio
+        Municipio (opcional)
       </FieldLabel>
       <Combobox
         items={places}
@@ -71,6 +71,9 @@ export function MunicipalityField({ form }: { form: UseFormReturn<InvoiceHeaderV
           className="w-full"
           aria-invalid={fieldState.invalid}
           onBlur={field.onBlur}
+          // Without it a picked municipality could not be removed, and the address would stay required.
+          showClear={selected !== null}
+          clearLabel="Quitar el municipio"
         />
         <ComboboxContent>
           <ComboboxEmpty>No hay municipios con ese nombre.</ComboboxEmpty>
