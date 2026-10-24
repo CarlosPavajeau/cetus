@@ -8,8 +8,8 @@ import java.util.Optional;
  *
  * @param operationCode "100" when the query succeeded; anything else comes with a description of why not
  */
-public record NumberingRangeResponse(String operationCode, String operationDescription, List<Range> ranges,
-                                     String rawXml) {
+public record NumberingRangeResponse(
+        String operationCode, String operationDescription, List<Range> ranges, String rawXml) {
 
     public boolean succeeded() {
         return "100".equals(operationCode);
@@ -25,7 +25,13 @@ public record NumberingRangeResponse(String operationCode, String operationDescr
     }
 
     /** Dates come as the DIAN sends them (yyyy-MM-dd). */
-    public record Range(String resolutionNumber, String resolutionDate, String prefix, Long fromNumber,
-                        Long toNumber, String validDateFrom, String validDateTo, String technicalKey) {
-    }
+    public record Range(
+            String resolutionNumber,
+            String resolutionDate,
+            String prefix,
+            Long fromNumber,
+            Long toNumber,
+            String validDateFrom,
+            String validDateTo,
+            String technicalKey) {}
 }

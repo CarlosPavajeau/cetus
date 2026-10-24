@@ -1,5 +1,7 @@
 package com.cantte.cetus.ubl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.domain.dian.Cufe;
 import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
@@ -11,21 +13,18 @@ import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
 import com.cantte.cetus.ubl.model.Ns;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
-import javax.xml.crypto.dsig.XMLSignature;
-import javax.xml.crypto.dsig.XMLSignatureFactory;
-import javax.xml.crypto.dsig.dom.DOMValidateContext;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.xml.crypto.dsig.XMLSignature;
+import javax.xml.crypto.dsig.XMLSignatureFactory;
+import javax.xml.crypto.dsig.dom.DOMValidateContext;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 class CreditNoteUblMapperTest {
 
@@ -36,11 +35,28 @@ class CreditNoteUblMapperTest {
 
         assertThat(root.getLocalName()).isEqualTo("CreditNote");
         assertThat(root.getNamespaceURI()).isEqualTo(Ns.CREDIT_NOTE);
-        assertThat(childNames(root)).containsSubsequence(
-                "UBLExtensions", "UBLVersionID", "CustomizationID", "ProfileID", "ProfileExecutionID", "ID", "UUID",
-                "IssueDate", "IssueTime", "CreditNoteTypeCode", "DocumentCurrencyCode", "LineCountNumeric",
-                "DiscrepancyResponse", "BillingReference", "AccountingSupplierParty", "AccountingCustomerParty",
-                "PaymentMeans", "TaxTotal", "LegalMonetaryTotal", "CreditNoteLine");
+        assertThat(childNames(root))
+                .containsSubsequence(
+                        "UBLExtensions",
+                        "UBLVersionID",
+                        "CustomizationID",
+                        "ProfileID",
+                        "ProfileExecutionID",
+                        "ID",
+                        "UUID",
+                        "IssueDate",
+                        "IssueTime",
+                        "CreditNoteTypeCode",
+                        "DocumentCurrencyCode",
+                        "LineCountNumeric",
+                        "DiscrepancyResponse",
+                        "BillingReference",
+                        "AccountingSupplierParty",
+                        "AccountingCustomerParty",
+                        "PaymentMeans",
+                        "TaxTotal",
+                        "LegalMonetaryTotal",
+                        "CreditNoteLine");
         assertThat(childNames(root)).doesNotContain("DueDate");
     }
 
@@ -66,24 +82,31 @@ class CreditNoteUblMapperTest {
         assertThat(text(discrepancy, Ns.CBC, "Description")).isEqualTo("Anulación de factura electrónica");
         assertThat(text(doc.getDocumentElement(), Ns.CBC, "Note")).isEqualTo("Anulación por error en el valor");
 
-        Element reference = (Element) doc.getElementsByTagNameNS(Ns.CAC, "InvoiceDocumentReference").item(0);
+        Element reference = (Element)
+                doc.getElementsByTagNameNS(Ns.CAC, "InvoiceDocumentReference").item(0);
         assertThat(text(reference, Ns.CBC, "ID")).isEqualTo("SETP990000001");
-        Element cufe = (Element) reference.getElementsByTagNameNS(Ns.CBC, "UUID").item(0);
+        Element cufe =
+                (Element) reference.getElementsByTagNameNS(Ns.CBC, "UUID").item(0);
         assertThat(cufe.getAttribute("schemeName")).isEqualTo("CUFE-SHA384");
         assertThat(cufe.getTextContent()).isEqualTo(note.reference().cufe());
         assertThat(text(reference, Ns.CBC, "IssueDate")).isEqualTo("2026-10-17");
 
-        assertThat(doc.getElementsByTagNameNS(Ns.STS, "InvoiceControl").getLength()).isZero();
-        assertThat(doc.getElementsByTagNameNS(Ns.CBC, "CreditedQuantity").getLength()).isEqualTo(1);
-        assertThat(doc.getElementsByTagNameNS(Ns.CBC, "InvoicedQuantity").getLength()).isZero();
+        assertThat(doc.getElementsByTagNameNS(Ns.STS, "InvoiceControl").getLength())
+                .isZero();
+        assertThat(doc.getElementsByTagNameNS(Ns.CBC, "CreditedQuantity").getLength())
+                .isEqualTo(1);
+        assertThat(doc.getElementsByTagNameNS(Ns.CBC, "InvoicedQuantity").getLength())
+                .isZero();
     }
 
     @Test
     void theSupplierCarriesTheNotePrefix() {
         Document doc = new UblMarshaller().toDocument(new CreditNoteUblMapper().map(sampleCreditNote()));
 
-        Element supplier = (Element) doc.getElementsByTagNameNS(Ns.CAC, "AccountingSupplierParty").item(0);
-        Element scheme = (Element) supplier.getElementsByTagNameNS(Ns.CAC, "CorporateRegistrationScheme").item(0);
+        Element supplier = (Element)
+                doc.getElementsByTagNameNS(Ns.CAC, "AccountingSupplierParty").item(0);
+        Element scheme = (Element) supplier.getElementsByTagNameNS(Ns.CAC, "CorporateRegistrationScheme")
+                .item(0);
         assertThat(text(scheme, Ns.CBC, "ID")).isEqualTo("NC");
     }
 
@@ -99,25 +122,51 @@ class CreditNoteUblMapperTest {
 
         byte[] serialized = XmlSupport.serialize(doc);
         assertThat(new String(serialized, StandardCharsets.UTF_8))
-                .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><CreditNote xmlns=\"" + Ns.CREDIT_NOTE + "\"");
+                .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><CreditNote xmlns=\""
+                        + Ns.CREDIT_NOTE + "\"");
         Document received = XmlSupport.parse(serialized);
-        Element signature = (Element) received.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").item(0);
+        Element signature = (Element)
+                received.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").item(0);
         DOMValidateContext context = new DOMValidateContext(keys.certificate().getPublicKey(), signature);
-        context.setIdAttributeNS((Element) received.getElementsByTagNameNS(XadesSigner.XADES_NS, "SignedProperties").item(0), null, "Id");
-        context.setIdAttributeNS((Element) received.getElementsByTagNameNS(XMLSignature.XMLNS, "KeyInfo").item(0), null, "Id");
-        assertThat(XMLSignatureFactory.getInstance("DOM").unmarshalXMLSignature(context).validate(context)).isTrue();
+        context.setIdAttributeNS(
+                (Element) received.getElementsByTagNameNS(XadesSigner.XADES_NS, "SignedProperties")
+                        .item(0),
+                null,
+                "Id");
+        context.setIdAttributeNS(
+                (Element) received.getElementsByTagNameNS(XMLSignature.XMLNS, "KeyInfo")
+                        .item(0),
+                null,
+                "Id");
+        assertThat(XMLSignatureFactory.getInstance("DOM")
+                        .unmarshalXMLSignature(context)
+                        .validate(context))
+                .isTrue();
     }
 
     static ElectronicCreditNote sampleCreditNote() {
         ElectronicInvoice invoice = InvoiceUblMapperTest.sampleInvoice();
         LocalDate date = LocalDate.of(2026, 10, 18);
         LocalTime time = LocalTime.of(9, 15);
-        String cude = Cufe.compute(new Cufe.Input("NC1", date, time, invoice.calculation(), "900123456",
-                "1020304050", "12345", Environment.TEST));
-        return new ElectronicCreditNote(Environment.TEST, "NC", 1, date, time, "COP", invoice.supplier(),
-                invoice.customer(), invoice.payment(), invoice.calculation(),
+        String cude = Cufe.compute(new Cufe.Input(
+                "NC1", date, time, invoice.calculation(), "900123456", "1020304050", "12345", Environment.TEST));
+        return new ElectronicCreditNote(
+                Environment.TEST,
+                "NC",
+                1,
+                date,
+                time,
+                "COP",
+                invoice.supplier(),
+                invoice.customer(),
+                invoice.payment(),
+                invoice.calculation(),
                 new BillingReference(invoice.fullNumber(), invoice.cufe(), invoice.issueDate()),
-                CreditNoteConcept.CANCELLATION, "Anulación por error en el valor", invoice.software(), cude, "qr",
+                CreditNoteConcept.CANCELLATION,
+                "Anulación por error en el valor",
+                invoice.software(),
+                cude,
+                "qr",
                 List.of());
     }
 
@@ -133,7 +182,8 @@ class CreditNoteUblMapperTest {
 
     private static Element directChild(Element parent, String ns, String name) {
         for (Node node = parent.getFirstChild(); node != null; node = node.getNextSibling()) {
-            if (node instanceof Element element && ns.equals(element.getNamespaceURI())
+            if (node instanceof Element element
+                    && ns.equals(element.getNamespaceURI())
                     && name.equals(element.getLocalName())) {
                 return element;
             }

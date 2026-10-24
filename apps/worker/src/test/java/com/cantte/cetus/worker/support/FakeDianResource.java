@@ -1,7 +1,6 @@
 package com.cantte.cetus.worker.support;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
@@ -17,13 +16,14 @@ public class FakeDianResource implements QuarkusTestResourceLifecycleManager {
     public Map<String, String> start() {
         int port = freePort();
         return Map.of(
-                "fake-dian.port", String.valueOf(port),
-                "cetus.dian.test-url", "http://localhost:" + port + "/WcfDianCustomerServices.svc");
+                "fake-dian.port",
+                String.valueOf(port),
+                "cetus.dian.test-url",
+                "http://localhost:" + port + "/WcfDianCustomerServices.svc");
     }
 
     @Override
-    public void stop() {
-    }
+    public void stop() {}
 
     private static int freePort() {
         try (ServerSocket socket = new ServerSocket(0)) {

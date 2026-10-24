@@ -9,6 +9,5 @@ public final class PlatformRoles {
     public static final String ADMIN = "admin";
     public static final String SUPPORT = "support";
 
-    private PlatformRoles() {
-    }
+    private PlatformRoles() {}
 }

@@ -10,7 +10,6 @@ import com.cantte.cetus.webhooks.WebhookPublisher.DeliveryInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -81,7 +80,9 @@ public class DeliveryRecorder {
 
     /** Tells the integrator to deliver the document by its own means. */
     private void publishFailure(DocumentDeliveryEntity delivery) {
-        webhooks.publish(WebhookEventType.DOCUMENT_DELIVERY_FAILED, DocumentEntity.findById(delivery.documentId),
+        webhooks.publish(
+                WebhookEventType.DOCUMENT_DELIVERY_FAILED,
+                DocumentEntity.findById(delivery.documentId),
                 new DeliveryInfo(delivery.status.name(), delivery.recipient, delivery.error));
     }
 

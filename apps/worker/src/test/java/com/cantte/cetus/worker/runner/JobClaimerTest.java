@@ -1,19 +1,18 @@
 package com.cantte.cetus.worker.runner;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.jobs.JobClaimer;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class JobClaimerTest {
@@ -33,12 +32,15 @@ class JobClaimerTest {
             pending(ignored, 90 - i);
         }
 
-        List<JobEntity> claimed = claimer.claim("worker-test", Map.of(a, 2, b, 5, "UNUSED", 0), 4, Duration.ofMinutes(5));
+        List<JobEntity> claimed =
+                claimer.claim("worker-test", Map.of(a, 2, b, 5, "UNUSED", 0), 4, Duration.ofMinutes(5));
 
         assertThat(claimed).extracting(job -> job.jobType).containsExactlyInAnyOrder(a, a, b, b);
         assertThat(claimed).allMatch(job -> "RUNNING".equals(job.status) && "worker-test".equals(job.lockedBy));
-        assertThat(claimer.claim("worker-test", Map.of(a, 5), 10, Duration.ofMinutes(5))).hasSize(3);
-        assertThat(claimer.claim("worker-test", Map.of(), 10, Duration.ofMinutes(5))).isEmpty();
+        assertThat(claimer.claim("worker-test", Map.of(a, 5), 10, Duration.ofMinutes(5)))
+                .hasSize(3);
+        assertThat(claimer.claim("worker-test", Map.of(), 10, Duration.ofMinutes(5)))
+                .isEmpty();
     }
 
     private static void pending(String type, int secondsAgo) {

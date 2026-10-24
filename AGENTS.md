@@ -77,8 +77,12 @@ mise exec -- ./gradlew build
 mise exec -- ./gradlew :modules:domain:test
 mise exec -- ./gradlew :apps:api:test --tests '*InvoiceResourceTest'
 
-# Console format, checks (lint, format, types) and tests
+# Format Java (palantir-java-format) and the console (oxfmt); fmt-check only checks
 mise run fmt
+mise run fmt-check
+mise exec -- ./gradlew :modules:domain:spotlessApply
+
+# Console checks (lint, format, types) and tests
 mise exec -- pnpm --filter @cetus/console check
 mise exec -- pnpm --filter @cetus/console typecheck
 mise run test-console  # needs `mise run dev-mock` running

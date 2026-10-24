@@ -36,7 +36,6 @@ import com.cantte.cetus.webhooks.WebhookSignature;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -57,11 +56,12 @@ import java.util.concurrent.ThreadLocalRandom;
 @ApplicationScoped
 public class WorkerFixtures {
 
-    private static final Address ADDRESS = new Address("11001", "Bogotá, D.C.", "11", "Bogotá", "110111",
-            "Calle 100 # 10-20", "CO", "Colombia");
+    private static final Address ADDRESS =
+            new Address("11001", "Bogotá, D.C.", "11", "Bogotá", "110111", "Calle 100 # 10-20", "CO", "Colombia");
 
     @Inject
     DocumentStorage storage;
+
     @Inject
     SecretCipher cipher;
 
@@ -138,8 +138,11 @@ public class WorkerFixtures {
      * where the worker looks for it.
      */
     public UUID sandboxInvoice(String customerId) {
-        storage.put("certificates/sandbox/cetus-sandbox.p12.sealed", cipher.seal(testSigner()), "application/octet-stream");
-        storage.put("certificates/sandbox/cetus-sandbox.password.sealed", cipher.sealText("cetus-test"),
+        storage.put(
+                "certificates/sandbox/cetus-sandbox.p12.sealed", cipher.seal(testSigner()), "application/octet-stream");
+        storage.put(
+                "certificates/sandbox/cetus-sandbox.password.sealed",
+                cipher.sealText("cetus-test"),
                 "application/octet-stream");
         return QuarkusTransaction.requiringNew().call(() -> {
             AccountEntity account = new AccountEntity();
@@ -186,10 +189,12 @@ public class WorkerFixtures {
     /** Another SANDBOX invoice of the account, from the issuer and range {@link #sandboxInvoice} created. */
     public UUID sandboxInvoiceFor(UUID accountId) {
         return QuarkusTransaction.requiringNew().call(() -> {
-            IssuerEntity issuer = IssuerEntity.<IssuerEntity>find("accountId = ?1 and environment = ?2", accountId,
-                    Environment.SANDBOX).singleResult();
-            NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("issuerId = ?1 and documentType = ?2",
-                    issuer.id, DocumentType.INVOICE).singleResult();
+            IssuerEntity issuer = IssuerEntity.<IssuerEntity>find(
+                            "accountId = ?1 and environment = ?2", accountId, Environment.SANDBOX)
+                    .singleResult();
+            NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find(
+                            "issuerId = ?1 and documentType = ?2", issuer.id, DocumentType.INVOICE)
+                    .singleResult();
             return document(accountId, issuer.id, range, DocumentType.INVOICE, Environment.SANDBOX, "900108281").id;
         });
     }
@@ -199,14 +204,17 @@ public class WorkerFixtures {
      * numbered in its own NC range without resolution or technical key. Returns the note id.
      */
     public UUID creditNote(UUID invoiceId) {
-        return note(invoiceId, DocumentType.CREDIT_NOTE, "NC", CreditNoteConcept.CANCELLATION.name(),
+        return note(
+                invoiceId,
+                DocumentType.CREDIT_NOTE,
+                "NC",
+                CreditNoteConcept.CANCELLATION.name(),
                 "Anulación por error en el valor");
     }
 
     /** Like {@link #creditNote}, but a debit note charging interest, numbered in its own ND range. */
     public UUID debitNote(UUID invoiceId) {
-        return note(invoiceId, DocumentType.DEBIT_NOTE, "ND", DebitNoteConcept.INTEREST.name(),
-                "Intereses de mora");
+        return note(invoiceId, DocumentType.DEBIT_NOTE, "ND", DebitNoteConcept.INTEREST.name(), "Intereses de mora");
     }
 
     private UUID note(UUID invoiceId, DocumentType type, String prefix, String concept, String description) {
@@ -226,7 +234,12 @@ public class WorkerFixtures {
             range.nextNumber = ThreadLocalRandom.current().nextLong(1, 99999999);
             range.persist();
 
-            DocumentEntity note = document(invoice.accountId, invoice.issuerId, range, type, invoice.environment,
+            DocumentEntity note = document(
+                    invoice.accountId,
+                    invoice.issuerId,
+                    range,
+                    type,
+                    invoice.environment,
                     invoice.customer.identificationNumber());
             note.referencedDocumentId = invoice.id;
             note.correctionConcept = concept;
@@ -236,8 +249,7 @@ public class WorkerFixtures {
     }
 
     /** A webhook endpoint registered as the console does it, with its secret in clear for the test. */
-    public record Endpoint(UUID id, String secret) {
-    }
+    public record Endpoint(UUID id, String secret) {}
 
     /** Registers an active endpoint for the document's account; no event types means all of them. */
     public Endpoint webhookEndpoint(UUID documentId, Environment environment, String url, String... eventTypes) {
@@ -258,19 +270,35 @@ public class WorkerFixtures {
 
     /** The calculation of every seeded document. */
     public static CalculationResult calculation() {
-        return new InvoiceCalculator().calculate(List.of(
-                new LineInput("SKU-1", "Servicio de consultoría", new BigDecimal("1"), "94", new BigDecimal("100000"),
-                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
-                new LineInput("SKU-2", "Libro", new BigDecimal("2"), "94", new BigDecimal("50"),
-                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("5"))))));
+        return new InvoiceCalculator()
+                .calculate(List.of(
+                        new LineInput(
+                                "SKU-1",
+                                "Servicio de consultoría",
+                                new BigDecimal("1"),
+                                "94",
+                                new BigDecimal("100000"),
+                                List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
+                        new LineInput(
+                                "SKU-2",
+                                "Libro",
+                                new BigDecimal("2"),
+                                "94",
+                                new BigDecimal("50"),
+                                List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("5"))))));
     }
 
     /** Points the account's categories to these addresses, verified (null leaves a category without contact). */
     public void contacts(UUID accountId, String technical, String fiscal, String billing) {
         QuarkusTransaction.requiringNew().run(() -> {
-            for (var entry : Map.of(AccountContactEntity.Category.TECHNICAL, Optional.ofNullable(technical),
-                    AccountContactEntity.Category.FISCAL, Optional.ofNullable(fiscal),
-                    AccountContactEntity.Category.BILLING, Optional.ofNullable(billing)).entrySet()) {
+            for (var entry : Map.of(
+                            AccountContactEntity.Category.TECHNICAL,
+                            Optional.ofNullable(technical),
+                            AccountContactEntity.Category.FISCAL,
+                            Optional.ofNullable(fiscal),
+                            AccountContactEntity.Category.BILLING,
+                            Optional.ofNullable(billing))
+                    .entrySet()) {
                 entry.getValue().ifPresent(email -> {
                     AccountContactEntity contact = new AccountContactEntity();
                     contact.id = Ids.newId();
@@ -286,8 +314,10 @@ public class WorkerFixtures {
 
     /** The SEND_NOTIFICATION job of a notice, as the claimer hands it over. */
     public JobEntity notificationJob(UUID notificationId) {
-        return QuarkusTransaction.requiringNew().call(() -> JobEntity.<JobEntity>find("jobType = ?1 and referenceId = ?2",
-                JobTypes.SEND_NOTIFICATION, notificationId).singleResult());
+        return QuarkusTransaction.requiringNew()
+                .call(() -> JobEntity.<JobEntity>find(
+                                "jobType = ?1 and referenceId = ?2", JobTypes.SEND_NOTIFICATION, notificationId)
+                        .singleResult());
     }
 
     /** A job for the document as the claimer hands it over: RUNNING, on the given attempt. */
@@ -324,8 +354,13 @@ public class WorkerFixtures {
         });
     }
 
-    private static DocumentEntity document(UUID accountId, UUID issuerId, NumberingRangeEntity range, DocumentType type,
-                                           Environment environment, String customerId) {
+    private static DocumentEntity document(
+            UUID accountId,
+            UUID issuerId,
+            NumberingRangeEntity range,
+            DocumentType type,
+            Environment environment,
+            String customerId) {
         CalculationResult calculation = calculation();
 
         DocumentEntity doc = new DocumentEntity();
@@ -339,9 +374,19 @@ public class WorkerFixtures {
         doc.number = range.take();
         doc.issueDate = LocalDate.now();
         doc.issueTime = LocalTime.of(10, 30);
-        doc.customer = new Party(PersonType.LEGAL_ENTITY, IdentificationType.NIT, customerId, "3",
-                "OPTICAS GMO COLOMBIA S A S", null, List.of("R-99-PN"), "01", "IVA", ADDRESS,
-                "compras@example.com", null);
+        doc.customer = new Party(
+                PersonType.LEGAL_ENTITY,
+                IdentificationType.NIT,
+                customerId,
+                "3",
+                "OPTICAS GMO COLOMBIA S A S",
+                null,
+                List.of("R-99-PN"),
+                "01",
+                "IVA",
+                ADDRESS,
+                "compras@example.com",
+                null);
         doc.payment = new PaymentInfo("1", "10", null);
         doc.lineExtensionAmount = calculation.totals().lineExtensionAmount();
         doc.taxExclusiveAmount = calculation.totals().taxExclusiveAmount();

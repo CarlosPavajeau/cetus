@@ -12,7 +12,6 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -31,6 +30,7 @@ public class ApiKeyFilter implements ContainerRequestFilter {
 
     @Inject
     ApiPrincipal principal;
+
     @Inject
     ApiKeyRateLimiter rateLimiter;
 
@@ -69,8 +69,8 @@ public class ApiKeyFilter implements ContainerRequestFilter {
         Optional<Duration> wait = rateLimiter.acquire(key.id, key.environment);
         if (wait.isPresent()) {
             long seconds = Math.max(1, (long) Math.ceil(wait.get().toMillis() / 1000.0));
-            request.abortWith(ProblemDetail.builder(429, "rate_limited",
-                            "Too many requests for this API key; retry in " + seconds + " s")
+            request.abortWith(ProblemDetail.builder(
+                            429, "rate_limited", "Too many requests for this API key; retry in " + seconds + " s")
                     .header("Retry-After", seconds)
                     .build());
             return;
@@ -86,6 +86,5 @@ public class ApiKeyFilter implements ContainerRequestFilter {
         request.abortWith(ProblemDetail.response(status.getStatusCode(), code, message));
     }
 
-    private record Resolved(ApiKeyEntity key, String accountStatus) {
-    }
+    private record Resolved(ApiKeyEntity key, String accountStatus) {}
 }

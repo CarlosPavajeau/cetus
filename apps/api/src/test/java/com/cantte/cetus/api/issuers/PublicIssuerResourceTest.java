@@ -1,17 +1,16 @@
 package com.cantte.cetus.api.issuers;
 
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.api.support.ConsoleFixtures;
 import com.cantte.cetus.api.support.ConsoleUser;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import io.restassured.specification.RequestSpecification;
-import org.junit.jupiter.api.Test;
-
 import java.util.Map;
 import java.util.UUID;
-
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class PublicIssuerResourceTest {
@@ -27,14 +26,26 @@ class PublicIssuerResourceTest {
         ConsoleFixtures.bootstrap(other, "Other SAS");
         String foreign = ConsoleFixtures.createIssuer(other);
 
-        JsonPath test = api(key(user, "TEST")).get("/v1/issuers").then().statusCode(200).extract().jsonPath();
+        JsonPath test = api(key(user, "TEST"))
+                .get("/v1/issuers")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
         assertThat(test.getList("id", String.class)).containsExactlyInAnyOrder(ready, pending);
-        assertThat(test.getBoolean("find { it.id == '" + ready + "' }.readyToIssue")).isTrue();
+        assertThat(test.getBoolean("find { it.id == '" + ready + "' }.readyToIssue"))
+                .isTrue();
         assertThat(test.getString("find { it.id == '" + ready + "' }.status")).isEqualTo("TESTING");
-        assertThat(test.getBoolean("find { it.id == '" + pending + "' }.readyToIssue")).isFalse();
+        assertThat(test.getBoolean("find { it.id == '" + pending + "' }.readyToIssue"))
+                .isFalse();
 
         // A production key sees only production issuers.
-        JsonPath live = api(key(user, "LIVE")).get("/v1/issuers").then().statusCode(200).extract().jsonPath();
+        JsonPath live = api(key(user, "LIVE"))
+                .get("/v1/issuers")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
         assertThat(live.getList("id")).isEmpty();
 
         api(key(user, "TEST")).get("/v1/issuers/" + ready).then().statusCode(200);
@@ -49,9 +60,13 @@ class PublicIssuerResourceTest {
     }
 
     private static String key(ConsoleUser user, String environment) {
-        return user.request().body(Map.of("name", "ERP " + environment, "environment", environment))
+        return user.request()
+                .body(Map.of("name", "ERP " + environment, "environment", environment))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
     }
 
     private static RequestSpecification api(String apiKey) {

@@ -7,11 +7,10 @@ import com.cantte.cetus.email.ResendEmailSender;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import java.time.Duration;
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * Email delivery settings. The API key and the senders only come from the environment (RESEND_API_KEY,
@@ -31,16 +30,18 @@ public class EmailClients {
     private final Duration rateLimitDelay;
 
     /** {@code cetus.email.resend.base-url} only changes in tests, to point the SDK at a fake. */
-    public EmailClients(@ConfigProperty(name = "cetus.email.resend.api-key") Optional<String> apiKey,
-                        @ConfigProperty(name = "cetus.email.resend.base-url") String baseUrl,
-                        @ConfigProperty(name = "cetus.email.connect-timeout") Duration connectTimeout,
-                        @ConfigProperty(name = "cetus.email.read-timeout") Duration readTimeout,
-                        @ConfigProperty(name = "cetus.email.from") Optional<String> from,
-                        @ConfigProperty(name = "cetus.notifications.from") Optional<String> notificationsFrom,
-                        @ConfigProperty(name = "cetus.email.test-recipient") Optional<String> testRecipient,
-                        @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay) {
+    public EmailClients(
+            @ConfigProperty(name = "cetus.email.resend.api-key") Optional<String> apiKey,
+            @ConfigProperty(name = "cetus.email.resend.base-url") String baseUrl,
+            @ConfigProperty(name = "cetus.email.connect-timeout") Duration connectTimeout,
+            @ConfigProperty(name = "cetus.email.read-timeout") Duration readTimeout,
+            @ConfigProperty(name = "cetus.email.from") Optional<String> from,
+            @ConfigProperty(name = "cetus.notifications.from") Optional<String> notificationsFrom,
+            @ConfigProperty(name = "cetus.email.test-recipient") Optional<String> testRecipient,
+            @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay) {
         this.client = apiKey.filter(key -> !key.isBlank()).isPresent()
-                ? new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout) : null;
+                ? new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout)
+                : null;
         this.from = from.filter(f -> !f.isBlank()).orElse(null);
         this.notificationsFrom = notificationsFrom.filter(f -> !f.isBlank()).orElse(this.from);
         this.testRecipient = testRecipient.filter(recipient -> !recipient.isBlank());

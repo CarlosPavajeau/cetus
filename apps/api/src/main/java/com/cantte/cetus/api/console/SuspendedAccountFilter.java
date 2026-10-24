@@ -10,9 +10,8 @@ import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
-import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import java.util.Set;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
  * A suspended (or closed) account keeps reading its console: documents, files and activity. Every change
@@ -43,8 +42,10 @@ public class SuspendedAccountFilter implements ContainerRequestFilter {
         if (organizationId == null || organizationId.isBlank()) {
             return;
         }
-        String status = QuarkusTransaction.requiringNew().call(() -> AccountEntity.findByOrganization(organizationId)
-                .map(account -> account.status).orElse(null));
+        String status = QuarkusTransaction.requiringNew()
+                .call(() -> AccountEntity.findByOrganization(organizationId)
+                        .map(account -> account.status)
+                        .orElse(null));
         if (status != null && !"ACTIVE".equals(status)) {
             request.abortWith(ProblemDetail.response(403, "account_suspended", "This account is suspended"));
         }

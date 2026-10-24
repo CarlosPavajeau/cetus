@@ -14,17 +14,16 @@ import com.cantte.cetus.worker.support.WebhookDeliveryRecorder;
 import com.cantte.cetus.worker.support.WebhookDeliveryRecorder.Target;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Optional;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * POSTs a webhook event to one endpoint, signed with the endpoint's secret (Standard Webhooks). Any answer
@@ -40,6 +39,7 @@ public class DeliverWebhookHandler implements JobHandler {
 
     @Inject
     WebhookDeliveryRecorder deliveries;
+
     @Inject
     WebhookClients clients;
 
@@ -55,11 +55,13 @@ public class DeliverWebhookHandler implements JobHandler {
             return;
         }
         Target target = loaded.get();
-        if (target.endpointStatus() == WebhookEndpointEntity.Status.DISABLED && deliveries.canceled(target.deliveryId())) {
+        if (target.endpointStatus() == WebhookEndpointEntity.Status.DISABLED
+                && deliveries.canceled(target.deliveryId())) {
             return;
         }
         // Literal addresses never reach the client's DNS lookup, so they are checked here.
-        Optional<String> problem = WebhookTargets.problem(target.url(), target.environment(), clients.allowPrivateTargets());
+        Optional<String> problem =
+                WebhookTargets.problem(target.url(), target.environment(), clients.allowPrivateTargets());
         if (problem.isPresent()) {
             deliveries.attemptFailed(target.deliveryId(), null, null, problem.get());
             throw new GiveUp(problem.get(), null);
@@ -67,8 +69,8 @@ public class DeliverWebhookHandler implements JobHandler {
 
         long timestamp = Instant.now().getEpochSecond();
         String messageId = target.eventId().toString();
-        String signature = WebhookSignature.sign(clients.secret(target.endpointId(), target.secretSealed()),
-                messageId, timestamp, target.payload());
+        String signature = WebhookSignature.sign(
+                clients.secret(target.endpointId(), target.secretSealed()), messageId, timestamp, target.payload());
         Request request = new Request.Builder()
                 .url(target.url())
                 .header("user-agent", USER_AGENT)

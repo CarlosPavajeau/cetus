@@ -12,8 +12,7 @@ import java.util.List;
 /** Loads a .p12/.pfx in memory. The bytes come already decrypted from KMS; nothing touches disk. */
 public final class Pkcs12Loader {
 
-    private Pkcs12Loader() {
-    }
+    private Pkcs12Loader() {}
 
     /**
      * Loads a file uploaded by a user: its key derivations are bounded first (see {@link Pkcs12Iterations}),
@@ -34,9 +33,8 @@ public final class Pkcs12Loader {
                 }
                 PrivateKey key = (PrivateKey) keyStore.getKey(alias, password);
                 Certificate[] chain = keyStore.getCertificateChain(alias);
-                List<X509Certificate> certificates = Arrays.stream(chain)
-                        .map(X509Certificate.class::cast)
-                        .toList();
+                List<X509Certificate> certificates =
+                        Arrays.stream(chain).map(X509Certificate.class::cast).toList();
                 return new KeyMaterial(key, certificates.get(0), certificates);
             }
             throw new SigningException("The PKCS#12 file does not contain a private key");

@@ -8,7 +8,6 @@ import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity.Status;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -27,16 +26,20 @@ public class NotificationRecorder {
 
     /** How long a contact's verification link works. */
     public static final Duration VERIFICATION_LIFETIME = Duration.ofHours(48);
+
     private static final SecureRandom RANDOM = new SecureRandom();
 
     /** A pending notice, with the verified addresses of its categories. */
-    public record Pending(UUID id, UUID accountId, String accountName, NotificationKind kind, Map<String, String> data,
-                          List<String> recipients) {
-    }
+    public record Pending(
+            UUID id,
+            UUID accountId,
+            String accountName,
+            NotificationKind kind,
+            Map<String, String> data,
+            List<String> recipients) {}
 
     /** A fresh verification link of a contact and the new address it goes to. */
-    public record VerificationLink(String token, String tokenHash, String email) {
-    }
+    public record VerificationLink(String token, String tokenHash, String email) {}
 
     /** Empty when the notice is gone or already resolved. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -47,10 +50,16 @@ public class NotificationRecorder {
         }
         NotificationKind kind = NotificationKind.valueOf(notification.kind);
         AccountEntity account = AccountEntity.findById(notification.accountId);
-        List<String> recipients = kind.categories().isEmpty() ? List.of()
+        List<String> recipients = kind.categories().isEmpty()
+                ? List.of()
                 : AccountContactEntity.emails(notification.accountId, kind.categories());
-        return Optional.of(new Pending(notification.id, notification.accountId, account.name, kind,
-                Map.copyOf(notification.data), recipients));
+        return Optional.of(new Pending(
+                notification.id,
+                notification.accountId,
+                account.name,
+                kind,
+                Map.copyOf(notification.data),
+                recipients));
     }
 
     /**
@@ -66,14 +75,19 @@ public class NotificationRecorder {
         UUID named = UUID.fromString(notice.data().get("contactId"));
         // Locked in the same order as the console's changes (AccountContactEntity.listForUpdate).
         List<AccountContactEntity> waiting = AccountContactEntity.listForUpdate(notice.accountId()).stream()
-                .filter(contact -> email.equals(contact.pendingEmail) && contact.pendingRequestedAt != null
+                .filter(contact -> email.equals(contact.pendingEmail)
+                        && contact.pendingRequestedAt != null
                         && contact.pendingRequestedAt.toInstant().equals(requestedAt))
                 .toList();
         if (waiting.isEmpty()) {
             return Optional.empty();
         }
-        AccountContactEntity holder = waiting.stream().filter(contact -> contact.id.equals(named)).findFirst()
-                .orElseGet(() -> waiting.stream().min(Comparator.comparing(contact -> contact.category)).orElseThrow());
+        AccountContactEntity holder = waiting.stream()
+                .filter(contact -> contact.id.equals(named))
+                .findFirst()
+                .orElseGet(() -> waiting.stream()
+                        .min(Comparator.comparing(contact -> contact.category))
+                        .orElseThrow());
         byte[] secret = new byte[32];
         RANDOM.nextBytes(secret);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(secret);

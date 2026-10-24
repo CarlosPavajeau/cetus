@@ -5,8 +5,6 @@ import com.sun.net.httpserver.HttpServer;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -22,6 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * DIAN web services stand-in for worker tests. Each operation answers with the replies queued for it,
@@ -71,8 +70,7 @@ public class FakeDian {
     }
 
     /** A request received, with its SOAP operation. */
-    public record Call(String operation, String body) {
-    }
+    public record Call(String operation, String body) {}
 
     @ConfigProperty(name = "fake-dian.port")
     int port;
@@ -114,7 +112,8 @@ public class FakeDian {
 
     private void handle(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        Matcher action = ACTION.matcher(String.valueOf(exchange.getRequestHeaders().getFirst("Content-Type")));
+        Matcher action =
+                ACTION.matcher(String.valueOf(exchange.getRequestHeaders().getFirst("Content-Type")));
         String operation = action.find() ? action.group(1) : "unknown";
         calls.add(new Call(operation, body));
 

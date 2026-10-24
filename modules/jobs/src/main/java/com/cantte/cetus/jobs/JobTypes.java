@@ -15,6 +15,5 @@ public final class JobTypes {
     /** Email a notice to the account's contacts. reference_id = notification_log id. */
     public static final String SEND_NOTIFICATION = "SEND_NOTIFICATION";
 
-    private JobTypes() {
-    }
+    private JobTypes() {}
 }

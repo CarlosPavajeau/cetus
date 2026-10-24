@@ -1,7 +1,6 @@
 package com.cantte.cetus.webhooks;
 
 import com.cantte.cetus.domain.model.Environment;
-
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -18,8 +17,7 @@ import java.util.Optional;
  */
 public final class WebhookTargets {
 
-    private WebhookTargets() {
-    }
+    private WebhookTargets() {}
 
     /**
      * Checks what can be checked without resolving the host.
@@ -55,8 +53,11 @@ public final class WebhookTargets {
 
     /** Whether an address belongs to a network Cetus must not send webhooks to. */
     public static boolean isPrivate(InetAddress address) {
-        if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
-                || address.isAnyLocalAddress() || address.isMulticastAddress()) {
+        if (address.isLoopbackAddress()
+                || address.isSiteLocalAddress()
+                || address.isLinkLocalAddress()
+                || address.isAnyLocalAddress()
+                || address.isMulticastAddress()) {
             return true;
         }
         byte[] bytes = address.getAddress();
@@ -75,7 +76,9 @@ public final class WebhookTargets {
 
     private static boolean isInternalName(String host) {
         String name = host.toLowerCase(Locale.ROOT);
-        if (name.equals("localhost") || name.endsWith(".localhost") || name.endsWith(".internal")
+        if (name.equals("localhost")
+                || name.endsWith(".localhost")
+                || name.endsWith(".internal")
                 || name.endsWith(".local")) {
             return true;
         }

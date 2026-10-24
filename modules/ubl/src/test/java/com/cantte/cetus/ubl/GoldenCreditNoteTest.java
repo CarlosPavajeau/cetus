@@ -1,5 +1,11 @@
 package com.cantte.cetus.ubl;
 
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.parse;
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.rootChild;
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.skeleton;
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.text;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.domain.dian.Cufe;
 import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
@@ -9,20 +15,13 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.LocalTime;
 import java.util.List;
-
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.parse;
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.rootChild;
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.skeleton;
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.text;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Compares the structure of a freshly built and signed credit note with NC2, the total cancellation
@@ -46,8 +45,8 @@ class GoldenCreditNoteTest {
         Document golden = parse(getClass().getResourceAsStream(GOLDEN));
         Document generated = signedSample();
 
-        for (String name : List.of("UBLVersionID", "CustomizationID", "ProfileID", "ProfileExecutionID",
-                "CreditNoteTypeCode")) {
+        for (String name :
+                List.of("UBLVersionID", "CustomizationID", "ProfileID", "ProfileExecutionID", "CreditNoteTypeCode")) {
             assertThat(text(generated, name)).as(name).isEqualTo(text(golden, name));
         }
         Element goldenUuid = rootChild(golden, "UUID");
@@ -61,7 +60,10 @@ class GoldenCreditNoteTest {
     }
 
     private static String discrepancy(Document doc, String localName) {
-        return rootChild(doc, "DiscrepancyResponse").getElementsByTagNameNS("*", localName).item(0).getTextContent();
+        return rootChild(doc, "DiscrepancyResponse")
+                .getElementsByTagNameNS("*", localName)
+                .item(0)
+                .getTextContent();
     }
 
     private static Document signedSample() throws Exception {
@@ -77,12 +79,32 @@ class GoldenCreditNoteTest {
     private static ElectronicCreditNote sample() {
         ElectronicInvoice invoice = GoldenInvoiceTest.sample();
         LocalTime time = LocalTime.of(12, 29, 42);
-        String cude = Cufe.compute(new Cufe.Input("NC2", invoice.issueDate(), time, invoice.calculation(),
-                "900123456", "900108281", "12345", Environment.TEST));
-        return new ElectronicCreditNote(Environment.TEST, "NC", 2, invoice.issueDate(), time, "COP",
-                invoice.supplier(), invoice.customer(), invoice.payment(), invoice.calculation(),
+        String cude = Cufe.compute(new Cufe.Input(
+                "NC2",
+                invoice.issueDate(),
+                time,
+                invoice.calculation(),
+                "900123456",
+                "900108281",
+                "12345",
+                Environment.TEST));
+        return new ElectronicCreditNote(
+                Environment.TEST,
+                "NC",
+                2,
+                invoice.issueDate(),
+                time,
+                "COP",
+                invoice.supplier(),
+                invoice.customer(),
+                invoice.payment(),
+                invoice.calculation(),
                 new BillingReference(invoice.fullNumber(), invoice.cufe(), invoice.issueDate()),
-                CreditNoteConcept.CANCELLATION, "Anulación total de la factura de prueba", invoice.software(), cude,
-                "qr", List.of());
+                CreditNoteConcept.CANCELLATION,
+                "Anulación total de la factura de prueba",
+                invoice.software(),
+                cude,
+                "qr",
+                List.of());
     }
 }

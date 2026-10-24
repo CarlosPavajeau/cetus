@@ -1,8 +1,8 @@
 package com.cantte.cetus.api.audit;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 class RequestOriginResolverTest {
 
@@ -22,6 +22,7 @@ class RequestOriginResolverTest {
         assertThat(RequestOriginResolver.normalizeIp("localhost")).isNull();
         assertThat(RequestOriginResolver.normalizeIp("evil.example.com")).isNull();
         assertThat(RequestOriginResolver.normalizeIp("1.2.3.4, 5.6.7.8")).isNull();
-        assertThat(RequestOriginResolver.normalizeIp("1.2.3.4'); DROP TABLE x; --")).isNull();
+        assertThat(RequestOriginResolver.normalizeIp("1.2.3.4'); DROP TABLE x; --"))
+                .isNull();
     }
 }

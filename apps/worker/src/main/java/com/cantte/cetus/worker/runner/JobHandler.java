@@ -13,6 +13,5 @@ public interface JobHandler {
     void handle(JobEntity job) throws Exception;
 
     /** Called once the job is DEAD, so the handler can leave what it was working on in a final state. */
-    default void onDead(JobEntity job, String reason) {
-    }
+    default void onDead(JobEntity job, String reason) {}
 }

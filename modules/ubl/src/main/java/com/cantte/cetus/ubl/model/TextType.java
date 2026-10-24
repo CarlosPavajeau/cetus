@@ -7,6 +7,7 @@ public class TextType {
 
     @XmlValue
     public String value;
+
     @XmlAttribute
     public String languageID;
 

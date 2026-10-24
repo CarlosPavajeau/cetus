@@ -6,9 +6,6 @@ import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Answers SendBillSync and GetStatus like the DIAN, without calling it: the same SOAP envelope, status
@@ -71,8 +70,8 @@ public final class SimulatedDian {
             throw new DianTransportException("Simulated: the DIAN did not answer in time", true, null);
         }
         if (scenario == SimulatedScenario.TEMPORARY_FAILURE && previousSends < 2) {
-            throw new DianFaultException("s:Receiver", List.of("a:InternalServiceFault"),
-                    "Error interno del servicio.", fault());
+            throw new DianFaultException(
+                    "s:Receiver", List.of("a:InternalServiceFault"), "Error interno del servicio.", fault());
         }
         return result("SendBillSync", document, scenario);
     }
@@ -88,12 +87,14 @@ public final class SimulatedDian {
         if (document.isPresent() && registered(SimulatedScenario.of(document.get()), previousSends)) {
             return result("GetStatus", document.get(), SimulatedScenario.of(document.get()));
         }
-        String raw = envelope("GetStatus", "<b:ErrorMessage xmlns:c=\"" + ARRAYS_NS + "\"/><b:IsValid>false</b:IsValid>"
-                + "<b:StatusCode>66</b:StatusCode><b:StatusDescription>TrackId no existe en los registros de la DIAN."
-                + "</b:StatusDescription><b:StatusMessage i:nil=\"true\"/><b:XmlBase64Bytes i:nil=\"true\"/>"
-                + "<b:XmlBytes i:nil=\"true\"/><b:XmlDocumentKey i:nil=\"true\"/><b:XmlFileName i:nil=\"true\"/>");
-        return new DianResponse(false, "66", "TrackId no existe en los registros de la DIAN.", null, List.of(),
-                null, null, raw);
+        String raw = envelope(
+                "GetStatus",
+                "<b:ErrorMessage xmlns:c=\"" + ARRAYS_NS + "\"/><b:IsValid>false</b:IsValid>"
+                        + "<b:StatusCode>66</b:StatusCode><b:StatusDescription>TrackId no existe en los registros de la DIAN."
+                        + "</b:StatusDescription><b:StatusMessage i:nil=\"true\"/><b:XmlBase64Bytes i:nil=\"true\"/>"
+                        + "<b:XmlBytes i:nil=\"true\"/><b:XmlDocumentKey i:nil=\"true\"/><b:XmlFileName i:nil=\"true\"/>");
+        return new DianResponse(
+                false, "66", "TrackId no existe en los registros de la DIAN.", null, List.of(), null, null, raw);
     }
 
     private static boolean registered(SimulatedScenario scenario, int previousSends) {
@@ -119,22 +120,26 @@ public final class SimulatedDian {
         String applicationResponse = Base64.getEncoder().encodeToString(applicationResponse(document, valid, errors));
 
         StringBuilder messages = new StringBuilder();
-        errors.forEach(error -> messages.append("<c:string>").append(escape(error)).append("</c:string>"));
-        String raw = envelope(operation, "<b:ErrorMessage xmlns:c=\"" + ARRAYS_NS + "\">" + messages + "</b:ErrorMessage>"
-                + "<b:IsValid>" + valid + "</b:IsValid><b:StatusCode>" + statusCode + "</b:StatusCode>"
-                + "<b:StatusDescription>" + escape(description) + "</b:StatusDescription>"
-                + "<b:StatusMessage>" + escape(message) + "</b:StatusMessage>"
-                + "<b:XmlBase64Bytes>" + applicationResponse + "</b:XmlBase64Bytes><b:XmlBytes i:nil=\"true\"/>"
-                + "<b:XmlDocumentKey>" + escape(document.uniqueCode()) + "</b:XmlDocumentKey>"
-                + "<b:XmlFileName>" + escape(document.fileName()) + "</b:XmlFileName>");
-        return new DianResponse(valid, statusCode, description, message, errors, applicationResponse,
-                document.uniqueCode(), raw);
+        errors.forEach(
+                error -> messages.append("<c:string>").append(escape(error)).append("</c:string>"));
+        String raw = envelope(
+                operation,
+                "<b:ErrorMessage xmlns:c=\"" + ARRAYS_NS + "\">" + messages + "</b:ErrorMessage>"
+                        + "<b:IsValid>" + valid + "</b:IsValid><b:StatusCode>" + statusCode + "</b:StatusCode>"
+                        + "<b:StatusDescription>" + escape(description) + "</b:StatusDescription>"
+                        + "<b:StatusMessage>" + escape(message) + "</b:StatusMessage>"
+                        + "<b:XmlBase64Bytes>" + applicationResponse + "</b:XmlBase64Bytes><b:XmlBytes i:nil=\"true\"/>"
+                        + "<b:XmlDocumentKey>" + escape(document.uniqueCode()) + "</b:XmlDocumentKey>"
+                        + "<b:XmlFileName>" + escape(document.fileName()) + "</b:XmlFileName>");
+        return new DianResponse(
+                valid, statusCode, description, message, errors, applicationResponse, document.uniqueCode(), raw);
     }
 
     /** The DIAN's ApplicationResponse: 02 validated or 04 rejected, one line per rule. */
     private byte[] applicationResponse(SimulatedDocument document, boolean valid, List<String> errors) {
         OffsetDateTime now = OffsetDateTime.now(clock.withZone(COLOMBIA));
-        String id = String.valueOf(10_000_000 + Math.floorMod(document.uniqueCode().hashCode(), 90_000_000));
+        String id =
+                String.valueOf(10_000_000 + Math.floorMod(document.uniqueCode().hashCode(), 90_000_000));
         StringBuilder lines = new StringBuilder(line(1, "0000", "0"));
         for (int i = 0; i < errors.size(); i++) {
             Matcher rule = RULE.matcher(errors.get(i));
@@ -163,7 +168,8 @@ public final class SimulatedDian {
                 + "<cbc:Note>" + SIMULATED_NOTE + "</cbc:Note>"
                 + party("SenderParty", DIAN_NAME, "4", DIAN_NIT)
                 + party("ReceiverParty", document.supplierName(), "1", document.supplierNit())
-                + "<cac:DocumentResponse><cac:Response><cbc:ResponseCode>" + (valid ? "02" : "04") + "</cbc:ResponseCode>"
+                + "<cac:DocumentResponse><cac:Response><cbc:ResponseCode>" + (valid ? "02" : "04")
+                + "</cbc:ResponseCode>"
                 + "<cbc:Description>" + (valid ? "Documento validado por la DIAN" : "Documento rechazado por la DIAN")
                 + "</cbc:Description></cac:Response><cac:DocumentReference><cbc:ID>" + escape(document.number())
                 + "</cbc:ID><cbc:UUID schemeName=\"" + document.kind().uniqueCodeScheme() + "\">"
@@ -171,7 +177,8 @@ public final class SimulatedDian {
                 + "</cac:DocumentResponse></ApplicationResponse>";
         Document ar = XmlSupport.parse(xml.getBytes(StandardCharsets.UTF_8));
         Element slot = (Element) ar.getElementsByTagNameNS(
-                "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2", "ExtensionContent").item(1);
+                        "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2", "ExtensionContent")
+                .item(1);
         signer.sign(ar, slot, keys, XadesSigner.SignerRole.THIRD_PARTY);
         return XmlSupport.serialize(ar);
     }
@@ -208,15 +215,19 @@ public final class SimulatedDian {
 
     private static String sha384(String value) {
         try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-384")
-                    .digest(value.getBytes(StandardCharsets.UTF_8)));
+            return HexFormat.of()
+                    .formatHex(MessageDigest.getInstance("SHA-384").digest(value.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
     }
 
     private static String escape(String value) {
-        return value == null ? "" : value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                .replace("\"", "&quot;");
+        return value == null
+                ? ""
+                : value.replace("&", "&amp;")
+                        .replace("<", "&lt;")
+                        .replace(">", "&gt;")
+                        .replace("\"", "&quot;");
     }
 }

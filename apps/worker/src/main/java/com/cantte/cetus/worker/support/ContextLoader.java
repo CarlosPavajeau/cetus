@@ -20,7 +20,6 @@ import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -65,14 +64,26 @@ public class ContextLoader {
                 .orElseThrow(() -> new IllegalStateException("Issuer has no software credentials"));
         SigningCertificateEntity certificate = SigningCertificateEntity.findActive(issuer.id)
                 .orElseThrow(() -> new IllegalStateException("Issuer has no signing certificate"));
-        return context(doc, issuer, range, range.technicalKeySealed, software.softwareId, software.pinSealed,
+        return context(
+                doc,
+                issuer,
+                range,
+                range.technicalKeySealed,
+                software.softwareId,
+                software.pinSealed,
                 activeTestSet(issuer.id, software.testSetId),
                 new ProcessingContext.CertificateRef(certificate.id, certificate.s3Key, certificate.passwordSealed));
     }
 
-    private ProcessingContext context(DocumentEntity doc, IssuerEntity issuer, NumberingRangeEntity range,
-                                      byte[] technicalKeySealed, String softwareId, byte[] pinSealed,
-                                      String testSetId, ProcessingContext.CertificateRef certificate) {
+    private ProcessingContext context(
+            DocumentEntity doc,
+            IssuerEntity issuer,
+            NumberingRangeEntity range,
+            byte[] technicalKeySealed,
+            String softwareId,
+            byte[] pinSealed,
+            String testSetId,
+            ProcessingContext.CertificateRef certificate) {
 
         return new ProcessingContext(
                 doc.id,
@@ -135,23 +146,39 @@ public class ContextLoader {
                     .filter(tax -> tax.line != null && tax.line.id.equals(line.id))
                     .map(ContextLoader::toTaxAmount)
                     .toList();
-            lines.add(new CalculatedLine(line.lineNumber, line.itemCode, line.description, line.quantity,
-                    line.unitCode, line.unitPrice, line.lineExtensionAmount, lineTaxes));
+            lines.add(new CalculatedLine(
+                    line.lineNumber,
+                    line.itemCode,
+                    line.description,
+                    line.quantity,
+                    line.unitCode,
+                    line.unitPrice,
+                    line.lineExtensionAmount,
+                    lineTaxes));
         }
 
         Map<TaxType, List<TaxAmount>> grouped = new EnumMap<>(TaxType.class);
         doc.taxes.stream()
                 .filter(tax -> tax.line == null)
-                .forEach(tax -> grouped.computeIfAbsent(tax.taxType, t -> new ArrayList<>()).add(toTaxAmount(tax)));
+                .forEach(tax -> grouped.computeIfAbsent(tax.taxType, t -> new ArrayList<>())
+                        .add(toTaxAmount(tax)));
         List<TaxTotal> totals = grouped.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparing(TaxType::dianCode)))
-                .map(entry -> new TaxTotal(entry.getKey(),
+                .map(entry -> new TaxTotal(
+                        entry.getKey(),
                         entry.getValue().stream().map(TaxAmount::amount).reduce(BigDecimal.ZERO, BigDecimal::add),
-                        entry.getValue().stream().sorted(Comparator.comparing(TaxAmount::percent)).toList()))
+                        entry.getValue().stream()
+                                .sorted(Comparator.comparing(TaxAmount::percent))
+                                .toList()))
                 .toList();
 
-        MonetaryTotals monetary = new MonetaryTotals(doc.lineExtensionAmount, doc.taxExclusiveAmount,
-                doc.taxInclusiveAmount, doc.allowanceTotalAmount, doc.chargeTotalAmount, doc.prepaidAmount,
+        MonetaryTotals monetary = new MonetaryTotals(
+                doc.lineExtensionAmount,
+                doc.taxExclusiveAmount,
+                doc.taxInclusiveAmount,
+                doc.allowanceTotalAmount,
+                doc.chargeTotalAmount,
+                doc.prepaidAmount,
                 doc.payableAmount);
         return new CalculationResult(lines, totals, monetary);
     }

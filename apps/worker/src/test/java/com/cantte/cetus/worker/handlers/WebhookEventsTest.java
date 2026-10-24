@@ -1,5 +1,8 @@
 package com.cantte.cetus.worker.handlers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobTypes;
@@ -20,15 +23,11 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Which webhook events the worker publishes, and to which endpoints. */
 @QuarkusTest
@@ -40,10 +39,13 @@ class WebhookEventsTest {
 
     @Inject
     ProcessDocumentHandler processor;
+
     @Inject
     DeliveryRecorder deliveryRecorder;
+
     @Inject
     FakeDian dian;
+
     @Inject
     WorkerFixtures fixtures;
 
@@ -57,7 +59,8 @@ class WebhookEventsTest {
         dian.reply(SEND, Reply.fixture("send-bill-sync-accepted.xml"));
         UUID id = fixtures.invoice();
         Endpoint all = fixtures.webhookEndpoint(id, Environment.TEST, "https://hooks.example.com/all");
-        Endpoint accepted = fixtures.webhookEndpoint(id, Environment.TEST, "https://hooks.example.com/accepted", "invoice.accepted");
+        Endpoint accepted = fixtures.webhookEndpoint(
+                id, Environment.TEST, "https://hooks.example.com/accepted", "invoice.accepted");
         fixtures.webhookEndpoint(id, Environment.TEST, "https://hooks.example.com/notes", "credit_note.accepted");
         fixtures.webhookEndpoint(id, Environment.LIVE, "https://hooks.example.com/live");
         Endpoint disabled = fixtures.webhookEndpoint(id, Environment.TEST, "https://hooks.example.com/off");
@@ -127,7 +130,10 @@ class WebhookEventsTest {
 
         WebhookEventEntity event = singleEvent(id);
         assertThat(event.type).isEqualTo("credit_note.accepted");
-        assertThat(JSON.readTree(event.payload).get("data").get("referencedInvoiceId").asText())
+        assertThat(JSON.readTree(event.payload)
+                        .get("data")
+                        .get("referencedInvoiceId")
+                        .asText())
                 .isEqualTo(invoiceId.toString());
     }
 
@@ -139,8 +145,9 @@ class WebhookEventsTest {
 
         deliveryRecorder.skipped(id, "The customer has no email address");
 
-        WebhookEventEntity event = QuarkusTransaction.requiringNew().call(() ->
-                WebhookEventEntity.<WebhookEventEntity>find("documentId = ?1 and type = ?2", id, "document.delivery_failed")
+        WebhookEventEntity event = QuarkusTransaction.requiringNew()
+                .call(() -> WebhookEventEntity.<WebhookEventEntity>find(
+                                "documentId = ?1 and type = ?2", id, "document.delivery_failed")
                         .singleResult());
         JsonNode delivery = JSON.readTree(event.payload).get("data").get("delivery");
         assertThat(delivery.get("status").asText()).isEqualTo("SKIPPED");
@@ -166,7 +173,9 @@ class WebhookEventsTest {
     }
 
     private static List<UUID> webhookJobs() {
-        return QuarkusTransaction.requiringNew().call(() ->
-                JobEntity.<JobEntity>list("jobType", JobTypes.DELIVER_WEBHOOK).stream().map(job -> job.referenceId).toList());
+        return QuarkusTransaction.requiringNew()
+                .call(() -> JobEntity.<JobEntity>list("jobType", JobTypes.DELIVER_WEBHOOK).stream()
+                        .map(job -> job.referenceId)
+                        .toList());
     }
 }

@@ -11,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -22,18 +21,24 @@ public class DocumentTaxEntity extends PanacheEntityBase {
 
     @Id
     public UUID id;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id")
     public DocumentEntity document;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "line_id")
     public DocumentLineEntity line;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "tax_type")
     public TaxType taxType;
+
     @Column(name = "taxable_amount")
     public BigDecimal taxableAmount;
+
     public BigDecimal percent;
+
     @Column(name = "tax_amount")
     public BigDecimal taxAmount;
 }

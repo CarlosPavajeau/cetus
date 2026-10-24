@@ -21,14 +21,13 @@ import com.cantte.cetus.worker.support.ProviderSettings;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.jboss.logging.Logger;
-
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.jboss.logging.Logger;
 
 /**
  * Compares an invoice range with the DIAN's record of it (GetNumberingRange): prefix, numbers, validity and
@@ -42,10 +41,13 @@ public class VerifyNumberingRangeHandler implements JobHandler {
 
     @Inject
     DianClients dian;
+
     @Inject
     KeyMaterialCache keyMaterial;
+
     @Inject
     SecretCipher cipher;
+
     @Inject
     ProviderSettings provider;
 
@@ -69,10 +71,13 @@ public class VerifyNumberingRangeHandler implements JobHandler {
             throw e;
         }
         if (!response.succeeded()) {
-            LOG.warnf("GetNumberingRange for range %s answered %s: %s", job.referenceId, response.operationCode(),
-                    response.operationDescription());
-            record(job.referenceId, VerificationStatus.ERROR, "La DIAN respondió %s: %s"
-                    .formatted(response.operationCode(), response.operationDescription()));
+            LOG.warnf(
+                    "GetNumberingRange for range %s answered %s: %s",
+                    job.referenceId, response.operationCode(), response.operationDescription());
+            record(
+                    job.referenceId,
+                    VerificationStatus.ERROR,
+                    "La DIAN respondió %s: %s".formatted(response.operationCode(), response.operationDescription()));
             return;
         }
         List<String> differences = differences(target, response);
@@ -100,9 +105,17 @@ public class VerifyNumberingRangeHandler implements JobHandler {
                 .orElseThrow(() -> new GiveUp("El emisor no tiene software DIAN registrado"));
         SigningCertificateEntity certificate = SigningCertificateEntity.findActive(issuer.id)
                 .orElseThrow(() -> new GiveUp("El emisor no tiene certificado de firma"));
-        return new Target(issuer.environment, issuer.nit, software.softwareId,
+        return new Target(
+                issuer.environment,
+                issuer.nit,
+                software.softwareId,
                 new ProcessingContext.CertificateRef(certificate.id, certificate.s3Key, certificate.passwordSealed),
-                range.prefix, range.resolutionNumber, range.rangeFrom, range.rangeTo, range.validFrom, range.validTo,
+                range.prefix,
+                range.resolutionNumber,
+                range.rangeFrom,
+                range.rangeTo,
+                range.validFrom,
+                range.validTo,
                 range.technicalKeySealed == null ? null : cipher.openText(range.technicalKeySealed));
     }
 
@@ -110,12 +123,17 @@ public class VerifyNumberingRangeHandler implements JobHandler {
         var found = response.find(target.prefix(), target.resolutionNumber());
         if (found.isEmpty()) {
             String known = response.ranges().stream()
-                    .map(r -> "%s (resolución %s)".formatted(r.prefix() == null || r.prefix().isEmpty() ? "sin prefijo" : r.prefix(),
-                            r.resolutionNumber()))
-                    .reduce((a, b) -> a + ", " + b).orElse("ninguno");
-            return List.of("La DIAN no tiene un rango con prefijo %s%s para este software. Rangos de la DIAN: %s".formatted(
-                    target.prefix().isEmpty() ? "vacío" : target.prefix(),
-                    target.resolutionNumber() == null ? "" : " y resolución " + target.resolutionNumber(), known));
+                    .map(r -> "%s (resolución %s)"
+                            .formatted(
+                                    r.prefix() == null || r.prefix().isEmpty() ? "sin prefijo" : r.prefix(),
+                                    r.resolutionNumber()))
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse("ninguno");
+            return List.of("La DIAN no tiene un rango con prefijo %s%s para este software. Rangos de la DIAN: %s"
+                    .formatted(
+                            target.prefix().isEmpty() ? "vacío" : target.prefix(),
+                            target.resolutionNumber() == null ? "" : " y resolución " + target.resolutionNumber(),
+                            known));
         }
         NumberingRangeResponse.Range dianRange = found.get();
         List<String> differences = new ArrayList<>();
@@ -159,8 +177,16 @@ public class VerifyNumberingRangeHandler implements JobHandler {
         });
     }
 
-    private record Target(Environment environment, String nit, String softwareId,
-                          ProcessingContext.CertificateRef certificate, String prefix, String resolutionNumber,
-                          long from, long to, LocalDate validFrom, LocalDate validTo, String technicalKey) {
-    }
+    private record Target(
+            Environment environment,
+            String nit,
+            String softwareId,
+            ProcessingContext.CertificateRef certificate,
+            String prefix,
+            String resolutionNumber,
+            long from,
+            long to,
+            LocalDate validFrom,
+            LocalDate validTo,
+            String technicalKey) {}
 }

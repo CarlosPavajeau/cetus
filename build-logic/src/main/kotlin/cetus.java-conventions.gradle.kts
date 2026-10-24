@@ -1,6 +1,7 @@
 // Shared settings for every Java project in the repo.
 plugins {
     java
+    id("com.diffplug.spotless")
 }
 
 java {
@@ -30,5 +31,13 @@ tasks.register("resolveDependencies") {
     description = "Downloads every resolvable dependency of this project."
     doLast {
         configurations.filter { it.isCanBeResolved }.forEach { it.resolve() }
+    }
+}
+
+spotless {
+    // Checked in CI (java-format.yml), not by `check`: the Docker images run `build` and must not fail on formatting.
+    isEnforceCheck = false
+    java {
+        palantirJavaFormat(versionCatalogs.named("libs").findVersion("palantir-java-format").get().requiredVersion)
     }
 }

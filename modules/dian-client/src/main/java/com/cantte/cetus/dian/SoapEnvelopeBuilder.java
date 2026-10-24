@@ -1,12 +1,11 @@
 package com.cantte.cetus.dian;
 
 import com.cantte.cetus.signing.XmlSupport;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /** Builds the SOAP 1.2 envelope with WS-Addressing headers, ready to be signed. */
 final class SoapEnvelopeBuilder {
@@ -15,8 +14,7 @@ final class SoapEnvelopeBuilder {
     static final String WSA_NS = "http://www.w3.org/2005/08/addressing";
     static final String XMLNS_NS = "http://www.w3.org/2000/xmlns/";
 
-    private SoapEnvelopeBuilder() {
-    }
+    private SoapEnvelopeBuilder() {}
 
     static Envelope build(String endpointUrl, DianOperation operation, Map<String, String> parameters) {
         Document doc = XmlSupport.newDocument();
@@ -35,7 +33,10 @@ final class SoapEnvelopeBuilder {
 
         Element to = doc.createElementNS(WSA_NS, "wsa:To");
         to.setAttributeNS(XMLNS_NS, "xmlns:wsu", WsSecuritySigner.WSU_NS);
-        to.setAttributeNS(WsSecuritySigner.WSU_NS, "wsu:Id", "id-" + UUID.randomUUID().toString().replace("-", ""));
+        to.setAttributeNS(
+                WsSecuritySigner.WSU_NS,
+                "wsu:Id",
+                "id-" + UUID.randomUUID().toString().replace("-", ""));
         to.setTextContent(endpointUrl);
         header.appendChild(to);
 
@@ -51,6 +52,5 @@ final class SoapEnvelopeBuilder {
         return new Envelope(doc, header, to);
     }
 
-    record Envelope(Document document, Element header, Element to) {
-    }
+    record Envelope(Document document, Element header, Element to) {}
 }

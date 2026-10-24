@@ -28,6 +28,7 @@ public record DianResponse(
      * "Set de prueba con identificador … se encuentra Aceptado." (status code 2 from GetStatusZip).
      */
     public boolean testSetAlreadyAccepted() {
-        return statusDescription != null && TEST_SET_ACCEPTED.matcher(statusDescription).find();
+        return statusDescription != null
+                && TEST_SET_ACCEPTED.matcher(statusDescription).find();
     }
 }

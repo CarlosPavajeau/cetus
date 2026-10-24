@@ -1,13 +1,12 @@
 package com.cantte.cetus.dian.simulated;
 
 import com.cantte.cetus.signing.XmlSupport;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 /**
  * What the simulator reads from a signed UBL document, the same fields the DIAN uses to answer.
@@ -19,8 +18,14 @@ import java.util.zip.ZipInputStream;
  * @param supplierNit  the issuer, who receives the ApplicationResponse
  * @param customerId   the identification number of the customer, which picks the scenario
  */
-public record SimulatedDocument(Kind kind, String number, String uniqueCode, String fileName, String supplierNit,
-                                String supplierName, String customerId) {
+public record SimulatedDocument(
+        Kind kind,
+        String number,
+        String uniqueCode,
+        String fileName,
+        String supplierNit,
+        String supplierName,
+        String customerId) {
 
     private static final String CBC = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
     private static final String CAC = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
@@ -71,8 +76,13 @@ public record SimulatedDocument(Kind kind, String number, String uniqueCode, Str
         };
         Element supplier = path(root, CAC, "AccountingSupplierParty", "Party", "PartyTaxScheme");
         Element customer = path(root, CAC, "AccountingCustomerParty", "Party", "PartyTaxScheme");
-        return new SimulatedDocument(kind, text(child(root, CBC, "ID")), text(child(root, CBC, "UUID")), fileName,
-                text(child(supplier, CBC, "CompanyID")), text(child(supplier, CBC, "RegistrationName")),
+        return new SimulatedDocument(
+                kind,
+                text(child(root, CBC, "ID")),
+                text(child(root, CBC, "UUID")),
+                fileName,
+                text(child(supplier, CBC, "CompanyID")),
+                text(child(supplier, CBC, "RegistrationName")),
                 text(child(customer, CBC, "CompanyID")));
     }
 
@@ -96,7 +106,8 @@ public record SimulatedDocument(Kind kind, String number, String uniqueCode, Str
     private static Element child(Element parent, String ns, String name) {
         if (parent != null) {
             for (Node node = parent.getFirstChild(); node != null; node = node.getNextSibling()) {
-                if (node instanceof Element element && ns.equals(element.getNamespaceURI())
+                if (node instanceof Element element
+                        && ns.equals(element.getNamespaceURI())
                         && name.equals(element.getLocalName())) {
                     return element;
                 }

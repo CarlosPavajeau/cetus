@@ -13,11 +13,10 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import java.util.Map;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
-import java.util.Map;
 
 /**
  * Called with the impersonation session itself, just before the console ends it: only that session knows
@@ -25,14 +24,19 @@ import java.util.Map;
  */
 @Path("/console/impersonation/end")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "403",
+        description = "Forbidden",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class ImpersonationResource {
 
     @Inject
     ConsoleContext context;
+
     @Inject
     AuditLog auditLog;
+
     @Inject
     RequestOriginResolver origin;
 
@@ -42,10 +46,16 @@ public class ImpersonationResource {
     public void end() {
         String admin = context.impersonatedBy().orElseThrow(ForbiddenException::new);
         String organizationId = jwtOrganization();
-        AccountEntity account = organizationId == null ? null
+        AccountEntity account = organizationId == null
+                ? null
                 : AccountEntity.findByOrganization(organizationId).orElse(null);
-        auditLog.record(account == null ? null : account.id, new Actor(Actor.ActorType.PLATFORM, admin),
-                origin.resolve(), AuditAction.IMPERSONATION_ENDED, "user", null,
+        auditLog.record(
+                account == null ? null : account.id,
+                new Actor(Actor.ActorType.PLATFORM, admin),
+                origin.resolve(),
+                AuditAction.IMPERSONATION_ENDED,
+                "user",
+                null,
                 Map.of("userId", context.userId()));
     }
 

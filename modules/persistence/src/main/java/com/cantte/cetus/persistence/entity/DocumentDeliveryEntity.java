@@ -8,7 +8,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +18,9 @@ import java.util.UUID;
 @Table(name = "document_deliveries")
 public class DocumentDeliveryEntity extends PanacheEntityBase {
 
-    public enum Channel { EMAIL }
+    public enum Channel {
+        EMAIL
+    }
 
     /**
      * PENDING until the provider takes the email (SENT); its webhook then reports DELIVERED, BOUNCED or
@@ -27,7 +28,13 @@ public class DocumentDeliveryEntity extends PanacheEntityBase {
      * deliver the document by other means.
      */
     public enum Status {
-        PENDING, SENT, DELIVERED, BOUNCED, COMPLAINED, SKIPPED, FAILED;
+        PENDING,
+        SENT,
+        DELIVERED,
+        BOUNCED,
+        COMPLAINED,
+        SKIPPED,
+        FAILED;
 
         /** The delivery left Cetus; only the provider's events change it from here. */
         public boolean handedOver() {
@@ -37,23 +44,34 @@ public class DocumentDeliveryEntity extends PanacheEntityBase {
 
     @Id
     public UUID id;
+
     @Column(name = "document_id")
     public UUID documentId;
+
     @Enumerated(EnumType.STRING)
     public Channel channel = Channel.EMAIL;
+
     public String recipient;
+
     @Enumerated(EnumType.STRING)
     public Status status = Status.PENDING;
+
     public int attempts;
+
     @Column(name = "provider_message_id")
     public String providerMessageId;
+
     public String error;
+
     @Column(name = "sent_at")
     public OffsetDateTime sentAt;
+
     @Column(name = "last_event_at")
     public OffsetDateTime lastEventAt;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     public OffsetDateTime createdAt;
+
     @Column(name = "updated_at")
     public OffsetDateTime updatedAt = OffsetDateTime.now();
 

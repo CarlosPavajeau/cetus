@@ -1,14 +1,13 @@
 package com.cantte.cetus.dian;
 
 import com.cantte.cetus.signing.XmlSupport;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Reads DIAN responses by local name. The response namespaces come from WCF data contracts
@@ -16,8 +15,7 @@ import java.util.List;
  */
 final class DianResponseParser {
 
-    private DianResponseParser() {
-    }
+    private DianResponseParser() {}
 
     static DianResponse single(String rawXml, String resultElement) {
         Element result = requireResult(rawXml, resultElement);
@@ -64,8 +62,8 @@ final class DianResponseParser {
                     text(item, "ValidDateTo"),
                     text(item, "TechnicalKey")));
         }
-        return new NumberingRangeResponse(text(result, "OperationCode"), text(result, "OperationDescription"),
-                List.copyOf(ranges), rawXml);
+        return new NumberingRangeResponse(
+                text(result, "OperationCode"), text(result, "OperationDescription"), List.copyOf(ranges), rawXml);
     }
 
     private static Long number(String value) {
@@ -106,7 +104,8 @@ final class DianResponseParser {
             current = nested.isEmpty() ? null : nested.get(0);
         }
         NodeList reasons = fault.getElementsByTagNameNS("*", "Text");
-        String reason = reasons.getLength() > 0 ? reasons.item(0).getTextContent().trim() : "Unknown SOAP fault";
+        String reason =
+                reasons.getLength() > 0 ? reasons.item(0).getTextContent().trim() : "Unknown SOAP fault";
         return new DianFaultException(code == null ? "unknown" : code, subcodes, reason, rawXml);
     }
 
@@ -116,7 +115,8 @@ final class DianResponseParser {
             NodeList items = errorList.getChildNodes();
             for (int i = 0; i < items.getLength(); i++) {
                 Node item = items.item(i);
-                if (item.getNodeType() == Node.ELEMENT_NODE && !item.getTextContent().isBlank()) {
+                if (item.getNodeType() == Node.ELEMENT_NODE
+                        && !item.getTextContent().isBlank()) {
                     errors.add(item.getTextContent().trim());
                 }
             }

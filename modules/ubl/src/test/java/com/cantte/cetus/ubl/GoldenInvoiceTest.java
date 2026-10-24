@@ -1,5 +1,7 @@
 package com.cantte.cetus.ubl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.dian.Cufe;
 import com.cantte.cetus.domain.model.Address;
@@ -16,14 +18,6 @@ import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -33,8 +27,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 /**
  * Compares the structure of a freshly built and signed invoice with SETP990000003, the invoice the
@@ -58,8 +57,8 @@ class GoldenInvoiceTest {
         Document golden = parse(getClass().getResourceAsStream("/golden/invoice-habilitacion-accepted.xml"));
         Document generated = signedSample();
 
-        for (String name : List.of("UBLVersionID", "CustomizationID", "ProfileID", "ProfileExecutionID",
-                "InvoiceTypeCode")) {
+        for (String name :
+                List.of("UBLVersionID", "CustomizationID", "ProfileID", "ProfileExecutionID", "InvoiceTypeCode")) {
             assertThat(text(generated, name)).as(name).isEqualTo(text(golden, name));
         }
         Element goldenUuid = rootChild(golden, "UUID");
@@ -79,30 +78,84 @@ class GoldenInvoiceTest {
     }
 
     static ElectronicInvoice sample() {
-        var calc = new InvoiceCalculator().calculate(List.of(
-                new LineInput("AOHV84-225", "AV OASYS -2.25 (8.4) LENTE DE CONTATO", new BigDecimal("1"), "EA",
-                        new BigDecimal("12600.06"), List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
-                new LineInput("91412012412", "Bolsa", new BigDecimal("1"), "NIU", new BigDecimal("100"),
-                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("16"))))));
-        Party supplier = new Party(PersonType.NATURAL_PERSON, IdentificationType.NIT, "900123456", "1",
-                "Cetus Pruebas SAS", null, List.of("O-47"), "ZZ", "No aplica",
+        var calc = new InvoiceCalculator()
+                .calculate(List.of(
+                        new LineInput(
+                                "AOHV84-225",
+                                "AV OASYS -2.25 (8.4) LENTE DE CONTATO",
+                                new BigDecimal("1"),
+                                "EA",
+                                new BigDecimal("12600.06"),
+                                List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
+                        new LineInput(
+                                "91412012412",
+                                "Bolsa",
+                                new BigDecimal("1"),
+                                "NIU",
+                                new BigDecimal("100"),
+                                List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("16"))))));
+        Party supplier = new Party(
+                PersonType.NATURAL_PERSON,
+                IdentificationType.NIT,
+                "900123456",
+                "1",
+                "Cetus Pruebas SAS",
+                null,
+                List.of("O-47"),
+                "ZZ",
+                "No aplica",
                 new Address("20001", "Valledupar", "20", "Cesar", "200001", "Calle 100 # 10-20", "CO", "Colombia"),
-                "facturas@cetus.test", "6015550000");
-        Party customer = new Party(PersonType.LEGAL_ENTITY, IdentificationType.NIT, "900108281", "3",
-                "OPTICAS GMO COLOMBIA S A S", null, List.of("R-99-PN"), "01", "IVA",
-                new Address("11001", "Bogotá, D.C.", "11", "Bogotá", "110311", "CARRERA 8 No 20-14/40", "CO",
-                        "Colombia"),
-                "dcruz@empresa.org", "31031031089");
+                "facturas@cetus.test",
+                "6015550000");
+        Party customer = new Party(
+                PersonType.LEGAL_ENTITY,
+                IdentificationType.NIT,
+                "900108281",
+                "3",
+                "OPTICAS GMO COLOMBIA S A S",
+                null,
+                List.of("R-99-PN"),
+                "01",
+                "IVA",
+                new Address(
+                        "11001", "Bogotá, D.C.", "11", "Bogotá", "110311", "CARRERA 8 No 20-14/40", "CO", "Colombia"),
+                "dcruz@empresa.org",
+                "31031031089");
         LocalDate date = LocalDate.of(2026, 10, 19);
         LocalTime time = LocalTime.of(9, 57, 1);
-        String cufe = Cufe.compute(new Cufe.Input("SETP990000003", date, time, calc, "900123456", "900108281",
-                "fc8eac422eba16e22ffd8c6f94b3f40a6e38162c", Environment.TEST));
-        return new ElectronicInvoice(Environment.TEST, "10", "SETP", 990000003, date, time, date.plusDays(30), "COP",
-                supplier, customer, new PaymentInfo("2", "42", date.plusDays(30)), calc,
-                new NumberingAuthorization("18760000001", LocalDate.of(2019, 1, 19), LocalDate.of(2030, 1, 19),
-                        "SETP", 990000000, 995000000),
+        String cufe = Cufe.compute(new Cufe.Input(
+                "SETP990000003",
+                date,
+                time,
+                calc,
+                "900123456",
+                "900108281",
+                "fc8eac422eba16e22ffd8c6f94b3f40a6e38162c",
+                Environment.TEST));
+        return new ElectronicInvoice(
+                Environment.TEST,
+                "10",
+                "SETP",
+                990000003,
+                date,
+                time,
+                date.plusDays(30),
+                "COP",
+                supplier,
+                customer,
+                new PaymentInfo("2", "42", date.plusDays(30)),
+                calc,
+                new NumberingAuthorization(
+                        "18760000001",
+                        LocalDate.of(2019, 1, 19),
+                        LocalDate.of(2030, 1, 19),
+                        "SETP",
+                        990000000,
+                        995000000),
                 new SoftwareInfo("900123456", "1", "00000000-0000-0000-0000-000000000000", "security-code"),
-                cufe, "qr", List.of("Factura de prueba basada en la ejemplificación Generica.xml de la DIAN"));
+                cufe,
+                "qr",
+                List.of("Factura de prueba basada en la ejemplificación Generica.xml de la DIAN"));
     }
 
     /**

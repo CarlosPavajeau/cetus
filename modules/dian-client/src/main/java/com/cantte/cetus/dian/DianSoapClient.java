@@ -2,7 +2,6 @@ package com.cantte.cetus.dian;
 
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.XmlSupport;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -76,8 +75,8 @@ public final class DianSoapClient implements DianGateway {
     }
 
     @Override
-    public NumberingRangeResponse getNumberingRange(String accountCode, String accountCodeT, String softwareCode,
-                                                    KeyMaterial keys) {
+    public NumberingRangeResponse getNumberingRange(
+            String accountCode, String accountCodeT, String softwareCode, KeyMaterial keys) {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("accountCode", accountCode);
         params.put("accountCodeT", accountCodeT);
@@ -101,7 +100,8 @@ public final class DianSoapClient implements DianGateway {
                 .POST(HttpRequest.BodyPublishers.ofByteArray(body))
                 .build();
         try {
-            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<String> response =
+                    http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() >= 500 && !response.body().contains("Fault")) {
                 throw new DianTransportException("DIAN returned HTTP " + response.statusCode(), false, null);
             }
@@ -109,7 +109,8 @@ public final class DianSoapClient implements DianGateway {
         } catch (HttpTimeoutException e) {
             throw new DianTransportException("Timeout calling " + operation.operationName(), true, e);
         } catch (IOException e) {
-            throw new DianTransportException("I/O error calling " + operation.operationName() + ": " + e.getMessage(), false, e);
+            throw new DianTransportException(
+                    "I/O error calling " + operation.operationName() + ": " + e.getMessage(), false, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new DianTransportException("Interrupted calling " + operation.operationName(), false, e);

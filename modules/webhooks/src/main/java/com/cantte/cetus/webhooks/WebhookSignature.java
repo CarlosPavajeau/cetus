@@ -1,7 +1,5 @@
 package com.cantte.cetus.webhooks;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -9,6 +7,8 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Standard Webhooks signatures (the scheme Svix uses): {@code webhook-signature: v1,<base64>} where the
@@ -28,8 +28,7 @@ public final class WebhookSignature {
     private static final String VERSION = "v1";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private WebhookSignature() {
-    }
+    private WebhookSignature() {}
 
     /** A new {@code whsec_} secret with 32 random bytes. */
     public static String newSecret() {
@@ -47,8 +46,8 @@ public final class WebhookSignature {
      * @param signatureHeader one or more space-separated {@code v1,<base64>} signatures
      * @return true when one of them matches and the timestamp is within {@link #TOLERANCE} of {@code now}
      */
-    public static boolean verify(String secret, String messageId, String timestamp, String signatureHeader,
-                                 String body, Instant now) {
+    public static boolean verify(
+            String secret, String messageId, String timestamp, String signatureHeader, String body, Instant now) {
         if (secret == null || messageId == null || timestamp == null || signatureHeader == null || body == null) {
             return false;
         }

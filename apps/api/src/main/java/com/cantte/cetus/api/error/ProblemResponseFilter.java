@@ -3,10 +3,9 @@ package com.cantte.cetus.api.error;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.core.HttpHeaders;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
-
-import java.util.Optional;
 
 /**
  * Completes every {@link ProblemDetail} on its way out, whether it comes from an exception mapper, a request
@@ -27,7 +26,8 @@ public class ProblemResponseFilter {
             return;
         }
         String type = typeBase.map(base -> base + problem.code()).orElse(problem.type());
-        response.setEntity(problem.withContext(type, request.getUriInfo().getRequestUri().getRawPath()));
+        response.setEntity(
+                problem.withContext(type, request.getUriInfo().getRequestUri().getRawPath()));
         response.getHeaders().putSingle(HttpHeaders.CONTENT_TYPE, ProblemDetail.MEDIA_TYPE);
     }
 }

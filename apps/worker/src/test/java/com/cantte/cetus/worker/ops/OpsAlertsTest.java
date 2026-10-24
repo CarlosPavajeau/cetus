@@ -1,5 +1,8 @@
 package com.cantte.cetus.worker.ops;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.cantte.cetus.email.EmailException;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
@@ -14,14 +17,10 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Operational alerts against seeded data. Other tests share the database, so every assertion looks only
@@ -34,10 +33,13 @@ class OpsAlertsTest {
 
     @Inject
     OpsAlerts alerts;
+
     @Inject
     WorkerFixtures fixtures;
+
     @Inject
     FakeResend resend;
+
     @Inject
     EntityManager em;
 
@@ -51,7 +53,9 @@ class OpsAlertsTest {
         UUID documentId = fixtures.invoice();
         JobEntity job = fixtures.job(documentId, 10);
         String key = "job_dead:" + job.id;
-        sql("UPDATE billing.jobs SET status = 'DEAD', last_error = 'DianTransportException: timeout' WHERE id = ?1", job.id);
+        sql(
+                "UPDATE billing.jobs SET status = 'DEAD', last_error = 'DianTransportException: timeout' WHERE id = ?1",
+                job.id);
 
         assertThat(keys(alerts.run(Run.FREQUENT))).contains(key);
         assertThat(resend.requests()).isNotEmpty();
@@ -73,7 +77,9 @@ class OpsAlertsTest {
         UUID documentId = fixtures.invoice();
         JobEntity job = fixtures.job(documentId, 1);
         String key = "document_stuck:" + documentId;
-        sql("UPDATE billing.documents SET status = 'PROCESSING', updated_at = now() - interval '20 minutes' WHERE id = ?1", documentId);
+        sql(
+                "UPDATE billing.documents SET status = 'PROCESSING', updated_at = now() - interval '20 minutes' WHERE id = ?1",
+                documentId);
 
         assertThat(keys(alerts.run(Run.FREQUENT))).contains(key);
         assertThat(keys(alerts.run(Run.FREQUENT))).doesNotContain(key);
@@ -98,15 +104,23 @@ class OpsAlertsTest {
     void theDailyRunReportsExpiringCertificatesAndRangesRunningOut() {
         UUID documentId = fixtures.invoice();
         DocumentEntity doc = QuarkusTransaction.requiringNew().call(() -> DocumentEntity.findById(documentId));
-        UUID certificateId = (UUID) single("SELECT id FROM billing.signing_certificates WHERE issuer_id = ?1", doc.issuerId);
-        sql("UPDATE billing.signing_certificates SET valid_to = now() + interval '10 days' WHERE id = ?1", certificateId);
+        UUID certificateId =
+                (UUID) single("SELECT id FROM billing.signing_certificates WHERE issuer_id = ?1", doc.issuerId);
+        sql(
+                "UPDATE billing.signing_certificates SET valid_to = now() + interval '10 days' WHERE id = ?1",
+                certificateId);
         sql("UPDATE billing.numbering_ranges SET next_number = range_to - 10 WHERE id = ?1", doc.numberingRangeId);
 
         List<OpsAlert> sent = alerts.run(Run.DAILY);
 
-        assertThat(keys(sent)).contains("certificate_expiring:" + certificateId, "range_running_out:" + doc.numberingRangeId);
-        assertThat(sent).filteredOn(a -> a.key().equals("range_running_out:" + doc.numberingRangeId))
-                .singleElement().extracting(OpsAlert::summary).asString().contains("le quedan 11 de 5000001 números");
+        assertThat(keys(sent))
+                .contains("certificate_expiring:" + certificateId, "range_running_out:" + doc.numberingRangeId);
+        assertThat(sent)
+                .filteredOn(a -> a.key().equals("range_running_out:" + doc.numberingRangeId))
+                .singleElement()
+                .extracting(OpsAlert::summary)
+                .asString()
+                .contains("le quedan 11 de 5000001 números");
         // The frequent run neither reports nor forgets the daily categories.
         alerts.run(Run.FREQUENT);
         assertThat(known("certificate_expiring:" + certificateId)).isTrue();
@@ -117,7 +131,8 @@ class OpsAlertsTest {
         UUID documentId = fixtures.invoice();
         DocumentEntity doc = QuarkusTransaction.requiringNew().call(() -> DocumentEntity.findById(documentId));
         String key = "range_unverified:" + doc.numberingRangeId;
-        sql("UPDATE billing.numbering_ranges SET verification_status = 'ERROR', verification_error = '301' WHERE id = ?1",
+        sql(
+                "UPDATE billing.numbering_ranges SET verification_status = 'ERROR', verification_error = '301' WHERE id = ?1",
                 doc.numberingRangeId);
 
         // Habilitación: the shared test range always answers 301, so it is not an operator's problem.
@@ -150,12 +165,15 @@ class OpsAlertsTest {
     }
 
     private Object single(String query, Object parameter) {
-        return QuarkusTransaction.requiringNew().call(() ->
-                em.createNativeQuery(query).setParameter(1, parameter).getSingleResult());
+        return QuarkusTransaction.requiringNew()
+                .call(() ->
+                        em.createNativeQuery(query).setParameter(1, parameter).getSingleResult());
     }
 
     private void sql(String statement, Object parameter) {
-        QuarkusTransaction.requiringNew().run(() ->
-                em.createNativeQuery(statement).setParameter(1, parameter).executeUpdate());
+        QuarkusTransaction.requiringNew()
+                .run(() -> em.createNativeQuery(statement)
+                        .setParameter(1, parameter)
+                        .executeUpdate());
     }
 }

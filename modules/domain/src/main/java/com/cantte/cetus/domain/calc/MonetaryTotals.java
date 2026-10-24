@@ -10,5 +10,4 @@ public record MonetaryTotals(
         BigDecimal allowanceTotalAmount,
         BigDecimal chargeTotalAmount,
         BigDecimal prepaidAmount,
-        BigDecimal payableAmount) {
-}
+        BigDecimal payableAmount) {}

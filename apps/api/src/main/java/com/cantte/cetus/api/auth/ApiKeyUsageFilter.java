@@ -12,10 +12,9 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
-import org.jboss.logging.Logger;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.jboss.logging.Logger;
 
 /**
  * Records every /v1 request made with a valid API key: method, path, status and duration. Each request gets an id,
@@ -35,8 +34,10 @@ public class ApiKeyUsageFilter implements ContainerRequestFilter, ContainerRespo
 
     @Inject
     ApiPrincipal principal;
+
     @Inject
     ApiKeyUsage usage;
+
     @Inject
     RequestOriginResolver origin;
 
@@ -61,9 +62,15 @@ public class ApiKeyUsageFilter implements ContainerRequestFilter, ContainerRespo
         }
         long elapsedNanos = System.nanoTime() - (long) request.getProperty(STARTED_NANOS);
         // The path comes without the query string, which may carry customer data.
-        ApiKeyRequest recorded = new ApiKeyRequest(requestId, principal.accountId(), principal.apiKeyId(),
-                request.getMethod(), request.getUriInfo().getPath(), response.getStatus(),
-                (int) Math.min(elapsedNanos / 1_000_000, Integer.MAX_VALUE), origin.resolve(),
+        ApiKeyRequest recorded = new ApiKeyRequest(
+                requestId,
+                principal.accountId(),
+                principal.apiKeyId(),
+                request.getMethod(),
+                request.getUriInfo().getPath(),
+                response.getStatus(),
+                (int) Math.min(elapsedNanos / 1_000_000, Integer.MAX_VALUE),
+                origin.resolve(),
                 (OffsetDateTime) request.getProperty(RECEIVED_AT));
         try {
             usage.record(recorded);

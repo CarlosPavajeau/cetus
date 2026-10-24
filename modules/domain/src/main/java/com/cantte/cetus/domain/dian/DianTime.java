@@ -11,8 +11,7 @@ public final class DianTime {
     public static final ZoneId ZONE = ZoneId.of("America/Bogota");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    private DianTime() {
-    }
+    private DianTime() {}
 
     public static String time(LocalTime time) {
         return TIME.format(time) + "-05:00";

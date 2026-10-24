@@ -1,16 +1,15 @@
 package com.cantte.cetus.api.support;
 
+import static io.restassured.RestAssured.given;
+
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.smallrye.jwt.build.Jwt;
 import io.smallrye.jwt.build.JwtClaimsBuilder;
 import jakarta.json.JsonValue;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
-import static io.restassured.RestAssured.given;
 
 /**
  * A console user with its own organization, calling the API the way the console BFF does. They own the
@@ -86,8 +85,8 @@ public record ConsoleUser(String userId, String organizationId, Set<String> grou
     }
 
     private static RequestSpecification request(String token) {
-        return given()
-                .auth().oauth2(token)
+        return given().auth()
+                .oauth2(token)
                 .contentType(ContentType.JSON)
                 .header("X-Cetus-Client-IP", CLIENT_IP)
                 .header("X-Cetus-Client-User-Agent", CLIENT_USER_AGENT);

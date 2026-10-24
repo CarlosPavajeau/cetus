@@ -1,13 +1,12 @@
 package com.cantte.cetus.email;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.junit.jupiter.api.Test;
 
 class ResendWebhookVerifierTest {
 
@@ -20,7 +19,8 @@ class ResendWebhookVerifierTest {
     @Test
     void acceptsAnEventSignedWithTheSecret() {
         String timestamp = now();
-        assertThat(verifier.verify("msg_1", timestamp, "v1," + sign("msg_1", timestamp, BODY), BODY)).isTrue();
+        assertThat(verifier.verify("msg_1", timestamp, "v1," + sign("msg_1", timestamp, BODY), BODY))
+                .isTrue();
     }
 
     @Test
@@ -34,13 +34,15 @@ class ResendWebhookVerifierTest {
     void rejectsATamperedBody() {
         String timestamp = now();
         String signature = "v1," + sign("msg_1", timestamp, BODY);
-        assertThat(verifier.verify("msg_1", timestamp, signature, BODY.replace("delivered", "bounced"))).isFalse();
+        assertThat(verifier.verify("msg_1", timestamp, signature, BODY.replace("delivered", "bounced")))
+                .isFalse();
     }
 
     @Test
     void rejectsAnOldEvent() {
         String timestamp = String.valueOf(System.currentTimeMillis() / 1000 - 600);
-        assertThat(verifier.verify("msg_1", timestamp, "v1," + sign("msg_1", timestamp, BODY), BODY)).isFalse();
+        assertThat(verifier.verify("msg_1", timestamp, "v1," + sign("msg_1", timestamp, BODY), BODY))
+                .isFalse();
     }
 
     @Test
@@ -48,9 +50,12 @@ class ResendWebhookVerifierTest {
         String timestamp = now();
         String signature = "v1," + sign("msg_1", timestamp, BODY);
         assertThat(verifier.verify(null, timestamp, signature, BODY)).isFalse();
-        String otherSecret = "whsec_" + Base64.getEncoder().encodeToString("another-key".getBytes(StandardCharsets.UTF_8));
-        assertThat(new ResendWebhookVerifier(otherSecret).verify("msg_1", timestamp, signature, BODY)).isFalse();
-        assertThat(new ResendWebhookVerifier("whsec_not base64!").verify("msg_1", timestamp, signature, BODY)).isFalse();
+        String otherSecret =
+                "whsec_" + Base64.getEncoder().encodeToString("another-key".getBytes(StandardCharsets.UTF_8));
+        assertThat(new ResendWebhookVerifier(otherSecret).verify("msg_1", timestamp, signature, BODY))
+                .isFalse();
+        assertThat(new ResendWebhookVerifier("whsec_not base64!").verify("msg_1", timestamp, signature, BODY))
+                .isFalse();
     }
 
     /** What Resend (Svix) computes: base64(HMAC-SHA256(key, id + "." + timestamp + "." + body)). */
@@ -58,8 +63,8 @@ class ResendWebhookVerifierTest {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(KEY, "HmacSHA256"));
-            return Base64.getEncoder().encodeToString(
-                    mac.doFinal((id + "." + timestamp + "." + body).getBytes(StandardCharsets.UTF_8)));
+            return Base64.getEncoder()
+                    .encodeToString(mac.doFinal((id + "." + timestamp + "." + body).getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

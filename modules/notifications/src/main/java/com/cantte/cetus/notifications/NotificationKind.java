@@ -1,7 +1,6 @@
 package com.cantte.cetus.notifications;
 
 import com.cantte.cetus.persistence.entity.AccountContactEntity.Category;
-
 import java.util.Set;
 
 /** What a notice reports, and which contacts receive it. */

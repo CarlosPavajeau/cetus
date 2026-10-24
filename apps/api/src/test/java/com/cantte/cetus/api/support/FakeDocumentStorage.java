@@ -4,7 +4,6 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.domain.dian.Hashing;
 import io.quarkus.test.Mock;
 import jakarta.enterprise.context.ApplicationScoped;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -30,6 +29,8 @@ public class FakeDocumentStorage extends DocumentStorage {
 
     @Override
     public PresignedUrl presignGet(String key, Duration ttl, String downloadName) {
-        return new PresignedUrl("https://s3.test/" + key + "?filename=" + downloadName, Instant.now().plus(ttl));
+        return new PresignedUrl(
+                "https://s3.test/" + key + "?filename=" + downloadName,
+                Instant.now().plus(ttl));
     }
 }

@@ -13,8 +13,7 @@ public final class DianFileNames {
     /** Provider code when the issuer uses its own software. */
     public static final String OWN_SOFTWARE_CODE = "000";
 
-    private DianFileNames() {
-    }
+    private DianFileNames() {}
 
     public static String xml(DocumentType type, String nit, String providerCode, int year, long sequence) {
         return type.filePrefix() + base(nit, providerCode, year, sequence) + ".xml";

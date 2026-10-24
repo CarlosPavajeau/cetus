@@ -5,14 +5,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.hibernate.query.NativeQuery;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import org.hibernate.query.NativeQuery;
 
 /** Requests made with each API key: written once per /v1 request, read by the console. */
 @ApplicationScoped
@@ -33,8 +32,7 @@ public class ApiKeyUsage {
                              user_agent, created_at)
                         VALUES (:id, :account, :apiKey, :method, :path, :status, :duration, CAST(:ip AS inet),
                                 :userAgent, :createdAt)
-                        """)
-                .unwrap(NativeQuery.class);
+                        """).unwrap(NativeQuery.class);
         // Typed binding: an untyped null would be sent as bytea and break the cast.
         insert.setParameter("id", request.id(), UUID.class)
                 .setParameter("account", request.accountId(), UUID.class)
@@ -72,10 +70,11 @@ public class ApiKeyUsage {
                         FROM billing.api_key_requests
                         WHERE account_id = :account AND api_key_id = :apiKey AND created_at >= :since
                         """)
-                .setParameter("account", accountId)
-                .setParameter("apiKey", apiKeyId)
-                .setParameter("since", since)
-                .getSingleResult()).longValue();
+                        .setParameter("account", accountId)
+                        .setParameter("apiKey", apiKeyId)
+                        .setParameter("since", since)
+                        .getSingleResult())
+                .longValue();
     }
 
     private static ApiKeyRequestView toView(Object[] row) {

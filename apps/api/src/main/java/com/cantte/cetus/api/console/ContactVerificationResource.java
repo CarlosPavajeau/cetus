@@ -20,16 +20,15 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
  * The page behind a contact's verification link. No session: the token proves the address receives
@@ -39,14 +38,21 @@ import java.util.UUID;
  */
 @Path("/console/contact-verifications/{token}")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "422",
+        description = "Unprocessable Entity",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class ContactVerificationResource {
 
     @Inject
     AuditLog auditLog;
+
     @Inject
     RequestOriginResolver origin;
 
@@ -54,8 +60,8 @@ public class ContactVerificationResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public VerificationView get(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
-        AccountContactEntity contact = AccountContactEntity.findByPendingToken(ApiKeys.hash(token))
-                .orElseThrow(VerificationLinkNotFound::new);
+        AccountContactEntity contact =
+                AccountContactEntity.findByPendingToken(ApiKeys.hash(token)).orElseThrow(VerificationLinkNotFound::new);
         return view(contact, contact.pendingEmail, verifies(contact));
     }
 
@@ -67,13 +73,15 @@ public class ContactVerificationResource {
     @POST
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public VerificationView confirm(@PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
+    public VerificationView confirm(
+            @PathParam("token") @Pattern(regexp = CertificateUploadResource.TOKEN) String token) {
         String hash = ApiKeys.hash(token);
         UUID accountId = AccountContactEntity.accountOfPendingToken(hash).orElseThrow(VerificationLinkNotFound::new);
         OffsetDateTime now = OffsetDateTime.now();
         AccountContactEntity contact = AccountContactEntity.listForUpdate(accountId).stream()
                 .filter(each -> hash.equals(each.pendingTokenHash) && each.pendingExpiresAt.isAfter(now))
-                .findFirst().orElseThrow(VerificationLinkNotFound::new);
+                .findFirst()
+                .orElseThrow(VerificationLinkNotFound::new);
         // No session here, so SuspendedAccountFilter does not apply: a suspended account stays read-only.
         AccountEntity account = AccountEntity.findById(contact.accountId);
         if (!"ACTIVE".equals(account.status)) {
@@ -90,8 +98,14 @@ public class ContactVerificationResource {
             each.email = email;
             each.verifiedAt = now;
             each.clearPending();
-            auditLog.record(each.accountId, link, origin.resolve(), AuditAction.CONTACT_VERIFIED, "account_contact",
-                    each.id, data);
+            auditLog.record(
+                    each.accountId,
+                    link,
+                    origin.resolve(),
+                    AuditAction.CONTACT_VERIFIED,
+                    "account_contact",
+                    each.id,
+                    data);
         }
         return view(contact, email, verified);
     }
@@ -102,9 +116,13 @@ public class ContactVerificationResource {
         return contacts;
     }
 
-    private static VerificationView view(AccountContactEntity contact, String email, List<AccountContactEntity> contacts) {
+    private static VerificationView view(
+            AccountContactEntity contact, String email, List<AccountContactEntity> contacts) {
         AccountEntity account = AccountEntity.findById(contact.accountId);
-        return new VerificationView(account.name, contacts.stream().map(each -> each.category).sorted().toList(), email);
+        return new VerificationView(
+                account.name,
+                contacts.stream().map(each -> each.category).sorted().toList(),
+                email);
     }
 
     /** Unknown, expired, replaced or already used: the page says the same for all. */
@@ -117,6 +135,5 @@ public class ContactVerificationResource {
     public record VerificationView(
             @Schema(required = true) String accountName,
             @Schema(required = true) List<Category> categories,
-            @Schema(required = true) String email) {
-    }
+            @Schema(required = true) String email) {}
 }

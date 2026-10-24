@@ -23,8 +23,7 @@ import com.cantte.cetus.ubl.model.TextType;
 /** Mapping shared by every document type: parties, payment, taxes, totals, line parts and DIAN extensions. */
 final class UblParts {
 
-    private UblParts() {
-    }
+    private UblParts() {}
 
     /** DIAN extensions without InvoiceControl, which only invoices carry. */
     static DianExtensions dianExtensions(SoftwareInfo software, String qrCode) {
@@ -41,11 +40,11 @@ final class UblParts {
         ext.softwareProvider.providerId = IdentifierType.of(software.providerNit())
                 .agency(DianCodes.AGENCY_ID, DianCodes.AGENCY_NAME)
                 .scheme(software.providerCheckDigit(), IdentificationType.NIT.dianCode());
-        ext.softwareProvider.softwareId = IdentifierType.of(software.softwareId())
-                .agency(DianCodes.AGENCY_ID, DianCodes.AGENCY_NAME);
+        ext.softwareProvider.softwareId =
+                IdentifierType.of(software.softwareId()).agency(DianCodes.AGENCY_ID, DianCodes.AGENCY_NAME);
 
-        ext.softwareSecurityCode = IdentifierType.of(software.securityCode())
-                .agency(DianCodes.AGENCY_ID, DianCodes.AGENCY_NAME);
+        ext.softwareSecurityCode =
+                IdentifierType.of(software.securityCode()).agency(DianCodes.AGENCY_ID, DianCodes.AGENCY_NAME);
 
         ext.authorizationProvider = new DianExtensions.AuthorizationProvider();
         ext.authorizationProvider.authorizationProviderId = IdentifierType.of(DianCodes.DIAN_NIT)
@@ -73,14 +72,16 @@ final class UblParts {
         Cac.BillingReference billing = new Cac.BillingReference();
         billing.invoiceDocumentReference = new Cac.DocumentReference();
         billing.invoiceDocumentReference.id = reference.number();
-        billing.invoiceDocumentReference.uuid = IdentifierType.of(reference.cufe()).scheme(null, "CUFE-SHA384");
+        billing.invoiceDocumentReference.uuid =
+                IdentifierType.of(reference.cufe()).scheme(null, "CUFE-SHA384");
         billing.invoiceDocumentReference.issueDate = DianTime.date(reference.issueDate());
         return billing;
     }
 
     static Cac.PartyRole supplier(Party party, String prefix) {
         Cac.PartyRole role = new Cac.PartyRole();
-        role.additionalAccountId = IdentifierType.of(party.personType().dianCode()).agency(DianCodes.AGENCY_ID, null);
+        role.additionalAccountId =
+                IdentifierType.of(party.personType().dianCode()).agency(DianCodes.AGENCY_ID, null);
         role.party = new Cac.Party();
         role.party.partyNames.add(partyName(party));
         role.party.physicalLocation = new Cac.Location();
@@ -99,7 +100,8 @@ final class UblParts {
 
     static Cac.PartyRole customer(Party party) {
         Cac.PartyRole role = new Cac.PartyRole();
-        role.additionalAccountId = IdentifierType.of(party.personType().dianCode()).agency(DianCodes.AGENCY_ID, null);
+        role.additionalAccountId =
+                IdentifierType.of(party.personType().dianCode()).agency(DianCodes.AGENCY_ID, null);
         role.party = new Cac.Party();
         Cac.PartyIdentification identification = new Cac.PartyIdentification();
         identification.id = companyId(party);
@@ -151,8 +153,8 @@ final class UblParts {
     }
 
     private static IdentifierType companyId(Party party) {
-        IdentifierType id = IdentifierType.of(party.identificationNumber())
-                .agency(DianCodes.AGENCY_ID, DianCodes.AGENCY_NAME);
+        IdentifierType id =
+                IdentifierType.of(party.identificationNumber()).agency(DianCodes.AGENCY_ID, DianCodes.AGENCY_NAME);
         id.schemeName = party.identificationType().dianCode();
         if (party.identificationType() == IdentificationType.NIT) {
             id.schemeID = party.checkDigit();
@@ -241,7 +243,8 @@ final class UblParts {
         if (source.itemCode() != null) {
             item.sellersItemIdentification = itemId(source.itemCode(), null, null);
             // 999 = Cetus internal standard (seller's own code). Change if you adopt UNSPSC/GTIN.
-            item.standardItemIdentification = itemId(source.itemCode(), "999", "Estándar de adopción del contribuyente");
+            item.standardItemIdentification =
+                    itemId(source.itemCode(), "999", "Estándar de adopción del contribuyente");
         }
         return item;
     }

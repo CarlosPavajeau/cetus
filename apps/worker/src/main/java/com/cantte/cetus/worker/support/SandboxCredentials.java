@@ -3,9 +3,8 @@ package com.cantte.cetus.worker.support;
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.worker.builders.DocumentSecrets;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.util.UUID;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * What a SANDBOX document is built and signed with, in place of its issuer's own credentials: a Software
@@ -24,12 +23,16 @@ public class SandboxCredentials {
 
     @ConfigProperty(name = "cetus.sandbox.software-id")
     String softwareId;
+
     @ConfigProperty(name = "cetus.sandbox.pin")
     String pin;
+
     @ConfigProperty(name = "cetus.sandbox.technical-key")
     String technicalKey;
+
     @ConfigProperty(name = "cetus.sandbox.certificate.s3-key")
     String certificateKey;
+
     @ConfigProperty(name = "cetus.sandbox.certificate.password-s3-key")
     String passwordKey;
 
@@ -39,7 +42,8 @@ public class SandboxCredentials {
 
     /** A five-digit PIN and a 40-character technical key of the issuer's own, from the configured ones. */
     public DocumentSecrets secrets(UUID issuerId) {
-        String issuerPin = String.valueOf(10_000 + Integer.parseInt(derive(pin, issuerId).substring(0, 7), 16) % 90_000);
+        String issuerPin =
+                String.valueOf(10_000 + Integer.parseInt(derive(pin, issuerId).substring(0, 7), 16) % 90_000);
         return new DocumentSecrets(issuerPin, derive(technicalKey, issuerId).substring(0, 40));
     }
 

@@ -1,7 +1,6 @@
 package com.cantte.cetus.webhooks;
 
 import com.cantte.cetus.domain.model.DocumentType;
-
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -22,7 +21,11 @@ public enum WebhookEventType {
     DOCUMENT_DELIVERY_FAILED("document.delivery_failed");
 
     /** How the DIAN validation of a document ended. */
-    public enum Outcome { ACCEPTED, REJECTED, FAILED }
+    public enum Outcome {
+        ACCEPTED,
+        REJECTED,
+        FAILED
+    }
 
     private final String wireName;
 
@@ -44,6 +47,8 @@ public enum WebhookEventType {
     }
 
     public static Optional<WebhookEventType> fromWireName(String wireName) {
-        return Arrays.stream(values()).filter(type -> type.wireName.equals(wireName)).findFirst();
+        return Arrays.stream(values())
+                .filter(type -> type.wireName.equals(wireName))
+                .findFirst();
     }
 }

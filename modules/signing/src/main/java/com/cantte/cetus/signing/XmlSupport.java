@@ -1,7 +1,7 @@
 package com.cantte.cetus.signing;
 
-import org.w3c.dom.Document;
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -10,8 +10,7 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import org.w3c.dom.Document;
 
 /**
  * Safe XML parsing (no external entities) and serialization that never re-indents.
@@ -19,8 +18,7 @@ import java.io.ByteArrayOutputStream;
  */
 public final class XmlSupport {
 
-    private XmlSupport() {
-    }
+    private XmlSupport() {}
 
     public static DocumentBuilder newDocumentBuilder() {
         try {

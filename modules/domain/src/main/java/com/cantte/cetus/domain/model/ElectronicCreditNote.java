@@ -1,7 +1,6 @@
 package com.cantte.cetus.domain.model;
 
 import com.cantte.cetus.domain.calc.CalculationResult;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;

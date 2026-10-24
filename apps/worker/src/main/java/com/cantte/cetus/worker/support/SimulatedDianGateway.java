@@ -14,7 +14,6 @@ import com.cantte.cetus.signing.KeyMaterial;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
@@ -36,14 +35,17 @@ public class SimulatedDianGateway implements DianGateway {
     @Override
     public DianResponse sendBillSync(String zipFileName, byte[] zip, KeyMaterial keys) {
         SimulatedDocument document = SimulatedDocument.fromZip(zip);
-        int previousSends = documentId(document.uniqueCode()).map(SimulatedDianGateway::sends).orElse(0);
+        int previousSends = documentId(document.uniqueCode())
+                .map(SimulatedDianGateway::sends)
+                .orElse(0);
         return new SimulatedDian(keys, clock).sendBillSync(document, previousSends);
     }
 
     @Override
     public DianResponse getStatus(String trackId, KeyMaterial keys) {
         Optional<UUID> documentId = documentId(trackId);
-        Optional<SimulatedDocument> document = documentId.flatMap(id -> artifacts.latest(id, Kind.SIGNED_XML))
+        Optional<SimulatedDocument> document = documentId
+                .flatMap(id -> artifacts.latest(id, Kind.SIGNED_XML))
                 .map(xml -> SimulatedDocument.fromXml(xml.fileName().replaceFirst("\\.xml$", ""), xml.content()));
         int previousSends = documentId.map(SimulatedDianGateway::sends).orElse(0);
         return new SimulatedDian(keys, clock).getStatus(trackId, document, previousSends);
@@ -60,19 +62,21 @@ public class SimulatedDianGateway implements DianGateway {
     }
 
     @Override
-    public NumberingRangeResponse getNumberingRange(String accountCode, String accountCodeT, String softwareCode,
-                                                    KeyMaterial keys) {
+    public NumberingRangeResponse getNumberingRange(
+            String accountCode, String accountCodeT, String softwareCode, KeyMaterial keys) {
         throw new UnsupportedOperationException("Sandbox ranges are not verified with the DIAN");
     }
 
     private static Optional<UUID> documentId(String uniqueCode) {
-        return QuarkusTransaction.requiringNew().call(() -> DocumentEntity.<DocumentEntity>find(
-                        "cufe = ?1 and environment = ?2", uniqueCode, Environment.SANDBOX)
-                .firstResultOptional().map(doc -> doc.id));
+        return QuarkusTransaction.requiringNew()
+                .call(() -> DocumentEntity.<DocumentEntity>find(
+                                "cufe = ?1 and environment = ?2", uniqueCode, Environment.SANDBOX)
+                        .firstResultOptional()
+                        .map(doc -> doc.id));
     }
 
     private static int sends(UUID documentId) {
-        return QuarkusTransaction.requiringNew().call(() -> (int) DianSubmissionEntity.count(
-                "documentId = ?1 and operation = 'SendBillSync'", documentId));
+        return QuarkusTransaction.requiringNew().call(() ->
+                (int) DianSubmissionEntity.count("documentId = ?1 and operation = 'SendBillSync'", documentId));
     }
 }

@@ -4,7 +4,6 @@ import com.cantte.cetus.domain.calc.Amounts;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.TaxType;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -20,8 +19,7 @@ import java.time.LocalTime;
  */
 public final class Cufe {
 
-    private Cufe() {
-    }
+    private Cufe() {}
 
     public static String compute(Input input) {
         CalculationResult calc = input.calculation();
@@ -29,9 +27,12 @@ public final class Cufe {
                 + DianTime.date(input.issueDate())
                 + DianTime.time(input.issueTime())
                 + Amounts.format(calc.totals().lineExtensionAmount())
-                + TaxType.IVA.dianCode() + Amounts.format(calc.taxAmount(TaxType.IVA))
-                + TaxType.INC.dianCode() + Amounts.format(calc.taxAmount(TaxType.INC))
-                + TaxType.ICA.dianCode() + Amounts.format(calc.taxAmount(TaxType.ICA))
+                + TaxType.IVA.dianCode()
+                + Amounts.format(calc.taxAmount(TaxType.IVA))
+                + TaxType.INC.dianCode()
+                + Amounts.format(calc.taxAmount(TaxType.INC))
+                + TaxType.ICA.dianCode()
+                + Amounts.format(calc.taxAmount(TaxType.ICA))
                 + Amounts.format(calc.totals().payableAmount())
                 + input.supplierNit()
                 + input.customerIdentification()
@@ -51,6 +52,5 @@ public final class Cufe {
             String supplierNit,
             String customerIdentification,
             String key,
-            Environment environment) {
-    }
+            Environment environment) {}
 }

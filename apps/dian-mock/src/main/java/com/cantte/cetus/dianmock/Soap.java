@@ -14,12 +14,17 @@ final class Soap {
     private static final String ARRAYS_NS = "http://schemas.microsoft.com/2003/10/Serialization/Arrays";
 
     /** What a DianResponse data contract carries. */
-    record Result(boolean valid, String statusCode, String description, String message, List<String> errors,
-                  String applicationResponse, String documentKey, String fileName) {
-    }
+    record Result(
+            boolean valid,
+            String statusCode,
+            String description,
+            String message,
+            List<String> errors,
+            String applicationResponse,
+            String documentKey,
+            String fileName) {}
 
-    private Soap() {
-    }
+    private Soap() {}
 
     static String single(String operation, Result result) {
         String body = "<" + operation + "Response xmlns=\"" + SERVICE_NS + "\"><" + operation + "Result xmlns:b=\""
@@ -42,7 +47,8 @@ final class Soap {
     static String upload(String operation, String zipKey, List<String> errors) {
         StringBuilder messages = new StringBuilder();
         for (String error : errors) {
-            messages.append("<c:XmlParamsResponseTrackId><c:ProcessedMessage>").append(escape(error))
+            messages.append("<c:XmlParamsResponseTrackId><c:ProcessedMessage>")
+                    .append(escape(error))
                     .append("</c:ProcessedMessage></c:XmlParamsResponseTrackId>");
         }
         String body = "<" + operation + "Response xmlns=\"" + SERVICE_NS + "\"><" + operation + "Result xmlns:b=\""
@@ -116,6 +122,9 @@ final class Soap {
     }
 
     static String escape(String value) {
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 }

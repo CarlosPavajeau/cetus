@@ -11,7 +11,6 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -31,6 +30,7 @@ public class AccountContacts {
 
     @Inject
     EntityManager em;
+
     @Inject
     Notifications notifications;
 
@@ -69,12 +69,22 @@ public class AccountContacts {
     public void requestVerification(AccountContactEntity contact, List<Category> categories) {
         contact.pendingTokenHash = null;
         contact.pendingExpiresAt = null;
-        notifications.request(contact.accountId, NotificationKind.CONTACT_VERIFICATION,
-                "contact_verification:%s:%d".formatted(contact.id, contact.pendingRequestedAt.toInstant().toEpochMilli()),
-                Map.of("contactId", contact.id.toString(),
-                        "categories", categories.stream().sorted().map(Category::name).collect(Collectors.joining(",")),
-                        "email", contact.pendingEmail,
-                        "requestedAt", contact.pendingRequestedAt.toInstant().toString()));
+        notifications.request(
+                contact.accountId,
+                NotificationKind.CONTACT_VERIFICATION,
+                "contact_verification:%s:%d"
+                        .formatted(
+                                contact.id,
+                                contact.pendingRequestedAt.toInstant().toEpochMilli()),
+                Map.of(
+                        "contactId",
+                        contact.id.toString(),
+                        "categories",
+                        categories.stream().sorted().map(Category::name).collect(Collectors.joining(",")),
+                        "email",
+                        contact.pendingEmail,
+                        "requestedAt",
+                        contact.pendingRequestedAt.toInstant().toString()));
     }
 
     /**
@@ -85,8 +95,12 @@ public class AccountContacts {
         if (contact.pendingEmail == null) {
             return List.of();
         }
-        return AccountContactEntity.list("accountId = ?1 and id <> ?2 and pendingEmail = ?3 and pendingRequestedAt = ?4",
-                contact.accountId, contact.id, contact.pendingEmail, contact.pendingRequestedAt);
+        return AccountContactEntity.list(
+                "accountId = ?1 and id <> ?2 and pendingEmail = ?3 and pendingRequestedAt = ?4",
+                contact.accountId,
+                contact.id,
+                contact.pendingEmail,
+                contact.pendingRequestedAt);
     }
 
     /**
@@ -105,7 +119,8 @@ public class AccountContacts {
                 .setParameter("since", OffsetDateTime.now().minus(RESEND_AFTER))
                 .getSingleResult();
         if (recent.longValue() > 0) {
-            throw new DomainException("verification_recently_sent",
+            throw new DomainException(
+                    "verification_recently_sent",
                     "A verification email was just sent to that address; wait a minute before asking for another");
         }
     }
@@ -118,7 +133,8 @@ public class AccountContacts {
     /** The category's contact, with every category of the account locked (see AccountContactEntity.listForUpdate). */
     static AccountContactEntity require(UUID accountId, Category category) {
         return AccountContactEntity.listForUpdate(accountId).stream()
-                .filter(contact -> contact.category == category).findFirst()
+                .filter(contact -> contact.category == category)
+                .findFirst()
                 .orElseThrow(() -> new NotFoundException("The account has no " + category + " contact"));
     }
 
@@ -136,7 +152,9 @@ public class AccountContacts {
         if (tokenHash != null && !others.isEmpty()) {
             // The hash is unique: it leaves this row before it reaches the next.
             em.flush();
-            AccountContactEntity heir = others.stream().min(Comparator.comparing(other -> other.category)).orElseThrow();
+            AccountContactEntity heir = others.stream()
+                    .min(Comparator.comparing(other -> other.category))
+                    .orElseThrow();
             heir.pendingTokenHash = tokenHash;
             heir.pendingExpiresAt = expiresAt;
         }
@@ -153,11 +171,12 @@ public class AccountContacts {
                         VALUES (:id, :account, :category, :email, :requestedAt)
                         ON CONFLICT (account_id, category) DO NOTHING
                         """)
-                .setParameter("id", Ids.newId())
-                .setParameter("account", accountId)
-                .setParameter("category", category.name())
-                .setParameter("email", pendingEmail)
-                .setParameter("requestedAt", requestedAt)
-                .executeUpdate() == 1;
+                        .setParameter("id", Ids.newId())
+                        .setParameter("account", accountId)
+                        .setParameter("category", category.name())
+                        .setParameter("email", pendingEmail)
+                        .setParameter("requestedAt", requestedAt)
+                        .executeUpdate()
+                == 1;
     }
 }

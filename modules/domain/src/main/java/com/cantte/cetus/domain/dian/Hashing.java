@@ -7,8 +7,7 @@ import java.util.HexFormat;
 
 public final class Hashing {
 
-    private Hashing() {
-    }
+    private Hashing() {}
 
     public static String sha384Hex(String value) {
         return hex("SHA-384", value.getBytes(StandardCharsets.UTF_8));

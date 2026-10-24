@@ -1,5 +1,8 @@
 package com.cantte.cetus.dianmock;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianOperation;
 import com.cantte.cetus.dian.DianResponse;
@@ -10,10 +13,6 @@ import com.cantte.cetus.dian.simulated.SimulatedDian;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.sun.net.httpserver.HttpServer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -25,9 +24,9 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class DianMockServerTest {
 
@@ -49,8 +48,13 @@ class DianMockServerTest {
         if (server != null) {
             server.stop(0);
         }
-        dian = new MockDian(Scenario.ACCEPT, rejectSelfSigned, timeoutDelay, 1,
-                new SimulatedDian(keys, Clock.systemUTC()), Clock.systemUTC());
+        dian = new MockDian(
+                Scenario.ACCEPT,
+                rejectSelfSigned,
+                timeoutDelay,
+                1,
+                new SimulatedDian(keys, Clock.systemUTC()),
+                Clock.systemUTC());
         server = DianMockServer.start(0, dian);
         url = "http://localhost:" + server.getAddress().getPort() + "/WcfDianCustomerServices.svc";
         client = new DianSoapClient(url, Duration.ofSeconds(5), Duration.ofSeconds(5));
@@ -106,7 +110,8 @@ class DianMockServerTest {
 
         assertThat(response.valid()).isFalse();
         assertThat(response.statusCode()).isEqualTo("99");
-        assertThat(response.errors()).anyMatch(error -> error.startsWith("Regla: FAK26"))
+        assertThat(response.errors())
+                .anyMatch(error -> error.startsWith("Regla: FAK26"))
                 .anyMatch(error -> error.startsWith("Regla: FAB10a"));
         assertThat(decoded(response.applicationResponse())).contains("<cbc:ResponseCode>04</cbc:ResponseCode>");
         assertThat(client.getStatus("cufe-1", keys).valid()).isFalse();
@@ -116,11 +121,11 @@ class DianMockServerTest {
     void failsTheFirstTwoSendsOfTheTemporaryFailureCustomer() {
         byte[] zip = invoiceZip("SETP1", "cufe-1", "1000000004");
 
-        DianFaultException first = catchThrowableOfType(DianFaultException.class,
-                () -> client.sendBillSync("z1.zip", zip, keys));
+        DianFaultException first =
+                catchThrowableOfType(DianFaultException.class, () -> client.sendBillSync("z1.zip", zip, keys));
         assertThat(client.getStatus("cufe-1", keys).statusCode()).isEqualTo("66");
-        DianFaultException second = catchThrowableOfType(DianFaultException.class,
-                () -> client.sendBillSync("z1.zip", zip, keys));
+        DianFaultException second =
+                catchThrowableOfType(DianFaultException.class, () -> client.sendBillSync("z1.zip", zip, keys));
         DianResponse third = client.sendBillSync("z1.zip", zip, keys);
 
         assertThat(first.retryable()).isTrue();
@@ -143,9 +148,12 @@ class DianMockServerTest {
     @Test
     void delaysEverySoapAnswerByTheConfiguredLatency() throws Exception {
         URI control = URI.create("http://localhost:" + server.getAddress().getPort() + "/__mock/latency?value=PT0.3S");
-        HttpResponse<String> set = HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder(control).POST(HttpRequest.BodyPublishers.noBody()).build(),
-                HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> set = HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(control)
+                                .POST(HttpRequest.BodyPublishers.noBody())
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
         long started = System.nanoTime();
 
         DianResponse response = client.sendBillSync("z1.zip", invoiceZip("SETP1", "cufe-1"), keys);
@@ -205,8 +213,8 @@ class DianMockServerTest {
     void answersTheClientFaultScenarioLikeTheDian() {
         dian.scenario(Scenario.CLIENT_FAULT);
 
-        DianFaultException fault = catchThrowableOfType(DianFaultException.class,
-                () -> client.sendBillSync("z1.zip", invoiceZip("SETP1", "cufe-1"), keys));
+        DianFaultException fault = catchThrowableOfType(
+                DianFaultException.class, () -> client.sendBillSync("z1.zip", invoiceZip("SETP1", "cufe-1"), keys));
 
         assertThat(fault.code()).isEqualTo("s:Client");
         assertThat(fault.retryable()).isFalse();
@@ -216,8 +224,8 @@ class DianMockServerTest {
     void keepsServerFaultsRetryable() {
         dian.scenario(Scenario.SERVER_FAULT);
 
-        DianFaultException fault = catchThrowableOfType(DianFaultException.class,
-                () -> client.getStatus("cufe-1", keys));
+        DianFaultException fault =
+                catchThrowableOfType(DianFaultException.class, () -> client.getStatus("cufe-1", keys));
 
         assertThat(fault.retryable()).isTrue();
     }
@@ -226,13 +234,16 @@ class DianMockServerTest {
     void rejectsAnEnvelopeAlteredAfterSigning() throws Exception {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("trackId", "cufe-1");
-        String signed = new String(client.buildSignedEnvelope(DianOperation.GET_STATUS, params, keys),
-                StandardCharsets.UTF_8);
+        String signed =
+                new String(client.buildSignedEnvelope(DianOperation.GET_STATUS, params, keys), StandardCharsets.UTF_8);
         String tampered = signed.replace(url, "http://evil.example/WcfDianCustomerServices.svc");
 
-        HttpResponse<String> response = HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder(URI.create(url)).POST(HttpRequest.BodyPublishers.ofString(tampered)).build(),
-                HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(URI.create(url))
+                                .POST(HttpRequest.BodyPublishers.ofString(tampered))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
 
         assertThat(response.statusCode()).isEqualTo(500);
         assertThat(response.body()).contains("s:Client");
@@ -242,8 +253,8 @@ class DianMockServerTest {
     void canRejectSelfSignedCertificatesLikeTheDian() {
         restart(true, Duration.ofSeconds(2));
 
-        DianFaultException fault = catchThrowableOfType(DianFaultException.class,
-                () -> client.getStatus("cufe-1", keys));
+        DianFaultException fault =
+                catchThrowableOfType(DianFaultException.class, () -> client.getStatus("cufe-1", keys));
 
         assertThat(fault).isNotNull();
         assertThat(fault.isClientFault()).isTrue();

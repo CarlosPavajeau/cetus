@@ -12,8 +12,7 @@ public final class Dates {
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter MOMENT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private Dates() {
-    }
+    private Dates() {}
 
     public static String bogota(OffsetDateTime moment) {
         return moment.atZoneSameInstant(BOGOTA).format(MOMENT);

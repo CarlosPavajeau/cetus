@@ -17,7 +17,6 @@ import com.cantte.cetus.persistence.entity.IssuerEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -59,18 +58,19 @@ public class InvoiceService {
         if (issuerId != null) {
             return IssuerEntity.findForAccount(accountId, issuerId)
                     .filter(found -> found.environment == environment)
-                    .orElseThrow(() -> new DomainException("issuer_not_found",
-                            "Issuer not found in the " + environment + " environment"));
+                    .orElseThrow(() -> new DomainException(
+                            "issuer_not_found", "Issuer not found in the " + environment + " environment"));
         }
         List<IssuerEntity> candidates = IssuerEntity.listByAccount(accountId).stream()
                 .filter(issuer -> issuer.environment == environment && DocumentDrafts.canIssue(issuer, environment))
                 .toList();
         if (candidates.isEmpty()) {
-            throw new DomainException("issuer_not_found",
-                    "No issuer can issue documents in the " + environment + " environment");
+            throw new DomainException(
+                    "issuer_not_found", "No issuer can issue documents in the " + environment + " environment");
         }
         if (candidates.size() > 1) {
-            throw new DomainException("issuer_required",
+            throw new DomainException(
+                    "issuer_required",
                     "The account has several issuers in the " + environment + " environment; send issuerId");
         }
         return candidates.get(0);
@@ -84,33 +84,49 @@ public class InvoiceService {
                         line.quantity(),
                         line.unitCode() != null ? line.unitCode() : "94",
                         line.unitPrice(),
-                        line.taxes() == null ? List.of() : line.taxes().stream()
-                                .map(tax -> new LineInput.LineTax(tax.type(), tax.percent()))
-                                .toList()))
+                        line.taxes() == null
+                                ? List.of()
+                                : line.taxes().stream()
+                                        .map(tax -> new LineInput.LineTax(tax.type(), tax.percent()))
+                                        .toList()))
                 .toList();
     }
 
     private static Party toParty(InvoiceRequest.Customer customer) {
         if (!customer.identificationNumber().matches(identificationPattern(customer.identificationType()))) {
-            throw new DomainException("customer_identification_invalid",
+            throw new DomainException(
+                    "customer_identification_invalid",
                     "The identification number does not match the format of " + customer.identificationType());
         }
         String checkDigit = customer.checkDigit();
         if (customer.identificationType() == IdentificationType.NIT) {
             String expected = NitCheckDigit.compute(customer.identificationNumber());
             if (checkDigit != null && !checkDigit.equals(expected)) {
-                throw new DomainException("customer_check_digit_invalid",
+                throw new DomainException(
+                        "customer_check_digit_invalid",
                         "The NIT check digit does not match (expected " + expected + ")");
             }
             checkDigit = expected;
         }
         boolean iva = customer.taxScheme() == InvoiceRequest.CustomerTaxScheme.IVA;
-        List<String> taxLevels = customer.taxLevelCodes() == null || customer.taxLevelCodes().isEmpty()
-                ? List.of("R-99-PN") : customer.taxLevelCodes();
+        List<String> taxLevels =
+                customer.taxLevelCodes() == null || customer.taxLevelCodes().isEmpty()
+                        ? List.of("R-99-PN")
+                        : customer.taxLevelCodes();
         Address address = customer.address() == null ? null : customer.address().toAddress();
-        return new Party(customer.personType(), customer.identificationType(), customer.identificationNumber(),
-                checkDigit, customer.legalName(), customer.tradeName(), taxLevels,
-                iva ? "01" : "ZZ", iva ? "IVA" : "No aplica", address, customer.email(), customer.phone());
+        return new Party(
+                customer.personType(),
+                customer.identificationType(),
+                customer.identificationNumber(),
+                checkDigit,
+                customer.legalName(),
+                customer.tradeName(),
+                taxLevels,
+                iva ? "01" : "ZZ",
+                iva ? "IVA" : "No aplica",
+                address,
+                customer.email(),
+                customer.phone());
     }
 
     /**

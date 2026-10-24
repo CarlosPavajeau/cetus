@@ -7,12 +7,16 @@ public class CodeType {
 
     @XmlValue
     public String value;
+
     @XmlAttribute
     public String listAgencyID;
+
     @XmlAttribute
     public String listAgencyName;
+
     @XmlAttribute
     public String listSchemeURI;
+
     @XmlAttribute
     public String listName;
 

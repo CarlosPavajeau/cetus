@@ -30,15 +30,14 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
  * Every Cetus account, for the Cetus team. Support reads; only admins suspend and reactivate. A suspended
@@ -47,14 +46,26 @@ import java.util.UUID;
  */
 @Path("/admin/accounts")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "400",
+        description = "Bad Request",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "403",
+        description = "Forbidden",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "422",
+        description = "Unprocessable Entity",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class AdminAccountResource {
 
     private static final Set<String> STATUSES = Set.of("ACTIVE", "SUSPENDED", "CLOSED");
@@ -63,12 +74,16 @@ public class AdminAccountResource {
 
     @Inject
     ConsoleContext context;
+
     @Inject
     AdminAccountQueries queries;
+
     @Inject
     AuditLog auditLog;
+
     @Inject
     RequestOriginResolver origin;
+
     @Inject
     Notifications notifications;
 
@@ -76,10 +91,11 @@ public class AdminAccountResource {
     @Transactional
     @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
     @APIResponse(responseCode = "200", description = "OK")
-    public AccountPage list(@QueryParam("status") String status,
-                            @QueryParam("organizationId") List<String> organizationIds,
-                            @QueryParam("before") UUID before,
-                            @QueryParam("limit") @DefaultValue("50") int limit) {
+    public AccountPage list(
+            @QueryParam("status") String status,
+            @QueryParam("organizationId") List<String> organizationIds,
+            @QueryParam("before") UUID before,
+            @QueryParam("limit") @DefaultValue("50") int limit) {
         if (status != null && !STATUSES.contains(status)) {
             throw new BadRequestException("Unknown status " + status);
         }
@@ -115,8 +131,12 @@ public class AdminAccountResource {
         }
         changeStatus(account, "SUSPENDED", request.reason(), AuditAction.ACCOUNT_SUSPENDED);
         // The billing contact hears it from Cetus, with the same reason the console banner shows.
-        notifications.request(account.id, NotificationKind.ACCOUNT_SUSPENDED,
-                "account_suspended:%s:%d".formatted(account.id, account.statusChangedAt.toInstant().toEpochMilli()),
+        notifications.request(
+                account.id,
+                NotificationKind.ACCOUNT_SUSPENDED,
+                "account_suspended:%s:%d"
+                        .formatted(
+                                account.id, account.statusChangedAt.toInstant().toEpochMilli()),
                 Map.of("reason", account.statusReason));
         return detail(account);
     }
@@ -142,15 +162,22 @@ public class AdminAccountResource {
         account.statusReason = why;
         account.statusChangedAt = OffsetDateTime.now();
         account.statusChangedBy = context.userId();
-        auditLog.record(account.id, context.platformActor(), origin.resolve(), action, "account", account.id,
+        auditLog.record(
+                account.id,
+                context.platformActor(),
+                origin.resolve(),
+                action,
+                "account",
+                account.id,
                 Map.of("reason", why, "previousStatus", previous));
     }
 
     private AccountDetailView detail(AccountEntity account) {
         List<IssuerViews.IssuerView> issuers = IssuerEntity.listByAccount(account.id).stream()
-                .map(IssuerViews.IssuerView::from).toList();
-        return AccountDetailView.of(account, issuers, queries.usageThisMonth(account.id),
-                queries.recentFailures(account.id));
+                .map(IssuerViews.IssuerView::from)
+                .toList();
+        return AccountDetailView.of(
+                account, issuers, queries.usageThisMonth(account.id), queries.recentFailures(account.id));
     }
 
     private static AccountEntity account(UUID id) {

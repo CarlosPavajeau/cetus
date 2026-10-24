@@ -4,7 +4,6 @@ import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.worker.support.ProcessingContext;
-
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -19,8 +18,9 @@ public record DeliveryEmail(String subject, String html, String text) {
      * A SANDBOX document reaches the account's technical contact instead of its customer, as the email the
      * customer would get, marked as a simulation.
      */
-    static final String SANDBOX_NOTICE = "Simulación de Cetus: así recibiría este correo su cliente. El documento no tiene "
-            + "validez fiscal y no fue enviado a la DIAN.";
+    static final String SANDBOX_NOTICE =
+            "Simulación de Cetus: así recibiría este correo su cliente. El documento no tiene "
+                    + "validez fiscal y no fue enviado a la DIAN.";
 
     /**
      * The subject is fixed by the annex: "NIT;Name;Number;Type code;Trade name" (the optional line of
@@ -29,9 +29,15 @@ public record DeliveryEmail(String subject, String html, String text) {
     public static DeliveryEmail of(ProcessingContext ctx) {
         Party supplier = ctx.supplier();
         String tradeName = supplier.tradeName() == null || supplier.tradeName().isBlank()
-                ? supplier.legalName() : supplier.tradeName();
-        String subject = String.join(";", supplier.identificationNumber(), supplier.legalName(), ctx.fullNumber(),
-                ctx.documentType().dianCode(), tradeName);
+                ? supplier.legalName()
+                : supplier.tradeName();
+        String subject = String.join(
+                ";",
+                supplier.identificationNumber(),
+                supplier.legalName(),
+                ctx.fullNumber(),
+                ctx.documentType().dianCode(),
+                tradeName);
 
         String kind = switch (ctx.documentType()) {
             case INVOICE -> "la factura electrónica";
@@ -40,7 +46,8 @@ public record DeliveryEmail(String subject, String html, String text) {
         };
         String total = money(ctx.calculation().totals().payableAmount()) + " " + ctx.currency();
         String reference = ctx.documentType() == DocumentType.INVOICE || ctx.reference() == null
-                ? "" : " sobre la factura " + ctx.reference().number();
+                ? ""
+                : " sobre la factura " + ctx.reference().number();
 
         String text = """
                 Hola, %s:
@@ -53,8 +60,14 @@ public record DeliveryEmail(String subject, String html, String text) {
                 %s
 
                 Este es un mensaje automático; por favor no lo responda.
-                """.formatted(ctx.customer().legalName(), supplier.legalName(), kind, ctx.fullNumber(), reference,
-                total, contact(tradeName, supplier.email(), supplier.phone()));
+                """.formatted(
+                        ctx.customer().legalName(),
+                        supplier.legalName(),
+                        kind,
+                        ctx.fullNumber(),
+                        reference,
+                        total,
+                        contact(tradeName, supplier.email(), supplier.phone()));
         String html = """
                 <p>Hola, %s:</p>
                 <p><strong>%s</strong> le envía %s <strong>%s</strong>%s por <strong>%s</strong>, validada por la DIAN.</p>
@@ -62,11 +75,18 @@ public record DeliveryEmail(String subject, String html, String text) {
                 y su representación gráfica en PDF.</p>
                 <p>%s</p>
                 <p style="color:#5f6368;font-size:12px">Este es un mensaje automático; por favor no lo responda.</p>
-                """.formatted(escape(ctx.customer().legalName()), escape(supplier.legalName()), kind,
-                escape(ctx.fullNumber()), escape(reference), total,
-                escape(contact(tradeName, supplier.email(), supplier.phone())));
+                """.formatted(
+                        escape(ctx.customer().legalName()),
+                        escape(supplier.legalName()),
+                        kind,
+                        escape(ctx.fullNumber()),
+                        escape(reference),
+                        total,
+                        escape(contact(tradeName, supplier.email(), supplier.phone())));
         if (ctx.environment() == Environment.SANDBOX) {
-            return new DeliveryEmail("[Simulación] " + subject, "<p><strong>" + SANDBOX_NOTICE + "</strong></p>\n" + html,
+            return new DeliveryEmail(
+                    "[Simulación] " + subject,
+                    "<p><strong>" + SANDBOX_NOTICE + "</strong></p>\n" + html,
                     SANDBOX_NOTICE + "\n\n" + text);
         }
         return new DeliveryEmail(subject, html, text);
@@ -87,7 +107,8 @@ public record DeliveryEmail(String subject, String html, String text) {
         if (channels.isEmpty()) {
             return "Si tiene preguntas sobre este documento, comuníquese directamente con " + issuer + ".";
         }
-        return "Si tiene preguntas sobre este documento, comuníquese con " + issuer + " en " + String.join(" o ", channels) + ".";
+        return "Si tiene preguntas sobre este documento, comuníquese con " + issuer + " en "
+                + String.join(" o ", channels) + ".";
     }
 
     private static String money(BigDecimal amount) {
@@ -95,6 +116,9 @@ public record DeliveryEmail(String subject, String html, String text) {
     }
 
     private static String escape(String value) {
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 }

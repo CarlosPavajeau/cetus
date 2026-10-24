@@ -11,7 +11,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.function.Function;
@@ -26,6 +25,7 @@ public class IdempotentCreation {
 
     @Inject
     IdempotencyStore idempotency;
+
     @Inject
     ObjectMapper mapper;
 
@@ -34,8 +34,12 @@ public class IdempotentCreation {
      *               returns the response body
      */
     @Transactional(Transactional.TxType.MANDATORY)
-    public Response accept(UUID accountId, Environment environment, String idempotencyKey, Object request,
-                           Function<String, Object> create)
+    public Response accept(
+            UUID accountId,
+            Environment environment,
+            String idempotencyKey,
+            Object request,
+            Function<String, Object> create)
             throws JsonProcessingException {
         String rawJson = mapper.writeValueAsString(request);
         String requestHash = Hashing.sha256Hex(rawJson.getBytes(StandardCharsets.UTF_8));
@@ -43,14 +47,17 @@ public class IdempotentCreation {
         var outcome = idempotency.begin(accountId, environment, idempotencyKey, requestHash);
         switch (outcome.state()) {
             case REPLAY:
-                return Response.status(outcome.responseStatus()).entity(outcome.responseBody())
-                        .type(MediaType.APPLICATION_JSON).header("Idempotent-Replayed", "true").build();
+                return Response.status(outcome.responseStatus())
+                        .entity(outcome.responseBody())
+                        .type(MediaType.APPLICATION_JSON)
+                        .header("Idempotent-Replayed", "true")
+                        .build();
             case IN_PROGRESS:
-                return ProblemDetail.response(409, "idempotency_in_progress",
-                        "A request with this Idempotency-Key is still being processed");
+                return ProblemDetail.response(
+                        409, "idempotency_in_progress", "A request with this Idempotency-Key is still being processed");
             case MISMATCH:
-                return ProblemDetail.response(422, "idempotency_mismatch",
-                        "This Idempotency-Key was used with a different request body");
+                return ProblemDetail.response(
+                        422, "idempotency_mismatch", "This Idempotency-Key was used with a different request body");
             default:
                 break;
         }

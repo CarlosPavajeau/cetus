@@ -2,8 +2,8 @@ package com.cantte.cetus.worker.handlers;
 
 import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.dian.DianFaultException;
-import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.dian.DianGateway;
+import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.DianZip;
 import com.cantte.cetus.dian.UploadResponse;
@@ -35,9 +35,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import org.jboss.logging.Logger;
-import org.w3c.dom.Document;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
@@ -45,6 +42,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jboss.logging.Logger;
+import org.w3c.dom.Document;
 
 /**
  * Full pipeline for one document: CUFE/CUDE → UBL → XAdES signature → zip → DIAN → result. Only the
@@ -63,22 +62,31 @@ public class ProcessDocumentHandler implements JobHandler {
 
     @Inject
     ContextLoader loader;
+
     @Inject
     ResultRecorder recorder;
+
     @Inject
     ArtifactStore artifacts;
+
     @Inject
     KeyMaterialCache keyCache;
+
     @Inject
     DianClients dianClients;
+
     @Inject
     SecretCipher cipher;
+
     @Inject
     FileSequence fileSequence;
+
     @Inject
     ProviderSettings provider;
+
     @Inject
     SandboxCredentials sandbox;
+
     @Inject
     Instance<DocumentBuilder> builderInstances;
 
@@ -121,8 +129,10 @@ public class ProcessDocumentHandler implements JobHandler {
         byte[] signedXml = sign(built.unsigned(), keys);
         long sequence = fileSequence.next(ctx.issuerId(), ctx.issueDate().getYear());
         String nit = ctx.supplier().identificationNumber();
-        String xmlName = DianFileNames.xml(ctx.documentType(), nit, provider.fileCode(), ctx.issueDate().getYear(), sequence);
-        String zipName = DianFileNames.zip(nit, provider.fileCode(), ctx.issueDate().getYear(), sequence);
+        String xmlName = DianFileNames.xml(
+                ctx.documentType(), nit, provider.fileCode(), ctx.issueDate().getYear(), sequence);
+        String zipName =
+                DianFileNames.zip(nit, provider.fileCode(), ctx.issueDate().getYear(), sequence);
         byte[] zip = DianZip.single(xmlName, signedXml);
 
         artifacts.save(ctx, Kind.SIGNED_XML, xmlName, signedXml, "application/xml");
@@ -160,19 +170,32 @@ public class ProcessDocumentHandler implements JobHandler {
         try {
             response = dian.sendBillSync(zipName, zip, keys);
         } catch (DianTransportException e) {
-            recorder.submission(ctx.documentId(), "SendBillSync", null, e.isTimeout(), null,
-                    List.of(e.getMessage()), System.currentTimeMillis() - start);
+            recorder.submission(
+                    ctx.documentId(),
+                    "SendBillSync",
+                    null,
+                    e.isTimeout(),
+                    null,
+                    List.of(e.getMessage()),
+                    System.currentTimeMillis() - start);
             throw e;
         } catch (DianFaultException e) {
             recordFault(ctx, "SendBillSync", e, start);
             throw escalate(e);
         }
-        recorder.submission(ctx.documentId(), "SendBillSync", null, false, response, response.errors(),
+        recorder.submission(
+                ctx.documentId(),
+                "SendBillSync",
+                null,
+                false,
+                response,
+                response.errors(),
                 System.currentTimeMillis() - start);
         storeResponse(ctx, response);
         recorder.completed(ctx.documentId(), response);
-        LOG.infof("Document %s %s by DIAN (%s)", ctx.fullNumber(), response.valid() ? "accepted" : "rejected",
-                response.statusCode());
+        LOG.infof(
+                "Document %s %s by DIAN (%s)",
+                ctx.fullNumber(), response.valid() ? "accepted" : "rejected", response.statusCode());
     }
 
     private void sendTestSet(ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String zipName, byte[] zip) {
@@ -181,14 +204,26 @@ public class ProcessDocumentHandler implements JobHandler {
         try {
             upload = dian.sendTestSetAsync(zipName, zip, ctx.testSetId(), keys);
         } catch (DianTransportException e) {
-            recorder.submission(ctx.documentId(), "SendTestSetAsync", null, e.isTimeout(), null,
-                    List.of(e.getMessage()), System.currentTimeMillis() - start);
+            recorder.submission(
+                    ctx.documentId(),
+                    "SendTestSetAsync",
+                    null,
+                    e.isTimeout(),
+                    null,
+                    List.of(e.getMessage()),
+                    System.currentTimeMillis() - start);
             throw e;
         } catch (DianFaultException e) {
             recordFault(ctx, "SendTestSetAsync", e, start);
             throw escalate(e);
         }
-        recorder.submission(ctx.documentId(), "SendTestSetAsync", upload.zipKey(), false, null, upload.errors(),
+        recorder.submission(
+                ctx.documentId(),
+                "SendTestSetAsync",
+                upload.zipKey(),
+                false,
+                null,
+                upload.errors(),
                 System.currentTimeMillis() - start);
         if (upload.zipKey() == null) {
             recorder.gaveUp(ctx.documentId(), "DIAN did not return a ZipKey: " + String.join("; ", upload.errors()));
@@ -209,19 +244,37 @@ public class ProcessDocumentHandler implements JobHandler {
     }
 
     private void storeResponse(ProcessingContext ctx, DianResponse response) {
-        artifacts.save(ctx, Kind.DIAN_RESPONSE, "dian-response.xml",
-                response.rawXml().getBytes(StandardCharsets.UTF_8), "application/xml");
+        artifacts.save(
+                ctx,
+                Kind.DIAN_RESPONSE,
+                "dian-response.xml",
+                response.rawXml().getBytes(StandardCharsets.UTF_8),
+                "application/xml");
         if (response.applicationResponse() != null) {
-            artifacts.save(ctx, Kind.APPLICATION_RESPONSE, "application-response.xml",
-                    Base64.getDecoder().decode(response.applicationResponse()), "application/xml");
+            artifacts.save(
+                    ctx,
+                    Kind.APPLICATION_RESPONSE,
+                    "application-response.xml",
+                    Base64.getDecoder().decode(response.applicationResponse()),
+                    "application/xml");
         }
     }
 
     private void recordFault(ProcessingContext ctx, String operation, DianFaultException e, long start) {
-        recorder.submission(ctx.documentId(), operation, null, false, null, List.of(e.getMessage()),
+        recorder.submission(
+                ctx.documentId(),
+                operation,
+                null,
+                false,
+                null,
+                List.of(e.getMessage()),
                 System.currentTimeMillis() - start);
-        artifacts.save(ctx, Kind.DIAN_RESPONSE, "dian-fault-" + System.currentTimeMillis() + ".xml",
-                e.rawXml().getBytes(StandardCharsets.UTF_8), "application/xml");
+        artifacts.save(
+                ctx,
+                Kind.DIAN_RESPONSE,
+                "dian-fault-" + System.currentTimeMillis() + ".xml",
+                e.rawXml().getBytes(StandardCharsets.UTF_8),
+                "application/xml");
         recorder.failed(ctx.documentId(), "DIAN fault: " + e.getMessage());
     }
 

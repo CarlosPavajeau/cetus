@@ -6,7 +6,6 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,8 @@ public class JobClaimer {
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     @SuppressWarnings("unchecked")
     public List<JobEntity> claim(String workerId, Map<String, Integer> limits, int total, Duration lease) {
-        List<Map.Entry<String, Integer>> wanted = limits.entrySet().stream().filter(e -> e.getValue() > 0).toList();
+        List<Map.Entry<String, Integer>> wanted =
+                limits.entrySet().stream().filter(e -> e.getValue() > 0).toList();
         if (wanted.isEmpty() || total <= 0) {
             return List.of();
         }
@@ -71,7 +71,8 @@ public class JobClaimer {
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void done(UUID jobId) {
-        em.createNativeQuery("UPDATE billing.jobs SET status = 'DONE', locked_until = NULL, updated_at = now() WHERE id = :id")
+        em.createNativeQuery(
+                        "UPDATE billing.jobs SET status = 'DONE', locked_until = NULL, updated_at = now() WHERE id = :id")
                 .setParameter("id", jobId)
                 .executeUpdate();
     }

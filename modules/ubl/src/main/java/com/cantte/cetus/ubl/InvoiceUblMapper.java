@@ -31,7 +31,8 @@ public final class InvoiceUblMapper {
         ubl.profileId = DianCodes.INVOICE_PROFILE;
         ubl.profileExecutionId = invoice.environment().dianCode();
         ubl.id = invoice.fullNumber();
-        ubl.uuid = IdentifierType.of(invoice.cufe()).scheme(invoice.environment().dianCode(), "CUFE-SHA384");
+        ubl.uuid =
+                IdentifierType.of(invoice.cufe()).scheme(invoice.environment().dianCode(), "CUFE-SHA384");
         ubl.issueDate = DianTime.date(invoice.issueDate());
         ubl.issueTime = DianTime.time(invoice.issueTime());
         ubl.dueDate = invoice.dueDate() == null ? null : DianTime.date(invoice.dueDate());
@@ -40,7 +41,8 @@ public final class InvoiceUblMapper {
         ubl.documentCurrencyCode = currency;
         ubl.lineCountNumeric = calc.lines().size();
 
-        ubl.supplier = UblParts.supplier(invoice.supplier(), invoice.authorization().prefix());
+        ubl.supplier =
+                UblParts.supplier(invoice.supplier(), invoice.authorization().prefix());
         ubl.customer = UblParts.customer(invoice.customer());
         ubl.paymentMeans.add(UblParts.paymentMeans(invoice.payment()));
         calc.taxTotals().forEach(total -> ubl.taxTotals.add(UblParts.taxTotal(total, currency)));
@@ -55,8 +57,10 @@ public final class InvoiceUblMapper {
         ext.invoiceControl = new DianExtensions.InvoiceControl();
         ext.invoiceControl.invoiceAuthorization = invoice.authorization().resolutionNumber();
         ext.invoiceControl.authorizationPeriod = new Cac.Period();
-        ext.invoiceControl.authorizationPeriod.startDate = DianTime.date(invoice.authorization().startDate());
-        ext.invoiceControl.authorizationPeriod.endDate = DianTime.date(invoice.authorization().endDate());
+        ext.invoiceControl.authorizationPeriod.startDate =
+                DianTime.date(invoice.authorization().startDate());
+        ext.invoiceControl.authorizationPeriod.endDate =
+                DianTime.date(invoice.authorization().endDate());
         ext.invoiceControl.authorizedInvoices = new DianExtensions.AuthorizedInvoices();
         ext.invoiceControl.authorizedInvoices.prefix = invoice.authorization().prefix();
         ext.invoiceControl.authorizedInvoices.from = invoice.authorization().from();

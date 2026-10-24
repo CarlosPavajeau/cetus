@@ -31,9 +31,6 @@ import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.SandboxDeliveries;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.jboss.logging.Logger;
-import org.w3c.dom.Document;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -43,6 +40,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import org.jboss.logging.Logger;
+import org.w3c.dom.Document;
 
 /**
  * Delivers an accepted document to its customer (annex section 9.1): builds and signs the AttachedDocument,
@@ -65,16 +64,22 @@ public class DeliverDocumentHandler implements JobHandler {
 
     @Inject
     ContextLoader loader;
+
     @Inject
     ArtifactStore artifacts;
+
     @Inject
     KeyMaterialCache keyCache;
+
     @Inject
     DeliveryRecorder deliveries;
+
     @Inject
     EmailClients email;
+
     @Inject
     ProviderSettings provider;
+
     @Inject
     SandboxDeliveries sandboxDeliveries;
 
@@ -90,7 +95,8 @@ public class DeliverDocumentHandler implements JobHandler {
             return;
         }
 
-        Stored attached = artifacts.latest(ctx.documentId(), Kind.ATTACHED_DOCUMENT).orElseGet(() -> attachedDocument(ctx));
+        Stored attached =
+                artifacts.latest(ctx.documentId(), Kind.ATTACHED_DOCUMENT).orElseGet(() -> attachedDocument(ctx));
         Stored pdf = artifacts.latest(ctx.documentId(), Kind.PDF).orElseGet(() -> pdf(ctx));
 
         Optional<EmailSender> sender = email.sender();
@@ -110,11 +116,13 @@ public class DeliverDocumentHandler implements JobHandler {
             recipient = email.recipient(ctx.environment(), ctx.customer());
         }
         if (recipient.isEmpty()) {
-            deliveries.skipped(ctx.documentId(), switch (ctx.environment()) {
-                case TEST -> "TEST documents are only emailed to CETUS_EMAIL_TEST_RECIPIENT, which is not set";
-                case LIVE -> "The customer has no email address";
-                case SANDBOX -> "SANDBOX documents are never emailed to their customer";
-            });
+            deliveries.skipped(
+                    ctx.documentId(),
+                    switch (ctx.environment()) {
+                        case TEST -> "TEST documents are only emailed to CETUS_EMAIL_TEST_RECIPIENT, which is not set";
+                        case LIVE -> "The customer has no email address";
+                        case SANDBOX -> "SANDBOX documents are never emailed to their customer";
+                    });
             return;
         }
 
@@ -122,13 +130,20 @@ public class DeliverDocumentHandler implements JobHandler {
         byte[] zip = zip(attached, pdf);
         UUID deliveryId = deliveries.attempt(ctx.documentId(), recipient.get());
         if (zip.length > MAX_ZIP_BYTES) {
-            deliveries.failed(ctx.documentId(), "The zip weighs " + zip.length + " bytes; the annex allows 2 MB per email");
+            deliveries.failed(
+                    ctx.documentId(), "The zip weighs " + zip.length + " bytes; the annex allows 2 MB per email");
             return;
         }
 
         DeliveryEmail content = DeliveryEmail.of(ctx);
-        EmailMessage message = new EmailMessage(email.from(), recipient.get(), ctx.supplier().email(),
-                content.subject(), content.html(), content.text(), List.of(new EmailMessage.Attachment(zipName, zip)));
+        EmailMessage message = new EmailMessage(
+                email.from(),
+                recipient.get(),
+                ctx.supplier().email(),
+                content.subject(),
+                content.html(),
+                content.text(),
+                List.of(new EmailMessage.Attachment(zipName, zip)));
         String messageId;
         try {
             messageId = sender.get().send(message, "delivery-" + deliveryId);
@@ -153,16 +168,29 @@ public class DeliverDocumentHandler implements JobHandler {
 
     /** The signed document and the DIAN's ApplicationResponse in the container, signed by the issuer. */
     private Stored attachedDocument(ProcessingContext ctx) {
-        Stored signedXml = artifacts.latest(ctx.documentId(), Kind.SIGNED_XML)
+        Stored signedXml = artifacts
+                .latest(ctx.documentId(), Kind.SIGNED_XML)
                 .orElseThrow(() -> new GiveUp("Accepted document " + ctx.documentId() + " has no signed XML", null));
-        Stored applicationResponse = artifacts.latest(ctx.documentId(), Kind.APPLICATION_RESPONSE)
-                .orElseThrow(() -> new GiveUp("The DIAN returned no ApplicationResponse for " + ctx.fullNumber(), null));
+        Stored applicationResponse = artifacts
+                .latest(ctx.documentId(), Kind.APPLICATION_RESPONSE)
+                .orElseThrow(
+                        () -> new GiveUp("The DIAN returned no ApplicationResponse for " + ctx.fullNumber(), null));
 
         Document container = marshaller.toDocument(mapper.map(new AttachedDocumentMapper.Contents(
-                ctx.environment(), ctx.documentType(), ctx.fullNumber(), ctx.existingCufe(), ctx.supplier(),
-                ctx.customer(), signedXml.content(), applicationResponse.content(),
-                ctx.validatedAt() == null ? OffsetDateTime.now() : ctx.validatedAt(), OffsetDateTime.now())));
-        signer.sign(container, UblMarshaller.signatureSlot(container), keyCache.get(ctx.certificate()),
+                ctx.environment(),
+                ctx.documentType(),
+                ctx.fullNumber(),
+                ctx.existingCufe(),
+                ctx.supplier(),
+                ctx.customer(),
+                signedXml.content(),
+                applicationResponse.content(),
+                ctx.validatedAt() == null ? OffsetDateTime.now() : ctx.validatedAt(),
+                OffsetDateTime.now())));
+        signer.sign(
+                container,
+                UblMarshaller.signatureSlot(container),
+                keyCache.get(ctx.certificate()),
                 XadesSigner.SignerRole.SUPPLIER);
         byte[] xml = XmlSupport.serialize(container);
         String name = DianFileNames.attachedDocument(signedXml.fileName());
@@ -171,8 +199,13 @@ public class DeliverDocumentHandler implements JobHandler {
     }
 
     private Stored pdf(ProcessingContext ctx) {
-        byte[] pdf = pdfRenderer.render(ctx, ctx.existingCufe(), new PdfRenderer.Legend(provider.softwareName(),
-                provider.providerName(ctx.supplier()), provider.providerNit(ctx.supplier())));
+        byte[] pdf = pdfRenderer.render(
+                ctx,
+                ctx.existingCufe(),
+                new PdfRenderer.Legend(
+                        provider.softwareName(),
+                        provider.providerName(ctx.supplier()),
+                        provider.providerNit(ctx.supplier())));
         String name = ctx.fullNumber() + ".pdf";
         artifacts.save(ctx, Kind.PDF, name, pdf, "application/pdf");
         return new Stored(name, pdf);
@@ -181,7 +214,7 @@ public class DeliverDocumentHandler implements JobHandler {
     /** The single zip the annex asks for: the AttachedDocument and, optionally, the PDF. */
     private static byte[] zip(Stored attached, Stored pdf) {
         try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-             ZipOutputStream zip = new ZipOutputStream(bytes)) {
+                ZipOutputStream zip = new ZipOutputStream(bytes)) {
             for (Stored file : List.of(attached, pdf)) {
                 zip.putNextEntry(new ZipEntry(file.fileName()));
                 zip.write(file.content());

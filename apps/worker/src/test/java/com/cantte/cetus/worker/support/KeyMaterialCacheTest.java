@@ -1,8 +1,8 @@
 package com.cantte.cetus.worker.support;
 
-import com.cantte.cetus.signing.KeyMaterial;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.cantte.cetus.signing.KeyMaterial;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -11,8 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class KeyMaterialCacheTest {
 
@@ -36,7 +35,8 @@ class KeyMaterialCacheTest {
         KeyMaterial first = cache.get(ref);
 
         // Replaced in storage, the certificate under another password: the next load reads both again.
-        storage.put(CERTIFICATE, cipher.seal(withPassword(signer, "cetus-test", "rotated")), "application/octet-stream");
+        storage.put(
+                CERTIFICATE, cipher.seal(withPassword(signer, "cetus-test", "rotated")), "application/octet-stream");
         storage.put(PASSWORD, cipher.sealText("rotated"), "application/octet-stream");
         cache.clock = Clock.fixed(start.plus(Duration.ofMinutes(11)), ZoneOffset.UTC);
 
@@ -57,7 +57,10 @@ class KeyMaterialCacheTest {
         KeyStore copy = KeyStore.getInstance("PKCS12");
         copy.load(null, null);
         String alias = keyStore.aliases().nextElement();
-        copy.setKeyEntry(alias, keyStore.getKey(alias, current.toCharArray()), next.toCharArray(),
+        copy.setKeyEntry(
+                alias,
+                keyStore.getKey(alias, current.toCharArray()),
+                next.toCharArray(),
                 keyStore.getCertificateChain(alias));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         copy.store(out, next.toCharArray());

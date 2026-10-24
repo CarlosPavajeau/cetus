@@ -8,13 +8,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Generated;
-import org.hibernate.generator.EventType;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 @Entity
 @Table(name = "api_keys")
@@ -22,17 +21,24 @@ public class ApiKeyEntity extends PanacheEntityBase {
 
     @Id
     public UUID id;
+
     @Column(name = "account_id")
     public UUID accountId;
+
     @Enumerated(EnumType.STRING)
     public Environment environment;
+
     public String name;
+
     @Column(name = "key_prefix")
     public String keyPrefix;
+
     @Column(name = "key_hash")
     public String keyHash;
+
     @Column(name = "last_used_at")
     public OffsetDateTime lastUsedAt;
+
     @Column(name = "revoked_at")
     public OffsetDateTime revokedAt;
     /** Better Auth user id of the creator; null for keys whose creation was not recorded. */

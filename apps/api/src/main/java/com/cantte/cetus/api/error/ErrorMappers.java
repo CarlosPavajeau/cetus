@@ -17,9 +17,6 @@ import jakarta.validation.Path;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
-import org.jboss.logging.Logger;
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
-
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,12 +26,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.jboss.logging.Logger;
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
 public class ErrorMappers {
 
     private static final Logger LOG = Logger.getLogger(ErrorMappers.class);
-    private static final Set<ElementKind> INVOCATION = Set.of(ElementKind.METHOD, ElementKind.CONSTRUCTOR,
-            ElementKind.PARAMETER, ElementKind.CROSS_PARAMETER, ElementKind.RETURN_VALUE);
+    private static final Set<ElementKind> INVOCATION = Set.of(
+            ElementKind.METHOD,
+            ElementKind.CONSTRUCTOR,
+            ElementKind.PARAMETER,
+            ElementKind.CROSS_PARAMETER,
+            ElementKind.RETURN_VALUE);
 
     @ServerExceptionMapper
     public Response domain(DomainException e) {
@@ -48,7 +51,8 @@ public class ErrorMappers {
                 .sorted(Comparator.comparing(ProblemDetail.FieldError::field)
                         .thenComparing(ProblemDetail.FieldError::message))
                 .toList();
-        return Response.status(400).type(ProblemDetail.MEDIA_TYPE)
+        return Response.status(400)
+                .type(ProblemDetail.MEDIA_TYPE)
                 .entity(ProblemDetail.of(400, "invalid_request", "The request is invalid", errors))
                 .build();
     }
@@ -64,7 +68,8 @@ public class ErrorMappers {
             return ProblemDetail.response(400, "invalid_request", "The request body must be a JSON object");
         }
         var errors = List.of(new ProblemDetail.FieldError(field, mismatchMessage(e)));
-        return Response.status(400).type(ProblemDetail.MEDIA_TYPE)
+        return Response.status(400)
+                .type(ProblemDetail.MEDIA_TYPE)
                 .entity(ProblemDetail.of(400, "invalid_request", "The request is invalid", errors))
                 .build();
     }
@@ -138,14 +143,16 @@ public class ErrorMappers {
             return SafeStrings.MESSAGE;
         }
         if (type.isEnum()) {
-            return "must be one of: " + Arrays.stream(type.getEnumConstants())
-                    .map(constant -> ((Enum<?>) constant).name())
-                    .collect(Collectors.joining(", "));
+            return "must be one of: "
+                    + Arrays.stream(type.getEnumConstants())
+                            .map(constant -> ((Enum<?>) constant).name())
+                            .collect(Collectors.joining(", "));
         }
         if (type == UUID.class) {
             return "must be a UUID";
         }
-        if (Number.class.isAssignableFrom(type) || (type.isPrimitive() && type != boolean.class && type != char.class)) {
+        if (Number.class.isAssignableFrom(type)
+                || (type.isPrimitive() && type != boolean.class && type != char.class)) {
             return "must be a number";
         }
         if (type == Boolean.class || type == boolean.class) {
@@ -176,7 +183,9 @@ public class ErrorMappers {
             skip++;
         }
         String full = path.toString();
-        String prefix = String.join(".", nodes.subList(0, skip).stream().map(Path.Node::getName).toList()) + ".";
+        String prefix = String.join(
+                        ".",
+                        nodes.subList(0, skip).stream().map(Path.Node::getName).toList()) + ".";
         if (skip == 0 || !full.startsWith(prefix) || full.length() == prefix.length()) {
             return skip == 0 ? full : nodes.get(skip - 1).getName();
         }

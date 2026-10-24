@@ -1,23 +1,5 @@
 package com.cantte.cetus.api.console;
 
-import com.cantte.cetus.api.support.ConsoleFixtures;
-import com.cantte.cetus.api.support.ConsoleUser;
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.http.ContentType;
-import io.restassured.path.json.JsonPath;
-import io.restassured.response.Response;
-import org.junit.jupiter.api.Test;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.IntStream;
-
 import static com.cantte.cetus.api.support.ConsoleFixtures.CERTIFICATE_PASSWORD;
 import static com.cantte.cetus.api.support.ConsoleFixtures.PIN;
 import static com.cantte.cetus.api.support.ConsoleFixtures.SOFTWARE_ID;
@@ -30,6 +12,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
+import com.cantte.cetus.api.support.ConsoleFixtures;
+import com.cantte.cetus.api.support.ConsoleUser;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
+import io.restassured.path.json.JsonPath;
+import io.restassured.response.Response;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.IntStream;
+import org.junit.jupiter.api.Test;
+
 /** A new account issues in the sandbox right away, without software, certificate or ranges of its own. */
 @QuarkusTest
 class SandboxIssuerTest {
@@ -41,15 +40,27 @@ class SandboxIssuerTest {
         // Bootstrapping again does not add a second one.
         bootstrap(user, "Sandbox SAS");
 
-        List<Map<String, Object>> issuers = user.request().get("/console/issuers")
-                .then().statusCode(200).extract().jsonPath().getList("");
+        List<Map<String, Object>> issuers = user.request()
+                .get("/console/issuers")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getList("");
         assertThat(issuers).singleElement().satisfies(issuer -> {
-            assertThat(issuer).containsEntry("environment", "SANDBOX").containsEntry("nit", "900999999")
-                    .containsEntry("checkDigit", "4").containsEntry("status", "ENABLED");
+            assertThat(issuer)
+                    .containsEntry("environment", "SANDBOX")
+                    .containsEntry("nit", "900999999")
+                    .containsEntry("checkDigit", "4")
+                    .containsEntry("status", "ENABLED");
         });
         String issuerId = (String) issuers.getFirst().get("id");
-        JsonPath ranges = user.request().get("/console/issuers/" + issuerId + "/numbering-ranges")
-                .then().statusCode(200).extract().jsonPath();
+        JsonPath ranges = user.request()
+                .get("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
         assertThat(ranges.getList("documentType")).containsExactlyInAnyOrder("INVOICE", "CREDIT_NOTE", "DEBIT_NOTE");
         assertThat(ranges.getList("prefix")).containsExactlyInAnyOrder("SIM", "NCS", "NDS");
     }
@@ -58,16 +69,24 @@ class SandboxIssuerTest {
     void aSandboxKeyIssuesWithTheSampleIssuer() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "First invoice SAS");
-        String apiKey = user.request().body(Map.of("name", "ERP", "environment", "SANDBOX"))
+        String apiKey = user.request()
+                .body(Map.of("name", "ERP", "environment", "SANDBOX"))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
         assertThat(apiKey).startsWith("cetus_sandbox_");
 
-        JsonPath created = given().header("Authorization", "Bearer " + apiKey).contentType(ContentType.JSON)
+        JsonPath created = given().header("Authorization", "Bearer " + apiKey)
+                .contentType(ContentType.JSON)
                 .header("Idempotency-Key", UUID.randomUUID().toString())
                 .body(invoice())
                 .post("/v1/invoices")
-                .then().statusCode(202).extract().jsonPath();
+                .then()
+                .statusCode(202)
+                .extract()
+                .jsonPath();
 
         assertThat(created.getString("environment")).isEqualTo("SANDBOX");
         assertThat(created.getString("status")).isEqualTo("RECEIVED");
@@ -78,15 +97,21 @@ class SandboxIssuerTest {
     void anAccountIssuesAFewSandboxDocumentsADay() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Busy sandbox SAS");
-        String apiKey = user.request().body(Map.of("name", "ERP", "environment", "SANDBOX"))
+        String apiKey = user.request()
+                .body(Map.of("name", "ERP", "environment", "SANDBOX"))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
 
         // The test profile allows three a day.
         for (int i = 0; i < 3; i++) {
             issue(apiKey).then().statusCode(202);
         }
-        issue(apiKey).then().statusCode(429)
+        issue(apiKey)
+                .then()
+                .statusCode(429)
                 .body("code", equalTo("sandbox_daily_limit"))
                 .header("Retry-After", notNullValue());
     }
@@ -95,9 +120,13 @@ class SandboxIssuerTest {
     void parallelRequestsDoNotGoPastTheDailyQuota() throws Exception {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Parallel sandbox SAS");
-        String apiKey = user.request().body(Map.of("name", "ERP", "environment", "SANDBOX"))
+        String apiKey = user.request()
+                .body(Map.of("name", "ERP", "environment", "SANDBOX"))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
 
         // Six at once against the test profile's three a day: exactly three get through.
         try (ExecutorService pool = Executors.newFixedThreadPool(6)) {
@@ -121,8 +150,12 @@ class SandboxIssuerTest {
 
         String issuerId = createIssuer(user, "900123456", "SANDBOX");
 
-        JsonPath detail = user.request().get("/console/issuers/" + issuerId)
-                .then().statusCode(200).extract().jsonPath();
+        JsonPath detail = user.request()
+                .get("/console/issuers/" + issuerId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
         assertThat(detail.getString("status")).isEqualTo("ENABLED");
         assertThat(detail.getList("ranges.prefix")).containsExactlyInAnyOrder("SIM", "NCS", "NDS");
     }
@@ -136,8 +169,12 @@ class SandboxIssuerTest {
             createIssuer(user, nit, "SANDBOX");
         }
 
-        user.request().body(issuerRequest("900123455", "SANDBOX")).post("/console/issuers")
-                .then().statusCode(422).body("code", equalTo("sandbox_issuer_limit"));
+        user.request()
+                .body(issuerRequest("900123455", "SANDBOX"))
+                .post("/console/issuers")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("sandbox_issuer_limit"));
         // Other environments are not capped.
         createIssuer(user, "900123455", "TEST");
     }
@@ -155,22 +192,32 @@ class SandboxIssuerTest {
         try (ExecutorService pool = Executors.newFixedThreadPool(nits.size())) {
             List<Future<Response>> responses = new ArrayList<>();
             for (String nit : nits) {
-                responses.add(pool.submit(() -> user.request().body(issuerRequest(nit, "SANDBOX"))
-                        .post("/console/issuers")));
+                responses.add(pool.submit(
+                        () -> user.request().body(issuerRequest(nit, "SANDBOX")).post("/console/issuers")));
             }
             List<Response> done = new ArrayList<>();
             for (Future<Response> response : responses) {
                 done.add(response.get());
             }
-            assertThat(done).filteredOn(response -> response.statusCode() == 200).hasSize(1);
-            assertThat(done).filteredOn(response -> response.statusCode() == 422)
+            assertThat(done)
+                    .filteredOn(response -> response.statusCode() == 200)
+                    .hasSize(1);
+            assertThat(done)
+                    .filteredOn(response -> response.statusCode() == 422)
                     .hasSize(nits.size() - 1)
-                    .allSatisfy(response -> assertThat(response.jsonPath().getString("code"))
-                            .isEqualTo("sandbox_issuer_limit"));
+                    .allSatisfy(response ->
+                            assertThat(response.jsonPath().getString("code")).isEqualTo("sandbox_issuer_limit"));
         }
-        List<Map<String, Object>> issuers = user.request().get("/console/issuers")
-                .then().statusCode(200).extract().jsonPath().getList("");
-        assertThat(issuers).filteredOn(issuer -> "SANDBOX".equals(issuer.get("environment"))).hasSize(5);
+        List<Map<String, Object>> issuers = user.request()
+                .get("/console/issuers")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getList("");
+        assertThat(issuers)
+                .filteredOn(issuer -> "SANDBOX".equals(issuer.get("environment")))
+                .hasSize(5);
     }
 
     @Test
@@ -180,19 +227,41 @@ class SandboxIssuerTest {
         String issuerId = createIssuer(user, "900123456", "SANDBOX");
         String issuer = "/console/issuers/" + issuerId;
 
-        user.request().body(Map.of("softwareId", SOFTWARE_ID, "pin", PIN))
+        user.request()
+                .body(Map.of("softwareId", SOFTWARE_ID, "pin", PIN))
                 .put(issuer + "/software")
-                .then().statusCode(422).body("code", equalTo("sandbox_issuer"));
-        user.request().body(Map.of("pkcs12Base64", certificateBase64(), "password", CERTIFICATE_PASSWORD))
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("sandbox_issuer"));
+        user.request()
+                .body(Map.of("pkcs12Base64", certificateBase64(), "password", CERTIFICATE_PASSWORD))
                 .put(issuer + "/certificate")
-                .then().statusCode(422).body("code", equalTo("sandbox_issuer"));
-        user.request().body(Map.of("documentType", "INVOICE", "prefix", "OWN", "from", 1, "to", 10,
-                        "resolutionNumber", "1", "resolutionDate", LocalDate.now().toString(),
-                        "validFrom", LocalDate.now().toString(), "validTo", LocalDate.now().plusYears(1).toString()))
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("sandbox_issuer"));
+        user.request()
+                .body(Map.of(
+                        "documentType",
+                        "INVOICE",
+                        "prefix",
+                        "OWN",
+                        "from",
+                        1,
+                        "to",
+                        10,
+                        "resolutionNumber",
+                        "1",
+                        "resolutionDate",
+                        LocalDate.now().toString(),
+                        "validFrom",
+                        LocalDate.now().toString(),
+                        "validTo",
+                        LocalDate.now().plusYears(1).toString()))
                 .post(issuer + "/numbering-ranges")
-                .then().statusCode(422).body("code", equalTo("sandbox_issuer"));
-        user.request().post(issuer + "/promote")
-                .then().statusCode(422).body("code", equalTo("sandbox_issuer"));
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("sandbox_issuer"));
+        user.request().post(issuer + "/promote").then().statusCode(422).body("code", equalTo("sandbox_issuer"));
     }
 
     @Test
@@ -200,20 +269,28 @@ class SandboxIssuerTest {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Mixed SAS");
         ConsoleFixtures.onboard(user);
-        String testKey = user.request().body(Map.of("name", "ERP", "environment", "TEST"))
+        String testKey = user.request()
+                .body(Map.of("name", "ERP", "environment", "TEST"))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
 
         // The TEST issuer is the only candidate of a TEST key, so it can be left out.
-        given().header("Authorization", "Bearer " + testKey).contentType(ContentType.JSON)
+        given().header("Authorization", "Bearer " + testKey)
+                .contentType(ContentType.JSON)
                 .header("Idempotency-Key", UUID.randomUUID().toString())
                 .body(invoice())
                 .post("/v1/invoices")
-                .then().statusCode(202).body("environment", equalTo("TEST"));
+                .then()
+                .statusCode(202)
+                .body("environment", equalTo("TEST"));
     }
 
     private static Response issue(String apiKey) {
-        return given().header("Authorization", "Bearer " + apiKey).contentType(ContentType.JSON)
+        return given().header("Authorization", "Bearer " + apiKey)
+                .contentType(ContentType.JSON)
                 .header("Idempotency-Key", UUID.randomUUID().toString())
                 .body(invoice())
                 .post("/v1/invoices");
@@ -221,17 +298,24 @@ class SandboxIssuerTest {
 
     private static Map<String, Object> invoice() {
         return Map.of(
-                "customer", Map.of(
-                        "personType", "NATURAL_PERSON",
-                        "identificationType", "CITIZEN_ID",
-                        "identificationNumber", "1020304050",
-                        "legalName", "Consumidor Final"),
+                "customer",
+                        Map.of(
+                                "personType", "NATURAL_PERSON",
+                                "identificationType", "CITIZEN_ID",
+                                "identificationNumber", "1020304050",
+                                "legalName", "Consumidor Final"),
                 "payment", Map.of("method", "CASH", "meansCode", "10"),
-                "lines", List.of(Map.of(
-                        "itemCode", "SERV-1",
-                        "description", "Servicio",
-                        "quantity", 1,
-                        "unitPrice", 100000,
-                        "taxes", List.of(Map.of("type", "IVA", "percent", 19)))));
+                "lines",
+                        List.of(Map.of(
+                                "itemCode",
+                                "SERV-1",
+                                "description",
+                                "Servicio",
+                                "quantity",
+                                1,
+                                "unitPrice",
+                                100000,
+                                "taxes",
+                                List.of(Map.of("type", "IVA", "percent", 19)))));
     }
 }

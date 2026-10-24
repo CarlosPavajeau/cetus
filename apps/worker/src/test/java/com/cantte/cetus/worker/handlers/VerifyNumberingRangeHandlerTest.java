@@ -1,5 +1,8 @@
 package com.cantte.cetus.worker.handlers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.jobs.JobTypes;
@@ -16,15 +19,11 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.function.Consumer;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** GetNumberingRange against the range seeded by WorkerFixtures (the habilitación range SETP). */
 @QuarkusTest
@@ -35,10 +34,13 @@ class VerifyNumberingRangeHandlerTest {
 
     @Inject
     VerifyNumberingRangeHandler handler;
+
     @Inject
     FakeDian dian;
+
     @Inject
     WorkerFixtures fixtures;
+
     @Inject
     SecretCipher cipher;
 
@@ -49,7 +51,7 @@ class VerifyNumberingRangeHandlerTest {
 
     @Test
     void aRangeEqualToTheDiansIsVerified() {
-        UUID rangeId = range(r -> { });
+        UUID rangeId = range(r -> {});
         dian.reply(OPERATION, Reply.fixture("get-numbering-range.xml"));
 
         handler.handle(job(rangeId));
@@ -59,7 +61,8 @@ class VerifyNumberingRangeHandlerTest {
         assertThat(range.verificationError).isNull();
         assertThat(range.verifiedAt).isNotNull();
         String request = dian.calls().get(0).body();
-        assertThat(request).contains("<wcf:accountCode>900123456</wcf:accountCode>")
+        assertThat(request)
+                .contains("<wcf:accountCode>900123456</wcf:accountCode>")
                 .contains("<wcf:accountCodeT>900123456</wcf:accountCodeT>")
                 .contains("<wcf:softwareCode>");
     }
@@ -73,7 +76,10 @@ class VerifyNumberingRangeHandlerTest {
 
         NumberingRangeEntity range = load(rangeId);
         assertThat(range.verificationStatus).isEqualTo(VerificationStatus.MISMATCH);
-        assertThat(range.verificationError).contains("clave técnica").doesNotContain("fc8eac").doesNotContain("00000000");
+        assertThat(range.verificationError)
+                .contains("clave técnica")
+                .doesNotContain("fc8eac")
+                .doesNotContain("00000000");
     }
 
     @Test
@@ -92,7 +98,7 @@ class VerifyNumberingRangeHandlerTest {
 
     @Test
     void aClientFaultGivesUpAndLeavesTheRangeInError() {
-        UUID rangeId = range(r -> { });
+        UUID rangeId = range(r -> {});
         dian.reply(OPERATION, Reply.fault("fault-client.xml"));
         JobEntity job = job(rangeId);
 

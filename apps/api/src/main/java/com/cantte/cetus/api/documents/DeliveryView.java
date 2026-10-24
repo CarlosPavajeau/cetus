@@ -1,11 +1,10 @@
 package com.cantte.cetus.api.documents;
 
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
  * How the document reached its customer. SKIPPED, BOUNCED, COMPLAINED or FAILED mean it did not: the

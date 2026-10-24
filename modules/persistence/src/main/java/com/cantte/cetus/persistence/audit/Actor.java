@@ -6,7 +6,12 @@ package com.cantte.cetus.persistence.audit;
  */
 public record Actor(ActorType type, String id, String impersonatedBy) {
 
-    public enum ActorType { USER, API_KEY, PLATFORM, SYSTEM }
+    public enum ActorType {
+        USER,
+        API_KEY,
+        PLATFORM,
+        SYSTEM
+    }
 
     public Actor(ActorType type, String id) {
         this(type, id, null);

@@ -7,12 +7,16 @@ public class IdentifierType {
 
     @XmlValue
     public String value;
+
     @XmlAttribute
     public String schemeAgencyID;
+
     @XmlAttribute
     public String schemeAgencyName;
+
     @XmlAttribute
     public String schemeID;
+
     @XmlAttribute
     public String schemeName;
 

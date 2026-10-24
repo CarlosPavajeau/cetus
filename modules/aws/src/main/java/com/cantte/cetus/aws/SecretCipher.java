@@ -2,19 +2,18 @@ package com.cantte.cetus.aws;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.DataKeySpec;
 import software.amazon.awssdk.services.kms.model.GenerateDataKeyResponse;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.util.Arrays;
 
 /**
  * Envelope encryption with AWS KMS. Each secret gets its own data key; the result is a single
@@ -40,7 +39,8 @@ public class SecretCipher {
     String keyId;
 
     public byte[] seal(byte[] plaintext) {
-        GenerateDataKeyResponse dataKey = kms.generateDataKey(r -> r.keyId(keyId).keySpec(DataKeySpec.AES_256));
+        GenerateDataKeyResponse dataKey =
+                kms.generateDataKey(r -> r.keyId(keyId).keySpec(DataKeySpec.AES_256));
         byte[] key = dataKey.plaintext().asByteArray();
         try {
             byte[] iv = new byte[IV_LENGTH];
@@ -77,7 +77,8 @@ public class SecretCipher {
         buffer.get(ciphertext);
 
         byte[] key = kms.decrypt(r -> r.keyId(keyId).ciphertextBlob(SdkBytes.fromByteArray(encryptedKey)))
-                .plaintext().asByteArray();
+                .plaintext()
+                .asByteArray();
         try {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(TAG_BITS, iv));

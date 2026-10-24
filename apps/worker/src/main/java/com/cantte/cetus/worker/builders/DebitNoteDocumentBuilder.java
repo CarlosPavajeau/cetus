@@ -34,16 +34,43 @@ public class DebitNoteDocumentBuilder implements DocumentBuilder {
         }
         String number = ctx.fullNumber();
         // Same formula as the CUFE, with the software PIN in place of the technical key.
-        String cude = Cufe.compute(new Cufe.Input(number, ctx.issueDate(), ctx.issueTime(), ctx.calculation(),
-                ctx.supplier().identificationNumber(), ctx.customer().identificationNumber(), secrets.pin(),
+        String cude = Cufe.compute(new Cufe.Input(
+                number,
+                ctx.issueDate(),
+                ctx.issueTime(),
+                ctx.calculation(),
+                ctx.supplier().identificationNumber(),
+                ctx.customer().identificationNumber(),
+                secrets.pin(),
                 ctx.environment()));
-        String qr = QrCode.note(number, ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
-                ctx.customer().identificationNumber(), ctx.calculation(), cude, ctx.environment());
+        String qr = QrCode.note(
+                number,
+                ctx.issueDate(),
+                ctx.issueTime(),
+                ctx.supplier().identificationNumber(),
+                ctx.customer().identificationNumber(),
+                ctx.calculation(),
+                cude,
+                ctx.environment());
 
-        ElectronicDebitNote note = new ElectronicDebitNote(ctx.environment(), ctx.prefix(), ctx.number(),
-                ctx.issueDate(), ctx.issueTime(), ctx.currency(), ctx.supplier(), ctx.customer(), ctx.payment(),
-                ctx.calculation(), ctx.reference(), concept, ctx.correctionDescription(),
-                provider.software(ctx, secrets.pin()), cude, qr, ctx.notes());
+        ElectronicDebitNote note = new ElectronicDebitNote(
+                ctx.environment(),
+                ctx.prefix(),
+                ctx.number(),
+                ctx.issueDate(),
+                ctx.issueTime(),
+                ctx.currency(),
+                ctx.supplier(),
+                ctx.customer(),
+                ctx.payment(),
+                ctx.calculation(),
+                ctx.reference(),
+                concept,
+                ctx.correctionDescription(),
+                provider.software(ctx, secrets.pin()),
+                cude,
+                qr,
+                ctx.notes());
         return new BuiltDocument(marshaller.toDocument(mapper.map(note)), cude);
     }
 }
