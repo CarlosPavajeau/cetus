@@ -251,7 +251,7 @@ class DocumentResourceTest {
                 .jsonPath()
                 .getList("items");
         assertThat(audited).hasSize(1);
-        assertThat(audited.get(0)).containsEntry("resourceId", noteId).containsEntry("actorType", "USER");
+        assertThat(audited.getFirst()).containsEntry("resourceId", noteId).containsEntry("actorType", "USER");
 
         // Nothing is left to credit.
         cancel(user, invoiceId, UUID.randomUUID().toString(), "Otra vez")

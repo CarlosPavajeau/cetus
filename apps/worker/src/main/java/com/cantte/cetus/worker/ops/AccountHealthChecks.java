@@ -73,7 +73,7 @@ public class AccountHealthChecks {
                 JOIN billing.accounts a ON a.id = i.account_id
                 WHERE c.active AND i.status <> 'DISABLED' AND a.status <> 'CLOSED'
                   AND c.valid_to > now() AND (c.valid_to AT TIME ZONE 'America/Bogota')::date <= :until
-                """, Map.of("until", today.plusDays(CERTIFICATE_DAYS.get(0)))).stream()
+                """, Map.of("until", today.plusDays(CERTIFICATE_DAYS.getFirst()))).stream()
                 .map(r -> {
                     LocalDate validTo = date(r[6]);
                     long days = Math.max(0, validTo.toEpochDay() - today.toEpochDay());
@@ -109,7 +109,7 @@ public class AccountHealthChecks {
                 JOIN billing.accounts a ON a.id = i.account_id
                 WHERE r.status = 'ACTIVE' AND i.environment = 'LIVE' AND i.status <> 'DISABLED' AND a.status <> 'CLOSED'
                   AND (r.next_number - r.range_from) >= :share * (r.range_to - r.range_from + 1)
-                """, Map.of("share", RANGE_USAGE.get(0) / 100.0)).stream()
+                """, Map.of("share", RANGE_USAGE.getFirst() / 100.0)).stream()
                 .map(r -> {
                     long used = ((Number) r[6]).longValue();
                     long total = ((Number) r[7]).longValue();
@@ -149,7 +149,7 @@ public class AccountHealthChecks {
                 JOIN billing.accounts a ON a.id = i.account_id
                 WHERE r.status = 'ACTIVE' AND i.environment = 'LIVE' AND i.status <> 'DISABLED' AND a.status <> 'CLOSED'
                   AND r.valid_to >= :today AND r.valid_to <= :until
-                """, Map.of("today", today, "until", today.plusDays(RESOLUTION_DAYS.get(0)))).stream()
+                """, Map.of("today", today, "until", today.plusDays(RESOLUTION_DAYS.getFirst()))).stream()
                 .map(r -> {
                     LocalDate validTo = date(r[7]);
                     long days = validTo.toEpochDay() - today.toEpochDay();

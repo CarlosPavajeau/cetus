@@ -92,7 +92,7 @@ final class DianResponseParser {
         String code = null;
         List<String> subcodes = new ArrayList<>();
         List<Element> codes = children(fault, "Code");
-        Element current = codes.isEmpty() ? null : codes.get(0);
+        Element current = codes.isEmpty() ? null : codes.getFirst();
         while (current != null) {
             String value = text(current, "Value");
             if (code == null) {
@@ -101,7 +101,7 @@ final class DianResponseParser {
                 subcodes.add(value);
             }
             List<Element> nested = children(current, "Subcode");
-            current = nested.isEmpty() ? null : nested.get(0);
+            current = nested.isEmpty() ? null : nested.getFirst();
         }
         NodeList reasons = fault.getElementsByTagNameNS("*", "Text");
         String reason =
@@ -149,7 +149,7 @@ final class DianResponseParser {
         if (matches.isEmpty()) {
             return null;
         }
-        String value = matches.get(0).getTextContent();
+        String value = matches.getFirst().getTextContent();
         return value == null || value.isBlank() ? null : value.trim();
     }
 }

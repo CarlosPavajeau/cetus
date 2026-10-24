@@ -73,7 +73,7 @@ public class InvoiceService {
                     "issuer_required",
                     "The account has several issuers in the " + environment + " environment; send issuerId");
         }
-        return candidates.get(0);
+        return candidates.getFirst();
     }
 
     public static List<LineInput> toLines(List<InvoiceRequest.Line> lines) {

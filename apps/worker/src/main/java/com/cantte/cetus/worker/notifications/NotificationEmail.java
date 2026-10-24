@@ -155,7 +155,7 @@ public record NotificationEmail(String subject, String html, String text) {
                 .map(NotificationEmail::category)
                 .toList();
         return names.size() == 1
-                ? names.get(0)
+                ? names.getFirst()
                 : String.join(", ", names.subList(0, names.size() - 1)) + " y " + names.getLast();
     }
 

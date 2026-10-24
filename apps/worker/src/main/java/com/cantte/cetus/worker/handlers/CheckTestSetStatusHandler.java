@@ -58,11 +58,11 @@ public class CheckTestSetStatusHandler implements JobHandler {
         } catch (DianFaultException e) {
             throw ProcessDocumentHandler.escalate(e);
         }
-        if (responses.isEmpty() || stillProcessing(responses.get(0))) {
+        if (responses.isEmpty() || stillProcessing(responses.getFirst())) {
             throw new RetryLater(Duration.ofSeconds(15), "DIAN is still processing " + ctx.trackId());
         }
 
-        DianResponse response = responses.get(0);
+        DianResponse response = responses.getFirst();
         recorder.submission(ctx.documentId(), "GetStatusZip", ctx.trackId(), false, response, response.errors(), 0);
         artifacts.save(
                 ctx,

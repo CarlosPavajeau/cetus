@@ -102,7 +102,8 @@ class SendNotificationHandlerTest {
                 .containsExactly(
                         "a-tech@cetus.test", "b-fiscal@cetus.test", "a-tech@cetus.test", "b-fiscal@cetus.test");
         // Resend answers a repeated key with the email it already sent instead of sending it again.
-        assertThat(requests.get(2).idempotencyKey()).isEqualTo(requests.get(0).idempotencyKey());
+        assertThat(requests.get(2).idempotencyKey())
+                .isEqualTo(requests.getFirst().idempotencyKey());
         assertThat(requests.get(3).idempotencyKey()).isEqualTo(requests.get(1).idempotencyKey());
         NotificationEntity sent = notice(id);
         assertThat(sent.status).isEqualTo(NotificationEntity.Status.SENT);

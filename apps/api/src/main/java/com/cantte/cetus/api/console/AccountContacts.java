@@ -48,7 +48,7 @@ public class AccountContacts {
             }
         }
         if (!seeded.isEmpty()) {
-            requestVerification(require(accountId, seeded.get(0)), seeded);
+            requestVerification(require(accountId, seeded.getFirst()), seeded);
         }
     }
 

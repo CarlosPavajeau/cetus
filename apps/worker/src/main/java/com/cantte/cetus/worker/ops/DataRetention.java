@@ -44,7 +44,8 @@ public class DataRetention {
      * every day until it reaches the 7-day mark, so a shorter one would send that notice again.
      */
     static final Duration MIN_NOTIFICATIONS = Duration.ofDays(
-            Math.max(AccountHealthChecks.CERTIFICATE_DAYS.get(0), AccountHealthChecks.RESOLUTION_DAYS.get(0)) + 1);
+            Math.max(AccountHealthChecks.CERTIFICATE_DAYS.getFirst(), AccountHealthChecks.RESOLUTION_DAYS.getFirst())
+                    + 1);
 
     /** What refers to a document, in the order the foreign keys let it go, and the document last. */
     private static final List<String> SANDBOX_DOCUMENT_ROWS = List.of(

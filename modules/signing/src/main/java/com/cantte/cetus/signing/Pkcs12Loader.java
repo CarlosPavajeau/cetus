@@ -35,7 +35,7 @@ public final class Pkcs12Loader {
                 Certificate[] chain = keyStore.getCertificateChain(alias);
                 List<X509Certificate> certificates =
                         Arrays.stream(chain).map(X509Certificate.class::cast).toList();
-                return new KeyMaterial(key, certificates.get(0), certificates);
+                return new KeyMaterial(key, certificates.getFirst(), certificates);
             }
             throw new SigningException("The PKCS#12 file does not contain a private key");
         } catch (SigningException e) {

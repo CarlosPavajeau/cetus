@@ -45,7 +45,7 @@ public class IdempotencyStore {
                 .setParameter("environment", environment.name())
                 .setParameter("key", key)
                 .getResultList();
-        Object[] row = rows.get(0);
+        Object[] row = rows.getFirst();
         if (!requestHash.equals(row[0])) {
             return new Outcome(State.MISMATCH, null, null);
         }

@@ -79,7 +79,7 @@ class ProcessDocumentHandlerTest {
         assertThat(artifacts(id))
                 .containsExactlyInAnyOrder(Kind.SIGNED_XML, Kind.ZIP, Kind.DIAN_RESPONSE, Kind.APPLICATION_RESPONSE);
         assertThat(dian.operations()).containsExactly(SEND);
-        assertThat(dian.calls().get(0).body()).contains("<wcf:fileName>z0900123456");
+        assertThat(dian.calls().getFirst().body()).contains("<wcf:fileName>z0900123456");
         // Every artifact is written with the legal retention (Object Lock).
         assertThat(QuarkusTransaction.requiringNew().call(() -> DocumentArtifactEntity.listByDocument(id)))
                 .allSatisfy(a -> assertThat(((FakeDocumentStorage) storage).isRetained(a.s3Key))

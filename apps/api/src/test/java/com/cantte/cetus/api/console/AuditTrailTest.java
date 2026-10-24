@@ -45,7 +45,7 @@ class AuditTrailTest {
 
         List<Map<String, Object>> entries = entries(user, "ACCOUNT_CREATED");
         assertThat(entries).hasSize(1);
-        Map<String, Object> entry = entries.get(0);
+        Map<String, Object> entry = entries.getFirst();
         assertThat(entry)
                 .containsEntry("actorType", "USER")
                 .containsEntry("actorId", user.userId())
@@ -77,14 +77,14 @@ class AuditTrailTest {
         Map<String, Object> expected = Map.of("name", "ERP", "environment", "TEST", "prefix", prefix);
         List<Map<String, Object>> createdEntries = entries(user, "API_KEY_CREATED");
         assertThat(createdEntries).hasSize(1);
-        assertThat(createdEntries.get(0))
+        assertThat(createdEntries.getFirst())
                 .containsEntry("resourceType", "api_key")
                 .containsEntry("resourceId", keyId);
-        assertThat(data(createdEntries.get(0))).isEqualTo(expected);
+        assertThat(data(createdEntries.getFirst())).isEqualTo(expected);
 
         List<Map<String, Object>> revokedEntries = entries(user, "API_KEY_REVOKED");
         assertThat(revokedEntries).as("revoking twice audits once").hasSize(1);
-        assertThat(data(revokedEntries.get(0))).isEqualTo(expected);
+        assertThat(data(revokedEntries.getFirst())).isEqualTo(expected);
 
         assertThat(auditedText(accountId)).doesNotContain(secret);
     }

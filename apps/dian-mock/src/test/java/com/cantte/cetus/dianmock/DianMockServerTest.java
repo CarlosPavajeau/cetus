@@ -192,9 +192,9 @@ class DianMockServerTest {
         List<DianResponse> first = client.getStatusZip(upload.zipKey(), keys);
         List<DianResponse> second = client.getStatusZip(upload.zipKey(), keys);
 
-        assertThat(first.get(0).statusCode()).isNull();
-        assertThat(first.get(0).statusDescription()).contains("en proceso");
-        assertThat(second.get(0).valid()).isTrue();
+        assertThat(first.getFirst().statusCode()).isNull();
+        assertThat(first.getFirst().statusDescription()).contains("en proceso");
+        assertThat(second.getFirst().valid()).isTrue();
     }
 
     @Test

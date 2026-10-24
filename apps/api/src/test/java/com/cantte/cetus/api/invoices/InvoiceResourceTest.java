@@ -341,7 +341,7 @@ class InvoiceResourceTest {
                 .statusCode(400)
                 .contentType("application/problem+json")
                 .body("code", equalTo("invalid_request"))
-                .body("errors.field", contains(error.get(0)))
+                .body("errors.field", contains(error.getFirst()))
                 .body("errors.message", contains(error.get(1))));
     }
 

@@ -168,7 +168,7 @@ public class OpsAlerts {
             return;
         }
         String subject = alerts.size() == 1
-                ? "[Cetus] " + alerts.get(0).summary()
+                ? "[Cetus] " + alerts.getFirst().summary()
                 : "[Cetus] %d alertas operativas".formatted(alerts.size());
         String text = alerts.stream().map(alert -> "- " + alert.summary()).collect(Collectors.joining("\n"));
         String html = "<ul>"

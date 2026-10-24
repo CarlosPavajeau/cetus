@@ -60,7 +60,7 @@ class VerifyNumberingRangeHandlerTest {
         assertThat(range.verificationStatus).isEqualTo(VerificationStatus.VERIFIED);
         assertThat(range.verificationError).isNull();
         assertThat(range.verifiedAt).isNotNull();
-        String request = dian.calls().get(0).body();
+        String request = dian.calls().getFirst().body();
         assertThat(request)
                 .contains("<wcf:accountCode>900123456</wcf:accountCode>")
                 .contains("<wcf:accountCodeT>900123456</wcf:accountCodeT>")

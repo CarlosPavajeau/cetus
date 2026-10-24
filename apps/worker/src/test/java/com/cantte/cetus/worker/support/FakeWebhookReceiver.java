@@ -79,7 +79,7 @@ public class FakeWebhookReceiver {
     private void handle(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         Map<String, String> headers = new HashMap<>();
-        exchange.getRequestHeaders().forEach((name, values) -> headers.put(name.toLowerCase(), values.get(0)));
+        exchange.getRequestHeaders().forEach((name, values) -> headers.put(name.toLowerCase(), values.getFirst()));
         requests.add(new Request(exchange.getRequestURI().getPath(), headers, body));
         Reply reply;
         synchronized (this) {

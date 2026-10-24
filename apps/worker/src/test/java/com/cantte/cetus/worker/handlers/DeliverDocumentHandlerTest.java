@@ -101,7 +101,7 @@ class DeliverDocumentHandlerTest {
         assertThat(delivery.attempts).isEqualTo(1);
         assertThat(delivery.sentAt).isNotNull();
 
-        FakeResend.Request request = resend.requests().get(0);
+        FakeResend.Request request = resend.requests().getFirst();
         assertThat(request.authorization()).isEqualTo("Bearer " + FakeResendResource.API_KEY);
         assertThat(request.idempotencyKey()).isEqualTo("delivery-" + delivery.id);
         assertThat(delivery.providerMessageId).isEqualTo("email-delivery-" + delivery.id);
@@ -253,7 +253,8 @@ class DeliverDocumentHandlerTest {
 
         deliver(id);
 
-        assertThat(resend.requests().get(0).body().get("to").get(0).asText()).isEqualTo("compras@example.com");
+        assertThat(resend.requests().getFirst().body().get("to").get(0).asText())
+                .isEqualTo("compras@example.com");
     }
 
     @Test
@@ -271,7 +272,8 @@ class DeliverDocumentHandlerTest {
 
         DocumentEntity note = document(id);
         assertThat(singleDelivery(id).status).isEqualTo(Status.SENT);
-        assertThat(resend.requests().get(0).body().get("subject").asText()).contains(";" + note.fullNumber() + ";91;");
+        assertThat(resend.requests().getFirst().body().get("subject").asText())
+                .contains(";" + note.fullNumber() + ";91;");
         Document attached = XmlSupport.parse(storage.get(artifact(id, Kind.ATTACHED_DOCUMENT).s3Key));
         Element uuid = (Element) attached.getElementsByTagNameNS("*", "UUID").item(0);
         assertThat(uuid.getAttribute("schemeName")).isEqualTo("CUDE-SHA384");
@@ -293,7 +295,8 @@ class DeliverDocumentHandlerTest {
 
         DocumentEntity note = document(id);
         assertThat(singleDelivery(id).status).isEqualTo(Status.SENT);
-        assertThat(resend.requests().get(0).body().get("subject").asText()).contains(";" + note.fullNumber() + ";92;");
+        assertThat(resend.requests().getFirst().body().get("subject").asText())
+                .contains(";" + note.fullNumber() + ";92;");
         Document attached = XmlSupport.parse(storage.get(artifact(id, Kind.ATTACHED_DOCUMENT).s3Key));
         Element uuid = (Element) attached.getElementsByTagNameNS("*", "UUID").item(0);
         assertThat(uuid.getAttribute("schemeName")).isEqualTo("CUDE-SHA384");
@@ -354,7 +357,7 @@ class DeliverDocumentHandlerTest {
     private static DocumentDeliveryEntity singleDelivery(UUID id) {
         List<DocumentDeliveryEntity> deliveries = deliveries(id);
         assertThat(deliveries).hasSize(1);
-        return deliveries.get(0);
+        return deliveries.getFirst();
     }
 
     private static Map<String, byte[]> unzip(byte[] zip) {

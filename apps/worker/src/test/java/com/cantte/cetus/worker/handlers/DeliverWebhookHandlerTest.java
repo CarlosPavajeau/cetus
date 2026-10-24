@@ -81,7 +81,7 @@ class DeliverWebhookHandlerTest {
         assertThat(delivery.lastResponseStatus).isEqualTo(200);
         assertThat(delivery.deliveredAt).isNotNull();
 
-        FakeWebhookReceiver.Request request = receiver.requests().get(0);
+        FakeWebhookReceiver.Request request = receiver.requests().getFirst();
         assertThat(request.path()).isEqualTo("/hooks/cetus");
         assertThat(request.body()).isEqualTo(event.payload);
         assertThat(request.headers())
@@ -119,9 +119,9 @@ class DeliverWebhookHandlerTest {
         assertThat(delivered.lastError).isNull();
         assertThat(receiver.requests()).hasSize(2);
         assertThat(receiver.requests().get(1).headers().get("webhook-id"))
-                .isEqualTo(receiver.requests().get(0).headers().get("webhook-id"));
+                .isEqualTo(receiver.requests().getFirst().headers().get("webhook-id"));
         assertThat(receiver.requests().get(1).body())
-                .isEqualTo(receiver.requests().get(0).body());
+                .isEqualTo(receiver.requests().getFirst().body());
     }
 
     @Test

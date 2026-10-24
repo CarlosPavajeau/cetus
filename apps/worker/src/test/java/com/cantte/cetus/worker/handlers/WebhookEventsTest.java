@@ -165,7 +165,7 @@ class WebhookEventsTest {
     private static WebhookEventEntity singleEvent(UUID documentId) {
         List<WebhookEventEntity> events = events(documentId);
         assertThat(events).hasSize(1);
-        return events.get(0);
+        return events.getFirst();
     }
 
     private static List<WebhookDeliveryEntity> deliveries(UUID eventId) {
