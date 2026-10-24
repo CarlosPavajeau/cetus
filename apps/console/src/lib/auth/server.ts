@@ -6,9 +6,21 @@ import { admin, jwt, organization, twoFactor } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { and, eq } from "drizzle-orm";
 
+import { verificationMessage } from "~/emails/VerificationEmail";
+
 import { db } from "../db";
+import { emailSender } from "../email";
 import { env } from "../env";
-import { ac, impersonationSeconds, platformRole, roleList, roles } from "./permissions";
+import {
+  ac,
+  impersonationSeconds,
+  invitationSeconds,
+  organizationAc,
+  organizationRoles,
+  platformRole,
+  roleList,
+  roles,
+} from "./permissions";
 import * as schema from "./schema";
 
 const adminReads = new Set([
@@ -35,6 +47,7 @@ const forbiddenWhileImpersonating = new Set([
   "/organization/delete",
   "/organization/leave",
   "/organization/invite-member",
+  "/organization/cancel-invitation",
   "/organization/remove-member",
   "/organization/update-member-role",
 ]);
@@ -59,6 +72,16 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 10,
+  },
+  // Only accepting an invitation asks for a verified address (requireEmailVerificationOnInvitation), so
+  // whoever holds an invitation's link cannot sign up with its address and join. The link proves the
+  // address and nothing else: it signs nobody in, so it never skips a second factor.
+  emailVerification: {
+    sendVerificationEmail: ({ user, url }) =>
+      emailSender.send(verificationMessage({ to: user.email, name: user.name, url })),
+    sendOnSignUp: false,
+    autoSignInAfterVerification: false,
+    expiresIn: 24 * 60 * 60,
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
@@ -97,7 +120,12 @@ export const auth = betterAuth({
     }),
   },
   plugins: [
-    organization(),
+    organization({
+      ac: organizationAc,
+      roles: organizationRoles,
+      invitationExpiresIn: invitationSeconds,
+      requireEmailVerificationOnInvitation: true,
+    }),
     admin({
       ac,
       roles,
@@ -123,9 +151,9 @@ export const auth = betterAuth({
           return {
             email: user.email,
             org,
-            // The member's roles in the active organization (owner, admin, member): the API limits some
+            // The member's roles in the active organization (owner, admin, biller, member): the API limits some
             // changes to some of them. Read on every token, so a role change applies within one request.
-            orgRoles: org ? await organizationRoles(user.id, org) : [],
+            orgRoles: org ? await memberRoles(user.id, org) : [],
             // SmallRye JWT reads `groups` as the caller's roles. Only staff with 2FA get them.
             groups: role && user.twoFactorEnabled ? [role] : [],
             impersonatedBy: session.impersonatedBy ?? null,
@@ -140,7 +168,8 @@ export const auth = betterAuth({
 
 export type Session = typeof auth.$Infer.Session;
 
-async function organizationRoles(userId: string, organizationId: string): Promise<string[]> {
+/** The member's roles in the organization (owner, admin, member), or none outside it. */
+export async function memberRoles(userId: string, organizationId: string): Promise<string[]> {
   const [membership] = await db
     .select({ role: schema.member.role })
     .from(schema.member)

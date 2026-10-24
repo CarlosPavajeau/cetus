@@ -12,7 +12,7 @@ import {
 import { Field, FieldDescription, FieldError, FieldLabel } from "~/components/ui/field";
 import { departments } from "~/features/setup/divipola";
 
-import type { InvoiceHeaderValues } from "./schema";
+import type { CustomerValues } from "./schema";
 
 type Place = {
   code: string;
@@ -38,19 +38,19 @@ const places: Place[] = departments
  * The customer's municipality, searched by name across the country. Picking one fills in its DANE code and
  * its department, which the DIAN requires; the person never sees a code unless they look for it.
  */
-export function MunicipalityField({ form }: { form: UseFormReturn<InvoiceHeaderValues> }) {
+export function MunicipalityField({ form }: { form: UseFormReturn<CustomerValues> }) {
   const id = useId();
   const { field, fieldState } = useController({
     control: form.control,
-    name: "customer.municipalityCode",
+    name: "municipalityCode",
   });
   const selected = places.find((place) => place.code === field.value) ?? null;
 
   function select(place: Place | null) {
     field.onChange(place?.code ?? "");
-    form.setValue("customer.cityName", place?.name ?? "");
-    form.setValue("customer.departmentCode", place?.departmentCode ?? "");
-    form.setValue("customer.departmentName", place?.departmentName ?? "");
+    form.setValue("cityName", place?.name ?? "");
+    form.setValue("departmentCode", place?.departmentCode ?? "");
+    form.setValue("departmentName", place?.departmentName ?? "");
   }
 
   return (

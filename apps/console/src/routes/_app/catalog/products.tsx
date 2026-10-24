@@ -20,8 +20,8 @@ import {
 } from "~/components/ui/table";
 import { CatalogHeader } from "~/features/catalog/CatalogHeader";
 import { CatalogSearch, LoadMore } from "~/features/catalog/CatalogList";
-import { CreateProduct } from "~/features/catalog/CreateProduct";
 import { DeleteEntry } from "~/features/catalog/DeleteEntry";
+import { ProductDialog } from "~/features/catalog/ProductDialog";
 import { productPagesQuery } from "~/features/catalog/queries";
 import { presetOf } from "~/features/catalog/schema";
 import { deleteProduct } from "~/features/catalog/server";
@@ -60,7 +60,7 @@ function Products() {
 
   return (
     <>
-      <CatalogHeader action={<CreateProduct environment={environment} />} />
+      <CatalogHeader action={<ProductDialog environment={environment} />} />
       {items.length === 0 && q === "" ? (
         <Empty className="border">
           <EmptyHeader>
@@ -88,7 +88,7 @@ function Products() {
                   <TableHead>Descripción</TableHead>
                   <TableHead>Impuesto</TableHead>
                   <TableHead className="text-right">Precio</TableHead>
-                  <TableHead className="w-12 pr-5" />
+                  <TableHead className="w-20 pr-5" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -111,10 +111,13 @@ function Products() {
                       {formatMoney(product.unitPrice, "COP")}
                     </TableCell>
                     <TableCell className="pr-5">
-                      <DeleteEntry
-                        label={product.description}
-                        remove={() => deleteProduct({ data: { environment, id: product.id } })}
-                      />
+                      <div className="flex justify-end">
+                        <ProductDialog environment={environment} product={product} />
+                        <DeleteEntry
+                          label={product.description}
+                          remove={() => deleteProduct({ data: { environment, id: product.id } })}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

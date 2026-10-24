@@ -21,6 +21,7 @@ import {
   MailIcon,
   ShieldCheckIcon,
   ShieldIcon,
+  UsersIcon,
   WebhookIcon,
 } from "lucide-react";
 
@@ -54,13 +55,13 @@ import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { EnvironmentSelect } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery } from "~/features/environment/queries";
 import { SandboxBanner } from "~/features/environment/SandboxBanner";
-import { requireSession } from "~/features/session/guard";
+import { requireMembership } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
 
 /** Protected layout: every child route requires a session. */
 export const Route = createFileRoute("/_app")({
-  beforeLoad: requireSession,
+  beforeLoad: requireMembership,
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(activeEnvironmentQuery),
   component: AppLayout,
 });
@@ -146,6 +147,15 @@ function AppLayout() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to="/settings/members" />}
+                isActive={Boolean(matchRoute({ to: "/settings/members" }))}
+              >
+                <UsersIcon />
+                <span>Miembros</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 render={<Link to="/settings/contacts" />}

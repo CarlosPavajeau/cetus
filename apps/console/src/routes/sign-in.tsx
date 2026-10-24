@@ -11,14 +11,17 @@ import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signInSchema } from "~/features/auth/schema";
-import { startSession } from "~/features/auth/session-start";
+import { invitationSearch, startSession } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
 
+/** `invitation`: the invitation the person came to accept; after signing in they go back to it. */
 export const Route = createFileRoute("/sign-in")({
+  validateSearch: invitationSearch,
   component: SignIn,
 });
 
 function SignIn() {
+  const { invitation } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -40,12 +43,14 @@ function SignIn() {
     }
     // The password was right but the account has 2FA: the session starts after the code.
     if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
-      await navigate({ to: "/two-factor" });
+      await navigate({ to: "/two-factor", search: { invitation } });
       return;
     }
 
     await startSession(queryClient);
-    await navigate({ to: "/overview" });
+    await (invitation
+      ? navigate({ to: "/invitations/$invitationId", params: { invitationId: invitation } })
+      : navigate({ to: "/overview" }));
   });
 
   return (
@@ -110,6 +115,7 @@ function SignIn() {
             ¿Aún no tienes cuenta?{" "}
             <Link
               to="/sign-up"
+              search={{ invitation }}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               Crea una

@@ -9,5 +9,6 @@ export const accountStatusLabel: Record<AccountStatus, string> = {
 export const memberRoleLabel: Record<string, string> = {
   owner: "Dueño",
   admin: "Administrador",
+  biller: "Facturador",
   member: "Miembro",
 };

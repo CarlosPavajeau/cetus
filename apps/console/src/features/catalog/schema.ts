@@ -1,7 +1,7 @@
 import { type } from "arktype";
 
 import { type TaxPreset, taxPresetIds, taxPresets } from "~/features/issuance/catalogs";
-import type { CustomerExtras, InvoiceHeaderValues, LineValues } from "~/features/issuance/schema";
+import type { CustomerExtras, CustomerValues, LineValues } from "~/features/issuance/schema";
 import { trimmed } from "~/features/issuance/schema";
 import { isTaxLevelCode } from "~/features/setup/taxLevels";
 import type { Customer, LineTax, Product } from "~/lib/api/types";
@@ -24,13 +24,28 @@ export const productSchema = type({
 
 export type ProductValues = typeof productSchema.infer;
 
-export function toProductRequest(product: ProductValues) {
+/** The product as the API takes it; an edited product keeps its unit, which the form does not show. */
+export function toProductRequest(product: ProductValues, unitCode: string | null) {
   return {
     code: product.code,
     description: product.description,
+    ...(unitCode ? { unitCode } : {}),
     unitPrice: Number(product.unitPrice),
     taxes: taxPresets[product.tax].taxes,
   };
+}
+
+/** A saved product as the form's values, or null when its taxes are not a preset. */
+export function toProductValues(product: Product): ProductValues | null {
+  const tax = presetOf(product.taxes);
+  return tax === null
+    ? null
+    : {
+        code: product.code,
+        description: product.description,
+        unitPrice: String(product.unitPrice),
+        tax,
+      };
 }
 
 /** The preset whose taxes are exactly these, or null for a combination the form does not offer. */
@@ -91,7 +106,7 @@ export function customerUnavailable(customer: Customer): string | null {
  */
 export function toCustomerValues(
   customer: Customer,
-): { values: InvoiceHeaderValues["customer"]; extras: CustomerExtras } | null {
+): { values: CustomerValues; extras: CustomerExtras } | null {
   const identificationType = formIdentificationTypes.find(
     (value) => value === customer.identificationType,
   );

@@ -1,6 +1,6 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, notFound, redirect, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
@@ -15,9 +15,15 @@ import { IssuerFields, issuerDefaults } from "~/features/setup/IssuerFields";
 import { issuerSchema } from "~/features/setup/schema";
 import { updateIssuer } from "~/features/setup/server";
 import type { IssuerDetail } from "~/lib/api/types";
+import { memberPermissions } from "~/lib/auth/permissions";
 import { uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/issuers/$issuerId_/edit")({
+  beforeLoad: ({ context: { session }, params }) => {
+    if (!memberPermissions(session.memberRoles).manage) {
+      throw redirect({ to: "/issuers/$issuerId", params: { issuerId: params.issuerId } });
+    }
+  },
   loader: async ({ context: { queryClient }, params }) => {
     if (!uuidPattern.test(params.issuerId)) {
       throw notFound();

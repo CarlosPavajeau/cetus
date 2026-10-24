@@ -1,0 +1,399 @@
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeaders } from "@tanstack/react-start/server";
+import { type } from "arktype";
+import { APIError } from "better-auth/api";
+import { and, eq, lte } from "drizzle-orm";
+
+import {
+  assignableMemberRoles,
+  invitationSeconds,
+  memberPermissions,
+} from "~/lib/auth/permissions";
+import { invitation as invitationTable } from "~/lib/auth/schema";
+import { auth, memberRoles } from "~/lib/auth/server";
+import { db } from "~/lib/db";
+import { emailSender } from "~/lib/email";
+import { env } from "~/lib/env";
+
+import { deliverInvitation, invitationMessage } from "./invitationEmail";
+
+export type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  self: boolean;
+};
+
+/** An invitation waiting for an answer, with the link to share; it only opens for the invited address. */
+export type Invitation = {
+  id: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+  url: string;
+};
+
+/** Built on the server from the console's public URL: the page also renders there, without `window`. */
+function invitationUrl(id: string) {
+  return new URL(`/invitations/${id}`, env.BETTER_AUTH_URL).toString();
+}
+
+export type Members = { members: Member[]; invitations: Invitation[] };
+
+/** The active organization's members and its invitations still waiting for an answer. */
+export const listMembers = createServerFn({ method: "GET" }).handler(async (): Promise<Members> => {
+  const headers = getRequestHeaders();
+  const [organization, session] = await Promise.all([
+    auth.api.getFullOrganization({ headers }),
+    auth.api.getSession({ headers }),
+  ]);
+  if (!organization || !session) {
+    return { members: [], invitations: [] };
+  }
+  const now = Date.now();
+  return {
+    members: organization.members.map((member) => ({
+      id: member.id,
+      name: member.user.name,
+      email: member.user.email,
+      role: member.role,
+      self: member.userId === session.user.id,
+    })),
+    invitations: organization.invitations
+      .filter(
+        (invitation) =>
+          invitation.status === "pending" && new Date(invitation.expiresAt).getTime() > now,
+      )
+      .map((invitation) => ({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        expiresAt: new Date(invitation.expiresAt).toISOString(),
+        url: invitationUrl(invitation.id),
+      })),
+  };
+});
+
+export type MemberResult = { ok: true } | { ok: false; message: string };
+
+const messages: Record<string, string> = {
+  USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION: "Esa persona ya es miembro de la organización.",
+  USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION:
+    "Esa persona ya tiene una invitación pendiente. Cancélala para enviarle otra.",
+  INVALID_EMAIL: "Escribe un correo válido.",
+  YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION:
+    "Solo los dueños y administradores de la organización invitan personas.",
+  YOU_ARE_NOT_ALLOWED_TO_INVITE_USER_WITH_THIS_ROLE: "No puedes invitar a alguien con ese rol.",
+  YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_INVITATION:
+    "Solo los dueños y administradores de la organización cancelan invitaciones.",
+  YOU_ARE_NOT_ALLOWED_TO_UPDATE_THIS_MEMBER: "No puedes cambiar el rol de esta persona.",
+  YOU_ARE_NOT_ALLOWED_TO_DELETE_THIS_MEMBER: "No puedes quitar a esta persona de la organización.",
+  YOU_CANNOT_LEAVE_THE_ORGANIZATION_AS_THE_ONLY_OWNER:
+    "La organización necesita un dueño: no se puede quitar al único.",
+  YOU_CANNOT_LEAVE_THE_ORGANIZATION_WITHOUT_AN_OWNER:
+    "La organización necesita un dueño: no se puede quitar al único.",
+  INVITATION_NOT_FOUND: "La invitación ya no existe o ya fue respondida.",
+  MEMBER_NOT_FOUND: "Esa persona ya no es miembro de la organización.",
+  IMPERSONATION_FORBIDDEN: "Los miembros solo los gestiona la persona de la cuenta.",
+};
+
+/** A refusal of Better Auth, explained; anything else is thrown. */
+function refusal(error: unknown, fallback: string): { ok: false; message: string } {
+  if (error instanceof APIError && error.statusCode >= 400 && error.statusCode < 500) {
+    const code = error.body?.code;
+    return { ok: false, message: (code && messages[code]) || fallback };
+  }
+  throw error;
+}
+
+async function change(call: () => Promise<unknown>, fallback: string): Promise<MemberResult> {
+  try {
+    await call();
+    return { ok: true };
+  } catch (error) {
+    return refusal(error, fallback);
+  }
+}
+
+const memberRole = type.enumerated(...assignableMemberRoles);
+
+export type InviteResult =
+  | { ok: true; url: string; emailed: boolean }
+  | { ok: false; message: string };
+
+/** Emails the invitation to its address; whatever fails, the invitation and its link stand. */
+function emailInvitation(
+  headers: Headers,
+  invitation: { id: string; email: string; role: string; expiresAt: Date },
+): Promise<boolean> {
+  return deliverInvitation(emailSender, async () => {
+    const [organization, session] = await Promise.all([
+      auth.api.getFullOrganization({ headers }),
+      auth.api.getSession({ headers }),
+    ]);
+    if (!organization || !session) {
+      throw new Error(
+        `Invitation ${invitation.id} has no active organization or session to email it`,
+      );
+    }
+    return invitationMessage({
+      to: invitation.email,
+      organization: organization.name,
+      inviterName: session.user.name,
+      inviterEmail: session.user.email,
+      role: invitation.role,
+      url: invitationUrl(invitation.id),
+      expiresAt: invitation.expiresAt,
+    });
+  });
+}
+
+/**
+ * Invites someone to the active organization and emails them the link. The link only works for this
+ * address; the console also shows it, to share if the email does not arrive.
+ */
+export const inviteMember = createServerFn({ method: "POST" })
+  .validator(type({ email: "string.email", role: memberRole }))
+  .handler(async ({ data }): Promise<InviteResult> => {
+    const headers = getRequestHeaders();
+    let invitation: Awaited<ReturnType<typeof auth.api.createInvitation>>;
+    try {
+      invitation = await auth.api.createInvitation({
+        headers,
+        body: { email: data.email, role: data.role },
+      });
+    } catch (error) {
+      return refusal(error, "No pudimos crear la invitación.");
+    }
+    const emailed = await emailInvitation(headers, invitation);
+    return { ok: true, url: invitationUrl(invitation.id), emailed };
+  });
+
+export type ResendResult = { ok: true; emailed: boolean } | { ok: false; message: string };
+
+/** One email a minute per invitation, so a double click or an impatient person sends one. */
+const resendIntervalSeconds = 60;
+
+/** Emails a pending invitation again; Better Auth restarts its validity rather than creating another. */
+export const resendInvitation = createServerFn({ method: "POST" })
+  .validator(type({ invitationId: "string > 0" }))
+  .handler(async ({ data }): Promise<ResendResult> => {
+    const headers = getRequestHeaders();
+    const organization = await auth.api.getFullOrganization({ headers });
+    const pending = organization?.invitations.find(
+      (invitation) => invitation.id === data.invitationId && invitation.status === "pending",
+    );
+    if (!pending) {
+      return { ok: false, message: "La invitación ya no existe o ya fue respondida." };
+    }
+    const role = assignableMemberRoles.find((value) => value === pending.role);
+    if (!role) {
+      throw new Error(
+        `Invitation ${pending.id} has a role the console does not hand out: ${pending.role}`,
+      );
+    }
+    // Better Auth checks this too, but only after the claim below has moved the expiry.
+    const session = await auth.api.getSession({ headers });
+    if (!session || !organization) {
+      throw new Error("Resending an invitation takes a session in its organization");
+    }
+    if (session.session.impersonatedBy) {
+      return { ok: false, message: "Los miembros solo los gestiona la persona de la cuenta." };
+    }
+    if (!memberPermissions(await memberRoles(session.user.id, organization.id)).manage) {
+      return {
+        ok: false,
+        message: "Solo los dueños y administradores de la organización invitan personas.",
+      };
+    }
+    // The claim: one atomic update restarts the invitation only if its last email is a minute old, so of
+    // two requests at once (two admins, a double click) only one sends it.
+    const now = Date.now();
+    const claimed = await db
+      .update(invitationTable)
+      .set({ expiresAt: new Date(now + invitationSeconds * 1000) })
+      .where(
+        and(
+          eq(invitationTable.id, pending.id),
+          eq(invitationTable.organizationId, organization.id),
+          eq(invitationTable.status, "pending"),
+          lte(
+            invitationTable.expiresAt,
+            new Date(now + (invitationSeconds - resendIntervalSeconds) * 1000),
+          ),
+        ),
+      )
+      .returning({ id: invitationTable.id });
+    if (claimed.length === 0) {
+      return { ok: false, message: "Acabamos de enviarla. Espera un minuto antes de reenviarla." };
+    }
+    let invitation: Awaited<ReturnType<typeof auth.api.createInvitation>>;
+    try {
+      invitation = await auth.api.createInvitation({
+        headers,
+        body: { email: pending.email, role, resend: true },
+      });
+    } catch (error) {
+      return refusal(error, "No pudimos reenviar la invitación.");
+    }
+    return { ok: true, emailed: await emailInvitation(headers, invitation) };
+  });
+
+export const cancelInvitation = createServerFn({ method: "POST" })
+  .validator(type({ invitationId: "string > 0" }))
+  .handler(({ data }) =>
+    change(
+      () =>
+        auth.api.cancelInvitation({
+          headers: getRequestHeaders(),
+          body: { invitationId: data.invitationId },
+        }),
+      "No pudimos cancelar la invitación.",
+    ),
+  );
+
+export const updateMemberRole = createServerFn({ method: "POST" })
+  .validator(type({ memberId: "string > 0", role: memberRole }))
+  .handler(({ data }) =>
+    change(
+      () =>
+        auth.api.updateMemberRole({
+          headers: getRequestHeaders(),
+          body: { memberId: data.memberId, role: data.role },
+        }),
+      "No pudimos cambiar el rol.",
+    ),
+  );
+
+export const removeMember = createServerFn({ method: "POST" })
+  .validator(type({ memberId: "string > 0" }))
+  .handler(({ data }) =>
+    change(
+      () =>
+        auth.api.removeMember({
+          headers: getRequestHeaders(),
+          body: { memberIdOrEmail: data.memberId },
+        }),
+      "No pudimos quitar a esta persona.",
+    ),
+  );
+
+export type InvitationDetails =
+  | { status: "signed-out" }
+  | { status: "invalid"; message: string }
+  /** The invitation is for this person, who has yet to prove the address is theirs. */
+  | { status: "unverified"; email: string }
+  | {
+      status: "pending";
+      organizationName: string;
+      inviterEmail: string;
+      email: string;
+      role: string;
+    };
+
+/** The invitation as its recipient sees it; only the invited address, signed in, can read it. */
+export const getInvitationDetails = createServerFn({ method: "GET" })
+  .validator(type({ id: "string > 0" }))
+  .handler(async ({ data }): Promise<InvitationDetails> => {
+    const headers = getRequestHeaders();
+    const session = await auth.api.getSession({ headers });
+    if (!session) {
+      return { status: "signed-out" };
+    }
+    try {
+      const invitation = await auth.api.getInvitation({ headers, query: { id: data.id } });
+      return {
+        status: "pending",
+        organizationName: invitation.organizationName,
+        inviterEmail: invitation.inviterEmail,
+        email: invitation.email,
+        role: invitation.role,
+      };
+    } catch (error) {
+      // Better Auth checks the address before the verification: a wrong address is never "unverified".
+      if (
+        error instanceof APIError &&
+        error.body?.code === "EMAIL_VERIFICATION_REQUIRED_FOR_INVITATION"
+      ) {
+        return { status: "unverified", email: session.user.email };
+      }
+      if (
+        error instanceof APIError &&
+        error.body?.code === "YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION"
+      ) {
+        return {
+          status: "invalid",
+          message:
+            "Esta invitación es para otro correo. Cierra sesión y entra, o crea tu cuenta, con el correo invitado.",
+        };
+      }
+      return {
+        status: "invalid",
+        message: refusal(
+          error,
+          "Venció, ya se usó o la cancelaron. Pide a quien te invitó un enlace nuevo.",
+        ).message,
+      };
+    }
+  });
+
+export type Workplaces = {
+  /** The organizations the person already belongs to, other than an active one they left. */
+  organizations: { id: string; name: string }[];
+  invitations: UserInvitations;
+};
+
+export type UserInvitations =
+  | { status: "unverified"; email: string }
+  | {
+      status: "verified";
+      invitations: { id: string; organizationName: string; role: string; expiresAt: string }[];
+    };
+
+/**
+ * Where the signed-in person can work: the organizations they belong to and the invitations waiting for
+ * them. Better Auth only lists invitations once the address is confirmed, so whoever signed up with someone
+ * else's address never learns who invited it.
+ */
+export const listWorkplaces = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Workplaces> => {
+    const headers = getRequestHeaders();
+    const [session, organizations] = await Promise.all([
+      auth.api.getSession({ headers }),
+      auth.api.listOrganizations({ headers }),
+    ]);
+    if (!session) {
+      throw new Error("Listing workplaces takes a session");
+    }
+    return {
+      organizations: organizations.map((organization) => ({
+        id: organization.id,
+        name: organization.name,
+      })),
+      invitations: await userInvitations(headers, session.user),
+    };
+  },
+);
+
+async function userInvitations(
+  headers: Headers,
+  user: { email: string; emailVerified: boolean },
+): Promise<UserInvitations> {
+  if (!user.emailVerified) {
+    return { status: "unverified", email: user.email };
+  }
+  const now = Date.now();
+  const invitations = await auth.api.listUserInvitations({ headers });
+  return {
+    status: "verified",
+    invitations: invitations
+      .filter((invitation) => new Date(invitation.expiresAt).getTime() > now)
+      .map((invitation) => ({
+        id: invitation.id,
+        organizationName: invitation.organizationName ?? "",
+        role: invitation.role,
+        expiresAt: new Date(invitation.expiresAt).toISOString(),
+      })),
+  };
+}

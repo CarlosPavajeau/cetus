@@ -31,6 +31,8 @@ import { PromoteIssuer } from "~/features/issuers/PromoteIssuer";
 import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
 import { RangeVerification } from "~/features/issuers/RangeVerification";
 import { TestSetProgress } from "~/features/issuers/TestSetProgress";
+import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { IssuerDetail } from "~/lib/api/types";
 import { uuidPattern } from "~/lib/utils";
 
@@ -111,6 +113,7 @@ function IssuerDetailPage() {
   // The loader already returned notFound for a missing issuer.
   const issuer = useSuspenseQuery(issuerDetailQuery(issuerId)).data!;
   const { data: issuers } = useSuspenseQuery(issuersQuery);
+  const { manage } = useMemberPermissions();
   const sandbox = issuer.environment === "SANDBOX";
   // The same NIT in the other DIAN environment: the production issuer of a test one, or the other way round.
   const counterpart = sandbox
@@ -136,7 +139,7 @@ function IssuerDetailPage() {
         status={<IssuerStatusBadge status={issuer.status} />}
         lead={sandbox ? sandboxLead : statusLead[issuer.status]}
         action={
-          issuer.status === "ONBOARDING" ? (
+          !manage ? undefined : issuer.status === "ONBOARDING" ? (
             <Button
               render={<Link to="/setup" search={{ issuerId: issuer.id }} />}
               nativeButton={false}
@@ -150,6 +153,10 @@ function IssuerDetailPage() {
           )
         }
       />
+
+      <ReadOnlyNotice>
+        Los emisores los configuran los dueños y administradores de la organización.
+      </ReadOnlyNotice>
 
       {counterpart && (
         <p className="text-2xs text-muted-foreground">
@@ -224,15 +231,17 @@ function IssuerDetailPage() {
         id="tax-data"
         title="Datos tributarios"
         action={
-          <Button
-            variant="outline"
-            size="sm"
-            render={<Link to="/issuers/$issuerId/edit" params={{ issuerId: issuer.id }} />}
-            nativeButton={false}
-          >
-            <PencilIcon data-icon="inline-start" />
-            Editar
-          </Button>
+          manage && (
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link to="/issuers/$issuerId/edit" params={{ issuerId: issuer.id }} />}
+              nativeButton={false}
+            >
+              <PencilIcon data-icon="inline-start" />
+              Editar
+            </Button>
+          )
         }
       >
         <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
@@ -257,7 +266,11 @@ function IssuerDetailPage() {
       <Section
         id="dian"
         title={sandbox ? "Numeración simulada" : "Configuración DIAN"}
-        action={!sandbox && issuer.status !== "ONBOARDING" && <AddNoteRange issuerId={issuer.id} />}
+        action={
+          manage &&
+          !sandbox &&
+          issuer.status !== "ONBOARDING" && <AddNoteRange issuerId={issuer.id} />
+        }
       >
         {sandbox ? (
           <p className="text-2xs text-muted-foreground">
@@ -330,6 +343,7 @@ function IssuerDetailPage() {
                         issuerId={issuer.id}
                         environment={issuer.environment}
                         range={range}
+                        readOnly={!manage}
                       />
                     </TableCell>
                     <TableCell className="pr-4 text-2xs">

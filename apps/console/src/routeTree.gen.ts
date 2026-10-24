@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
@@ -21,6 +22,7 @@ import { Route as DotwellKnownJwksDotjsonRouteImport } from './routes/[.]well-kn
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
+import { Route as InvitationsInvitationIdRouteImport } from './routes/invitations.$invitationId'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
@@ -34,6 +36,7 @@ import { Route as AppDocumentsNewRouteImport } from './routes/_app/documents/new
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
 import { Route as AppSettingsContactsRouteImport } from './routes/_app/settings/contacts'
+import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
@@ -64,6 +67,11 @@ const AppRoute = AppRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationsRoute = OrganizationsRouteImport.update({
+  id: '/organizations',
+  path: '/organizations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupRoute = SetupRouteImport.update({
@@ -107,6 +115,11 @@ const ContactVerificationTokenRoute =
     path: '/contact-verification/$token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const InvitationsInvitationIdRoute = InvitationsInvitationIdRouteImport.update({
+  id: '/invitations/$invitationId',
+  path: '/invitations/$invitationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -170,6 +183,11 @@ const AppIssuersIssuerIdRoute = AppIssuersIssuerIdRouteImport.update({
 const AppSettingsContactsRoute = AppSettingsContactsRouteImport.update({
   id: '/settings/contacts',
   path: '/settings/contacts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsMembersRoute = AppSettingsMembersRouteImport.update({
+  id: '/settings/members',
+  path: '/settings/members',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
@@ -249,6 +267,7 @@ const AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/organizations': typeof OrganizationsRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -257,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
+  '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
@@ -265,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/documents/new': typeof AppDocumentsNewRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/settings/contacts': typeof AppSettingsContactsRoute
+  '/settings/members': typeof AppSettingsMembersRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/': typeof AdminAdminIndexRoute
@@ -287,6 +308,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/organizations': typeof OrganizationsRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -295,6 +317,7 @@ export interface FileRoutesByTo {
   '/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
+  '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
@@ -303,6 +326,7 @@ export interface FileRoutesByTo {
   '/documents/new': typeof AppDocumentsNewRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/settings/contacts': typeof AppSettingsContactsRoute
+  '/settings/members': typeof AppSettingsMembersRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin': typeof AdminAdminIndexRoute
@@ -328,6 +352,7 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/_app': typeof AppRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/organizations': typeof OrganizationsRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -336,6 +361,7 @@ export interface FileRoutesById {
   '/_app/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
+  '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/catalog/customers': typeof AppCatalogCustomersRoute
@@ -344,6 +370,7 @@ export interface FileRoutesById {
   '/_app/documents/new': typeof AppDocumentsNewRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/_app/settings/contacts': typeof AppSettingsContactsRoute
+  '/_app/settings/members': typeof AppSettingsMembersRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
@@ -368,6 +395,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/forgot-password'
+    | '/organizations'
     | '/setup'
     | '/sign-in'
     | '/sign-up'
@@ -376,6 +404,7 @@ export interface FileRouteTypes {
     | '/overview'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
+    | '/invitations/$invitationId'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/catalog/customers'
@@ -384,6 +413,7 @@ export interface FileRouteTypes {
     | '/documents/new'
     | '/issuers/$issuerId'
     | '/settings/contacts'
+    | '/settings/members'
     | '/settings/security'
     | '/api/auth/$'
     | '/admin/'
@@ -406,6 +436,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/forgot-password'
+    | '/organizations'
     | '/setup'
     | '/sign-in'
     | '/sign-up'
@@ -414,6 +445,7 @@ export interface FileRouteTypes {
     | '/overview'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
+    | '/invitations/$invitationId'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/catalog/customers'
@@ -422,6 +454,7 @@ export interface FileRouteTypes {
     | '/documents/new'
     | '/issuers/$issuerId'
     | '/settings/contacts'
+    | '/settings/members'
     | '/settings/security'
     | '/api/auth/$'
     | '/admin'
@@ -446,6 +479,7 @@ export interface FileRouteTypes {
     | '/_admin'
     | '/_app'
     | '/forgot-password'
+    | '/organizations'
     | '/setup'
     | '/sign-in'
     | '/sign-up'
@@ -454,6 +488,7 @@ export interface FileRouteTypes {
     | '/_app/overview'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
+    | '/invitations/$invitationId'
     | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
     | '/_app/catalog/customers'
@@ -462,6 +497,7 @@ export interface FileRouteTypes {
     | '/_app/documents/new'
     | '/_app/issuers/$issuerId'
     | '/_app/settings/contacts'
+    | '/_app/settings/members'
     | '/_app/settings/security'
     | '/api/auth/$'
     | '/_admin/admin/'
@@ -487,6 +523,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  OrganizationsRoute: typeof OrganizationsRoute
   SetupRoute: typeof SetupRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
@@ -494,6 +531,7 @@ export interface RootRouteChildren {
   DotwellKnownJwksDotjsonRoute: typeof DotwellKnownJwksDotjsonRoute
   CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
   ContactVerificationTokenRoute: typeof ContactVerificationTokenRoute
+  InvitationsInvitationIdRoute: typeof InvitationsInvitationIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -525,6 +563,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizations': {
+      id: '/organizations'
+      path: '/organizations'
+      fullPath: '/organizations'
+      preLoaderRoute: typeof OrganizationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup': {
@@ -581,6 +626,13 @@ declare module '@tanstack/react-router' {
       path: '/contact-verification/$token'
       fullPath: '/contact-verification/$token'
       preLoaderRoute: typeof ContactVerificationTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitations/$invitationId': {
+      id: '/invitations/$invitationId'
+      path: '/invitations/$invitationId'
+      fullPath: '/invitations/$invitationId'
+      preLoaderRoute: typeof InvitationsInvitationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin/admin/': {
@@ -672,6 +724,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/contacts'
       fullPath: '/settings/contacts'
       preLoaderRoute: typeof AppSettingsContactsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/members': {
+      id: '/_app/settings/members'
+      path: '/settings/members'
+      fullPath: '/settings/members'
+      preLoaderRoute: typeof AppSettingsMembersRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/security': {
@@ -800,6 +859,7 @@ interface AppRouteChildren {
   AppDocumentsNewRoute: typeof AppDocumentsNewRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
   AppSettingsContactsRoute: typeof AppSettingsContactsRoute
+  AppSettingsMembersRoute: typeof AppSettingsMembersRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
@@ -822,6 +882,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDocumentsNewRoute: AppDocumentsNewRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
   AppSettingsContactsRoute: AppSettingsContactsRoute,
+  AppSettingsMembersRoute: AppSettingsMembersRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
   AppCatalogIndexRoute: AppCatalogIndexRoute,
@@ -842,6 +903,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  OrganizationsRoute: OrganizationsRoute,
   SetupRoute: SetupRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
@@ -849,6 +911,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotwellKnownJwksDotjsonRoute: DotwellKnownJwksDotjsonRoute,
   CertificateUploadTokenRoute: CertificateUploadTokenRoute,
   ContactVerificationTokenRoute: ContactVerificationTokenRoute,
+  InvitationsInvitationIdRoute: InvitationsInvitationIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

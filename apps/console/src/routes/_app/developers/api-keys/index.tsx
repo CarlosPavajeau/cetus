@@ -76,7 +76,9 @@ import { apiKeysQuery } from "~/features/api-keys/queries";
 import { RevokeApiKey, useInvalidateApiKeys } from "~/features/api-keys/RevokeApiKey";
 import { createApiKeySchema } from "~/features/api-keys/schema";
 import { createApiKey } from "~/features/api-keys/server";
+import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
 import { useImpersonation } from "~/features/session/useImpersonation";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { ApiKey, Environment } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
@@ -150,6 +152,9 @@ function ApiKeys() {
         lead="Administra el acceso a la API de facturación electrónica de tu empresa."
         action={<CreateApiKey />}
       />
+      <ReadOnlyNotice>
+        Las llaves las crean y revocan los dueños y administradores de la organización.
+      </ReadOnlyNotice>
 
       {keys.length === 0 ? (
         <Empty className="border">
@@ -345,9 +350,14 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
   );
 }
 
-/** Creating keys stays with the customer, also while the Cetus team acts as them. */
+/** Creating keys stays with the customer's owners and admins, also while the Cetus team acts as them. */
 function CreateApiKey() {
-  return useImpersonation() ? (
+  const impersonation = useImpersonation();
+  const { manage } = useMemberPermissions();
+  if (!manage) {
+    return null;
+  }
+  return impersonation ? (
     <Button disabled title="No disponible mientras ves la consola como otra persona">
       <PlusIcon data-icon="inline-start" />
       Crear llave

@@ -10,12 +10,12 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Some changes are only for the organization's owners and admins (its member roles, carried in the token's
- * "orgRoles" claim): who receives the account's notices. Other members answer 403. A token without the
- * claim has no roles, so it is refused too.
+ * "orgRoles" claim): who receives the account's notices, the API keys, the webhooks and the issuers, whose
+ * certificate and promotion decide what is issued in the company's name. Other members only read them and
+ * answer 403. A token without the claim has no roles, so it is refused too.
  */
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -23,12 +23,10 @@ public class OrganizationRoleFilter implements ContainerRequestFilter {
 
     static final Set<String> MANAGERS = Set.of("owner", "admin");
 
-    private record Rule(String method, Pattern path) {}
+    private static final Set<String> READS = Set.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS);
 
-    private static final List<Rule> MANAGERS_ONLY = List.of(
-            new Rule(HttpMethod.PUT, Pattern.compile("/console/contacts/[^/]+")),
-            new Rule(HttpMethod.POST, Pattern.compile("/console/contacts/[^/]+/verification")),
-            new Rule(HttpMethod.DELETE, Pattern.compile("/console/contacts/[^/]+/pending")));
+    private static final List<String> MANAGED =
+            List.of("/console/contacts", "/console/api-keys", "/console/webhook-endpoints", "/console/issuers");
 
     @Inject
     ConsoleContext context;
@@ -36,12 +34,10 @@ public class OrganizationRoleFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext request) {
         String path = request.getUriInfo().getPath();
-        if (!path.startsWith("/console/")) {
+        if (READS.contains(request.getMethod())) {
             return;
         }
-        boolean restricted = MANAGERS_ONLY.stream()
-                .anyMatch(rule -> rule.method().equals(request.getMethod())
-                        && rule.path().matcher(path).matches());
+        boolean restricted = MANAGED.stream().anyMatch(root -> path.equals(root) || path.startsWith(root + "/"));
         if (restricted && context.organizationRoles().stream().noneMatch(MANAGERS::contains)) {
             request.abortWith(ProblemDetail.response(
                     403, "organization_role_forbidden", "Only the organization's owners and admins can do this"));

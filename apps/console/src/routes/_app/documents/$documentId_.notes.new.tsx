@@ -5,7 +5,6 @@ import { ArrowLeftIcon } from "lucide-react";
 import { PageHeader } from "~/components/PageHeader";
 import { documentDetailQuery } from "~/features/documents/queries";
 import { NoteForm, type NoteType } from "~/features/issuance/NoteForm";
-import { canIssueLiveQuery } from "~/features/issuance/queries";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import { uuidPattern } from "~/lib/utils";
 
@@ -17,10 +16,7 @@ export const Route = createFileRoute("/_app/documents/$documentId_/notes/new")({
     if (!uuidPattern.test(params.documentId)) {
       throw notFound();
     }
-    const [invoice] = await Promise.all([
-      queryClient.ensureQueryData(documentDetailQuery(params.documentId)),
-      queryClient.ensureQueryData(canIssueLiveQuery),
-    ]);
+    const invoice = await queryClient.ensureQueryData(documentDetailQuery(params.documentId));
     // Notes only correct accepted invoices.
     if (!invoice || invoice.documentType !== "INVOICE" || invoice.status !== "ACCEPTED") {
       throw notFound();

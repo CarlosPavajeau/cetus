@@ -1,26 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 
 import { CetusApiError, api } from "~/lib/api/client";
 import type { DocumentPreview, Environment, InvoiceRequest } from "~/lib/api/types";
-import { liveIssuerRoles, roleList } from "~/lib/auth/permissions";
-import { auth } from "~/lib/auth/server";
 
 import {
   customerExtrasSchema,
+  customerFormSchema,
   invoiceHeaderSchema,
   linesSchema,
   toInvoiceRequest,
   toLine,
   trimmed,
 } from "./schema";
-
-/** Whether the signed-in member may issue LIVE documents: the organization's owners and admins. */
-export const canIssueLive = createServerFn({ method: "GET" }).handler(async () => {
-  const member = await auth.api.getActiveMember({ headers: getRequestHeaders() });
-  return roleList(member?.role).some((role) => liveIssuerRoles.includes(role));
-});
 
 /** Lines, taxes and totals as the API would issue them; null when the lines cannot be calculated. */
 export const previewDocument = createServerFn({ method: "POST" })
@@ -54,7 +46,7 @@ const messages: Record<string, string> = {
   sandbox_daily_limit:
     "Ya emitiste los documentos de simulación permitidos por hoy. Vuelve a intentarlo mañana.",
   organization_role_forbidden:
-    "Solo los dueños y administradores de la organización pueden emitir documentos en producción.",
+    "Solo los dueños, administradores y facturadores de la organización pueden emitir documentos en producción.",
   impersonation_forbidden: "Los documentos de producción solo los emite la persona de la cuenta.",
   account_suspended: "La cuenta está suspendida: no se pueden emitir documentos.",
   idempotency_in_progress: "El documento ya se está emitiendo. Espera unos segundos.",
@@ -80,13 +72,14 @@ export const issueInvoice = createServerFn({ method: "POST" })
     type({
       idempotencyKey: "string.uuid",
       invoice: invoiceHeaderSchema,
+      customer: customerFormSchema,
       lines: linesSchema,
       customerExtras: customerExtrasSchema.or("null"),
       saveCustomer: type("'SANDBOX' | 'TEST' | 'LIVE'").or("null"),
     }),
   )
   .handler(async ({ data }): Promise<IssueResult> => {
-    const request = toInvoiceRequest(data.invoice, data.lines, data.customerExtras);
+    const request = toInvoiceRequest(data.invoice, data.customer, data.lines, data.customerExtras);
     let issued: IssueResult;
     try {
       issued = {

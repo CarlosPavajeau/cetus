@@ -34,10 +34,13 @@ export function RangeVerification({
   issuerId,
   environment,
   range,
+  readOnly,
 }: {
   issuerId: string;
   environment: IssuerDetail["environment"];
   range: NumberingRange;
+  /** Without the button to check it again: only owners and admins change the issuers. */
+  readOnly: boolean;
 }) {
   const queryClient = useQueryClient();
   const verify = useMutation({
@@ -70,7 +73,7 @@ export function RangeVerification({
       ) : (
         badge
       )}
-      {status !== "PENDING" && status !== "VERIFIED" && (
+      {!readOnly && status !== "PENDING" && status !== "VERIFIED" && (
         <Button
           variant="ghost"
           size="icon-xs"

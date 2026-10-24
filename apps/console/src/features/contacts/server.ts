@@ -1,23 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 
 import { CetusApiError, api, publicApi } from "~/lib/api/client";
 import type { ContactVerification } from "~/lib/api/types";
-import { contactManagerRoles, roleList } from "~/lib/auth/permissions";
-import { auth } from "~/lib/auth/server";
 
 import { changeContactSchema, contactCategory } from "./schema";
 
 export const listContacts = createServerFn({ method: "GET" }).handler(() =>
   api.get("/console/contacts"),
 );
-
-/** Whether the signed-in member may change the contacts: the organization's owners and admins. */
-export const canManageContacts = createServerFn({ method: "GET" }).handler(async () => {
-  const member = await auth.api.getActiveMember({ headers: getRequestHeaders() });
-  return roleList(member?.role).some((role) => contactManagerRoles.includes(role));
-});
 
 const messages: Record<string, string> = {
   verification_recently_sent:

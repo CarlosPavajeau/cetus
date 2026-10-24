@@ -1,4 +1,4 @@
-import { createOrganization } from "../support/organization";
+import { inviteMember, setMemberRole } from "../support/organization";
 import { consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
@@ -47,13 +47,7 @@ test("only the organization's owners and admins change the contacts", async ({
   organization: owner,
 }) => {
   // Someone with an account of their own joins the owner's organization as a plain member.
-  const colleague = await createOrganization("Colega SAS");
-  const invitation = await owner.auth<{ id: string; organizationId: string }>(
-    "/organization/invite-member",
-    { email: colleague.email, role: "member" },
-  );
-  await colleague.auth("/organization/accept-invitation", { invitationId: invitation.id });
-  await colleague.auth("/organization/set-active", { organizationId: invitation.organizationId });
+  const { person: colleague, memberId } = await inviteMember(owner, "member");
 
   const change = (person: typeof colleague) =>
     person.api("/console/contacts/FISCAL", {
@@ -74,13 +68,6 @@ test("only the organization's owners and admins change the contacts", async ({
   await expect(page.getByRole("button", { name: "Cambiar" })).toHaveCount(0);
 
   // Made an admin, the next token carries the new role.
-  const members = await owner.auth<{ members: { id: string; userId: string; role: string }[] }>(
-    "/organization/get-full-organization",
-  );
-  const membership = members.members.find((member) => member.role === "member");
-  await owner.auth("/organization/update-member-role", {
-    memberId: membership?.id,
-    role: "admin",
-  });
+  await setMemberRole(owner, memberId, "admin");
   expect((await change(colleague)).status).toBe(200);
 });

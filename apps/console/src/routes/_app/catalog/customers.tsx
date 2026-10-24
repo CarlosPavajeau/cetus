@@ -20,6 +20,7 @@ import {
 } from "~/components/ui/table";
 import { CatalogHeader } from "~/features/catalog/CatalogHeader";
 import { CatalogSearch, LoadMore } from "~/features/catalog/CatalogList";
+import { CustomerDialog } from "~/features/catalog/CustomerDialog";
 import { DeleteEntry } from "~/features/catalog/DeleteEntry";
 import { customerPagesQuery } from "~/features/catalog/queries";
 import { deleteCustomer } from "~/features/catalog/server";
@@ -47,7 +48,7 @@ function Customers() {
 
   return (
     <>
-      <CatalogHeader />
+      <CatalogHeader action={<CustomerDialog environment={environment} />} />
       {items.length === 0 && q === "" ? (
         <Empty className="border">
           <EmptyHeader>
@@ -56,8 +57,9 @@ function Customers() {
             </EmptyMedia>
             <EmptyTitle>Aún no tienes clientes guardados</EmptyTitle>
             <EmptyDescription>
-              Al emitir una factura, marca «Guardar este cliente» para tenerlo a mano la próxima
-              vez. También puedes guardarlos con la API en <code>/v1/customers</code>.
+              Crea uno aquí, o marca «Guardar este cliente» al emitir una factura para tenerlo a
+              mano la próxima vez. También puedes guardarlos con la API en{" "}
+              <code>/v1/customers</code>.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -75,7 +77,7 @@ function Customers() {
                   <TableHead className="px-5">Nombre o razón social</TableHead>
                   <TableHead>Documento</TableHead>
                   <TableHead>Correo</TableHead>
-                  <TableHead className="w-12 pr-5" />
+                  <TableHead className="w-20 pr-5" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -100,10 +102,13 @@ function Customers() {
                     </TableCell>
                     <TableCell className="text-xs">{customer.email ?? "—"}</TableCell>
                     <TableCell className="pr-5">
-                      <DeleteEntry
-                        label={customer.legalName}
-                        remove={() => deleteCustomer({ data: { environment, id: customer.id } })}
-                      />
+                      <div className="flex justify-end">
+                        <CustomerDialog environment={environment} customer={customer} />
+                        <DeleteEntry
+                          label={customer.legalName}
+                          remove={() => deleteCustomer({ data: { environment, id: customer.id } })}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
