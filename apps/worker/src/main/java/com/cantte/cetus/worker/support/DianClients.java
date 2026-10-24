@@ -5,11 +5,10 @@ import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianSoapClient;
 import com.cantte.cetus.domain.model.Environment;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import java.time.Duration;
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DianClients {
@@ -21,10 +20,11 @@ public class DianClients {
     private final SimulatedDianGateway sandbox;
 
     /** {@code cetus.dian.test-url} redirects only the TEST environment (e.g. to the local mock); LIVE is fixed. */
-    public DianClients(@ConfigProperty(name = "cetus.dian.connect-timeout") Duration connectTimeout,
-                       @ConfigProperty(name = "cetus.dian.request-timeout") Duration requestTimeout,
-                       @ConfigProperty(name = "cetus.dian.test-url") Optional<String> testUrl,
-                       SimulatedDianGateway sandbox) {
+    public DianClients(
+            @ConfigProperty(name = "cetus.dian.connect-timeout") Duration connectTimeout,
+            @ConfigProperty(name = "cetus.dian.request-timeout") Duration requestTimeout,
+            @ConfigProperty(name = "cetus.dian.test-url") Optional<String> testUrl,
+            SimulatedDianGateway sandbox) {
         String testEndpoint = testUrl.filter(url -> !url.isBlank()).orElse(DianEndpoint.TEST.url());
         if (!testEndpoint.equals(DianEndpoint.TEST.url())) {
             LOG.warnf("DIAN TEST environment redirected to %s", testEndpoint);

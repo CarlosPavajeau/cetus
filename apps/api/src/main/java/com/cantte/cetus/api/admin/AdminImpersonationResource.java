@@ -20,13 +20,12 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
  * Better Auth creates the impersonation session from the console server; the API records it first, on the
@@ -34,18 +33,29 @@ import java.util.UUID;
  */
 @Path("/admin/impersonations")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "400",
+        description = "Bad Request",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "403",
+        description = "Forbidden",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class AdminImpersonationResource {
 
     @Inject
     ConsoleContext context;
+
     @Inject
     AuditLog auditLog;
+
     @Inject
     RequestOriginResolver origin;
 
@@ -58,8 +68,14 @@ public class AdminImpersonationResource {
         if (account == null) {
             throw new NotFoundException("Account not found");
         }
-        auditLog.record(account.id, context.platformActor(), origin.resolve(), AuditAction.IMPERSONATION_STARTED,
-                "user", null, Map.of(
+        auditLog.record(
+                account.id,
+                context.platformActor(),
+                origin.resolve(),
+                AuditAction.IMPERSONATION_STARTED,
+                "user",
+                null,
+                Map.of(
                         "userId", request.userId(),
                         "email", request.email(),
                         "reason", request.reason().strip(),
@@ -67,10 +83,11 @@ public class AdminImpersonationResource {
     }
 
     public record ImpersonationRequest(
-            @NotBlank @Pattern(regexp = AdminUserResource.USER_ID) String userId,
+            @NotBlank @Pattern(regexp = AdminUserResource.USER_ID)
+            String userId,
+
             @NotBlank @Size(max = 254) @Email String email,
             @NotNull UUID accountId,
             @NotBlank @Size(min = 3, max = 500) String reason,
-            @NotNull OffsetDateTime expiresAt) {
-    }
+            @NotNull OffsetDateTime expiresAt) {}
 }

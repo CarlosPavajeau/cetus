@@ -4,10 +4,6 @@ import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.webhooks.WebhookTargets;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import okhttp3.Dns;
-import okhttp3.OkHttpClient;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.net.InetAddress;
 import java.net.Proxy;
 import java.net.UnknownHostException;
@@ -17,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import okhttp3.Dns;
+import okhttp3.OkHttpClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * HTTP client and settings for webhook deliveries.
@@ -40,9 +39,10 @@ public class WebhookClients {
     SecretCipher cipher;
 
     /** {@code cetus.webhooks.allow-private-targets} is only true in development and tests. */
-    public WebhookClients(@ConfigProperty(name = "cetus.webhooks.connect-timeout") Duration connectTimeout,
-                          @ConfigProperty(name = "cetus.webhooks.request-timeout") Duration requestTimeout,
-                          @ConfigProperty(name = "cetus.webhooks.allow-private-targets") boolean allowPrivateTargets) {
+    public WebhookClients(
+            @ConfigProperty(name = "cetus.webhooks.connect-timeout") Duration connectTimeout,
+            @ConfigProperty(name = "cetus.webhooks.request-timeout") Duration requestTimeout,
+            @ConfigProperty(name = "cetus.webhooks.allow-private-targets") boolean allowPrivateTargets) {
         this.allowPrivateTargets = allowPrivateTargets;
         this.http = new OkHttpClient.Builder()
                 .dns(allowPrivateTargets ? Dns.SYSTEM : new PublicOnlyDns(Dns.SYSTEM))
@@ -106,6 +106,5 @@ public class WebhookClients {
         }
     }
 
-    private record CachedSecret(String secret, Instant loadedAt) {
-    }
+    private record CachedSecret(String secret, Instant loadedAt) {}
 }

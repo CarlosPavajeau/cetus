@@ -15,5 +15,4 @@ public record Address(
         String postalCode,
         String line,
         String countryCode,
-        String countryName) {
-}
+        String countryName) {}

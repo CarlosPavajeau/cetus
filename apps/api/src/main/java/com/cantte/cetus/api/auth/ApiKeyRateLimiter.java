@@ -3,14 +3,13 @@ package com.cantte.cetus.api.auth;
 import com.cantte.cetus.domain.model.Environment;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * A token bucket per API key: {@code burst} requests at once, refilled at {@code requests-per-second}.
@@ -21,8 +20,7 @@ import java.util.function.LongSupplier;
 public class ApiKeyRateLimiter {
 
     /** Requests a key may make at once ({@code burst}) and the rate its bucket refills at. */
-    public record Limits(double ratePerSecond, int burst) {
-    }
+    public record Limits(double ratePerSecond, int burst) {}
 
     private final Limits limits;
     private final Limits sandboxLimits;
@@ -30,10 +28,11 @@ public class ApiKeyRateLimiter {
     private final Map<UUID, Bucket> buckets = new ConcurrentHashMap<>();
 
     @Inject
-    public ApiKeyRateLimiter(@ConfigProperty(name = "cetus.rate-limit.requests-per-second") double ratePerSecond,
-                             @ConfigProperty(name = "cetus.rate-limit.burst") int burst,
-                             @ConfigProperty(name = "cetus.rate-limit.sandbox.requests-per-second") double sandboxRate,
-                             @ConfigProperty(name = "cetus.rate-limit.sandbox.burst") int sandboxBurst) {
+    public ApiKeyRateLimiter(
+            @ConfigProperty(name = "cetus.rate-limit.requests-per-second") double ratePerSecond,
+            @ConfigProperty(name = "cetus.rate-limit.burst") int burst,
+            @ConfigProperty(name = "cetus.rate-limit.sandbox.requests-per-second") double sandboxRate,
+            @ConfigProperty(name = "cetus.rate-limit.sandbox.burst") int sandboxBurst) {
         this(new Limits(ratePerSecond, burst), new Limits(sandboxRate, sandboxBurst), System::nanoTime);
     }
 
@@ -46,7 +45,8 @@ public class ApiKeyRateLimiter {
     /** Takes one token; when there is none, returns how long until the next one. */
     public Optional<Duration> acquire(UUID apiKeyId, Environment environment) {
         Limits bucketLimits = environment == Environment.SANDBOX ? sandboxLimits : limits;
-        return buckets.computeIfAbsent(apiKeyId, id -> new Bucket(bucketLimits, nanoClock.getAsLong())).take();
+        return buckets.computeIfAbsent(apiKeyId, id -> new Bucket(bucketLimits, nanoClock.getAsLong()))
+                .take();
     }
 
     private final class Bucket {

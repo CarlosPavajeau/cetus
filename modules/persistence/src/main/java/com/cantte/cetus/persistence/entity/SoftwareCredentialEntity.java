@@ -5,12 +5,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Generated;
-import org.hibernate.generator.EventType;
-
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 /** Software ID, PIN (sealed) and test set id registered in the DIAN portal. */
 @Entity
@@ -19,15 +18,21 @@ public class SoftwareCredentialEntity extends PanacheEntityBase {
 
     @Id
     public UUID id;
+
     @Column(name = "issuer_id")
     public UUID issuerId;
+
     @Column(name = "software_id")
     public String softwareId;
+
     @Column(name = "pin_sealed")
     public byte[] pinSealed;
+
     @Column(name = "test_set_id")
     public String testSetId;
+
     public boolean active = true;
+
     @Generated(event = EventType.INSERT)
     @Column(name = "created_at", insertable = false, updatable = false)
     public OffsetDateTime createdAt;
@@ -44,7 +49,8 @@ public class SoftwareCredentialEntity extends PanacheEntityBase {
      * TestSetId keeps counting from there, and a different one starts over.
      */
     public static OffsetDateTime testSetStart(UUID issuerId, String testSetId) {
-        return getEntityManager().createQuery("""
+        return getEntityManager()
+                .createQuery("""
                         select min(c.createdAt) from SoftwareCredentialEntity c
                         where c.issuerId = :issuerId and c.testSetId = :testSetId""", OffsetDateTime.class)
                 .setParameter("issuerId", issuerId)
@@ -54,7 +60,8 @@ public class SoftwareCredentialEntity extends PanacheEntityBase {
 
     /** When the DIAN reported this test set as accepted, whichever of the issuer's credentials recorded it; null if not yet. */
     public static OffsetDateTime testSetAcceptedAt(UUID issuerId, String testSetId) {
-        return getEntityManager().createQuery("""
+        return getEntityManager()
+                .createQuery("""
                         select min(c.testSetAcceptedAt) from SoftwareCredentialEntity c
                         where c.issuerId = :issuerId and c.testSetId = :testSetId""", OffsetDateTime.class)
                 .setParameter("issuerId", issuerId)
@@ -64,8 +71,11 @@ public class SoftwareCredentialEntity extends PanacheEntityBase {
 
     /** Records the first time the DIAN reported this test set as accepted, on every credential that uses it. */
     public static void markTestSetAccepted(UUID issuerId, String testSetId) {
-        update("testSetAcceptedAt = ?1 where issuerId = ?2 and testSetId = ?3 and testSetAcceptedAt is null",
-                OffsetDateTime.now(), issuerId, testSetId);
+        update(
+                "testSetAcceptedAt = ?1 where issuerId = ?2 and testSetId = ?3 and testSetAcceptedAt is null",
+                OffsetDateTime.now(),
+                issuerId,
+                testSetId);
     }
 
     public static void deactivateAll(UUID issuerId) {

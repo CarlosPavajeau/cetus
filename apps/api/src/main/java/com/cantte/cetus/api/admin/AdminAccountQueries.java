@@ -12,7 +12,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,11 +32,11 @@ public class AdminAccountQueries {
     static final int RECENT_FAILURES = 20;
 
     private static final ZoneId COLOMBIA = ZoneId.of("America/Bogota");
-    private static final TypeReference<List<String>> STRINGS = new TypeReference<>() {
-    };
+    private static final TypeReference<List<String>> STRINGS = new TypeReference<>() {};
 
     @Inject
     EntityManager em;
+
     @Inject
     ObjectMapper mapper;
 
@@ -84,10 +83,20 @@ public class AdminAccountQueries {
         }
         @SuppressWarnings("unchecked")
         List<Object[]> rows = query.getResultList();
-        return rows.stream().map(row -> new AccountSummaryView(
-                (UUID) row[0], (String) row[1], (String) row[2], (String) row[3], (String) row[4],
-                toOffsetDateTime(row[5]), count(row[6]), count(row[7]), count(row[8]), count(row[9]),
-                row[10] == null ? null : toOffsetDateTime(row[10]))).toList();
+        return rows.stream()
+                .map(row -> new AccountSummaryView(
+                        (UUID) row[0],
+                        (String) row[1],
+                        (String) row[2],
+                        (String) row[3],
+                        (String) row[4],
+                        toOffsetDateTime(row[5]),
+                        count(row[6]),
+                        count(row[7]),
+                        count(row[8]),
+                        count(row[9]),
+                        row[10] == null ? null : toOffsetDateTime(row[10])))
+                .toList();
     }
 
     /** Documents created this month, by environment, type and status. */
@@ -103,9 +112,13 @@ public class AdminAccountQueries {
                 .setParameter("account", accountId)
                 .setParameter("monthStart", monthStart())
                 .getResultList();
-        return rows.stream().map(row -> new UsageCountView(
-                Environment.valueOf((String) row[0]), DocumentType.valueOf((String) row[1]), (String) row[2],
-                count(row[3]))).toList();
+        return rows.stream()
+                .map(row -> new UsageCountView(
+                        Environment.valueOf((String) row[0]),
+                        DocumentType.valueOf((String) row[1]),
+                        (String) row[2],
+                        count(row[3])))
+                .toList();
     }
 
     /** The latest documents the DIAN rejected or that could not be sent, with the DIAN's errors; the sandbox's are practice. */
@@ -122,10 +135,19 @@ public class AdminAccountQueries {
                 .setParameter("account", accountId)
                 .setParameter("limit", RECENT_FAILURES)
                 .getResultList();
-        return rows.stream().map(row -> new FailedDocumentView(
-                (UUID) row[0], (UUID) row[1], Environment.valueOf((String) row[2]),
-                DocumentType.valueOf((String) row[3]), row[4] + String.valueOf(row[5]), (String) row[6],
-                (String) row[7], (String) row[8], errors((String) row[9]), toOffsetDateTime(row[10]))).toList();
+        return rows.stream()
+                .map(row -> new FailedDocumentView(
+                        (UUID) row[0],
+                        (UUID) row[1],
+                        Environment.valueOf((String) row[2]),
+                        DocumentType.valueOf((String) row[3]),
+                        row[4] + String.valueOf(row[5]),
+                        (String) row[6],
+                        (String) row[7],
+                        (String) row[8],
+                        errors((String) row[9]),
+                        toOffsetDateTime(row[10])))
+                .toList();
     }
 
     private List<String> errors(String json) {

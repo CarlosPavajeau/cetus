@@ -1,19 +1,18 @@
 package com.cantte.cetus.api.auth;
 
+import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
+
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ValidatableResponse;
-import org.junit.jupiter.api.Test;
-
 import java.util.Map;
 import java.util.UUID;
-
-import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.startsWith;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class ApiKeyFilterTest {
@@ -22,7 +21,8 @@ class ApiKeyFilterTest {
     void unknownKeysAreUnauthorized() {
         given().header("Authorization", "Bearer cetus_test_unknown")
                 .get("/v1/invoices/" + UUID.randomUUID())
-                .then().statusCode(401)
+                .then()
+                .statusCode(401)
                 .contentType("application/problem+json")
                 .body("type", equalTo("about:blank"))
                 .body("title", equalTo("Unauthorized"))
@@ -62,13 +62,18 @@ class ApiKeyFilterTest {
     }
 
     private static String testKey(ConsoleUser user) {
-        return user.request().body(Map.of("name", "ERP", "environment", "TEST"))
+        return user.request()
+                .body(Map.of("name", "ERP", "environment", "TEST"))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
     }
 
     private static void setStatus(ConsoleUser user, String status) {
-        QuarkusTransaction.requiringNew().run(() ->
-                AccountEntity.findByOrganization(user.organizationId()).orElseThrow().status = status);
+        QuarkusTransaction.requiringNew()
+                .run(() ->
+                        AccountEntity.findByOrganization(user.organizationId()).orElseThrow().status = status);
     }
 }

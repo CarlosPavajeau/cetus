@@ -9,12 +9,11 @@ import com.cantte.cetus.ubl.model.UblInvoice;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 /** Marshals the UBL model into a DOM, ready to receive the XAdES signature. */
 public final class UblMarshaller {
@@ -110,8 +109,12 @@ public final class UblMarshaller {
 
     private static JAXBContext createContext() {
         try {
-            return JAXBContext.newInstance(UblInvoice.class, UblCreditNote.class, UblDebitNote.class,
-                    UblAttachedDocument.class, DianExtensions.class);
+            return JAXBContext.newInstance(
+                    UblInvoice.class,
+                    UblCreditNote.class,
+                    UblDebitNote.class,
+                    UblAttachedDocument.class,
+                    DianExtensions.class);
         } catch (JAXBException e) {
             throw new ExceptionInInitializerError(e);
         }

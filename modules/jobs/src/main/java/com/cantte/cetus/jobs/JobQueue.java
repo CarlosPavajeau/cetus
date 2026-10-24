@@ -4,7 +4,6 @@ import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.UUID;

@@ -7,7 +7,6 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
-
 import java.time.OffsetDateTime;
 
 /**
@@ -54,9 +53,11 @@ public class WebhookRedeliveries {
             return 0;
         }
         long failed = ((Number) failedParameters(em.createNativeQuery("SELECT count(*) " + FAILED), endpoint, since)
-                .getSingleResult()).longValue();
+                        .getSingleResult())
+                .longValue();
         long undelivered = ((Number) parameters(em.createNativeQuery("SELECT count(*) " + UNDELIVERED), endpoint, since)
-                .getSingleResult()).longValue();
+                        .getSingleResult())
+                .longValue();
         return failed + undelivered;
     }
 
@@ -106,6 +107,7 @@ public class WebhookRedeliveries {
                 .setParameter("account", endpoint.accountId)
                 .setParameter("environment", endpoint.environment.name())
                 .setParameter("since", since)
-                .setParameter("types", String.join(",", endpoint.eventTypes == null ? new String[0] : endpoint.eventTypes));
+                .setParameter(
+                        "types", String.join(",", endpoint.eventTypes == null ? new String[0] : endpoint.eventTypes));
     }
 }

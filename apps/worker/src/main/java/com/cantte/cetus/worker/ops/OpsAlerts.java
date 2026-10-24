@@ -10,9 +10,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -24,6 +21,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * Emails the operators (CETUS_OPS_ALERT_EMAIL) about what needs a person: dead jobs and stuck documents
@@ -51,23 +50,30 @@ public class OpsAlerts {
 
     @Inject
     EntityManager em;
+
     @Inject
     OpsAlertChecks checks;
+
     @Inject
     EmailClients email;
 
     @ConfigProperty(name = "cetus.alerts.recipient")
     Optional<String> recipient;
+
     @ConfigProperty(name = "cetus.alerts.repeat-after")
     Duration repeatAfter;
 
-    @Scheduled(every = "${cetus.alerts.check-interval}", delayed = "1m",
+    @Scheduled(
+            every = "${cetus.alerts.check-interval}",
+            delayed = "1m",
             concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void frequent() {
         run(Run.FREQUENT);
     }
 
-    @Scheduled(cron = "${cetus.alerts.daily-cron}", timeZone = "America/Bogota",
+    @Scheduled(
+            cron = "${cetus.alerts.daily-cron}",
+            timeZone = "America/Bogota",
             concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void daily() {
         run(Run.DAILY);
@@ -81,7 +87,8 @@ public class OpsAlerts {
     @Transactional
     public List<OpsAlert> run(Run run) {
         if (!Boolean.TRUE.equals(em.createNativeQuery("SELECT pg_try_advisory_xact_lock(:id)")
-                .setParameter("id", LOCK_ID).getSingleResult())) {
+                .setParameter("id", LOCK_ID)
+                .getSingleResult())) {
             return List.of();
         }
         List<OpsAlert> current = new ArrayList<>();
@@ -129,7 +136,8 @@ public class OpsAlerts {
                         FROM billing.ops_alerts WHERE category IN (:categories)
                         """, Object[].class)
                 .setParameter("dueBefore", OffsetDateTime.now().minus(repeatAfter))
-                .setParameter("categories", categories.stream().map(Category::id).toList())
+                .setParameter(
+                        "categories", categories.stream().map(Category::id).toList())
                 .getResultList();
         for (Object[] row : rows) {
             known.put((String) row[0], (Boolean) row[1]);
@@ -139,7 +147,8 @@ public class OpsAlerts {
 
     /** A condition that cleared is forgotten, so it is reported again if it comes back. */
     private void forgetCleared(Set<String> current, Set<String> known) {
-        List<String> cleared = known.stream().filter(key -> !current.contains(key)).toList();
+        List<String> cleared =
+                known.stream().filter(key -> !current.contains(key)).toList();
         if (!cleared.isEmpty()) {
             em.createNativeQuery("DELETE FROM billing.ops_alerts WHERE alert_key IN (:keys)")
                     .setParameter("keys", cleared)
@@ -154,19 +163,23 @@ public class OpsAlerts {
         Optional<EmailSender> sender = email.sender();
         Optional<String> to = recipient.filter(r -> !r.isBlank());
         if (sender.isEmpty() || to.isEmpty()) {
-            alerts.forEach(alert -> LOG.warnf("Ops alert (not emailed, no CETUS_OPS_ALERT_EMAIL or email delivery): %s",
-                    alert.summary()));
+            alerts.forEach(alert -> LOG.warnf(
+                    "Ops alert (not emailed, no CETUS_OPS_ALERT_EMAIL or email delivery): %s", alert.summary()));
             return;
         }
         String subject = alerts.size() == 1
                 ? "[Cetus] " + alerts.get(0).summary()
                 : "[Cetus] %d alertas operativas".formatted(alerts.size());
         String text = alerts.stream().map(alert -> "- " + alert.summary()).collect(Collectors.joining("\n"));
-        String html = "<ul>" + alerts.stream().map(alert -> "<li>" + escape(alert.summary()) + "</li>")
-                .collect(Collectors.joining()) + "</ul>";
+        String html = "<ul>"
+                + alerts.stream()
+                        .map(alert -> "<li>" + escape(alert.summary()) + "</li>")
+                        .collect(Collectors.joining()) + "</ul>";
         try {
-            sender.get().send(new EmailMessage(email.from(), to.get(), null, shorten(subject), html, text, null),
-                    "ops-alert-" + UUID.randomUUID());
+            sender.get()
+                    .send(
+                            new EmailMessage(email.from(), to.get(), null, shorten(subject), html, text, null),
+                            "ops-alert-" + UUID.randomUUID());
         } catch (EmailException e) {
             LOG.errorf("Could not email %d ops alerts, retrying on the next run: %s", alerts.size(), e.getMessage());
             throw e;

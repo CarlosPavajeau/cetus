@@ -2,13 +2,13 @@ package com.cantte.cetus.ubl.model;
 
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlValue;
-
 import java.math.BigDecimal;
 
 public class QuantityType {
 
     @XmlValue
     public BigDecimal value;
+
     @XmlAttribute
     public String unitCode;
 

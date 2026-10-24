@@ -8,7 +8,6 @@ import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
-
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -24,8 +23,7 @@ public class OrganizationRoleFilter implements ContainerRequestFilter {
 
     static final Set<String> MANAGERS = Set.of("owner", "admin");
 
-    private record Rule(String method, Pattern path) {
-    }
+    private record Rule(String method, Pattern path) {}
 
     private static final List<Rule> MANAGERS_ONLY = List.of(
             new Rule(HttpMethod.PUT, Pattern.compile("/console/contacts/[^/]+")),
@@ -42,10 +40,11 @@ public class OrganizationRoleFilter implements ContainerRequestFilter {
             return;
         }
         boolean restricted = MANAGERS_ONLY.stream()
-                .anyMatch(rule -> rule.method().equals(request.getMethod()) && rule.path().matcher(path).matches());
+                .anyMatch(rule -> rule.method().equals(request.getMethod())
+                        && rule.path().matcher(path).matches());
         if (restricted && context.organizationRoles().stream().noneMatch(MANAGERS::contains)) {
-            request.abortWith(ProblemDetail.response(403, "organization_role_forbidden",
-                    "Only the organization's owners and admins can do this"));
+            request.abortWith(ProblemDetail.response(
+                    403, "organization_role_forbidden", "Only the organization's owners and admins can do this"));
         }
     }
 }

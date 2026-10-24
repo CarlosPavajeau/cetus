@@ -3,9 +3,13 @@ package com.cantte.cetus.dian;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.SigningException;
 import com.cantte.cetus.signing.XadesSigner;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
+import java.time.Clock;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+import java.util.List;
+import java.util.UUID;
 import javax.xml.crypto.dom.DOMStructure;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import javax.xml.crypto.dsig.DigestMethod;
@@ -17,13 +21,8 @@ import javax.xml.crypto.dsig.XMLSignatureFactory;
 import javax.xml.crypto.dsig.dom.DOMSignContext;
 import javax.xml.crypto.dsig.keyinfo.KeyInfo;
 import javax.xml.crypto.dsig.spec.ExcC14NParameterSpec;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Adds the WS-Security header expected by the DIAN: Timestamp, the certificate as a
@@ -77,19 +76,22 @@ final class WsSecuritySigner {
             token.setAttribute("EncodingType", BASE64_ENCODING);
             token.setAttribute("ValueType", X509_TOKEN);
             token.setAttributeNS(WSU_NS, "wsu:Id", tokenId);
-            token.setTextContent(Base64.getEncoder().encodeToString(keys.certificate().getEncoded()));
+            token.setTextContent(
+                    Base64.getEncoder().encodeToString(keys.certificate().getEncoded()));
 
             XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
             String toId = envelope.to().getAttributeNS(WSU_NS, "Id");
-            Reference toReference = factory.newReference("#" + toId,
+            Reference toReference = factory.newReference(
+                    "#" + toId,
                     factory.newDigestMethod(DigestMethod.SHA256, null),
-                    List.of(factory.newTransform(CanonicalizationMethod.EXCLUSIVE,
-                            new ExcC14NParameterSpec(List.of("soap", "wcf")))),
-                    null, null);
+                    List.of(factory.newTransform(
+                            CanonicalizationMethod.EXCLUSIVE, new ExcC14NParameterSpec(List.of("soap", "wcf")))),
+                    null,
+                    null);
 
             SignedInfo signedInfo = factory.newSignedInfo(
-                    factory.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE,
-                            new ExcC14NParameterSpec(List.of("wsa", "soap", "wcf"))),
+                    factory.newCanonicalizationMethod(
+                            CanonicalizationMethod.EXCLUSIVE, new ExcC14NParameterSpec(List.of("wsa", "soap", "wcf"))),
                     factory.newSignatureMethod(SignatureMethod.RSA_SHA256, null),
                     List.of(toReference));
 
@@ -98,8 +100,8 @@ final class WsSecuritySigner {
             Element reference = append(tokenReference, doc.createElementNS(WSSE_NS, "wsse:Reference"));
             reference.setAttribute("URI", "#" + tokenId);
             reference.setAttribute("ValueType", X509_TOKEN);
-            KeyInfo keyInfo = factory.getKeyInfoFactory()
-                    .newKeyInfo(List.of(new DOMStructure(tokenReference)), "KI-" + suffix);
+            KeyInfo keyInfo =
+                    factory.getKeyInfoFactory().newKeyInfo(List.of(new DOMStructure(tokenReference)), "KI-" + suffix);
 
             XMLSignature signature = factory.newXMLSignature(signedInfo, keyInfo, null, "SIG-" + suffix, null);
             DOMSignContext context = new DOMSignContext(keys.privateKey(), security);

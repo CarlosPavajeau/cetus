@@ -4,14 +4,13 @@ import com.cantte.cetus.worker.ops.OpsAlert.Category;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /** The queries behind each alert category. Ids and dates come back as text: they only go into an email. */
 @ApplicationScoped
@@ -25,8 +24,10 @@ public class OpsAlertChecks {
 
     @ConfigProperty(name = "cetus.alerts.stuck-after")
     Duration stuckAfter;
+
     @ConfigProperty(name = "cetus.alerts.expiry-window")
     Duration expiryWindow;
+
     @ConfigProperty(name = "cetus.alerts.range-min-available")
     double rangeMinAvailable;
 
@@ -40,7 +41,10 @@ public class OpsAlertChecks {
                 WHERE j.status = 'DEAD' AND j.updated_at > :since
                 ORDER BY j.updated_at
                 """, Map.of("since", OffsetDateTime.now().minus(DEAD_JOB_WINDOW))).stream()
-                .map(r -> OpsAlert.of(Category.JOB_DEAD, r[0], false,
+                .map(r -> OpsAlert.of(
+                        Category.JOB_DEAD,
+                        r[0],
+                        false,
                         "Job %s %s (%s) murió tras %s intentos: %s".formatted(r[1], r[0], r[4], r[2], shorten(r[3]))))
                 .toList();
     }
@@ -60,8 +64,12 @@ public class OpsAlertChecks {
                               AND j.job_type = 'PROCESS_DOCUMENT' AND j.status IN ('PENDING', 'RUNNING'))
                 ORDER BY d.updated_at
                 """, Map.of("since", OffsetDateTime.now().minus(stuckAfter))).stream()
-                .map(r -> OpsAlert.of(Category.DOCUMENT_STUCK, r[0], true,
-                        "%s %s %s (%s) sigue en %s desde %s %s".formatted(r[1], r[2], r[3], r[0], r[4], r[5], shorten(r[6]))
+                .map(r -> OpsAlert.of(
+                        Category.DOCUMENT_STUCK,
+                        r[0],
+                        true,
+                        "%s %s %s (%s) sigue en %s desde %s %s"
+                                .formatted(r[1], r[2], r[3], r[0], r[4], r[5], shorten(r[6]))
                                 .trim()))
                 .toList();
     }
@@ -75,9 +83,12 @@ public class OpsAlertChecks {
                 JOIN billing.issuers i ON i.id = r.issuer_id
                 WHERE r.status = 'ACTIVE' AND i.environment = 'LIVE' AND r.verification_status IN ('MISMATCH', 'ERROR')
                 """, Map.of()).stream()
-                .map(r -> OpsAlert.of(Category.RANGE_UNVERIFIED, r[0], true,
-                        "%s %s (NIT %s): el rango %s no coincide con la DIAN (%s): %s".formatted(
-                                r[1], r[2], r[3], prefix(r[4]), r[5], shorten(r[6]))))
+                .map(r -> OpsAlert.of(
+                        Category.RANGE_UNVERIFIED,
+                        r[0],
+                        true,
+                        "%s %s (NIT %s): el rango %s no coincide con la DIAN (%s): %s"
+                                .formatted(r[1], r[2], r[3], prefix(r[4]), r[5], shorten(r[6]))))
                 .toList();
     }
 
@@ -90,14 +101,18 @@ public class OpsAlertChecks {
                 WHERE c.active AND i.status <> 'DISABLED' AND c.valid_to < :until
                 ORDER BY c.valid_to
                 """, Map.of("until", OffsetDateTime.now().plus(expiryWindow))).stream()
-                .map(r -> OpsAlert.of(Category.CERTIFICATE_EXPIRING, r[0], true,
+                .map(r -> OpsAlert.of(
+                        Category.CERTIFICATE_EXPIRING,
+                        r[0],
+                        true,
                         "%s %s (NIT %s): el certificado de firma vence el %s".formatted(r[1], r[2], r[3], r[4])))
                 .toList();
     }
 
     /** Active ranges with less than {@code range-min-available} of their numbers left, or about to expire. */
     List<OpsAlert> rangesRunningOut() {
-        return rows("""
+        return rows(
+                        """
                 SELECT r.id::text, i.environment, i.legal_name, i.nit, r.document_type, r.prefix,
                        (r.range_to - r.next_number + 1)::text, (r.range_to - r.range_from + 1)::text,
                        coalesce(', vigente hasta ' || to_char(r.valid_to, 'YYYY-MM-DD'), '')
@@ -107,10 +122,19 @@ public class OpsAlertChecks {
                   AND ((r.range_to - r.next_number + 1) < :ratio * (r.range_to - r.range_from + 1)
                        OR r.valid_to < :until)
                 ORDER BY r.valid_to
-                """, Map.of("ratio", rangeMinAvailable, "until", LocalDate.now().plusDays(expiryWindow.toDays()))).stream()
-                .map(r -> OpsAlert.of(Category.RANGE_RUNNING_OUT, r[0], true,
-                        "%s %s (NIT %s): al rango %s %s le quedan %s de %s números%s".formatted(
-                                r[1], r[2], r[3], r[4], prefix(r[5]), r[6], r[7], r[8])))
+                """,
+                        Map.of(
+                                "ratio",
+                                rangeMinAvailable,
+                                "until",
+                                LocalDate.now().plusDays(expiryWindow.toDays())))
+                .stream()
+                .map(r -> OpsAlert.of(
+                        Category.RANGE_RUNNING_OUT,
+                        r[0],
+                        true,
+                        "%s %s (NIT %s): al rango %s %s le quedan %s de %s números%s"
+                                .formatted(r[1], r[2], r[3], r[4], prefix(r[5]), r[6], r[7], r[8])))
                 .toList();
     }
 
@@ -118,9 +142,10 @@ public class OpsAlertChecks {
     private List<String[]> rows(String sql, Map<String, Object> parameters) {
         var query = em.createNativeQuery(sql, Object[].class);
         parameters.forEach(query::setParameter);
-        return ((List<Object[]>) query.getResultList()).stream()
-                .map(row -> Arrays.stream(row).map(String::valueOf).toArray(String[]::new))
-                .toList();
+        return ((List<Object[]>) query.getResultList())
+                .stream()
+                        .map(row -> Arrays.stream(row).map(String::valueOf).toArray(String[]::new))
+                        .toList();
     }
 
     private static String prefix(String prefix) {

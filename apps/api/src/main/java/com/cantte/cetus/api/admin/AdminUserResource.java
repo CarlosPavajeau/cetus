@@ -19,13 +19,12 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
  * Users live in Better Auth, which bans and unbans them (and revokes their sessions) from the console
@@ -34,10 +33,16 @@ import java.util.Map;
  */
 @Path("/admin/users/{userId}/ban-events")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "400",
+        description = "Bad Request",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "403",
+        description = "Forbidden",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class AdminUserResource {
 
     /** Better Auth ids: random alphanumerics. */
@@ -45,8 +50,10 @@ public class AdminUserResource {
 
     @Inject
     ConsoleContext context;
+
     @Inject
     AuditLog auditLog;
+
     @Inject
     RequestOriginResolver origin;
 
@@ -54,27 +61,37 @@ public class AdminUserResource {
     @Transactional
     @RolesAllowed(PlatformRoles.ADMIN)
     @APIResponse(responseCode = "204", description = "Recorded")
-    public void record(@PathParam("userId") @Pattern(regexp = USER_ID) String userId,
-                       @Valid @NotNull BanEventRequest request) {
+    public void record(
+            @PathParam("userId") @Pattern(regexp = USER_ID) String userId, @Valid @NotNull BanEventRequest request) {
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);
         data.put("email", request.email());
         data.put("reason", request.reason().strip());
         if (request.type() == BanEventType.BANNED) {
-            data.put("expiresAt", request.expiresAt() == null ? null : request.expiresAt().toString());
+            data.put(
+                    "expiresAt",
+                    request.expiresAt() == null ? null : request.expiresAt().toString());
         }
-        auditLog.record(null, context.platformActor(), origin.resolve(),
+        auditLog.record(
+                null,
+                context.platformActor(),
+                origin.resolve(),
                 request.type() == BanEventType.BANNED ? AuditAction.USER_BANNED : AuditAction.USER_UNBANNED,
-                "user", null, data);
+                "user",
+                null,
+                data);
     }
 
-    public enum BanEventType { BANNED, UNBANNED }
+    public enum BanEventType {
+        BANNED,
+        UNBANNED
+    }
 
     public record BanEventRequest(
             @NotNull BanEventType type,
             @NotBlank @Size(max = 254) @Email String email,
             @NotBlank @Size(min = 3, max = 500) String reason,
+
             @Schema(nullable = true, description = "When a ban ends on its own; null for an indefinite ban")
-            OffsetDateTime expiresAt) {
-    }
+            OffsetDateTime expiresAt) {}
 }

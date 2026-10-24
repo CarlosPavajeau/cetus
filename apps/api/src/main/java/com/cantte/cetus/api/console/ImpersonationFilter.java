@@ -8,7 +8,6 @@ import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
-
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -21,8 +20,7 @@ import java.util.regex.Pattern;
 @Priority(Priorities.AUTHORIZATION)
 public class ImpersonationFilter implements ContainerRequestFilter {
 
-    private record Rule(String method, Pattern path) {
-    }
+    private record Rule(String method, Pattern path) {}
 
     private static final List<Rule> FORBIDDEN = List.of(
             new Rule(HttpMethod.PUT, Pattern.compile("/console/issuers/[^/]+/certificate")),
@@ -42,10 +40,11 @@ public class ImpersonationFilter implements ContainerRequestFilter {
             return;
         }
         boolean forbidden = FORBIDDEN.stream()
-                .anyMatch(rule -> rule.method().equals(request.getMethod()) && rule.path().matcher(path).matches());
+                .anyMatch(rule -> rule.method().equals(request.getMethod())
+                        && rule.path().matcher(path).matches());
         if (forbidden && context.impersonatedBy().isPresent()) {
-            request.abortWith(ProblemDetail.response(403, "impersonation_forbidden",
-                    "This action is not available while impersonating a user"));
+            request.abortWith(ProblemDetail.response(
+                    403, "impersonation_forbidden", "This action is not available while impersonating a user"));
         }
     }
 }

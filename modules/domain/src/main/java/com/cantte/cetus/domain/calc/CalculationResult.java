@@ -1,7 +1,6 @@
 package com.cantte.cetus.domain.calc;
 
 import com.cantte.cetus.domain.model.TaxType;
-
 import java.math.BigDecimal;
 import java.util.List;
 

@@ -3,7 +3,6 @@ package com.cantte.cetus.domain.calc;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.model.LineInput;
 import com.cantte.cetus.domain.model.TaxType;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -43,7 +42,8 @@ public final class InvoiceCalculator {
             BigDecimal lineExtension = Amounts.round(input.quantity().multiply(input.unitPrice()));
             List<TaxAmount> lineTaxes = new ArrayList<>();
             for (LineInput.LineTax tax : input.taxes()) {
-                BigDecimal amount = Amounts.round(lineExtension.multiply(tax.percent()).divide(HUNDRED));
+                BigDecimal amount =
+                        Amounts.round(lineExtension.multiply(tax.percent()).divide(HUNDRED));
                 TaxAmount lineTax = new TaxAmount(tax.type(), percent(tax.percent()), lineExtension, amount);
                 lineTaxes.add(lineTax);
                 grouped.computeIfAbsent(tax.type(), t -> new TreeMap<>())
@@ -54,16 +54,23 @@ public final class InvoiceCalculator {
             if (!lineTaxes.isEmpty()) {
                 taxableTotal = taxableTotal.add(lineExtension);
             }
-            lines.add(new CalculatedLine(lineNumber, input.itemCode(), input.description(),
-                    input.quantity(), input.unitCode(), input.unitPrice(), lineExtension, List.copyOf(lineTaxes)));
+            lines.add(new CalculatedLine(
+                    lineNumber,
+                    input.itemCode(),
+                    input.description(),
+                    input.quantity(),
+                    input.unitCode(),
+                    input.unitPrice(),
+                    lineExtension,
+                    List.copyOf(lineTaxes)));
         }
 
         List<TaxTotal> taxTotals = grouped.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparing(TaxType::dianCode)))
                 .map(entry -> {
                     List<TaxAmount> subtotals = List.copyOf(entry.getValue().values());
-                    BigDecimal amount = subtotals.stream().map(TaxAmount::amount)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal amount =
+                            subtotals.stream().map(TaxAmount::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
                     return new TaxTotal(entry.getKey(), Amounts.round(amount), subtotals);
                 })
                 .toList();
@@ -82,8 +89,8 @@ public final class InvoiceCalculator {
                 taxInclusive);
 
         if (totals.payableAmount().compareTo(MAX_AMOUNT) > 0) {
-            throw new DomainException("amount_too_large",
-                    "The document total cannot exceed " + MAX_AMOUNT.toPlainString());
+            throw new DomainException(
+                    "amount_too_large", "The document total cannot exceed " + MAX_AMOUNT.toPlainString());
         }
         return new CalculationResult(List.copyOf(lines), taxTotals, totals);
     }
@@ -93,13 +100,16 @@ public final class InvoiceCalculator {
             throw new DomainException("line_description_required", "Line " + lineNumber + " needs a description");
         }
         if (input.quantity() == null || input.quantity().signum() <= 0) {
-            throw new DomainException("line_quantity_invalid", "Line " + lineNumber + " quantity must be greater than zero");
+            throw new DomainException(
+                    "line_quantity_invalid", "Line " + lineNumber + " quantity must be greater than zero");
         }
         if (input.unitPrice() == null || input.unitPrice().signum() < 0) {
             throw new DomainException("line_price_invalid", "Line " + lineNumber + " unit price cannot be negative");
         }
         for (LineInput.LineTax tax : input.taxes()) {
-            if (tax.type() == null || tax.percent() == null || tax.percent().signum() < 0
+            if (tax.type() == null
+                    || tax.percent() == null
+                    || tax.percent().signum() < 0
                     || tax.percent().compareTo(HUNDRED) > 0) {
                 throw new DomainException("line_tax_invalid", "Line " + lineNumber + " has an invalid tax");
             }
@@ -111,7 +121,10 @@ public final class InvoiceCalculator {
     }
 
     private static TaxAmount sum(TaxAmount a, TaxAmount b) {
-        return new TaxAmount(a.type(), a.percent(),
-                a.taxableAmount().add(b.taxableAmount()), a.amount().add(b.amount()));
+        return new TaxAmount(
+                a.type(),
+                a.percent(),
+                a.taxableAmount().add(b.taxableAmount()),
+                a.amount().add(b.amount()));
     }
 }

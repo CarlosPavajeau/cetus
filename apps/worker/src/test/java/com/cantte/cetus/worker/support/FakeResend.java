@@ -7,8 +7,6 @@ import com.sun.net.httpserver.HttpServer;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +15,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Resend API stand-in for worker tests: records every POST /emails and answers with the queued replies,
@@ -30,13 +29,14 @@ public class FakeResend {
     public record Reply(int status, String body) {
 
         public static Reply error(int status, String name, String message) {
-            return new Reply(status, "{\"statusCode\":" + status + ",\"name\":\"" + name + "\",\"message\":\"" + message + "\"}");
+            return new Reply(
+                    status,
+                    "{\"statusCode\":" + status + ",\"name\":\"" + name + "\",\"message\":\"" + message + "\"}");
         }
     }
 
     /** A request received: its authorization and idempotency headers and the parsed JSON body. */
-    public record Request(String authorization, String idempotencyKey, JsonNode body) {
-    }
+    public record Request(String authorization, String idempotencyKey, JsonNode body) {}
 
     @ConfigProperty(name = "fake-resend.port")
     int port;

@@ -1,22 +1,21 @@
 package com.cantte.cetus.signing;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.KeyStore;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /** PKCS#12 files from OpenSSL (defaults, 3DES, legacy RC2) and the JDK open; crafted ones are refused. */
 class Pkcs12IterationsTest {
@@ -24,8 +23,13 @@ class Pkcs12IterationsTest {
     private static final char[] PASSWORD = "cetus-test".toCharArray();
 
     @ParameterizedTest
-    @ValueSource(strings = {"/test-signer.p12", "/pkcs12/openssl-default.p12", "/pkcs12/openssl-3des.p12",
-            "/pkcs12/openssl-legacy-rc2.p12"})
+    @ValueSource(
+            strings = {
+                "/test-signer.p12",
+                "/pkcs12/openssl-default.p12",
+                "/pkcs12/openssl-3des.p12",
+                "/pkcs12/openssl-legacy-rc2.p12"
+            })
     void certificatesExportedWithTheUsualSettingsOpen(String file) throws IOException {
         KeyMaterial keys = Pkcs12Loader.loadUntrusted(resource(file), PASSWORD);
 
@@ -51,12 +55,17 @@ class Pkcs12IterationsTest {
         KeyStore source = KeyStore.getInstance("PKCS12");
         source.load(new java.io.ByteArrayInputStream(resource("/test-signer.p12")), PASSWORD);
         String alias = source.aliases().nextElement();
-        KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) source.getEntry(alias,
-                new KeyStore.PasswordProtection(PASSWORD));
+        KeyStore.PrivateKeyEntry entry =
+                (KeyStore.PrivateKeyEntry) source.getEntry(alias, new KeyStore.PasswordProtection(PASSWORD));
         KeyStore crafted = KeyStore.getInstance("PKCS12");
         crafted.load(null, null);
-        crafted.setEntry(alias, entry, new KeyStore.PasswordProtection(PASSWORD, "PBEWithHmacSHA256AndAES_256",
-                new PBEParameterSpec(new byte[16], 2_000_000, new IvParameterSpec(new byte[16]))));
+        crafted.setEntry(
+                alias,
+                entry,
+                new KeyStore.PasswordProtection(
+                        PASSWORD,
+                        "PBEWithHmacSHA256AndAES_256",
+                        new PBEParameterSpec(new byte[16], 2_000_000, new IvParameterSpec(new byte[16]))));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         crafted.store(out, PASSWORD);
 
@@ -92,7 +101,7 @@ class Pkcs12IterationsTest {
 
     @Test
     void garbageIsNotAPkcs12() {
-        assertThatThrownBy(() -> Pkcs12Iterations.check(new byte[]{0x30, (byte) 0x84, 1, 2, 3, 4}, PASSWORD))
+        assertThatThrownBy(() -> Pkcs12Iterations.check(new byte[] {0x30, (byte) 0x84, 1, 2, 3, 4}, PASSWORD))
                 .isInstanceOf(SigningException.class)
                 .hasNoCause()
                 .hasMessage("The file is not a valid PKCS#12");
@@ -112,16 +121,18 @@ class Pkcs12IterationsTest {
     private static byte[] withKeyInsideEncryptedContainer(int containerIterations, int keyIterations) throws Exception {
         AlgorithmParameters keyParameters = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_256");
         keyParameters.init(new PBEParameterSpec(new byte[16], keyIterations, new IvParameterSpec(new byte[16])));
-        byte[] keyBag = seq(oid("1.2.840.113549.1.12.10.1.2"),
-                explicit0(seq(algorithm(keyParameters), octets(new byte[48]))));
+        byte[] keyBag =
+                seq(oid("1.2.840.113549.1.12.10.1.2"), explicit0(seq(algorithm(keyParameters), octets(new byte[48]))));
         byte[] safeContents = seq(keyBag);
 
         Cipher cipher = Cipher.getInstance("PBEWithHmacSHA256AndAES_256");
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeyFactory.getInstance("PBE").generateSecret(new PBEKeySpec(PASSWORD)),
+        cipher.init(
+                Cipher.ENCRYPT_MODE,
+                SecretKeyFactory.getInstance("PBE").generateSecret(new PBEKeySpec(PASSWORD)),
                 new PBEParameterSpec(new byte[16], containerIterations, new IvParameterSpec(new byte[16])));
         byte[] encrypted = cipher.doFinal(safeContents);
-        byte[] encryptedData = seq(integer(0),
-                seq(oid("1.2.840.113549.1.7.1"), algorithm(cipher.getParameters()), tlv(0x80, encrypted)));
+        byte[] encryptedData = seq(
+                integer(0), seq(oid("1.2.840.113549.1.7.1"), algorithm(cipher.getParameters()), tlv(0x80, encrypted)));
         byte[] authSafe = seq(seq(oid("1.2.840.113549.1.7.6"), explicit0(encryptedData)));
         return seq(integer(3), seq(oid("1.2.840.113549.1.7.1"), explicit0(octets(authSafe))));
     }

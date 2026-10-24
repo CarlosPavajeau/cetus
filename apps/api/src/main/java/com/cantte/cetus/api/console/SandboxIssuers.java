@@ -10,7 +10,6 @@ import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -52,8 +51,8 @@ public class SandboxIssuers {
         range(issuer, DocumentType.DEBIT_NOTE, "NDS", null, today);
     }
 
-    private static void range(IssuerEntity issuer, DocumentType type, String prefix, String resolution,
-                              LocalDate today) {
+    private static void range(
+            IssuerEntity issuer, DocumentType type, String prefix, String resolution, LocalDate today) {
         NumberingRangeEntity range = new NumberingRangeEntity();
         range.id = Ids.newId();
         range.issuerId = issuer.id;
@@ -70,10 +69,18 @@ public class SandboxIssuers {
     }
 
     private static IssuerViews.CreateIssuerRequest sample() {
-        return new IssuerViews.CreateIssuerRequest(Environment.SANDBOX, SAMPLE_NIT, null, "Empresa de Ejemplo SAS",
-                "Ejemplo", PersonType.LEGAL_ENTITY, List.of("O-13"), true,
-                new InvoiceRequest.AddressInput("11001", "Bogotá, D.C.", "11", "Bogotá", "110111",
-                        "Carrera 7 # 71-21", "CO", "Colombia"),
-                "facturas@example.com", null);
+        return new IssuerViews.CreateIssuerRequest(
+                Environment.SANDBOX,
+                SAMPLE_NIT,
+                null,
+                "Empresa de Ejemplo SAS",
+                "Ejemplo",
+                PersonType.LEGAL_ENTITY,
+                List.of("O-13"),
+                true,
+                new InvoiceRequest.AddressInput(
+                        "11001", "Bogotá, D.C.", "11", "Bogotá", "110111", "Carrera 7 # 71-21", "CO", "Colombia"),
+                "facturas@example.com",
+                null);
     }
 }

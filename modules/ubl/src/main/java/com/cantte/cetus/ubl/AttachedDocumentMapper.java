@@ -8,7 +8,6 @@ import com.cantte.cetus.ubl.model.Cac;
 import com.cantte.cetus.ubl.model.Ext;
 import com.cantte.cetus.ubl.model.IdentifierType;
 import com.cantte.cetus.ubl.model.UblAttachedDocument;
-
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 
@@ -26,10 +25,17 @@ public final class AttachedDocumentMapper {
      * @param validatedAt         when the DIAN validated it
      * @param issuedAt            when the container is generated; never before the wrapped document
      */
-    public record Contents(Environment environment, DocumentType documentType, String number, String uniqueCode,
-                           Party supplier, Party customer, byte[] signedXml, byte[] applicationResponse,
-                           OffsetDateTime validatedAt, OffsetDateTime issuedAt) {
-    }
+    public record Contents(
+            Environment environment,
+            DocumentType documentType,
+            String number,
+            String uniqueCode,
+            Party supplier,
+            Party customer,
+            byte[] signedXml,
+            byte[] applicationResponse,
+            OffsetDateTime validatedAt,
+            OffsetDateTime issuedAt) {}
 
     public UblAttachedDocument map(Contents contents) {
         OffsetDateTime issued = colombia(contents.issuedAt());

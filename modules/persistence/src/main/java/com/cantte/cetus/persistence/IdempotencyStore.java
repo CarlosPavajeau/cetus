@@ -4,7 +4,6 @@ import com.cantte.cetus.domain.model.Environment;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,7 +69,12 @@ public class IdempotencyStore {
                 .executeUpdate();
     }
 
-    public enum State { STARTED, IN_PROGRESS, REPLAY, MISMATCH }
+    public enum State {
+        STARTED,
+        IN_PROGRESS,
+        REPLAY,
+        MISMATCH
+    }
 
     public record Outcome(State state, Integer responseStatus, String responseBody) {
         static Outcome started() {

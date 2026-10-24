@@ -17,11 +17,10 @@ import com.cantte.cetus.worker.support.NotificationRecorder.Pending;
 import com.cantte.cetus.worker.support.NotificationRecorder.VerificationLink;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import java.util.List;
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * Emails a notice to the verified contacts of its categories, one email per address. Each email goes out
@@ -36,6 +35,7 @@ public class SendNotificationHandler implements JobHandler {
 
     @Inject
     NotificationRecorder notifications;
+
     @Inject
     EmailClients email;
 
@@ -62,13 +62,18 @@ public class SendNotificationHandler implements JobHandler {
             }
             if (sender.isEmpty()) {
                 // Only where email is not configured (local development): the link is the only way to verify.
-                LOG.warnf("Email delivery is not configured; verify %s at %s/contact-verification/%s",
+                LOG.warnf(
+                        "Email delivery is not configured; verify %s at %s/contact-verification/%s",
                         link.email(), stripSlash(consoleUrl), link.token());
                 notifications.skipped(notice.id(), "Email delivery is not configured");
                 return;
             }
             // A new link per attempt: the key names it, so a retry never answers with an email of an older one.
-            send(sender.get(), notice, link.email(), link.token(),
+            send(
+                    sender.get(),
+                    notice,
+                    link.email(),
+                    link.token(),
                     "notification-" + notice.id() + "-" + link.tokenHash().substring(0, 16));
             notifications.sent(notice.id(), List.of(link.email()));
             return;
@@ -86,7 +91,9 @@ public class SendNotificationHandler implements JobHandler {
             send(sender.get(), notice, recipient, null, "notification-" + notice.id() + "-" + recipient);
         }
         notifications.sent(notice.id(), notice.recipients());
-        LOG.infof("Notice %s %s emailed to %d contacts", notice.kind(), notice.id(), notice.recipients().size());
+        LOG.infof(
+                "Notice %s %s emailed to %d contacts",
+                notice.kind(), notice.id(), notice.recipients().size());
     }
 
     @Override
@@ -95,10 +102,10 @@ public class SendNotificationHandler implements JobHandler {
     }
 
     private void send(EmailSender sender, Pending notice, String recipient, String token, String idempotencyKey) {
-        NotificationEmail content = NotificationEmail.of(notice.kind(), notice.accountName(), notice.data(),
-                stripSlash(consoleUrl), token);
-        EmailMessage message = new EmailMessage(email.notificationsFrom(), recipient, null,
-                content.subject(), content.html(), content.text(), null);
+        NotificationEmail content =
+                NotificationEmail.of(notice.kind(), notice.accountName(), notice.data(), stripSlash(consoleUrl), token);
+        EmailMessage message = new EmailMessage(
+                email.notificationsFrom(), recipient, null, content.subject(), content.html(), content.text(), null);
         try {
             sender.send(message, idempotencyKey);
         } catch (EmailRateLimited e) {

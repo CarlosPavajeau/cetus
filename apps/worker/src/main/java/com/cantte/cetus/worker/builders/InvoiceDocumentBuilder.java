@@ -29,16 +29,43 @@ public class InvoiceDocumentBuilder implements DocumentBuilder {
     @Override
     public BuiltDocument build(ProcessingContext ctx, DocumentSecrets secrets) {
         String number = ctx.fullNumber();
-        String cufe = Cufe.compute(new Cufe.Input(number, ctx.issueDate(), ctx.issueTime(), ctx.calculation(),
-                ctx.supplier().identificationNumber(), ctx.customer().identificationNumber(), secrets.technicalKey(),
+        String cufe = Cufe.compute(new Cufe.Input(
+                number,
+                ctx.issueDate(),
+                ctx.issueTime(),
+                ctx.calculation(),
+                ctx.supplier().identificationNumber(),
+                ctx.customer().identificationNumber(),
+                secrets.technicalKey(),
                 ctx.environment()));
-        String qr = QrCode.invoice(number, ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
-                ctx.customer().identificationNumber(), ctx.calculation(), cufe, ctx.environment());
+        String qr = QrCode.invoice(
+                number,
+                ctx.issueDate(),
+                ctx.issueTime(),
+                ctx.supplier().identificationNumber(),
+                ctx.customer().identificationNumber(),
+                ctx.calculation(),
+                cufe,
+                ctx.environment());
 
-        ElectronicInvoice invoice = new ElectronicInvoice(ctx.environment(), ctx.operationType(), ctx.prefix(),
-                ctx.number(), ctx.issueDate(), ctx.issueTime(), ctx.dueDate(), ctx.currency(), ctx.supplier(),
-                ctx.customer(), ctx.payment(), ctx.calculation(), ctx.authorization(),
-                provider.software(ctx, secrets.pin()), cufe, qr, ctx.notes());
+        ElectronicInvoice invoice = new ElectronicInvoice(
+                ctx.environment(),
+                ctx.operationType(),
+                ctx.prefix(),
+                ctx.number(),
+                ctx.issueDate(),
+                ctx.issueTime(),
+                ctx.dueDate(),
+                ctx.currency(),
+                ctx.supplier(),
+                ctx.customer(),
+                ctx.payment(),
+                ctx.calculation(),
+                ctx.authorization(),
+                provider.software(ctx, secrets.pin()),
+                cufe,
+                qr,
+                ctx.notes());
         return new BuiltDocument(marshaller.toDocument(mapper.map(invoice)), cufe);
     }
 }

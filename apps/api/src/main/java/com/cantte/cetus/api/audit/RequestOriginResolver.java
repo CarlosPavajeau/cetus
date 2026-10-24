@@ -6,7 +6,6 @@ import io.vertx.core.net.SocketAddress;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.regex.Pattern;
@@ -33,17 +32,22 @@ public class RequestOriginResolver {
 
     public RequestOrigin resolve() {
         if (isBff(request.path())) {
-            return new RequestOrigin(normalizeIp(request.getHeader(CLIENT_IP_HEADER)),
+            return new RequestOrigin(
+                    normalizeIp(request.getHeader(CLIENT_IP_HEADER)),
                     truncate(request.getHeader(CLIENT_USER_AGENT_HEADER)));
         }
         SocketAddress remote = request.remoteAddress();
-        return new RequestOrigin(remote == null ? null : normalizeIp(remote.hostAddress()),
+        return new RequestOrigin(
+                remote == null ? null : normalizeIp(remote.hostAddress()),
                 truncate(request.getHeader(HttpHeaders.USER_AGENT)));
     }
 
     private static boolean isBff(String path) {
-        return path != null && (path.equals("/console") || path.startsWith("/console/")
-                || path.equals("/admin") || path.startsWith("/admin/"));
+        return path != null
+                && (path.equals("/console")
+                        || path.startsWith("/console/")
+                        || path.equals("/admin")
+                        || path.startsWith("/admin/"));
     }
 
     /**

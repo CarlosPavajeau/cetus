@@ -21,10 +21,9 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-
-import java.util.UUID;
 
 @Path("/v1/invoices")
 @Produces(MediaType.APPLICATION_JSON)
@@ -32,10 +31,13 @@ public class InvoiceResource {
 
     @Inject
     ApiPrincipal principal;
+
     @Inject
     InvoiceService service;
+
     @Inject
     IdempotentCreation idempotentCreation;
+
     @Inject
     DocumentFiles files;
 
@@ -45,10 +47,17 @@ public class InvoiceResource {
      */
     @POST
     @Transactional
-    public Response create(@HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
-                           @Valid @NotNull InvoiceRequest request) throws JsonProcessingException {
-        return idempotentCreation.accept(principal.accountId(), principal.environment(), idempotencyKey, request, rawJson ->
-                InvoiceResponse.created(service.create(principal.accountId(), principal.environment(), request, rawJson)));
+    public Response create(
+            @HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
+            @Valid @NotNull InvoiceRequest request)
+            throws JsonProcessingException {
+        return idempotentCreation.accept(
+                principal.accountId(),
+                principal.environment(),
+                idempotencyKey,
+                request,
+                rawJson -> InvoiceResponse.created(
+                        service.create(principal.accountId(), principal.environment(), request, rawJson)));
     }
 
     /** The invoice, with the credit notes issued against it and the balance they leave. */
@@ -70,9 +79,10 @@ public class InvoiceResource {
     @GET
     @Path("/{id}/files/{file}")
     @Transactional
-    public DocumentFiles.DocumentFileResponse file(@PathParam("id") UUID id,
-                                                   @Parameter(schema = @Schema(enumeration = {"xml", "pdf", "attached-document"}))
-                                                   @PathParam("file") String file) {
+    public DocumentFiles.DocumentFileResponse file(
+            @PathParam("id") UUID id,
+            @Parameter(schema = @Schema(enumeration = {"xml", "pdf", "attached-document"})) @PathParam("file")
+                    String file) {
         return files.presign(principal.accountId(), principal.environment(), id, DocumentType.INVOICE, file);
     }
 }

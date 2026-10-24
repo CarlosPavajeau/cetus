@@ -1,8 +1,15 @@
 package com.cantte.cetus.signing;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
+import java.security.MessageDigest;
+import java.security.cert.X509Certificate;
+import java.time.Clock;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+import java.util.List;
+import java.util.UUID;
 import javax.xml.crypto.dom.DOMStructure;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import javax.xml.crypto.dsig.DigestMethod;
@@ -19,16 +26,8 @@ import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
 import javax.xml.crypto.dsig.keyinfo.X509Data;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
-import java.security.MessageDigest;
-import java.security.cert.X509Certificate;
-import java.time.Clock;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * XAdES-EPES enveloped signature following the DIAN signature policy (v2).
@@ -46,7 +45,8 @@ public final class XadesSigner {
     public static final String DS_NS = XMLSignature.XMLNS;
 
     static final String POLICY_ID = "https://facturaelectronica.dian.gov.co/politicadefirma/v2/politicadefirmav2.pdf";
-    static final String POLICY_DESCRIPTION = "Política de firma para facturas electrónicas de la República de Colombia.";
+    static final String POLICY_DESCRIPTION =
+            "Política de firma para facturas electrónicas de la República de Colombia.";
     static final String POLICY_HASH = "dMoMvtcG5aIzgYo0tIsSQeVJBDnUnfSOfBpxXrmor0Y=";
     private static final String SIGNED_PROPERTIES_TYPE = "http://uri.etsi.org/01903#SignedProperties";
 
@@ -83,8 +83,8 @@ public final class XadesSigner {
 
             Reference documentRef = factory.newReference("", sha256, List.of(enveloped), null, id + "-ref0");
             Reference keyInfoRef = factory.newReference("#" + keyInfoId, sha256);
-            Reference signedPropsRef = factory.newReference("#" + signedPropsId, sha256, null,
-                    SIGNED_PROPERTIES_TYPE, null);
+            Reference signedPropsRef =
+                    factory.newReference("#" + signedPropsId, sha256, null, SIGNED_PROPERTIES_TYPE, null);
 
             SignedInfo signedInfo = factory.newSignedInfo(
                     factory.newCanonicalizationMethod(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null),
@@ -97,9 +97,11 @@ public final class XadesSigner {
 
             Element qualifyingProperties = qualifyingProperties(document, id, signedPropsId, keys.certificate(), role);
             Element signedProperties = (Element) qualifyingProperties.getFirstChild();
-            XMLObject xadesObject = factory.newXMLObject(List.of(new DOMStructure(qualifyingProperties)), null, null, null);
+            XMLObject xadesObject =
+                    factory.newXMLObject(List.of(new DOMStructure(qualifyingProperties)), null, null, null);
 
-            XMLSignature signature = factory.newXMLSignature(signedInfo, keyInfo, List.of(xadesObject), id, id + "-sigvalue");
+            XMLSignature signature =
+                    factory.newXMLSignature(signedInfo, keyInfo, List.of(xadesObject), id, id + "-sigvalue");
 
             DOMSignContext context = new DOMSignContext(keys.privateKey(), target);
             context.setDefaultNamespacePrefix("ds");
@@ -113,8 +115,9 @@ public final class XadesSigner {
         }
     }
 
-    private Element qualifyingProperties(Document doc, String signatureId, String signedPropsId,
-                                         X509Certificate certificate, SignerRole role) throws Exception {
+    private Element qualifyingProperties(
+            Document doc, String signatureId, String signedPropsId, X509Certificate certificate, SignerRole role)
+            throws Exception {
         Element qp = xades(doc, "QualifyingProperties");
         // Explicit declarations so canonicalization of SignedProperties is deterministic.
         qp.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xades", XADES_NS);
@@ -125,19 +128,27 @@ public final class XadesSigner {
         signedProperties.setAttribute("Id", signedPropsId);
         Element ssp = append(signedProperties, xades(doc, "SignedSignatureProperties"));
 
-        String signingTime = OffsetDateTime.now(clock).withOffsetSameInstant(ZoneOffset.ofHours(-5))
-                .truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        String signingTime = OffsetDateTime.now(clock)
+                .withOffsetSameInstant(ZoneOffset.ofHours(-5))
+                .truncatedTo(ChronoUnit.SECONDS)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         append(ssp, xades(doc, "SigningTime")).setTextContent(signingTime);
 
         Element cert = append(append(ssp, xades(doc, "SigningCertificate")), xades(doc, "Cert"));
         Element certDigest = append(cert, xades(doc, "CertDigest"));
-        appendDigest(doc, certDigest, Base64.getEncoder().encodeToString(
-                MessageDigest.getInstance("SHA-256").digest(certificate.getEncoded())));
+        appendDigest(
+                doc,
+                certDigest,
+                Base64.getEncoder()
+                        .encodeToString(MessageDigest.getInstance("SHA-256").digest(certificate.getEncoded())));
         Element issuerSerial = append(cert, xades(doc, "IssuerSerial"));
-        append(issuerSerial, ds(doc, "X509IssuerName")).setTextContent(certificate.getIssuerX500Principal().getName());
-        append(issuerSerial, ds(doc, "X509SerialNumber")).setTextContent(certificate.getSerialNumber().toString());
+        append(issuerSerial, ds(doc, "X509IssuerName"))
+                .setTextContent(certificate.getIssuerX500Principal().getName());
+        append(issuerSerial, ds(doc, "X509SerialNumber"))
+                .setTextContent(certificate.getSerialNumber().toString());
 
-        Element policyId = append(append(ssp, xades(doc, "SignaturePolicyIdentifier")), xades(doc, "SignaturePolicyId"));
+        Element policyId =
+                append(append(ssp, xades(doc, "SignaturePolicyIdentifier")), xades(doc, "SignaturePolicyId"));
         Element sigPolicyId = append(policyId, xades(doc, "SigPolicyId"));
         append(sigPolicyId, xades(doc, "Identifier")).setTextContent(POLICY_ID);
         append(sigPolicyId, xades(doc, "Description")).setTextContent(POLICY_DESCRIPTION);

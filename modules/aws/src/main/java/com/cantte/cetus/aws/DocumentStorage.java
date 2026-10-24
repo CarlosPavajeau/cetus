@@ -2,15 +2,6 @@ package com.cantte.cetus.aws;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
-import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
-import software.amazon.awssdk.services.s3.model.ObjectLockMode;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-
 import java.net.URL;
 import java.security.MessageDigest;
 import java.time.Duration;
@@ -20,6 +11,14 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.ObjectLockMode;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 /**
  * Document storage on S3. Signed documents and DIAN responses go through {@link #putRetained}, which
@@ -32,6 +31,7 @@ public class DocumentStorage {
 
     @Inject
     S3Client s3;
+
     @Inject
     S3Presigner presigner;
 
@@ -52,7 +52,8 @@ public class DocumentStorage {
 
     private StoredObject put(String key, byte[] content, String contentType, boolean retain) {
         byte[] digest = sha256(content);
-        PutObjectRequest.Builder request = PutObjectRequest.builder().bucket(bucket).key(key).contentType(contentType);
+        PutObjectRequest.Builder request =
+                PutObjectRequest.builder().bucket(bucket).key(key).contentType(contentType);
         if (retain && retentionDays.isPresent()) {
             // S3 requires an integrity checksum on writes that set a retention.
             request.objectLockMode(ObjectLockMode.COMPLIANCE)
@@ -76,12 +77,17 @@ public class DocumentStorage {
         if (keys.isEmpty()) {
             return;
         }
-        List<ObjectIdentifier> objects = keys.stream().map(key -> ObjectIdentifier.builder().key(key).build()).toList();
-        DeleteObjectsResponse response = s3.deleteObjects(r -> r.bucket(bucket).delete(d -> d.objects(objects).quiet(true)));
+        List<ObjectIdentifier> objects = keys.stream()
+                .map(key -> ObjectIdentifier.builder().key(key).build())
+                .toList();
+        DeleteObjectsResponse response = s3.deleteObjects(
+                r -> r.bucket(bucket).delete(d -> d.objects(objects).quiet(true)));
         if (response.hasErrors() && !response.errors().isEmpty()) {
-            throw new IllegalStateException("Could not delete " + response.errors().size() + " objects: "
-                    + response.errors().stream().map(error -> error.key() + " (" + error.code() + ")")
-                    .collect(Collectors.joining(", ")));
+            throw new IllegalStateException(
+                    "Could not delete " + response.errors().size() + " objects: "
+                            + response.errors().stream()
+                                    .map(error -> error.key() + " (" + error.code() + ")")
+                                    .collect(Collectors.joining(", ")));
         }
     }
 
@@ -90,9 +96,12 @@ public class DocumentStorage {
      * the API. The browser saves it as {@code downloadName}.
      */
     public PresignedUrl presignGet(String key, Duration ttl, String downloadName) {
-        URL url = presigner.presignGetObject(r -> r.signatureDuration(ttl)
-                .getObjectRequest(get -> get.bucket(bucket).key(key)
-                        .responseContentDisposition("attachment; filename=\"" + downloadName + "\""))).url();
+        URL url = presigner
+                .presignGetObject(r -> r.signatureDuration(ttl)
+                        .getObjectRequest(get -> get.bucket(bucket)
+                                .key(key)
+                                .responseContentDisposition("attachment; filename=\"" + downloadName + "\"")))
+                .url();
         return new PresignedUrl(url.toString(), Instant.now().plus(ttl));
     }
 
@@ -104,9 +113,7 @@ public class DocumentStorage {
         }
     }
 
-    public record StoredObject(String key, String sha256, long size, String contentType) {
-    }
+    public record StoredObject(String key, String sha256, long size, String contentType) {}
 
-    public record PresignedUrl(String url, Instant expiresAt) {
-    }
+    public record PresignedUrl(String url, Instant expiresAt) {}
 }

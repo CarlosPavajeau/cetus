@@ -5,7 +5,6 @@ import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,8 +41,7 @@ import java.util.stream.Collectors;
  */
 public final class DianMockServer {
 
-    private DianMockServer() {
-    }
+    private DianMockServer() {}
 
     public static void main(String[] args) {
         int port = Integer.parseInt(env("DIAN_MOCK_PORT", "8090"));
@@ -115,23 +113,37 @@ public final class DianMockServer {
             Thread.currentThread().interrupt();
         } catch (RuntimeException e) {
             log("internal error: " + e);
-            send(exchange, 500, "application/soap+xml; charset=utf-8", Soap.fault("s:Receiver",
-                    "a:InternalServiceFault", "DIAN mock internal error: " + e.getMessage()));
+            send(
+                    exchange,
+                    500,
+                    "application/soap+xml; charset=utf-8",
+                    Soap.fault("s:Receiver", "a:InternalServiceFault", "DIAN mock internal error: " + e.getMessage()));
         }
     }
 
     private static void control(HttpExchange exchange, MockDian dian, String method, URI uri) throws IOException {
         String path = uri.getPath();
         if ("GET".equals(method) && ("/__mock".equals(path) || "/__mock/".equals(path))) {
-            send(exchange, 200, "text/plain", "scenario: " + dian.scenario().label() + "\nlatency: "
-                    + dian.latency() + "\nreceived: " + dian.received().size() + "\n");
+            send(
+                    exchange,
+                    200,
+                    "text/plain",
+                    "scenario: " + dian.scenario().label() + "\nlatency: " + dian.latency() + "\nreceived: "
+                            + dian.received().size() + "\n");
         } else if ("POST".equals(method) && "/__mock/scenario".equals(path)) {
             String name = query(uri, "name");
             try {
                 dian.scenario(Scenario.parse(name == null ? "" : name));
             } catch (IllegalArgumentException e) {
-                send(exchange, 400, "text/plain", "unknown scenario '" + name + "', use one of: "
-                        + Arrays.stream(Scenario.values()).map(Scenario::label).collect(Collectors.joining(", ")) + "\n");
+                send(
+                        exchange,
+                        400,
+                        "text/plain",
+                        "unknown scenario '" + name + "', use one of: "
+                                + Arrays.stream(Scenario.values())
+                                        .map(Scenario::label)
+                                        .collect(Collectors.joining(", "))
+                                + "\n");
                 return;
             }
             log("scenario set to " + dian.scenario().label());
@@ -141,8 +153,11 @@ public final class DianMockServer {
             try {
                 dian.latency(Duration.parse(value == null ? "" : value));
             } catch (RuntimeException e) {
-                send(exchange, 400, "text/plain", "invalid latency '" + value + "', use an ISO-8601 duration such as"
-                        + " PT1.5S\n");
+                send(
+                        exchange,
+                        400,
+                        "text/plain",
+                        "invalid latency '" + value + "', use an ISO-8601 duration such as" + " PT1.5S\n");
                 return;
             }
             log("latency set to " + dian.latency());

@@ -1,14 +1,14 @@
 package com.cantte.cetus.signing;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 /**
  * Bounds the key derivations a PKCS#12 file asks for, before the JDK opens it.
@@ -68,7 +68,8 @@ final class Pkcs12Iterations {
                 Der encryptedContentInfo = contentInfo.child(1).child(0).child(1);
                 Der algorithm = encryptedContentInfo.child(1);
                 spend(iterations(algorithm));
-                safeContents(Der.parse(decrypt(algorithm, encryptedContentInfo.child(2).octets())));
+                safeContents(Der.parse(
+                        decrypt(algorithm, encryptedContentInfo.child(2).octets())));
             }
         }
     }
@@ -87,8 +88,8 @@ final class Pkcs12Iterations {
     private void spend(long iterations) {
         total += iterations;
         if (total > MAX_TOTAL) {
-            throw new SigningException("The PKCS#12 file asks for too many key derivations ("
-                    + total + "+ iterations; at most " + MAX_TOTAL + "): export it again with the default settings");
+            throw new SigningException("The PKCS#12 file asks for too many key derivations (" + total
+                    + "+ iterations; at most " + MAX_TOTAL + "): export it again with the default settings");
         }
     }
 
@@ -121,8 +122,10 @@ final class Pkcs12Iterations {
             parameters.init(algorithm.child(1).encoded());
             // PBES2 parameters name their cipher, e.g. PBEWithHmacSHA256AndAES_256.
             Cipher cipher = Cipher.getInstance(oid.equals(PBES2) ? parameters.toString() : oid);
-            cipher.init(Cipher.DECRYPT_MODE,
-                    SecretKeyFactory.getInstance("PBE").generateSecret(new PBEKeySpec(password)), parameters);
+            cipher.init(
+                    Cipher.DECRYPT_MODE,
+                    SecretKeyFactory.getInstance("PBE").generateSecret(new PBEKeySpec(password)),
+                    parameters);
             return cipher.doFinal(encrypted);
         } catch (SigningException e) {
             throw e;

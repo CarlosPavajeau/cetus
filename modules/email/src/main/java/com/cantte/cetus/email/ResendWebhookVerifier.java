@@ -3,7 +3,6 @@ package com.cantte.cetus.email;
 import com.resend.core.exception.ResendException;
 import com.resend.services.webhooks.Webhooks;
 import com.resend.services.webhooks.model.VerifyWebhookOptions;
-
 import java.util.Map;
 
 /**
@@ -31,7 +30,8 @@ public final class ResendWebhookVerifier {
         try {
             webhooks.verify(VerifyWebhookOptions.builder()
                     .payload(body)
-                    .addHeaders(Map.of("svix-id", svixId, "svix-timestamp", svixTimestamp, "svix-signature", svixSignature))
+                    .addHeaders(
+                            Map.of("svix-id", svixId, "svix-timestamp", svixTimestamp, "svix-signature", svixSignature))
                     .secret(secret)
                     .build());
             return true;

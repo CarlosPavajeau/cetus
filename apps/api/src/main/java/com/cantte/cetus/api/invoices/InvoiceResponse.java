@@ -7,13 +7,12 @@ import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record InvoiceResponse(
         @Schema(required = true) UUID id,
@@ -30,9 +29,13 @@ public record InvoiceResponse(
         @Schema(required = true) OffsetDateTime createdAt,
         @Schema(required = true) List<CreditNoteSummary> creditNotes,
         @Schema(required = true) List<DebitNoteSummary> debitNotes,
-        @Schema(required = true, description = "What credit notes can still take: the payable amount plus accepted "
-                + "debit notes, minus accepted or in-flight credit notes")
+
+        @Schema(
+                required = true,
+                description = "What credit notes can still take: the payable amount plus accepted "
+                        + "debit notes, minus accepted or in-flight credit notes")
         BigDecimal balance,
+
         @Schema(required = true, description = "Deliveries of the accepted invoice to the customer")
         List<DeliveryView> deliveries) {
 
@@ -40,15 +43,13 @@ public record InvoiceResponse(
             @Schema(required = true) BigDecimal lineExtension,
             @Schema(required = true) BigDecimal taxExclusive,
             @Schema(required = true) BigDecimal taxInclusive,
-            @Schema(required = true) BigDecimal payable) {
-    }
+            @Schema(required = true) BigDecimal payable) {}
 
     public record Dian(
             @Schema(required = true, nullable = true) String statusCode,
             @Schema(required = true, nullable = true) String statusMessage,
             @Schema(required = true) List<String> errors,
-            @Schema(required = true, nullable = true) OffsetDateTime validatedAt) {
-    }
+            @Schema(required = true, nullable = true) OffsetDateTime validatedAt) {}
 
     public record CreditNoteSummary(
             @Schema(required = true) UUID id,
@@ -59,8 +60,12 @@ public record InvoiceResponse(
 
         static List<CreditNoteSummary> of(UUID invoiceId) {
             return DocumentEntity.notesFor(invoiceId, DocumentType.CREDIT_NOTE).stream()
-                    .map(note -> new CreditNoteSummary(note.id, note.fullNumber(), note.status,
-                            (CreditNoteConcept) note.concept(), note.payableAmount))
+                    .map(note -> new CreditNoteSummary(
+                            note.id,
+                            note.fullNumber(),
+                            note.status,
+                            (CreditNoteConcept) note.concept(),
+                            note.payableAmount))
                     .toList();
         }
     }
@@ -74,15 +79,23 @@ public record InvoiceResponse(
 
         static List<DebitNoteSummary> of(UUID invoiceId) {
             return DocumentEntity.notesFor(invoiceId, DocumentType.DEBIT_NOTE).stream()
-                    .map(note -> new DebitNoteSummary(note.id, note.fullNumber(), note.status,
-                            (DebitNoteConcept) note.concept(), note.payableAmount))
+                    .map(note -> new DebitNoteSummary(
+                            note.id,
+                            note.fullNumber(),
+                            note.status,
+                            (DebitNoteConcept) note.concept(),
+                            note.payableAmount))
                     .toList();
         }
     }
 
     public static InvoiceResponse from(DocumentEntity doc) {
-        return of(doc, CreditNoteSummary.of(doc.id), DebitNoteSummary.of(doc.id),
-                DocumentEntity.creditableBalance(doc), DeliveryView.of(doc.id));
+        return of(
+                doc,
+                CreditNoteSummary.of(doc.id),
+                DebitNoteSummary.of(doc.id),
+                DocumentEntity.creditableBalance(doc),
+                DeliveryView.of(doc.id));
     }
 
     /**
@@ -93,9 +106,12 @@ public record InvoiceResponse(
         return of(doc, List.of(), List.of(), doc.payableAmount, List.of());
     }
 
-    private static InvoiceResponse of(DocumentEntity doc, List<CreditNoteSummary> creditNotes,
-                                      List<DebitNoteSummary> debitNotes, BigDecimal balance,
-                                      List<DeliveryView> deliveries) {
+    private static InvoiceResponse of(
+            DocumentEntity doc,
+            List<CreditNoteSummary> creditNotes,
+            List<DebitNoteSummary> debitNotes,
+            BigDecimal balance,
+            List<DeliveryView> deliveries) {
         return new InvoiceResponse(
                 doc.id,
                 doc.environment,

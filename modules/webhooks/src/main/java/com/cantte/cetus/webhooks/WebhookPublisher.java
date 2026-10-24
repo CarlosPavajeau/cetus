@@ -14,12 +14,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.hibernate.query.NativeQuery;
-
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import org.hibernate.query.NativeQuery;
 
 /**
  * Records an event of a document and enqueues one delivery per subscribed endpoint, in the caller's
@@ -29,13 +28,14 @@ import java.util.UUID;
 public class WebhookPublisher {
 
     /** What happened to the email delivery a {@code document.*} event reports. */
-    public record DeliveryInfo(String status, String recipient, String reason) {
-    }
+    public record DeliveryInfo(String status, String recipient, String reason) {}
 
     @Inject
     EntityManager em;
+
     @Inject
     JobQueue jobs;
+
     @Inject
     ObjectMapper mapper;
 
@@ -57,8 +57,7 @@ public class WebhookPublisher {
                         INSERT INTO billing.webhook_events (id, account_id, environment, type, document_id, payload)
                         VALUES (:id, :account, :environment, :type, :document, CAST(:payload AS json))
                         ON CONFLICT (document_id, type) DO NOTHING
-                        """)
-                .unwrap(NativeQuery.class);
+                        """).unwrap(NativeQuery.class);
         int inserted = insert.setParameter("id", eventId, UUID.class)
                 .setParameter("account", document.accountId, UUID.class)
                 .setParameter("environment", document.environment.name(), String.class)
@@ -69,8 +68,8 @@ public class WebhookPublisher {
         if (inserted == 0) {
             return;
         }
-        for (WebhookEndpointEntity endpoint : WebhookEndpointEntity.listSubscribed(document.accountId,
-                document.environment, type.wireName())) {
+        for (WebhookEndpointEntity endpoint :
+                WebhookEndpointEntity.listSubscribed(document.accountId, document.environment, type.wireName())) {
             WebhookDeliveryEntity created = new WebhookDeliveryEntity();
             created.id = Ids.newId();
             created.eventId = eventId;
@@ -95,7 +94,8 @@ public class WebhookPublisher {
         data.put("cufe", document.cufe);
         data.put("issueDate", document.issueDate == null ? null : document.issueDate.toString());
         data.put("externalReference", document.externalReference);
-        data.put("referencedInvoiceId",
+        data.put(
+                "referencedInvoiceId",
                 document.referencedDocumentId == null ? null : document.referencedDocumentId.toString());
         ObjectNode dian = data.putObject("dian");
         dian.put("statusCode", document.dianStatusCode);

@@ -1,21 +1,5 @@
 package com.cantte.cetus.api.console;
 
-import com.cantte.cetus.api.support.ConsoleFixtures.Onboarding;
-import com.cantte.cetus.api.support.ConsoleUser;
-import com.cantte.cetus.jobs.JobTypes;
-import com.cantte.cetus.persistence.entity.JobEntity;
-import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.path.json.JsonPath;
-import io.restassured.response.ValidatableResponse;
-import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import static com.cantte.cetus.api.support.ConsoleFixtures.CERTIFICATE_PASSWORD;
 import static com.cantte.cetus.api.support.ConsoleFixtures.PIN;
 import static com.cantte.cetus.api.support.ConsoleFixtures.SOFTWARE_ID;
@@ -28,6 +12,21 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
 import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+
+import com.cantte.cetus.api.support.ConsoleFixtures.Onboarding;
+import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.path.json.JsonPath;
+import io.restassured.response.ValidatableResponse;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
 
 /** The issuer detail, and the update that resumes the setup assistant and keeps the issuer in line with its RUT. */
 @QuarkusTest
@@ -58,8 +57,12 @@ class IssuerResourceTest {
         bootstrap(user, "Onboarded SAS");
         Onboarding onboarding = onboard(user);
 
-        String body = user.request().get("/console/issuers/" + onboarding.issuerId())
-                .then().statusCode(200).extract().asString();
+        String body = user.request()
+                .get("/console/issuers/" + onboarding.issuerId())
+                .then()
+                .statusCode(200)
+                .extract()
+                .asString();
         JsonPath detail = new JsonPath(body);
         assertThat(detail.getString("status")).isEqualTo("TESTING");
         assertThat(detail.getString("software.softwareId")).isEqualTo(SOFTWARE_ID);
@@ -81,8 +84,11 @@ class IssuerResourceTest {
         Map<String, Object> again = new HashMap<>(update("Acme SAS"));
         again.put("environment", "LIVE");
         again.put("nit", "900123456");
-        user.request().body(again).post("/console/issuers")
-                .then().statusCode(422)
+        user.request()
+                .body(again)
+                .post("/console/issuers")
+                .then()
+                .statusCode(422)
                 .body("code", equalTo("issuer_already_exists"));
     }
 
@@ -95,7 +101,11 @@ class IssuerResourceTest {
         bootstrap(other, "Other SAS");
 
         other.request().get("/console/issuers/" + issuerId).then().statusCode(404);
-        other.request().body(update("Intruder SAS")).put("/console/issuers/" + issuerId).then().statusCode(404);
+        other.request()
+                .body(update("Intruder SAS"))
+                .put("/console/issuers/" + issuerId)
+                .then()
+                .statusCode(404);
     }
 
     @Test
@@ -104,8 +114,11 @@ class IssuerResourceTest {
         bootstrap(user, "Update SAS");
         String issuerId = createIssuer(user);
 
-        user.request().body(update("Acme Colombia SAS")).put("/console/issuers/" + issuerId)
-                .then().statusCode(200)
+        user.request()
+                .body(update("Acme Colombia SAS"))
+                .put("/console/issuers/" + issuerId)
+                .then()
+                .statusCode(200)
                 .body("legalName", equalTo("Acme Colombia SAS"))
                 .body("nit", equalTo("900123456"))
                 .body("responsibleForIva", equalTo(false))
@@ -114,13 +127,16 @@ class IssuerResourceTest {
         List<Map<String, Object>> entries = AuditTrailTest.entries(user, "ISSUER_UPDATED");
         assertThat(entries).singleElement().satisfies(entry -> {
             assertThat(entry).containsEntry("resourceType", "issuer").containsEntry("resourceId", issuerId);
-            assertThat(AuditTrailTest.data(entry)).isEqualTo(Map.of(
-                    "fields", List.of("legalName", "taxLevelCodes", "responsibleForIva")));
+            assertThat(AuditTrailTest.data(entry))
+                    .isEqualTo(Map.of("fields", List.of("legalName", "taxLevelCodes", "responsibleForIva")));
         });
 
         // Saving the same data again changes nothing and audits nothing.
-        user.request().body(update("Acme Colombia SAS")).put("/console/issuers/" + issuerId)
-                .then().statusCode(200);
+        user.request()
+                .body(update("Acme Colombia SAS"))
+                .put("/console/issuers/" + issuerId)
+                .then()
+                .statusCode(200);
         assertThat(AuditTrailTest.entries(user, "ISSUER_UPDATED")).hasSize(1);
     }
 
@@ -130,8 +146,11 @@ class IssuerResourceTest {
         bootstrap(user, "Rut SAS");
         Onboarding onboarding = onboard(user);
 
-        user.request().body(update("Acme Colombia SAS")).put("/console/issuers/" + onboarding.issuerId())
-                .then().statusCode(200)
+        user.request()
+                .body(update("Acme Colombia SAS"))
+                .put("/console/issuers/" + onboarding.issuerId())
+                .then()
+                .statusCode(200)
                 .body("legalName", equalTo("Acme Colombia SAS"))
                 .body("status", equalTo("TESTING"))
                 .body("taxLevelCodes", equalTo(List.of("O-47")));
@@ -146,8 +165,11 @@ class IssuerResourceTest {
         Map<String, Object> naturalPerson = new HashMap<>(update("Changed SAS"));
         naturalPerson.put("personType", "NATURAL_PERSON");
 
-        user.request().body(naturalPerson).put("/console/issuers/" + onboarding.issuerId())
-                .then().statusCode(422)
+        user.request()
+                .body(naturalPerson)
+                .put("/console/issuers/" + onboarding.issuerId())
+                .then()
+                .statusCode(422)
                 .body("code", equalTo("person_type_locked"));
         assertThat(detail(user, onboarding.issuerId()).getString("legalName")).isNotEqualTo("Changed SAS");
     }
@@ -165,16 +187,21 @@ class IssuerResourceTest {
         String notes = addCreditNoteRange(user, issuerId);
 
         JsonPath detail = detail(user, issuerId);
-        assertThat(detail.getString("ranges.find { it.id == '%s' }.verificationStatus".formatted(early))).isEqualTo("PENDING");
-        assertThat(detail.getString("ranges.find { it.id == '%s' }.verificationStatus".formatted(onboarding.rangeId()))).isEqualTo("PENDING");
-        assertThat(detail.getString("ranges.find { it.id == '%s' }.verificationStatus".formatted(notes))).isNull();
+        assertThat(detail.getString("ranges.find { it.id == '%s' }.verificationStatus".formatted(early)))
+                .isEqualTo("PENDING");
+        assertThat(detail.getString("ranges.find { it.id == '%s' }.verificationStatus".formatted(onboarding.rangeId())))
+                .isEqualTo("PENDING");
+        assertThat(detail.getString("ranges.find { it.id == '%s' }.verificationStatus".formatted(notes)))
+                .isNull();
         assertThat(verificationJobs(early)).isEqualTo(1);
 
         // Asking again while it is pending does not queue a second job; once checked it does.
         verify(user, issuerId, early).statusCode(200).body("verificationStatus", equalTo("PENDING"));
         assertThat(verificationJobs(early)).isEqualTo(1);
-        QuarkusTransaction.requiringNew().run(() -> NumberingRangeEntity.<NumberingRangeEntity>findById(UUID.fromString(early))
-                .verificationStatus = NumberingRangeEntity.VerificationStatus.MISMATCH);
+        QuarkusTransaction.requiringNew()
+                .run(() ->
+                        NumberingRangeEntity.<NumberingRangeEntity>findById(UUID.fromString(early)).verificationStatus =
+                                NumberingRangeEntity.VerificationStatus.MISMATCH);
         verify(user, issuerId, early).statusCode(200).body("verificationStatus", equalTo("PENDING"));
         assertThat(verificationJobs(early)).isEqualTo(2);
 
@@ -188,32 +215,67 @@ class IssuerResourceTest {
         Onboarding onboarding = onboard(user);
 
         // The shared test range (SETP) is not registered per NIT: GetNumberingRange always answers 301.
-        assertThat(detail(user, onboarding.issuerId()).getString("ranges[0].verificationStatus")).isNull();
+        assertThat(detail(user, onboarding.issuerId()).getString("ranges[0].verificationStatus"))
+                .isNull();
         assertThat(verificationJobs(onboarding.rangeId())).isZero();
-        verify(user, onboarding.issuerId(), onboarding.rangeId()).statusCode(422)
+        verify(user, onboarding.issuerId(), onboarding.rangeId())
+                .statusCode(422)
                 .body("code", equalTo("range_not_verifiable"));
     }
 
     private static ValidatableResponse verify(ConsoleUser user, String issuerId, String rangeId) {
-        return user.request().post("/console/issuers/%s/numbering-ranges/%s/verification".formatted(issuerId, rangeId)).then();
+        return user.request()
+                .post("/console/issuers/%s/numbering-ranges/%s/verification".formatted(issuerId, rangeId))
+                .then();
     }
 
     private static long verificationJobs(String rangeId) {
-        return QuarkusTransaction.requiringNew().call(() ->
-                JobEntity.count("jobType = ?1 and referenceId = ?2", JobTypes.VERIFY_NUMBERING_RANGE, UUID.fromString(rangeId)));
+        return QuarkusTransaction.requiringNew()
+                .call(() -> JobEntity.count(
+                        "jobType = ?1 and referenceId = ?2",
+                        JobTypes.VERIFY_NUMBERING_RANGE,
+                        UUID.fromString(rangeId)));
     }
 
     private static JsonPath detail(ConsoleUser user, String issuerId) {
-        return user.request().get("/console/issuers/" + issuerId).then().statusCode(200).extract().jsonPath();
+        return user.request()
+                .get("/console/issuers/" + issuerId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
     }
 
     private static Map<String, Object> update(String legalName) {
         Map<String, Object> address = Map.of(
-                "municipalityCode", "11001", "cityName", "Bogotá", "departmentCode", "11",
-                "departmentName", "Bogotá", "postalCode", "110111", "line", "Calle 1 # 2-3",
-                "countryCode", "CO", "countryName", "Colombia");
+                "municipalityCode",
+                "11001",
+                "cityName",
+                "Bogotá",
+                "departmentCode",
+                "11",
+                "departmentName",
+                "Bogotá",
+                "postalCode",
+                "110111",
+                "line",
+                "Calle 1 # 2-3",
+                "countryCode",
+                "CO",
+                "countryName",
+                "Colombia");
         return Map.of(
-                "legalName", legalName, "personType", "LEGAL_ENTITY", "taxLevelCodes", List.of("O-47"),
-                "responsibleForIva", false, "address", address, "email", "facturas@acme.test");
+                "legalName",
+                legalName,
+                "personType",
+                "LEGAL_ENTITY",
+                "taxLevelCodes",
+                List.of("O-47"),
+                "responsibleForIva",
+                false,
+                "address",
+                address,
+                "email",
+                "facturas@acme.test");
     }
 }

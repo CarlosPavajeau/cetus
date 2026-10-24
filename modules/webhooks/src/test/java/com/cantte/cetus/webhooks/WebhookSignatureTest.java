@@ -1,11 +1,10 @@
 package com.cantte.cetus.webhooks;
 
-import com.cantte.cetus.email.ResendWebhookVerifier;
-import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import com.cantte.cetus.email.ResendWebhookVerifier;
+import java.time.Instant;
+import org.junit.jupiter.api.Test;
 
 class WebhookSignatureTest {
 
@@ -26,34 +25,42 @@ class WebhookSignatureTest {
     void verifiesItsOwnSignature() {
         String signature = WebhookSignature.sign(secret, "evt_1", now.getEpochSecond(), BODY);
         assertThat(signature).startsWith("v1,");
-        assertThat(WebhookSignature.verify(secret, "evt_1", timestamp, signature, BODY, now)).isTrue();
+        assertThat(WebhookSignature.verify(secret, "evt_1", timestamp, signature, BODY, now))
+                .isTrue();
     }
 
     @Test
     void rejectsATamperedBodyAnotherIdOrAnotherSecret() {
         String signature = WebhookSignature.sign(secret, "evt_1", now.getEpochSecond(), BODY);
-        assertThat(WebhookSignature.verify(secret, "evt_1", timestamp, signature, BODY.replace("accepted", "rejected"), now)).isFalse();
-        assertThat(WebhookSignature.verify(secret, "evt_2", timestamp, signature, BODY, now)).isFalse();
-        assertThat(WebhookSignature.verify(WebhookSignature.newSecret(), "evt_1", timestamp, signature, BODY, now)).isFalse();
+        assertThat(WebhookSignature.verify(
+                        secret, "evt_1", timestamp, signature, BODY.replace("accepted", "rejected"), now))
+                .isFalse();
+        assertThat(WebhookSignature.verify(secret, "evt_2", timestamp, signature, BODY, now))
+                .isFalse();
+        assertThat(WebhookSignature.verify(WebhookSignature.newSecret(), "evt_1", timestamp, signature, BODY, now))
+                .isFalse();
     }
 
     @Test
     void rejectsAReplayedTimestamp() {
         long old = now.minusSeconds(600).getEpochSecond();
         String signature = WebhookSignature.sign(secret, "evt_1", old, BODY);
-        assertThat(WebhookSignature.verify(secret, "evt_1", Long.toString(old), signature, BODY, now)).isFalse();
+        assertThat(WebhookSignature.verify(secret, "evt_1", Long.toString(old), signature, BODY, now))
+                .isFalse();
     }
 
     @Test
     void acceptsAnyOfSeveralSignaturesDuringARotation() {
         String header = "v1,bm90LXRoaXMtb25l " + WebhookSignature.sign(secret, "evt_1", now.getEpochSecond(), BODY);
-        assertThat(WebhookSignature.verify(secret, "evt_1", timestamp, header, BODY, now)).isTrue();
+        assertThat(WebhookSignature.verify(secret, "evt_1", timestamp, header, BODY, now))
+                .isTrue();
     }
 
     /** Svix implements the same scheme, so any Standard Webhooks verifier accepts our signatures. */
     @Test
     void interoperatesWithTheSvixVerifier() {
         String signature = WebhookSignature.sign(secret, "evt_1", now.getEpochSecond(), BODY);
-        assertThat(new ResendWebhookVerifier(secret).verify("evt_1", timestamp, signature, BODY)).isTrue();
+        assertThat(new ResendWebhookVerifier(secret).verify("evt_1", timestamp, signature, BODY))
+                .isTrue();
     }
 }

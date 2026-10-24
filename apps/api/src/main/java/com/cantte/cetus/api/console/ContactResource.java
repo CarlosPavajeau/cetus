@@ -23,16 +23,15 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
  * Who receives the account's notices, per category. A new address only replaces the current one once it
@@ -41,20 +40,32 @@ import java.util.UUID;
  */
 @Path("/console/contacts")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "400",
+        description = "Bad Request",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "422",
+        description = "Unprocessable Entity",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class ContactResource {
 
     @Inject
     ConsoleContext context;
+
     @Inject
     AccountContacts contacts;
+
     @Inject
     AuditLog auditLog;
+
     @Inject
     RequestOriginResolver origin;
 
@@ -62,7 +73,9 @@ public class ContactResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public List<ContactView> list() {
-        return AccountContactEntity.listByAccount(context.account().id).stream().map(ContactView::from).toList();
+        return AccountContactEntity.listByAccount(context.account().id).stream()
+                .map(ContactView::from)
+                .toList();
     }
 
     /** Asks to move the category to a new address; the same address as now cancels a pending change. */
@@ -148,25 +161,37 @@ public class ContactResource {
     }
 
     private void audit(AccountContactEntity contact, AuditAction action, Map<String, Object> data) {
-        auditLog.record(contact.accountId, context.actor(), origin.resolve(), action, "account_contact", contact.id, data);
+        auditLog.record(
+                contact.accountId, context.actor(), origin.resolve(), action, "account_contact", contact.id, data);
     }
 
-    public record ChangeContactRequest(@NotBlank @Email @Size(max = 254) String email) {
-    }
+    public record ChangeContactRequest(
+            @NotBlank @Email @Size(max = 254) String email) {}
 
     public record ContactView(
             @Schema(required = true) UUID id,
             @Schema(required = true) Category category,
-            @Schema(required = true, nullable = true,
+
+            @Schema(
+                    required = true,
+                    nullable = true,
                     description = "The verified address that receives the notices; null until one is verified")
             String email,
+
             @Schema(required = true, nullable = true) OffsetDateTime verifiedAt,
+
             @Schema(required = true, nullable = true, description = "A new address waiting for its verification")
             String pendingEmail,
+
             @Schema(required = true, nullable = true) OffsetDateTime pendingRequestedAt) {
         static ContactView from(AccountContactEntity contact) {
-            return new ContactView(contact.id, contact.category, contact.email, contact.verifiedAt,
-                    contact.pendingEmail, contact.pendingEmail == null ? null : contact.pendingRequestedAt);
+            return new ContactView(
+                    contact.id,
+                    contact.category,
+                    contact.email,
+                    contact.verifiedAt,
+                    contact.pendingEmail,
+                    contact.pendingEmail == null ? null : contact.pendingRequestedAt);
         }
     }
 }

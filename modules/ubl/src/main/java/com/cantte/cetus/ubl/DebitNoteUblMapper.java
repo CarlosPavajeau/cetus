@@ -32,7 +32,8 @@ public final class DebitNoteUblMapper {
         ubl.issueDate = DianTime.date(note.issueDate());
         ubl.issueTime = DianTime.time(note.issueTime());
         // The issuer's reason travels as a note: DBF04 expects the concept's own name in the Description.
-        if (note.correctionDescription() != null && !note.correctionDescription().isBlank()) {
+        if (note.correctionDescription() != null
+                && !note.correctionDescription().isBlank()) {
             ubl.notes.add(note.correctionDescription());
         }
         ubl.notes.addAll(note.notes());

@@ -8,8 +8,7 @@ public final class Amounts {
 
     public static final int SCALE = 2;
 
-    private Amounts() {
-    }
+    private Amounts() {}
 
     public static BigDecimal round(BigDecimal value) {
         return value.setScale(SCALE, RoundingMode.HALF_UP);

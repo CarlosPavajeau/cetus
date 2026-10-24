@@ -1,22 +1,11 @@
 package com.cantte.cetus.ubl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXParseException;
-
-import javax.xml.XMLConstants;
-import javax.xml.transform.Source;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -30,9 +19,19 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXParseException;
 
 /**
  * Validates the generated UBL against the XSDs of the DIAN toolbox (src/main/xsd).
@@ -71,14 +70,17 @@ class UblSchemaValidationTest {
         Document document = sampleDocument();
         try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
             var keys = Pkcs12Loader.load(in.readAllBytes(), "cetus-test".toCharArray());
-            new XadesSigner().sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+            new XadesSigner()
+                    .sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         }
         byte[] xml = XmlSupport.serialize(document);
         Files.createDirectories(OUTPUT);
         Files.write(OUTPUT.resolve("sample-invoice-signed.xml"), xml);
 
         List<String> errors = validate(invoiceXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
-        assertThat(errors).as("XSD errors, see build/ubl/sample-invoice-signed.xml").isEmpty();
+        assertThat(errors)
+                .as("XSD errors, see build/ubl/sample-invoice-signed.xml")
+                .isEmpty();
     }
 
     @Test
@@ -91,7 +93,9 @@ class UblSchemaValidationTest {
         Files.write(OUTPUT.resolve("sample-credit-note.xml"), xml);
 
         List<String> errors = validate(creditNoteXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
-        assertThat(errors).as("XSD errors, see build/ubl/sample-credit-note.xml").isEmpty();
+        assertThat(errors)
+                .as("XSD errors, see build/ubl/sample-credit-note.xml")
+                .isEmpty();
     }
 
     @Test
@@ -102,14 +106,17 @@ class UblSchemaValidationTest {
         Document document = sampleCreditNoteDocument();
         try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
             var keys = Pkcs12Loader.load(in.readAllBytes(), "cetus-test".toCharArray());
-            new XadesSigner().sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+            new XadesSigner()
+                    .sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         }
         byte[] xml = XmlSupport.serialize(document);
         Files.createDirectories(OUTPUT);
         Files.write(OUTPUT.resolve("sample-credit-note-signed.xml"), xml);
 
         List<String> errors = validate(creditNoteXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
-        assertThat(errors).as("XSD errors, see build/ubl/sample-credit-note-signed.xml").isEmpty();
+        assertThat(errors)
+                .as("XSD errors, see build/ubl/sample-credit-note-signed.xml")
+                .isEmpty();
     }
 
     @Test
@@ -120,14 +127,17 @@ class UblSchemaValidationTest {
         Document document = sampleDebitNoteDocument();
         try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
             var keys = Pkcs12Loader.load(in.readAllBytes(), "cetus-test".toCharArray());
-            new XadesSigner().sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+            new XadesSigner()
+                    .sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         }
         byte[] xml = XmlSupport.serialize(document);
         Files.createDirectories(OUTPUT);
         Files.write(OUTPUT.resolve("sample-debit-note-signed.xml"), xml);
 
         List<String> errors = validate(debitNoteXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
-        assertThat(errors).as("XSD errors, see build/ubl/sample-debit-note-signed.xml").isEmpty();
+        assertThat(errors)
+                .as("XSD errors, see build/ubl/sample-debit-note-signed.xml")
+                .isEmpty();
     }
 
     /** The container is only valid once signed: its single UBLExtension is the signature slot. */
@@ -139,14 +149,17 @@ class UblSchemaValidationTest {
         Document document = AttachedDocumentMapperTest.sampleDocument();
         try (var in = getClass().getResourceAsStream("/test-signer.p12")) {
             var keys = Pkcs12Loader.load(in.readAllBytes(), "cetus-test".toCharArray());
-            new XadesSigner().sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
+            new XadesSigner()
+                    .sign(document, UblMarshaller.signatureSlot(document), keys, XadesSigner.SignerRole.SUPPLIER);
         }
         byte[] xml = XmlSupport.serialize(document);
         Files.createDirectories(OUTPUT);
         Files.write(OUTPUT.resolve("sample-attached-document-signed.xml"), xml);
 
         List<String> errors = validate(attachedXsd.get(), new StreamSource(new ByteArrayInputStream(xml)));
-        assertThat(errors).as("XSD errors, see build/ubl/sample-attached-document-signed.xml").isEmpty();
+        assertThat(errors)
+                .as("XSD errors, see build/ubl/sample-attached-document-signed.xml")
+                .isEmpty();
     }
 
     /** Credit notes carry no InvoiceControl; the DIAN schema must accept the extensions without it. */
@@ -155,9 +168,13 @@ class UblSchemaValidationTest {
         Optional<Path> dianXsd = findByTargetNamespace(STS_NAMESPACE);
         assumeTrue(dianXsd.isPresent(), "No XSD with the DIAN structures namespace in src/main/xsd");
 
-        Node extensions = sampleCreditNoteDocument().getElementsByTagNameNS(STS_NAMESPACE, "DianExtensions").item(0);
+        Node extensions = sampleCreditNoteDocument()
+                .getElementsByTagNameNS(STS_NAMESPACE, "DianExtensions")
+                .item(0);
         List<String> errors = withoutKnownCoId2Deviations(validate(dianXsd.get(), new DOMSource(extensions)));
-        assertThat(errors).as("XSD errors in the credit note sts:DianExtensions").isEmpty();
+        assertThat(errors)
+                .as("XSD errors in the credit note sts:DianExtensions")
+                .isEmpty();
     }
 
     /**
@@ -170,7 +187,8 @@ class UblSchemaValidationTest {
         assumeTrue(dianXsd.isPresent(), "No XSD with the DIAN structures namespace in src/main/xsd");
 
         Document document = sampleDocument();
-        Node extensions = document.getElementsByTagNameNS(STS_NAMESPACE, "DianExtensions").item(0);
+        Node extensions =
+                document.getElementsByTagNameNS(STS_NAMESPACE, "DianExtensions").item(0);
         assertThat(extensions).as("sts:DianExtensions element").isNotNull();
 
         List<String> errors = withoutKnownCoId2Deviations(validate(dianXsd.get(), new DOMSource(extensions)));
@@ -186,11 +204,13 @@ class UblSchemaValidationTest {
     void providerIdsCarryTheCheckDigitAsInTheDianExamples() {
         Document document = sampleDocument();
 
-        Element provider = (Element) document.getElementsByTagNameNS(STS_NAMESPACE, "ProviderID").item(0);
+        Element provider = (Element)
+                document.getElementsByTagNameNS(STS_NAMESPACE, "ProviderID").item(0);
         assertThat(provider.getAttribute("schemeID")).isEqualTo("8");
         assertThat(provider.getAttribute("schemeName")).isEqualTo("31");
 
-        Element dian = (Element) document.getElementsByTagNameNS(STS_NAMESPACE, "AuthorizationProviderID").item(0);
+        Element dian = (Element) document.getElementsByTagNameNS(STS_NAMESPACE, "AuthorizationProviderID")
+                .item(0);
         assertThat(dian.getTextContent()).isEqualTo("800197268");
         assertThat(dian.getAttribute("schemeID")).isEqualTo("4");
         assertThat(dian.getAttribute("schemeName")).isEqualTo("31");
@@ -211,8 +231,11 @@ class UblSchemaValidationTest {
         for (String error : errors) {
             Optional<String> digit = quotedDigit(error);
             boolean providerId = error.contains("'sts:ProviderID'") || error.contains("'sts:AuthorizationProviderID'");
-            if (error.startsWith("cvc-attribute.3") && providerId && error.contains("'schemeID'")
-                    && error.contains("'#AnonType_schemeIDcoID2Type'") && digit.isPresent()) {
+            if (error.startsWith("cvc-attribute.3")
+                    && providerId
+                    && error.contains("'schemeID'")
+                    && error.contains("'#AnonType_schemeIDcoID2Type'")
+                    && digit.isPresent()) {
                 checkDigits.add(digit.get());
             } else {
                 kept.add(error);
@@ -234,7 +257,8 @@ class UblSchemaValidationTest {
     }
 
     private static Document sampleCreditNoteDocument() {
-        return new UblMarshaller().toDocument(new CreditNoteUblMapper().map(CreditNoteUblMapperTest.sampleCreditNote()));
+        return new UblMarshaller()
+                .toDocument(new CreditNoteUblMapper().map(CreditNoteUblMapperTest.sampleCreditNote()));
     }
 
     private static Document sampleDebitNoteDocument() {
@@ -252,8 +276,7 @@ class UblSchemaValidationTest {
         List<String> errors = new ArrayList<>();
         validator.setErrorHandler(new ErrorHandler() {
             @Override
-            public void warning(SAXParseException e) {
-            }
+            public void warning(SAXParseException e) {}
 
             @Override
             public void error(SAXParseException e) {
@@ -278,7 +301,8 @@ class UblSchemaValidationTest {
             return Optional.empty();
         }
         try (Stream<Path> files = Files.walk(XSD_ROOT)) {
-            return files.filter(path -> path.getFileName().toString().equals(fileName)).findFirst();
+            return files.filter(path -> path.getFileName().toString().equals(fileName))
+                    .findFirst();
         }
     }
 
@@ -288,8 +312,8 @@ class UblSchemaValidationTest {
         }
         try (Stream<Path> files = Files.walk(XSD_ROOT)) {
             return files.filter(path -> path.toString().endsWith(".xsd"))
-                .filter(path -> declaresTargetNamespace(path, namespace))
-                .findFirst();
+                    .filter(path -> declaresTargetNamespace(path, namespace))
+                    .findFirst();
         }
     }
 

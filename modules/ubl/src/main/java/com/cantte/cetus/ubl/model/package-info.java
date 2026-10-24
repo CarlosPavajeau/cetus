@@ -7,13 +7,13 @@
 @XmlSchema(
         elementFormDefault = XmlNsForm.QUALIFIED,
         xmlns = {
-                @XmlNs(prefix = "", namespaceURI = Ns.INVOICE),
-                @XmlNs(prefix = "cac", namespaceURI = Ns.CAC),
-                @XmlNs(prefix = "cbc", namespaceURI = Ns.CBC),
-                @XmlNs(prefix = "ext", namespaceURI = Ns.EXT),
-                @XmlNs(prefix = "sts", namespaceURI = Ns.STS),
-                @XmlNs(prefix = "ds", namespaceURI = Ns.DS),
-                @XmlNs(prefix = "xades", namespaceURI = Ns.XADES)
+            @XmlNs(prefix = "", namespaceURI = Ns.INVOICE),
+            @XmlNs(prefix = "cac", namespaceURI = Ns.CAC),
+            @XmlNs(prefix = "cbc", namespaceURI = Ns.CBC),
+            @XmlNs(prefix = "ext", namespaceURI = Ns.EXT),
+            @XmlNs(prefix = "sts", namespaceURI = Ns.STS),
+            @XmlNs(prefix = "ds", namespaceURI = Ns.DS),
+            @XmlNs(prefix = "xades", namespaceURI = Ns.XADES)
         })
 @XmlAccessorType(XmlAccessType.FIELD)
 package com.cantte.cetus.ubl.model;

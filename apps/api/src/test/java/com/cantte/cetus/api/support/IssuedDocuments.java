@@ -1,5 +1,7 @@
 package com.cantte.cetus.api.support;
 
+import static io.restassured.RestAssured.given;
+
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
@@ -8,21 +10,16 @@ import com.cantte.cetus.persistence.entity.DocumentEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static io.restassured.RestAssured.given;
-
 /** A TEST issuer with an API key, and invoices left as the worker leaves them once accepted and delivered. */
 public final class IssuedDocuments {
 
-    private IssuedDocuments() {
-    }
+    private IssuedDocuments() {}
 
-    public record Issuer(String id, String apiKey) {
-    }
+    public record Issuer(String id, String apiKey) {}
 
     public static Issuer issuer(String name) {
         return issuer(ConsoleUser.newOrganization(), name);
@@ -32,9 +29,13 @@ public final class IssuedDocuments {
     public static Issuer issuer(ConsoleUser user, String name) {
         ConsoleFixtures.bootstrap(user, name);
         String issuerId = ConsoleFixtures.onboard(user).issuerId();
-        String key = user.request().body(Map.of("name", "ERP", "environment", "TEST"))
+        String key = user.request()
+                .body(Map.of("name", "ERP", "environment", "TEST"))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
         return new Issuer(issuerId, key);
     }
 
@@ -42,23 +43,39 @@ public final class IssuedDocuments {
     public static UUID invoice(Issuer issuer) {
         Map<String, Object> invoice = Map.of(
                 "issuerId", issuer.id(),
-                "customer", Map.of(
-                        "personType", "NATURAL_PERSON",
-                        "identificationType", "CITIZEN_ID",
-                        "identificationNumber", "1020304050",
-                        "legalName", "Consumidor Final"),
+                "customer",
+                        Map.of(
+                                "personType", "NATURAL_PERSON",
+                                "identificationType", "CITIZEN_ID",
+                                "identificationNumber", "1020304050",
+                                "legalName", "Consumidor Final"),
                 "payment", Map.of("method", "CASH", "meansCode", "10"),
-                "lines", List.of(Map.of("itemCode", "SERV-1", "description", "Servicio", "quantity", 1, "unitPrice", 100000,
-                        "taxes", List.of(Map.of("type", "IVA", "percent", 19)))));
-        String id = api(issuer.apiKey()).header("Idempotency-Key", UUID.randomUUID().toString()).body(invoice)
+                "lines",
+                        List.of(Map.of(
+                                "itemCode",
+                                "SERV-1",
+                                "description",
+                                "Servicio",
+                                "quantity",
+                                1,
+                                "unitPrice",
+                                100000,
+                                "taxes",
+                                List.of(Map.of("type", "IVA", "percent", 19)))));
+        String id = api(issuer.apiKey())
+                .header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoice)
                 .post("/v1/invoices")
-                .then().statusCode(202).extract().path("id");
+                .then()
+                .statusCode(202)
+                .extract()
+                .path("id");
         return UUID.fromString(id);
     }
 
     public static void accept(UUID documentId) {
-        QuarkusTransaction.requiringNew().run(() ->
-                DocumentEntity.<DocumentEntity>findById(documentId).status = DocumentStatus.ACCEPTED);
+        QuarkusTransaction.requiringNew()
+                .run(() -> DocumentEntity.<DocumentEntity>findById(documentId).status = DocumentStatus.ACCEPTED);
     }
 
     /** Records an artifact as the worker does; the file itself lives in the fake S3 under this key. */

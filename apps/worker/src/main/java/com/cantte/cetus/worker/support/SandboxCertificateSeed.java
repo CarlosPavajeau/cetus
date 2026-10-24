@@ -6,15 +6,14 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 /**
  * Local runs only (development and the console's CI): LocalStack starts empty, so at startup the sandbox
@@ -28,15 +27,19 @@ public class SandboxCertificateSeed {
 
     @Inject
     DocumentStorage storage;
+
     @Inject
     SecretCipher cipher;
 
     @ConfigProperty(name = "cetus.sandbox.certificate.s3-key")
     String certificateKey;
+
     @ConfigProperty(name = "cetus.sandbox.certificate.password-s3-key")
     String passwordKey;
+
     @ConfigProperty(name = "cetus.sandbox.certificate.seed-file")
     Optional<Path> seedFile;
+
     @ConfigProperty(name = "cetus.sandbox.certificate.seed-password")
     Optional<String> seedPassword;
 

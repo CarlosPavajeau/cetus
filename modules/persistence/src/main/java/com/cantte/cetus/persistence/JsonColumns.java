@@ -6,12 +6,11 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.quarkus.hibernate.orm.JsonFormat;
 import io.quarkus.hibernate.orm.PersistenceUnitExtension;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.io.IOException;
 import org.hibernate.type.descriptor.WrapperOptions;
 import org.hibernate.type.descriptor.java.JavaType;
 import org.hibernate.type.format.FormatMapper;
 import org.hibernate.type.format.jackson.JacksonJsonFormatMapper;
-
-import java.io.IOException;
 
 /**
  * How the JSON columns are written and read. Not the REST {@code ObjectMapper}: its customizations (SafeStrings)

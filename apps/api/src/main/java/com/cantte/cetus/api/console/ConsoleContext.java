@@ -7,12 +7,11 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonString;
-import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
  * Identity of a console request. The JWT is minted by Better Auth in the console server;
@@ -38,7 +37,9 @@ public class ConsoleContext {
     public Set<String> organizationRoles() {
         Object roles = jwt.getClaim("orgRoles");
         if (roles instanceof JsonArray array) {
-            return array.stream().filter(JsonString.class::isInstance).map(value -> ((JsonString) value).getString())
+            return array.stream()
+                    .filter(JsonString.class::isInstance)
+                    .map(value -> ((JsonString) value).getString())
                     .collect(Collectors.toUnmodifiableSet());
         }
         if (roles instanceof Collection<?> values) {
@@ -59,7 +60,8 @@ public class ConsoleContext {
 
     /** The signed-in console user as the actor of an audited action. */
     public Actor actor() {
-        return new Actor(Actor.ActorType.USER, jwt.getSubject(), impersonatedBy().orElse(null));
+        return new Actor(
+                Actor.ActorType.USER, jwt.getSubject(), impersonatedBy().orElse(null));
     }
 
     /** A member of the Cetus team acting from the administration (the caller holds a platform role). */
@@ -77,7 +79,7 @@ public class ConsoleContext {
 
     public AccountEntity account() {
         return AccountEntity.findByOrganization(organizationId())
-                .orElseThrow(() -> new DomainException("account_not_found",
-                        "The organization has no Cetus account yet"));
+                .orElseThrow(
+                        () -> new DomainException("account_not_found", "The organization has no Cetus account yet"));
     }
 }

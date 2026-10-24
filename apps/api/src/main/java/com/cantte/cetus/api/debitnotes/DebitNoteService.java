@@ -14,7 +14,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -37,7 +36,8 @@ public class DebitNoteService {
                 .filter(doc -> doc.documentType == DocumentType.INVOICE)
                 .orElseThrow(() -> new NotFoundException("Invoice not found"));
         if (invoice.status != DocumentStatus.ACCEPTED) {
-            throw new DomainException("invoice_not_accepted",
+            throw new DomainException(
+                    "invoice_not_accepted",
                     "Only invoices accepted by the DIAN can be debited; this one is " + invoice.status);
         }
         IssuerEntity issuer = IssuerEntity.findById(invoice.issuerId);

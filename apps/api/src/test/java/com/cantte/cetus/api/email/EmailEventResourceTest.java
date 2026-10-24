@@ -1,5 +1,10 @@
 package com.cantte.cetus.api.email;
 
+import static com.cantte.cetus.api.support.IssuedDocuments.api;
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.api.support.IssuedDocuments.Issuer;
@@ -10,20 +15,14 @@ import com.cantte.cetus.persistence.entity.WebhookEventEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.Test;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import static com.cantte.cetus.api.support.IssuedDocuments.api;
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.junit.jupiter.api.Test;
 
 /** Resend delivery events, signed like Svix does with the test-only secret of application.properties. */
 @QuarkusTest
@@ -43,7 +42,10 @@ class EmailEventResourceTest {
         DocumentDeliveryEntity delivery = IssuedDocuments.delivery(deliveryId);
         assertThat(delivery.status).isEqualTo(Status.DELIVERED);
         assertThat(delivery.lastEventAt).isNotNull();
-        api(issuer.apiKey()).get("/v1/invoices/" + invoice).then().statusCode(200)
+        api(issuer.apiKey())
+                .get("/v1/invoices/" + invoice)
+                .then()
+                .statusCode(200)
                 .body("deliveries[0].status", equalTo("DELIVERED"))
                 .body("deliveries[0].recipient", equalTo("cliente@example.com"))
                 .body("deliveries[0].channel", equalTo("EMAIL"));
@@ -56,8 +58,12 @@ class EmailEventResourceTest {
         String emailId = "email-" + UUID.randomUUID();
         UUID deliveryId = IssuedDocuments.sentDelivery(invoice, emailId);
 
-        post(event("email.bounced", emailId, ",\"bounce\":{\"message\":\"Mailbox does not exist\",\"type\":\"Permanent\"}"))
-                .then().statusCode(200);
+        post(event(
+                        "email.bounced",
+                        emailId,
+                        ",\"bounce\":{\"message\":\"Mailbox does not exist\",\"type\":\"Permanent\"}"))
+                .then()
+                .statusCode(200);
         post(event("email.delivered", emailId, "")).then().statusCode(200);
 
         DocumentDeliveryEntity delivery = IssuedDocuments.delivery(deliveryId);
@@ -80,8 +86,11 @@ class EmailEventResourceTest {
     void deliveryOutcomesArePublishedOnceToWebhooks() {
         ConsoleUser user = ConsoleUser.newOrganization();
         Issuer issuer = IssuedDocuments.issuer(user, "Webhooks SAS");
-        user.request().body(Map.of("url", "https://hooks.example.com", "environment", "TEST"))
-                .post("/console/webhook-endpoints").then().statusCode(200);
+        user.request()
+                .body(Map.of("url", "https://hooks.example.com", "environment", "TEST"))
+                .post("/console/webhook-endpoints")
+                .then()
+                .statusCode(200);
         UUID delivered = IssuedDocuments.invoice(issuer);
         String deliveredEmail = "email-" + UUID.randomUUID();
         IssuedDocuments.sentDelivery(delivered, deliveredEmail);
@@ -91,15 +100,21 @@ class EmailEventResourceTest {
 
         post(event("email.delivered", deliveredEmail, "")).then().statusCode(200);
         post(event("email.delivered", deliveredEmail, "")).then().statusCode(200);
-        post(event("email.bounced", bouncedEmail, ",\"bounce\":{\"message\":\"Mailbox full\"}")).then().statusCode(200);
+        post(event("email.bounced", bouncedEmail, ",\"bounce\":{\"message\":\"Mailbox full\"}"))
+                .then()
+                .statusCode(200);
 
         assertThat(eventTypes(delivered)).containsExactly("document.delivered");
         assertThat(eventTypes(bounced)).containsExactly("document.delivery_failed");
-        String payload = QuarkusTransaction.requiringNew().call(() ->
-                WebhookEventEntity.<WebhookEventEntity>find("documentId", bounced).singleResult().payload);
+        String payload = QuarkusTransaction.requiringNew()
+                .call(() -> WebhookEventEntity.<WebhookEventEntity>find("documentId", bounced)
+                        .singleResult()
+                        .payload);
         assertThat(payload).contains("\"status\":\"BOUNCED\"").contains("Mailbox full");
-        assertThat(QuarkusTransaction.requiringNew().call(() -> WebhookDeliveryEntity.count(
-                "eventId in (select e.id from WebhookEventEntity e where e.documentId in ?1)", List.of(delivered, bounced))))
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() -> WebhookDeliveryEntity.count(
+                                "eventId in (select e.id from WebhookEventEntity e where e.documentId in ?1)",
+                                List.of(delivered, bounced))))
                 .isEqualTo(2);
     }
 
@@ -117,25 +132,40 @@ class EmailEventResourceTest {
         String body = event("email.bounced", emailId, "");
         String now = String.valueOf(System.currentTimeMillis() / 1000);
 
-        given().contentType(ContentType.JSON).header("svix-id", "msg_1").header("svix-timestamp", now)
+        given().contentType(ContentType.JSON)
+                .header("svix-id", "msg_1")
+                .header("svix-timestamp", now)
                 .header("svix-signature", "v1," + sign("msg_1", now, body.replace("bounced", "delivered")))
-                .body(body).post("/internal/email-events")
-                .then().statusCode(401).body("code", equalTo("invalid_signature"));
+                .body(body)
+                .post("/internal/email-events")
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("invalid_signature"));
 
         String old = String.valueOf(System.currentTimeMillis() / 1000 - 3600);
-        given().contentType(ContentType.JSON).header("svix-id", "msg_1").header("svix-timestamp", old)
+        given().contentType(ContentType.JSON)
+                .header("svix-id", "msg_1")
+                .header("svix-timestamp", old)
                 .header("svix-signature", "v1," + sign("msg_1", old, body))
-                .body(body).post("/internal/email-events")
-                .then().statusCode(401);
+                .body(body)
+                .post("/internal/email-events")
+                .then()
+                .statusCode(401);
 
-        given().contentType(ContentType.JSON).body(body).post("/internal/email-events").then().statusCode(401);
+        given().contentType(ContentType.JSON)
+                .body(body)
+                .post("/internal/email-events")
+                .then()
+                .statusCode(401);
 
         assertThat(IssuedDocuments.delivery(deliveryId).status).isEqualTo(Status.SENT);
     }
 
     private static List<String> eventTypes(UUID documentId) {
-        return QuarkusTransaction.requiringNew().call(() -> WebhookEventEntity.<WebhookEventEntity>list("documentId", documentId)
-                .stream().map(e -> e.type).toList());
+        return QuarkusTransaction.requiringNew()
+                .call(() -> WebhookEventEntity.<WebhookEventEntity>list("documentId", documentId).stream()
+                        .map(e -> e.type)
+                        .toList());
     }
 
     private static io.restassured.response.Response post(String body) {
@@ -158,8 +188,8 @@ class EmailEventResourceTest {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(KEY, "HmacSHA256"));
-            return Base64.getEncoder().encodeToString(
-                    mac.doFinal((id + "." + timestamp + "." + body).getBytes(StandardCharsets.UTF_8)));
+            return Base64.getEncoder()
+                    .encodeToString(mac.doFinal((id + "." + timestamp + "." + body).getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

@@ -5,18 +5,17 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-import org.postgresql.Driver;
-import org.postgresql.PGConnection;
-import org.postgresql.PGNotification;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import org.postgresql.Driver;
+import org.postgresql.PGConnection;
+import org.postgresql.PGNotification;
 
 /**
  * Wakes the {@link JobRunner} the moment a job is enqueued: the jobs table NOTIFYs {@value #CHANNEL} on every
@@ -34,6 +33,7 @@ public class JobListener {
     private static final Logger LOG = Logger.getLogger(JobListener.class);
     /** How long to wait for a notification before checking that the connection is still alive. */
     private static final int WAIT_MILLIS = 10_000;
+
     private static final Duration MAX_BACKOFF = Duration.ofMinutes(1);
 
     @Inject
@@ -41,12 +41,16 @@ public class JobListener {
 
     @ConfigProperty(name = "cetus.jobs.listen")
     boolean enabled;
+
     @ConfigProperty(name = "cetus.jobs.listen-url")
     Optional<String> listenUrl;
+
     @ConfigProperty(name = "quarkus.datasource.jdbc.url")
     Optional<String> datasourceUrl;
+
     @ConfigProperty(name = "quarkus.datasource.username")
     Optional<String> username;
+
     @ConfigProperty(name = "quarkus.datasource.password")
     Optional<String> password;
 
@@ -90,7 +94,8 @@ public class JobListener {
                 if (!running) {
                     return;
                 }
-                LOG.warnf("Lost the job notifications connection (%s); retrying in %ds, polling meanwhile",
+                LOG.warnf(
+                        "Lost the job notifications connection (%s); retrying in %ds, polling meanwhile",
                         e.getMessage(), backoff.toSeconds());
                 sleep(backoff);
                 backoff = backoff.multipliedBy(2).compareTo(MAX_BACKOFF) > 0 ? MAX_BACKOFF : backoff.multipliedBy(2);

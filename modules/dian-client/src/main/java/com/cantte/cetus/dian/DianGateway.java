@@ -1,7 +1,6 @@
 package com.cantte.cetus.dian;
 
 import com.cantte.cetus.signing.KeyMaterial;
-
 import java.util.List;
 
 /**
@@ -27,6 +26,6 @@ public interface DianGateway {
      * @param accountCodeT NIT of the software provider: the issuer itself with "software propio"
      * @param softwareCode the software ID registered in the DIAN portal
      */
-    NumberingRangeResponse getNumberingRange(String accountCode, String accountCodeT, String softwareCode,
-                                             KeyMaterial keys);
+    NumberingRangeResponse getNumberingRange(
+            String accountCode, String accountCodeT, String softwareCode, KeyMaterial keys);
 }

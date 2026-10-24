@@ -1,16 +1,15 @@
 package com.cantte.cetus.domain;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.dian.NitCheckDigit;
 import com.cantte.cetus.domain.model.LineInput;
 import com.cantte.cetus.domain.model.TaxType;
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
 
 class InvoiceCalculatorTest {
 
@@ -19,7 +18,12 @@ class InvoiceCalculatorTest {
     @Test
     void computesTotalsWithMixedTaxes() {
         var lines = List.of(
-                new LineInput("A1", "Consultoría", new BigDecimal("2"), "94", new BigDecimal("100000"),
+                new LineInput(
+                        "A1",
+                        "Consultoría",
+                        new BigDecimal("2"),
+                        "94",
+                        new BigDecimal("100000"),
                         List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19")))),
                 new LineInput("B1", "Libro", new BigDecimal("1"), "94", new BigDecimal("50000"), List.of()));
 
@@ -38,12 +42,18 @@ class InvoiceCalculatorTest {
 
     @Test
     void rejectsTotalsTheDatabaseCannotStore() {
-        var lines = List.of(new LineInput("A1", "Consultoría", new BigDecimal("99999999999999"), "94",
-                new BigDecimal("99999999999999"), List.of()));
+        var lines = List.of(new LineInput(
+                "A1",
+                "Consultoría",
+                new BigDecimal("99999999999999"),
+                "94",
+                new BigDecimal("99999999999999"),
+                List.of()));
 
         assertThatThrownBy(() -> calculator.calculate(lines))
                 .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException) e).code()).isEqualTo("amount_too_large");
+                .extracting(e -> ((DomainException) e).code())
+                .isEqualTo("amount_too_large");
     }
 
     @Test

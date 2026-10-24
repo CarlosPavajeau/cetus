@@ -22,13 +22,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * The steps every document type shares at creation: the issuer can issue, the document takes the
@@ -58,8 +57,8 @@ public class DocumentDrafts {
             return;
         }
         SoftwareCredentialEntity.findActive(issuer.id)
-                .orElseThrow(() -> new DomainException("issuer_missing_software",
-                        "The issuer has no DIAN software credentials"));
+                .orElseThrow(() ->
+                        new DomainException("issuer_missing_software", "The issuer has no DIAN software credentials"));
         // An accepted test set takes no more documents, but habilitación still validates them with
         // SendBillSync: the worker switches to it on its own once the set is accepted.
         if (SigningCertificateEntity.findActive(issuer.id).isEmpty()) {
@@ -72,15 +71,19 @@ public class DocumentDrafts {
      * for that type, with the calculated totals, lines and taxes. The caller fills in the rest and
      * calls {@link #submit}.
      */
-    public DocumentEntity draft(UUID accountId, IssuerEntity issuer, Environment environment, DocumentType type,
-                                CalculationResult calculation) {
+    public DocumentEntity draft(
+            UUID accountId,
+            IssuerEntity issuer,
+            Environment environment,
+            DocumentType type,
+            CalculationResult calculation) {
         ZonedDateTime now = ZonedDateTime.now(DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS);
         if (environment == Environment.SANDBOX) {
             requireSandboxQuota(accountId, now);
         }
         NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, now.toLocalDate())
-                .orElseThrow(() -> new DomainException("no_active_numbering_range",
-                        "The issuer has no active numbering range for " + label(type)));
+                .orElseThrow(() -> new DomainException(
+                        "no_active_numbering_range", "The issuer has no active numbering range for " + label(type)));
 
         DocumentEntity doc = new DocumentEntity();
         doc.id = Ids.newId();
@@ -143,8 +146,11 @@ public class DocumentDrafts {
                 .setParameter("key", "sandbox-quota:" + accountId)
                 .getSingleResult();
         ZonedDateTime midnight = now.toLocalDate().atStartOfDay(DianTime.ZONE);
-        long issuedToday = DocumentEntity.count("accountId = ?1 and environment = ?2 and createdAt >= ?3",
-                accountId, Environment.SANDBOX, midnight.toOffsetDateTime());
+        long issuedToday = DocumentEntity.count(
+                "accountId = ?1 and environment = ?2 and createdAt >= ?3",
+                accountId,
+                Environment.SANDBOX,
+                midnight.toOffsetDateTime());
         if (issuedToday >= sandboxDailyDocuments) {
             throw new SandboxDailyLimit(sandboxDailyDocuments, Duration.between(now, midnight.plusDays(1)));
         }
@@ -154,7 +160,9 @@ public class DocumentDrafts {
     public static class SandboxDailyLimit extends WebApplicationException {
 
         SandboxDailyLimit(int limit, Duration untilMidnight) {
-            super(ProblemDetail.builder(429, "sandbox_daily_limit",
+            super(ProblemDetail.builder(
+                            429,
+                            "sandbox_daily_limit",
                             "This account already issued its " + limit + " sandbox documents of the day")
                     .header("Retry-After", Math.max(1, untilMidnight.toSeconds()))
                     .build());

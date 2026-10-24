@@ -19,14 +19,13 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.jboss.logging.Logger;
-
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.jboss.logging.Logger;
 
 /**
  * Resend's delivery events (webhook). Only accepted with a valid signature from the endpoint secret
@@ -39,6 +38,7 @@ public class EmailEventResource {
 
     @Inject
     ObjectMapper json;
+
     @Inject
     WebhookPublisher webhooks;
 
@@ -52,10 +52,15 @@ public class EmailEventResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(hidden = true)
-    public Response receive(@HeaderParam("svix-id") String id, @HeaderParam("svix-timestamp") String timestamp,
-                            @HeaderParam("svix-signature") String signature, String body) throws IOException {
+    public Response receive(
+            @HeaderParam("svix-id") String id,
+            @HeaderParam("svix-timestamp") String timestamp,
+            @HeaderParam("svix-signature") String signature,
+            String body)
+            throws IOException {
         if (verifier.isEmpty()) {
-            return error(Response.Status.SERVICE_UNAVAILABLE, "webhook_not_configured", "RESEND_WEBHOOK_SECRET is not set");
+            return error(
+                    Response.Status.SERVICE_UNAVAILABLE, "webhook_not_configured", "RESEND_WEBHOOK_SECRET is not set");
         }
         if (!verifier.get().verify(id, timestamp, signature, body)) {
             return error(Response.Status.UNAUTHORIZED, "invalid_signature", "The webhook signature is not valid");
@@ -87,7 +92,9 @@ public class EmailEventResource {
             DocumentDeliveryEntity delivery = found.get();
             // Events can arrive out of order: a late "delivered" never hides a bounce or a complaint.
             boolean downgrade = status == Status.DELIVERED
-                    && (delivery.status == Status.BOUNCED || delivery.status == Status.COMPLAINED || delivery.status == Status.FAILED);
+                    && (delivery.status == Status.BOUNCED
+                            || delivery.status == Status.COMPLAINED
+                            || delivery.status == Status.FAILED);
             boolean changed = !downgrade && delivery.status != status;
             if (!downgrade) {
                 delivery.status = status;
@@ -97,7 +104,9 @@ public class EmailEventResource {
             }
             if (changed) {
                 // Same transaction as the change; a repeated event changes nothing and publishes nothing.
-                webhooks.publish(status == Status.DELIVERED ? WebhookEventType.DOCUMENT_DELIVERED
+                webhooks.publish(
+                        status == Status.DELIVERED
+                                ? WebhookEventType.DOCUMENT_DELIVERED
                                 : WebhookEventType.DOCUMENT_DELIVERY_FAILED,
                         DocumentEntity.findById(delivery.documentId),
                         new DeliveryInfo(status.name(), delivery.recipient, delivery.error));

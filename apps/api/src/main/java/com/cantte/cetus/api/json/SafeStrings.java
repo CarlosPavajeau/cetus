@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
-
 import java.io.IOException;
 
 /**
@@ -29,12 +28,14 @@ public class SafeStrings implements ObjectMapperCustomizer {
     }
 
     static boolean allowed(int codePoint) {
-        boolean xml = codePoint == '\t' || codePoint == '\n' || codePoint == '\r'
+        boolean xml = codePoint == '\t'
+                || codePoint == '\n'
+                || codePoint == '\r'
                 || (codePoint >= 0x20 && codePoint <= 0xD7FF)
                 || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
                 || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
-        boolean bidiControl = (codePoint >= 0x202A && codePoint <= 0x202E)
-                || (codePoint >= 0x2066 && codePoint <= 0x2069);
+        boolean bidiControl =
+                (codePoint >= 0x202A && codePoint <= 0x202E) || (codePoint >= 0x2066 && codePoint <= 0x2069);
         return xml && !bidiControl;
     }
 

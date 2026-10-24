@@ -8,8 +8,6 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
-import org.hibernate.query.NativeQuery;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -20,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import org.hibernate.query.NativeQuery;
 
 /**
  * Permanent record of who changed what on an account. Rows are written in the transaction of the
@@ -41,17 +40,23 @@ public class AuditLog {
             """;
     private static final String SELECT = SELECT_ALL + " AND account_id = :account";
 
-    private static final TypeReference<Map<String, Object>> DATA_TYPE = new TypeReference<>() {
-    };
+    private static final TypeReference<Map<String, Object>> DATA_TYPE = new TypeReference<>() {};
 
     @Inject
     EntityManager em;
+
     @Inject
     ObjectMapper mapper;
 
     @Transactional(Transactional.TxType.MANDATORY)
-    public void record(UUID accountId, Actor actor, RequestOrigin origin, AuditAction action,
-                       String resourceType, UUID resourceId, Map<String, Object> data) {
+    public void record(
+            UUID accountId,
+            Actor actor,
+            RequestOrigin origin,
+            AuditAction action,
+            String resourceType,
+            UUID resourceId,
+            Map<String, Object> data) {
         Objects.requireNonNull(actor, "actor");
         Objects.requireNonNull(action, "action");
         RequestOrigin from = origin == null ? RequestOrigin.unknown() : origin;
@@ -61,8 +66,7 @@ public class AuditLog {
                              data, ip_address, user_agent)
                         VALUES (:account, :actorType, :actorId, :impersonatedBy, :action, :resourceType, :resourceId,
                                 CAST(:data AS jsonb), CAST(:ip AS inet), :userAgent)
-                        """)
-                .unwrap(NativeQuery.class);
+                        """).unwrap(NativeQuery.class);
         // Typed binding: an untyped null would be sent as bytea and break the casts.
         insert.setParameter("account", accountId, UUID.class)
                 .setParameter("actorType", actor.type().name(), String.class)
@@ -91,8 +95,7 @@ public class AuditLog {
         return page(new Filter(accountId, actionFilter, actorId), beforeId, limit);
     }
 
-    private record Filter(UUID accountId, AuditAction action, String actorId) {
-    }
+    private record Filter(UUID accountId, AuditAction action, String actorId) {}
 
     private AuditPage page(Filter filter, Long beforeId, int limit) {
         int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));

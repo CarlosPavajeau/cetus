@@ -11,10 +11,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +26,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * Claims ready jobs and runs up to {@code cetus.jobs.concurrency} of them at once: most of a job is waiting on
@@ -61,6 +60,7 @@ public class JobRunner {
 
     @Inject
     JobClaimer claimer;
+
     @Inject
     Instance<JobHandler> handlerInstances;
 
@@ -69,12 +69,14 @@ public class JobRunner {
 
     @ConfigProperty(name = "cetus.jobs.concurrency")
     int concurrency;
+
     @ConfigProperty(name = "cetus.jobs.lease")
     Duration lease;
 
     private Semaphore slots;
     /** Free slots of each job type; only types with a handler are claimed. */
     private final Map<String, Semaphore> typeSlots = new HashMap<>();
+
     private ExecutorService executor;
     private volatile boolean stopping;
     private Map<String, JobHandler> handlers;
@@ -82,12 +84,15 @@ public class JobRunner {
     @PostConstruct
     void init() {
         slots = new Semaphore(concurrency);
-        executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("job-", 0).factory());
+        executor = Executors.newThreadPerTaskExecutor(
+                Thread.ofVirtual().name("job-", 0).factory());
         handlers = handlerInstances.stream().collect(Collectors.toMap(JobHandler::type, Function.identity()));
         Map<String, Integer> limits = new TreeMap<>();
         for (String type : handlers.keySet()) {
-            int limit = Math.min(concurrency,
-                    config.getOptionalValue("cetus.jobs.limit." + type, Integer.class).orElse(concurrency));
+            int limit = Math.min(
+                    concurrency,
+                    config.getOptionalValue("cetus.jobs.limit." + type, Integer.class)
+                            .orElse(concurrency));
             limits.put(type, limit);
             typeSlots.put(type, new Semaphore(limit));
         }
@@ -180,7 +185,8 @@ public class JobRunner {
         } catch (RetryLater retry) {
             claimer.reschedule(job.id, retry.delay());
         } catch (GiveUp giveUp) {
-            LOG.errorf("Job %s (%s) failed permanently on attempt %d, not retrying: %s",
+            LOG.errorf(
+                    "Job %s (%s) failed permanently on attempt %d, not retrying: %s",
                     job.id, job.jobType, job.attempts, giveUp.getMessage());
             claimer.kill(job.id, giveUp.getMessage());
             handler.onDead(job, giveUp.getMessage());
@@ -207,7 +213,8 @@ public class JobRunner {
         stopping = true;
         executor.shutdown();
         if (!executor.awaitTermination(SHUTDOWN_GRACE.toSeconds(), TimeUnit.SECONDS)) {
-            LOG.warnf("%d jobs still running at shutdown; they will be retried when their lease expires",
+            LOG.warnf(
+                    "%d jobs still running at shutdown; they will be retried when their lease expires",
                     concurrency - slots.availablePermits());
         }
     }

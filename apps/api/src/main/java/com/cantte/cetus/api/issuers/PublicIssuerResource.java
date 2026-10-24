@@ -12,11 +12,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
  * The issuers an API key can invoice for: those of its account in its environment. Lets an
@@ -37,11 +36,20 @@ public class PublicIssuerResource {
             @Schema(required = true) String legalName,
             @Schema(required = true, nullable = true) String tradeName,
             @Schema(required = true) IssuerEntity.Status status,
-            @Schema(required = true, description = "Whether its status lets it issue with this key") boolean readyToIssue) {
+
+            @Schema(required = true, description = "Whether its status lets it issue with this key")
+            boolean readyToIssue) {
 
         static PublicIssuerView from(IssuerEntity issuer) {
-            return new PublicIssuerView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit, issuer.legalName,
-                    issuer.tradeName, issuer.status, DocumentDrafts.canIssue(issuer, issuer.environment));
+            return new PublicIssuerView(
+                    issuer.id,
+                    issuer.environment,
+                    issuer.nit,
+                    issuer.checkDigit,
+                    issuer.legalName,
+                    issuer.tradeName,
+                    issuer.status,
+                    DocumentDrafts.canIssue(issuer, issuer.environment));
         }
     }
 

@@ -5,8 +5,6 @@ import com.sun.net.httpserver.HttpServer;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * An integrator's webhook endpoint for worker tests: records every POST and answers with the queued
@@ -37,8 +36,7 @@ public class FakeWebhookReceiver {
     }
 
     /** A request received: its path, headers (lower-case names, first value) and body. */
-    public record Request(String path, Map<String, String> headers, String body) {
-    }
+    public record Request(String path, Map<String, String> headers, String body) {}
 
     @ConfigProperty(name = "fake-webhooks.port")
     int port;

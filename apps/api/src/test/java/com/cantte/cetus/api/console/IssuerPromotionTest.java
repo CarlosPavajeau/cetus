@@ -1,10 +1,5 @@
 package com.cantte.cetus.api.console;
 
-import com.cantte.cetus.api.support.ConsoleUser;
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.path.json.JsonPath;
-import org.junit.jupiter.api.Test;
-
 import static com.cantte.cetus.api.support.ConsoleFixtures.SOFTWARE_ID;
 import static com.cantte.cetus.api.support.ConsoleFixtures.addRange;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
@@ -12,6 +7,11 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
 import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+
+import com.cantte.cetus.api.support.ConsoleUser;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.path.json.JsonPath;
+import org.junit.jupiter.api.Test;
 
 /** Promoting a test issuer that finished habilitación to its production issuer. */
 @QuarkusTest
@@ -29,24 +29,34 @@ class IssuerPromotionTest {
         assertThat(live.getString("nit")).isEqualTo("900123456");
         assertThat(live.getString("status")).isEqualTo("ONBOARDING");
 
-        JsonPath detail = user.request().get("/console/issuers/" + live.getString("id"))
-                .then().statusCode(200).extract().jsonPath();
+        JsonPath detail = user.request()
+                .get("/console/issuers/" + live.getString("id"))
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
         assertThat(detail.getString("legalName")).isEqualTo("Acme SAS");
         assertThat(detail.getString("software.softwareId")).isEqualTo(SOFTWARE_ID);
         assertThat(detail.getString("software.testSetId")).isNull();
         assertThat(detail.getString("certificate.subject")).isEqualTo("CN=Cetus Test Signer,O=Cantte,C=CO");
-        assertThat(detail.getList("ranges")).as("the production numbering is the person's own").isEmpty();
+        assertThat(detail.getList("ranges"))
+                .as("the production numbering is the person's own")
+                .isEmpty();
 
         // The production numbering completes it: the copied software and certificate are usable.
         addRange(user, live.getString("id"), "FE");
-        user.request().get("/console/issuers/" + live.getString("id"))
-                .then().statusCode(200).body("status", equalTo("ENABLED"));
+        user.request()
+                .get("/console/issuers/" + live.getString("id"))
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("ENABLED"));
 
         // The test issuer keeps working in habilitación.
         user.request().get("/console/issuers/" + testId).then().statusCode(200).body("status", equalTo("TESTING"));
 
         assertThat(AuditTrailTest.entries(user, "ISSUER_PROMOTED"))
-                .singleElement().satisfies(entry -> assertThat(entry).containsEntry("resourceId", testId));
+                .singleElement()
+                .satisfies(entry -> assertThat(entry).containsEntry("resourceId", testId));
     }
 
     @Test

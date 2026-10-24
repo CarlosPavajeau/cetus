@@ -19,18 +19,16 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public final class IssuerViews {
 
-    private IssuerViews() {
-    }
+    private IssuerViews() {}
 
     /**
      * The name of the issuer goes on one line: it is a field of the delivery email's subject, where a line
@@ -48,38 +46,53 @@ public final class IssuerViews {
             @NotNull Environment environment,
             @NotBlank @Pattern(regexp = "\\d{5,15}") String nit,
             @Pattern(regexp = "\\d") String checkDigit,
-            @NotBlank @Size(max = 450) @Pattern(regexp = ONE_LINE) String legalName,
+
+            @NotBlank @Size(max = 450) @Pattern(regexp = ONE_LINE)
+            String legalName,
+
             @Size(max = 450) @Pattern(regexp = ONE_LINE) String tradeName,
             @NotNull PersonType personType,
-            @NotEmpty @Size(max = 5) List<@NotNull @Pattern(regexp = InvoiceRequest.TAX_LEVEL_CODE) String> taxLevelCodes,
+
+            @NotEmpty @Size(max = 5)
+            List<@NotNull @Pattern(regexp = InvoiceRequest.TAX_LEVEL_CODE) String> taxLevelCodes,
+
             boolean responsibleForIva,
             @NotNull @Valid InvoiceRequest.AddressInput address,
-            @NotBlank @Size(max = 254) @Email(regexp = InvoiceRequest.EMAIL) String email,
-            @Size(max = 50) @Pattern(regexp = InvoiceRequest.PHONE) String phone) {
-    }
+
+            @NotBlank @Size(max = 254) @Email(regexp = InvoiceRequest.EMAIL)
+            String email,
+
+            @Size(max = 50) @Pattern(regexp = InvoiceRequest.PHONE)
+            String phone) {}
 
     /** The tax data that can change while the issuer is being set up: everything but its NIT and environment. */
     public record UpdateIssuerRequest(
-            @NotBlank @Size(max = 450) @Pattern(regexp = ONE_LINE) String legalName,
+            @NotBlank @Size(max = 450) @Pattern(regexp = ONE_LINE)
+            String legalName,
+
             @Size(max = 450) @Pattern(regexp = ONE_LINE) String tradeName,
             @NotNull PersonType personType,
-            @NotEmpty @Size(max = 5) List<@NotNull @Pattern(regexp = InvoiceRequest.TAX_LEVEL_CODE) String> taxLevelCodes,
+
+            @NotEmpty @Size(max = 5)
+            List<@NotNull @Pattern(regexp = InvoiceRequest.TAX_LEVEL_CODE) String> taxLevelCodes,
+
             boolean responsibleForIva,
             @NotNull @Valid InvoiceRequest.AddressInput address,
-            @NotBlank @Size(max = 254) @Email(regexp = InvoiceRequest.EMAIL) String email,
-            @Size(max = 50) @Pattern(regexp = InvoiceRequest.PHONE) String phone) {
-    }
+
+            @NotBlank @Size(max = 254) @Email(regexp = InvoiceRequest.EMAIL)
+            String email,
+
+            @Size(max = 50) @Pattern(regexp = InvoiceRequest.PHONE)
+            String phone) {}
 
     public record SoftwareRequest(
             @NotBlank @Pattern(regexp = DIAN_UUID) String softwareId,
             @NotBlank @Size(max = 100) String pin,
-            @Pattern(regexp = DIAN_UUID) String testSetId) {
-    }
+            @Pattern(regexp = DIAN_UUID) String testSetId) {}
 
     public record CertificateRequest(
             @NotBlank @Size(max = MAX_PKCS12_BASE64) String pkcs12Base64,
-            @NotBlank @Size(max = 256) String password) {
-    }
+            @NotBlank @Size(max = 256) String password) {}
 
     /**
      * The prefix goes into the document number, its QR and file names; the resolution number and the technical
@@ -94,8 +107,7 @@ public final class IssuerViews {
             @Positive @Max(MAX_NUMBER) long to,
             LocalDate validFrom,
             LocalDate validTo,
-            @Pattern(regexp = "[0-9A-Za-z-]{1,100}") String technicalKey) {
-    }
+            @Pattern(regexp = "[0-9A-Za-z-]{1,100}") String technicalKey) {}
 
     public record IssuerView(
             @Schema(required = true) UUID id,
@@ -106,8 +118,14 @@ public final class IssuerViews {
             @Schema(required = true, nullable = true) String tradeName,
             @Schema(required = true) IssuerEntity.Status status) {
         public static IssuerView from(IssuerEntity issuer) {
-            return new IssuerView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit, issuer.legalName,
-                    issuer.tradeName, issuer.status);
+            return new IssuerView(
+                    issuer.id,
+                    issuer.environment,
+                    issuer.nit,
+                    issuer.checkDigit,
+                    issuer.legalName,
+                    issuer.tradeName,
+                    issuer.status);
         }
     }
 
@@ -135,14 +153,31 @@ public final class IssuerViews {
             @Schema(required = true, nullable = true) TestSetProgressView testSet) {
         public static IssuerDetailView from(IssuerEntity issuer) {
             List<String> taxLevelCodes = issuer.taxLevelCodes == null || issuer.taxLevelCodes.isBlank()
-                    ? List.of() : List.of(issuer.taxLevelCodes.split(";"));
-            SoftwareCredentialEntity software = SoftwareCredentialEntity.findActive(issuer.id).orElse(null);
-            return new IssuerDetailView(issuer.id, issuer.environment, issuer.nit, issuer.checkDigit,
-                    issuer.legalName, issuer.tradeName, issuer.status, issuer.personType, taxLevelCodes,
-                    "01".equals(issuer.taxSchemeId), issuer.address, issuer.email, issuer.phone,
+                    ? List.of()
+                    : List.of(issuer.taxLevelCodes.split(";"));
+            SoftwareCredentialEntity software =
+                    SoftwareCredentialEntity.findActive(issuer.id).orElse(null);
+            return new IssuerDetailView(
+                    issuer.id,
+                    issuer.environment,
+                    issuer.nit,
+                    issuer.checkDigit,
+                    issuer.legalName,
+                    issuer.tradeName,
+                    issuer.status,
+                    issuer.personType,
+                    taxLevelCodes,
+                    "01".equals(issuer.taxSchemeId),
+                    issuer.address,
+                    issuer.email,
+                    issuer.phone,
                     software == null ? null : SoftwareView.from(software),
-                    SigningCertificateEntity.findActive(issuer.id).map(CertificateView::from).orElse(null),
-                    NumberingRangeEntity.listByIssuer(issuer.id).stream().map(NumberingRangeView::from).toList(),
+                    SigningCertificateEntity.findActive(issuer.id)
+                            .map(CertificateView::from)
+                            .orElse(null),
+                    NumberingRangeEntity.listByIssuer(issuer.id).stream()
+                            .map(NumberingRangeView::from)
+                            .toList(),
                     TestSetProgressView.of(issuer, software));
         }
     }
@@ -155,14 +190,20 @@ public final class IssuerViews {
     public record TestSetProgressView(
             @Schema(required = true) String testSetId,
             @Schema(required = true) OffsetDateTime since,
-            @Schema(required = true, nullable = true,
+
+            @Schema(
+                    required = true,
+                    nullable = true,
                     description = "When the DIAN reported the set as accepted: habilitación is done")
             OffsetDateTime acceptedAt,
+
             @Schema(required = true) List<TestSetCountView> documents) {
         /** Null unless the issuer sends to a test set: a test issuer whose software has a TestSetId. */
         static TestSetProgressView of(IssuerEntity issuer, SoftwareCredentialEntity software) {
-            if (issuer.environment != Environment.TEST || software == null
-                    || software.testSetId == null || software.testSetId.isBlank()) {
+            if (issuer.environment != Environment.TEST
+                    || software == null
+                    || software.testSetId == null
+                    || software.testSetId.isBlank()) {
                 return null;
             }
             OffsetDateTime since = SoftwareCredentialEntity.testSetStart(issuer.id, software.testSetId);
@@ -170,8 +211,11 @@ public final class IssuerViews {
             List<TestSetCountView> documents = Arrays.stream(DocumentType.values())
                     .map(type -> TestSetCountView.of(type, counts))
                     .toList();
-            return new TestSetProgressView(software.testSetId, since,
-                    SoftwareCredentialEntity.testSetAcceptedAt(issuer.id, software.testSetId), documents);
+            return new TestSetProgressView(
+                    software.testSetId,
+                    since,
+                    SoftwareCredentialEntity.testSetAcceptedAt(issuer.id, software.testSetId),
+                    documents);
         }
     }
 
@@ -215,8 +259,8 @@ public final class IssuerViews {
             @Schema(required = true) OffsetDateTime validFrom,
             @Schema(required = true) OffsetDateTime validTo) {
         static CertificateView from(SigningCertificateEntity certificate) {
-            return new CertificateView(certificate.subjectDn, certificate.serialNumber, certificate.validFrom,
-                    certificate.validTo);
+            return new CertificateView(
+                    certificate.subjectDn, certificate.serialNumber, certificate.validFrom, certificate.validTo);
         }
     }
 
@@ -229,15 +273,30 @@ public final class IssuerViews {
             @Schema(required = true) long nextNumber,
             @Schema(required = true, nullable = true) LocalDate validTo,
             @Schema(required = true) String status,
+
             @Schema(required = true, nullable = true, description = "GetNumberingRange outcome; invoice ranges only")
             NumberingRangeEntity.VerificationStatus verificationStatus,
+
             @Schema(required = true, nullable = true) OffsetDateTime verifiedAt,
-            @Schema(required = true, nullable = true, description = "What differs from the DIAN, or why it could not be checked")
+
+            @Schema(
+                    required = true,
+                    nullable = true,
+                    description = "What differs from the DIAN, or why it could not be checked")
             String verificationError) {
         public static NumberingRangeView from(NumberingRangeEntity range) {
-            return new NumberingRangeView(range.id, range.documentType, range.prefix, range.rangeFrom,
-                    range.rangeTo, range.nextNumber, range.validTo, range.status, range.verificationStatus,
-                    range.verifiedAt, range.verificationError);
+            return new NumberingRangeView(
+                    range.id,
+                    range.documentType,
+                    range.prefix,
+                    range.rangeFrom,
+                    range.rangeTo,
+                    range.nextNumber,
+                    range.validTo,
+                    range.status,
+                    range.verificationStatus,
+                    range.verifiedAt,
+                    range.verificationError);
         }
     }
 }

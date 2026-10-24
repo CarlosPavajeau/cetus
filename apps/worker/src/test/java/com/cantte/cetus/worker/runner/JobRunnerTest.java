@@ -1,5 +1,7 @@
 package com.cantte.cetus.worker.runner;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
@@ -12,16 +14,13 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @QuarkusTestResource(FakeDianResource.class)
@@ -29,8 +28,10 @@ class JobRunnerTest {
 
     @Inject
     JobRunner runner;
+
     @Inject
     FakeDian dian;
+
     @Inject
     WorkerFixtures fixtures;
 

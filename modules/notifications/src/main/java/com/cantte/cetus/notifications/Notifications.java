@@ -9,11 +9,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.hibernate.query.NativeQuery;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.hibernate.query.NativeQuery;
 
 /**
  * Records a notice and enqueues its email in the caller's transaction: the notice exists if and only if
@@ -24,8 +23,10 @@ public class Notifications {
 
     @Inject
     EntityManager em;
+
     @Inject
     JobQueue jobs;
+
     @Inject
     ObjectMapper mapper;
 
@@ -40,8 +41,7 @@ public class Notifications {
                         INSERT INTO billing.notification_log (id, account_id, kind, dedup_key, data)
                         VALUES (:id, :account, :kind, :key, CAST(:data AS jsonb))
                         ON CONFLICT (dedup_key) DO NOTHING
-                        """)
-                .unwrap(NativeQuery.class);
+                        """).unwrap(NativeQuery.class);
         int inserted = insert.setParameter("id", id, UUID.class)
                 .setParameter("account", accountId, UUID.class)
                 .setParameter("kind", kind.name(), String.class)

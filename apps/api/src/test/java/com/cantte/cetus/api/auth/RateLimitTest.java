@@ -1,19 +1,18 @@
 package com.cantte.cetus.api.auth;
 
+import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+
 import com.cantte.cetus.api.support.ConsoleUser;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.response.ValidatableResponse;
-import org.junit.jupiter.api.Test;
-
 import java.util.Map;
 import java.util.UUID;
-
-import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import org.junit.jupiter.api.Test;
 
 /** A tiny limit (2 requests, almost no refill), so the third request of a key is always over it. */
 @QuarkusTest
@@ -36,7 +35,8 @@ class RateLimitTest {
 
         call(busy).statusCode(404);
         call(busy).statusCode(404);
-        call(busy).statusCode(429)
+        call(busy)
+                .statusCode(429)
                 .header("Retry-After", notNullValue())
                 .contentType("application/problem+json")
                 .body("status", equalTo(429))
@@ -53,8 +53,12 @@ class RateLimitTest {
     }
 
     private static String testKey(ConsoleUser user) {
-        return user.request().body(Map.of("name", "ERP " + UUID.randomUUID(), "environment", "TEST"))
+        return user.request()
+                .body(Map.of("name", "ERP " + UUID.randomUUID(), "environment", "TEST"))
                 .post("/console/api-keys")
-                .then().statusCode(200).extract().path("secret");
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
     }
 }

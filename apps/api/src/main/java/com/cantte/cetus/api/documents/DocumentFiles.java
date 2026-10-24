@@ -10,14 +10,13 @@ import com.cantte.cetus.persistence.entity.DocumentEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
  * Downloads of a document's files. The API never streams them: it answers with a short-lived presigned
@@ -39,13 +38,14 @@ public class DocumentFiles {
     Duration ttl;
 
     public record DocumentFileResponse(
-            @Schema(required = true, description = "Presigned URL; download it without the API key") String url,
-            @Schema(required = true) OffsetDateTime expiresAt) {
-    }
+            @Schema(required = true, description = "Presigned URL; download it without the API key")
+            String url,
+
+            @Schema(required = true) OffsetDateTime expiresAt) {}
 
     /** Must run in a transaction. */
-    public DocumentFileResponse presign(UUID accountId, Environment environment, UUID documentId, DocumentType type,
-                                        String file) {
+    public DocumentFileResponse presign(
+            UUID accountId, Environment environment, UUID documentId, DocumentType type, String file) {
         DocumentEntity doc = DocumentEntity.findForAccount(accountId, documentId, environment)
                 .filter(d -> d.documentType == type)
                 .orElseThrow(() -> new NotFoundException("Document not found"));
@@ -53,8 +53,8 @@ public class DocumentFiles {
         if (kind == null) {
             throw new NotFoundException("Unknown file " + file + "; use xml, pdf or attached-document");
         }
-        DocumentArtifactEntity artifact = DocumentArtifactEntity.findLatest(doc.id, kind)
-                .orElseThrow(() -> new FileNotAvailable(file));
+        DocumentArtifactEntity artifact =
+                DocumentArtifactEntity.findLatest(doc.id, kind).orElseThrow(() -> new FileNotAvailable(file));
         String key = artifact.s3Key;
         DocumentStorage.PresignedUrl url = storage.presignGet(key, ttl, key.substring(key.lastIndexOf('/') + 1));
         return new DocumentFileResponse(url.url(), url.expiresAt().atOffset(ZoneOffset.UTC));

@@ -19,6 +19,16 @@ import com.google.zxing.EncodeHintType;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import org.openpdf.text.Chunk;
 import org.openpdf.text.Document;
 import org.openpdf.text.Element;
@@ -38,17 +48,6 @@ import org.openpdf.text.pdf.PdfPageEventHelper;
 import org.openpdf.text.pdf.PdfTemplate;
 import org.openpdf.text.pdf.PdfWriter;
 
-import java.awt.Color;
-import java.io.ByteArrayOutputStream;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-
 /**
  * Graphic representation of a validated invoice or credit note: a single plain template with the minimum
  * content the DIAN asks for (parties, number, dates, resolution, lines, taxes, totals, CUFE/CUDE, QR and
@@ -66,15 +65,26 @@ public final class PdfRenderer {
     private static final Font SMALL = FontFactory.getFont(FontFactory.HELVETICA, 7, Font.NORMAL, MUTED);
     private static final Font SMALL_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7, Font.NORMAL, MUTED);
     private static final Map<String, String> PAYMENT_MEANS = Map.of(
-            "10", "Efectivo", "20", "Cheque", "42", "Consignación bancaria", "47", "Transferencia débito bancaria",
-            "48", "Tarjeta crédito", "49", "Tarjeta débito", "ZZZ", "Otro");
+            "10",
+            "Efectivo",
+            "20",
+            "Cheque",
+            "42",
+            "Consignación bancaria",
+            "47",
+            "Transferencia débito bancaria",
+            "48",
+            "Tarjeta crédito",
+            "49",
+            "Tarjeta débito",
+            "ZZZ",
+            "Otro");
 
     /**
      * @param softwareName name of the software that generated the document
      * @param providerName technology provider (the issuer itself with "software propio")
      */
-    public record Legend(String softwareName, String providerName, String providerNit) {
-    }
+    public record Legend(String softwareName, String providerName, String providerNit) {}
 
     /** @param uniqueCode the CUFE (invoice) or CUDE (notes) the DIAN validated */
     public byte[] render(ProcessingContext ctx, String uniqueCode, Legend legend) {
@@ -117,8 +127,8 @@ public final class PdfRenderer {
     /** Light diagonal text over the page, drawn once the page's content is laid out. */
     private static final class Watermark extends PdfPageEventHelper {
 
-        private static final Font FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 34, Font.NORMAL,
-                new Color(0xc6, 0x28, 0x28));
+        private static final Font FONT =
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 34, Font.NORMAL, new Color(0xc6, 0x28, 0x28));
 
         private final String text;
 
@@ -134,15 +144,20 @@ public final class PdfRenderer {
             translucent.setFillOpacity(0.15f);
             canvas.setGState(translucent);
             Rectangle page = document.getPageSize();
-            ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, new Phrase(text, FONT),
-                    page.getWidth() / 2, page.getHeight() / 2, 45);
+            ColumnText.showTextAligned(
+                    canvas,
+                    Element.ALIGN_CENTER,
+                    new Phrase(text, FONT),
+                    page.getWidth() / 2,
+                    page.getHeight() / 2,
+                    45);
             canvas.restoreState();
         }
     }
 
     private static PdfPTable header(ProcessingContext ctx) {
         Party supplier = ctx.supplier();
-        PdfPTable table = table(new float[]{3, 2});
+        PdfPTable table = table(new float[] {3, 2});
 
         PdfPCell issuer = cell();
         issuer.addElement(new Paragraph(supplier.legalName(), TITLE));
@@ -153,21 +168,24 @@ public final class PdfRenderer {
         address(supplier.address()).forEach(text -> issuer.addElement(line(text, NORMAL)));
         contact(supplier).forEach(text -> issuer.addElement(line(text, NORMAL)));
         if (!supplier.taxLevelCodes().isEmpty()) {
-            issuer.addElement(line("Responsabilidades fiscales: " + String.join(", ", supplier.taxLevelCodes()), SMALL));
+            issuer.addElement(
+                    line("Responsabilidades fiscales: " + String.join(", ", supplier.taxLevelCodes()), SMALL));
         }
         table.addCell(issuer);
 
         PdfPCell document = boxed();
         document.addElement(line(title(ctx.documentType()).toUpperCase(COLOMBIA), BOLD));
         document.addElement(new Paragraph("No. " + ctx.fullNumber(), TITLE));
-        document.addElement(labelled("Fecha de emisión", DianTime.date(ctx.issueDate()) + " " + DianTime.time(ctx.issueTime())));
+        document.addElement(
+                labelled("Fecha de emisión", DianTime.date(ctx.issueDate()) + " " + DianTime.time(ctx.issueTime())));
         if (ctx.dueDate() != null) {
             document.addElement(labelled("Fecha de vencimiento", DianTime.date(ctx.dueDate())));
         }
         PaymentInfo payment = ctx.payment();
         if (payment != null) {
             document.addElement(labelled("Forma de pago", "2".equals(payment.methodId()) ? "Crédito" : "Contado"));
-            document.addElement(labelled("Medio de pago", PAYMENT_MEANS.getOrDefault(payment.meansCode(), payment.meansCode())));
+            document.addElement(
+                    labelled("Medio de pago", PAYMENT_MEANS.getOrDefault(payment.meansCode(), payment.meansCode())));
         }
         document.addElement(labelled("Moneda", ctx.currency()));
         table.addCell(document);
@@ -177,7 +195,7 @@ public final class PdfRenderer {
 
     private static PdfPTable customer(ProcessingContext ctx) {
         Party customer = ctx.customer();
-        PdfPTable table = table(new float[]{1});
+        PdfPTable table = table(new float[] {1});
         PdfPCell cell = boxed();
         cell.addElement(line("ADQUIRIENTE", SMALL_BOLD));
         cell.addElement(line(customer.legalName(), BOLD));
@@ -190,13 +208,19 @@ public final class PdfRenderer {
     }
 
     private static PdfPTable reference(ProcessingContext ctx) {
-        PdfPTable table = table(new float[]{1});
+        PdfPTable table = table(new float[] {1});
         PdfPCell cell = boxed();
         cell.addElement(line("FACTURA QUE SE CORRIGE", SMALL_BOLD));
-        cell.addElement(labelled("Número", ctx.reference().number() + "   Fecha: " + DianTime.date(ctx.reference().issueDate())));
+        cell.addElement(labelled(
+                "Número",
+                ctx.reference().number() + "   Fecha: "
+                        + DianTime.date(ctx.reference().issueDate())));
         cell.addElement(labelled("CUFE", ctx.reference().cufe()));
         if (ctx.correctionConcept() != null) {
-            cell.addElement(labelled("Concepto", ctx.correctionConcept().dianCode() + " - " + ctx.correctionConcept().dianName()));
+            cell.addElement(labelled(
+                    "Concepto",
+                    ctx.correctionConcept().dianCode() + " - "
+                            + ctx.correctionConcept().dianName()));
         }
         if (ctx.correctionDescription() != null && !ctx.correctionDescription().isBlank()) {
             cell.addElement(labelled("Motivo", ctx.correctionDescription()));
@@ -207,9 +231,10 @@ public final class PdfRenderer {
     }
 
     private static PdfPTable lines(ProcessingContext ctx) {
-        PdfPTable table = table(new float[]{0.4f, 1.1f, 3.6f, 0.8f, 0.6f, 1.3f, 0.7f, 1.4f});
+        PdfPTable table = table(new float[] {0.4f, 1.1f, 3.6f, 0.8f, 0.6f, 1.3f, 0.7f, 1.4f});
         table.setHeaderRows(1);
-        for (String heading : List.of("#", "Código", "Descripción", "Cant.", "Und.", "Valor unitario", "IVA %", "Total")) {
+        for (String heading :
+                List.of("#", "Código", "Descripción", "Cant.", "Und.", "Valor unitario", "IVA %", "Total")) {
             PdfPCell cell = new PdfPCell(new Phrase(heading, BOLD));
             cell.setBackgroundColor(HEADER_FILL);
             cell.setBorderColor(RULE);
@@ -232,16 +257,24 @@ public final class PdfRenderer {
 
     private static PdfPTable totals(ProcessingContext ctx) {
         MonetaryTotals totals = ctx.calculation().totals();
-        PdfPTable table = table(new float[]{4, 1.6f, 1.4f});
+        PdfPTable table = table(new float[] {4, 1.6f, 1.4f});
         addTotal(table, "Subtotal", totals.lineExtensionAmount(), false);
         for (TaxTotal tax : ctx.calculation().taxTotals()) {
             for (TaxAmount subtotal : tax.subtotals()) {
-                addTotal(table, tax.type().dianName() + " " + plain(subtotal.percent()) + " % sobre "
-                        + money(subtotal.taxableAmount()), subtotal.amount(), false);
+                addTotal(
+                        table,
+                        tax.type().dianName() + " " + plain(subtotal.percent()) + " % sobre "
+                                + money(subtotal.taxableAmount()),
+                        subtotal.amount(),
+                        false);
             }
         }
         addTotal(table, "Total impuestos", totals.taxInclusiveAmount().subtract(totals.taxExclusiveAmount()), false);
-        addTotal(table, ctx.documentType() == DocumentType.INVOICE ? "Total a pagar" : "Total nota", totals.payableAmount(), true);
+        addTotal(
+                table,
+                ctx.documentType() == DocumentType.INVOICE ? "Total a pagar" : "Total nota",
+                totals.payableAmount(),
+                true);
         table.setSpacingAfter(10);
         return table;
     }
@@ -257,20 +290,36 @@ public final class PdfRenderer {
     private static Paragraph resolution(NumberingAuthorization authorization) {
         String text = "Autorización de numeración de facturación DIAN No. " + authorization.resolutionNumber()
                 + " vigente del " + authorization.startDate() + " al " + authorization.endDate()
-                + ", prefijo " + authorization.prefix() + " del " + authorization.from() + " al " + authorization.to() + ".";
+                + ", prefijo " + authorization.prefix() + " del " + authorization.from() + " al " + authorization.to()
+                + ".";
         Paragraph paragraph = new Paragraph(text, SMALL);
         paragraph.setSpacingAfter(8);
         return paragraph;
     }
 
-    private static PdfPTable validation(ProcessingContext ctx, String uniqueCode, Legend legend, PdfContentByte canvas) {
+    private static PdfPTable validation(
+            ProcessingContext ctx, String uniqueCode, Legend legend, PdfContentByte canvas) {
         String qrContent = ctx.documentType() == DocumentType.INVOICE
-                ? QrCode.invoice(ctx.fullNumber(), ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
-                        ctx.customer().identificationNumber(), ctx.calculation(), uniqueCode, ctx.environment())
-                : QrCode.note(ctx.fullNumber(), ctx.issueDate(), ctx.issueTime(), ctx.supplier().identificationNumber(),
-                        ctx.customer().identificationNumber(), ctx.calculation(), uniqueCode, ctx.environment());
+                ? QrCode.invoice(
+                        ctx.fullNumber(),
+                        ctx.issueDate(),
+                        ctx.issueTime(),
+                        ctx.supplier().identificationNumber(),
+                        ctx.customer().identificationNumber(),
+                        ctx.calculation(),
+                        uniqueCode,
+                        ctx.environment())
+                : QrCode.note(
+                        ctx.fullNumber(),
+                        ctx.issueDate(),
+                        ctx.issueTime(),
+                        ctx.supplier().identificationNumber(),
+                        ctx.customer().identificationNumber(),
+                        ctx.calculation(),
+                        uniqueCode,
+                        ctx.environment());
 
-        PdfPTable table = table(new float[]{1, 4});
+        PdfPTable table = table(new float[] {1, 4});
         PdfPCell qr = new PdfPCell(qr(canvas, qrContent, 96), false);
         qr.setBorder(Rectangle.NO_BORDER);
         qr.setPadding(2);
@@ -285,15 +334,19 @@ public final class PdfRenderer {
         if (validated != null) {
             OffsetDateTime colombia = validated.atZoneSameInstant(DianTime.ZONE).toOffsetDateTime();
             String by = sandbox ? "Validación simulada por Cetus el " : "Validada por la DIAN el ";
-            details.addElement(line(by + DianTime.date(colombia.toLocalDate()) + " "
-                    + DianTime.time(colombia.toLocalTime()), SMALL));
+            details.addElement(line(
+                    by + DianTime.date(colombia.toLocalDate()) + " " + DianTime.time(colombia.toLocalTime()), SMALL));
         }
-        details.addElement(line(sandbox
-                ? "Documento simulado: no fue enviado a la DIAN y no aparece en su catálogo."
-                : "Escanee el código QR para consultar el documento en el catálogo de la DIAN.", SMALL));
-        details.addElement(line("Representación gráfica de " + title(ctx.documentType()).toLowerCase(COLOMBIA)
-                + ". Software: " + legend.softwareName() + " · Proveedor tecnológico: " + legend.providerName()
-                + " NIT " + legend.providerNit(), SMALL));
+        details.addElement(line(
+                sandbox
+                        ? "Documento simulado: no fue enviado a la DIAN y no aparece en su catálogo."
+                        : "Escanee el código QR para consultar el documento en el catálogo de la DIAN.",
+                SMALL));
+        details.addElement(line(
+                "Representación gráfica de " + title(ctx.documentType()).toLowerCase(COLOMBIA)
+                        + ". Software: " + legend.softwareName() + " · Proveedor tecnológico: " + legend.providerName()
+                        + " NIT " + legend.providerNit(),
+                SMALL));
         table.addCell(details);
         return table;
     }
@@ -301,9 +354,19 @@ public final class PdfRenderer {
     /** The QR as vector squares, so it stays sharp at any zoom and needs no image codec. */
     private static Image qr(PdfContentByte canvas, String content, float size) {
         try {
-            BitMatrix matrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, 0, 0,
-                    Map.of(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M, EncodeHintType.MARGIN, 0,
-                            EncodeHintType.CHARACTER_SET, "UTF-8"));
+            BitMatrix matrix = new QRCodeWriter()
+                    .encode(
+                            content,
+                            BarcodeFormat.QR_CODE,
+                            0,
+                            0,
+                            Map.of(
+                                    EncodeHintType.ERROR_CORRECTION,
+                                    ErrorCorrectionLevel.M,
+                                    EncodeHintType.MARGIN,
+                                    0,
+                                    EncodeHintType.CHARACTER_SET,
+                                    "UTF-8"));
             float module = size / matrix.getWidth();
             PdfTemplate template = canvas.createTemplate(size, size);
             template.setColorFill(Color.BLACK);
@@ -373,7 +436,8 @@ public final class PdfRenderer {
     }
 
     private static String lineTaxes(CalculatedLine line) {
-        return String.join(" ", line.taxes().stream().map(tax -> plain(tax.percent())).toList());
+        return String.join(
+                " ", line.taxes().stream().map(tax -> plain(tax.percent())).toList());
     }
 
     private static void addTotal(PdfPTable table, String label, BigDecimal amount, boolean strong) {

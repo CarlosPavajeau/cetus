@@ -1,19 +1,18 @@
 package com.cantte.cetus.api.auth;
 
-import com.cantte.cetus.domain.model.Environment;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.cantte.cetus.domain.model.Environment;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class ApiKeyRateLimiterTest {
 
     private final AtomicLong now = new AtomicLong();
-    private final ApiKeyRateLimiter limiter = new ApiKeyRateLimiter(new ApiKeyRateLimiter.Limits(2, 3),
-            new ApiKeyRateLimiter.Limits(1, 1), now::get);
+    private final ApiKeyRateLimiter limiter =
+            new ApiKeyRateLimiter(new ApiKeyRateLimiter.Limits(2, 3), new ApiKeyRateLimiter.Limits(1, 1), now::get);
 
     @Test
     void allowsTheBurstThenAsksToWaitForTheNextToken() {

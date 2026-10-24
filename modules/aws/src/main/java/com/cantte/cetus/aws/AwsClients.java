@@ -3,6 +3,8 @@ package com.cantte.cetus.aws;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;
+import java.net.URI;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
@@ -11,9 +13,6 @@ import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-
-import java.net.URI;
-import java.util.Optional;
 
 /**
  * AWS SDK clients. Credentials come from the default chain; on Railway set
@@ -59,7 +58,8 @@ public class AwsClients {
                 .region(Region.of(region))
                 .credentialsProvider(DefaultCredentialsProvider.builder().build());
         endpointOverride.ifPresent(uri -> builder.endpointOverride(uri)
-                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()));
+                .serviceConfiguration(
+                        S3Configuration.builder().pathStyleAccessEnabled(true).build()));
         return builder.build();
     }
 

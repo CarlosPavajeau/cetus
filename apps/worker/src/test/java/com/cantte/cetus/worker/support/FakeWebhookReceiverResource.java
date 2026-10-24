@@ -1,7 +1,6 @@
 package com.cantte.cetus.worker.support;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
@@ -20,6 +19,5 @@ public class FakeWebhookReceiverResource implements QuarkusTestResourceLifecycle
     }
 
     @Override
-    public void stop() {
-    }
+    public void stop() {}
 }

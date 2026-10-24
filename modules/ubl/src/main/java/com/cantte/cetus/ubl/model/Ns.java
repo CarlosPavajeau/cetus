@@ -14,6 +14,5 @@ public final class Ns {
     public static final String DS = "http://www.w3.org/2000/09/xmldsig#";
     public static final String XADES = "http://uri.etsi.org/01903/v1.3.2#";
 
-    private Ns() {
-    }
+    private Ns() {}
 }

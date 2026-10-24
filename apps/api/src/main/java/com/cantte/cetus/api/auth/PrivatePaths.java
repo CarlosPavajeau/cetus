@@ -5,11 +5,10 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.Router;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * /console/** and /admin/** (the console's BFF) and /q/** (health, OpenAPI) are only served to private hosts: Railway's
@@ -21,7 +20,8 @@ import java.util.Locale;
 public class PrivatePaths {
 
     private static final List<String> PRIVATE_PREFIXES = List.of("/console/", "/admin/", "/q/");
-    private static final byte[] NOT_FOUND = "{\"code\":\"not_found\",\"message\":\"Not found\",\"details\":null}".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] NOT_FOUND =
+            "{\"code\":\"not_found\",\"message\":\"Not found\",\"details\":null}".getBytes(StandardCharsets.UTF_8);
 
     @ConfigProperty(name = "cetus.private-hosts")
     List<String> privateHosts;
@@ -29,7 +29,9 @@ public class PrivatePaths {
     void register(@Observes Router router) {
         router.route().order(Integer.MIN_VALUE).handler(ctx -> {
             if (isPrivatePath(ctx.normalizedPath()) && !isPrivateHost(ctx.request())) {
-                ctx.response().setStatusCode(404).putHeader("Content-Type", "application/json")
+                ctx.response()
+                        .setStatusCode(404)
+                        .putHeader("Content-Type", "application/json")
                         .end(Buffer.buffer(NOT_FOUND));
                 return;
             }

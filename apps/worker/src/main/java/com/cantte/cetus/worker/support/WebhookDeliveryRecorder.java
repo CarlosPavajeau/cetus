@@ -15,14 +15,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * Short transactions that track the delivery of a webhook event to one endpoint, and the health of the
@@ -40,20 +39,29 @@ public class WebhookDeliveryRecorder {
     public static final int MAX_BODY_CHARS = 1024;
 
     /** What the handler needs to send a delivery, read in one go. */
-    public record Target(UUID deliveryId, Status status, UUID eventId, String payload, UUID endpointId,
-                         WebhookEndpointEntity.Status endpointStatus, Environment environment, String url,
-                         byte[] secretSealed) {
-    }
+    public record Target(
+            UUID deliveryId,
+            Status status,
+            UUID eventId,
+            String payload,
+            UUID endpointId,
+            WebhookEndpointEntity.Status endpointStatus,
+            Environment environment,
+            String url,
+            byte[] secretSealed) {}
 
     @Inject
     AuditLog auditLog;
+
     @Inject
     Notifications notifications;
 
     @ConfigProperty(name = "cetus.webhooks.auto-disable.after")
     Duration autoDisableAfter;
+
     @ConfigProperty(name = "cetus.webhooks.auto-disable.min-failures")
     int autoDisableMinFailures;
+
     @ConfigProperty(name = "cetus.webhooks.failing-notice-after")
     int failingNoticeAfter;
 
@@ -65,8 +73,16 @@ public class WebhookDeliveryRecorder {
         }
         WebhookEventEntity event = WebhookEventEntity.findById(delivery.eventId);
         WebhookEndpointEntity endpoint = WebhookEndpointEntity.findById(delivery.endpointId);
-        return Optional.of(new Target(delivery.id, delivery.status, event.id, event.payload, endpoint.id,
-                endpoint.status, endpoint.environment, endpoint.url, endpoint.secretSealed));
+        return Optional.of(new Target(
+                delivery.id,
+                delivery.status,
+                event.id,
+                event.payload,
+                endpoint.id,
+                endpoint.status,
+                endpoint.environment,
+                endpoint.url,
+                endpoint.secretSealed));
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -85,7 +101,8 @@ public class WebhookDeliveryRecorder {
         delivery.lastError = null;
         delivery.deliveredAt = OffsetDateTime.now();
         // Only written when there is a streak to clear, so busy endpoints do not contend for the row.
-        WebhookEndpointEntity.update("consecutiveFailures = 0, failingSince = null where id = ?1 and consecutiveFailures > 0",
+        WebhookEndpointEntity.update(
+                "consecutiveFailures = 0, failingSince = null where id = ?1 and consecutiveFailures > 0",
                 delivery.endpointId);
     }
 
@@ -119,7 +136,8 @@ public class WebhookDeliveryRecorder {
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public boolean canceled(UUID deliveryId) {
         WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId);
-        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findById(delivery.endpointId, LockModeType.PESSIMISTIC_READ);
+        WebhookEndpointEntity endpoint =
+                WebhookEndpointEntity.findById(delivery.endpointId, LockModeType.PESSIMISTIC_READ);
         if (endpoint.status != WebhookEndpointEntity.Status.DISABLED) {
             return false;
         }
@@ -136,33 +154,59 @@ public class WebhookDeliveryRecorder {
         if (endpoint.failingSince == null) {
             endpoint.failingSince = now;
         }
-        if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE && endpoint.consecutiveFailures == failingNoticeAfter) {
+        if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE
+                && endpoint.consecutiveFailures == failingNoticeAfter) {
             notify(endpoint, NotificationKind.WEBHOOK_FAILING, "webhook_failing", endpoint.failingSince);
         }
         boolean longEnough = !endpoint.failingSince.plus(autoDisableAfter).isAfter(now);
-        if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE && longEnough
+        if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE
+                && longEnough
                 && endpoint.consecutiveFailures >= autoDisableMinFailures) {
             endpoint.status = WebhookEndpointEntity.Status.DISABLED;
             endpoint.disabledAt = now;
             endpoint.disabledReason = WebhookEndpointEntity.DisabledReason.AUTOMATIC;
-            auditLog.record(endpoint.accountId, Actor.system(), null, AuditAction.WEBHOOK_ENDPOINT_DISABLED,
-                    "webhook_endpoint", endpoint.id, Map.of("url", endpoint.url, "environment", endpoint.environment,
-                            "reason", "AUTOMATIC", "consecutiveFailures", endpoint.consecutiveFailures,
-                            "failingSince", endpoint.failingSince.toString()));
-            LOG.warnf("Disabled webhook endpoint %s: %d failed attempts since %s", endpoint.id,
-                    endpoint.consecutiveFailures, endpoint.failingSince);
+            auditLog.record(
+                    endpoint.accountId,
+                    Actor.system(),
+                    null,
+                    AuditAction.WEBHOOK_ENDPOINT_DISABLED,
+                    "webhook_endpoint",
+                    endpoint.id,
+                    Map.of(
+                            "url",
+                            endpoint.url,
+                            "environment",
+                            endpoint.environment,
+                            "reason",
+                            "AUTOMATIC",
+                            "consecutiveFailures",
+                            endpoint.consecutiveFailures,
+                            "failingSince",
+                            endpoint.failingSince.toString()));
+            LOG.warnf(
+                    "Disabled webhook endpoint %s: %d failed attempts since %s",
+                    endpoint.id, endpoint.consecutiveFailures, endpoint.failingSince);
             notify(endpoint, NotificationKind.WEBHOOK_DISABLED, "webhook_disabled", endpoint.disabledAt);
         }
     }
 
     /** Once per streak (or per disabling), named by when it started. */
     private void notify(WebhookEndpointEntity endpoint, NotificationKind kind, String key, OffsetDateTime since) {
-        notifications.request(endpoint.accountId, kind,
+        notifications.request(
+                endpoint.accountId,
+                kind,
                 "%s:%s:%d".formatted(key, endpoint.id, since.toInstant().toEpochMilli()),
-                Map.of("endpointId", endpoint.id.toString(), "url", endpoint.url,
-                        "environment", endpoint.environment.name(),
-                        "failures", String.valueOf(endpoint.consecutiveFailures),
-                        "failingSince", Dates.bogota(endpoint.failingSince)));
+                Map.of(
+                        "endpointId",
+                        endpoint.id.toString(),
+                        "url",
+                        endpoint.url,
+                        "environment",
+                        endpoint.environment.name(),
+                        "failures",
+                        String.valueOf(endpoint.consecutiveFailures),
+                        "failingSince",
+                        Dates.bogota(endpoint.failingSince)));
     }
 
     private static String truncate(String body) {

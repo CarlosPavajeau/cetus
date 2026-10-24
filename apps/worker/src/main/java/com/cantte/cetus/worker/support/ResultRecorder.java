@@ -16,7 +16,6 @@ import com.cantte.cetus.webhooks.WebhookPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ public class ResultRecorder {
 
     @Inject
     JobQueue jobs;
+
     @Inject
     WebhookPublisher webhooks;
 
@@ -46,8 +46,14 @@ public class ResultRecorder {
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void submission(UUID documentId, String operation, String trackId, boolean timedOut,
-                           DianResponse response, List<String> errors, long durationMs) {
+    public void submission(
+            UUID documentId,
+            String operation,
+            String trackId,
+            boolean timedOut,
+            DianResponse response,
+            List<String> errors,
+            long durationMs) {
         DianSubmissionEntity submission = new DianSubmissionEntity();
         submission.id = Ids.newId();
         submission.documentId = documentId;
@@ -91,8 +97,9 @@ public class ResultRecorder {
             // Same transaction as the status change: an accepted document is always delivered.
             jobs.enqueue(JobTypes.DELIVER_DOCUMENT, documentId);
         }
-        webhooks.publish(WebhookEventType.forDocument(doc.documentType,
-                response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED), doc);
+        webhooks.publish(
+                WebhookEventType.forDocument(doc.documentType, response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED),
+                doc);
     }
 
     /** The DIAN accepted the issuer's test set; the API stops taking test invoices for it. */

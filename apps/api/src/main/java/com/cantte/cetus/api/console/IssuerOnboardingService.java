@@ -26,8 +26,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
@@ -37,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Issuer setup: tax data, DIAN software credentials, certificate and numbering ranges.
@@ -48,25 +47,35 @@ public class IssuerOnboardingService {
 
     @Inject
     SecretCipher cipher;
+
     @Inject
     DocumentStorage storage;
+
     @Inject
     AuditLog auditLog;
+
     @Inject
     JobQueue jobs;
+
     @Inject
     SandboxIssuers sandboxIssuers;
+
     @ConfigProperty(name = "cetus.sandbox.max-issuers")
     int sandboxMaxIssuers;
 
     @Transactional
-    public IssuerEntity create(UUID accountId, IssuerViews.CreateIssuerRequest request, Actor actor,
-                               RequestOrigin origin) {
+    public IssuerEntity create(
+            UUID accountId, IssuerViews.CreateIssuerRequest request, Actor actor, RequestOrigin origin) {
         IssuerEntity issuer = persist(accountId, request);
-        audit(issuer, actor, origin, AuditAction.ISSUER_CREATED, Map.of(
-                "nit", issuer.nit,
-                "environment", issuer.environment,
-                "personType", issuer.personType));
+        audit(
+                issuer,
+                actor,
+                origin,
+                AuditAction.ISSUER_CREATED,
+                Map.of(
+                        "nit", issuer.nit,
+                        "environment", issuer.environment,
+                        "personType", issuer.personType));
         return issuer;
     }
 
@@ -75,15 +84,21 @@ public class IssuerOnboardingService {
     IssuerEntity persist(UUID accountId, IssuerViews.CreateIssuerRequest request) {
         String checkDigit = NitCheckDigit.compute(request.nit());
         if (request.checkDigit() != null && !request.checkDigit().equals(checkDigit)) {
-            throw new DomainException("check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");
+            throw new DomainException(
+                    "check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");
         }
         if (request.environment() == Environment.SANDBOX) {
             requireSandboxIssuerSlot(accountId);
         }
-        boolean exists = IssuerEntity.count("accountId = ?1 and environment = ?2 and nit = ?3",
-                accountId, request.environment(), request.nit()) > 0;
+        boolean exists = IssuerEntity.count(
+                        "accountId = ?1 and environment = ?2 and nit = ?3",
+                        accountId,
+                        request.environment(),
+                        request.nit())
+                > 0;
         if (exists) {
-            throw new DomainException("issuer_already_exists", "This NIT already has an issuer in " + request.environment());
+            throw new DomainException(
+                    "issuer_already_exists", "This NIT already has an issuer in " + request.environment());
         }
         IssuerEntity issuer = new IssuerEntity();
         issuer.id = Ids.newId();
@@ -91,9 +106,17 @@ public class IssuerOnboardingService {
         issuer.environment = request.environment();
         issuer.nit = request.nit();
         issuer.checkDigit = checkDigit;
-        apply(issuer, new IssuerViews.UpdateIssuerRequest(request.legalName(), request.tradeName(),
-                request.personType(), request.taxLevelCodes(), request.responsibleForIva(), request.address(),
-                request.email(), request.phone()));
+        apply(
+                issuer,
+                new IssuerViews.UpdateIssuerRequest(
+                        request.legalName(),
+                        request.tradeName(),
+                        request.personType(),
+                        request.taxLevelCodes(),
+                        request.responsibleForIva(),
+                        request.address(),
+                        request.email(),
+                        request.phone()));
         issuer.operationMode = IssuerEntity.OperationMode.OWN_SOFTWARE;
         issuer.persist();
         if (issuer.environment == Environment.SANDBOX) {
@@ -113,8 +136,8 @@ public class IssuerOnboardingService {
                 .getSingleResult();
         long issuers = IssuerEntity.count("accountId = ?1 and environment = ?2", accountId, Environment.SANDBOX);
         if (issuers >= sandboxMaxIssuers) {
-            throw new DomainException("sandbox_issuer_limit",
-                    "This account already has its " + sandboxMaxIssuers + " sandbox issuers");
+            throw new DomainException(
+                    "sandbox_issuer_limit", "This account already has its " + sandboxMaxIssuers + " sandbox issuers");
         }
     }
 
@@ -125,11 +148,11 @@ public class IssuerOnboardingService {
      * Documents not yet sent to the DIAN go out with the new data.
      */
     @Transactional
-    public IssuerEntity update(IssuerEntity issuer, IssuerViews.UpdateIssuerRequest request, Actor actor,
-                               RequestOrigin origin) {
+    public IssuerEntity update(
+            IssuerEntity issuer, IssuerViews.UpdateIssuerRequest request, Actor actor, RequestOrigin origin) {
         if (issuer.status != IssuerEntity.Status.ONBOARDING && request.personType() != issuer.personType) {
-            throw new DomainException("person_type_locked",
-                    "The person type can only change while the issuer is being set up");
+            throw new DomainException(
+                    "person_type_locked", "The person type can only change while the issuer is being set up");
         }
         Map<String, Object> before = snapshot(issuer);
         apply(issuer, request);
@@ -144,8 +167,8 @@ public class IssuerOnboardingService {
     }
 
     @Transactional
-    public void setSoftware(IssuerEntity issuer, IssuerViews.SoftwareRequest request, Actor actor,
-                            RequestOrigin origin) {
+    public void setSoftware(
+            IssuerEntity issuer, IssuerViews.SoftwareRequest request, Actor actor, RequestOrigin origin) {
         requireOwnSetup(issuer);
         SoftwareCredentialEntity.deactivateAll(issuer.id);
         SoftwareCredentialEntity credential = new SoftwareCredentialEntity();
@@ -155,16 +178,23 @@ public class IssuerOnboardingService {
         credential.pinSealed = cipher.sealText(request.pin());
         credential.testSetId = request.testSetId();
         credential.persist();
-        audit(issuer, actor, origin, AuditAction.SOFTWARE_CREDENTIALS_SET, Map.of(
-                "softwareId", credential.softwareId,
-                "hasTestSet", credential.testSetId != null && !credential.testSetId.isBlank()));
+        audit(
+                issuer,
+                actor,
+                origin,
+                AuditAction.SOFTWARE_CREDENTIALS_SET,
+                Map.of(
+                        "softwareId",
+                        credential.softwareId,
+                        "hasTestSet",
+                        credential.testSetId != null && !credential.testSetId.isBlank()));
         refreshStatus(issuer, actor, origin);
     }
 
     /** Validates the PKCS#12, stores it sealed in S3 and keeps only metadata in the database. */
     @Transactional
-    public SigningCertificateEntity setCertificate(IssuerEntity issuer, IssuerViews.CertificateRequest request,
-                                                   Actor actor, RequestOrigin origin) {
+    public SigningCertificateEntity setCertificate(
+            IssuerEntity issuer, IssuerViews.CertificateRequest request, Actor actor, RequestOrigin origin) {
         requireOwnSetup(issuer);
         byte[] pkcs12;
         try {
@@ -177,8 +207,11 @@ public class IssuerOnboardingService {
             keys = Pkcs12Loader.loadUntrusted(pkcs12, request.password().toCharArray());
         } catch (SigningException e) {
             // Low-level keystore errors stay out of the response; only our own messages are shown.
-            throw new DomainException("certificate_invalid", e.getCause() == null ? e.getMessage()
-                    : "Could not read the PKCS#12 file: check the file and its password");
+            throw new DomainException(
+                    "certificate_invalid",
+                    e.getCause() == null
+                            ? e.getMessage()
+                            : "Could not read the PKCS#12 file: check the file and its password");
         }
         var certificate = keys.certificate();
         OffsetDateTime validTo = certificate.getNotAfter().toInstant().atOffset(ZoneOffset.UTC);
@@ -204,19 +237,24 @@ public class IssuerOnboardingService {
         entity.validFrom = certificate.getNotBefore().toInstant().atOffset(ZoneOffset.UTC);
         entity.validTo = validTo;
         entity.persist();
-        audit(issuer, actor, origin, AuditAction.CERTIFICATE_UPLOADED, Map.of(
-                "certificateId", entity.id,
-                "subject", entity.subjectDn,
-                "serialNumber", entity.serialNumber,
-                "validTo", entity.validTo,
-                "fingerprintSha256", entity.fingerprintSha256));
+        audit(
+                issuer,
+                actor,
+                origin,
+                AuditAction.CERTIFICATE_UPLOADED,
+                Map.of(
+                        "certificateId", entity.id,
+                        "subject", entity.subjectDn,
+                        "serialNumber", entity.serialNumber,
+                        "validTo", entity.validTo,
+                        "fingerprintSha256", entity.fingerprintSha256));
         refreshStatus(issuer, actor, origin);
         return entity;
     }
 
     @Transactional
-    public NumberingRangeEntity addRange(IssuerEntity issuer, IssuerViews.NumberingRangeRequest request, Actor actor,
-                                         RequestOrigin origin) {
+    public NumberingRangeEntity addRange(
+            IssuerEntity issuer, IssuerViews.NumberingRangeRequest request, Actor actor, RequestOrigin origin) {
         requireOwnSetup(issuer);
         if (request.from() > request.to()) {
             throw new DomainException("range_invalid", "'from' must be lower than or equal to 'to'");
@@ -258,14 +296,16 @@ public class IssuerOnboardingService {
     @Transactional
     public NumberingRangeEntity verifyRange(IssuerEntity issuer, UUID rangeId) {
         requireOwnSetup(issuer);
-        NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find("id = ?1 and issuerId = ?2", rangeId, issuer.id)
+        NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find(
+                        "id = ?1 and issuerId = ?2", rangeId, issuer.id)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Numbering range not found"));
         if (range.documentType != DocumentType.INVOICE) {
             throw new DomainException("range_not_verifiable", "Only invoice ranges are authorized by the DIAN");
         }
         if (issuer.environment != Environment.LIVE) {
-            throw new DomainException("range_not_verifiable",
+            throw new DomainException(
+                    "range_not_verifiable",
                     "Habilitación uses the DIAN's shared test range, which is not registered per NIT");
         }
         if (!canSign(issuer)) {
@@ -280,7 +320,8 @@ public class IssuerOnboardingService {
     /** Sandbox issuers sign and number with what Cetus gives them, so their setup never changes. */
     private static void requireOwnSetup(IssuerEntity issuer) {
         if (issuer.environment == Environment.SANDBOX) {
-            throw new DomainException("sandbox_issuer",
+            throw new DomainException(
+                    "sandbox_issuer",
                     "Sandbox issuers use Cetus' sandbox credentials and numbering; they need no setup");
         }
     }
@@ -306,11 +347,12 @@ public class IssuerOnboardingService {
     public IssuerEntity promote(IssuerEntity test, Actor actor, RequestOrigin origin) {
         requireOwnSetup(test);
         if (test.environment != Environment.TEST || test.status != IssuerEntity.Status.TESTING) {
-            throw new DomainException("issuer_not_promotable",
-                    "Only a test issuer in habilitación can be promoted to production");
+            throw new DomainException(
+                    "issuer_not_promotable", "Only a test issuer in habilitación can be promoted to production");
         }
-        boolean promoted = IssuerEntity.count("accountId = ?1 and environment = ?2 and nit = ?3",
-                test.accountId, Environment.LIVE, test.nit) > 0;
+        boolean promoted = IssuerEntity.count(
+                        "accountId = ?1 and environment = ?2 and nit = ?3", test.accountId, Environment.LIVE, test.nit)
+                > 0;
         if (promoted) {
             throw new DomainException("issuer_already_promoted", "This NIT already has a production issuer");
         }
@@ -363,12 +405,17 @@ public class IssuerOnboardingService {
                 .orElse(false);
 
         audit(test, actor, origin, AuditAction.ISSUER_PROMOTED, Map.of("liveIssuerId", live.id));
-        audit(live, actor, origin, AuditAction.ISSUER_CREATED, Map.of(
-                "nit", live.nit,
-                "environment", live.environment,
-                "personType", live.personType,
-                "promotedFrom", test.id,
-                "certificateCopied", certificateCopied));
+        audit(
+                live,
+                actor,
+                origin,
+                AuditAction.ISSUER_CREATED,
+                Map.of(
+                        "nit", live.nit,
+                        "environment", live.environment,
+                        "personType", live.personType,
+                        "promotedFrom", test.id,
+                        "certificateCopied", certificateCopied));
         return live;
     }
 
@@ -383,15 +430,22 @@ public class IssuerOnboardingService {
         // Habilitación numbers from a shared test range (SETP) the DIAN does not register per NIT, so
         // GetNumberingRange only answers for production resolutions.
         if (canSign && issuer.environment == Environment.LIVE) {
-            NumberingRangeEntity.<NumberingRangeEntity>list("issuerId = ?1 and documentType = ?2 and status = 'ACTIVE' "
-                    + "and verificationStatus is null", issuer.id, DocumentType.INVOICE).forEach(this::requestVerification);
+            NumberingRangeEntity.<NumberingRangeEntity>list(
+                            "issuerId = ?1 and documentType = ?2 and status = 'ACTIVE' "
+                                    + "and verificationStatus is null",
+                            issuer.id,
+                            DocumentType.INVOICE)
+                    .forEach(this::requestVerification);
         }
         if (ready && issuer.status == IssuerEntity.Status.ONBOARDING) {
             IssuerEntity.Status previous = issuer.status;
-            issuer.status = issuer.environment == Environment.TEST
-                    ? IssuerEntity.Status.TESTING
-                    : IssuerEntity.Status.ENABLED;
-            audit(issuer, actor, origin, AuditAction.ISSUER_STATUS_CHANGED,
+            issuer.status =
+                    issuer.environment == Environment.TEST ? IssuerEntity.Status.TESTING : IssuerEntity.Status.ENABLED;
+            audit(
+                    issuer,
+                    actor,
+                    origin,
+                    AuditAction.ISSUER_STATUS_CHANGED,
                     Map.of("from", previous, "to", issuer.status));
         }
     }
@@ -422,8 +476,8 @@ public class IssuerOnboardingService {
         return fields;
     }
 
-    private void audit(IssuerEntity issuer, Actor actor, RequestOrigin origin, AuditAction action,
-                       Map<String, Object> data) {
+    private void audit(
+            IssuerEntity issuer, Actor actor, RequestOrigin origin, AuditAction action, Map<String, Object> data) {
         auditLog.record(issuer.accountId, actor, origin, action, "issuer", issuer.id, data);
     }
 }

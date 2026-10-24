@@ -16,6 +16,5 @@ public record LineInput(
         taxes = taxes == null ? List.of() : List.copyOf(taxes);
     }
 
-    public record LineTax(TaxType type, BigDecimal percent) {
-    }
+    public record LineTax(TaxType type, BigDecimal percent) {}
 }

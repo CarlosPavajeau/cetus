@@ -6,9 +6,8 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import java.util.List;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /** Who is calling the administration API. Lets the console check the platform role end to end. */
 @Path("/admin/me")
@@ -21,9 +20,9 @@ public class AdminSessionResource {
     @GET
     @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
     public AdminSessionView me() {
-        return new AdminSessionView(jwt.getSubject(), jwt.getGroups().stream().sorted().toList());
+        return new AdminSessionView(
+                jwt.getSubject(), jwt.getGroups().stream().sorted().toList());
     }
 
-    public record AdminSessionView(String userId, List<String> roles) {
-    }
+    public record AdminSessionView(String userId, List<String> roles) {}
 }

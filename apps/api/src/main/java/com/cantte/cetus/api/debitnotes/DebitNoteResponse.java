@@ -7,12 +7,11 @@ import com.cantte.cetus.domain.model.DebitNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record DebitNoteResponse(
         @Schema(required = true) UUID id,
@@ -30,6 +29,7 @@ public record DebitNoteResponse(
         @Schema(required = true) InvoiceResponse.Dian dian,
         @Schema(required = true, nullable = true) String externalReference,
         @Schema(required = true) OffsetDateTime createdAt,
+
         @Schema(required = true, description = "Deliveries of the accepted note to the customer")
         List<DeliveryView> deliveries) {
 
@@ -47,10 +47,10 @@ public record DebitNoteResponse(
                 new InvoiceRef(invoice.id, invoice.fullNumber(), invoice.cufe),
                 (DebitNoteConcept) note.concept(),
                 note.correctionDescription,
-                new InvoiceResponse.Totals(note.lineExtensionAmount, note.taxExclusiveAmount, note.taxInclusiveAmount,
-                        note.payableAmount),
-                new InvoiceResponse.Dian(note.dianStatusCode, note.dianStatusMessage, List.copyOf(note.dianErrors),
-                        note.validatedAt),
+                new InvoiceResponse.Totals(
+                        note.lineExtensionAmount, note.taxExclusiveAmount, note.taxInclusiveAmount, note.payableAmount),
+                new InvoiceResponse.Dian(
+                        note.dianStatusCode, note.dianStatusMessage, List.copyOf(note.dianErrors), note.validatedAt),
                 note.externalReference,
                 note.createdAt,
                 DeliveryView.of(note.id));

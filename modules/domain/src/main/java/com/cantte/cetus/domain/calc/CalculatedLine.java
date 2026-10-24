@@ -11,5 +11,4 @@ public record CalculatedLine(
         String unitCode,
         BigDecimal unitPrice,
         BigDecimal lineExtensionAmount,
-        List<TaxAmount> taxes) {
-}
+        List<TaxAmount> taxes) {}

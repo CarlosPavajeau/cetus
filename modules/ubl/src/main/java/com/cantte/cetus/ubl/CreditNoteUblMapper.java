@@ -34,7 +34,8 @@ public final class CreditNoteUblMapper {
         ubl.issueTime = DianTime.time(note.issueTime());
         ubl.creditNoteTypeCode = DocumentType.CREDIT_NOTE.dianCode();
         // The issuer's reason travels as a note: CBF04 expects the concept's own name in the Description.
-        if (note.correctionDescription() != null && !note.correctionDescription().isBlank()) {
+        if (note.correctionDescription() != null
+                && !note.correctionDescription().isBlank()) {
             ubl.notes.add(note.correctionDescription());
         }
         ubl.notes.addAll(note.notes());

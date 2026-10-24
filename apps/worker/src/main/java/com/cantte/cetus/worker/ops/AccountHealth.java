@@ -8,10 +8,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.jboss.logging.Logger;
-
 import java.time.LocalDate;
 import java.util.List;
+import org.jboss.logging.Logger;
 
 /**
  * Once a day, tells each account's contacts what is about to stop their invoicing: certificates and
@@ -28,12 +27,16 @@ public class AccountHealth {
 
     @Inject
     EntityManager em;
+
     @Inject
     AccountHealthChecks checks;
+
     @Inject
     Notifications notifications;
 
-    @Scheduled(cron = "${cetus.account-health.cron}", timeZone = "America/Bogota",
+    @Scheduled(
+            cron = "${cetus.account-health.cron}",
+            timeZone = "America/Bogota",
             concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void daily() {
         run(LocalDate.now(Dates.BOGOTA));
@@ -43,12 +46,14 @@ public class AccountHealth {
     @Transactional
     public List<Notice> run(LocalDate today) {
         if (!Boolean.TRUE.equals(em.createNativeQuery("SELECT pg_try_advisory_xact_lock(:id)")
-                .setParameter("id", LOCK_ID).getSingleResult())) {
+                .setParameter("id", LOCK_ID)
+                .getSingleResult())) {
             return List.of();
         }
         List<Notice> requested = checks.all(today).stream()
-                .filter(notice -> notifications.request(notice.accountId(), notice.kind(), notice.dedupKey(),
-                        notice.data()).isPresent())
+                .filter(notice -> notifications
+                        .request(notice.accountId(), notice.kind(), notice.dedupKey(), notice.data())
+                        .isPresent())
                 .toList();
         if (!requested.isEmpty()) {
             LOG.infof("Account health: %d new notices", requested.size());

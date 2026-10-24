@@ -17,7 +17,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +39,8 @@ public class CreditNoteService {
                 .filter(doc -> doc.documentType == DocumentType.INVOICE)
                 .orElseThrow(() -> new NotFoundException("Invoice not found"));
         if (invoice.status != DocumentStatus.ACCEPTED) {
-            throw new DomainException("invoice_not_accepted",
+            throw new DomainException(
+                    "invoice_not_accepted",
                     "Only invoices accepted by the DIAN can be credited; this one is " + invoice.status);
         }
         IssuerEntity issuer = IssuerEntity.findById(invoice.issuerId);
@@ -49,9 +49,10 @@ public class CreditNoteService {
         CalculationResult calculation = calculator.calculate(lines(request, invoice));
         BigDecimal balance = DocumentEntity.creditableBalance(invoice);
         if (calculation.totals().payableAmount().compareTo(balance) > 0) {
-            throw new DomainException("credit_note_exceeds_balance",
-                    "The credit note totals " + calculation.totals().payableAmount()
-                            + " but only " + balance + " of the invoice is left to credit");
+            throw new DomainException(
+                    "credit_note_exceeds_balance",
+                    "The credit note totals " + calculation.totals().payableAmount() + " but only " + balance
+                            + " of the invoice is left to credit");
         }
 
         DocumentEntity note = drafts.draft(accountId, issuer, environment, DocumentType.CREDIT_NOTE, calculation);
@@ -74,7 +75,8 @@ public class CreditNoteService {
             return InvoiceService.toLines(request.lines());
         }
         if (request.concept() != CreditNoteConcept.CANCELLATION) {
-            throw new DomainException("credit_note_lines_required",
+            throw new DomainException(
+                    "credit_note_lines_required",
                     "Send the lines to credit; only a CANCELLATION can leave them out to credit the whole invoice");
         }
         return invoice.lines.stream().map(line -> copy(line, invoice)).toList();

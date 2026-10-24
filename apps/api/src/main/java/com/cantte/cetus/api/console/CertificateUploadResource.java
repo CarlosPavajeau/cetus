@@ -21,11 +21,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import java.time.OffsetDateTime;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
-import java.time.OffsetDateTime;
 
 /**
  * The page behind a one-time certificate upload link. No session: the token is the credential, so these
@@ -34,10 +33,16 @@ import java.time.OffsetDateTime;
  */
 @Path("/console/certificate-uploads/{token}")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "422",
+        description = "Unprocessable Entity",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class CertificateUploadResource {
 
     /** Base64url of 32 random bytes. */
@@ -45,6 +50,7 @@ public class CertificateUploadResource {
 
     @Inject
     IssuerOnboardingService onboarding;
+
     @Inject
     RequestOriginResolver origin;
 
@@ -52,8 +58,8 @@ public class CertificateUploadResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public UploadLinkView get(@PathParam("token") @Pattern(regexp = TOKEN) String token) {
-        CertificateUploadLinkEntity link = CertificateUploadLinkEntity.findUsable(ApiKeys.hash(token))
-                .orElseThrow(UploadLinkNotFound::new);
+        CertificateUploadLinkEntity link =
+                CertificateUploadLinkEntity.findUsable(ApiKeys.hash(token)).orElseThrow(UploadLinkNotFound::new);
         IssuerEntity issuer = IssuerEntity.findById(link.issuerId);
         return new UploadLinkView(issuer.legalName, issuer.nit, issuer.environment, link.expiresAt);
     }
@@ -62,8 +68,9 @@ public class CertificateUploadResource {
     @PUT
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public UploadedCertificateView upload(@PathParam("token") @Pattern(regexp = TOKEN) String token,
-                                          @Valid @NotNull IssuerViews.CertificateRequest request) {
+    public UploadedCertificateView upload(
+            @PathParam("token") @Pattern(regexp = TOKEN) String token,
+            @Valid @NotNull IssuerViews.CertificateRequest request) {
         CertificateUploadLinkEntity link = CertificateUploadLinkEntity.findUsableForUpdate(ApiKeys.hash(token))
                 .orElseThrow(UploadLinkNotFound::new);
         AccountEntity account = AccountEntity.findById(link.accountId);
@@ -71,8 +78,11 @@ public class CertificateUploadResource {
             throw new DomainException("account_suspended", "This account is suspended");
         }
         IssuerEntity issuer = IssuerEntity.findById(link.issuerId);
-        var certificate = onboarding.setCertificate(issuer, request,
-                new Actor(Actor.ActorType.SYSTEM, "certificate-upload-link:" + link.id), origin.resolve());
+        var certificate = onboarding.setCertificate(
+                issuer,
+                request,
+                new Actor(Actor.ActorType.SYSTEM, "certificate-upload-link:" + link.id),
+                origin.resolve());
         link.usedAt = OffsetDateTime.now();
         return new UploadedCertificateView(certificate.subjectDn, certificate.validTo);
     }
@@ -88,11 +98,9 @@ public class CertificateUploadResource {
             @Schema(required = true) String legalName,
             @Schema(required = true) String nit,
             @Schema(required = true) Environment environment,
-            @Schema(required = true) OffsetDateTime expiresAt) {
-    }
+            @Schema(required = true) OffsetDateTime expiresAt) {}
 
     public record UploadedCertificateView(
             @Schema(required = true) String subject,
-            @Schema(required = true) OffsetDateTime validTo) {
-    }
+            @Schema(required = true) OffsetDateTime validTo) {}
 }

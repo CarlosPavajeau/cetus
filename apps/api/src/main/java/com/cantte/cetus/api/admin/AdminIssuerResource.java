@@ -24,16 +24,15 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
  * Setup steps the Cetus team does for a customer (software credentials, numbering ranges), through the
@@ -42,14 +41,26 @@ import java.util.UUID;
  */
 @Path("/admin/accounts/{accountId}/issuers/{issuerId}")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(responseCode = "400", description = "Bad Request",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "403", description = "Forbidden",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "404", description = "Not Found",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(responseCode = "422", description = "Unprocessable Entity",
-        content = @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "400",
+        description = "Bad Request",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "403",
+        description = "Forbidden",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@APIResponse(
+        responseCode = "422",
+        description = "Unprocessable Entity",
+        content =
+                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
 public class AdminIssuerResource {
 
@@ -58,18 +69,21 @@ public class AdminIssuerResource {
 
     @Inject
     ConsoleContext context;
+
     @Inject
     IssuerOnboardingService onboarding;
+
     @Inject
     AuditLog auditLog;
+
     @Inject
     RequestOriginResolver origin;
 
     @GET
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public IssuerViews.IssuerDetailView get(@PathParam("accountId") UUID accountId,
-                                            @PathParam("issuerId") UUID issuerId) {
+    public IssuerViews.IssuerDetailView get(
+            @PathParam("accountId") UUID accountId, @PathParam("issuerId") UUID issuerId) {
         return IssuerViews.IssuerDetailView.from(issuer(accountId, issuerId));
     }
 
@@ -77,9 +91,10 @@ public class AdminIssuerResource {
     @Path("/software")
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public IssuerViews.IssuerDetailView setSoftware(@PathParam("accountId") UUID accountId,
-                                                    @PathParam("issuerId") UUID issuerId,
-                                                    @Valid @NotNull IssuerViews.SoftwareRequest request) {
+    public IssuerViews.IssuerDetailView setSoftware(
+            @PathParam("accountId") UUID accountId,
+            @PathParam("issuerId") UUID issuerId,
+            @Valid @NotNull IssuerViews.SoftwareRequest request) {
         IssuerEntity issuer = issuer(accountId, issuerId);
         onboarding.setSoftware(issuer, request, context.platformActor(), origin.resolve());
         return IssuerViews.IssuerDetailView.from(issuer);
@@ -89,11 +104,12 @@ public class AdminIssuerResource {
     @Path("/numbering-ranges")
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public IssuerViews.NumberingRangeView addRange(@PathParam("accountId") UUID accountId,
-                                                   @PathParam("issuerId") UUID issuerId,
-                                                   @Valid @NotNull IssuerViews.NumberingRangeRequest request) {
-        return IssuerViews.NumberingRangeView.from(onboarding.addRange(issuer(accountId, issuerId), request,
-                context.platformActor(), origin.resolve()));
+    public IssuerViews.NumberingRangeView addRange(
+            @PathParam("accountId") UUID accountId,
+            @PathParam("issuerId") UUID issuerId,
+            @Valid @NotNull IssuerViews.NumberingRangeRequest request) {
+        return IssuerViews.NumberingRangeView.from(
+                onboarding.addRange(issuer(accountId, issuerId), request, context.platformActor(), origin.resolve()));
     }
 
     /** A new link for the customer to upload the certificate; earlier unused links of the issuer stop working. */
@@ -101,8 +117,8 @@ public class AdminIssuerResource {
     @Path("/certificate-upload-links")
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public CertificateUploadLinkView createUploadLink(@PathParam("accountId") UUID accountId,
-                                                      @PathParam("issuerId") UUID issuerId) {
+    public CertificateUploadLinkView createUploadLink(
+            @PathParam("accountId") UUID accountId, @PathParam("issuerId") UUID issuerId) {
         // Locked so two links created at once cannot both survive: each expires the other's in turn.
         IssuerEntity issuer = IssuerEntity.findForAccountForUpdate(accountId, issuerId)
                 .orElseThrow(() -> new NotFoundException("Issuer not found"));
@@ -119,8 +135,13 @@ public class AdminIssuerResource {
         link.createdBy = context.userId();
         link.expiresAt = OffsetDateTime.now().plus(LINK_LIFETIME);
         link.persist();
-        auditLog.record(issuer.accountId, context.platformActor(), origin.resolve(),
-                AuditAction.CERTIFICATE_UPLOAD_LINK_CREATED, "issuer", issuer.id,
+        auditLog.record(
+                issuer.accountId,
+                context.platformActor(),
+                origin.resolve(),
+                AuditAction.CERTIFICATE_UPLOAD_LINK_CREATED,
+                "issuer",
+                issuer.id,
                 Map.of("linkId", link.id.toString(), "expiresAt", link.expiresAt.toString()));
         return new CertificateUploadLinkView(token, link.expiresAt);
     }
@@ -131,7 +152,8 @@ public class AdminIssuerResource {
     }
 
     public record CertificateUploadLinkView(
-            @Schema(required = true, description = "Shown once; only its hash is stored") String token,
-            @Schema(required = true) OffsetDateTime expiresAt) {
-    }
+            @Schema(required = true, description = "Shown once; only its hash is stored")
+            String token,
+
+            @Schema(required = true) OffsetDateTime expiresAt) {}
 }

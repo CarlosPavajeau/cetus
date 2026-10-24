@@ -1,7 +1,6 @@
 package com.cantte.cetus.worker.support;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
@@ -29,8 +28,7 @@ public class FakeResendResource implements QuarkusTestResourceLifecycleManager {
     }
 
     @Override
-    public void stop() {
-    }
+    public void stop() {}
 
     private static int freePort() {
         try (ServerSocket socket = new ServerSocket(0)) {

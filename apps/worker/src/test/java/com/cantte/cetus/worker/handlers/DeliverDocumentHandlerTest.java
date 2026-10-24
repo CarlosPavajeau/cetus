@@ -1,5 +1,8 @@
 package com.cantte.cetus.worker.handlers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
@@ -25,11 +28,6 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -41,9 +39,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /** Delivery of accepted documents: AttachedDocument and PDF built once, emailed through a fake Resend. */
 @QuarkusTest
@@ -55,14 +54,19 @@ class DeliverDocumentHandlerTest {
 
     @Inject
     ProcessDocumentHandler processor;
+
     @Inject
     DeliverDocumentHandler handler;
+
     @Inject
     FakeDian dian;
+
     @Inject
     FakeResend resend;
+
     @Inject
     WorkerFixtures fixtures;
+
     @Inject
     DocumentStorage storage;
 
@@ -116,20 +120,34 @@ class DeliverDocumentHandlerTest {
         assertThat(body.get("html").asText()).contains("comuníquese con Cetus Pruebas SAS en facturas@cetus.test.");
 
         JsonNode attachment = body.get("attachments").get(0);
-        assertThat(attachment.get("filename").asText()).startsWith("ad0900123456").endsWith(".zip");
-        Map<String, byte[]> zip = unzip(Base64.getDecoder().decode(attachment.get("content").asText()));
-        assertThat(zip.keySet()).hasSize(2).anyMatch(name -> name.startsWith("ad0900123456") && name.endsWith(".xml"))
+        assertThat(attachment.get("filename").asText())
+                .startsWith("ad0900123456")
+                .endsWith(".zip");
+        Map<String, byte[]> zip =
+                unzip(Base64.getDecoder().decode(attachment.get("content").asText()));
+        assertThat(zip.keySet())
+                .hasSize(2)
+                .anyMatch(name -> name.startsWith("ad0900123456") && name.endsWith(".xml"))
                 .contains(doc.fullNumber() + ".pdf");
 
-        byte[] attachedXml = zip.entrySet().stream().filter(e -> e.getKey().endsWith(".xml")).findFirst().orElseThrow().getValue();
+        byte[] attachedXml = zip.entrySet().stream()
+                .filter(e -> e.getKey().endsWith(".xml"))
+                .findFirst()
+                .orElseThrow()
+                .getValue();
         assertThat(attachedXml).isEqualTo(storage.get(artifact(id, Kind.ATTACHED_DOCUMENT).s3Key));
         Document attached = XmlSupport.parse(attachedXml);
         assertThat(attached.getDocumentElement().getLocalName()).isEqualTo("AttachedDocument");
-        assertThat(attached.getElementsByTagNameNS("*", "Signature").getLength()).isEqualTo(1);
-        Element reference = (Element) attached.getElementsByTagNameNS("*", "DocumentReference").item(0);
-        assertThat(reference.getElementsByTagNameNS("*", "UUID").item(0).getTextContent()).isEqualTo(doc.cufe);
-        String embedded = attached.getElementsByTagNameNS(CBC, "Description").item(0).getTextContent();
-        assertThat(embedded.getBytes(StandardCharsets.UTF_8)).isEqualTo(storage.get(artifact(id, Kind.SIGNED_XML).s3Key));
+        assertThat(attached.getElementsByTagNameNS("*", "Signature").getLength())
+                .isEqualTo(1);
+        Element reference = (Element)
+                attached.getElementsByTagNameNS("*", "DocumentReference").item(0);
+        assertThat(reference.getElementsByTagNameNS("*", "UUID").item(0).getTextContent())
+                .isEqualTo(doc.cufe);
+        String embedded =
+                attached.getElementsByTagNameNS(CBC, "Description").item(0).getTextContent();
+        assertThat(embedded.getBytes(StandardCharsets.UTF_8))
+                .isEqualTo(storage.get(artifact(id, Kind.SIGNED_XML).s3Key));
 
         byte[] pdf = zip.get(doc.fullNumber() + ".pdf");
         assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
@@ -153,9 +171,11 @@ class DeliverDocumentHandlerTest {
         assertThat(sent.status).isEqualTo(Status.SENT);
         assertThat(sent.attempts).isEqualTo(2);
         assertThat(sent.error).isNull();
-        assertThat(resend.requests()).extracting(FakeResend.Request::idempotencyKey)
+        assertThat(resend.requests())
+                .extracting(FakeResend.Request::idempotencyKey)
                 .containsExactly("delivery-" + sent.id, "delivery-" + sent.id);
-        assertThat(artifactKinds(id).stream().filter(kind -> kind == Kind.ATTACHED_DOCUMENT)).hasSize(1);
+        assertThat(artifactKinds(id).stream().filter(kind -> kind == Kind.ATTACHED_DOCUMENT))
+                .hasSize(1);
         assertThat(artifactKinds(id).stream().filter(kind -> kind == Kind.PDF)).hasSize(1);
     }
 
@@ -201,9 +221,19 @@ class DeliverDocumentHandlerTest {
             DocumentEntity doc = DocumentEntity.findById(id);
             doc.environment = Environment.LIVE;
             Party c = doc.customer;
-            doc.customer = new Party(c.personType(), c.identificationType(), c.identificationNumber(), c.checkDigit(),
-                    c.legalName(), c.tradeName(), c.taxLevelCodes(), c.taxSchemeId(), c.taxSchemeName(), c.address(),
-                    null, c.phone());
+            doc.customer = new Party(
+                    c.personType(),
+                    c.identificationType(),
+                    c.identificationNumber(),
+                    c.checkDigit(),
+                    c.legalName(),
+                    c.tradeName(),
+                    c.taxLevelCodes(),
+                    c.taxSchemeId(),
+                    c.taxSchemeName(),
+                    c.address(),
+                    null,
+                    c.phone());
         });
 
         deliver(id);
@@ -218,7 +248,8 @@ class DeliverDocumentHandlerTest {
     @Test
     void aLiveCustomerGetsTheEmailItself() {
         UUID id = acceptedInvoice();
-        QuarkusTransaction.requiringNew().run(() -> DocumentEntity.<DocumentEntity>findById(id).environment = Environment.LIVE);
+        QuarkusTransaction.requiringNew()
+                .run(() -> DocumentEntity.<DocumentEntity>findById(id).environment = Environment.LIVE);
 
         deliver(id);
 
@@ -227,7 +258,10 @@ class DeliverDocumentHandlerTest {
 
     @Test
     void creditNotesAreDeliveredWithTheirCude() {
-        dian.reply("SendBillSync", Reply.fixture("send-bill-sync-accepted.xml"), Reply.fixture("send-bill-sync-accepted.xml"));
+        dian.reply(
+                "SendBillSync",
+                Reply.fixture("send-bill-sync-accepted.xml"),
+                Reply.fixture("send-bill-sync-accepted.xml"));
         UUID invoiceId = fixtures.invoice();
         processor.handle(fixtures.job(invoiceId, 1));
         UUID id = fixtures.creditNote(invoiceId);
@@ -246,7 +280,10 @@ class DeliverDocumentHandlerTest {
 
     @Test
     void debitNotesAreDeliveredWithTheirCude() {
-        dian.reply("SendBillSync", Reply.fixture("send-bill-sync-accepted.xml"), Reply.fixture("send-bill-sync-accepted.xml"));
+        dian.reply(
+                "SendBillSync",
+                Reply.fixture("send-bill-sync-accepted.xml"),
+                Reply.fixture("send-bill-sync-accepted.xml"));
         UUID invoiceId = fixtures.invoice();
         processor.handle(fixtures.job(invoiceId, 1));
         UUID id = fixtures.debitNote(invoiceId);
@@ -261,7 +298,9 @@ class DeliverDocumentHandlerTest {
         Element uuid = (Element) attached.getElementsByTagNameNS("*", "UUID").item(0);
         assertThat(uuid.getAttribute("schemeName")).isEqualTo("CUDE-SHA384");
         assertThat(uuid.getTextContent()).isEqualTo(note.cufe);
-        assertThat(storage.get(artifact(id, Kind.ATTACHED_DOCUMENT).s3Key)).asString().contains("DebitNote");
+        assertThat(storage.get(artifact(id, Kind.ATTACHED_DOCUMENT).s3Key))
+                .asString()
+                .contains("DebitNote");
     }
 
     @Test
@@ -290,17 +329,22 @@ class DeliverDocumentHandlerTest {
     }
 
     private static List<String> jobTypes(UUID referenceId) {
-        return QuarkusTransaction.requiringNew().call(() ->
-                JobEntity.<JobEntity>list("referenceId", referenceId).stream().map(job -> job.jobType).toList());
+        return QuarkusTransaction.requiringNew()
+                .call(() -> JobEntity.<JobEntity>list("referenceId", referenceId).stream()
+                        .map(job -> job.jobType)
+                        .toList());
     }
 
     private static List<Kind> artifactKinds(UUID id) {
-        return QuarkusTransaction.requiringNew().call(() ->
-                DocumentArtifactEntity.listByDocument(id).stream().map(a -> a.kind).toList());
+        return QuarkusTransaction.requiringNew()
+                .call(() -> DocumentArtifactEntity.listByDocument(id).stream()
+                        .map(a -> a.kind)
+                        .toList());
     }
 
     private static DocumentArtifactEntity artifact(UUID id, Kind kind) {
-        return QuarkusTransaction.requiringNew().call(() -> DocumentArtifactEntity.findLatest(id, kind).orElseThrow());
+        return QuarkusTransaction.requiringNew()
+                .call(() -> DocumentArtifactEntity.findLatest(id, kind).orElseThrow());
     }
 
     private static List<DocumentDeliveryEntity> deliveries(UUID id) {

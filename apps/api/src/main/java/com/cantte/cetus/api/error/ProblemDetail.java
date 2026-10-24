@@ -2,9 +2,8 @@ package com.cantte.cetus.api.error;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
 import java.util.List;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
  * Error body returned by every endpoint, as an RFC 9457 problem detail. {@code code} is a stable extension
@@ -13,15 +12,21 @@ import java.util.List;
  */
 @Schema(name = "ProblemDetail")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ProblemDetail(@Schema(required = true) String type, @Schema(required = true) String title,
-                            @Schema(required = true) int status, String detail, String instance,
-                            @Schema(required = true) String code, List<FieldError> errors) {
+public record ProblemDetail(
+        @Schema(required = true) String type,
+        @Schema(required = true) String title,
+        @Schema(required = true) int status,
+        String detail,
+        String instance,
+        @Schema(required = true) String code,
+        List<FieldError> errors) {
 
     public static final String MEDIA_TYPE = "application/problem+json";
 
     /** One invalid field of the request; only present on {@code invalid_request}. */
-    public record FieldError(@Schema(required = true) String field, @Schema(required = true) String message) {
-    }
+    public record FieldError(
+            @Schema(required = true) String field,
+            @Schema(required = true) String message) {}
 
     public static ProblemDetail of(int status, String code, String detail) {
         return of(status, code, detail, null);
@@ -49,6 +54,8 @@ public record ProblemDetail(@Schema(required = true) String type, @Schema(requir
         if (known != null) {
             return known.getReasonPhrase();
         }
-        return Response.Status.Family.familyOf(status) == Response.Status.Family.CLIENT_ERROR ? "Client Error" : "Server Error";
+        return Response.Status.Family.familyOf(status) == Response.Status.Family.CLIENT_ERROR
+                ? "Client Error"
+                : "Server Error";
     }
 }

@@ -5,7 +5,6 @@ import com.resend.core.exception.ResendException;
 import com.resend.core.net.RequestOptions;
 import com.resend.services.emails.model.Attachment;
 import com.resend.services.emails.model.CreateEmailOptions;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Base64;
@@ -48,7 +47,8 @@ public final class ResendEmailSender implements EmailSender {
                     .content(Base64.getEncoder().encodeToString(attachment.content()))
                     .build());
         }
-        RequestOptions options = RequestOptions.builder().setIdempotencyKey(idempotencyKey).build();
+        RequestOptions options =
+                RequestOptions.builder().setIdempotencyKey(idempotencyKey).build();
         try {
             return resend.emails().send(email.build(), options).getId();
         } catch (ResendException e) {
@@ -56,7 +56,8 @@ public final class ResendEmailSender implements EmailSender {
         } catch (RuntimeException e) {
             // The SDK wraps network errors and timeouts in a RuntimeException around the IOException.
             if (e.getCause() instanceof IOException) {
-                throw new EmailTransientException("Resend unreachable: " + e.getCause().getMessage(), e);
+                throw new EmailTransientException(
+                        "Resend unreachable: " + e.getCause().getMessage(), e);
             }
             throw e;
         }

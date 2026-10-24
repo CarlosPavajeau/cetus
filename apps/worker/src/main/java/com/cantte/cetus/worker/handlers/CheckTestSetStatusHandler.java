@@ -16,7 +16,6 @@ import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ResultRecorder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
@@ -28,12 +27,16 @@ public class CheckTestSetStatusHandler implements JobHandler {
 
     @Inject
     ContextLoader loader;
+
     @Inject
     DianClients dianClients;
+
     @Inject
     KeyMaterialCache keyCache;
+
     @Inject
     ResultRecorder recorder;
+
     @Inject
     ArtifactStore artifacts;
 
@@ -61,11 +64,19 @@ public class CheckTestSetStatusHandler implements JobHandler {
 
         DianResponse response = responses.get(0);
         recorder.submission(ctx.documentId(), "GetStatusZip", ctx.trackId(), false, response, response.errors(), 0);
-        artifacts.save(ctx, Kind.DIAN_RESPONSE, "dian-response.xml",
-                response.rawXml().getBytes(StandardCharsets.UTF_8), "application/xml");
+        artifacts.save(
+                ctx,
+                Kind.DIAN_RESPONSE,
+                "dian-response.xml",
+                response.rawXml().getBytes(StandardCharsets.UTF_8),
+                "application/xml");
         if (response.applicationResponse() != null) {
-            artifacts.save(ctx, Kind.APPLICATION_RESPONSE, "application-response.xml",
-                    Base64.getDecoder().decode(response.applicationResponse()), "application/xml");
+            artifacts.save(
+                    ctx,
+                    Kind.APPLICATION_RESPONSE,
+                    "application-response.xml",
+                    Base64.getDecoder().decode(response.applicationResponse()),
+                    "application/xml");
         }
         recorder.completed(ctx.documentId(), response);
         if (response.testSetAlreadyAccepted() && ctx.testSetId() != null) {
@@ -86,7 +97,9 @@ public class CheckTestSetStatusHandler implements JobHandler {
         if (response.statusCode() == null) {
             return true;
         }
-        String description = response.statusDescription() == null ? "" : response.statusDescription().toLowerCase();
+        String description = response.statusDescription() == null
+                ? ""
+                : response.statusDescription().toLowerCase();
         return description.contains("en proceso") || description.contains("procesamiento");
     }
 }

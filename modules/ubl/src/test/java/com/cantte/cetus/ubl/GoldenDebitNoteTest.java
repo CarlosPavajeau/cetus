@@ -1,5 +1,11 @@
 package com.cantte.cetus.ubl;
 
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.parse;
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.rootChild;
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.skeleton;
+import static com.cantte.cetus.ubl.GoldenInvoiceTest.text;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.dian.Cufe;
@@ -13,21 +19,14 @@ import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.List;
-
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.parse;
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.rootChild;
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.skeleton;
-import static com.cantte.cetus.ubl.GoldenInvoiceTest.text;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Compares the structure of a freshly built and signed debit note with ND1, the interest charged on
@@ -66,7 +65,10 @@ class GoldenDebitNoteTest {
     }
 
     private static String discrepancy(Document doc, String localName) {
-        return rootChild(doc, "DiscrepancyResponse").getElementsByTagNameNS("*", localName).item(0).getTextContent();
+        return rootChild(doc, "DiscrepancyResponse")
+                .getElementsByTagNameNS("*", localName)
+                .item(0)
+                .getTextContent();
     }
 
     private static Document signedSample() throws Exception {
@@ -82,14 +84,33 @@ class GoldenDebitNoteTest {
     private static ElectronicDebitNote sample() {
         ElectronicInvoice invoice = GoldenInvoiceTest.sample();
         LocalTime time = LocalTime.of(15, 1, 33);
-        CalculationResult calc = new InvoiceCalculator().calculate(List.of(new LineInput("INT-001", "Intereses de mora",
-                BigDecimal.ONE, "94", new BigDecimal("2000"), List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19"))))));
-        String cude = Cufe.compute(new Cufe.Input("ND1", invoice.issueDate(), time, calc, "900123456", "900108281",
-                "12345", Environment.TEST));
-        return new ElectronicDebitNote(Environment.TEST, "ND", 1, invoice.issueDate(), time, "COP",
-                invoice.supplier(), invoice.customer(), invoice.payment(), calc,
+        CalculationResult calc = new InvoiceCalculator()
+                .calculate(List.of(new LineInput(
+                        "INT-001",
+                        "Intereses de mora",
+                        BigDecimal.ONE,
+                        "94",
+                        new BigDecimal("2000"),
+                        List.of(new LineInput.LineTax(TaxType.IVA, new BigDecimal("19"))))));
+        String cude = Cufe.compute(new Cufe.Input(
+                "ND1", invoice.issueDate(), time, calc, "900123456", "900108281", "12345", Environment.TEST));
+        return new ElectronicDebitNote(
+                Environment.TEST,
+                "ND",
+                1,
+                invoice.issueDate(),
+                time,
+                "COP",
+                invoice.supplier(),
+                invoice.customer(),
+                invoice.payment(),
+                calc,
                 new BillingReference(invoice.fullNumber(), invoice.cufe(), invoice.issueDate()),
-                DebitNoteConcept.INTEREST, "Intereses de mora por pago tardío", invoice.software(), cude, "qr",
+                DebitNoteConcept.INTEREST,
+                "Intereses de mora por pago tardío",
+                invoice.software(),
+                cude,
+                "qr",
                 List.of());
     }
 }

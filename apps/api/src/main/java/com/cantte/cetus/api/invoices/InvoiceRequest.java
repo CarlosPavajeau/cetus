@@ -16,7 +16,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +40,7 @@ public record InvoiceRequest(
     public static final String DIAN_CODE = "[0-9A-Z]{1,3}";
     /** Municipality, department or postal code; foreign addresses use their own codes. */
     public static final String CODE = "[0-9A-Za-z-]{1,10}";
+
     public static final String PHONE = "[0-9+() -]*";
     /** Stricter than @Email alone: no quoted local part, no comments, a dotted domain. */
     public static final String EMAIL = "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}";
@@ -56,10 +56,12 @@ public record InvoiceRequest(
             CustomerTaxScheme taxScheme,
             @Valid AddressInput address,
             @Size(max = 254) @Email(regexp = EMAIL) String email,
-            @Size(max = 50) @Pattern(regexp = PHONE) String phone) {
-    }
+            @Size(max = 50) @Pattern(regexp = PHONE) String phone) {}
 
-    public enum CustomerTaxScheme { IVA, NOT_APPLICABLE }
+    public enum CustomerTaxScheme {
+        IVA,
+        NOT_APPLICABLE
+    }
 
     public record AddressInput(
             @NotBlank @Pattern(regexp = CODE) String municipalityCode,
@@ -73,30 +75,45 @@ public record InvoiceRequest(
 
         /** Colombia unless the country is given. */
         public Address toAddress() {
-            return new Address(municipalityCode, cityName, departmentCode, departmentName, postalCode, line,
-                    countryCode != null ? countryCode : "CO", countryName != null ? countryName : "Colombia");
+            return new Address(
+                    municipalityCode,
+                    cityName,
+                    departmentCode,
+                    departmentName,
+                    postalCode,
+                    line,
+                    countryCode != null ? countryCode : "CO",
+                    countryName != null ? countryName : "Colombia");
         }
     }
 
     public record Payment(
             @NotNull PaymentMethod method,
             @NotBlank @Pattern(regexp = DIAN_CODE) String meansCode,
-            LocalDate dueDate) {
-    }
+            LocalDate dueDate) {}
 
-    public enum PaymentMethod { CASH, CREDIT }
+    public enum PaymentMethod {
+        CASH,
+        CREDIT
+    }
 
     public record Line(
             @NotBlank @Size(max = 50) String itemCode,
             @NotBlank @Size(max = 300) String description,
-            @NotNull @Positive @Digits(integer = 14, fraction = 6) BigDecimal quantity,
+
+            @NotNull @Positive @Digits(integer = 14, fraction = 6)
+            BigDecimal quantity,
+
             @Pattern(regexp = DIAN_CODE) String unitCode,
-            @NotNull @PositiveOrZero @Digits(integer = 14, fraction = 6) BigDecimal unitPrice,
-            @Size(max = 5) List<@Valid LineTax> taxes) {
-    }
+
+            @NotNull @PositiveOrZero @Digits(integer = 14, fraction = 6)
+            BigDecimal unitPrice,
+
+            @Size(max = 5) List<@Valid LineTax> taxes) {}
 
     public record LineTax(
             @NotNull TaxType type,
-            @NotNull @DecimalMin("0") @DecimalMax("100") @Digits(integer = 3, fraction = 4) BigDecimal percent) {
-    }
+
+            @NotNull @DecimalMin("0") @DecimalMax("100") @Digits(integer = 3, fraction = 4)
+            BigDecimal percent) {}
 }

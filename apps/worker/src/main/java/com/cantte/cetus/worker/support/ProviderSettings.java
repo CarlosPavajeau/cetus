@@ -5,9 +5,8 @@ import com.cantte.cetus.domain.dian.SoftwareSecurityCode;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.SoftwareInfo;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Who appears as software provider. With "software propio" it is the issuer itself; once Cetus
@@ -18,12 +17,16 @@ public class ProviderSettings {
 
     @ConfigProperty(name = "cetus.provider.nit")
     Optional<String> nit;
+
     @ConfigProperty(name = "cetus.provider.check-digit")
     Optional<String> checkDigit;
+
     @ConfigProperty(name = "cetus.provider.file-code")
     Optional<String> fileCode;
+
     @ConfigProperty(name = "cetus.provider.name")
     Optional<String> name;
+
     @ConfigProperty(name = "cetus.provider.software-name", defaultValue = "Cetus")
     String softwareName;
 

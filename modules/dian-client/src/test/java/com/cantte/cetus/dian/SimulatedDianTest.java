@@ -1,33 +1,32 @@
 package com.cantte.cetus.dian;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import com.cantte.cetus.dian.simulated.SimulatedDian;
 import com.cantte.cetus.dian.simulated.SimulatedDocument;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XmlSupport;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-
-import javax.xml.crypto.dsig.XMLSignature;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import javax.xml.crypto.dsig.XMLSignature;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
 
 /** The simulator's answers read exactly like the DIAN's through the same parser the client uses. */
 class SimulatedDianTest {
 
-    private static final String CUFE = "6bfc6bd3a183b17ce09b894a08732fbc57dabbd28306118502b76c3e1c8027dcced51fc6aadc4cc27dcb1c910861c222";
+    private static final String CUFE =
+            "6bfc6bd3a183b17ce09b894a08732fbc57dabbd28306118502b76c3e1c8027dcced51fc6aadc4cc27dcb1c910861c222";
 
     private static SimulatedDian dian;
 
@@ -67,9 +66,15 @@ class SimulatedDianTest {
         Document applicationResponse = XmlSupport.parse(Base64.getDecoder().decode(response.applicationResponse()));
         String xml = new String(Base64.getDecoder().decode(response.applicationResponse()), StandardCharsets.UTF_8);
         assertThat(applicationResponse.getDocumentElement().getLocalName()).isEqualTo("ApplicationResponse");
-        assertThat(applicationResponse.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").getLength()).isEqualTo(1);
-        assertThat(xml).contains("<cbc:ResponseCode>02</cbc:ResponseCode>", "sin validez fiscal",
-                "<cbc:UUID schemeName=\"CUFE-SHA384\">" + CUFE + "</cbc:UUID>");
+        assertThat(applicationResponse
+                        .getElementsByTagNameNS(XMLSignature.XMLNS, "Signature")
+                        .getLength())
+                .isEqualTo(1);
+        assertThat(xml)
+                .contains(
+                        "<cbc:ResponseCode>02</cbc:ResponseCode>",
+                        "sin validez fiscal",
+                        "<cbc:UUID schemeName=\"CUFE-SHA384\">" + CUFE + "</cbc:UUID>");
     }
 
     @Test
@@ -88,18 +93,20 @@ class SimulatedDianTest {
         assertThat(response).isEqualTo(DianResponseParser.single(response.rawXml(), "SendBillSyncResult"));
         assertThat(response.valid()).isFalse();
         assertThat(response.statusCode()).isEqualTo("99");
-        assertThat(response.errors()).extracting(error -> error.substring(0, error.indexOf(',')))
+        assertThat(response.errors())
+                .extracting(error -> error.substring(0, error.indexOf(',')))
                 .containsExactly("Regla: FAK26", "Regla: FAB10a", "Regla: FAJ43b");
         String xml = new String(Base64.getDecoder().decode(response.applicationResponse()), StandardCharsets.UTF_8);
-        assertThat(xml).contains("<cbc:ResponseCode>04</cbc:ResponseCode>", "<cbc:ResponseCode>FAK26</cbc:ResponseCode>");
+        assertThat(xml)
+                .contains("<cbc:ResponseCode>04</cbc:ResponseCode>", "<cbc:ResponseCode>FAK26</cbc:ResponseCode>");
     }
 
     @Test
     void aTimedOutSendIsFoundByItsStatus() {
         SimulatedDocument document = document("Invoice", "1000000003");
 
-        DianTransportException timeout = catchThrowableOfType(DianTransportException.class,
-                () -> dian.sendBillSync(document, 0));
+        DianTransportException timeout =
+                catchThrowableOfType(DianTransportException.class, () -> dian.sendBillSync(document, 0));
         assertThat(timeout.isTimeout()).isTrue();
         assertThat(dian.getStatus(CUFE, Optional.of(document), 0).statusCode()).isEqualTo("66");
 
@@ -114,14 +121,15 @@ class SimulatedDianTest {
 
         for (int previous = 0; previous < 2; previous++) {
             int sends = previous;
-            DianFaultException fault = catchThrowableOfType(DianFaultException.class,
-                    () -> dian.sendBillSync(document, sends));
+            DianFaultException fault =
+                    catchThrowableOfType(DianFaultException.class, () -> dian.sendBillSync(document, sends));
             assertThat(fault.retryable()).isTrue();
-            DianFaultException parsed = catchThrowableOfType(DianFaultException.class,
-                    () -> DianResponseParser.single(fault.rawXml(), "SendBillSyncResult"));
+            DianFaultException parsed = catchThrowableOfType(
+                    DianFaultException.class, () -> DianResponseParser.single(fault.rawXml(), "SendBillSyncResult"));
             assertThat(parsed.getMessage()).isEqualTo(fault.getMessage());
             assertThat(dian.getStatus(CUFE, Optional.of(document), sends + 1).statusCode())
-                    .as("a fault registers nothing").isEqualTo("66");
+                    .as("a fault registers nothing")
+                    .isEqualTo("66");
         }
         assertThat(dian.sendBillSync(document, 2).valid()).isTrue();
     }
@@ -133,8 +141,10 @@ class SimulatedDianTest {
         assertThat(note.errors()).singleElement().asString().startsWith("Regla: CBF04, Rechazo:");
         assertThat(note.statusMessage()).isEqualTo("Documento con errores en campos mandatorios.");
 
-        assertThat(dian.sendBillSync(document("DebitNote", "1000000005"), 0).valid()).isTrue();
-        assertThat(dian.sendBillSync(document("Invoice", "1000000005"), 0).valid()).isTrue();
+        assertThat(dian.sendBillSync(document("DebitNote", "1000000005"), 0).valid())
+                .isTrue();
+        assertThat(dian.sendBillSync(document("Invoice", "1000000005"), 0).valid())
+                .isTrue();
     }
 
     @Test

@@ -1,21 +1,20 @@
 package com.cantte.cetus.dian;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.XmlSupport;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import javax.xml.crypto.dsig.XMLSignature;
-import javax.xml.crypto.dsig.XMLSignatureFactory;
-import javax.xml.crypto.dsig.dom.DOMValidateContext;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import javax.xml.crypto.dsig.XMLSignature;
+import javax.xml.crypto.dsig.XMLSignatureFactory;
+import javax.xml.crypto.dsig.dom.DOMValidateContext;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 class DianSoapClientTest {
 
@@ -35,12 +34,17 @@ class DianSoapClientTest {
 
         Document envelope = XmlSupport.parse(client.buildSignedEnvelope(DianOperation.SEND_BILL_SYNC, params, keys));
 
-        Element to = (Element) envelope.getElementsByTagNameNS(SoapEnvelopeBuilder.WSA_NS, "To").item(0);
+        Element to = (Element) envelope.getElementsByTagNameNS(SoapEnvelopeBuilder.WSA_NS, "To")
+                .item(0);
         assertThat(to.getTextContent()).isEqualTo(DianEndpoint.TEST.url());
-        Element signature = (Element) envelope.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").item(0);
+        Element signature = (Element)
+                envelope.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature").item(0);
         DOMValidateContext context = new DOMValidateContext(keys.certificate().getPublicKey(), signature);
         context.setIdAttributeNS(to, WsSecuritySigner.WSU_NS, "Id");
-        assertThat(XMLSignatureFactory.getInstance("DOM").unmarshalXMLSignature(context).validate(context)).isTrue();
+        assertThat(XMLSignatureFactory.getInstance("DOM")
+                        .unmarshalXMLSignature(context)
+                        .validate(context))
+                .isTrue();
     }
 
     @Test
@@ -109,8 +113,8 @@ class DianSoapClientTest {
                 <s:Reason><s:Text xml:lang="en-US">The creator of this fault did not specify a Reason.</s:Text></s:Reason>
                 </s:Fault></s:Body></s:Envelope>""";
 
-        DianFaultException fault = catchThrowableOfType(DianFaultException.class,
-                () -> DianResponseParser.single(raw, "SendBillSyncResult"));
+        DianFaultException fault = catchThrowableOfType(
+                DianFaultException.class, () -> DianResponseParser.single(raw, "SendBillSyncResult"));
 
         assertThat(fault.code()).isEqualTo("s:Client");
         assertThat(fault.retryable()).isFalse();
@@ -127,8 +131,8 @@ class DianSoapClientTest {
                 <s:Reason><s:Text xml:lang="en-US">Internal error</s:Text></s:Reason>
                 </s:Fault></s:Body></s:Envelope>""";
 
-        DianFaultException fault = catchThrowableOfType(DianFaultException.class,
-                () -> DianResponseParser.single(raw, "SendBillSyncResult"));
+        DianFaultException fault = catchThrowableOfType(
+                DianFaultException.class, () -> DianResponseParser.single(raw, "SendBillSyncResult"));
 
         assertThat(fault.retryable()).isTrue();
         assertThat(fault.getMessage()).isEqualTo("SOAP fault s:Receiver/a:InternalServiceFault: Internal error");

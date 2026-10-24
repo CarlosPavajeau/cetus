@@ -6,7 +6,6 @@ import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -31,6 +30,7 @@ public class KeyMaterialCache {
 
     @Inject
     DocumentStorage storage;
+
     @Inject
     SecretCipher cipher;
 
@@ -49,7 +49,8 @@ public class KeyMaterialCache {
                 return entry.keys();
             }
             byte[] pkcs12 = cipher.open(storage.get(ref.s3Key()));
-            byte[] passwordSealed = ref.passwordSealed() != null ? ref.passwordSealed() : storage.get(ref.passwordS3Key());
+            byte[] passwordSealed =
+                    ref.passwordSealed() != null ? ref.passwordSealed() : storage.get(ref.passwordS3Key());
             char[] password = cipher.openText(passwordSealed).toCharArray();
             KeyMaterial keys = Pkcs12Loader.load(pkcs12, password);
             cache.put(ref.id(), new Entry(keys, clock.instant()));
@@ -64,6 +65,5 @@ public class KeyMaterialCache {
         return entry != null && entry.loadedAt().plus(TTL).isAfter(clock.instant()) ? entry : null;
     }
 
-    private record Entry(KeyMaterial keys, Instant loadedAt) {
-    }
+    private record Entry(KeyMaterial keys, Instant loadedAt) {}
 }

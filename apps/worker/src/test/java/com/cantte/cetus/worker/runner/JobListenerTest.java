@@ -1,5 +1,8 @@
 package com.cantte.cetus.worker.runner;
 
+import static com.cantte.cetus.worker.runner.JobRunnerTest.await;
+import static com.cantte.cetus.worker.runner.JobRunnerTest.document;
+
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
@@ -13,13 +16,9 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.Map;
 import java.util.UUID;
-
-import static com.cantte.cetus.worker.runner.JobRunnerTest.await;
-import static com.cantte.cetus.worker.runner.JobRunnerTest.document;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @QuarkusTestResource(FakeDianResource.class)
@@ -36,10 +35,13 @@ class JobListenerTest {
 
     @Inject
     FakeDian dian;
+
     @Inject
     WorkerFixtures fixtures;
+
     @Inject
     JobQueue queue;
+
     @Inject
     JobRunner runner;
 

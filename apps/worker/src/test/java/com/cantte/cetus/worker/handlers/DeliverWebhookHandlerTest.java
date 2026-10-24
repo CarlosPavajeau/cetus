@@ -1,5 +1,8 @@
 package com.cantte.cetus.worker.handlers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
@@ -22,17 +25,13 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Delivery of webhook events to a fake integrator endpoint. */
 @QuarkusTest
@@ -42,16 +41,22 @@ class DeliverWebhookHandlerTest {
 
     @Inject
     ProcessDocumentHandler processor;
+
     @Inject
     DeliverWebhookHandler handler;
+
     @Inject
     FakeDian dian;
+
     @Inject
     FakeWebhookReceiver receiver;
+
     @Inject
     WorkerFixtures fixtures;
+
     @Inject
     WebhookDeliveryRecorder recorder;
+
     @Inject
     EntityManager em;
 
@@ -79,12 +84,18 @@ class DeliverWebhookHandlerTest {
         FakeWebhookReceiver.Request request = receiver.requests().get(0);
         assertThat(request.path()).isEqualTo("/hooks/cetus");
         assertThat(request.body()).isEqualTo(event.payload);
-        assertThat(request.headers()).containsEntry("content-type", "application/json")
+        assertThat(request.headers())
+                .containsEntry("content-type", "application/json")
                 .containsEntry("user-agent", DeliverWebhookHandler.USER_AGENT)
                 .containsEntry("webhook-id", event.id.toString());
-        assertThat(WebhookSignature.verify(endpoint.secret(), request.headers().get("webhook-id"),
-                request.headers().get("webhook-timestamp"), request.headers().get("webhook-signature"),
-                request.body(), Instant.now())).isTrue();
+        assertThat(WebhookSignature.verify(
+                        endpoint.secret(),
+                        request.headers().get("webhook-id"),
+                        request.headers().get("webhook-timestamp"),
+                        request.headers().get("webhook-signature"),
+                        request.body(),
+                        Instant.now()))
+                .isTrue();
     }
 
     @Test
@@ -109,7 +120,8 @@ class DeliverWebhookHandlerTest {
         assertThat(receiver.requests()).hasSize(2);
         assertThat(receiver.requests().get(1).headers().get("webhook-id"))
                 .isEqualTo(receiver.requests().get(0).headers().get("webhook-id"));
-        assertThat(receiver.requests().get(1).body()).isEqualTo(receiver.requests().get(0).body());
+        assertThat(receiver.requests().get(1).body())
+                .isEqualTo(receiver.requests().get(0).body());
     }
 
     @Test
@@ -188,8 +200,11 @@ class DeliverWebhookHandlerTest {
         assertThat(disabled.consecutiveFailures).isEqualTo(10);
         assertThat(auditedReasons(disabled)).containsExactly("AUTOMATIC");
         // The technical contact hears that it reached 10 failures and that it was disabled, once each.
-        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity
-                .<NotificationEntity>list("accountId", disabled.accountId).stream().map(n -> n.kind).toList()))
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() ->
+                                NotificationEntity.<NotificationEntity>list("accountId", disabled.accountId).stream()
+                                        .map(n -> n.kind)
+                                        .toList()))
                 .containsExactlyInAnyOrder("WEBHOOK_FAILING", "WEBHOOK_DISABLED");
 
         // Its next attempt finds it disabled and stops instead of calling it again.
@@ -205,8 +220,9 @@ class DeliverWebhookHandlerTest {
         assertThat(recorder.canceled(deliveryId)).isFalse();
         assertThat(delivery(deliveryId).status).isEqualTo(Status.PENDING);
 
-        QuarkusTransaction.requiringNew().run(() -> WebhookEndpointEntity.<WebhookEndpointEntity>findById(endpoint.id())
-                .status = WebhookEndpointEntity.Status.DISABLED);
+        QuarkusTransaction.requiringNew()
+                .run(() -> WebhookEndpointEntity.<WebhookEndpointEntity>findById(endpoint.id()).status =
+                        WebhookEndpointEntity.Status.DISABLED);
         assertThat(recorder.canceled(deliveryId)).isTrue();
         assertThat(delivery(deliveryId).status).isEqualTo(Status.CANCELED);
     }
@@ -223,7 +239,8 @@ class DeliverWebhookHandlerTest {
         assertThat(endpoint.status).isEqualTo(WebhookEndpointEntity.Status.ACTIVE);
         assertThat(endpoint.consecutiveFailures).isEqualTo(51);
         // Past the 10th failure already: the notice went out then, not again.
-        assertThat(QuarkusTransaction.requiringNew().call(() -> NotificationEntity.count("accountId", endpoint.accountId)))
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() -> NotificationEntity.count("accountId", endpoint.accountId)))
                 .isZero();
     }
 
@@ -255,10 +272,12 @@ class DeliverWebhookHandlerTest {
 
     @SuppressWarnings("unchecked")
     private List<String> auditedReasons(WebhookEndpointEntity endpoint) {
-        return QuarkusTransaction.requiringNew().call(() -> em.createNativeQuery("""
+        return QuarkusTransaction.requiringNew()
+                .call(() -> em.createNativeQuery("""
                         SELECT data->>'reason' FROM billing.audit_log
                         WHERE resource_id = :id AND action = 'WEBHOOK_ENDPOINT_DISABLED' AND actor_type = 'SYSTEM'""")
-                .setParameter("id", endpoint.id).getResultList());
+                        .setParameter("id", endpoint.id)
+                        .getResultList());
     }
 
     /** An accepted invoice with one endpoint on the fake receiver; returns its pending delivery. */
@@ -267,8 +286,10 @@ class DeliverWebhookHandlerTest {
         UUID id = fixtures.invoice();
         endpoint = fixtures.webhookEndpoint(id, Environment.TEST, receiver.url("/hooks/cetus"));
         processor.handle(fixtures.job(id, 1));
-        return QuarkusTransaction.requiringNew().call(() ->
-                WebhookDeliveryEntity.<WebhookDeliveryEntity>find("endpointId", endpoint.id()).singleResult().id);
+        return QuarkusTransaction.requiringNew()
+                .call(() -> WebhookDeliveryEntity.<WebhookDeliveryEntity>find("endpointId", endpoint.id())
+                        .singleResult()
+                        .id);
     }
 
     private JobEntity job(UUID deliveryId) {
@@ -290,7 +311,8 @@ class DeliverWebhookHandlerTest {
     }
 
     private static WebhookEventEntity event(UUID deliveryId) {
-        return QuarkusTransaction.requiringNew().call(() ->
-                WebhookEventEntity.findById(WebhookDeliveryEntity.<WebhookDeliveryEntity>findById(deliveryId).eventId));
+        return QuarkusTransaction.requiringNew()
+                .call(() -> WebhookEventEntity.findById(
+                        WebhookDeliveryEntity.<WebhookDeliveryEntity>findById(deliveryId).eventId));
     }
 }

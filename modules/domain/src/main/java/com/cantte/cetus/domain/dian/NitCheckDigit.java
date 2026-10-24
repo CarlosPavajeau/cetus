@@ -5,8 +5,7 @@ public final class NitCheckDigit {
 
     private static final int[] WEIGHTS = {3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71};
 
-    private NitCheckDigit() {
-    }
+    private NitCheckDigit() {}
 
     public static String compute(String nit) {
         if (nit == null || !nit.matches("\\d{1,15}")) {

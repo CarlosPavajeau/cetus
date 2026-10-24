@@ -5,19 +5,17 @@ import com.cantte.cetus.worker.notifications.Dates;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * What each account's contacts should hear about today. Each notice is named by the fact and the
@@ -36,21 +34,24 @@ public class AccountHealthChecks {
     static final List<Integer> RANGE_USAGE = List.of(80, 95);
 
     /** A notice to request. */
-    public record Notice(UUID accountId, NotificationKind kind, String dedupKey, Map<String, String> data) {
-    }
+    public record Notice(UUID accountId, NotificationKind kind, String dedupKey, Map<String, String> data) {}
 
     @Inject
     EntityManager em;
 
     @ConfigProperty(name = "cetus.account-health.rejections-min")
     int rejectionsMin;
+
     @ConfigProperty(name = "cetus.account-health.rejections-rate")
     double rejectionsRate;
 
     /** Every check; one that fails is logged and skipped, so it does not hold back the notices of the others. */
     List<Notice> all(LocalDate today) {
-        List<Supplier<List<Notice>>> checks = List.of(() -> expiringCertificates(today), this::rangesRunningOut,
-                () -> expiringResolutions(today), () -> rejectionSpikes(today));
+        List<Supplier<List<Notice>>> checks = List.of(
+                () -> expiringCertificates(today),
+                this::rangesRunningOut,
+                () -> expiringResolutions(today),
+                () -> rejectionSpikes(today));
         List<Notice> notices = new ArrayList<>();
         for (Supplier<List<Notice>> check : checks) {
             try {
@@ -77,11 +78,23 @@ public class AccountHealthChecks {
                     LocalDate validTo = date(r[6]);
                     long days = Math.max(0, validTo.toEpochDay() - today.toEpochDay());
                     int mark = lowestMark(CERTIFICATE_DAYS, days);
-                    return new Notice((UUID) r[0], NotificationKind.CERTIFICATE_EXPIRING,
+                    return new Notice(
+                            (UUID) r[0],
+                            NotificationKind.CERTIFICATE_EXPIRING,
                             "cert_expiring:%s:%dd".formatted(r[1], mark),
-                            Map.of("issuerId", r[2].toString(), "issuer", (String) r[3], "nit", (String) r[4],
-                                    "environment", (String) r[5], "validTo", Dates.day(validTo),
-                                    "days", String.valueOf(days)));
+                            Map.of(
+                                    "issuerId",
+                                    r[2].toString(),
+                                    "issuer",
+                                    (String) r[3],
+                                    "nit",
+                                    (String) r[4],
+                                    "environment",
+                                    (String) r[5],
+                                    "validTo",
+                                    Dates.day(validTo),
+                                    "days",
+                                    String.valueOf(days)));
                 })
                 .toList();
     }
@@ -100,14 +113,29 @@ public class AccountHealthChecks {
                 .map(r -> {
                     long used = ((Number) r[6]).longValue();
                     long total = ((Number) r[7]).longValue();
-                    int mark = RANGE_USAGE.stream().filter(t -> used * 100 >= (long) t * total)
-                            .reduce((a, b) -> b).orElseThrow();
-                    return new Notice((UUID) r[0], NotificationKind.RANGE_RUNNING_OUT,
+                    int mark = RANGE_USAGE.stream()
+                            .filter(t -> used * 100 >= (long) t * total)
+                            .reduce((a, b) -> b)
+                            .orElseThrow();
+                    return new Notice(
+                            (UUID) r[0],
+                            NotificationKind.RANGE_RUNNING_OUT,
                             "range_usage:%s:%d".formatted(r[1], mark),
-                            Map.of("issuerId", r[2].toString(), "issuer", (String) r[3], "nit", (String) r[4],
-                                    "prefix", r[5] == null ? "" : (String) r[5], "threshold", String.valueOf(mark),
-                                    "remaining", String.valueOf(Math.max(0, total - used)),
-                                    "total", String.valueOf(total)));
+                            Map.of(
+                                    "issuerId",
+                                    r[2].toString(),
+                                    "issuer",
+                                    (String) r[3],
+                                    "nit",
+                                    (String) r[4],
+                                    "prefix",
+                                    r[5] == null ? "" : (String) r[5],
+                                    "threshold",
+                                    String.valueOf(mark),
+                                    "remaining",
+                                    String.valueOf(Math.max(0, total - used)),
+                                    "total",
+                                    String.valueOf(total)));
                 })
                 .toList();
     }
@@ -126,13 +154,26 @@ public class AccountHealthChecks {
                     LocalDate validTo = date(r[7]);
                     long days = validTo.toEpochDay() - today.toEpochDay();
                     int mark = lowestMark(RESOLUTION_DAYS, days);
-                    return new Notice((UUID) r[0], NotificationKind.RESOLUTION_EXPIRING,
+                    return new Notice(
+                            (UUID) r[0],
+                            NotificationKind.RESOLUTION_EXPIRING,
                             "resolution_expiring:%s:%dd".formatted(r[1], mark),
-                            Map.of("issuerId", r[2].toString(), "issuer", (String) r[3], "nit", (String) r[4],
-                                    "prefix", r[5] == null ? "" : (String) r[5],
+                            Map.of(
+                                    "issuerId",
+                                    r[2].toString(),
+                                    "issuer",
+                                    (String) r[3],
+                                    "nit",
+                                    (String) r[4],
+                                    "prefix",
+                                    r[5] == null ? "" : (String) r[5],
                                     // A range can be saved without its resolution number.
-                                    "resolution", r[6] == null ? "" : (String) r[6],
-                                    "validTo", Dates.day(validTo), "days", String.valueOf(days)));
+                                    "resolution",
+                                    r[6] == null ? "" : (String) r[6],
+                                    "validTo",
+                                    Dates.day(validTo),
+                                    "days",
+                                    String.valueOf(days)));
                 })
                 .toList();
     }
@@ -144,7 +185,8 @@ public class AccountHealthChecks {
      */
     List<Notice> rejectionSpikes(LocalDate today) {
         LocalDate day = today.minusDays(1);
-        return rows("""
+        return rows(
+                        """
                 SELECT d.account_id, count(*) FILTER (WHERE d.status = 'REJECTED'), count(*)
                 FROM billing.documents d
                 JOIN billing.accounts a ON a.id = d.account_id
@@ -153,18 +195,35 @@ public class AccountHealthChecks {
                 GROUP BY d.account_id
                 HAVING count(*) FILTER (WHERE d.status = 'REJECTED') >= :min
                    AND count(*) FILTER (WHERE d.status = 'REJECTED') >= :rate * count(*)
-                """, Map.of("from", day.atStartOfDay(Dates.BOGOTA).toOffsetDateTime(),
-                "to", today.atStartOfDay(Dates.BOGOTA).toOffsetDateTime(), "min", rejectionsMin,
-                "rate", rejectionsRate)).stream()
+                """,
+                        Map.of(
+                                "from",
+                                day.atStartOfDay(Dates.BOGOTA).toOffsetDateTime(),
+                                "to",
+                                today.atStartOfDay(Dates.BOGOTA).toOffsetDateTime(),
+                                "min",
+                                rejectionsMin,
+                                "rate",
+                                rejectionsRate))
+                .stream()
                 .map(r -> {
                     long rejected = ((Number) r[1]).longValue();
                     long total = ((Number) r[2]).longValue();
-                    return new Notice((UUID) r[0], NotificationKind.REJECTIONS_SPIKE,
+                    return new Notice(
+                            (UUID) r[0],
+                            NotificationKind.REJECTIONS_SPIKE,
                             "rejections_spike:%s:%s".formatted(r[0], day),
-                            Map.of("date", Dates.day(day), "rejected", String.valueOf(rejected),
-                                    "total", String.valueOf(total),
-                                    "rate", BigDecimal.valueOf(rejected * 100.0 / total)
-                                            .setScale(0, RoundingMode.HALF_UP).toPlainString()));
+                            Map.of(
+                                    "date",
+                                    Dates.day(day),
+                                    "rejected",
+                                    String.valueOf(rejected),
+                                    "total",
+                                    String.valueOf(total),
+                                    "rate",
+                                    BigDecimal.valueOf(rejected * 100.0 / total)
+                                            .setScale(0, RoundingMode.HALF_UP)
+                                            .toPlainString()));
                 })
                 .toList();
     }

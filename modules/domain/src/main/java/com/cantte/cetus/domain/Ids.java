@@ -8,8 +8,7 @@ public final class Ids {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private Ids() {
-    }
+    private Ids() {}
 
     public static UUID newId() {
         long millis = System.currentTimeMillis();

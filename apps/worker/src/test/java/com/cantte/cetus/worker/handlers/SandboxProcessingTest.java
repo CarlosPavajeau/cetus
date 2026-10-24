@@ -1,5 +1,8 @@
 package com.cantte.cetus.worker.handlers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianTransportException;
@@ -7,8 +10,8 @@ import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
-import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
+import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.WebhookDeliveryEntity;
 import com.cantte.cetus.persistence.entity.WebhookEventEntity;
@@ -23,16 +26,12 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** SANDBOX documents go through the whole pipeline, answered by the simulator and never by the DIAN. */
 @QuarkusTest
@@ -42,14 +41,19 @@ class SandboxProcessingTest {
 
     @Inject
     ProcessDocumentHandler handler;
+
     @Inject
     DeliverDocumentHandler delivery;
+
     @Inject
     FakeDian dian;
+
     @Inject
     FakeResend resend;
+
     @Inject
     WorkerFixtures fixtures;
+
     @Inject
     DocumentStorage storage;
 
@@ -75,16 +79,19 @@ class SandboxProcessingTest {
         assertThat(doc.cufe).hasSize(96);
         assertThat(doc.dianStatusCode).isEqualTo("00");
         assertThat(doc.dianStatusMessage).isEqualTo("Procesado Correctamente.");
-        assertThat(artifacts(id)).extracting(a -> a.kind).containsExactlyInAnyOrder(
-                Kind.SIGNED_XML, Kind.ZIP, Kind.DIAN_RESPONSE, Kind.APPLICATION_RESPONSE);
-        assertThat(artifacts(id)).noneSatisfy(a -> assertThat(((FakeDocumentStorage) storage).isRetained(a.s3Key)).isTrue());
+        assertThat(artifacts(id))
+                .extracting(a -> a.kind)
+                .containsExactlyInAnyOrder(Kind.SIGNED_XML, Kind.ZIP, Kind.DIAN_RESPONSE, Kind.APPLICATION_RESPONSE);
+        assertThat(artifacts(id))
+                .noneSatisfy(a -> assertThat(((FakeDocumentStorage) storage).isRetained(a.s3Key))
+                        .isTrue());
         assertThat(artifacts(id)).allSatisfy(a -> assertThat(a.s3Key).startsWith("documents/sandbox/"));
         assertThat(new String(storage.get(artifact(id, Kind.DIAN_RESPONSE).s3Key), StandardCharsets.UTF_8))
                 .contains("La Factura electrónica SIM-" + doc.number + ", ha sido autorizada.");
         // The XML is built like a habilitación one, with the sandbox Software ID.
         String xml = new String(storage.get(artifact(id, Kind.SIGNED_XML).s3Key), StandardCharsets.UTF_8);
-        assertThat(xml).contains("<cbc:ProfileExecutionID>2</cbc:ProfileExecutionID>",
-                "5a4db0c0-0000-4000-8000-000000000001");
+        assertThat(xml)
+                .contains("<cbc:ProfileExecutionID>2</cbc:ProfileExecutionID>", "5a4db0c0-0000-4000-8000-000000000001");
     }
 
     @Test
@@ -109,18 +116,19 @@ class SandboxProcessingTest {
     void theAcceptanceIsPublishedToTheSandboxEndpointsOnly() {
         UUID id = fixtures.sandboxInvoice("900108281");
         // Plain http is fine outside production.
-        WorkerFixtures.Endpoint sandbox = fixtures.webhookEndpoint(id, Environment.SANDBOX, "http://localhost:4000/hooks");
+        WorkerFixtures.Endpoint sandbox =
+                fixtures.webhookEndpoint(id, Environment.SANDBOX, "http://localhost:4000/hooks");
         fixtures.webhookEndpoint(id, Environment.TEST, "https://hooks.example.com/test");
 
         process(id);
 
-        List<WebhookEventEntity> events = QuarkusTransaction.requiringNew().call(() ->
-                WebhookEventEntity.list("documentId", id));
+        List<WebhookEventEntity> events =
+                QuarkusTransaction.requiringNew().call(() -> WebhookEventEntity.list("documentId", id));
         assertThat(events).singleElement().satisfies(event -> {
             assertThat(event.type).isEqualTo("invoice.accepted");
             assertThat(event.payload).contains("\"environment\":\"SANDBOX\"");
-            List<WebhookDeliveryEntity> deliveries = QuarkusTransaction.requiringNew().call(() ->
-                    WebhookDeliveryEntity.listByEvent(event.id));
+            List<WebhookDeliveryEntity> deliveries =
+                    QuarkusTransaction.requiringNew().call(() -> WebhookDeliveryEntity.listByEvent(event.id));
             assertThat(deliveries).extracting(delivery -> delivery.endpointId).containsExactly(sandbox.id());
         });
     }
@@ -161,8 +169,8 @@ class SandboxProcessingTest {
         process(id);
 
         assertThat(document(id).status).isEqualTo(DocumentStatus.ACCEPTED);
-        assertThat(submissions(id)).containsExactly(
-                "SendBillSync", "GetStatus", "SendBillSync", "GetStatus", "SendBillSync");
+        assertThat(submissions(id))
+                .containsExactly("SendBillSync", "GetStatus", "SendBillSync", "GetStatus", "SendBillSync");
     }
 
     @Test
@@ -197,7 +205,8 @@ class SandboxProcessingTest {
         UUID first = fixtures.sandboxInvoice("900108281");
         UUID accountId = document(first).accountId;
         fixtures.contacts(accountId, "dev@cliente.test", "fiscal@cliente.test", null);
-        List<UUID> invoices = List.of(first, fixtures.sandboxInvoiceFor(accountId), fixtures.sandboxInvoiceFor(accountId));
+        List<UUID> invoices =
+                List.of(first, fixtures.sandboxInvoiceFor(accountId), fixtures.sandboxInvoiceFor(accountId));
 
         for (UUID id : invoices) {
             process(id);
@@ -253,7 +262,11 @@ class SandboxProcessingTest {
     }
 
     private static List<String> submissions(UUID id) {
-        return QuarkusTransaction.requiringNew().call(() -> DianSubmissionEntity.<DianSubmissionEntity>list(
-                "documentId = ?1 order by createdAt", id).stream().map(s -> s.operation).toList());
+        return QuarkusTransaction.requiringNew()
+                .call(() ->
+                        DianSubmissionEntity.<DianSubmissionEntity>list("documentId = ?1 order by createdAt", id)
+                                .stream()
+                                .map(s -> s.operation)
+                                .toList());
     }
 }

@@ -3,7 +3,6 @@ package com.cantte.cetus.api.auth;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.audit.Actor;
 import jakarta.enterprise.context.RequestScoped;
-
 import java.util.UUID;
 
 /** Account, environment and key resolved from the API key of the current request. */

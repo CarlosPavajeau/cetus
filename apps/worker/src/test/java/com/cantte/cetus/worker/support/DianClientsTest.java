@@ -1,18 +1,17 @@
 package com.cantte.cetus.worker.support;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.cantte.cetus.dian.DianSoapClient;
 import com.cantte.cetus.domain.model.Environment;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class DianClientsTest {
 
-    private final DianClients clients = new DianClients(Duration.ofSeconds(1), Duration.ofSeconds(1), Optional.empty(),
-            new SimulatedDianGateway());
+    private final DianClients clients =
+            new DianClients(Duration.ofSeconds(1), Duration.ofSeconds(1), Optional.empty(), new SimulatedDianGateway());
 
     @Test
     void theSandboxNeverReachesTheDian() {
