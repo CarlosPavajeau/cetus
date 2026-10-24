@@ -18,6 +18,7 @@ export const actionLabel: Record<AuditAction, string> = {
   INVOICE_ISSUED: "Factura emitida",
   CREDIT_NOTE_ISSUED: "Nota crédito emitida",
   DEBIT_NOTE_ISSUED: "Nota débito emitida",
+  DOCUMENT_RESENT: "Documento reenviado por correo",
   ACCOUNT_SUSPENDED: "Cuenta suspendida",
   ACCOUNT_REACTIVATED: "Cuenta reactivada",
   USER_BANNED: "Usuario bloqueado",

@@ -97,6 +97,8 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
         : `${text(data.number)} sobre la factura ${text(data.invoiceNumber)} · ${label(conceptLabel, data.concept)} · ${label(environmentLabel, data.environment)}`;
     case "DEBIT_NOTE_ISSUED":
       return `${text(data.number)} sobre la factura ${text(data.invoiceNumber)} · ${label(conceptLabel, data.concept)} · ${label(environmentLabel, data.environment)}`;
+    case "DOCUMENT_RESENT":
+      return `${text(data.number)}${data.recipient ? ` a ${text(data.recipient)}` : ""} · ${label(environmentLabel, data.environment)}`;
     case "ACCOUNT_SUSPENDED":
     case "ACCOUNT_REACTIVATED":
       return `Motivo: ${text(data.reason)}`;
