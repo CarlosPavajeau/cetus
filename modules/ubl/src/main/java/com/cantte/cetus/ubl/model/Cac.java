@@ -1,6 +1,7 @@
 package com.cantte.cetus.ubl.model;
 
 import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -277,15 +278,11 @@ public final class Cac {
         public AmountType payableAmount;
     }
 
-    @XmlType(
-            name = "InvoiceLine",
-            propOrder = {"id", "invoicedQuantity", "lineExtensionAmount", "taxTotals", "item", "price"})
-    public static class InvoiceLine {
+    /** Members shared by invoice and note lines; each line lists them in its own {@code propOrder}. */
+    @XmlTransient
+    public abstract static class Line {
         @XmlElement(name = "ID", namespace = Ns.CBC)
         public String id;
-
-        @XmlElement(name = "InvoicedQuantity", namespace = Ns.CBC)
-        public QuantityType invoicedQuantity;
 
         @XmlElement(name = "LineExtensionAmount", namespace = Ns.CBC)
         public AmountType lineExtensionAmount;
@@ -298,52 +295,30 @@ public final class Cac {
 
         @XmlElement(name = "Price", namespace = Ns.CAC)
         public Price price;
+    }
+
+    @XmlType(
+            name = "InvoiceLine",
+            propOrder = {"id", "invoicedQuantity", "lineExtensionAmount", "taxTotals", "item", "price"})
+    public static class InvoiceLine extends Line {
+        @XmlElement(name = "InvoicedQuantity", namespace = Ns.CBC)
+        public QuantityType invoicedQuantity;
     }
 
     @XmlType(
             name = "CreditNoteLine",
             propOrder = {"id", "creditedQuantity", "lineExtensionAmount", "taxTotals", "item", "price"})
-    public static class CreditNoteLine {
-        @XmlElement(name = "ID", namespace = Ns.CBC)
-        public String id;
-
+    public static class CreditNoteLine extends Line {
         @XmlElement(name = "CreditedQuantity", namespace = Ns.CBC)
         public QuantityType creditedQuantity;
-
-        @XmlElement(name = "LineExtensionAmount", namespace = Ns.CBC)
-        public AmountType lineExtensionAmount;
-
-        @XmlElement(name = "TaxTotal", namespace = Ns.CAC)
-        public List<TaxTotal> taxTotals = new ArrayList<>();
-
-        @XmlElement(name = "Item", namespace = Ns.CAC)
-        public Item item;
-
-        @XmlElement(name = "Price", namespace = Ns.CAC)
-        public Price price;
     }
 
     @XmlType(
             name = "DebitNoteLine",
             propOrder = {"id", "debitedQuantity", "lineExtensionAmount", "taxTotals", "item", "price"})
-    public static class DebitNoteLine {
-        @XmlElement(name = "ID", namespace = Ns.CBC)
-        public String id;
-
+    public static class DebitNoteLine extends Line {
         @XmlElement(name = "DebitedQuantity", namespace = Ns.CBC)
         public QuantityType debitedQuantity;
-
-        @XmlElement(name = "LineExtensionAmount", namespace = Ns.CBC)
-        public AmountType lineExtensionAmount;
-
-        @XmlElement(name = "TaxTotal", namespace = Ns.CAC)
-        public List<TaxTotal> taxTotals = new ArrayList<>();
-
-        @XmlElement(name = "Item", namespace = Ns.CAC)
-        public Item item;
-
-        @XmlElement(name = "Price", namespace = Ns.CAC)
-        public Price price;
     }
 
     @XmlType(
