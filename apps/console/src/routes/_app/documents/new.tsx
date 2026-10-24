@@ -17,8 +17,8 @@ import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
 import { InvoiceForm } from "~/features/issuance/InvoiceForm";
 import { canIssueLiveQuery } from "~/features/issuance/queries";
+import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import { issuersQuery } from "~/features/issuers/queries";
-import { useImpersonation } from "~/features/session/useImpersonation";
 import type { Environment, Issuer } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/documents/new")({
@@ -52,20 +52,11 @@ const leads: Record<Environment, string> = {
 function NewInvoice() {
   const environment = useActiveEnvironment();
   const { data: issuers } = useSuspenseQuery(issuersQuery);
-  const { data: canIssueLive } = useSuspenseQuery(canIssueLiveQuery);
   const { data: documents } = useSuspenseInfiniteQuery(documentsQuery({ environment }));
-  const impersonating = Boolean(useImpersonation());
+  const blockedReason = useBlockedReason(environment);
   const usable = issuers.filter((issuer) => canIssue(issuer, environment));
   const firstSandboxInvoice =
     environment === "SANDBOX" && documents.pages.every((page) => page.items.length === 0);
-  const blockedReason =
-    environment !== "LIVE"
-      ? null
-      : impersonating
-        ? "Las facturas de producción solo las emite la persona de la cuenta, no el equipo de soporte."
-        : canIssueLive
-          ? null
-          : "Solo los dueños y administradores de la organización pueden emitir facturas en producción.";
 
   return (
     <>

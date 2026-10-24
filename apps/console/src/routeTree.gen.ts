@@ -42,6 +42,7 @@ import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/dev
 import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
 import { Route as AppDevelopersWebhooksEndpointIdRouteImport } from './routes/_app/developers/webhooks/$endpointId'
 import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuers/$issuerId_.edit'
+import { Route as AppDocumentsDocumentIdNotesNewRouteImport } from './routes/_app/documents/$documentId_.notes.new'
 import { Route as AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport } from './routes/_admin/admin/organizations/$accountId_.issuers.$issuerId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -214,6 +215,12 @@ const AppIssuersIssuerIdEditRoute = AppIssuersIssuerIdEditRouteImport.update({
   path: '/issuers/$issuerId/edit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsDocumentIdNotesNewRoute =
+  AppDocumentsDocumentIdNotesNewRouteImport.update({
+    id: '/documents/$documentId_/notes/new',
+    path: '/documents/$documentId/notes/new',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute =
   AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport.update({
     id: '/admin/organizations/$accountId_/issuers/$issuerId',
@@ -253,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesByTo {
@@ -287,6 +295,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
+  '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesById {
@@ -324,6 +333,7 @@ export interface FileRoutesById {
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/_app/documents/$documentId_/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/_admin/admin/organizations/$accountId_/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRouteTypes {
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/admin/users/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
+    | '/documents/$documentId/notes/new'
     | '/admin/organizations/$accountId/issuers/$issuerId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/developers/api-keys'
     | '/developers/webhooks'
+    | '/documents/$documentId/notes/new'
     | '/admin/organizations/$accountId/issuers/$issuerId'
   id:
     | '__root__'
@@ -430,6 +442,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/users/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
+    | '/_app/documents/$documentId_/notes/new'
     | '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
   fileRoutesById: FileRoutesById
 }
@@ -681,6 +694,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIssuersIssuerIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/documents/$documentId_/notes/new': {
+      id: '/_app/documents/$documentId_/notes/new'
+      path: '/documents/$documentId/notes/new'
+      fullPath: '/documents/$documentId/notes/new'
+      preLoaderRoute: typeof AppDocumentsDocumentIdNotesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_admin/admin/organizations/$accountId_/issuers/$issuerId': {
       id: '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
       path: '/admin/organizations/$accountId/issuers/$issuerId'
@@ -730,6 +750,7 @@ interface AppRouteChildren {
   AppIssuersIssuerIdEditRoute: typeof AppIssuersIssuerIdEditRoute
   AppDevelopersApiKeysIndexRoute: typeof AppDevelopersApiKeysIndexRoute
   AppDevelopersWebhooksIndexRoute: typeof AppDevelopersWebhooksIndexRoute
+  AppDocumentsDocumentIdNotesNewRoute: typeof AppDocumentsDocumentIdNotesNewRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -748,6 +769,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIssuersIssuerIdEditRoute: AppIssuersIssuerIdEditRoute,
   AppDevelopersApiKeysIndexRoute: AppDevelopersApiKeysIndexRoute,
   AppDevelopersWebhooksIndexRoute: AppDevelopersWebhooksIndexRoute,
+  AppDocumentsDocumentIdNotesNewRoute: AppDocumentsDocumentIdNotesNewRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

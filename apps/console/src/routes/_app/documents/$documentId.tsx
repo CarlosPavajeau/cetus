@@ -1,6 +1,12 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
-import { ArrowLeftIcon, FileTextIcon, FingerprintIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  FileMinusIcon,
+  FilePlusIcon,
+  FileTextIcon,
+  FingerprintIcon,
+} from "lucide-react";
 
 import { CopyButton } from "~/components/CopyButton";
 import { Entry, Section } from "~/components/DetailSection";
@@ -40,6 +46,7 @@ import {
   identificationTypeLabel,
 } from "~/features/documents/labels";
 import { documentDetailQuery } from "~/features/documents/queries";
+import { ResendDocument } from "~/features/documents/ResendDocument";
 import type { DocumentDetail } from "~/lib/api/types";
 import { uuidPattern } from "~/lib/utils";
 
@@ -90,7 +97,39 @@ function DocumentDetailPage() {
         lead={documentLead(document.status, document.environment)}
         action={
           <div className="flex flex-col items-start gap-2 sm:items-end">
-            {isInvoice && document.status === "ACCEPTED" && <CancelInvoice invoice={document} />}
+            {isInvoice && document.status === "ACCEPTED" && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  render={
+                    <Link
+                      to="/documents/$documentId/notes/new"
+                      params={{ documentId: document.id }}
+                      search={{ type: "CREDIT_NOTE" }}
+                    />
+                  }
+                  nativeButton={false}
+                >
+                  <FileMinusIcon data-icon="inline-start" />
+                  Nota crédito
+                </Button>
+                <Button
+                  variant="outline"
+                  render={
+                    <Link
+                      to="/documents/$documentId/notes/new"
+                      params={{ documentId: document.id }}
+                      search={{ type: "DEBIT_NOTE" }}
+                    />
+                  }
+                  nativeButton={false}
+                >
+                  <FilePlusIcon data-icon="inline-start" />
+                  Nota débito
+                </Button>
+                <CancelInvoice invoice={document} />
+              </div>
+            )}
             <DocumentDownloads documentId={document.id} />
           </div>
         }
@@ -216,7 +255,11 @@ function DocumentDetailPage() {
 
       {isInvoice && <InvoiceNotes document={document} />}
 
-      <Section id="deliveries" title="Entrega al cliente">
+      <Section
+        id="deliveries"
+        title="Entrega al cliente"
+        action={<ResendDocument document={document} />}
+      >
         {document.deliveries.length === 0 ? (
           <p className="text-2xs text-muted-foreground">
             {document.status === "ACCEPTED"

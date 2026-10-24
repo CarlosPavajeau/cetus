@@ -93,6 +93,15 @@ const noteDescription = trimmed(
   "Explica el motivo de la nota (hasta 500 caracteres).",
 );
 
+/** What a note asks for besides its lines; the type of the note narrows the concept when it is issued. */
+export const noteHeaderSchema = type({
+  "+": "delete",
+  concept: creditNoteConcept.or(debitNoteConcept),
+  description: noteDescription,
+});
+
+export type NoteHeaderValues = typeof noteHeaderSchema.infer;
+
 export const creditNoteSchema = type({
   "+": "delete",
   concept: creditNoteConcept,

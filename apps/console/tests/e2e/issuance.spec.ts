@@ -1,4 +1,12 @@
-import { addRange, onboardIssuer, uniqueNit } from "../support/issuers";
+import {
+  addCreditNoteRange,
+  addRange,
+  createTestApiKey,
+  issueInvoice,
+  onboardIssuer,
+  uniqueNit,
+  waitForStatus,
+} from "../support/issuers";
 import { expect, open, test } from "./fixtures";
 
 test("a new organization issues its first simulated invoice from the overview", async ({
@@ -90,4 +98,59 @@ test("a production invoice asks for confirmation before it is issued", async ({
   await page.getByRole("button", { name: "Emitir factura" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Emitir en producción" }).click();
   await expect(page.getByRole("heading", { name: /^Factura FE\d+$/ })).toBeVisible();
+});
+
+test("an accepted invoice is corrected with a partial credit note", async ({
+  page,
+  organization,
+}) => {
+  const issuerId = await onboardIssuer(organization, uniqueNit(), "Notas SAS", { testSet: false });
+  await addCreditNoteRange(organization, issuerId);
+  const invoice = await issueInvoice(
+    await createTestApiKey(organization),
+    issuerId,
+    "Cliente Notas",
+  );
+  expect(await waitForStatus(organization, invoice.id)).toBe("ACCEPTED");
+
+  await open(page, `/documents/${invoice.id}`);
+  await page.getByRole("button", { name: "Nota crédito" }).click();
+  await expect(page.getByRole("heading", { name: "Emitir nota crédito" })).toBeVisible();
+  await expect(page.getByText("Puedes acreditar hasta $ 119.000")).toBeVisible();
+  await page.getByLabel("Descripción", { exact: true }).fill("Descuento acordado con el cliente");
+  await page.getByLabel("Descripción de la línea 1").fill("Descuento");
+  await page.getByLabel("Precio unitario de la línea 1").fill("10000");
+  await expect(page.getByRole("definition").filter({ hasText: "11.900" })).toBeVisible();
+  await page.getByRole("button", { name: "Emitir nota crédito" }).click();
+
+  await expect(page.getByRole("heading", { name: /^Nota crédito NC\d+$/ })).toBeVisible();
+  await expect(page.getByText("Descuento acordado con el cliente")).toBeVisible();
+});
+
+test("an accepted invoice is emailed again at most once a minute", async ({
+  page,
+  organization,
+}) => {
+  const issuerId = await onboardIssuer(organization, uniqueNit(), "Reenvio SAS", {
+    testSet: false,
+  });
+  const invoice = await issueInvoice(
+    await createTestApiKey(organization),
+    issuerId,
+    "Cliente Reenvio",
+  );
+  expect(await waitForStatus(organization, invoice.id)).toBe("ACCEPTED");
+
+  await open(page, `/documents/${invoice.id}`);
+  const deliveries = page.getByRole("region", { name: "Entrega al cliente" });
+  // Enabled once the first delivery is over; the page refreshes itself until then.
+  await deliveries.getByRole("button", { name: "Reenviar correo" }).click({ timeout: 20_000 });
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Enviar a").fill("contabilidad@cliente.test");
+  await dialog.getByRole("button", { name: "Reenviar" }).click();
+
+  // The first delivery just ended; the API and worker tests cover a resend that goes out.
+  await expect(
+    dialog.getByText("Acabamos de enviarlo. Espera un minuto antes de reenviarlo."),
+  ).toBeVisible();
 });
