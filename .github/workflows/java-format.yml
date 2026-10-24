@@ -5,8 +5,11 @@ on:
   pull_request:
     paths:
       - "**/*.java"
+      - "**/*.gradle.kts"
       - "build-logic/**"
       - "gradle/**"
+      - "mise.toml"
+      - ".github/workflows/java-format.yml"
 
 permissions:
   contents: read
