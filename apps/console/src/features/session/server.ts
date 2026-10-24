@@ -17,6 +17,7 @@ export const getSession = createServerFn({ method: "GET" }).handler(async () => 
       id: session.user.id,
       name: session.user.name,
       email: session.user.email,
+      emailVerified: session.user.emailVerified,
       platformRole: platformRole(session.user.role),
       twoFactorEnabled: Boolean(session.user.twoFactorEnabled),
     },

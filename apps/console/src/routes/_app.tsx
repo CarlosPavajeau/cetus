@@ -55,6 +55,7 @@ import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { EnvironmentSelect } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery } from "~/features/environment/queries";
 import { SandboxBanner } from "~/features/environment/SandboxBanner";
+import { EmailVerificationBanner } from "~/features/session/EmailVerificationBanner";
 import { requireMembership } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
@@ -186,6 +187,10 @@ function AppLayout() {
       <SidebarInset>
         <ImpersonationBanner />
         <SandboxBanner />
+        {/* While impersonating, the address is the person's to confirm, not support's. */}
+        {!session.user.emailVerified && !session.impersonatedBy && (
+          <EmailVerificationBanner email={session.user.email} />
+        )}
         <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-10">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />

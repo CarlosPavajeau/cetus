@@ -20,7 +20,7 @@ const paragraph = {
 export function VerificationEmail(props: VerificationEmailProps) {
   return (
     <EmailLayout
-      preview="Confirma tu correo para unirte en Cetus"
+      preview="Confirma tu correo en Cetus"
       reason="Recibiste este correo porque alguien creó una cuenta de Cetus con esta dirección o pidió confirmarla. Si no fuiste tú, ignóralo: sin el enlace no se confirma."
     >
       <Heading
@@ -30,8 +30,8 @@ export function VerificationEmail(props: VerificationEmailProps) {
         Confirma tu correo
       </Heading>
       <Text style={paragraph}>
-        Hola, {props.name}. Confirma que esta dirección es tuya para aceptar la invitación a una
-        organización en Cetus. Así nadie más puede unirse con tu correo.
+        Hola, {props.name}. Confirma que esta dirección es tuya. Así puedes aceptar invitaciones a
+        organizaciones en Cetus, y nadie más puede unirse con tu correo.
       </Text>
       <Button
         href={props.url}
@@ -63,7 +63,7 @@ export function verificationText(props: VerificationEmailProps) {
   return [
     "Confirma tu correo",
     "",
-    `Hola, ${props.name}. Confirma que esta dirección es tuya para aceptar la invitación a una organización en Cetus. Así nadie más puede unirse con tu correo.`,
+    `Hola, ${props.name}. Confirma que esta dirección es tuya. Así puedes aceptar invitaciones a organizaciones en Cetus, y nadie más puede unirse con tu correo.`,
     "",
     `Confírmalo aquí: ${props.url}`,
     "",
