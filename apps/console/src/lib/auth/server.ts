@@ -11,6 +11,7 @@ import { env } from "../env";
 import {
   ac,
   impersonationSeconds,
+  invitationSeconds,
   organizationAc,
   organizationRoles,
   platformRole,
@@ -106,7 +107,11 @@ export const auth = betterAuth({
     }),
   },
   plugins: [
-    organization({ ac: organizationAc, roles: organizationRoles }),
+    organization({
+      ac: organizationAc,
+      roles: organizationRoles,
+      invitationExpiresIn: invitationSeconds,
+    }),
     admin({
       ac,
       roles,

@@ -1,3 +1,5 @@
+import { type } from "arktype";
+
 import { addRange, onboardIssuer, uniqueNit } from "../support/issuers";
 import { consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
@@ -11,7 +13,7 @@ test("a biller is invited by link, issues in production and is removed", async (
   const testIssuerId = await onboardIssuer(owner, uniqueNit(), "Facturas SAS", { testSet: false });
   const promoted = await owner.api(`/console/issuers/${testIssuerId}/promote`, { method: "POST" });
   expect(promoted.status).toBe(200);
-  const { id: liveIssuerId } = (await promoted.json()) as { id: string };
+  const { id: liveIssuerId } = type({ id: "string" }).assert(await promoted.json());
   await addRange(owner, liveIssuerId, "FE");
 
   const email = `e2e-biller-${crypto.randomUUID().slice(0, 8)}@cetus.test`;
@@ -21,12 +23,17 @@ test("a biller is invited by link, issues in production and is removed", async (
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Correo").fill(email);
   await dialog.getByRole("button", { name: "Crear invitación" }).click();
+  // Without a Resend key the local stack writes the email to its log, so it counts as sent.
+  await expect(dialog.getByRole("heading", { name: "Invitación enviada" })).toBeVisible();
   const url = (await dialog.locator("code", { hasText: "/invitations/" }).textContent()) ?? "";
   expect(url).toContain(`${consoleUrl}/invitations/`);
   await dialog.getByRole("button", { name: "Listo" }).click();
   const pending = page.getByRole("region", { name: "Invitaciones pendientes" });
   await expect(pending.getByRole("cell", { name: email, exact: true })).toBeVisible();
   await expect(pending.getByRole("cell", { name: "Facturador" })).toBeVisible();
+  // It was just sent: sending it again waits a minute.
+  await pending.getByRole("button", { name: "Reenviar" }).click();
+  await expect(pending.getByText("Espera un minuto antes de reenviarla")).toBeVisible();
 
   // The invited person creates their account from the link and lands in the owner's organization.
   const visitor = await browser.newContext();

@@ -81,5 +81,8 @@ export function memberPermissions(assigned: string[]): MemberPermissions {
   };
 }
 
+/** How long an invitation to an organization stays valid; sending it again restarts it. */
+export const invitationSeconds = 48 * 60 * 60;
+
 /** How long a Cetus admin can act as a console user before signing in again. */
 export const impersonationSeconds = 30 * 60;

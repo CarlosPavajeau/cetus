@@ -37,7 +37,7 @@ variable que exista en Railway y no esté ahí.
 | api y worker | `CETUS_DB_URL`, `CETUS_DB_USER`, `CETUS_DB_PASSWORD`, `CETUS_KMS_KEY_ID`, `CETUS_DOCUMENTS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (cada servicio con su propio usuario IAM) |
 | api | `CETUS_DB_MIGRATION_URL` (la misma base en el puerto 5432, para Flyway), `CETUS_AUTH_JWKS_URL` (URL privada de la consola), `CETUS_AUTH_ISSUER` (igual a `BETTER_AUTH_URL`), `RESEND_WEBHOOK_SECRET` |
 | worker | `CETUS_JOBS_LISTEN_URL` (la misma base en el puerto 5432, para el `LISTEN` de la cola), `RESEND_API_KEY`, `CETUS_EMAIL_FROM`, `CETUS_EMAIL_TEST_RECIPIENT`, `CETUS_OPS_ALERT_EMAIL` |
-| console | `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CETUS_API_URL` (URL privada de la API), `CETUS_EDGE_SECRET` |
+| console | `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CETUS_API_URL` (URL privada de la API), `CETUS_EDGE_SECRET`, `RESEND_API_KEY`, `CETUS_AUTH_EMAIL_FROM` |
 
 Las URL privadas se arman con referencias, p. ej. `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`. En el
 perfil `prod`, la API y el worker escuchan en `::` (la red privada de Railway es IPv6) y escriben logs en JSON.
@@ -80,8 +80,12 @@ operativas.
 | `CETUS_EMAIL_FROM` | worker | Remitente en el dominio verificado, p. ej. `Facturas <facturas@facturas.midominio.com>` |
 | `CETUS_EMAIL_TEST_RECIPIENT` | worker | Buzón que recibe los documentos TEST en lugar del adquiriente |
 | `RESEND_WEBHOOK_SECRET` | api | Secreto `whsec_…` del webhook de eventos |
+| `RESEND_API_KEY` | console | Otra llave solo de envío, para los correos de la cuenta (invitaciones) |
+| `CETUS_AUTH_EMAIL_FROM` | console | Remitente de esos correos, p. ej. `Cetus <cuentas@cetus.midominio.com>` |
 
-Sin `RESEND_API_KEY` o `CETUS_EMAIL_FROM`, la entrega queda `SKIPPED`. En Resend:
+Sin `RESEND_API_KEY` o `CETUS_EMAIL_FROM`, la entrega queda `SKIPPED`. La consola envía los correos de la cuenta
+(invitaciones a una organización) con su propia llave; sin ella los escribe en el log y la invitación sigue
+mostrando su enlace para copiar. En Resend:
 
 1. Verifica un subdominio dedicado (p. ej. `facturas.midominio.com`) con los registros SPF y DKIM que muestra el
    panel, y agrega una política DMARC.

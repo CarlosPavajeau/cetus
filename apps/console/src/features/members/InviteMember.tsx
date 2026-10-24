@@ -40,8 +40,8 @@ type InvitationValues = typeof invitationSchema.infer;
 const empty: InvitationValues = { email: "", role: "biller" };
 
 /**
- * Invites someone with a role. The console sends no email: the dialog shows the link to share, which only
- * works for the invited address.
+ * Invites someone with a role and emails them the link. The dialog also shows it, to share by other means if
+ * the email does not arrive; it only works for the invited address.
  */
 export function InviteMember() {
   const [open, setOpen] = useState(false);
@@ -83,12 +83,24 @@ export function InviteMember() {
         {invited ? (
           <>
             <DialogHeader>
-              <DialogTitle>Comparte el enlace de la invitación</DialogTitle>
+              <DialogTitle>
+                {invited.emailed ? "Invitación enviada" : "Comparte el enlace de la invitación"}
+              </DialogTitle>
               <DialogDescription>
-                Envíaselo a {form.getValues("email")}. Solo sirve con ese correo, una vez, y vence
-                en 48 horas.
+                {invited.emailed
+                  ? `Le enviamos la invitación a ${form.getValues("email")}. Si no le llega, comparte este enlace.`
+                  : `Envíaselo a ${form.getValues("email")}.`}{" "}
+                Solo sirve con ese correo, una vez, y vence en 48 horas.
               </DialogDescription>
             </DialogHeader>
+            {!invited.emailed && (
+              <Alert>
+                <AlertDescription>
+                  No pudimos enviar el correo. La invitación quedó creada: comparte el enlace o
+                  reenvíala desde la lista en un momento.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="flex items-center gap-2 rounded-md border bg-muted/40 p-2">
               <code className="min-w-0 flex-1 truncate text-xs">{invitationUrl(invited.id)}</code>
               <CopyButton value={invitationUrl(invited.id)} label="Copiar enlace" />

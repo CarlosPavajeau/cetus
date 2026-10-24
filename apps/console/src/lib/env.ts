@@ -9,6 +9,10 @@ const schema = type({
   CETUS_API_URL: "string.url",
   // Read by the edge middleware (start.ts); listed so a short secret fails at startup.
   "CETUS_EDGE_SECRET?": "string >= 32",
+  // Resend for the account emails (invitations); a send-only key, apart from the worker's.
+  "RESEND_API_KEY?": "string > 0",
+  // e.g. "Cetus <cuentas@cetus.cantte.com>", on a domain verified in Resend.
+  "CETUS_AUTH_EMAIL_FROM?": "string > 0",
 });
 
 /** Server-only environment, validated once at startup. */

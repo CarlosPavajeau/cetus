@@ -2,9 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 import { APIError } from "better-auth/api";
+import { createElement } from "react";
 
-import { assignableMemberRoles } from "~/lib/auth/permissions";
+import { InvitationEmail, invitationText } from "~/emails/InvitationEmail";
+import { memberRoleLabel } from "~/features/admin/labels";
+import { assignableMemberRoles, invitationSeconds } from "~/lib/auth/permissions";
 import { auth } from "~/lib/auth/server";
+import { emailSender } from "~/lib/email";
+import { env } from "~/lib/env";
+
+import { assignableRoleItems } from "./labels";
 
 export type Member = {
   id: string;
@@ -94,24 +101,113 @@ async function change(call: () => Promise<unknown>, fallback: string): Promise<M
 
 const memberRole = type.enumerated(...assignableMemberRoles);
 
-export type InviteResult = { ok: true; id: string } | { ok: false; message: string };
+export type InviteResult =
+  | { ok: true; id: string; emailed: boolean }
+  | { ok: false; message: string };
+
+const expiresFormat = new Intl.DateTimeFormat("es-CO", {
+  dateStyle: "long",
+  timeStyle: "short",
+  timeZone: "America/Bogota",
+});
 
 /**
- * Invites someone to the active organization. The console sends no email: the person who invites shares
- * the link of the invitation, which only works for this address.
+ * Emails the invitation to its address. A failure leaves the invitation as it is: the console still shows its
+ * link to share, so it only says whether the email went out.
+ */
+async function emailInvitation(
+  headers: Headers,
+  invitation: { id: string; email: string; role: string; expiresAt: Date },
+): Promise<boolean> {
+  const [organization, session] = await Promise.all([
+    auth.api.getFullOrganization({ headers }),
+    auth.api.getSession({ headers }),
+  ]);
+  if (!organization || !session) {
+    throw new Error("An invitation was created without an active organization or a session");
+  }
+  const role = assignableRoleItems.find((item) => item.value === invitation.role);
+  const props = {
+    organization: organization.name,
+    inviterName: session.user.name,
+    inviterEmail: session.user.email,
+    role: memberRoleLabel[invitation.role] ?? invitation.role,
+    roleDescription: role?.description ?? "",
+    url: new URL(`/invitations/${invitation.id}`, env.BETTER_AUTH_URL).toString(),
+    expires: expiresFormat.format(invitation.expiresAt),
+  };
+  try {
+    await emailSender.send({
+      to: invitation.email,
+      subject: `${props.inviterName} te invitó a ${props.organization} en Cetus`,
+      react: createElement(InvitationEmail, props),
+      text: invitationText(props),
+    });
+    return true;
+  } catch (error) {
+    console.error("Invitation created but not emailed", { invitationId: invitation.id, error });
+    return false;
+  }
+}
+
+/**
+ * Invites someone to the active organization and emails them the link. The link only works for this
+ * address; the console also shows it, to share if the email does not arrive.
  */
 export const inviteMember = createServerFn({ method: "POST" })
   .validator(type({ email: "string.email", role: memberRole }))
   .handler(async ({ data }): Promise<InviteResult> => {
+    const headers = getRequestHeaders();
+    let invitation: Awaited<ReturnType<typeof auth.api.createInvitation>>;
     try {
-      const invitation = await auth.api.createInvitation({
-        headers: getRequestHeaders(),
+      invitation = await auth.api.createInvitation({
+        headers,
         body: { email: data.email, role: data.role },
       });
-      return { ok: true, id: invitation.id };
     } catch (error) {
       return refusal(error, "No pudimos crear la invitación.");
     }
+    const emailed = await emailInvitation(headers, invitation);
+    return { ok: true, id: invitation.id, emailed };
+  });
+
+export type ResendResult = { ok: true; emailed: boolean } | { ok: false; message: string };
+
+/** One email a minute per invitation, so a double click or an impatient person sends one. */
+const resendIntervalSeconds = 60;
+
+/** Emails a pending invitation again; Better Auth restarts its validity rather than creating another. */
+export const resendInvitation = createServerFn({ method: "POST" })
+  .validator(type({ invitationId: "string > 0" }))
+  .handler(async ({ data }): Promise<ResendResult> => {
+    const headers = getRequestHeaders();
+    const organization = await auth.api.getFullOrganization({ headers });
+    const pending = organization?.invitations.find(
+      (invitation) => invitation.id === data.invitationId && invitation.status === "pending",
+    );
+    if (!pending) {
+      return { ok: false, message: "La invitación ya no existe o ya fue respondida." };
+    }
+    const role = assignableMemberRoles.find((value) => value === pending.role);
+    if (!role) {
+      throw new Error(
+        `Invitation ${pending.id} has a role the console does not hand out: ${pending.role}`,
+      );
+    }
+    const sentAt = new Date(pending.expiresAt).getTime() - invitationSeconds * 1000;
+    if (Date.now() - sentAt < resendIntervalSeconds * 1000) {
+      return { ok: false, message: "Acabamos de enviarla. Espera un minuto antes de reenviarla." };
+    }
+    let invitation: Awaited<ReturnType<typeof auth.api.createInvitation>>;
+    try {
+      invitation = await auth.api.createInvitation({
+        headers,
+        body: { email: pending.email, role, resend: true },
+      });
+    } catch (error) {
+      return refusal(error, "No pudimos reenviar la invitación.");
+    }
+    return { ok: true, emailed: await emailInvitation(headers, invitation) };
   });
 
 export const cancelInvitation = createServerFn({ method: "POST" })

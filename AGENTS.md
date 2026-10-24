@@ -22,7 +22,7 @@ cetus/
 ├── apps/
 │   ├── api/            Quarkus · public REST (/v1) and console endpoints (/console); validates, numbers, stores, enqueues
 │   ├── worker/         Quarkus · job runner: UBL, XAdES signing, DIAN submission and status, emails, webhook delivery
-│   ├── console/        TanStack Start + Better Auth · web panel (BFF to the API), owns the "auth" schema (Drizzle)
+│   ├── console/        TanStack Start + Better Auth · web panel (BFF to the API), owns the "auth" schema (Drizzle) and its emails
 │   └── dian-mock/      Local stand-in for the DIAN web services; development and bench only, never deployed
 ├── modules/
 │   ├── domain/         Plain Java · model, totals, CUFE/CUDE, DIAN rules; depends on no framework
@@ -109,6 +109,10 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
 - `OpenApiFilter` marks every member of a response schema as required; do not
   add `@Schema(required = true)`. Mark members that can be null with
   `@Schema(nullable = true)`. Requests take `required` from Bean Validation.
+- Account emails (invitations, and later password reset and email
+  verification) go out from the console (`src/lib/email`, Resend with
+  react-email templates in `src/emails`), next to the `auth` data they come
+  from. Billing emails and notices stay in the worker (`modules/email`).
 - Secrets (PIN, technical key, certificate password and file) are sealed with
   KMS. The `.p12` lives in S3; the database only holds metadata.
 

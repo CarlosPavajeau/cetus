@@ -82,6 +82,9 @@ export default defineRailway((ctx) => {
       CETUS_API_URL: "http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}",
       // Cloudflare sends it in X-Cetus-Edge-Secret (Transform Rule); without it the public domain answers 403.
       CETUS_EDGE_SECRET: preserve(),
+      // Account emails (invitations); a send-only Resend key of its own.
+      RESEND_API_KEY: preserve(),
+      CETUS_AUTH_EMAIL_FROM: "Cetus <cuentas@cetus.cantte.com>",
     },
   });
 

@@ -42,8 +42,10 @@ import {
   type Invitation,
   type Member,
   type MemberResult,
+  type ResendResult,
   cancelInvitation,
   removeMember,
+  resendInvitation,
   updateMemberRole,
 } from "~/features/members/server";
 import { useImpersonation } from "~/features/session/useImpersonation";
@@ -71,7 +73,9 @@ function assignable(role: string): AssignableMemberRole | null {
 }
 
 /** A change to the members whose refusal shows on the page; the list is read again either way. */
-function useMemberChange<T>(call: (input: { data: T }) => Promise<MemberResult>) {
+function useMemberChange<T, R extends MemberResult | ResendResult>(
+  call: (input: { data: T }) => Promise<R>,
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: call,
@@ -139,7 +143,7 @@ function Members() {
                   <TableHead className="px-5">Correo</TableHead>
                   <TableHead>Rol</TableHead>
                   <TableHead>Vence</TableHead>
-                  <TableHead className="w-48 pr-5" />
+                  <TableHead className="w-64 pr-5" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -259,13 +263,25 @@ function RemoveMember({ member }: { member: Member }) {
 
 function InvitationRow({ invitation, editable }: { invitation: Invitation; editable: boolean }) {
   const cancel = useMemberChange(cancelInvitation);
-  const failure = cancel.data && !cancel.data.ok ? cancel.data.message : null;
+  const resend = useMemberChange(resendInvitation);
+  const failure =
+    cancel.data && !cancel.data.ok
+      ? cancel.data.message
+      : resend.data && !resend.data.ok
+        ? resend.data.message
+        : resend.data?.ok && !resend.data.emailed
+          ? "No pudimos enviar el correo. Comparte el enlace o inténtalo en un momento."
+          : null;
+  const resent = resend.data?.ok && resend.data.emailed;
 
   return (
     <TableRow>
       <TableCell className="px-5 text-xs font-medium">
         {invitation.email}
         {failure && <p className="mt-1 text-2xs font-normal text-destructive">{failure}</p>}
+        {resent && (
+          <p className="mt-1 text-2xs font-normal text-muted-foreground">Invitación reenviada.</p>
+        )}
       </TableCell>
       <TableCell className="text-xs">{roleLabel(invitation.role)}</TableCell>
       <TableCell className="text-xs tabular-nums">
@@ -279,6 +295,15 @@ function InvitationRow({ invitation, editable }: { invitation: Invitation; edita
               label={`Copiar enlace de ${invitation.email}`}
               iconOnly
             />
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={resend.isPending}
+              onClick={() => resend.mutate({ data: { invitationId: invitation.id } })}
+            >
+              {resend.isPending && <Spinner data-icon="inline-start" />}
+              Reenviar
+            </Button>
             <Button
               variant="ghost"
               size="sm"
