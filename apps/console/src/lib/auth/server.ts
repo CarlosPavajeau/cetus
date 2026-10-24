@@ -41,7 +41,7 @@ const forbiddenWhileImpersonating = new Set([
 
 /**
  * Better Auth owns users, organizations and memberships (schema "auth").
- * The JWT plugin mints short-lived RS256 tokens that the Java API validates through /api/auth/jwks.
+ * The JWT plugin mints short-lived RS256 tokens that the Java API validates through /.well-known/jwks.json.
  * Platform staff (admin plugin roles) must have 2FA: without it their token carries no `groups` and
  * the admin endpoints of Better Auth refuse them.
  */

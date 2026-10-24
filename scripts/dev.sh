@@ -220,8 +220,8 @@ up() {
   if has console; then
     start_service console
     info "Waiting for the console's JWKS"
-    wait_until 120 curl -sf localhost:3000/api/auth/jwks || warn "The console is not answering /api/auth/jwks yet"
-  elif has api && ! curl -sf localhost:3000/api/auth/jwks >/dev/null 2>&1; then
+    wait_until 120 curl -sf localhost:3000/.well-known/jwks.json || warn "The console is not answering /.well-known/jwks.json yet"
+  elif has api && ! curl -sf localhost:3000/.well-known/jwks.json >/dev/null 2>&1; then
     warn "The console is not running; the API will not be able to validate JWTs"
   fi
   for s in $services; do
