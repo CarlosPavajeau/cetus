@@ -84,33 +84,30 @@ public class AuditLogResource {
 
     /** Same JSON as the persistence page; declared here so the OpenAPI spec can mark required fields. */
     public record AuditPage(
-            @Schema(required = true) List<AuditEntry> items,
-            @Schema(required = true, nullable = true) Long nextCursor) {
+            List<AuditEntry> items, @Schema(nullable = true) Long nextCursor) {
         static AuditPage from(com.cantte.cetus.persistence.audit.AuditPage page) {
             return new AuditPage(page.items().stream().map(AuditEntry::from).toList(), page.nextCursor());
         }
     }
 
     public record AuditEntry(
-            @Schema(required = true) long id,
-            @Schema(required = true) AuditAction action,
-            @Schema(required = true) Actor.ActorType actorType,
-            @Schema(required = true, nullable = true) String actorId,
+            long id,
+            AuditAction action,
+            Actor.ActorType actorType,
+            @Schema(nullable = true) String actorId,
 
             @Schema(
-                    required = true,
                     nullable = true,
                     description = "Better Auth id of the Cetus admin who acted as this user, if one did")
             String impersonatedBy,
 
-            @Schema(required = true, nullable = true) String resourceType,
-            @Schema(required = true, nullable = true) UUID resourceId,
+            @Schema(nullable = true) String resourceType,
+            @Schema(nullable = true) UUID resourceId,
 
-            @Schema(required = true, additionalProperties = AuditValue.class)
-            Map<String, Object> data,
+            @Schema(additionalProperties = AuditValue.class) Map<String, Object> data,
 
-            @Schema(required = true, nullable = true) String ipAddress,
-            @Schema(required = true) OffsetDateTime createdAt) {
+            @Schema(nullable = true) String ipAddress,
+            OffsetDateTime createdAt) {
         static AuditEntry from(AuditEntryView entry) {
             return new AuditEntry(
                     entry.id(),

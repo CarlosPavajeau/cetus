@@ -169,21 +169,20 @@ public class ContactResource {
             @NotBlank @Email @Size(max = 254) String email) {}
 
     public record ContactView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) Category category,
+            UUID id,
+            Category category,
 
             @Schema(
-                    required = true,
                     nullable = true,
                     description = "The verified address that receives the notices; null until one is verified")
             String email,
 
-            @Schema(required = true, nullable = true) OffsetDateTime verifiedAt,
+            @Schema(nullable = true) OffsetDateTime verifiedAt,
 
-            @Schema(required = true, nullable = true, description = "A new address waiting for its verification")
+            @Schema(nullable = true, description = "A new address waiting for its verification")
             String pendingEmail,
 
-            @Schema(required = true, nullable = true) OffsetDateTime pendingRequestedAt) {
+            @Schema(nullable = true) OffsetDateTime pendingRequestedAt) {
         static ContactView from(AccountContactEntity contact) {
             return new ContactView(
                     contact.id,

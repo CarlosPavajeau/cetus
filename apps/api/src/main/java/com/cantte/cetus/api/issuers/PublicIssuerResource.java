@@ -29,15 +29,15 @@ public class PublicIssuerResource {
     ApiPrincipal principal;
 
     public record PublicIssuerView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) String nit,
-            @Schema(required = true) String checkDigit,
-            @Schema(required = true) String legalName,
-            @Schema(required = true, nullable = true) String tradeName,
-            @Schema(required = true) IssuerEntity.Status status,
+            UUID id,
+            Environment environment,
+            String nit,
+            String checkDigit,
+            String legalName,
+            @Schema(nullable = true) String tradeName,
+            IssuerEntity.Status status,
 
-            @Schema(required = true, description = "Whether its status lets it issue with this key")
+            @Schema(description = "Whether its status lets it issue with this key")
             boolean readyToIssue) {
 
         static PublicIssuerView from(IssuerEntity issuer) {

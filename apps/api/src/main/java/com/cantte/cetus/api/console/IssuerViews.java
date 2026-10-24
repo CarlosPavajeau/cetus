@@ -110,13 +110,13 @@ public final class IssuerViews {
             @Pattern(regexp = "[0-9A-Za-z-]{1,100}") String technicalKey) {}
 
     public record IssuerView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) String nit,
-            @Schema(required = true) String checkDigit,
-            @Schema(required = true) String legalName,
-            @Schema(required = true, nullable = true) String tradeName,
-            @Schema(required = true) IssuerEntity.Status status) {
+            UUID id,
+            Environment environment,
+            String nit,
+            String checkDigit,
+            String legalName,
+            @Schema(nullable = true) String tradeName,
+            IssuerEntity.Status status) {
         public static IssuerView from(IssuerEntity issuer) {
             return new IssuerView(
                     issuer.id,
@@ -134,23 +134,23 @@ public final class IssuerViews {
      * the certificate or its password, nor the technical key.
      */
     public record IssuerDetailView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) String nit,
-            @Schema(required = true) String checkDigit,
-            @Schema(required = true) String legalName,
-            @Schema(required = true, nullable = true) String tradeName,
-            @Schema(required = true) IssuerEntity.Status status,
-            @Schema(required = true) PersonType personType,
-            @Schema(required = true) List<String> taxLevelCodes,
-            @Schema(required = true) boolean responsibleForIva,
-            @Schema(required = true) Address address,
-            @Schema(required = true) String email,
-            @Schema(required = true, nullable = true) String phone,
-            @Schema(required = true, nullable = true) SoftwareView software,
-            @Schema(required = true, nullable = true) CertificateView certificate,
-            @Schema(required = true) List<NumberingRangeView> ranges,
-            @Schema(required = true, nullable = true) TestSetProgressView testSet) {
+            UUID id,
+            Environment environment,
+            String nit,
+            String checkDigit,
+            String legalName,
+            @Schema(nullable = true) String tradeName,
+            IssuerEntity.Status status,
+            PersonType personType,
+            List<String> taxLevelCodes,
+            boolean responsibleForIva,
+            Address address,
+            String email,
+            @Schema(nullable = true) String phone,
+            @Schema(nullable = true) SoftwareView software,
+            @Schema(nullable = true) CertificateView certificate,
+            List<NumberingRangeView> ranges,
+            @Schema(nullable = true) TestSetProgressView testSet) {
         public static IssuerDetailView from(IssuerEntity issuer) {
             List<String> taxLevelCodes = issuer.taxLevelCodes == null || issuer.taxLevelCodes.isBlank()
                     ? List.of()
@@ -188,16 +188,13 @@ public final class IssuerViews {
      * it against.
      */
     public record TestSetProgressView(
-            @Schema(required = true) String testSetId,
-            @Schema(required = true) OffsetDateTime since,
+            String testSetId,
+            OffsetDateTime since,
 
-            @Schema(
-                    required = true,
-                    nullable = true,
-                    description = "When the DIAN reported the set as accepted: habilitación is done")
+            @Schema(nullable = true, description = "When the DIAN reported the set as accepted: habilitación is done")
             OffsetDateTime acceptedAt,
 
-            @Schema(required = true) List<TestSetCountView> documents) {
+            List<TestSetCountView> documents) {
         /** Null unless the issuer sends to a test set: a test issuer whose software has a TestSetId. */
         static TestSetProgressView of(IssuerEntity issuer, SoftwareCredentialEntity software) {
             if (issuer.environment != Environment.TEST
@@ -221,11 +218,7 @@ public final class IssuerViews {
 
     /** Documents of one type in the test set: accepted and rejected by the DIAN, in progress, or failed to send. */
     public record TestSetCountView(
-            @Schema(required = true) DocumentType documentType,
-            @Schema(required = true) long accepted,
-            @Schema(required = true) long rejected,
-            @Schema(required = true) long inProgress,
-            @Schema(required = true) long failed) {
+            DocumentType documentType, long accepted, long rejected, long inProgress, long failed) {
         static TestSetCountView of(DocumentType type, List<DocumentEntity.StatusCount> counts) {
             long accepted = 0, rejected = 0, inProgress = 0, failed = 0;
             for (DocumentEntity.StatusCount count : counts) {
@@ -245,8 +238,7 @@ public final class IssuerViews {
 
     /** The active DIAN software credentials, without the PIN. */
     public record SoftwareView(
-            @Schema(required = true) String softwareId,
-            @Schema(required = true, nullable = true) String testSetId) {
+            String softwareId, @Schema(nullable = true) String testSetId) {
         static SoftwareView from(SoftwareCredentialEntity credential) {
             return new SoftwareView(credential.softwareId, credential.testSetId);
         }
@@ -254,10 +246,7 @@ public final class IssuerViews {
 
     /** Metadata of the active signing certificate. */
     public record CertificateView(
-            @Schema(required = true) String subject,
-            @Schema(required = true) String serialNumber,
-            @Schema(required = true) OffsetDateTime validFrom,
-            @Schema(required = true) OffsetDateTime validTo) {
+            String subject, String serialNumber, OffsetDateTime validFrom, OffsetDateTime validTo) {
         static CertificateView from(SigningCertificateEntity certificate) {
             return new CertificateView(
                     certificate.subjectDn, certificate.serialNumber, certificate.validFrom, certificate.validTo);
@@ -265,24 +254,21 @@ public final class IssuerViews {
     }
 
     public record NumberingRangeView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) DocumentType documentType,
-            @Schema(required = true) String prefix,
-            @Schema(required = true) long from,
-            @Schema(required = true) long to,
-            @Schema(required = true) long nextNumber,
-            @Schema(required = true, nullable = true) LocalDate validTo,
-            @Schema(required = true) String status,
+            UUID id,
+            DocumentType documentType,
+            String prefix,
+            long from,
+            long to,
+            long nextNumber,
+            @Schema(nullable = true) LocalDate validTo,
+            String status,
 
-            @Schema(required = true, nullable = true, description = "GetNumberingRange outcome; invoice ranges only")
+            @Schema(nullable = true, description = "GetNumberingRange outcome; invoice ranges only")
             NumberingRangeEntity.VerificationStatus verificationStatus,
 
-            @Schema(required = true, nullable = true) OffsetDateTime verifiedAt,
+            @Schema(nullable = true) OffsetDateTime verifiedAt,
 
-            @Schema(
-                    required = true,
-                    nullable = true,
-                    description = "What differs from the DIAN, or why it could not be checked")
+            @Schema(nullable = true, description = "What differs from the DIAN, or why it could not be checked")
             String verificationError) {
         public static NumberingRangeView from(NumberingRangeEntity range) {
             return new NumberingRangeView(

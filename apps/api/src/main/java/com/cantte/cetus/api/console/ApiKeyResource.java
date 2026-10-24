@@ -142,15 +142,15 @@ public class ApiKeyResource {
             @NotBlank @Size(max = 80) String name, @NotNull Environment environment) {}
 
     public record ApiKeyView(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String name,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) String prefix,
-            @Schema(required = true, nullable = true) OffsetDateTime lastUsedAt,
-            @Schema(required = true, nullable = true) OffsetDateTime revokedAt,
-            @Schema(required = true) OffsetDateTime createdAt,
+            UUID id,
+            String name,
+            Environment environment,
+            String prefix,
+            @Schema(nullable = true) OffsetDateTime lastUsedAt,
+            @Schema(nullable = true) OffsetDateTime revokedAt,
+            OffsetDateTime createdAt,
 
-            @Schema(required = true, nullable = true, description = "Better Auth user id of the creator")
+            @Schema(nullable = true, description = "Better Auth user id of the creator")
             String createdBy) {
         static ApiKeyView from(ApiKeyEntity key) {
             return new ApiKeyView(
@@ -166,20 +166,14 @@ public class ApiKeyResource {
     }
 
     public record ApiKeyDetail(
-            @Schema(required = true) ApiKeyView key,
-            @Schema(required = true) long requestsLast24Hours,
+            ApiKeyView key,
+            long requestsLast24Hours,
 
-            @Schema(required = true, description = "Newest first")
-            List<ApiKeyRequestEntry> recentRequests) {}
+            @Schema(description = "Newest first") List<ApiKeyRequestEntry> recentRequests) {}
 
     /** A /v1 request made with the key. {@code id} is the X-Request-Id the client received. */
     public record ApiKeyRequestEntry(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String method,
-            @Schema(required = true) String path,
-            @Schema(required = true) int status,
-            @Schema(required = true) int durationMs,
-            @Schema(required = true) OffsetDateTime createdAt) {
+            UUID id, String method, String path, int status, int durationMs, OffsetDateTime createdAt) {
         static ApiKeyRequestEntry from(ApiKeyRequestView request) {
             return new ApiKeyRequestEntry(
                     request.id(),
@@ -191,7 +185,5 @@ public class ApiKeyResource {
         }
     }
 
-    public record CreatedApiKey(
-            @Schema(required = true) ApiKeyView key,
-            @Schema(required = true) String secret) {}
+    public record CreatedApiKey(ApiKeyView key, String secret) {}
 }

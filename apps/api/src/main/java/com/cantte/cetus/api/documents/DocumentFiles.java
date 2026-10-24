@@ -38,10 +38,10 @@ public class DocumentFiles {
     Duration ttl;
 
     public record DocumentFileResponse(
-            @Schema(required = true, description = "Presigned URL; download it without the API key")
+            @Schema(description = "Presigned URL; download it without the API key")
             String url,
 
-            @Schema(required = true) OffsetDateTime expiresAt) {}
+            OffsetDateTime expiresAt) {}
 
     /** Must run in a transaction. */
     public DocumentFileResponse presign(

@@ -23,20 +23,20 @@ public final class DocumentViews {
     private DocumentViews() {}
 
     public record DocumentSummary(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) DocumentType documentType,
-            @Schema(required = true) String number,
-            @Schema(required = true) DocumentStatus status,
-            @Schema(required = true) LocalDate issueDate,
-            @Schema(required = true) UUID issuerId,
-            @Schema(required = true) String issuerName,
-            @Schema(required = true) String customerName,
-            @Schema(required = true) String customerIdentification,
-            @Schema(required = true) BigDecimal payable,
-            @Schema(required = true) String currency,
-            @Schema(required = true, nullable = true) String externalReference,
-            @Schema(required = true) OffsetDateTime createdAt) {
+            UUID id,
+            Environment environment,
+            DocumentType documentType,
+            String number,
+            DocumentStatus status,
+            LocalDate issueDate,
+            UUID issuerId,
+            String issuerName,
+            String customerName,
+            String customerIdentification,
+            BigDecimal payable,
+            String currency,
+            @Schema(nullable = true) String externalReference,
+            OffsetDateTime createdAt) {
 
         static DocumentSummary from(DocumentEntity doc, String issuerName) {
             return new DocumentSummary(
@@ -58,62 +58,57 @@ public final class DocumentViews {
     }
 
     public record DocumentPage(
-            @Schema(required = true, description = "Newest first")
-            List<DocumentSummary> items,
+            @Schema(description = "Newest first") List<DocumentSummary> items,
 
-            @Schema(required = true, nullable = true, description = "Pass as before to get the next page")
+            @Schema(nullable = true, description = "Pass as before to get the next page")
             UUID nextCursor) {}
 
     public record DocumentDetail(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) Environment environment,
-            @Schema(required = true) DocumentType documentType,
-            @Schema(required = true) String number,
-            @Schema(required = true) DocumentStatus status,
+            UUID id,
+            Environment environment,
+            DocumentType documentType,
+            String number,
+            DocumentStatus status,
 
-            @Schema(required = true, nullable = true, description = "CUFE of an invoice, CUDE of a note")
+            @Schema(nullable = true, description = "CUFE of an invoice, CUDE of a note")
             String cufe,
 
-            @Schema(required = true) LocalDate issueDate,
-            @Schema(required = true, nullable = true) LocalDate dueDate,
-            @Schema(required = true) String currency,
-            @Schema(required = true) DocumentIssuer issuer,
-            @Schema(required = true) DocumentCustomer customer,
-            @Schema(required = true) List<DocumentLine> lines,
+            LocalDate issueDate,
+            @Schema(nullable = true) LocalDate dueDate,
+            String currency,
+            DocumentIssuer issuer,
+            DocumentCustomer customer,
+            List<DocumentLine> lines,
 
-            @Schema(required = true, description = "Document-level subtotals by tax")
+            @Schema(description = "Document-level subtotals by tax")
             List<DocumentTax> taxes,
 
-            @Schema(required = true) InvoiceResponse.Totals totals,
-            @Schema(required = true) InvoiceResponse.Dian dian,
-            @Schema(required = true, nullable = true) String externalReference,
-            @Schema(required = true) OffsetDateTime createdAt,
+            InvoiceResponse.Totals totals,
+            InvoiceResponse.Dian dian,
+            @Schema(nullable = true) String externalReference,
+            OffsetDateTime createdAt,
 
-            @Schema(required = true, description = "Notes issued against an invoice; empty for a note")
+            @Schema(description = "Notes issued against an invoice; empty for a note")
             List<DocumentNote> creditNotes,
 
-            @Schema(required = true, description = "Notes issued against an invoice; empty for a note")
+            @Schema(description = "Notes issued against an invoice; empty for a note")
             List<DocumentNote> debitNotes,
 
-            @Schema(
-                    required = true,
-                    nullable = true,
-                    description = "What credit notes can still take; only for invoices")
+            @Schema(nullable = true, description = "What credit notes can still take; only for invoices")
             BigDecimal balance,
 
-            @Schema(required = true, nullable = true, description = "The invoice a note corrects")
+            @Schema(nullable = true, description = "The invoice a note corrects")
             DocumentInvoice invoice,
 
-            @Schema(required = true, nullable = true, description = "Correction concept of a note")
+            @Schema(nullable = true, description = "Correction concept of a note")
             String concept,
 
-            @Schema(required = true, nullable = true, description = "The integrator's reason for a note")
+            @Schema(nullable = true, description = "The integrator's reason for a note")
             String description,
 
-            @Schema(required = true) List<DeliveryView> deliveries,
+            List<DeliveryView> deliveries,
 
-            @Schema(required = true, description = "Oldest first")
-            List<DocumentTimeline.DocumentEvent> events) {
+            @Schema(description = "Oldest first") List<DocumentTimeline.DocumentEvent> events) {
 
         static DocumentDetail from(DocumentEntity doc, IssuerEntity issuer) {
             boolean invoice = doc.documentType == DocumentType.INVOICE;
@@ -156,17 +151,17 @@ public final class DocumentViews {
     }
 
     public record DocumentIssuer(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String legalName,
-            @Schema(required = true) String nit,
-            @Schema(required = true, nullable = true) String checkDigit) {}
+            UUID id,
+            String legalName,
+            String nit,
+            @Schema(nullable = true) String checkDigit) {}
 
     public record DocumentCustomer(
-            @Schema(required = true) String identificationType,
-            @Schema(required = true) String identificationNumber,
-            @Schema(required = true, nullable = true) String checkDigit,
-            @Schema(required = true) String legalName,
-            @Schema(required = true, nullable = true) String email) {
+            String identificationType,
+            String identificationNumber,
+            @Schema(nullable = true) String checkDigit,
+            String legalName,
+            @Schema(nullable = true) String email) {
 
         static DocumentCustomer from(Party party) {
             return new DocumentCustomer(
@@ -179,13 +174,13 @@ public final class DocumentViews {
     }
 
     public record DocumentLine(
-            @Schema(required = true) int lineNumber,
-            @Schema(required = true, nullable = true) String itemCode,
-            @Schema(required = true) String description,
-            @Schema(required = true) BigDecimal quantity,
-            @Schema(required = true) BigDecimal unitPrice,
+            int lineNumber,
+            @Schema(nullable = true) String itemCode,
+            String description,
+            BigDecimal quantity,
+            BigDecimal unitPrice,
 
-            @Schema(required = true, description = "Quantity times unit price, before taxes")
+            @Schema(description = "Quantity times unit price, before taxes")
             BigDecimal lineExtension) {
 
         static DocumentLine from(DocumentLineEntity line) {
@@ -199,11 +194,7 @@ public final class DocumentViews {
         }
     }
 
-    public record DocumentTax(
-            @Schema(required = true) String type,
-            @Schema(required = true) BigDecimal percent,
-            @Schema(required = true) BigDecimal taxable,
-            @Schema(required = true) BigDecimal amount) {
+    public record DocumentTax(String type, BigDecimal percent, BigDecimal taxable, BigDecimal amount) {
 
         static DocumentTax from(DocumentTaxEntity tax) {
             return new DocumentTax(tax.taxType.name(), tax.percent, tax.taxableAmount, tax.taxAmount);
@@ -211,12 +202,12 @@ public final class DocumentViews {
     }
 
     public record DocumentNote(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String number,
-            @Schema(required = true) DocumentStatus status,
-            @Schema(required = true) String concept,
-            @Schema(required = true) BigDecimal payable,
-            @Schema(required = true) OffsetDateTime createdAt) {
+            UUID id,
+            String number,
+            DocumentStatus status,
+            String concept,
+            BigDecimal payable,
+            OffsetDateTime createdAt) {
 
         static List<DocumentNote> of(UUID invoiceId, DocumentType type) {
             return DocumentEntity.notesFor(invoiceId, type).stream()
@@ -232,7 +223,5 @@ public final class DocumentViews {
     }
 
     public record DocumentInvoice(
-            @Schema(required = true) UUID id,
-            @Schema(required = true) String number,
-            @Schema(required = true, nullable = true) String cufe) {}
+            UUID id, String number, @Schema(nullable = true) String cufe) {}
 }

@@ -14,23 +14,23 @@ import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record DebitNoteResponse(
-        @Schema(required = true) UUID id,
-        @Schema(required = true) Environment environment,
-        @Schema(required = true) UUID issuerId,
-        @Schema(required = true) String number,
-        @Schema(required = true) DocumentStatus status,
-        @Schema(required = true, nullable = true) String cude,
-        @Schema(required = true) LocalDate issueDate,
-        @Schema(required = true) String currency,
-        @Schema(required = true) InvoiceRef invoice,
-        @Schema(required = true) DebitNoteConcept concept,
-        @Schema(required = true) String description,
-        @Schema(required = true) InvoiceResponse.Totals totals,
-        @Schema(required = true) InvoiceResponse.Dian dian,
-        @Schema(required = true, nullable = true) String externalReference,
-        @Schema(required = true) OffsetDateTime createdAt,
+        UUID id,
+        Environment environment,
+        UUID issuerId,
+        String number,
+        DocumentStatus status,
+        @Schema(nullable = true) String cude,
+        LocalDate issueDate,
+        String currency,
+        InvoiceRef invoice,
+        DebitNoteConcept concept,
+        String description,
+        InvoiceResponse.Totals totals,
+        InvoiceResponse.Dian dian,
+        @Schema(nullable = true) String externalReference,
+        OffsetDateTime createdAt,
 
-        @Schema(required = true, description = "Deliveries of the accepted note to the customer")
+        @Schema(description = "Deliveries of the accepted note to the customer")
         List<DeliveryView> deliveries) {
 
     public static DebitNoteResponse from(DocumentEntity note) {

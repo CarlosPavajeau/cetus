@@ -86,25 +86,24 @@ public class AdminAuditLogResource {
     }
 
     public record AdminAuditPage(
-            @Schema(required = true) List<AdminAuditEntry> items,
-            @Schema(required = true, nullable = true) Long nextCursor) {}
+            List<AdminAuditEntry> items,
+            @Schema(nullable = true) Long nextCursor) {}
 
     public record AdminAuditEntry(
-            @Schema(required = true) long id,
-            @Schema(required = true, nullable = true) UUID accountId,
-            @Schema(required = true, nullable = true) String accountName,
-            @Schema(required = true) AuditAction action,
-            @Schema(required = true) Actor.ActorType actorType,
-            @Schema(required = true, nullable = true) String actorId,
-            @Schema(required = true, nullable = true) String impersonatedBy,
-            @Schema(required = true, nullable = true) String resourceType,
-            @Schema(required = true, nullable = true) UUID resourceId,
+            long id,
+            @Schema(nullable = true) UUID accountId,
+            @Schema(nullable = true) String accountName,
+            AuditAction action,
+            Actor.ActorType actorType,
+            @Schema(nullable = true) String actorId,
+            @Schema(nullable = true) String impersonatedBy,
+            @Schema(nullable = true) String resourceType,
+            @Schema(nullable = true) UUID resourceId,
 
-            @Schema(required = true, additionalProperties = AuditValue.class)
-            Map<String, Object> data,
+            @Schema(additionalProperties = AuditValue.class) Map<String, Object> data,
 
-            @Schema(required = true, nullable = true) String ipAddress,
-            @Schema(required = true) OffsetDateTime createdAt) {
+            @Schema(nullable = true) String ipAddress,
+            OffsetDateTime createdAt) {
         static AdminAuditEntry from(AuditEntryView entry, String accountName) {
             return new AdminAuditEntry(
                     entry.id(),
