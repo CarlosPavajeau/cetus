@@ -4,7 +4,6 @@ import com.cantte.cetus.domain.calc.CalculatedLine;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.ElectronicInvoice;
-import com.cantte.cetus.ubl.model.AmountType;
 import com.cantte.cetus.ubl.model.Cac;
 import com.cantte.cetus.ubl.model.DianExtensions;
 import com.cantte.cetus.ubl.model.Ext;
@@ -69,13 +68,8 @@ public final class InvoiceUblMapper {
     }
 
     private Cac.InvoiceLine line(CalculatedLine source, String currency) {
-        Cac.InvoiceLine line = new Cac.InvoiceLine();
-        line.id = String.valueOf(source.number());
+        Cac.InvoiceLine line = UblParts.line(new Cac.InvoiceLine(), source, currency);
         line.invoicedQuantity = QuantityType.of(source.quantity(), UblParts.unit(source));
-        line.lineExtensionAmount = AmountType.of(source.lineExtensionAmount(), currency);
-        source.taxes().forEach(tax -> line.taxTotals.add(UblParts.lineTaxTotal(tax, currency)));
-        line.item = UblParts.item(source);
-        line.price = UblParts.price(source, currency);
         return line;
     }
 }

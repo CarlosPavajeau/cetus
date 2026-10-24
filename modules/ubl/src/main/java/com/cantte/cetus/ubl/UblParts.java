@@ -1,6 +1,7 @@
 package com.cantte.cetus.ubl;
 
 import com.cantte.cetus.domain.calc.CalculatedLine;
+import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.MonetaryTotals;
 import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.calc.TaxTotal;
@@ -8,6 +9,7 @@ import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.CorrectionConcept;
+import com.cantte.cetus.domain.model.ElectronicNote;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PaymentInfo;
@@ -16,9 +18,11 @@ import com.cantte.cetus.ubl.model.AmountType;
 import com.cantte.cetus.ubl.model.Cac;
 import com.cantte.cetus.ubl.model.CodeType;
 import com.cantte.cetus.ubl.model.DianExtensions;
+import com.cantte.cetus.ubl.model.Ext;
 import com.cantte.cetus.ubl.model.IdentifierType;
 import com.cantte.cetus.ubl.model.QuantityType;
 import com.cantte.cetus.ubl.model.TextType;
+import com.cantte.cetus.ubl.model.UblNote;
 
 /** Mapping shared by every document type: parties, payment, taxes, totals, line parts and DIAN extensions. */
 final class UblParts {
@@ -53,6 +57,40 @@ final class UblParts {
 
         ext.qrCode = qrCode;
         return ext;
+    }
+
+    /** Everything credit and debit notes share; the caller adds its type code, totals and lines. */
+    static void note(UblNote ubl, ElectronicNote note, String customizationId, String profileId) {
+        String currency = note.currency();
+        CalculationResult calc = note.calculation();
+
+        ubl.ublExtensions = new Ext.UblExtensions();
+        // Notes have no numbering resolution, so their extensions carry no InvoiceControl.
+        ubl.ublExtensions.extensions.add(Ext.UblExtension.of(dianExtensions(note.software(), note.qrCode())));
+
+        ubl.ublVersionId = DianCodes.UBL_VERSION;
+        ubl.customizationId = customizationId;
+        ubl.profileId = profileId;
+        ubl.profileExecutionId = note.environment().dianCode();
+        ubl.id = note.fullNumber();
+        ubl.uuid = IdentifierType.of(note.cude()).scheme(note.environment().dianCode(), "CUDE-SHA384");
+        ubl.issueDate = DianTime.date(note.issueDate());
+        ubl.issueTime = DianTime.time(note.issueTime());
+        if (note.correctionDescription() != null
+                && !note.correctionDescription().isBlank()) {
+            ubl.notes.add(note.correctionDescription());
+        }
+        ubl.notes.addAll(note.notes());
+        ubl.documentCurrencyCode = currency;
+        ubl.lineCountNumeric = calc.lines().size();
+
+        ubl.discrepancyResponse = discrepancyResponse(note.reference(), note.concept());
+        ubl.billingReference = billingReference(note.reference());
+
+        ubl.supplier = supplier(note.supplier(), note.prefix());
+        ubl.customer = customer(note.customer());
+        ubl.paymentMeans.add(paymentMeans(note.payment()));
+        calc.taxTotals().forEach(total -> ubl.taxTotals.add(taxTotal(total, currency)));
     }
 
     /**
@@ -202,7 +240,7 @@ final class UblParts {
         return taxTotal;
     }
 
-    static Cac.TaxTotal lineTaxTotal(TaxAmount tax, String currency) {
+    private static Cac.TaxTotal lineTaxTotal(TaxAmount tax, String currency) {
         Cac.TaxTotal taxTotal = new Cac.TaxTotal();
         taxTotal.taxAmount = AmountType.of(tax.amount(), currency);
         taxTotal.taxSubtotals.add(taxSubtotal(tax, currency));
@@ -233,11 +271,21 @@ final class UblParts {
         return total;
     }
 
+    /** Every member of a line except its quantity, whose element name depends on the document type. */
+    static <L extends Cac.Line> L line(L line, CalculatedLine source, String currency) {
+        line.id = String.valueOf(source.number());
+        line.lineExtensionAmount = AmountType.of(source.lineExtensionAmount(), currency);
+        source.taxes().forEach(tax -> line.taxTotals.add(lineTaxTotal(tax, currency)));
+        line.item = item(source);
+        line.price = price(source, currency);
+        return line;
+    }
+
     static String unit(CalculatedLine source) {
         return source.unitCode() != null ? source.unitCode() : DianCodes.DEFAULT_UNIT;
     }
 
-    static Cac.Item item(CalculatedLine source) {
+    private static Cac.Item item(CalculatedLine source) {
         Cac.Item item = new Cac.Item();
         item.description = source.description();
         if (source.itemCode() != null) {
@@ -249,7 +297,7 @@ final class UblParts {
         return item;
     }
 
-    static Cac.Price price(CalculatedLine source, String currency) {
+    private static Cac.Price price(CalculatedLine source, String currency) {
         Cac.Price price = new Cac.Price();
         price.priceAmount = AmountType.of(source.unitPrice(), currency);
         // The price refers to the whole line quantity, as in the DIAN examples.

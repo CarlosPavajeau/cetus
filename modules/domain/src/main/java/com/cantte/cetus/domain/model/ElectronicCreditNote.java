@@ -26,12 +26,14 @@ public record ElectronicCreditNote(
         SoftwareInfo software,
         String cude,
         String qrCode,
-        List<String> notes) {
+        List<String> notes)
+        implements ElectronicNote {
 
     public ElectronicCreditNote {
         notes = notes == null ? List.of() : List.copyOf(notes);
     }
 
+    @Override
     public String fullNumber() {
         return prefix + number;
     }
