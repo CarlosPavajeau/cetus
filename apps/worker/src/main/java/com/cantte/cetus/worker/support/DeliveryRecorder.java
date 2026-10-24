@@ -38,6 +38,14 @@ public class DeliveryRecorder {
         return delivery.id;
     }
 
+    /** A delivery the console asked for again: every attempt of its job reuses the row and its key. */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void resendAttempt(UUID deliveryId, String recipient) {
+        DocumentDeliveryEntity delivery = DocumentDeliveryEntity.findById(deliveryId);
+        delivery.recipient = recipient;
+        delivery.attempts++;
+    }
+
     /** Nothing to send to: the integrator has to deliver the document by its own means. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void skipped(UUID documentId, String reason) {
@@ -74,6 +82,27 @@ public class DeliveryRecorder {
         }
         DocumentDeliveryEntity delivery = pendingOrNew(documentId);
         delivery.status = Status.FAILED;
+        delivery.error = error;
+        publishFailure(delivery);
+    }
+
+    /** Like {@link #failed(UUID, String)}, for a delivery already under way; a resolved one is left as is. */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void deliveryFailed(UUID deliveryId, String error) {
+        resolve(deliveryId, Status.FAILED, error);
+    }
+
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void deliverySkipped(UUID deliveryId, String reason) {
+        resolve(deliveryId, Status.SKIPPED, reason);
+    }
+
+    private void resolve(UUID deliveryId, Status status, String error) {
+        DocumentDeliveryEntity delivery = DocumentDeliveryEntity.findById(deliveryId);
+        if (delivery.status != Status.PENDING) {
+            return;
+        }
+        delivery.status = status;
         delivery.error = error;
         publishFailure(delivery);
     }

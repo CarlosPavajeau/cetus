@@ -20,6 +20,8 @@ public enum AuditAction {
     INVOICE_ISSUED,
     CREDIT_NOTE_ISSUED,
     DEBIT_NOTE_ISSUED,
+    /** An accepted document emailed again from the console. */
+    DOCUMENT_RESENT,
     ACCOUNT_SUSPENDED,
     ACCOUNT_REACTIVATED,
     /** A person banned from the console by the Cetus team; recorded without an account. */

@@ -9,6 +9,7 @@ import com.cantte.cetus.api.creditnotes.CreditNoteRequest;
 import com.cantte.cetus.api.creditnotes.CreditNoteService;
 import com.cantte.cetus.api.debitnotes.DebitNoteRequest;
 import com.cantte.cetus.api.debitnotes.DebitNoteService;
+import com.cantte.cetus.api.documents.DeliveryView;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.documents.IdempotentCreation;
 import com.cantte.cetus.api.error.ProblemDetail;
@@ -23,12 +24,14 @@ import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
+import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -46,6 +49,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -99,6 +103,9 @@ public class DocumentResource {
 
     @Inject
     ConsoleIssuance issuance;
+
+    @Inject
+    DocumentResends resends;
 
     @Inject
     AuditLog auditLog;
@@ -344,6 +351,43 @@ public class DocumentResource {
                 });
     }
 
+    /**
+     * Emails an accepted document again, to {@code email} or to whom its first delivery went; at most once a
+     * minute. The new delivery shows up in the document's deliveries.
+     */
+    @POST
+    @Path("/{id}/deliveries")
+    @Transactional
+    @APIResponse(
+            responseCode = "202",
+            description = "Accepted",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = DeliveryView.class)))
+    public Response resend(@PathParam("id") UUID id, @Valid @NotNull ResendRequest request) {
+        DocumentEntity doc = find(id);
+        String email = request.email() == null || request.email().isBlank()
+                ? null
+                : request.email().strip();
+        DocumentDeliveryEntity delivery = resends.resend(doc.accountId, doc.id, doc.environment, email);
+        Map<String, Object> data = new HashMap<>();
+        data.put("number", doc.fullNumber());
+        data.put("environment", doc.environment);
+        if (email != null) {
+            data.put("recipient", email);
+        }
+        auditLog.record(
+                doc.accountId,
+                context.actor(),
+                origin.resolve(),
+                AuditAction.DOCUMENT_RESENT,
+                "document",
+                doc.id,
+                data);
+        return Response.accepted(DeliveryView.from(delivery)).build();
+    }
+
     private void recordNote(AuditAction action, DocumentEntity invoice, DocumentEntity note, String concept) {
         auditLog.record(
                 invoice.accountId,
@@ -380,6 +424,12 @@ public class DocumentResource {
             @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines) {}
 
     public record IssuedDocument(UUID id, String number) {}
+
+    public record ResendRequest(
+            @Schema(nullable = true, description = "Another address; leave it out to use the first delivery's")
+            @Size(max = 254)
+            @Email(regexp = InvoiceRequest.EMAIL)
+            String email) {}
 
     public record CancellationRequest(
             @NotBlank @Size(max = 500) String description) {}

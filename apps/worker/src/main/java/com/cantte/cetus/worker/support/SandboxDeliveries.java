@@ -48,8 +48,9 @@ public class SandboxDeliveries {
     }
 
     /**
-     * SANDBOX deliveries handed to the email provider since midnight in Colombia, other than this document's:
-     * a retry after a provider rate limit keeps the slot its first attempt took.
+     * SANDBOX deliveries handed to the email provider since midnight in Colombia, other than the one pending for
+     * this document: a retry after a provider rate limit keeps the slot its first attempt took, while every
+     * resend from the console takes a slot of its own.
      */
     private long sentToday(UUID accountId, UUID documentId) {
         OffsetDateTime midnight =
@@ -59,7 +60,7 @@ public class SandboxDeliveries {
                         JOIN billing.documents d ON d.id = x.document_id
                         WHERE d.account_id = :account AND d.environment = 'SANDBOX'
                           AND x.status NOT IN ('SKIPPED', 'FAILED') AND x.created_at >= :midnight
-                          AND x.document_id <> :document
+                          AND NOT (x.document_id = :document AND x.status = 'PENDING')
                         """)
                         .setParameter("account", accountId)
                         .setParameter("document", documentId)

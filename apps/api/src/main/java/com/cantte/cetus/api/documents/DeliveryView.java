@@ -21,7 +21,11 @@ public record DeliveryView(
 
     public static List<DeliveryView> of(UUID documentId) {
         return DocumentDeliveryEntity.listByDocument(documentId).stream()
-                .map(d -> new DeliveryView(d.id, d.channel, d.recipient, d.status, d.error, d.sentAt, d.lastEventAt))
+                .map(DeliveryView::from)
                 .toList();
+    }
+
+    public static DeliveryView from(DocumentDeliveryEntity d) {
+        return new DeliveryView(d.id, d.channel, d.recipient, d.status, d.error, d.sentAt, d.lastEventAt);
     }
 }
