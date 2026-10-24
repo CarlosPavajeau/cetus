@@ -59,7 +59,7 @@ public final class DianSoapClient implements DianGateway {
         params.put("contentFile", Base64.getEncoder().encodeToString(zip));
         params.put("testSetId", testSetId);
         String raw = call(DianOperation.SEND_TEST_SET_ASYNC, params, keys);
-        return DianResponseParser.upload(raw, "SendTestSetAsyncResult");
+        return DianResponseParser.upload(raw);
     }
 
     @Override
@@ -71,7 +71,7 @@ public final class DianSoapClient implements DianGateway {
     @Override
     public List<DianResponse> getStatusZip(String zipKey, KeyMaterial keys) {
         String raw = call(DianOperation.GET_STATUS_ZIP, Map.of("trackId", zipKey), keys);
-        return DianResponseParser.list(raw, "GetStatusZipResult");
+        return DianResponseParser.list(raw);
     }
 
     @Override
@@ -82,7 +82,7 @@ public final class DianSoapClient implements DianGateway {
         params.put("accountCodeT", accountCodeT);
         params.put("softwareCode", softwareCode);
         String raw = call(DianOperation.GET_NUMBERING_RANGE, params, keys);
-        return DianResponseParser.numberingRanges(raw, "GetNumberingRangeResult");
+        return DianResponseParser.numberingRanges(raw);
     }
 
     /** Builds and signs the envelope without sending it. Useful for tests and debugging. */

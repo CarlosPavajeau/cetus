@@ -23,8 +23,8 @@ final class DianResponseParser {
     }
 
     /** GetStatusZip returns a list of DianResponse; for a single document the first one is used. */
-    static List<DianResponse> list(String rawXml, String resultElement) {
-        Element result = requireResult(rawXml, resultElement);
+    static List<DianResponse> list(String rawXml) {
+        Element result = requireResult(rawXml, "GetStatusZipResult");
         List<DianResponse> responses = new ArrayList<>();
         for (Element child : children(result, "DianResponse")) {
             responses.add(toResponse(child, rawXml));
@@ -32,8 +32,8 @@ final class DianResponseParser {
         return responses;
     }
 
-    static UploadResponse upload(String rawXml, String resultElement) {
-        Element result = requireResult(rawXml, resultElement);
+    static UploadResponse upload(String rawXml) {
+        Element result = requireResult(rawXml, "SendTestSetAsyncResult");
         List<String> errors = new ArrayList<>();
         NodeList messages = result.getElementsByTagNameNS("*", "ProcessedMessage");
         for (int i = 0; i < messages.getLength(); i++) {
@@ -46,8 +46,8 @@ final class DianResponseParser {
     }
 
     /** GetNumberingRange: OperationCode 100 and one NumberRangeResponse per authorized range. */
-    static NumberingRangeResponse numberingRanges(String rawXml, String resultElement) {
-        Element result = requireResult(rawXml, resultElement);
+    static NumberingRangeResponse numberingRanges(String rawXml) {
+        Element result = requireResult(rawXml, "GetNumberingRangeResult");
         List<NumberingRangeResponse.Range> ranges = new ArrayList<>();
         NodeList items = result.getElementsByTagNameNS("*", "NumberRangeResponse");
         for (int i = 0; i < items.getLength(); i++) {

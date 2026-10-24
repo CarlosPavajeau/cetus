@@ -93,7 +93,7 @@ class DianSoapClientTest {
                   </b:ResponseList>
                 </GetNumberingRangeResult></GetNumberingRangeResponse></s:Body></s:Envelope>""";
 
-        NumberingRangeResponse response = DianResponseParser.numberingRanges(raw, "GetNumberingRangeResult");
+        NumberingRangeResponse response = DianResponseParser.numberingRanges(raw);
 
         assertThat(response.succeeded()).isTrue();
         assertThat(response.find("SETP", "18760000001")).hasValueSatisfying(range -> {
