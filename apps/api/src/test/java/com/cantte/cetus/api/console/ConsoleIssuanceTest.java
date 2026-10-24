@@ -13,6 +13,7 @@ import com.cantte.cetus.api.support.IssuedDocuments;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,6 +69,16 @@ class ConsoleIssuanceTest {
                 .statusCode(400);
         user.request()
                 .body(Map.of("lines", List.of(line("Servicio", -1, 1000, List.of()))))
+                .post("/console/documents/preview")
+                .then()
+                .statusCode(400);
+        user.request()
+                .body(Map.of("lines", Collections.singletonList(null)))
+                .post("/console/documents/preview")
+                .then()
+                .statusCode(400);
+        user.request()
+                .body(Map.of("lines", List.of(line("Servicio", 1, 1000, Collections.singletonList(null)))))
                 .post("/console/documents/preview")
                 .then()
                 .statusCode(400);

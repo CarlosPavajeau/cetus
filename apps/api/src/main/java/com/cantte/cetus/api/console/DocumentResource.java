@@ -367,17 +367,17 @@ public class DocumentResource {
                         invoice.environment));
     }
 
-    public record PreviewRequest(@NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid Line> lines) {}
+    public record PreviewRequest(@NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines) {}
 
     public record CreditNoteInput(
             @NotNull CreditNoteConcept concept,
             @NotBlank @Size(max = 500) String description,
-            @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid Line> lines) {}
+            @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines) {}
 
     public record DebitNoteInput(
             @NotNull DebitNoteConcept concept,
             @NotBlank @Size(max = 500) String description,
-            @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid Line> lines) {}
+            @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines) {}
 
     public record IssuedDocument(UUID id, String number) {}
 

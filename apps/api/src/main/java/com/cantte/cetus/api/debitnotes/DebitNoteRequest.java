@@ -18,6 +18,6 @@ public record DebitNoteRequest(
         @NotNull UUID invoiceId,
         @NotNull DebitNoteConcept concept,
         @NotBlank @Size(max = 500) String description,
-        @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid Line> lines,
+        @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines,
         @Size(max = 100) String externalReference,
         @Size(max = 20) List<@Size(max = 500) String> notes) {}
