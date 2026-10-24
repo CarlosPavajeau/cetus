@@ -41,3 +41,16 @@ export async function invitationExpiry(invitationId: string): Promise<Date> {
     await pool.end();
   }
 }
+
+/**
+ * Marks an address as confirmed, for fixtures that join an organization by invitation without being what
+ * a test checks. Tests of the confirmation itself follow the emailed link instead (`latestEmailTo`).
+ */
+export async function markEmailVerified(email: string) {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    await pool.query(`UPDATE auth."user" SET email_verified = true WHERE email = $1`, [email]);
+  } finally {
+    await pool.end();
+  }
+}

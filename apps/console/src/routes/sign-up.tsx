@@ -9,10 +9,10 @@ import { Button } from "~/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
-import { bootstrapAccount } from "~/features/account/server";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
 import { invitationSearch } from "~/features/auth/session-start";
+import { createWorkspace } from "~/features/auth/workspace";
 import { authClient } from "~/lib/auth/client";
 
 /** `invitation`: the invitation the person came to accept; they join that organization instead of a new one. */
@@ -20,17 +20,6 @@ export const Route = createFileRoute("/sign-up")({
   validateSearch: invitationSearch,
   component: SignUp,
 });
-
-function slugify(value: string) {
-  const base = value
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 40);
-  return `${base || "empresa"}-${Math.random().toString(36).slice(2, 6)}`;
-}
 
 function SignUp() {
   const { invitation } = Route.useSearch();
@@ -52,38 +41,31 @@ function SignUp() {
     }
 
     if (invitation) {
-      // Accepting makes the inviting organization active, and its account already exists.
-      const { error: acceptError } = await authClient.organization.acceptInvitation({
-        invitationId: invitation,
+      // Joining takes a confirmed address, so the person gets no organization of their own: the email's
+      // link brings them back to the invitation, and the console offers the rest once they have one.
+      const { error: sendError } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: `/invitations/${invitation}`,
       });
-      if (!acceptError) {
-        queryClient.clear();
-        await navigate({ to: "/overview" });
-        return;
-      }
-      // Another address, or an invitation no longer valid: the person still gets their own workspace,
-      // and the invitation page tells them why they did not join.
+      queryClient.clear();
+      await navigate({
+        to: "/invitations/$invitationId",
+        params: { invitationId: invitation },
+        search: sendError ? {} : { sent: true },
+      });
+      return;
     }
 
-    // 1. Organization in Better Auth  2. Make it active  3. Matching account in the Java API.
     // Sign-up does not ask for the company, so the workspace starts with the person's name.
-    const { data: organization, error: orgError } = await authClient.organization.create({
-      name,
-      slug: slugify(name),
-    });
-    if (orgError || !organization) {
+    if (!(await createWorkspace(name))) {
       form.setError("root", {
         message: "Tu usuario quedó creado, pero no la empresa. Inicia sesión para terminar.",
       });
       return;
     }
-    await authClient.organization.setActive({ organizationId: organization.id });
-    await bootstrapAccount({ data: { name } });
     // Drop anything cached by a previous session in this tab (e.g. one that expired).
     queryClient.clear();
-    await (invitation
-      ? navigate({ to: "/invitations/$invitationId", params: { invitationId: invitation } })
-      : navigate({ to: "/overview" }));
+    await navigate({ to: "/overview" });
   });
 
   return (

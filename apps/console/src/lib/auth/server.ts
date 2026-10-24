@@ -6,7 +6,10 @@ import { admin, jwt, organization, twoFactor } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { and, eq } from "drizzle-orm";
 
+import { verificationMessage } from "~/emails/VerificationEmail";
+
 import { db } from "../db";
+import { emailSender } from "../email";
 import { env } from "../env";
 import {
   ac,
@@ -70,6 +73,16 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 10,
   },
+  // Only accepting an invitation asks for a verified address (requireEmailVerificationOnInvitation), so
+  // whoever holds an invitation's link cannot sign up with its address and join. The link proves the
+  // address and nothing else: it signs nobody in, so it never skips a second factor.
+  emailVerification: {
+    sendVerificationEmail: ({ user, url }) =>
+      emailSender.send(verificationMessage({ to: user.email, name: user.name, url })),
+    sendOnSignUp: false,
+    autoSignInAfterVerification: false,
+    expiresIn: 24 * 60 * 60,
+  },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (forbiddenWhileImpersonating.has(ctx.path)) {
@@ -111,6 +124,7 @@ export const auth = betterAuth({
       ac: organizationAc,
       roles: organizationRoles,
       invitationExpiresIn: invitationSeconds,
+      requireEmailVerificationOnInvitation: true,
     }),
     admin({
       ac,

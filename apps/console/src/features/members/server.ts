@@ -244,6 +244,8 @@ export const removeMember = createServerFn({ method: "POST" })
 export type InvitationDetails =
   | { status: "signed-out" }
   | { status: "invalid"; message: string }
+  /** The invitation is for this person, who has yet to prove the address is theirs. */
+  | { status: "unverified"; email: string }
   | {
       status: "pending";
       organizationName: string;
@@ -257,7 +259,8 @@ export const getInvitationDetails = createServerFn({ method: "GET" })
   .validator(type({ id: "string > 0" }))
   .handler(async ({ data }): Promise<InvitationDetails> => {
     const headers = getRequestHeaders();
-    if (!(await auth.api.getSession({ headers }))) {
+    const session = await auth.api.getSession({ headers });
+    if (!session) {
       return { status: "signed-out" };
     }
     try {
@@ -270,6 +273,13 @@ export const getInvitationDetails = createServerFn({ method: "GET" })
         role: invitation.role,
       };
     } catch (error) {
+      // Better Auth checks the address before the verification: a wrong address is never "unverified".
+      if (
+        error instanceof APIError &&
+        error.body?.code === "EMAIL_VERIFICATION_REQUIRED_FOR_INVITATION"
+      ) {
+        return { status: "unverified", email: session.user.email };
+      }
       if (
         error instanceof APIError &&
         error.body?.code === "YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION"
@@ -289,3 +299,63 @@ export const getInvitationDetails = createServerFn({ method: "GET" })
       };
     }
   });
+
+export type Workplaces = {
+  /** The organizations the person already belongs to, other than an active one they left. */
+  organizations: { id: string; name: string }[];
+  invitations: UserInvitations;
+};
+
+export type UserInvitations =
+  | { status: "unverified"; email: string }
+  | {
+      status: "verified";
+      invitations: { id: string; organizationName: string; role: string; expiresAt: string }[];
+    };
+
+/**
+ * Where the signed-in person can work: the organizations they belong to and the invitations waiting for
+ * them. Better Auth only lists invitations once the address is confirmed, so whoever signed up with someone
+ * else's address never learns who invited it.
+ */
+export const listWorkplaces = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Workplaces> => {
+    const headers = getRequestHeaders();
+    const [session, organizations] = await Promise.all([
+      auth.api.getSession({ headers }),
+      auth.api.listOrganizations({ headers }),
+    ]);
+    if (!session) {
+      throw new Error("Listing workplaces takes a session");
+    }
+    return {
+      organizations: organizations.map((organization) => ({
+        id: organization.id,
+        name: organization.name,
+      })),
+      invitations: await userInvitations(headers, session.user),
+    };
+  },
+);
+
+async function userInvitations(
+  headers: Headers,
+  user: { email: string; emailVerified: boolean },
+): Promise<UserInvitations> {
+  if (!user.emailVerified) {
+    return { status: "unverified", email: user.email };
+  }
+  const now = Date.now();
+  const invitations = await auth.api.listUserInvitations({ headers });
+  return {
+    status: "verified",
+    invitations: invitations
+      .filter((invitation) => new Date(invitation.expiresAt).getTime() > now)
+      .map((invitation) => ({
+        id: invitation.id,
+        organizationName: invitation.organizationName ?? "",
+        role: invitation.role,
+        expiresAt: new Date(invitation.expiresAt).toISOString(),
+      })),
+  };
+}

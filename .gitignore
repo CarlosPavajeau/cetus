@@ -16,6 +16,7 @@ dist/
 .tanstack/
 test-results/
 playwright-report/
+.email-outbox/
 .vitest/
 
 # Env / secrets

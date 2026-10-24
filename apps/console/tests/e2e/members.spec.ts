@@ -1,8 +1,9 @@
 import { type } from "arktype";
 
-import { ageInvitation, invitationExpiry } from "../support/invitations";
+import { ageInvitation, invitationExpiry, markEmailVerified } from "../support/invitations";
 import { addRange, onboardIssuer, uniqueNit } from "../support/issuers";
 import { createOrganization } from "../support/organization";
+import { latestEmailTo, linkTo } from "../support/outbox";
 import { enableTwoFactor, totp } from "../support/platform-staff";
 import { consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
@@ -47,7 +48,8 @@ test("a biller is invited by link, issues in production and is removed", async (
   await pending.getByRole("button", { name: "Reenviar" }).click();
   await expect(pending.getByText("Espera un minuto antes de reenviarla")).toBeVisible();
 
-  // The invited person creates their account from the link and lands in the owner's organization.
+  // The invited person creates their account from the link, confirms the address it was sent to, and
+  // joins the owner's organization.
   const visitor = await browser.newContext();
   const invited = await visitor.newPage();
   await open(invited, url);
@@ -58,6 +60,18 @@ test("a biller is invited by link, issues in production and is removed", async (
   await invited.getByLabel("Contraseña", { exact: true }).fill("clave-facturadora-segura");
   await invited.getByLabel("Confirmar contraseña").fill("clave-facturadora-segura");
   await invited.getByRole("button", { name: "Crear cuenta" }).click();
+  await expect(invited.getByRole("heading", { name: "Confirma tu correo" })).toBeVisible();
+  await expect(invited.getByText(`Te enviamos el enlace a ${email}`)).toBeVisible();
+  // Until then they have no organization of their own, and the console asks where to work.
+  await open(invited, "/overview");
+  await expect(invited).toHaveURL(/\/organizations$/);
+  await expect(invited.getByText("Tus invitaciones")).toHaveCount(0);
+
+  const confirmation = await latestEmailTo(email);
+  expect(confirmation.subject).toBe("Confirma tu correo en Cetus");
+  await open(invited, linkTo(confirmation, "/api/auth/verify-email"));
+  await expect(invited).toHaveURL(new RegExp(`/invitations/${invitationId}$`));
+  await invited.getByRole("button", { name: "Unirme" }).click();
   await expect(invited).toHaveURL(/\/overview$/);
   await expect(invited.getByRole("heading", { name: "Pruebas SAS" })).toBeVisible();
 
@@ -131,6 +145,7 @@ test("someone with 2FA comes back to the invitation after the second step", asyn
   organization: owner,
 }) => {
   const invited = await createOrganization("Con 2FA SAS");
+  await markEmailVerified(invited.email);
   const secret = await enableTwoFactor(invited);
   const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
     email: invited.email,
@@ -150,5 +165,41 @@ test("someone with 2FA comes back to the invitation after the second step", asyn
 
   await expect(page).toHaveURL(new RegExp(`/invitations/${invitation.id}$`));
   await expect(page.getByRole("heading", { name: "Únete a Pruebas SAS" })).toBeVisible();
+  await visitor.close();
+});
+
+test("whoever gets an invitation's link cannot join with its address without owning it", async ({
+  browser,
+  organization: owner,
+}) => {
+  const email = `e2e-ajeno-${crypto.randomUUID().slice(0, 8)}@cetus.test`;
+  const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
+    email,
+    role: "biller",
+  });
+
+  // Someone else signs up first with the invited address, from the link.
+  const visitor = await browser.newContext();
+  const page = await visitor.newPage();
+  await open(page, `/invitations/${invitation.id}`);
+  await page.getByRole("button", { name: "Crear cuenta" }).click();
+  await page.getByLabel("Nombre completo").fill("Persona Ajena");
+  await page.getByLabel("Correo electrónico").fill(email);
+  await page.getByLabel("Contraseña", { exact: true }).fill("clave-ajena-muy-segura");
+  await page.getByLabel("Confirmar contraseña").fill("clave-ajena-muy-segura");
+  await page.getByRole("button", { name: "Crear cuenta" }).click();
+  await expect(page.getByRole("heading", { name: "Confirma tu correo" })).toBeVisible();
+
+  // Without the email's link, Better Auth refuses to accept, and the page offers nothing else.
+  const accepted = await page.request.post("/api/auth/organization/accept-invitation", {
+    data: { invitationId: invitation.id },
+    headers: { Origin: consoleUrl },
+  });
+  expect(accepted.status()).toBe(403);
+  await expect(page.getByRole("button", { name: "Unirme" })).toHaveCount(0);
+  const members = await owner.auth<{ members: { user: { email: string } }[] }>(
+    "/organization/get-full-organization",
+  );
+  expect(members.members.map((member) => member.user.email)).not.toContain(email);
   await visitor.close();
 });

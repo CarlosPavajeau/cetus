@@ -1,3 +1,4 @@
+import { markEmailVerified } from "./invitations";
 import { apiUrl, consoleUrl } from "./stack";
 
 /** A signed-up user with its own organization and Cetus account, created through the real HTTP endpoints. */
@@ -100,6 +101,8 @@ export async function inviteMember(
   role: string,
 ): Promise<{ person: TestOrganization; memberId: string }> {
   const person = await createOrganization("Colega SAS");
+  // Joining takes a confirmed address; the confirmation itself is tested in members.spec.ts.
+  await markEmailVerified(person.email);
   const invitation = await owner.auth<{ id: string; organizationId: string }>(
     "/organization/invite-member",
     { email: person.email, role },

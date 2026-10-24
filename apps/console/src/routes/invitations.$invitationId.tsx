@@ -9,11 +9,29 @@ import { memberRoleLabel } from "~/features/admin/labels";
 import { getInvitationDetails } from "~/features/members/server";
 import { authClient } from "~/lib/auth/client";
 
+type InvitationSearch = {
+  /** The sign-up just sent the confirmation email. */
+  sent?: true;
+  /** Why Better Auth could not confirm the address, when its link sends the person back here. */
+  error?: string;
+};
+
+const verificationErrors: Record<string, string> = {
+  TOKEN_EXPIRED: "El enlace de confirmación venció. Pide otro.",
+  INVALID_TOKEN: "El enlace de confirmación no es válido. Pide otro.",
+  INVALID_USER: "Ese enlace confirma otro correo: entra con la cuenta a la que llegó.",
+};
+
 /**
  * Where an invited person joins the organization. Better Auth only shows the invitation to its address,
- * signed in, so someone without a session is sent to sign in or to create their account first.
+ * signed in and confirmed, so someone without a session is sent to sign in or to create their account, and
+ * someone who has not confirmed their address is asked to.
  */
 export const Route = createFileRoute("/invitations/$invitationId")({
+  validateSearch: (search): InvitationSearch => ({
+    ...(search.sent === true || search.sent === "true" ? { sent: true as const } : {}),
+    ...(typeof search.error === "string" && search.error ? { error: search.error } : {}),
+  }),
   loader: ({ params }) => getInvitationDetails({ data: { id: params.invitationId } }),
   head: () => ({ meta: [{ name: "referrer", content: "no-referrer" }] }),
   component: InvitationPage,
@@ -72,11 +90,20 @@ function InvitationPage() {
   if (invitation.status === "invalid") {
     return (
       <AuthLayout title="Invitación no válida" lead="Este enlace de invitación no sirve.">
-        <Alert>
-          <AlertDescription>{invitation.message}</AlertDescription>
-        </Alert>
+        <div className="flex flex-col gap-4">
+          <Alert>
+            <AlertDescription>{invitation.message}</AlertDescription>
+          </Alert>
+          <Button variant="outline" render={<Link to="/overview" />} nativeButton={false}>
+            Ir a la consola
+          </Button>
+        </div>
       </AuthLayout>
     );
+  }
+
+  if (invitation.status === "unverified") {
+    return <ConfirmAddress invitationId={invitationId} email={invitation.email} />;
   }
 
   const role = memberRoleLabel[invitation.role] ?? invitation.role;
@@ -99,6 +126,60 @@ function InvitationPage() {
         >
           {accept.isPending && <Spinner data-icon="inline-start" />}
           Unirme
+        </Button>
+      </div>
+    </AuthLayout>
+  );
+}
+
+/** Asks the invited person to prove the address is theirs; its link brings them back here. */
+function ConfirmAddress({ invitationId, email }: { invitationId: string; email: string }) {
+  const { sent, error } = Route.useSearch();
+  const send = useMutation({
+    mutationFn: async () => {
+      const { error: sendError } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: `/invitations/${invitationId}`,
+      });
+      if (sendError) {
+        throw new Error("No pudimos enviar el correo. Inténtalo de nuevo en un momento.");
+      }
+    },
+  });
+  const linkError = error ? (verificationErrors[error] ?? verificationErrors.INVALID_TOKEN) : null;
+
+  return (
+    <AuthLayout
+      title="Confirma tu correo"
+      lead={`Para unirte, confirma que ${email} es tuyo con el enlace que te enviamos. Así nadie más puede aceptar esta invitación.`}
+    >
+      <div className="flex flex-col gap-4">
+        {linkError && (
+          <Alert variant="destructive">
+            <AlertDescription>{linkError}</AlertDescription>
+          </Alert>
+        )}
+        {send.error && (
+          <Alert variant="destructive">
+            <AlertDescription>{send.error.message}</AlertDescription>
+          </Alert>
+        )}
+        {(send.isSuccess || (sent && !linkError)) && (
+          <Alert>
+            <AlertDescription>
+              Te enviamos el enlace a {email}. Ábrelo en este navegador para volver aquí y unirte.
+            </AlertDescription>
+          </Alert>
+        )}
+        <Button
+          size="lg"
+          variant={send.isSuccess || sent ? "outline" : "default"}
+          className="h-11"
+          disabled={send.isPending}
+          onClick={() => send.mutate()}
+        >
+          {send.isPending && <Spinner data-icon="inline-start" />}
+          {send.isSuccess || sent ? "Reenviar el correo" : "Enviar el correo de confirmación"}
         </Button>
       </div>
     </AuthLayout>

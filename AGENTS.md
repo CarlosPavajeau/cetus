@@ -143,6 +143,11 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
   CUFEs and the document stays in `PROCESSING`.
 - New console routes need `vite build` or the dev server to regenerate
   `src/routeTree.gen.ts` before typecheck.
+- Without Resend, the console writes account emails to
+  `CETUS_EMAIL_OUTBOX_DIR` (`.email-outbox` in `.env.example`); e2e tests read
+  their links with `latestEmailTo` from `tests/support/outbox.ts`. Joining an
+  organization takes a verified address: fixtures that only need a member use
+  `markEmailVerified`.
 
 ## DIAN rules
 

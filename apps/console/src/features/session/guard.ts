@@ -14,11 +14,23 @@ export async function requireSession() {
 }
 
 /**
+ * `beforeLoad` of the console: a session that belongs to the active organization. Someone without one (just
+ * signed up from an invitation, or removed from it) chooses where to work first.
+ */
+export async function requireMembership() {
+  const { session } = await requireSession();
+  if (!session.activeOrganizationId || session.memberRoles.length === 0) {
+    throw redirect({ to: "/organizations" });
+  }
+  return { session };
+}
+
+/**
  * `beforeLoad` of the setup assistant: it creates and configures issuers, which only the organization's owners
  * and admins change. Other members go back to the issuers they can read.
  */
 export async function requireManager() {
-  const { session } = await requireSession();
+  const { session } = await requireMembership();
   if (!memberPermissions(session.memberRoles).manage) {
     throw redirect({ to: "/issuers" });
   }
