@@ -12,9 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -82,27 +80,16 @@ public class CustomerEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
+    /** Must stay identical to the expression of idx_customers_search (V23), or the planner will not use it. */
+    static final String SEARCH_TEXT = "(legal_name || E'\\n' || identification_number)";
+
     /**
      * Newest first, paginated by id (UUID v7): pass the last id of the previous page as {@code beforeId}.
-     * {@code text} matches the name or the identification number.
+     * {@code text} matches the name or the identification number, whatever the case.
      */
     public static List<CustomerEntity> page(
             UUID accountId, Environment environment, String text, UUID beforeId, int limit) {
-        StringBuilder query = new StringBuilder("accountId = :account and environment = :environment");
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("account", accountId);
-        parameters.put("environment", environment);
-        if (text != null && !text.isBlank()) {
-            query.append(
-                    " and (lower(legalName) like :text escape '\\' or lower(identificationNumber) like :text escape '\\')");
-            parameters.put("text", Catalogs.containing(text));
-        }
-        if (beforeId != null) {
-            query.append(" and id < :before");
-            parameters.put("before", beforeId);
-        }
-        return find(query.append(" order by id desc").toString(), parameters)
-                .page(0, limit)
-                .list();
+        return Catalogs.page(
+                CustomerEntity.class, "customers", SEARCH_TEXT, accountId, environment, text, beforeId, limit);
     }
 }
