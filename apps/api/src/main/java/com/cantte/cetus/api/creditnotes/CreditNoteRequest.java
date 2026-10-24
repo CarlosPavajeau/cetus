@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.creditnotes;
 
+import com.cantte.cetus.api.documents.CorrectionRequest;
 import com.cantte.cetus.api.invoices.InvoiceRequest;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
 import jakarta.validation.Valid;
@@ -19,4 +20,5 @@ public record CreditNoteRequest(
         @NotBlank @Size(max = 500) String description,
         @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines,
         @Size(max = 100) String externalReference,
-        @Size(max = 20) List<@Size(max = 500) String> notes) {}
+        @Size(max = 20) List<@Size(max = 500) String> notes)
+        implements CorrectionRequest {}

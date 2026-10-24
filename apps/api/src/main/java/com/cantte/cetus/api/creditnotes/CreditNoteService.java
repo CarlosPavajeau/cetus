@@ -6,7 +6,6 @@ import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
-import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.LineInput;
@@ -16,7 +15,6 @@ import com.cantte.cetus.persistence.entity.IssuerEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -35,14 +33,7 @@ public class CreditNoteService {
 
     @Transactional(Transactional.TxType.MANDATORY)
     public DocumentEntity create(UUID accountId, Environment environment, CreditNoteRequest request, String rawJson) {
-        DocumentEntity invoice = DocumentEntity.lockForAccount(accountId, request.invoiceId(), environment)
-                .filter(doc -> doc.documentType == DocumentType.INVOICE)
-                .orElseThrow(() -> new NotFoundException("Invoice not found"));
-        if (invoice.status != DocumentStatus.ACCEPTED) {
-            throw new DomainException(
-                    "invoice_not_accepted",
-                    "Only invoices accepted by the DIAN can be credited; this one is " + invoice.status);
-        }
+        DocumentEntity invoice = drafts.lockCorrectedInvoice(accountId, environment, request, "credited");
         IssuerEntity issuer = IssuerEntity.findById(invoice.issuerId);
         drafts.ensureReady(issuer, environment);
 
@@ -56,16 +47,7 @@ public class CreditNoteService {
         }
 
         DocumentEntity note = drafts.draft(accountId, issuer, environment, DocumentType.CREDIT_NOTE, calculation);
-        note.referencedDocumentId = invoice.id;
-        note.correctionConcept = request.concept().name();
-        note.correctionDescription = request.description();
-        note.currency = invoice.currency;
-        note.customer = invoice.customer;
-        note.payment = invoice.payment;
-        note.notes = request.notes() == null ? List.of() : List.copyOf(request.notes());
-        note.requestPayload = rawJson;
-        note.externalReference = request.externalReference();
-        drafts.submit(note);
+        drafts.submitCorrection(note, invoice, request, rawJson);
         return note;
     }
 

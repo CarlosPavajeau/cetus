@@ -7,6 +7,7 @@ import com.cantte.cetus.domain.calc.CalculatedLine;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.dian.DianTime;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobQueue;
@@ -21,10 +22,12 @@ import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -64,6 +67,23 @@ public class DocumentDrafts {
         if (SigningCertificateEntity.findActive(issuer.id).isEmpty()) {
             throw new DomainException("issuer_missing_certificate", "The issuer has no signing certificate");
         }
+    }
+
+    /**
+     * The invoice the correction points at, locked until the transaction ends; it must belong to the
+     * account and environment and be accepted by the DIAN.
+     */
+    public DocumentEntity lockCorrectedInvoice(
+            UUID accountId, Environment environment, CorrectionRequest request, String verb) {
+        DocumentEntity invoice = DocumentEntity.lockForAccount(accountId, request.invoiceId(), environment)
+                .filter(doc -> doc.documentType == DocumentType.INVOICE)
+                .orElseThrow(() -> new NotFoundException("Invoice not found"));
+        if (invoice.status != DocumentStatus.ACCEPTED) {
+            throw new DomainException(
+                    "invoice_not_accepted",
+                    "Only invoices accepted by the DIAN can be " + verb + "; this one is " + invoice.status);
+        }
+        return invoice;
     }
 
     /**
@@ -134,6 +154,22 @@ public class DocumentDrafts {
                 ? Duration.ofMillis(ThreadLocalRandom.current().nextLong(1000, 3001))
                 : Duration.ZERO;
         jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id, delay);
+    }
+
+    /** Links the note to the invoice it corrects, taking its currency, customer and payment, and submits it. */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public void submitCorrection(
+            DocumentEntity note, DocumentEntity invoice, CorrectionRequest request, String rawJson) {
+        note.referencedDocumentId = invoice.id;
+        note.correctionConcept = request.concept().name();
+        note.correctionDescription = request.description();
+        note.currency = invoice.currency;
+        note.customer = invoice.customer;
+        note.payment = invoice.payment;
+        note.notes = request.notes() == null ? List.of() : List.copyOf(request.notes());
+        note.requestPayload = rawJson;
+        note.externalReference = request.externalReference();
+        submit(note);
     }
 
     /**
