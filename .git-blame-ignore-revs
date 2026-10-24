@@ -3,3 +3,6 @@
 
 # [console] Format with oxfmt
 dce618067684fb8002d3b1761275f6a8c75a063c
+
+# Format the Java code with palantir-java-format
+7adc4c1c557c088fc5d7b14267bde56912b3dadd

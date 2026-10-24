@@ -54,8 +54,12 @@ description = "Apply the console's auth-schema migrations (Flyway runs when the 
 run = "pnpm --filter @cetus/console db:migrate"
 
 [tasks.fmt]
-description = "Format the console code (oxfmt)"
-run = "pnpm --filter @cetus/console format"
+description = "Format the Java (palantir-java-format) and console (oxfmt) code"
+run = ["./gradlew spotlessApply --console=plain", "pnpm --filter @cetus/console format"]
+
+[tasks.fmt-check]
+description = "Check the Java and console formatting without changing files"
+run = ["./gradlew spotlessCheck --console=plain", "pnpm --filter @cetus/console format:check"]
 
 [tasks.test-console]
 description = "Console integration (Vitest) and e2e (Playwright) tests; needs `mise run dev-mock` running"
