@@ -1,0 +1,80 @@
+# Local development tools and shortcuts. `mise install` gets the tools, `mise tasks` lists the shortcuts.
+# The heavy lifting lives in scripts/dev.sh and bench/bench.sh.
+
+[tools]
+java = "temurin-25.0.4+7.0.LTS"
+node = "22.23.4"
+# Same as package.json#packageManager.
+pnpm = "10.34.7"
+# Load generator for bench/.
+k6 = "2.3.0"
+
+[tasks.setup]
+description = "First-time setup: pnpm install, containers, auth migrations, Java build"
+run = "scripts/dev.sh setup"
+
+[tasks.dev]
+description = "Start infra + console, API and worker in this terminal (Ctrl+C stops them)"
+run = "scripts/dev.sh"
+
+[tasks.dev-mock]
+description = "Same as dev, plus the DIAN mock with the worker pointing at it"
+run = "scripts/dev.sh --mock"
+
+[tasks.console]
+description = "Start only the console (:3000)"
+run = "scripts/dev.sh console"
+
+[tasks.api]
+description = "Start only the API (:8080)"
+run = "scripts/dev.sh api"
+
+[tasks.worker]
+description = "Start only the worker (:8081)"
+run = "scripts/dev.sh worker"
+
+[tasks.mock]
+description = "Start only the DIAN mock (:8090)"
+run = "scripts/dev.sh mock"
+
+[tasks.infra]
+description = "Start Postgres and LocalStack and wait until they are ready"
+run = "scripts/dev.sh infra"
+
+[tasks.infra-down]
+description = "Stop the containers (the Postgres volume is kept)"
+run = "docker compose down"
+
+[tasks.infra-logs]
+description = "Follow the container logs"
+run = "docker compose logs -f"
+
+[tasks.migrate]
+description = "Apply the console's auth-schema migrations (Flyway runs when the API starts)"
+run = "pnpm --filter @cetus/console db:migrate"
+
+[tasks.test-console]
+description = "Console integration (Vitest) and e2e (Playwright) tests; needs `mise run dev-mock` running"
+run = "pnpm --filter @cetus/console test"
+
+[tasks.bench-up]
+description = "Benchmark: build and start the production images with Railway's limits (bench/README.md)"
+run = "bench/bench.sh up"
+
+[tasks.bench-seed]
+description = "Benchmark: create tenants and a document history in the benchmark stack"
+run = "bench/bench.sh seed"
+
+[tasks.bench]
+description = "Benchmark: run a k6 scenario, e.g. PROFILE=load RATE=200 mise run bench public-api"
+usage = 'arg "[scenario]" default="public-api"'
+run = 'bench/bench.sh run "${usage_scenario}"'
+
+[tasks.bench-coldstart]
+description = "Benchmark: restart the API and the worker and load them cold, e.g. mise run bench-coldstart public-api"
+usage = 'arg "[scenario]" default="public-api"'
+run = 'bench/bench.sh coldstart "${usage_scenario}"'
+
+[tasks.bench-down]
+description = "Benchmark: stop the stack (its database volume is kept)"
+run = "bench/bench.sh down"

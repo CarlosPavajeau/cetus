@@ -31,32 +31,33 @@ cetus/
 - `apps/console/src/lib/auth/schema.ts` se mantiene **a mano**. `pnpm auth:generate` reescribe el archivo
   completo con `pgTable` (schema `public`, no `auth`) y cambia el export de las relaciones. Úsalo solo para
   ver qué columnas pide un plugin nuevo, cópialas con `authSchema.table` y descarta el resto
-  (`git checkout src/lib/auth/schema.ts`). Luego `pnpm db:generate` crea la migración y `make migrate` la aplica.
+  (`git checkout src/lib/auth/schema.ts`). Luego `pnpm db:generate` crea la migración y `mise run migrate` la aplica.
 - Los secretos (PIN, clave técnica, contraseña y archivo del certificado) se guardan "sellados" con KMS.
   El `.p12` vive en S3; en la base de datos solo hay metadatos.
 
 ## Requisitos
 
-Java 25, Node 22 con pnpm, Docker. Gradle solo para generar el wrapper la primera vez.
+[mise](https://mise.jdx.dev) y Docker. mise instala las versiones fijadas en `mise.toml` (Java 25, Node 22, pnpm y
+k6): `mise trust && mise install`.
 
-## Desarrollo local con `make`
+## Desarrollo local con `mise`
 
 ```bash
-make setup      # una vez: pnpm install, contenedores, migraciones de auth y compilación
-make dev        # infra + consola (:3000), API (:8080) y worker (:8081) en una sola terminal
-make dev-mock   # lo mismo más el mock de la DIAN (:8090), con el worker apuntando a él
-make api        # un solo servicio (también console, worker, mock), por si lo quieres en otra pestaña
-make            # lista todos los comandos
+mise run setup      # una vez: pnpm install, contenedores, migraciones de auth y compilación
+mise run dev        # infra + consola (:3000), API (:8080) y worker (:8081) en una sola terminal
+mise run dev-mock   # lo mismo más el mock de la DIAN (:8090), con el worker apuntando a él
+mise run api        # un solo servicio (también console, worker, mock), por si lo quieres en otra pestaña
+mise tasks          # lista todos los comandos
 ```
 
-`make dev` levanta Postgres y LocalStack y espera a que estén listos, exporta las credenciales ficticias de AWS,
+`mise run dev` levanta Postgres y LocalStack y espera a que estén listos, exporta las credenciales ficticias de AWS,
 compila una vez los módulos compartidos y arranca la consola antes que la API (por el JWKS). Cada línea sale con
 el nombre del servicio y queda también en `.logs/<servicio>.log`. Ctrl+C detiene los servicios; los contenedores
-siguen arriba hasta `make infra-down`. El worker escucha el depurador en el puerto 5006 (la API en el 5005).
+siguen arriba hasta `mise run infra-down`. El worker escucha el depurador en el puerto 5006 (la API en el 5005).
 
 Postgres corre en la versión 18, la misma de PlanetScale. Si tu entorno venía de Postgres 16, sus datos
-quedaron en el volumen anterior (`postgres-data`), que el 18 no puede abrir. `make dev` arranca con una base
-vacía, Flyway la migra al iniciar la API, y `make migrate` crea el esquema de auth. El volumen viejo se borra con
+quedaron en el volumen anterior (`postgres-data`), que el 18 no puede abrir. `mise run dev` arranca con una base
+vacía, Flyway la migra al iniciar la API, y `mise run migrate` crea el esquema de auth. El volumen viejo se borra con
 `docker volume rm cetus_postgres-data`.
 
 Los pasos manuales equivalentes:
@@ -172,8 +173,8 @@ curl -X POST http://localhost:8080/v1/invoices \
 ## Pruebas
 
 - **API y worker:** `./gradlew test` (Quarkus con Testcontainers; no necesita el stack levantado).
-- **Consola:** corre contra el stack real, sin mocks. Levántalo con `make dev-mock` y en otra terminal ejecuta
-  `make test-console`. Cada prueba crea su propia organización, así que no hay que limpiar datos.
+- **Consola:** corre contra el stack real, sin mocks. Levántalo con `mise run dev-mock` y en otra terminal ejecuta
+  `mise run test-console`. Cada prueba crea su propia organización, así que no hay que limpiar datos.
   - `pnpm --filter @cetus/console test:integration`: Vitest (`apps/console/tests/integration`). Prueba el contrato
     entre la consola y la API (JWT de Better Auth, aislamiento por organización) y el catálogo DIVIPOLA.
   - `pnpm --filter @cetus/console test:e2e`: Playwright (`apps/console/tests/e2e`). Prueba el navegador de punta a
