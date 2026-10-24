@@ -14,7 +14,12 @@ import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
 import { authClient } from "~/lib/auth/client";
 
+/** `invitation`: the invitation the person came to accept; they join that organization instead of a new one. */
 export const Route = createFileRoute("/sign-up")({
+  validateSearch: (search): { invitation?: string } =>
+    typeof search.invitation === "string" && search.invitation
+      ? { invitation: search.invitation }
+      : {},
   component: SignUp,
 });
 
@@ -30,6 +35,7 @@ function slugify(value: string) {
 }
 
 function SignUp() {
+  const { invitation } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -45,6 +51,20 @@ function SignUp() {
         message: signUpError.message ?? "No pudimos crear la cuenta. Revisa los datos.",
       });
       return;
+    }
+
+    if (invitation) {
+      // Accepting makes the inviting organization active, and its account already exists.
+      const { error: acceptError } = await authClient.organization.acceptInvitation({
+        invitationId: invitation,
+      });
+      if (!acceptError) {
+        queryClient.clear();
+        await navigate({ to: "/overview" });
+        return;
+      }
+      // Another address, or an invitation no longer valid: the person still gets their own workspace,
+      // and the invitation page tells them why they did not join.
     }
 
     // 1. Organization in Better Auth  2. Make it active  3. Matching account in the Java API.
@@ -63,7 +83,9 @@ function SignUp() {
     await bootstrapAccount({ data: { name } });
     // Drop anything cached by a previous session in this tab (e.g. one that expired).
     queryClient.clear();
-    await navigate({ to: "/overview" });
+    await (invitation
+      ? navigate({ to: "/invitations/$invitationId", params: { invitationId: invitation } })
+      : navigate({ to: "/overview" }));
   });
 
   return (
@@ -163,6 +185,7 @@ function SignUp() {
             ¿Ya tienes cuenta?{" "}
             <Link
               to="/sign-in"
+              search={{ invitation }}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               Inicia sesión

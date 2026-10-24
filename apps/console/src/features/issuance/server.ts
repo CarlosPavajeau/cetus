@@ -46,7 +46,7 @@ const messages: Record<string, string> = {
   sandbox_daily_limit:
     "Ya emitiste los documentos de simulación permitidos por hoy. Vuelve a intentarlo mañana.",
   organization_role_forbidden:
-    "Solo los dueños y administradores de la organización pueden emitir documentos en producción.",
+    "Solo los dueños, administradores y facturadores de la organización pueden emitir documentos en producción.",
   impersonation_forbidden: "Los documentos de producción solo los emite la persona de la cuenta.",
   account_suspended: "La cuenta está suspendida: no se pueden emitir documentos.",
   idempotency_in_progress: "El documento ya se está emitiendo. Espera unos segundos.",

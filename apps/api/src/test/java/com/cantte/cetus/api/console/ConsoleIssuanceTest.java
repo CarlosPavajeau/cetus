@@ -185,6 +185,16 @@ class ConsoleIssuanceTest {
                 .statusCode(403)
                 .body("code", equalTo("organization_role_forbidden"));
 
+        // A biller issues LIVE documents, but changes nothing else.
+        ConsoleUser biller = owner.member("biller");
+        issue(biller, UUID.randomUUID().toString(), request).then().statusCode(202);
+        biller.request()
+                .body(Map.of("name", "ERP", "environment", "LIVE"))
+                .post("/console/api-keys")
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("organization_role_forbidden"));
+
         // Impersonating stays possible outside LIVE, for support and demos.
         owner.impersonatedBy("user_" + UUID.randomUUID())
                 .header("Idempotency-Key", UUID.randomUUID().toString())

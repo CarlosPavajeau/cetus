@@ -3,8 +3,8 @@ import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { Environment } from "~/lib/api/types";
 
 /**
- * Why the person cannot issue in this environment, or null. Only LIVE is restricted: to owners and admins,
- * and never while a Cetus admin impersonates them. The API enforces the same rules.
+ * Why the person cannot issue in this environment, or null. Only LIVE is restricted: to owners, admins and
+ * billers, and never while a Cetus admin impersonates them. The API enforces the same rules.
  */
 export function useBlockedReason(environment: Environment): string | null {
   const { issueLive } = useMemberPermissions();
@@ -17,5 +17,5 @@ export function useBlockedReason(environment: Environment): string | null {
   }
   return issueLive
     ? null
-    : "Solo los dueños y administradores de la organización pueden emitir documentos en producción.";
+    : "Solo los dueños, administradores y facturadores de la organización pueden emitir documentos en producción.";
 }

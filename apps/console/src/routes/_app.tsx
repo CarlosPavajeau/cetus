@@ -21,6 +21,7 @@ import {
   MailIcon,
   ShieldCheckIcon,
   ShieldIcon,
+  UsersIcon,
   WebhookIcon,
 } from "lucide-react";
 
@@ -146,6 +147,15 @@ function AppLayout() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to="/settings/members" />}
+                isActive={Boolean(matchRoute({ to: "/settings/members" }))}
+              >
+                <UsersIcon />
+                <span>Miembros</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 render={<Link to="/settings/contacts" />}

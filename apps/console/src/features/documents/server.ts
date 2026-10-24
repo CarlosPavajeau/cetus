@@ -73,7 +73,7 @@ const cancellationMessages: Record<string, string> = {
   issuer_missing_certificate: "Al emisor le falta el certificado de firma.",
   idempotency_in_progress: "La anulación ya se está procesando. Espera unos segundos.",
   organization_role_forbidden:
-    "Solo los dueños y administradores de la organización pueden anular facturas de producción.",
+    "Solo los dueños, administradores y facturadores de la organización pueden anular facturas de producción.",
   impersonation_forbidden: "Las facturas de producción solo las anula la persona de la cuenta.",
   account_suspended: "La cuenta está suspendida: no se pueden anular facturas.",
 };

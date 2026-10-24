@@ -8,7 +8,15 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { env } from "../env";
-import { ac, impersonationSeconds, platformRole, roleList, roles } from "./permissions";
+import {
+  ac,
+  impersonationSeconds,
+  organizationAc,
+  organizationRoles,
+  platformRole,
+  roleList,
+  roles,
+} from "./permissions";
 import * as schema from "./schema";
 
 const adminReads = new Set([
@@ -35,6 +43,7 @@ const forbiddenWhileImpersonating = new Set([
   "/organization/delete",
   "/organization/leave",
   "/organization/invite-member",
+  "/organization/cancel-invitation",
   "/organization/remove-member",
   "/organization/update-member-role",
 ]);
@@ -97,7 +106,7 @@ export const auth = betterAuth({
     }),
   },
   plugins: [
-    organization(),
+    organization({ ac: organizationAc, roles: organizationRoles }),
     admin({
       ac,
       roles,
@@ -123,9 +132,9 @@ export const auth = betterAuth({
           return {
             email: user.email,
             org,
-            // The member's roles in the active organization (owner, admin, member): the API limits some
+            // The member's roles in the active organization (owner, admin, biller, member): the API limits some
             // changes to some of them. Read on every token, so a role change applies within one request.
-            orgRoles: org ? await organizationRoles(user.id, org) : [],
+            orgRoles: org ? await memberRoles(user.id, org) : [],
             // SmallRye JWT reads `groups` as the caller's roles. Only staff with 2FA get them.
             groups: role && user.twoFactorEnabled ? [role] : [],
             impersonatedBy: session.impersonatedBy ?? null,
@@ -141,7 +150,7 @@ export const auth = betterAuth({
 export type Session = typeof auth.$Infer.Session;
 
 /** The member's roles in the organization (owner, admin, member), or none outside it. */
-export async function organizationRoles(userId: string, organizationId: string): Promise<string[]> {
+export async function memberRoles(userId: string, organizationId: string): Promise<string[]> {
   const [membership] = await db
     .select({ role: schema.member.role })
     .from(schema.member)

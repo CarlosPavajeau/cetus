@@ -14,11 +14,17 @@ import { signInSchema } from "~/features/auth/schema";
 import { startSession } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
 
+/** `invitation`: the invitation the person came to accept; after signing in they go back to it. */
 export const Route = createFileRoute("/sign-in")({
+  validateSearch: (search): { invitation?: string } =>
+    typeof search.invitation === "string" && search.invitation
+      ? { invitation: search.invitation }
+      : {},
   component: SignIn,
 });
 
 function SignIn() {
+  const { invitation } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -45,7 +51,9 @@ function SignIn() {
     }
 
     await startSession(queryClient);
-    await navigate({ to: "/overview" });
+    await (invitation
+      ? navigate({ to: "/invitations/$invitationId", params: { invitationId: invitation } })
+      : navigate({ to: "/overview" }));
   });
 
   return (
@@ -110,6 +118,7 @@ function SignIn() {
             ¿Aún no tienes cuenta?{" "}
             <Link
               to="/sign-up"
+              search={{ invitation }}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               Crea una
