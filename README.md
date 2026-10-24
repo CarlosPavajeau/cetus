@@ -1,147 +1,69 @@
 # Cetus
 
-API de facturación electrónica para Colombia (DIAN). Monorepo de **cantte**.
+API de facturación electrónica para Colombia (DIAN). Emite facturas, notas crédito y notas débito, las firma,
+las envía a la DIAN y entrega el resultado al adquiriente por correo y a los integradores por webhooks.
+
+Cada documento se emite en uno de tres ambientes, según la llave de API (`cetus_sandbox_…`, `cetus_test_…`,
+`cetus_live_…`):
+
+- **Sandbox:** nunca llega a la DIAN; un simulador responde. Cada cuenta nueva trae un emisor de ejemplo listo
+  para emitir desde el primer minuto.
+- **Test:** habilitación ante la DIAN, con el software, el certificado y el set de pruebas del emisor.
+- **Live:** producción.
+
+## Arquitectura
 
 ```
-cetus/
-├── apps/
-│   ├── api/          Quarkus · REST pública (/v1) y endpoints de consola (/console)
-│   ├── worker/       Quarkus · UBL, firma XAdES, envío a la DIAN, consulta de estado
-│   └── console/      TanStack Start + Better Auth · panel web (BFF hacia la API)
-├── modules/
-│   ├── domain/       Java puro · modelo, cálculos, CUFE/CUDE, reglas DIAN
-│   ├── persistence/  Panache + migraciones Flyway (esquema "billing")
-│   ├── jobs/         Cola de trabajos sobre Postgres (FOR UPDATE SKIP LOCKED)
-│   ├── ubl/          Modelo JAXB de UBL 2.1 escrito a mano + mapper
-│   ├── signing/      Firma XAdES-EPES con la API del JDK
-│   ├── dian-client/  SOAP 1.2 + WS-Security + HttpClient
-│   └── aws/          KMS (cifrado envelope) y S3
-├── build-logic/      Convention plugins de Gradle
-├── infra/            Scripts de inicialización para desarrollo local
-└── docker-compose.yml
+apps/
+├── api/          Quarkus · REST pública (/v1) y endpoints de la consola (/console)
+├── worker/       Quarkus · UBL, firma, envío y consulta a la DIAN, correos y webhooks
+├── console/      TanStack Start + Better Auth · panel web (BFF hacia la API)
+└── dian-mock/    Imitación local de los servicios de la DIAN (solo desarrollo)
+modules/          domain, persistence, jobs, ubl, signing, dian-client, aws, email, webhooks, notifications
 ```
 
-## Reglas de arquitectura
+- La API valida, numera, guarda y encola; **nunca** llama a la DIAN. El worker hace el resto a partir de una
+  cola de trabajos sobre Postgres.
+- `domain` es Java puro, sin frameworks. Todo lo demás depende de él.
+- Postgres tiene dos esquemas: `billing` (Flyway, migra al arrancar la API) y `auth` (Better Auth, migrado con
+  Drizzle desde la consola).
+- Los secretos del emisor (PIN, clave técnica, certificado y su contraseña) se guardan sellados con KMS; el
+  `.p12` vive en S3. Los documentos firmados quedan en S3 con Object Lock.
 
-- `domain` no depende de ningún framework. Todo apunta hacia él.
-- La API **nunca** llama a la DIAN: valida, numera, guarda y encola. El worker hace el resto.
-- Better Auth es dueño de usuarios, organizaciones y membresías (esquema `auth`, migrado con Drizzle).
-  `billing.accounts.organization_id` guarda el ID de la organización, sin llave foránea entre esquemas.
-- Flyway solo gestiona `billing`; Drizzle solo gestiona `auth` (`schemaFilter`). Nunca uses `drizzle-kit push` en producción.
-- `apps/console/src/lib/auth/schema.ts` se mantiene **a mano**. `pnpm auth:generate` reescribe el archivo
-  completo con `pgTable` (schema `public`, no `auth`) y cambia el export de las relaciones. Úsalo solo para
-  ver qué columnas pide un plugin nuevo, cópialas con `authSchema.table` y descarta el resto
-  (`git checkout src/lib/auth/schema.ts`). Luego `pnpm db:generate` crea la migración y `mise run migrate` la aplica.
-- Los secretos (PIN, clave técnica, contraseña y archivo del certificado) se guardan "sellados" con KMS.
-  El `.p12` vive en S3; en la base de datos solo hay metadatos.
+`AGENTS.md` tiene el mapa completo del repositorio y las reglas de desarrollo.
 
-## Requisitos
+## Desarrollo local
 
-[mise](https://mise.jdx.dev) y Docker. mise instala las versiones fijadas en `mise.toml` (Java 25, Node 22, pnpm y
-k6): `mise trust && mise install`.
-
-## Desarrollo local con `mise`
+Requiere [mise](https://mise.jdx.dev) y Docker. mise instala las versiones fijadas en `mise.toml` (Java 25,
+Node 22, pnpm y k6).
 
 ```bash
+mise trust && mise install
 mise run setup      # una vez: pnpm install, contenedores, migraciones de auth y compilación
-mise run dev        # infra + consola (:3000), API (:8080) y worker (:8081) en una sola terminal
+mise run dev        # Postgres + LocalStack, consola (:3000), API (:8080) y worker (:8081)
 mise run dev-mock   # lo mismo más el mock de la DIAN (:8090), con el worker apuntando a él
-mise run api        # un solo servicio (también console, worker, mock), por si lo quieres en otra pestaña
 mise tasks          # lista todos los comandos
 ```
 
-`mise run dev` levanta Postgres y LocalStack y espera a que estén listos, exporta las credenciales ficticias de AWS,
-compila una vez los módulos compartidos y arranca la consola antes que la API (por el JWKS). Cada línea sale con
-el nombre del servicio y queda también en `.logs/<servicio>.log`. Ctrl+C detiene los servicios; los contenedores
-siguen arriba hasta `mise run infra-down`. El worker escucha el depurador en el puerto 5006 (la API en el 5005).
+Cada servicio escribe con su nombre en la terminal y en `.logs/<servicio>.log`. Ctrl+C detiene los servicios;
+los contenedores siguen arriba hasta `mise run infra-down`. Los depuradores escuchan en el 5005 (API) y el 5006
+(worker).
 
-Postgres corre en la versión 18, la misma de PlanetScale. Si tu entorno venía de Postgres 16, sus datos
-quedaron en el volumen anterior (`postgres-data`), que el 18 no puede abrir. `mise run dev` arranca con una base
-vacía, Flyway la migra al iniciar la API, y `mise run migrate` crea el esquema de auth. El volumen viejo se borra con
-`docker volume rm cetus_postgres-data`.
+Para el correo en local, copia `apps/api/.env.example` y `apps/worker/.env.example` a `.env` en su carpeta.
+Sin llave de Resend, la entrega queda `SKIPPED`.
 
-Los pasos manuales equivalentes:
+## Primera factura
 
-## Primer arranque local
-
-```bash
-# 1. Wrapper de Gradle (no se incluye el .jar en este esqueleto)
-gradle wrapper --gradle-version 8.10.2
-
-# 2. Infraestructura: Postgres con los esquemas billing/auth y LocalStack con KMS + S3
-docker compose up -d
-
-# 3. Credenciales ficticias para que el SDK de AWS hable con LocalStack
-export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1
-
-# 4. Consola: migraciones del esquema auth y servidor en :3000
-cp apps/console/.env.example apps/console/.env    # genera BETTER_AUTH_SECRET con: openssl rand -base64 32
-pnpm install
-pnpm --filter @cetus/console db:migrate
-pnpm console:dev
-
-# 5. API (:8080, ejecuta Flyway al iniciar) y worker (:8081)
-./gradlew :apps:api:quarkusDev
-./gradlew :apps:worker:quarkusDev
-```
-
-La API valida los JWT de la consola descargando las llaves públicas de `http://localhost:3000/api/auth/jwks`,
-así que arranca la consola primero.
-
-## Mock local de la DIAN
-
-`apps/dian-mock` imita `WcfDianCustomerServices.svc` (SendBillSync, SendTestSetAsync, GetStatus, GetStatusZip, GetNumberingRange)
-para probar el flujo sin la DIAN ni un certificado de una CA acreditada:
-
-```bash
-./gradlew :apps:dian-mock:run                          # escucha en :8090
-CETUS_DIAN_TEST_URL=http://localhost:8090/WcfDianCustomerServices.svc ./gradlew :apps:worker:quarkusDev
-```
-
-Solo se redirige el ambiente de pruebas; producción siempre usa la URL real. El mock verifica la firma WS-Security
-(Timestamp, BinarySecurityToken, firma sobre `wsa:To`) pero acepta certificados autofirmados. Cuando algo falla
-responde el mismo `s:Client` sin razón que la DIAN y deja la causa real en su log. Del documento solo revisa la
-estructura (zip con un XML firmado, `cbc:ID`, `cbc:UUID`) y rechaza los CUFE repetidos (regla 90); no aplica las
-reglas de validación de la DIAN. Los mensajes que genera empiezan por `Mock:`.
-
-Lo que pasa esas revisiones lo responde el mismo simulador del sandbox (`SimulatedDian`), con el ApplicationResponse
-firmado y con la estructura del de la DIAN, y con los mismos escenarios según el adquiriente: `1000000001` aceptado
-con FAJ43b, `1000000002` rechazado con FAK26 y FAB10a, `1000000003` responde tarde el primer envío (tras
-`DIAN_MOCK_TIMEOUT_DELAY`) pero queda aceptado, `1000000004` falla de servidor en los dos primeros envíos y
-`1000000005` rechaza las notas crédito por CBF04. Cualquier otro se acepta. Los escenarios globales de abajo se
-imponen sobre estos.
-
-```bash
-curl -X POST "localhost:8090/__mock/scenario?name=reject"   # accept | reject | client-fault | server-fault | timeout
-curl localhost:8090/__mock/documents                        # documentos recibidos y su resultado
-curl -X POST localhost:8090/__mock/reset                    # olvida todo
-```
-
-Variables: `DIAN_MOCK_PORT` (8090), `DIAN_MOCK_SCENARIO` (accept), `DIAN_MOCK_REJECT_SELF_SIGNED` (false; en true
-rechaza los autofirmados como la DIAN), `DIAN_MOCK_TIMEOUT_DELAY` (PT90S), `DIAN_MOCK_PROCESSING_POLLS` (1, consultas
-de GetStatusZip que responden "en proceso" antes del resultado) y `DIAN_MOCK_SIGNER` / `DIAN_MOCK_SIGNER_PASSWORD`
-(el PKCS#12 que firma el ApplicationResponse; por defecto, el certificado de prueba empaquetado en el jar, con
-`cetus-test`).
-
-## Probar el flujo completo en habilitación
-
-1. Crea tu cuenta en `http://localhost:3000/sign-up` (crea usuario, organización y cuenta en la API).
-2. La consola te lleva al asistente de configuración (`http://localhost:3000/setup`), que registra el emisor en
-   cuatro pasos: datos del RUT, software DIAN (Software ID, PIN y TestSetId del portal de habilitación),
-   certificado `.p12` con su contraseña y numeración (ya trae la del set de pruebas: prefijo `SETP`,
-   990000000 a 995000000; solo falta la clave técnica). Cada paso se guarda al continuar, así que puedes
-   retomarlo donde lo dejaste. Con las tres piezas, el emisor pasa a `TESTING`.
-   También puedes hacerlo con los endpoints de consola: `POST /console/issuers`, `PUT /console/issuers/{id}/software`,
-   `PUT /console/issuers/{id}/certificate` (`.p12` en base64 y contraseña) y `POST /console/issuers/{id}/numbering-ranges`.
-3. Crea una llave de pruebas en la consola y envía una factura:
+1. Crea una cuenta en `http://localhost:3000/sign-up`. La consola abre el asistente para configurar un emisor
+   real, pero el de sandbox no lo necesita.
+2. Crea una llave de simulación en **Desarrolladores → Llaves de API** y envía una factura:
 
 ```bash
 curl -X POST http://localhost:8080/v1/invoices \
-  -H "Authorization: Bearer cetus_test_..." \
+  -H "Authorization: Bearer cetus_sandbox_..." \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
-    "issuerId": "<id del emisor>",
     "customer": {
       "personType": "NATURAL_PERSON", "identificationType": "CITIZEN_ID",
       "identificationNumber": "1020304050", "legalName": "Ana Pérez",
@@ -155,221 +77,28 @@ curl -X POST http://localhost:8080/v1/invoices \
   }'
 ```
 
-   El `issuerId` aparece en la consola (sección Emisores) y en `GET /v1/issuers`, que lista los emisores
-   de la cuenta en el ambiente de la llave. Puedes omitirlo si la cuenta tiene un solo emisor habilitado en
-   ese ambiente; con varios, la API responde `422 issuer_required`. La respuesta trae el `issuerId` usado.
+3. Consulta `GET /v1/invoices/{id}` hasta ver `ACCEPTED` o `REJECTED`.
 
-4. Consulta `GET /v1/invoices/{id}` hasta ver `ACCEPTED` o `REJECTED` con los errores de la DIAN.
-   Los XML firmados y las respuestas quedan en S3 (`documents/test/{nit}/...`).
-
-5. Sobre una factura aceptada se emiten notas con `POST /v1/credit-notes` y `POST /v1/debit-notes`, cada una con
-   su propio rango de numeración sin resolución (por ejemplo, prefijos `NC` y `ND`, creados con
-   `POST /console/issuers/{id}/numbering-ranges`). La nota crédito acepta los conceptos de la tabla 13.2.4 y, si es
-   una `CANCELLATION` sin líneas, copia las de la factura; la nota débito (`INTEREST`, `EXPENSES`, `VALUE_CHANGE`,
-   `OTHER`, tabla 13.2.5) siempre lleva sus líneas. `GET /v1/invoices/{id}` lista `creditNotes`, `debitNotes` y el
-   `balance` que aún pueden acreditar las notas crédito: el total más las notas débito aceptadas, menos las notas
-   crédito aceptadas o en curso.
+`issuerId` es opcional si la cuenta tiene un solo emisor en el ambiente de la llave. Para habilitar un emisor
+real ante la DIAN, ver [docs/habilitacion.md](docs/habilitacion.md).
 
 ## Pruebas
 
-- **API y worker:** `./gradlew test` (Quarkus con Testcontainers; no necesita el stack levantado).
-- **Consola:** corre contra el stack real, sin mocks. Levántalo con `mise run dev-mock` y en otra terminal ejecuta
-  `mise run test-console`. Cada prueba crea su propia organización, así que no hay que limpiar datos.
-  - `pnpm --filter @cetus/console test:integration`: Vitest (`apps/console/tests/integration`). Prueba el contrato
-    entre la consola y la API (JWT de Better Auth, aislamiento por organización) y el catálogo DIVIPOLA.
-  - `pnpm --filter @cetus/console test:e2e`: Playwright (`apps/console/tests/e2e`). Prueba el navegador de punta a
-    punta, por ejemplo el asistente de configuración completo. La primera vez instala el navegador con
-    `pnpm --filter @cetus/console exec playwright install chromium`.
-  - `CONSOLE_URL` y `CETUS_API_URL` apuntan las pruebas a otro entorno (por defecto `:3000` y `:8080`).
-  - En CI, `.github/workflows/console-tests.yml` levanta el mismo stack con `scripts/dev.sh --mock` y corre ambas
-    suites en cada PR que toque las apps, los módulos o la infraestructura. Si fallan, adjunta el reporte de
-    Playwright (con trazas) y los logs de cada servicio.
-
-## Despliegue en Railway
-
-Tres servicios (`console`, `api` y `worker`) desde el mismo repositorio, cada uno construido con su Dockerfile
-desde la raíz. Los Dockerfiles de Java separan en capas el wrapper de Gradle, las dependencias
-(`resolveDependencies`, que solo cambian con los `build.gradle.kts`) y el código, así que un cambio en la
-consola o en otra app no recompila nada, y uno en el código Java no vuelve a descargar dependencias. Todo el proyecto se describe en `.railway/railway.ts` (Infrastructure as Code de Railway):
-fuente, Dockerfile, rutas vigiladas, health checks, pre-deploy, réplicas, dominios y variables. Railway **no**
-lo lee al desplegar; se aplica con su CLI (5.42.1 o superior):
-
 ```bash
-railway login && railway link          # una vez: elige el proyecto y el entorno
-railway config plan                    # muestra qué cambiaría
-railway config apply                   # lo aplica, pidiendo confirmación
+mise exec -- ./gradlew test   # API, worker y módulos (Testcontainers; no necesita el stack)
+mise run test-console         # consola: Vitest + Playwright contra el stack real de `mise run dev-mock`
 ```
 
-| Servicio | Dockerfile | Health check | Pre-deploy | Dominio |
-|---|---|---|---|---|
-| console | `apps/console/Dockerfile` | `/sign-in` | `pnpm db:migrate` | `cetus.cantte.com` |
-| api | `apps/api/Dockerfile` | `/q/health/ready` | — (Flyway migra al arrancar) | `cetus-api.cantte.com` |
-| worker | `apps/worker/Dockerfile` | `/q/health/ready` | — | — |
+Con el stack arriba, el worker ocupa el puerto 8081, que también usa Quarkus en pruebas: corre las de Java con
+`QUARKUS_HTTP_TEST_PORT=0`. La primera vez, Playwright necesita
+`pnpm --filter @cetus/console exec playwright install chromium`. En CI, `console-tests.yml` levanta el mismo
+stack y corre ambas suites en cada PR.
 
-Los secretos van como `preserve()`: su valor solo vive en Railway (cárgalos *sealed* en el panel), nunca en
-el archivo. Toda variable que use un servicio debe estar en `railway.ts`; `plan` muestra como eliminación
-cualquier variable que exista en Railway y no esté ahí.
+## Documentación
 
-Variables principales: `CETUS_DB_URL`, `CETUS_DB_USER`, `CETUS_DB_PASSWORD`, `CETUS_KMS_KEY_ID`,
-`CETUS_DOCUMENTS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (API y worker, cada uno
-con su propio usuario IAM); `CETUS_AUTH_JWKS_URL` (URL privada de la consola) y `CETUS_AUTH_ISSUER` (URL
-pública) en la API; `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CETUS_API_URL` (URL privada de
-la API) y `CETUS_EDGE_SECRET` en la consola. Las URL privadas se arman con referencias, p. ej.
-`http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`.
-
-- En el perfil `prod`, la API y el worker escuchan en `::` (la red privada de Railway es IPv6) y escriben
-  logs en JSON.
-- `infra/aws/` tiene las políticas IAM de mínimo privilegio de cada servicio (`iam-cetus-prod-*.json`) y el
-  ciclo de vida del bucket (`s3-lifecycle.json`). La API solo sella secretos (`kms:GenerateDataKey`) y el
-  worker solo los abre (`kms:Decrypt`).
-- El sandbox firma con un certificado autofirmado de Cetus, sellado en el bucket en
-  `certificates/sandbox/cetus-sandbox.p12.sealed` y su contraseña en
-  `certificates/sandbox/cetus-sandbox.password.sealed`. Sus documentos se guardan sin Object Lock en
-  `documents/sandbox/`: el worker los borra a los 10 días (`CETUS_RETENTION_SANDBOX_DOCUMENTS`, con
-  `s3:DeleteObject` solo sobre ese prefijo) y la regla `sandbox-documents` del ciclo de vida recoge lo que
-  quede. El bucket tiene versionado: borrar deja una versión anterior, que esa regla elimina al día siguiente.
-- La consola solo atiende el dominio público si la petición pasó por Cloudflare: una Transform Rule de
-  `cetus.cantte.com` agrega el header `X-Cetus-Edge-Secret` con el valor de `CETUS_EDGE_SECRET`, y sin él la
-  consola responde 403 (el edge de Railway también responde a ese dominio si se le llama directo). La red
-  privada, `localhost` y el health check no lo necesitan. Así `CF-Connecting-IP`, que alimenta el rate limit de
-  Better Auth y el audit log, no se puede falsificar.
-- `/console/*` y `/q/*` solo responden a hosts privados (`cetus.private-hosts`): la red privada de Railway
-  (`*.railway.internal`), `localhost` y el health check de Railway. Por el dominio público responden 404.
-
-### Entrega por correo (Resend)
-
-Cuando la DIAN acepta un documento, el worker arma el `AttachedDocument` firmado y el PDF, y los envía en un
-zip al adquiriente. Las llaves solo se leen del entorno y nunca van en el código:
-
-| Variable | Servicio | Uso |
-|---|---|---|
-| `RESEND_API_KEY` | worker | Llave con permiso solo de envío, una por ambiente |
-| `CETUS_EMAIL_FROM` | worker | Remitente en el dominio verificado, p. ej. `Facturas <facturas@facturas.midominio.com>` |
-| `CETUS_EMAIL_TEST_RECIPIENT` | worker | Buzón que recibe los documentos TEST en lugar del adquiriente |
-| `RESEND_WEBHOOK_SECRET` | api | Secreto `whsec_…` del webhook de eventos |
-
-Sin `RESEND_API_KEY` o `CETUS_EMAIL_FROM`, la entrega queda `SKIPPED`. En local, copia
-`apps/worker/.env.example` a `apps/worker/.env` (y `apps/api/.env.example` a `apps/api/.env`): Quarkus en modo
-dev los lee y git los ignora.
-
-En Resend:
-
-1. Verifica un subdominio dedicado (p. ej. `facturas.midominio.com`) con los registros SPF y DKIM que muestra el
-   panel, y agrega una política DMARC.
-2. Crea el webhook hacia `https://<api>/internal/email-events` con los eventos `email.delivered`,
-   `email.bounced`, `email.complained` y `email.failed`. Copia su secreto en `RESEND_WEBHOOK_SECRET`.
-
-Las entregas aparecen en `deliveries` de `GET /v1/{invoices|credit-notes|debit-notes}/{id}`. Los
-archivos se descargan con `GET /v1/{invoices|credit-notes|debit-notes}/{id}/files/{xml|pdf|attached-document}`, que responde una URL
-prefirmada de S3 válida por 5 minutos.
-
-### Webhooks
-
-Los integradores registran URLs que reciben un `POST` firmado cuando cambia uno de sus documentos, sin
-consultar en ciclo. Se administran desde `/console/webhook-endpoints` (por ambiente, con un filtro opcional de
-eventos). El secreto `whsec_…` se muestra una sola vez, al crear el endpoint, y se guarda sellado con KMS.
-
-| Evento | Cuándo |
-|---|---|
-| `invoice.accepted`, `credit_note.accepted`, `debit_note.accepted` | La DIAN validó el documento |
-| `invoice.rejected`, `credit_note.rejected`, `debit_note.rejected` | La DIAN lo rechazó |
-| `invoice.failed`, `credit_note.failed`, `debit_note.failed` | El worker se rindió (sin más reintentos) |
-| `document.delivered` | El correo con el `AttachedDocument` y el PDF llegó al adquiriente |
-| `document.delivery_failed` | El correo rebotó, fue marcado como spam, falló o no había a quién enviarlo: hay que entregar el documento por otro medio |
-
-Cada hecho se publica una sola vez. El cuerpo es el mismo en todos los reintentos:
-
-```json
-{ "id": "…", "type": "invoice.accepted", "createdAt": "…", "environment": "TEST",
-  "data": { "id": "…", "documentType": "INVOICE", "number": "SETP990000005", "status": "ACCEPTED",
-            "cufe": "…", "issueDate": "2026-10-19", "externalReference": "…", "referencedInvoiceId": null,
-            "dian": { "statusCode": "00", "statusMessage": "…", "errors": [] },
-            "delivery": { "status": "BOUNCED", "recipient": "…", "reason": "…" } } }
-```
-
-`delivery` solo viene en los eventos `document.*`. La firma sigue
-[Standard Webhooks](https://www.standardwebhooks.com/), así que sirve cualquiera de sus librerías (o la de
-Svix). Los encabezados son:
-
-- `webhook-id`: el id del evento, igual en cada reintento. Úsalo para descartar repetidos.
-- `webhook-timestamp`: los segundos Unix del envío. Rechaza los que tengan más de 5 minutos.
-- `webhook-signature`: `v1,<base64>`, donde el valor es el HMAC-SHA256 de `<webhook-id>.<webhook-timestamp>.<cuerpo>`
-  con la parte base64 del secreto (sin `whsec_`) como llave.
-
-```text
-key      = base64_decode(secret.removePrefix("whsec_"))
-expected = "v1," + base64(hmac_sha256(key, id + "." + timestamp + "." + rawBody))
-valid    = constant_time_equals(expected, header) && |now - timestamp| <= 300
-```
-
-Cualquier respuesta 2xx confirma la entrega. Un timeout, un error de red o cualquier otro código se reintenta
-con backoff exponencial: hasta 10 intentos durante unas 4 o 5 horas. Un `410 Gone` detiene los reintentos. El
-historial queda en `GET /console/webhook-endpoints/{id}/deliveries`, y
-`POST …/deliveries/{deliveryId}/retry` reenvía una entrega.
-
-Un endpoint que lleva 3 días fallando (`cetus.webhooks.auto-disable.after`), con al menos 10 intentos fallidos
-(`…min-failures`) y ningún 2xx en medio, se desactiva solo, con `disabledReason: AUTOMATIC`. Sus entregas
-pendientes se cancelan y la desactivación queda en la actividad de la cuenta. `POST /console/webhook-endpoints/{id}/enable`
-lo reactiva y pone en cero el conteo de fallas.
-
-En LIVE la URL debe ser `https`. El worker no envía a direcciones internas (loopback, redes privadas,
-link-local, CGNAT), no usa proxy y no sigue redirecciones. La verificación vive en el DNS del propio cliente
-HTTP (OkHttp), así que se revisan las mismas IPs a las que se conecta: un host que responde una IP pública al
-validar y una interna al conectar (DNS rebinding) queda bloqueado. En dev y en pruebas,
-`cetus.webhooks.allow-private-targets=true` permite `localhost`.
-
-### Operación
-
-| Variable | Servicio | Uso |
-|---|---|---|
-| `CETUS_OPS_ALERT_EMAIL` | worker | Buzón de alertas operativas. Sin él, las alertas solo quedan en el log (`WARN`) |
-| `CETUS_STORAGE_RETENTION_DAYS` | worker | Días de bloqueo (Object Lock) de cada documento. En `prod`, 1826 por defecto |
-| `CETUS_RATE_LIMIT_REQUESTS_PER_SECOND`, `CETUS_RATE_LIMIT_BURST` | api | Límite por llave de API en `/v1/**` (por defecto 10 y 20) |
-
-- **Alertas.** El worker envía un correo (con la misma configuración de Resend) cuando algo necesita una
-  persona:
-  - Cada 5 minutos revisa jobs `DEAD`, documentos que llevan más de 15 minutos sin llegar a la DIAN y rangos
-    que no coinciden con los de la DIAN.
-  - Cada día a las 7:00 revisa certificados a menos de 30 días de vencer, y rangos con menos del 10 %
-    disponible o a menos de 30 días de su fin.
-  - Cada condición se avisa una vez y se repite como máximo cada 24 horas mientras siga (tabla `ops_alerts`).
-    Una condición resuelta se olvida, así que se avisa de nuevo si vuelve.
-  - Con varias réplicas, un advisory lock de Postgres hace que corra una sola a la vez.
-- **Retención.** Los artefactos de cada documento (XML firmado, zip, respuestas de la DIAN,
-  AttachedDocument, PDF) se escriben con Object Lock en modo compliance. Nadie puede alterarlos ni borrarlos
-  antes de que venza la retención, ni siquiera el root de AWS.
-  - El bucket debe crearse con Object Lock habilitado y **sin** retención por defecto. Los certificados
-    sellados de `certificates/` quedan sin bloquear.
-  - En local, LocalStack crea el bucket igual, pero sin retención.
-- **Límite de tasa.** Cada llave de API tiene un token bucket en memoria. Al pasarlo, la API responde
-  `429 rate_limited` con `Retry-After`. El límite es por réplica de la API.
-- **Equipo de Cetus.** Los roles de plataforma (`admin` y `support`) viven en `auth.user.role` (plugin
-  `admin` de Better Auth) y no tienen nada que ver con los roles dentro de una organización.
-  - Se asignan a mano y nunca desde la API. La persona se registra normalmente en la consola y luego:
-    `UPDATE auth."user" SET role = 'admin' WHERE email = 'persona@cantte.com';`
-  - El rol solo tiene efecto con la verificación en dos pasos activa (Seguridad, en la consola). Sin
-    ella, el JWT no lleva el claim `groups` y Better Auth rechaza sus endpoints `/api/auth/admin/*`.
-  - `support` lee y hace acciones asistidas. Solo `admin` bloquea usuarios, suspende cuentas y suplanta.
-  - La administración está en `/admin` de la consola. Una cuenta suspendida no puede usar sus llaves de
-    API (`403 account_suspended`) y su consola queda en solo lectura, con el motivo visible. Los documentos
-    que ya estaban en cola se terminan de procesar, porque ya tienen número asignado.
-- **Verificación del rango.** Cuando un emisor de **producción** ya tiene software y certificado, el worker
-  consulta `GetNumberingRange` por cada rango de factura y lo compara con lo registrado: prefijo, números,
-  vigencia y clave técnica. En habilitación no aplica: el rango de prueba (`SETP`) es compartido, la DIAN no
-  lo registra por NIT y siempre responde `301`.
-  - Una clave técnica mal digitada haría inválidos todos los CUFE. La consola muestra el resultado en la
-    columna "DIAN" y permite consultar de nuevo, y una diferencia genera una alerta.
-  - El mock local responde siempre con el rango de habilitación (`SETP`); sirve para probar emisores LIVE en local.
-
-## Pendiente de validar contra la DIAN
-
-Todo lo marcado en comentarios como "confirm/verify" debe revisarse con el anexo técnico vigente y con
-respuestas reales de habilitación: hash de la política de firma, formato del QR, reglas de redondeo y
-tolerancias, códigos de estado de `GetStatusZip`, encabezados WS-Security y `BaseQuantity` de las líneas.
-Los XSD de la caja de herramientas van en `modules/ubl/src/main/xsd` para validar en pruebas.
-
-## Siguientes pasos
-
-Notas crédito y débito (CUDE), `AttachedDocument`, PDF con QR, envío por correo (SES),
-panel de configuración del emisor en la consola, tipos TypeScript generados desde OpenAPI (`pnpm --filter @cetus/console api:types`)
-y roles por organización en los endpoints de consola.
+- [Habilitación ante la DIAN](docs/habilitacion.md): configurar un emisor, set de pruebas y notas.
+- [Mock de la DIAN](docs/dian-mock.md): escenarios y variables del mock local.
+- [Webhooks](docs/webhooks.md): eventos, firma y reintentos.
+- [Despliegue](docs/deploy.md): Railway, AWS, Cloudflare y Resend.
+- [Operación](docs/operations.md): alertas, retención, límites, sandbox y equipo de Cetus.
+- [Benchmarks](bench/README.md): pruebas de carga con k6.
