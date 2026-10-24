@@ -46,7 +46,12 @@ export function ResendDocument({ document }: { document: DocumentDetail }) {
     },
   });
   const sandbox = document.environment === "SANDBOX";
-  const failure = resend.data && !resend.data.ok ? resend.data : null;
+  const failure =
+    resend.data && !resend.data.ok
+      ? resend.data.message
+      : resend.error
+        ? "No pudimos comunicarnos con Cetus. Revisa tu conexión e inténtalo de nuevo."
+        : null;
   const busy = document.deliveries.some((delivery) => delivery.status === "PENDING");
 
   if (document.status !== "ACCEPTED" || document.deliveries.length === 0) {
@@ -105,7 +110,7 @@ export function ResendDocument({ document }: { document: DocumentDetail }) {
           )}
           {failure && (
             <Alert variant="destructive">
-              <AlertDescription>{failure.message}</AlertDescription>
+              <AlertDescription>{failure}</AlertDescription>
             </Alert>
           )}
           <DialogFooter>

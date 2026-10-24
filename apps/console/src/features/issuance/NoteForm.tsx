@@ -23,7 +23,12 @@ import { auditLogKey } from "~/features/audit-log/queries";
 import { conceptLabel, formatMoney } from "~/features/documents/labels";
 import { documentsKey } from "~/features/documents/queries";
 import { FieldRow, FieldSection } from "~/features/setup/StepLayout";
-import type { CreditNoteConcept, DebitNoteConcept, DocumentDetail } from "~/lib/api/types";
+import type {
+  CreditNoteConcept,
+  DebitNoteConcept,
+  DocumentDetail,
+  DocumentPreview,
+} from "~/lib/api/types";
 
 import { SelectField } from "./fields";
 import { LinesEditor, emptyLine } from "./LinesEditor";
@@ -125,8 +130,18 @@ export function NoteForm({
       ]);
       await navigate({ to: "/documents/$documentId", params: { documentId: result.id } });
     },
+    // The form's alert explains the failure; the dialog would hide it.
+    onError: () => setConfirmTotal(null),
   });
-  const failure = issue.data && !issue.data.ok ? issue.data : null;
+  const [previewFailure, setPreviewFailure] = useState<string | null>(null);
+  // An answer of the API explains itself; a thrown error is an outage or a lost connection, and a retry
+  // with the same key is safe.
+  const failure =
+    issue.data && !issue.data.ok
+      ? issue.data.message
+      : issue.error
+        ? "No pudimos comunicarnos con Cetus. Revisa tu conexión e inténtalo de nuevo."
+        : previewFailure;
   const money = (amount: number) => formatMoney(amount, invoice.currency);
 
   async function submit() {
@@ -134,12 +149,24 @@ export function NoteForm({
     if (!headerValid || !linesValid) {
       return;
     }
+    setPreviewFailure(null);
     if (invoice.environment === "LIVE") {
-      const preview = await previewDocument({ data: { lines: lines.getValues().lines } });
-      if (preview) {
-        setConfirmTotal(preview.totals.payable);
+      // A LIVE note is only issued from the confirmation, which needs its total.
+      let preview: DocumentPreview | null;
+      try {
+        preview = await previewDocument({ data: { lines: lines.getValues().lines } });
+      } catch {
+        setPreviewFailure(
+          "No pudimos calcular el total para confirmar. Revisa tu conexión e inténtalo de nuevo.",
+        );
         return;
       }
+      if (!preview) {
+        setPreviewFailure("No pudimos calcular el total de estas líneas. Revisa sus valores.");
+        return;
+      }
+      setConfirmTotal(preview.totals.payable);
+      return;
     }
     issue.mutate();
   }
@@ -204,7 +231,7 @@ export function NoteForm({
       {failure && (
         <Alert variant="destructive">
           <AlertTitle>No se emitió la {copy[noteType].title}</AlertTitle>
-          <AlertDescription>{failure.message}</AlertDescription>
+          <AlertDescription>{failure}</AlertDescription>
         </Alert>
       )}
       {blockedReason && (
