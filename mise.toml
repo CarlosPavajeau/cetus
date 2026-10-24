@@ -53,6 +53,10 @@ run = "docker compose logs -f"
 description = "Apply the console's auth-schema migrations (Flyway runs when the API starts)"
 run = "pnpm --filter @cetus/console db:migrate"
 
+[tasks.fmt]
+description = "Format the console code (oxfmt)"
+run = "pnpm --filter @cetus/console format"
+
 [tasks.test-console]
 description = "Console integration (Vitest) and e2e (Playwright) tests; needs `mise run dev-mock` running"
 run = "pnpm --filter @cetus/console test"
