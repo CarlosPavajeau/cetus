@@ -123,12 +123,15 @@ export const invoiceHeaderSchema = type({
     });
   }
   if (customer.municipalityCode && !customer.line) {
-    return ctx.reject({ path: ["customer", "line"], message: "Escribe la dirección." });
+    return ctx.reject({
+      path: ["customer", "line"],
+      message: "Escribe la dirección, o quita el municipio para no indicar ubicación.",
+    });
   }
   if (customer.line && !customer.municipalityCode) {
     return ctx.reject({
       path: ["customer", "municipalityCode"],
-      message: "Busca el municipio de la dirección.",
+      message: "Busca el municipio de la dirección, o bórrala para no indicar ubicación.",
     });
   }
   if (payment.method === "CREDIT" && !/^\d{4}-\d{2}-\d{2}$/.test(payment.dueDate)) {

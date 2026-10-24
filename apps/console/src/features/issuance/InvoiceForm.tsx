@@ -324,6 +324,7 @@ export function InvoiceForm({
             control={header.control}
             name="customer.line"
             label="Dirección (opcional)"
+            hint="Va junto con el municipio: indica los dos o ninguno."
             autoComplete="off"
           />
           <Controller
