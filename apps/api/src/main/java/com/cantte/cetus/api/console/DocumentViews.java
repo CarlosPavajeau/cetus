@@ -2,6 +2,11 @@ package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.documents.DeliveryView;
 import com.cantte.cetus.api.invoices.InvoiceResponse;
+import com.cantte.cetus.domain.calc.Amounts;
+import com.cantte.cetus.domain.calc.CalculatedLine;
+import com.cantte.cetus.domain.calc.CalculationResult;
+import com.cantte.cetus.domain.calc.MonetaryTotals;
+import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -147,6 +152,49 @@ public final class DocumentViews {
                     doc.correctionDescription,
                     DeliveryView.of(doc.id),
                     DocumentTimeline.of(doc));
+        }
+    }
+
+    public record DocumentPreview(
+            List<PreviewLine> lines,
+
+            @Schema(description = "Document-level subtotals by tax")
+            List<DocumentTax> taxes,
+
+            InvoiceResponse.Totals totals) {
+
+        static DocumentPreview from(CalculationResult calculation) {
+            MonetaryTotals totals = calculation.totals();
+            return new DocumentPreview(
+                    calculation.lines().stream().map(PreviewLine::from).toList(),
+                    calculation.taxTotals().stream()
+                            .flatMap(total -> total.subtotals().stream())
+                            .map(tax -> new DocumentTax(
+                                    tax.type().name(), tax.percent(), tax.taxableAmount(), tax.amount()))
+                            .toList(),
+                    new InvoiceResponse.Totals(
+                            totals.lineExtensionAmount(),
+                            totals.taxExclusiveAmount(),
+                            totals.taxInclusiveAmount(),
+                            totals.payableAmount()));
+        }
+    }
+
+    public record PreviewLine(
+            int lineNumber,
+
+            @Schema(description = "Quantity times unit price, before taxes")
+            BigDecimal lineExtension,
+
+            BigDecimal taxAmount) {
+
+        static PreviewLine from(CalculatedLine line) {
+            return new PreviewLine(
+                    line.number(),
+                    line.lineExtensionAmount(),
+                    line.taxes().stream()
+                            .map(TaxAmount::amount)
+                            .reduce(Amounts.round(BigDecimal.ZERO), BigDecimal::add));
         }
     }
 
