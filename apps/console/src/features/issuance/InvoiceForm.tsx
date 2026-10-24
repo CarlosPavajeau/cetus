@@ -37,11 +37,12 @@ import { LinesEditor, emptyLine } from "./LinesEditor";
 import { MunicipalityField } from "./MunicipalityField";
 import { nitCheckDigit } from "./nitCheckDigit";
 import {
-  type CustomerExtras,
   type InvoiceHeaderValues,
+  type PickedCustomer,
   type LinesFormValues,
   invoiceHeaderSchema,
   linesFormSchema,
+  pickedExtras,
   splitNit,
 } from "./schema";
 import { issueInvoice, previewDocument } from "./server";
@@ -111,10 +112,7 @@ export function InvoiceForm({
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [saveCustomer, setSaveCustomer] = useState(false);
-  const [picked, setPicked] = useState<{
-    identificationNumber: string;
-    extras: CustomerExtras;
-  } | null>(null);
+  const [picked, setPicked] = useState<PickedCustomer | null>(null);
   const customerSearch = useCustomerSearch(environment);
   const header = useForm<InvoiceHeaderValues>({
     resolver: arktypeResolver(invoiceHeaderSchema),
@@ -203,11 +201,7 @@ export function InvoiceForm({
       idempotencyKey,
       invoice,
       lines: values.lines,
-      // Only while the customer is still the one picked: a hand-typed one inherits nothing.
-      customerExtras:
-        picked !== null && picked.identificationNumber === invoice.customer.identificationNumber
-          ? picked.extras
-          : null,
+      customerExtras: pickedExtras(picked, invoice.customer),
       saveCustomer: saveCustomer ? environment : null,
     };
   }
@@ -268,6 +262,7 @@ export function InvoiceForm({
                     shouldValidate: header.formState.isSubmitted,
                   });
                   setPicked({
+                    identificationType: saved.values.identificationType,
                     identificationNumber: saved.values.identificationNumber,
                     extras: saved.extras,
                   });

@@ -5,10 +5,12 @@ import type { Environment } from "~/lib/api/types";
 import { useSettled } from "~/lib/useSettled";
 
 import { customerSearchQuery, productSearchQuery } from "./queries";
+import { searchLengthMax } from "./schema";
 
 function useSearchText() {
   const [text, setText] = useState("");
-  return { q: useSettled(text.trim(), 300), setText };
+  // The input stops at the limit; slicing here keeps a pasted text from ever reaching the server too long.
+  return { q: useSettled(text.trim().slice(0, searchLengthMax), 300), setText };
 }
 
 /**

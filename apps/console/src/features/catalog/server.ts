@@ -4,14 +4,14 @@ import { type } from "arktype";
 import { CetusApiError, api } from "~/lib/api/client";
 import type { CustomerPage, ProductPage } from "~/lib/api/types";
 
-import { productSchema, toProductRequest } from "./schema";
+import { productSchema, searchLengthMax, toProductRequest } from "./schema";
 
 const environment = type("'SANDBOX' | 'TEST' | 'LIVE'");
 
 /** A page of a catalog, newest first; {@code q} searches it on the server, so no entry is out of reach. */
 const catalogPage = type({
   environment,
-  "q?": "string <= 100 | undefined",
+  "q?": type.string.atMostLength(searchLengthMax).or("undefined"),
   "before?": "string.uuid | undefined",
   limit: "1 <= number.integer <= 100",
 });

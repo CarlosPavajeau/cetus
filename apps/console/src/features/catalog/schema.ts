@@ -6,6 +6,9 @@ import { trimmed } from "~/features/issuance/schema";
 import { isTaxLevelCode } from "~/features/setup/taxLevels";
 import type { Customer, LineTax, Product } from "~/lib/api/types";
 
+/** The longest search the catalogs take; the inputs stop there, and the server refuses more. */
+export const searchLengthMax = 100;
+
 export const productSchema = type({
   "+": "delete",
   code: trimmed("0 < string <= 50", "Escribe un código de hasta 50 caracteres."),

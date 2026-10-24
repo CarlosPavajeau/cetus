@@ -6,6 +6,7 @@ import {
   type InvoiceHeaderValues,
   invoiceHeaderSchema,
   linesFormSchema,
+  pickedExtras,
   toInvoiceRequest,
 } from "~/features/issuance/schema";
 
@@ -133,5 +134,27 @@ describe("messages", () => {
       "Escribe el número de identificación.",
       "Escribe el nombre o la razón social.",
     ]);
+  });
+});
+
+describe("pickedExtras", () => {
+  const picked = {
+    identificationType: "NIT",
+    identificationNumber: "900999999-4",
+    extras: { tradeName: "Ejemplo", phone: "6015550000" },
+  } as const;
+
+  it("travels while the form holds the picked customer", () => {
+    expect(pickedExtras(picked, invoice.customer)).toEqual(picked.extras);
+  });
+
+  it("is dropped when the document type or number changes, or nothing was picked", () => {
+    expect(
+      pickedExtras(picked, { ...invoice.customer, identificationType: "PASSPORT" }),
+    ).toBeNull();
+    expect(
+      pickedExtras(picked, { ...invoice.customer, identificationNumber: "800197268-4" }),
+    ).toBeNull();
+    expect(pickedExtras(null, invoice.customer)).toBeNull();
   });
 });

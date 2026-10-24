@@ -4,6 +4,8 @@ import { Button } from "~/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "~/components/ui/input-group";
 import { Spinner } from "~/components/ui/spinner";
 
+import { searchLengthMax } from "./schema";
+
 /** Searches the catalog on the server; the list shows what matches, page by page. */
 export function CatalogSearch({
   value,
@@ -24,7 +26,7 @@ export function CatalogSearch({
           type="search"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          maxLength={100}
+          maxLength={searchLengthMax}
           placeholder={placeholder}
           aria-label={placeholder}
         />

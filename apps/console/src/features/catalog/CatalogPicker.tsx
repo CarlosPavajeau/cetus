@@ -10,6 +10,8 @@ import {
 } from "~/components/ui/combobox";
 import { Field, FieldLabel } from "~/components/ui/field";
 
+import { searchLengthMax } from "./schema";
+
 /**
  * Picks an entry of the catalog to fill in the form, searched on the server as the person types. It holds
  * no value: once picked, the form owns the data and the box clears for the next search. An entry the form
@@ -60,7 +62,13 @@ export function CatalogPicker<T extends { id: string }>({
         itemToStringLabel={itemLabel}
         isItemEqualToValue={(a: T, b: T) => a.id === b.id}
       >
-        <ComboboxInput id={id} placeholder={placeholder} className="w-full" />
+        <ComboboxInput
+          id={id}
+          placeholder={placeholder}
+          className="w-full"
+          // The search takes up to this many characters; a longer name still matches by its start.
+          maxLength={searchLengthMax}
+        />
         <ComboboxContent>
           <ComboboxEmpty>{empty}</ComboboxEmpty>
           <ComboboxList>

@@ -155,6 +155,28 @@ export const customerExtrasSchema = type({
 
 export type CustomerExtras = typeof customerExtrasSchema.infer;
 
+/** The saved customer picked into the form, with what travels beside it. */
+export type PickedCustomer = {
+  identificationType: InvoiceHeaderValues["customer"]["identificationType"];
+  identificationNumber: string;
+  extras: CustomerExtras;
+};
+
+/**
+ * The picked customer's extras, only while the form still holds that customer: same document type and
+ * number. A customer typed by hand, or a picked one changed into another, inherits nothing.
+ */
+export function pickedExtras(
+  picked: PickedCustomer | null,
+  customer: InvoiceHeaderValues["customer"],
+): CustomerExtras | null {
+  return picked !== null &&
+    picked.identificationType === customer.identificationType &&
+    picked.identificationNumber === customer.identificationNumber
+    ? picked.extras
+    : null;
+}
+
 function identificationPattern(
   identificationType: InvoiceHeaderValues["customer"]["identificationType"],
 ) {
