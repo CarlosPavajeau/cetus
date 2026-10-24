@@ -1,10 +1,15 @@
 import { FlaskConicalIcon } from "lucide-react";
 
-import { useActiveEnvironment } from "./queries";
+import { useActiveEnvironment, usePageEnvironment } from "./queries";
 
-/** Always visible while the console works in the sandbox, so nobody takes a simulated document for real. */
+/**
+ * Always visible while the console works in the sandbox, so nobody takes a simulated document for real. A
+ * page showing one document follows that document instead: a real one never sits under this warning.
+ */
 export function SandboxBanner() {
-  if (useActiveEnvironment() !== "SANDBOX") {
+  const active = useActiveEnvironment();
+  const page = usePageEnvironment();
+  if ((page ?? active) !== "SANDBOX") {
     return null;
   }
   return (

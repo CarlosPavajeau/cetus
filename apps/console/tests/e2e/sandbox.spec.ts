@@ -1,4 +1,10 @@
-import { issueInvoice, waitForStatus } from "../support/issuers";
+import {
+  createTestApiKey,
+  issueInvoice,
+  onboardIssuer,
+  uniqueNit,
+  waitForStatus,
+} from "../support/issuers";
 import type { TestOrganization } from "../support/organization";
 import { expect, open, test } from "./fixtures";
 
@@ -46,4 +52,26 @@ test("the sample issuer needs no setup", async ({ page, organization }) => {
   await expect(page.getByRole("heading", { name: "Numeración simulada" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Continuar configuración" })).toHaveCount(0);
   await expect(page.getByText("Software ID")).toHaveCount(0);
+});
+
+test("a real document never shows under the simulation warning", async ({ page, organization }) => {
+  const issuerId = await onboardIssuer(organization, uniqueNit(), "Real SAS", { testSet: false });
+  const invoice = await issueInvoice(
+    await createTestApiKey(organization),
+    issuerId,
+    "Cliente Real",
+  );
+
+  await open(page, `/documents/${invoice.id}`);
+  await page.getByRole("combobox", { name: "Ambiente" }).click();
+  await page.getByRole("option", { name: "Simulación" }).click();
+
+  // Leaving the document's environment goes back to the list, now under the warning.
+  await expect(page).toHaveURL(/\/documents$/);
+  await expect(page.getByRole("complementary", { name: "Modo simulación" })).toBeVisible();
+
+  // Opened directly, the document follows its own environment, not the selector.
+  await open(page, `/documents/${invoice.id}`);
+  await expect(page.getByRole("heading", { name: `Factura ${invoice.number}` })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Modo simulación" })).toHaveCount(0);
 });

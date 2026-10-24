@@ -52,7 +52,7 @@ export const Route = createFileRoute("/_app/documents/$documentId")({
     if (!document) {
       throw notFound();
     }
-    return { crumb: document.number };
+    return { crumb: document.number, environment: document.environment };
   },
   component: DocumentDetailPage,
   notFoundComponent: DocumentNotFound,
