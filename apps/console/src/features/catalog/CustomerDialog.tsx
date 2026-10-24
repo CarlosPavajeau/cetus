@@ -97,6 +97,10 @@ function SaveCustomer({
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        // Kept open while saving: a closed dialog reopened meanwhile would be closed by that save.
+        if (!next && save.isPending) {
+          return;
+        }
         setOpen(next);
         if (next) {
           form.reset(values);
@@ -115,7 +119,7 @@ function SaveCustomer({
           Nuevo cliente
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl">
         <form
           className="contents"
           noValidate
@@ -136,7 +140,12 @@ function SaveCustomer({
             </Alert>
           )}
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" type="button" />}>Cancelar</DialogClose>
+            <DialogClose
+              render={<Button variant="outline" type="button" />}
+              disabled={save.isPending}
+            >
+              Cancelar
+            </DialogClose>
             <Button type="submit" disabled={save.isPending}>
               {save.isPending && <Spinner data-icon="inline-start" />}
               Guardar
