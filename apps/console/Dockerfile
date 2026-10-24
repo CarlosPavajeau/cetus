@@ -1,5 +1,5 @@
 # Build from the repository root: docker build -f apps/console/Dockerfile .
-FROM node:22-slim AS build
+FROM node:24.22.1-slim AS build
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -8,7 +8,7 @@ RUN pnpm install --frozen-lockfile --filter @cetus/console...
 COPY apps/console apps/console
 RUN pnpm --filter @cetus/console build
 
-FROM node:22-slim
+FROM node:24.22.1-slim
 WORKDIR /app
 RUN corepack enable
 COPY --from=build /app /app

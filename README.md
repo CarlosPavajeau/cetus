@@ -35,7 +35,7 @@ modules/          domain, persistence, jobs, ubl, signing, dian-client, aws, ema
 ## Desarrollo local
 
 Requiere [mise](https://mise.jdx.dev) y Docker. mise instala las versiones fijadas en `mise.toml` (Java 25,
-Node 22, pnpm y k6).
+Node 24, pnpm y k6).
 
 ```bash
 mise trust && mise install
