@@ -1,21 +1,13 @@
 import { createElement } from "react";
-import { Heading, Text } from "react-email";
 
 import type { EmailMessage } from "~/lib/email/sender";
 
-import { EmailLayout, colors } from "./EmailLayout";
+import { EmailHeading, EmailLayout, EmailParagraph } from "./EmailLayout";
 
 export type PasswordChangedEmailProps = {
   name: string;
   /** When the password changed, already formatted for the reader. */
   changed: string;
-};
-
-const paragraph = {
-  color: colors.foreground,
-  fontSize: 14,
-  lineHeight: "22px",
-  margin: "0 0 16px",
 };
 
 const changedFormat = new Intl.DateTimeFormat("es-CO", {
@@ -30,20 +22,15 @@ export function PasswordChangedEmail(props: PasswordChangedEmailProps) {
       preview="La contraseña de tu cuenta de Cetus cambió"
       reason="Recibiste este correo porque la contraseña de tu cuenta de Cetus cambió. Te avisamos siempre que pasa."
     >
-      <Heading
-        as="h1"
-        style={{ color: colors.foreground, fontSize: 22, lineHeight: "30px", margin: "0 0 16px" }}
-      >
-        Tu contraseña cambió
-      </Heading>
-      <Text style={paragraph}>
+      <EmailHeading>Tu contraseña cambió</EmailHeading>
+      <EmailParagraph>
         Hola, {props.name}. La contraseña de tu cuenta de Cetus cambió el {props.changed} (hora de
         Colombia) desde el enlace de recuperación, y cerramos las sesiones que tenías abiertas.
-      </Text>
-      <Text style={paragraph}>
+      </EmailParagraph>
+      <EmailParagraph>
         <strong>Si no fuiste tú</strong>, escríbenos a soporte de inmediato: alguien pudo entrar a
         tu correo.
-      </Text>
+      </EmailParagraph>
     </EmailLayout>
   );
 }

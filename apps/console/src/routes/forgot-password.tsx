@@ -31,6 +31,7 @@ function ForgotPassword() {
       redirectTo: "/reset-password",
     });
     if (error) {
+      setSentTo(undefined);
       form.setError("root", {
         message:
           error.status === 429

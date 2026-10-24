@@ -12,8 +12,9 @@ export const signInSchema = type({
 });
 
 const newPassword = {
-  password: type("string >= 10").configure({
-    message: "La contraseña debe tener mínimo 10 caracteres.",
+  // Better Auth's own limits (minPasswordLength, and maxPasswordLength by default).
+  password: type("10 <= string <= 128").configure({
+    message: "La contraseña debe tener entre 10 y 128 caracteres.",
   }),
   confirmPassword: type("string > 0").configure({ message: "Repite tu contraseña." }),
 };

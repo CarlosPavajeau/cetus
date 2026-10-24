@@ -74,7 +74,7 @@ function NewPasswordForm({ token, onExpired }: { token: string; onExpired: () =>
     }
     if (error) {
       form.setError("root", {
-        message: error.message ?? "No pudimos cambiar la contraseña. Inténtalo de nuevo.",
+        message: "No pudimos cambiar la contraseña. Inténtalo de nuevo o pide otro enlace.",
       });
       return;
     }
