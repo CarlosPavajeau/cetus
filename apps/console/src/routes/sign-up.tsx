@@ -63,6 +63,8 @@ function SignUp() {
       });
       return;
     }
+    // Not checked: the console's banner offers to send it again.
+    await authClient.sendVerificationEmail({ email, callbackURL: "/overview" });
     // Drop anything cached by a previous session in this tab (e.g. one that expired).
     queryClient.clear();
     await navigate({ to: "/overview" });
