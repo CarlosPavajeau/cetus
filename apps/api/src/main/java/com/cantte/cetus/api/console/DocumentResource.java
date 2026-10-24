@@ -3,25 +3,37 @@ package com.cantte.cetus.api.console;
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.console.DocumentViews.DocumentDetail;
 import com.cantte.cetus.api.console.DocumentViews.DocumentPage;
+import com.cantte.cetus.api.console.DocumentViews.DocumentPreview;
 import com.cantte.cetus.api.console.DocumentViews.DocumentSummary;
 import com.cantte.cetus.api.creditnotes.CreditNoteRequest;
 import com.cantte.cetus.api.creditnotes.CreditNoteService;
+import com.cantte.cetus.api.debitnotes.DebitNoteRequest;
+import com.cantte.cetus.api.debitnotes.DebitNoteService;
+import com.cantte.cetus.api.documents.DeliveryView;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.documents.IdempotentCreation;
 import com.cantte.cetus.api.error.ProblemDetail;
+import com.cantte.cetus.api.invoices.InvoiceRequest;
+import com.cantte.cetus.api.invoices.InvoiceService;
+import com.cantte.cetus.domain.DomainException;
+import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
+import com.cantte.cetus.domain.model.DebitNoteConcept;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
+import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -37,6 +49,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,7 +59,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
-/** The account's invoices and notes, in both environments, as the console shows them, and their cancellation. */
+/** The account's invoices and notes, in every environment, as the console shows and issues them. */
 @Path("/console/documents")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(
@@ -68,6 +81,8 @@ public class DocumentResource {
 
     static final int MAX_PAGE_SIZE = 100;
 
+    private final InvoiceCalculator calculator = new InvoiceCalculator();
+
     @Inject
     ConsoleContext context;
 
@@ -79,6 +94,18 @@ public class DocumentResource {
 
     @Inject
     CreditNoteService creditNotes;
+
+    @Inject
+    InvoiceService invoices;
+
+    @Inject
+    DebitNoteService debitNotes;
+
+    @Inject
+    ConsoleIssuance issuance;
+
+    @Inject
+    DocumentResends resends;
 
     @Inject
     AuditLog auditLog;
@@ -170,6 +197,7 @@ public class DocumentResource {
             @Valid @NotNull CancellationRequest request)
             throws JsonProcessingException {
         DocumentEntity invoice = find(id);
+        issuance.requireCanIssue(invoice.environment);
         UUID accountId = invoice.accountId;
         CreditNoteRequest noteRequest = new CreditNoteRequest(
                 invoice.id,
@@ -198,6 +226,210 @@ public class DocumentResource {
                     return new CancellationResponse(note.id, note.fullNumber());
                 });
     }
+
+    /**
+     * The lines, taxes and totals a document with these lines would have, from the same calculator that
+     * issues it, so the console never computes taxes on its own. Nothing is stored.
+     */
+    @POST
+    @Path("/preview")
+    @APIResponse(responseCode = "200", description = "OK")
+    public DocumentPreview preview(@Valid @NotNull PreviewRequest request) {
+        return DocumentPreview.from(calculator.calculate(InvoiceService.toLines(request.lines())));
+    }
+
+    /**
+     * Issues an invoice from the console form. The issuer is required and sets the environment; the console
+     * sends one Idempotency-Key per form, so a double click issues a single invoice.
+     */
+    @POST
+    @Path("/invoices")
+    @Transactional
+    @APIResponse(
+            responseCode = "202",
+            description = "Accepted",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = IssuedDocument.class)))
+    public Response issueInvoice(
+            @HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
+            @Valid @NotNull InvoiceRequest request)
+            throws JsonProcessingException {
+        if (request.issuerId() == null) {
+            throw new DomainException("issuer_required", "Choose the issuer of the invoice");
+        }
+        UUID accountId = context.account().id;
+        IssuerEntity issuer = IssuerEntity.findForAccount(accountId, request.issuerId())
+                .orElseThrow(() -> new NotFoundException("Issuer not found"));
+        Environment environment = issuer.environment;
+        issuance.requireCanIssue(environment);
+        return idempotentCreation.accept(accountId, environment, "console:" + idempotencyKey, request, rawJson -> {
+            DocumentEntity doc = invoices.create(accountId, environment, request, rawJson);
+            auditLog.record(
+                    accountId,
+                    context.actor(),
+                    origin.resolve(),
+                    AuditAction.INVOICE_ISSUED,
+                    "document",
+                    doc.id,
+                    Map.of(
+                            "number",
+                            doc.fullNumber(),
+                            "issuerId",
+                            issuer.id,
+                            "payable",
+                            doc.payableAmount,
+                            "environment",
+                            environment));
+            return new IssuedDocument(doc.id, doc.fullNumber());
+        });
+    }
+
+    /** Issues a credit note for some lines of an accepted invoice; a full one goes through the cancellation. */
+    @POST
+    @Path("/{id}/credit-notes")
+    @Transactional
+    @APIResponse(
+            responseCode = "202",
+            description = "Accepted",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = IssuedDocument.class)))
+    public Response issueCreditNote(
+            @PathParam("id") UUID id,
+            @HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
+            @Valid @NotNull CreditNoteInput request)
+            throws JsonProcessingException {
+        DocumentEntity invoice = find(id);
+        issuance.requireCanIssue(invoice.environment);
+        UUID accountId = invoice.accountId;
+        CreditNoteRequest noteRequest = new CreditNoteRequest(
+                invoice.id, request.concept(), request.description().strip(), request.lines(), null, null);
+        return idempotentCreation.accept(
+                accountId, invoice.environment, "console:" + idempotencyKey, noteRequest, rawJson -> {
+                    DocumentEntity note = creditNotes.create(accountId, invoice.environment, noteRequest, rawJson);
+                    recordNote(
+                            AuditAction.CREDIT_NOTE_ISSUED,
+                            invoice,
+                            note,
+                            request.concept().name());
+                    return new IssuedDocument(note.id, note.fullNumber());
+                });
+    }
+
+    @POST
+    @Path("/{id}/debit-notes")
+    @Transactional
+    @APIResponse(
+            responseCode = "202",
+            description = "Accepted",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = IssuedDocument.class)))
+    public Response issueDebitNote(
+            @PathParam("id") UUID id,
+            @HeaderParam("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
+            @Valid @NotNull DebitNoteInput request)
+            throws JsonProcessingException {
+        DocumentEntity invoice = find(id);
+        issuance.requireCanIssue(invoice.environment);
+        UUID accountId = invoice.accountId;
+        DebitNoteRequest noteRequest = new DebitNoteRequest(
+                invoice.id, request.concept(), request.description().strip(), request.lines(), null, null);
+        return idempotentCreation.accept(
+                accountId, invoice.environment, "console:" + idempotencyKey, noteRequest, rawJson -> {
+                    DocumentEntity note = debitNotes.create(accountId, invoice.environment, noteRequest, rawJson);
+                    recordNote(
+                            AuditAction.DEBIT_NOTE_ISSUED,
+                            invoice,
+                            note,
+                            request.concept().name());
+                    return new IssuedDocument(note.id, note.fullNumber());
+                });
+    }
+
+    /**
+     * Emails an accepted document again, to {@code email} or to whom its first delivery went; at most once a
+     * minute. The new delivery shows up in the document's deliveries.
+     */
+    @POST
+    @Path("/{id}/deliveries")
+    @Transactional
+    @APIResponse(
+            responseCode = "202",
+            description = "Accepted",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = DeliveryView.class)))
+    public Response resend(@PathParam("id") UUID id, @Valid @NotNull ResendRequest request) {
+        DocumentEntity doc = find(id);
+        String email = request.email() == null || request.email().isBlank()
+                ? null
+                : request.email().strip();
+        DocumentDeliveryEntity delivery = resends.resend(doc.accountId, doc.id, doc.environment, email);
+        Map<String, Object> data = new HashMap<>();
+        data.put("number", doc.fullNumber());
+        data.put("environment", doc.environment);
+        if (email != null) {
+            data.put("recipient", email);
+        }
+        auditLog.record(
+                doc.accountId,
+                context.actor(),
+                origin.resolve(),
+                AuditAction.DOCUMENT_RESENT,
+                "document",
+                doc.id,
+                data);
+        return Response.accepted(DeliveryView.from(delivery)).build();
+    }
+
+    private void recordNote(AuditAction action, DocumentEntity invoice, DocumentEntity note, String concept) {
+        auditLog.record(
+                invoice.accountId,
+                context.actor(),
+                origin.resolve(),
+                action,
+                "document",
+                note.id,
+                Map.of(
+                        "number",
+                        note.fullNumber(),
+                        "invoiceId",
+                        invoice.id,
+                        "invoiceNumber",
+                        invoice.fullNumber(),
+                        "concept",
+                        concept,
+                        "payable",
+                        note.payableAmount,
+                        "environment",
+                        invoice.environment));
+    }
+
+    public record PreviewRequest(@NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines) {}
+
+    public record CreditNoteInput(
+            @NotNull CreditNoteConcept concept,
+            @NotBlank @Size(max = 500) String description,
+            @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines) {}
+
+    public record DebitNoteInput(
+            @NotNull DebitNoteConcept concept,
+            @NotBlank @Size(max = 500) String description,
+            @NotEmpty @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines) {}
+
+    public record IssuedDocument(UUID id, String number) {}
+
+    public record ResendRequest(
+            @Schema(nullable = true, description = "Another address; leave it out to use the first delivery's")
+            @Size(max = 254)
+            @Email(regexp = InvoiceRequest.EMAIL)
+            String email) {}
 
     public record CancellationRequest(
             @NotBlank @Size(max = 500) String description) {}

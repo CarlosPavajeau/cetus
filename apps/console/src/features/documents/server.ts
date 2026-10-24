@@ -65,7 +65,7 @@ export const getDocumentFileUrl = createServerFn({ method: "GET" })
 const cancellationMessages: Record<string, string> = {
   invoice_not_accepted: "Solo se pueden anular facturas aceptadas por la DIAN.",
   credit_note_exceeds_balance:
-    "La factura ya tiene notas crédito: la anulación total superaría su saldo. Emite una nota parcial por la API.",
+    "La factura ya tiene notas crédito: la anulación total superaría su saldo. Emite una nota crédito parcial por el saldo.",
   no_active_numbering_range:
     "El emisor no tiene un rango de numeración vigente para notas crédito. Agrégalo en el detalle del emisor.",
   issuer_not_ready: "El emisor no está habilitado para emitir documentos.",
@@ -105,6 +105,47 @@ export const cancelInvoice = createServerFn({ method: "POST" })
           message:
             cancellationMessages[error.code] ??
             "No pudimos anular la factura. Inténtalo de nuevo en unos minutos.",
+        };
+      }
+      throw error;
+    }
+  });
+
+const resendMessages: Record<string, string> = {
+  document_not_accepted: "Solo se reenvían documentos aceptados por la DIAN.",
+  delivery_in_progress: "El documento todavía se está enviando por correo. Espera a que termine.",
+  delivery_too_soon: "Acabamos de enviarlo. Espera un minuto antes de reenviarlo.",
+  recipient_required: "El cliente no tiene correo: escribe a qué dirección enviarlo.",
+  sandbox_recipient: "Los documentos de simulación solo se envían al contacto técnico.",
+  impersonation_forbidden: "Los documentos solo los reenvía la persona de la cuenta.",
+  account_suspended: "La cuenta está suspendida: no se pueden reenviar documentos.",
+  invalid_request: "Escribe un correo válido.",
+};
+
+/** Another address for a resend, or empty for the first delivery's; checked by the dialog too. */
+export const resendEmail = type("string.trim").to(
+  type("string.email | ''").configure({ message: "Escribe un correo válido." }),
+);
+
+export type ResendResult = { ok: true } | { ok: false; message: string };
+
+/** Emails an accepted document again, to another address or to whom it went the first time. */
+export const resendDocument = createServerFn({ method: "POST" })
+  .validator(type({ id: "string.uuid", email: resendEmail }))
+  .handler(async ({ data }): Promise<ResendResult> => {
+    try {
+      await api.post("/console/documents/{id}/deliveries", {
+        params: { path: { id: data.id } },
+        body: data.email ? { email: data.email } : {},
+      });
+      return { ok: true };
+    } catch (error) {
+      if (error instanceof CetusApiError && error.status >= 400 && error.status < 500) {
+        return {
+          ok: false,
+          message:
+            resendMessages[error.code] ??
+            "No pudimos reenviar el documento. Inténtalo de nuevo en unos minutos.",
         };
       }
       throw error;

@@ -40,6 +40,32 @@ export type DocumentEvent = Schemas["DocumentEvent"];
 
 export type Delivery = Schemas["DeliveryView"];
 
+export type InvoiceRequest = Schemas["InvoiceRequest"];
+
+export type InvoiceLine = Schemas["Line"];
+
+export type LineTax = Schemas["LineTax"];
+
+export type IdentificationType = Schemas["IdentificationType"];
+
+export type PersonType = Schemas["PersonType"];
+
+export type CreditNoteConcept = Schemas["CreditNoteConcept"];
+
+export type DebitNoteConcept = Schemas["DebitNoteConcept"];
+
+export type DocumentPreview = Schemas["DocumentPreview"];
+
+export type IssuedDocument = Schemas["IssuedDocument"];
+
+export type Customer = Schemas["CustomerView"];
+
+export type CustomerPage = Schemas["CustomerPage"];
+
+export type Product = Schemas["ProductView"];
+
+export type ProductPage = Schemas["ProductPage"];
+
 export type DocumentFile = "xml" | "pdf" | "attached-document";
 
 /** Runtime lists for the document filters and their validators. Must list every value of the API enums. */
@@ -100,7 +126,10 @@ export const auditActions = [
   "WEBHOOK_ENDPOINT_DISABLED",
   "WEBHOOK_ENDPOINT_ENABLED",
   "WEBHOOK_DELIVERY_RETRIED",
+  "INVOICE_ISSUED",
   "CREDIT_NOTE_ISSUED",
+  "DEBIT_NOTE_ISSUED",
+  "DOCUMENT_RESENT",
   "ACCOUNT_SUSPENDED",
   "ACCOUNT_REACTIVATED",
   "USER_BANNED",

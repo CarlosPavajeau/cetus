@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 /**
  * While a Cetus admin impersonates a console user, the actions that hand over or replace credentials stay
  * with the customer: uploading a certificate, creating or revoking API keys and changing who receives the
- * account's notices answer 403.
+ * account's notices answer 403. So does emailing a document again, which can name any address.
  */
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -28,7 +28,8 @@ public class ImpersonationFilter implements ContainerRequestFilter {
             new Rule(HttpMethod.DELETE, Pattern.compile("/console/api-keys/[^/]+")),
             new Rule(HttpMethod.PUT, Pattern.compile("/console/contacts/[^/]+")),
             new Rule(HttpMethod.POST, Pattern.compile("/console/contacts/[^/]+/verification")),
-            new Rule(HttpMethod.DELETE, Pattern.compile("/console/contacts/[^/]+/pending")));
+            new Rule(HttpMethod.DELETE, Pattern.compile("/console/contacts/[^/]+/pending")),
+            new Rule(HttpMethod.POST, Pattern.compile("/console/documents/[^/]+/deliveries")));
 
     @Inject
     ConsoleContext context;

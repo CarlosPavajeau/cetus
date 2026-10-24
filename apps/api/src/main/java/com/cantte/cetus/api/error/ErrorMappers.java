@@ -1,5 +1,7 @@
 package com.cantte.cetus.api.error;
 
+import com.cantte.cetus.api.console.ConsoleIssuance;
+import com.cantte.cetus.api.console.DocumentResends;
 import com.cantte.cetus.api.documents.DocumentDrafts;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.json.SafeStrings;
@@ -92,6 +94,16 @@ public class ErrorMappers {
 
     @ServerExceptionMapper
     public Response fileNotAvailable(DocumentFiles.FileNotAvailable e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response issuanceForbidden(ConsoleIssuance.IssuanceForbidden e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response resendTooSoon(DocumentResends.TooSoon e) {
         return e.getResponse();
     }
 

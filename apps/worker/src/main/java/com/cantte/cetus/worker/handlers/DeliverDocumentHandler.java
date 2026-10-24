@@ -95,9 +95,7 @@ public class DeliverDocumentHandler implements JobHandler {
             return;
         }
 
-        Stored attached =
-                artifacts.latest(ctx.documentId(), Kind.ATTACHED_DOCUMENT).orElseGet(() -> attachedDocument(ctx));
-        Stored pdf = artifacts.latest(ctx.documentId(), Kind.PDF).orElseGet(() -> pdf(ctx));
+        Files files = files(ctx);
 
         Optional<EmailSender> sender = email.sender();
         if (sender.isEmpty()) {
@@ -126,19 +124,34 @@ public class DeliverDocumentHandler implements JobHandler {
             return;
         }
 
-        String zipName = attached.fileName().replaceFirst("\\.xml$", ".zip");
-        byte[] zip = zip(attached, pdf);
         UUID deliveryId = deliveries.attempt(ctx.documentId(), recipient.get());
+        send(ctx, files, sender.get(), deliveryId, recipient.get());
+    }
+
+    /** The AttachedDocument and the PDF of an accepted document, built and stored the first time. */
+    Files files(ProcessingContext ctx) {
+        Stored attached =
+                artifacts.latest(ctx.documentId(), Kind.ATTACHED_DOCUMENT).orElseGet(() -> attachedDocument(ctx));
+        Stored pdf = artifacts.latest(ctx.documentId(), Kind.PDF).orElseGet(() -> pdf(ctx));
+        return new Files(attached, pdf);
+    }
+
+    record Files(Stored attached, Stored pdf) {}
+
+    /** Emails both files in one zip under the delivery's idempotency key, and records how it went. */
+    void send(ProcessingContext ctx, Files files, EmailSender sender, UUID deliveryId, String recipient) {
+        String zipName = files.attached().fileName().replaceFirst("\\.xml$", ".zip");
+        byte[] zip = zip(files.attached(), files.pdf());
         if (zip.length > MAX_ZIP_BYTES) {
-            deliveries.failed(
-                    ctx.documentId(), "The zip weighs " + zip.length + " bytes; the annex allows 2 MB per email");
+            deliveries.deliveryFailed(
+                    deliveryId, "The zip weighs " + zip.length + " bytes; the annex allows 2 MB per email");
             return;
         }
 
         DeliveryEmail content = DeliveryEmail.of(ctx);
         EmailMessage message = new EmailMessage(
                 email.from(),
-                recipient.get(),
+                recipient,
                 ctx.supplier().email(),
                 content.subject(),
                 content.html(),
@@ -146,7 +159,7 @@ public class DeliverDocumentHandler implements JobHandler {
                 List.of(new EmailMessage.Attachment(zipName, zip)));
         String messageId;
         try {
-            messageId = sender.get().send(message, "delivery-" + deliveryId);
+            messageId = sender.send(message, "delivery-" + deliveryId);
         } catch (EmailRateLimited e) {
             deliveries.attemptFailed(deliveryId, e.getMessage());
             throw new RetryLater(email.rateLimitDelay(), e.getMessage());
@@ -154,7 +167,7 @@ public class DeliverDocumentHandler implements JobHandler {
             deliveries.attemptFailed(deliveryId, e.getMessage());
             throw e;
         } catch (EmailRejectedException e) {
-            deliveries.failed(ctx.documentId(), e.getMessage());
+            deliveries.deliveryFailed(deliveryId, e.getMessage());
             throw new GiveUp(e.getMessage(), e);
         }
         deliveries.sent(deliveryId, messageId);

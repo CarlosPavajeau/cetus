@@ -31,7 +31,7 @@ public record InvoiceRequest(
         @Pattern(regexp = "[A-Z]{3}") String currency,
         @NotNull @Valid Customer customer,
         @NotNull @Valid Payment payment,
-        @NotEmpty @Size(max = 500) List<@Valid Line> lines,
+        @NotEmpty @Size(max = 500) List<@Valid @NotNull Line> lines,
         @Size(max = 20) List<@Size(max = 500) String> notes) {
 
     /** Fiscal responsibilities a customer can declare (annex table 13.2.6.1). */
@@ -109,7 +109,7 @@ public record InvoiceRequest(
             @NotNull @PositiveOrZero @Digits(integer = 14, fraction = 6)
             BigDecimal unitPrice,
 
-            @Size(max = 5) List<@Valid LineTax> taxes) {}
+            @Size(max = 5) List<@Valid @NotNull LineTax> taxes) {}
 
     public record LineTax(
             @NotNull TaxType type,

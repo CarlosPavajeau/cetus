@@ -66,8 +66,7 @@ export function CancelInvoice({ invoice }: { invoice: DocumentDetail }) {
           </Button>
         </TooltipTrigger>
         <TooltipContent className="max-w-64">
-          Ya tiene notas crédito por parte de su valor: emite el resto con una nota parcial por la
-          API.
+          Ya tiene notas crédito por parte de su valor: emite el resto con una nota crédito parcial.
         </TooltipContent>
       </Tooltip>
     );

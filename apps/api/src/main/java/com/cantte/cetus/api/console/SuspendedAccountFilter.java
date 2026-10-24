@@ -24,10 +24,11 @@ public class SuspendedAccountFilter implements ContainerRequestFilter {
 
     private static final Set<String> READS = Set.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS);
     /**
-     * Bootstrapping is idempotent (it returns the existing account, whatever its status), and ending an
-     * impersonation only records it.
+     * Bootstrapping is idempotent (it returns the existing account, whatever its status), ending an
+     * impersonation only records it, and a document preview stores nothing.
      */
-    private static final Set<String> ALLOWED = Set.of("/console/account", "/console/impersonation/end");
+    private static final Set<String> ALLOWED =
+            Set.of("/console/account", "/console/impersonation/end", "/console/documents/preview");
 
     @Inject
     JsonWebToken jwt;

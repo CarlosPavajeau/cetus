@@ -180,6 +180,31 @@ class InvoiceResourceTest {
     }
 
     @Test
+    void aNullLineOrTaxIsAFieldError() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Null line SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+        Map<String, Object> nullLine = invoice(issuerId);
+        nullLine.put("lines", Collections.singletonList(null));
+        Map<String, Object> nullTax = invoice(issuerId);
+        Map<String, Object> line = new HashMap<>(
+                Map.of("itemCode", "SERV-1", "description", "Servicio", "quantity", 1, "unitPrice", 100000));
+        line.put("taxes", Collections.singletonList(null));
+        nullTax.put("lines", List.of(line));
+
+        for (Map<String, Object> invoice : List.of(nullLine, nullTax)) {
+            api(apiKey)
+                    .header("Idempotency-Key", UUID.randomUUID().toString())
+                    .body(invoice)
+                    .post("/v1/invoices")
+                    .then()
+                    .statusCode(400)
+                    .body("code", equalTo("invalid_request"));
+        }
+    }
+
+    @Test
     @Timeout(30)
     void hugeExponentsAreRefusedBeforeAnyArithmetic() {
         ConsoleUser user = ConsoleUser.newOrganization();

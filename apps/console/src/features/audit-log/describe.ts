@@ -1,3 +1,4 @@
+import { conceptLabel } from "~/features/documents/labels";
 import type { AuditEntry } from "~/lib/api/types";
 
 import { dayFormat, timeFormat } from "./labels";
@@ -88,8 +89,16 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "WEBHOOK_ENDPOINT_CREATED":
     case "WEBHOOK_DELIVERY_RETRIED":
       return `${text(data.url)} · ${label(environmentLabel, data.environment)}`;
+    case "INVOICE_ISSUED":
+      return `${text(data.number)} · ${label(environmentLabel, data.environment)}`;
     case "CREDIT_NOTE_ISSUED":
-      return `${text(data.number)} anula la factura ${text(data.invoiceNumber)} · ${label(environmentLabel, data.environment)}`;
+      return data.concept === "CANCELLATION"
+        ? `${text(data.number)} anula la factura ${text(data.invoiceNumber)} · ${label(environmentLabel, data.environment)}`
+        : `${text(data.number)} sobre la factura ${text(data.invoiceNumber)} · ${label(conceptLabel, data.concept)} · ${label(environmentLabel, data.environment)}`;
+    case "DEBIT_NOTE_ISSUED":
+      return `${text(data.number)} sobre la factura ${text(data.invoiceNumber)} · ${label(conceptLabel, data.concept)} · ${label(environmentLabel, data.environment)}`;
+    case "DOCUMENT_RESENT":
+      return `${text(data.number)}${data.recipient ? ` a ${text(data.recipient)}` : ""} · ${label(environmentLabel, data.environment)}`;
     case "ACCOUNT_SUSPENDED":
     case "ACCOUNT_REACTIVATED":
       return `Motivo: ${text(data.reason)}`;

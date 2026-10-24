@@ -25,8 +25,12 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
+import { Route as AppCatalogIndexRouteImport } from './routes/_app/catalog/index'
+import { Route as AppCatalogCustomersRouteImport } from './routes/_app/catalog/customers'
+import { Route as AppCatalogProductsRouteImport } from './routes/_app/catalog/products'
 import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/index'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
+import { Route as AppDocumentsNewRouteImport } from './routes/_app/documents/new'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
 import { Route as AppSettingsContactsRouteImport } from './routes/_app/settings/contacts'
@@ -41,6 +45,7 @@ import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/dev
 import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
 import { Route as AppDevelopersWebhooksEndpointIdRouteImport } from './routes/_app/developers/webhooks/$endpointId'
 import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuers/$issuerId_.edit'
+import { Route as AppDocumentsDocumentIdNotesNewRouteImport } from './routes/_app/documents/$documentId_.notes.new'
 import { Route as AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport } from './routes/_admin/admin/organizations/$accountId_.issuers.$issuerId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -122,6 +127,21 @@ const AppActivityEventIdRoute = AppActivityEventIdRouteImport.update({
   path: '/activity/$eventId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCatalogIndexRoute = AppCatalogIndexRouteImport.update({
+  id: '/catalog/',
+  path: '/catalog/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogCustomersRoute = AppCatalogCustomersRouteImport.update({
+  id: '/catalog/customers',
+  path: '/catalog/customers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogProductsRoute = AppCatalogProductsRouteImport.update({
+  id: '/catalog/products',
+  path: '/catalog/products',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDocumentsIndexRoute = AppDocumentsIndexRouteImport.update({
   id: '/documents/',
   path: '/documents/',
@@ -130,6 +150,11 @@ const AppDocumentsIndexRoute = AppDocumentsIndexRouteImport.update({
 const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
   id: '/documents/$documentId',
   path: '/documents/$documentId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDocumentsNewRoute = AppDocumentsNewRouteImport.update({
+  id: '/documents/new',
+  path: '/documents/new',
   getParentRoute: () => AppRoute,
 } as any)
 const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
@@ -208,6 +233,12 @@ const AppIssuersIssuerIdEditRoute = AppIssuersIssuerIdEditRouteImport.update({
   path: '/issuers/$issuerId/edit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsDocumentIdNotesNewRoute =
+  AppDocumentsDocumentIdNotesNewRouteImport.update({
+    id: '/documents/$documentId_/notes/new',
+    path: '/documents/$documentId/notes/new',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute =
   AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport.update({
     id: '/admin/organizations/$accountId_/issuers/$issuerId',
@@ -228,13 +259,17 @@ export interface FileRoutesByFullPath {
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/catalog/customers': typeof AppCatalogCustomersRoute
+  '/catalog/products': typeof AppCatalogProductsRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/documents/new': typeof AppDocumentsNewRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/activity/': typeof AppActivityIndexRoute
+  '/catalog/': typeof AppCatalogIndexRoute
   '/documents/': typeof AppDocumentsIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
@@ -246,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesByTo {
@@ -261,13 +297,17 @@ export interface FileRoutesByTo {
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/catalog/customers': typeof AppCatalogCustomersRoute
+  '/catalog/products': typeof AppCatalogProductsRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/documents/new': typeof AppDocumentsNewRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin': typeof AdminAdminIndexRoute
   '/activity': typeof AppActivityIndexRoute
+  '/catalog': typeof AppCatalogIndexRoute
   '/documents': typeof AppDocumentsIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
@@ -279,6 +319,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
+  '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesById {
@@ -297,13 +338,17 @@ export interface FileRoutesById {
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
+  '/_app/catalog/customers': typeof AppCatalogCustomersRoute
+  '/_app/catalog/products': typeof AppCatalogProductsRoute
   '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/_app/documents/new': typeof AppDocumentsNewRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/_app/settings/contacts': typeof AppSettingsContactsRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_app/activity/': typeof AppActivityIndexRoute
+  '/_app/catalog/': typeof AppCatalogIndexRoute
   '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_admin/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
@@ -315,6 +360,7 @@ export interface FileRoutesById {
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
+  '/_app/documents/$documentId_/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
   '/_admin/admin/organizations/$accountId_/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRouteTypes {
@@ -332,13 +378,17 @@ export interface FileRouteTypes {
     | '/contact-verification/$token'
     | '/admin/audit-log'
     | '/activity/$eventId'
+    | '/catalog/customers'
+    | '/catalog/products'
     | '/documents/$documentId'
+    | '/documents/new'
     | '/issuers/$issuerId'
     | '/settings/contacts'
     | '/settings/security'
     | '/api/auth/$'
     | '/admin/'
     | '/activity/'
+    | '/catalog/'
     | '/documents/'
     | '/issuers/'
     | '/admin/organizations/$accountId'
@@ -350,6 +400,7 @@ export interface FileRouteTypes {
     | '/admin/users/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
+    | '/documents/$documentId/notes/new'
     | '/admin/organizations/$accountId/issuers/$issuerId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -365,13 +416,17 @@ export interface FileRouteTypes {
     | '/contact-verification/$token'
     | '/admin/audit-log'
     | '/activity/$eventId'
+    | '/catalog/customers'
+    | '/catalog/products'
     | '/documents/$documentId'
+    | '/documents/new'
     | '/issuers/$issuerId'
     | '/settings/contacts'
     | '/settings/security'
     | '/api/auth/$'
     | '/admin'
     | '/activity'
+    | '/catalog'
     | '/documents'
     | '/issuers'
     | '/admin/organizations/$accountId'
@@ -383,6 +438,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/developers/api-keys'
     | '/developers/webhooks'
+    | '/documents/$documentId/notes/new'
     | '/admin/organizations/$accountId/issuers/$issuerId'
   id:
     | '__root__'
@@ -400,13 +456,17 @@ export interface FileRouteTypes {
     | '/contact-verification/$token'
     | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
+    | '/_app/catalog/customers'
+    | '/_app/catalog/products'
     | '/_app/documents/$documentId'
+    | '/_app/documents/new'
     | '/_app/issuers/$issuerId'
     | '/_app/settings/contacts'
     | '/_app/settings/security'
     | '/api/auth/$'
     | '/_admin/admin/'
     | '/_app/activity/'
+    | '/_app/catalog/'
     | '/_app/documents/'
     | '/_app/issuers/'
     | '/_admin/admin/organizations/$accountId'
@@ -418,6 +478,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/users/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
+    | '/_app/documents/$documentId_/notes/new'
     | '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
   fileRoutesById: FileRoutesById
 }
@@ -550,6 +611,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActivityEventIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/catalog/': {
+      id: '/_app/catalog/'
+      path: '/catalog'
+      fullPath: '/catalog/'
+      preLoaderRoute: typeof AppCatalogIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/customers': {
+      id: '/_app/catalog/customers'
+      path: '/catalog/customers'
+      fullPath: '/catalog/customers'
+      preLoaderRoute: typeof AppCatalogCustomersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/products': {
+      id: '/_app/catalog/products'
+      path: '/catalog/products'
+      fullPath: '/catalog/products'
+      preLoaderRoute: typeof AppCatalogProductsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/documents/': {
       id: '/_app/documents/'
       path: '/documents'
@@ -562,6 +644,13 @@ declare module '@tanstack/react-router' {
       path: '/documents/$documentId'
       fullPath: '/documents/$documentId'
       preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents/new': {
+      id: '/_app/documents/new'
+      path: '/documents/new'
+      fullPath: '/documents/new'
+      preLoaderRoute: typeof AppDocumentsNewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/issuers/': {
@@ -662,6 +751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIssuersIssuerIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/documents/$documentId_/notes/new': {
+      id: '/_app/documents/$documentId_/notes/new'
+      path: '/documents/$documentId/notes/new'
+      fullPath: '/documents/$documentId/notes/new'
+      preLoaderRoute: typeof AppDocumentsDocumentIdNotesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_admin/admin/organizations/$accountId_/issuers/$issuerId': {
       id: '/_admin/admin/organizations/$accountId_/issuers/$issuerId'
       path: '/admin/organizations/$accountId/issuers/$issuerId'
@@ -698,11 +794,15 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 interface AppRouteChildren {
   AppOverviewRoute: typeof AppOverviewRoute
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
+  AppCatalogCustomersRoute: typeof AppCatalogCustomersRoute
+  AppCatalogProductsRoute: typeof AppCatalogProductsRoute
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
+  AppDocumentsNewRoute: typeof AppDocumentsNewRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
   AppSettingsContactsRoute: typeof AppSettingsContactsRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
+  AppCatalogIndexRoute: typeof AppCatalogIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
@@ -710,16 +810,21 @@ interface AppRouteChildren {
   AppIssuersIssuerIdEditRoute: typeof AppIssuersIssuerIdEditRoute
   AppDevelopersApiKeysIndexRoute: typeof AppDevelopersApiKeysIndexRoute
   AppDevelopersWebhooksIndexRoute: typeof AppDevelopersWebhooksIndexRoute
+  AppDocumentsDocumentIdNotesNewRoute: typeof AppDocumentsDocumentIdNotesNewRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppOverviewRoute: AppOverviewRoute,
   AppActivityEventIdRoute: AppActivityEventIdRoute,
+  AppCatalogCustomersRoute: AppCatalogCustomersRoute,
+  AppCatalogProductsRoute: AppCatalogProductsRoute,
   AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
+  AppDocumentsNewRoute: AppDocumentsNewRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
   AppSettingsContactsRoute: AppSettingsContactsRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
+  AppCatalogIndexRoute: AppCatalogIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
@@ -727,6 +832,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIssuersIssuerIdEditRoute: AppIssuersIssuerIdEditRoute,
   AppDevelopersApiKeysIndexRoute: AppDevelopersApiKeysIndexRoute,
   AppDevelopersWebhooksIndexRoute: AppDevelopersWebhooksIndexRoute,
+  AppDocumentsDocumentIdNotesNewRoute: AppDocumentsDocumentIdNotesNewRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

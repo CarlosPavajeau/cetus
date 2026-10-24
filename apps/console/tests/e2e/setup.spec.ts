@@ -31,7 +31,9 @@ async function fillSoftware(page: Page, { testSet = true }: { testSet?: boolean 
   }
 }
 
-test("signing up takes a new organization to the assistant", async ({ page }) => {
+test("signing up opens the console in the sandbox, with the assistant one click away", async ({
+  page,
+}) => {
   const id = crypto.randomUUID().slice(0, 8);
   await open(page, "/sign-up");
   await page.getByLabel("Nombre completo").fill("Persona de pruebas");
@@ -41,6 +43,9 @@ test("signing up takes a new organization to the assistant", async ({ page }) =>
   await page.getByLabel("Confirmar contraseña").fill(`clave-${id}-segura`);
   await page.getByRole("button", { name: /crear/i }).click();
 
+  await expect(page).toHaveURL(/\/overview$/);
+  await expect(page.getByRole("complementary", { name: "Modo simulación" })).toBeVisible();
+  await page.getByRole("button", { name: "Configurar emisor" }).click();
   await expect(page).toHaveURL(/\/setup$/);
   await expect(stepTitle(page, 1)).toBeVisible();
   // Habilitación is where a new issuer usually starts.
@@ -51,9 +56,7 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   page,
   organization: _,
 }) => {
-  await open(page, "/overview");
-  // With no issuers, the console starts in the assistant.
-  await expect(page).toHaveURL(/\/setup$/);
+  await open(page, "/setup");
 
   await fillIssuer(page);
   await expect(page.getByText("Código de municipio: 20001")).toBeVisible();

@@ -36,5 +36,11 @@ export function roleList(role: string | null | undefined): string[] {
  */
 export const contactManagerRoles = ["owner", "admin"];
 
+/**
+ * Organization member roles that may issue LIVE documents from the console: a real fiscal document, only
+ * corrected with another one. The API checks the same list; SANDBOX and TEST are open to every member.
+ */
+export const liveIssuerRoles = ["owner", "admin"];
+
 /** How long a Cetus admin can act as a console user before signing in again. */
 export const impersonationSeconds = 30 * 60;

@@ -17,6 +17,6 @@ public record CreditNoteRequest(
         @NotNull UUID invoiceId,
         @NotNull CreditNoteConcept concept,
         @NotBlank @Size(max = 500) String description,
-        @Size(max = 500) List<InvoiceRequest.@Valid Line> lines,
+        @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines,
         @Size(max = 100) String externalReference,
         @Size(max = 20) List<@Size(max = 500) String> notes) {}

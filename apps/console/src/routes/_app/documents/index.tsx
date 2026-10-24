@@ -1,7 +1,7 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type } from "arktype";
-import { FileTextIcon, SearchIcon } from "lucide-react";
+import { FileTextIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useState } from "react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
@@ -32,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
 import { IssueDateFilter } from "~/features/documents/IssueDateFilter";
 import {
@@ -43,6 +42,8 @@ import {
 } from "~/features/documents/labels";
 import { documentsQuery } from "~/features/documents/queries";
 import { type DocumentFilters, documentFilters } from "~/features/documents/server";
+import { environmentLabel } from "~/features/environment/EnvironmentSelect";
+import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
 import {
   type DocumentSummary,
   documentStatuses,
@@ -50,24 +51,38 @@ import {
   type Environment,
 } from "~/lib/api/types";
 
+/** The environment comes from the console's selector, not the URL. */
+type SearchFilters = Omit<DocumentFilters, "environment">;
+
 export const Route = createFileRoute("/_app/documents/")({
   // Unknown or malformed params are dropped instead of failing the page.
-  validateSearch: (search: Record<string, unknown>): DocumentFilters => {
+  validateSearch: (search: Record<string, unknown>): SearchFilters => {
     const filters: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(search)) {
       // The router parses "?q=123" as a number.
       const raw = typeof value === "number" ? String(value) : value;
-      if (raw !== "" && !(documentFilters({ [key]: raw }) instanceof type.errors)) {
+      if (
+        key !== "environment" &&
+        raw !== "" &&
+        !(documentFilters({ [key]: raw }) instanceof type.errors)
+      ) {
         filters[key] = raw;
       }
     }
-    return filters as DocumentFilters;
+    return filters;
   },
   loaderDeps: ({ search }) => search,
-  loader: ({ context: { queryClient }, deps }) =>
-    queryClient.ensureInfiniteQueryData(documentsQuery(deps)),
+  loader: async ({ context: { queryClient }, deps }) => {
+    const environment = await queryClient.ensureQueryData(activeEnvironmentQuery);
+    await queryClient.ensureInfiniteQueryData(documentsQuery(withEnvironment(deps, environment)));
+  },
   component: Documents,
 });
+
+/** An issuer has a single environment, so its documents are listed whatever the selector says. */
+function withEnvironment(filters: SearchFilters, environment: Environment): DocumentFilters {
+  return filters.issuerId ? filters : { ...filters, environment };
+}
 
 type Option = { label: string; value: string };
 
@@ -156,15 +171,16 @@ function SearchBox({
 
 function Documents() {
   const filters = Route.useSearch();
+  const environment = useActiveEnvironment();
   const navigate = useNavigate({ from: Route.fullPath });
   // Each filter set is its own query, so the pages appended with "Ver más" never mix across filters.
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
-    documentsQuery(filters),
+    documentsQuery(withEnvironment(filters, environment)),
   );
   const documents = data.pages.flatMap((page) => page.items);
   const filtered = Object.values(filters).some((value) => value !== undefined);
 
-  function update(changes: Partial<DocumentFilters>) {
+  function update(changes: Partial<SearchFilters>) {
     void navigate({ search: (previous) => ({ ...previous, ...changes }), replace: true });
   }
 
@@ -173,23 +189,21 @@ function Documents() {
       <PageHeader
         title="Documentos"
         lead="Facturas y notas de la cuenta, con su estado ante la DIAN y su entrega al cliente."
+        action={
+          <Button render={<Link to="/documents/new" />} nativeButton={false}>
+            <PlusIcon data-icon="inline-start" />
+            Emitir factura
+          </Button>
+        }
       />
 
       <section className="flex flex-col gap-4" aria-label="Tus documentos">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <Tabs
-            value={filters.environment ?? "ALL"}
-            onValueChange={(value) =>
-              update({ environment: value === "ALL" ? undefined : (value as Environment) })
-            }
-          >
-            <TabsList className="gap-0.75">
-              <TabsTrigger value="ALL">Todos</TabsTrigger>
-              <TabsTrigger value="LIVE">Producción</TabsTrigger>
-              <TabsTrigger value="TEST">Pruebas</TabsTrigger>
-              <TabsTrigger value="SANDBOX">Simulación</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <p className="text-xs text-muted-foreground">
+            {filters.issuerId
+              ? "Documentos de un emisor"
+              : `Documentos en ${environmentLabel[environment].toLowerCase()}`}
+          </p>
           <div className="flex flex-wrap items-center gap-2">
             <FilterSelect
               items={typeItems}
@@ -230,8 +244,8 @@ function Documents() {
               </EmptyMedia>
               <EmptyTitle>Aún no hay documentos</EmptyTitle>
               <EmptyDescription>
-                Las facturas y notas que emitas con la API aparecerán aquí con su estado ante la
-                DIAN.
+                Las facturas y notas que emitas desde aquí o con la API aparecerán con su estado
+                ante la DIAN.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
