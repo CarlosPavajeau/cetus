@@ -1,4 +1,4 @@
-// The tests run against the local stack (`make dev-mock`): console, API, worker and DIAN mock, with
+// The tests run against the local stack (`mise run dev-mock`): console, API, worker and DIAN mock, with
 // the real Postgres and LocalStack. Nothing is mocked; every test creates its own organization.
 
 export const consoleUrl = process.env.CONSOLE_URL ?? "http://localhost:3000";
@@ -27,7 +27,7 @@ export async function assertStackIsUp() {
   const down = checks.find((_, index) => !results[index]);
   if (down) {
     throw new Error(
-      `The ${down.name} is not answering at ${down.url}. Start the stack with \`make dev-mock\` first.`,
+      `The ${down.name} is not answering at ${down.url}. Start the stack with \`mise run dev-mock\` first.`,
     );
   }
 }

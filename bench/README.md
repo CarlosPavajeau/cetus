@@ -7,14 +7,14 @@ esos límites, contra el mock de la DIAN, y genera la carga con [k6](https://k6.
 ## Uso
 
 ```sh
-brew install k6
-make bench-up      # construye y levanta el stack (proyecto cetus-bench, puertos propios: convive con make dev-mock)
-make bench-seed    # organizaciones, emisores, API keys (bench/.state.json) e historial de documentos
-make bench SCENARIO=public-api PROFILE=smoke
-make bench SCENARIO=public-api PROFILE=load RATE=200
-bench/bench.sh drain  # entre corridas: vacía la cola que dejó la anterior
-make bench-coldstart SCENARIO=public-api   # reinicia el API y el worker y los carga en frío (700/s durante 2 min)
-make bench-down    # bench/bench.sh down -v borra también su base de datos
+mise install           # incluye k6
+mise run bench-up      # construye y levanta el stack (proyecto cetus-bench, puertos propios: convive con mise run dev-mock)
+mise run bench-seed    # organizaciones, emisores, API keys (bench/.state.json) e historial de documentos
+PROFILE=smoke mise run bench public-api
+PROFILE=load RATE=200 mise run bench public-api
+bench/bench.sh drain   # entre corridas: vacía la cola que dejó la anterior
+mise run bench-coldstart public-api   # reinicia el API y el worker y los carga en frío (700/s durante 2 min)
+mise run bench-down    # bench/bench.sh down -v borra también su base de datos
 ```
 
 Cada corrida deja en `bench/results/<fecha>-<escenario>-<perfil>/` (no versionado):
@@ -63,9 +63,9 @@ El mock responde al instante por defecto. La DIAN real tarda entre 1 y 3 s, y el
 que conviene correr `end-to-end` con ambas latencias:
 
 ```sh
-make bench SCENARIO=end-to-end RATE=1 DURATION=5m                       # mock instantáneo
-DIAN_LATENCY=PT1.5S make bench SCENARIO=end-to-end RATE=1 DURATION=5m   # aproximación a la DIAN
-bench/bench.sh latency PT0S                                             # volver a instantáneo
+RATE=1 DURATION=5m mise run bench end-to-end                       # mock instantáneo
+DIAN_LATENCY=PT1.5S RATE=1 DURATION=5m mise run bench end-to-end   # aproximación a la DIAN
+bench/bench.sh latency PT0S                                        # volver a instantáneo
 ```
 
 ### Comparar versiones
@@ -108,8 +108,8 @@ servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
   UPDATE`). El seed crea 5 emisores (`BENCH_ORGS`); con un único emisor la recepción sería menor.
 - LocalStack no guarda estado. Si su contenedor se reinicia (por ejemplo, porque `up` recrea servicios después
   de cambiar el compose), se pierden la llave KMS y los certificados en S3, y el worker falla con `NoSuchKey`.
-  En ese caso, `bench/bench.sh down -v`, `make bench-up` y `make bench-seed`.
-- Las cookies de sesión de `.state.json` duran lo que dura una sesión de Better Auth (7 días). Si vencen, vuelve a correr `make bench-seed`.
+  En ese caso, `bench/bench.sh down -v`, `mise run bench-up` y `mise run bench-seed`.
+- Las cookies de sesión de `.state.json` duran lo que dura una sesión de Better Auth (7 días). Si vencen, vuelve a correr `mise run bench-seed`.
 
 ## Resultados (2026-10-21)
 

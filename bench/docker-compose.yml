@@ -1,6 +1,6 @@
 # Benchmark stack: the production images with Railway's limits (.railway/railway.ts), the DIAN mock and
-# their own Postgres and LocalStack. It runs as project "cetus-bench" on its own ports, so `make dev-mock`
-# can stay up next to it. Driven by bench/bench.sh (make bench-up / bench-down).
+# their own Postgres and LocalStack. It runs as project "cetus-bench" on its own ports, so `mise run dev-mock`
+# can stay up next to it. Driven by bench/bench.sh (mise run bench-up / bench-down).
 #
 #   console :3100   api :8180   worker :8181   dian-mock :8190   postgres :5532
 name: cetus-bench

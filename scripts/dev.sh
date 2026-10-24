@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the local stack in a single terminal: infra (docker compose), console, API, worker and, optionally, the DIAN mock.
 # Each service's output is prefixed with its name and also written to .logs/<service>.log. Ctrl+C stops every service;
-# the containers keep running (make infra-down stops them).
+# the containers keep running (mise run infra-down stops them).
 #
 #   scripts/dev.sh [--mock] [--no-infra] [console|api|worker|mock ...]   start services (default: console api worker)
 #   scripts/dev.sh setup                                                  first-time setup: deps, infra, auth migrations
@@ -160,7 +160,7 @@ setup() {
   pnpm --filter @cetus/console db:migrate
   info "Compiling the Java apps"
   $GRADLE -q :apps:api:classes :apps:worker:classes :apps:dian-mock:classes
-  ok "Ready. Run: make dev"
+  ok "Ready. Run: mise run dev"
 }
 
 up() {
@@ -191,8 +191,8 @@ up() {
     fi
   done
   if has console; then
-    [ -f apps/console/.env ] || die "Missing apps/console/.env (make setup)"
-    [ -d apps/console/node_modules ] || die "Missing Node dependencies (make setup)"
+    [ -f apps/console/.env ] || die "Missing apps/console/.env (mise run setup)"
+    [ -d apps/console/node_modules ] || die "Missing Node dependencies (mise run setup)"
   fi
 
   [ "$with_infra" = 1 ] && infra_up
