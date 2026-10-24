@@ -1,6 +1,7 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { PackageIcon } from "lucide-react";
+import { useState } from "react";
 
 import {
   Empty,
@@ -18,20 +19,22 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { CatalogHeader } from "~/features/catalog/CatalogHeader";
+import { CatalogSearch, LoadMore } from "~/features/catalog/CatalogList";
 import { CreateProduct } from "~/features/catalog/CreateProduct";
 import { DeleteEntry } from "~/features/catalog/DeleteEntry";
-import { productsQuery } from "~/features/catalog/queries";
+import { productPagesQuery } from "~/features/catalog/queries";
 import { presetOf } from "~/features/catalog/schema";
 import { deleteProduct } from "~/features/catalog/server";
 import { formatMoney } from "~/features/documents/labels";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
 import { taxPresets } from "~/features/issuance/catalogs";
 import type { Product } from "~/lib/api/types";
+import { useSettled } from "~/lib/useSettled";
 
 export const Route = createFileRoute("/_app/catalog/products")({
   loader: async ({ context: { queryClient } }) => {
     const environment = await queryClient.ensureQueryData(activeEnvironmentQuery);
-    await queryClient.ensureQueryData(productsQuery(environment));
+    await queryClient.ensureInfiniteQueryData(productPagesQuery(environment, ""));
   },
   component: Products,
 });
@@ -47,12 +50,18 @@ function taxLabel(product: Product) {
 
 function Products() {
   const environment = useActiveEnvironment();
-  const { data } = useSuspenseQuery(productsQuery(environment));
+  const [text, setText] = useState("");
+  const q = useSettled(text.trim(), 300);
+  const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
+    ...productPagesQuery(environment, q),
+    placeholderData: keepPreviousData,
+  });
+  const items = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <>
       <CatalogHeader action={<CreateProduct environment={environment} />} />
-      {data.items.length === 0 ? (
+      {items.length === 0 && q === "" ? (
         <Empty className="border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -65,37 +74,59 @@ function Products() {
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="px-5">Código</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Impuesto</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
-                <TableHead className="w-12 pr-5" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.items.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="px-5 text-xs font-medium">{product.code}</TableCell>
-                  <TableCell className="text-xs">{product.description}</TableCell>
-                  <TableCell className="text-xs">{taxLabel(product)}</TableCell>
-                  <TableCell className="text-right text-xs tabular-nums">
-                    {formatMoney(product.unitPrice, "COP")}
-                  </TableCell>
-                  <TableCell className="pr-5">
-                    <DeleteEntry
-                      label={product.description}
-                      remove={() => deleteProduct({ data: { environment, id: product.id } })}
-                    />
-                  </TableCell>
+        <section className="flex flex-col gap-4" aria-label="Catálogo de productos">
+          <CatalogSearch
+            value={text}
+            placeholder="Buscar por código o descripción"
+            onChange={setText}
+          />
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="px-5">Código</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead>Impuesto</TableHead>
+                  <TableHead className="text-right">Precio</TableHead>
+                  <TableHead className="w-12 pr-5" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {items.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-20 text-center text-xs text-muted-foreground"
+                    >
+                      Ningún resultado para «{q}».
+                    </TableCell>
+                  </TableRow>
+                )}
+                {items.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="px-5 text-xs font-medium">{product.code}</TableCell>
+                    <TableCell className="text-xs">{product.description}</TableCell>
+                    <TableCell className="text-xs">{taxLabel(product)}</TableCell>
+                    <TableCell className="text-right text-xs tabular-nums">
+                      {formatMoney(product.unitPrice, "COP")}
+                    </TableCell>
+                    <TableCell className="pr-5">
+                      <DeleteEntry
+                        label={product.description}
+                        remove={() => deleteProduct({ data: { environment, id: product.id } })}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <LoadMore
+            hasMore={hasNextPage}
+            loading={isFetchingNextPage}
+            onLoad={() => void fetchNextPage()}
+          />
+        </section>
       )}
     </>
   );

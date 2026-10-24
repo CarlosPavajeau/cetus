@@ -18,6 +18,7 @@ const invoice: InvoiceHeaderValues = {
     legalName: "Cliente de Ejemplo SAS",
     email: "",
     responsibleForIva: true,
+    taxLevelCodes: ["O-13"],
     departmentCode: "11",
     departmentName: "Bogotá, D.C.",
     municipalityCode: "11001",
@@ -45,22 +46,43 @@ describe("invoiceHeaderSchema", () => {
   it("accepts a complete invoice and maps it to the API request", () => {
     const parsed = invoiceHeaderSchema(invoice);
     const lines = linesFormSchema({
-      lines: [{ description: " Asesoría ", quantity: "2", unitPrice: "150000.5", tax: "EXCLUDED" }],
+      lines: [
+        {
+          description: " Asesoría ",
+          quantity: "2",
+          unitPrice: "150000.5",
+          tax: "EXCLUDED",
+          unitCode: "HUR",
+        },
+      ],
     });
     if (parsed instanceof type.errors || lines instanceof type.errors) {
       throw new Error("The invoice should be valid");
     }
-    const request = toInvoiceRequest(parsed, lines.lines);
+    const request = toInvoiceRequest(parsed, lines.lines, {
+      tradeName: "Ejemplo",
+      postalCode: "110111",
+    });
     expect(request.customer).toMatchObject({
       identificationNumber: "900999999",
       checkDigit: "4",
+      tradeName: "Ejemplo",
+      taxLevelCodes: ["O-13"],
       taxScheme: "IVA",
-      address: { municipalityCode: "11001", line: "Calle 100 # 10-20" },
+      address: { municipalityCode: "11001", postalCode: "110111", line: "Calle 100 # 10-20" },
     });
     expect(request.customer).not.toHaveProperty("email");
+    expect(request.customer).not.toHaveProperty("phone");
     expect(request.payment).toEqual({ method: "CASH", meansCode: "10" });
     expect(request.lines).toEqual([
-      { itemCode: "1", description: "Asesoría", quantity: 2, unitPrice: 150000.5, taxes: [] },
+      {
+        itemCode: "1",
+        description: "Asesoría",
+        quantity: 2,
+        unitCode: "HUR",
+        unitPrice: 150000.5,
+        taxes: [],
+      },
     ]);
   });
 
@@ -85,12 +107,14 @@ describe("invoiceHeaderSchema", () => {
     expect(linesFormSchema({ lines: [] })).toBeInstanceOf(type.errors);
     expect(
       linesFormSchema({
-        lines: [{ description: "x", quantity: "0", unitPrice: "1", tax: "IVA_19" }],
+        lines: [{ description: "x", quantity: "0", unitPrice: "1", tax: "IVA_19", unitCode: "94" }],
       }),
     ).toBeInstanceOf(type.errors);
     expect(
       linesFormSchema({
-        lines: [{ description: "x", quantity: "1.5", unitPrice: "1000", tax: "IVA_19" }],
+        lines: [
+          { description: "x", quantity: "1.5", unitPrice: "1000", tax: "IVA_19", unitCode: "94" },
+        ],
       }),
     ).not.toBeInstanceOf(type.errors);
   });

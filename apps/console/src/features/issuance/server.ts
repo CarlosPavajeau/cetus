@@ -7,7 +7,14 @@ import type { DocumentPreview, Environment, InvoiceRequest } from "~/lib/api/typ
 import { liveIssuerRoles, roleList } from "~/lib/auth/permissions";
 import { auth } from "~/lib/auth/server";
 
-import { invoiceHeaderSchema, linesSchema, toInvoiceRequest, toLine, trimmed } from "./schema";
+import {
+  customerExtrasSchema,
+  invoiceHeaderSchema,
+  linesSchema,
+  toInvoiceRequest,
+  toLine,
+  trimmed,
+} from "./schema";
 
 /** Whether the signed-in member may issue LIVE documents: the organization's owners and admins. */
 export const canIssueLive = createServerFn({ method: "GET" }).handler(async () => {
@@ -74,11 +81,12 @@ export const issueInvoice = createServerFn({ method: "POST" })
       idempotencyKey: "string.uuid",
       invoice: invoiceHeaderSchema,
       lines: linesSchema,
+      customerExtras: customerExtrasSchema.or("null"),
       saveCustomer: type("'SANDBOX' | 'TEST' | 'LIVE'").or("null"),
     }),
   )
   .handler(async ({ data }): Promise<IssueResult> => {
-    const request = toInvoiceRequest(data.invoice, data.lines);
+    const request = toInvoiceRequest(data.invoice, data.lines, data.customerExtras);
     let issued: IssueResult;
     try {
       issued = {

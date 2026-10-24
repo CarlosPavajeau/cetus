@@ -22,20 +22,22 @@ import { Spinner } from "~/components/ui/spinner";
 import { auditLogKey } from "~/features/audit-log/queries";
 import { CatalogPicker } from "~/features/catalog/CatalogPicker";
 import { catalogKey } from "~/features/catalog/queries";
-import { toCustomerValues } from "~/features/catalog/schema";
+import { customerUnavailable, toCustomerValues } from "~/features/catalog/schema";
+import { useCustomerSearch } from "~/features/catalog/useCatalogSearch";
 import { formatMoney } from "~/features/documents/labels";
 import { documentsKey } from "~/features/documents/queries";
 import { issuerName } from "~/features/issuers/labels";
 import { DateField, TextField } from "~/features/setup/fields";
 import { FieldRow, FieldSection } from "~/features/setup/StepLayout";
-import type { Customer, DocumentPreview, Environment, Issuer, Product } from "~/lib/api/types";
+import type { DocumentPreview, Environment, Issuer } from "~/lib/api/types";
 
 import { finalConsumer, identificationTypes, paymentMeans, personTypes } from "./catalogs";
-import { SelectField } from "./fields";
+import { SelectField, TaxLevelsField } from "./fields";
 import { LinesEditor, emptyLine } from "./LinesEditor";
 import { MunicipalityField } from "./MunicipalityField";
 import { nitCheckDigit } from "./nitCheckDigit";
 import {
+  type CustomerExtras,
   type InvoiceHeaderValues,
   type LinesFormValues,
   invoiceHeaderSchema,
@@ -51,6 +53,7 @@ const emptyCustomer: InvoiceHeaderValues["customer"] = {
   legalName: "",
   email: "",
   responsibleForIva: false,
+  taxLevelCodes: ["R-99-PN"],
   departmentCode: "",
   departmentName: "",
   municipalityCode: "",
@@ -76,6 +79,7 @@ const sampleLine = {
   quantity: "1",
   unitPrice: "100000",
   tax: "IVA_19",
+  unitCode: "94",
 } as const;
 
 const paymentMethodItems = [
@@ -91,8 +95,6 @@ export function InvoiceForm({
   environment,
   issuers,
   sample,
-  customers,
-  products,
   blockedReason,
 }: {
   environment: Environment;
@@ -100,8 +102,6 @@ export function InvoiceForm({
   issuers: Issuer[];
   sample: boolean;
   /** The catalog of the environment, to fill in the customer and the lines. */
-  customers: Customer[];
-  products: Product[];
   /** Why the person cannot issue here, if they cannot. */
   blockedReason: string | null;
 }) {
@@ -111,6 +111,11 @@ export function InvoiceForm({
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [saveCustomer, setSaveCustomer] = useState(false);
+  const [picked, setPicked] = useState<{
+    identificationNumber: string;
+    extras: CustomerExtras;
+  } | null>(null);
+  const customerSearch = useCustomerSearch(environment);
   const header = useForm<InvoiceHeaderValues>({
     resolver: arktypeResolver(invoiceHeaderSchema),
     defaultValues: {
@@ -198,11 +203,17 @@ export function InvoiceForm({
       idempotencyKey,
       invoice,
       lines: values.lines,
+      // Only while the customer is still the one picked: a hand-typed one inherits nothing.
+      customerExtras:
+        picked !== null && picked.identificationNumber === invoice.customer.identificationNumber
+          ? picked.extras
+          : null,
       saveCustomer: saveCustomer ? environment : null,
     };
   }
 
   function fillFinalConsumer() {
+    setPicked(null);
     header.setValue("customer", {
       ...emptyCustomer,
       ...finalConsumer,
@@ -238,21 +249,28 @@ export function InvoiceForm({
 
       <FieldSection title="Cliente">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          {customers.length > 0 && (
+          {customerSearch.saved && (
             <div className="sm:w-80">
               <CatalogPicker
                 label="Cliente guardado"
                 placeholder="Busca por nombre o documento"
-                empty="No hay clientes con ese nombre."
-                items={customers}
+                empty="No hay clientes con ese nombre o documento."
+                items={customerSearch.items}
                 itemLabel={(customer) => `${customer.legalName} · ${customer.identificationNumber}`}
+                unavailable={customerUnavailable}
+                onSearch={customerSearch.setText}
                 onPick={(customer) => {
-                  const values = toCustomerValues(customer);
-                  if (values) {
-                    header.setValue("customer", values, {
-                      shouldValidate: header.formState.isSubmitted,
-                    });
+                  const saved = toCustomerValues(customer);
+                  if (!saved) {
+                    return;
                   }
+                  header.setValue("customer", saved.values, {
+                    shouldValidate: header.formState.isSubmitted,
+                  });
+                  setPicked({
+                    identificationNumber: saved.values.identificationNumber,
+                    extras: saved.extras,
+                  });
                 }}
               />
             </div>
@@ -302,6 +320,9 @@ export function InvoiceForm({
             autoComplete="off"
           />
         </FieldRow>
+        <FieldRow className="sm:grid-cols-2">
+          <TaxLevelsField control={header.control} />
+        </FieldRow>
         <FieldRow className="sm:grid-cols-[1fr_1fr_auto]">
           <MunicipalityField form={header} />
           <TextField
@@ -342,7 +363,7 @@ export function InvoiceForm({
       </Field>
 
       <FieldSection title="Productos o servicios">
-        <LinesEditor form={lines} currency="COP" products={products} />
+        <LinesEditor form={lines} currency="COP" environment={environment} />
       </FieldSection>
 
       <FieldSection title="Pago">

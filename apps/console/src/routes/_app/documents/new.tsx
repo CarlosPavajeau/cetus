@@ -12,8 +12,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "~/components/ui/empty";
-import { customersQuery, productsQuery } from "~/features/catalog/queries";
-import { toLineValues } from "~/features/catalog/schema";
 import { documentsQuery } from "~/features/documents/queries";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
@@ -30,8 +28,6 @@ export const Route = createFileRoute("/_app/documents/new")({
       queryClient.ensureQueryData(issuersQuery),
       queryClient.ensureQueryData(canIssueLiveQuery),
       queryClient.ensureInfiniteQueryData(documentsQuery({ environment })),
-      queryClient.ensureQueryData(customersQuery(environment)),
-      queryClient.ensureQueryData(productsQuery(environment)),
     ]);
     return { crumb: "Emitir factura" };
   },
@@ -57,8 +53,6 @@ function NewInvoice() {
   const environment = useActiveEnvironment();
   const { data: issuers } = useSuspenseQuery(issuersQuery);
   const { data: documents } = useSuspenseInfiniteQuery(documentsQuery({ environment }));
-  const { data: customers } = useSuspenseQuery(customersQuery(environment));
-  const { data: products } = useSuspenseQuery(productsQuery(environment));
   const blockedReason = useBlockedReason(environment);
   const usable = issuers.filter((issuer) => canIssue(issuer, environment));
   const firstSandboxInvoice =
@@ -93,8 +87,6 @@ function NewInvoice() {
           environment={environment}
           issuers={usable}
           sample={firstSandboxInvoice}
-          customers={customers.items}
-          products={products.items.filter((product) => toLineValues(product) !== null)}
           blockedReason={blockedReason}
         />
       )}

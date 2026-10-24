@@ -28,7 +28,6 @@ import type {
   DebitNoteConcept,
   DocumentDetail,
   DocumentPreview,
-  Product,
 } from "~/lib/api/types";
 
 import { SelectField } from "./fields";
@@ -87,12 +86,10 @@ type Confirmation = { note: NoteValues; total: number };
 export function NoteForm({
   invoice,
   noteType,
-  products,
   blockedReason,
 }: {
   invoice: DocumentDetail;
   noteType: NoteType;
-  products: Product[];
   blockedReason: string | null;
 }) {
   const navigate = useNavigate();
@@ -233,7 +230,7 @@ export function NoteForm({
             invoice.balance !== null &&
             ` Puedes acreditar hasta ${money(invoice.balance)}.`}
         </p>
-        <LinesEditor form={lines} currency={invoice.currency} products={products} />
+        <LinesEditor form={lines} currency={invoice.currency} environment={invoice.environment} />
       </FieldSection>
 
       {failure && (

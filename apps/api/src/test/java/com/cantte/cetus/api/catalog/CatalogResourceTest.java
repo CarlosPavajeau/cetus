@@ -91,6 +91,29 @@ class CatalogResourceTest {
     }
 
     @Test
+    void aPassportIsFoundWhateverTheCase() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Pasaporte SAS");
+        String sandboxKey = key(user, "SANDBOX");
+        String id = api(sandboxKey)
+                .body(Map.of(
+                        "personType", "NATURAL_PERSON",
+                        "identificationType", "PASSPORT",
+                        "identificationNumber", "AB12345",
+                        "legalName", "Viajero Extranjero"))
+                .post("/v1/customers")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+
+        for (String q : List.of("AB12345", "ab123")) {
+            assertThat(api(sandboxKey).get("/v1/customers?q=" + q).jsonPath().getList("items.id"))
+                    .containsExactly(id);
+        }
+    }
+
+    @Test
     void productsArePagedAndUniqueByCode() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Productos SAS");

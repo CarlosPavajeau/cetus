@@ -1,7 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { type } from "arktype";
 import { PlusIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Controller, type UseFormReturn, useFieldArray, useWatch } from "react-hook-form";
 
 import { Button } from "~/components/ui/button";
@@ -17,9 +16,11 @@ import {
 } from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
 import { CatalogPicker } from "~/features/catalog/CatalogPicker";
-import { toLineValues } from "~/features/catalog/schema";
+import { productUnavailable, toLineValues } from "~/features/catalog/schema";
+import { useProductSearch } from "~/features/catalog/useCatalogSearch";
 import { formatMoney } from "~/features/documents/labels";
-import type { Product } from "~/lib/api/types";
+import type { Environment } from "~/lib/api/types";
+import { useSettled } from "~/lib/useSettled";
 
 import { taxPresetIds, taxPresets } from "./catalogs";
 import { type LineValues, type LinesFormValues, linesFormSchema } from "./schema";
@@ -32,19 +33,10 @@ export const emptyLine: LineValues = {
   quantity: "1",
   unitPrice: "",
   tax: "IVA_19",
+  unitCode: "94",
 };
 
 const taxLabel: Record<string, string> = { IVA: "IVA", INC: "Impuesto al consumo", ICA: "ICA" };
-
-/** The value once it has stopped changing for a moment, so typing does not call the API on every key. */
-function useSettled<T>(value: T, delayMs: number) {
-  const [settled, setSettled] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setSettled(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return settled;
-}
 
 /**
  * The lines of a document with their taxes, and the totals the API calculates for them: the console never
@@ -53,13 +45,14 @@ function useSettled<T>(value: T, delayMs: number) {
 export function LinesEditor({
   form,
   currency,
-  products,
+  environment,
 }: {
   form: UseFormReturn<LinesFormValues>;
   currency: string;
-  /** The saved products with taxes the form offers. */
-  products: Product[];
+  /** Where the saved products come from. */
+  environment: Environment;
 }) {
+  const productSearch = useProductSearch(environment);
   const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: "lines",
@@ -174,14 +167,16 @@ export function LinesEditor({
           <PlusIcon data-icon="inline-start" />
           Agregar línea
         </Button>
-        {products.length > 0 && (
+        {productSearch.saved && (
           <div className="sm:w-80">
             <CatalogPicker
               label="Agregar un producto guardado"
               placeholder="Busca por código o descripción"
-              empty="No hay productos con ese nombre."
-              items={products}
+              empty="No hay productos con ese código o descripción."
+              items={productSearch.items}
               itemLabel={(product) => `${product.code} · ${product.description}`}
+              unavailable={productUnavailable}
+              onSearch={productSearch.setText}
               onPick={(product) => {
                 const line = toLineValues(product);
                 if (!line) {

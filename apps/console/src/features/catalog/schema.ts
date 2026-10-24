@@ -1,9 +1,10 @@
 import { type } from "arktype";
 
 import { type TaxPreset, taxPresetIds, taxPresets } from "~/features/issuance/catalogs";
-import type { InvoiceHeaderValues, LineValues } from "~/features/issuance/schema";
+import type { CustomerExtras, InvoiceHeaderValues, LineValues } from "~/features/issuance/schema";
 import { trimmed } from "~/features/issuance/schema";
-import type { Customer, LineTax, Product, ProductPage } from "~/lib/api/types";
+import { isTaxLevelCode } from "~/features/setup/taxLevels";
+import type { Customer, LineTax, Product } from "~/lib/api/types";
 
 export const productSchema = type({
   "+": "delete",
@@ -45,7 +46,12 @@ export function presetOf(taxes: LineTax[]): TaxPreset | null {
   );
 }
 
-/** A saved product as a line of the form, or null when its taxes are not among the presets. */
+/** Why a saved product cannot fill a line of the form, or null when it can. */
+export function productUnavailable(product: Product): string | null {
+  return presetOf(product.taxes) === null ? "impuestos solo por API" : null;
+}
+
+/** A saved product as a line of the form, with its own unit; null when its taxes are not a preset. */
 export function toLineValues(product: Product): LineValues | null {
   const tax = presetOf(product.taxes);
   return tax === null
@@ -55,10 +61,9 @@ export function toLineValues(product: Product): LineValues | null {
         quantity: "1",
         unitPrice: String(product.unitPrice),
         tax,
+        unitCode: product.unitCode,
       };
 }
-
-export type ProductsPage = ProductPage;
 
 const formIdentificationTypes = [
   "NIT",
@@ -69,27 +74,54 @@ const formIdentificationTypes = [
   "FOREIGN_DOCUMENT",
 ] as const;
 
-/** A saved customer as the form's customer, or null when its document is not one the form offers. */
-export function toCustomerValues(customer: Customer): InvoiceHeaderValues["customer"] | null {
+/**
+ * Why a saved customer cannot fill the form without losing data, or null when it can: a document the form
+ * does not offer, a foreign address or a responsibility outside table 13.2.6.1.
+ */
+export function customerUnavailable(customer: Customer): string | null {
+  return toCustomerValues(customer) === null ? "solo por API" : null;
+}
+
+/**
+ * A saved customer as the form's customer and what travels beside it, or null when the form cannot hold it
+ * whole. Nothing saved is replaced by a default.
+ */
+export function toCustomerValues(
+  customer: Customer,
+): { values: InvoiceHeaderValues["customer"]; extras: CustomerExtras } | null {
   const identificationType = formIdentificationTypes.find(
     (value) => value === customer.identificationType,
   );
-  if (!identificationType) {
+  const taxLevels = customer.taxLevelCodes.filter(isTaxLevelCode);
+  const address = customer.address;
+  if (
+    !identificationType ||
+    taxLevels.length !== customer.taxLevelCodes.length ||
+    (address !== null && address.countryCode !== "CO")
+  ) {
     return null;
   }
   return {
-    personType: customer.personType,
-    identificationType,
-    identificationNumber: customer.checkDigit
-      ? `${customer.identificationNumber}-${customer.checkDigit}`
-      : customer.identificationNumber,
-    legalName: customer.legalName,
-    email: customer.email ?? "",
-    responsibleForIva: customer.taxScheme === "IVA",
-    departmentCode: customer.address?.departmentCode ?? "",
-    departmentName: customer.address?.departmentName ?? "",
-    municipalityCode: customer.address?.municipalityCode ?? "",
-    cityName: customer.address?.cityName ?? "",
-    line: customer.address?.line ?? "",
+    values: {
+      personType: customer.personType,
+      identificationType,
+      identificationNumber: customer.checkDigit
+        ? `${customer.identificationNumber}-${customer.checkDigit}`
+        : customer.identificationNumber,
+      legalName: customer.legalName,
+      email: customer.email ?? "",
+      responsibleForIva: customer.taxScheme === "IVA",
+      taxLevelCodes: taxLevels.length > 0 ? taxLevels : ["R-99-PN"],
+      departmentCode: address?.departmentCode ?? "",
+      departmentName: address?.departmentName ?? "",
+      municipalityCode: address?.municipalityCode ?? "",
+      cityName: address?.cityName ?? "",
+      line: address?.line ?? "",
+    },
+    extras: {
+      ...(customer.tradeName ? { tradeName: customer.tradeName } : {}),
+      ...(customer.phone ? { phone: customer.phone } : {}),
+      ...(address?.postalCode ? { postalCode: address.postalCode } : {}),
+    },
   };
 }

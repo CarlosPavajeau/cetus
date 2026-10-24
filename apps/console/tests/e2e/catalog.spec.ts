@@ -27,6 +27,13 @@ test("saved products and customers fill in the next invoice", async ({ page, org
   await expect(
     page.getByRole("cell", { name: "Cliente de Ejemplo SAS", exact: true }),
   ).toBeVisible();
+  // The list is searched on the server.
+  await page.getByLabel("Buscar por nombre o documento").fill("nadie");
+  await expect(page.getByText("Ningún resultado para «nadie».")).toBeVisible();
+  await page.getByLabel("Buscar por nombre o documento").fill("9012345");
+  await expect(
+    page.getByRole("cell", { name: "Cliente de Ejemplo SAS", exact: true }),
+  ).toBeVisible();
 
   // The next invoice starts empty and takes the saved customer.
   await open(page, "/documents/new");
@@ -39,4 +46,26 @@ test("saved products and customers fill in the next invoice", async ({ page, org
   await open(page, "/catalog/products");
   await page.getByRole("button", { name: "Eliminar Almuerzo ejecutivo" }).click();
   await expect(page.getByText("Aún no tienes productos guardados")).toBeVisible();
+});
+
+test("a customer the form cannot hold is listed but cannot be picked", async ({
+  page,
+  organization,
+}) => {
+  const response = await organization.api("/console/customers?environment=SANDBOX", {
+    method: "POST",
+    body: JSON.stringify({
+      personType: "LEGAL_ENTITY",
+      identificationType: "FOREIGN_NIT",
+      identificationNumber: "EX-778899",
+      legalName: "Importadora Extranjera Inc",
+    }),
+  });
+  expect(response.status).toBe(201);
+
+  await open(page, "/documents/new");
+  await page.getByLabel("Cliente guardado").fill("importadora");
+  const option = page.getByRole("option", { name: /Importadora Extranjera Inc/ });
+  await expect(option).toContainText("solo por API");
+  await expect(option).toHaveAttribute("aria-disabled", "true");
 });

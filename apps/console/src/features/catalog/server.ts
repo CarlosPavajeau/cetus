@@ -8,17 +8,26 @@ import { productSchema, toProductRequest } from "./schema";
 
 const environment = type("'SANDBOX' | 'TEST' | 'LIVE'");
 
-/** The newest customers of the catalog; the console filters them as the person types. */
+/** A page of a catalog, newest first; {@code q} searches it on the server, so no entry is out of reach. */
+const catalogPage = type({
+  environment,
+  "q?": "string <= 100 | undefined",
+  "before?": "string.uuid | undefined",
+  limit: "1 <= number.integer <= 100",
+});
+
+export type CatalogPageRequest = typeof catalogPage.infer;
+
 export const listCustomers = createServerFn({ method: "GET" })
-  .validator(type({ environment }))
+  .validator(catalogPage)
   .handler(({ data }): Promise<CustomerPage> =>
-    api.get("/console/customers", { params: { query: { ...data, limit: 100 } } }),
+    api.get("/console/customers", { params: { query: data } }),
   );
 
 export const listProducts = createServerFn({ method: "GET" })
-  .validator(type({ environment }))
+  .validator(catalogPage)
   .handler(({ data }): Promise<ProductPage> =>
-    api.get("/console/products", { params: { query: { ...data, limit: 100 } } }),
+    api.get("/console/products", { params: { query: data } }),
   );
 
 export const deleteCustomer = createServerFn({ method: "POST" })

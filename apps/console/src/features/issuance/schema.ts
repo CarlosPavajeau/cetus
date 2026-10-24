@@ -1,5 +1,6 @@
 import { type } from "arktype";
 
+import { taxLevelCodes } from "~/features/setup/taxLevels";
 import type { InvoiceLine, InvoiceRequest } from "~/lib/api/types";
 
 import { identificationTypes, paymentMeansCodes, taxPresetIds, taxPresets } from "./catalogs";
@@ -35,6 +36,8 @@ export const lineSchema = type({
     .configure({ message: "Escribe una cantidad mayor que cero." }),
   unitPrice: type(decimal).configure({ message: "Escribe el precio sin puntos de miles." }),
   tax: type.enumerated(...taxPresetIds),
+  // Not shown: "94" (unit) unless the line comes from a saved product with its own.
+  unitCode: /^[0-9A-Z]{1,3}$/,
 });
 
 export type LineValues = typeof lineSchema.infer;
@@ -66,6 +69,11 @@ const customerSchema = type({
   legalName: trimmed("0 < string <= 450", "Escribe el nombre o la razón social."),
   email: trimmed("string.email | ''", "Escribe un correo válido o déjalo vacío."),
   responsibleForIva: "boolean",
+  taxLevelCodes: type
+    .enumerated(...taxLevelCodes)
+    .array()
+    .atLeastLength(1)
+    .configure({ message: "Elige al menos una responsabilidad, como aparece en su RUT." }),
   departmentCode: "string",
   departmentName: "string",
   municipalityCode: "string",
@@ -134,6 +142,19 @@ export const invoiceHeaderSchema = type({
 
 export type InvoiceHeaderValues = typeof invoiceHeaderSchema.infer;
 
+/**
+ * What a saved customer carries beyond the form's fields. It travels with the invoice only while the
+ * customer is still the one picked, so a hand-typed customer never inherits it.
+ */
+export const customerExtrasSchema = type({
+  "+": "delete",
+  "tradeName?": "string <= 450",
+  "phone?": /^[0-9+() -]{0,50}$/,
+  "postalCode?": /^[0-9A-Za-z-]{1,10}$/,
+});
+
+export type CustomerExtras = typeof customerExtrasSchema.infer;
+
 function identificationPattern(
   identificationType: InvoiceHeaderValues["customer"]["identificationType"],
 ) {
@@ -148,6 +169,7 @@ export function toLine(line: LineValues, index: number): InvoiceLine {
     itemCode: String(index + 1),
     description: line.description,
     quantity: Number(line.quantity),
+    unitCode: line.unitCode,
     unitPrice: Number(line.unitPrice),
     taxes: taxPresets[line.tax].taxes,
   };
@@ -156,6 +178,7 @@ export function toLine(line: LineValues, index: number): InvoiceLine {
 export function toInvoiceRequest(
   invoice: InvoiceHeaderValues,
   lines: LineValues[],
+  extras: CustomerExtras | null,
 ): InvoiceRequest {
   const { customer, payment } = invoice;
   const nit =
@@ -168,8 +191,11 @@ export function toInvoiceRequest(
       identificationNumber: nit ? nit.nit : customer.identificationNumber,
       ...(nit?.checkDigit ? { checkDigit: nit.checkDigit } : {}),
       legalName: customer.legalName,
+      ...(extras?.tradeName ? { tradeName: extras.tradeName } : {}),
+      taxLevelCodes: customer.taxLevelCodes,
       taxScheme: customer.responsibleForIva ? "IVA" : "NOT_APPLICABLE",
       ...(customer.email ? { email: customer.email } : {}),
+      ...(extras?.phone ? { phone: extras.phone } : {}),
       ...(customer.municipalityCode
         ? {
             address: {
@@ -177,6 +203,7 @@ export function toInvoiceRequest(
               cityName: customer.cityName,
               departmentCode: customer.departmentCode,
               departmentName: customer.departmentName,
+              ...(extras?.postalCode ? { postalCode: extras.postalCode } : {}),
               line: customer.line,
             },
           }

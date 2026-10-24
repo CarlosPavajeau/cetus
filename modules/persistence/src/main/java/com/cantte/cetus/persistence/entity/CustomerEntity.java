@@ -94,7 +94,7 @@ public class CustomerEntity extends PanacheEntityBase {
         parameters.put("environment", environment);
         if (text != null && !text.isBlank()) {
             query.append(
-                    " and (lower(legalName) like :text escape '\\' or identificationNumber like :text escape '\\')");
+                    " and (lower(legalName) like :text escape '\\' or lower(identificationNumber) like :text escape '\\')");
             parameters.put("text", Catalogs.containing(text));
         }
         if (beforeId != null) {
