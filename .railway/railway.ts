@@ -106,7 +106,7 @@ export default defineRailway((ctx) => {
       // The same database on port 5432, for Flyway.
       CETUS_DB_MIGRATION_URL: preserve(),
       ...aws,
-      CETUS_AUTH_JWKS_URL: "http://${{console.RAILWAY_PRIVATE_DOMAIN}}:${{console.PORT}}/api/auth/jwks",
+      CETUS_AUTH_JWKS_URL: "http://${{console.RAILWAY_PRIVATE_DOMAIN}}:${{console.PORT}}/.well-known/jwks.json",
       // Must equal the console's BETTER_AUTH_URL, without a trailing slash.
       CETUS_AUTH_ISSUER: "https://cetus.cantte.com",
       RESEND_WEBHOOK_SECRET: preserve(),

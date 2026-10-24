@@ -17,6 +17,7 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as TwoFactorRouteImport } from './routes/two-factor'
+import { Route as DotwellKnownJwksDotjsonRouteImport } from './routes/[.]well-known/jwks[.]json'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
@@ -78,6 +79,11 @@ const SignUpRoute = SignUpRouteImport.update({
 const TwoFactorRoute = TwoFactorRouteImport.update({
   id: '/two-factor',
   path: '/two-factor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotwellKnownJwksDotjsonRoute = DotwellKnownJwksDotjsonRouteImport.update({
+  id: '/.well-known/jwks.json',
+  path: '/.well-known/jwks.json',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
+  '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
+  '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
+  '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/_app/overview': typeof AppOverviewRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
+    | '/.well-known/jwks.json'
     | '/overview'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
+    | '/.well-known/jwks.json'
     | '/overview'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -383,6 +394,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
+    | '/.well-known/jwks.json'
     | '/_app/overview'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -418,6 +430,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   TwoFactorRoute: typeof TwoFactorRoute
+  DotwellKnownJwksDotjsonRoute: typeof DotwellKnownJwksDotjsonRoute
   CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
   ContactVerificationTokenRoute: typeof ContactVerificationTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -479,6 +492,13 @@ declare module '@tanstack/react-router' {
       path: '/two-factor'
       fullPath: '/two-factor'
       preLoaderRoute: typeof TwoFactorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/jwks.json': {
+      id: '/.well-known/jwks.json'
+      path: '/.well-known/jwks.json'
+      fullPath: '/.well-known/jwks.json'
+      preLoaderRoute: typeof DotwellKnownJwksDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/overview': {
@@ -720,6 +740,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   TwoFactorRoute: TwoFactorRoute,
+  DotwellKnownJwksDotjsonRoute: DotwellKnownJwksDotjsonRoute,
   CertificateUploadTokenRoute: CertificateUploadTokenRoute,
   ContactVerificationTokenRoute: ContactVerificationTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
