@@ -50,3 +50,14 @@ export function linkTo(email: OutboxEmail, path: string): string {
   }
   return link;
 }
+
+/** The first link of an email's text whose path starts with the given prefix, for links that end in a token. */
+export function linkUnder(email: OutboxEmail, prefix: string): string {
+  const link = email.text
+    .match(/https?:\/\/\S+/g)
+    ?.find((url) => new URL(url).pathname.startsWith(prefix));
+  if (!link) {
+    throw new Error(`The email "${email.subject}" has no link under ${prefix}`);
+  }
+  return link;
+}

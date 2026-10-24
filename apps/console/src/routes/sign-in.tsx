@@ -1,10 +1,11 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { CheckCircle2Icon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
@@ -14,14 +15,20 @@ import { signInSchema } from "~/features/auth/schema";
 import { invitationSearch, startSession } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
 
-/** `invitation`: the invitation the person came to accept; after signing in they go back to it. */
+/**
+ * `invitation`: the invitation the person came to accept; after signing in they go back to it.
+ * `reset`: the person just chose a new password.
+ */
 export const Route = createFileRoute("/sign-in")({
-  validateSearch: invitationSearch,
+  validateSearch: (search: Record<string, unknown>): { invitation?: string; reset?: true } => ({
+    ...invitationSearch(search),
+    ...(search.reset === true || search.reset === "true" ? { reset: true as const } : {}),
+  }),
   component: SignIn,
 });
 
 function SignIn() {
-  const { invitation } = Route.useSearch();
+  const { invitation, reset } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -60,6 +67,13 @@ function SignIn() {
     >
       <form onSubmit={onSubmit} noValidate>
         <FieldGroup>
+          {reset && (
+            <Alert>
+              <CheckCircle2Icon />
+              <AlertTitle>Contraseña cambiada</AlertTitle>
+              <AlertDescription>Inicia sesión con la nueva.</AlertDescription>
+            </Alert>
+          )}
           <Controller
             name="email"
             control={form.control}

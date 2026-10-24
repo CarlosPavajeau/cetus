@@ -1,4 +1,4 @@
-import { type } from "arktype";
+import { type Traversal, type } from "arktype";
 
 const email = type("string.email").configure({ message: "Ingresa un correo válido." });
 
@@ -11,18 +11,27 @@ export const signInSchema = type({
   password: type("string > 0").configure({ message: "Ingresa tu contraseña." }),
 });
 
-export const signUpSchema = type({
-  name: required("Escribe tu nombre completo."),
-  email,
+const newPassword = {
   password: type("string >= 10").configure({
     message: "La contraseña debe tener mínimo 10 caracteres.",
   }),
   confirmPassword: type("string > 0").configure({ message: "Repite tu contraseña." }),
-}).narrow((values, ctx) =>
+};
+
+const passwordsMatch = (values: { password: string; confirmPassword: string }, ctx: Traversal) =>
   values.password === values.confirmPassword
     ? true
-    : ctx.reject({ path: ["confirmPassword"], message: "Las contraseñas no coinciden." }),
-);
+    : ctx.reject({ path: ["confirmPassword"], message: "Las contraseñas no coinciden." });
+
+export const signUpSchema = type({
+  name: required("Escribe tu nombre completo."),
+  email,
+  ...newPassword,
+}).narrow(passwordsMatch);
+
+export const forgotPasswordSchema = type({ email });
+
+export const resetPasswordSchema = type(newPassword).narrow(passwordsMatch);
 
 const trustDevice = type("boolean");
 
