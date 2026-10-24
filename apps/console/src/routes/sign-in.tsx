@@ -11,15 +11,12 @@ import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signInSchema } from "~/features/auth/schema";
-import { startSession } from "~/features/auth/session-start";
+import { invitationSearch, startSession } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
 
 /** `invitation`: the invitation the person came to accept; after signing in they go back to it. */
 export const Route = createFileRoute("/sign-in")({
-  validateSearch: (search): { invitation?: string } =>
-    typeof search.invitation === "string" && search.invitation
-      ? { invitation: search.invitation }
-      : {},
+  validateSearch: invitationSearch,
   component: SignIn,
 });
 
@@ -46,7 +43,7 @@ function SignIn() {
     }
     // The password was right but the account has 2FA: the session starts after the code.
     if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
-      await navigate({ to: "/two-factor" });
+      await navigate({ to: "/two-factor", search: { invitation } });
       return;
     }
 

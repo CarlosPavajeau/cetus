@@ -1,4 +1,6 @@
 import { addRange, onboardIssuer, uniqueNit } from "../support/issuers";
+import { createOrganization } from "../support/organization";
+import { enableTwoFactor, totp } from "../support/platform-staff";
 import { consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
@@ -86,5 +88,50 @@ test("an invitation only opens for its address", async ({ page, browser, organiz
   const anonymous = await visitor.newPage();
   await open(anonymous, `/invitations/${invitation.id}`);
   await expect(anonymous.getByRole("button", { name: "Ya tengo cuenta" })).toBeVisible();
+  await visitor.close();
+});
+
+test("the members page renders on the server with a pending invitation", async ({
+  page,
+  organization: owner,
+}) => {
+  const email = `e2e-pendiente-${crypto.randomUUID().slice(0, 8)}@cetus.test`;
+  await owner.auth("/organization/invite-member", { email, role: "member" });
+
+  // React falls back to rendering in the browser when the server fails, so read what the server sent:
+  // the row's copy button, which the serialized loader data does not hold.
+  const html = await (await page.request.get("/settings/members")).text();
+  expect(html).toContain(`Copiar enlace de ${email}`);
+
+  await open(page, "/settings/members");
+  const pending = page.getByRole("region", { name: "Invitaciones pendientes" });
+  await expect(pending.getByRole("cell", { name: email, exact: true })).toBeVisible();
+  await expect(pending.getByRole("button", { name: `Copiar enlace de ${email}` })).toBeVisible();
+});
+
+test("someone with 2FA comes back to the invitation after the second step", async ({
+  browser,
+  organization: owner,
+}) => {
+  const invited = await createOrganization("Con 2FA SAS");
+  const secret = await enableTwoFactor(invited);
+  const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
+    email: invited.email,
+    role: "member",
+  });
+
+  const visitor = await browser.newContext();
+  const page = await visitor.newPage();
+  await open(page, `/invitations/${invitation.id}`);
+  await page.getByRole("button", { name: "Ya tengo cuenta" }).click();
+  await page.getByLabel("Correo electrónico").fill(invited.email);
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(invited.password);
+  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.waitForURL("**/two-factor**");
+  await page.getByLabel("Código de verificación").fill(totp(secret));
+  await page.getByRole("button", { name: "Verificar", exact: true }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/invitations/${invitation.id}$`));
+  await expect(page.getByRole("heading", { name: "Únete a Pruebas SAS" })).toBeVisible();
   await visitor.close();
 });

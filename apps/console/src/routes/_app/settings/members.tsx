@@ -36,7 +36,7 @@ import {
 import { memberRoleLabel } from "~/features/admin/labels";
 import { formatDateTime } from "~/features/api-keys/formats";
 import { InviteMember } from "~/features/members/InviteMember";
-import { assignableRoleItems, invitationUrl } from "~/features/members/labels";
+import { assignableRoleItems } from "~/features/members/labels";
 import { membersQuery } from "~/features/members/queries";
 import {
   type Invitation,
@@ -275,7 +275,7 @@ function InvitationRow({ invitation, editable }: { invitation: Invitation; edita
         {editable && (
           <div className="flex items-center justify-end gap-1">
             <CopyButton
-              value={invitationUrl(invitation.id)}
+              value={invitation.url}
               label={`Copiar enlace de ${invitation.email}`}
               iconOnly
             />

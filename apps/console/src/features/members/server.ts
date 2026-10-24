@@ -5,6 +5,7 @@ import { APIError } from "better-auth/api";
 
 import { assignableMemberRoles } from "~/lib/auth/permissions";
 import { auth } from "~/lib/auth/server";
+import { env } from "~/lib/env";
 
 export type Member = {
   id: string;
@@ -14,7 +15,19 @@ export type Member = {
   self: boolean;
 };
 
-export type Invitation = { id: string; email: string; role: string; expiresAt: string };
+/** An invitation waiting for an answer, with the link to share; it only opens for the invited address. */
+export type Invitation = {
+  id: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+  url: string;
+};
+
+/** Built on the server from the console's public URL: the page also renders there, without `window`. */
+function invitationUrl(id: string) {
+  return new URL(`/invitations/${id}`, env.BETTER_AUTH_URL).toString();
+}
 
 export type Members = { members: Member[]; invitations: Invitation[] };
 
@@ -47,6 +60,7 @@ export const listMembers = createServerFn({ method: "GET" }).handler(async (): P
         email: invitation.email,
         role: invitation.role,
         expiresAt: new Date(invitation.expiresAt).toISOString(),
+        url: invitationUrl(invitation.id),
       })),
   };
 });
@@ -94,7 +108,7 @@ async function change(call: () => Promise<unknown>, fallback: string): Promise<M
 
 const memberRole = type.enumerated(...assignableMemberRoles);
 
-export type InviteResult = { ok: true; id: string } | { ok: false; message: string };
+export type InviteResult = { ok: true; url: string } | { ok: false; message: string };
 
 /**
  * Invites someone to the active organization. The console sends no email: the person who invites shares
@@ -108,7 +122,7 @@ export const inviteMember = createServerFn({ method: "POST" })
         headers: getRequestHeaders(),
         body: { email: data.email, role: data.role },
       });
-      return { ok: true, id: invitation.id };
+      return { ok: true, url: invitationUrl(invitation.id) };
     } catch (error) {
       return refusal(error, "No pudimos crear la invitación.");
     }
