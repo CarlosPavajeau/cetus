@@ -203,3 +203,30 @@ test("whoever gets an invitation's link cannot join with its address without own
   expect(members.members.map((member) => member.user.email)).not.toContain(email);
   await visitor.close();
 });
+
+test("two resends at once send the invitation once", async ({ context, organization: owner }) => {
+  const email = `e2e-doble-${crypto.randomUUID().slice(0, 8)}@cetus.test`;
+  const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
+    email,
+    role: "member",
+  });
+  await ageInvitation(invitation.id, 61);
+
+  // Two tabs of the members page, as two admins would have them open.
+  const pages = await Promise.all([context.newPage(), context.newPage()]);
+  await Promise.all(pages.map((tab) => open(tab, "/settings/members")));
+  const rows = pages.map((tab) =>
+    tab.getByRole("region", { name: "Invitaciones pendientes" }).getByRole("row", { name: email }),
+  );
+  await Promise.all(rows.map((row) => row.getByRole("button", { name: "Reenviar" }).click()));
+
+  const outcomes = await Promise.all(
+    rows.map(async (row) => {
+      const resent = row.getByText("Invitación reenviada.");
+      const waited = row.getByText("Espera un minuto antes de reenviarla");
+      await expect(resent.or(waited)).toBeVisible();
+      return (await resent.isVisible()) ? "resent" : "waited";
+    }),
+  );
+  expect(outcomes.filter((outcome) => outcome === "resent")).toHaveLength(1);
+});

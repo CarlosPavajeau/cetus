@@ -2,9 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 import { APIError } from "better-auth/api";
+import { and, eq, lte } from "drizzle-orm";
 
-import { assignableMemberRoles, invitationSeconds } from "~/lib/auth/permissions";
-import { auth } from "~/lib/auth/server";
+import {
+  assignableMemberRoles,
+  invitationSeconds,
+  memberPermissions,
+} from "~/lib/auth/permissions";
+import { invitation as invitationTable } from "~/lib/auth/schema";
+import { auth, memberRoles } from "~/lib/auth/server";
+import { db } from "~/lib/db";
 import { emailSender } from "~/lib/email";
 import { env } from "~/lib/env";
 
@@ -186,8 +193,39 @@ export const resendInvitation = createServerFn({ method: "POST" })
         `Invitation ${pending.id} has a role the console does not hand out: ${pending.role}`,
       );
     }
-    const sentAt = new Date(pending.expiresAt).getTime() - invitationSeconds * 1000;
-    if (Date.now() - sentAt < resendIntervalSeconds * 1000) {
+    // Better Auth checks this too, but only after the claim below has moved the expiry.
+    const session = await auth.api.getSession({ headers });
+    if (!session || !organization) {
+      throw new Error("Resending an invitation takes a session in its organization");
+    }
+    if (session.session.impersonatedBy) {
+      return { ok: false, message: "Los miembros solo los gestiona la persona de la cuenta." };
+    }
+    if (!memberPermissions(await memberRoles(session.user.id, organization.id)).manage) {
+      return {
+        ok: false,
+        message: "Solo los dueños y administradores de la organización invitan personas.",
+      };
+    }
+    // The claim: one atomic update restarts the invitation only if its last email is a minute old, so of
+    // two requests at once (two admins, a double click) only one sends it.
+    const now = Date.now();
+    const claimed = await db
+      .update(invitationTable)
+      .set({ expiresAt: new Date(now + invitationSeconds * 1000) })
+      .where(
+        and(
+          eq(invitationTable.id, pending.id),
+          eq(invitationTable.organizationId, organization.id),
+          eq(invitationTable.status, "pending"),
+          lte(
+            invitationTable.expiresAt,
+            new Date(now + (invitationSeconds - resendIntervalSeconds) * 1000),
+          ),
+        ),
+      )
+      .returning({ id: invitationTable.id });
+    if (claimed.length === 0) {
       return { ok: false, message: "Acabamos de enviarla. Espera un minuto antes de reenviarla." };
     }
     let invitation: Awaited<ReturnType<typeof auth.api.createInvitation>>;
