@@ -2,16 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 import { APIError } from "better-auth/api";
-import { createElement } from "react";
 
-import { InvitationEmail, invitationText } from "~/emails/InvitationEmail";
-import { memberRoleLabel } from "~/features/admin/labels";
 import { assignableMemberRoles, invitationSeconds } from "~/lib/auth/permissions";
 import { auth } from "~/lib/auth/server";
 import { emailSender } from "~/lib/email";
 import { env } from "~/lib/env";
 
-import { assignableRoleItems } from "./labels";
+import { deliverInvitation, invitationMessage } from "./invitationEmail";
 
 export type Member = {
   id: string;
@@ -118,49 +115,31 @@ export type InviteResult =
   | { ok: true; url: string; emailed: boolean }
   | { ok: false; message: string };
 
-const expiresFormat = new Intl.DateTimeFormat("es-CO", {
-  dateStyle: "long",
-  timeStyle: "short",
-  timeZone: "America/Bogota",
-});
-
-/**
- * Emails the invitation to its address. A failure leaves the invitation as it is: the console still shows its
- * link to share, so it only says whether the email went out.
- */
-async function emailInvitation(
+/** Emails the invitation to its address; whatever fails, the invitation and its link stand. */
+function emailInvitation(
   headers: Headers,
   invitation: { id: string; email: string; role: string; expiresAt: Date },
 ): Promise<boolean> {
-  const [organization, session] = await Promise.all([
-    auth.api.getFullOrganization({ headers }),
-    auth.api.getSession({ headers }),
-  ]);
-  if (!organization || !session) {
-    throw new Error("An invitation was created without an active organization or a session");
-  }
-  const role = assignableRoleItems.find((item) => item.value === invitation.role);
-  const props = {
-    organization: organization.name,
-    inviterName: session.user.name,
-    inviterEmail: session.user.email,
-    role: memberRoleLabel[invitation.role] ?? invitation.role,
-    roleDescription: role?.description ?? "",
-    url: invitationUrl(invitation.id),
-    expires: expiresFormat.format(invitation.expiresAt),
-  };
-  try {
-    await emailSender.send({
+  return deliverInvitation(emailSender, async () => {
+    const [organization, session] = await Promise.all([
+      auth.api.getFullOrganization({ headers }),
+      auth.api.getSession({ headers }),
+    ]);
+    if (!organization || !session) {
+      throw new Error(
+        `Invitation ${invitation.id} has no active organization or session to email it`,
+      );
+    }
+    return invitationMessage({
       to: invitation.email,
-      subject: `${props.inviterName} te invitó a ${props.organization} en Cetus`,
-      react: createElement(InvitationEmail, props),
-      text: invitationText(props),
+      organization: organization.name,
+      inviterName: session.user.name,
+      inviterEmail: session.user.email,
+      role: invitation.role,
+      url: invitationUrl(invitation.id),
+      expiresAt: invitation.expiresAt,
     });
-    return true;
-  } catch (error) {
-    console.error("Invitation created but not emailed", { invitationId: invitation.id, error });
-    return false;
-  }
+  });
 }
 
 /**

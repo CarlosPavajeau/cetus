@@ -1,5 +1,6 @@
 import { type } from "arktype";
 
+import { ageInvitation, invitationExpiry } from "../support/invitations";
 import { addRange, onboardIssuer, uniqueNit } from "../support/issuers";
 import { createOrganization } from "../support/organization";
 import { enableTwoFactor, totp } from "../support/platform-staff";
@@ -34,6 +35,15 @@ test("a biller is invited by link, issues in production and is removed", async (
   await expect(pending.getByRole("cell", { name: email, exact: true })).toBeVisible();
   await expect(pending.getByRole("cell", { name: "Facturador" })).toBeVisible();
   // It was just sent: sending it again waits a minute.
+  await pending.getByRole("button", { name: "Reenviar" }).click();
+  await expect(pending.getByText("Espera un minuto antes de reenviarla")).toBeVisible();
+  // A minute later it goes out again: the same invitation, valid for another 48 hours.
+  const invitationId = new URL(url).pathname.split("/").pop() ?? "";
+  const aged = await ageInvitation(invitationId, 61);
+  await pending.getByRole("button", { name: "Reenviar" }).click();
+  await expect(pending.getByText("Invitación reenviada.")).toBeVisible();
+  expect((await invitationExpiry(invitationId)).getTime()).toBeGreaterThan(aged.getTime());
+  await expect(pending.getByRole("row")).toHaveCount(2);
   await pending.getByRole("button", { name: "Reenviar" }).click();
   await expect(pending.getByText("Espera un minuto antes de reenviarla")).toBeVisible();
 
