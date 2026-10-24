@@ -1,5 +1,7 @@
 package com.cantte.cetus.persistence.audit;
 
+import static com.cantte.cetus.persistence.NativeColumns.toOffsetDateTime;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,10 +10,6 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -178,14 +176,5 @@ public class AuditLog {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Corrupt audit data", e);
         }
-    }
-
-    private static OffsetDateTime toOffsetDateTime(Object value) {
-        return switch (value) {
-            case OffsetDateTime odt -> odt;
-            case Instant instant -> instant.atOffset(ZoneOffset.UTC);
-            case Timestamp timestamp -> timestamp.toInstant().atOffset(ZoneOffset.UTC);
-            default -> throw new IllegalStateException("Unexpected timestamp type " + value.getClass());
-        };
     }
 }

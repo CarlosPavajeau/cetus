@@ -1,14 +1,13 @@
 package com.cantte.cetus.persistence.usage;
 
+import static com.cantte.cetus.persistence.NativeColumns.toOffsetDateTime;
+
 import com.cantte.cetus.persistence.audit.RequestOrigin;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import org.hibernate.query.NativeQuery;
@@ -85,14 +84,5 @@ public class ApiKeyUsage {
                 ((Number) row[3]).intValue(),
                 ((Number) row[4]).intValue(),
                 toOffsetDateTime(row[5]));
-    }
-
-    private static OffsetDateTime toOffsetDateTime(Object value) {
-        return switch (value) {
-            case OffsetDateTime odt -> odt;
-            case Instant instant -> instant.atOffset(ZoneOffset.UTC);
-            case Timestamp timestamp -> timestamp.toInstant().atOffset(ZoneOffset.UTC);
-            default -> throw new IllegalStateException("Unexpected timestamp type " + value.getClass());
-        };
     }
 }

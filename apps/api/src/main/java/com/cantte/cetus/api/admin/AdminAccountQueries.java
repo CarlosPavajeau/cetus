@@ -1,5 +1,7 @@
 package com.cantte.cetus.api.admin;
 
+import static com.cantte.cetus.persistence.NativeColumns.toOffsetDateTime;
+
 import com.cantte.cetus.api.admin.AdminViews.AccountSummaryView;
 import com.cantte.cetus.api.admin.AdminViews.FailedDocumentView;
 import com.cantte.cetus.api.admin.AdminViews.UsageCountView;
@@ -12,12 +14,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -164,14 +163,5 @@ public class AdminAccountQueries {
 
     private static long count(Object value) {
         return ((Number) value).longValue();
-    }
-
-    private static OffsetDateTime toOffsetDateTime(Object value) {
-        return switch (value) {
-            case OffsetDateTime odt -> odt;
-            case Instant instant -> instant.atOffset(ZoneOffset.UTC);
-            case Timestamp timestamp -> timestamp.toInstant().atOffset(ZoneOffset.UTC);
-            default -> throw new IllegalStateException("Unexpected timestamp type " + value.getClass());
-        };
     }
 }
