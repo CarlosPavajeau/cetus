@@ -48,7 +48,7 @@ public class OpenApiFilter implements OASFilter {
         requireResponseMembers(openAPI, schemas);
     }
 
-    private static void requireResponseMembers(OpenAPI openAPI, Map<String, Schema> schemas) {
+    static void requireResponseMembers(OpenAPI openAPI, Map<String, Schema> schemas) {
         List<Operation> operations = openAPI.getPaths().getPathItems().values().stream()
                 .flatMap(item -> item.getOperations().values().stream())
                 .toList();
