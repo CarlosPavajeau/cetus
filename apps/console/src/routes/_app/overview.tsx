@@ -1,6 +1,6 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { BuildingIcon } from "lucide-react";
+import { BuildingIcon, FileTextIcon } from "lucide-react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
@@ -30,6 +30,8 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { accountQuery } from "~/features/account/queries";
+import { documentsQuery } from "~/features/documents/queries";
+import { useActiveEnvironment } from "~/features/environment/queries";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 
@@ -38,6 +40,7 @@ export const Route = createFileRoute("/_app/overview")({
     Promise.all([
       queryClient.ensureQueryData(accountQuery),
       queryClient.ensureQueryData(issuersQuery),
+      queryClient.ensureInfiniteQueryData(documentsQuery({ environment: "SANDBOX" })),
     ]),
   component: Overview,
 });
@@ -45,8 +48,13 @@ export const Route = createFileRoute("/_app/overview")({
 function Overview() {
   const { data: account } = useSuspenseQuery(accountQuery);
   const { data: issuers } = useSuspenseQuery(issuersQuery);
+  const { data: sandboxDocuments } = useSuspenseInfiniteQuery(
+    documentsQuery({ environment: "SANDBOX" }),
+  );
+  const environment = useActiveEnvironment();
   // A new organization only has the sandbox sample, which needs no setup.
   const fiscal = issuers.some((issuer) => issuer.environment !== "SANDBOX");
+  const tried = sandboxDocuments.pages.some((page) => page.items.length > 0);
 
   return (
     <>
@@ -54,6 +62,26 @@ function Overview() {
         title={account.name}
         lead={`Plan ${account.plan.toLowerCase()} · cuenta ${account.status.toLowerCase()}`}
       />
+
+      {environment === "SANDBOX" && !tried && (
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileTextIcon />
+            </EmptyMedia>
+            <EmptyTitle>Emite tu primera factura de prueba</EmptyTitle>
+            <EmptyDescription>
+              Ya tienes un emisor de ejemplo listo. Emite una factura simulada y mira su ciclo
+              completo: el estado ante la DIAN, el PDF y el XML. No tiene validez fiscal.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button render={<Link to="/documents/new" />} nativeButton={false}>
+              Emitir factura de prueba
+            </Button>
+          </EmptyContent>
+        </Empty>
+      )}
 
       {!fiscal && (
         <Card>

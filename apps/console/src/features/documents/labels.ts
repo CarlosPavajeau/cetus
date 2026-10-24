@@ -1,5 +1,11 @@
 import { dateFormat } from "~/features/api-keys/formats";
-import type { Delivery, DocumentEvent, DocumentStatus, DocumentType } from "~/lib/api/types";
+import type {
+  Delivery,
+  DocumentEvent,
+  DocumentStatus,
+  DocumentType,
+  Environment,
+} from "~/lib/api/types";
 
 export const documentTypeLabel: Record<DocumentType, string> = {
   INVOICE: "Factura",
@@ -24,6 +30,26 @@ export const documentStatusLead: Record<DocumentStatus, string> = {
   REJECTED: "La DIAN lo rechazó: no tiene validez fiscal. Corrige los datos y emite uno nuevo.",
   FAILED: "Cetus no pudo enviarlo a la DIAN después de varios intentos.",
 };
+
+const sandboxStatusLead: Record<DocumentStatus, string> = {
+  RECEIVED: "Cetus lo recibió y lo va a firmar y enviar al simulador.",
+  PROCESSING: "Cetus lo está firmando y enviando al simulador.",
+  SUBMITTED: "El simulador lo recibió y está validándolo.",
+  ACCEPTED: "El simulador de Cetus lo aceptó, como lo haría la DIAN. No tiene validez fiscal.",
+  REJECTED: "El simulador lo rechazó, como lo haría la DIAN. Corrige los datos y emite uno nuevo.",
+  FAILED: "Cetus no pudo enviarlo al simulador después de varios intentos.",
+};
+
+/** The lead of a document's status; outside production nothing has fiscal validity. */
+export function documentLead(status: DocumentStatus, environment: Environment) {
+  if (environment === "SANDBOX") {
+    return sandboxStatusLead[status];
+  }
+  if (environment === "TEST" && status === "ACCEPTED") {
+    return "La DIAN de pruebas lo validó. No tiene validez fiscal.";
+  }
+  return documentStatusLead[status];
+}
 
 /** Credit note concepts (table 13.2.4 of the annex) and debit note concepts (table 13.2.5). */
 export const conceptLabel: Record<string, string> = {

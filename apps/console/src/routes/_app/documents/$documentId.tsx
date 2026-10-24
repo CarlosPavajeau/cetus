@@ -33,7 +33,7 @@ import {
   conceptLabel,
   deliveryStatusLabel,
   describeEvent,
-  documentStatusLead,
+  documentLead,
   documentTypeLabel,
   formatDay,
   formatMoney,
@@ -87,7 +87,7 @@ function DocumentDetailPage() {
       <PageHeader
         title={`${documentTypeLabel[document.documentType]} ${document.number}`}
         status={<DocumentStatusBadge status={document.status} />}
-        lead={documentStatusLead[document.status]}
+        lead={documentLead(document.status, document.environment)}
         action={
           <div className="flex flex-col items-start gap-2 sm:items-end">
             {isInvoice && document.status === "ACCEPTED" && <CancelInvoice invoice={document} />}

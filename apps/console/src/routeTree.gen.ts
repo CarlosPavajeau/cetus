@@ -27,6 +27,7 @@ import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/ind
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
 import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/index'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
+import { Route as AppDocumentsNewRouteImport } from './routes/_app/documents/new'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
 import { Route as AppSettingsContactsRouteImport } from './routes/_app/settings/contacts'
@@ -132,6 +133,11 @@ const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
   path: '/documents/$documentId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsNewRoute = AppDocumentsNewRouteImport.update({
+  id: '/documents/new',
+  path: '/documents/new',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
   id: '/issuers/',
   path: '/issuers/',
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/documents/new': typeof AppDocumentsNewRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/security': typeof AppSettingsSecurityRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/documents/new': typeof AppDocumentsNewRoute
   '/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/security': typeof AppSettingsSecurityRoute
@@ -298,6 +306,7 @@ export interface FileRoutesById {
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
+  '/_app/documents/new': typeof AppDocumentsNewRoute
   '/_app/issuers/$issuerId': typeof AppIssuersIssuerIdRoute
   '/_app/settings/contacts': typeof AppSettingsContactsRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
@@ -333,6 +342,7 @@ export interface FileRouteTypes {
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
+    | '/documents/new'
     | '/issuers/$issuerId'
     | '/settings/contacts'
     | '/settings/security'
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/documents/$documentId'
+    | '/documents/new'
     | '/issuers/$issuerId'
     | '/settings/contacts'
     | '/settings/security'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
     | '/_app/documents/$documentId'
+    | '/_app/documents/new'
     | '/_app/issuers/$issuerId'
     | '/_app/settings/contacts'
     | '/_app/settings/security'
@@ -564,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/documents/new': {
+      id: '/_app/documents/new'
+      path: '/documents/new'
+      fullPath: '/documents/new'
+      preLoaderRoute: typeof AppDocumentsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/issuers/': {
       id: '/_app/issuers/'
       path: '/issuers'
@@ -699,6 +718,7 @@ interface AppRouteChildren {
   AppOverviewRoute: typeof AppOverviewRoute
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
+  AppDocumentsNewRoute: typeof AppDocumentsNewRoute
   AppIssuersIssuerIdRoute: typeof AppIssuersIssuerIdRoute
   AppSettingsContactsRoute: typeof AppSettingsContactsRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
@@ -716,6 +736,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOverviewRoute: AppOverviewRoute,
   AppActivityEventIdRoute: AppActivityEventIdRoute,
   AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
+  AppDocumentsNewRoute: AppDocumentsNewRoute,
   AppIssuersIssuerIdRoute: AppIssuersIssuerIdRoute,
   AppSettingsContactsRoute: AppSettingsContactsRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,

@@ -1,7 +1,7 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type } from "arktype";
-import { FileTextIcon, SearchIcon } from "lucide-react";
+import { FileTextIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useState } from "react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/_app/documents/")({
         filters[key] = raw;
       }
     }
-    return filters as SearchFilters;
+    return filters;
   },
   loaderDeps: ({ search }) => search,
   loader: async ({ context: { queryClient }, deps }) => {
@@ -189,6 +189,12 @@ function Documents() {
       <PageHeader
         title="Documentos"
         lead="Facturas y notas de la cuenta, con su estado ante la DIAN y su entrega al cliente."
+        action={
+          <Button render={<Link to="/documents/new" />} nativeButton={false}>
+            <PlusIcon data-icon="inline-start" />
+            Emitir factura
+          </Button>
+        }
       />
 
       <section className="flex flex-col gap-4" aria-label="Tus documentos">
@@ -238,8 +244,8 @@ function Documents() {
               </EmptyMedia>
               <EmptyTitle>Aún no hay documentos</EmptyTitle>
               <EmptyDescription>
-                Las facturas y notas que emitas con la API aparecerán aquí con su estado ante la
-                DIAN.
+                Las facturas y notas que emitas desde aquí o con la API aparecerán con su estado
+                ante la DIAN.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

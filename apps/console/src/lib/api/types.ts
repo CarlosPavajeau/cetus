@@ -40,6 +40,24 @@ export type DocumentEvent = Schemas["DocumentEvent"];
 
 export type Delivery = Schemas["DeliveryView"];
 
+export type InvoiceRequest = Schemas["InvoiceRequest"];
+
+export type InvoiceLine = Schemas["Line"];
+
+export type LineTax = Schemas["LineTax"];
+
+export type IdentificationType = Schemas["IdentificationType"];
+
+export type PersonType = Schemas["PersonType"];
+
+export type CreditNoteConcept = Schemas["CreditNoteConcept"];
+
+export type DebitNoteConcept = Schemas["DebitNoteConcept"];
+
+export type DocumentPreview = Schemas["DocumentPreview"];
+
+export type IssuedDocument = Schemas["IssuedDocument"];
+
 export type DocumentFile = "xml" | "pdf" | "attached-document";
 
 /** Runtime lists for the document filters and their validators. Must list every value of the API enums. */

@@ -45,7 +45,7 @@ test("signing up opens the console in the sandbox, with the assistant one click 
 
   await expect(page).toHaveURL(/\/overview$/);
   await expect(page.getByRole("complementary", { name: "Modo simulación" })).toBeVisible();
-  await page.getByRole("link", { name: "Configurar emisor" }).first().click();
+  await page.getByRole("button", { name: "Configurar emisor" }).click();
   await expect(page).toHaveURL(/\/setup$/);
   await expect(stepTitle(page, 1)).toBeVisible();
   // Habilitación is where a new issuer usually starts.
