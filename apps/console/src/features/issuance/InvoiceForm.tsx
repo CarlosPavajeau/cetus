@@ -127,8 +127,18 @@ export function InvoiceForm({
       ]);
       await navigate({ to: "/documents/$documentId", params: { documentId: result.id } });
     },
+    // The form's alert explains the failure; the dialog would hide it.
+    onError: () => setConfirmation(null),
   });
-  const failure = issue.data && !issue.data.ok ? issue.data : null;
+  const [previewFailure, setPreviewFailure] = useState<string | null>(null);
+  // An answer of the API explains itself; a thrown error is an outage or a lost connection, and a retry
+  // with the same key is safe.
+  const failure =
+    issue.data && !issue.data.ok
+      ? issue.data.message
+      : issue.error
+        ? "No pudimos comunicarnos con Cetus. Revisa tu conexión e inténtalo de nuevo."
+        : previewFailure;
   const method = useWatch({ control: header.control, name: "payment.method" });
   const identificationType = useWatch({
     control: header.control,
@@ -151,12 +161,24 @@ export function InvoiceForm({
     if (parsedHeader instanceof type.errors || parsedLines instanceof type.errors) {
       return;
     }
+    setPreviewFailure(null);
     if (environment === "LIVE") {
-      const total = await previewDocument({ data: { lines: parsedLines.lines } });
-      if (total) {
-        setConfirmation({ header: parsedHeader, lines: parsedLines, total });
+      // A LIVE invoice is only issued from the confirmation, which needs its total.
+      let total: DocumentPreview | null;
+      try {
+        total = await previewDocument({ data: { lines: parsedLines.lines } });
+      } catch {
+        setPreviewFailure(
+          "No pudimos calcular el total para confirmar. Revisa tu conexión e inténtalo de nuevo.",
+        );
         return;
       }
+      if (!total) {
+        setPreviewFailure("No pudimos calcular el total de estas líneas. Revisa sus valores.");
+        return;
+      }
+      setConfirmation({ header: parsedHeader, lines: parsedLines, total });
+      return;
     }
     issue.mutate({ data: { idempotencyKey, invoice: parsedHeader, lines: parsedLines.lines } });
   }
@@ -297,7 +319,7 @@ export function InvoiceForm({
       {failure && (
         <Alert variant="destructive">
           <AlertTitle>No se emitió la factura</AlertTitle>
-          <AlertDescription>{failure.message}</AlertDescription>
+          <AlertDescription>{failure}</AlertDescription>
         </Alert>
       )}
       {blockedReason && (
