@@ -91,6 +91,10 @@ function SaveProduct({
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        // Kept open while saving: a closed dialog reopened meanwhile would be closed by that save.
+        if (!next && save.isPending) {
+          return;
+        }
         setOpen(next);
         if (next) {
           form.reset(values);
@@ -144,7 +148,12 @@ function SaveProduct({
             </Alert>
           )}
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" type="button" />}>Cancelar</DialogClose>
+            <DialogClose
+              render={<Button variant="outline" type="button" />}
+              disabled={save.isPending}
+            >
+              Cancelar
+            </DialogClose>
             <Button type="submit" disabled={save.isPending}>
               {save.isPending && <Spinner data-icon="inline-start" />}
               Guardar
