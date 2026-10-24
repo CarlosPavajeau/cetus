@@ -20,4 +20,4 @@ public record ProductRequest(
         @NotNull @PositiveOrZero @Digits(integer = 14, fraction = 6)
         BigDecimal unitPrice,
 
-        @Size(max = 5) List<InvoiceRequest.@Valid LineTax> taxes) {}
+        @Size(max = 5) List<InvoiceRequest.@Valid @NotNull LineTax> taxes) {}

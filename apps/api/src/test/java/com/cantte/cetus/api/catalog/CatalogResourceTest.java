@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.equalTo;
 import com.cantte.cetus.api.support.ConsoleUser;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -109,6 +110,11 @@ class CatalogResourceTest {
         assertThat(api(sandboxKey).get("/v1/products?q=ase").jsonPath().getList("items.id"))
                 .containsExactly(first);
 
+        api(sandboxKey)
+                .body(product("NUL-1", "Impuesto nulo", Collections.singletonList(null)))
+                .post("/v1/products")
+                .then()
+                .statusCode(400);
         api(sandboxKey)
                 .body(product("ASE-1", "Duplicado", List.of()))
                 .post("/v1/products")
