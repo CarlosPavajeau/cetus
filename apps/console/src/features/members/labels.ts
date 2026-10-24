@@ -21,8 +21,3 @@ export const assignableRoleItems: {
     description: "Consulta y emite en pruebas y simulación.",
   },
 ];
-
-/** The link that brings the invited person in; it only works signed in with the invited address. */
-export function invitationUrl(id: string) {
-  return `${window.location.origin}/invitations/${id}`;
-}

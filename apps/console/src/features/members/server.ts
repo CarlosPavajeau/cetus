@@ -21,7 +21,19 @@ export type Member = {
   self: boolean;
 };
 
-export type Invitation = { id: string; email: string; role: string; expiresAt: string };
+/** An invitation waiting for an answer, with the link to share; it only opens for the invited address. */
+export type Invitation = {
+  id: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+  url: string;
+};
+
+/** Built on the server from the console's public URL: the page also renders there, without `window`. */
+function invitationUrl(id: string) {
+  return new URL(`/invitations/${id}`, env.BETTER_AUTH_URL).toString();
+}
 
 export type Members = { members: Member[]; invitations: Invitation[] };
 
@@ -54,6 +66,7 @@ export const listMembers = createServerFn({ method: "GET" }).handler(async (): P
         email: invitation.email,
         role: invitation.role,
         expiresAt: new Date(invitation.expiresAt).toISOString(),
+        url: invitationUrl(invitation.id),
       })),
   };
 });
@@ -102,7 +115,7 @@ async function change(call: () => Promise<unknown>, fallback: string): Promise<M
 const memberRole = type.enumerated(...assignableMemberRoles);
 
 export type InviteResult =
-  | { ok: true; id: string; emailed: boolean }
+  | { ok: true; url: string; emailed: boolean }
   | { ok: false; message: string };
 
 const expiresFormat = new Intl.DateTimeFormat("es-CO", {
@@ -133,7 +146,7 @@ async function emailInvitation(
     inviterEmail: session.user.email,
     role: memberRoleLabel[invitation.role] ?? invitation.role,
     roleDescription: role?.description ?? "",
-    url: new URL(`/invitations/${invitation.id}`, env.BETTER_AUTH_URL).toString(),
+    url: invitationUrl(invitation.id),
     expires: expiresFormat.format(invitation.expiresAt),
   };
   try {
@@ -168,7 +181,7 @@ export const inviteMember = createServerFn({ method: "POST" })
       return refusal(error, "No pudimos crear la invitación.");
     }
     const emailed = await emailInvitation(headers, invitation);
-    return { ok: true, id: invitation.id, emailed };
+    return { ok: true, url: invitationUrl(invitation.id), emailed };
   });
 
 export type ResendResult = { ok: true; emailed: boolean } | { ok: false; message: string };

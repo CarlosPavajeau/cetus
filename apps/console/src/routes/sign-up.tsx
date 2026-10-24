@@ -12,14 +12,12 @@ import { Spinner } from "~/components/ui/spinner";
 import { bootstrapAccount } from "~/features/account/server";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
+import { invitationSearch } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
 
 /** `invitation`: the invitation the person came to accept; they join that organization instead of a new one. */
 export const Route = createFileRoute("/sign-up")({
-  validateSearch: (search): { invitation?: string } =>
-    typeof search.invitation === "string" && search.invitation
-      ? { invitation: search.invitation }
-      : {},
+  validateSearch: invitationSearch,
   component: SignUp,
 });
 

@@ -23,7 +23,7 @@ import { SelectField } from "~/features/issuance/fields";
 import { TextField } from "~/features/setup/fields";
 import { assignableMemberRoles } from "~/lib/auth/permissions";
 
-import { assignableRoleItems, invitationUrl } from "./labels";
+import { assignableRoleItems } from "./labels";
 import { membersQuery } from "./queries";
 import { inviteMember } from "./server";
 
@@ -102,8 +102,8 @@ export function InviteMember() {
               </Alert>
             )}
             <div className="flex items-center gap-2 rounded-md border bg-muted/40 p-2">
-              <code className="min-w-0 flex-1 truncate text-xs">{invitationUrl(invited.id)}</code>
-              <CopyButton value={invitationUrl(invited.id)} label="Copiar enlace" />
+              <code className="min-w-0 flex-1 truncate text-xs">{invited.url}</code>
+              <CopyButton value={invited.url} label="Copiar enlace" />
             </div>
             <DialogFooter>
               <DialogClose render={<Button />}>Listo</DialogClose>
