@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_app/documents/$documentId_/notes/new")({
     if (!invoice || invoice.documentType !== "INVOICE" || invoice.status !== "ACCEPTED") {
       throw notFound();
     }
-    return { crumb: invoice.number };
+    return { crumb: invoice.number, environment: invoice.environment };
   },
   component: NewNote,
 });
