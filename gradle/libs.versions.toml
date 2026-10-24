@@ -8,8 +8,13 @@ resend = "4.28.0"
 okhttp = "5.4.0"
 openpdf = "3.0.5"
 zxing = "3.5.4"
+spotless = "8.9.0"
+palantir-java-format = "2.102.0"
 
 [libraries]
+# Build logic
+spotless-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+
 # BOMs (platforms) — align transitive versions
 quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
 awssdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "awssdk" }
