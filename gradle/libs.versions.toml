@@ -51,6 +51,7 @@ awssdk-url-connection = { module = "software.amazon.awssdk:url-connection-client
 # Email delivery (official Resend SDK), PDF rendering and QR codes
 resend-java = { module = "com.resend:resend-java", version.ref = "resend" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+jetbrains-annotations = { module = "org.jetbrains:annotations" }
 openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 

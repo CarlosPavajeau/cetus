@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import okhttp3.Dns;
 import okhttp3.OkHttpClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * HTTP client and settings for webhook deliveries.
@@ -94,7 +95,7 @@ public class WebhookClients {
         }
 
         @Override
-        public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+        public @NotNull List<InetAddress> lookup(@NotNull String hostname) throws UnknownHostException {
             List<InetAddress> addresses = delegate.lookup(hostname);
             for (InetAddress address : addresses) {
                 if (WebhookTargets.isPrivate(address)) {

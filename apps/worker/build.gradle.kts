@@ -27,6 +27,8 @@ dependencies {
     implementation(libs.zxing.core)
     // Webhook deliveries: its pluggable DNS checks the very addresses it connects to (DNS rebinding).
     implementation(libs.okhttp)
+    // OkHttp is written in Kotlin; overrides of its interfaces repeat its nullness annotations.
+    compileOnly(libs.jetbrains.annotations)
 
     testImplementation(libs.quarkus.junit)
     // The worker never migrates in production; tests create the schema the same way the API does.
