@@ -28,6 +28,8 @@ import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { IssuerStatusBadge } from "~/features/issuers/IssuerStatusBadge";
 import { issuerName } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
+import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { Environment, Issuer } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/issuers/")({
@@ -48,6 +50,7 @@ function NewIssuer() {
 
 function Issuers() {
   const { data: issuers } = useSuspenseQuery(issuersQuery);
+  const { manage } = useMemberPermissions();
   const [environment, setEnvironment] = useState<EnvironmentFilter>("ALL");
   const [search, setSearch] = useState("");
 
@@ -70,8 +73,11 @@ function Issuers() {
         title="Emisores"
         count={issuers.length}
         lead="Las empresas que facturan desde esta cuenta. Cada una tiene su ID para la API."
-        action={<NewIssuer />}
+        action={manage ? <NewIssuer /> : undefined}
       />
+      <ReadOnlyNotice>
+        Los emisores los crean y configuran los dueños y administradores de la organización.
+      </ReadOnlyNotice>
 
       {issuers.length === 0 ? (
         <Empty className="border">
@@ -85,9 +91,11 @@ function Issuers() {
               de numeración. El asistente te guía para configurarlo.
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <NewIssuer />
-          </EmptyContent>
+          {manage && (
+            <EmptyContent>
+              <NewIssuer />
+            </EmptyContent>
+          )}
         </Empty>
       ) : (
         <section className="flex flex-col gap-4" aria-label="Tus emisores">
@@ -161,6 +169,7 @@ function Issuers() {
 }
 
 function IssuerRow({ issuer }: { issuer: Issuer }) {
+  const { manage } = useMemberPermissions();
   return (
     <TableRow>
       <TableCell className="px-5 py-5">
@@ -184,7 +193,7 @@ function IssuerRow({ issuer }: { issuer: Issuer }) {
         <EnvironmentBadge environment={issuer.environment} />
       </TableCell>
       <TableCell>
-        {issuer.status === "ONBOARDING" ? (
+        {manage && issuer.status === "ONBOARDING" ? (
           <Button
             variant="link"
             size="sm"

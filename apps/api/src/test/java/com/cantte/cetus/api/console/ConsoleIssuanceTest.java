@@ -161,6 +161,30 @@ class ConsoleIssuanceTest {
                 .path("id");
         assertThat(detail(owner, id).getString("environment")).isEqualTo("LIVE");
 
+        // Correcting a LIVE invoice issues another LIVE document: the same members only.
+        UUID invoiceId = UUID.fromString(id);
+        ConsoleUser member = owner.member("member");
+        Map<String, Object> credit = Map.of(
+                "concept", "PRICE_ADJUSTMENT",
+                "description", "Descuento acordado",
+                "lines", List.of(line("Descuento", 1, 10000, List.of(tax("IVA", 19)))));
+        Map<String, Object> debit = Map.of(
+                "concept", "INTEREST",
+                "description", "Intereses de mora",
+                "lines", List.of(line("Intereses", 1, 5000, List.of())));
+        note(member, invoiceId, "credit-notes", credit)
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("organization_role_forbidden"));
+        note(member, invoiceId, "debit-notes", debit)
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("organization_role_forbidden"));
+        note(member, invoiceId, "cancellation", Map.of("description", "Factura emitida por error"))
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("organization_role_forbidden"));
+
         // Impersonating stays possible outside LIVE, for support and demos.
         owner.impersonatedBy("user_" + UUID.randomUUID())
                 .header("Idempotency-Key", UUID.randomUUID().toString())

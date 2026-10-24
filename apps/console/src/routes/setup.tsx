@@ -14,7 +14,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
-import { requireSession } from "~/features/session/guard";
+import { requireManager } from "~/features/session/guard";
 import { CertificateStep } from "~/features/setup/CertificateStep";
 import { IssuerStep } from "~/features/setup/IssuerStep";
 import { NumberingStep } from "~/features/setup/NumberingStep";
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/setup")({
         : (search.new === true || search.new === "true") && { new: true as const }),
     };
   },
-  beforeLoad: requireSession,
+  beforeLoad: requireManager,
   loaderDeps: ({ search }) => ({ issuerId: search.issuerId, new: search.new }),
   loader: async ({ context: { queryClient }, deps }) => {
     if (deps.issuerId) {

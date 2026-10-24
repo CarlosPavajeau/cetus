@@ -34,6 +34,7 @@ import { documentsQuery } from "~/features/documents/queries";
 import { useActiveEnvironment } from "~/features/environment/queries";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 
 export const Route = createFileRoute("/_app/overview")({
   loader: ({ context: { queryClient } }) =>
@@ -52,6 +53,7 @@ function Overview() {
     documentsQuery({ environment: "SANDBOX" }),
   );
   const environment = useActiveEnvironment();
+  const { manage } = useMemberPermissions();
   // A new organization only has the sandbox sample, which needs no setup.
   const fiscal = issuers.some((issuer) => issuer.environment !== "SANDBOX");
   const tried = sandboxDocuments.pages.some((page) => page.items.length > 0);
@@ -83,7 +85,7 @@ function Overview() {
         </Empty>
       )}
 
-      {!fiscal && (
+      {!fiscal && manage && (
         <Card>
           <CardHeader>
             <CardTitle>Factura con validez fiscal</CardTitle>
@@ -119,11 +121,13 @@ function Overview() {
                   resolución de numeración. El asistente te guía para configurarlo.
                 </EmptyDescription>
               </EmptyHeader>
-              <EmptyContent>
-                <Button render={<Link to="/setup" />} nativeButton={false}>
-                  Configurar emisor
-                </Button>
-              </EmptyContent>
+              {manage && (
+                <EmptyContent>
+                  <Button render={<Link to="/setup" />} nativeButton={false}>
+                    Configurar emisor
+                  </Button>
+                </EmptyContent>
+              )}
             </Empty>
           ) : (
             <Table>
@@ -154,7 +158,7 @@ function Overview() {
                       <EnvironmentBadge environment={issuer.environment} />
                     </TableCell>
                     <TableCell>
-                      {issuer.status === "ONBOARDING" ? (
+                      {manage && issuer.status === "ONBOARDING" ? (
                         <Button
                           variant="link"
                           size="sm"

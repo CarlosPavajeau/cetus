@@ -31,16 +31,31 @@ export function roleList(role: string | null | undefined): string[] {
 }
 
 /**
- * Organization member roles (`auth.member.role`, unrelated to the platform roles) that may change who
- * receives the account's notices. The API checks the same list against the token's `orgRoles`.
+ * Organization member roles (`auth.member.role`, unrelated to the platform roles) that may change the
+ * account's contacts, API keys, webhooks and issuers. The API checks the same list against the token's
+ * `orgRoles` (OrganizationRoleFilter).
  */
-export const contactManagerRoles = ["owner", "admin"];
+export const managerRoles = ["owner", "admin"];
 
 /**
  * Organization member roles that may issue LIVE documents from the console: a real fiscal document, only
  * corrected with another one. The API checks the same list; SANDBOX and TEST are open to every member.
  */
 export const liveIssuerRoles = ["owner", "admin"];
+
+export type MemberPermissions = {
+  /** Changes the contacts, the API keys, the webhooks and the issuers. */
+  manage: boolean;
+  /** Issues LIVE documents. */
+  issueLive: boolean;
+};
+
+export function memberPermissions(assigned: string[]): MemberPermissions {
+  return {
+    manage: assigned.some((role) => managerRoles.includes(role)),
+    issueLive: assigned.some((role) => liveIssuerRoles.includes(role)),
+  };
+}
 
 /** How long a Cetus admin can act as a console user before signing in again. */
 export const impersonationSeconds = 30 * 60;

@@ -5,6 +5,7 @@ import {
   FileMinusIcon,
   FilePlusIcon,
   FileTextIcon,
+  FileXIcon,
   FingerprintIcon,
 } from "lucide-react";
 
@@ -30,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { formatDateTime } from "~/features/api-keys/formats";
 import { CancelInvoice } from "~/features/documents/CancelInvoice";
 import { DianErrors } from "~/features/documents/DianErrors";
@@ -47,6 +49,7 @@ import {
 } from "~/features/documents/labels";
 import { documentDetailQuery } from "~/features/documents/queries";
 import { ResendDocument } from "~/features/documents/ResendDocument";
+import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import type { DocumentDetail } from "~/lib/api/types";
 import { uuidPattern } from "~/lib/utils";
 
@@ -98,37 +101,7 @@ function DocumentDetailPage() {
         action={
           <div className="flex flex-col items-start gap-2 sm:items-end">
             {isInvoice && document.status === "ACCEPTED" && (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  render={
-                    <Link
-                      to="/documents/$documentId/notes/new"
-                      params={{ documentId: document.id }}
-                      search={{ type: "CREDIT_NOTE" }}
-                    />
-                  }
-                  nativeButton={false}
-                >
-                  <FileMinusIcon data-icon="inline-start" />
-                  Nota crédito
-                </Button>
-                <Button
-                  variant="outline"
-                  render={
-                    <Link
-                      to="/documents/$documentId/notes/new"
-                      params={{ documentId: document.id }}
-                      search={{ type: "DEBIT_NOTE" }}
-                    />
-                  }
-                  nativeButton={false}
-                >
-                  <FilePlusIcon data-icon="inline-start" />
-                  Nota débito
-                </Button>
-                <CancelInvoice invoice={document} />
-              </div>
+              <InvoiceCorrections invoice={document} />
             )}
             <DocumentDownloads documentId={document.id} />
           </div>
@@ -313,6 +286,68 @@ function DocumentDetailPage() {
         </ol>
         <p className="text-2xs text-muted-foreground">Horarios de Colombia (UTC−5)</p>
       </Section>
+    </div>
+  );
+}
+
+/**
+ * The notes and the cancellation of an accepted invoice. Each one issues another document in the invoice's
+ * environment, so in LIVE they follow who may issue there.
+ */
+function InvoiceCorrections({ invoice }: { invoice: DocumentDetail }) {
+  const blockedReason = useBlockedReason(invoice.environment);
+  if (blockedReason) {
+    return (
+      <Tooltip>
+        <TooltipTrigger render={<span className="flex w-fit flex-wrap gap-2" />}>
+          <Button variant="outline" disabled>
+            <FileMinusIcon data-icon="inline-start" />
+            Nota crédito
+          </Button>
+          <Button variant="outline" disabled>
+            <FilePlusIcon data-icon="inline-start" />
+            Nota débito
+          </Button>
+          <Button variant="outline" disabled>
+            <FileXIcon data-icon="inline-start" />
+            Anular factura
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-64">{blockedReason}</TooltipContent>
+      </Tooltip>
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        variant="outline"
+        render={
+          <Link
+            to="/documents/$documentId/notes/new"
+            params={{ documentId: invoice.id }}
+            search={{ type: "CREDIT_NOTE" }}
+          />
+        }
+        nativeButton={false}
+      >
+        <FileMinusIcon data-icon="inline-start" />
+        Nota crédito
+      </Button>
+      <Button
+        variant="outline"
+        render={
+          <Link
+            to="/documents/$documentId/notes/new"
+            params={{ documentId: invoice.id }}
+            search={{ type: "DEBIT_NOTE" }}
+          />
+        }
+        nativeButton={false}
+      >
+        <FilePlusIcon data-icon="inline-start" />
+        Nota débito
+      </Button>
+      <CancelInvoice invoice={invoice} />
     </div>
   );
 }

@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { formatDateTime } from "~/features/api-keys/formats";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import {
   DisableWebhookEndpoint,
   EnableWebhookEndpoint,
@@ -70,6 +71,7 @@ function WebhookEndpointPage() {
   const { endpointId } = Route.useParams();
   // The loader already returned notFound for a missing endpoint.
   const endpoint = useSuspenseQuery(webhookEndpointQuery(endpointId)).data!;
+  const { manage } = useMemberPermissions();
 
   return (
     <div className="flex flex-1 flex-col gap-5">
@@ -80,7 +82,7 @@ function WebhookEndpointPage() {
         status={<WebhookStatusBadge endpoint={endpoint} />}
         lead={endpoint.description ?? endpoint.url}
         action={
-          endpoint.status === "ACTIVE" ? (
+          !manage ? undefined : endpoint.status === "ACTIVE" ? (
             <DisableWebhookEndpoint endpoint={endpoint} />
           ) : (
             <EnableWebhookEndpoint endpoint={endpoint} />
@@ -209,6 +211,7 @@ function DeliveryRow({
   delivery: WebhookDelivery;
 }) {
   const at = delivery.lastAttemptAt ?? delivery.createdAt;
+  const { manage } = useMemberPermissions();
   return (
     <TableRow>
       <TableCell className="pl-4 text-2xs">
@@ -239,7 +242,9 @@ function DeliveryRow({
         </span>
       </TableCell>
       <TableCell className="pr-4">
-        {delivery.status !== "PENDING" && <RetryDelivery endpoint={endpoint} delivery={delivery} />}
+        {manage && delivery.status !== "PENDING" && (
+          <RetryDelivery endpoint={endpoint} delivery={delivery} />
+        )}
       </TableCell>
     </TableRow>
   );

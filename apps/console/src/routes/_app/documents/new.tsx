@@ -16,7 +16,6 @@ import { documentsQuery } from "~/features/documents/queries";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
 import { InvoiceForm } from "~/features/issuance/InvoiceForm";
-import { canIssueLiveQuery } from "~/features/issuance/queries";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import { issuersQuery } from "~/features/issuers/queries";
 import type { Environment, Issuer } from "~/lib/api/types";
@@ -26,7 +25,6 @@ export const Route = createFileRoute("/_app/documents/new")({
     const environment = await queryClient.ensureQueryData(activeEnvironmentQuery);
     await Promise.all([
       queryClient.ensureQueryData(issuersQuery),
-      queryClient.ensureQueryData(canIssueLiveQuery),
       queryClient.ensureInfiniteQueryData(documentsQuery({ environment })),
     ]);
     return { crumb: "Emitir factura" };

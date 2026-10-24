@@ -16,6 +16,7 @@ import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { auditLogKey } from "~/features/audit-log/queries";
 import { useImpersonation } from "~/features/session/useImpersonation";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { ApiKey } from "~/lib/api/types";
 
 import { apiKeysQuery } from "./queries";
@@ -54,8 +55,9 @@ export function RevokeApiKey({
   });
   const pending = revoke.isPending;
   const impersonation = useImpersonation();
-  // Keys stay the customer's to revoke, also while the Cetus team acts as them.
-  if (impersonation) {
+  const { manage } = useMemberPermissions();
+  // Keys stay the customer's owners' and admins' to revoke, also while the Cetus team acts as them.
+  if (impersonation || !manage) {
     return null;
   }
 

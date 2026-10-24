@@ -1,11 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 
 import { CetusApiError, api } from "~/lib/api/client";
 import type { DocumentPreview, Environment, InvoiceRequest } from "~/lib/api/types";
-import { liveIssuerRoles, roleList } from "~/lib/auth/permissions";
-import { auth } from "~/lib/auth/server";
 
 import {
   customerExtrasSchema,
@@ -16,12 +13,6 @@ import {
   toLine,
   trimmed,
 } from "./schema";
-
-/** Whether the signed-in member may issue LIVE documents: the organization's owners and admins. */
-export const canIssueLive = createServerFn({ method: "GET" }).handler(async () => {
-  const member = await auth.api.getActiveMember({ headers: getRequestHeaders() });
-  return roleList(member?.role).some((role) => liveIssuerRoles.includes(role));
-});
 
 /** Lines, taxes and totals as the API would issue them; null when the lines cannot be calculated. */
 export const previewDocument = createServerFn({ method: "POST" })

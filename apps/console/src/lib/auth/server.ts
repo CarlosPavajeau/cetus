@@ -140,7 +140,8 @@ export const auth = betterAuth({
 
 export type Session = typeof auth.$Infer.Session;
 
-async function organizationRoles(userId: string, organizationId: string): Promise<string[]> {
+/** The member's roles in the organization (owner, admin, member), or none outside it. */
+export async function organizationRoles(userId: string, organizationId: string): Promise<string[]> {
   const [membership] = await db
     .select({ role: schema.member.role })
     .from(schema.member)

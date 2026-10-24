@@ -22,6 +22,8 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import { CreateWebhookEndpoint } from "~/features/webhooks/CreateWebhookEndpoint";
 import { eventTypesSummary } from "~/features/webhooks/labels";
 import { webhookEndpointsQuery, webhookEventTypesQuery } from "~/features/webhooks/queries";
@@ -41,6 +43,7 @@ type EnvironmentFilter = Environment | "ALL";
 
 function Webhooks() {
   const { data: endpoints } = useSuspenseQuery(webhookEndpointsQuery);
+  const { manage } = useMemberPermissions();
   const [environment, setEnvironment] = useState<EnvironmentFilter>("ALL");
   const visible = endpoints.filter(
     (endpoint) => environment === "ALL" || endpoint.environment === environment,
@@ -54,8 +57,12 @@ function Webhooks() {
         title="Webhooks"
         count={endpoints.length}
         lead="URLs de tus sistemas que reciben un aviso firmado cuando cambia uno de tus documentos."
-        action={<CreateWebhookEndpoint />}
+        action={manage ? <CreateWebhookEndpoint /> : undefined}
       />
+      <ReadOnlyNotice>
+        Los webhooks los registran, desactivan y reintentan los dueños y administradores de la
+        organización.
+      </ReadOnlyNotice>
 
       {endpoints.length === 0 ? (
         <Empty className="border">
@@ -69,9 +76,11 @@ function Webhooks() {
               de que el cliente lo recibió, sin consultar la API una y otra vez.
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <CreateWebhookEndpoint />
-          </EmptyContent>
+          {manage && (
+            <EmptyContent>
+              <CreateWebhookEndpoint />
+            </EmptyContent>
+          )}
         </Empty>
       ) : (
         <section className="flex flex-col gap-4" aria-label="Tus webhooks">

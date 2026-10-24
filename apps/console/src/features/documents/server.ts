@@ -72,6 +72,10 @@ const cancellationMessages: Record<string, string> = {
   issuer_missing_software: "Al emisor le falta configurar el software de la DIAN.",
   issuer_missing_certificate: "Al emisor le falta el certificado de firma.",
   idempotency_in_progress: "La anulación ya se está procesando. Espera unos segundos.",
+  organization_role_forbidden:
+    "Solo los dueños y administradores de la organización pueden anular facturas de producción.",
+  impersonation_forbidden: "Las facturas de producción solo las anula la persona de la cuenta.",
+  account_suspended: "La cuenta está suspendida: no se pueden anular facturas.",
 };
 
 export type CancellationResult =
@@ -98,7 +102,10 @@ export const cancelInvoice = createServerFn({ method: "POST" })
       });
       return { ok: true, ...note };
     } catch (error) {
-      if (error instanceof CetusApiError && (error.status === 409 || error.status === 422)) {
+      if (
+        error instanceof CetusApiError &&
+        (error.status === 403 || error.status === 409 || error.status === 422)
+      ) {
         return {
           ok: false,
           code: error.code,

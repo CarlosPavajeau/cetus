@@ -88,3 +88,32 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
     authResponse,
   };
 }
+
+type FullOrganization = { members: { id: string; role: string; user: { email: string } }[] };
+
+/**
+ * Signs up someone with an account of their own and brings them into the owner's organization with the
+ * given role, active there. Returns them with their membership ID, to change their role later.
+ */
+export async function inviteMember(
+  owner: TestOrganization,
+  role: string,
+): Promise<{ person: TestOrganization; memberId: string }> {
+  const person = await createOrganization("Colega SAS");
+  const invitation = await owner.auth<{ id: string; organizationId: string }>(
+    "/organization/invite-member",
+    { email: person.email, role },
+  );
+  await person.auth("/organization/accept-invitation", { invitationId: invitation.id });
+  await person.auth("/organization/set-active", { organizationId: invitation.organizationId });
+  const organization = await owner.auth<FullOrganization>("/organization/get-full-organization");
+  const membership = organization.members.find((member) => member.user.email === person.email);
+  if (!membership) {
+    throw new Error(`${person.email} is not a member after accepting the invitation`);
+  }
+  return { person, memberId: membership.id };
+}
+
+export async function setMemberRole(owner: TestOrganization, memberId: string, role: string) {
+  await owner.auth("/organization/update-member-role", { memberId, role });
+}
