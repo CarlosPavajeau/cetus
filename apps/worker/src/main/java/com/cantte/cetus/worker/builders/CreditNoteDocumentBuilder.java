@@ -1,7 +1,5 @@
 package com.cantte.cetus.worker.builders;
 
-import com.cantte.cetus.domain.dian.Cufe;
-import com.cantte.cetus.domain.dian.QrCode;
 import com.cantte.cetus.domain.model.CreditNoteConcept;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.ElectronicCreditNote;
@@ -33,26 +31,7 @@ public class CreditNoteDocumentBuilder implements DocumentBuilder {
             throw new IllegalStateException(
                     "Credit note " + ctx.documentId() + " has no referenced invoice or concept");
         }
-        String number = ctx.fullNumber();
-        // Same formula as the CUFE, with the software PIN in place of the technical key.
-        String cude = Cufe.compute(new Cufe.Input(
-                number,
-                ctx.issueDate(),
-                ctx.issueTime(),
-                ctx.calculation(),
-                ctx.supplier().identificationNumber(),
-                ctx.customer().identificationNumber(),
-                secrets.pin(),
-                ctx.environment()));
-        String qr = QrCode.note(
-                number,
-                ctx.issueDate(),
-                ctx.issueTime(),
-                ctx.supplier().identificationNumber(),
-                ctx.customer().identificationNumber(),
-                ctx.calculation(),
-                cude,
-                ctx.environment());
+        NoteCodes codes = NoteCodes.of(ctx, secrets.pin());
 
         ElectronicCreditNote note = new ElectronicCreditNote(
                 ctx.environment(),
@@ -69,9 +48,9 @@ public class CreditNoteDocumentBuilder implements DocumentBuilder {
                 concept,
                 ctx.correctionDescription(),
                 provider.software(ctx, secrets.pin()),
-                cude,
-                qr,
+                codes.cude(),
+                codes.qr(),
                 ctx.notes());
-        return new BuiltDocument(marshaller.toDocument(mapper.map(note)), cude);
+        return new BuiltDocument(marshaller.toDocument(mapper.map(note)), codes.cude());
     }
 }
