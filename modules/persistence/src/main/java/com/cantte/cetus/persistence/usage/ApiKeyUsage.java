@@ -58,7 +58,7 @@ public class ApiKeyUsage {
                         """)
                 .setParameter("account", accountId)
                 .setParameter("apiKey", apiKeyId)
-                .setParameter("limit", Math.max(1, Math.min(limit, MAX_RECENT)))
+                .setParameter("limit", Math.clamp(limit, 1, MAX_RECENT))
                 .getResultList();
         return rows.stream().map(ApiKeyUsage::toView).toList();
     }

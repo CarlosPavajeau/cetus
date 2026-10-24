@@ -32,7 +32,7 @@ public class Catalog {
 
     @Transactional(Transactional.TxType.MANDATORY)
     public CustomerPage customers(UUID accountId, Environment environment, String q, UUID before, int limit) {
-        int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
+        int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
         // One more than asked tells whether there is a next page.
         List<CustomerEntity> rows = CustomerEntity.page(accountId, environment, q, before, size + 1);
         List<CustomerEntity> page = rows.subList(0, Math.min(size, rows.size()));
@@ -77,7 +77,7 @@ public class Catalog {
 
     @Transactional(Transactional.TxType.MANDATORY)
     public ProductPage products(UUID accountId, Environment environment, String q, UUID before, int limit) {
-        int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
+        int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
         List<ProductEntity> rows = ProductEntity.page(accountId, environment, q, before, size + 1);
         List<ProductEntity> page = rows.subList(0, Math.min(size, rows.size()));
         UUID next = rows.size() > size ? page.getLast().id : null;

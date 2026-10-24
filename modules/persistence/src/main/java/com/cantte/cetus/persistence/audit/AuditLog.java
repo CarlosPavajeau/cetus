@@ -96,7 +96,7 @@ public class AuditLog {
     private record Filter(UUID accountId, AuditAction action, String actorId) {}
 
     private AuditPage page(Filter filter, Long beforeId, int limit) {
-        int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
+        int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
         StringBuilder sql = new StringBuilder(filter.accountId() != null ? SELECT : SELECT_ALL);
         if (filter.action() != null) {
             sql.append(" AND action = :action");

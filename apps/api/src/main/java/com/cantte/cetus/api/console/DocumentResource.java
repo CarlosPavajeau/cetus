@@ -133,7 +133,7 @@ public class DocumentResource {
             @QueryParam("before") UUID before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
         UUID accountId = context.account().id;
-        int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
+        int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
         DocumentEntity.Search search = new DocumentEntity.Search(environment, type, status, issuerId, from, to, q);
         // One more than asked tells whether there is a next page.
         List<DocumentEntity> rows = DocumentEntity.pageForAccount(accountId, search, before, size + 1);

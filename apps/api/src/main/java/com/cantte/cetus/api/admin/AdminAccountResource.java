@@ -102,7 +102,7 @@ public class AdminAccountResource {
         if (organizationIds != null && organizationIds.size() > MAX_ORGANIZATION_IDS) {
             throw new BadRequestException("At most " + MAX_ORGANIZATION_IDS + " organization ids");
         }
-        int size = Math.max(1, Math.min(limit, AdminAccountQueries.MAX_PAGE_SIZE));
+        int size = Math.clamp(limit, 1, AdminAccountQueries.MAX_PAGE_SIZE);
         // One extra row tells whether there is a next page.
         List<AccountSummaryView> rows = queries.list(status, organizationIds, before, size + 1);
         List<AccountSummaryView> items = rows.subList(0, Math.min(rows.size(), size));

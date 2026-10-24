@@ -207,7 +207,7 @@ public class WebhookEndpointResource {
             @QueryParam("before") UUID before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
         WebhookEndpointEntity endpoint = find(context.account().id, id);
-        int size = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
+        int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
         // One more than asked tells whether there is a next page.
         List<WebhookDeliveryEntity> rows = WebhookDeliveryEntity.pageByEndpoint(endpoint.id, before, size + 1);
         List<WebhookDeliveryEntity> page = rows.subList(0, Math.min(size, rows.size()));
