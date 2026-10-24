@@ -3,34 +3,43 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { nitCheckDigit } from "~/features/issuance/nitCheckDigit";
 import {
+  type CustomerValues,
   type InvoiceHeaderValues,
+  customerFormSchema,
   invoiceHeaderSchema,
   linesFormSchema,
   pickedExtras,
+  toCustomerRequest,
   toInvoiceRequest,
 } from "~/features/issuance/schema";
 
 const invoice: InvoiceHeaderValues = {
-  issuerId: "0b9f0d8e-7c5d-4a7e-9b1f-2c3d4e5f6a7b",
-  customer: {
-    personType: "LEGAL_ENTITY",
-    identificationType: "NIT",
-    identificationNumber: "900999999-4",
-    legalName: "Cliente de Ejemplo SAS",
-    email: "",
-    responsibleForIva: true,
-    taxLevelCodes: ["O-13"],
-    departmentCode: "11",
-    departmentName: "Bogotá, D.C.",
-    municipalityCode: "11001",
-    cityName: "Bogotá, D.C.",
-    line: "Calle 100 # 10-20",
-  },
+  issuerId: crypto.randomUUID(),
   payment: { method: "CASH", meansCode: "10", dueDate: "" },
+};
+
+const customer: CustomerValues = {
+  personType: "LEGAL_ENTITY",
+  identificationType: "NIT",
+  identificationNumber: "900999999-4",
+  legalName: "Cliente de Ejemplo SAS",
+  email: "",
+  responsibleForIva: true,
+  taxLevelCodes: ["O-13"],
+  departmentCode: "11",
+  departmentName: "Bogotá, D.C.",
+  municipalityCode: "11001",
+  cityName: "Bogotá, D.C.",
+  line: "Calle 100 # 10-20",
 };
 
 function errorsOf(value: unknown) {
   const result = invoiceHeaderSchema(value);
+  return result instanceof type.errors ? result.map((error) => error.propString) : [];
+}
+
+function customerErrorsOf(value: unknown) {
+  const result = customerFormSchema(value);
   return result instanceof type.errors ? result.map((error) => error.propString) : [];
 }
 
@@ -46,6 +55,7 @@ describe("nitCheckDigit", () => {
 describe("invoiceHeaderSchema", () => {
   it("accepts a complete invoice and maps it to the API request", () => {
     const parsed = invoiceHeaderSchema(invoice);
+    const buyer = customerFormSchema(customer);
     const lines = linesFormSchema({
       lines: [
         {
@@ -57,10 +67,14 @@ describe("invoiceHeaderSchema", () => {
         },
       ],
     });
-    if (parsed instanceof type.errors || lines instanceof type.errors) {
+    if (
+      parsed instanceof type.errors ||
+      buyer instanceof type.errors ||
+      lines instanceof type.errors
+    ) {
       throw new Error("The invoice should be valid");
     }
-    const request = toInvoiceRequest(parsed, lines.lines, {
+    const request = toInvoiceRequest(parsed, buyer, lines.lines, {
       tradeName: "Ejemplo",
       postalCode: "110111",
     });
@@ -88,20 +102,16 @@ describe("invoiceHeaderSchema", () => {
   });
 
   it("rejects a wrong verification digit", () => {
-    const wrong = {
-      ...invoice,
-      customer: { ...invoice.customer, identificationNumber: "900999999-1" },
-    };
-    expect(errorsOf(wrong)).toEqual(["customer.identificationNumber"]);
+    expect(customerErrorsOf({ ...customer, identificationNumber: "900999999-1" })).toEqual([
+      "identificationNumber",
+    ]);
   });
 
   it("asks for a due date on credit and for both parts of an address", () => {
     expect(
       errorsOf({ ...invoice, payment: { method: "CREDIT", meansCode: "10", dueDate: "" } }),
     ).toEqual(["payment.dueDate"]);
-    expect(errorsOf({ ...invoice, customer: { ...invoice.customer, line: "" } })).toEqual([
-      "customer.line",
-    ]);
+    expect(customerErrorsOf({ ...customer, line: "" })).toEqual(["line"]);
   });
 
   it("validates the lines on their own", () => {
@@ -121,14 +131,28 @@ describe("invoiceHeaderSchema", () => {
   });
 });
 
+describe("toCustomerRequest", () => {
+  it("keeps what the form does not show and leaves out what is empty", () => {
+    expect(
+      toCustomerRequest({ ...customer, municipalityCode: "", line: "" }, { phone: "6015550000" }),
+    ).toEqual({
+      personType: "LEGAL_ENTITY",
+      identificationType: "NIT",
+      identificationNumber: "900999999",
+      checkDigit: "4",
+      legalName: "Cliente de Ejemplo SAS",
+      taxLevelCodes: ["O-13"],
+      taxScheme: "IVA",
+      phone: "6015550000",
+    });
+  });
+});
+
 describe("messages", () => {
   it("names what is missing in Spanish", () => {
-    const result = invoiceHeaderSchema({
-      ...invoice,
-      customer: { ...invoice.customer, identificationNumber: " ", legalName: "" },
-    });
+    const result = customerFormSchema({ ...customer, identificationNumber: " ", legalName: "" });
     if (!(result instanceof type.errors)) {
-      throw new Error("The invoice should be invalid");
+      throw new Error("The customer should be invalid");
     }
     expect(result.map((error) => error.message)).toEqual([
       "Escribe el número de identificación.",
@@ -145,16 +169,12 @@ describe("pickedExtras", () => {
   } as const;
 
   it("travels while the form holds the picked customer", () => {
-    expect(pickedExtras(picked, invoice.customer)).toEqual(picked.extras);
+    expect(pickedExtras(picked, customer)).toEqual(picked.extras);
   });
 
   it("is dropped when the document type or number changes, or nothing was picked", () => {
-    expect(
-      pickedExtras(picked, { ...invoice.customer, identificationType: "PASSPORT" }),
-    ).toBeNull();
-    expect(
-      pickedExtras(picked, { ...invoice.customer, identificationNumber: "800197268-4" }),
-    ).toBeNull();
-    expect(pickedExtras(null, invoice.customer)).toBeNull();
+    expect(pickedExtras(picked, { ...customer, identificationType: "PASSPORT" })).toBeNull();
+    expect(pickedExtras(picked, { ...customer, identificationNumber: "800197268-4" })).toBeNull();
+    expect(pickedExtras(null, customer)).toBeNull();
   });
 });

@@ -61,7 +61,8 @@ export function splitNit(value: string) {
   return match ? { nit: match[1] ?? "", checkDigit: match[2] ?? null } : null;
 }
 
-const customerSchema = type({
+/** The customer lives in a form of its own, shared by the invoice and the catalog. */
+export const customerFormSchema = type({
   "+": "delete",
   personType: "'LEGAL_ENTITY' | 'NATURAL_PERSON'",
   identificationType: type.enumerated(...identificationTypes.map((option) => option.value)),
@@ -79,25 +80,12 @@ const customerSchema = type({
   municipalityCode: "string",
   cityName: "string",
   line: trimmed("string <= 300", "La dirección tiene hasta 300 caracteres."),
-});
-
-/** Everything an invoice needs but its lines. */
-export const invoiceHeaderSchema = type({
-  "+": "delete",
-  issuerId: type("string.uuid").configure({ message: "Elige el emisor." }),
-  customer: customerSchema,
-  payment: {
-    method: "'CASH' | 'CREDIT'",
-    meansCode: type.enumerated(...paymentMeansCodes),
-    dueDate: "string",
-  },
-}).narrow((invoice, ctx) => {
-  const { customer, payment } = invoice;
+}).narrow((customer, ctx) => {
   if (customer.identificationType === "NIT") {
     const parts = splitNit(customer.identificationNumber);
     if (!parts) {
       return ctx.reject({
-        path: ["customer", "identificationNumber"],
+        path: ["identificationNumber"],
         message:
           "Escribe el NIT con solo números; el dígito de verificación va opcional tras un guion.",
       });
@@ -105,7 +93,7 @@ export const invoiceHeaderSchema = type({
     const expected = nitCheckDigit(parts.nit);
     if (parts.checkDigit !== null && parts.checkDigit !== expected) {
       return ctx.reject({
-        path: ["customer", "identificationNumber"],
+        path: ["identificationNumber"],
         message: `El dígito de verificación de ese NIT es ${expected}.`,
       });
     }
@@ -113,7 +101,7 @@ export const invoiceHeaderSchema = type({
     !identificationPattern(customer.identificationType).test(customer.identificationNumber)
   ) {
     return ctx.reject({
-      path: ["customer", "identificationNumber"],
+      path: ["identificationNumber"],
       message:
         customer.identificationType === "PASSPORT" ||
         customer.identificationType === "PEP" ||
@@ -124,16 +112,46 @@ export const invoiceHeaderSchema = type({
   }
   if (customer.municipalityCode && !customer.line) {
     return ctx.reject({
-      path: ["customer", "line"],
+      path: ["line"],
       message: "Escribe la dirección, o quita el municipio para no indicar ubicación.",
     });
   }
   if (customer.line && !customer.municipalityCode) {
     return ctx.reject({
-      path: ["customer", "municipalityCode"],
+      path: ["municipalityCode"],
       message: "Busca el municipio de la dirección, o bórrala para no indicar ubicación.",
     });
   }
+  return true;
+});
+
+export type CustomerValues = typeof customerFormSchema.infer;
+
+export const emptyCustomer: CustomerValues = {
+  personType: "LEGAL_ENTITY",
+  identificationType: "NIT",
+  identificationNumber: "",
+  legalName: "",
+  email: "",
+  responsibleForIva: false,
+  taxLevelCodes: ["R-99-PN"],
+  departmentCode: "",
+  departmentName: "",
+  municipalityCode: "",
+  cityName: "",
+  line: "",
+};
+
+/** Everything an invoice needs but its customer and its lines. */
+export const invoiceHeaderSchema = type({
+  "+": "delete",
+  issuerId: type("string.uuid").configure({ message: "Elige el emisor." }),
+  payment: {
+    method: "'CASH' | 'CREDIT'",
+    meansCode: type.enumerated(...paymentMeansCodes),
+    dueDate: "string",
+  },
+}).narrow(({ payment }, ctx) => {
   if (payment.method === "CREDIT" && !/^\d{4}-\d{2}-\d{2}$/.test(payment.dueDate)) {
     return ctx.reject({
       path: ["payment", "dueDate"],
@@ -160,7 +178,7 @@ export type CustomerExtras = typeof customerExtrasSchema.infer;
 
 /** The saved customer picked into the form, with what travels beside it. */
 export type PickedCustomer = {
-  identificationType: InvoiceHeaderValues["customer"]["identificationType"];
+  identificationType: CustomerValues["identificationType"];
   identificationNumber: string;
   extras: CustomerExtras;
 };
@@ -171,7 +189,7 @@ export type PickedCustomer = {
  */
 export function pickedExtras(
   picked: PickedCustomer | null,
-  customer: InvoiceHeaderValues["customer"],
+  customer: CustomerValues,
 ): CustomerExtras | null {
   return picked !== null &&
     picked.identificationType === customer.identificationType &&
@@ -180,9 +198,7 @@ export function pickedExtras(
     : null;
 }
 
-function identificationPattern(
-  identificationType: InvoiceHeaderValues["customer"]["identificationType"],
-) {
+function identificationPattern(identificationType: CustomerValues["identificationType"]) {
   return identificationType === "CITIZEN_ID" || identificationType === "FOREIGNER_ID"
     ? /^\d{1,20}$/
     : /^[A-Za-z0-9-]{1,20}$/;
@@ -200,40 +216,49 @@ export function toLine(line: LineValues, index: number): InvoiceLine {
   };
 }
 
-export function toInvoiceRequest(
-  invoice: InvoiceHeaderValues,
-  lines: LineValues[],
+/** The customer as the API takes it, with what the form does not show but a saved customer carries. */
+export function toCustomerRequest(
+  customer: CustomerValues,
   extras: CustomerExtras | null,
-): InvoiceRequest {
-  const { customer, payment } = invoice;
+): InvoiceRequest["customer"] {
   const nit =
     customer.identificationType === "NIT" ? splitNit(customer.identificationNumber) : null;
   return {
+    personType: customer.personType,
+    identificationType: customer.identificationType,
+    identificationNumber: nit ? nit.nit : customer.identificationNumber,
+    ...(nit?.checkDigit ? { checkDigit: nit.checkDigit } : {}),
+    legalName: customer.legalName,
+    ...(extras?.tradeName ? { tradeName: extras.tradeName } : {}),
+    taxLevelCodes: customer.taxLevelCodes,
+    taxScheme: customer.responsibleForIva ? "IVA" : "NOT_APPLICABLE",
+    ...(customer.email ? { email: customer.email } : {}),
+    ...(extras?.phone ? { phone: extras.phone } : {}),
+    ...(customer.municipalityCode
+      ? {
+          address: {
+            municipalityCode: customer.municipalityCode,
+            cityName: customer.cityName,
+            departmentCode: customer.departmentCode,
+            departmentName: customer.departmentName,
+            ...(extras?.postalCode ? { postalCode: extras.postalCode } : {}),
+            line: customer.line,
+          },
+        }
+      : {}),
+  };
+}
+
+export function toInvoiceRequest(
+  invoice: InvoiceHeaderValues,
+  customer: CustomerValues,
+  lines: LineValues[],
+  extras: CustomerExtras | null,
+): InvoiceRequest {
+  const { payment } = invoice;
+  return {
     issuerId: invoice.issuerId,
-    customer: {
-      personType: customer.personType,
-      identificationType: customer.identificationType,
-      identificationNumber: nit ? nit.nit : customer.identificationNumber,
-      ...(nit?.checkDigit ? { checkDigit: nit.checkDigit } : {}),
-      legalName: customer.legalName,
-      ...(extras?.tradeName ? { tradeName: extras.tradeName } : {}),
-      taxLevelCodes: customer.taxLevelCodes,
-      taxScheme: customer.responsibleForIva ? "IVA" : "NOT_APPLICABLE",
-      ...(customer.email ? { email: customer.email } : {}),
-      ...(extras?.phone ? { phone: extras.phone } : {}),
-      ...(customer.municipalityCode
-        ? {
-            address: {
-              municipalityCode: customer.municipalityCode,
-              cityName: customer.cityName,
-              departmentCode: customer.departmentCode,
-              departmentName: customer.departmentName,
-              ...(extras?.postalCode ? { postalCode: extras.postalCode } : {}),
-              line: customer.line,
-            },
-          }
-        : {}),
-    },
+    customer: toCustomerRequest(customer, extras),
     payment: {
       method: payment.method,
       meansCode: payment.meansCode,

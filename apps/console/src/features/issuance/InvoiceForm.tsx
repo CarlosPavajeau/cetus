@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type } from "arktype";
 import { useState } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
@@ -27,43 +27,29 @@ import { useCustomerSearch } from "~/features/catalog/useCatalogSearch";
 import { formatMoney } from "~/features/documents/labels";
 import { documentsKey } from "~/features/documents/queries";
 import { issuerName } from "~/features/issuers/labels";
-import { DateField, TextField } from "~/features/setup/fields";
+import { DateField } from "~/features/setup/fields";
 import { FieldRow, FieldSection } from "~/features/setup/StepLayout";
 import type { DocumentPreview, Environment, Issuer } from "~/lib/api/types";
 
-import { finalConsumer, identificationTypes, paymentMeans, personTypes } from "./catalogs";
-import { SelectField, TaxLevelsField } from "./fields";
+import { finalConsumer, paymentMeans } from "./catalogs";
+import { CustomerFields } from "./CustomerFields";
+import { SelectField } from "./fields";
 import { LinesEditor, emptyLine } from "./LinesEditor";
-import { MunicipalityField } from "./MunicipalityField";
-import { nitCheckDigit } from "./nitCheckDigit";
 import {
+  type CustomerValues,
   type InvoiceHeaderValues,
   type PickedCustomer,
   type LinesFormValues,
+  customerFormSchema,
+  emptyCustomer,
   invoiceHeaderSchema,
   linesFormSchema,
   pickedExtras,
-  splitNit,
 } from "./schema";
 import { issueInvoice, previewDocument } from "./server";
 
-const emptyCustomer: InvoiceHeaderValues["customer"] = {
-  personType: "LEGAL_ENTITY",
-  identificationType: "NIT",
-  identificationNumber: "",
-  legalName: "",
-  email: "",
-  responsibleForIva: false,
-  taxLevelCodes: ["R-99-PN"],
-  departmentCode: "",
-  departmentName: "",
-  municipalityCode: "",
-  cityName: "",
-  line: "",
-};
-
 /** The first sandbox invoice comes filled in: issuing it only takes a click. */
-const sampleCustomer: InvoiceHeaderValues["customer"] = {
+const sampleCustomer: CustomerValues = {
   ...emptyCustomer,
   identificationNumber: "901234567",
   legalName: "Cliente de Ejemplo SAS",
@@ -90,7 +76,12 @@ const paymentMethodItems = [
 
 const paymentMeansItems = paymentMeans.map((means) => ({ value: means.code, label: means.label }));
 
-type Confirmation = { header: InvoiceHeaderValues; lines: LinesFormValues; total: DocumentPreview };
+type Confirmation = {
+  header: InvoiceHeaderValues;
+  customer: CustomerValues;
+  lines: LinesFormValues;
+  total: DocumentPreview;
+};
 
 export function InvoiceForm({
   environment,
@@ -118,9 +109,12 @@ export function InvoiceForm({
     resolver: arktypeResolver(invoiceHeaderSchema),
     defaultValues: {
       issuerId: issuers.length === 1 || sample ? (issuers[0]?.id ?? "") : "",
-      customer: sample ? sampleCustomer : emptyCustomer,
       payment: { method: "CASH", meansCode: "10", dueDate: "" },
     },
+  });
+  const customerForm = useForm<CustomerValues>({
+    resolver: arktypeResolver(customerFormSchema),
+    defaultValues: sample ? sampleCustomer : emptyCustomer,
   });
   const lines = useForm<LinesFormValues>({
     resolver: arktypeResolver(linesFormSchema),
@@ -153,25 +147,24 @@ export function InvoiceForm({
         ? "No pudimos comunicarnos con Cetus. Revisa tu conexión e inténtalo de nuevo."
         : previewFailure;
   const method = useWatch({ control: header.control, name: "payment.method" });
-  const identificationType = useWatch({
-    control: header.control,
-    name: "customer.identificationType",
-  });
-  const identificationNumber = useWatch({
-    control: header.control,
-    name: "customer.identificationNumber",
-  });
-  const nit = identificationType === "NIT" ? splitNit(identificationNumber) : null;
-  const checkDigit = nit ? nitCheckDigit(nit.nit) : null;
 
   async function submit() {
-    const [headerValid, linesValid] = await Promise.all([header.trigger(), lines.trigger()]);
-    if (!headerValid || !linesValid) {
+    const [headerValid, customerValid, linesValid] = await Promise.all([
+      header.trigger(),
+      customerForm.trigger(),
+      lines.trigger(),
+    ]);
+    if (!headerValid || !customerValid || !linesValid) {
       return;
     }
     const parsedHeader = invoiceHeaderSchema(header.getValues());
+    const parsedCustomer = customerFormSchema(customerForm.getValues());
     const parsedLines = linesFormSchema(lines.getValues());
-    if (parsedHeader instanceof type.errors || parsedLines instanceof type.errors) {
+    if (
+      parsedHeader instanceof type.errors ||
+      parsedCustomer instanceof type.errors ||
+      parsedLines instanceof type.errors
+    ) {
       return;
     }
     setPreviewFailure(null);
@@ -190,28 +183,35 @@ export function InvoiceForm({
         setPreviewFailure("No pudimos calcular el total de estas líneas. Revisa sus valores.");
         return;
       }
-      setConfirmation({ header: parsedHeader, lines: parsedLines, total });
+      setConfirmation({
+        header: parsedHeader,
+        customer: parsedCustomer,
+        lines: parsedLines,
+        total,
+      });
       return;
     }
-    issue.mutate({ data: request(parsedHeader, parsedLines) });
+    issue.mutate({ data: request(parsedHeader, parsedCustomer, parsedLines) });
   }
 
-  function request(invoice: InvoiceHeaderValues, values: LinesFormValues) {
+  function request(
+    invoice: InvoiceHeaderValues,
+    customer: CustomerValues,
+    values: LinesFormValues,
+  ) {
     return {
       idempotencyKey,
       invoice,
+      customer,
       lines: values.lines,
-      customerExtras: pickedExtras(picked, invoice.customer),
+      customerExtras: pickedExtras(picked, customer),
       saveCustomer: saveCustomer ? environment : null,
     };
   }
 
   function fillFinalConsumer() {
     setPicked(null);
-    header.setValue("customer", {
-      ...emptyCustomer,
-      ...finalConsumer,
-    });
+    customerForm.reset({ ...emptyCustomer, ...finalConsumer });
   }
 
   const confirmedIssuer = confirmation
@@ -258,9 +258,10 @@ export function InvoiceForm({
                   if (!saved) {
                     return;
                   }
-                  header.setValue("customer", saved.values, {
-                    shouldValidate: header.formState.isSubmitted,
-                  });
+                  customerForm.reset(saved.values, { keepIsSubmitted: true });
+                  if (customerForm.formState.isSubmitted) {
+                    void customerForm.trigger();
+                  }
                   setPicked({
                     identificationType: saved.values.identificationType,
                     identificationNumber: saved.values.identificationNumber,
@@ -274,77 +275,10 @@ export function InvoiceForm({
             Venta a consumidor final
           </Button>
         </div>
-        <FieldRow>
-          <SelectField
-            control={header.control}
-            name="customer.personType"
-            label="Tipo de persona"
-            items={personTypes}
-          />
-          <SelectField
-            control={header.control}
-            name="customer.identificationType"
-            label="Documento"
-            items={identificationTypes}
-          />
-          <TextField
-            control={header.control}
-            name="customer.identificationNumber"
-            label="Número"
-            hint={
-              checkDigit === null
-                ? undefined
-                : `Dígito de verificación: ${checkDigit}${nit?.checkDigit ? "" : " (lo calculamos por ti)"}`
-            }
-            autoComplete="off"
-          />
-        </FieldRow>
-        <FieldRow className="sm:grid-cols-2">
-          <TextField
-            control={header.control}
-            name="customer.legalName"
-            label="Nombre o razón social"
-            autoComplete="off"
-          />
-          <TextField
-            control={header.control}
-            name="customer.email"
-            label="Correo (opcional)"
-            type="email"
-            hint="Le enviamos la factura cuando la DIAN la acepte."
-            autoComplete="off"
-          />
-        </FieldRow>
-        <FieldRow className="sm:grid-cols-2">
-          <TaxLevelsField control={header.control} />
-        </FieldRow>
-        <FieldRow className="sm:grid-cols-[1fr_1fr_auto]">
-          <MunicipalityField form={header} />
-          <TextField
-            control={header.control}
-            name="customer.line"
-            label="Dirección (opcional)"
-            hint="Va junto con el municipio: indica los dos o ninguno."
-            autoComplete="off"
-          />
-          <Controller
-            control={header.control}
-            name="customer.responsibleForIva"
-            render={({ field }) => (
-              <Field orientation="horizontal" className="gap-2 sm:pt-7">
-                <Checkbox
-                  id="customer-iva"
-                  checked={field.value}
-                  onCheckedChange={(checked) => field.onChange(checked)}
-                  onBlur={field.onBlur}
-                />
-                <FieldLabel htmlFor="customer-iva" className="text-xs font-normal">
-                  Responsable de IVA
-                </FieldLabel>
-              </Field>
-            )}
-          />
-        </FieldRow>
+        <CustomerFields
+          form={customerForm}
+          emailHint="Le enviamos la factura cuando la DIAN la acepte."
+        />
       </FieldSection>
 
       <Field orientation="horizontal" className="-mt-4 gap-2">
@@ -423,8 +357,7 @@ export function InvoiceForm({
               <dd>{confirmedIssuer ? issuerName(confirmedIssuer) : ""}</dd>
               <dt className="text-muted-foreground">Cliente</dt>
               <dd>
-                {confirmation.header.customer.legalName} ·{" "}
-                {confirmation.header.customer.identificationNumber}
+                {confirmation.customer.legalName} · {confirmation.customer.identificationNumber}
               </dd>
               <dt className="text-muted-foreground">Total</dt>
               <dd className="font-medium tabular-nums">
@@ -438,7 +371,9 @@ export function InvoiceForm({
               disabled={issue.isPending}
               onClick={() =>
                 confirmation &&
-                issue.mutate({ data: request(confirmation.header, confirmation.lines) })
+                issue.mutate({
+                  data: request(confirmation.header, confirmation.customer, confirmation.lines),
+                })
               }
             >
               {issue.isPending && <Spinner data-icon="inline-start" />}

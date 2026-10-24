@@ -66,6 +66,8 @@ export type Product = Schemas["ProductView"];
 
 export type ProductPage = Schemas["ProductPage"];
 
+export type ProductRequest = Schemas["ProductRequest"];
+
 export type DocumentFile = "xml" | "pdf" | "attached-document";
 
 /** Runtime lists for the document filters and their validators. Must list every value of the API enums. */

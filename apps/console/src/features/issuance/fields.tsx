@@ -12,7 +12,7 @@ import {
 } from "~/components/ui/select";
 import { nextTaxLevels, taxLevelItems } from "~/features/setup/taxLevels";
 
-import type { InvoiceHeaderValues } from "./schema";
+import type { CustomerValues } from "./schema";
 
 /** A choice among fixed options, shown by name instead of the code the API takes. */
 export function SelectField<T extends FieldValues>({
@@ -71,9 +71,9 @@ export function SelectField<T extends FieldValues>({
 }
 
 /** The customer's fiscal responsibilities as its RUT lists them (annex table 13.2.6.1). */
-export function TaxLevelsField({ control }: { control: Control<InvoiceHeaderValues> }) {
+export function TaxLevelsField({ control }: { control: Control<CustomerValues> }) {
   const id = useId();
-  const { field, fieldState } = useController({ control, name: "customer.taxLevelCodes" });
+  const { field, fieldState } = useController({ control, name: "taxLevelCodes" });
   return (
     <Field data-invalid={fieldState.invalid} className="gap-1.75">
       <FieldLabel htmlFor={id} className="text-xs">

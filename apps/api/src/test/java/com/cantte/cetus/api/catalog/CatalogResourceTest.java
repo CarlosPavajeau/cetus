@@ -207,6 +207,77 @@ class CatalogResourceTest {
                 .statusCode(204);
     }
 
+    @Test
+    void theConsoleUpdatesTheCatalogOfTheEnvironmentItNames() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Consola Edicion SAS");
+        String id = user.request()
+                .body(customer("900123456", "Comprador SAS"))
+                .post("/console/customers?environment=TEST")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+        user.request()
+                .body(customer("800197268", "Otro Comprador SAS"))
+                .post("/console/customers?environment=TEST")
+                .then()
+                .statusCode(201);
+
+        JsonPath renamed = user.request()
+                .body(customer("900123456", "Comprador Renombrado SAS"))
+                .put("/console/customers/" + id + "?environment=TEST")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+        assertThat(renamed.getString("legalName")).isEqualTo("Comprador Renombrado SAS");
+        assertThat(renamed.getString("checkDigit")).isEqualTo("8");
+
+        user.request()
+                .body(customer("800197268", "Comprador SAS"))
+                .put("/console/customers/" + id + "?environment=TEST")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("customer_exists"));
+        user.request()
+                .body(customer("900123456", "Comprador SAS"))
+                .put("/console/customers/" + id + "?environment=LIVE")
+                .then()
+                .statusCode(404);
+
+        ConsoleUser other = ConsoleUser.newOrganization();
+        bootstrap(other, "Ajena Edicion SAS");
+        other.request()
+                .body(customer("900123456", "Comprador SAS"))
+                .put("/console/customers/" + id + "?environment=TEST")
+                .then()
+                .statusCode(404);
+
+        String productId = user.request()
+                .body(product("SERV-1", "Servicio", List.of(tax("IVA", 19))))
+                .post("/console/products?environment=TEST")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+        JsonPath product = user.request()
+                .body(Map.of(
+                        "code", "SERV-1",
+                        "description", "Servicio mensual",
+                        "unitCode", "MON",
+                        "unitPrice", 120000,
+                        "taxes", List.of(tax("IVA", 5))))
+                .put("/console/products/" + productId + "?environment=TEST")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+        assertThat(product.getString("description")).isEqualTo("Servicio mensual");
+        assertThat(product.getString("unitCode")).isEqualTo("MON");
+        assertThat(product.getDouble("unitPrice")).isEqualTo(120000.0);
+    }
+
     private static String key(ConsoleUser user, String environment) {
         return user.request()
                 .body(Map.of("name", "ERP " + UUID.randomUUID(), "environment", environment))

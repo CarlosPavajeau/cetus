@@ -9,6 +9,7 @@ import { auth } from "~/lib/auth/server";
 
 import {
   customerExtrasSchema,
+  customerFormSchema,
   invoiceHeaderSchema,
   linesSchema,
   toInvoiceRequest,
@@ -80,13 +81,14 @@ export const issueInvoice = createServerFn({ method: "POST" })
     type({
       idempotencyKey: "string.uuid",
       invoice: invoiceHeaderSchema,
+      customer: customerFormSchema,
       lines: linesSchema,
       customerExtras: customerExtrasSchema.or("null"),
       saveCustomer: type("'SANDBOX' | 'TEST' | 'LIVE'").or("null"),
     }),
   )
   .handler(async ({ data }): Promise<IssueResult> => {
-    const request = toInvoiceRequest(data.invoice, data.lines, data.customerExtras);
+    const request = toInvoiceRequest(data.invoice, data.customer, data.lines, data.customerExtras);
     let issued: IssueResult;
     try {
       issued = {
