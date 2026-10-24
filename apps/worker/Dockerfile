@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Build from the repository root: docker build -f apps/worker/Dockerfile .
 #
 # Layers go from what changes least to what changes most, so a build only redoes what changed:
@@ -17,15 +18,17 @@ FROM eclipse-temurin:25.0.4_7-jdk AS build
 WORKDIR /workspace
 COPY --from=gradle-files /out/gradlew ./
 COPY --from=gradle-files /out/gradle gradle
-RUN ./gradlew --version --no-daemon
+# ~/.gradle (dependencies and the build cache) persists between builds, so unchanged modules come from the
+# cache. Railway only keeps a cache mount whose id is s/<service id>-<path>, with the ID written out.
+RUN --mount=type=cache,id=s/de0bbaa5-d169-4ece-abe7-88ba34055bad-/root/.gradle,target=/root/.gradle ./gradlew --version --no-daemon
 COPY --from=gradle-files /out ./
-RUN ./gradlew :apps:worker:resolveDependencies --no-daemon
+RUN --mount=type=cache,id=s/de0bbaa5-d169-4ece-abe7-88ba34055bad-/root/.gradle,target=/root/.gradle ./gradlew :apps:worker:resolveDependencies --no-daemon
 COPY modules modules
 COPY apps/worker apps/worker
 # AOT enabled: packages an aot-jar (every class on the JDK's class loader, which the AOT cache needs) and makes
 # the app stop after static init when quarkus.appcds.generate is set. The cache Quarkus makes here, with the
 # JDK, is dropped: the one that counts is made below with the runtime JVM.
-RUN ./gradlew :apps:worker:build -x test --no-daemon \
+RUN --mount=type=cache,id=s/de0bbaa5-d169-4ece-abe7-88ba34055bad-/root/.gradle,target=/root/.gradle ./gradlew :apps:worker:build -x test --no-daemon \
     -Dquarkus.package.jar.aot.enabled=true -Dquarkus.package.jar.aot.phase=build \
     && rm -f apps/worker/build/quarkus-app/app.aot
 
