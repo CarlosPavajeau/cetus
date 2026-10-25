@@ -1,5 +1,5 @@
 import { defineRelations } from "drizzle-orm";
-import { pgSchema, text, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
+import { pgSchema, text, timestamp, boolean, integer, index, unique } from "drizzle-orm/pg-core";
 
 
 export const authSchema = pgSchema("auth");
@@ -162,8 +162,25 @@ export const jwks = authSchema.table("jwks", {
   crv: text("crv"),
 });
 
+/** Each user's acceptance of a version of a legal document (features/legal/documents.ts). */
+export const consent = authSchema.table(
+  "consent",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    document: text("document").notNull(),
+    version: text("version").notNull(),
+    acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+  },
+  (table) => [unique("consent_user_document_version_key").on(table.userId, table.document, table.version)],
+);
+
 export const relations = defineRelations(
-  { user, session, account, verification, organization, member, invitation, twoFactor, jwks },
+  { user, session, account, verification, organization, member, invitation, twoFactor, jwks, consent },
   (r) => ({
     user: {
       sessions: r.many.session(),
@@ -171,6 +188,7 @@ export const relations = defineRelations(
       members: r.many.member(),
       invitations: r.many.invitation(),
       twoFactors: r.many.twoFactor(),
+      consents: r.many.consent(),
     },
     session: {
       user: r.one.user({ from: r.session.userId, to: r.user.id, optional: false }),
@@ -192,6 +210,9 @@ export const relations = defineRelations(
     },
     twoFactor: {
       user: r.one.user({ from: r.twoFactor.userId, to: r.user.id, optional: false }),
+    },
+    consent: {
+      user: r.one.user({ from: r.consent.userId, to: r.user.id, optional: false }),
     },
   }),
 );

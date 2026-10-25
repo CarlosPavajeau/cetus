@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowUpRightIcon, CodeXmlIcon, FileCheck2Icon, ScanLineIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -62,10 +63,15 @@ export function AuthLayout({
         </main>
         <footer className="flex items-center justify-between text-muted-foreground">
           <p className="text-xs">© {year} Cetus</p>
-          {/* Placeholders until the help center and the privacy policy exist. */}
           <div className="flex gap-5 text-sm">
+            {/* Placeholder until the help center exists. */}
             <span>¿Necesitas ayuda?</span>
-            <span>Privacidad</span>
+            <Link to="/legal/terminos" className="hover:text-foreground">
+              Términos
+            </Link>
+            <Link to="/legal/privacidad" className="hover:text-foreground">
+              Privacidad
+            </Link>
           </div>
         </footer>
       </div>

@@ -1,3 +1,5 @@
+import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
+
 import { markEmailVerified } from "./invitations";
 import { apiUrl, consoleUrl } from "./stack";
 
@@ -27,7 +29,7 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   const password = `clave-${id}-segura`;
   const jar = new Map<string, string>();
 
-  async function authResponse(path: string, body?: unknown) {
+  async function authResponse(path: string, body?: unknown, headers: Record<string, string> = {}) {
     const response = await fetch(`${consoleUrl}/api/auth${path}`, {
       method: body === undefined ? "GET" : "POST",
       headers: {
@@ -35,6 +37,7 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
         // Better Auth only accepts cookie-authenticated calls from its own origin.
         Origin: consoleUrl,
         Cookie: [...jar].map(([key, value]) => `${key}=${value}`).join("; "),
+        ...headers,
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -54,7 +57,14 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
     return response.json();
   }
 
-  await auth("/sign-up/email", { name: "Persona de pruebas", email, password });
+  const signUp = await authResponse(
+    "/sign-up/email",
+    { name: "Persona de pruebas", email, password },
+    { [legalAcceptanceHeader]: legalAcceptance },
+  );
+  if (!signUp.ok) {
+    throw new Error(`/sign-up/email answered ${signUp.status}: ${await signUp.text()}`);
+  }
   const organization = await auth<{ id: string }>("/organization/create", {
     name,
     slug: `${name}-${id}`.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"),

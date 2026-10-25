@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
@@ -13,6 +14,8 @@ import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
 import { invitationSearch } from "~/features/auth/session-start";
 import { createWorkspace } from "~/features/auth/workspace";
+import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
+import { LegalLink } from "~/features/legal/LegalLink";
 import { authClient } from "~/lib/auth/client";
 
 /** `invitation`: the invitation the person came to accept; they join that organization instead of a new one. */
@@ -27,12 +30,15 @@ function SignUp() {
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: arktypeResolver(signUpSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "", acceptedLegal: false },
   });
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ name, email, password }) => {
-    const { error: signUpError } = await authClient.signUp.email({ name, email, password });
+    const { error: signUpError } = await authClient.signUp.email(
+      { name, email, password },
+      { headers: { [legalAcceptanceHeader]: legalAcceptance } },
+    );
     if (signUpError) {
       form.setError("root", {
         message: signUpError.message ?? "No pudimos crear la cuenta. Revisa los datos.",
@@ -151,6 +157,30 @@ function SignUp() {
                   aria-invalid={fieldState.invalid}
                 />
                 <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+          <Controller
+            name="acceptedLegal"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field orientation="horizontal" data-invalid={fieldState.invalid}>
+                <Checkbox
+                  id="sign-up-legal"
+                  checked={field.value}
+                  onCheckedChange={(checked) => field.onChange(checked)}
+                  onBlur={field.onBlur}
+                  aria-invalid={fieldState.invalid}
+                  aria-describedby="sign-up-legal-error"
+                />
+                <div className="flex flex-col gap-1.5">
+                  <FieldLabel htmlFor="sign-up-legal" className="block font-normal">
+                    Acepto los <LegalLink document="terms">términos de servicio</LegalLink> y
+                    autorizo el tratamiento de mis datos según la{" "}
+                    <LegalLink document="privacy">política de datos</LegalLink>.
+                  </FieldLabel>
+                  <FieldError id="sign-up-legal-error" errors={[fieldState.error]} />
+                </div>
               </Field>
             )}
           />

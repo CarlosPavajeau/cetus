@@ -19,8 +19,8 @@ import { authClient } from "~/lib/auth/client";
  * the only one they had. They join one they were invited to, or create their own.
  */
 export const Route = createFileRoute("/organizations")({
-  beforeLoad: async () => {
-    const { session } = await requireSession();
+  beforeLoad: async ({ location }) => {
+    const { session } = await requireSession({ location });
     if (session.activeOrganizationId && session.memberRoles.length > 0) {
       throw redirect({ to: "/overview" });
     }
