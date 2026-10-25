@@ -11,7 +11,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { issuerDetailQuery, issuersQuery } from "~/features/issuers/queries";
 import { requireManager } from "~/features/session/guard";
@@ -22,6 +22,7 @@ import { SetupProgress } from "~/features/setup/SetupProgress";
 import { SoftwareStep } from "~/features/setup/SoftwareStep";
 import { type Step, completedSteps, firstIncompleteStep } from "~/features/setup/steps";
 import type { IssuerDetail } from "~/lib/api/types";
+import { docsUrl } from "~/lib/docs";
 import { uuidPattern } from "~/lib/utils";
 
 type SetupSearch = { step?: Step; issuerId?: string; new?: true };
@@ -114,13 +115,18 @@ function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        {/* Placeholders until the documentation and help center exist, as in the console header. */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" disabled>
+          <a
+            href={docsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
             <BookOpenIcon data-icon="inline-start" />
             Documentación
             <ArrowUpRightIcon data-icon="inline-end" />
-          </Button>
+          </a>
+          {/* Placeholder until the help center exists, as in the console header. */}
           <Button variant="ghost" size="icon-sm" disabled>
             <CircleHelpIcon />
             <span className="sr-only">Ayuda</span>

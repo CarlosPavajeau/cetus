@@ -1,0 +1,55 @@
+---
+title: Ambientes
+description: Simulación, pruebas y producción, y qué llave usar en cada caso.
+---
+
+Cetus tiene tres ambientes separados. **La llave define el ambiente**, no la URL: todas las peticiones van a
+`https://cetus-api.cantte.com`, y lo que haces con una llave solo existe en su ambiente. Una factura de
+pruebas no aparece al consultar con una llave de producción, y un cliente guardado en la simulación no
+existe en producción.
+
+| Ambiente   | Prefijo de la llave | En la consola | Para qué sirve                                                                           |
+| ---------- | ------------------- | ------------- | ---------------------------------------------------------------------------------------- |
+| Simulación | `cetus_sandbox_`    | Simulación    | Integrar y probar desde el primer minuto, sin configurar nada. Nada llega a la DIAN.     |
+| Pruebas    | `cetus_test_`       | Pruebas       | El set de pruebas de habilitación ante la DIAN, con tu empresa real. Sin validez fiscal. |
+| Producción | `cetus_live_`       | Producción    | Documentos con validez fiscal.                                                           |
+
+Las llaves se crean en la consola, en **Llaves de API**, eligiendo el ambiente. Cada una se muestra una
+sola vez.
+
+## Simulación
+
+<Sandbox>
+    Cetus imita a la DIAN: genera, firma y valida cada documento con la misma estructura que en
+    producción, pero con un certificado de Cetus y sin enviarlo a la DIAN.
+</Sandbox>
+
+- Cada cuenta trae la empresa de ejemplo **Empresa de Ejemplo SAS** (NIT 900999999-4), habilitada y con
+  numeración `SIM` (facturas), `NCS` (notas crédito) y `NDS` (notas débito). Por API puedes crear hasta
+  cinco empresas de simulación, contando la de ejemplo.
+- La respuesta de la DIAN llega en uno a tres segundos. El número de identificación del adquiriente elige
+  la respuesta: ver los escenarios en el
+  [inicio rápido](/inicio-rapido/desarrolladores#practica-los-casos-difíciles).
+- Los correos nunca van al adquiriente, sino al contacto técnico verificado de tu cuenta.
+- Límites: 200 documentos al día por cuenta y 5 peticiones por segundo por llave.
+- Los documentos se borran a los 10 días y no cuentan en tu plan.
+
+## Pruebas
+
+Es el ambiente de **habilitación** de la DIAN. Para usarlo, configura tu empresa en la consola con
+**Configurar emisor**: los datos del RUT, el software que registraste en el portal de la DIAN, tu
+certificado de firma y la numeración de pruebas. Con la llave `cetus_test_` envías el set de pruebas que
+exige la DIAN; cuando lo acepta, tu empresa queda lista para producción.
+
+## Producción
+
+Con tu empresa habilitada y la resolución de numeración de producción, la llave `cetus_live_` emite
+documentos con validez fiscal. Cada documento aceptado cuenta en el plan de tu cuenta.
+
+<Callout type="warn">
+    Una llave `live` emite documentos reales: guárdala en el servidor, nunca en el navegador ni en
+    una aplicación móvil. Si se filtra, revócala en **Llaves de API** y crea otra.
+</Callout>
+
+Tu código no cambia entre ambientes: cambias la llave (y, si la usas, el `issuerId` de tu empresa en ese
+ambiente).

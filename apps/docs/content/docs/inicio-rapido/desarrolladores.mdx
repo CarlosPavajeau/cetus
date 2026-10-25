@@ -1,0 +1,348 @@
+---
+title: Inicio rápido con la API
+description: Emite tu primera factura simulada, consulta su estado y recibe un webhook, en unos diez minutos.
+---
+
+Vas a emitir una factura en el **modo de simulación**: el ciclo es el mismo que en producción (número,
+CUFE, XML firmado, PDF, respuesta de la DIAN y webhook), pero nada llega a la DIAN y nada tiene validez
+fiscal. No necesitas certificado, resolución ni habilitación.
+
+<Sandbox>
+    Cada cuenta nueva trae la empresa de ejemplo **Empresa de Ejemplo SAS** (NIT 900999999-4), con
+    numeración `SIM` para facturas, `NCS` para notas crédito y `NDS` para notas débito, lista para
+    emitir.
+</Sandbox>
+
+<Steps>
+<Step>
+
+### Crea tu cuenta
+
+[Regístrate en la consola](https://cetus.cantte.com/sign-up) y crea tu organización. La consola abre en el
+ambiente **Simulación**.
+
+</Step>
+<Step>
+
+### Crea una llave de simulación
+
+En la consola, ve a **Llaves de API** y pulsa **Crear llave**. Ponle un nombre, deja el ambiente en
+**Simulación (sin la DIAN)** y pulsa **Crear llave**.
+
+![Diálogo para crear una llave de API, con el ambiente Simulación](/images/consola/nueva-llave.png)
+
+La llave empieza por `cetus_sandbox_` y se muestra **una sola vez**: cópiala y guárdala como variable de
+entorno.
+
+```bash
+export CETUS_API_KEY="cetus_sandbox_..."
+```
+
+El ambiente lo define la llave, no la URL: con una llave `cetus_sandbox_` todo lo que hagas ocurre en la
+simulación. Más detalles en [Ambientes](/guias/ambientes).
+
+</Step>
+<Step>
+
+### Emite una factura
+
+Envía la factura a `POST /v1/invoices`. El encabezado `Idempotency-Key` es obligatorio: es un identificador
+que eliges tú (por ejemplo, el número de tu pedido) y evita emitir dos veces si repites la petición. Ver
+[Idempotencia](/guias/idempotencia).
+
+No hace falta indicar el emisor: si solo una de tus empresas puede emitir con la llave, Cetus la toma sola.
+
+<Tabs items={["cURL", "JavaScript", "Python"]}>
+<Tab value="cURL">
+
+```bash
+curl https://cetus-api.cantte.com/v1/invoices \
+  -H "Authorization: Bearer $CETUS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pedido-1001" \
+  -d '{
+    "customer": {
+      "personType": "NATURAL_PERSON",
+      "identificationType": "CITIZEN_ID",
+      "identificationNumber": "1020304050",
+      "legalName": "Consumidor Final"
+    },
+    "payment": { "method": "CASH", "meansCode": "10" },
+    "lines": [
+      {
+        "itemCode": "SERV-1",
+        "description": "Servicio de consultoría",
+        "quantity": 1,
+        "unitPrice": 100000,
+        "taxes": [{ "type": "IVA", "percent": 19 }]
+      }
+    ]
+  }'
+```
+
+</Tab>
+<Tab value="JavaScript">
+
+```js
+const response = await fetch("https://cetus-api.cantte.com/v1/invoices", {
+    method: "POST",
+    headers: {
+        Authorization: `Bearer ${process.env.CETUS_API_KEY}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": "pedido-1001",
+    },
+    body: JSON.stringify({
+        customer: {
+            personType: "NATURAL_PERSON",
+            identificationType: "CITIZEN_ID",
+            identificationNumber: "1020304050",
+            legalName: "Consumidor Final",
+        },
+        payment: { method: "CASH", meansCode: "10" },
+        lines: [
+            {
+                itemCode: "SERV-1",
+                description: "Servicio de consultoría",
+                quantity: 1,
+                unitPrice: 100000,
+                taxes: [{ type: "IVA", percent: 19 }],
+            },
+        ],
+    }),
+});
+const invoice = await response.json();
+console.log(response.status, invoice.id, invoice.number, invoice.status);
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+import os
+import requests
+
+response = requests.post(
+    "https://cetus-api.cantte.com/v1/invoices",
+    headers={
+        "Authorization": f"Bearer {os.environ['CETUS_API_KEY']}",
+        "Idempotency-Key": "pedido-1001",
+    },
+    json={
+        "customer": {
+            "personType": "NATURAL_PERSON",
+            "identificationType": "CITIZEN_ID",
+            "identificationNumber": "1020304050",
+            "legalName": "Consumidor Final",
+        },
+        "payment": {"method": "CASH", "meansCode": "10"},
+        "lines": [
+            {
+                "itemCode": "SERV-1",
+                "description": "Servicio de consultoría",
+                "quantity": 1,
+                "unitPrice": 100000,
+                "taxes": [{"type": "IVA", "percent": 19}],
+            }
+        ],
+    },
+)
+invoice = response.json()
+print(response.status_code, invoice["id"], invoice["number"], invoice["status"])
+```
+
+</Tab>
+</Tabs>
+
+Cetus responde `202 Accepted` con la factura ya numerada y en estado `RECEIVED`. Los totales los calcula
+Cetus: 100 000 más el 19 % de IVA.
+
+```json
+{
+    "id": "01a173bd-8875-7f02-8af1-d763beec853a",
+    "environment": "SANDBOX",
+    "number": "SIM1",
+    "status": "RECEIVED",
+    "cufe": null,
+    "totals": {
+        "lineExtension": 100000.0,
+        "taxExclusive": 100000.0,
+        "taxInclusive": 119000.0,
+        "payable": 119000.0
+    },
+    "dian": { "statusCode": null, "statusMessage": null, "errors": [], "validatedAt": null }
+}
+```
+
+La respuesta trae más campos; todos están en la [referencia](/reference#tag/facturas/POST/v1/invoices).
+
+</Step>
+<Step>
+
+### Consulta su estado
+
+La factura se procesa en segundo plano. En la simulación, la respuesta de la DIAN llega en uno a tres
+segundos. Consulta la factura con el `id` que recibiste:
+
+```bash
+curl https://cetus-api.cantte.com/v1/invoices/01a173bd-8875-7f02-8af1-d763beec853a \
+  -H "Authorization: Bearer $CETUS_API_KEY"
+```
+
+```json
+{
+    "id": "01a173bd-8875-7f02-8af1-d763beec853a",
+    "number": "SIM1",
+    "status": "ACCEPTED",
+    "cufe": "6ed9a8e5f0966147d6943caf5f20bd2d059b06955c467520d3d490ce4c057918dd8a2e28b461c4c84f53b0947299f5d9",
+    "dian": {
+        "statusCode": "00",
+        "statusMessage": "Procesado Correctamente.",
+        "errors": [],
+        "validatedAt": "2026-10-25T15:46:07.126756Z"
+    }
+}
+```
+
+`ACCEPTED` y `REJECTED` son definitivos. Qué significa cada estado y qué hacer en cada uno está en
+[Ciclo de vida de un documento](/guias/ciclo-de-vida).
+
+</Step>
+<Step>
+
+### Descarga el PDF y el XML
+
+Pide una URL temporal de descarga para `pdf`, `xml` o `attached-document`. La URL dura cinco minutos y se
+descarga sin la llave:
+
+```bash
+curl https://cetus-api.cantte.com/v1/invoices/01a173bd-8875-7f02-8af1-d763beec853a/files/pdf \
+  -H "Authorization: Bearer $CETUS_API_KEY"
+```
+
+```json
+{ "url": "https://…/SIM1.pdf?X-Amz-Signature=…", "expiresAt": "2026-10-25T15:51:07.745062Z" }
+```
+
+El PDF de la simulación lleva la marca de agua "Documento simulado, sin validez fiscal".
+
+</Step>
+<Step>
+
+### Recibe un webhook
+
+En lugar de consultar el estado una y otra vez, Cetus puede avisarte con un `POST` a tu servidor cuando la
+DIAN responde.
+
+1. Abre [webhook.site](https://webhook.site) para tener una URL de prueba que muestra lo que recibe.
+2. En la consola, ve a **Webhooks** y pulsa **Registrar webhook**.
+3. Pega la URL, elige el ambiente **Simulación (sin la DIAN)** y marca **Factura aceptada** (sin ninguno
+   marcado, recibes todos los eventos).
+4. Pulsa **Registrar webhook** y copia el **secreto de firma** (`whsec_…`): se muestra una sola vez.
+
+![Diálogo para registrar un webhook en el ambiente Simulación](/images/consola/nuevo-webhook.png)
+
+Emite otra factura (con otra `Idempotency-Key`). Cuando quede aceptada llega un `POST` como este:
+
+```json
+{
+    "id": "…",
+    "type": "invoice.accepted",
+    "createdAt": "…",
+    "environment": "SANDBOX",
+    "data": {
+        "id": "…",
+        "documentType": "INVOICE",
+        "number": "SIM2",
+        "status": "ACCEPTED",
+        "cufe": "…",
+        "issueDate": "2026-10-25",
+        "externalReference": null,
+        "referencedInvoiceId": null,
+        "dian": { "statusCode": "00", "statusMessage": "Procesado Correctamente.", "errors": [] }
+    }
+}
+```
+
+Antes de confiar en un webhook, verifica su firma. Cetus firma según
+[Standard Webhooks](https://www.standardwebhooks.com/), así que sirve cualquiera de sus librerías. Sin
+librería, en Node.js:
+
+```js
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+/** `rawBody` es el cuerpo tal como llegó, antes de convertirlo a JSON. */
+export function verifyCetusWebhook(headers, rawBody, secret) {
+    const id = headers["webhook-id"];
+    const timestamp = headers["webhook-timestamp"];
+    if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) {
+        return false;
+    }
+    const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
+    const expected = createHmac("sha256", key).update(`${id}.${timestamp}.${rawBody}`).digest();
+    return headers["webhook-signature"].split(" ").some((signature) => {
+        const [version, value] = signature.split(",");
+        const received = Buffer.from(value ?? "", "base64");
+        return (
+            version === "v1" &&
+            received.length === expected.length &&
+            timingSafeEqual(received, expected)
+        );
+    });
+}
+```
+
+Responde con cualquier código 2xx para confirmar la entrega; si no, Cetus reintenta durante unas horas.
+`webhook-id` es el mismo en cada reintento: úsalo para no procesar dos veces el mismo evento.
+
+</Step>
+</Steps>
+
+## Practica los casos difíciles
+
+En la simulación, el número de identificación del adquiriente (`customer.identificationNumber`) elige lo
+que responde la DIAN. Úsalos para probar cómo maneja tu integración los rechazos y las fallas:
+
+| Adquiriente    | Qué pasa                                                                                           |
+| -------------- | -------------------------------------------------------------------------------------------------- |
+| `1000000001`   | Aceptado, con la notificación `FAJ43b` en `dian.errors`. Una notificación no impide la aceptación. |
+| `1000000002`   | Rechazado por las reglas `FAK26` y `FAB10a`. Queda `REJECTED` con las reglas en `dian.errors`.     |
+| `1000000003`   | El primer envío no recibe respuesta a tiempo; Cetus consulta el estado y lo encuentra aceptado.    |
+| `1000000004`   | La DIAN falla en los dos primeros envíos y acepta el tercero. Cetus reintenta solo.                |
+| `1000000005`   | Las notas crédito sobre sus facturas se rechazan por la regla `CBF04`.                             |
+| Cualquier otro | Aceptado.                                                                                          |
+
+Un rechazo se ve así:
+
+```json
+{
+    "status": "REJECTED",
+    "dian": {
+        "statusCode": "99",
+        "statusMessage": "Validación contiene errores en campos mandatorios.",
+        "errors": [
+            "Regla: FAK26, Rechazo: Responsabilidad informada para receptor no valida según lista.",
+            "Regla: FAB10a, Rechazo: El prefijo de numeración no es igual al código de la sucursal correspondiente a este punto de facturación"
+        ]
+    }
+}
+```
+
+## Límites de la simulación
+
+- Hasta 200 documentos al día por cuenta, contados en hora de Colombia. Después, `429 sandbox_daily_limit`
+  con `Retry-After`.
+- Hasta 5 peticiones por segundo por llave, con ráfagas de 10. Después, `429 rate_limited` con
+  `Retry-After`.
+- Los correos nunca van al adquiriente: van al contacto técnico verificado de tu cuenta, con
+  `[Simulación]` en el asunto, como máximo 30 al día. Sin contacto técnico verificado, la entrega queda
+  `SKIPPED`.
+- Los documentos simulados se borran a los 10 días.
+
+## Siguientes pasos
+
+- **Pruebas y producción.** Cuando configures tu empresa ante la DIAN, solo cambias la llave: `cetus_test_`
+  para las pruebas de habilitación y `cetus_live_` para producción. Ver [Ambientes](/guias/ambientes).
+- **Notas crédito y débito.** Se emiten sobre una factura aceptada con `POST /v1/credit-notes` y
+  `POST /v1/debit-notes`. Ver la [referencia](/reference#tag/notas-crédito).
+- **Postman.** La [colección de Postman](/cetus.postman_collection.json) guarda el `id` de cada documento que
+  creas y lo usa en las consultas siguientes.

@@ -1,0 +1,61 @@
+---
+title: Ciclo de vida de un documento
+description: Los estados de una factura o nota, qué significan y qué hacer en cada uno.
+---
+
+Crear un documento responde de inmediato con `202 Accepted` y el estado `RECEIVED`. Desde ahí, Cetus lo
+procesa en segundo plano hasta la respuesta de la DIAN.
+
+```
+RECEIVED → PROCESSING → SUBMITTED → ACCEPTED
+                                  ↘ REJECTED
+           (falla) → FAILED → PROCESSING (reintento)
+```
+
+| Estado       | Qué significa                                        | Qué hacer                                              |
+| ------------ | ---------------------------------------------------- | ------------------------------------------------------ |
+| `RECEIVED`   | Cetus lo validó, le asignó número y lo puso en cola. | Esperar.                                               |
+| `PROCESSING` | Cetus lo está generando, firmando o enviando.        | Esperar.                                               |
+| `SUBMITTED`  | Enviado; Cetus espera la respuesta de la DIAN.       | Esperar.                                               |
+| `ACCEPTED`   | La DIAN lo aceptó. **Es definitivo.**                | Listo: ya puedes descargar el PDF y el XML.            |
+| `REJECTED`   | La DIAN lo rechazó. **Es definitivo.**               | Lee `dian.errors`, corrige y emite un documento nuevo. |
+| `FAILED`     | Un intento falló por una causa técnica.              | Si Cetus aún reintenta, vuelve a `PROCESSING` solo.    |
+
+## Cómo enterarte del resultado
+
+- **Webhooks** (recomendado): registra una URL en la consola y Cetus te avisa con `invoice.accepted`,
+  `invoice.rejected` o `invoice.failed` (y los equivalentes `credit_note.*` y `debit_note.*`). Ver el
+  [inicio rápido](/inicio-rapido/desarrolladores#recibe-un-webhook).
+- **Consulta**: `GET /v1/invoices/{id}` (o `/v1/credit-notes/{id}`, `/v1/debit-notes/{id}`). Si consultas en
+  ciclo, espera unos segundos entre intentos.
+
+## Rechazos
+
+Un documento rechazado conserva su número, pero no tiene validez: emite uno nuevo con los datos corregidos
+(con otra `Idempotency-Key`). `dian.errors` trae cada regla de la DIAN con su explicación:
+
+```json
+"errors": [
+  "Regla: FAK26, Rechazo: Responsabilidad informada para receptor no valida según lista."
+]
+```
+
+Algunas entradas son **notificaciones**, no rechazos (por ejemplo `Regla: FAJ43b, Notificación: …`): la DIAN
+avisa de algo, pero acepta el documento.
+
+## Fallas
+
+Si la DIAN no responde o responde con un error temporal, Cetus reintenta solo y el documento vuelve a
+`PROCESSING`. Si después de varios intentos no lo logra, el documento queda `FAILED` y llega el webhook
+`invoice.failed` (o el de su tipo). Cada respuesta trae el encabezado `X-Request-Id`: inclúyelo si escribes a
+soporte.
+
+## Después de aceptado
+
+- **Archivos**: `GET /v1/invoices/{id}/files/{file}` da una URL temporal para el `xml`, el `pdf` o el
+  `attached-document`.
+- **Entrega al cliente**: si el adquiriente tiene correo, Cetus le envía el AttachedDocument y el PDF.
+  `deliveries` en la factura, y los webhooks `document.delivered` y `document.delivery_failed`, dicen si
+  llegó.
+- **Correcciones**: una factura aceptada no se modifica. Se anula o disminuye con una nota crédito y se
+  aumenta con una nota débito.

@@ -1,8 +1,38 @@
 ---
-title: Cetus
-description: Facturación electrónica ante la DIAN por API.
+title: Qué es Cetus
+description: Facturación electrónica ante la DIAN por API, o desde la consola sin escribir código.
 ---
 
-Cetus emite facturas, notas crédito y notas débito electrónicas ante la DIAN de Colombia.
+Cetus emite facturas, notas crédito y notas débito electrónicas ante la DIAN de Colombia. Le envías el
+documento en JSON y Cetus hace el resto: lo valida, lo numera con tu resolución, genera el XML UBL 2.1, lo
+firma con tu certificado, lo envía a la DIAN y le entrega al cliente el XML y el PDF por correo.
 
-- [Referencia de la API](/reference)
+Sirve a dos tipos de usuario:
+
+- **Quien integra un sistema** (un ERP, una tienda en línea, un software de punto de venta) y quiere
+  facturar desde su código con una API REST.
+- **Quien factura a mano**, sin sistema propio: emite desde la consola web con un formulario.
+
+En ambos casos puedes empezar **hoy**, sin certificado ni habilitación ante la DIAN: cada cuenta nueva trae
+un modo de simulación con una empresa de ejemplo lista para emitir.
+
+## Por dónde empezar
+
+<Cards>
+    <Card title="Inicio rápido con la API" href="/inicio-rapido/desarrolladores">
+        Tu primera factura simulada con cURL, JavaScript o Python, en unos diez minutos.
+    </Card>
+    <Card title="Inicio rápido desde la consola" href="/inicio-rapido/consola">
+        Emite una factura de prueba sin escribir código.
+    </Card>
+    <Card title="Referencia de la API" href="/reference">
+        Todos los endpoints, campos, errores y ejemplos. Puedes probarlos con una llave de
+        simulación.
+    </Card>
+    <Card title="Ambientes" href="/guias/ambientes">
+        Simulación, pruebas y producción: qué llave usar en cada caso.
+    </Card>
+</Cards>
+
+¿Prefieres Postman? Descarga la [colección de Postman](/cetus.postman_collection.json), pon tu llave en la
+variable `apiKey` y envía las peticiones en orden.

@@ -1,10 +1,10 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { BuildingIcon, FileTextIcon } from "lucide-react";
+import { ArrowUpRightIcon, BuildingIcon, FileTextIcon } from "lucide-react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -38,6 +38,7 @@ import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import { planTitle } from "~/features/usage/labels";
 import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
 import { usageQuery } from "~/features/usage/queries";
+import { docsUrl } from "~/lib/docs";
 
 export const Route = createFileRoute("/_app/overview")({
   loader: ({ context: { queryClient } }) =>
@@ -217,6 +218,15 @@ function Overview() {
           <Button render={<Link to="/developers/api-keys" />} nativeButton={false}>
             Crear llave de API
           </Button>
+          <a
+            href={`${docsUrl}/inicio-rapido/desarrolladores`}
+            target="_blank"
+            rel="noreferrer"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Ver el inicio rápido
+            <ArrowUpRightIcon data-icon="inline-end" />
+          </a>
         </CardFooter>
       </Card>
     </>

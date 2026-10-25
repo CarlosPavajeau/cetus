@@ -20,7 +20,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "api:types": "openapi-typescript http://localhost:8080/q/openapi -o src/lib/api/schema.d.ts",
-    "api:types:file": "openapi-typescript ../api/build/openapi/openapi.yaml -o src/lib/api/schema.d.ts"
+    "api:types:file": "openapi-typescript ../api/build/openapi/openapi.yaml -o src/lib/api/schema.d.ts",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
