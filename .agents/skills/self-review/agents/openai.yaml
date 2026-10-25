@@ -1,0 +1,5 @@
+interface:
+  display_name: "Self Review"
+  short_description: "Critically review and fix the current changes before committing"
+policy:
+  allow_implicit_invocation: false
