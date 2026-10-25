@@ -291,7 +291,7 @@ class AdminAccountResourceTest {
                 .body("items", hasSize(1))
                 .body("items[0].actorId", equalTo(ADMIN.userId()))
                 .body("items[0].data.plan", equalTo("INICIAL"))
-                .body("items[0].data.previousPlan", equalTo("FREE"))
+                .body("items[0].data.planPrevious", equalTo("FREE"))
                 .body("items[0].data.reason", equalTo("Contrató el plan"));
     }
 
