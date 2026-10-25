@@ -28,10 +28,10 @@ test("a plain member reads the keys, webhooks and issuers but changes none", asy
 
   await open(page, "/issuers");
   await expect(page.getByText("Solo lectura")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Nuevo emisor" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Nuevo emisor" })).toHaveCount(0);
   await open(page, `/issuers/${issuerId}`);
   await expect(page.getByRole("heading", { name: "Roles SAS" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Editar" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Editar" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Pasar a producción" })).toHaveCount(0);
   await open(page, "/setup");
   await expect(page).toHaveURL(/\/issuers$/);
@@ -42,5 +42,5 @@ test("a plain member reads the keys, webhooks and issuers but changes none", asy
   await expect(page.getByText("Solo lectura")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Crear llave" }).first()).toBeVisible();
   await open(page, `/issuers/${issuerId}`);
-  await expect(page.getByRole("button", { name: "Editar" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Editar" })).toBeVisible();
 });

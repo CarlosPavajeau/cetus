@@ -15,7 +15,7 @@ test("a new organization issues its first simulated invoice from the overview", 
 }) => {
   await open(page, "/overview");
   await expect(page.getByRole("complementary", { name: "Modo simulación" })).toBeVisible();
-  await page.getByRole("button", { name: "Emitir factura de prueba" }).click();
+  await page.getByRole("link", { name: "Emitir factura simulada" }).click();
 
   // Everything comes filled in; the totals come from the API.
   await expect(page.getByLabel("Descripción de la línea 1")).toHaveValue("Asesoría contable");
@@ -114,7 +114,7 @@ test("an accepted invoice is corrected with a partial credit note", async ({
   expect(await waitForStatus(organization, invoice.id)).toBe("ACCEPTED");
 
   await open(page, `/documents/${invoice.id}`);
-  await page.getByRole("button", { name: "Nota crédito" }).click();
+  await page.getByRole("link", { name: "Nota crédito" }).click();
   await expect(page.getByRole("heading", { name: "Emitir nota crédito" })).toBeVisible();
   await expect(page.getByText("Puedes acreditar hasta $ 119.000")).toBeVisible();
   await page.getByLabel("Descripción", { exact: true }).fill("Descuento acordado con el cliente");

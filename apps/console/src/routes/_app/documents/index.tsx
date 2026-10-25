@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -50,6 +50,7 @@ import {
   documentTypes,
   type Environment,
 } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
 /** The environment comes from the console's selector, not the URL. */
 type SearchFilters = Omit<DocumentFilters, "environment">;
@@ -190,10 +191,10 @@ function Documents() {
         title="Documentos"
         lead="Facturas y notas de la cuenta, con su estado ante la DIAN y su entrega al cliente."
         action={
-          <Button render={<Link to="/documents/new" />} nativeButton={false}>
+          <Link to="/documents/new" className={cn(buttonVariants())}>
             <PlusIcon data-icon="inline-start" />
             Emitir factura
-          </Button>
+          </Link>
         }
       />
 

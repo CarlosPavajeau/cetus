@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
-import { Button } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -245,9 +245,9 @@ function ApiKeyNotFound() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" render={<Link to="/developers/api-keys" />} nativeButton={false}>
+        <Link to="/developers/api-keys" className={cn(buttonVariants({ variant: "outline" }))}>
           Volver a las llaves de API
-        </Button>
+        </Link>
       </EmptyContent>
     </Empty>
   );

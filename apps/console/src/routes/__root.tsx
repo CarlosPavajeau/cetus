@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { type ReactNode, Suspense, lazy } from "react";
 
+import { ShellError } from "~/components/RouteError";
 import { TooltipProvider } from "~/components/ui/tooltip";
 
 import appCss from "~/styles.css?url";
@@ -25,6 +26,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }),
   shellComponent: RootDocument,
   component: Outlet,
+  errorComponent: ShellError,
 });
 
 function RootDocument({ children }: { children: ReactNode }) {

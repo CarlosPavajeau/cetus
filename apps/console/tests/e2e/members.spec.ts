@@ -54,7 +54,7 @@ test("a biller is invited by link, issues in production and is removed", async (
   const invited = await visitor.newPage();
   await open(invited, url);
   await expect(invited.getByRole("heading", { name: "Te invitaron a Cetus" })).toBeVisible();
-  await invited.getByRole("button", { name: "Crear cuenta" }).click();
+  await invited.getByRole("link", { name: "Crear cuenta" }).click();
   await invited.getByLabel("Nombre completo").fill("Persona Facturadora");
   await invited.getByLabel("Correo electrónico").fill(email);
   await invited.getByLabel("Contraseña", { exact: true }).fill("clave-facturadora-segura");
@@ -119,7 +119,7 @@ test("an invitation only opens for its address", async ({ page, browser, organiz
   const visitor = await browser.newContext();
   const anonymous = await visitor.newPage();
   await open(anonymous, `/invitations/${invitation.id}`);
-  await expect(anonymous.getByRole("button", { name: "Ya tengo cuenta" })).toBeVisible();
+  await expect(anonymous.getByRole("link", { name: "Ya tengo cuenta" })).toBeVisible();
   await visitor.close();
 });
 
@@ -156,7 +156,7 @@ test("someone with 2FA comes back to the invitation after the second step", asyn
   const visitor = await browser.newContext();
   const page = await visitor.newPage();
   await open(page, `/invitations/${invitation.id}`);
-  await page.getByRole("button", { name: "Ya tengo cuenta" }).click();
+  await page.getByRole("link", { name: "Ya tengo cuenta" }).click();
   await page.getByLabel("Correo electrónico").fill(invited.email);
   await page.getByRole("textbox", { name: "Contraseña" }).fill(invited.password);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
@@ -183,7 +183,7 @@ test("whoever gets an invitation's link cannot join with its address without own
   const visitor = await browser.newContext();
   const page = await visitor.newPage();
   await open(page, `/invitations/${invitation.id}`);
-  await page.getByRole("button", { name: "Crear cuenta" }).click();
+  await page.getByRole("link", { name: "Crear cuenta" }).click();
   await page.getByLabel("Nombre completo").fill("Persona Ajena");
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill("clave-ajena-muy-segura");

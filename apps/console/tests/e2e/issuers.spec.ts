@@ -10,7 +10,7 @@ test("the issuers page shows each issuer's ID for the API", async ({ page, organ
   ).toHaveAttribute("data-active");
   const row = page.getByRole("row", { name: /Primero SAS/ });
   await expect(row.getByText(`…${id.slice(-8)}`)).toBeVisible();
-  await expect(row.getByRole("button", { name: "Continuar configuración" })).toBeVisible();
+  await expect(row.getByRole("link", { name: "Continuar configuración" })).toBeVisible();
 
   await row.getByRole("link", { name: "Primero SAS" }).click();
   await expect(page).toHaveURL(new RegExp(`/issuers/${id}$`));
@@ -26,7 +26,7 @@ test("a second issuer is set up from the issuers page and resumed by its ID", as
   const first = await createIssuer(organization, "900123456", "Primero SAS");
 
   await open(page, "/issuers");
-  await page.getByRole("button", { name: "Nuevo emisor" }).click();
+  await page.getByRole("link", { name: "Nuevo emisor" }).click();
   await expect(page).toHaveURL(/\/setup\?new=true$/);
   await expect(page.getByText("Paso 1 de 4")).toBeVisible();
   await expect(page.getByLabel("Nombre o razón social")).toHaveValue("");
@@ -57,7 +57,7 @@ test("a second issuer is set up from the issuers page and resumed by its ID", as
   await open(page, "/issuers");
   await page
     .getByRole("row", { name: /Segundo SAS/ })
-    .getByRole("button", { name: "Continuar configuración" })
+    .getByRole("link", { name: "Continuar configuración" })
     .click();
   await expect(page.getByText("Segundo SAS · NIT 800197268")).toBeVisible();
 
@@ -110,7 +110,7 @@ test("an issuer in habilitación keeps its tax data in line with its RUT", async
   const id = await onboardIssuer(organization, "900123456", "Rut SAS");
 
   await open(page, `/issuers/${id}`);
-  await page.getByRole("button", { name: "Editar" }).click();
+  await page.getByRole("link", { name: "Editar" }).click();
   await expect(page).toHaveURL(new RegExp(`/issuers/${id}/edit$`));
   await expect(page.getByLabel("NIT")).toHaveAttribute("readonly");
   // The person type comes with the NIT: it is fixed once the issuer is set up.

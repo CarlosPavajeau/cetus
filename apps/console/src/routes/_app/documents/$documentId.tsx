@@ -13,7 +13,7 @@ import { CopyButton } from "~/components/CopyButton";
 import { Entry, Section } from "~/components/DetailSection";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -51,7 +51,7 @@ import { documentDetailQuery } from "~/features/documents/queries";
 import { ResendDocument } from "~/features/documents/ResendDocument";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import type { DocumentDetail } from "~/lib/api/types";
-import { uuidPattern } from "~/lib/utils";
+import { cn, uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/documents/$documentId")({
   loader: async ({ context: { queryClient }, params }) => {
@@ -319,34 +319,24 @@ function InvoiceCorrections({ invoice }: { invoice: DocumentDetail }) {
   }
   return (
     <div className="flex flex-wrap gap-2">
-      <Button
-        variant="outline"
-        render={
-          <Link
-            to="/documents/$documentId/notes/new"
-            params={{ documentId: invoice.id }}
-            search={{ type: "CREDIT_NOTE" }}
-          />
-        }
-        nativeButton={false}
+      <Link
+        to="/documents/$documentId/notes/new"
+        params={{ documentId: invoice.id }}
+        search={{ type: "CREDIT_NOTE" }}
+        className={cn(buttonVariants({ variant: "outline" }))}
       >
         <FileMinusIcon data-icon="inline-start" />
         Nota crédito
-      </Button>
-      <Button
-        variant="outline"
-        render={
-          <Link
-            to="/documents/$documentId/notes/new"
-            params={{ documentId: invoice.id }}
-            search={{ type: "DEBIT_NOTE" }}
-          />
-        }
-        nativeButton={false}
+      </Link>
+      <Link
+        to="/documents/$documentId/notes/new"
+        params={{ documentId: invoice.id }}
+        search={{ type: "DEBIT_NOTE" }}
+        className={cn(buttonVariants({ variant: "outline" }))}
       >
         <FilePlusIcon data-icon="inline-start" />
         Nota débito
-      </Button>
+      </Link>
       <CancelInvoice invoice={invoice} />
     </div>
   );
@@ -454,9 +444,9 @@ function DocumentNotFound() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" render={<Link to="/documents" />} nativeButton={false}>
+        <Link to="/documents" className={cn(buttonVariants({ variant: "outline" }))}>
           Volver a los documentos
-        </Button>
+        </Link>
       </EmptyContent>
     </Empty>
   );

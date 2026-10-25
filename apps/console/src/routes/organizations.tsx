@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Field, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
@@ -13,6 +13,7 @@ import { createWorkspace } from "~/features/auth/workspace";
 import { listWorkplaces } from "~/features/members/server";
 import { requireSession } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
+import { cn } from "~/lib/utils";
 
 /**
  * Where someone signed in without an organization lands: just signed up from an invitation, or removed from
@@ -94,18 +95,13 @@ function Organizations() {
                       {memberRoleLabel[invitation.role] ?? invitation.role}
                     </span>
                   </div>
-                  <Button
-                    size="sm"
-                    render={
-                      <Link
-                        to="/invitations/$invitationId"
-                        params={{ invitationId: invitation.id }}
-                      />
-                    }
-                    nativeButton={false}
+                  <Link
+                    to="/invitations/$invitationId"
+                    params={{ invitationId: invitation.id }}
+                    className={cn(buttonVariants({ size: "sm" }))}
                   >
                     Ver invitación
-                  </Button>
+                  </Link>
                 </div>
               ))}
             </section>

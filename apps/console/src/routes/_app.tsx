@@ -26,6 +26,7 @@ import {
   WebhookIcon,
 } from "lucide-react";
 
+import { ShellError } from "~/components/RouteError";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   Breadcrumb,
@@ -67,6 +68,7 @@ export const Route = createFileRoute("/_app")({
   beforeLoad: requireMembership,
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(activeEnvironmentQuery),
   component: AppLayout,
+  errorComponent: ShellError,
 });
 
 const navigation = [
