@@ -3,7 +3,7 @@ export const legalOwner = {
   name: "Carlos Andrés Pavajeau Max",
   taxId: "C.C. 1007870923",
   city: "Valledupar, Cesar",
-  address: "Carrera 11 #13B-62, barrio Obrero",
+  address: "Carrera 11 #13B-62, Obrero",
   email: "contact@cantte.com",
 } as const;
 
