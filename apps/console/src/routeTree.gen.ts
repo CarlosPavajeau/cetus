@@ -24,6 +24,10 @@ import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
 import { Route as InvitationsInvitationIdRouteImport } from './routes/invitations.$invitationId'
+import { Route as LegalAcceptRouteImport } from './routes/legal.accept'
+import { Route as LegalEncargoRouteImport } from './routes/legal.encargo'
+import { Route as LegalPrivacidadRouteImport } from './routes/legal.privacidad'
+import { Route as LegalTerminosRouteImport } from './routes/legal.terminos'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
@@ -125,6 +129,26 @@ const ContactVerificationTokenRoute =
 const InvitationsInvitationIdRoute = InvitationsInvitationIdRouteImport.update({
   id: '/invitations/$invitationId',
   path: '/invitations/$invitationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalAcceptRoute = LegalAcceptRouteImport.update({
+  id: '/legal/accept',
+  path: '/legal/accept',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalEncargoRoute = LegalEncargoRouteImport.update({
+  id: '/legal/encargo',
+  path: '/legal/encargo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacidadRoute = LegalPrivacidadRouteImport.update({
+  id: '/legal/privacidad',
+  path: '/legal/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalTerminosRoute = LegalTerminosRouteImport.update({
+  id: '/legal/terminos',
+  path: '/legal/terminos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
@@ -290,6 +314,10 @@ export interface FileRoutesByFullPath {
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
+  '/legal/accept': typeof LegalAcceptRoute
+  '/legal/encargo': typeof LegalEncargoRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
@@ -333,6 +361,10 @@ export interface FileRoutesByTo {
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
+  '/legal/accept': typeof LegalAcceptRoute
+  '/legal/encargo': typeof LegalEncargoRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
@@ -379,6 +411,10 @@ export interface FileRoutesById {
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
+  '/legal/accept': typeof LegalAcceptRoute
+  '/legal/encargo': typeof LegalEncargoRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/catalog/customers': typeof AppCatalogCustomersRoute
@@ -424,6 +460,10 @@ export interface FileRouteTypes {
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
     | '/invitations/$invitationId'
+    | '/legal/accept'
+    | '/legal/encargo'
+    | '/legal/privacidad'
+    | '/legal/terminos'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/catalog/customers'
@@ -467,6 +507,10 @@ export interface FileRouteTypes {
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
     | '/invitations/$invitationId'
+    | '/legal/accept'
+    | '/legal/encargo'
+    | '/legal/privacidad'
+    | '/legal/terminos'
     | '/admin/audit-log'
     | '/activity/$eventId'
     | '/catalog/customers'
@@ -512,6 +556,10 @@ export interface FileRouteTypes {
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
     | '/invitations/$invitationId'
+    | '/legal/accept'
+    | '/legal/encargo'
+    | '/legal/privacidad'
+    | '/legal/terminos'
     | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
     | '/_app/catalog/customers'
@@ -557,6 +605,10 @@ export interface RootRouteChildren {
   CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
   ContactVerificationTokenRoute: typeof ContactVerificationTokenRoute
   InvitationsInvitationIdRoute: typeof InvitationsInvitationIdRoute
+  LegalAcceptRoute: typeof LegalAcceptRoute
+  LegalEncargoRoute: typeof LegalEncargoRoute
+  LegalPrivacidadRoute: typeof LegalPrivacidadRoute
+  LegalTerminosRoute: typeof LegalTerminosRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -665,6 +717,34 @@ declare module '@tanstack/react-router' {
       path: '/invitations/$invitationId'
       fullPath: '/invitations/$invitationId'
       preLoaderRoute: typeof InvitationsInvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/accept': {
+      id: '/legal/accept'
+      path: '/legal/accept'
+      fullPath: '/legal/accept'
+      preLoaderRoute: typeof LegalAcceptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/encargo': {
+      id: '/legal/encargo'
+      path: '/legal/encargo'
+      fullPath: '/legal/encargo'
+      preLoaderRoute: typeof LegalEncargoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacidad': {
+      id: '/legal/privacidad'
+      path: '/legal/privacidad'
+      fullPath: '/legal/privacidad'
+      preLoaderRoute: typeof LegalPrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/terminos': {
+      id: '/legal/terminos'
+      path: '/legal/terminos'
+      fullPath: '/legal/terminos'
+      preLoaderRoute: typeof LegalTerminosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin/admin/': {
@@ -954,6 +1034,10 @@ const rootRouteChildren: RootRouteChildren = {
   CertificateUploadTokenRoute: CertificateUploadTokenRoute,
   ContactVerificationTokenRoute: ContactVerificationTokenRoute,
   InvitationsInvitationIdRoute: InvitationsInvitationIdRoute,
+  LegalAcceptRoute: LegalAcceptRoute,
+  LegalEncargoRoute: LegalEncargoRoute,
+  LegalPrivacidadRoute: LegalPrivacidadRoute,
+  LegalTerminosRoute: LegalTerminosRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

@@ -41,6 +41,7 @@ test("signing up opens the console in the sandbox, with the assistant one click 
   // Exact: "Confirmar contraseña" and the "Mostrar contraseña" buttons match too.
   await page.getByLabel("Contraseña", { exact: true }).fill(`clave-${id}-segura`);
   await page.getByLabel("Confirmar contraseña").fill(`clave-${id}-segura`);
+  await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
   await page.getByRole("button", { name: /crear/i }).click();
 
   await expect(page).toHaveURL(/\/overview$/);

@@ -24,10 +24,16 @@ const passwordsMatch = (values: { password: string; confirmPassword: string }, c
     ? true
     : ctx.reject({ path: ["confirmPassword"], message: "Las contraseñas no coinciden." });
 
+/** A checkbox the person must tick: the form starts with it unticked. */
+export const acceptedLegal = type("boolean")
+  .narrow((accepted) => accepted)
+  .configure({ message: "Acepta los términos y la política de datos para continuar." });
+
 export const signUpSchema = type({
   name: required("Escribe tu nombre completo."),
   email,
   ...newPassword,
+  acceptedLegal,
 }).narrow(passwordsMatch);
 
 export const forgotPasswordSchema = type({ email });

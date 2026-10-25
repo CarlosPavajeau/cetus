@@ -59,6 +59,7 @@ test("a biller is invited by link, issues in production and is removed", async (
   await invited.getByLabel("Correo electrónico").fill(email);
   await invited.getByLabel("Contraseña", { exact: true }).fill("clave-facturadora-segura");
   await invited.getByLabel("Confirmar contraseña").fill("clave-facturadora-segura");
+  await invited.getByRole("checkbox", { name: /Acepto los términos/ }).check();
   await invited.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(invited.getByRole("heading", { name: "Confirma tu correo" })).toBeVisible();
   await expect(invited.getByText(`Te enviamos el enlace a ${email}`)).toBeVisible();
@@ -187,6 +188,7 @@ test("whoever gets an invitation's link cannot join with its address without own
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill("clave-ajena-muy-segura");
   await page.getByLabel("Confirmar contraseña").fill("clave-ajena-muy-segura");
+  await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(page.getByRole("heading", { name: "Confirma tu correo" })).toBeVisible();
 

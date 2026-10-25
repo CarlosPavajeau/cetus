@@ -9,6 +9,8 @@ import { and, eq } from "drizzle-orm";
 import { passwordChangedMessage } from "~/emails/PasswordChangedEmail";
 import { passwordResetMessage } from "~/emails/PasswordResetEmail";
 import { verificationMessage } from "~/emails/VerificationEmail";
+import { consentOrigin, recordConsents } from "~/features/legal/consents";
+import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
 
 import { db } from "../db";
 import { emailSender } from "../email";
@@ -112,8 +114,34 @@ export const auth = betterAuth({
     autoSignInAfterVerification: false,
     expiresIn: 24 * 60 * 60,
   },
+  databaseHooks: {
+    user: {
+      create: {
+        // Only sign-up creates users, and its hook below already checked that the person accepted. If the
+        // record fails, the console asks them to accept again instead of failing a sign-up already done.
+        after: async (user, ctx) => {
+          if (ctx?.path !== "/sign-up/email") {
+            return;
+          }
+          await recordConsents(user.id, consentOrigin(ctx.request?.headers ?? new Headers())).catch(
+            (error: unknown) => console.error("Could not record the consents of a sign-up", error),
+          );
+        },
+      },
+    },
+  },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // Also covers calls to the endpoint that skip the console's form.
+      if (ctx.path === "/sign-up/email") {
+        if (ctx.headers?.get(legalAcceptanceHeader) !== legalAcceptance) {
+          throw new APIError("BAD_REQUEST", {
+            code: "LEGAL_ACCEPTANCE_REQUIRED",
+            message: "Acepta los términos de servicio y la política de datos para crear la cuenta.",
+          });
+        }
+        return;
+      }
       if (forbiddenWhileImpersonating.has(ctx.path)) {
         const session = await getSessionFromCtx(ctx);
         if (session?.session.impersonatedBy) {
