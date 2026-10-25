@@ -9,8 +9,8 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
-import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { BackupCodeInput, TotpCodeInput } from "~/features/auth/CodeInput";
 import { backupCodeSchema, totpCodeSchema } from "~/features/auth/schema";
 import { invitationSearch, startSession } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
@@ -65,6 +65,8 @@ function CodeForm({ backup }: { backup: boolean }) {
       ? await authClient.twoFactor.verifyBackupCode({ code, trustDevice })
       : await authClient.twoFactor.verifyTotp({ code, trustDevice });
     if (error) {
+      form.setValue("code", "");
+      form.setFocus("code");
       form.setError("root", {
         message:
           error.status === 429
@@ -92,14 +94,15 @@ function CodeForm({ backup }: { backup: boolean }) {
               <FieldLabel htmlFor="two-factor-code">
                 {backup ? "Código de respaldo" : "Código de verificación"}
               </FieldLabel>
-              <Input
-                {...field}
-                id="two-factor-code"
-                autoComplete="one-time-code"
-                inputMode={backup ? "text" : "numeric"}
-                className="h-11 px-3 font-mono tracking-widest"
-                aria-invalid={fieldState.invalid}
-              />
+              {backup ? (
+                <BackupCodeInput
+                  {...field}
+                  id="two-factor-code"
+                  aria-invalid={fieldState.invalid}
+                />
+              ) : (
+                <TotpCodeInput {...field} id="two-factor-code" aria-invalid={fieldState.invalid} />
+              )}
               <FieldError errors={[fieldState.error]} />
             </Field>
           )}

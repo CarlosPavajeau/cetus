@@ -50,7 +50,14 @@ export const totpCodeSchema = type({
 });
 
 export const backupCodeSchema = type({
-  code: required("Escribe un código de respaldo."),
+  code: type("string.trim")
+    .to(
+      type(/^[a-zA-Z0-9]{10}$/).configure({
+        message: "El código de respaldo tiene 10 caracteres.",
+      }),
+    )
+    // Better Auth stores and compares the code with the dash between its halves.
+    .pipe((code) => `${code.slice(0, 5)}-${code.slice(5)}`),
   trustDevice,
 });
 
