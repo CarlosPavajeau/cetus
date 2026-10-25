@@ -225,7 +225,7 @@ function Overview() {
             className={buttonVariants({ variant: "outline" })}
           >
             Ver el inicio rápido
-            <ArrowUpRightIcon data-icon="inline-end" />
+            <ArrowUpRightIcon data-icon="inline-end" strokeWidth={2} absoluteStrokeWidth />
           </a>
         </CardFooter>
       </Card>
