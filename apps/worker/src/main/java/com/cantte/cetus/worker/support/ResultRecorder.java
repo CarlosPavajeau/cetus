@@ -150,7 +150,7 @@ public class ResultRecorder {
                     "included", Numbers.count(plan.includedDocuments),
                     "period", Dates.month(period)));
             if (plan.overagePriceCop != null) {
-                data.put("overagePrice", Numbers.cop(plan.overagePriceCop));
+                data.put("priceOverage", Numbers.cop(plan.overagePriceCop));
             }
             notifications.request(
                     doc.accountId,

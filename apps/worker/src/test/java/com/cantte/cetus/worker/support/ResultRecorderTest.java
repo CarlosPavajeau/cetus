@@ -111,7 +111,7 @@ class ResultRecorderTest {
                         .containsEntry("percent", "80")
                         .containsEntry("total", "4")
                         .containsEntry("included", "5")
-                        .containsEntry("overagePrice", "$1.500"));
+                        .containsEntry("priceOverage", "$1.500"));
     }
 
     @Test

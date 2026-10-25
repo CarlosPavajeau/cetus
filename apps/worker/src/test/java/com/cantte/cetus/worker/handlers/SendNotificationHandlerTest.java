@@ -91,7 +91,7 @@ class SendNotificationHandlerTest {
                         "total", "200",
                         "included", "200",
                         "period", "octubre de 2026",
-                        "overagePrice", "$150"));
+                        "priceOverage", "$150"));
 
         handler.handle(fixtures.notificationJob(id));
 

@@ -160,9 +160,9 @@ public record NotificationEmail(String subject, String html, String text) {
                                         data.get("period")),
                         "La facturación no se detiene: %s Si esperas más volumen, escríbenos para cambiar de plan."
                                 .formatted(
-                                        data.containsKey("overagePrice")
+                                        data.containsKey("priceOverage")
                                                 ? "cada documento adicional se cobra a %s."
-                                                        .formatted(data.get("overagePrice"))
+                                                        .formatted(data.get("priceOverage"))
                                                 : "los documentos adicionales se cobran según tu contrato."),
                         "Ver el uso del plan",
                         "/settings/usage");
