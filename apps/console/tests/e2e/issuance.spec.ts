@@ -26,8 +26,9 @@ test("a new organization issues its first simulated invoice from the overview", 
   await expect(page.getByRole("heading", { name: /^Factura SIM\d+$/ })).toBeVisible();
   // The page refreshes itself until the simulator answers.
   await expect(page.getByText("El simulador de Cetus lo aceptó")).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole("button", { name: "PDF" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "XML" })).toBeVisible();
+  await page.getByRole("button", { name: "Descargar" }).click();
+  await expect(page.getByRole("menuitem", { name: "PDF" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "XML" })).toBeVisible();
 });
 
 test("an invoice is filled in by hand in habilitación", async ({ page, organization }) => {
@@ -114,7 +115,8 @@ test("an accepted invoice is corrected with a partial credit note", async ({
   expect(await waitForStatus(organization, invoice.id)).toBe("ACCEPTED");
 
   await open(page, `/documents/${invoice.id}`);
-  await page.getByRole("link", { name: "Nota crédito" }).click();
+  await page.getByRole("button", { name: "Corregir factura" }).click();
+  await page.getByRole("menuitem", { name: "Nota crédito" }).click();
   await expect(page.getByRole("heading", { name: "Emitir nota crédito" })).toBeVisible();
   await expect(page.getByText("Puedes acreditar hasta $ 119.000")).toBeVisible();
   await page.getByLabel("Descripción", { exact: true }).fill("Descuento acordado con el cliente");

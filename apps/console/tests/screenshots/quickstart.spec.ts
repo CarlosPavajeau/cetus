@@ -31,7 +31,7 @@ test("the first simulated invoice, from the console", async ({ page }) => {
 
   await page.getByRole("button", { name: "Emitir factura" }).click();
   await expect(page.getByText("El simulador de Cetus lo aceptó")).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole("button", { name: "PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Descargar" })).toBeVisible();
   await capture(page, "factura-aceptada");
 });
 
