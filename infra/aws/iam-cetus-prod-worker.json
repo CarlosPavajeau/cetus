@@ -24,6 +24,12 @@
       "Effect": "Allow",
       "Action": "kms:Decrypt",
       "Resource": "arn:aws:kms:us-east-1:ACCOUNT_ID:key/KEY_ID"
+    },
+    {
+      "Sid": "SealTechnicalKeys",
+      "Effect": "Allow",
+      "Action": "kms:GenerateDataKey",
+      "Resource": "arn:aws:kms:us-east-1:ACCOUNT_ID:key/KEY_ID"
     }
   ]
 }

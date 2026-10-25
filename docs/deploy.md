@@ -76,8 +76,9 @@ desarrollo `localhost:3001`.
 ## AWS
 
 `infra/aws/` tiene las políticas IAM de mínimo privilegio de cada servicio (`iam-cetus-prod-*.json`) y el ciclo
-de vida del bucket (`s3-lifecycle.json`). La API solo sella secretos (`kms:GenerateDataKey`) y el worker solo los
-abre (`kms:Decrypt`).
+de vida del bucket (`s3-lifecycle.json`). La API sella secretos (`kms:GenerateDataKey`) y el worker los abre
+(`kms:Decrypt`); el worker también sella la clave técnica que trae de la DIAN (GetNumberingRange), así que tiene
+los dos permisos.
 
 - El bucket debe crearse con Object Lock habilitado y **sin** retención por defecto: el worker fija la retención
   de cada documento (ver [Operación](operations.md#retención)).
