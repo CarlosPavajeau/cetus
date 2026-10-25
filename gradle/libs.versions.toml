@@ -31,6 +31,7 @@ quarkus-flyway = { module = "io.quarkus:quarkus-flyway" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
 quarkus-smallrye-jwt = { module = "io.quarkus:quarkus-smallrye-jwt" }
 quarkus-smallrye-openapi = { module = "io.quarkus:quarkus-smallrye-openapi" }
+microprofile-openapi-api = { module = "org.eclipse.microprofile.openapi:microprofile-openapi-api" }
 quarkus-smallrye-health = { module = "io.quarkus:quarkus-smallrye-health" }
 quarkus-logging-json = { module = "io.quarkus:quarkus-logging-json" }
 quarkus-scheduler = { module = "io.quarkus:quarkus-scheduler" }

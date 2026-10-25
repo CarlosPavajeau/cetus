@@ -15,7 +15,12 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 /**
  * The issuers an API key can invoice for: those of its account in its environment. Lets an
@@ -23,21 +28,40 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  */
 @Path("/v1/issuers")
 @Produces(MediaType.APPLICATION_JSON)
+@Tag(name = "Emisores")
+@SecurityRequirement(name = "apiKey")
+@APIResponse(responseCode = "401", ref = "Unauthorized")
+@APIResponse(responseCode = "403", ref = "Forbidden")
+@APIResponse(responseCode = "429", ref = "TooManyRequests")
 public class PublicIssuerResource {
 
     @Inject
     ApiPrincipal principal;
 
+    @Schema(description = "Un emisor de la cuenta en el ambiente de la llave.")
     public record PublicIssuerView(
+            @Schema(description = "Identificador del emisor; es el `issuerId` de los documentos.")
             UUID id,
+
+            @Schema(description = "Ambiente del emisor, el mismo de la llave.")
             Environment environment,
+
+            @Schema(description = "NIT sin dígito de verificación.", example = "900999999")
             String nit,
+
+            @Schema(description = "Dígito de verificación del NIT.", example = "4")
             String checkDigit,
+
+            @Schema(description = "Razón social o nombre, como figura en el RUT.", example = "Empresa de Ejemplo SAS")
             String legalName,
-            @Schema(nullable = true) String tradeName,
+
+            @Schema(nullable = true, description = "Nombre comercial, si tiene.")
+            String tradeName,
+
+            @Schema(description = "Estado de configuración ante la DIAN.")
             IssuerEntity.Status status,
 
-            @Schema(description = "Whether its status lets it issue with this key")
+            @Schema(description = "Si su estado le permite emitir con esta llave.")
             boolean readyToIssue) {
 
         static PublicIssuerView from(IssuerEntity issuer) {
@@ -55,6 +79,11 @@ public class PublicIssuerResource {
 
     @GET
     @Transactional
+    @Operation(
+            summary = "Listar los emisores",
+            description = "Los emisores de la cuenta en el ambiente de la llave. `readyToIssue` dice cuáles pueden "
+                    + "emitir; con uno solo, los documentos pueden omitir `issuerId`.")
+    @APIResponse(responseCode = "200", description = "Los emisores, del más antiguo al más reciente.")
     public List<PublicIssuerView> list() {
         return IssuerEntity.listByAccount(principal.accountId()).stream()
                 .filter(issuer -> issuer.environment == principal.environment())
@@ -66,7 +95,10 @@ public class PublicIssuerResource {
     @GET
     @Path("/{id}")
     @Transactional
-    public PublicIssuerView get(@PathParam("id") UUID id) {
+    @Operation(summary = "Consultar un emisor")
+    @APIResponse(responseCode = "200", description = "El emisor.")
+    @APIResponse(responseCode = "404", ref = "NotFound")
+    public PublicIssuerView get(@Parameter(ref = "ResourceId") @PathParam("id") UUID id) {
         return IssuerEntity.findForAccount(principal.accountId(), id)
                 .filter(issuer -> issuer.environment == principal.environment())
                 .map(PublicIssuerView::from)

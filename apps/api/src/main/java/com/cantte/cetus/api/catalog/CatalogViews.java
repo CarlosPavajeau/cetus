@@ -18,24 +18,52 @@ public final class CatalogViews {
 
     private CatalogViews() {}
 
+    @Schema(description = "Un cliente guardado.")
     public record CustomerView(
+            @Schema(description = "Identificador del cliente.")
             UUID id,
+
+            @Schema(description = "Ambiente del cliente: el de la llave.")
             Environment environment,
+
+            @Schema(description = "Persona natural o jurídica.")
             PersonType personType,
+
+            @Schema(description = "Tipo de documento de identificación.")
             IdentificationType identificationType,
+
+            @Schema(description = "Número de identificación.", example = "900123456")
             String identificationNumber,
 
-            @Schema(nullable = true, description = "Only for a NIT")
+            @Schema(nullable = true, description = "Dígito de verificación; solo para un NIT.", example = "8")
             String checkDigit,
 
+            @Schema(description = "Razón social o nombre completo.")
             String legalName,
-            @Schema(nullable = true) String tradeName,
+
+            @Schema(nullable = true, description = "Nombre comercial.")
+            String tradeName,
+
+            @Schema(description = "Responsabilidades fiscales del RUT.")
             List<String> taxLevelCodes,
-            @Schema(enumeration = {"IVA", "NOT_APPLICABLE"}) String taxScheme,
-            @Schema(nullable = true) Address address,
-            @Schema(nullable = true) String email,
-            @Schema(nullable = true) String phone,
-            OffsetDateTime createdAt,
+
+            @Schema(
+                    enumeration = {"IVA", "NOT_APPLICABLE"},
+                    description = "Si es responsable de IVA.")
+            String taxScheme,
+
+            @Schema(nullable = true, description = "Dirección.")
+            Address address,
+
+            @Schema(nullable = true, description = "Correo de entrega de documentos.")
+            String email,
+
+            @Schema(nullable = true, description = "Teléfono.")
+            String phone,
+
+            @Schema(description = "Cuándo se creó.") OffsetDateTime createdAt,
+
+            @Schema(description = "Cuándo cambió por última vez.")
             OffsetDateTime updatedAt) {
 
         public static CustomerView from(CustomerEntity customer) {
@@ -59,26 +87,46 @@ public final class CatalogViews {
         }
     }
 
+    @Schema(description = "Una página de clientes.")
     public record CustomerPage(
-            @Schema(description = "Newest first") List<CustomerView> items,
+            @Schema(description = "Del más reciente al más antiguo.")
+            List<CustomerView> items,
 
-            @Schema(nullable = true, description = "Pass as before to get the next page")
+            @Schema(nullable = true, description = "Envíalo como `before` para la siguiente página; nulo en la última.")
             UUID nextCursor) {}
 
-    public record ProductTax(TaxType type, BigDecimal percent) {}
+    @Schema(description = "Un impuesto de un producto.")
+    public record ProductTax(
+            @Schema(description = "Impuesto.") TaxType type,
 
+            @Schema(description = "Tarifa en porcentaje.", example = "19")
+            BigDecimal percent) {}
+
+    @Schema(description = "Un producto o servicio guardado.")
     public record ProductView(
+            @Schema(description = "Identificador del producto.")
             UUID id,
+
+            @Schema(description = "Ambiente del producto: el de la llave.")
             Environment environment,
+
+            @Schema(description = "Tu código del producto.", example = "PROD-001")
             String code,
-            String description,
+
+            @Schema(description = "Descripción.") String description,
+
+            @Schema(description = "Código de unidad de medida de la DIAN.", example = "94")
             String unitCode,
+
+            @Schema(description = "Precio unitario antes de impuestos.")
             BigDecimal unitPrice,
 
-            @Schema(description = "Empty for an item excluded from taxes")
+            @Schema(description = "Impuestos por defecto; vacío si está excluido de impuestos.")
             List<ProductTax> taxes,
 
-            OffsetDateTime createdAt,
+            @Schema(description = "Cuándo se creó.") OffsetDateTime createdAt,
+
+            @Schema(description = "Cuándo cambió por última vez.")
             OffsetDateTime updatedAt) {
 
         public static ProductView from(ProductEntity product) {
@@ -97,9 +145,11 @@ public final class CatalogViews {
         }
     }
 
+    @Schema(description = "Una página de productos.")
     public record ProductPage(
-            @Schema(description = "Newest first") List<ProductView> items,
+            @Schema(description = "Del más reciente al más antiguo.")
+            List<ProductView> items,
 
-            @Schema(nullable = true, description = "Pass as before to get the next page")
+            @Schema(nullable = true, description = "Envíalo como `before` para la siguiente página; nulo en la última.")
             UUID nextCursor) {}
 }

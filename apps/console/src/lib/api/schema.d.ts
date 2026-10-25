@@ -930,7 +930,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create */
+        /**
+         * Crear una nota crédito
+         * @description Emite una nota crédito sobre una factura aceptada por la DIAN, para anularla o disminuir su valor. El cliente, la moneda y el pago se toman de la factura. Responde 202 con estado `RECEIVED`; consulta el resultado con `GET /v1/credit-notes/{id}` o con el webhook `credit_note.accepted`.
+         */
         post: operations["CreditNoteResource_create"];
         delete?: never;
         options?: never;
@@ -945,7 +948,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get */
+        /**
+         * Consultar una nota crédito
+         * @description La nota con su estado ante la DIAN, la factura que corrige y sus entregas al cliente.
+         */
         get: operations["CreditNoteResource_get"];
         put?: never;
         post?: never;
@@ -962,7 +968,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** File */
+        /**
+         * Descargar un archivo de la nota crédito
+         * @description Una URL temporal para descargar el XML firmado, el PDF o el AttachedDocument de la nota.
+         */
         get: operations["CreditNoteResource_file"];
         put?: never;
         post?: never;
@@ -979,10 +988,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List */
+        /**
+         * Listar los clientes
+         * @description Del más reciente al más antiguo, por páginas: para la siguiente, envía el `nextCursor` de la anterior como `before`. `q` busca en el nombre o la identificación.
+         */
         get: operations["CustomerResource_list"];
         put?: never;
-        /** Create */
+        /** Crear un cliente */
         post: operations["CustomerResource_create"];
         delete?: never;
         options?: never;
@@ -997,12 +1009,18 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get */
+        /** Consultar un cliente */
         get: operations["CustomerResource_get"];
-        /** Update */
+        /**
+         * Reemplazar un cliente
+         * @description Reemplaza todos sus datos; lo que no se envíe queda vacío. No cambia los documentos ya emitidos.
+         */
         put: operations["CustomerResource_update"];
         post?: never;
-        /** Delete */
+        /**
+         * Eliminar un cliente
+         * @description No afecta los documentos ya emitidos.
+         */
         delete: operations["CustomerResource_delete"];
         options?: never;
         head?: never;
@@ -1018,7 +1036,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create */
+        /**
+         * Crear una nota débito
+         * @description Emite una nota débito sobre una factura aceptada por la DIAN, para cobrar un valor adicional. El cliente, la moneda y el pago se toman de la factura; las líneas son lo que la nota cobra. Responde 202 con estado `RECEIVED`; consulta el resultado con `GET /v1/debit-notes/{id}` o con el webhook `debit_note.accepted`.
+         */
         post: operations["DebitNoteResource_create"];
         delete?: never;
         options?: never;
@@ -1033,7 +1054,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get */
+        /**
+         * Consultar una nota débito
+         * @description La nota con su estado ante la DIAN, la factura que corrige y sus entregas al cliente.
+         */
         get: operations["DebitNoteResource_get"];
         put?: never;
         post?: never;
@@ -1050,7 +1074,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** File */
+        /**
+         * Descargar un archivo de la nota débito
+         * @description Una URL temporal para descargar el XML firmado, el PDF o el AttachedDocument de la nota.
+         */
         get: operations["DebitNoteResource_file"];
         put?: never;
         post?: never;
@@ -1069,7 +1096,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create */
+        /**
+         * Crear una factura
+         * @description Valida la factura, le asigna el siguiente número del rango activo del emisor y la encola. Responde 202 con estado `RECEIVED`; Cetus la firma, la envía a la DIAN y la entrega al cliente en segundo plano. Consulta el resultado con `GET /v1/invoices/{id}` o con el webhook `invoice.accepted`.
+         */
         post: operations["InvoiceResource_create"];
         delete?: never;
         options?: never;
@@ -1084,7 +1114,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get */
+        /**
+         * Consultar una factura
+         * @description La factura con su estado ante la DIAN, las notas crédito y débito emitidas sobre ella, el saldo que les queda y sus entregas al cliente.
+         */
         get: operations["InvoiceResource_get"];
         put?: never;
         post?: never;
@@ -1101,7 +1134,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** File */
+        /**
+         * Descargar un archivo de la factura
+         * @description Una URL temporal para descargar el XML firmado, el PDF o el AttachedDocument de la factura.
+         */
         get: operations["InvoiceResource_file"];
         put?: never;
         post?: never;
@@ -1118,7 +1154,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List */
+        /**
+         * Listar los emisores
+         * @description Los emisores de la cuenta en el ambiente de la llave. `readyToIssue` dice cuáles pueden emitir; con uno solo, los documentos pueden omitir `issuerId`.
+         */
         get: operations["PublicIssuerResource_list"];
         put?: never;
         post?: never;
@@ -1135,7 +1174,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get */
+        /** Consultar un emisor */
         get: operations["PublicIssuerResource_get"];
         put?: never;
         post?: never;
@@ -1152,10 +1191,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List */
+        /**
+         * Listar los productos
+         * @description Del más reciente al más antiguo, por páginas: para la siguiente, envía el `nextCursor` de la anterior como `before`. `q` busca en el código o la descripción.
+         */
         get: operations["ProductResource_list"];
         put?: never;
-        /** Create */
+        /** Crear un producto */
         post: operations["ProductResource_create"];
         delete?: never;
         options?: never;
@@ -1170,12 +1212,18 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get */
+        /** Consultar un producto */
         get: operations["ProductResource_get"];
-        /** Update */
+        /**
+         * Reemplazar un producto
+         * @description Reemplaza todos sus datos; lo que no se envíe queda vacío. No cambia los documentos ya emitidos.
+         */
         put: operations["ProductResource_update"];
         post?: never;
-        /** Delete */
+        /**
+         * Eliminar un producto
+         * @description No afecta los documentos ya emitidos.
+         */
         delete: operations["ProductResource_delete"];
         options?: never;
         head?: never;
@@ -1246,23 +1294,61 @@ export interface components {
         /** @enum {string} */
         ActorType: "USER" | "API_KEY" | "PLATFORM" | "SYSTEM";
         Address: {
+            /** @description Código DIVIPOLA del municipio. */
             municipalityCode: string;
+            /** @description Nombre del municipio. */
             cityName: string;
+            /** @description Código DIVIPOLA del departamento. */
             departmentCode: string;
+            /** @description Nombre del departamento. */
             departmentName: string;
+            /** @description Código postal. */
             postalCode: string | null;
+            /** @description Dirección. */
             line: string;
+            /** @description País ISO 3166-1 alfa-2. */
             countryCode: string;
+            /** @description Nombre del país. */
             countryName: string;
         };
+        /** @description Una dirección. Los códigos son los de DIVIPOLA para Colombia. */
         AddressInput: {
+            /**
+             * @description Código DIVIPOLA del municipio.
+             * @example 11001
+             */
             municipalityCode: string;
+            /**
+             * @description Nombre del municipio.
+             * @example Bogotá, D.C.
+             */
             cityName: string;
+            /**
+             * @description Código DIVIPOLA del departamento.
+             * @example 11
+             */
             departmentCode: string;
+            /**
+             * @description Nombre del departamento.
+             * @example Bogotá
+             */
             departmentName: string;
+            /**
+             * @description Código postal.
+             * @example 110111
+             */
             postalCode?: string;
+            /**
+             * @description Dirección.
+             * @example Calle 93 # 11-26
+             */
             line: string;
+            /**
+             * @description País ISO 3166-1 alfa-2. Por defecto, `CO`.
+             * @example CO
+             */
             countryCode?: string;
+            /** @description Nombre del país. Por defecto, Colombia. */
             countryName?: string;
         };
         AdminAuditEntry: {
@@ -1383,7 +1469,12 @@ export interface components {
         ChangeContactRequest: {
             email: string;
         };
-        /** @enum {string} */
+        /**
+         * @description Canal de entrega.
+         *
+         *     - `EMAIL`: Correo electrónico.
+         * @enum {string}
+         */
         Channel: "EMAIL";
         ContactView: {
             id: components["schemas"]["UUID"];
@@ -1428,7 +1519,17 @@ export interface components {
             /** @description whsec_ signing secret; it is not shown again */
             secret: string;
         };
-        /** @enum {string} */
+        /**
+         * @description Concepto de la nota crédito (tabla 13.2.4 del anexo).
+         *
+         *     - `PARTIAL_RETURN`: Devolución parcial de los bienes y/o no aceptación parcial del servicio (1).
+         *     - `CANCELLATION`: Anulación de factura electrónica (2).
+         *     - `REBATE`: Rebaja o descuento parcial o total (3).
+         *     - `PRICE_ADJUSTMENT`: Ajuste de precio (4).
+         *     - `EARLY_PAYMENT_DISCOUNT`: Descuento comercial por pronto pago (5).
+         *     - `VOLUME_DISCOUNT`: Descuento comercial por volumen de ventas (6).
+         * @enum {string}
+         */
         CreditNoteConcept: "PARTIAL_RETURN" | "CANCELLATION" | "REBATE" | "PRICE_ADJUSTMENT" | "EARLY_PAYMENT_DISCOUNT" | "VOLUME_DISCOUNT";
         CreditNoteInput: {
             concept: components["schemas"]["CreditNoteConcept"];
@@ -1436,80 +1537,192 @@ export interface components {
             lines: components["schemas"]["Line"][];
         };
         CreditNoteRequest: {
+            /** @description La factura que se corrige. Debe estar aceptada por la DIAN. */
             invoiceId: components["schemas"]["UUID"];
+            /** @description Concepto de la nota (tabla 13.2.4 del anexo). */
             concept: components["schemas"]["CreditNoteConcept"];
+            /**
+             * @description Motivo de la nota; aparece en el documento.
+             * @example Factura emitida por error
+             */
             description: string;
+            /** @description Líneas que se acreditan. Una anulación (`CANCELLATION`) sin líneas acredita la factura completa. */
             lines?: components["schemas"]["Line"][];
+            /** @description Tu referencia. Vuelve en las respuestas y los webhooks. */
             externalReference?: string;
+            /** @description Notas libres que aparecen en el documento. */
             notes?: string[];
         };
         CreditNoteResponse: {
+            /** @description Identificador de la nota en Cetus. */
             id: components["schemas"]["UUID"];
+            /** @description Ambiente en que se emitió: el de la llave. */
             environment: components["schemas"]["Environment"];
+            /** @description Emisor que la emitió. */
             issuerId: components["schemas"]["UUID"];
+            /**
+             * @description Número completo, con el prefijo del rango.
+             * @example NCS1
+             */
             number: string;
+            /** @description Estado ante la DIAN. */
             status: components["schemas"]["DocumentStatus"];
+            /** @description CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma. */
             cude: string | null;
+            /**
+             * @description Fecha de emisión, en hora de Colombia.
+             * @example 2022-03-10
+             */
             issueDate: components["schemas"]["LocalDate"];
+            /**
+             * @description Moneda ISO 4217.
+             * @example COP
+             */
             currency: string;
+            /** @description La factura que corrige. */
             invoice: components["schemas"]["InvoiceRef"];
+            /** @description Concepto de la nota. */
             concept: components["schemas"]["CreditNoteConcept"];
+            /** @description Motivo de la nota, como lo enviaste. */
             description: string;
+            /** @description Totales calculados por Cetus. */
             totals: components["schemas"]["Totals"];
+            /** @description Respuesta de la DIAN. */
             dian: components["schemas"]["Dian"];
+            /** @description Tu referencia, si la enviaste. */
             externalReference: string | null;
+            /** @description Cuándo Cetus la recibió. */
             createdAt: components["schemas"]["OffsetDateTime"];
-            /** @description Deliveries of the accepted note to the customer */
+            /** @description Entregas de la nota aceptada al cliente. */
             deliveries: components["schemas"]["DeliveryView"][];
         };
+        /** @description Una nota crédito de la factura. */
         CreditNoteSummary: {
+            /** @description Identificador de la nota. */
             id: components["schemas"]["UUID"];
+            /**
+             * @description Número de la nota.
+             * @example NCS1
+             */
             number: string;
+            /** @description Estado ante la DIAN. */
             status: components["schemas"]["DocumentStatus"];
+            /** @description Concepto de la nota. */
             concept: components["schemas"]["CreditNoteConcept"];
+            /** @description Total de la nota. */
             payable: number;
         };
+        /** @description Un adquiriente: la persona o empresa a quien se le factura. */
         Customer: {
+            /** @description Persona natural o jurídica. */
             personType: components["schemas"]["PersonType"];
+            /** @description Tipo de documento de identificación. */
             identificationType: components["schemas"]["IdentificationType"];
+            /**
+             * @description Número de identificación, sin dígito de verificación.
+             * @example 900123456
+             */
             identificationNumber: string;
+            /**
+             * @description Dígito de verificación, solo para un NIT. Si lo envías, Cetus comprueba que corresponda; si no, lo calcula.
+             * @example 8
+             */
             checkDigit?: string;
+            /**
+             * @description Razón social o nombre completo.
+             * @example Distribuidora Andina SAS
+             */
             legalName: string;
+            /** @description Nombre comercial. */
             tradeName?: string;
+            /**
+             * @description Responsabilidades fiscales del RUT (tabla 13.2.6.1 del anexo): `O-13` gran contribuyente, `O-15` autorretenedor, `O-23` agente de retención de IVA, `O-47` régimen simple, `R-99-PN` no responsable. Por defecto, `R-99-PN`.
+             * @example [
+             *       "O-13"
+             *     ]
+             */
             taxLevelCodes?: string[];
+            /** @description Si es responsable de IVA. Por defecto, `NOT_APPLICABLE`. */
             taxScheme?: components["schemas"]["CustomerTaxScheme"];
+            /** @description Dirección del adquiriente. */
             address?: components["schemas"]["AddressInput"];
+            /**
+             * @description Correo al que Cetus entrega la factura cuando la DIAN la acepta.
+             * @example facturas@andina.example
+             */
             email?: string;
+            /**
+             * @description Teléfono.
+             * @example +57 601 555 0101
+             */
             phone?: string;
         };
+        /** @description Una página de clientes. */
         CustomerPage: {
-            /** @description Newest first */
+            /** @description Del más reciente al más antiguo. */
             items: components["schemas"]["CustomerView"][];
-            /** @description Pass as before to get the next page */
+            /** @description Envíalo como `before` para la siguiente página; nulo en la última. */
             nextCursor: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
         };
-        /** @enum {string} */
+        /**
+         * @description Régimen de IVA del adquiriente.
+         *
+         *     - `IVA`: Responsable de IVA.
+         *     - `NOT_APPLICABLE`: No responsable de IVA.
+         * @enum {string}
+         */
         CustomerTaxScheme: "IVA" | "NOT_APPLICABLE";
+        /** @description Un cliente guardado. */
         CustomerView: {
+            /** @description Identificador del cliente. */
             id: components["schemas"]["UUID"];
+            /** @description Ambiente del cliente: el de la llave. */
             environment: components["schemas"]["Environment"];
+            /** @description Persona natural o jurídica. */
             personType: components["schemas"]["PersonType"];
+            /** @description Tipo de documento de identificación. */
             identificationType: components["schemas"]["IdentificationType"];
+            /**
+             * @description Número de identificación.
+             * @example 900123456
+             */
             identificationNumber: string;
-            /** @description Only for a NIT */
+            /**
+             * @description Dígito de verificación; solo para un NIT.
+             * @example 8
+             */
             checkDigit: string | null;
+            /** @description Razón social o nombre completo. */
             legalName: string;
+            /** @description Nombre comercial. */
             tradeName: string | null;
+            /** @description Responsabilidades fiscales del RUT. */
             taxLevelCodes: string[];
-            /** @enum {string} */
+            /**
+             * @description Si es responsable de IVA.
+             * @enum {string}
+             */
             taxScheme: "IVA" | "NOT_APPLICABLE";
-            address: components["schemas"]["Address"] | null;
+            /** @description Dirección. */
+            address: ((components["schemas"]["Address"] | null) | null) | components["schemas"]["Address"] | null;
+            /** @description Correo de entrega de documentos. */
             email: string | null;
+            /** @description Teléfono. */
             phone: string | null;
+            /** @description Cuándo se creó. */
             createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Cuándo cambió por última vez. */
             updatedAt: components["schemas"]["OffsetDateTime"];
         };
-        /** @enum {string} */
+        /**
+         * @description Concepto de la nota débito (tabla 13.2.5 del anexo).
+         *
+         *     - `INTEREST`: Intereses (1).
+         *     - `EXPENSES`: Gastos por cobrar (2).
+         *     - `VALUE_CHANGE`: Cambio del valor (3).
+         *     - `OTHER`: Otros (4).
+         * @enum {string}
+         */
         DebitNoteConcept: "INTEREST" | "EXPENSES" | "VALUE_CHANGE" | "OTHER";
         DebitNoteInput: {
             concept: components["schemas"]["DebitNoteConcept"];
@@ -1517,52 +1730,123 @@ export interface components {
             lines: components["schemas"]["Line"][];
         };
         DebitNoteRequest: {
+            /** @description La factura que se corrige. Debe estar aceptada por la DIAN. */
             invoiceId: components["schemas"]["UUID"];
+            /** @description Concepto de la nota (tabla 13.2.4 del anexo). */
             concept: components["schemas"]["DebitNoteConcept"];
+            /**
+             * @description Motivo de la nota; aparece en el documento.
+             * @example Factura emitida por error
+             */
             description: string;
+            /** @description Lo que la nota cobra, de 1 a 500 líneas. */
             lines: components["schemas"]["Line"][];
+            /** @description Tu referencia. Vuelve en las respuestas y los webhooks. */
             externalReference?: string;
+            /** @description Notas libres que aparecen en el documento. */
             notes?: string[];
         };
         DebitNoteResponse: {
+            /** @description Identificador de la nota en Cetus. */
             id: components["schemas"]["UUID"];
+            /** @description Ambiente en que se emitió: el de la llave. */
             environment: components["schemas"]["Environment"];
+            /** @description Emisor que la emitió. */
             issuerId: components["schemas"]["UUID"];
+            /**
+             * @description Número completo, con el prefijo del rango.
+             * @example NDS1
+             */
             number: string;
+            /** @description Estado ante la DIAN. */
             status: components["schemas"]["DocumentStatus"];
+            /** @description CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma. */
             cude: string | null;
+            /**
+             * @description Fecha de emisión, en hora de Colombia.
+             * @example 2022-03-10
+             */
             issueDate: components["schemas"]["LocalDate"];
+            /**
+             * @description Moneda ISO 4217.
+             * @example COP
+             */
             currency: string;
+            /** @description La factura que corrige. */
             invoice: components["schemas"]["InvoiceRef"];
+            /** @description Concepto de la nota. */
             concept: components["schemas"]["DebitNoteConcept"];
+            /** @description Motivo de la nota, como lo enviaste. */
             description: string;
+            /** @description Totales calculados por Cetus. */
             totals: components["schemas"]["Totals"];
+            /** @description Respuesta de la DIAN. */
             dian: components["schemas"]["Dian"];
+            /** @description Tu referencia, si la enviaste. */
             externalReference: string | null;
+            /** @description Cuándo Cetus la recibió. */
             createdAt: components["schemas"]["OffsetDateTime"];
-            /** @description Deliveries of the accepted note to the customer */
+            /** @description Entregas de la nota aceptada al cliente. */
             deliveries: components["schemas"]["DeliveryView"][];
         };
+        /** @description Una nota débito de la factura. */
         DebitNoteSummary: {
+            /** @description Identificador de la nota. */
             id: components["schemas"]["UUID"];
+            /**
+             * @description Número de la nota.
+             * @example NDS1
+             */
             number: string;
+            /** @description Estado ante la DIAN. */
             status: components["schemas"]["DocumentStatus"];
+            /** @description Concepto de la nota. */
             concept: components["schemas"]["DebitNoteConcept"];
+            /** @description Total de la nota. */
             payable: number;
         };
+        /**
+         * @description Estado de la entrega. `SKIPPED`, `BOUNCED`, `COMPLAINED` y `FAILED` significan que no llegó: entrega el documento por tu cuenta.
+         *
+         *     - `PENDING`: En cola.
+         *     - `SENT`: El proveedor de correo la recibió.
+         *     - `DELIVERED`: Llegó al buzón del destinatario.
+         *     - `BOUNCED`: Rebotó.
+         *     - `COMPLAINED`: El destinatario la marcó como correo no deseado.
+         *     - `SKIPPED`: No se envió: no había a quién enviarla.
+         *     - `FAILED`: El proveedor de correo la rechazó.
+         * @enum {string}
+         */
+        DeliveryStatus: "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "SKIPPED" | "FAILED";
+        /** @description Una entrega del documento a su cliente. */
         DeliveryView: {
+            /** @description Identificador de la entrega. */
             id: components["schemas"]["UUID"];
+            /** @description Canal de entrega. */
             channel: components["schemas"]["Channel"];
+            /**
+             * @description Destinatario.
+             * @example cliente@example.com
+             */
             recipient: string | null;
-            status: components["schemas"]["Status1"];
+            /** @description Estado de la entrega. */
+            status: components["schemas"]["DeliveryStatus"];
+            /** @description Por qué no se entregó, si no se entregó. */
             error: string | null;
+            /** @description Cuándo se envió. */
             sentAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            /** @description Cuándo llegó el último evento del proveedor de correo. */
             lastEventAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
+        /** @description Lo que respondió la DIAN. Todo es nulo o vacío mientras no responde. */
         Dian: {
+            /** @description Código de estado de la DIAN; `00` es procesado correctamente. */
             statusCode: string | null;
+            /** @description Mensaje de estado de la DIAN. */
             statusMessage: string | null;
+            /** @description Rechazos y notificaciones de la DIAN, cada uno con su regla, por ejemplo `FAK26`. Una notificación no impide la aceptación. */
             errors: string[];
+            /** @description Cuándo la DIAN lo validó. */
             validatedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
         /** @enum {string} */
@@ -1588,6 +1872,7 @@ export interface components {
             /** @description CUFE of an invoice, CUDE of a note */
             cufe: string | null;
             issueDate: components["schemas"]["LocalDate"];
+            /** @example 2022-03-10 */
             dueDate: ((string | components["schemas"]["LocalDate"] | null) | null) | components["schemas"]["LocalDate"] | null;
             currency: string;
             issuer: components["schemas"]["DocumentIssuer"];
@@ -1629,9 +1914,11 @@ export interface components {
         };
         /** @enum {string} */
         DocumentEventKind: "CREATED" | "DIAN_SUBMISSION" | "VALIDATED" | "PROCESSING_FAILED" | "DELIVERY_SENT" | "DELIVERY_UPDATED" | "WEBHOOK_EVENT";
+        /** @description Una URL temporal para descargar un archivo del documento. */
         DocumentFileResponse: {
-            /** @description Presigned URL; download it without the API key */
+            /** @description URL prefirmada; descárgala sin la llave de API. */
             url: string;
+            /** @description Cuándo deja de servir la URL. */
             expiresAt: components["schemas"]["OffsetDateTime"];
         };
         DocumentInvoice: {
@@ -1675,7 +1962,17 @@ export interface components {
             taxes: components["schemas"]["DocumentTax"][];
             totals: components["schemas"]["Totals"];
         };
-        /** @enum {string} */
+        /**
+         * @description Estado del documento ante la DIAN.
+         *
+         *     - `RECEIVED`: Recibido y numerado; en cola.
+         *     - `PROCESSING`: Cetus lo está generando, firmando o enviando.
+         *     - `SUBMITTED`: Enviado; Cetus espera la respuesta de la DIAN.
+         *     - `ACCEPTED`: La DIAN lo aceptó. Es definitivo.
+         *     - `REJECTED`: La DIAN lo rechazó. Es definitivo: `dian.errors` dice por qué; corrige y emite un documento nuevo.
+         *     - `FAILED`: Un intento falló. Si Cetus todavía reintenta, vuelve a `PROCESSING`; el webhook `*.failed` avisa cuando ya no hay más reintentos.
+         * @enum {string}
+         */
         DocumentStatus: "RECEIVED" | "PROCESSING" | "SUBMITTED" | "ACCEPTED" | "REJECTED" | "FAILED";
         DocumentSummary: {
             id: components["schemas"]["UUID"];
@@ -1705,7 +2002,14 @@ export interface components {
             /** @description Send again the events it missed while failing or disabled */
             redeliver?: boolean;
         };
-        /** @enum {string} */
+        /**
+         * @description Ambiente, definido por la llave.
+         *
+         *     - `LIVE`: Producción: documentos con validez fiscal.
+         *     - `TEST`: Pruebas de habilitación ante la DIAN.
+         *     - `SANDBOX`: Simulación de Cetus: nada llega a la DIAN.
+         * @enum {string}
+         */
         Environment: "LIVE" | "TEST" | "SANDBOX";
         FailedDocumentView: {
             id: components["schemas"]["UUID"];
@@ -1720,11 +2024,35 @@ export interface components {
             dianErrors: string[];
             updatedAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @description Un campo inválido de la petición. */
         FieldError: {
+            /**
+             * @description Ruta del campo.
+             * @example lines[0].quantity
+             */
             field: string;
+            /**
+             * @description Por qué es inválido.
+             * @example must be greater than 0
+             */
             message: string;
         };
-        /** @enum {string} */
+        /**
+         * @description Tipo de documento de identificación; entre paréntesis, su código DIAN.
+         *
+         *     - `CIVIL_REGISTRY`: Registro civil (11).
+         *     - `IDENTITY_CARD`: Tarjeta de identidad (12).
+         *     - `CITIZEN_ID`: Cédula de ciudadanía (13).
+         *     - `FOREIGNER_CARD`: Tarjeta de extranjería (21).
+         *     - `FOREIGNER_ID`: Cédula de extranjería (22).
+         *     - `NIT`: NIT (31).
+         *     - `PASSPORT`: Pasaporte (41).
+         *     - `FOREIGN_DOCUMENT`: Documento de identificación extranjero (42).
+         *     - `PEP`: Permiso especial de permanencia (47).
+         *     - `FOREIGN_NIT`: NIT de otro país (50).
+         *     - `NUIP`: NUIP (91).
+         * @enum {string}
+         */
         IdentificationType: "CIVIL_REGISTRY" | "IDENTITY_CARD" | "CITIZEN_ID" | "FOREIGNER_CARD" | "FOREIGNER_ID" | "NIT" | "PASSPORT" | "FOREIGN_DOCUMENT" | "PEP" | "FOREIGN_NIT" | "NUIP";
         ImpersonationRequest: {
             userId: string;
@@ -1733,38 +2061,82 @@ export interface components {
             reason: string;
             expiresAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @description La factura que corrige una nota. */
         InvoiceRef: {
+            /** @description Identificador de la factura. */
             id: components["schemas"]["UUID"];
+            /**
+             * @description Número de la factura.
+             * @example SIM1
+             */
             number: string;
+            /** @description CUFE de la factura. */
             cufe: string;
         };
+        /** @description Una factura electrónica de venta. */
         InvoiceRequest: {
+            /** @description Emisor que factura. Omítelo si solo uno de tus emisores puede emitir con esta llave. */
             issuerId?: components["schemas"]["UUID"];
+            /**
+             * @description Tu referencia, por ejemplo el número de pedido. Vuelve en las respuestas y los webhooks.
+             * @example PED-2041
+             */
             externalReference?: string;
+            /**
+             * @description Moneda ISO 4217. Por defecto, `COP`.
+             * @example COP
+             */
             currency?: string;
+            /** @description El adquiriente: a quien se le factura. */
             customer: components["schemas"]["Customer"];
+            /** @description Forma y medio de pago. */
             payment: components["schemas"]["Payment"];
+            /** @description Lo que se factura, de 1 a 500 líneas. */
             lines: components["schemas"]["Line"][];
+            /** @description Notas libres que aparecen en el documento. */
             notes?: string[];
         };
         InvoiceResponse: {
+            /** @description Identificador de la factura en Cetus. */
             id: components["schemas"]["UUID"];
+            /** @description Ambiente en que se emitió: el de la llave. */
             environment: components["schemas"]["Environment"];
+            /** @description Emisor que la emitió. */
             issuerId: components["schemas"]["UUID"];
+            /**
+             * @description Número completo, con el prefijo del rango.
+             * @example SIM1
+             */
             number: string;
+            /** @description Estado ante la DIAN. */
             status: components["schemas"]["DocumentStatus"];
+            /** @description CUFE: código único de la factura ante la DIAN. Nulo hasta que Cetus lo firma. */
             cufe: string | null;
+            /**
+             * @description Fecha de emisión, en hora de Colombia.
+             * @example 2022-03-10
+             */
             issueDate: components["schemas"]["LocalDate"];
+            /**
+             * @description Moneda ISO 4217.
+             * @example COP
+             */
             currency: string;
+            /** @description Totales calculados por Cetus. */
             totals: components["schemas"]["Totals"];
+            /** @description Respuesta de la DIAN. */
             dian: components["schemas"]["Dian"];
+            /** @description Tu referencia, si la enviaste. */
             externalReference: string | null;
+            /** @description Cuándo Cetus la recibió. */
             createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Notas crédito emitidas sobre la factura. */
             creditNotes: components["schemas"]["CreditNoteSummary"][];
+            /** @description Notas débito emitidas sobre la factura. */
             debitNotes: components["schemas"]["DebitNoteSummary"][];
-            /** @description What credit notes can still take: the payable amount plus accepted debit notes, minus accepted or in-flight credit notes */
+            /** @description Lo que todavía pueden acreditar las notas crédito: el total a pagar más las notas débito aceptadas, menos las notas crédito aceptadas o en proceso. */
             balance: number;
-            /** @description Deliveries of the accepted invoice to the customer */
+            /** @description Entregas de la factura aceptada al cliente. */
             deliveries: components["schemas"]["DeliveryView"][];
         };
         IssuedDocument: {
@@ -1778,7 +2150,7 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["IssuerStatus"];
             personType: components["schemas"]["PersonType"];
             taxLevelCodes: string[];
             responsibleForIva: boolean;
@@ -1790,6 +2162,16 @@ export interface components {
             ranges: components["schemas"]["NumberingRangeView"][];
             testSet: components["schemas"]["TestSetProgressView"] | null;
         };
+        /**
+         * @description Estado de configuración del emisor ante la DIAN.
+         *
+         *     - `ONBOARDING`: En configuración: todavía no emite.
+         *     - `TESTING`: En el set de pruebas de habilitación: emite solo con llaves `test`.
+         *     - `ENABLED`: Habilitado: emite en su ambiente.
+         *     - `DISABLED`: Deshabilitado: no emite.
+         * @enum {string}
+         */
+        IssuerStatus: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
         IssuerView: {
             id: components["schemas"]["UUID"];
             environment: components["schemas"]["Environment"];
@@ -1797,24 +2179,49 @@ export interface components {
             checkDigit: string;
             legalName: string;
             tradeName: string | null;
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["IssuerStatus"];
         };
+        /** @description Una línea del documento: un producto o servicio. */
         Line: {
+            /**
+             * @description Tu código del producto o servicio.
+             * @example PROD-001
+             */
             itemCode: string;
+            /**
+             * @description Descripción.
+             * @example Caja de guantes de nitrilo
+             */
             description: string;
+            /**
+             * @description Cantidad, mayor que cero.
+             * @example 10
+             */
             quantity: number;
+            /**
+             * @description Código de unidad de medida de la DIAN. Por defecto, `94` (unidad).
+             * @example 94
+             */
             unitCode?: string;
+            /**
+             * @description Precio unitario antes de impuestos.
+             * @example 25000
+             */
             unitPrice: number;
+            /** @description Impuestos de la línea. Vacío o sin enviar si está excluida de impuestos. */
             taxes?: components["schemas"]["LineTax"][];
         };
+        /** @description Un impuesto de una línea. */
         LineTax: {
+            /** @description Impuesto. */
             type: components["schemas"]["TaxType"];
+            /**
+             * @description Tarifa en porcentaje: 19 para IVA del 19 %, 0 para exento.
+             * @example 19
+             */
             percent: number;
         };
-        /**
-         * Format: date
-         * @example 2022-03-10
-         */
+        /** Format: date */
         LocalDate: string;
         MonthTotalView: {
             /** @description Calendar month in Colombia, YYYY-MM */
@@ -1845,6 +2252,7 @@ export interface components {
             to: number;
             /** Format: int64 */
             nextNumber: number;
+            /** @example 2022-03-10 */
             validTo: ((string | components["schemas"]["LocalDate"] | null) | null) | components["schemas"]["LocalDate"] | null;
             status: string;
             /** @description GetNumberingRange outcome; invoice ranges only */
@@ -1858,12 +2266,28 @@ export interface components {
          * @example 2022-03-10T12:15:50-04:00
          */
         OffsetDateTime: string;
+        /** @description Cómo se paga la factura. */
         Payment: {
+            /** @description Contado o crédito. */
             method: components["schemas"]["PaymentMethod"];
+            /**
+             * @description Medio de pago (tabla 13.3.4.2 del anexo): `10` efectivo, `42` consignación, `47` transferencia, `48` tarjeta crédito, `49` tarjeta débito, `20` cheque, `ZZZ` otro.
+             * @example 10
+             */
             meansCode: string;
+            /**
+             * @description Fecha de vencimiento. Obligatoria para `CREDIT`.
+             * @example 2026-11-30
+             */
             dueDate?: components["schemas"]["LocalDate"];
         };
-        /** @enum {string} */
+        /**
+         * @description Forma de pago.
+         *
+         *     - `CASH`: Contado.
+         *     - `CREDIT`: Crédito: exige `dueDate`.
+         * @enum {string}
+         */
         PaymentMethod: "CASH" | "CREDIT";
         /** @description Billable documents (production, accepted by the DIAN) of a month against the plan */
         PeriodUsageView: {
@@ -1884,7 +2308,13 @@ export interface components {
              */
             costOverageCop: number | null;
         };
-        /** @enum {string} */
+        /**
+         * @description Tipo de persona.
+         *
+         *     - `LEGAL_ENTITY`: Persona jurídica.
+         *     - `NATURAL_PERSON`: Persona natural.
+         * @enum {string}
+         */
         PersonType: "LEGAL_ENTITY" | "NATURAL_PERSON";
         PlanChangeRequest: {
             plan: string;
@@ -1932,54 +2362,133 @@ export interface components {
         PreviewRequest: {
             lines: components["schemas"]["Line"][];
         };
+        /** @description Un error, como problem detail (RFC 9457). */
         ProblemDetail: {
+            /**
+             * @description Tipo del problema (RFC 9457).
+             * @example about:blank
+             */
             type: string;
+            /**
+             * @description Nombre del estado HTTP.
+             * @example Unprocessable Entity
+             */
             title: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Estado HTTP.
+             * @example 422
+             */
             status: number;
+            /** @description Explicación para personas. No decidas según este texto: cambia. */
             detail?: string;
+            /**
+             * @description Ruta de la petición.
+             * @example /v1/invoices
+             */
             instance: string;
+            /**
+             * @description Código estable del error. Decide según este campo.
+             * @example issuer_not_ready
+             */
             code: string;
+            /** @description Los campos inválidos; solo en `invalid_request`. */
             errors?: components["schemas"]["FieldError"][];
         };
+        /** @description Una página de productos. */
         ProductPage: {
-            /** @description Newest first */
+            /** @description Del más reciente al más antiguo. */
             items: components["schemas"]["ProductView"][];
-            /** @description Pass as before to get the next page */
+            /** @description Envíalo como `before` para la siguiente página; nulo en la última. */
             nextCursor: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
         };
         ProductRequest: {
+            /**
+             * @description Tu código del producto; único en el ambiente.
+             * @example PROD-001
+             */
             code: string;
+            /**
+             * @description Descripción.
+             * @example Caja de guantes de nitrilo
+             */
             description: string;
+            /**
+             * @description Código de unidad de medida de la DIAN. Por defecto, `94` (unidad).
+             * @example 94
+             */
             unitCode?: string;
+            /**
+             * @description Precio unitario antes de impuestos.
+             * @example 25000
+             */
             unitPrice: number;
+            /** @description Impuestos por defecto. Vacío o sin enviar si está excluido de impuestos. */
             taxes?: components["schemas"]["LineTax"][];
         };
+        /** @description Un impuesto de un producto. */
         ProductTax: {
+            /** @description Impuesto. */
             type: components["schemas"]["TaxType"];
+            /**
+             * @description Tarifa en porcentaje.
+             * @example 19
+             */
             percent: number;
         };
+        /** @description Un producto o servicio guardado. */
         ProductView: {
+            /** @description Identificador del producto. */
             id: components["schemas"]["UUID"];
+            /** @description Ambiente del producto: el de la llave. */
             environment: components["schemas"]["Environment"];
+            /**
+             * @description Tu código del producto.
+             * @example PROD-001
+             */
             code: string;
+            /** @description Descripción. */
             description: string;
+            /**
+             * @description Código de unidad de medida de la DIAN.
+             * @example 94
+             */
             unitCode: string;
+            /** @description Precio unitario antes de impuestos. */
             unitPrice: number;
-            /** @description Empty for an item excluded from taxes */
+            /** @description Impuestos por defecto; vacío si está excluido de impuestos. */
             taxes: components["schemas"]["ProductTax"][];
+            /** @description Cuándo se creó. */
             createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Cuándo cambió por última vez. */
             updatedAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @description Un emisor de la cuenta en el ambiente de la llave. */
         PublicIssuerView: {
+            /** @description Identificador del emisor; es el `issuerId` de los documentos. */
             id: components["schemas"]["UUID"];
+            /** @description Ambiente del emisor, el mismo de la llave. */
             environment: components["schemas"]["Environment"];
+            /**
+             * @description NIT sin dígito de verificación.
+             * @example 900999999
+             */
             nit: string;
+            /**
+             * @description Dígito de verificación del NIT.
+             * @example 4
+             */
             checkDigit: string;
+            /**
+             * @description Razón social o nombre, como figura en el RUT.
+             * @example Empresa de Ejemplo SAS
+             */
             legalName: string;
+            /** @description Nombre comercial, si tiene. */
             tradeName: string | null;
-            status: components["schemas"]["Status"];
-            /** @description Whether its status lets it issue with this key */
+            /** @description Estado de configuración ante la DIAN. */
+            status: components["schemas"]["IssuerStatus"];
+            /** @description Si su estado le permite emitir con esta llave. */
             readyToIssue: boolean;
         };
         /** @description The production API limits that apply to the account now */
@@ -2008,17 +2517,20 @@ export interface components {
             testSetId: string | null;
         };
         /** @enum {string} */
-        Status: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
+        Status: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
         /** @enum {string} */
-        Status1: "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "SKIPPED" | "FAILED";
-        /** @enum {string} */
-        Status2: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
-        /** @enum {string} */
-        Status3: "ACTIVE" | "DISABLED";
+        Status1: "ACTIVE" | "DISABLED";
         StatusChangeRequest: {
             reason: string;
         };
-        /** @enum {string} */
+        /**
+         * @description Impuesto.
+         *
+         *     - `IVA`: Impuesto al valor agregado.
+         *     - `ICA`: Impuesto de industria y comercio.
+         *     - `INC`: Impuesto nacional al consumo.
+         * @enum {string}
+         */
         TaxType: "IVA" | "ICA" | "INC";
         TestSetCountView: {
             documentType: components["schemas"]["DocumentType"];
@@ -2038,10 +2550,27 @@ export interface components {
             acceptedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             documents: components["schemas"]["TestSetCountView"][];
         };
+        /** @description Totales del documento. */
         Totals: {
+            /**
+             * @description Suma de las líneas, antes de impuestos.
+             * @example 100000
+             */
             lineExtension: number;
+            /**
+             * @description Base sobre la que se calculan los impuestos.
+             * @example 100000
+             */
             taxExclusive: number;
+            /**
+             * @description Total con impuestos.
+             * @example 119000
+             */
             taxInclusive: number;
+            /**
+             * @description Total a pagar.
+             * @example 119000
+             */
             payable: number;
         };
         /** Format: uuid */
@@ -2104,7 +2633,7 @@ export interface components {
             eventId: components["schemas"]["UUID"];
             eventType: string;
             documentId: components["schemas"]["UUID"];
-            status: components["schemas"]["Status2"];
+            status: components["schemas"]["Status"];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
@@ -2123,7 +2652,7 @@ export interface components {
             environment: components["schemas"]["Environment"];
             /** @description Empty means all event types */
             eventTypes: string[];
-            status: components["schemas"]["Status3"];
+            status: components["schemas"]["Status1"];
             disabledAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description AUTOMATIC when Cetus disabled it after failing for days */
             disabledReason: ((string | components["schemas"]["DisabledReason"] | null) | null) | components["schemas"]["DisabledReason"] | null;
@@ -2144,10 +2673,197 @@ export interface components {
             missedEvents: number | null;
         };
     };
-    responses: never;
-    parameters: never;
+    responses: {
+        /**
+         * @description `invalid_request`: el cuerpo no es JSON válido, no corresponde al contrato o algún campo no cumple
+         *     sus reglas. `errors` dice qué campo y por qué.
+         */
+        BadRequest: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /** @description `unauthorized`: falta el encabezado `Authorization` o la llave no existe o fue revocada. */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /** @description `account_suspended`: la cuenta está suspendida y sus llaves no pueden operar. */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /** @description `not_found`: no existe en el ambiente de la llave. Un recurso de otro ambiente tampoco se encuentra. */
+        NotFound: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description `not_found`: el documento no existe en el ambiente de la llave. `file_not_available`: el archivo
+         *     todavía no existe; el XML y el PDF aparecen cuando la DIAN acepta el documento.
+         */
+        FileNotFound: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description `idempotency_in_progress`: otra petición con la misma `Idempotency-Key` todavía se está
+         *     procesando. Reintenta en unos segundos.
+         */
+        IdempotencyConflict: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description La factura no se puede emitir:
+         *
+         *     - `idempotency_mismatch`: la `Idempotency-Key` ya se usó con un cuerpo distinto.
+         *     - `issuer_not_found`, `issuer_required`: no hay emisor que pueda emitir, o hay varios y falta `issuerId`.
+         *     - `issuer_not_ready`, `issuer_missing_software`, `issuer_missing_certificate`: el emisor no está
+         *       habilitado o le falta configuración.
+         *     - `no_active_numbering_range`: el emisor no tiene un rango de numeración vigente.
+         *     - `customer_identification_invalid`, `customer_check_digit_invalid`: la identificación del
+         *       adquiriente no tiene el formato de su tipo o el dígito de verificación no corresponde.
+         *     - `payment_due_date_required`: un pago a crédito necesita `dueDate`.
+         *     - `lines_required`, `line_description_required`, `line_quantity_invalid`, `line_price_invalid`,
+         *       `line_tax_invalid`, `amount_too_large`: alguna línea o el total no es válido.
+         */
+        InvoiceRejected: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description La nota no se puede emitir:
+         *
+         *     - `idempotency_mismatch`: la `Idempotency-Key` ya se usó con un cuerpo distinto.
+         *     - `invoice_not_accepted`: la factura todavía no está aceptada por la DIAN.
+         *     - `credit_note_exceeds_balance`: la nota crédito supera el saldo que le queda a la factura.
+         *     - `credit_note_lines_required`: solo una anulación (`CANCELLATION`) puede omitir las líneas.
+         *     - `issuer_not_ready`, `issuer_missing_software`, `issuer_missing_certificate`,
+         *       `no_active_numbering_range`: el emisor no puede emitir este tipo de documento.
+         *     - `lines_required`, `line_description_required`, `line_quantity_invalid`, `line_price_invalid`,
+         *       `line_tax_invalid`, `amount_too_large`: alguna línea o el total no es válido.
+         */
+        CorrectionRejected: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description - `customer_exists`: ya hay un cliente con ese tipo y número de identificación.
+         *     - `customer_identification_invalid`, `customer_check_digit_invalid`: la identificación no tiene
+         *       el formato de su tipo o el dígito de verificación no corresponde.
+         */
+        CustomerRejected: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /** @description `product_exists`: ya hay un producto con ese código. */
+        ProductRejected: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description `rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan. Espera los
+         *     segundos de `Retry-After`.
+         */
+        TooManyRequests: {
+            headers: {
+                "Retry-After": components["headers"]["Retry-After"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description `rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan.
+         *     `sandbox_daily_limit`: la cuenta ya emitió los documentos de simulación del día; el límite se
+         *     reinicia a medianoche, hora de Colombia. En ambos casos, espera los segundos de `Retry-After`.
+         */
+        TooManyDocuments: {
+            headers: {
+                "Retry-After": components["headers"]["Retry-After"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+    };
+    parameters: {
+        /**
+         * @description Identificador único que eliges para esta emisión, por ejemplo un UUID o el número de tu pedido.
+         *     Si la petición falla por red y la repites con la misma llave, Cetus devuelve el documento ya
+         *     creado en lugar de emitir otro. Vale por cuenta y ambiente.
+         * @example 6f1c2a3e-4b5d-4e6f-8a9b-0c1d2e3f4a5b
+         */
+        IdempotencyKey: string;
+        /** @description El `id` que devolvió la creación del documento. */
+        DocumentId: string;
+        /**
+         * @description - `xml`: el XML firmado, tal como lo validó la DIAN.
+         *     - `pdf`: la representación gráfica.
+         *     - `attached-document`: el AttachedDocument que recibe el cliente, con el XML y la respuesta de la DIAN.
+         */
+        DocumentFile: "xml" | "pdf" | "attached-document";
+        ResourceId: string;
+    };
     requestBodies: never;
-    headers: never;
+    headers: {
+        /** @description Identificador de la petición. Inclúyelo al pedir soporte. */
+        "X-Request-Id": string;
+        /** @description `true` cuando la respuesta es la guardada para esta `Idempotency-Key`. */
+        "Idempotent-Replayed": "true";
+        /** @description Segundos que debes esperar antes de reintentar. */
+        "Retry-After": number;
+    };
     pathItems: never;
 }
 export type $defs = Record<string, never>;
@@ -5712,7 +6428,13 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                "Idempotency-Key": string;
+                /**
+                 * @description Identificador único que eliges para esta emisión, por ejemplo un UUID o el número de tu pedido.
+                 *     Si la petición falla por red y la repites con la misma llave, Cetus devuelve el documento ya
+                 *     creado en lugar de emitir otro. Vale por cuenta y ambiente.
+                 * @example 6f1c2a3e-4b5d-4e6f-8a9b-0c1d2e3f4a5b
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path?: never;
             cookie?: never;
@@ -5723,22 +6445,24 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Nota recibida y encolada. Repetir la petición con la misma `Idempotency-Key` devuelve esta misma respuesta. */
+            202: {
                 headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "Idempotent-Replayed": components["headers"]["Idempotent-Replayed"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CreditNoteResponse"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["IdempotencyConflict"];
+            422: components["responses"]["CorrectionRejected"];
+            429: components["responses"]["TooManyDocuments"];
         };
     };
     CreditNoteResource_get: {
@@ -5746,13 +6470,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                /** @description El `id` que devolvió la creación del documento. */
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description La nota. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5761,6 +6486,10 @@ export interface operations {
                     "application/json": components["schemas"]["CreditNoteResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     CreditNoteResource_file: {
@@ -5768,14 +6497,20 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                file: "xml" | "pdf" | "attached-document";
-                id: components["schemas"]["UUID"];
+                /**
+                 * @description - `xml`: el XML firmado, tal como lo validó la DIAN.
+                 *     - `pdf`: la representación gráfica.
+                 *     - `attached-document`: el AttachedDocument que recibe el cliente, con el XML y la respuesta de la DIAN.
+                 */
+                file: components["parameters"]["DocumentFile"];
+                /** @description El `id` que devolvió la creación del documento. */
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description La URL de descarga. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5784,13 +6519,20 @@ export interface operations {
                     "application/json": components["schemas"]["DocumentFileResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["FileNotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     CustomerResource_list: {
         parameters: {
             query?: {
+                /** @description El `nextCursor` de la página anterior. */
                 before?: components["schemas"]["UUID"];
+                /** @description Cuántos clientes devolver, hasta 100. */
                 limit?: number;
+                /** @description Texto a buscar. */
                 q?: string;
             };
             header?: never;
@@ -5799,7 +6541,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Una página de clientes. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5808,33 +6550,10 @@ export interface operations {
                     "application/json": components["schemas"]["CustomerPage"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     CustomerResource_create: {
@@ -5850,7 +6569,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
+            /** @description El cliente creado. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -5859,33 +6578,11 @@ export interface operations {
                     "application/json": components["schemas"]["CustomerView"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["CustomerRejected"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     CustomerResource_get: {
@@ -5893,13 +6590,13 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description El cliente. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5908,33 +6605,10 @@ export interface operations {
                     "application/json": components["schemas"]["CustomerView"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     CustomerResource_update: {
@@ -5942,7 +6616,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
@@ -5952,7 +6626,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description El cliente actualizado. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5961,33 +6635,12 @@ export interface operations {
                     "application/json": components["schemas"]["CustomerView"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["CustomerRejected"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     CustomerResource_delete: {
@@ -5995,53 +6648,36 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
+            /** @description Eliminado. */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     DebitNoteResource_create: {
         parameters: {
             query?: never;
             header: {
-                "Idempotency-Key": string;
+                /**
+                 * @description Identificador único que eliges para esta emisión, por ejemplo un UUID o el número de tu pedido.
+                 *     Si la petición falla por red y la repites con la misma llave, Cetus devuelve el documento ya
+                 *     creado en lugar de emitir otro. Vale por cuenta y ambiente.
+                 * @example 6f1c2a3e-4b5d-4e6f-8a9b-0c1d2e3f4a5b
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path?: never;
             cookie?: never;
@@ -6052,22 +6688,24 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Nota recibida y encolada. Repetir la petición con la misma `Idempotency-Key` devuelve esta misma respuesta. */
+            202: {
                 headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "Idempotent-Replayed": components["headers"]["Idempotent-Replayed"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["DebitNoteResponse"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["IdempotencyConflict"];
+            422: components["responses"]["CorrectionRejected"];
+            429: components["responses"]["TooManyDocuments"];
         };
     };
     DebitNoteResource_get: {
@@ -6075,13 +6713,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                /** @description El `id` que devolvió la creación del documento. */
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description La nota. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6090,6 +6729,10 @@ export interface operations {
                     "application/json": components["schemas"]["DebitNoteResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     DebitNoteResource_file: {
@@ -6097,14 +6740,20 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                file: "xml" | "pdf" | "attached-document";
-                id: components["schemas"]["UUID"];
+                /**
+                 * @description - `xml`: el XML firmado, tal como lo validó la DIAN.
+                 *     - `pdf`: la representación gráfica.
+                 *     - `attached-document`: el AttachedDocument que recibe el cliente, con el XML y la respuesta de la DIAN.
+                 */
+                file: components["parameters"]["DocumentFile"];
+                /** @description El `id` que devolvió la creación del documento. */
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description La URL de descarga. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6113,13 +6762,23 @@ export interface operations {
                     "application/json": components["schemas"]["DocumentFileResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["FileNotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     InvoiceResource_create: {
         parameters: {
             query?: never;
             header: {
-                "Idempotency-Key": string;
+                /**
+                 * @description Identificador único que eliges para esta emisión, por ejemplo un UUID o el número de tu pedido.
+                 *     Si la petición falla por red y la repites con la misma llave, Cetus devuelve el documento ya
+                 *     creado en lugar de emitir otro. Vale por cuenta y ambiente.
+                 * @example 6f1c2a3e-4b5d-4e6f-8a9b-0c1d2e3f4a5b
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path?: never;
             cookie?: never;
@@ -6130,22 +6789,23 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Factura recibida y encolada. Repetir la petición con la misma `Idempotency-Key` devuelve esta misma respuesta. */
+            202: {
                 headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "Idempotent-Replayed": components["headers"]["Idempotent-Replayed"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["InvoiceResponse"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["IdempotencyConflict"];
+            422: components["responses"]["InvoiceRejected"];
+            429: components["responses"]["TooManyDocuments"];
         };
     };
     InvoiceResource_get: {
@@ -6153,13 +6813,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                /** @description El `id` que devolvió la creación del documento. */
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description La factura. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6168,6 +6829,10 @@ export interface operations {
                     "application/json": components["schemas"]["InvoiceResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     InvoiceResource_file: {
@@ -6175,14 +6840,20 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                file: "xml" | "pdf" | "attached-document";
-                id: components["schemas"]["UUID"];
+                /**
+                 * @description - `xml`: el XML firmado, tal como lo validó la DIAN.
+                 *     - `pdf`: la representación gráfica.
+                 *     - `attached-document`: el AttachedDocument que recibe el cliente, con el XML y la respuesta de la DIAN.
+                 */
+                file: components["parameters"]["DocumentFile"];
+                /** @description El `id` que devolvió la creación del documento. */
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description La URL de descarga. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6191,6 +6862,10 @@ export interface operations {
                     "application/json": components["schemas"]["DocumentFileResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["FileNotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     PublicIssuerResource_list: {
@@ -6202,7 +6877,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Los emisores, del más antiguo al más reciente. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6211,6 +6886,9 @@ export interface operations {
                     "application/json": components["schemas"]["PublicIssuerView"][];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     PublicIssuerResource_get: {
@@ -6218,13 +6896,13 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description El emisor. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6233,13 +6911,20 @@ export interface operations {
                     "application/json": components["schemas"]["PublicIssuerView"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     ProductResource_list: {
         parameters: {
             query?: {
+                /** @description El `nextCursor` de la página anterior. */
                 before?: components["schemas"]["UUID"];
+                /** @description Cuántos productos devolver, hasta 100. */
                 limit?: number;
+                /** @description Texto a buscar. */
                 q?: string;
             };
             header?: never;
@@ -6248,7 +6933,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Una página de productos. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6257,33 +6942,10 @@ export interface operations {
                     "application/json": components["schemas"]["ProductPage"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     ProductResource_create: {
@@ -6299,7 +6961,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
+            /** @description El producto creado. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -6308,33 +6970,11 @@ export interface operations {
                     "application/json": components["schemas"]["ProductView"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ProductRejected"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     ProductResource_get: {
@@ -6342,13 +6982,13 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description El producto. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6357,33 +6997,10 @@ export interface operations {
                     "application/json": components["schemas"]["ProductView"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     ProductResource_update: {
@@ -6391,7 +7008,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
@@ -6401,7 +7018,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description El producto actualizado. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6410,33 +7027,12 @@ export interface operations {
                     "application/json": components["schemas"]["ProductView"];
                 };
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["ProductRejected"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     ProductResource_delete: {
@@ -6444,46 +7040,23 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: components["schemas"]["UUID"];
+                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
+            /** @description Eliminado. */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
 }

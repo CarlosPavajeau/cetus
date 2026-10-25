@@ -37,10 +37,12 @@ public class DocumentFiles {
     @ConfigProperty(name = "cetus.storage.download-ttl")
     Duration ttl;
 
+    @Schema(description = "Una URL temporal para descargar un archivo del documento.")
     public record DocumentFileResponse(
-            @Schema(description = "Presigned URL; download it without the API key")
+            @Schema(description = "URL prefirmada; descárgala sin la llave de API.")
             String url,
 
+            @Schema(description = "Cuándo deja de servir la URL.")
             OffsetDateTime expiresAt) {}
 
     /** Must run in a transaction. */

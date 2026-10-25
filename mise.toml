@@ -61,6 +61,10 @@ run = ["./gradlew spotlessApply --console=plain", "pnpm --filter @cetus/console 
 description = "Check the Java and console formatting without changing files"
 run = ["./gradlew spotlessCheck --console=plain", "pnpm --filter @cetus/console format:check"]
 
+[tasks.docs-spec]
+description = "Build the API's OpenAPI spec and write its public part (/v1) for the docs site"
+run = ["./gradlew :apps:api:build -x test --console=plain", "node scripts/openapi-public.mjs"]
+
 [tasks.test-console]
 description = "Console integration (Vitest) and e2e (Playwright) tests; needs `mise run dev-mock` running"
 run = "pnpm --filter @cetus/console test"

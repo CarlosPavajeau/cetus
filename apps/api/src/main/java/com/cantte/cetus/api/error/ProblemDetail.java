@@ -10,15 +10,40 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  * member clients branch on; {@code detail} is for humans. {@code type} and {@code instance} are filled in by
  * {@link ProblemResponseFilter}, so the code building the problem does not need the request.
  */
-@Schema(name = "ProblemDetail")
+@Schema(name = "ProblemDetail", description = "Un error, como problem detail (RFC 9457).")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ProblemDetail(
-        String type, String title, int status, String detail, String instance, String code, List<FieldError> errors) {
+        @Schema(description = "Tipo del problema (RFC 9457).", example = "about:blank")
+        String type,
+
+        @Schema(description = "Nombre del estado HTTP.", example = "Unprocessable Entity")
+        String title,
+
+        @Schema(description = "Estado HTTP.", example = "422")
+        int status,
+
+        @Schema(description = "Explicación para personas. No decidas según este texto: cambia.")
+        String detail,
+
+        @Schema(description = "Ruta de la petición.", example = "/v1/invoices")
+        String instance,
+
+        @Schema(description = "Código estable del error. Decide según este campo.", example = "issuer_not_ready")
+        String code,
+
+        @Schema(description = "Los campos inválidos; solo en `invalid_request`.")
+        List<FieldError> errors) {
 
     public static final String MEDIA_TYPE = "application/problem+json";
 
     /** One invalid field of the request; only present on {@code invalid_request}. */
-    public record FieldError(String field, String message) {}
+    @Schema(description = "Un campo inválido de la petición.")
+    public record FieldError(
+            @Schema(description = "Ruta del campo.", example = "lines[0].quantity")
+            String field,
+
+            @Schema(description = "Por qué es inválido.", example = "must be greater than 0")
+            String message) {}
 
     public static ProblemDetail of(int status, String code, String detail) {
         return of(status, code, detail, null);

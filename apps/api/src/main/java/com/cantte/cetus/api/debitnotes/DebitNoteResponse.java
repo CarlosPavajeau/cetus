@@ -14,23 +14,47 @@ import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record DebitNoteResponse(
+        @Schema(description = "Identificador de la nota en Cetus.")
         UUID id,
-        Environment environment,
-        UUID issuerId,
-        String number,
-        DocumentStatus status,
-        @Schema(nullable = true) String cude,
-        LocalDate issueDate,
-        String currency,
-        InvoiceRef invoice,
-        DebitNoteConcept concept,
-        String description,
-        InvoiceResponse.Totals totals,
-        InvoiceResponse.Dian dian,
-        @Schema(nullable = true) String externalReference,
-        OffsetDateTime createdAt,
 
-        @Schema(description = "Deliveries of the accepted note to the customer")
+        @Schema(description = "Ambiente en que se emitió: el de la llave.")
+        Environment environment,
+
+        @Schema(description = "Emisor que la emitió.") UUID issuerId,
+
+        @Schema(description = "Número completo, con el prefijo del rango.", example = "NDS1")
+        String number,
+
+        @Schema(description = "Estado ante la DIAN.") DocumentStatus status,
+
+        @Schema(
+                nullable = true,
+                description = "CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma.")
+        String cude,
+
+        @Schema(description = "Fecha de emisión, en hora de Colombia.")
+        LocalDate issueDate,
+
+        @Schema(description = "Moneda ISO 4217.", example = "COP")
+        String currency,
+
+        @Schema(description = "La factura que corrige.") InvoiceRef invoice,
+        @Schema(description = "Concepto de la nota.") DebitNoteConcept concept,
+
+        @Schema(description = "Motivo de la nota, como lo enviaste.")
+        String description,
+
+        @Schema(description = "Totales calculados por Cetus.")
+        InvoiceResponse.Totals totals,
+
+        @Schema(description = "Respuesta de la DIAN.") InvoiceResponse.Dian dian,
+
+        @Schema(nullable = true, description = "Tu referencia, si la enviaste.")
+        String externalReference,
+
+        @Schema(description = "Cuándo Cetus la recibió.") OffsetDateTime createdAt,
+
+        @Schema(description = "Entregas de la nota aceptada al cliente.")
         List<DeliveryView> deliveries) {
 
     public static DebitNoteResponse from(DocumentEntity note) {

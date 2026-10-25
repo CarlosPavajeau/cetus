@@ -9,6 +9,9 @@ dependencies {
     api(libs.quarkus.hibernate.orm.panache)
     api(libs.quarkus.jdbc.postgresql)
     api(libs.quarkus.jackson)
+    // Names the enums that the API's OpenAPI spec shows; the annotations are read from the bytecode.
+    compileOnly(enforcedPlatform(libs.quarkus.bom))
+    compileOnly(libs.microprofile.openapi.api)
 
     // Migrations are verified against a real Postgres (Testcontainers, needs Docker).
     testImplementation(libs.flyway.core)

@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -29,6 +30,7 @@ public class IssuerEntity extends PanacheEntityBase {
         TECHNOLOGY_PROVIDER
     }
 
+    @Schema(name = "IssuerStatus")
     public enum Status {
         ONBOARDING,
         TESTING,

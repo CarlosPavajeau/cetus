@@ -1,5 +1,5 @@
-# Keeps the console in sync with the API contract: the TypeScript types in schema.d.ts are generated
-# from the OpenAPI spec that Quarkus builds from the Java DTOs.
+# Keeps the console and the docs site in sync with the API contract: the TypeScript types in schema.d.ts and
+# the public spec in openapi.public.json are generated from the OpenAPI spec that Quarkus builds from the Java DTOs.
 name: API contract
 
 on:
@@ -41,6 +41,14 @@ jobs:
         run: |
           if ! git diff --exit-code apps/console/src/lib/api/schema.d.ts; then
             echo "::error file=apps/console/src/lib/api/schema.d.ts::schema.d.ts does not match the API's OpenAPI spec. Run './gradlew :apps:api:build -x test' and 'pnpm --filter @cetus/console api:types:file', then commit the result."
+            exit 1
+          fi
+
+      - name: Check that the public spec is up to date
+        run: |
+          node scripts/openapi-public.mjs
+          if ! git diff --exit-code apps/docs/public/openapi.public.json; then
+            echo "::error file=apps/docs/public/openapi.public.json::openapi.public.json does not match the API's OpenAPI spec. Run 'mise run docs-spec', then commit the result."
             exit 1
           fi
 

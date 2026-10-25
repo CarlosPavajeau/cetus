@@ -9,16 +9,33 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
  * Public contract of POST /v1/credit-notes. The customer, currency and payment come from the
  * invoice. A CANCELLATION without lines credits the whole invoice.
  */
 public record CreditNoteRequest(
-        @NotNull UUID invoiceId,
-        @NotNull CreditNoteConcept concept,
-        @NotBlank @Size(max = 500) String description,
-        @Size(max = 500) List<InvoiceRequest.@Valid @NotNull Line> lines,
-        @Size(max = 100) String externalReference,
-        @Size(max = 20) List<@Size(max = 500) String> notes)
+        @Schema(description = "La factura que se corrige. Debe estar aceptada por la DIAN.") @NotNull
+        UUID invoiceId,
+
+        @Schema(description = "Concepto de la nota (tabla 13.2.4 del anexo).") @NotNull
+        CreditNoteConcept concept,
+
+        @Schema(description = "Motivo de la nota; aparece en el documento.", example = "Factura emitida por error")
+        @NotBlank
+        @Size(max = 500)
+        String description,
+
+        @Schema(
+                description =
+                        "Líneas que se acreditan. Una anulación (`CANCELLATION`) sin líneas acredita la factura completa.")
+        @Size(max = 500)
+        List<InvoiceRequest.@Valid @NotNull Line> lines,
+
+        @Schema(description = "Tu referencia. Vuelve en las respuestas y los webhooks.") @Size(max = 100)
+        String externalReference,
+
+        @Schema(description = "Notas libres que aparecen en el documento.") @Size(max = 20)
+        List<@Size(max = 500) String> notes)
         implements CorrectionRequest {}

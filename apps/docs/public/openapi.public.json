@@ -1,0 +1,3456 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cetus API",
+    "version": "v1",
+    "summary": "Facturación electrónica ante la DIAN por API.",
+    "description": "Emite facturas, notas crédito y notas débito electrónicas ante la DIAN de Colombia. Cetus valida\ncada documento, lo numera, genera el XML UBL 2.1, lo firma, lo envía a la DIAN y lo entrega a tu\ncliente por correo.\n\n**Autenticación.** Envía tu llave en `Authorization: Bearer <llave>`. Las llaves se crean en la\nconsola, en *Llaves de API*.\n\n**Ambientes.** La llave define el ambiente, no la URL:\n\n- `cetus_sandbox_…`: simulación. Nada llega a la DIAN; cada cuenta trae un emisor de ejemplo listo\n  para emitir.\n- `cetus_test_…`: pruebas de habilitación ante la DIAN.\n- `cetus_live_…`: producción, con validez fiscal.\n\n**Procesamiento asíncrono.** Crear un documento responde `202` con estado `RECEIVED`. Consulta su\nestado con el `GET` correspondiente o recibe un webhook cuando la DIAN responda.\n\n**Errores.** Todo error responde `application/problem+json` (RFC 9457). Decide según `code`, que es\nestable; `detail` es para personas.\n",
+    "contact": {
+      "name": "Cetus",
+      "email": "contact@cantte.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://cetus-api.cantte.com",
+      "description": "Producción. El ambiente lo define la llave."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Facturas",
+      "description": "Facturas electrónicas de venta. Se numeran con el rango activo del emisor."
+    },
+    {
+      "name": "Notas crédito",
+      "description": "Anulan o disminuyen el valor de una factura aceptada por la DIAN."
+    },
+    {
+      "name": "Notas débito",
+      "description": "Aumentan el valor de una factura aceptada por la DIAN, por ejemplo con intereses o gastos."
+    },
+    {
+      "name": "Emisores",
+      "description": "Las empresas o personas que facturan con tu cuenta en el ambiente de la llave. Si solo uno puede\nemitir, los documentos lo toman sin enviar `issuerId`.\n"
+    },
+    {
+      "name": "Clientes",
+      "description": "Clientes guardados para completar el adquiriente. Cada documento guarda su propia copia del\nadquiriente: cambiar un cliente no altera lo ya emitido.\n"
+    },
+    {
+      "name": "Productos",
+      "description": "Productos y servicios guardados para completar las líneas. Las líneas siguen enviando descripción,\nprecio e impuestos completos: el catálogo no se referencia desde los documentos.\n"
+    }
+  ],
+  "paths": {
+    "/v1/credit-notes": {
+      "post": {
+        "summary": "Crear una nota crédito",
+        "description": "Emite una nota crédito sobre una factura aceptada por la DIAN, para anularla o disminuir su valor. El cliente, la moneda y el pago se toman de la factura. Responde 202 con estado `RECEIVED`; consulta el resultado con `GET /v1/credit-notes/{id}` o con el webhook `credit_note.accepted`.",
+        "operationId": "CreditNoteResource_create",
+        "tags": [
+          "Notas crédito"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "anulacion": {
+                  "$ref": "#/components/examples/CancellationCreditNote"
+                },
+                "devolucion": {
+                  "$ref": "#/components/examples/PartialReturnCreditNote"
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreditNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Nota recibida y encolada. Repetir la petición con la misma `Idempotency-Key` devuelve esta misma respuesta.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditNoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/IdempotencyConflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/CorrectionRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyDocuments"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/credit-notes/{id}": {
+      "get": {
+        "summary": "Consultar una nota crédito",
+        "description": "La nota con su estado ante la DIAN, la factura que corrige y sus entregas al cliente.",
+        "operationId": "CreditNoteResource_get",
+        "tags": [
+          "Notas crédito"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "La nota.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditNoteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/credit-notes/{id}/files/{file}": {
+      "get": {
+        "summary": "Descargar un archivo de la nota crédito",
+        "description": "Una URL temporal para descargar el XML firmado, el PDF o el AttachedDocument de la nota.",
+        "operationId": "CreditNoteResource_file",
+        "tags": [
+          "Notas crédito"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentFile"
+          },
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "La URL de descarga.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentFileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/FileNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/customers": {
+      "get": {
+        "summary": "Listar los clientes",
+        "description": "Del más reciente al más antiguo, por páginas: para la siguiente, envía el `nextCursor` de la anterior como `before`. `q` busca en el nombre o la identificación.",
+        "operationId": "CustomerResource_list",
+        "tags": [
+          "Clientes"
+        ],
+        "parameters": [
+          {
+            "description": "El `nextCursor` de la página anterior.",
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "description": "Cuántos clientes devolver, hasta 100.",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "description": "Texto a buscar.",
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "[^\\p{Cntrl}]*",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Una página de clientes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Crear un cliente",
+        "operationId": "CustomerResource_create",
+        "tags": [
+          "Clientes"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "cliente": {
+                  "$ref": "#/components/examples/Customer"
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "El cliente creado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerView"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/CustomerRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/customers/{id}": {
+      "put": {
+        "summary": "Reemplazar un cliente",
+        "description": "Reemplaza todos sus datos; lo que no se envíe queda vacío. No cambia los documentos ya emitidos.",
+        "operationId": "CustomerResource_update",
+        "tags": [
+          "Clientes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "El cliente actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerView"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/CustomerRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Consultar un cliente",
+        "operationId": "CustomerResource_get",
+        "tags": [
+          "Clientes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "El cliente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerView"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Eliminar un cliente",
+        "description": "No afecta los documentos ya emitidos.",
+        "operationId": "CustomerResource_delete",
+        "tags": [
+          "Clientes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/debit-notes": {
+      "post": {
+        "summary": "Crear una nota débito",
+        "description": "Emite una nota débito sobre una factura aceptada por la DIAN, para cobrar un valor adicional. El cliente, la moneda y el pago se toman de la factura; las líneas son lo que la nota cobra. Responde 202 con estado `RECEIVED`; consulta el resultado con `GET /v1/debit-notes/{id}` o con el webhook `debit_note.accepted`.",
+        "operationId": "DebitNoteResource_create",
+        "tags": [
+          "Notas débito"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "intereses": {
+                  "$ref": "#/components/examples/InterestDebitNote"
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DebitNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Nota recibida y encolada. Repetir la petición con la misma `Idempotency-Key` devuelve esta misma respuesta.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebitNoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/IdempotencyConflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/CorrectionRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyDocuments"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/debit-notes/{id}": {
+      "get": {
+        "summary": "Consultar una nota débito",
+        "description": "La nota con su estado ante la DIAN, la factura que corrige y sus entregas al cliente.",
+        "operationId": "DebitNoteResource_get",
+        "tags": [
+          "Notas débito"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "La nota.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebitNoteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/debit-notes/{id}/files/{file}": {
+      "get": {
+        "summary": "Descargar un archivo de la nota débito",
+        "description": "Una URL temporal para descargar el XML firmado, el PDF o el AttachedDocument de la nota.",
+        "operationId": "DebitNoteResource_file",
+        "tags": [
+          "Notas débito"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentFile"
+          },
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "La URL de descarga.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentFileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/FileNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/invoices": {
+      "post": {
+        "summary": "Crear una factura",
+        "description": "Valida la factura, le asigna el siguiente número del rango activo del emisor y la encola. Responde 202 con estado `RECEIVED`; Cetus la firma, la envía a la DIAN y la entrega al cliente en segundo plano. Consulta el resultado con `GET /v1/invoices/{id}` o con el webhook `invoice.accepted`.",
+        "operationId": "InvoiceResource_create",
+        "tags": [
+          "Facturas"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "minima": {
+                  "$ref": "#/components/examples/MinimalInvoice"
+                },
+                "empresa": {
+                  "$ref": "#/components/examples/CompanyCreditInvoice"
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Factura recibida y encolada. Repetir la petición con la misma `Idempotency-Key` devuelve esta misma respuesta.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/Idempotent-Replayed"
+              }
+            },
+            "content": {
+              "application/json": {
+                "examples": {
+                  "recibida": {
+                    "$ref": "#/components/examples/InvoiceReceived"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/IdempotencyConflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/InvoiceRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyDocuments"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/invoices/{id}": {
+      "get": {
+        "summary": "Consultar una factura",
+        "description": "La factura con su estado ante la DIAN, las notas crédito y débito emitidas sobre ella, el saldo que les queda y sus entregas al cliente.",
+        "operationId": "InvoiceResource_get",
+        "tags": [
+          "Facturas"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "La factura.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "aceptada": {
+                    "$ref": "#/components/examples/InvoiceAccepted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/invoices/{id}/files/{file}": {
+      "get": {
+        "summary": "Descargar un archivo de la factura",
+        "description": "Una URL temporal para descargar el XML firmado, el PDF o el AttachedDocument de la factura.",
+        "operationId": "InvoiceResource_file",
+        "tags": [
+          "Facturas"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentFile"
+          },
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "La URL de descarga.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentFileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/FileNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/issuers": {
+      "get": {
+        "summary": "Listar los emisores",
+        "description": "Los emisores de la cuenta en el ambiente de la llave. `readyToIssue` dice cuáles pueden emitir; con uno solo, los documentos pueden omitir `issuerId`.",
+        "operationId": "PublicIssuerResource_list",
+        "tags": [
+          "Emisores"
+        ],
+        "responses": {
+          "200": {
+            "description": "Los emisores, del más antiguo al más reciente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicIssuerView"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/issuers/{id}": {
+      "get": {
+        "summary": "Consultar un emisor",
+        "operationId": "PublicIssuerResource_get",
+        "tags": [
+          "Emisores"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "El emisor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicIssuerView"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/products": {
+      "get": {
+        "summary": "Listar los productos",
+        "description": "Del más reciente al más antiguo, por páginas: para la siguiente, envía el `nextCursor` de la anterior como `before`. `q` busca en el código o la descripción.",
+        "operationId": "ProductResource_list",
+        "tags": [
+          "Productos"
+        ],
+        "parameters": [
+          {
+            "description": "El `nextCursor` de la página anterior.",
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "description": "Cuántos productos devolver, hasta 100.",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "description": "Texto a buscar.",
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "[^\\p{Cntrl}]*",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Una página de productos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Crear un producto",
+        "operationId": "ProductResource_create",
+        "tags": [
+          "Productos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "producto": {
+                  "$ref": "#/components/examples/Product"
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "El producto creado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductView"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ProductRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/products/{id}": {
+      "put": {
+        "summary": "Reemplazar un producto",
+        "description": "Reemplaza todos sus datos; lo que no se envíe queda vacío. No cambia los documentos ya emitidos.",
+        "operationId": "ProductResource_update",
+        "tags": [
+          "Productos"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "El producto actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductView"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ProductRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Consultar un producto",
+        "operationId": "ProductResource_get",
+        "tags": [
+          "Productos"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "El producto.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductView"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Eliminar un producto",
+        "description": "No afecta los documentos ya emitidos.",
+        "operationId": "ProductResource_delete",
+        "tags": [
+          "Productos"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "examples": {
+      "CancellationCreditNote": {
+        "summary": "Anulación total de una factura",
+        "description": "Una anulación sin líneas acredita la factura completa.",
+        "value": {
+          "invoiceId": "0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01",
+          "concept": "CANCELLATION",
+          "description": "Factura emitida por error"
+        }
+      },
+      "CompanyCreditInvoice": {
+        "summary": "Factura a crédito a una empresa",
+        "value": {
+          "issuerId": "0199f6a2-5b1c-7c3e-9a51-2f8d4c6e7a10",
+          "externalReference": "PED-2041",
+          "customer": {
+            "personType": "LEGAL_ENTITY",
+            "identificationType": "NIT",
+            "identificationNumber": "900123456",
+            "checkDigit": "8",
+            "legalName": "Distribuidora Andina SAS",
+            "taxLevelCodes": [
+              "O-13"
+            ],
+            "taxScheme": "IVA",
+            "address": {
+              "municipalityCode": "11001",
+              "cityName": "Bogotá, D.C.",
+              "departmentCode": "11",
+              "departmentName": "Bogotá",
+              "postalCode": "110111",
+              "line": "Calle 93"
+            },
+            "email": "facturas@andina.example"
+          },
+          "payment": {
+            "method": "CREDIT",
+            "meansCode": "42",
+            "dueDate": "2026-11-30"
+          },
+          "lines": [
+            {
+              "itemCode": "PROD-001",
+              "description": "Caja de guantes de nitrilo",
+              "quantity": 10,
+              "unitCode": "94",
+              "unitPrice": 25000,
+              "taxes": [
+                {
+                  "type": "IVA",
+                  "percent": 19
+                }
+              ]
+            },
+            {
+              "itemCode": "SERV-ENVIO",
+              "description": "Envío",
+              "quantity": 1,
+              "unitPrice": 12000
+            }
+          ],
+          "notes": [
+            "Pedido 2041"
+          ]
+        }
+      },
+      "Customer": {
+        "summary": "Empresa responsable de IVA",
+        "value": {
+          "personType": "LEGAL_ENTITY",
+          "identificationType": "NIT",
+          "identificationNumber": "900123456",
+          "checkDigit": "8",
+          "legalName": "Distribuidora Andina SAS",
+          "taxLevelCodes": [
+            "O-13"
+          ],
+          "taxScheme": "IVA",
+          "address": {
+            "municipalityCode": "11001",
+            "cityName": "Bogotá, D.C.",
+            "departmentCode": "11",
+            "departmentName": "Bogotá",
+            "line": "Calle 93"
+          },
+          "email": "facturas@andina.example"
+        }
+      },
+      "InterestDebitNote": {
+        "summary": "Intereses por mora",
+        "value": {
+          "invoiceId": "0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01",
+          "concept": "INTEREST",
+          "description": "Intereses por pago tardío",
+          "lines": [
+            {
+              "itemCode": "INT-MORA",
+              "description": "Intereses de mora de noviembre",
+              "quantity": 1,
+              "unitPrice": 3500
+            }
+          ]
+        }
+      },
+      "InvalidRequestProblem": {
+        "summary": "Campo inválido",
+        "value": {
+          "type": "about:blank",
+          "title": "Bad Request",
+          "status": 400,
+          "detail": "The request is invalid",
+          "instance": "/v1/invoices",
+          "code": "invalid_request",
+          "errors": [
+            {
+              "field": "lines[0].quantity",
+              "message": "must be greater than 0"
+            }
+          ]
+        }
+      },
+      "InvoiceAccepted": {
+        "summary": "Factura aceptada por la DIAN",
+        "value": {
+          "id": "0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01",
+          "environment": "SANDBOX",
+          "issuerId": "0199f6a2-5b1c-7c3e-9a51-2f8d4c6e7a10",
+          "number": "SIM1",
+          "status": "ACCEPTED",
+          "cufe": "3f1a9c0e8b7d6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d",
+          "issueDate": "2026-10-25",
+          "currency": "COP",
+          "totals": {
+            "lineExtension": 100000,
+            "taxExclusive": 100000,
+            "taxInclusive": 119000,
+            "payable": 119000
+          },
+          "dian": {
+            "statusCode": "00",
+            "statusMessage": "Procesado Correctamente.",
+            "errors": [],
+            "validatedAt": "2026-10-25T15:15:32.481Z"
+          },
+          "externalReference": null,
+          "createdAt": "2026-10-25T15:15:30.123Z",
+          "creditNotes": [],
+          "debitNotes": [],
+          "balance": 119000,
+          "deliveries": [
+            {
+              "id": "0199f6b0-1c4d-7e52-9b6a-0f1e2d3c4b5a",
+              "channel": "EMAIL",
+              "recipient": "cliente@example.com",
+              "status": "DELIVERED",
+              "error": null,
+              "sentAt": "2026-10-25T15:15:33.010Z",
+              "lastEventAt": "2026-10-25T15:15:35.200Z"
+            }
+          ]
+        }
+      },
+      "InvoiceReceived": {
+        "summary": "Factura recibida",
+        "value": {
+          "id": "0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01",
+          "environment": "SANDBOX",
+          "issuerId": "0199f6a2-5b1c-7c3e-9a51-2f8d4c6e7a10",
+          "number": "SIM1",
+          "status": "RECEIVED",
+          "cufe": null,
+          "issueDate": "2026-10-25",
+          "currency": "COP",
+          "totals": {
+            "lineExtension": 100000,
+            "taxExclusive": 100000,
+            "taxInclusive": 119000,
+            "payable": 119000
+          },
+          "dian": {
+            "statusCode": null,
+            "statusMessage": null,
+            "errors": [],
+            "validatedAt": null
+          },
+          "externalReference": null,
+          "createdAt": "2026-10-25T15:15:30.123Z",
+          "creditNotes": [],
+          "debitNotes": [],
+          "balance": 119000,
+          "deliveries": []
+        }
+      },
+      "IssuerRequiredProblem": {
+        "summary": "Falta el emisor",
+        "value": {
+          "type": "about:blank",
+          "title": "Unprocessable Entity",
+          "status": 422,
+          "detail": "The account has several issuers in the SANDBOX environment; send issuerId",
+          "instance": "/v1/invoices",
+          "code": "issuer_required"
+        }
+      },
+      "MinimalInvoice": {
+        "summary": "Factura mínima a un consumidor final",
+        "description": "Sin `issuerId`: la toma del único emisor que puede emitir con la llave, como el emisor de ejemplo\ndel sandbox.\n",
+        "value": {
+          "customer": {
+            "personType": "NATURAL_PERSON",
+            "identificationType": "CITIZEN_ID",
+            "identificationNumber": "1020304050",
+            "legalName": "Consumidor Final"
+          },
+          "payment": {
+            "method": "CASH",
+            "meansCode": "10"
+          },
+          "lines": [
+            {
+              "itemCode": "SERV-1",
+              "description": "Servicio de consultoría",
+              "quantity": 1,
+              "unitPrice": 100000,
+              "taxes": [
+                {
+                  "type": "IVA",
+                  "percent": 19
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "PartialReturnCreditNote": {
+        "summary": "Devolución parcial",
+        "value": {
+          "invoiceId": "0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01",
+          "concept": "PARTIAL_RETURN",
+          "description": "El cliente devolvió dos cajas",
+          "lines": [
+            {
+              "itemCode": "PROD-001",
+              "description": "Caja de guantes de nitrilo",
+              "quantity": 2,
+              "unitPrice": 25000,
+              "taxes": [
+                {
+                  "type": "IVA",
+                  "percent": 19
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "Product": {
+        "summary": "Producto con IVA del 19 %",
+        "value": {
+          "code": "PROD-001",
+          "description": "Caja de guantes de nitrilo",
+          "unitCode": "94",
+          "unitPrice": 25000,
+          "taxes": [
+            {
+              "type": "IVA",
+              "percent": 19
+            }
+          ]
+        }
+      }
+    },
+    "headers": {
+      "Idempotent-Replayed": {
+        "description": "`true` cuando la respuesta es la guardada para esta `Idempotency-Key`.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "true"
+          ]
+        }
+      },
+      "Retry-After": {
+        "description": "Segundos que debes esperar antes de reintentar.",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "X-Request-Id": {
+        "description": "Identificador de la petición. Inclúyelo al pedir soporte.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "parameters": {
+      "DocumentFile": {
+        "name": "file",
+        "in": "path",
+        "required": true,
+        "description": "- `xml`: el XML firmado, tal como lo validó la DIAN.\n- `pdf`: la representación gráfica.\n- `attached-document`: el AttachedDocument que recibe el cliente, con el XML y la respuesta de la DIAN.\n",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "xml",
+            "pdf",
+            "attached-document"
+          ]
+        }
+      },
+      "DocumentId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "El `id` que devolvió la creación del documento.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "description": "Identificador único que eliges para esta emisión, por ejemplo un UUID o el número de tu pedido.\nSi la petición falla por red y la repites con la misma llave, Cetus devuelve el documento ya\ncreado en lugar de emitir otro. Vale por cuenta y ambiente.\n",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "example": "6f1c2a3e-4b5d-4e6f-8a9b-0c1d2e3f4a5b"
+      },
+      "ResourceId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "`invalid_request`: el cuerpo no es JSON válido, no corresponde al contrato o algún campo no cumple\nsus reglas. `errors` dice qué campo y por qué.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            },
+            "examples": {
+              "invalid_request": {
+                "$ref": "#/components/examples/InvalidRequestProblem"
+              }
+            }
+          }
+        }
+      },
+      "CorrectionRejected": {
+        "description": "La nota no se puede emitir:\n\n- `idempotency_mismatch`: la `Idempotency-Key` ya se usó con un cuerpo distinto.\n- `invoice_not_accepted`: la factura todavía no está aceptada por la DIAN.\n- `credit_note_exceeds_balance`: la nota crédito supera el saldo que le queda a la factura.\n- `credit_note_lines_required`: solo una anulación (`CANCELLATION`) puede omitir las líneas.\n- `issuer_not_ready`, `issuer_missing_software`, `issuer_missing_certificate`,\n  `no_active_numbering_range`: el emisor no puede emitir este tipo de documento.\n- `lines_required`, `line_description_required`, `line_quantity_invalid`, `line_price_invalid`,\n  `line_tax_invalid`, `amount_too_large`: alguna línea o el total no es válido.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "CustomerRejected": {
+        "description": "- `customer_exists`: ya hay un cliente con ese tipo y número de identificación.\n- `customer_identification_invalid`, `customer_check_digit_invalid`: la identificación no tiene\n  el formato de su tipo o el dígito de verificación no corresponde.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "FileNotFound": {
+        "description": "`not_found`: el documento no existe en el ambiente de la llave. `file_not_available`: el archivo\ntodavía no existe; el XML y el PDF aparecen cuando la DIAN acepta el documento.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "`account_suspended`: la cuenta está suspendida y sus llaves no pueden operar.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "IdempotencyConflict": {
+        "description": "`idempotency_in_progress`: otra petición con la misma `Idempotency-Key` todavía se está\nprocesando. Reintenta en unos segundos.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "InvoiceRejected": {
+        "description": "La factura no se puede emitir:\n\n- `idempotency_mismatch`: la `Idempotency-Key` ya se usó con un cuerpo distinto.\n- `issuer_not_found`, `issuer_required`: no hay emisor que pueda emitir, o hay varios y falta `issuerId`.\n- `issuer_not_ready`, `issuer_missing_software`, `issuer_missing_certificate`: el emisor no está\n  habilitado o le falta configuración.\n- `no_active_numbering_range`: el emisor no tiene un rango de numeración vigente.\n- `customer_identification_invalid`, `customer_check_digit_invalid`: la identificación del\n  adquiriente no tiene el formato de su tipo o el dígito de verificación no corresponde.\n- `payment_due_date_required`: un pago a crédito necesita `dueDate`.\n- `lines_required`, `line_description_required`, `line_quantity_invalid`, `line_price_invalid`,\n  `line_tax_invalid`, `amount_too_large`: alguna línea o el total no es válido.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            },
+            "examples": {
+              "issuer_required": {
+                "$ref": "#/components/examples/IssuerRequiredProblem"
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "`not_found`: no existe en el ambiente de la llave. Un recurso de otro ambiente tampoco se encuentra.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "ProductRejected": {
+        "description": "`product_exists`: ya hay un producto con ese código.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "TooManyDocuments": {
+        "description": "`rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan.\n`sandbox_daily_limit`: la cuenta ya emitió los documentos de simulación del día; el límite se\nreinicia a medianoche, hora de Colombia. En ambos casos, espera los segundos de `Retry-After`.\n",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "`rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan. Espera los\nsegundos de `Retry-After`.\n",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "`unauthorized`: falta el encabezado `Authorization` o la llave no existe o fue revocada.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Address": {
+        "type": "object",
+        "properties": {
+          "municipalityCode": {
+            "type": "string",
+            "description": "Código DIVIPOLA del municipio."
+          },
+          "cityName": {
+            "type": "string",
+            "description": "Nombre del municipio."
+          },
+          "departmentCode": {
+            "type": "string",
+            "description": "Código DIVIPOLA del departamento."
+          },
+          "departmentName": {
+            "type": "string",
+            "description": "Nombre del departamento."
+          },
+          "postalCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Código postal."
+          },
+          "line": {
+            "type": "string",
+            "description": "Dirección."
+          },
+          "countryCode": {
+            "type": "string",
+            "description": "País ISO 3166-1 alfa-2."
+          },
+          "countryName": {
+            "type": "string",
+            "description": "Nombre del país."
+          }
+        },
+        "required": [
+          "municipalityCode",
+          "cityName",
+          "departmentCode",
+          "departmentName",
+          "postalCode",
+          "line",
+          "countryCode",
+          "countryName"
+        ]
+      },
+      "AddressInput": {
+        "type": "object",
+        "description": "Una dirección. Los códigos son los de DIVIPOLA para Colombia.",
+        "required": [
+          "municipalityCode",
+          "cityName",
+          "departmentCode",
+          "departmentName",
+          "line"
+        ],
+        "properties": {
+          "municipalityCode": {
+            "type": "string",
+            "description": "Código DIVIPOLA del municipio.",
+            "examples": [
+              "11001"
+            ],
+            "pattern": "[0-9A-Za-z-]{1,10}"
+          },
+          "cityName": {
+            "type": "string",
+            "description": "Nombre del municipio.",
+            "examples": [
+              "Bogotá, D.C."
+            ],
+            "pattern": "\\S",
+            "maxLength": 100
+          },
+          "departmentCode": {
+            "type": "string",
+            "description": "Código DIVIPOLA del departamento.",
+            "examples": [
+              "11"
+            ],
+            "pattern": "[0-9A-Za-z-]{1,10}"
+          },
+          "departmentName": {
+            "type": "string",
+            "description": "Nombre del departamento.",
+            "examples": [
+              "Bogotá"
+            ],
+            "pattern": "\\S",
+            "maxLength": 100
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Código postal.",
+            "examples": [
+              "110111"
+            ],
+            "pattern": "[0-9A-Za-z-]{1,10}"
+          },
+          "line": {
+            "type": "string",
+            "description": "Dirección.",
+            "examples": [
+              "Calle 93 # 11-26"
+            ],
+            "pattern": "\\S",
+            "maxLength": 300
+          },
+          "countryCode": {
+            "type": "string",
+            "description": "País ISO 3166-1 alfa-2. Por defecto, `CO`.",
+            "examples": [
+              "CO"
+            ],
+            "pattern": "[A-Z]{2}"
+          },
+          "countryName": {
+            "type": "string",
+            "description": "Nombre del país. Por defecto, Colombia.",
+            "maxLength": 100
+          }
+        }
+      },
+      "Channel": {
+        "type": "string",
+        "enum": [
+          "EMAIL"
+        ],
+        "description": "Canal de entrega.\n\n- `EMAIL`: Correo electrónico."
+      },
+      "CreditNoteConcept": {
+        "type": "string",
+        "enum": [
+          "PARTIAL_RETURN",
+          "CANCELLATION",
+          "REBATE",
+          "PRICE_ADJUSTMENT",
+          "EARLY_PAYMENT_DISCOUNT",
+          "VOLUME_DISCOUNT"
+        ],
+        "description": "Concepto de la nota crédito (tabla 13.2.4 del anexo).\n\n- `PARTIAL_RETURN`: Devolución parcial de los bienes y/o no aceptación parcial del servicio (1).\n- `CANCELLATION`: Anulación de factura electrónica (2).\n- `REBATE`: Rebaja o descuento parcial o total (3).\n- `PRICE_ADJUSTMENT`: Ajuste de precio (4).\n- `EARLY_PAYMENT_DISCOUNT`: Descuento comercial por pronto pago (5).\n- `VOLUME_DISCOUNT`: Descuento comercial por volumen de ventas (6)."
+      },
+      "CreditNoteRequest": {
+        "type": "object",
+        "required": [
+          "invoiceId",
+          "concept",
+          "description"
+        ],
+        "properties": {
+          "invoiceId": {
+            "description": "La factura que se corrige. Debe estar aceptada por la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "concept": {
+            "description": "Concepto de la nota (tabla 13.2.4 del anexo).",
+            "type": "string",
+            "$ref": "#/components/schemas/CreditNoteConcept"
+          },
+          "description": {
+            "type": "string",
+            "description": "Motivo de la nota; aparece en el documento.",
+            "examples": [
+              "Factura emitida por error"
+            ],
+            "pattern": "\\S",
+            "maxLength": 500
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            },
+            "description": "Líneas que se acreditan. Una anulación (`CANCELLATION`) sin líneas acredita la factura completa.",
+            "maxItems": 500
+          },
+          "externalReference": {
+            "type": "string",
+            "description": "Tu referencia. Vuelve en las respuestas y los webhooks.",
+            "maxLength": 100
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "description": "Notas libres que aparecen en el documento.",
+            "maxItems": 20
+          }
+        }
+      },
+      "CreditNoteResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador de la nota en Cetus.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "environment": {
+            "description": "Ambiente en que se emitió: el de la llave.",
+            "type": "string",
+            "$ref": "#/components/schemas/Environment"
+          },
+          "issuerId": {
+            "description": "Emisor que la emitió.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Número completo, con el prefijo del rango.",
+            "examples": [
+              "NCS1"
+            ]
+          },
+          "status": {
+            "description": "Estado ante la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "cude": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma."
+          },
+          "issueDate": {
+            "description": "Fecha de emisión, en hora de Colombia.",
+            "type": "string",
+            "examples": [
+              "2022-03-10"
+            ],
+            "$ref": "#/components/schemas/LocalDate"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Moneda ISO 4217.",
+            "examples": [
+              "COP"
+            ]
+          },
+          "invoice": {
+            "description": "La factura que corrige.",
+            "type": "object",
+            "$ref": "#/components/schemas/InvoiceRef"
+          },
+          "concept": {
+            "description": "Concepto de la nota.",
+            "type": "string",
+            "$ref": "#/components/schemas/CreditNoteConcept"
+          },
+          "description": {
+            "type": "string",
+            "description": "Motivo de la nota, como lo enviaste."
+          },
+          "totals": {
+            "description": "Totales calculados por Cetus.",
+            "type": "object",
+            "$ref": "#/components/schemas/Totals"
+          },
+          "dian": {
+            "description": "Respuesta de la DIAN.",
+            "type": "object",
+            "$ref": "#/components/schemas/Dian"
+          },
+          "externalReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tu referencia, si la enviaste."
+          },
+          "createdAt": {
+            "description": "Cuándo Cetus la recibió.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryView"
+            },
+            "description": "Entregas de la nota aceptada al cliente."
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "issuerId",
+          "number",
+          "status",
+          "cude",
+          "issueDate",
+          "currency",
+          "invoice",
+          "concept",
+          "description",
+          "totals",
+          "dian",
+          "externalReference",
+          "createdAt",
+          "deliveries"
+        ]
+      },
+      "CreditNoteSummary": {
+        "description": "Una nota crédito de la factura.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador de la nota.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Número de la nota.",
+            "examples": [
+              "NCS1"
+            ]
+          },
+          "status": {
+            "description": "Estado ante la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "concept": {
+            "description": "Concepto de la nota.",
+            "type": "string",
+            "$ref": "#/components/schemas/CreditNoteConcept"
+          },
+          "payable": {
+            "type": "number",
+            "description": "Total de la nota."
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "concept",
+          "payable"
+        ]
+      },
+      "Customer": {
+        "type": "object",
+        "description": "Un adquiriente: la persona o empresa a quien se le factura.",
+        "required": [
+          "personType",
+          "identificationType",
+          "identificationNumber",
+          "legalName"
+        ],
+        "properties": {
+          "personType": {
+            "description": "Persona natural o jurídica.",
+            "type": "string",
+            "$ref": "#/components/schemas/PersonType"
+          },
+          "identificationType": {
+            "description": "Tipo de documento de identificación.",
+            "type": "string",
+            "$ref": "#/components/schemas/IdentificationType"
+          },
+          "identificationNumber": {
+            "type": "string",
+            "description": "Número de identificación, sin dígito de verificación.",
+            "examples": [
+              "900123456"
+            ],
+            "pattern": "\\S",
+            "maxLength": 20
+          },
+          "checkDigit": {
+            "type": "string",
+            "description": "Dígito de verificación, solo para un NIT. Si lo envías, Cetus comprueba que corresponda; si no, lo calcula.",
+            "examples": [
+              "8"
+            ],
+            "pattern": "\\d"
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Razón social o nombre completo.",
+            "examples": [
+              "Distribuidora Andina SAS"
+            ],
+            "pattern": "\\S",
+            "maxLength": 450
+          },
+          "tradeName": {
+            "type": "string",
+            "description": "Nombre comercial.",
+            "maxLength": 450
+          },
+          "taxLevelCodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "O-13|O-15|O-23|O-47|R-99-PN"
+            },
+            "description": "Responsabilidades fiscales del RUT (tabla 13.2.6.1 del anexo): `O-13` gran contribuyente, `O-15` autorretenedor, `O-23` agente de retención de IVA, `O-47` régimen simple, `R-99-PN` no responsable. Por defecto, `R-99-PN`.",
+            "examples": [
+              [
+                "O-13"
+              ]
+            ],
+            "maxItems": 5
+          },
+          "taxScheme": {
+            "description": "Si es responsable de IVA. Por defecto, `NOT_APPLICABLE`.",
+            "type": "string",
+            "$ref": "#/components/schemas/CustomerTaxScheme"
+          },
+          "address": {
+            "description": "Dirección del adquiriente.",
+            "type": "object",
+            "$ref": "#/components/schemas/AddressInput"
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo al que Cetus entrega la factura cuando la DIAN la acepta.",
+            "examples": [
+              "facturas@andina.example"
+            ],
+            "maxLength": 254
+          },
+          "phone": {
+            "type": "string",
+            "description": "Teléfono.",
+            "examples": [
+              "+57 601 555 0101"
+            ],
+            "pattern": "[0-9+() -]*",
+            "maxLength": 50
+          }
+        }
+      },
+      "CustomerPage": {
+        "description": "Una página de clientes.",
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerView"
+            },
+            "description": "Del más reciente al más antiguo."
+          },
+          "nextCursor": {
+            "description": "Envíalo como `before` para la siguiente página; nulo en la última.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "CustomerTaxScheme": {
+        "type": "string",
+        "enum": [
+          "IVA",
+          "NOT_APPLICABLE"
+        ],
+        "description": "Régimen de IVA del adquiriente.\n\n- `IVA`: Responsable de IVA.\n- `NOT_APPLICABLE`: No responsable de IVA."
+      },
+      "CustomerView": {
+        "type": "object",
+        "description": "Un cliente guardado.",
+        "properties": {
+          "id": {
+            "description": "Identificador del cliente.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "environment": {
+            "description": "Ambiente del cliente: el de la llave.",
+            "type": "string",
+            "$ref": "#/components/schemas/Environment"
+          },
+          "personType": {
+            "description": "Persona natural o jurídica.",
+            "type": "string",
+            "$ref": "#/components/schemas/PersonType"
+          },
+          "identificationType": {
+            "description": "Tipo de documento de identificación.",
+            "type": "string",
+            "$ref": "#/components/schemas/IdentificationType"
+          },
+          "identificationNumber": {
+            "type": "string",
+            "description": "Número de identificación.",
+            "examples": [
+              "900123456"
+            ]
+          },
+          "checkDigit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Dígito de verificación; solo para un NIT.",
+            "examples": [
+              "8"
+            ]
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Razón social o nombre completo."
+          },
+          "tradeName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nombre comercial."
+          },
+          "taxLevelCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Responsabilidades fiscales del RUT."
+          },
+          "taxScheme": {
+            "type": "string",
+            "description": "Si es responsable de IVA.",
+            "enum": [
+              "IVA",
+              "NOT_APPLICABLE"
+            ]
+          },
+          "address": {
+            "description": "Dirección.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Address"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Correo de entrega de documentos."
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Teléfono."
+          },
+          "createdAt": {
+            "description": "Cuándo se creó.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          },
+          "updatedAt": {
+            "description": "Cuándo cambió por última vez.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "personType",
+          "identificationType",
+          "identificationNumber",
+          "checkDigit",
+          "legalName",
+          "tradeName",
+          "taxLevelCodes",
+          "taxScheme",
+          "address",
+          "email",
+          "phone",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DebitNoteConcept": {
+        "type": "string",
+        "enum": [
+          "INTEREST",
+          "EXPENSES",
+          "VALUE_CHANGE",
+          "OTHER"
+        ],
+        "description": "Concepto de la nota débito (tabla 13.2.5 del anexo).\n\n- `INTEREST`: Intereses (1).\n- `EXPENSES`: Gastos por cobrar (2).\n- `VALUE_CHANGE`: Cambio del valor (3).\n- `OTHER`: Otros (4)."
+      },
+      "DebitNoteRequest": {
+        "type": "object",
+        "required": [
+          "invoiceId",
+          "concept",
+          "description",
+          "lines"
+        ],
+        "properties": {
+          "invoiceId": {
+            "description": "La factura que se corrige. Debe estar aceptada por la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "concept": {
+            "description": "Concepto de la nota (tabla 13.2.4 del anexo).",
+            "type": "string",
+            "$ref": "#/components/schemas/DebitNoteConcept"
+          },
+          "description": {
+            "type": "string",
+            "description": "Motivo de la nota; aparece en el documento.",
+            "examples": [
+              "Factura emitida por error"
+            ],
+            "pattern": "\\S",
+            "maxLength": 500
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            },
+            "description": "Lo que la nota cobra, de 1 a 500 líneas.",
+            "maxItems": 500,
+            "minItems": 1
+          },
+          "externalReference": {
+            "type": "string",
+            "description": "Tu referencia. Vuelve en las respuestas y los webhooks.",
+            "maxLength": 100
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "description": "Notas libres que aparecen en el documento.",
+            "maxItems": 20
+          }
+        }
+      },
+      "DebitNoteResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador de la nota en Cetus.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "environment": {
+            "description": "Ambiente en que se emitió: el de la llave.",
+            "type": "string",
+            "$ref": "#/components/schemas/Environment"
+          },
+          "issuerId": {
+            "description": "Emisor que la emitió.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Número completo, con el prefijo del rango.",
+            "examples": [
+              "NDS1"
+            ]
+          },
+          "status": {
+            "description": "Estado ante la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "cude": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CUDE: código único de la nota ante la DIAN. Nulo hasta que Cetus lo firma."
+          },
+          "issueDate": {
+            "description": "Fecha de emisión, en hora de Colombia.",
+            "type": "string",
+            "examples": [
+              "2022-03-10"
+            ],
+            "$ref": "#/components/schemas/LocalDate"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Moneda ISO 4217.",
+            "examples": [
+              "COP"
+            ]
+          },
+          "invoice": {
+            "description": "La factura que corrige.",
+            "type": "object",
+            "$ref": "#/components/schemas/InvoiceRef"
+          },
+          "concept": {
+            "description": "Concepto de la nota.",
+            "type": "string",
+            "$ref": "#/components/schemas/DebitNoteConcept"
+          },
+          "description": {
+            "type": "string",
+            "description": "Motivo de la nota, como lo enviaste."
+          },
+          "totals": {
+            "description": "Totales calculados por Cetus.",
+            "type": "object",
+            "$ref": "#/components/schemas/Totals"
+          },
+          "dian": {
+            "description": "Respuesta de la DIAN.",
+            "type": "object",
+            "$ref": "#/components/schemas/Dian"
+          },
+          "externalReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tu referencia, si la enviaste."
+          },
+          "createdAt": {
+            "description": "Cuándo Cetus la recibió.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryView"
+            },
+            "description": "Entregas de la nota aceptada al cliente."
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "issuerId",
+          "number",
+          "status",
+          "cude",
+          "issueDate",
+          "currency",
+          "invoice",
+          "concept",
+          "description",
+          "totals",
+          "dian",
+          "externalReference",
+          "createdAt",
+          "deliveries"
+        ]
+      },
+      "DebitNoteSummary": {
+        "description": "Una nota débito de la factura.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador de la nota.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Número de la nota.",
+            "examples": [
+              "NDS1"
+            ]
+          },
+          "status": {
+            "description": "Estado ante la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "concept": {
+            "description": "Concepto de la nota.",
+            "type": "string",
+            "$ref": "#/components/schemas/DebitNoteConcept"
+          },
+          "payable": {
+            "type": "number",
+            "description": "Total de la nota."
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "concept",
+          "payable"
+        ]
+      },
+      "DeliveryStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "SENT",
+          "DELIVERED",
+          "BOUNCED",
+          "COMPLAINED",
+          "SKIPPED",
+          "FAILED"
+        ],
+        "description": "Estado de la entrega. `SKIPPED`, `BOUNCED`, `COMPLAINED` y `FAILED` significan que no llegó: entrega el documento por tu cuenta.\n\n- `PENDING`: En cola.\n- `SENT`: El proveedor de correo la recibió.\n- `DELIVERED`: Llegó al buzón del destinatario.\n- `BOUNCED`: Rebotó.\n- `COMPLAINED`: El destinatario la marcó como correo no deseado.\n- `SKIPPED`: No se envió: no había a quién enviarla.\n- `FAILED`: El proveedor de correo la rechazó."
+      },
+      "DeliveryView": {
+        "description": "Una entrega del documento a su cliente.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador de la entrega.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "channel": {
+            "description": "Canal de entrega.",
+            "type": "string",
+            "$ref": "#/components/schemas/Channel"
+          },
+          "recipient": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Destinatario.",
+            "examples": [
+              "cliente@example.com"
+            ]
+          },
+          "status": {
+            "description": "Estado de la entrega.",
+            "type": "string",
+            "$ref": "#/components/schemas/DeliveryStatus"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Por qué no se entregó, si no se entregó."
+          },
+          "sentAt": {
+            "description": "Cuándo se envió.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OffsetDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastEventAt": {
+            "description": "Cuándo llegó el último evento del proveedor de correo.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OffsetDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "channel",
+          "recipient",
+          "status",
+          "error",
+          "sentAt",
+          "lastEventAt"
+        ]
+      },
+      "Dian": {
+        "description": "Lo que respondió la DIAN. Todo es nulo o vacío mientras no responde.",
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Código de estado de la DIAN; `00` es procesado correctamente."
+          },
+          "statusMessage": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Mensaje de estado de la DIAN."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Rechazos y notificaciones de la DIAN, cada uno con su regla, por ejemplo `FAK26`. Una notificación no impide la aceptación."
+          },
+          "validatedAt": {
+            "description": "Cuándo la DIAN lo validó.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OffsetDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "statusCode",
+          "statusMessage",
+          "errors",
+          "validatedAt"
+        ]
+      },
+      "DocumentFileResponse": {
+        "description": "Una URL temporal para descargar un archivo del documento.",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL prefirmada; descárgala sin la llave de API."
+          },
+          "expiresAt": {
+            "description": "Cuándo deja de servir la URL.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ]
+      },
+      "DocumentStatus": {
+        "type": "string",
+        "enum": [
+          "RECEIVED",
+          "PROCESSING",
+          "SUBMITTED",
+          "ACCEPTED",
+          "REJECTED",
+          "FAILED"
+        ],
+        "description": "Estado del documento ante la DIAN.\n\n- `RECEIVED`: Recibido y numerado; en cola.\n- `PROCESSING`: Cetus lo está generando, firmando o enviando.\n- `SUBMITTED`: Enviado; Cetus espera la respuesta de la DIAN.\n- `ACCEPTED`: La DIAN lo aceptó. Es definitivo.\n- `REJECTED`: La DIAN lo rechazó. Es definitivo: `dian.errors` dice por qué; corrige y emite un documento nuevo.\n- `FAILED`: Un intento falló. Si Cetus todavía reintenta, vuelve a `PROCESSING`; el webhook `*.failed` avisa cuando ya no hay más reintentos."
+      },
+      "Environment": {
+        "type": "string",
+        "enum": [
+          "LIVE",
+          "TEST",
+          "SANDBOX"
+        ],
+        "description": "Ambiente, definido por la llave.\n\n- `LIVE`: Producción: documentos con validez fiscal.\n- `TEST`: Pruebas de habilitación ante la DIAN.\n- `SANDBOX`: Simulación de Cetus: nada llega a la DIAN."
+      },
+      "FieldError": {
+        "type": "object",
+        "description": "Un campo inválido de la petición.",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Ruta del campo.",
+            "examples": [
+              "lines[0].quantity"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Por qué es inválido.",
+            "examples": [
+              "must be greater than 0"
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "message"
+        ]
+      },
+      "IdentificationType": {
+        "type": "string",
+        "enum": [
+          "CIVIL_REGISTRY",
+          "IDENTITY_CARD",
+          "CITIZEN_ID",
+          "FOREIGNER_CARD",
+          "FOREIGNER_ID",
+          "NIT",
+          "PASSPORT",
+          "FOREIGN_DOCUMENT",
+          "PEP",
+          "FOREIGN_NIT",
+          "NUIP"
+        ],
+        "description": "Tipo de documento de identificación; entre paréntesis, su código DIAN.\n\n- `CIVIL_REGISTRY`: Registro civil (11).\n- `IDENTITY_CARD`: Tarjeta de identidad (12).\n- `CITIZEN_ID`: Cédula de ciudadanía (13).\n- `FOREIGNER_CARD`: Tarjeta de extranjería (21).\n- `FOREIGNER_ID`: Cédula de extranjería (22).\n- `NIT`: NIT (31).\n- `PASSPORT`: Pasaporte (41).\n- `FOREIGN_DOCUMENT`: Documento de identificación extranjero (42).\n- `PEP`: Permiso especial de permanencia (47).\n- `FOREIGN_NIT`: NIT de otro país (50).\n- `NUIP`: NUIP (91)."
+      },
+      "InvoiceRef": {
+        "description": "La factura que corrige una nota.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador de la factura.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Número de la factura.",
+            "examples": [
+              "SIM1"
+            ]
+          },
+          "cufe": {
+            "type": "string",
+            "description": "CUFE de la factura."
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "cufe"
+        ]
+      },
+      "InvoiceRequest": {
+        "description": "Una factura electrónica de venta.",
+        "type": "object",
+        "properties": {
+          "issuerId": {
+            "description": "Emisor que factura. Omítelo si solo uno de tus emisores puede emitir con esta llave.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "externalReference": {
+            "type": "string",
+            "description": "Tu referencia, por ejemplo el número de pedido. Vuelve en las respuestas y los webhooks.",
+            "examples": [
+              "PED-2041"
+            ],
+            "maxLength": 100
+          },
+          "currency": {
+            "type": "string",
+            "description": "Moneda ISO 4217. Por defecto, `COP`.",
+            "examples": [
+              "COP"
+            ],
+            "pattern": "[A-Z]{3}"
+          },
+          "customer": {
+            "description": "El adquiriente: a quien se le factura.",
+            "type": "object",
+            "$ref": "#/components/schemas/Customer"
+          },
+          "payment": {
+            "description": "Forma y medio de pago.",
+            "type": "object",
+            "$ref": "#/components/schemas/Payment"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            },
+            "description": "Lo que se factura, de 1 a 500 líneas.",
+            "maxItems": 500,
+            "minItems": 1
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "description": "Notas libres que aparecen en el documento.",
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "customer",
+          "payment",
+          "lines"
+        ]
+      },
+      "InvoiceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador de la factura en Cetus.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "environment": {
+            "description": "Ambiente en que se emitió: el de la llave.",
+            "type": "string",
+            "$ref": "#/components/schemas/Environment"
+          },
+          "issuerId": {
+            "description": "Emisor que la emitió.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Número completo, con el prefijo del rango.",
+            "examples": [
+              "SIM1"
+            ]
+          },
+          "status": {
+            "description": "Estado ante la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "cufe": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CUFE: código único de la factura ante la DIAN. Nulo hasta que Cetus lo firma."
+          },
+          "issueDate": {
+            "description": "Fecha de emisión, en hora de Colombia.",
+            "type": "string",
+            "examples": [
+              "2022-03-10"
+            ],
+            "$ref": "#/components/schemas/LocalDate"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Moneda ISO 4217.",
+            "examples": [
+              "COP"
+            ]
+          },
+          "totals": {
+            "description": "Totales calculados por Cetus.",
+            "type": "object",
+            "$ref": "#/components/schemas/Totals"
+          },
+          "dian": {
+            "description": "Respuesta de la DIAN.",
+            "type": "object",
+            "$ref": "#/components/schemas/Dian"
+          },
+          "externalReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tu referencia, si la enviaste."
+          },
+          "createdAt": {
+            "description": "Cuándo Cetus la recibió.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          },
+          "creditNotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditNoteSummary"
+            },
+            "description": "Notas crédito emitidas sobre la factura."
+          },
+          "debitNotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DebitNoteSummary"
+            },
+            "description": "Notas débito emitidas sobre la factura."
+          },
+          "balance": {
+            "type": "number",
+            "description": "Lo que todavía pueden acreditar las notas crédito: el total a pagar más las notas débito aceptadas, menos las notas crédito aceptadas o en proceso."
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryView"
+            },
+            "description": "Entregas de la factura aceptada al cliente."
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "issuerId",
+          "number",
+          "status",
+          "cufe",
+          "issueDate",
+          "currency",
+          "totals",
+          "dian",
+          "externalReference",
+          "createdAt",
+          "creditNotes",
+          "debitNotes",
+          "balance",
+          "deliveries"
+        ]
+      },
+      "IssuerStatus": {
+        "type": "string",
+        "enum": [
+          "ONBOARDING",
+          "TESTING",
+          "ENABLED",
+          "DISABLED"
+        ],
+        "description": "Estado de configuración del emisor ante la DIAN.\n\n- `ONBOARDING`: En configuración: todavía no emite.\n- `TESTING`: En el set de pruebas de habilitación: emite solo con llaves `test`.\n- `ENABLED`: Habilitado: emite en su ambiente.\n- `DISABLED`: Deshabilitado: no emite."
+      },
+      "Line": {
+        "type": "object",
+        "description": "Una línea del documento: un producto o servicio.",
+        "required": [
+          "itemCode",
+          "description",
+          "quantity",
+          "unitPrice"
+        ],
+        "properties": {
+          "itemCode": {
+            "type": "string",
+            "description": "Tu código del producto o servicio.",
+            "examples": [
+              "PROD-001"
+            ],
+            "pattern": "\\S",
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción.",
+            "examples": [
+              "Caja de guantes de nitrilo"
+            ],
+            "pattern": "\\S",
+            "maxLength": 300
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Cantidad, mayor que cero.",
+            "examples": [
+              10
+            ],
+            "multipleOf": 0.000001,
+            "exclusiveMinimum": 0
+          },
+          "unitCode": {
+            "type": "string",
+            "description": "Código de unidad de medida de la DIAN. Por defecto, `94` (unidad).",
+            "examples": [
+              "94"
+            ],
+            "pattern": "[0-9A-Z]{1,3}"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Precio unitario antes de impuestos.",
+            "examples": [
+              25000
+            ],
+            "multipleOf": 0.000001,
+            "minimum": 0
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineTax"
+            },
+            "description": "Impuestos de la línea. Vacío o sin enviar si está excluida de impuestos.",
+            "maxItems": 5
+          }
+        }
+      },
+      "LineTax": {
+        "type": "object",
+        "description": "Un impuesto de una línea.",
+        "required": [
+          "type",
+          "percent"
+        ],
+        "properties": {
+          "type": {
+            "description": "Impuesto.",
+            "type": "string",
+            "$ref": "#/components/schemas/TaxType"
+          },
+          "percent": {
+            "type": "number",
+            "description": "Tarifa en porcentaje: 19 para IVA del 19 %, 0 para exento.",
+            "examples": [
+              19
+            ],
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 0.0001
+          }
+        }
+      },
+      "LocalDate": {
+        "type": "string",
+        "format": "date"
+      },
+      "OffsetDateTime": {
+        "type": "string",
+        "format": "date-time",
+        "examples": [
+          "2022-03-10T12:15:50-04:00"
+        ]
+      },
+      "Payment": {
+        "type": "object",
+        "description": "Cómo se paga la factura.",
+        "required": [
+          "method",
+          "meansCode"
+        ],
+        "properties": {
+          "method": {
+            "description": "Contado o crédito.",
+            "type": "string",
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "meansCode": {
+            "type": "string",
+            "description": "Medio de pago (tabla 13.3.4.2 del anexo): `10` efectivo, `42` consignación, `47` transferencia, `48` tarjeta crédito, `49` tarjeta débito, `20` cheque, `ZZZ` otro.",
+            "examples": [
+              "10"
+            ],
+            "pattern": "[0-9A-Z]{1,3}"
+          },
+          "dueDate": {
+            "description": "Fecha de vencimiento. Obligatoria para `CREDIT`.",
+            "type": "string",
+            "examples": [
+              "2026-11-30"
+            ],
+            "$ref": "#/components/schemas/LocalDate"
+          }
+        }
+      },
+      "PaymentMethod": {
+        "type": "string",
+        "enum": [
+          "CASH",
+          "CREDIT"
+        ],
+        "description": "Forma de pago.\n\n- `CASH`: Contado.\n- `CREDIT`: Crédito: exige `dueDate`."
+      },
+      "PersonType": {
+        "type": "string",
+        "enum": [
+          "LEGAL_ENTITY",
+          "NATURAL_PERSON"
+        ],
+        "description": "Tipo de persona.\n\n- `LEGAL_ENTITY`: Persona jurídica.\n- `NATURAL_PERSON`: Persona natural."
+      },
+      "ProblemDetail": {
+        "description": "Un error, como problem detail (RFC 9457).",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Tipo del problema (RFC 9457).",
+            "examples": [
+              "about:blank"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Nombre del estado HTTP.",
+            "examples": [
+              "Unprocessable Entity"
+            ]
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Estado HTTP.",
+            "examples": [
+              422
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "description": "Explicación para personas. No decidas según este texto: cambia."
+          },
+          "instance": {
+            "type": "string",
+            "description": "Ruta de la petición.",
+            "examples": [
+              "/v1/invoices"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Código estable del error. Decide según este campo.",
+            "examples": [
+              "issuer_not_ready"
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "description": "Los campos inválidos; solo en `invalid_request`."
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "instance",
+          "code"
+        ]
+      },
+      "ProductPage": {
+        "description": "Una página de productos.",
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductView"
+            },
+            "description": "Del más reciente al más antiguo."
+          },
+          "nextCursor": {
+            "description": "Envíalo como `before` para la siguiente página; nulo en la última.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "ProductRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "description",
+          "unitPrice"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Tu código del producto; único en el ambiente.",
+            "examples": [
+              "PROD-001"
+            ],
+            "pattern": "\\S",
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción.",
+            "examples": [
+              "Caja de guantes de nitrilo"
+            ],
+            "pattern": "\\S",
+            "maxLength": 300
+          },
+          "unitCode": {
+            "type": "string",
+            "description": "Código de unidad de medida de la DIAN. Por defecto, `94` (unidad).",
+            "examples": [
+              "94"
+            ],
+            "pattern": "[0-9A-Z]{1,3}"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Precio unitario antes de impuestos.",
+            "examples": [
+              25000
+            ],
+            "multipleOf": 0.000001,
+            "minimum": 0
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineTax"
+            },
+            "description": "Impuestos por defecto. Vacío o sin enviar si está excluido de impuestos.",
+            "maxItems": 5
+          }
+        }
+      },
+      "ProductTax": {
+        "type": "object",
+        "description": "Un impuesto de un producto.",
+        "properties": {
+          "type": {
+            "description": "Impuesto.",
+            "type": "string",
+            "$ref": "#/components/schemas/TaxType"
+          },
+          "percent": {
+            "type": "number",
+            "description": "Tarifa en porcentaje.",
+            "examples": [
+              19
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "percent"
+        ]
+      },
+      "ProductView": {
+        "type": "object",
+        "description": "Un producto o servicio guardado.",
+        "properties": {
+          "id": {
+            "description": "Identificador del producto.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "environment": {
+            "description": "Ambiente del producto: el de la llave.",
+            "type": "string",
+            "$ref": "#/components/schemas/Environment"
+          },
+          "code": {
+            "type": "string",
+            "description": "Tu código del producto.",
+            "examples": [
+              "PROD-001"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción."
+          },
+          "unitCode": {
+            "type": "string",
+            "description": "Código de unidad de medida de la DIAN.",
+            "examples": [
+              "94"
+            ]
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Precio unitario antes de impuestos."
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductTax"
+            },
+            "description": "Impuestos por defecto; vacío si está excluido de impuestos."
+          },
+          "createdAt": {
+            "description": "Cuándo se creó.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          },
+          "updatedAt": {
+            "description": "Cuándo cambió por última vez.",
+            "type": "string",
+            "$ref": "#/components/schemas/OffsetDateTime"
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "code",
+          "description",
+          "unitCode",
+          "unitPrice",
+          "taxes",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PublicIssuerView": {
+        "description": "Un emisor de la cuenta en el ambiente de la llave.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identificador del emisor; es el `issuerId` de los documentos.",
+            "type": "string",
+            "$ref": "#/components/schemas/UUID"
+          },
+          "environment": {
+            "description": "Ambiente del emisor, el mismo de la llave.",
+            "type": "string",
+            "$ref": "#/components/schemas/Environment"
+          },
+          "nit": {
+            "type": "string",
+            "description": "NIT sin dígito de verificación.",
+            "examples": [
+              "900999999"
+            ]
+          },
+          "checkDigit": {
+            "type": "string",
+            "description": "Dígito de verificación del NIT.",
+            "examples": [
+              "4"
+            ]
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Razón social o nombre, como figura en el RUT.",
+            "examples": [
+              "Empresa de Ejemplo SAS"
+            ]
+          },
+          "tradeName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nombre comercial, si tiene."
+          },
+          "status": {
+            "description": "Estado de configuración ante la DIAN.",
+            "type": "string",
+            "$ref": "#/components/schemas/IssuerStatus"
+          },
+          "readyToIssue": {
+            "type": "boolean",
+            "description": "Si su estado le permite emitir con esta llave."
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "nit",
+          "checkDigit",
+          "legalName",
+          "tradeName",
+          "status",
+          "readyToIssue"
+        ]
+      },
+      "TaxType": {
+        "type": "string",
+        "enum": [
+          "IVA",
+          "ICA",
+          "INC"
+        ],
+        "description": "Impuesto.\n\n- `IVA`: Impuesto al valor agregado.\n- `ICA`: Impuesto de industria y comercio.\n- `INC`: Impuesto nacional al consumo."
+      },
+      "Totals": {
+        "description": "Totales del documento.",
+        "type": "object",
+        "properties": {
+          "lineExtension": {
+            "type": "number",
+            "description": "Suma de las líneas, antes de impuestos.",
+            "examples": [
+              100000
+            ]
+          },
+          "taxExclusive": {
+            "type": "number",
+            "description": "Base sobre la que se calculan los impuestos.",
+            "examples": [
+              100000
+            ]
+          },
+          "taxInclusive": {
+            "type": "number",
+            "description": "Total con impuestos.",
+            "examples": [
+              119000
+            ]
+          },
+          "payable": {
+            "type": "number",
+            "description": "Total a pagar.",
+            "examples": [
+              119000
+            ]
+          }
+        },
+        "required": [
+          "lineExtension",
+          "taxExclusive",
+          "taxInclusive",
+          "payable"
+        ]
+      },
+      "UUID": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "cetus_<ambiente>_<40 caracteres>",
+        "description": "Llave de API creada en la consola. Su prefijo indica el ambiente: `cetus_sandbox_`\n(simulación), `cetus_test_` (pruebas de habilitación) o `cetus_live_` (producción). Se muestra\nuna sola vez; si la pierdes, revócala y crea otra.\n"
+      }
+    }
+  }
+}
