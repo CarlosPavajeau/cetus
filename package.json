@@ -8,7 +8,10 @@
     "console:check": "pnpm --filter @cetus/console check",
     "console:lint": "pnpm --filter @cetus/console lint",
     "console:format": "pnpm --filter @cetus/console format",
-    "console:test": "pnpm --filter @cetus/console test"
+    "console:test": "pnpm --filter @cetus/console test",
+    "docs:dev": "pnpm --filter @cetus/docs dev",
+    "docs:build": "pnpm --filter @cetus/docs build",
+    "docs:check": "pnpm --filter @cetus/docs check"
   },
   "devDependencies": {
     "railway": "3.16.0"

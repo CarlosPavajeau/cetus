@@ -1,0 +1,37 @@
+import type { Translations } from "fumadocs-ui/i18n";
+
+/** Fumadocs UI ships in English; the site is in Spanish. */
+export const translations: Partial<Translations> = {
+  "Back to Home(404 not found page)": "Volver al inicio",
+  "Close Search(search dialog)(aria-label)": "Cerrar la búsqueda",
+  "Close Sidebar(aria-label)": "Cerrar el menú",
+  "Close Sidebar(sidebar)(aria-label)": "Cerrar el menú",
+  "Collapse Sidebar(sidebar)(aria-label)": "Contraer el menú",
+  "Copied Anchor Link(heading anchor)(aria-label)": "Enlace copiado",
+  "Copied Text(code block)(aria-label)": "Copiado",
+  "Copy Anchor Link(heading anchor)(aria-label)": "Copiar el enlace",
+  "Copy Text(code block)(aria-label)": "Copiar",
+  "Dark(theme switcher)(aria-label)": "Oscuro",
+  "Hide Sidebar(sidebar)": "Ocultar el menú",
+  "Light(theme switcher)(aria-label)": "Claro",
+  "Next Page(pagination)": "Siguiente",
+  "No Headings(table of contents)": "Sin secciones",
+  "No results found(search dialog)": "Sin resultados",
+  "On this page(table of contents)": "En esta página",
+  "Open Search(search trigger)(aria-label)": "Buscar",
+  "Open Sidebar(aria-label)": "Abrir el menú",
+  "Open Sidebar(sidebar)(aria-label)": "Abrir el menú",
+  "Page Not Found(404 not found page)": "Página no encontrada",
+  "Previous Page(pagination)": "Anterior",
+  "Search failed(search dialog)": "La búsqueda falló",
+  "Search(search dialog)": "Buscar",
+  "Search(search trigger)": "Buscar",
+  "Show Sidebar(sidebar)": "Mostrar el menú",
+  "System(theme switcher)(aria-label)": "Sistema",
+  "Table of Contents(inline table of contents)": "Contenido",
+  "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.(404 not found page)":
+    "La página que buscas no existe o cambió de dirección.",
+  "Theme(site menu)": "Tema",
+  "Toggle Menu(home layout header)(aria-label)": "Abrir o cerrar el menú",
+  "Toggle Theme(theme switcher)(aria-label)": "Cambiar el tema",
+};
