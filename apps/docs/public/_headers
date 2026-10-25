@@ -1,0 +1,11 @@
+# Cloudflare Pages: hashed assets never change; everything else is revalidated on every visit.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# The search index, exported at build time as a file without extension.
+/api/search
+  Content-Type: application/json

@@ -23,6 +23,7 @@ cetus/
 │   ├── api/            Quarkus · public REST (/v1) and console endpoints (/console); validates, numbers, stores, enqueues
 │   ├── worker/         Quarkus · job runner: UBL, XAdES signing, DIAN submission and status, emails, webhook delivery
 │   ├── console/        TanStack Start + Better Auth · web panel (BFF to the API), owns the "auth" schema (Drizzle) and its emails
+│   ├── docs/           Fumadocs + Scalar · static public docs (guides and API reference), on Cloudflare Pages
 │   └── dian-mock/      Local stand-in for the DIAN web services; development and bench only, never deployed
 ├── modules/
 │   ├── domain/         Plain Java · model, totals, CUFE/CUDE, DIAN rules; depends on no framework
@@ -82,6 +83,11 @@ mise run fmt
 mise run fmt-check
 mise exec -- ./gradlew :modules:domain:spotlessApply
 
+# Docs site (:3001) and its public OpenAPI spec (apps/docs/public/openapi.public.json)
+mise run docs
+mise run docs-spec
+mise exec -- pnpm --filter @cetus/docs check
+
 # Console checks (lint, format, types) and tests
 mise exec -- pnpm --filter @cetus/console check
 mise exec -- pnpm --filter @cetus/console typecheck
@@ -109,6 +115,9 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
 - `OpenApiFilter` marks every member of a response schema as required; do not
   add `@Schema(required = true)`. Mark members that can be null with
   `@Schema(nullable = true)`. Requests take `required` from Bean Validation.
+- The docs site publishes only `/v1`. After changing the public API, run `mise run docs-spec` and commit
+  `openapi.public.json`; the contract workflow fails otherwise. Its texts and examples live in the API's
+  annotations and `META-INF/openapi.yaml`, in Spanish (see `apps/docs/CONTRIBUTING.md`).
 - Account emails (invitations, and later password reset and email
   verification) go out from the console (`src/lib/email`, Resend with
   react-email templates in `src/emails`), next to the `auth` data they come

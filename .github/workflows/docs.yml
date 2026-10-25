@@ -1,5 +1,5 @@
 # Checks the docs site with Vite+ (formatting, lint and types) and builds it: the build prerenders every page
-# and fails on a broken internal link.
+# and fails on a broken internal link. Each pull request also gets a preview on Cloudflare Pages.
 name: Docs
 
 on:
@@ -41,3 +41,22 @@ jobs:
 
       - name: Build the static site
         run: pnpm --filter @cetus/docs build
+
+      # Branch deployments of the Pages project are previews; production is the main branch (deploy.yml).
+      # Pull requests from forks get no secrets, so they get no preview.
+      - name: Deploy a preview
+        id: preview
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.151.1"
+          command: pages deploy apps/docs/dist/client --project-name cetus-docs --branch ${{ github.head_ref }}
+
+      - name: Link the preview
+        if: steps.preview.outcome == 'success'
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.deployment-url }}
+        run: |
+          echo "Vista previa de la documentación: $PREVIEW_URL" >> "$GITHUB_STEP_SUMMARY"
