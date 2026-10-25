@@ -10,6 +10,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.completeSetup;
 import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
 import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
+import static com.cantte.cetus.api.support.ConsoleFixtures.rangeRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -209,6 +210,75 @@ class IssuerResourceTest {
     }
 
     @Test
+    void aProductionRangeWithoutTechnicalKeyWaitsForTheDians() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Sin clave SAS");
+        String issuerId =
+                completeSetup(user, createIssuer(user, "900123456", "LIVE")).issuerId();
+        Map<String, Object> request = rangeRequest("FE");
+        request.remove("technicalKey");
+
+        String rangeId = user.request()
+                .body(request)
+                .post("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then()
+                .statusCode(200)
+                .body("hasTechnicalKey", equalTo(false))
+                .body("verificationStatus", equalTo("PENDING"))
+                .extract()
+                .path("id");
+
+        assertThat(verificationJobs(rangeId)).isEqualTo(1);
+        assertThat(technicalKeySealed(rangeId)).isNull();
+    }
+
+    @Test
+    void aHabilitacionRangeNeedsItsTechnicalKey() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Habilitacion sin clave SAS");
+        String issuerId = createIssuer(user, "900123456");
+        Map<String, Object> request = rangeRequest("SETP");
+        request.remove("technicalKey");
+
+        user.request()
+                .body(request)
+                .post("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("technical_key_required"));
+    }
+
+    @Test
+    void aMismatchedTechnicalKeyIsReplacedWithTheDians() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Clave errada SAS");
+        Onboarding onboarding = completeSetup(user, createIssuer(user, "900123456", "LIVE"));
+        String rangeId = onboarding.rangeId();
+        assertThat(detail(user, onboarding.issuerId())
+                        .getBoolean("ranges.find { it.id == '%s' }.hasTechnicalKey".formatted(rangeId)))
+                .isTrue();
+        QuarkusTransaction.requiringNew()
+                .run(() -> NumberingRangeEntity.<NumberingRangeEntity>findById(UUID.fromString(rangeId))
+                                .verificationStatus =
+                        NumberingRangeEntity.VerificationStatus.MISMATCH);
+
+        user.request()
+                .post("/console/issuers/%s/numbering-ranges/%s/technical-key-from-dian"
+                        .formatted(onboarding.issuerId(), rangeId))
+                .then()
+                .statusCode(200)
+                .body("hasTechnicalKey", equalTo(false))
+                .body("verificationStatus", equalTo("PENDING"));
+
+        assertThat(technicalKeySealed(rangeId)).isNull();
+        assertThat(verificationJobs(rangeId)).isEqualTo(2);
+        assertThat(AuditTrailTest.entries(user, "TECHNICAL_KEY_REQUESTED_FROM_DIAN"))
+                .singleElement()
+                .satisfies(entry ->
+                        assertThat(AuditTrailTest.data(entry)).isEqualTo(Map.of("rangeId", rangeId, "prefix", "SETP")));
+    }
+
+    @Test
     void habilitacionRangesAreNotVerified() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Habilitacion SAS");
@@ -227,6 +297,12 @@ class IssuerResourceTest {
         return user.request()
                 .post("/console/issuers/%s/numbering-ranges/%s/verification".formatted(issuerId, rangeId))
                 .then();
+    }
+
+    private static byte[] technicalKeySealed(String rangeId) {
+        return QuarkusTransaction.requiringNew()
+                .call(() -> NumberingRangeEntity.<NumberingRangeEntity>findById(UUID.fromString(rangeId))
+                        .technicalKeySealed);
     }
 
     private static long verificationJobs(String rangeId) {

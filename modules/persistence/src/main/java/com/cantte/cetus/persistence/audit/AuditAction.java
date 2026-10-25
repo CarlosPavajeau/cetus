@@ -10,6 +10,8 @@ public enum AuditAction {
     SOFTWARE_CREDENTIALS_SET,
     CERTIFICATE_UPLOADED,
     NUMBERING_RANGE_ADDED,
+    /** A range's technical key discarded to take the DIAN's (GetNumberingRange) instead. */
+    TECHNICAL_KEY_REQUESTED_FROM_DIAN,
     ISSUER_STATUS_CHANGED,
     ISSUER_PROMOTED,
     WEBHOOK_ENDPOINT_CREATED,

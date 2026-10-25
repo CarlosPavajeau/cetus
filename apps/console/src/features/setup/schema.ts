@@ -73,7 +73,8 @@ export const numberingSchema = type({
   to: rangeNumber,
   validFrom: isoDate,
   validTo: isoDate,
-  technicalKey: required("Pega la clave técnica de la resolución."),
+  // Empty in production: the DIAN portal does not show it, so Cetus takes it from GetNumberingRange.
+  technicalKey: "string",
 }).narrow((range, ctx) => {
   if (Number(range.from) > Number(range.to)) {
     return ctx.reject({ path: ["to"], message: "Debe ser mayor o igual al número inicial." });
@@ -86,3 +87,8 @@ export const numberingSchema = type({
 });
 
 export type NumberingValues = typeof numberingSchema.infer;
+
+/** Habilitación's test range is not in GetNumberingRange, so its key has to be copied. */
+export const habilitacionNumberingSchema = numberingSchema.and({
+  technicalKey: required("Pega la clave técnica del set de pruebas."),
+});

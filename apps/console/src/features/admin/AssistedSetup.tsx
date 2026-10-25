@@ -21,8 +21,12 @@ import { FieldGroup } from "~/components/ui/field";
 import { Spinner } from "~/components/ui/spinner";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { DateField, SecretField, TextField } from "~/features/setup/fields";
-import { emptyRange, habilitacionRange } from "~/features/setup/NumberingStep";
-import { numberingSchema, softwareSchema } from "~/features/setup/schema";
+import { emptyRange, habilitacionRange, technicalKeyHint } from "~/features/setup/NumberingStep";
+import {
+  habilitacionNumberingSchema,
+  numberingSchema,
+  softwareSchema,
+} from "~/features/setup/schema";
 import { FieldRow } from "~/features/setup/StepLayout";
 import type { IssuerDetail } from "~/lib/api/types";
 
@@ -118,7 +122,9 @@ export function RangeDialog({ ids, issuer }: { ids: Ids; issuer: IssuerDetail })
   const [open, setOpen] = useState(false);
   const invalidate = useInvalidateAdmin();
   const form = useForm({
-    resolver: arktypeResolver(numberingSchema),
+    resolver: arktypeResolver(
+      issuer.environment === "TEST" ? habilitacionNumberingSchema : numberingSchema,
+    ),
     defaultValues: issuer.environment === "TEST" ? habilitacionRange : emptyRange,
   });
   const add = useMutation({ mutationFn: addAdminRange });
@@ -172,7 +178,12 @@ export function RangeDialog({ ids, issuer }: { ids: Ids; issuer: IssuerDetail })
               <DateField control={form.control} name="validFrom" label="Vigencia desde" />
               <DateField control={form.control} name="validTo" label="Vigencia hasta" />
             </FieldRow>
-            <SecretField control={form.control} name="technicalKey" label="Clave técnica" />
+            <SecretField
+              control={form.control}
+              name="technicalKey"
+              label={issuer.environment === "TEST" ? "Clave técnica" : "Clave técnica (opcional)"}
+              hint={issuer.environment === "TEST" ? technicalKeyHint.TEST : technicalKeyHint.LIVE}
+            />
           </FieldGroup>
           <RootError message={form.formState.errors.root?.message} />
           <DialogFooter>

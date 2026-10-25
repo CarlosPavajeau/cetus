@@ -155,6 +155,12 @@ public class ProcessDocumentHandler implements JobHandler {
             return sandbox.secrets(ctx.issuerId());
         }
         String pin = cipher.openText(ctx.pinSealed());
+        // Retried until the range verification brings the DIAN's key: without it the CUFE would be invalid.
+        if (ctx.documentType() == DocumentType.INVOICE
+                && ctx.environment() == Environment.LIVE
+                && ctx.technicalKeySealed() == null) {
+            throw new IllegalStateException("The numbering range is still waiting for its technical key from the DIAN");
+        }
         String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());
         return new DocumentSecrets(pin, technicalKey);
     }

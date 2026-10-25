@@ -9,6 +9,7 @@ export const actionLabel: Record<AuditAction, string> = {
   SOFTWARE_CREDENTIALS_SET: "Software DIAN configurado",
   CERTIFICATE_UPLOADED: "Certificado cargado",
   NUMBERING_RANGE_ADDED: "Rango de numeración agregado",
+  TECHNICAL_KEY_REQUESTED_FROM_DIAN: "Clave técnica pedida a la DIAN",
   ISSUER_STATUS_CHANGED: "Estado del emisor cambiado",
   ISSUER_PROMOTED: "Emisor pasado a producción",
   WEBHOOK_ENDPOINT_CREATED: "Webhook registrado",

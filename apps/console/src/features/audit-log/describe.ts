@@ -78,6 +78,8 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
         : text(data.subject);
     case "NUMBERING_RANGE_ADDED":
       return `${label(documentTypeLabel, data.documentType)} ${text(data.prefix)}${text(data.from)} a ${text(data.prefix)}${text(data.to)}`;
+    case "TECHNICAL_KEY_REQUESTED_FROM_DIAN":
+      return `Rango de factura ${text(data.prefix) || "sin prefijo"}`;
     case "ISSUER_STATUS_CHANGED":
       return `${label(issuerStatusLabel, data.from)} → ${label(issuerStatusLabel, data.to)}`;
     case "ISSUER_PROMOTED":

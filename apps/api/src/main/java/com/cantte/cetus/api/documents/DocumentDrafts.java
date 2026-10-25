@@ -104,6 +104,11 @@ public class DocumentDrafts {
         NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, now.toLocalDate())
                 .orElseThrow(() -> new DomainException(
                         "no_active_numbering_range", "The issuer has no active numbering range for " + label(type)));
+        if (type == DocumentType.INVOICE && environment == Environment.LIVE && range.technicalKeySealed == null) {
+            throw new DomainException(
+                    "technical_key_pending",
+                    "The numbering range is waiting for its technical key from the DIAN; try again in a few minutes");
+        }
 
         DocumentEntity doc = new DocumentEntity();
         doc.id = Ids.newId();

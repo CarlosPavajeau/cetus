@@ -82,6 +82,27 @@ const verificationMessages: Record<string, string> = {
   range_not_verifiable: "Solo los rangos de factura están autorizados por la DIAN.",
 };
 
+/** Discards an invoice range's technical key so the worker takes the DIAN's (GetNumberingRange). */
+export const requestDianTechnicalKey = createServerFn({ method: "POST" })
+  .validator(type({ id: "string.uuid", rangeId: "string.uuid" }))
+  .handler(async ({ data }) => {
+    try {
+      return await api.post(
+        "/console/issuers/{id}/numbering-ranges/{rangeId}/technical-key-from-dian",
+        { params: { path: { id: data.id, rangeId: data.rangeId } } },
+      );
+    } catch (error) {
+      if (error instanceof CetusApiError) {
+        throw new Error(
+          verificationMessages[error.code] ??
+            "No pudimos pedir la clave a la DIAN. Inténtalo de nuevo en unos minutos.",
+          { cause: error },
+        );
+      }
+      throw error;
+    }
+  });
+
 /** Asks the worker to compare an invoice range with the DIAN's record (GetNumberingRange) again. */
 export const verifyRange = createServerFn({ method: "POST" })
   .validator(type({ id: "string.uuid", rangeId: "string.uuid" }))

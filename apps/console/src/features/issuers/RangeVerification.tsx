@@ -1,13 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { RefreshCwIcon } from "lucide-react";
+import { KeyRoundIcon, RefreshCwIcon } from "lucide-react";
+import { useState } from "react";
 
+import { Alert, AlertDescription } from "~/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
 import { type BadgeStatus, StatusBadge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import type { IssuerDetail, NumberingRange } from "~/lib/api/types";
 
-import { verifyRange } from "./server";
+import { requestDianTechnicalKey, verifyRange } from "./server";
 
 type Status = NonNullable<NumberingRange["verificationStatus"]>;
 
@@ -85,6 +98,74 @@ export function RangeVerification({
           {verify.isPending ? <Spinner /> : <RefreshCwIcon />}
         </Button>
       )}
+      {!readOnly && status === "MISMATCH" && (
+        <TechnicalKeyFromDian issuerId={issuerId} rangeId={range.id} />
+      )}
     </div>
+  );
+}
+
+/**
+ * Replaces the range's technical key with the DIAN's. The DIAN portal does not show the key, so a typed one
+ * is easily something else, such as the software code.
+ */
+function TechnicalKeyFromDian({ issuerId, rangeId }: { issuerId: string; rangeId: string }) {
+  const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const request = useMutation({
+    mutationFn: requestDianTechnicalKey,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["issuers", issuerId] });
+      setOpen(false);
+    },
+  });
+  const pending = request.isPending;
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        request.reset();
+      }}
+    >
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Usar la clave técnica de la DIAN"
+            title="Usar la clave técnica de la DIAN"
+          />
+        }
+      >
+        <KeyRoundIcon />
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Usar la clave técnica de la DIAN?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Reemplazaremos la clave técnica de este rango por la que la DIAN tiene registrada para
+            tu software y prefijo. Mientras la consultamos, que suele tardar unos segundos, este
+            rango no emite facturas.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {request.error && (
+          <Alert variant="destructive">
+            <AlertDescription>{request.error.message}</AlertDescription>
+          </Alert>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => request.mutate({ data: { id: issuerId, rangeId } })}
+            disabled={pending}
+          >
+            {pending && <Spinner data-icon="inline-start" />}
+            Usar la clave de la DIAN
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

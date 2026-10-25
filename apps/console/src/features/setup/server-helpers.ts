@@ -61,6 +61,6 @@ export function rangeBody(range: NumberingValues) {
     to: Number(range.to),
     validFrom: range.validFrom,
     validTo: range.validTo,
-    technicalKey: range.technicalKey.trim(),
+    technicalKey: range.technicalKey.trim() || undefined,
   };
 }

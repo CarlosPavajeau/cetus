@@ -269,7 +269,10 @@ public final class IssuerViews {
             @Schema(nullable = true) OffsetDateTime verifiedAt,
 
             @Schema(nullable = true, description = "What differs from the DIAN, or why it could not be checked")
-            String verificationError) {
+            String verificationError,
+
+            @Schema(description = "Whether the range has its technical key; never the key itself")
+            boolean hasTechnicalKey) {
         public static NumberingRangeView from(NumberingRangeEntity range) {
             return new NumberingRangeView(
                     range.id,
@@ -282,7 +285,8 @@ public final class IssuerViews {
                     range.status,
                     range.verificationStatus,
                     range.verifiedAt,
-                    range.verificationError);
+                    range.verificationError,
+                    range.technicalKeySealed != null);
         }
     }
 }

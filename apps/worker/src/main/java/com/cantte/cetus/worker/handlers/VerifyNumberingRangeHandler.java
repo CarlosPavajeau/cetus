@@ -32,7 +32,8 @@ import org.jboss.logging.Logger;
 /**
  * Compares an invoice range with the DIAN's record of it (GetNumberingRange): prefix, numbers, validity and
  * technical key. A typo in the technical key makes every CUFE invalid, so this runs before the issuer
- * invoices; a difference is shown in the console and raised as an operational alert.
+ * invoices; a difference is shown in the console and raised as an operational alert. The DIAN portal does not
+ * show the technical key, so a range saved without one takes the DIAN's.
  */
 @ApplicationScoped
 public class VerifyNumberingRangeHandler implements JobHandler {
@@ -77,22 +78,30 @@ public class VerifyNumberingRangeHandler implements JobHandler {
             record(
                     job.referenceId,
                     VerificationStatus.ERROR,
-                    "La DIAN respondió %s: %s".formatted(response.operationCode(), response.operationDescription()));
+                    "La DIAN respondió %s: %s".formatted(response.operationCode(), response.operationDescription()),
+                    null);
             return;
         }
+        byte[] technicalKeySealed = target.technicalKey() == null
+                ? response.find(target.prefix(), target.resolutionNumber())
+                        .map(NumberingRangeResponse.Range::technicalKey)
+                        .filter(key -> !key.isBlank())
+                        .map(cipher::sealText)
+                        .orElse(null)
+                : null;
         List<String> differences = differences(target, response);
         if (differences.isEmpty()) {
             LOG.infof("Numbering range %s matches the DIAN", job.referenceId);
-            record(job.referenceId, VerificationStatus.VERIFIED, null);
+            record(job.referenceId, VerificationStatus.VERIFIED, null, technicalKeySealed);
         } else {
             LOG.warnf("Numbering range %s differs from the DIAN: %s", job.referenceId, differences);
-            record(job.referenceId, VerificationStatus.MISMATCH, String.join("; ", differences));
+            record(job.referenceId, VerificationStatus.MISMATCH, String.join("; ", differences), technicalKeySealed);
         }
     }
 
     @Override
     public void onDead(JobEntity job, String reason) {
-        record(job.referenceId, VerificationStatus.ERROR, "No se pudo consultar a la DIAN: " + reason);
+        record(job.referenceId, VerificationStatus.ERROR, "No se pudo consultar a la DIAN: " + reason, null);
     }
 
     private Target load(UUID rangeId) {
@@ -145,6 +154,10 @@ public class VerifyNumberingRangeHandler implements JobHandler {
             // Never the keys themselves: they end up in the console and in emails.
             differences.add("la clave técnica no coincide con la de la DIAN");
         }
+        if (target.technicalKey() == null
+                && (dianRange.technicalKey() == null || dianRange.technicalKey().isBlank())) {
+            differences.add("la DIAN no devolvió la clave técnica de este rango");
+        }
         return differences;
     }
 
@@ -165,11 +178,14 @@ public class VerifyNumberingRangeHandler implements JobHandler {
         }
     }
 
-    private static void record(UUID rangeId, VerificationStatus status, String error) {
+    private static void record(UUID rangeId, VerificationStatus status, String error, byte[] technicalKeySealed) {
         QuarkusTransaction.requiringNew().run(() -> {
             NumberingRangeEntity range = NumberingRangeEntity.findById(rangeId);
             if (range == null) {
                 return;
+            }
+            if (technicalKeySealed != null && range.technicalKeySealed == null) {
+                range.technicalKeySealed = technicalKeySealed;
             }
             range.verificationStatus = status;
             range.verificationError = error;

@@ -106,6 +106,34 @@ class InvoiceResourceTest {
     }
 
     @Test
+    void aProductionRangeWaitingForItsTechnicalKeyIssuesNoInvoices() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Clave pendiente SAS");
+        ConsoleFixtures.Onboarding live =
+                ConsoleFixtures.completeSetup(user, ConsoleFixtures.createIssuer(user, "900123456", "LIVE"));
+        user.request()
+                .post("/console/issuers/%s/numbering-ranges/%s/technical-key-from-dian"
+                        .formatted(live.issuerId(), live.rangeId()))
+                .then()
+                .statusCode(200);
+        String liveKey = user.request()
+                .body(Map.of("name", "ERP", "environment", "LIVE"))
+                .post("/console/api-keys")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
+
+        api(liveKey)
+                .header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoice(live.issuerId()))
+                .post("/v1/invoices")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("technical_key_pending"));
+    }
+
+    @Test
     void theIssuerCanBeLeftOutWhenOnlyOneCanIssue() {
         ConsoleUser user = ConsoleUser.newOrganization();
         ConsoleFixtures.bootstrap(user, "Single issuer SAS");

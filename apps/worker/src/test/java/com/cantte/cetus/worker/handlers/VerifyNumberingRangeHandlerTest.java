@@ -83,6 +83,35 @@ class VerifyNumberingRangeHandlerTest {
     }
 
     @Test
+    void aRangeWithoutTechnicalKeyTakesTheDians() {
+        UUID registered = range(r -> {});
+        UUID rangeId = range(r -> r.technicalKeySealed = null);
+        dian.reply(OPERATION, Reply.fixture("get-numbering-range.xml"));
+
+        handler.handle(job(rangeId));
+
+        NumberingRangeEntity range = load(rangeId);
+        assertThat(range.verificationStatus).isEqualTo(VerificationStatus.VERIFIED);
+        assertThat(cipher.openText(range.technicalKeySealed))
+                .isEqualTo(cipher.openText(load(registered).technicalKeySealed));
+    }
+
+    @Test
+    void aRangeWithoutTechnicalKeyTheDianDoesNotHaveKeepsItEmpty() {
+        UUID rangeId = range(r -> {
+            r.technicalKeySealed = null;
+            r.prefix = "FE";
+        });
+        dian.reply(OPERATION, Reply.fixture("get-numbering-range.xml"));
+
+        handler.handle(job(rangeId));
+
+        NumberingRangeEntity range = load(rangeId);
+        assertThat(range.verificationStatus).isEqualTo(VerificationStatus.MISMATCH);
+        assertThat(range.technicalKeySealed).isNull();
+    }
+
+    @Test
     void differentNumbersAndAnUnknownPrefixAreMismatches() {
         UUID numbers = range(r -> r.rangeTo = 990000100);
         UUID prefix = range(r -> r.prefix = "FE");
