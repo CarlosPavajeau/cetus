@@ -1,0 +1,466 @@
+openapi: 3.1.0
+info:
+  title: Cetus API
+  version: v1
+  summary: Facturación electrónica ante la DIAN por API.
+  description: |
+    Emite facturas, notas crédito y notas débito electrónicas ante la DIAN de Colombia. Cetus valida
+    cada documento, lo numera, genera el XML UBL 2.1, lo firma, lo envía a la DIAN y lo entrega a tu
+    cliente por correo.
+
+    **Autenticación.** Envía tu llave en `Authorization: Bearer <llave>`. Las llaves se crean en la
+    consola, en *Llaves de API*.
+
+    **Ambientes.** La llave define el ambiente, no la URL:
+
+    - `cetus_sandbox_…`: simulación. Nada llega a la DIAN; cada cuenta trae un emisor de ejemplo listo
+      para emitir.
+    - `cetus_test_…`: pruebas de habilitación ante la DIAN.
+    - `cetus_live_…`: producción, con validez fiscal.
+
+    **Procesamiento asíncrono.** Crear un documento responde `202` con estado `RECEIVED`. Consulta su
+    estado con el `GET` correspondiente o recibe un webhook cuando la DIAN responda.
+
+    **Errores.** Todo error responde `application/problem+json` (RFC 9457). Decide según `code`, que es
+    estable; `detail` es para personas.
+  contact:
+    name: Cetus
+    email: contact@cantte.com
+servers:
+  - url: https://cetus-api.cantte.com
+    description: Producción. El ambiente lo define la llave.
+tags:
+  - name: Facturas
+    description: Facturas electrónicas de venta. Se numeran con el rango activo del emisor.
+  - name: Notas crédito
+    description: Anulan o disminuyen el valor de una factura aceptada por la DIAN.
+  - name: Notas débito
+    description: Aumentan el valor de una factura aceptada por la DIAN, por ejemplo con intereses o gastos.
+  - name: Emisores
+    description: |
+      Las empresas o personas que facturan con tu cuenta en el ambiente de la llave. Si solo uno puede
+      emitir, los documentos lo toman sin enviar `issuerId`.
+  - name: Clientes
+    description: |
+      Clientes guardados para completar el adquiriente. Cada documento guarda su propia copia del
+      adquiriente: cambiar un cliente no altera lo ya emitido.
+  - name: Productos
+    description: |
+      Productos y servicios guardados para completar las líneas. Las líneas siguen enviando descripción,
+      precio e impuestos completos: el catálogo no se referencia desde los documentos.
+components:
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      bearerFormat: cetus_<ambiente>_<40 caracteres>
+      description: |
+        Llave de API creada en la consola. Su prefijo indica el ambiente: `cetus_sandbox_`
+        (simulación), `cetus_test_` (pruebas de habilitación) o `cetus_live_` (producción). Se muestra
+        una sola vez; si la pierdes, revócala y crea otra.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Identificador único que eliges para esta emisión, por ejemplo un UUID o el número de tu pedido.
+        Si la petición falla por red y la repites con la misma llave, Cetus devuelve el documento ya
+        creado en lugar de emitir otro. Vale por cuenta y ambiente.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+      example: 6f1c2a3e-4b5d-4e6f-8a9b-0c1d2e3f4a5b
+    DocumentId:
+      name: id
+      in: path
+      required: true
+      description: El `id` que devolvió la creación del documento.
+      schema:
+        type: string
+        format: uuid
+    DocumentFile:
+      name: file
+      in: path
+      required: true
+      description: |
+        - `xml`: el XML firmado, tal como lo validó la DIAN.
+        - `pdf`: la representación gráfica.
+        - `attached-document`: el AttachedDocument que recibe el cliente, con el XML y la respuesta de la DIAN.
+      schema:
+        type: string
+        enum: [xml, pdf, attached-document]
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  headers:
+    X-Request-Id:
+      description: Identificador de la petición. Inclúyelo al pedir soporte.
+      schema:
+        type: string
+    Idempotent-Replayed:
+      description: "`true` cuando la respuesta es la guardada para esta `Idempotency-Key`."
+      schema:
+        type: string
+        enum: ["true"]
+    Retry-After:
+      description: Segundos que debes esperar antes de reintentar.
+      schema:
+        type: integer
+  responses:
+    BadRequest:
+      description: |
+        `invalid_request`: el cuerpo no es JSON válido, no corresponde al contrato o algún campo no cumple
+        sus reglas. `errors` dice qué campo y por qué.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+          examples:
+            invalid_request:
+              $ref: "#/components/examples/InvalidRequestProblem"
+    Unauthorized:
+      description: "`unauthorized`: falta el encabezado `Authorization` o la llave no existe o fue revocada."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "`account_suspended`: la cuenta está suspendida y sus llaves no pueden operar."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: |
+        `not_found`: no existe en el ambiente de la llave. Un recurso de otro ambiente tampoco se encuentra.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    FileNotFound:
+      description: |
+        `not_found`: el documento no existe en el ambiente de la llave. `file_not_available`: el archivo
+        todavía no existe; el XML y el PDF aparecen cuando la DIAN acepta el documento.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: |
+        `idempotency_in_progress`: otra petición con la misma `Idempotency-Key` todavía se está
+        procesando. Reintenta en unos segundos.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    InvoiceRejected:
+      description: |
+        La factura no se puede emitir:
+
+        - `idempotency_mismatch`: la `Idempotency-Key` ya se usó con un cuerpo distinto.
+        - `issuer_not_found`, `issuer_required`: no hay emisor que pueda emitir, o hay varios y falta `issuerId`.
+        - `issuer_not_ready`, `issuer_missing_software`, `issuer_missing_certificate`: el emisor no está
+          habilitado o le falta configuración.
+        - `no_active_numbering_range`: el emisor no tiene un rango de numeración vigente.
+        - `customer_identification_invalid`, `customer_check_digit_invalid`: la identificación del
+          adquiriente no tiene el formato de su tipo o el dígito de verificación no corresponde.
+        - `payment_due_date_required`: un pago a crédito necesita `dueDate`.
+        - `lines_required`, `line_description_required`, `line_quantity_invalid`, `line_price_invalid`,
+          `line_tax_invalid`, `amount_too_large`: alguna línea o el total no es válido.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+          examples:
+            issuer_required:
+              $ref: "#/components/examples/IssuerRequiredProblem"
+    CorrectionRejected:
+      description: |
+        La nota no se puede emitir:
+
+        - `idempotency_mismatch`: la `Idempotency-Key` ya se usó con un cuerpo distinto.
+        - `invoice_not_accepted`: la factura todavía no está aceptada por la DIAN.
+        - `credit_note_exceeds_balance`: la nota crédito supera el saldo que le queda a la factura.
+        - `credit_note_lines_required`: solo una anulación (`CANCELLATION`) puede omitir las líneas.
+        - `issuer_not_ready`, `issuer_missing_software`, `issuer_missing_certificate`,
+          `no_active_numbering_range`: el emisor no puede emitir este tipo de documento.
+        - `lines_required`, `line_description_required`, `line_quantity_invalid`, `line_price_invalid`,
+          `line_tax_invalid`, `amount_too_large`: alguna línea o el total no es válido.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    CustomerRejected:
+      description: |
+        - `customer_exists`: ya hay un cliente con ese tipo y número de identificación.
+        - `customer_identification_invalid`, `customer_check_digit_invalid`: la identificación no tiene
+          el formato de su tipo o el dígito de verificación no corresponde.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    ProductRejected:
+      description: "`product_exists`: ya hay un producto con ese código."
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    TooManyRequests:
+      description: |
+        `rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan. Espera los
+        segundos de `Retry-After`.
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/Retry-After"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    TooManyDocuments:
+      description: |
+        `rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan.
+        `sandbox_daily_limit`: la cuenta ya emitió los documentos de simulación del día; el límite se
+        reinicia a medianoche, hora de Colombia. En ambos casos, espera los segundos de `Retry-After`.
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/Retry-After"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+  examples:
+    MinimalInvoice:
+      summary: Factura mínima a un consumidor final
+      description: |
+        Sin `issuerId`: la toma del único emisor que puede emitir con la llave, como el emisor de ejemplo
+        del sandbox.
+      value:
+        customer:
+          personType: NATURAL_PERSON
+          identificationType: CITIZEN_ID
+          identificationNumber: "1020304050"
+          legalName: Consumidor Final
+        payment:
+          method: CASH
+          meansCode: "10"
+        lines:
+          - itemCode: SERV-1
+            description: Servicio de consultoría
+            quantity: 1
+            unitPrice: 100000
+            taxes:
+              - type: IVA
+                percent: 19
+    CompanyCreditInvoice:
+      summary: Factura a crédito a una empresa
+      value:
+        issuerId: 0199f6a2-5b1c-7c3e-9a51-2f8d4c6e7a10
+        externalReference: PED-2041
+        customer:
+          personType: LEGAL_ENTITY
+          identificationType: NIT
+          identificationNumber: "900123456"
+          checkDigit: "8"
+          legalName: Distribuidora Andina SAS
+          taxLevelCodes:
+            - O-13
+          taxScheme: IVA
+          address:
+            municipalityCode: "11001"
+            cityName: Bogotá, D.C.
+            departmentCode: "11"
+            departmentName: Bogotá
+            postalCode: "110111"
+            line: "Calle 93 # 11-26"
+          email: facturas@andina.example
+        payment:
+          method: CREDIT
+          meansCode: "42"
+          dueDate: "2026-11-30"
+        lines:
+          - itemCode: PROD-001
+            description: Caja de guantes de nitrilo
+            quantity: 10
+            unitCode: "94"
+            unitPrice: 25000
+            taxes:
+              - type: IVA
+                percent: 19
+          - itemCode: SERV-ENVIO
+            description: Envío
+            quantity: 1
+            unitPrice: 12000
+        notes:
+          - Pedido 2041
+    InvoiceReceived:
+      summary: Factura recibida
+      value:
+        id: 0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01
+        environment: SANDBOX
+        issuerId: 0199f6a2-5b1c-7c3e-9a51-2f8d4c6e7a10
+        number: SIM1
+        status: RECEIVED
+        cufe: null
+        issueDate: "2026-10-25"
+        currency: COP
+        totals:
+          lineExtension: 100000.00
+          taxExclusive: 100000.00
+          taxInclusive: 119000.00
+          payable: 119000.00
+        dian:
+          statusCode: null
+          statusMessage: null
+          errors: []
+          validatedAt: null
+        externalReference: null
+        createdAt: "2026-10-25T15:15:30.123Z"
+        creditNotes: []
+        debitNotes: []
+        balance: 119000.00
+        deliveries: []
+    InvoiceAccepted:
+      summary: Factura aceptada por la DIAN
+      value:
+        id: 0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01
+        environment: SANDBOX
+        issuerId: 0199f6a2-5b1c-7c3e-9a51-2f8d4c6e7a10
+        number: SIM1
+        status: ACCEPTED
+        cufe: 3f1a9c0e8b7d6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d
+        issueDate: "2026-10-25"
+        currency: COP
+        totals:
+          lineExtension: 100000.00
+          taxExclusive: 100000.00
+          taxInclusive: 119000.00
+          payable: 119000.00
+        dian:
+          statusCode: "00"
+          statusMessage: Procesado Correctamente.
+          errors: []
+          validatedAt: "2026-10-25T15:15:32.481Z"
+        externalReference: null
+        createdAt: "2026-10-25T15:15:30.123Z"
+        creditNotes: []
+        debitNotes: []
+        balance: 119000.00
+        deliveries:
+          - id: 0199f6b0-1c4d-7e52-9b6a-0f1e2d3c4b5a
+            channel: EMAIL
+            recipient: cliente@example.com
+            status: DELIVERED
+            error: null
+            sentAt: "2026-10-25T15:15:33.010Z"
+            lastEventAt: "2026-10-25T15:15:35.200Z"
+    CancellationCreditNote:
+      summary: Anulación total de una factura
+      description: Una anulación sin líneas acredita la factura completa.
+      value:
+        invoiceId: 0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01
+        concept: CANCELLATION
+        description: Factura emitida por error
+    PartialReturnCreditNote:
+      summary: Devolución parcial
+      value:
+        invoiceId: 0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01
+        concept: PARTIAL_RETURN
+        description: El cliente devolvió dos cajas
+        lines:
+          - itemCode: PROD-001
+            description: Caja de guantes de nitrilo
+            quantity: 2
+            unitPrice: 25000
+            taxes:
+              - type: IVA
+                percent: 19
+    InterestDebitNote:
+      summary: Intereses por mora
+      value:
+        invoiceId: 0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01
+        concept: INTEREST
+        description: Intereses por pago tardío
+        lines:
+          - itemCode: INT-MORA
+            description: Intereses de mora de noviembre
+            quantity: 1
+            unitPrice: 3500
+    Product:
+      summary: Producto con IVA del 19 %
+      value:
+        code: PROD-001
+        description: Caja de guantes de nitrilo
+        unitCode: "94"
+        unitPrice: 25000
+        taxes:
+          - type: IVA
+            percent: 19
+    Customer:
+      summary: Empresa responsable de IVA
+      value:
+        personType: LEGAL_ENTITY
+        identificationType: NIT
+        identificationNumber: "900123456"
+        checkDigit: "8"
+        legalName: Distribuidora Andina SAS
+        taxLevelCodes:
+          - O-13
+        taxScheme: IVA
+        address:
+          municipalityCode: "11001"
+          cityName: Bogotá, D.C.
+          departmentCode: "11"
+          departmentName: Bogotá
+          line: "Calle 93 # 11-26"
+        email: facturas@andina.example
+    InvalidRequestProblem:
+      summary: Campo inválido
+      value:
+        type: about:blank
+        title: Bad Request
+        status: 400
+        detail: The request is invalid
+        instance: /v1/invoices
+        code: invalid_request
+        errors:
+          - field: lines[0].quantity
+            message: must be greater than 0
+    IssuerRequiredProblem:
+      summary: Falta el emisor
+      value:
+        type: about:blank
+        title: Unprocessable Entity
+        status: 422
+        detail: The account has several issuers in the SANDBOX environment; send issuerId
+        instance: /v1/invoices
+        code: issuer_required

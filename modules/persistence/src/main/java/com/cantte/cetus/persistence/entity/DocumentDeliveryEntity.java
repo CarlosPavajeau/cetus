@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /** Hand-over of a validated document (AttachedDocument + PDF) to its customer. */
 @Entity
@@ -27,6 +28,7 @@ public class DocumentDeliveryEntity extends PanacheEntityBase {
      * COMPLAINED. SKIPPED (nothing to send to) and FAILED (the provider refused it) tell the integrator to
      * deliver the document by other means.
      */
+    @Schema(name = "DeliveryStatus")
     public enum Status {
         PENDING,
         SENT,

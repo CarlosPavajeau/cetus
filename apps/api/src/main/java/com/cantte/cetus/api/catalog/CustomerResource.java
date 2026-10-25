@@ -3,7 +3,6 @@ package com.cantte.cetus.api.catalog;
 import com.cantte.cetus.api.auth.ApiPrincipal;
 import com.cantte.cetus.api.catalog.CatalogViews.CustomerPage;
 import com.cantte.cetus.api.catalog.CatalogViews.CustomerView;
-import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.api.invoices.InvoiceRequest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -23,9 +22,15 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.ExampleObject;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 /**
  * Customers saved to fill in invoices, in the key's environment. An invoice still sends its customer in
@@ -33,21 +38,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
  */
 @Path("/v1/customers")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(
-        responseCode = "400",
-        description = "Bad Request",
-        content =
-                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(
-        responseCode = "404",
-        description = "Not Found",
-        content =
-                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(
-        responseCode = "422",
-        description = "Unprocessable Entity",
-        content =
-                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@Tag(name = "Clientes")
+@SecurityRequirement(name = "apiKey")
+@APIResponse(responseCode = "401", ref = "Unauthorized")
+@APIResponse(responseCode = "403", ref = "Forbidden")
+@APIResponse(responseCode = "429", ref = "TooManyRequests")
 public class CustomerResource {
 
     @Inject
@@ -56,38 +51,57 @@ public class CustomerResource {
     @Inject
     Catalog catalog;
 
-    /**
-     * Newest first: pass the previous page's {@code nextCursor} as {@code before}. {@code q} matches
-     * the name or the identification.
-     */
     @GET
     @Transactional
-    @APIResponse(responseCode = "200", description = "OK")
+    @Operation(
+            summary = "Listar los clientes",
+            description = "Del más reciente al más antiguo, por páginas: para la siguiente, envía el `nextCursor` "
+                    + "de la anterior como `before`. `q` busca en el nombre o la identificación.")
+    @APIResponse(responseCode = "200", description = "Una página de clientes.")
+    @APIResponse(responseCode = "400", ref = "BadRequest")
     public CustomerPage list(
-            @QueryParam("q") @Size(max = 200) @Pattern(regexp = "[^\\p{Cntrl}]*") String q,
-            @QueryParam("before") UUID before,
-            @QueryParam("limit") @DefaultValue("50") int limit) {
+            @Parameter(description = "Texto a buscar.")
+                    @QueryParam("q")
+                    @Size(max = 200)
+                    @Pattern(regexp = "[^\\p{Cntrl}]*")
+                    String q,
+            @Parameter(description = "El `nextCursor` de la página anterior.") @QueryParam("before") UUID before,
+            @Parameter(description = "Cuántos clientes devolver, hasta 100.") @QueryParam("limit") @DefaultValue("50")
+                    int limit) {
         return catalog.customers(principal.accountId(), principal.environment(), q, before, limit);
     }
 
     @GET
     @Path("/{id}")
     @Transactional
-    @APIResponse(responseCode = "200", description = "OK")
-    public CustomerView get(@PathParam("id") UUID id) {
+    @Operation(summary = "Consultar un cliente")
+    @APIResponse(responseCode = "200", description = "El cliente.")
+    @APIResponse(responseCode = "404", ref = "NotFound")
+    public CustomerView get(@Parameter(ref = "ResourceId") @PathParam("id") UUID id) {
         return catalog.customer(principal.accountId(), principal.environment(), id);
     }
 
     @POST
     @Transactional
+    @Operation(summary = "Crear un cliente")
+    @APIResponse(responseCode = "400", ref = "BadRequest")
+    @APIResponse(responseCode = "422", ref = "CustomerRejected")
     @APIResponse(
             responseCode = "201",
-            description = "Created",
+            description = "El cliente creado.",
             content =
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             schema = @Schema(implementation = CustomerView.class)))
-    public Response create(@Valid @NotNull InvoiceRequest.Customer request) {
+    public Response create(
+            @RequestBody(
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.APPLICATION_JSON,
+                                            examples = @ExampleObject(name = "cliente", ref = "Customer")))
+                    @Valid
+                    @NotNull
+                    InvoiceRequest.Customer request) {
         return Response.status(201)
                 .entity(catalog.createCustomer(principal.accountId(), principal.environment(), request))
                 .build();
@@ -96,16 +110,26 @@ public class CustomerResource {
     @PUT
     @Path("/{id}")
     @Transactional
-    @APIResponse(responseCode = "200", description = "OK")
-    public CustomerView update(@PathParam("id") UUID id, @Valid @NotNull InvoiceRequest.Customer request) {
+    @Operation(
+            summary = "Reemplazar un cliente",
+            description = "Reemplaza todos sus datos; lo que no se envíe queda vacío. No cambia los documentos ya "
+                    + "emitidos.")
+    @APIResponse(responseCode = "200", description = "El cliente actualizado.")
+    @APIResponse(responseCode = "400", ref = "BadRequest")
+    @APIResponse(responseCode = "404", ref = "NotFound")
+    @APIResponse(responseCode = "422", ref = "CustomerRejected")
+    public CustomerView update(
+            @Parameter(ref = "ResourceId") @PathParam("id") UUID id, @Valid @NotNull InvoiceRequest.Customer request) {
         return catalog.updateCustomer(principal.accountId(), principal.environment(), id, request);
     }
 
     @DELETE
     @Path("/{id}")
     @Transactional
-    @APIResponse(responseCode = "204", description = "No Content")
-    public Response delete(@PathParam("id") UUID id) {
+    @Operation(summary = "Eliminar un cliente", description = "No afecta los documentos ya emitidos.")
+    @APIResponse(responseCode = "204", description = "Eliminado.")
+    @APIResponse(responseCode = "404", ref = "NotFound")
+    public Response delete(@Parameter(ref = "ResourceId") @PathParam("id") UUID id) {
         catalog.deleteCustomer(principal.accountId(), principal.environment(), id);
         return Response.noContent().build();
     }

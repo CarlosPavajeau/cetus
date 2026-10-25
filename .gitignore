@@ -40,3 +40,6 @@ playwright-report/
 # Benchmark output (bench/README.md)
 bench/results/
 bench/.state.json
+
+# Docs: generated from the public spec at build time
+apps/docs/public/cetus.postman_collection.json

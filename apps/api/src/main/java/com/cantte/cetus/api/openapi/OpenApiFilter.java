@@ -45,6 +45,7 @@ public class OpenApiFilter implements OASFilter {
                 .getProperties()
                 .get("postalCode")
                 .addType(Schema.SchemaType.NULL);
+        SchemaDescriptions.apply(schemas);
         requireResponseMembers(openAPI, schemas);
     }
 

@@ -35,7 +35,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
   Sidebar,
@@ -59,6 +59,7 @@ import { SandboxBanner } from "~/features/environment/SandboxBanner";
 import { EmailVerificationBanner } from "~/features/session/EmailVerificationBanner";
 import { requireMembership } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
+import { docsUrl } from "~/lib/docs";
 import { cn } from "~/lib/utils";
 
 /** Protected layout: every child route requires a session. */
@@ -237,12 +238,17 @@ function AppLayout() {
           </Breadcrumb>
           <div className="ml-auto flex items-center gap-2">
             <EnvironmentSelect />
-            {/* Placeholders until the documentation and help center exist. */}
-            <Button variant="ghost" size="sm" className="max-sm:hidden" disabled>
+            <a
+              href={docsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "max-sm:hidden")}
+            >
               <BookOpenIcon data-icon="inline-start" />
               Documentación
               <ArrowUpRightIcon data-icon="inline-end" />
-            </Button>
+            </a>
+            {/* Placeholder until the help center exists. */}
             <Button variant="ghost" size="icon-sm" disabled>
               <CircleHelpIcon />
               <span className="sr-only">Ayuda</span>

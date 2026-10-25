@@ -3,7 +3,6 @@ package com.cantte.cetus.api.catalog;
 import com.cantte.cetus.api.auth.ApiPrincipal;
 import com.cantte.cetus.api.catalog.CatalogViews.ProductPage;
 import com.cantte.cetus.api.catalog.CatalogViews.ProductView;
-import com.cantte.cetus.api.error.ProblemDetail;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -22,9 +21,15 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.UUID;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.ExampleObject;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 /**
  * Products and services saved to fill in the lines of invoices and notes, in the key's environment. A line
@@ -32,21 +37,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
  */
 @Path("/v1/products")
 @Produces(MediaType.APPLICATION_JSON)
-@APIResponse(
-        responseCode = "400",
-        description = "Bad Request",
-        content =
-                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(
-        responseCode = "404",
-        description = "Not Found",
-        content =
-                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
-@APIResponse(
-        responseCode = "422",
-        description = "Unprocessable Entity",
-        content =
-                @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
+@Tag(name = "Productos")
+@SecurityRequirement(name = "apiKey")
+@APIResponse(responseCode = "401", ref = "Unauthorized")
+@APIResponse(responseCode = "403", ref = "Forbidden")
+@APIResponse(responseCode = "429", ref = "TooManyRequests")
 public class ProductResource {
 
     @Inject
@@ -55,38 +50,57 @@ public class ProductResource {
     @Inject
     Catalog catalog;
 
-    /**
-     * Newest first: pass the previous page's {@code nextCursor} as {@code before}. {@code q} matches
-     * the code or the description.
-     */
     @GET
     @Transactional
-    @APIResponse(responseCode = "200", description = "OK")
+    @Operation(
+            summary = "Listar los productos",
+            description = "Del más reciente al más antiguo, por páginas: para la siguiente, envía el `nextCursor` "
+                    + "de la anterior como `before`. `q` busca en el código o la descripción.")
+    @APIResponse(responseCode = "200", description = "Una página de productos.")
+    @APIResponse(responseCode = "400", ref = "BadRequest")
     public ProductPage list(
-            @QueryParam("q") @Size(max = 200) @Pattern(regexp = "[^\\p{Cntrl}]*") String q,
-            @QueryParam("before") UUID before,
-            @QueryParam("limit") @DefaultValue("50") int limit) {
+            @Parameter(description = "Texto a buscar.")
+                    @QueryParam("q")
+                    @Size(max = 200)
+                    @Pattern(regexp = "[^\\p{Cntrl}]*")
+                    String q,
+            @Parameter(description = "El `nextCursor` de la página anterior.") @QueryParam("before") UUID before,
+            @Parameter(description = "Cuántos productos devolver, hasta 100.") @QueryParam("limit") @DefaultValue("50")
+                    int limit) {
         return catalog.products(principal.accountId(), principal.environment(), q, before, limit);
     }
 
     @GET
     @Path("/{id}")
     @Transactional
-    @APIResponse(responseCode = "200", description = "OK")
-    public ProductView get(@PathParam("id") UUID id) {
+    @Operation(summary = "Consultar un producto")
+    @APIResponse(responseCode = "200", description = "El producto.")
+    @APIResponse(responseCode = "404", ref = "NotFound")
+    public ProductView get(@Parameter(ref = "ResourceId") @PathParam("id") UUID id) {
         return catalog.product(principal.accountId(), principal.environment(), id);
     }
 
     @POST
     @Transactional
+    @Operation(summary = "Crear un producto")
+    @APIResponse(responseCode = "400", ref = "BadRequest")
+    @APIResponse(responseCode = "422", ref = "ProductRejected")
     @APIResponse(
             responseCode = "201",
-            description = "Created",
+            description = "El producto creado.",
             content =
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             schema = @Schema(implementation = ProductView.class)))
-    public Response create(@Valid @NotNull ProductRequest request) {
+    public Response create(
+            @RequestBody(
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.APPLICATION_JSON,
+                                            examples = @ExampleObject(name = "producto", ref = "Product")))
+                    @Valid
+                    @NotNull
+                    ProductRequest request) {
         return Response.status(201)
                 .entity(catalog.createProduct(principal.accountId(), principal.environment(), request))
                 .build();
@@ -95,16 +109,26 @@ public class ProductResource {
     @PUT
     @Path("/{id}")
     @Transactional
-    @APIResponse(responseCode = "200", description = "OK")
-    public ProductView update(@PathParam("id") UUID id, @Valid @NotNull ProductRequest request) {
+    @Operation(
+            summary = "Reemplazar un producto",
+            description = "Reemplaza todos sus datos; lo que no se envíe queda vacío. No cambia los documentos ya "
+                    + "emitidos.")
+    @APIResponse(responseCode = "200", description = "El producto actualizado.")
+    @APIResponse(responseCode = "400", ref = "BadRequest")
+    @APIResponse(responseCode = "404", ref = "NotFound")
+    @APIResponse(responseCode = "422", ref = "ProductRejected")
+    public ProductView update(
+            @Parameter(ref = "ResourceId") @PathParam("id") UUID id, @Valid @NotNull ProductRequest request) {
         return catalog.updateProduct(principal.accountId(), principal.environment(), id, request);
     }
 
     @DELETE
     @Path("/{id}")
     @Transactional
-    @APIResponse(responseCode = "204", description = "No Content")
-    public Response delete(@PathParam("id") UUID id) {
+    @Operation(summary = "Eliminar un producto", description = "No afecta los documentos ya emitidos.")
+    @APIResponse(responseCode = "204", description = "Eliminado.")
+    @APIResponse(responseCode = "404", ref = "NotFound")
+    public Response delete(@Parameter(ref = "ResourceId") @PathParam("id") UUID id) {
         catalog.deleteProduct(principal.accountId(), principal.environment(), id);
         return Response.noContent().build();
     }

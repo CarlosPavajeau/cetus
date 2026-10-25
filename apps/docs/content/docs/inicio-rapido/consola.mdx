@@ -1,0 +1,75 @@
+---
+title: Inicio rápido desde la consola
+description: Emite tu primera factura de prueba desde el navegador, sin escribir código.
+---
+
+En menos de dos minutos vas a emitir una factura de prueba y ver todo su ciclo: el número, la respuesta de
+la DIAN, el PDF y el XML. No necesitas certificado, resolución ni conocimientos técnicos.
+
+<Sandbox>
+    La factura se emite en el **modo de simulación**: Cetus imita a la DIAN, así que el documento no
+    tiene validez fiscal y nunca se envía al cliente.
+</Sandbox>
+
+<Steps>
+<Step>
+
+### Crea tu cuenta
+
+[Regístrate en la consola](https://cetus.cantte.com/sign-up) con tu nombre, tu correo y una contraseña, y
+crea tu organización. La consola abre en el **Resumen**, con el banner azul "Modo simulación" arriba.
+
+![Resumen de una cuenta nueva, con la invitación a emitir la primera factura de prueba](/images/consola/resumen-simulacion.png)
+
+</Step>
+<Step>
+
+### Abre la factura de prueba
+
+Pulsa **Emitir factura de prueba**. El formulario ya viene lleno: la empresa de ejemplo como emisor, un
+cliente de ejemplo y una línea de asesoría con IVA del 19 %. Los totales se calculan solos mientras
+escribes.
+
+![Formulario de emisión con un cliente y una línea de ejemplo](/images/consola/factura-precargada.png)
+
+Puedes cambiar lo que quieras: el cliente, las líneas, el impuesto de cada línea o la forma de pago. El
+dígito de verificación de un NIT se calcula al escribirlo.
+
+</Step>
+<Step>
+
+### Emite
+
+Pulsa **Emitir factura**. Cetus le asigna el siguiente número (`SIM1`, `SIM2`, …) y la envía al simulador.
+En unos segundos la página muestra **Aceptado** y el mensaje "El simulador de Cetus lo aceptó".
+
+![Detalle de la factura aceptada, con su CUFE y los botones de descarga](/images/consola/factura-aceptada.png)
+
+</Step>
+<Step>
+
+### Descarga el PDF y el XML
+
+Desde el detalle de la factura:
+
+- **PDF**: la representación gráfica, con la marca de agua "Documento simulado, sin validez fiscal".
+- **XML**: la factura firmada, tal como la valida la DIAN.
+- **AttachedDocument**: lo que recibe el cliente por correo, con el XML y la respuesta de la DIAN.
+
+El **CUFE** es el código único de la factura; el botón **Copiar** lo deja en tu portapapeles.
+
+</Step>
+</Steps>
+
+## Y ahora qué
+
+- **Corrige una factura.** Desde el detalle de una factura aceptada, **Nota crédito** la anula o disminuye
+  su valor, y **Nota débito** cobra un valor adicional. **Anular factura** emite una nota crédito por el
+  total.
+- **Guarda clientes y productos** en **Catálogo** para no escribirlos en cada factura.
+- **Factura de verdad.** Cuando quieras emitir con validez fiscal, el botón **Configurar emisor** del Resumen
+  te guía paso a paso: los datos del RUT, el software registrado en la DIAN, el certificado de firma y la
+  resolución de numeración. Luego cambias el ambiente de la consola a **Pruebas** o **Producción**. Ver
+  [Ambientes](/guias/ambientes).
+- **Conecta tu sistema.** Si tu ERP o tu tienda en línea va a facturar sola, sigue el
+  [inicio rápido con la API](/inicio-rapido/desarrolladores).

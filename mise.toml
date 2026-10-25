@@ -54,12 +54,20 @@ description = "Apply the console's auth-schema migrations (Flyway runs when the 
 run = "pnpm --filter @cetus/console db:migrate"
 
 [tasks.fmt]
-description = "Format the Java (palantir-java-format) and console (oxfmt) code"
-run = ["./gradlew spotlessApply --console=plain", "pnpm --filter @cetus/console format"]
+description = "Format the Java (palantir-java-format), console and docs (oxfmt) code"
+run = ["./gradlew spotlessApply --console=plain", "pnpm --filter @cetus/console format", "pnpm --filter @cetus/docs format"]
 
 [tasks.fmt-check]
-description = "Check the Java and console formatting without changing files"
-run = ["./gradlew spotlessCheck --console=plain", "pnpm --filter @cetus/console format:check"]
+description = "Check the Java, console and docs formatting without changing files"
+run = ["./gradlew spotlessCheck --console=plain", "pnpm --filter @cetus/console format:check", "pnpm --filter @cetus/docs format:check"]
+
+[tasks.docs]
+description = "Start the docs site (:3001); VITE_API_URL=http://localhost:8080 points its reference at a local API"
+run = "pnpm --filter @cetus/docs dev"
+
+[tasks.docs-spec]
+description = "Build the API's OpenAPI spec and write its public part (/v1) for the docs site"
+run = ["./gradlew :apps:api:build -x test --console=plain", "node scripts/openapi-public.mjs"]
 
 [tasks.test-console]
 description = "Console integration (Vitest) and e2e (Playwright) tests; needs `mise run dev-mock` running"

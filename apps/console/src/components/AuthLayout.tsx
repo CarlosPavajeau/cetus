@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import flowArrow from "~/assets/flow-arrow.svg";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
+import { docsUrl } from "~/lib/docs";
 
 const year = new Date().getFullYear();
 
@@ -39,11 +40,15 @@ export function AuthLayout({
             <CetusMark />
             <span className="text-[1.375rem] font-semibold">Cetus</span>
           </div>
-          {/* Placeholder until the documentation site exists, as in the console header. */}
-          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <a
+            href={docsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
             Documentación
             <ArrowUpRightIcon className="size-3" />
-          </span>
+          </a>
         </header>
         {/*
           Flexible gaps instead of fixed ones, so the page fits short screens without scrolling.

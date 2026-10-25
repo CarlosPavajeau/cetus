@@ -2,6 +2,7 @@
 
 Producción corre en Railway, con AWS (KMS y S3) para secretos y documentos, Cloudflare delante de la consola y
 Resend para el correo. `.github/workflows/deploy.yml` despliega desde `main` con `scripts/railway-deploy.sh`.
+La documentación es un sitio estático en Cloudflare Pages.
 
 ## Railway
 
@@ -42,6 +43,25 @@ variable que exista en Railway y no esté ahí.
 Las URL privadas se arman con referencias, p. ej. `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`. En el
 perfil `prod`, la API y el worker escuchan en `::` (la red privada de Railway es IPv6) y escriben logs en JSON.
 Las variables opcionales de operación están en [Operación](operations.md).
+
+## Documentación (Cloudflare Pages)
+
+`apps/docs` se publica como sitio estático en el proyecto de Pages `cetus-docs`, con el dominio
+`cetus-docs.cantte.com` (un subdominio de primer nivel, cubierto por el certificado universal de
+Cloudflare). No usa la integración de Git de Pages: lo despliega GitHub Actions con `wrangler`.
+
+- **Producción:** el job `docs` de `deploy.yml`, cuando un push a `main` toca `apps/docs`.
+- **Vistas previas:** `docs.yml` despliega cada pull request como rama del proyecto y deja la URL en el
+  resumen del job.
+- **Secretos del repositorio:** `CLOUDFLARE_API_TOKEN` (permiso *Cloudflare Pages: Edit*) y
+  `CLOUDFLARE_ACCOUNT_ID`.
+- **Una vez, a mano:** crear el proyecto (`wrangler pages project create cetus-docs --production-branch main`)
+  y agregarle el dominio personalizado en el panel de Pages.
+- `apps/docs/public/_headers` fija la caché: los recursos con hash son inmutables y el resto se revalida.
+
+El botón de probar peticiones de la referencia llama a la API desde el navegador. La API acepta por CORS
+solo el origen de la documentación (`CETUS_DOCS_ORIGIN`, por defecto `https://cetus-docs.cantte.com`), y en
+desarrollo `localhost:3001`.
 
 ## Red
 
