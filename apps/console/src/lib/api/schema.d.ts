@@ -106,6 +106,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/accounts/{id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change Plan */
+        put: operations["AdminAccountResource_changePlan"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/accounts/{id}/reactivation": {
         parameters: {
             query?: never;
@@ -183,6 +200,23 @@ export interface paths {
         };
         /** Me */
         get: operations["AdminSessionResource_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["AdminPlanResource_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1147,7 +1181,10 @@ export interface components {
             statusChangedBy: string | null;
             createdAt: components["schemas"]["OffsetDateTime"];
             issuers: components["schemas"]["IssuerView"][];
+            /** @description Documents created this month in every environment, by status */
             usageThisMonth: components["schemas"]["UsageCountView"][];
+            /** @description Billable documents this month against the account's plan */
+            billableThisMonth: components["schemas"]["PeriodUsageView"];
             recentFailures: components["schemas"]["FailedDocumentView"][];
         };
         AccountPage: {
@@ -1171,7 +1208,7 @@ export interface components {
             liveIssuersEnabled: number;
             /**
              * Format: int64
-             * @description Production documents created this month (Colombia time)
+             * @description Production documents the DIAN accepted this month (Colombia time)
              */
             liveDocumentsThisMonth: number;
             /**
@@ -1266,7 +1303,7 @@ export interface components {
             createdBy: string | null;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1513,6 +1550,11 @@ export interface components {
         };
         /** @enum {string} */
         DisabledReason: "MANUAL" | "AUTOMATIC";
+        DocumentCountView: {
+            documentType: components["schemas"]["DocumentType"];
+            /** Format: int64 */
+            count: number;
+        };
         DocumentCustomer: {
             identificationType: string;
             identificationNumber: string;
@@ -1800,8 +1842,58 @@ export interface components {
         };
         /** @enum {string} */
         PaymentMethod: "CASH" | "CREDIT";
+        /** @description Billable documents (production, accepted by the DIAN) of a month against the plan */
+        PeriodUsageView: {
+            /** @description Calendar month in Colombia, YYYY-MM */
+            period: string;
+            plan: components["schemas"]["PlanView"];
+            documents: components["schemas"]["DocumentCountView"][];
+            /** Format: int64 */
+            total: number;
+            /**
+             * Format: int64
+             * @description Documents above the plan's included ones; 0 without a limit
+             */
+            overage: number;
+            /**
+             * Format: int64
+             * @description Overage times its price, in COP; null when the plan has no price
+             */
+            overageCostCop: number | null;
+        };
         /** @enum {string} */
         PersonType: "LEGAL_ENTITY" | "NATURAL_PERSON";
+        PlanChangeRequest: {
+            plan: string;
+            reason: string;
+        };
+        /** @description What a plan includes. A null limit is no limit; a null price is agreed by contract. */
+        PlanView: {
+            code: string;
+            name: string;
+            /** Format: int64 */
+            priceMonthlyCop: number | null;
+            /**
+             * Format: int32
+             * @description Billable documents included each month
+             */
+            includedDocuments: number | null;
+            /**
+             * Format: int32
+             * @description Price of each document above the included ones
+             */
+            overagePriceCop: number | null;
+            /**
+             * Format: int32
+             * @description Production issuers (NIT) the account may have
+             */
+            includedIssuers: number | null;
+            /**
+             * Format: int32
+             * @description Production API requests a minute, shared by the account's keys
+             */
+            requestsPerMinute: number | null;
+        };
         PreviewLine: {
             /** Format: int32 */
             lineNumber: number;
@@ -2413,6 +2505,75 @@ export interface operations {
             };
         };
     };
+    AdminAccountResource_changePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     AdminAccountResource_reactivate: {
         parameters: {
             query?: never;
@@ -2674,6 +2835,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminSessionView"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Allowed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminPlanResource_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"][];
                 };
             };
             /** @description Not Authorized */

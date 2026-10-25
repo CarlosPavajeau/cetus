@@ -24,6 +24,8 @@ public enum AuditAction {
     DOCUMENT_RESENT,
     ACCOUNT_SUSPENDED,
     ACCOUNT_REACTIVATED,
+    /** The Cetus team assigned the account another plan. */
+    ACCOUNT_PLAN_CHANGED,
     /** A person banned from the console by the Cetus team; recorded without an account. */
     USER_BANNED,
     USER_UNBANNED,

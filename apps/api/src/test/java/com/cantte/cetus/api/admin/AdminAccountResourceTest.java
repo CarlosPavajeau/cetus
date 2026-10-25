@@ -13,9 +13,12 @@ import static org.hamcrest.Matchers.nullValue;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.DocumentType;
+import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
+import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import java.util.List;
@@ -222,6 +225,73 @@ class AdminAccountResourceTest {
     }
 
     @Test
+    void anAdminChangesThePlanAndTheUsageIsBilledAgainstIt() {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        String accountId = bootstrap(customer, "Planeada SAS");
+        bill(UUID.fromString(accountId), DocumentType.INVOICE, 190);
+        bill(UUID.fromString(accountId), DocumentType.CREDIT_NOTE, 13);
+
+        ADMIN.request()
+                .get("/admin/accounts/" + accountId)
+                .then()
+                .body("plan", equalTo("FREE"))
+                .body("billableThisMonth.total", equalTo(203))
+                .body("billableThisMonth.overage", equalTo(0))
+                .body("billableThisMonth.overageCostCop", nullValue());
+        SUPPORT.request()
+                .get("/admin/plans")
+                .then()
+                .statusCode(200)
+                .body("code", contains("FREE", "SOCIOS", "INICIAL", "CRECIMIENTO", "ESCALA"));
+        SUPPORT.request()
+                .body(Map.of("plan", "INICIAL", "reason", "Contrató el plan"))
+                .put("/admin/accounts/" + accountId + "/plan")
+                .then()
+                .statusCode(403);
+        ADMIN.request()
+                .body(Map.of("plan", "PLATINO", "reason", "Contrató el plan"))
+                .put("/admin/accounts/" + accountId + "/plan")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("plan_unknown"));
+
+        ADMIN.request()
+                .body(Map.of("plan", "INICIAL", "reason", " Contrató el plan "))
+                .put("/admin/accounts/" + accountId + "/plan")
+                .then()
+                .statusCode(200)
+                .body("plan", equalTo("INICIAL"))
+                .body("billableThisMonth.period", equalTo(UsagePeriod.current().toString()))
+                .body("billableThisMonth.plan.includedDocuments", equalTo(200))
+                .body("billableThisMonth.documents.find { it.documentType == 'INVOICE' }.count", equalTo(190))
+                .body("billableThisMonth.total", equalTo(203))
+                .body("billableThisMonth.overage", equalTo(3))
+                .body("billableThisMonth.overageCostCop", equalTo(450));
+        ADMIN.request()
+                .body(Map.of("plan", "INICIAL", "reason", "Otra vez"))
+                .put("/admin/accounts/" + accountId + "/plan")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("plan_unchanged"));
+        SUPPORT.request()
+                .queryParam("organizationId", customer.organizationId())
+                .get("/admin/accounts")
+                .then()
+                .body("items[0].plan", equalTo("INICIAL"))
+                .body("items[0].liveDocumentsThisMonth", equalTo(203));
+
+        customer.request()
+                .queryParam("action", "ACCOUNT_PLAN_CHANGED")
+                .get("/console/audit-log")
+                .then()
+                .body("items", hasSize(1))
+                .body("items[0].actorId", equalTo(ADMIN.userId()))
+                .body("items[0].data.plan", equalTo("INICIAL"))
+                .body("items[0].data.previousPlan", equalTo("FREE"))
+                .body("items[0].data.reason", equalTo("Contrató el plan"));
+    }
+
+    @Test
     void closedAccountsAreNotReactivated() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         String accountId = bootstrap(customer, "Cerrada SAS");
@@ -250,6 +320,20 @@ class AdminAccountResourceTest {
                 .then()
                 .statusCode(403)
                 .body("code", equalTo("account_suspended"));
+    }
+
+    private static void bill(UUID accountId, DocumentType type, int count) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> Panache.getEntityManager()
+                        .createNativeQuery("""
+                                INSERT INTO billing.usage_counters (account_id, period, document_type, count)
+                                VALUES (:account, :period, :type, :count)
+                                """)
+                        .setParameter("account", accountId)
+                        .setParameter("period", UsagePeriod.current().toString())
+                        .setParameter("type", type.name())
+                        .setParameter("count", count)
+                        .executeUpdate());
     }
 
     private static void reject(UUID documentId, List<String> errors) {

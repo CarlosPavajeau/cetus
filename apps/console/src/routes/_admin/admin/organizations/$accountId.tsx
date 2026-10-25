@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { AccountPlanDialog } from "~/features/admin/AccountPlanDialog";
 import { AccountStatusDialog } from "~/features/admin/AccountStatusDialog";
 import { accountStatusLabel, memberRoleLabel } from "~/features/admin/labels";
 import { adminAccountQuery } from "~/features/admin/queries";
@@ -21,6 +22,8 @@ import type { AccountStatus } from "~/features/admin/schema";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { documentStatusLabel, documentTypeLabel } from "~/features/documents/labels";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
+import { planPrice } from "~/features/usage/labels";
+import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
 import type { DocumentStatus } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_admin/admin/organizations/$accountId")({
@@ -58,14 +61,21 @@ function AccountDetail() {
             {accountStatusLabel[status] ?? account.status}
           </Badge>
         }
-        lead={`Plan ${account.plan.toLowerCase()} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
+        lead={`Plan ${account.billableThisMonth.plan.name} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
         action={
           isAdmin && status !== "CLOSED" ? (
-            <AccountStatusDialog
-              accountId={account.id}
-              accountName={account.name}
-              action={status === "ACTIVE" ? "suspend" : "reactivate"}
-            />
+            <div className="flex gap-2">
+              <AccountPlanDialog
+                accountId={account.id}
+                accountName={account.name}
+                plan={account.plan}
+              />
+              <AccountStatusDialog
+                accountId={account.id}
+                accountName={account.name}
+                action={status === "ACTIVE" ? "suspend" : "reactivate"}
+              />
+            </div>
           ) : undefined
         }
       />
@@ -176,7 +186,14 @@ function AccountDetail() {
         </Section>
       </div>
 
-      <Section id="account-usage" title="Documentos de este mes">
+      <Section
+        id="account-billing"
+        title={`Plan ${account.billableThisMonth.plan.name} · ${planPrice(account.billableThisMonth.plan)}`}
+      >
+        <PeriodUsageSummary usage={account.billableThisMonth} />
+      </Section>
+
+      <Section id="account-usage" title="Documentos creados este mes">
         {account.usageThisMonth.length === 0 ? (
           <p className="text-xs text-muted-foreground">No ha creado documentos este mes.</p>
         ) : (

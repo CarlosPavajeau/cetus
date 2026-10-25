@@ -12,6 +12,11 @@ export const statusChangeSchema = type({
   ),
 });
 
+/** A plan change says why, like a status change; it stays in the audit log. */
+export const planChangeSchema = statusChangeSchema.and({
+  plan: type("string > 0").configure({ message: "Elige un plan." }),
+});
+
 /** How long a ban lasts, in days; null bans until someone lifts it. */
 export const banDurations = [1, 7, 30] as const;
 
