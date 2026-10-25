@@ -18,7 +18,6 @@ import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
 import com.cantte.cetus.webhooks.WebhookPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -79,14 +78,17 @@ public class ResultRecorder {
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void cufe(UUID documentId, String cufe) {
-        DocumentEntity doc = DocumentEntity.findById(documentId);
+        DocumentEntity doc = DocumentEntity.lock(documentId);
         doc.cufe = cufe;
     }
 
     /** Async test set upload accepted by the DIAN: poll GetStatusZip later. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void submitted(UUID documentId, String zipKey) {
-        DocumentEntity doc = DocumentEntity.findById(documentId);
+        DocumentEntity doc = DocumentEntity.lock(documentId);
+        if (doc.status.isFinal()) {
+            return;
+        }
         doc.status = DocumentStatus.SUBMITTED;
         doc.dianTrackId = zipKey;
         jobs.enqueue(JobTypes.CHECK_TEST_SET_STATUS, documentId, Duration.ofSeconds(10));
@@ -94,11 +96,11 @@ public class ResultRecorder {
 
     /**
      * The DIAN's verdict. Recorded once: a job whose lease expired can run again and get its own answer, and
-     * the document must not be delivered, published or billed twice.
+     * the document must not be delivered, published or billed twice. See {@link DocumentEntity#lock}.
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void completed(UUID documentId, DianResponse response) {
-        DocumentEntity doc = DocumentEntity.findById(documentId, LockModeType.PESSIMISTIC_WRITE);
+        DocumentEntity doc = DocumentEntity.lock(documentId);
         if (doc.status.isFinal()) {
             return;
         }
@@ -131,7 +133,7 @@ public class ResultRecorder {
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void failed(UUID documentId, String message) {
-        DocumentEntity doc = DocumentEntity.findById(documentId);
+        DocumentEntity doc = DocumentEntity.lock(documentId);
         if (!doc.status.isFinal()) {
             doc.status = DocumentStatus.FAILED;
             doc.dianStatusMessage = message;
@@ -141,7 +143,7 @@ public class ResultRecorder {
     /** The document stays FAILED for good: no job will process it again. Publishes the failed event once. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void gaveUp(UUID documentId, String message) {
-        DocumentEntity doc = DocumentEntity.findById(documentId);
+        DocumentEntity doc = DocumentEntity.lock(documentId);
         if (doc.status.isFinal()) {
             return;
         }
