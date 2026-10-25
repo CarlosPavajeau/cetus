@@ -110,5 +110,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # The wrangler of apps/docs, from the lockfile: the action would otherwise add it to the workspace root.
+          workingDirectory: apps/docs
           wranglerVersion: "4.151.1"
-          command: pages deploy apps/docs/dist/client --project-name cetus-docs --branch main
+          command: pages deploy dist/client --project-name cetus-docs --branch main
