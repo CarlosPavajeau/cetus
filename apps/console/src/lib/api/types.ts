@@ -110,6 +110,12 @@ export type AdminAuditEntry = Schemas["AdminAuditEntry"];
 
 export type AdminAuditPage = Schemas["AdminAuditPage"];
 
+export type Plan = Schemas["PlanView"];
+
+export type PeriodUsage = Schemas["PeriodUsageView"];
+
+export type Usage = Schemas["UsageView"];
+
 export type CertificateUploadLink = Schemas["UploadLinkView"];
 
 /** Runtime list of audit actions for the filter and its validator. Must list every value of the API enum. */
@@ -134,6 +140,7 @@ export const auditActions = [
   "DOCUMENT_RESENT",
   "ACCOUNT_SUSPENDED",
   "ACCOUNT_REACTIVATED",
+  "ACCOUNT_PLAN_CHANGED",
   "USER_BANNED",
   "USER_UNBANNED",
   "IMPERSONATION_STARTED",

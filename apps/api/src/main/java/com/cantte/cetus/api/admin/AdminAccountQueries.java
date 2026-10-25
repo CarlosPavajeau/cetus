@@ -7,6 +7,7 @@ import com.cantte.cetus.api.admin.AdminViews.FailedDocumentView;
 import com.cantte.cetus.api.admin.AdminViews.UsageCountView;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,15 +15,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Reads across accounts for the Cetus team. Usage is counted from {@code documents} until usage counters
- * exist; "this month" is the calendar month in Colombia.
+ * Reads across accounts for the Cetus team; "this month" is the calendar month in Colombia. Billable
+ * documents come from the usage counters, and the documents created, by status, from {@code documents}.
  */
 @ApplicationScoped
 public class AdminAccountQueries {
@@ -30,7 +29,6 @@ public class AdminAccountQueries {
     public static final int MAX_PAGE_SIZE = 100;
     static final int RECENT_FAILURES = 20;
 
-    private static final ZoneId COLOMBIA = ZoneId.of("America/Bogota");
     private static final TypeReference<List<String>> STRINGS = new TypeReference<>() {};
 
     @Inject
@@ -46,8 +44,8 @@ public class AdminAccountQueries {
                        (SELECT count(*) FROM billing.issuers i WHERE i.account_id = a.id AND i.environment <> 'SANDBOX'),
                        (SELECT count(*) FROM billing.issuers i
                         WHERE i.account_id = a.id AND i.environment = 'LIVE' AND i.status = 'ENABLED'),
-                       (SELECT count(*) FROM billing.documents d
-                        WHERE d.account_id = a.id AND d.environment = 'LIVE' AND d.created_at >= :monthStart),
+                       (SELECT coalesce(sum(u.count), 0) FROM billing.usage_counters u
+                        WHERE u.account_id = a.id AND u.period = :period),
                        (SELECT count(*) FROM billing.documents d
                         WHERE d.account_id = a.id AND d.environment <> 'SANDBOX' AND d.status IN ('REJECTED', 'FAILED')
                           AND d.created_at >= :weekAgo),
@@ -68,7 +66,7 @@ public class AdminAccountQueries {
         sql.append(" ORDER BY a.id DESC LIMIT :limit");
 
         Query query = em.createNativeQuery(sql.toString())
-                .setParameter("monthStart", monthStart())
+                .setParameter("period", UsagePeriod.current().toString())
                 .setParameter("weekAgo", OffsetDateTime.now().minusDays(7))
                 .setParameter("limit", size);
         if (status != null) {
@@ -109,7 +107,7 @@ public class AdminAccountQueries {
                         ORDER BY environment, document_type, status
                         """)
                 .setParameter("account", accountId)
-                .setParameter("monthStart", monthStart())
+                .setParameter("monthStart", UsagePeriod.start(UsagePeriod.current()))
                 .getResultList();
         return rows.stream()
                 .map(row -> new UsageCountView(
@@ -155,10 +153,6 @@ public class AdminAccountQueries {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Corrupt dian_errors", e);
         }
-    }
-
-    static OffsetDateTime monthStart() {
-        return LocalDate.now(COLOMBIA).withDayOfMonth(1).atStartOfDay(COLOMBIA).toOffsetDateTime();
     }
 
     private static long count(Object value) {

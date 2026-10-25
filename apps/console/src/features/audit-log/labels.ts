@@ -21,6 +21,7 @@ export const actionLabel: Record<AuditAction, string> = {
   DOCUMENT_RESENT: "Documento reenviado por correo",
   ACCOUNT_SUSPENDED: "Cuenta suspendida",
   ACCOUNT_REACTIVATED: "Cuenta reactivada",
+  ACCOUNT_PLAN_CHANGED: "Plan cambiado",
   USER_BANNED: "Usuario bloqueado",
   USER_UNBANNED: "Usuario desbloqueado",
   IMPERSONATION_STARTED: "Soporte entró como usuario",

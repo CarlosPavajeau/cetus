@@ -106,6 +106,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/accounts/{id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change Plan */
+        put: operations["AdminAccountResource_changePlan"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/accounts/{id}/reactivation": {
         parameters: {
             query?: never;
@@ -183,6 +200,23 @@ export interface paths {
         };
         /** Me */
         get: operations["AdminSessionResource_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["AdminPlanResource_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -766,6 +800,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["UsageResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/webhook-endpoints": {
         parameters: {
             query?: never;
@@ -1147,7 +1198,10 @@ export interface components {
             statusChangedBy: string | null;
             createdAt: components["schemas"]["OffsetDateTime"];
             issuers: components["schemas"]["IssuerView"][];
+            /** @description Documents created this month in every environment, by status */
             usageThisMonth: components["schemas"]["UsageCountView"][];
+            /** @description Billable documents this month against the account's plan */
+            billableThisMonth: components["schemas"]["PeriodUsageView"];
             recentFailures: components["schemas"]["FailedDocumentView"][];
         };
         AccountPage: {
@@ -1171,7 +1225,7 @@ export interface components {
             liveIssuersEnabled: number;
             /**
              * Format: int64
-             * @description Production documents created this month (Colombia time)
+             * @description Production documents the DIAN accepted this month (Colombia time)
              */
             liveDocumentsThisMonth: number;
             /**
@@ -1266,7 +1320,7 @@ export interface components {
             createdBy: string | null;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1513,6 +1567,11 @@ export interface components {
         };
         /** @enum {string} */
         DisabledReason: "MANUAL" | "AUTOMATIC";
+        DocumentCountView: {
+            documentType: components["schemas"]["DocumentType"];
+            /** Format: int64 */
+            count: number;
+        };
         DocumentCustomer: {
             identificationType: string;
             identificationNumber: string;
@@ -1757,6 +1816,12 @@ export interface components {
          * @example 2022-03-10
          */
         LocalDate: string;
+        MonthTotalView: {
+            /** @description Calendar month in Colombia, YYYY-MM */
+            period: string;
+            /** Format: int64 */
+            total: number;
+        };
         NumberingRangeRequest: {
             documentType: components["schemas"]["DocumentType"];
             resolutionNumber?: string;
@@ -1800,8 +1865,63 @@ export interface components {
         };
         /** @enum {string} */
         PaymentMethod: "CASH" | "CREDIT";
+        /** @description Billable documents (production, accepted by the DIAN) of a month against the plan */
+        PeriodUsageView: {
+            /** @description Calendar month in Colombia, YYYY-MM */
+            period: string;
+            plan: components["schemas"]["PlanView"];
+            documents: components["schemas"]["DocumentCountView"][];
+            /** Format: int64 */
+            total: number;
+            /**
+             * Format: int64
+             * @description Documents above the plan's included ones; 0 without a limit
+             */
+            overage: number;
+            /**
+             * Format: int64
+             * @description Overage times its price, in COP; null when the plan has no price
+             */
+            costOverageCop: number | null;
+        };
         /** @enum {string} */
         PersonType: "LEGAL_ENTITY" | "NATURAL_PERSON";
+        PlanChangeRequest: {
+            plan: string;
+            reason: string;
+        };
+        /** @description What a plan includes. A null limit is no limit; a null price is agreed by contract. */
+        PlanView: {
+            code: string;
+            name: string;
+            /** Format: int64 */
+            priceMonthlyCop: number | null;
+            /**
+             * Format: int32
+             * @description Billable documents included each month
+             */
+            documentsIncluded: number | null;
+            /**
+             * Format: int32
+             * @description Price of each document above the included ones
+             */
+            priceOverageCop: number | null;
+            /**
+             * Format: int32
+             * @description Production issuers (NIT) the account may have
+             */
+            issuersIncluded: number | null;
+            /**
+             * Format: int32
+             * @description Production API requests a second, shared by the account's keys
+             */
+            requestsPerSecond: number | null;
+            /**
+             * Format: int32
+             * @description Production API requests the account may make at once
+             */
+            requestsBurst: number | null;
+        };
         PreviewLine: {
             /** Format: int32 */
             lineNumber: number;
@@ -1861,6 +1981,18 @@ export interface components {
             status: components["schemas"]["Status"];
             /** @description Whether its status lets it issue with this key */
             readyToIssue: boolean;
+        };
+        /** @description The production API limits that apply to the account now */
+        RequestLimitsView: {
+            /** Format: double */
+            requestsPerSecond: number;
+            /**
+             * Format: int32
+             * @description Requests that may be made at once
+             */
+            requestsBurst: number;
+            /** @description True when each key has these limits; false when the account's keys share them */
+            perKey: boolean;
         };
         ResendRequest: {
             /** @description Another address; leave it out to use the first delivery's */
@@ -1940,6 +2072,18 @@ export interface components {
             status: string;
             /** Format: int64 */
             count: number;
+        };
+        /** @description The account's plan and its billable documents: this month in detail, and the months before */
+        UsageView: {
+            current: components["schemas"]["PeriodUsageView"];
+            /**
+             * Format: int64
+             * @description Production issuers the account has, against the plan's included ones
+             */
+            issuersLive: number;
+            /** @description The last months, newest first, this month included */
+            months: components["schemas"]["MonthTotalView"][];
+            requests: components["schemas"]["RequestLimitsView"];
         };
         /** @enum {string} */
         VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";
@@ -2413,6 +2557,75 @@ export interface operations {
             };
         };
     };
+    AdminAccountResource_changePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     AdminAccountResource_reactivate: {
         parameters: {
             query?: never;
@@ -2689,6 +2902,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    AdminPlanResource_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"][];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -5025,6 +5274,35 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    UsageResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

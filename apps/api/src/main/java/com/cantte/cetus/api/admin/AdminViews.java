@@ -1,6 +1,7 @@
 package com.cantte.cetus.api.admin;
 
 import com.cantte.cetus.api.console.IssuerViews;
+import com.cantte.cetus.api.usage.UsageViews.PeriodUsageView;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -30,7 +31,7 @@ public final class AdminViews {
             @Schema(description = "Production issuers already enabled at the DIAN")
             long liveIssuersEnabled,
 
-            @Schema(description = "Production documents created this month (Colombia time)")
+            @Schema(description = "Production documents the DIAN accepted this month (Colombia time)")
             long liveDocumentsThisMonth,
 
             @Schema(description = "Documents rejected or failed in the last 7 days")
@@ -56,12 +57,19 @@ public final class AdminViews {
 
             OffsetDateTime createdAt,
             List<IssuerViews.IssuerView> issuers,
+
+            @Schema(description = "Documents created this month in every environment, by status")
             List<UsageCountView> usageThisMonth,
+
+            @Schema(description = "Billable documents this month against the account's plan")
+            PeriodUsageView billableThisMonth,
+
             List<FailedDocumentView> recentFailures) {
         static AccountDetailView of(
                 AccountEntity account,
                 List<IssuerViews.IssuerView> issuers,
                 List<UsageCountView> usage,
+                PeriodUsageView billable,
                 List<FailedDocumentView> failures) {
             return new AccountDetailView(
                     account.id,
@@ -75,6 +83,7 @@ public final class AdminViews {
                     account.createdAt,
                     issuers,
                     usage,
+                    billable,
                     failures);
         }
     }
@@ -95,6 +104,11 @@ public final class AdminViews {
             @Schema(nullable = true) String dianStatusMessage,
             List<String> dianErrors,
             OffsetDateTime updatedAt) {}
+
+    /** A plan change says why, like a status change; it is audited with the previous plan. */
+    public record PlanChangeRequest(
+            @NotBlank String plan,
+            @NotBlank @Size(min = 3, max = 500) String reason) {}
 
     /** Suspending or reactivating an account always says why; the account's members see the reason. */
     public record StatusChangeRequest(

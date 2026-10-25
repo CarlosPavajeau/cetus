@@ -59,6 +59,34 @@ test("an admin suspends an account: its keys stop and its console turns read-onl
   ).toBeVisible();
 });
 
+test("an admin changes an account's plan and it stays in the audit log", async ({
+  page,
+  context,
+}) => {
+  const name = `Planeada ${crypto.randomUUID().slice(0, 8)} SAS`;
+  await createOrganization(name);
+  const admin = await createPlatformStaff("admin");
+  await signIn(context, admin);
+
+  await open(page, "/admin/organizations?q=" + encodeURIComponent(name));
+  await page.getByRole("link", { name }).click();
+  await expect(page.getByRole("heading", { name: /^Sin plan/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "Cambiar plan" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("radio", { name: /Inicial/ }).click();
+  await dialog.getByLabel("Motivo").fill("Contrató el plan Inicial");
+  await dialog.getByRole("button", { name: "Cambiar plan" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("heading", { name: /Plan Inicial/ })).toBeVisible();
+  await expect(page.getByText("0 de 200 documentos")).toBeVisible();
+
+  await page.getByRole("link", { name: "Ver el registro de auditoría de esta cuenta" }).click();
+  const row = page.getByRole("row", { name: /Plan cambiado/ });
+  await expect(row.getByText(admin.email)).toBeVisible();
+  await expect(row.getByText("De FREE a INICIAL · Motivo: Contrató el plan Inicial")).toBeVisible();
+});
+
 test("support reads accounts but cannot suspend them", async ({ page, context }) => {
   const name = `Consultada ${crypto.randomUUID().slice(0, 8)} SAS`;
   await createOrganization(name);
@@ -68,6 +96,7 @@ test("support reads accounts but cannot suspend them", async ({ page, context })
   await page.getByRole("link", { name }).click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await expect(page.getByRole("button", { name: "Suspender cuenta" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Cambiar plan" })).toHaveCount(0);
 });
 
 test("staff without 2FA are sent to enable it, and customers never see the administration", async ({

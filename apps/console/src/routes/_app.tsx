@@ -18,6 +18,7 @@ import {
   KeyRoundIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  GaugeIcon,
   MailIcon,
   ShieldCheckIcon,
   ShieldIcon,
@@ -164,6 +165,15 @@ function AppLayout() {
               >
                 <MailIcon />
                 <span>Contactos</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to="/settings/usage" />}
+                isActive={Boolean(matchRoute({ to: "/settings/usage" }))}
+              >
+                <GaugeIcon />
+                <span>Plan y uso</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

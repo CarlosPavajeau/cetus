@@ -79,6 +79,34 @@ class SendNotificationHandlerTest {
     }
 
     @Test
+    void aPlanUsageNoticeGoesToTheBillingContact() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
+        UUID id = request(
+                accountId,
+                NotificationKind.PLAN_USAGE,
+                Map.of(
+                        "plan", "Inicial",
+                        "percent", "100",
+                        "total", "200",
+                        "included", "200",
+                        "period", "octubre de 2026",
+                        "priceOverage", "$150"));
+
+        handler.handle(fixtures.notificationJob(id));
+
+        assertThat(resend.requests()).singleElement().satisfies(request -> {
+            assertThat(request.body().get("to").get(0).asText()).isEqualTo("billing@cetus.test");
+            assertThat(request.body().get("subject").asText())
+                    .isEqualTo("[Cetus] Usaste todos los documentos de tu plan Inicial");
+            assertThat(request.body().get("text").asText())
+                    .contains("200 de los 200 documentos que incluye el plan Inicial en octubre de 2026")
+                    .contains("cada documento adicional se cobra a $150")
+                    .contains("/settings/usage");
+        });
+    }
+
+    @Test
     void aRetryAfterAPartialFailureReusesTheKeysOfTheEmailsAlreadySent() {
         UUID accountId = account();
         fixtures.contacts(accountId, "a-tech@cetus.test", "b-fiscal@cetus.test", "billing@cetus.test");
