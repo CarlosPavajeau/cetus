@@ -70,9 +70,7 @@ function Usage() {
               : `${formatCount(usage.issuersLive)} de ${formatCount(plan.issuersIncluded)}`}
           </Entry>
           <Entry label="Solicitudes a la API en producción">
-            {usage.requestsPerSecond === null || usage.requestsBurst === null
-              ? "10 por segundo por llave"
-              : `${formatCount(usage.requestsPerSecond)} por segundo, hasta ${formatCount(usage.requestsBurst)} de una vez`}
+            {`${formatCount(usage.requests.requestsPerSecond)} por segundo, hasta ${formatCount(usage.requests.requestsBurst)} de una vez${usage.requests.perKey ? ", por llave" : ""}`}
           </Entry>
         </dl>
       </Section>

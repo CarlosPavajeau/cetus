@@ -7,15 +7,27 @@ import static org.hamcrest.Matchers.equalTo;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ValidatableResponse;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** An account's own production limits, shared by its keys; a tiny one makes the third request go over it. */
 @QuarkusTest
 class AccountRateLimitTest {
+
+    /** A clock that never moves, so no token comes back however slow the requests are. */
+    @BeforeEach
+    void freezeTheClock() {
+        long now = System.nanoTime();
+        QuarkusMock.installMockForType(
+                new ApiKeyRateLimiter(
+                        new ApiKeyRateLimiter.Limits(10, 20), new ApiKeyRateLimiter.Limits(5, 10), () -> now),
+                ApiKeyRateLimiter.class);
+    }
 
     @Test
     void theProductionKeysOfAnAccountShareItsOwnLimits() {
@@ -40,8 +52,9 @@ class AccountRateLimitTest {
         user.request()
                 .get("/console/usage")
                 .then()
-                .body("requestsPerSecond", equalTo(1))
-                .body("requestsBurst", equalTo(2))
+                .body("requests.requestsPerSecond", equalTo(1f))
+                .body("requests.requestsBurst", equalTo(2))
+                .body("requests.perKey", equalTo(false))
                 .body("current.plan.requestsPerSecond", equalTo(20))
                 .body("current.plan.requestsBurst", equalTo(60));
     }

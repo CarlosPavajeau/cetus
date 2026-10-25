@@ -35,7 +35,9 @@ class UsageResourceTest {
                 .body("current.total", equalTo(0))
                 .body("current.documents.documentType", contains("INVOICE", "CREDIT_NOTE", "DEBIT_NOTE"))
                 .body("issuersLive", equalTo(0))
-                .body("requestsPerSecond", nullValue())
+                .body("requests.requestsPerSecond", equalTo(10f))
+                .body("requests.requestsBurst", equalTo(20))
+                .body("requests.perKey", equalTo(true))
                 .body("months.period", contains(months(now)));
     }
 
@@ -55,8 +57,9 @@ class UsageResourceTest {
                 .then()
                 .statusCode(200)
                 .body("current.plan.name", equalTo("Inicial"))
-                .body("requestsPerSecond", equalTo(5))
-                .body("requestsBurst", equalTo(20))
+                .body("requests.requestsPerSecond", equalTo(5f))
+                .body("requests.requestsBurst", equalTo(20))
+                .body("requests.perKey", equalTo(false))
                 .body("current.total", equalTo(206))
                 .body("current.overage", equalTo(6))
                 .body("current.costOverageCop", equalTo(900))

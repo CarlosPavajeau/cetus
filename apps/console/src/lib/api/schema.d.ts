@@ -1982,6 +1982,18 @@ export interface components {
             /** @description Whether its status lets it issue with this key */
             readyToIssue: boolean;
         };
+        /** @description The production API limits that apply to the account now */
+        RequestLimitsView: {
+            /** Format: double */
+            requestsPerSecond: number;
+            /**
+             * Format: int32
+             * @description Requests that may be made at once
+             */
+            requestsBurst: number;
+            /** @description True when each key has these limits; false when the account's keys share them */
+            perKey: boolean;
+        };
         ResendRequest: {
             /** @description Another address; leave it out to use the first delivery's */
             email?: string | null;
@@ -2071,16 +2083,7 @@ export interface components {
             issuersLive: number;
             /** @description The last months, newest first, this month included */
             months: components["schemas"]["MonthTotalView"][];
-            /**
-             * Format: int32
-             * @description The account's production API requests a second: its own, or its plan's. Null keeps the per-key limit.
-             */
-            requestsPerSecond: number | null;
-            /**
-             * Format: int32
-             * @description Requests at once, with requestsPerSecond
-             */
-            requestsBurst: number | null;
+            requests: components["schemas"]["RequestLimitsView"];
         };
         /** @enum {string} */
         VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";

@@ -76,12 +76,15 @@ public final class UsageViews {
             @Schema(description = "The last months, newest first, this month included")
             List<MonthTotalView> months,
 
-            @Schema(
-                    nullable = true,
-                    description = "The account's production API requests a second: its own, or its plan's. "
-                            + "Null keeps the per-key limit.")
-            Integer requestsPerSecond,
+            RequestLimitsView requests) {}
 
-            @Schema(nullable = true, description = "Requests at once, with requestsPerSecond")
-            Integer requestsBurst) {}
+    @Schema(description = "The production API limits that apply to the account now")
+    public record RequestLimitsView(
+            double requestsPerSecond,
+
+            @Schema(description = "Requests that may be made at once")
+            int requestsBurst,
+
+            @Schema(description = "True when each key has these limits; false when the account's keys share them")
+            boolean perKey) {}
 }

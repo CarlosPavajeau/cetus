@@ -44,6 +44,11 @@ public class ApiKeyRateLimiter {
         this.nanoClock = nanoClock;
     }
 
+    /** The production limits of a key whose account has none of its own. */
+    public Limits perKey() {
+        return limits;
+    }
+
     /**
      * Takes one token; when there is none, returns how long until the next one.
      *

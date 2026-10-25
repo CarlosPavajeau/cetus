@@ -1,9 +1,11 @@
 package com.cantte.cetus.api.usage;
 
+import com.cantte.cetus.api.auth.ApiKeyRateLimiter;
 import com.cantte.cetus.api.usage.UsageViews.DocumentCountView;
 import com.cantte.cetus.api.usage.UsageViews.MonthTotalView;
 import com.cantte.cetus.api.usage.UsageViews.PeriodUsageView;
 import com.cantte.cetus.api.usage.UsageViews.PlanView;
+import com.cantte.cetus.api.usage.UsageViews.RequestLimitsView;
 import com.cantte.cetus.api.usage.UsageViews.UsageView;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.usage.UsagePeriod;
@@ -22,6 +24,9 @@ public class AccountUsage {
 
     @Inject
     UsageCounters counters;
+
+    @Inject
+    ApiKeyRateLimiter rateLimiter;
 
     public PeriodUsageView period(AccountEntity account, YearMonth period) {
         PlanEntity plan = PlanEntity.of(account);
@@ -42,13 +47,19 @@ public class AccountUsage {
                         .map(entry -> new MonthTotalView(entry.getKey().toString(), entry.getValue()))
                         .toList();
         long issuersLive = IssuerEntity.count("accountId = ?1 and environment = ?2", account.id, Environment.LIVE);
+        return new UsageView(period(account, current), issuersLive, totals, requests(account));
+    }
+
+    /** The account's own limits, else its plan's, else the per-key ones the API applies to every key. */
+    private RequestLimitsView requests(AccountEntity account) {
+        if (account.requestsPerSecond != null) {
+            return new RequestLimitsView(account.requestsPerSecond, account.requestsBurst, false);
+        }
         PlanEntity plan = PlanEntity.of(account);
-        boolean own = account.requestsPerSecond != null;
-        return new UsageView(
-                period(account, current),
-                issuersLive,
-                totals,
-                own ? account.requestsPerSecond : plan.requestsPerSecond,
-                own ? account.requestsBurst : plan.requestsBurst);
+        if (plan.requestsPerSecond != null) {
+            return new RequestLimitsView(plan.requestsPerSecond, plan.requestsBurst, false);
+        }
+        ApiKeyRateLimiter.Limits perKey = rateLimiter.perKey();
+        return new RequestLimitsView(perKey.ratePerSecond(), perKey.burst(), true);
     }
 }
