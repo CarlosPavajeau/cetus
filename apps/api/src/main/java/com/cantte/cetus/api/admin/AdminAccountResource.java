@@ -21,6 +21,7 @@ import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -133,7 +134,7 @@ public class AdminAccountResource {
     @RolesAllowed(PlatformRoles.ADMIN)
     @APIResponse(responseCode = "200", description = "OK")
     public AccountDetailView suspend(@PathParam("id") UUID id, @Valid @NotNull StatusChangeRequest request) {
-        AccountEntity account = account(id);
+        AccountEntity account = lockedAccount(id);
         if (!"ACTIVE".equals(account.status)) {
             throw new DomainException("account_not_active", "Only an active account can be suspended");
         }
@@ -155,7 +156,7 @@ public class AdminAccountResource {
     @RolesAllowed(PlatformRoles.ADMIN)
     @APIResponse(responseCode = "200", description = "OK")
     public AccountDetailView reactivate(@PathParam("id") UUID id, @Valid @NotNull StatusChangeRequest request) {
-        AccountEntity account = account(id);
+        AccountEntity account = lockedAccount(id);
         if (!"SUSPENDED".equals(account.status)) {
             throw new DomainException("account_not_suspended", "Only a suspended account can be reactivated");
         }
@@ -169,7 +170,7 @@ public class AdminAccountResource {
     @RolesAllowed(PlatformRoles.ADMIN)
     @APIResponse(responseCode = "200", description = "OK")
     public AccountDetailView changePlan(@PathParam("id") UUID id, @Valid @NotNull PlanChangeRequest request) {
-        AccountEntity account = account(id);
+        AccountEntity account = lockedAccount(id);
         PlanEntity plan = PlanEntity.findById(request.plan());
         if (plan == null || !plan.assignable) {
             throw new DomainException("plan_unknown", "There is no assignable plan " + request.plan());
@@ -223,6 +224,18 @@ public class AdminAccountResource {
                 queries.usageThisMonth(account.id),
                 usage.period(account, UsagePeriod.current()),
                 queries.recentFailures(account.id));
+    }
+
+    /**
+     * The account, locked until the transaction ends. Every change of an account saves the whole row, so a
+     * plan change and a suspension running together would otherwise put back each other's fields.
+     */
+    private static AccountEntity lockedAccount(UUID id) {
+        AccountEntity account = AccountEntity.findById(id, LockModeType.PESSIMISTIC_WRITE);
+        if (account == null) {
+            throw new NotFoundException("Account not found");
+        }
+        return account;
     }
 
     private static AccountEntity account(UUID id) {
