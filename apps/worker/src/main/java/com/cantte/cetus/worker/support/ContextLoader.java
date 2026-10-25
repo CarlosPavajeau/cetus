@@ -38,7 +38,7 @@ public class ContextLoader {
     /** Marks the document as PROCESSING and returns its snapshot, or empty if there is nothing to do. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public Optional<ProcessingContext> startProcessing(UUID documentId) {
-        DocumentEntity doc = DocumentEntity.findById(documentId);
+        DocumentEntity doc = DocumentEntity.lock(documentId);
         if (doc == null || doc.status.isFinal() || doc.status == DocumentStatus.SUBMITTED) {
             return Optional.empty();
         }

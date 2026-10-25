@@ -193,6 +193,15 @@ public class DocumentEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
+    /**
+     * The document, locked until the transaction ends; null when there is none. The worker takes it for every
+     * write: a job whose lease expired can run next to the first one, and a write without it would put back
+     * the status it read before the other one committed.
+     */
+    public static DocumentEntity lock(UUID documentId) {
+        return findById(documentId, LockModeType.PESSIMISTIC_WRITE);
+    }
+
     /** The correction concept of a note, or null for an invoice. */
     public CorrectionConcept concept() {
         return CorrectionConcept.of(documentType, correctionConcept);
