@@ -20,9 +20,16 @@ public class UsageCounters {
     @Inject
     EntityManager em;
 
-    /** Counts one more document and returns the account's total for the period. */
+    /**
+     * Counts one more document and returns the account's total for the period. Two document types update
+     * different rows, so the account's month is locked until the transaction ends: otherwise both could read
+     * the total before either commits, and the one that reaches a share of the plan would not see it.
+     */
     @Transactional(Transactional.TxType.MANDATORY)
     public long record(UUID accountId, YearMonth period, DocumentType type) {
+        em.createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                .setParameter("key", "usage:" + accountId + ":" + period)
+                .getSingleResult();
         em.createNativeQuery("""
                         INSERT INTO billing.usage_counters (account_id, period, document_type, count)
                         VALUES (:account, :period, :type, 1)
