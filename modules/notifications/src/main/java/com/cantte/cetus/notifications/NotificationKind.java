@@ -13,7 +13,9 @@ public enum NotificationKind {
     RANGE_RUNNING_OUT(Set.of(Category.FISCAL)),
     RESOLUTION_EXPIRING(Set.of(Category.FISCAL)),
     REJECTIONS_SPIKE(Set.of(Category.FISCAL, Category.TECHNICAL)),
-    ACCOUNT_SUSPENDED(Set.of(Category.BILLING));
+    ACCOUNT_SUSPENDED(Set.of(Category.BILLING)),
+    /** The month's billable documents reached 80 % or 100 % of the plan's quota. */
+    PLAN_USAGE(Set.of(Category.BILLING));
 
     private final Set<Category> categories;
 

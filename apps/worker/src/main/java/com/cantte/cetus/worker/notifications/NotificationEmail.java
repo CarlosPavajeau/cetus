@@ -146,6 +146,26 @@ public record NotificationEmail(String subject, String html, String text) {
                                 + "para reactivarla.",
                         "Abrir la consola",
                         "/");
+            case PLAN_USAGE ->
+                new Body(
+                        "100".equals(data.get("percent"))
+                                ? "Usaste todos los documentos de tu plan " + data.get("plan")
+                                : "Usaste el %s%% de tu plan %s".formatted(data.get("percent"), data.get("plan")),
+                        "%s lleva %s de los %s documentos que incluye el plan %s en %s."
+                                .formatted(
+                                        account,
+                                        data.get("total"),
+                                        data.get("included"),
+                                        data.get("plan"),
+                                        data.get("period")),
+                        "La facturación no se detiene: %s Si esperas más volumen, escríbenos para cambiar de plan."
+                                .formatted(
+                                        data.containsKey("overagePrice")
+                                                ? "cada documento adicional se cobra a %s."
+                                                        .formatted(data.get("overagePrice"))
+                                                : "los documentos adicionales se cobran según tu contrato."),
+                        "Ver el uso del plan",
+                        "/settings/usage");
         };
     }
 
