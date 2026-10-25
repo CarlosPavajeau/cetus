@@ -54,8 +54,15 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             if (found.lastUsedAt == null || found.lastUsedAt.isBefore(now.minus(LAST_USED_PRECISION))) {
                 found.lastUsedAt = now;
             }
-            AccountEntity account = AccountEntity.findById(found.accountId);
-            return new Resolved(found, account.status);
+            Object[] account = (Object[]) AccountEntity.getEntityManager()
+                    .createQuery("""
+                            SELECT a.status, p.requestsPerMinute
+                            FROM AccountEntity a JOIN PlanEntity p ON p.code = a.plan
+                            WHERE a.id = :id
+                            """)
+                    .setParameter("id", found.accountId)
+                    .getSingleResult();
+            return new Resolved(found, (String) account[0], (Integer) account[1]);
         });
         if (resolved == null) {
             abort(request, "Invalid or revoked API key");
@@ -66,7 +73,8 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             return;
         }
         ApiKeyEntity key = resolved.key();
-        Optional<Duration> wait = rateLimiter.acquire(key.id, key.environment);
+        Optional<Duration> wait =
+                rateLimiter.acquire(key.id, key.accountId, key.environment, resolved.planRequestsPerMinute());
         if (wait.isPresent()) {
             long seconds = Math.max(1, (long) Math.ceil(wait.get().toMillis() / 1000.0));
             request.abortWith(ProblemDetail.builder(
@@ -86,5 +94,5 @@ public class ApiKeyFilter implements ContainerRequestFilter {
         request.abortWith(ProblemDetail.response(status.getStatusCode(), code, message));
     }
 
-    private record Resolved(ApiKeyEntity key, String accountStatus) {}
+    private record Resolved(ApiKeyEntity key, String accountStatus, Integer planRequestsPerMinute) {}
 }

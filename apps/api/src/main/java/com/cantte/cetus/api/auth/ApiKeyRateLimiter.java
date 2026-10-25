@@ -14,6 +14,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 /**
  * A token bucket per API key: {@code burst} requests at once, refilled at {@code requests-per-second}.
  * SANDBOX keys have their own, lower limits: the sandbox is free to use, so it is the easiest to abuse.
+ * Production keys of an account whose plan limits its requests share one bucket per account instead, since
+ * the plan sells them per account: a minute's worth at once, refilled over the minute.
  * The buckets live in memory, so with several API replicas each one allows that much.
  */
 @ApplicationScoped
@@ -42,21 +44,40 @@ public class ApiKeyRateLimiter {
         this.nanoClock = nanoClock;
     }
 
-    /** Takes one token; when there is none, returns how long until the next one. */
-    public Optional<Duration> acquire(UUID apiKeyId, Environment environment) {
-        Limits bucketLimits = environment == Environment.SANDBOX ? sandboxLimits : limits;
-        return buckets.computeIfAbsent(apiKeyId, id -> new Bucket(bucketLimits, nanoClock.getAsLong()))
+    /**
+     * Takes one token; when there is none, returns how long until the next one.
+     *
+     * @param planRequestsPerMinute the account plan's production requests a minute; null when it has no limit
+     */
+    public Optional<Duration> acquire(
+            UUID apiKeyId, UUID accountId, Environment environment, Integer planRequestsPerMinute) {
+        if (environment == Environment.LIVE && planRequestsPerMinute != null) {
+            return bucket(accountId, new Limits(planRequestsPerMinute / 60.0, planRequestsPerMinute))
+                    .take();
+        }
+        return bucket(apiKeyId, environment == Environment.SANDBOX ? sandboxLimits : limits)
                 .take();
+    }
+
+    /** A plan change gives the account a new bucket with the new limits. */
+    private Bucket bucket(UUID id, Limits bucketLimits) {
+        return buckets.compute(
+                id,
+                (key, bucket) -> bucket != null && bucket.limits.equals(bucketLimits)
+                        ? bucket
+                        : new Bucket(bucketLimits, nanoClock.getAsLong()));
     }
 
     private final class Bucket {
 
+        private final Limits limits;
         private final double ratePerSecond;
         private final double burst;
         private double tokens;
         private long refilledAt;
 
         Bucket(Limits limits, long now) {
+            this.limits = limits;
             this.ratePerSecond = limits.ratePerSecond();
             this.burst = limits.burst();
             this.tokens = limits.burst();

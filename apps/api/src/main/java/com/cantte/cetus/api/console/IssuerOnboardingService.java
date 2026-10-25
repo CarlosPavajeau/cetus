@@ -14,9 +14,11 @@ import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.audit.RequestOrigin;
+import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity.VerificationStatus;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.signing.KeyMaterial;
@@ -90,6 +92,9 @@ public class IssuerOnboardingService {
         if (request.environment() == Environment.SANDBOX) {
             requireSandboxIssuerSlot(accountId);
         }
+        if (request.environment() == Environment.LIVE) {
+            requirePlanIssuerSlot(accountId);
+        }
         boolean exists = IssuerEntity.count(
                         "accountId = ?1 and environment = ?2 and nit = ?3",
                         accountId,
@@ -138,6 +143,26 @@ public class IssuerOnboardingService {
         if (issuers >= sandboxMaxIssuers) {
             throw new DomainException(
                     "sandbox_issuer_limit", "This account already has its " + sandboxMaxIssuers + " sandbox issuers");
+        }
+    }
+
+    /**
+     * Production issuers are what the plan sells per NIT; a plan without a limit takes any number. Locked per
+     * account like the sandbox slots, so two requests cannot both take the last one.
+     */
+    private void requirePlanIssuerSlot(UUID accountId) {
+        Integer included = PlanEntity.of(AccountEntity.findById(accountId)).includedIssuers;
+        if (included == null) {
+            return;
+        }
+        IssuerEntity.getEntityManager()
+                .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                .setParameter("key", "live-issuers:" + accountId)
+                .getSingleResult();
+        long issuers = IssuerEntity.count("accountId = ?1 and environment = ?2", accountId, Environment.LIVE);
+        if (issuers >= included) {
+            throw new DomainException(
+                    "plan_issuer_limit", "The account's plan includes " + included + " production issuers");
         }
     }
 
@@ -356,6 +381,7 @@ public class IssuerOnboardingService {
         if (promoted) {
             throw new DomainException("issuer_already_promoted", "This NIT already has a production issuer");
         }
+        requirePlanIssuerSlot(test.accountId);
 
         IssuerEntity live = new IssuerEntity();
         live.id = Ids.newId();

@@ -14,6 +14,8 @@ const messages: Record<string, string> = {
     "El tipo de persona viene con el NIT: no cambia una vez configurado el emisor.",
   issuer_already_exists:
     "Ya tienes un emisor con este NIT en este entorno. Búscalo en la lista de emisores.",
+  plan_issuer_limit:
+    "Tu plan no incluye más emisores en producción. Escríbenos para cambiar de plan.",
   invalid_request: "Revisa los datos del formulario: alguno no tiene el formato esperado.",
 };
 

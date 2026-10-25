@@ -27,6 +27,8 @@ export const getIssuer = createServerFn({ method: "GET" })
 const promotionMessages: Record<string, string> = {
   issuer_not_promotable: "Solo un emisor de pruebas en habilitación puede pasar a producción.",
   issuer_already_promoted: "Este NIT ya tiene su emisor de producción.",
+  plan_issuer_limit:
+    "Tu plan no incluye más emisores en producción. Escríbenos para cambiar de plan.",
 };
 
 /** Creates the production issuer of a test issuer in habilitación and returns it. */
