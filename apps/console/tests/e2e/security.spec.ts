@@ -32,3 +32,28 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
   await page.getByRole("button", { name: "Verificar", exact: true }).click();
   await page.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
 });
+
+test("a backup code typed as shown, dash included, signs in", async ({ browser, organization }) => {
+  const { totpURI, backupCodes } = await organization.auth<{
+    totpURI: string;
+    backupCodes: string[];
+  }>("/two-factor/enable", { password: organization.password });
+  const secret = new URL(totpURI).searchParams.get("secret") ?? "";
+  await organization.auth("/two-factor/verify-totp", { code: totp(secret) });
+  const [backupCode] = backupCodes;
+  expect(backupCode).toMatch(/^[a-zA-Z0-9]{5}-[a-zA-Z0-9]{5}$/);
+
+  const visitor = await browser.newContext();
+  const page = await visitor.newPage();
+  await open(page, "/sign-in");
+  await page.getByLabel("Correo electrónico").fill(organization.email);
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.waitForURL("**/two-factor");
+
+  await page.getByRole("button", { name: "Usar un código de respaldo" }).click();
+  await page.getByLabel("Código de respaldo").pressSequentially(backupCode ?? "");
+  await page.getByRole("button", { name: "Verificar", exact: true }).click();
+  await page.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
+  await visitor.close();
+});

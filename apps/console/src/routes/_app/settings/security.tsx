@@ -19,8 +19,8 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
-import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { TotpCodeInput } from "~/features/auth/CodeInput";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { enableTwoFactorSchema, verifyTotpSchema } from "~/features/auth/schema";
 import { authClient } from "~/lib/auth/client";
@@ -178,6 +178,8 @@ function VerifyEnrollment({
   const onSubmit = form.handleSubmit(async ({ code }) => {
     const { error } = await authClient.twoFactor.verifyTotp({ code });
     if (error) {
+      form.setValue("code", "");
+      form.setFocus("code");
       form.setError("root", { message: "El código no es válido. Revísalo e intenta de nuevo." });
       return;
     }
@@ -215,12 +217,9 @@ function VerifyEnrollment({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="verify-2fa-code">Código de verificación</FieldLabel>
-                  <Input
+                  <TotpCodeInput
                     {...field}
                     id="verify-2fa-code"
-                    autoComplete="one-time-code"
-                    inputMode="numeric"
-                    className="max-w-48 font-mono tracking-widest"
                     aria-invalid={fieldState.invalid}
                   />
                   <FieldError errors={[fieldState.error]} />
