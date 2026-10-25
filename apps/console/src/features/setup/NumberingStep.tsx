@@ -7,7 +7,7 @@ import { Separator } from "~/components/ui/separator";
 import type { IssuerDetail } from "~/lib/api/types";
 
 import { DateField, SecretField, TextField } from "./fields";
-import { type NumberingValues, numberingSchema } from "./schema";
+import { habilitacionNumberingSchema, type NumberingValues, numberingSchema } from "./schema";
 import { addNumberingRange } from "./server";
 import { FieldRow, FieldSection, StepGuide, StepLayout } from "./StepLayout";
 
@@ -38,6 +38,12 @@ export const emptyRange: NumberingValues = {
   technicalKey: "",
 };
 
+/** Production leaves the key empty: the DIAN portal does not show it, and the range verification brings it. */
+export const technicalKeyHint = {
+  TEST: "Copia la clave técnica asociada a esta resolución. Mantén este valor privado.",
+  LIVE: "Déjala vacía: Cetus la consulta a la DIAN al guardar el rango. No es el código del software.",
+};
+
 /** Step 4: the resolution and the invoice numbering range. Saving it completes the setup. */
 export function NumberingStep({
   issuer,
@@ -50,7 +56,9 @@ export function NumberingStep({
 }) {
   const add = useMutation({ mutationFn: addNumberingRange });
   const form = useForm({
-    resolver: arktypeResolver(numberingSchema),
+    resolver: arktypeResolver(
+      issuer.environment === "TEST" ? habilitacionNumberingSchema : numberingSchema,
+    ),
     defaultValues: issuer.environment === "TEST" ? habilitacionRange : emptyRange,
   });
   const range = useWatch({ control: form.control });
@@ -160,8 +168,8 @@ export function NumberingStep({
       <SecretField
         control={form.control}
         name="technicalKey"
-        label="Clave técnica"
-        hint="Copia la clave técnica asociada a esta resolución. Mantén este valor privado."
+        label={issuer.environment === "TEST" ? "Clave técnica" : "Clave técnica (opcional)"}
+        hint={issuer.environment === "TEST" ? technicalKeyHint.TEST : technicalKeyHint.LIVE}
       />
     </StepLayout>
   );

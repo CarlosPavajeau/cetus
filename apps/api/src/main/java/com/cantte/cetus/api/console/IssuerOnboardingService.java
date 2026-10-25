@@ -284,6 +284,13 @@ public class IssuerOnboardingService {
         if (request.from() > request.to()) {
             throw new DomainException("range_invalid", "'from' must be lower than or equal to 'to'");
         }
+        // Production takes the key from GetNumberingRange when it comes empty; habilitación's test range has no
+        // record there.
+        if (request.documentType() == DocumentType.INVOICE
+                && issuer.environment == Environment.TEST
+                && request.technicalKey() == null) {
+            throw new DomainException("technical_key_required", "Habilitación invoice ranges need their technical key");
+        }
         NumberingRangeEntity range = new NumberingRangeEntity();
         range.id = Ids.newId();
         range.issuerId = issuer.id;
@@ -320,6 +327,14 @@ public class IssuerOnboardingService {
      */
     @Transactional
     public NumberingRangeEntity verifyRange(IssuerEntity issuer, UUID rangeId) {
+        NumberingRangeEntity range = verifiableRange(issuer, rangeId);
+        if (range.verificationStatus != VerificationStatus.PENDING) {
+            requestVerification(range);
+        }
+        return range;
+    }
+
+    private static NumberingRangeEntity verifiableRange(IssuerEntity issuer, UUID rangeId) {
         requireOwnSetup(issuer);
         NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find(
                         "id = ?1 and issuerId = ?2", rangeId, issuer.id)
@@ -336,9 +351,25 @@ public class IssuerOnboardingService {
         if (!canSign(issuer)) {
             throw new DomainException("issuer_not_ready", "The issuer needs its DIAN software and certificate first");
         }
-        if (range.verificationStatus != VerificationStatus.PENDING) {
-            requestVerification(range);
-        }
+        return range;
+    }
+
+    /**
+     * Replaces the technical key of a production invoice range with the DIAN's (GetNumberingRange), for a range
+     * whose verification found a different key. Until the worker brings it, the range issues no invoices.
+     */
+    @Transactional
+    public NumberingRangeEntity useDianTechnicalKey(
+            IssuerEntity issuer, UUID rangeId, Actor actor, RequestOrigin origin) {
+        NumberingRangeEntity range = verifiableRange(issuer, rangeId);
+        range.technicalKeySealed = null;
+        requestVerification(range);
+        audit(
+                issuer,
+                actor,
+                origin,
+                AuditAction.TECHNICAL_KEY_REQUESTED_FROM_DIAN,
+                Map.of("rangeId", range.id, "prefix", range.prefix));
         return range;
     }
 

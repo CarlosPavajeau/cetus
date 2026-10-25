@@ -37,6 +37,8 @@ const messages: Record<string, string> = {
   issuer_missing_certificate: "Al emisor le falta el certificado de firma.",
   no_active_numbering_range:
     "El emisor no tiene un rango de numeración vigente para este documento. Agrégalo en el detalle del emisor.",
+  technical_key_pending:
+    "Estamos trayendo la clave técnica del rango desde la DIAN. Vuelve a intentarlo en unos minutos.",
   customer_identification_invalid:
     "El número de identificación del cliente no tiene un formato válido.",
   customer_check_digit_invalid: "El dígito de verificación del NIT del cliente no corresponde.",

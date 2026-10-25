@@ -3,6 +3,7 @@ package com.cantte.cetus.api.support;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -115,7 +116,18 @@ public final class ConsoleFixtures {
     }
 
     public static String addRange(ConsoleUser user, String issuerId, String prefix) {
-        Map<String, Object> request = Map.of(
+        return user.request()
+                .body(rangeRequest(prefix))
+                .post("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("id");
+    }
+
+    /** An invoice range with its technical key, mutable for the tests that change it. */
+    public static Map<String, Object> rangeRequest(String prefix) {
+        return new HashMap<>(Map.of(
                 "documentType",
                 "INVOICE",
                 "resolutionNumber",
@@ -133,14 +145,7 @@ public final class ConsoleFixtures {
                 "validTo",
                 "2030-12-31",
                 "technicalKey",
-                TECHNICAL_KEY);
-        return user.request()
-                .body(request)
-                .post("/console/issuers/" + issuerId + "/numbering-ranges")
-                .then()
-                .statusCode(200)
-                .extract()
-                .path("id");
+                TECHNICAL_KEY));
     }
 
     /** A credit note range as the DIAN expects it: own prefix and consecutive, no resolution or technical key. */

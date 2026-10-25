@@ -145,6 +145,17 @@ public class IssuerResource {
         return IssuerViews.NumberingRangeView.from(onboarding.verifyRange(issuer(id), rangeId));
     }
 
+    /** Discards the range's technical key and asks the worker to bring the DIAN's. */
+    @POST
+    @Path("/{id}/numbering-ranges/{rangeId}/technical-key-from-dian")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    public IssuerViews.NumberingRangeView useDianTechnicalKey(
+            @PathParam("id") UUID id, @PathParam("rangeId") UUID rangeId) {
+        return IssuerViews.NumberingRangeView.from(
+                onboarding.useDianTechnicalKey(issuer(id), rangeId, context.actor(), origin.resolve()));
+    }
+
     private IssuerEntity issuer(UUID id) {
         return IssuerEntity.findForAccount(context.account().id, id)
                 .orElseThrow(() -> new NotFoundException("Issuer not found"));
