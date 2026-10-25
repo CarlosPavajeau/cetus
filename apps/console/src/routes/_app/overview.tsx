@@ -35,12 +35,16 @@ import { useActiveEnvironment } from "~/features/environment/queries";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
+import { planTitle } from "~/features/usage/labels";
+import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
+import { usageQuery } from "~/features/usage/queries";
 
 export const Route = createFileRoute("/_app/overview")({
   loader: ({ context: { queryClient } }) =>
     Promise.all([
       queryClient.ensureQueryData(accountQuery),
       queryClient.ensureQueryData(issuersQuery),
+      queryClient.ensureQueryData(usageQuery),
       queryClient.ensureInfiniteQueryData(documentsQuery({ environment: "SANDBOX" })),
     ]),
   component: Overview,
@@ -49,6 +53,7 @@ export const Route = createFileRoute("/_app/overview")({
 function Overview() {
   const { data: account } = useSuspenseQuery(accountQuery);
   const { data: issuers } = useSuspenseQuery(issuersQuery);
+  const { data: usage } = useSuspenseQuery(usageQuery);
   const { data: sandboxDocuments } = useSuspenseInfiniteQuery(
     documentsQuery({ environment: "SANDBOX" }),
   );
@@ -62,7 +67,7 @@ function Overview() {
     <>
       <PageHeader
         title={account.name}
-        lead={`Plan ${account.plan.toLowerCase()} · cuenta ${account.status.toLowerCase()}`}
+        lead={`${planTitle(usage.current.plan)} · cuenta ${account.status.toLowerCase()}`}
       />
 
       {environment === "SANDBOX" && !tried && (
@@ -98,6 +103,25 @@ function Overview() {
           <CardFooter>
             <Button variant="outline" render={<Link to="/setup" />} nativeButton={false}>
               Configurar emisor
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
+      {fiscal && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Uso del mes</CardTitle>
+            <CardDescription>
+              Documentos que la DIAN aceptó en producción, contra lo que incluye tu plan.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PeriodUsageSummary usage={usage.current} />
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" render={<Link to="/settings/usage" />} nativeButton={false}>
+              Ver plan y uso
             </Button>
           </CardFooter>
         </Card>

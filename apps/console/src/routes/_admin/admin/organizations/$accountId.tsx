@@ -22,7 +22,7 @@ import type { AccountStatus } from "~/features/admin/schema";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { documentStatusLabel, documentTypeLabel } from "~/features/documents/labels";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
-import { planPrice } from "~/features/usage/labels";
+import { planPrice, planTitle } from "~/features/usage/labels";
 import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
 import type { DocumentStatus } from "~/lib/api/types";
 
@@ -61,7 +61,7 @@ function AccountDetail() {
             {accountStatusLabel[status] ?? account.status}
           </Badge>
         }
-        lead={`Plan ${account.billableThisMonth.plan.name} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
+        lead={`${planTitle(account.billableThisMonth.plan)} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
         action={
           isAdmin && status !== "CLOSED" ? (
             <div className="flex gap-2">
@@ -188,7 +188,7 @@ function AccountDetail() {
 
       <Section
         id="account-billing"
-        title={`Plan ${account.billableThisMonth.plan.name} · ${planPrice(account.billableThisMonth.plan)}`}
+        title={`${planTitle(account.billableThisMonth.plan)} · ${planPrice(account.billableThisMonth.plan)}`}
       >
         <PeriodUsageSummary usage={account.billableThisMonth} />
       </Section>

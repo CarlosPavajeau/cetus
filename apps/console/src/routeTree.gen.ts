@@ -39,6 +39,7 @@ import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$i
 import { Route as AppSettingsContactsRouteImport } from './routes/_app/settings/contacts'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
+import { Route as AppSettingsUsageRouteImport } from './routes/_app/settings/usage'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
 import { Route as AdminAdminOrganizationsAccountIdRouteImport } from './routes/_admin/admin/organizations/$accountId'
@@ -201,6 +202,11 @@ const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
   path: '/settings/security',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsUsageRoute = AppSettingsUsageRouteImport.update({
+  id: '/settings/usage',
+  path: '/settings/usage',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -294,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/settings/usage': typeof AppSettingsUsageRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/activity/': typeof AppActivityIndexRoute
@@ -336,6 +343,7 @@ export interface FileRoutesByTo {
   '/settings/contacts': typeof AppSettingsContactsRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/settings/usage': typeof AppSettingsUsageRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin': typeof AdminAdminIndexRoute
   '/activity': typeof AppActivityIndexRoute
@@ -381,6 +389,7 @@ export interface FileRoutesById {
   '/_app/settings/contacts': typeof AppSettingsContactsRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
+  '/_app/settings/usage': typeof AppSettingsUsageRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_app/activity/': typeof AppActivityIndexRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/settings/contacts'
     | '/settings/members'
     | '/settings/security'
+    | '/settings/usage'
     | '/api/auth/$'
     | '/admin/'
     | '/activity/'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/settings/contacts'
     | '/settings/members'
     | '/settings/security'
+    | '/settings/usage'
     | '/api/auth/$'
     | '/admin'
     | '/activity'
@@ -511,6 +522,7 @@ export interface FileRouteTypes {
     | '/_app/settings/contacts'
     | '/_app/settings/members'
     | '/_app/settings/security'
+    | '/_app/settings/usage'
     | '/api/auth/$'
     | '/_admin/admin/'
     | '/_app/activity/'
@@ -760,6 +772,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsSecurityRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/usage': {
+      id: '/_app/settings/usage'
+      path: '/settings/usage'
+      fullPath: '/settings/usage'
+      preLoaderRoute: typeof AppSettingsUsageRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -881,6 +900,7 @@ interface AppRouteChildren {
   AppSettingsContactsRoute: typeof AppSettingsContactsRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
+  AppSettingsUsageRoute: typeof AppSettingsUsageRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
@@ -904,6 +924,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsContactsRoute: AppSettingsContactsRoute,
   AppSettingsMembersRoute: AppSettingsMembersRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
+  AppSettingsUsageRoute: AppSettingsUsageRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
   AppCatalogIndexRoute: AppCatalogIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,

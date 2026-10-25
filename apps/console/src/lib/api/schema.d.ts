@@ -800,6 +800,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["UsageResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/webhook-endpoints": {
         parameters: {
             query?: never;
@@ -1799,6 +1816,12 @@ export interface components {
          * @example 2022-03-10
          */
         LocalDate: string;
+        MonthTotalView: {
+            /** @description Calendar month in Colombia, YYYY-MM */
+            period: string;
+            /** Format: int64 */
+            total: number;
+        };
         NumberingRangeRequest: {
             documentType: components["schemas"]["DocumentType"];
             resolutionNumber?: string;
@@ -2032,6 +2055,17 @@ export interface components {
             status: string;
             /** Format: int64 */
             count: number;
+        };
+        /** @description The account's plan and its billable documents: this month in detail, and the months before */
+        UsageView: {
+            current: components["schemas"]["PeriodUsageView"];
+            /**
+             * Format: int64
+             * @description Production issuers the account has, against the plan's included ones
+             */
+            liveIssuers: number;
+            /** @description The last months, oldest first, this month included */
+            months: components["schemas"]["MonthTotalView"][];
         };
         /** @enum {string} */
         VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";
@@ -2878,12 +2912,14 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Not Allowed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
             };
         };
     };
@@ -5220,6 +5256,35 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    UsageResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

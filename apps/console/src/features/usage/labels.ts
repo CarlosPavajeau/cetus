@@ -15,6 +15,11 @@ export function formatCount(value: number) {
   return count.format(value);
 }
 
+/** "Plan Inicial", or "Sin plan" for an account the Cetus team has not assigned one yet. */
+export function planTitle(plan: Plan) {
+  return plan.code === "FREE" ? plan.name : `Plan ${plan.name}`;
+}
+
 export function planPrice(plan: Plan) {
   return plan.priceMonthlyCop === null
     ? "Precio a convenir"

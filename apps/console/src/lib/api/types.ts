@@ -114,6 +114,8 @@ export type Plan = Schemas["PlanView"];
 
 export type PeriodUsage = Schemas["PeriodUsageView"];
 
+export type Usage = Schemas["UsageView"];
+
 export type CertificateUploadLink = Schemas["UploadLinkView"];
 
 /** Runtime list of audit actions for the filter and its validator. Must list every value of the API enum. */

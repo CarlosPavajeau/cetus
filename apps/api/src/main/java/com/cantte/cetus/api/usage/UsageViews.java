@@ -55,4 +55,20 @@ public final class UsageViews {
 
             @Schema(nullable = true, description = "Overage times its price, in COP; null when the plan has no price")
             Long overageCostCop) {}
+
+    public record MonthTotalView(
+            @Schema(description = "Calendar month in Colombia, YYYY-MM")
+            String period,
+
+            long total) {}
+
+    @Schema(description = "The account's plan and its billable documents: this month in detail, and the months before")
+    public record UsageView(
+            PeriodUsageView current,
+
+            @Schema(description = "Production issuers the account has, against the plan's included ones")
+            long liveIssuers,
+
+            @Schema(description = "The last months, oldest first, this month included")
+            List<MonthTotalView> months) {}
 }

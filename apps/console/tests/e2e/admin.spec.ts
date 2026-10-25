@@ -70,7 +70,7 @@ test("an admin changes an account's plan and it stays in the audit log", async (
 
   await open(page, "/admin/organizations?q=" + encodeURIComponent(name));
   await page.getByRole("link", { name }).click();
-  await expect(page.getByRole("heading", { name: /Plan Sin plan/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Sin plan/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Cambiar plan" }).click();
   const dialog = page.getByRole("dialog");
