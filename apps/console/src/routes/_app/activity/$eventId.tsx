@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import { PageHeader } from "~/components/PageHeader";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -254,9 +254,9 @@ function EventNotFound() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" render={<Link to="/activity" />} nativeButton={false}>
+        <Link to="/activity" className={cn(buttonVariants({ variant: "outline" }))}>
           Volver al registro de actividad
-        </Button>
+        </Link>
       </EmptyContent>
     </Empty>
   );

@@ -22,10 +22,10 @@ test.beforeEach(async ({ organization }) => {
 
 test("the first simulated invoice, from the console", async ({ page }) => {
   await open(page, "/overview");
-  await expect(page.getByRole("button", { name: "Emitir factura de prueba" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Emitir factura simulada" })).toBeVisible();
   await capture(page, "resumen-simulacion");
 
-  await page.getByRole("button", { name: "Emitir factura de prueba" }).click();
+  await page.getByRole("link", { name: "Emitir factura simulada" }).click();
   await expect(page.getByRole("definition").filter({ hasText: "119.000" }).first()).toBeVisible();
   await capture(page, "factura-precargada");
 

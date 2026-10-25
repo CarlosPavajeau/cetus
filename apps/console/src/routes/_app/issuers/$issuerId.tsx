@@ -6,7 +6,7 @@ import { CopyButton } from "~/components/CopyButton";
 import { Entry, Section } from "~/components/DetailSection";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
-import { Button } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -34,7 +34,7 @@ import { TestSetProgress } from "~/features/issuers/TestSetProgress";
 import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { IssuerDetail } from "~/lib/api/types";
-import { uuidPattern } from "~/lib/utils";
+import { cn, uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/issuers/$issuerId")({
   loader: async ({ context: { queryClient }, params }) => {
@@ -140,12 +140,9 @@ function IssuerDetailPage() {
         lead={sandbox ? sandboxLead : statusLead[issuer.status]}
         action={
           !manage ? undefined : issuer.status === "ONBOARDING" ? (
-            <Button
-              render={<Link to="/setup" search={{ issuerId: issuer.id }} />}
-              nativeButton={false}
-            >
+            <Link to="/setup" search={{ issuerId: issuer.id }} className={cn(buttonVariants())}>
               Continuar configuración
-            </Button>
+            </Link>
           ) : (
             issuer.environment === "TEST" &&
             issuer.status === "TESTING" &&
@@ -232,15 +229,14 @@ function IssuerDetailPage() {
         title="Datos tributarios"
         action={
           manage && (
-            <Button
-              variant="outline"
-              size="sm"
-              render={<Link to="/issuers/$issuerId/edit" params={{ issuerId: issuer.id }} />}
-              nativeButton={false}
+            <Link
+              to="/issuers/$issuerId/edit"
+              params={{ issuerId: issuer.id }}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
               <PencilIcon data-icon="inline-start" />
               Editar
-            </Button>
+            </Link>
           )
         }
       >
@@ -381,9 +377,9 @@ function IssuerNotFound() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" render={<Link to="/issuers" />} nativeButton={false}>
+        <Link to="/issuers" className={cn(buttonVariants({ variant: "outline" }))}>
           Volver a los emisores
-        </Button>
+        </Link>
       </EmptyContent>
     </Empty>
   );

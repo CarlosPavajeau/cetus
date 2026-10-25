@@ -5,12 +5,13 @@ import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Spinner } from "~/components/ui/spinner";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { resetPasswordSchema } from "~/features/auth/schema";
 import { authClient } from "~/lib/auth/client";
+import { cn } from "~/lib/utils";
 
 /**
  * Where the emailed link lands: Better Auth checks the token at /api/auth/reset-password/{token} and sends the
@@ -42,14 +43,12 @@ function ResetPassword() {
               El enlace venció o ya se usó. Pide otro y úsalo dentro de la hora siguiente.
             </AlertDescription>
           </Alert>
-          <Button
-            size="lg"
-            className="h-11"
-            render={<Link to="/forgot-password" />}
-            nativeButton={false}
+          <Link
+            to="/forgot-password"
+            className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
           >
             Pedir otro enlace
-          </Button>
+          </Link>
         </FieldGroup>
       </AuthLayout>
     );

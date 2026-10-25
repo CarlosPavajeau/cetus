@@ -4,7 +4,7 @@ import { ArrowUpRightIcon, BuildingIcon, FileTextIcon } from "lucide-react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -30,6 +30,8 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { accountQuery } from "~/features/account/queries";
+import { accountStatusLabel } from "~/features/admin/labels";
+import { accountStatuses } from "~/features/admin/schema";
 import { documentsQuery } from "~/features/documents/queries";
 import { useActiveEnvironment } from "~/features/environment/queries";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
@@ -39,6 +41,7 @@ import { planTitle } from "~/features/usage/labels";
 import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
 import { usageQuery } from "~/features/usage/queries";
 import { docsUrl } from "~/lib/docs";
+import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/overview")({
   loader: ({ context: { queryClient } }) =>
@@ -63,12 +66,14 @@ function Overview() {
   // A new organization only has the sandbox sample, which needs no setup.
   const fiscal = issuers.some((issuer) => issuer.environment !== "SANDBOX");
   const tried = sandboxDocuments.pages.some((page) => page.items.length > 0);
+  const status = accountStatuses.find((each) => each === account.status);
+  const statusText = status === undefined ? account.status : accountStatusLabel[status];
 
   return (
     <>
       <PageHeader
         title={account.name}
-        lead={`${planTitle(usage.current.plan)} · cuenta ${account.status.toLowerCase()}`}
+        lead={`${planTitle(usage.current.plan)} · cuenta ${statusText.toLowerCase()}`}
       />
 
       {environment === "SANDBOX" && !tried && (
@@ -77,16 +82,16 @@ function Overview() {
             <EmptyMedia variant="icon">
               <FileTextIcon />
             </EmptyMedia>
-            <EmptyTitle>Emite tu primera factura de prueba</EmptyTitle>
+            <EmptyTitle>Emite tu primera factura simulada</EmptyTitle>
             <EmptyDescription>
               Ya tienes un emisor de ejemplo listo. Emite una factura simulada y mira su ciclo
               completo: el estado ante la DIAN, el PDF y el XML. No tiene validez fiscal.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button render={<Link to="/documents/new" />} nativeButton={false}>
-              Emitir factura de prueba
-            </Button>
+            <Link to="/documents/new" className={cn(buttonVariants())}>
+              Emitir factura simulada
+            </Link>
           </EmptyContent>
         </Empty>
       )}
@@ -102,9 +107,9 @@ function Overview() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button variant="outline" render={<Link to="/setup" />} nativeButton={false}>
+            <Link to="/setup" className={cn(buttonVariants({ variant: "outline" }))}>
               Configurar emisor
-            </Button>
+            </Link>
           </CardFooter>
         </Card>
       )}
@@ -121,9 +126,9 @@ function Overview() {
             <PeriodUsageSummary usage={usage.current} />
           </CardContent>
           <CardFooter>
-            <Button variant="outline" render={<Link to="/settings/usage" />} nativeButton={false}>
+            <Link to="/settings/usage" className={cn(buttonVariants({ variant: "outline" }))}>
               Ver plan y uso
-            </Button>
+            </Link>
           </CardFooter>
         </Card>
       )}
@@ -148,9 +153,9 @@ function Overview() {
               </EmptyHeader>
               {manage && (
                 <EmptyContent>
-                  <Button render={<Link to="/setup" />} nativeButton={false}>
+                  <Link to="/setup" className={cn(buttonVariants())}>
                     Configurar emisor
-                  </Button>
+                  </Link>
                 </EmptyContent>
               )}
             </Empty>
@@ -184,15 +189,19 @@ function Overview() {
                     </TableCell>
                     <TableCell>
                       {manage && issuer.status === "ONBOARDING" ? (
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="h-auto px-0"
-                          render={<Link to="/setup" search={{ issuerId: issuer.id }} />}
-                          nativeButton={false}
+                        <Link
+                          to="/setup"
+                          search={{ issuerId: issuer.id }}
+                          className={cn(
+                            buttonVariants({
+                              variant: "link",
+                              size: "sm",
+                              className: "h-auto px-0",
+                            }),
+                          )}
                         >
                           Continuar configuración
-                        </Button>
+                        </Link>
                       ) : (
                         statusLabel[issuer.status]
                       )}
@@ -209,20 +218,20 @@ function Overview() {
         <CardHeader>
           <CardTitle>Integra tu sistema</CardTitle>
           <CardDescription>
-            Crea una llave de pruebas y envía tu primera factura a <code>POST /v1/invoices</code>.
-            Las llaves de pruebas envían a la habilitación de la DIAN; las de producción, a
+            Crea una llave de simulación y envía tu primera factura a <code>POST /v1/invoices</code>
+            . Las llaves de pruebas envían a la habilitación de la DIAN; las de producción, a
             facturación real.
           </CardDescription>
         </CardHeader>
         <CardFooter>
-          <Button render={<Link to="/developers/api-keys" />} nativeButton={false}>
+          <Link to="/developers/api-keys" className={cn(buttonVariants({ variant: "outline" }))}>
             Crear llave de API
-          </Button>
+          </Link>
           <a
             href={`${docsUrl}/inicio-rapido/desarrolladores`}
             target="_blank"
             rel="noreferrer"
-            className={buttonVariants({ variant: "outline" })}
+            className={cn(buttonVariants({ variant: "outline" }))}
           >
             Ver el inicio rápido
             <ArrowUpRightIcon data-icon="inline-end" strokeWidth={2} absoluteStrokeWidth />

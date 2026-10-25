@@ -3,11 +3,12 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { memberRoleLabel } from "~/features/admin/labels";
 import { getInvitationDetails } from "~/features/members/server";
 import { authClient } from "~/lib/auth/client";
+import { cn } from "~/lib/utils";
 
 type InvitationSearch = {
   /** The sign-up just sent the confirmation email. */
@@ -65,23 +66,20 @@ function InvitationPage() {
         lead="Entra con el correo al que llegó la invitación, o crea tu cuenta con él, para unirte a la organización."
       >
         <div className="flex flex-col gap-3">
-          <Button
-            size="lg"
-            className="h-11"
-            render={<Link to="/sign-up" search={{ invitation: invitationId }} />}
-            nativeButton={false}
+          <Link
+            to="/sign-up"
+            search={{ invitation: invitationId }}
+            className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
           >
             Crear cuenta
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="h-11"
-            render={<Link to="/sign-in" search={{ invitation: invitationId }} />}
-            nativeButton={false}
+          </Link>
+          <Link
+            to="/sign-in"
+            search={{ invitation: invitationId }}
+            className={cn(buttonVariants({ variant: "outline", size: "lg", className: "h-11" }))}
           >
             Ya tengo cuenta
-          </Button>
+          </Link>
         </div>
       </AuthLayout>
     );
@@ -94,9 +92,9 @@ function InvitationPage() {
           <Alert>
             <AlertDescription>{invitation.message}</AlertDescription>
           </Alert>
-          <Button variant="outline" render={<Link to="/overview" />} nativeButton={false}>
+          <Link to="/overview" className={cn(buttonVariants({ variant: "outline" }))}>
             Ir a la consola
-          </Button>
+          </Link>
         </div>
       </AuthLayout>
     );

@@ -6,7 +6,7 @@ import { Entry, Section } from "~/components/DetailSection";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -35,7 +35,7 @@ import { deliveryStatusLabel, eventTypeLabel } from "~/features/webhooks/labels"
 import { webhookDeliveriesQuery, webhookEndpointQuery } from "~/features/webhooks/queries";
 import { WebhookStatusBadge } from "~/features/webhooks/WebhookStatusBadge";
 import type { WebhookDelivery, WebhookEndpoint } from "~/lib/api/types";
-import { uuidPattern } from "~/lib/utils";
+import { cn, uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/developers/webhooks/$endpointId")({
   loader: async ({ context: { queryClient }, params }) => {
@@ -263,9 +263,9 @@ function WebhookEndpointNotFound() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" render={<Link to="/developers/webhooks" />} nativeButton={false}>
+        <Link to="/developers/webhooks" className={cn(buttonVariants({ variant: "outline" }))}>
           Volver a los webhooks
-        </Button>
+        </Link>
       </EmptyContent>
     </Empty>
   );

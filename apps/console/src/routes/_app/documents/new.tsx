@@ -3,7 +3,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { BuildingIcon } from "lucide-react";
 
 import { PageHeader } from "~/components/PageHeader";
-import { Button } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -19,6 +19,7 @@ import { InvoiceForm } from "~/features/issuance/InvoiceForm";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import { issuersQuery } from "~/features/issuers/queries";
 import type { Environment, Issuer } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/documents/new")({
   loader: async ({ context: { queryClient } }) => {
@@ -73,9 +74,9 @@ function NewInvoice() {
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button render={<Link to="/issuers" />} nativeButton={false}>
+            <Link to="/issuers" className={cn(buttonVariants())}>
               Ver emisores
-            </Button>
+            </Link>
           </EmptyContent>
         </Empty>
       ) : (

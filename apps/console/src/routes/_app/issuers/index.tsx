@@ -6,7 +6,7 @@ import { useState } from "react";
 import { CopyButton } from "~/components/CopyButton";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
-import { Button } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -31,6 +31,7 @@ import { issuersQuery } from "~/features/issuers/queries";
 import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { Environment, Issuer } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/issuers/")({
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(issuersQuery),
@@ -41,10 +42,10 @@ type EnvironmentFilter = Environment | "ALL";
 
 function NewIssuer() {
   return (
-    <Button render={<Link to="/setup" search={{ new: true }} />} nativeButton={false}>
+    <Link to="/setup" search={{ new: true }} className={cn(buttonVariants())}>
       <PlusIcon data-icon="inline-start" />
       Nuevo emisor
-    </Button>
+    </Link>
   );
 }
 
@@ -194,15 +195,15 @@ function IssuerRow({ issuer }: { issuer: Issuer }) {
       </TableCell>
       <TableCell>
         {manage && issuer.status === "ONBOARDING" ? (
-          <Button
-            variant="link"
-            size="sm"
-            className="h-auto px-0"
-            render={<Link to="/setup" search={{ issuerId: issuer.id }} />}
-            nativeButton={false}
+          <Link
+            to="/setup"
+            search={{ issuerId: issuer.id }}
+            className={cn(
+              buttonVariants({ variant: "link", size: "sm", className: "h-auto px-0" }),
+            )}
           >
             Continuar configuración
-          </Button>
+          </Link>
         ) : (
           <IssuerStatusBadge status={issuer.status} />
         )}
