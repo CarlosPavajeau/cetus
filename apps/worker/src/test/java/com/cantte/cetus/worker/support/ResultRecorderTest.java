@@ -22,6 +22,9 @@ import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -118,6 +121,67 @@ class ResultRecorderTest {
         recorder.completed(id, ACCEPTED);
 
         assertThat(notices(accountOf(id))).isEmpty();
+    }
+
+    @Test
+    void aWriteThatStartedBeforeTheVerdictWaitsForItAndKeepsIt() throws Exception {
+        UUID id = liveDocument(fixtures.invoice());
+        CountDownLatch locked = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        // Another run of the job holds the document while it records the DIAN's acceptance.
+        CompletableFuture<Void> verdict = CompletableFuture.runAsync(
+                () -> QuarkusTransaction.requiringNew().run(() -> {
+                    DocumentEntity doc = DocumentEntity.lock(id);
+                    locked.countDown();
+                    await(release);
+                    doc.status = DocumentStatus.ACCEPTED;
+                }));
+        locked.await(5, TimeUnit.SECONDS);
+
+        CompletableFuture<Void> failure = CompletableFuture.runAsync(() -> recorder.failed(id, "Connection reset"));
+        Thread.sleep(300);
+        assertThat(failure).isNotDone();
+        release.countDown();
+        verdict.get(5, TimeUnit.SECONDS);
+        failure.get(5, TimeUnit.SECONDS);
+
+        assertThat(status(id)).isEqualTo(DocumentStatus.ACCEPTED);
+    }
+
+    @Test
+    void documentsOfTheSameMonthAreCountedOneAfterTheOther() throws Exception {
+        UUID accountId = accountOf(fixtures.invoice());
+        CountDownLatch counted = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CompletableFuture<Long> invoice = CompletableFuture.supplyAsync(() -> QuarkusTransaction.requiringNew()
+                .call(() -> {
+                    long total = usage.record(accountId, UsagePeriod.current(), DocumentType.INVOICE);
+                    counted.countDown();
+                    await(release);
+                    return total;
+                }));
+        counted.await(5, TimeUnit.SECONDS);
+
+        // A credit note accepted at the same time updates another row, yet reads the invoice's count.
+        CompletableFuture<Long> note = CompletableFuture.supplyAsync(() -> QuarkusTransaction.requiringNew()
+                .call(() -> usage.record(accountId, UsagePeriod.current(), DocumentType.CREDIT_NOTE)));
+        Thread.sleep(300);
+        assertThat(note).isNotDone();
+        release.countDown();
+
+        assertThat(invoice.get(5, TimeUnit.SECONDS)).isEqualTo(1);
+        assertThat(note.get(5, TimeUnit.SECONDS)).isEqualTo(2);
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("The test never released the transaction");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
     }
 
     private static UUID accountOf(UUID documentId) {
