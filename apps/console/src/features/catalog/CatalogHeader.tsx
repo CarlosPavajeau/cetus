@@ -25,8 +25,7 @@ export function CatalogHeader({ action }: { action?: ReactNode }) {
           <Link
             key={tab.to}
             to={tab.to}
-            className="-mb-px border-b-2 border-transparent pb-2 text-muted-foreground hover:text-foreground"
-            activeProps={{ className: "border-foreground text-foreground" }}
+            className="-mb-px border-b-2 border-transparent pb-2 text-muted-foreground hover:text-foreground aria-[current=page]:border-foreground aria-[current=page]:text-foreground"
           >
             {tab.label}
           </Link>
