@@ -1,4 +1,4 @@
-import { type } from "arktype";
+import { type Traversal, type } from "arktype";
 
 const email = type("string.email").configure({ message: "Ingresa un correo válido." });
 
@@ -11,18 +11,28 @@ export const signInSchema = type({
   password: type("string > 0").configure({ message: "Ingresa tu contraseña." }),
 });
 
+const newPassword = {
+  // Better Auth's own limits (minPasswordLength, and maxPasswordLength by default).
+  password: type("10 <= string <= 128").configure({
+    message: "La contraseña debe tener entre 10 y 128 caracteres.",
+  }),
+  confirmPassword: type("string > 0").configure({ message: "Repite tu contraseña." }),
+};
+
+const passwordsMatch = (values: { password: string; confirmPassword: string }, ctx: Traversal) =>
+  values.password === values.confirmPassword
+    ? true
+    : ctx.reject({ path: ["confirmPassword"], message: "Las contraseñas no coinciden." });
+
 export const signUpSchema = type({
   name: required("Escribe tu nombre completo."),
   email,
-  password: type("string >= 10").configure({
-    message: "La contraseña debe tener mínimo 10 caracteres.",
-  }),
-  confirmPassword: type("string > 0").configure({ message: "Repite tu contraseña." }),
-}).narrow((values, ctx) =>
-  values.password === values.confirmPassword
-    ? true
-    : ctx.reject({ path: ["confirmPassword"], message: "Las contraseñas no coinciden." }),
-);
+  ...newPassword,
+}).narrow(passwordsMatch);
+
+export const forgotPasswordSchema = type({ email });
+
+export const resetPasswordSchema = type(newPassword).narrow(passwordsMatch);
 
 const trustDevice = type("boolean");
 

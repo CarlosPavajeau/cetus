@@ -6,6 +6,8 @@ import { admin, jwt, organization, twoFactor } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { and, eq } from "drizzle-orm";
 
+import { passwordChangedMessage } from "~/emails/PasswordChangedEmail";
+import { passwordResetMessage } from "~/emails/PasswordResetEmail";
 import { verificationMessage } from "~/emails/VerificationEmail";
 
 import { db } from "../db";
@@ -69,9 +71,36 @@ export const auth = betterAuth({
       ipAddressHeaders: ["cf-connecting-ip"],
     },
   },
+  rateLimit: {
+    customRules: {
+      "/request-password-reset": { window: 10 * 60, max: 3 },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 10,
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      // Not awaited: a registered address must not answer later than an unknown one.
+      void emailSender
+        .send(passwordResetMessage({ to: user.email, name: user.name, url }))
+        .catch((error: unknown) => console.error("Could not send a password reset email", error));
+    },
+    // The password already changed: nothing after it may turn the reset into an error.
+    onPasswordReset: async ({ user }) => {
+      // The link reached this address, which proves it is the person's.
+      if (!user.emailVerified) {
+        await db
+          .update(schema.user)
+          .set({ emailVerified: true })
+          .where(eq(schema.user.id, user.id))
+          .catch((error: unknown) => console.error("Could not confirm an address on reset", error));
+      }
+      await emailSender
+        .send(passwordChangedMessage({ to: user.email, name: user.name, changedAt: new Date() }))
+        .catch((error: unknown) => console.error("Could not send a password changed email", error));
+    },
   },
   // Only accepting an invitation asks for a verified address (requireEmailVerificationOnInvitation), so
   // whoever holds an invitation's link cannot sign up with its address and join. The link proves the
