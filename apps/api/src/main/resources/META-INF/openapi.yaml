@@ -301,7 +301,7 @@ components:
             departmentCode: "11"
             departmentName: Bogotá
             postalCode: "110111"
-            line: Calle 93 # 11-26
+            line: "Calle 93 # 11-26"
           email: facturas@andina.example
         payment:
           method: CREDIT
@@ -441,7 +441,7 @@ components:
           cityName: Bogotá, D.C.
           departmentCode: "11"
           departmentName: Bogotá
-          line: Calle 93 # 11-26
+          line: "Calle 93 # 11-26"
         email: facturas@andina.example
     InvalidRequestProblem:
       summary: Campo inválido
