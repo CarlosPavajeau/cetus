@@ -4,17 +4,21 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import com.cantte.cetus.persistence.usage.UsageCounters;
 import com.cantte.cetus.webhooks.WebhookEventType;
 import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
 import com.cantte.cetus.webhooks.WebhookPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -31,6 +35,9 @@ public class ResultRecorder {
 
     @Inject
     WebhookPublisher webhooks;
+
+    @Inject
+    UsageCounters usage;
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void artifact(UUID documentId, DocumentArtifactEntity.Kind kind, DocumentStorage.StoredObject stored) {
@@ -85,9 +92,16 @@ public class ResultRecorder {
         jobs.enqueue(JobTypes.CHECK_TEST_SET_STATUS, documentId, Duration.ofSeconds(10));
     }
 
+    /**
+     * The DIAN's verdict. Recorded once: a job whose lease expired can run again and get its own answer, and
+     * the document must not be delivered, published or billed twice.
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void completed(UUID documentId, DianResponse response) {
-        DocumentEntity doc = DocumentEntity.findById(documentId);
+        DocumentEntity doc = DocumentEntity.findById(documentId, LockModeType.PESSIMISTIC_WRITE);
+        if (doc.status.isFinal()) {
+            return;
+        }
         doc.status = response.valid() ? DocumentStatus.ACCEPTED : DocumentStatus.REJECTED;
         doc.dianStatusCode = response.statusCode();
         doc.dianStatusMessage = response.statusDescription();
@@ -96,6 +110,9 @@ public class ResultRecorder {
         if (response.valid()) {
             // Same transaction as the status change: an accepted document is always delivered.
             jobs.enqueue(JobTypes.DELIVER_DOCUMENT, documentId);
+            if (doc.environment == Environment.LIVE) {
+                usage.record(doc.accountId, UsagePeriod.of(doc.validatedAt), doc.documentType);
+            }
         }
         webhooks.publish(
                 WebhookEventType.forDocument(doc.documentType, response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED),
