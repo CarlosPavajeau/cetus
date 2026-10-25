@@ -21,9 +21,13 @@ import com.cantte.cetus.persistence.entity.NotificationEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -292,6 +296,43 @@ class AdminAccountResourceTest {
     }
 
     @Test
+    void aPlanChangeWaitsForASuspensionAndKeepsIt() throws Exception {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        UUID accountId = UUID.fromString(bootstrap(customer, "Concurrente SAS"));
+        CountDownLatch locked = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        // A suspension holds the account while it commits.
+        CompletableFuture<Void> suspension = CompletableFuture.runAsync(() -> QuarkusTransaction.requiringNew()
+                .run(() -> {
+                    AccountEntity account = AccountEntity.findById(accountId, LockModeType.PESSIMISTIC_WRITE);
+                    locked.countDown();
+                    await(release);
+                    account.status = "SUSPENDED";
+                }));
+        locked.await(5, TimeUnit.SECONDS);
+
+        // The plan change starts while the suspension holds the account, and must wait for it to commit.
+        CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            release.countDown();
+        });
+        ADMIN.request()
+                .body(Map.of("plan", "INICIAL", "reason", "Contrató el plan"))
+                .put("/admin/accounts/" + accountId + "/plan")
+                .then()
+                .statusCode(200);
+        suspension.get(5, TimeUnit.SECONDS);
+
+        AccountEntity account = QuarkusTransaction.requiringNew().call(() -> AccountEntity.findById(accountId));
+        assertThat(account.status).isEqualTo("SUSPENDED");
+        assertThat(account.plan).isEqualTo("INICIAL");
+    }
+
+    @Test
     void closedAccountsAreNotReactivated() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         String accountId = bootstrap(customer, "Cerrada SAS");
@@ -320,6 +361,17 @@ class AdminAccountResourceTest {
                 .then()
                 .statusCode(403)
                 .body("code", equalTo("account_suspended"));
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("The test never released the transaction");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
     }
 
     private static void bill(UUID accountId, DocumentType type, int count) {
