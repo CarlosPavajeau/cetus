@@ -35,6 +35,7 @@ class UsageResourceTest {
                 .body("current.total", equalTo(0))
                 .body("current.documents.documentType", contains("INVOICE", "CREDIT_NOTE", "DEBIT_NOTE"))
                 .body("issuersLive", equalTo(0))
+                .body("requestsPerSecond", nullValue())
                 .body("months.period", contains(months(now)));
     }
 
@@ -54,16 +55,18 @@ class UsageResourceTest {
                 .then()
                 .statusCode(200)
                 .body("current.plan.name", equalTo("Inicial"))
+                .body("requestsPerSecond", equalTo(5))
+                .body("requestsBurst", equalTo(20))
                 .body("current.total", equalTo(206))
                 .body("current.overage", equalTo(6))
                 .body("current.costOverageCop", equalTo(900))
-                .body("months.total", contains(0, 0, 0, 40, 0, 206));
+                .body("months.total", contains(206, 0, 40, 0, 0, 0));
     }
 
     private static String[] months(YearMonth last) {
         String[] months = new String[UsageResource.MONTHS];
         for (int i = 0; i < months.length; i++) {
-            months[i] = last.minusMonths(months.length - 1 - i).toString();
+            months[i] = last.minusMonths(i).toString();
         }
         return months;
     }

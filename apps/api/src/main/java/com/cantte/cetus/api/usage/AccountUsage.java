@@ -38,10 +38,17 @@ public class AccountUsage {
     public UsageView overview(AccountEntity account, int months) {
         YearMonth current = UsagePeriod.current();
         List<MonthTotalView> totals =
-                counters.totals(account.id, current.minusMonths(months - 1), current).entrySet().stream()
+                counters.totals(account.id, current.minusMonths(months - 1), current).reversed().entrySet().stream()
                         .map(entry -> new MonthTotalView(entry.getKey().toString(), entry.getValue()))
                         .toList();
         long issuersLive = IssuerEntity.count("accountId = ?1 and environment = ?2", account.id, Environment.LIVE);
-        return new UsageView(period(account, current), issuersLive, totals);
+        PlanEntity plan = PlanEntity.of(account);
+        boolean own = account.requestsPerSecond != null;
+        return new UsageView(
+                period(account, current),
+                issuersLive,
+                totals,
+                own ? account.requestsPerSecond : plan.requestsPerSecond,
+                own ? account.requestsBurst : plan.requestsBurst);
     }
 }

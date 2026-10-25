@@ -32,6 +32,13 @@ public class AccountEntity extends PanacheEntityBase {
     @Column(name = "status_changed_by")
     public String statusChangedBy;
 
+    /** The account's own production API limits, above its plan's; null follows the plan. Set by hand. */
+    @Column(name = "requests_per_second")
+    public Integer requestsPerSecond;
+
+    @Column(name = "requests_burst")
+    public Integer requestsBurst;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     public OffsetDateTime createdAt;
 

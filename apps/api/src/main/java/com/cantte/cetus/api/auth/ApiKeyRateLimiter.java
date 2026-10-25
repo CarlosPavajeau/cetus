@@ -14,8 +14,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 /**
  * A token bucket per API key: {@code burst} requests at once, refilled at {@code requests-per-second}.
  * SANDBOX keys have their own, lower limits: the sandbox is free to use, so it is the easiest to abuse.
- * Production keys of an account whose plan limits its requests share one bucket per account instead, since
- * the plan sells them per account: a minute's worth at once, refilled over the minute.
+ * Production keys of an account with its own limits (its plan's, or set for it) share one bucket per
+ * account instead, so more keys do not mean more requests.
  * The buckets live in memory, so with several API replicas each one allows that much.
  */
 @ApplicationScoped
@@ -47,19 +47,17 @@ public class ApiKeyRateLimiter {
     /**
      * Takes one token; when there is none, returns how long until the next one.
      *
-     * @param planRequestsPerMinute the account plan's production requests a minute; null when it has no limit
+     * @param accountLimits the account's production limits; null keeps the per-key ones
      */
-    public Optional<Duration> acquire(
-            UUID apiKeyId, UUID accountId, Environment environment, Integer planRequestsPerMinute) {
-        if (environment == Environment.LIVE && planRequestsPerMinute != null) {
-            return bucket(accountId, new Limits(planRequestsPerMinute / 60.0, planRequestsPerMinute))
-                    .take();
+    public Optional<Duration> acquire(UUID apiKeyId, UUID accountId, Environment environment, Limits accountLimits) {
+        if (environment == Environment.LIVE && accountLimits != null) {
+            return bucket(accountId, accountLimits).take();
         }
         return bucket(apiKeyId, environment == Environment.SANDBOX ? sandboxLimits : limits)
                 .take();
     }
 
-    /** A plan change gives the account a new bucket with the new limits. */
+    /** New limits for the account (another plan, or its own) give it a new bucket. */
     private Bucket bucket(UUID id, Limits bucketLimits) {
         return buckets.compute(
                 id,

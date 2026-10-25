@@ -1913,9 +1913,14 @@ export interface components {
             issuersIncluded: number | null;
             /**
              * Format: int32
-             * @description Production API requests a minute, shared by the account's keys
+             * @description Production API requests a second, shared by the account's keys
              */
-            requestsPerMinute: number | null;
+            requestsPerSecond: number | null;
+            /**
+             * Format: int32
+             * @description Production API requests the account may make at once
+             */
+            requestsBurst: number | null;
         };
         PreviewLine: {
             /** Format: int32 */
@@ -2064,8 +2069,18 @@ export interface components {
              * @description Production issuers the account has, against the plan's included ones
              */
             issuersLive: number;
-            /** @description The last months, oldest first, this month included */
+            /** @description The last months, newest first, this month included */
             months: components["schemas"]["MonthTotalView"][];
+            /**
+             * Format: int32
+             * @description The account's production API requests a second: its own, or its plan's. Null keeps the per-key limit.
+             */
+            requestsPerSecond: number | null;
+            /**
+             * Format: int32
+             * @description Requests at once, with requestsPerSecond
+             */
+            requestsBurst: number | null;
         };
         /** @enum {string} */
         VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";

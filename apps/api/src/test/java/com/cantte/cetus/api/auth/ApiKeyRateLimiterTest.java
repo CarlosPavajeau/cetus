@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 class ApiKeyRateLimiterTest {
 
     private static final UUID ACCOUNT = UUID.randomUUID();
+    private static final ApiKeyRateLimiter.Limits INICIAL = new ApiKeyRateLimiter.Limits(5, 20);
 
     private final AtomicLong now = new AtomicLong();
     private final ApiKeyRateLimiter limiter =
@@ -65,32 +66,33 @@ class ApiKeyRateLimiterTest {
     }
 
     @Test
-    void theProductionKeysOfAPlanShareTheAccountsMinute() {
+    void theProductionKeysOfAnAccountShareItsLimits() {
         UUID account = UUID.randomUUID();
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();
-        for (int i = 0; i < 30; i++) {
-            assertThat(limiter.acquire(i % 2 == 0 ? first : second, account, Environment.LIVE, 30))
+        for (int i = 0; i < 20; i++) {
+            assertThat(limiter.acquire(i % 2 == 0 ? first : second, account, Environment.LIVE, INICIAL))
                     .isEmpty();
         }
-        assertThat(limiter.acquire(second, account, Environment.LIVE, 30)).contains(Duration.ofSeconds(2));
+        assertThat(limiter.acquire(second, account, Environment.LIVE, INICIAL)).contains(Duration.ofMillis(200));
         // Its test keys keep their own buckets.
-        assertThat(limiter.acquire(UUID.randomUUID(), account, Environment.TEST, 30))
+        assertThat(limiter.acquire(UUID.randomUUID(), account, Environment.TEST, INICIAL))
                 .isEmpty();
 
-        now.addAndGet(Duration.ofSeconds(2).toNanos());
-        assertThat(limiter.acquire(first, account, Environment.LIVE, 30)).isEmpty();
+        now.addAndGet(Duration.ofMillis(200).toNanos());
+        assertThat(limiter.acquire(first, account, Environment.LIVE, INICIAL)).isEmpty();
     }
 
     @Test
-    void aPlanChangeTakesEffectOnTheNextRequest() {
+    void newLimitsTakeEffectOnTheNextRequest() {
         UUID account = UUID.randomUUID();
         UUID key = UUID.randomUUID();
-        for (int i = 0; i < 30; i++) {
-            limiter.acquire(key, account, Environment.LIVE, 30);
+        for (int i = 0; i < 20; i++) {
+            limiter.acquire(key, account, Environment.LIVE, INICIAL);
         }
-        assertThat(limiter.acquire(key, account, Environment.LIVE, 30)).isPresent();
+        assertThat(limiter.acquire(key, account, Environment.LIVE, INICIAL)).isPresent();
 
-        assertThat(limiter.acquire(key, account, Environment.LIVE, 120)).isEmpty();
+        assertThat(limiter.acquire(key, account, Environment.LIVE, new ApiKeyRateLimiter.Limits(10, 40)))
+                .isEmpty();
     }
 }

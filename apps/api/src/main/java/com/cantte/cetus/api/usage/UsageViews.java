@@ -24,8 +24,11 @@ public final class UsageViews {
             @Schema(nullable = true, description = "Production issuers (NIT) the account may have")
             Integer issuersIncluded,
 
-            @Schema(nullable = true, description = "Production API requests a minute, shared by the account's keys")
-            Integer requestsPerMinute) {
+            @Schema(nullable = true, description = "Production API requests a second, shared by the account's keys")
+            Integer requestsPerSecond,
+
+            @Schema(nullable = true, description = "Production API requests the account may make at once")
+            Integer requestsBurst) {
 
         public static PlanView from(PlanEntity plan) {
             return new PlanView(
@@ -35,7 +38,8 @@ public final class UsageViews {
                     plan.documentsIncluded,
                     plan.priceOverageCop,
                     plan.issuersIncluded,
-                    plan.requestsPerMinute);
+                    plan.requestsPerSecond,
+                    plan.requestsBurst);
         }
     }
 
@@ -69,6 +73,15 @@ public final class UsageViews {
             @Schema(description = "Production issuers the account has, against the plan's included ones")
             long issuersLive,
 
-            @Schema(description = "The last months, oldest first, this month included")
-            List<MonthTotalView> months) {}
+            @Schema(description = "The last months, newest first, this month included")
+            List<MonthTotalView> months,
+
+            @Schema(
+                    nullable = true,
+                    description = "The account's production API requests a second: its own, or its plan's. "
+                            + "Null keeps the per-key limit.")
+            Integer requestsPerSecond,
+
+            @Schema(nullable = true, description = "Requests at once, with requestsPerSecond")
+            Integer requestsBurst) {}
 }

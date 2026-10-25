@@ -29,8 +29,13 @@ public class PlanEntity extends PanacheEntityBase {
     @Column(name = "issuers_included")
     public Integer issuersIncluded;
 
-    @Column(name = "requests_per_minute")
-    public Integer requestsPerMinute;
+    /** Production API requests a second, shared by the account's keys; null keeps the API's per-key limit. */
+    @Column(name = "requests_per_second")
+    public Integer requestsPerSecond;
+
+    /** Requests the account may make at once; set together with {@link #requestsPerSecond}. */
+    @Column(name = "requests_burst")
+    public Integer requestsBurst;
 
     public boolean assignable;
 

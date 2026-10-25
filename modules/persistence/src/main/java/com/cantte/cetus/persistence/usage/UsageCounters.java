@@ -9,6 +9,7 @@ import java.time.YearMonth;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -48,7 +49,7 @@ public class UsageCounters {
     }
 
     /** The account's total of each month from {@code first} to {@code last}, with zero for months without documents. */
-    public Map<YearMonth, Long> totals(UUID accountId, YearMonth first, YearMonth last) {
+    public SequencedMap<YearMonth, Long> totals(UUID accountId, YearMonth first, YearMonth last) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = em.createNativeQuery("""
                         SELECT period, sum(count)
@@ -60,7 +61,7 @@ public class UsageCounters {
                 .setParameter("first", first.toString())
                 .setParameter("last", last.toString())
                 .getResultList();
-        Map<YearMonth, Long> totals = new TreeMap<>();
+        SequencedMap<YearMonth, Long> totals = new TreeMap<>();
         for (YearMonth month = first; !month.isAfter(last); month = month.plusMonths(1)) {
             totals.put(month, 0L);
         }

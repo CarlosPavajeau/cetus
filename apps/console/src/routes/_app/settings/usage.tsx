@@ -70,9 +70,9 @@ function Usage() {
               : `${formatCount(usage.issuersLive)} de ${formatCount(plan.issuersIncluded)}`}
           </Entry>
           <Entry label="Solicitudes a la API en producción">
-            {plan.requestsPerMinute === null
-              ? "Límite estándar"
-              : `${formatCount(plan.requestsPerMinute)} por minuto`}
+            {usage.requestsPerSecond === null || usage.requestsBurst === null
+              ? "10 por segundo por llave"
+              : `${formatCount(usage.requestsPerSecond)} por segundo, hasta ${formatCount(usage.requestsBurst)} de una vez`}
           </Entry>
         </dl>
       </Section>
@@ -90,7 +90,7 @@ function Usage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {[...usage.months].reverse().map((month) => (
+            {usage.months.map((month) => (
               <TableRow key={month.period}>
                 <TableCell>{periodLabel(month.period)}</TableCell>
                 <TableCell className="text-right tabular-nums">
