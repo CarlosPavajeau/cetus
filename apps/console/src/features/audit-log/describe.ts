@@ -103,7 +103,7 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "ACCOUNT_REACTIVATED":
       return `Motivo: ${text(data.reason)}`;
     case "ACCOUNT_PLAN_CHANGED":
-      return `De ${text(data.previousPlan)} a ${text(data.plan)} · Motivo: ${text(data.reason)}`;
+      return `De ${text(data.planPrevious)} a ${text(data.plan)} · Motivo: ${text(data.reason)}`;
     case "USER_BANNED":
       return `${text(data.email)} · ${data.expiresAt ? `hasta el ${dayFormat.format(new Date(text(data.expiresAt)))}` : "indefinido"} · Motivo: ${text(data.reason)}`;
     case "USER_UNBANNED":
