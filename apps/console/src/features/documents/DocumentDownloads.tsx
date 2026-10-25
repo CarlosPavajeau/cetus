@@ -1,7 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
-import { DownloadIcon } from "lucide-react";
+import { ChevronDownIcon, DownloadIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Spinner } from "~/components/ui/spinner";
 import type { DocumentFile } from "~/lib/api/types";
 
@@ -35,24 +41,29 @@ export function DocumentDownloads({ documentId }: { documentId: string }) {
 
   return (
     <div className="flex flex-col items-start gap-2 sm:items-end">
-      <div className="flex flex-wrap gap-2">
-        {files.map(({ file, label }) => (
-          <Button
-            key={file}
-            variant="outline"
-            size="sm"
-            disabled={download.isPending}
-            onClick={() => download.mutate(file)}
-          >
-            {download.isPending && download.variables === file ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <DownloadIcon data-icon="inline-start" />
-            )}
-            {label}
-          </Button>
-        ))}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={<Button variant="outline" className="group" disabled={download.isPending} />}
+        >
+          {download.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : (
+            <DownloadIcon data-icon="inline-start" />
+          )}
+          Descargar
+          <ChevronDownIcon
+            data-icon="inline-end"
+            className="transition-transform group-data-popup-open:rotate-180"
+          />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-auto">
+          {files.map(({ file, label }) => (
+            <DropdownMenuItem key={file} onClick={() => download.mutate(file)}>
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
       {message && <output className="text-2xs text-muted-foreground">{message}</output>}
     </div>
   );

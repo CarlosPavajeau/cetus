@@ -2,18 +2,28 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
+  ChevronDownIcon,
   FileMinusIcon,
+  FilePenLineIcon,
   FilePlusIcon,
   FileTextIcon,
   FileXIcon,
   FingerprintIcon,
 } from "lucide-react";
+import { useId, useState } from "react";
 
 import { CopyButton } from "~/components/CopyButton";
 import { Entry, Section } from "~/components/DetailSection";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { Button, buttonVariants } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
   Empty,
   EmptyContent,
@@ -31,9 +41,8 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { formatDateTime } from "~/features/api-keys/formats";
-import { CancelInvoice } from "~/features/documents/CancelInvoice";
+import { CancelInvoice, isCancellationBlocked } from "~/features/documents/CancelInvoice";
 import { DianErrors } from "~/features/documents/DianErrors";
 import { DocumentDownloads } from "~/features/documents/DocumentDownloads";
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
@@ -99,7 +108,7 @@ function DocumentDetailPage() {
         status={<DocumentStatusBadge status={document.status} />}
         lead={documentLead(document.status, document.environment)}
         action={
-          <div className="flex flex-col items-start gap-2 sm:items-end">
+          <div className="flex flex-wrap items-start gap-2">
             {isInvoice && document.status === "ACCEPTED" && (
               <InvoiceCorrections invoice={document} />
             )}
@@ -296,48 +305,70 @@ function DocumentDetailPage() {
  */
 function InvoiceCorrections({ invoice }: { invoice: DocumentDetail }) {
   const blockedReason = useBlockedReason(invoice.environment);
-  if (blockedReason) {
-    return (
-      <Tooltip>
-        <TooltipTrigger render={<span className="flex w-fit flex-wrap gap-2" />}>
-          <Button variant="outline" disabled>
-            <FileMinusIcon data-icon="inline-start" />
-            Nota crédito
-          </Button>
-          <Button variant="outline" disabled>
-            <FilePlusIcon data-icon="inline-start" />
-            Nota débito
-          </Button>
-          <Button variant="outline" disabled>
-            <FileXIcon data-icon="inline-start" />
-            Anular factura
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-64">{blockedReason}</TooltipContent>
-      </Tooltip>
-    );
-  }
+  const [cancelling, setCancelling] = useState(false);
+  const cancellationBlocked = isCancellationBlocked(invoice);
+  const cancellationReasonId = useId();
+
   return (
-    <div className="flex flex-wrap gap-2">
-      <Link
-        to="/documents/$documentId/notes/new"
-        params={{ documentId: invoice.id }}
-        search={{ type: "CREDIT_NOTE" }}
-        className={cn(buttonVariants({ variant: "outline" }))}
-      >
-        <FileMinusIcon data-icon="inline-start" />
-        Nota crédito
-      </Link>
-      <Link
-        to="/documents/$documentId/notes/new"
-        params={{ documentId: invoice.id }}
-        search={{ type: "DEBIT_NOTE" }}
-        className={cn(buttonVariants({ variant: "outline" }))}
-      >
-        <FilePlusIcon data-icon="inline-start" />
-        Nota débito
-      </Link>
-      <CancelInvoice invoice={invoice} />
+    <div className="flex flex-col items-start gap-2 sm:items-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={<Button variant="outline" className="group" disabled={blockedReason !== null} />}
+        >
+          <FilePenLineIcon data-icon="inline-start" />
+          Corregir factura
+          <ChevronDownIcon
+            data-icon="inline-end"
+            className="transition-transform group-data-popup-open:rotate-180"
+          />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-auto max-w-72">
+          <DropdownMenuItem
+            render={
+              <Link
+                to="/documents/$documentId/notes/new"
+                params={{ documentId: invoice.id }}
+                search={{ type: "CREDIT_NOTE" }}
+              />
+            }
+          >
+            <FileMinusIcon />
+            Nota crédito
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={
+              <Link
+                to="/documents/$documentId/notes/new"
+                params={{ documentId: invoice.id }}
+                search={{ type: "DEBIT_NOTE" }}
+              />
+            }
+          >
+            <FilePlusIcon />
+            Nota débito
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={cancellationBlocked}
+            aria-describedby={cancellationBlocked ? cancellationReasonId : undefined}
+            onClick={() => setCancelling(true)}
+          >
+            <FileXIcon />
+            Anular factura
+          </DropdownMenuItem>
+          {cancellationBlocked && (
+            <div id={cancellationReasonId} className="px-1.5 py-1 text-2xs text-muted-foreground">
+              Ya tiene notas crédito por parte de su valor: emite el resto con una nota crédito
+              parcial.
+            </div>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {blockedReason && (
+        <p className="max-w-64 text-2xs text-muted-foreground sm:text-right">{blockedReason}</p>
+      )}
+      <CancelInvoice invoice={invoice} open={cancelling} onOpenChange={setCancelling} />
     </div>
   );
 }

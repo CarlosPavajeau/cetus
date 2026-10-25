@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { FileXIcon } from "lucide-react";
 import { useId, useState } from "react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -12,13 +11,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "~/components/ui/field";
 import { Spinner } from "~/components/ui/spinner";
 import { Textarea } from "~/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { auditLogKey } from "~/features/audit-log/queries";
 import type { DocumentDetail } from "~/lib/api/types";
 
@@ -27,11 +24,23 @@ import { documentsKey } from "./queries";
 import { cancelInvoice } from "./server";
 
 /**
- * Cancels an accepted invoice with a credit note for all of it. Only offered while no credit note took
- * part of the invoice: then the full cancellation would exceed what is left to credit.
+ * Whether a credit note already took part of the invoice: then the full cancellation would exceed what is
+ * left to credit.
  */
-export function CancelInvoice({ invoice }: { invoice: DocumentDetail }) {
-  const [open, setOpen] = useState(false);
+export function isCancellationBlocked(invoice: DocumentDetail) {
+  return invoice.balance !== null && invoice.balance < invoice.totals.payable;
+}
+
+/** Cancels an accepted invoice with a credit note for all of it. */
+export function CancelInvoice({
+  invoice,
+  open,
+  onOpenChange,
+}: {
+  invoice: DocumentDetail;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [description, setDescription] = useState("");
   // One key per opening of the dialog: submitting twice issues a single note.
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
@@ -48,46 +57,25 @@ export function CancelInvoice({ invoice }: { invoice: DocumentDetail }) {
         queryClient.invalidateQueries({ queryKey: documentsKey }),
         queryClient.invalidateQueries({ queryKey: auditLogKey }),
       ]);
-      setOpen(false);
+      onOpenChange(false);
       await navigate({ to: "/documents/$documentId", params: { documentId: result.id } });
     },
   });
   const pending = cancel.isPending;
   const failure = cancel.data && !cancel.data.ok ? cancel.data : null;
-  const blocked = invoice.balance !== null && invoice.balance < invoice.totals.payable;
-
-  if (blocked) {
-    return (
-      <Tooltip>
-        <TooltipTrigger render={<span className="w-fit" />}>
-          <Button variant="outline" disabled>
-            <FileXIcon data-icon="inline-start" />
-            Anular factura
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-64">
-          Ya tiene notas crédito por parte de su valor: emite el resto con una nota crédito parcial.
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
 
   return (
     <AlertDialog
       open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) {
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(next) => {
+        if (!next) {
           setIdempotencyKey(crypto.randomUUID());
           setDescription("");
           cancel.reset();
         }
       }}
     >
-      <AlertDialogTrigger render={<Button variant="outline" />}>
-        <FileXIcon data-icon="inline-start" />
-        Anular factura
-      </AlertDialogTrigger>
       <AlertDialogContent>
         <form
           className="contents"

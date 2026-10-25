@@ -37,7 +37,8 @@ test("the documents page lists the invoices and opens their detail", async ({
   await expect(page.getByText("Cliente Dos")).toBeVisible();
   await expect(page.getByText("Servicio de consultoría")).toBeVisible();
   await expect(page.getByText("Recibido por Cetus")).toBeVisible();
-  await expect(page.getByRole("button", { name: "PDF" })).toBeVisible();
+  await page.getByRole("button", { name: "Descargar" }).click();
+  await expect(page.getByRole("menuitem", { name: "PDF" })).toBeVisible();
 });
 
 test("an unknown document shows a not found page", async ({ page, organization: _ }) => {
@@ -69,7 +70,8 @@ test("an accepted invoice is cancelled from its detail with a credit note", asyn
   expect(await waitForStatus(organization, invoice.id)).toBe("ACCEPTED");
 
   await open(page, `/documents/${invoice.id}`);
-  await page.getByRole("button", { name: "Anular factura" }).click();
+  await page.getByRole("button", { name: "Corregir factura" }).click();
+  await page.getByRole("menuitem", { name: "Anular factura" }).click();
   const dialog = page.getByRole("alertdialog");
   await expect(dialog.getByText(`¿Anular la factura ${invoice.number}?`)).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Emitir nota de anulación" })).toBeDisabled();
@@ -83,5 +85,8 @@ test("an accepted invoice is cancelled from its detail with a credit note", asyn
   await expect(page.getByRole("heading", { name: `Factura ${invoice.number}` })).toBeVisible();
   await expect(page.getByRole("link", { name: /^NC/ })).toBeVisible();
   // Nothing is left to credit, so the cancellation is no longer offered.
-  await expect(page.getByRole("button", { name: "Anular factura" })).toBeDisabled();
+  await page.getByRole("button", { name: "Corregir factura" }).click();
+  const cancellation = page.getByRole("menuitem", { name: "Anular factura" });
+  await expect(cancellation).toBeDisabled();
+  await expect(cancellation).toHaveAccessibleDescription(/Ya tiene notas crédito/);
 });
