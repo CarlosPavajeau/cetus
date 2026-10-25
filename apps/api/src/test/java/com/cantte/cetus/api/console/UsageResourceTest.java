@@ -31,10 +31,10 @@ class UsageResourceTest {
                 .statusCode(200)
                 .body("current.period", equalTo(now.toString()))
                 .body("current.plan.code", equalTo("FREE"))
-                .body("current.plan.includedDocuments", nullValue())
+                .body("current.plan.documentsIncluded", nullValue())
                 .body("current.total", equalTo(0))
                 .body("current.documents.documentType", contains("INVOICE", "CREDIT_NOTE", "DEBIT_NOTE"))
-                .body("liveIssuers", equalTo(0))
+                .body("issuersLive", equalTo(0))
                 .body("months.period", contains(months(now)));
     }
 
@@ -56,7 +56,7 @@ class UsageResourceTest {
                 .body("current.plan.name", equalTo("Inicial"))
                 .body("current.total", equalTo(206))
                 .body("current.overage", equalTo(6))
-                .body("current.overageCostCop", equalTo(900))
+                .body("current.costOverageCop", equalTo(900))
                 .body("months.total", contains(0, 0, 0, 40, 0, 206));
     }
 

@@ -27,22 +27,22 @@ export function planPrice(plan: Plan) {
 }
 
 export function planDocuments(plan: Plan) {
-  return plan.includedDocuments === null
+  return plan.documentsIncluded === null
     ? "Sin límite de documentos"
-    : `${formatCount(plan.includedDocuments)} documentos al mes`;
+    : `${formatCount(plan.documentsIncluded)} documentos al mes`;
 }
 
 export function planIssuers(plan: Plan) {
-  if (plan.includedIssuers === null) {
+  if (plan.issuersIncluded === null) {
     return "Emisores sin límite";
   }
-  return plan.includedIssuers === 1 ? "1 emisor" : `${plan.includedIssuers} emisores`;
+  return plan.issuersIncluded === 1 ? "1 emisor" : `${plan.issuersIncluded} emisores`;
 }
 
 export function planOverage(plan: Plan) {
-  return plan.overagePriceCop === null
+  return plan.priceOverageCop === null
     ? null
-    : `${formatCop(plan.overagePriceCop)} por documento adicional`;
+    : `${formatCop(plan.priceOverageCop)} por documento adicional`;
 }
 
 /** "Octubre de 2026" for a YYYY-MM period, read in Colombia like the period itself. */

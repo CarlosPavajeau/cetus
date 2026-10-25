@@ -189,7 +189,7 @@ public class AdminAccountResource {
                 Map.of(
                         "plan",
                         plan.code,
-                        "previousPlan",
+                        "planPrevious",
                         previous,
                         "reason",
                         request.reason().strip()));

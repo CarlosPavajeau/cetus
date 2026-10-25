@@ -20,14 +20,14 @@ public class PlanEntity extends PanacheEntityBase {
     @Column(name = "price_monthly_cop")
     public Long priceMonthlyCop;
 
-    @Column(name = "included_documents")
-    public Integer includedDocuments;
+    @Column(name = "documents_included")
+    public Integer documentsIncluded;
 
-    @Column(name = "overage_price_cop")
-    public Integer overagePriceCop;
+    @Column(name = "price_overage_cop")
+    public Integer priceOverageCop;
 
-    @Column(name = "included_issuers")
-    public Integer includedIssuers;
+    @Column(name = "issuers_included")
+    public Integer issuersIncluded;
 
     @Column(name = "requests_per_minute")
     public Integer requestsPerMinute;

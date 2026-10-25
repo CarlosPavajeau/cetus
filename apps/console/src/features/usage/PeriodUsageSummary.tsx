@@ -7,7 +7,7 @@ import { formatCop, formatCount, periodLabel } from "./labels";
 
 /** The billable documents of a month against the plan's quota, with the overage when it went over. */
 export function PeriodUsageSummary({ usage }: { usage: PeriodUsage }) {
-  const included = usage.plan.includedDocuments;
+  const included = usage.plan.documentsIncluded;
 
   return (
     <div className="flex flex-col gap-4">
@@ -27,7 +27,7 @@ export function PeriodUsageSummary({ usage }: { usage: PeriodUsage }) {
       {usage.overage > 0 && (
         <p className="text-xs text-muted-foreground">
           {formatCount(usage.overage)} documentos por encima del plan
-          {usage.overageCostCop !== null && ` · ${formatCop(usage.overageCostCop)} de excedente`}.
+          {usage.costOverageCop !== null && ` · ${formatCop(usage.costOverageCop)} de excedente`}.
           La facturación no se detiene.
         </p>
       )}

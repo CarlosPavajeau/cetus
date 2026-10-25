@@ -237,7 +237,7 @@ class AdminAccountResourceTest {
                 .body("plan", equalTo("FREE"))
                 .body("billableThisMonth.total", equalTo(203))
                 .body("billableThisMonth.overage", equalTo(0))
-                .body("billableThisMonth.overageCostCop", nullValue());
+                .body("billableThisMonth.costOverageCop", nullValue());
         SUPPORT.request()
                 .get("/admin/plans")
                 .then()
@@ -262,11 +262,11 @@ class AdminAccountResourceTest {
                 .statusCode(200)
                 .body("plan", equalTo("INICIAL"))
                 .body("billableThisMonth.period", equalTo(UsagePeriod.current().toString()))
-                .body("billableThisMonth.plan.includedDocuments", equalTo(200))
+                .body("billableThisMonth.plan.documentsIncluded", equalTo(200))
                 .body("billableThisMonth.documents.find { it.documentType == 'INVOICE' }.count", equalTo(190))
                 .body("billableThisMonth.total", equalTo(203))
                 .body("billableThisMonth.overage", equalTo(3))
-                .body("billableThisMonth.overageCostCop", equalTo(450));
+                .body("billableThisMonth.costOverageCop", equalTo(450));
         ADMIN.request()
                 .body(Map.of("plan", "INICIAL", "reason", "Otra vez"))
                 .put("/admin/accounts/" + accountId + "/plan")
@@ -287,7 +287,7 @@ class AdminAccountResourceTest {
                 .body("items", hasSize(1))
                 .body("items[0].actorId", equalTo(ADMIN.userId()))
                 .body("items[0].data.plan", equalTo("INICIAL"))
-                .body("items[0].data.previousPlan", equalTo("FREE"))
+                .body("items[0].data.planPrevious", equalTo("FREE"))
                 .body("items[0].data.reason", equalTo("Contrató el plan"));
     }
 

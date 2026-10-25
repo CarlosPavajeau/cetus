@@ -29,9 +29,9 @@ public class AccountUsage {
                 .map(entry -> new DocumentCountView(entry.getKey(), entry.getValue()))
                 .toList();
         long total = documents.stream().mapToLong(DocumentCountView::count).sum();
-        long overage = plan.includedDocuments == null ? 0 : Math.max(0, total - plan.includedDocuments);
-        Long overageCost = plan.overagePriceCop == null ? null : overage * plan.overagePriceCop;
-        return new PeriodUsageView(period.toString(), PlanView.from(plan), documents, total, overage, overageCost);
+        long overage = plan.documentsIncluded == null ? 0 : Math.max(0, total - plan.documentsIncluded);
+        Long costOverage = plan.priceOverageCop == null ? null : overage * plan.priceOverageCop;
+        return new PeriodUsageView(period.toString(), PlanView.from(plan), documents, total, overage, costOverage);
     }
 
     /** This month against the plan, and the totals of the {@code months} months up to it. */
@@ -41,7 +41,7 @@ public class AccountUsage {
                 counters.totals(account.id, current.minusMonths(months - 1), current).entrySet().stream()
                         .map(entry -> new MonthTotalView(entry.getKey().toString(), entry.getValue()))
                         .toList();
-        long liveIssuers = IssuerEntity.count("accountId = ?1 and environment = ?2", account.id, Environment.LIVE);
-        return new UsageView(period(account, current), liveIssuers, totals);
+        long issuersLive = IssuerEntity.count("accountId = ?1 and environment = ?2", account.id, Environment.LIVE);
+        return new UsageView(period(account, current), issuersLive, totals);
     }
 }

@@ -108,7 +108,7 @@ class ResultRecorderTest {
                         .containsEntry("percent", "80")
                         .containsEntry("total", "4")
                         .containsEntry("included", "5")
-                        .containsEntry("overagePrice", "$1.500"));
+                        .containsEntry("priceOverage", "$1.500"));
     }
 
     @Test
@@ -131,8 +131,8 @@ class ResultRecorderTest {
             PlanEntity plan = new PlanEntity();
             plan.code = "TEST_" + Ids.newId();
             plan.name = "Prueba";
-            plan.includedDocuments = included;
-            plan.overagePriceCop = 1500;
+            plan.documentsIncluded = included;
+            plan.priceOverageCop = 1500;
             plan.persist();
             AccountEntity.<AccountEntity>findById(accountId).plan = plan.code;
             return plan.code;

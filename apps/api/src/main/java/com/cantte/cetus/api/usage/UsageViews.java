@@ -16,13 +16,13 @@ public final class UsageViews {
             @Schema(nullable = true) Long priceMonthlyCop,
 
             @Schema(nullable = true, description = "Billable documents included each month")
-            Integer includedDocuments,
+            Integer documentsIncluded,
 
             @Schema(nullable = true, description = "Price of each document above the included ones")
-            Integer overagePriceCop,
+            Integer priceOverageCop,
 
             @Schema(nullable = true, description = "Production issuers (NIT) the account may have")
-            Integer includedIssuers,
+            Integer issuersIncluded,
 
             @Schema(nullable = true, description = "Production API requests a minute, shared by the account's keys")
             Integer requestsPerMinute) {
@@ -32,9 +32,9 @@ public final class UsageViews {
                     plan.code,
                     plan.name,
                     plan.priceMonthlyCop,
-                    plan.includedDocuments,
-                    plan.overagePriceCop,
-                    plan.includedIssuers,
+                    plan.documentsIncluded,
+                    plan.priceOverageCop,
+                    plan.issuersIncluded,
                     plan.requestsPerMinute);
         }
     }
@@ -54,7 +54,7 @@ public final class UsageViews {
             long overage,
 
             @Schema(nullable = true, description = "Overage times its price, in COP; null when the plan has no price")
-            Long overageCostCop) {}
+            Long costOverageCop) {}
 
     public record MonthTotalView(
             @Schema(description = "Calendar month in Colombia, YYYY-MM")
@@ -67,7 +67,7 @@ public final class UsageViews {
             PeriodUsageView current,
 
             @Schema(description = "Production issuers the account has, against the plan's included ones")
-            long liveIssuers,
+            long issuersLive,
 
             @Schema(description = "The last months, oldest first, this month included")
             List<MonthTotalView> months) {}

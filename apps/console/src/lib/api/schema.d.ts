@@ -1882,7 +1882,7 @@ export interface components {
              * Format: int64
              * @description Overage times its price, in COP; null when the plan has no price
              */
-            overageCostCop: number | null;
+            costOverageCop: number | null;
         };
         /** @enum {string} */
         PersonType: "LEGAL_ENTITY" | "NATURAL_PERSON";
@@ -1900,17 +1900,17 @@ export interface components {
              * Format: int32
              * @description Billable documents included each month
              */
-            includedDocuments: number | null;
+            documentsIncluded: number | null;
             /**
              * Format: int32
              * @description Price of each document above the included ones
              */
-            overagePriceCop: number | null;
+            priceOverageCop: number | null;
             /**
              * Format: int32
              * @description Production issuers (NIT) the account may have
              */
-            includedIssuers: number | null;
+            issuersIncluded: number | null;
             /**
              * Format: int32
              * @description Production API requests a minute, shared by the account's keys
@@ -2063,7 +2063,7 @@ export interface components {
              * Format: int64
              * @description Production issuers the account has, against the plan's included ones
              */
-            liveIssuers: number;
+            issuersLive: number;
             /** @description The last months, oldest first, this month included */
             months: components["schemas"]["MonthTotalView"][];
         };

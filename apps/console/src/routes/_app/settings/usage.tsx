@@ -62,12 +62,12 @@ function Usage() {
           <Entry label="Documentos incluidos">{planDocuments(plan)}</Entry>
           <Entry label="Documentos adicionales">
             {planOverage(plan) ??
-              (plan.includedDocuments === null ? "No aplica" : "Según tu contrato")}
+              (plan.documentsIncluded === null ? "No aplica" : "Según tu contrato")}
           </Entry>
           <Entry label="Emisores en producción">
-            {plan.includedIssuers === null
-              ? formatCount(usage.liveIssuers)
-              : `${formatCount(usage.liveIssuers)} de ${formatCount(plan.includedIssuers)}`}
+            {plan.issuersIncluded === null
+              ? formatCount(usage.issuersLive)
+              : `${formatCount(usage.issuersLive)} de ${formatCount(plan.issuersIncluded)}`}
           </Entry>
           <Entry label="Solicitudes a la API en producción">
             {plan.requestsPerMinute === null

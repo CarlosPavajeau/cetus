@@ -151,7 +151,7 @@ public class IssuerOnboardingService {
      * account like the sandbox slots, so two requests cannot both take the last one.
      */
     private void requirePlanIssuerSlot(UUID accountId) {
-        Integer included = PlanEntity.of(AccountEntity.findById(accountId)).includedIssuers;
+        Integer included = PlanEntity.of(AccountEntity.findById(accountId)).issuersIncluded;
         if (included == null) {
             return;
         }

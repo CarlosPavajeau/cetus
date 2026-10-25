@@ -137,18 +137,18 @@ public class ResultRecorder {
         YearMonth period = UsagePeriod.of(doc.validatedAt);
         long total = usage.record(doc.accountId, period, doc.documentType);
         PlanEntity plan = PlanEntity.of(AccountEntity.findById(doc.accountId));
-        if (plan.includedDocuments == null) {
+        if (plan.documentsIncluded == null) {
             return;
         }
-        UsageAlerts.reached(total, plan.includedDocuments).ifPresent(percent -> {
+        UsageAlerts.reached(total, plan.documentsIncluded).ifPresent(percent -> {
             Map<String, String> data = new HashMap<>(Map.of(
                     "plan", plan.name,
                     "percent", percent.toString(),
                     "total", Numbers.count(total),
-                    "included", Numbers.count(plan.includedDocuments),
+                    "included", Numbers.count(plan.documentsIncluded),
                     "period", Dates.month(period)));
-            if (plan.overagePriceCop != null) {
-                data.put("overagePrice", Numbers.cop(plan.overagePriceCop));
+            if (plan.priceOverageCop != null) {
+                data.put("priceOverage", Numbers.cop(plan.priceOverageCop));
             }
             notifications.request(
                     doc.accountId,
