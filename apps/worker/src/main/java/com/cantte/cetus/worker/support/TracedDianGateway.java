@@ -106,7 +106,8 @@ final class TracedDianGateway implements DianGateway {
             span.setStatus(StatusCode.ERROR, e.isTimeout() ? "Timeout" : "Transport");
             throw e;
         } catch (DianFaultException e) {
-            span.setStatus(StatusCode.ERROR, e.getMessage());
+            // The fault code only (s:Client, s:Server): its reason is the DIAN's text, which can quote the document.
+            span.setStatus(StatusCode.ERROR, e.code() == null ? "Fault" : "Fault " + e.code());
             throw e;
         } catch (RuntimeException e) {
             span.setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
