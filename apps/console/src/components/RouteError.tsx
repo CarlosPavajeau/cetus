@@ -1,5 +1,6 @@
+import * as Sentry from "@sentry/tanstackstart-react";
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { type ErrorComponentProps, useRouter } from "@tanstack/react-router";
 import { TriangleAlertIcon } from "lucide-react";
 import { useEffect } from "react";
 
@@ -13,9 +14,14 @@ import {
   EmptyTitle,
 } from "~/components/ui/empty";
 
-export function RouteError() {
+export function RouteError({ error }: ErrorComponentProps) {
   const router = useRouter();
   const queryErrorResetBoundary = useQueryErrorResetBoundary();
+
+  // The router catches it, so Sentry would never see it otherwise.
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
 
   // Suspense queries rethrow a cached error until their boundary is reset, so a retry would fail at once.
   useEffect(() => {
@@ -39,10 +45,10 @@ export function RouteError() {
 }
 
 /** For a failure above the app shell, where no layout pads the page. */
-export function ShellError() {
+export function ShellError(props: ErrorComponentProps) {
   return (
     <div className="flex min-h-svh items-center p-4">
-      <RouteError />
+      <RouteError {...props} />
     </div>
   );
 }

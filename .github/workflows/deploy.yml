@@ -21,6 +21,8 @@ concurrency:
 env:
   RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
   RAILWAY_CLI_VERSION: "5.70.0"
+  # The pushed commit, which is main's latest: the one Railway builds (scripts/railway-deploy.sh).
+  CETUS_COMMIT_SHA: ${{ github.sha }}
 
 jobs:
   changes:

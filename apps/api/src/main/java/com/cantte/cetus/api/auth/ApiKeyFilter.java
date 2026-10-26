@@ -1,8 +1,11 @@
 package com.cantte.cetus.api.auth;
 
 import com.cantte.cetus.api.error.ProblemDetail;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.ApiKeyEntity;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.opentelemetry.api.trace.Span;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
@@ -34,6 +37,9 @@ public class ApiKeyFilter implements ContainerRequestFilter {
     @Inject
     ApiKeyRateLimiter rateLimiter;
 
+    @Inject
+    MeterRegistry meters;
+
     @Override
     public void filter(ContainerRequestContext request) {
         if (!request.getUriInfo().getPath().startsWith("/v1/")) {
@@ -41,6 +47,7 @@ public class ApiKeyFilter implements ContainerRequestFilter {
         }
         String header = request.getHeaderString(HttpHeaders.AUTHORIZATION);
         if (header == null || !header.startsWith("Bearer cetus_")) {
+            authenticated(null, "unauthorized");
             abort(request, "Missing or malformed API key");
             return;
         }
@@ -71,16 +78,23 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             return new Resolved(found, (String) account[0], limits);
         });
         if (resolved == null) {
+            authenticated(null, "unauthorized");
             abort(request, "Invalid or revoked API key");
             return;
         }
+        Span.current()
+                .setAttribute("cetus.account.id", resolved.key().accountId.toString())
+                .setAttribute("cetus.api_key.id", resolved.key().id.toString())
+                .setAttribute("environment", resolved.key().environment.name());
         if (!ACTIVE.equals(resolved.accountStatus())) {
+            authenticated(resolved.key().environment, "suspended");
             abort(request, Response.Status.FORBIDDEN, "account_suspended", "This account is suspended");
             return;
         }
         ApiKeyEntity key = resolved.key();
         Optional<Duration> wait = rateLimiter.acquire(key.id, key.accountId, key.environment, resolved.accountLimits());
         if (wait.isPresent()) {
+            authenticated(key.environment, "rate_limited");
             long seconds = Math.max(1, (long) Math.ceil(wait.get().toMillis() / 1000.0));
             request.abortWith(ProblemDetail.builder(
                             429, "rate_limited", "Too many requests for this API key; retry in " + seconds + " s")
@@ -88,7 +102,19 @@ public class ApiKeyFilter implements ContainerRequestFilter {
                     .build());
             return;
         }
+        authenticated(key.environment, "ok");
         principal.set(key.accountId, key.environment, key.id);
+    }
+
+    /** {@code environment} is "none" when no key was found. */
+    private void authenticated(Environment environment, String outcome) {
+        meters.counter(
+                        "cetus.api_keys.authentications",
+                        "environment",
+                        environment == null ? "none" : environment.name(),
+                        "outcome",
+                        outcome)
+                .increment();
     }
 
     private static void abort(ContainerRequestContext request, String message) {

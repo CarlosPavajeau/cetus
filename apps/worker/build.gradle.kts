@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.quarkus.scheduler)
     implementation(libs.quarkus.smallrye.health)
     implementation(libs.quarkus.logging.json)
+    implementation(libs.quarkus.micrometer.opentelemetry)
     // Graphic representation (PDF) and its QR code.
     implementation(libs.openpdf)
     implementation(libs.zxing.core)
@@ -35,4 +36,5 @@ dependencies {
     testImplementation(libs.quarkus.flyway)
     testImplementation(libs.flyway.postgresql)
     testImplementation(libs.assertj)
+    testImplementation(libs.opentelemetry.sdk.testing)
 }

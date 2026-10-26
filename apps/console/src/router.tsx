@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/tanstackstart-react";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
@@ -25,6 +26,10 @@ export function getRouter() {
 
   // Dehydrates the server cache into the HTML, hydrates it on the client and wraps the app in QueryClientProvider.
   setupRouterSsrQueryIntegration({ router, queryClient });
+
+  if (!router.isServer) {
+    Sentry.addIntegration(Sentry.tanstackRouterBrowserTracingIntegration(router));
+  }
 
   return router;
 }

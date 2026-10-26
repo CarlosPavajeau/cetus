@@ -4,6 +4,7 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.usage.UsageAlerts;
 import com.cantte.cetus.domain.usage.UsagePeriod;
@@ -11,6 +12,7 @@ import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
+import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
@@ -23,6 +25,8 @@ import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
 import com.cantte.cetus.webhooks.WebhookPublisher;
 import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.notifications.Numbers;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -39,8 +43,25 @@ import java.util.UUID;
 @ApplicationScoped
 public class ResultRecorder {
 
+    /** From creation to the DIAN's verdict: seconds usually, much longer while the DIAN is down. */
+    private static final Duration[] VALIDATION_BUCKETS = {
+        Duration.ofSeconds(1),
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(10),
+        Duration.ofSeconds(30),
+        Duration.ofMinutes(1),
+        Duration.ofMinutes(5),
+        Duration.ofMinutes(30)
+    };
+
     @Inject
     JobQueue jobs;
+
+    @Inject
+    MeterRegistry meters;
+
+    @Inject
+    AfterCommit afterCommit;
 
     @Inject
     WebhookPublisher webhooks;
@@ -132,6 +153,30 @@ public class ResultRecorder {
         webhooks.publish(
                 WebhookEventType.forDocument(doc.documentType, response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED),
                 doc);
+        DocumentType type = doc.documentType;
+        Environment environment = doc.environment;
+        Duration toValidation = Duration.between(doc.createdAt, doc.validatedAt);
+        afterCommit.run(() -> {
+            finalized(type, environment, response.valid() ? "accepted" : "rejected");
+            Timer.builder("cetus.documents.time_to_validation")
+                    .tag("document.type", type.name())
+                    .tag("environment", environment.name())
+                    .serviceLevelObjectives(VALIDATION_BUCKETS)
+                    .register(meters)
+                    .record(toValidation);
+        });
+    }
+
+    private void finalized(DocumentType type, Environment environment, String outcome) {
+        meters.counter(
+                        "cetus.documents.finalized",
+                        "document.type",
+                        type.name(),
+                        "environment",
+                        environment.name(),
+                        "outcome",
+                        outcome)
+                .increment();
     }
 
     /** Counts the document in its month and tells the billing contact when the month reaches a share of the plan. */
@@ -188,6 +233,12 @@ public class ResultRecorder {
         }
         doc.status = DocumentStatus.FAILED;
         doc.dianStatusMessage = message;
-        webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
+        // FAILED is not final (attempts that will be retried use it too), so two attempts can both give up on
+        // the document; the event is published only the first time, and so it is counted.
+        if (webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc)) {
+            DocumentType type = doc.documentType;
+            Environment environment = doc.environment;
+            afterCommit.run(() -> finalized(type, environment, "failed"));
+        }
     }
 }

@@ -1,3 +1,4 @@
+import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -7,7 +8,21 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   // Bind IPv4 explicitly: Node resolves "localhost" to ::1, but the Java API fetches the JWKS via 127.0.0.1.
   server: { host: "127.0.0.1", port: 3000 },
-  plugins: lazyPlugins(() => [tsconfigPaths(), tailwindcss(), tanstackStart(), viteReact()]),
+  plugins: lazyPlugins(() => [
+    tsconfigPaths(),
+    tailwindcss(),
+    tanstackStart(),
+    viteReact(),
+    // Last. Uploads hidden source maps and deletes them from the build; without SENTRY_AUTH_TOKEN it skips
+    // the upload. Railway passes these to the Docker build (apps/console/Dockerfile).
+    sentryTanstackStart({
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      release: { name: process.env.CETUS_COMMIT_SHA },
+      telemetry: false,
+    }),
+  ]),
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "promise"],
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],

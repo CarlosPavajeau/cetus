@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.quarkus.smallrye.openapi)
     implementation(libs.quarkus.smallrye.health)
     implementation(libs.quarkus.logging.json)
+    implementation(libs.quarkus.micrometer.opentelemetry)
 
     testImplementation(libs.quarkus.junit)
     testImplementation(libs.quarkus.smallrye.jwt.build)

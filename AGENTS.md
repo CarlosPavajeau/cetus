@@ -37,7 +37,7 @@ cetus/
 │   ├── webhooks/       Outbound webhook events, Standard Webhooks signing, transactional publisher
 │   └── notifications/  Notices to account contacts, enqueued as emails in the caller's transaction
 ├── build-logic/        Gradle convention plugins (cetus.java-conventions, cetus.java-library)
-├── infra/              Local init (Postgres schemas, LocalStack) and production AWS policies (IAM, S3 lifecycle)
+├── infra/              Local init (Postgres schemas, LocalStack), production AWS policies (IAM, S3 lifecycle), Grafana dashboards and alerts
 ├── scripts/            dev.sh (behind the mise tasks), Railway deploy, one-off data scripts
 ├── bench/              k6 load benchmarks against production images (see bench/README.md)
 ├── mise.toml           Pinned tools and dev tasks (`mise tasks`)
@@ -170,6 +170,24 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
 - Take code lists from the annex's "Tablas Referenciadas" spreadsheets and
   rules from the annex PDF. The toolbox `Listas de valores/*.gc` files are
   stale and have caused rejections.
+
+## Telemetry
+
+- The API and the worker export traces, metrics and logs over OTLP (Grafana Cloud in production,
+  `mise run infra-otel` locally with `CETUS_OTEL_DISABLED=false`). The console reports to Sentry.
+- Resource attributes: `service.name` (`cetus-api`, `cetus-worker`, `cetus-console`), `service.version`
+  (commit SHA), `deployment.environment.name`.
+- Own metrics start with `cetus.`. Their attributes come from a closed list of low-cardinality values:
+  `document.type`, `environment` (`SANDBOX`, `TEST`, `LIVE`), `outcome`, `dian.operation`, `job.type`,
+  `error.kind`. Adding another one needs review.
+- IDs go in spans and logs, never in metrics: `cetus.document.id`, `cetus.account.id`, `cetus.issuer.id`,
+  `cetus.job.id`, `cetus.reference.id` (what a job works on), `dian.track_id`. No `account_id` and no issuer
+  NIT in metrics. `JobRunner` puts the job's IDs in the MDC, so every log line of a job carries them.
+- Dashboards and alert rules live in `infra/grafana/` and are published with `mise run grafana-sync`
+  (see its README). Change them there, not only in Grafana.
+- Never put in any telemetry: secrets (PIN, technical key, certificate and its password, API keys,
+  `Authorization` headers, tokens), request or response bodies (the XML and DIAN responses live in S3), or
+  personal data of customers and contacts (names, emails, identification numbers).
 
 ## Code standards
 

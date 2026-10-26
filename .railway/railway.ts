@@ -51,6 +51,18 @@ const aws = {
  * LISTEN (CETUS_JOBS_LISTEN_URL) and the console. That is about 7, twice during a deploy, under the 25 direct
  * connections; PgBouncer takes up to 400 clients.
  */
+/**
+ * Telemetry of the API and the worker, over OTLP to Grafana Cloud. The headers carry a Cloud Access Policy token
+ * with write scopes only: Authorization=Basic base64(instanceId:token).
+ */
+const telemetry = {
+  CETUS_DEPLOYMENT_ENV: "production",
+  // The deployed commit, set by scripts/railway-deploy.sh on each deploy.
+  CETUS_COMMIT_SHA: preserve(),
+  QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: preserve(),
+  QUARKUS_OTEL_EXPORTER_OTLP_HEADERS: preserve(),
+};
+
 const billingDatabase = {
   CETUS_DB_URL: preserve(),
   CETUS_DB_USER: preserve(),
@@ -85,6 +97,16 @@ export default defineRailway((ctx) => {
       // Account emails (invitations); a send-only Resend key of its own.
       RESEND_API_KEY: preserve(),
       CETUS_AUTH_EMAIL_FROM: "Cetus <cuentas@cetus.cantte.com>",
+      // Sentry: SENTRY_DSN for the server, VITE_SENTRY_DSN (the same value) built into the browser bundle, and
+      // a token that uploads source maps during the Docker build.
+      CETUS_DEPLOYMENT_ENV: "production",
+      // The deployed commit, set by scripts/railway-deploy.sh; also a build arg (Sentry's release).
+      CETUS_COMMIT_SHA: preserve(),
+      SENTRY_DSN: preserve(),
+      VITE_SENTRY_DSN: preserve(),
+      SENTRY_ORG: preserve(),
+      SENTRY_PROJECT: preserve(),
+      SENTRY_AUTH_TOKEN: preserve(),
     },
   });
 
@@ -109,6 +131,7 @@ export default defineRailway((ctx) => {
       // The same database on port 5432, for Flyway.
       CETUS_DB_MIGRATION_URL: preserve(),
       ...aws,
+      ...telemetry,
       CETUS_AUTH_JWKS_URL: "http://${{console.RAILWAY_PRIVATE_DOMAIN}}:${{console.PORT}}/.well-known/jwks.json",
       // Must equal the console's BETTER_AUTH_URL, without a trailing slash.
       CETUS_AUTH_ISSUER: "https://cetus.cantte.com",
@@ -137,6 +160,7 @@ export default defineRailway((ctx) => {
       // The same database on port 5432, for the LISTEN that starts jobs as soon as they are enqueued.
       CETUS_JOBS_LISTEN_URL: preserve(),
       ...aws,
+      ...telemetry,
       // Documents stay locked (S3 Object Lock, compliance) for the prod default of 1826 days; set
       // CETUS_STORAGE_RETENTION_DAYS here only to change that period. It cannot be shortened afterwards.
       RESEND_API_KEY: preserve(),

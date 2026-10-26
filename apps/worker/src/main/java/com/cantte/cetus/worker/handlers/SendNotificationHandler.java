@@ -63,8 +63,8 @@ public class SendNotificationHandler implements JobHandler {
             if (sender.isEmpty()) {
                 // Only where email is not configured (local development): the link is the only way to verify.
                 LOG.warnf(
-                        "Email delivery is not configured; verify %s at %s/contact-verification/%s",
-                        link.email(), stripSlash(consoleUrl), link.token());
+                        "Email delivery is not configured; verify the contact at %s/contact-verification/%s",
+                        stripSlash(consoleUrl), link.token());
                 notifications.skipped(notice.id(), "Email delivery is not configured");
                 return;
             }

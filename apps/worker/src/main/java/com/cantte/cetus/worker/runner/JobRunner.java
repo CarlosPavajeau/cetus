@@ -1,7 +1,16 @@
 package com.cantte.cetus.worker.runner;
 
 import com.cantte.cetus.jobs.JobClaimer;
+import com.cantte.cetus.jobs.JobTraces;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ManagedContext;
 import io.quarkus.runtime.ShutdownEvent;
@@ -29,6 +38,7 @@ import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
+import org.jboss.logging.MDC;
 
 /**
  * Claims ready jobs and runs up to {@code cetus.jobs.concurrency} of them at once: most of a job is waiting on
@@ -53,6 +63,15 @@ public class JobRunner {
 
     private static final Logger LOG = Logger.getLogger(JobRunner.class);
     private static final Duration SHUTDOWN_GRACE = Duration.ofSeconds(30);
+    private static final List<String> OUTCOMES = List.of("done", "retry", "dead");
+    private static final Duration[] DURATION_BUCKETS = {
+        Duration.ofMillis(100),
+        Duration.ofMillis(500),
+        Duration.ofSeconds(1),
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(30),
+        Duration.ofSeconds(60)
+    };
 
     private final String workerId = "worker-" + UUID.randomUUID();
     private final ReentrantLock claiming = new ReentrantLock();
@@ -66,6 +85,12 @@ public class JobRunner {
 
     @Inject
     Config config;
+
+    @Inject
+    Tracer tracer;
+
+    @Inject
+    MeterRegistry meters;
 
     @ConfigProperty(name = "cetus.jobs.concurrency")
     int concurrency;
@@ -95,6 +120,9 @@ public class JobRunner {
                             .orElse(concurrency));
             limits.put(type, limit);
             typeSlots.put(type, new Semaphore(limit));
+            // From zero: a counter whose first sample is already 1 shows no increase, and the first dead job
+            // would raise no alert. The OpenTelemetry bridge exports a counter only once something is added.
+            OUTCOMES.forEach(outcome -> completed(type, outcome).increment(0));
         }
         LOG.infof("Running up to %d jobs at once; per type: %s", concurrency, limits);
     }
@@ -159,45 +187,95 @@ public class JobRunner {
         }
     }
 
-    /** Each job gets its own request context, as the scheduler gave the poll, so it never shares an EntityManager. */
+    /**
+     * Each job gets its own request context, as the scheduler gave the poll, so it never shares an EntityManager.
+     * Its span is a child of the one that enqueued it, so it follows that trace's sampling decision and every
+     * attempt shows up in the same trace.
+     */
     private void runInRequestContext(JobEntity job) {
         ManagedContext requestContext = Arc.container().requestContext();
         requestContext.activate();
-        try {
-            run(job);
-        } catch (RuntimeException e) {
-            // run() already recorded the failure; this is a bug in the bookkeeping, and the lease will retry the job.
-            LOG.errorf(e, "Job %s (%s) could not be recorded", job.id, job.jobType);
+        Span span = tracer.spanBuilder("job.process")
+                .setParent(JobTraces.parent(job.traceContext))
+                .setSpanKind(SpanKind.CONSUMER)
+                .setAttribute("job.type", job.jobType)
+                .setAttribute("cetus.job.id", job.id.toString())
+                .setAttribute("cetus.reference.id", String.valueOf(job.referenceId))
+                .setAttribute("job.attempt", job.attempts)
+                .startSpan();
+        MDC.put("cetus.job.id", job.id.toString());
+        MDC.put("job.type", job.jobType);
+        MDC.put("cetus.reference.id", String.valueOf(job.referenceId));
+        try (Scope ignored = span.makeCurrent()) {
+            try {
+                run(job);
+            } catch (RuntimeException e) {
+                // run() already recorded the failure; this is a bug in the bookkeeping, and the lease will retry
+                // the job.
+                LOG.errorf(e, "Job %s (%s) could not be recorded", job.id, job.jobType);
+                span.setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
+            }
         } finally {
+            MDC.clear();
+            span.end();
             requestContext.terminate();
         }
     }
 
     void run(JobEntity job) {
+        long start = System.nanoTime();
+        String outcome = "dead";
         JobHandler handler = handlers.get(job.jobType);
         if (handler == null) {
-            claimer.fail(job, "No handler for job type " + job.jobType);
+            boolean dead = claimer.fail(job, "No handler for job type " + job.jobType);
+            Span.current().setStatus(StatusCode.ERROR, "No handler");
+            record(job, dead ? "dead" : "retry", start);
             return;
         }
         try {
             handler.handle(job);
             claimer.done(job.id);
+            outcome = "done";
         } catch (RetryLater retry) {
             claimer.reschedule(job.id, retry.delay());
+            outcome = "retry";
         } catch (GiveUp giveUp) {
             LOG.errorf(
                     "Job %s (%s) failed permanently on attempt %d, not retrying: %s",
                     job.id, job.jobType, job.attempts, giveUp.getMessage());
             claimer.kill(job.id, giveUp.getMessage());
+            Span.current().setStatus(StatusCode.ERROR, "Gave up");
             handler.onDead(job, giveUp.getMessage());
         } catch (Exception e) {
             LOG.warnf(e, "Job %s (%s) failed on attempt %d", job.id, job.jobType, job.attempts);
             String error = e.getClass().getSimpleName() + ": " + e.getMessage();
+            // Only the type: messages can carry customer data, and the log above already has them.
+            Span.current().setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
             if (claimer.fail(job, error)) {
                 LOG.errorf("Job %s (%s) is dead after %d attempts", job.id, job.jobType, job.attempts);
                 handler.onDead(job, error);
+            } else {
+                outcome = "retry";
             }
+        } finally {
+            record(job, outcome, start);
         }
+    }
+
+    private void record(JobEntity job, String outcome, long start) {
+        completed(job.jobType, outcome).increment();
+        Timer.builder("cetus.jobs.duration")
+                .tag("job.type", job.jobType)
+                .serviceLevelObjectives(DURATION_BUCKETS)
+                .register(meters)
+                .record(Duration.ofNanos(System.nanoTime() - start));
+    }
+
+    private Counter completed(String type, String outcome) {
+        return Counter.builder("cetus.jobs.completed")
+                .tag("job.type", type)
+                .tag("outcome", outcome)
+                .register(meters);
     }
 
     /** No job running in this worker. */

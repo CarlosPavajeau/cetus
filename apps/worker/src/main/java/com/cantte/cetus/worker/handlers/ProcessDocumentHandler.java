@@ -31,6 +31,9 @@ import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.ResultRecorder;
 import com.cantte.cetus.worker.support.SandboxCredentials;
+import com.cantte.cetus.worker.support.Spans;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -90,6 +93,9 @@ public class ProcessDocumentHandler implements JobHandler {
     @Inject
     Instance<DocumentBuilder> builderInstances;
 
+    @Inject
+    Tracer tracer;
+
     private Map<DocumentType, DocumentBuilder> builders;
 
     @PostConstruct
@@ -109,6 +115,10 @@ public class ProcessDocumentHandler implements JobHandler {
             return;
         }
         ProcessingContext ctx = loaded.get();
+        Span.current()
+                .setAttribute("cetus.document.id", ctx.documentId().toString())
+                .setAttribute("document.type", ctx.documentType().name())
+                .setAttribute("environment", ctx.environment().name());
         DocumentBuilder builder = builders.get(ctx.documentType());
         if (builder == null) {
             recorder.gaveUp(ctx.documentId(), "Document type not supported yet: " + ctx.documentType());
@@ -123,10 +133,10 @@ public class ProcessDocumentHandler implements JobHandler {
             return;
         }
 
-        BuiltDocument built = builder.build(ctx, secrets(ctx));
+        BuiltDocument built = Spans.traced(tracer, "document.build", () -> builder.build(ctx, secrets(ctx)));
         recorder.cufe(ctx.documentId(), built.uniqueCode());
 
-        byte[] signedXml = sign(built.unsigned(), keys);
+        byte[] signedXml = Spans.traced(tracer, "document.sign", () -> sign(built.unsigned(), keys));
         long sequence = fileSequence.next(ctx.issuerId(), ctx.issueDate().getYear());
         String nit = ctx.supplier().identificationNumber();
         String xmlName = DianFileNames.xml(

@@ -2,8 +2,12 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
+import com.cantte.cetus.email.EmailRateLimited;
+import com.cantte.cetus.email.EmailRejectedException;
 import com.cantte.cetus.email.EmailSender;
 import com.cantte.cetus.email.ResendEmailSender;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.opentelemetry.api.trace.Tracer;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -38,14 +42,38 @@ public class EmailClients {
             @ConfigProperty(name = "cetus.email.from") Optional<String> from,
             @ConfigProperty(name = "cetus.notifications.from") Optional<String> notificationsFrom,
             @ConfigProperty(name = "cetus.email.test-recipient") Optional<String> testRecipient,
-            @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay) {
+            @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay,
+            Tracer tracer,
+            MeterRegistry meters) {
         this.client = apiKey.filter(key -> !key.isBlank()).isPresent()
-                ? new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout)
+                ? instrumented(
+                        new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout),
+                        tracer,
+                        meters)
                 : null;
         this.from = from.filter(f -> !f.isBlank()).orElse(null);
         this.notificationsFrom = notificationsFrom.filter(f -> !f.isBlank()).orElse(this.from);
         this.testRecipient = testRecipient.filter(recipient -> !recipient.isBlank());
         this.rateLimitDelay = rateLimitDelay;
+    }
+
+    private static EmailSender instrumented(EmailSender sender, Tracer tracer, MeterRegistry meters) {
+        return (message, idempotencyKey) -> {
+            String outcome = "failed";
+            try {
+                String id = Spans.traced(tracer, "email.send", () -> sender.send(message, idempotencyKey));
+                outcome = "sent";
+                return id;
+            } catch (EmailRateLimited e) {
+                outcome = "rate_limited";
+                throw e;
+            } catch (EmailRejectedException e) {
+                outcome = "rejected";
+                throw e;
+            } finally {
+                meters.counter("cetus.email.sent", "outcome", outcome).increment();
+            }
+        };
     }
 
     void logSettings(@Observes StartupEvent event) {

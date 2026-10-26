@@ -12,6 +12,7 @@ import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.DocumentLineEntity;
 import com.cantte.cetus.persistence.entity.DocumentTaxEntity;
@@ -19,6 +20,7 @@ import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * The steps every document type shares at creation: the issuer can issue, the document takes the
@@ -39,8 +42,16 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class DocumentDrafts {
 
+    private static final Logger LOG = Logger.getLogger(DocumentDrafts.class);
+
     @Inject
     JobQueue jobs;
+
+    @Inject
+    AfterCommit afterCommit;
+
+    @Inject
+    MeterRegistry meters;
 
     @ConfigProperty(name = "cetus.sandbox.daily-documents")
     int sandboxDailyDocuments;
@@ -159,6 +170,14 @@ public class DocumentDrafts {
                 ? Duration.ofMillis(ThreadLocalRandom.current().nextLong(1000, 3001))
                 : Duration.ZERO;
         jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id, delay);
+        LOG.infof("Document %s received (%s, %s)", doc.id, doc.documentType, doc.environment);
+        afterCommit.run(() -> meters.counter(
+                        "cetus.documents.created",
+                        "document.type",
+                        doc.documentType.name(),
+                        "environment",
+                        doc.environment.name())
+                .increment());
     }
 
     /** Links the note to the invoice it corrects, taking its currency, customer and payment, and submits it. */

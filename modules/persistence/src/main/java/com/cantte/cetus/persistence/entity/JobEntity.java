@@ -44,6 +44,10 @@ public class JobEntity extends PanacheEntityBase {
     @Column(name = "last_error")
     public String lastError;
 
+    /** W3C traceparent of the span that enqueued the job; null when none was recorded. */
+    @Column(name = "trace_context")
+    public String traceContext;
+
     @Column(name = "updated_at")
     public OffsetDateTime updatedAt;
 }
