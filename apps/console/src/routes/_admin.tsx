@@ -72,7 +72,7 @@ function AdminLayout() {
 
   return (
     <SidebarProvider>
-      <Sidebar aria-label="Administración">
+      <Sidebar>
         <SidebarHeader>
           <p className="flex items-center gap-2 px-2 py-1 font-heading text-sm font-semibold tracking-tight">
             Cetus
@@ -80,23 +80,25 @@ function AdminLayout() {
           </p>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navigation.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton
-                      render={<Link to={item.to} />}
-                      isActive={Boolean(matchRoute({ to: item.to, fuzzy: true }))}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <nav aria-label="Administración">
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navigation.map((item) => (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        render={<Link to={item.to} />}
+                        isActive={Boolean(matchRoute({ to: item.to, fuzzy: true }))}
+                      >
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </nav>
         </SidebarContent>
         <SidebarFooter>
           <div className="flex flex-col gap-0.5 px-2">
