@@ -1,7 +1,13 @@
 package com.cantte.cetus.worker.runner;
 
 import com.cantte.cetus.jobs.JobClaimer;
+import com.cantte.cetus.jobs.JobTraces;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ManagedContext;
 import io.quarkus.runtime.ShutdownEvent;
@@ -67,6 +73,9 @@ public class JobRunner {
 
     @Inject
     Config config;
+
+    @Inject
+    Tracer tracer;
 
     @ConfigProperty(name = "cetus.jobs.concurrency")
     int concurrency;
@@ -160,20 +169,34 @@ public class JobRunner {
         }
     }
 
-    /** Each job gets its own request context, as the scheduler gave the poll, so it never shares an EntityManager. */
+    /**
+     * Each job gets its own request context, as the scheduler gave the poll, so it never shares an EntityManager.
+     * Its span is a child of the one that enqueued it, so it follows that trace's sampling decision and every
+     * attempt shows up in the same trace.
+     */
     private void runInRequestContext(JobEntity job) {
         ManagedContext requestContext = Arc.container().requestContext();
         requestContext.activate();
+        Span span = tracer.spanBuilder("job.process")
+                .setParent(JobTraces.parent(job.traceContext))
+                .setSpanKind(SpanKind.CONSUMER)
+                .setAttribute("job.type", job.jobType)
+                .setAttribute("cetus.job.id", job.id.toString())
+                .setAttribute("cetus.reference.id", String.valueOf(job.referenceId))
+                .setAttribute("job.attempt", job.attempts)
+                .startSpan();
         MDC.put("cetus.job.id", job.id.toString());
         MDC.put("job.type", job.jobType);
         MDC.put("cetus.reference.id", String.valueOf(job.referenceId));
-        try {
+        try (Scope ignored = span.makeCurrent()) {
             run(job);
         } catch (RuntimeException e) {
             // run() already recorded the failure; this is a bug in the bookkeeping, and the lease will retry the job.
             LOG.errorf(e, "Job %s (%s) could not be recorded", job.id, job.jobType);
+            span.setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
         } finally {
             MDC.clear();
+            span.end();
             requestContext.terminate();
         }
     }
@@ -182,6 +205,7 @@ public class JobRunner {
         JobHandler handler = handlers.get(job.jobType);
         if (handler == null) {
             claimer.fail(job, "No handler for job type " + job.jobType);
+            Span.current().setStatus(StatusCode.ERROR, "No handler");
             return;
         }
         try {
@@ -194,10 +218,13 @@ public class JobRunner {
                     "Job %s (%s) failed permanently on attempt %d, not retrying: %s",
                     job.id, job.jobType, job.attempts, giveUp.getMessage());
             claimer.kill(job.id, giveUp.getMessage());
+            Span.current().setStatus(StatusCode.ERROR, "Gave up");
             handler.onDead(job, giveUp.getMessage());
         } catch (Exception e) {
             LOG.warnf(e, "Job %s (%s) failed on attempt %d", job.id, job.jobType, job.attempts);
             String error = e.getClass().getSimpleName() + ": " + e.getMessage();
+            // Only the type: messages can carry customer data, and the log above already has them.
+            Span.current().setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
             if (claimer.fail(job, error)) {
                 LOG.errorf("Job %s (%s) is dead after %d attempts", job.id, job.jobType, job.attempts);
                 handler.onDead(job, error);

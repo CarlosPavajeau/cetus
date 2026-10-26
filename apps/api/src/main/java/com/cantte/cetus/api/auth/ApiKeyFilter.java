@@ -3,6 +3,7 @@ package com.cantte.cetus.api.auth;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.ApiKeyEntity;
+import io.opentelemetry.api.trace.Span;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
@@ -74,6 +75,10 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             abort(request, "Invalid or revoked API key");
             return;
         }
+        Span.current()
+                .setAttribute("cetus.account.id", resolved.key().accountId.toString())
+                .setAttribute("cetus.api_key.id", resolved.key().id.toString())
+                .setAttribute("environment", resolved.key().environment.name());
         if (!ACTIVE.equals(resolved.accountStatus())) {
             abort(request, Response.Status.FORBIDDEN, "account_suspended", "This account is suspended");
             return;

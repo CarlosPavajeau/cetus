@@ -6,4 +6,10 @@ plugins {
 dependencies {
     api(project(":modules:persistence"))
     implementation(enforcedPlatform(libs.quarkus.bom))
+    api(libs.opentelemetry.api)
+
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.assertj)
+    testRuntimeOnly(libs.junit.launcher)
 }

@@ -7,6 +7,7 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PersonType;
+import io.opentelemetry.api.OpenTelemetry;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +55,8 @@ class EmailClientsTest {
                 Optional.empty(),
                 Optional.of("avisos@cetus.test"),
                 Optional.empty(),
-                Duration.ofSeconds(2));
+                Duration.ofSeconds(2),
+                OpenTelemetry.noop().getTracer("test"));
         assertThat(onlyNotices.sender()).isEmpty();
         assertThat(onlyNotices.notificationSender()).isPresent();
         assertThat(onlyNotices.notificationsFrom()).isEqualTo("avisos@cetus.test");
@@ -99,6 +101,7 @@ class EmailClientsTest {
                 from,
                 Optional.empty(),
                 testRecipient,
-                Duration.ofSeconds(2));
+                Duration.ofSeconds(2),
+                OpenTelemetry.noop().getTracer("test"));
     }
 }

@@ -3,6 +3,8 @@ package com.cantte.cetus.worker.support;
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -23,6 +25,9 @@ public class ArtifactStore {
     @Inject
     ResultRecorder recorder;
 
+    @Inject
+    Tracer tracer;
+
     public void save(
             ProcessingContext ctx,
             DocumentArtifactEntity.Kind kind,
@@ -37,12 +42,13 @@ public class ArtifactStore {
                         ctx.issueDate().getMonthValue(),
                         ctx.documentId(),
                         fileName);
-        recorder.artifact(
-                ctx.documentId(),
-                kind,
-                ctx.environment() == Environment.SANDBOX
-                        ? storage.put(key, content, contentType)
-                        : storage.putRetained(key, content, contentType));
+        DocumentStorage.StoredObject stored = Spans.traced(tracer, "storage.put", () -> {
+            Span.current().setAttribute("artifact.kind", kind.name());
+            return ctx.environment() == Environment.SANDBOX
+                    ? storage.put(key, content, contentType)
+                    : storage.putRetained(key, content, contentType);
+        });
+        recorder.artifact(ctx.documentId(), kind, stored);
     }
 
     /** The newest artifact of a kind with its file name, read from S3 outside any transaction. */

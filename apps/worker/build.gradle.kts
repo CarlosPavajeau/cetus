@@ -36,4 +36,5 @@ dependencies {
     testImplementation(libs.quarkus.flyway)
     testImplementation(libs.flyway.postgresql)
     testImplementation(libs.assertj)
+    testImplementation(libs.opentelemetry.sdk.testing)
 }

@@ -4,6 +4,7 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.email.EmailSender;
 import com.cantte.cetus.email.ResendEmailSender;
+import io.opentelemetry.api.trace.Tracer;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -38,14 +39,20 @@ public class EmailClients {
             @ConfigProperty(name = "cetus.email.from") Optional<String> from,
             @ConfigProperty(name = "cetus.notifications.from") Optional<String> notificationsFrom,
             @ConfigProperty(name = "cetus.email.test-recipient") Optional<String> testRecipient,
-            @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay) {
+            @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay,
+            Tracer tracer) {
         this.client = apiKey.filter(key -> !key.isBlank()).isPresent()
-                ? new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout)
+                ? traced(new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout), tracer)
                 : null;
         this.from = from.filter(f -> !f.isBlank()).orElse(null);
         this.notificationsFrom = notificationsFrom.filter(f -> !f.isBlank()).orElse(this.from);
         this.testRecipient = testRecipient.filter(recipient -> !recipient.isBlank());
         this.rateLimitDelay = rateLimitDelay;
+    }
+
+    private static EmailSender traced(EmailSender sender, Tracer tracer) {
+        return (message, idempotencyKey) ->
+                Spans.traced(tracer, "email.send", () -> sender.send(message, idempotencyKey));
     }
 
     void logSettings(@Observes StartupEvent event) {

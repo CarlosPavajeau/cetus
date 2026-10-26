@@ -4,6 +4,7 @@ import com.cantte.cetus.dian.DianEndpoint;
 import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianSoapClient;
 import com.cantte.cetus.domain.model.Environment;
+import io.opentelemetry.api.trace.Tracer;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.Duration;
 import java.util.Optional;
@@ -15,23 +16,25 @@ public class DianClients {
 
     private static final Logger LOG = Logger.getLogger(DianClients.class);
 
-    private final DianSoapClient test;
-    private final DianSoapClient live;
-    private final SimulatedDianGateway sandbox;
+    private final DianGateway test;
+    private final DianGateway live;
+    private final DianGateway sandbox;
 
     /** {@code cetus.dian.test-url} redirects only the TEST environment (e.g. to the local mock); LIVE is fixed. */
     public DianClients(
             @ConfigProperty(name = "cetus.dian.connect-timeout") Duration connectTimeout,
             @ConfigProperty(name = "cetus.dian.request-timeout") Duration requestTimeout,
             @ConfigProperty(name = "cetus.dian.test-url") Optional<String> testUrl,
-            SimulatedDianGateway sandbox) {
+            SimulatedDianGateway sandbox,
+            Tracer tracer) {
         String testEndpoint = testUrl.filter(url -> !url.isBlank()).orElse(DianEndpoint.TEST.url());
         if (!testEndpoint.equals(DianEndpoint.TEST.url())) {
             LOG.warnf("DIAN TEST environment redirected to %s", testEndpoint);
         }
-        this.test = new DianSoapClient(testEndpoint, connectTimeout, requestTimeout);
-        this.live = new DianSoapClient(DianEndpoint.LIVE, connectTimeout, requestTimeout);
-        this.sandbox = sandbox;
+        this.test = new TracedDianGateway(new DianSoapClient(testEndpoint, connectTimeout, requestTimeout), tracer);
+        this.live =
+                new TracedDianGateway(new DianSoapClient(DianEndpoint.LIVE, connectTimeout, requestTimeout), tracer);
+        this.sandbox = new TracedDianGateway(sandbox, tracer);
     }
 
     /** SANDBOX never reaches the DIAN, not even its habilitación environment. */
