@@ -2,6 +2,15 @@ import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
+import {
+  CircleCheckIcon,
+  CircleDashedIcon,
+  CircleXIcon,
+  InfoIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
+
+import { Spinner } from "~/components/ui/spinner";
 
 const badgeVariants = cva(
   "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-2xs font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
@@ -11,7 +20,7 @@ const badgeVariants = cva(
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
         secondary: "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive:
-          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+          "bg-destructive/10 text-red-700 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:text-destructive dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
         outline: "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         ghost: "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
@@ -51,52 +60,83 @@ function Badge({
  */
 type BadgeStatus = "idle" | "info" | "pending" | "success" | "warning" | "error";
 
-const statusDotVariants = cva(
-  "relative size-1.5 shrink-0 rounded-full transition-[background-color] duration-150 ease-out",
-  {
-    variants: {
-      status: {
-        idle: "bg-muted-foreground",
-        info: "bg-sky-500",
-        // Ping ring under full motion, an opacity pulse under reduced motion.
-        pending: "bg-sky-500 motion-reduce:animate-pulse",
-        success: "bg-emerald-500",
-        warning: "bg-amber-500",
-        error: "bg-destructive",
-      },
-    },
-    defaultVariants: {
-      status: "idle",
+const statusBadgeVariants = cva("", {
+  variants: {
+    status: {
+      idle: "bg-secondary text-secondary-foreground",
+      info: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+      pending: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+      success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+      warning: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+      error: "bg-destructive/10 text-red-700 dark:bg-destructive/20 dark:text-destructive",
     },
   },
-);
+  defaultVariants: {
+    status: "idle",
+  },
+});
+
+const statusIcon: Record<BadgeStatus, React.ReactNode> = {
+  idle: <CircleDashedIcon aria-hidden />,
+  info: <InfoIcon aria-hidden />,
+  pending: <Spinner aria-hidden className="motion-reduce:animate-pulse" />,
+  success: <CircleCheckIcon aria-hidden />,
+  warning: <TriangleAlertIcon aria-hidden />,
+  error: <CircleXIcon aria-hidden />,
+};
+
+/** Every status icon stays mounted in one grid cell, so a status change cross-fades both ways. */
+function StatusIcon({ status }: { status: BadgeStatus }) {
+  return (
+    <span
+      data-slot="badge-status-icon"
+      aria-hidden
+      className="grid shrink-0 place-items-center [&_svg]:size-3!"
+    >
+      {Object.entries(statusIcon).map(([each, icon]) => (
+        <span
+          key={each}
+          className={cn(
+            "transition-[opacity,filter,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] [grid-area:1/1] motion-reduce:scale-100 motion-reduce:blur-[0px]",
+            each === status
+              ? "scale-100 opacity-100 blur-[0px]"
+              : "scale-[0.25] opacity-0 blur-[4px] [&_svg]:animate-none",
+          )}
+        >
+          {icon}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 /**
- * An outline badge with a colored dot for one {@link BadgeStatus}. Changing `status` retargets the
- * color transitions, so a pending → success swap blends instead of jumping. The label stays the
- * caller's, so the dot is never the only cue.
+ * A tinted badge with an icon for one {@link BadgeStatus}. Changing `status` retargets the color
+ * transitions and cross-fades the icon, so a pending → success swap blends instead of jumping. The
+ * label stays the caller's, so color and icon are never the only cue. `icon` replaces the status
+ * icon; `null` hides it.
  */
 function StatusBadge({
   status = "idle",
+  icon,
   className,
   children,
   ...props
-}: Omit<React.ComponentProps<typeof Badge>, "variant"> & { status?: BadgeStatus }) {
+}: Omit<React.ComponentProps<typeof Badge>, "variant"> & {
+  status?: BadgeStatus;
+  icon?: React.ReactNode;
+}) {
   return (
     <Badge
-      variant="outline"
+      variant={null}
       data-status={status}
-      className={cn(status === "idle" && "text-muted-foreground", className)}
+      className={cn(statusBadgeVariants({ status }), className)}
       {...props}
     >
-      <span data-slot="badge-status-dot" aria-hidden className={statusDotVariants({ status })}>
-        {status === "pending" && (
-          <span className="absolute inset-0 rounded-full bg-inherit motion-safe:animate-ping" />
-        )}
-      </span>
+      {icon === undefined ? <StatusIcon status={status} /> : icon}
       {children}
     </Badge>
   );
 }
 
-export { Badge, badgeVariants, StatusBadge, statusDotVariants, type BadgeStatus };
+export { Badge, badgeVariants, StatusBadge, statusBadgeVariants, type BadgeStatus };
