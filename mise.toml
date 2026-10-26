@@ -45,6 +45,10 @@ run = "scripts/dev.sh infra"
 description = "Start Grafana with OTLP (:3002); run the services with CETUS_OTEL_DISABLED=false to export to it"
 run = "docker compose --profile observability up -d otel-lgtm"
 
+[tasks.grafana-sync]
+description = "Publish infra/grafana (dashboards and alert rules) to a Grafana; local :3002 by default"
+run = "node scripts/grafana-sync.mjs"
+
 [tasks.infra-down]
 description = "Stop the containers (the Postgres volume is kept)"
 run = "docker compose --profile observability down"

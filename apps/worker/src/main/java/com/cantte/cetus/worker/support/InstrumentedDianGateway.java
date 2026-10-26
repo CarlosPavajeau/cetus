@@ -7,6 +7,7 @@ import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.NumberingRangeResponse;
 import com.cantte.cetus.dian.UploadResponse;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.signing.KeyMaterial;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -39,11 +40,15 @@ final class InstrumentedDianGateway implements DianGateway {
     };
 
     private final DianGateway delegate;
+    /** SANDBOX's simulator answers too: kept apart, so it never hides how the real DIAN is doing. */
+    private final Environment environment;
+
     private final Tracer tracer;
     private final MeterRegistry meters;
 
-    InstrumentedDianGateway(DianGateway delegate, Tracer tracer, MeterRegistry meters) {
+    InstrumentedDianGateway(DianGateway delegate, Environment environment, Tracer tracer, MeterRegistry meters) {
         this.delegate = delegate;
+        this.environment = environment;
         this.tracer = tracer;
         this.meters = meters;
     }
@@ -139,6 +144,7 @@ final class InstrumentedDianGateway implements DianGateway {
             span.end();
             Timer.builder("cetus.dian.request.duration")
                     .tag("dian.operation", operation.operationName())
+                    .tag("environment", environment.name())
                     .tag("outcome", outcome)
                     .serviceLevelObjectives(DURATION_BUCKETS)
                     .register(meters)
@@ -149,6 +155,7 @@ final class InstrumentedDianGateway implements DianGateway {
     private void error(DianOperation operation, String kind) {
         Counter.builder("cetus.dian.request.errors")
                 .tag("dian.operation", operation.operationName())
+                .tag("environment", environment.name())
                 .tag("error.kind", kind)
                 .register(meters)
                 .increment();

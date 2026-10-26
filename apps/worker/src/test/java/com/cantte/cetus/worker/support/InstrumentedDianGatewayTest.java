@@ -8,6 +8,7 @@ import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.NumberingRangeResponse;
 import com.cantte.cetus.dian.UploadResponse;
+import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.signing.KeyMaterial;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.common.AttributeKey;
@@ -28,7 +29,8 @@ class InstrumentedDianGatewayTest {
             .addSpanProcessor(SimpleSpanProcessor.create(spans))
             .build();
     private final SimpleMeterRegistry meters = new SimpleMeterRegistry();
-    private final DianGateway gateway = new InstrumentedDianGateway(new Unreachable(), provider.get("test"), meters);
+    private final DianGateway gateway =
+            new InstrumentedDianGateway(new Unreachable(), Environment.LIVE, provider.get("test"), meters);
 
     @AfterEach
     void close() {
@@ -48,12 +50,12 @@ class InstrumentedDianGatewayTest {
                 .isTrue();
         assertThat(span.getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);
         assertThat(meters.get("cetus.dian.request.errors")
-                        .tags("dian.operation", "SendBillSync", "error.kind", "timeout")
+                        .tags("dian.operation", "SendBillSync", "environment", "LIVE", "error.kind", "timeout")
                         .counter()
                         .count())
                 .isEqualTo(1);
         assertThat(meters.get("cetus.dian.request.duration")
-                        .tags("dian.operation", "SendBillSync", "outcome", "error")
+                        .tags("dian.operation", "SendBillSync", "environment", "LIVE", "outcome", "error")
                         .timer()
                         .count())
                 .isEqualTo(1);
@@ -75,7 +77,7 @@ class InstrumentedDianGatewayTest {
                 .isFalse();
         assertThat(span.getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);
         assertThat(meters.get("cetus.dian.request.duration")
-                        .tags("dian.operation", "GetStatus", "outcome", "invalid")
+                        .tags("dian.operation", "GetStatus", "environment", "LIVE", "outcome", "invalid")
                         .timer()
                         .count())
                 .isEqualTo(1);

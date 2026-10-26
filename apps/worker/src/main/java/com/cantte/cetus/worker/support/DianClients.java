@@ -34,10 +34,13 @@ public class DianClients {
             LOG.warnf("DIAN TEST environment redirected to %s", testEndpoint);
         }
         this.test = new InstrumentedDianGateway(
-                new DianSoapClient(testEndpoint, connectTimeout, requestTimeout), tracer, meters);
+                new DianSoapClient(testEndpoint, connectTimeout, requestTimeout), Environment.TEST, tracer, meters);
         this.live = new InstrumentedDianGateway(
-                new DianSoapClient(DianEndpoint.LIVE, connectTimeout, requestTimeout), tracer, meters);
-        this.sandbox = new InstrumentedDianGateway(sandbox, tracer, meters);
+                new DianSoapClient(DianEndpoint.LIVE, connectTimeout, requestTimeout),
+                Environment.LIVE,
+                tracer,
+                meters);
+        this.sandbox = new InstrumentedDianGateway(sandbox, Environment.SANDBOX, tracer, meters);
     }
 
     /** SANDBOX never reaches the DIAN, not even its habilitación environment. */

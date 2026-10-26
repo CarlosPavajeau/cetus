@@ -63,6 +63,7 @@ public class JobRunner {
 
     private static final Logger LOG = Logger.getLogger(JobRunner.class);
     private static final Duration SHUTDOWN_GRACE = Duration.ofSeconds(30);
+    private static final List<String> OUTCOMES = List.of("done", "retry", "dead");
     private static final Duration[] DURATION_BUCKETS = {
         Duration.ofMillis(100),
         Duration.ofMillis(500),
@@ -119,6 +120,9 @@ public class JobRunner {
                             .orElse(concurrency));
             limits.put(type, limit);
             typeSlots.put(type, new Semaphore(limit));
+            // From zero: a counter whose first sample is already 1 shows no increase, and the first dead job
+            // would raise no alert. The OpenTelemetry bridge exports a counter only once something is added.
+            OUTCOMES.forEach(outcome -> completed(type, outcome).increment(0));
         }
         LOG.infof("Running up to %d jobs at once; per type: %s", concurrency, limits);
     }
@@ -259,16 +263,19 @@ public class JobRunner {
     }
 
     private void record(JobEntity job, String outcome, long start) {
-        Counter.builder("cetus.jobs.completed")
-                .tag("job.type", job.jobType)
-                .tag("outcome", outcome)
-                .register(meters)
-                .increment();
+        completed(job.jobType, outcome).increment();
         Timer.builder("cetus.jobs.duration")
                 .tag("job.type", job.jobType)
                 .serviceLevelObjectives(DURATION_BUCKETS)
                 .register(meters)
                 .record(Duration.ofNanos(System.nanoTime() - start));
+    }
+
+    private Counter completed(String type, String outcome) {
+        return Counter.builder("cetus.jobs.completed")
+                .tag("job.type", type)
+                .tag("outcome", outcome)
+                .register(meters);
     }
 
     /** No job running in this worker. */
