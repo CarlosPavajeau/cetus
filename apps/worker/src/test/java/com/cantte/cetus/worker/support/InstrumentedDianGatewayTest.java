@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianGateway;
+import com.cantte.cetus.dian.DianOperation;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.NumberingRangeResponse;
@@ -65,6 +66,19 @@ class InstrumentedDianGatewayTest {
     }
 
     @Test
+    void theRealDiansErrorsStartAtZero() {
+        assertThat(meters.find("cetus.dian.request.errors")
+                        .tag("environment", "LIVE")
+                        .counters())
+                .hasSize(DianOperation.values().length * 3)
+                .allSatisfy(counter -> assertThat(counter.count()).isZero());
+
+        SimpleMeterRegistry sandboxMeters = new SimpleMeterRegistry();
+        new InstrumentedDianGateway(new Unreachable(), Environment.SANDBOX, provider.get("test"), sandboxMeters);
+        assertThat(sandboxMeters.find("cetus.dian.request.errors").counters()).isEmpty();
+    }
+
+    @Test
     void aFaultKeepsItsCodeButNotTheDiansText() {
         assertThatThrownBy(() -> gateway.sendTestSetAsync("doc.zip", new byte[0], "set", null))
                 .isInstanceOf(DianFaultException.class);
@@ -94,7 +108,8 @@ class InstrumentedDianGatewayTest {
                         .timer()
                         .count())
                 .isEqualTo(1);
-        assertThat(meters.find("cetus.dian.request.errors").counters()).isEmpty();
+        assertThat(meters.find("cetus.dian.request.errors").counters())
+                .allSatisfy(counter -> assertThat(counter.count()).isZero());
     }
 
     /** Times out on sync sends, faults on test sets and does not validate anything it is asked about. */

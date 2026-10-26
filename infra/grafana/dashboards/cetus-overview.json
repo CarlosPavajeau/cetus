@@ -296,7 +296,7 @@
         "graphMode": "none",
         "textMode": "value"
       },
-      "description": "Objetivo: menos de 30 s, sin contar caídas de la DIAN. Desde la creación hasta la respuesta de la DIAN."
+      "description": "Objetivo: menos de 30 s. Desde la creación hasta la respuesta de la DIAN, incluido el tiempo que la DIAN esté caída: si se pasa, mira primero el dashboard de la DIAN."
     },
     {
       "id": 5,

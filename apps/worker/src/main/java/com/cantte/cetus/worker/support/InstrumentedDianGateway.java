@@ -51,6 +51,15 @@ final class InstrumentedDianGateway implements DianGateway {
         this.environment = environment;
         this.tracer = tracer;
         this.meters = meters;
+        if (environment != Environment.SANDBOX) {
+            // From zero: errors whose first sample is already 2 show no increase, and the "DIAN con fallas" alert
+            // would miss the first burst. The OpenTelemetry bridge exports a counter only once something is added.
+            for (DianOperation operation : DianOperation.values()) {
+                for (String kind : List.of("timeout", "transport", "fault")) {
+                    errors(operation, kind).increment(0);
+                }
+            }
+        }
     }
 
     DianGateway delegate() {
@@ -154,12 +163,15 @@ final class InstrumentedDianGateway implements DianGateway {
     }
 
     private void error(DianOperation operation, String kind) {
-        Counter.builder("cetus.dian.request.errors")
+        errors(operation, kind).increment();
+    }
+
+    private Counter errors(DianOperation operation, String kind) {
+        return Counter.builder("cetus.dian.request.errors")
                 .tag("dian.operation", operation.operationName())
                 .tag("environment", environment.name())
                 .tag("error.kind", kind)
-                .register(meters)
-                .increment();
+                .register(meters);
     }
 
     private static boolean validated(Span span, DianResponse response) {

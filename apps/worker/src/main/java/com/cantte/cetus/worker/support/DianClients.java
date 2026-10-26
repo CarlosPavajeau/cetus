@@ -6,12 +6,15 @@ import com.cantte.cetus.dian.DianSoapClient;
 import com.cantte.cetus.domain.model.Environment;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.opentelemetry.api.trace.Tracer;
+import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.Duration;
 import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+/** Built at startup, so its error counters start at zero before the first call to the DIAN. */
+@Startup
 @ApplicationScoped
 public class DianClients {
 

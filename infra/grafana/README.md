@@ -76,7 +76,9 @@ Se ven en la fila **SLO** del dashboard de salud general:
 |---|---|---|
 | Disponibilidad de `POST /v1/*` | 99,5 % mensual | `http_server_requests` sin 5xx, 30 días |
 | Creación de documentos, p95 | < 500 ms | `cetus_documents_creation_duration` (solo aceptados) |
-| Tiempo hasta validación LIVE, p95 | < 30 s, sin contar caídas de la DIAN | `cetus_documents_time_to_validation` |
+| Tiempo hasta validación LIVE, p95 | < 30 s | `cetus_documents_time_to_validation` |
 
-Empiezan como objetivos alcanzables; se ajustan con datos reales. Si más adelante se quiere seguir el consumo del
+El tiempo hasta validación incluye las caídas de la DIAN (se mide desde la creación hasta su respuesta): un
+incumplimiento durante una caída se lee junto al dashboard de la DIAN. Empiezan como objetivos alcanzables; se
+ajustan con datos reales. Si más adelante se quiere seguir el consumo del
 presupuesto de error, la app de SLO de Grafana Cloud puede usar estas mismas consultas.
