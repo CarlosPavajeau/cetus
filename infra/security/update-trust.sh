@@ -11,7 +11,7 @@ if command -v keytool >/dev/null 2>&1; then
     sed -n 's/^Alias name: //p' /tmp/cetus-ca-list > /tmp/cetus-ca-aliases
     while IFS= read -r alias; do
         case "$alias" in
-            *emsigneccrootcag3*|*emsign_ecc_root_ca__g3*|*comodoaaaca*|*aaa_certificate_services*)
+            *emsigneccrootcag3*|*emsign_ecc_root_ca__g3*|*emsigneccrootcac3*|*emsign_ecc_root_ca__c3*|*emsignrootcac1*|*emsign_root_ca__c1*|*comodoaaaca*|*aaa_certificate_services*)
                 keytool -delete -cacerts -storepass changeit -alias "$alias"
                 ;;
         esac

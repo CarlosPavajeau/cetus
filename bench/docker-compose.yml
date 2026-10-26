@@ -47,7 +47,7 @@ services:
   # Stands in for PlanetScale's PgBouncer, with its defaults (transaction mode, 20 server connections per
   # user and database, prepared statements tracked).
   pgbouncer:
-    image: edoburu/pgbouncer:v1.26.0-p0
+    image: edoburu/pgbouncer:v1.26.1-p0
     environment:
       DB_HOST: postgres
       LISTEN_PORT: "6432"
