@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/tanstackstart-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Link,
@@ -25,6 +26,7 @@ import {
   UsersIcon,
   WebhookIcon,
 } from "lucide-react";
+import { useEffect } from "react";
 
 import { ShellError } from "~/components/RouteError";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -93,6 +95,13 @@ const navigation = [
 
 function AppLayout() {
   const { session } = Route.useRouteContext();
+
+  // Only the internal ID: never the email or the name.
+  useEffect(() => {
+    Sentry.setUser({ id: session.user.id });
+    return () => Sentry.setUser(null);
+  }, [session.user.id]);
+
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
   const queryClient = useQueryClient();
