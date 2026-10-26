@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
+import org.jboss.logging.MDC;
 
 /**
  * Claims ready jobs and runs up to {@code cetus.jobs.concurrency} of them at once: most of a job is waiting on
@@ -163,12 +164,16 @@ public class JobRunner {
     private void runInRequestContext(JobEntity job) {
         ManagedContext requestContext = Arc.container().requestContext();
         requestContext.activate();
+        MDC.put("cetus.job.id", job.id.toString());
+        MDC.put("job.type", job.jobType);
+        MDC.put("cetus.reference.id", String.valueOf(job.referenceId));
         try {
             run(job);
         } catch (RuntimeException e) {
             // run() already recorded the failure; this is a bug in the bookkeeping, and the lease will retry the job.
             LOG.errorf(e, "Job %s (%s) could not be recorded", job.id, job.jobType);
         } finally {
+            MDC.clear();
             requestContext.terminate();
         }
     }

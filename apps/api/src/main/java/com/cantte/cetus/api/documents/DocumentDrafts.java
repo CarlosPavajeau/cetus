@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 /**
  * The steps every document type shares at creation: the issuer can issue, the document takes the
@@ -38,6 +39,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @ApplicationScoped
 public class DocumentDrafts {
+
+    private static final Logger LOG = Logger.getLogger(DocumentDrafts.class);
 
     @Inject
     JobQueue jobs;
@@ -159,6 +162,7 @@ public class DocumentDrafts {
                 ? Duration.ofMillis(ThreadLocalRandom.current().nextLong(1000, 3001))
                 : Duration.ZERO;
         jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id, delay);
+        LOG.infof("Document %s received (%s, %s)", doc.id, doc.documentType, doc.environment);
     }
 
     /** Links the note to the invoice it corrects, taking its currency, customer and payment, and submits it. */

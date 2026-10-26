@@ -181,7 +181,8 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
   `document.type`, `environment` (`SANDBOX`, `TEST`, `LIVE`), `outcome`, `dian.operation`, `job.type`,
   `error.kind`. Adding another one needs review.
 - IDs go in spans and logs, never in metrics: `cetus.document.id`, `cetus.account.id`, `cetus.issuer.id`,
-  `cetus.job.id`, `dian.track_id`. No `account_id` and no issuer NIT in metrics.
+  `cetus.job.id`, `cetus.reference.id` (what a job works on), `dian.track_id`. No `account_id` and no issuer
+  NIT in metrics. `JobRunner` puts the job's IDs in the MDC, so every log line of a job carries them.
 - Never put in any telemetry: secrets (PIN, technical key, certificate and its password, API keys,
   `Authorization` headers, tokens), request or response bodies (the XML and DIAN responses live in S3), or
   personal data of customers and contacts (names, emails, identification numbers).
