@@ -31,6 +31,24 @@ test("the sidebar stays collapsed to icons after a reload", async ({ page, organ
   ).toHaveAttribute("data-active");
 });
 
+test("on a short window the collapsed sidebar scrolls to its last links", async ({
+  page,
+  organization: _,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 500 });
+  await open(page, "/overview");
+  await page.getByRole("main").getByRole("button", { name: "Mostrar u ocultar menú" }).click();
+  await expect(page.locator("[data-slot=sidebar][data-state]")).toHaveAttribute(
+    "data-state",
+    "collapsed",
+  );
+
+  const navigation = page.getByRole("navigation", { name: "Principal" });
+  await navigation.hover();
+  await page.mouse.wheel(0, 1000);
+  await expect(navigation.getByRole("link", { name: "Seguridad" })).toBeInViewport({ ratio: 1 });
+});
+
 test("the settings pages sit under the organization group", async ({ page, organization: _ }) => {
   await open(page, "/settings/members");
   await expect(page.getByRole("navigation", { name: "Principal" })).toBeVisible();
