@@ -130,6 +130,17 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/*
+ * A shadow at the bottom edge while more content sits below it. The cover scrolls with the content and hides
+ * the shadow at the end; it works where scrollbars only show while scrolling (macOS, iOS, Android).
+ */
+@utility scroll-shadow-bottom {
+  background:
+    linear-gradient(transparent, var(--sidebar) 70%) center bottom / 100% 2.5rem no-repeat local,
+    linear-gradient(transparent, color-mix(in oklab, var(--sidebar-foreground) 12%, transparent))
+      center bottom / 100% 1rem no-repeat scroll;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -1,21 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRightIcon, CodeXmlIcon, FileCheck2Icon, ScanLineIcon } from "lucide-react";
+import { ArrowUpRightIcon, CodeXmlIcon, FileCheck2Icon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import flowArrow from "~/assets/flow-arrow.svg";
+import { CetusMark } from "~/components/CetusMark";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
 import { docsUrl } from "~/lib/docs";
 
 const year = new Date().getFullYear();
-
-function CetusMark() {
-  return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-      <ScanLineIcon className="size-5" strokeWidth={1.8} />
-    </span>
-  );
-}
 
 /** Two columns from `lg` up: the form on the left, the product pitch on the right. */
 export function AuthLayout({

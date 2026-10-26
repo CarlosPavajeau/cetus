@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 
+import { CetusMark } from "~/components/CetusMark";
+import { Monogram } from "~/components/Monogram";
 import { ShellError } from "~/components/RouteError";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
@@ -46,12 +48,15 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { accountQuery } from "~/features/account/queries";
@@ -59,8 +64,10 @@ import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { EnvironmentSelect } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery } from "~/features/environment/queries";
 import { SandboxBanner } from "~/features/environment/SandboxBanner";
+import { isSidebarOpen } from "~/features/layout/sidebar";
 import { EmailVerificationBanner } from "~/features/session/EmailVerificationBanner";
 import { requireMembership } from "~/features/session/guard";
+import { OrganizationSwitcher } from "~/features/session/OrganizationSwitcher";
 import { authClient } from "~/lib/auth/client";
 import { docsUrl } from "~/lib/docs";
 import { cn } from "~/lib/utils";
@@ -68,33 +75,71 @@ import { cn } from "~/lib/utils";
 /** Protected layout: every child route requires a session. */
 export const Route = createFileRoute("/_app")({
   beforeLoad: requireMembership,
-  loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(activeEnvironmentQuery),
+  loader: async ({ context: { queryClient } }) => {
+    await queryClient.ensureQueryData(activeEnvironmentQuery);
+    return { sidebarOpen: isSidebarOpen() };
+  },
   component: AppLayout,
   errorComponent: ShellError,
 });
 
+type NavigationItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboardIcon;
+  staffOnly?: boolean;
+};
+
+/** `breadcrumb`: whether the header names the group before the page. */
 const navigation = [
-  { to: "/overview", label: "Resumen", icon: LayoutDashboardIcon },
-  { to: "/documents", label: "Documentos", icon: FileTextIcon },
-  { to: "/catalog", label: "Catálogo", icon: BookUserIcon },
-  { to: "/issuers", label: "Emisores", icon: BuildingIcon },
   {
-    to: "/developers/api-keys",
-    label: "Llaves de API",
-    icon: KeyRoundIcon,
-    section: "Desarrolladores",
+    label: "Espacio de trabajo",
+    breadcrumb: false,
+    items: [
+      { to: "/overview", label: "Resumen", icon: LayoutDashboardIcon },
+      { to: "/documents", label: "Documentos", icon: FileTextIcon },
+      { to: "/catalog", label: "Catálogo", icon: BookUserIcon },
+      { to: "/issuers", label: "Emisores", icon: BuildingIcon },
+    ],
   },
   {
-    to: "/developers/webhooks",
-    label: "Webhooks",
-    icon: WebhookIcon,
-    section: "Desarrolladores",
+    label: "Desarrolladores",
+    breadcrumb: true,
+    items: [
+      { to: "/developers/api-keys", label: "Llaves de API", icon: KeyRoundIcon },
+      { to: "/developers/webhooks", label: "Webhooks", icon: WebhookIcon },
+      { to: "/activity", label: "Actividad", icon: HistoryIcon },
+    ],
   },
-  { to: "/activity", label: "Actividad", icon: HistoryIcon },
-] as const;
+  {
+    label: "Organización",
+    breadcrumb: true,
+    items: [
+      {
+        to: "/admin/organizations",
+        label: "Administración",
+        icon: ShieldCheckIcon,
+        staffOnly: true,
+      },
+      { to: "/settings/members", label: "Miembros", icon: UsersIcon },
+      { to: "/settings/contacts", label: "Contactos", icon: MailIcon },
+      { to: "/settings/usage", label: "Plan y uso", icon: GaugeIcon },
+      { to: "/settings/security", label: "Seguridad", icon: ShieldIcon },
+    ],
+  },
+] as const satisfies readonly {
+  label: string;
+  breadcrumb: boolean;
+  items: readonly NavigationItem[];
+}[];
+
+const pages = navigation.flatMap((group) =>
+  group.items.map((item) => ({ ...item, section: group.breadcrumb ? group.label : undefined })),
+);
 
 function AppLayout() {
   const { session } = Route.useRouteContext();
+  const { sidebarOpen } = Route.useLoaderData();
 
   // Only the internal ID: never the email or the name.
   useEffect(() => {
@@ -108,7 +153,7 @@ function AppLayout() {
   // Not suspense: the layout must render even if the account cannot be read.
   const { data: account } = useQuery(accountQuery);
   const isStaff = Boolean(session.user.platformRole) && !session.impersonatedBy;
-  const current = navigation.find((item) => matchRoute({ to: item.to, fuzzy: true }));
+  const current = pages.find((item) => matchRoute({ to: item.to, fuzzy: true }));
   // A detail page names what it shows by returning { crumb } from its loader.
   const crumb = useMatches({
     select: (matches) =>
@@ -126,85 +171,68 @@ function AppLayout() {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar aria-label="Principal">
-        <SidebarHeader>
-          <p className="px-2 py-1 font-heading text-sm font-semibold tracking-tight">Cetus</p>
+    <SidebarProvider defaultOpen={sidebarOpen}>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="gap-3">
+          <div className="flex h-10 items-center gap-2.5 px-2 group-data-[collapsible=icon]:px-0.5">
+            <CetusMark />
+            <span className="font-heading text-lg font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
+              Cetus
+            </span>
+          </div>
+          {session.activeOrganizationId && (
+            <OrganizationSwitcher
+              activeOrganizationId={session.activeOrganizationId}
+              locked={Boolean(session.impersonatedBy)}
+            />
+          )}
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navigation.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton
-                      render={<Link to={item.to} />}
-                      isActive={Boolean(matchRoute({ to: item.to, fuzzy: true }))}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <nav aria-label="Principal">
+            {navigation.map((group) => (
+              <SidebarGroup key={group.label}>
+                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items
+                      .filter((item) => isStaff || !("staffOnly" in item))
+                      .map((item) => (
+                        <SidebarMenuItem key={item.to}>
+                          <SidebarMenuButton
+                            render={<Link to={item.to} />}
+                            isActive={Boolean(matchRoute({ to: item.to, fuzzy: true }))}
+                            tooltip={item.label}
+                          >
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+          </nav>
         </SidebarContent>
+        <SidebarSeparator />
         <SidebarFooter>
-          <p className="truncate px-2 text-xs text-muted-foreground">{session.user.email}</p>
+          <div className="flex items-center gap-2.5 px-0 py-1">
+            <Monogram name={session.user.name} className="rounded-full" />
+            <div className="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
+              <span className="truncate text-sm font-medium">{session.user.name}</span>
+              <span className="truncate text-2xs text-muted-foreground">{session.user.email}</span>
+            </div>
+          </div>
           <SidebarMenu>
-            {isStaff && (
-              <SidebarMenuItem>
-                <SidebarMenuButton render={<Link to="/admin/organizations" />}>
-                  <ShieldCheckIcon />
-                  <span>Administración</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
             <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link to="/settings/members" />}
-                isActive={Boolean(matchRoute({ to: "/settings/members" }))}
-              >
-                <UsersIcon />
-                <span>Miembros</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link to="/settings/contacts" />}
-                isActive={Boolean(matchRoute({ to: "/settings/contacts" }))}
-              >
-                <MailIcon />
-                <span>Contactos</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link to="/settings/usage" />}
-                isActive={Boolean(matchRoute({ to: "/settings/usage" }))}
-              >
-                <GaugeIcon />
-                <span>Plan y uso</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link to="/settings/security" />}
-                isActive={Boolean(matchRoute({ to: "/settings/security" }))}
-              >
-                <ShieldIcon />
-                <span>Seguridad</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton onClick={signOut}>
+              <SidebarMenuButton onClick={signOut} tooltip="Cerrar sesión">
                 <LogOutIcon />
                 <span>Cerrar sesión</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <ImpersonationBanner />
@@ -218,7 +246,7 @@ function AppLayout() {
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
           <Breadcrumb>
             <BreadcrumbList className="gap-3 text-xs">
-              {current && "section" in current && (
+              {current?.section && (
                 <>
                   <BreadcrumbItem className={cn(crumb && "max-sm:hidden")}>
                     {current.section}
