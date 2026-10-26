@@ -4,6 +4,7 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.DocumentStatus;
+import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.usage.UsageAlerts;
 import com.cantte.cetus.domain.usage.UsagePeriod;
@@ -11,6 +12,7 @@ import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
+import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
@@ -57,6 +59,9 @@ public class ResultRecorder {
 
     @Inject
     MeterRegistry meters;
+
+    @Inject
+    AfterCommit afterCommit;
 
     @Inject
     WebhookPublisher webhooks;
@@ -148,22 +153,27 @@ public class ResultRecorder {
         webhooks.publish(
                 WebhookEventType.forDocument(doc.documentType, response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED),
                 doc);
-        finalized(doc, response.valid() ? "accepted" : "rejected");
-        Timer.builder("cetus.documents.time_to_validation")
-                .tag("document.type", doc.documentType.name())
-                .tag("environment", doc.environment.name())
-                .serviceLevelObjectives(VALIDATION_BUCKETS)
-                .register(meters)
-                .record(Duration.between(doc.createdAt, doc.validatedAt));
+        DocumentType type = doc.documentType;
+        Environment environment = doc.environment;
+        Duration toValidation = Duration.between(doc.createdAt, doc.validatedAt);
+        afterCommit.run(() -> {
+            finalized(type, environment, response.valid() ? "accepted" : "rejected");
+            Timer.builder("cetus.documents.time_to_validation")
+                    .tag("document.type", type.name())
+                    .tag("environment", environment.name())
+                    .serviceLevelObjectives(VALIDATION_BUCKETS)
+                    .register(meters)
+                    .record(toValidation);
+        });
     }
 
-    private void finalized(DocumentEntity doc, String outcome) {
+    private void finalized(DocumentType type, Environment environment, String outcome) {
         meters.counter(
                         "cetus.documents.finalized",
                         "document.type",
-                        doc.documentType.name(),
+                        type.name(),
                         "environment",
-                        doc.environment.name(),
+                        environment.name(),
                         "outcome",
                         outcome)
                 .increment();
@@ -223,7 +233,12 @@ public class ResultRecorder {
         }
         doc.status = DocumentStatus.FAILED;
         doc.dianStatusMessage = message;
-        webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
-        finalized(doc, "failed");
+        // FAILED is not final (attempts that will be retried use it too), so two attempts can both give up on
+        // the document; the event is published only the first time, and so it is counted.
+        if (webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc)) {
+            DocumentType type = doc.documentType;
+            Environment environment = doc.environment;
+            afterCommit.run(() -> finalized(type, environment, "failed"));
+        }
     }
 }
