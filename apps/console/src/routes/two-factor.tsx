@@ -1,6 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ArrowLeftIcon, KeyRoundIcon, ShieldCheckIcon, SmartphoneIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -8,7 +9,14 @@ import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
-import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "~/components/ui/field";
 import { Spinner } from "~/components/ui/spinner";
 import { BackupCodeInput, TotpCodeInput } from "~/features/auth/CodeInput";
 import { backupCodeSchema, totpCodeSchema } from "~/features/auth/schema";
@@ -30,22 +38,47 @@ function TwoFactor() {
 
   return (
     <AuthLayout
+      icon={<ShieldCheckIcon strokeWidth={1.75} />}
+      eyebrow="SEGURIDAD DE LA CUENTA"
       title="Verificación en dos pasos"
       lead={
         useBackupCode
           ? "Escribe uno de los códigos de respaldo que guardaste al activar la verificación."
-          : "Escribe el código de 6 dígitos que muestra tu aplicación de autenticación."
+          : "Abre tu aplicación de autenticación y escribe el código de 6\u00A0dígitos que muestra para tu cuenta de Cetus."
       }
     >
       {/* Remount on switch so each form keeps its own resolver and values. */}
       <CodeForm key={String(useBackupCode)} backup={useBackupCode} />
-      <Button
-        variant="link"
-        className="mt-4 w-full"
-        onClick={() => setUseBackupCode((current) => !current)}
-      >
-        {useBackupCode ? "Usar la aplicación de autenticación" : "Usar un código de respaldo"}
-      </Button>
+      <div className="flex flex-col items-center gap-5 text-center">
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-[0.8125rem] text-muted-foreground">
+            {useBackupCode
+              ? "¿Ya tienes tu aplicación a mano?"
+              : "¿No tienes acceso a tu aplicación?"}
+          </p>
+          <Button
+            variant="link"
+            className="h-auto p-0"
+            onClick={() => setUseBackupCode((current) => !current)}
+          >
+            {useBackupCode ? (
+              <SmartphoneIcon data-icon="inline-start" />
+            ) : (
+              <KeyRoundIcon data-icon="inline-start" />
+            )}
+            <span className="underline underline-offset-4">
+              {useBackupCode ? "Usar la aplicación de autenticación" : "Usar un código de respaldo"}
+            </span>
+          </Button>
+        </div>
+        <Link
+          to="/sign-in"
+          className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          Volver a iniciar sesión
+        </Link>
+      </div>
     </AuthLayout>
   );
 }
@@ -85,42 +118,71 @@ function CodeForm({ backup }: { backup: boolean }) {
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      <FieldGroup>
+      <FieldGroup className="gap-6">
         <Controller
           name="code"
           control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="two-factor-code">
-                {backup ? "Código de respaldo" : "Código de verificación"}
-              </FieldLabel>
-              {backup ? (
-                <BackupCodeInput
-                  {...field}
-                  id="two-factor-code"
-                  aria-invalid={fieldState.invalid}
-                />
-              ) : (
-                <TotpCodeInput {...field} id="two-factor-code" aria-invalid={fieldState.invalid} />
-              )}
-              <FieldError errors={[fieldState.error]} />
-            </Field>
-          )}
+          render={({ field, fieldState }) => {
+            const describedBy = fieldState.error
+              ? "two-factor-code-error"
+              : backup
+                ? undefined
+                : "two-factor-code-description";
+            return (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="two-factor-code">
+                  {backup ? "Código de respaldo" : "Código de verificación"}
+                </FieldLabel>
+                {backup ? (
+                  <BackupCodeInput
+                    {...field}
+                    id="two-factor-code"
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={describedBy}
+                  />
+                ) : (
+                  <TotpCodeInput
+                    {...field}
+                    id="two-factor-code"
+                    boxed
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={describedBy}
+                  />
+                )}
+                {fieldState.error ? (
+                  <FieldError id="two-factor-code-error" errors={[fieldState.error]} />
+                ) : (
+                  !backup && (
+                    <FieldDescription id="two-factor-code-description" className="text-[0.8125rem]">
+                      El código cambia periódicamente. Usa el más reciente.
+                    </FieldDescription>
+                  )
+                )}
+              </Field>
+            );
+          }}
         />
         <Controller
           name="trustDevice"
           control={form.control}
           render={({ field }) => (
-            <Field orientation="horizontal">
+            <Field orientation="horizontal" className="gap-3">
               <Checkbox
                 id="two-factor-trust"
                 checked={field.value}
                 onCheckedChange={(checked) => field.onChange(checked)}
                 onBlur={field.onBlur}
+                aria-describedby="two-factor-trust-description"
               />
-              <FieldLabel htmlFor="two-factor-trust" className="font-normal">
-                Confiar en este dispositivo durante 30 días
-              </FieldLabel>
+              <FieldContent className="gap-1">
+                <FieldLabel htmlFor="two-factor-trust">
+                  Confiar en este dispositivo durante 30{"\u00A0"}días
+                </FieldLabel>
+                <FieldDescription id="two-factor-trust-description" className="text-[0.8125rem]">
+                  Solo si es un dispositivo personal. No lo actives en equipos públicos o
+                  compartidos.
+                </FieldDescription>
+              </FieldContent>
             </Field>
           )}
         />
@@ -129,18 +191,10 @@ function CodeForm({ backup }: { backup: boolean }) {
             <AlertDescription>{errors.root.message}</AlertDescription>
           </Alert>
         )}
-        <Button type="submit" size="lg" className="h-11" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="h-12 text-[0.9375rem]" disabled={isSubmitting}>
           {isSubmitting && <Spinner data-icon="inline-start" />}
-          {isSubmitting ? "Verificando…" : "Verificar"}
+          {isSubmitting ? "Verificando…" : "Verificar y continuar"}
         </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          <Link
-            to="/sign-in"
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-          >
-            Volver a iniciar sesión
-          </Link>
-        </p>
       </FieldGroup>
     </form>
   );

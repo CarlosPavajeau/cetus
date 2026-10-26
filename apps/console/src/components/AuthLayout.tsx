@@ -19,12 +19,15 @@ function CetusMark() {
 
 /** Two columns from `lg` up: the form on the left, the product pitch on the right. */
 export function AuthLayout({
+  icon,
   eyebrow = "CONSOLA CETUS",
   title,
   lead,
   headline = ["Tu producto.", "Nuestra API.", "Conectados a la DIAN."],
   children,
 }: {
+  /** Shown in a tile above the eyebrow. */
+  icon?: ReactNode;
   eyebrow?: string;
   title: string;
   lead: string;
@@ -57,18 +60,25 @@ export function AuthLayout({
         <main className="flex flex-1 flex-col items-center">
           <div className="min-h-4 flex-1 lg:max-h-33" />
           <div className="flex w-full max-w-100 flex-col gap-7">
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-medium text-muted-foreground">{eyebrow}</p>
-              <h1 className="text-[2rem]/[1.2] font-semibold">{title}</h1>
-              <p className="text-[0.875rem]/[1.6] text-muted-foreground">{lead}</p>
+            <div className="flex flex-col gap-5">
+              {icon && (
+                <span className="flex size-12 items-center justify-center rounded-xl bg-secondary [&>svg]:size-6">
+                  {icon}
+                </span>
+              )}
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-medium text-muted-foreground">{eyebrow}</p>
+                <h1 className="text-[2rem]/[1.2] font-semibold">{title}</h1>
+                <p className="text-[0.875rem]/[1.6] text-muted-foreground">{lead}</p>
+              </div>
             </div>
             {children}
           </div>
           <div className="min-h-4 flex-1" />
         </main>
-        <footer className="flex items-center justify-between text-muted-foreground">
-          <p className="text-xs">© {year} Cetus</p>
-          <div className="flex gap-5 text-sm">
+        <footer className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-muted-foreground">
+          <p className="text-xs whitespace-nowrap">© {year} Cetus</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm whitespace-nowrap">
             {/* Placeholder until the help center exists. */}
             <span>¿Necesitas ayuda?</span>
             <Link to="/legal/terminos" className="hover:text-foreground">

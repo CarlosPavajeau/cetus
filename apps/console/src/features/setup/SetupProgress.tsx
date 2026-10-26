@@ -40,7 +40,7 @@ export function SetupProgress({
           );
           // The segment is 4px tall; the padding gives it a comfortable target to hover and click.
           const target =
-            "flex w-full py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm";
+            "flex w-full py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring rounded-sm";
           return (
             <li key={step.title} className="flex-1" aria-current={isCurrent ? "step" : undefined}>
               <Tooltip>

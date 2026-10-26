@@ -162,7 +162,7 @@ test("someone with 2FA comes back to the invitation after the second step", asyn
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
   await page.waitForURL("**/two-factor**");
   await page.getByLabel("Código de verificación").fill(totp(secret));
-  await page.getByRole("button", { name: "Verificar", exact: true }).click();
+  await page.getByRole("button", { name: "Verificar y continuar" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/invitations/${invitation.id}$`));
   await expect(page.getByRole("heading", { name: "Únete a Pruebas SAS" })).toBeVisible();
