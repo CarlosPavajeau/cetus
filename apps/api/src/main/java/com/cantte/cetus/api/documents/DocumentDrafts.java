@@ -19,8 +19,13 @@ import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
@@ -44,6 +49,12 @@ public class DocumentDrafts {
 
     @Inject
     JobQueue jobs;
+
+    @Inject
+    TransactionSynchronizationRegistry transactions;
+
+    @Inject
+    MeterRegistry meters;
 
     @ConfigProperty(name = "cetus.sandbox.daily-documents")
     int sandboxDailyDocuments;
@@ -163,6 +174,23 @@ public class DocumentDrafts {
                 : Duration.ZERO;
         jobs.enqueue(JobTypes.PROCESS_DOCUMENT, doc.id, delay);
         LOG.infof("Document %s received (%s, %s)", doc.id, doc.documentType, doc.environment);
+        Counter created = meters.counter(
+                "cetus.documents.created",
+                "document.type",
+                doc.documentType.name(),
+                "environment",
+                doc.environment.name());
+        transactions.registerInterposedSynchronization(new Synchronization() {
+            @Override
+            public void beforeCompletion() {}
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status == Status.STATUS_COMMITTED) {
+                    created.increment();
+                }
+            }
+        });
     }
 
     /** Links the note to the invoice it corrects, taking its currency, customer and payment, and submits it. */

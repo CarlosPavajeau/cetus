@@ -3,6 +3,9 @@ package com.cantte.cetus.worker.runner;
 import com.cantte.cetus.jobs.JobClaimer;
 import com.cantte.cetus.jobs.JobTraces;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
@@ -60,6 +63,14 @@ public class JobRunner {
 
     private static final Logger LOG = Logger.getLogger(JobRunner.class);
     private static final Duration SHUTDOWN_GRACE = Duration.ofSeconds(30);
+    private static final Duration[] DURATION_BUCKETS = {
+        Duration.ofMillis(100),
+        Duration.ofMillis(500),
+        Duration.ofSeconds(1),
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(30),
+        Duration.ofSeconds(60)
+    };
 
     private final String workerId = "worker-" + UUID.randomUUID();
     private final ReentrantLock claiming = new ReentrantLock();
@@ -76,6 +87,9 @@ public class JobRunner {
 
     @Inject
     Tracer tracer;
+
+    @Inject
+    MeterRegistry meters;
 
     @ConfigProperty(name = "cetus.jobs.concurrency")
     int concurrency;
@@ -202,17 +216,22 @@ public class JobRunner {
     }
 
     void run(JobEntity job) {
+        long start = System.nanoTime();
+        String outcome = "dead";
         JobHandler handler = handlers.get(job.jobType);
         if (handler == null) {
-            claimer.fail(job, "No handler for job type " + job.jobType);
+            boolean dead = claimer.fail(job, "No handler for job type " + job.jobType);
             Span.current().setStatus(StatusCode.ERROR, "No handler");
+            record(job, dead ? "dead" : "retry", start);
             return;
         }
         try {
             handler.handle(job);
             claimer.done(job.id);
+            outcome = "done";
         } catch (RetryLater retry) {
             claimer.reschedule(job.id, retry.delay());
+            outcome = "retry";
         } catch (GiveUp giveUp) {
             LOG.errorf(
                     "Job %s (%s) failed permanently on attempt %d, not retrying: %s",
@@ -228,8 +247,25 @@ public class JobRunner {
             if (claimer.fail(job, error)) {
                 LOG.errorf("Job %s (%s) is dead after %d attempts", job.id, job.jobType, job.attempts);
                 handler.onDead(job, error);
+            } else {
+                outcome = "retry";
             }
+        } finally {
+            record(job, outcome, start);
         }
+    }
+
+    private void record(JobEntity job, String outcome, long start) {
+        Counter.builder("cetus.jobs.completed")
+                .tag("job.type", job.jobType)
+                .tag("outcome", outcome)
+                .register(meters)
+                .increment();
+        Timer.builder("cetus.jobs.duration")
+                .tag("job.type", job.jobType)
+                .serviceLevelObjectives(DURATION_BUCKETS)
+                .register(meters)
+                .record(Duration.ofNanos(System.nanoTime() - start));
     }
 
     /** No job running in this worker. */

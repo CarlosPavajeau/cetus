@@ -23,6 +23,8 @@ import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
 import com.cantte.cetus.webhooks.WebhookPublisher;
 import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.notifications.Numbers;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -39,8 +41,22 @@ import java.util.UUID;
 @ApplicationScoped
 public class ResultRecorder {
 
+    /** From creation to the DIAN's verdict: seconds usually, much longer while the DIAN is down. */
+    private static final Duration[] VALIDATION_BUCKETS = {
+        Duration.ofSeconds(1),
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(10),
+        Duration.ofSeconds(30),
+        Duration.ofMinutes(1),
+        Duration.ofMinutes(5),
+        Duration.ofMinutes(30)
+    };
+
     @Inject
     JobQueue jobs;
+
+    @Inject
+    MeterRegistry meters;
 
     @Inject
     WebhookPublisher webhooks;
@@ -132,6 +148,25 @@ public class ResultRecorder {
         webhooks.publish(
                 WebhookEventType.forDocument(doc.documentType, response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED),
                 doc);
+        finalized(doc, response.valid() ? "accepted" : "rejected");
+        Timer.builder("cetus.documents.time_to_validation")
+                .tag("document.type", doc.documentType.name())
+                .tag("environment", doc.environment.name())
+                .serviceLevelObjectives(VALIDATION_BUCKETS)
+                .register(meters)
+                .record(Duration.between(doc.createdAt, doc.validatedAt));
+    }
+
+    private void finalized(DocumentEntity doc, String outcome) {
+        meters.counter(
+                        "cetus.documents.finalized",
+                        "document.type",
+                        doc.documentType.name(),
+                        "environment",
+                        doc.environment.name(),
+                        "outcome",
+                        outcome)
+                .increment();
     }
 
     /** Counts the document in its month and tells the billing contact when the month reaches a share of the plan. */
@@ -189,5 +224,6 @@ public class ResultRecorder {
         doc.status = DocumentStatus.FAILED;
         doc.dianStatusMessage = message;
         webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
+        finalized(doc, "failed");
     }
 }

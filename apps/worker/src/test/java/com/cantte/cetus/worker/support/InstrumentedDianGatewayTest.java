@@ -9,6 +9,7 @@ import com.cantte.cetus.dian.DianTransportException;
 import com.cantte.cetus.dian.NumberingRangeResponse;
 import com.cantte.cetus.dian.UploadResponse;
 import com.cantte.cetus.signing.KeyMaterial;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
@@ -20,13 +21,14 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-class TracedDianGatewayTest {
+class InstrumentedDianGatewayTest {
 
     private final InMemorySpanExporter spans = InMemorySpanExporter.create();
     private final SdkTracerProvider provider = SdkTracerProvider.builder()
             .addSpanProcessor(SimpleSpanProcessor.create(spans))
             .build();
-    private final DianGateway gateway = new TracedDianGateway(new Unreachable(), provider.get("test"));
+    private final SimpleMeterRegistry meters = new SimpleMeterRegistry();
+    private final DianGateway gateway = new InstrumentedDianGateway(new Unreachable(), provider.get("test"), meters);
 
     @AfterEach
     void close() {
@@ -45,6 +47,16 @@ class TracedDianGatewayTest {
         assertThat(span.getAttributes().get(AttributeKey.booleanKey("dian.timed_out")))
                 .isTrue();
         assertThat(span.getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);
+        assertThat(meters.get("cetus.dian.request.errors")
+                        .tags("dian.operation", "SendBillSync", "error.kind", "timeout")
+                        .counter()
+                        .count())
+                .isEqualTo(1);
+        assertThat(meters.get("cetus.dian.request.duration")
+                        .tags("dian.operation", "SendBillSync", "outcome", "error")
+                        .timer()
+                        .count())
+                .isEqualTo(1);
     }
 
     @Test
@@ -62,6 +74,12 @@ class TracedDianGatewayTest {
         assertThat(span.getAttributes().get(AttributeKey.booleanKey("dian.valid")))
                 .isFalse();
         assertThat(span.getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);
+        assertThat(meters.get("cetus.dian.request.duration")
+                        .tags("dian.operation", "GetStatus", "outcome", "invalid")
+                        .timer()
+                        .count())
+                .isEqualTo(1);
+        assertThat(meters.find("cetus.dian.request.errors").counters()).isEmpty();
     }
 
     /** Times out on sends and does not validate anything it is asked about. */
