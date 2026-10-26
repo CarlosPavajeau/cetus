@@ -189,11 +189,14 @@ public class JobRunner {
         MDC.put("job.type", job.jobType);
         MDC.put("cetus.reference.id", String.valueOf(job.referenceId));
         try (Scope ignored = span.makeCurrent()) {
-            run(job);
-        } catch (RuntimeException e) {
-            // run() already recorded the failure; this is a bug in the bookkeeping, and the lease will retry the job.
-            LOG.errorf(e, "Job %s (%s) could not be recorded", job.id, job.jobType);
-            span.setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
+            try {
+                run(job);
+            } catch (RuntimeException e) {
+                // run() already recorded the failure; this is a bug in the bookkeeping, and the lease will retry
+                // the job.
+                LOG.errorf(e, "Job %s (%s) could not be recorded", job.id, job.jobType);
+                span.setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
+            }
         } finally {
             MDC.clear();
             span.end();
