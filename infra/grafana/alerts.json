@@ -80,7 +80,7 @@
       "severity": "high",
       "for": "0s",
       "window": "10m",
-      "expr": "((sum(increase(http_server_requests_milliseconds_count{job=\"cetus-api\", status=~\"5..\", uri!~\"/q/.*\"}[10m])) or vector(0)) / sum(increase(http_server_requests_milliseconds_count{job=\"cetus-api\", uri!~\"/q/.*\"}[10m]))) and on () (sum(increase(http_server_requests_milliseconds_count{job=\"cetus-api\", uri!~\"/q/.*\"}[10m])) >= 20)",
+      "expr": "((sum(increase(cetus_api_responses_total{outcome=\"server_error\"}[10m])) or vector(0)) / sum(increase(cetus_api_responses_total[10m]))) and on () (sum(increase(cetus_api_responses_total[10m])) >= 20)",
       "condition": { "type": "gt", "value": 0.02 },
       "noData": "OK",
       "summary": "Más del 2 % de las peticiones al API respondieron 5xx en 10 minutos.",
