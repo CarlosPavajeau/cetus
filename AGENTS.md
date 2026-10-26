@@ -171,6 +171,21 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
   rules from the annex PDF. The toolbox `Listas de valores/*.gc` files are
   stale and have caused rejections.
 
+## Telemetry
+
+- The API and the worker export traces, metrics and logs over OTLP (Grafana Cloud in production,
+  `mise run infra-otel` locally with `CETUS_OTEL_DISABLED=false`). The console reports to Sentry.
+- Resource attributes: `service.name` (`cetus-api`, `cetus-worker`, `cetus-console`), `service.version`
+  (commit SHA), `deployment.environment.name`.
+- Own metrics start with `cetus.`. Their attributes come from a closed list of low-cardinality values:
+  `document.type`, `environment` (`SANDBOX`, `TEST`, `LIVE`), `outcome`, `dian.operation`, `job.type`,
+  `error.kind`. Adding another one needs review.
+- IDs go in spans and logs, never in metrics: `cetus.document.id`, `cetus.account.id`, `cetus.issuer.id`,
+  `cetus.job.id`, `dian.track_id`. No `account_id` and no issuer NIT in metrics.
+- Never put in any telemetry: secrets (PIN, technical key, certificate and its password, API keys,
+  `Authorization` headers, tokens), request or response bodies (the XML and DIAN responses live in S3), or
+  personal data of customers and contacts (names, emails, identification numbers).
+
 ## Code standards
 
 - Make minimal, surgical changes.

@@ -34,6 +34,8 @@ quarkus-smallrye-openapi = { module = "io.quarkus:quarkus-smallrye-openapi" }
 microprofile-openapi-api = { module = "org.eclipse.microprofile.openapi:microprofile-openapi-api" }
 quarkus-smallrye-health = { module = "io.quarkus:quarkus-smallrye-health" }
 quarkus-logging-json = { module = "io.quarkus:quarkus-logging-json" }
+# OpenTelemetry traces and logs, and Micrometer metrics exported through it (OTLP).
+quarkus-micrometer-opentelemetry = { module = "io.quarkus:quarkus-micrometer-opentelemetry" }
 quarkus-scheduler = { module = "io.quarkus:quarkus-scheduler" }
 quarkus-jaxb = { module = "io.quarkus:quarkus-jaxb" }
 quarkus-junit = { module = "io.quarkus:quarkus-junit" }

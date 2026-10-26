@@ -41,9 +41,13 @@ run = "scripts/dev.sh mock"
 description = "Start Postgres and LocalStack and wait until they are ready"
 run = "scripts/dev.sh infra"
 
+[tasks.infra-otel]
+description = "Start Grafana with OTLP (:3002); run the services with CETUS_OTEL_DISABLED=false to export to it"
+run = "docker compose --profile observability up -d otel-lgtm"
+
 [tasks.infra-down]
 description = "Stop the containers (the Postgres volume is kept)"
-run = "docker compose down"
+run = "docker compose --profile observability down"
 
 [tasks.infra-logs]
 description = "Follow the container logs"

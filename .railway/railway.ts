@@ -51,6 +51,16 @@ const aws = {
  * LISTEN (CETUS_JOBS_LISTEN_URL) and the console. That is about 7, twice during a deploy, under the 25 direct
  * connections; PgBouncer takes up to 400 clients.
  */
+/**
+ * Telemetry of the API and the worker, over OTLP to Grafana Cloud. The headers carry a Cloud Access Policy token
+ * with write scopes only: Authorization=Basic base64(instanceId:token).
+ */
+const telemetry = {
+  CETUS_DEPLOYMENT_ENV: "production",
+  QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: preserve(),
+  QUARKUS_OTEL_EXPORTER_OTLP_HEADERS: preserve(),
+};
+
 const billingDatabase = {
   CETUS_DB_URL: preserve(),
   CETUS_DB_USER: preserve(),
@@ -109,6 +119,7 @@ export default defineRailway((ctx) => {
       // The same database on port 5432, for Flyway.
       CETUS_DB_MIGRATION_URL: preserve(),
       ...aws,
+      ...telemetry,
       CETUS_AUTH_JWKS_URL: "http://${{console.RAILWAY_PRIVATE_DOMAIN}}:${{console.PORT}}/.well-known/jwks.json",
       // Must equal the console's BETTER_AUTH_URL, without a trailing slash.
       CETUS_AUTH_ISSUER: "https://cetus.cantte.com",
@@ -137,6 +148,7 @@ export default defineRailway((ctx) => {
       // The same database on port 5432, for the LISTEN that starts jobs as soon as they are enqueued.
       CETUS_JOBS_LISTEN_URL: preserve(),
       ...aws,
+      ...telemetry,
       // Documents stay locked (S3 Object Lock, compliance) for the prod default of 1826 days; set
       // CETUS_STORAGE_RETENTION_DAYS here only to change that period. It cannot be shortened afterwards.
       RESEND_API_KEY: preserve(),
