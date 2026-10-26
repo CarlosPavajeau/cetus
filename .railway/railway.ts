@@ -57,6 +57,8 @@ const aws = {
  */
 const telemetry = {
   CETUS_DEPLOYMENT_ENV: "production",
+  // The deployed commit, set by scripts/railway-deploy.sh on each deploy.
+  CETUS_COMMIT_SHA: preserve(),
   QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: preserve(),
   QUARKUS_OTEL_EXPORTER_OTLP_HEADERS: preserve(),
 };
@@ -98,6 +100,8 @@ export default defineRailway((ctx) => {
       // Sentry: SENTRY_DSN for the server, VITE_SENTRY_DSN (the same value) built into the browser bundle, and
       // a token that uploads source maps during the Docker build.
       CETUS_DEPLOYMENT_ENV: "production",
+      // The deployed commit, set by scripts/railway-deploy.sh; also a build arg (Sentry's release).
+      CETUS_COMMIT_SHA: preserve(),
       SENTRY_DSN: preserve(),
       VITE_SENTRY_DSN: preserve(),
       SENTRY_ORG: preserve(),

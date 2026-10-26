@@ -5,7 +5,9 @@
 #
 #   scripts/railway-deploy.sh <service>
 #
-# Needs RAILWAY_TOKEN (a project token for the production environment) and jq.
+# Needs RAILWAY_TOKEN (a project token for the production environment) and jq. With CETUS_COMMIT_SHA (the
+# commit being deployed, from deploy.yml), it is stored in the service first: the telemetry's service.version
+# and Sentry's release. Railway only provides RAILWAY_GIT_COMMIT_SHA to deploys GitHub triggers, not to these.
 set -euo pipefail
 
 SERVICE=${1:?usage: railway-deploy.sh <service>}
@@ -16,6 +18,9 @@ TIMEOUT_SECONDS=${RAILWAY_DEPLOY_TIMEOUT:-1200}
 # timestamp in whole seconds (23:05:27Z) misses a deployment created in the same second.
 started_at=$(date -u +%s)
 echo "==> Deploying $SERVICE"
+if [ -n "${CETUS_COMMIT_SHA:-}" ]; then
+  railway variable set "CETUS_COMMIT_SHA=$CETUS_COMMIT_SHA" --service "$SERVICE" --skip-deploys
+fi
 railway redeploy --from-source --yes --service "$SERVICE"
 
 echo "==> Waiting for $SERVICE to build and pass its health check"

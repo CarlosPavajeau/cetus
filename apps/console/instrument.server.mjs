@@ -7,7 +7,7 @@ import { scrubLinks } from "./sentry-scrub.mjs";
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.CETUS_DEPLOYMENT_ENV ?? "development",
-    release: process.env.RAILWAY_GIT_COMMIT_SHA,
+    release: process.env.CETUS_COMMIT_SHA,
     beforeSend: scrubLinks,
     beforeSendSpan: scrubLinks,
     tracesSampler: ({ name, inheritOrSampleWith }) =>
