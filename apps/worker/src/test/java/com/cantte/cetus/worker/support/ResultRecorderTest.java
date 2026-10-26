@@ -16,6 +16,8 @@ import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.usage.UsageCounters;
+import com.cantte.cetus.webhooks.WebhookEventType;
+import com.cantte.cetus.webhooks.WebhookPublisher;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -43,6 +45,9 @@ class ResultRecorderTest {
 
     @Inject
     WorkerFixtures fixtures;
+
+    @Inject
+    WebhookPublisher webhooks;
 
     @Test
     void anAcceptedLiveDocumentIsBilledInItsMonth() {
@@ -72,6 +77,20 @@ class ResultRecorderTest {
                         .call(() ->
                                 JobEntity.count("jobType = ?1 and referenceId = ?2", JobTypes.DELIVER_DOCUMENT, id)))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void aFactIsPublishedOnlyTheFirstTime() {
+        UUID id = fixtures.invoice();
+
+        List<Boolean> published = QuarkusTransaction.requiringNew().call(() -> {
+            DocumentEntity doc = DocumentEntity.findById(id);
+            return List.of(
+                    webhooks.publish(WebhookEventType.INVOICE_FAILED, doc),
+                    webhooks.publish(WebhookEventType.INVOICE_FAILED, doc));
+        });
+
+        assertThat(published).containsExactly(true, false);
     }
 
     @Test
