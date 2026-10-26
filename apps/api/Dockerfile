@@ -7,14 +7,18 @@
 
 # Every Gradle build script, with the wrapper and the convention plugins, in the same directory layout.
 # This stage reruns on any change, but its output only changes with the build scripts.
-FROM eclipse-temurin:25.0.4_7-jdk AS gradle-files
+FROM eclipse-temurin:25.0.4_7-jdk AS java-build-base
+COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
+RUN sh /usr/local/bin/cetus-update-trust
+
+FROM java-build-base AS gradle-files
 WORKDIR /src
 COPY . .
 RUN mkdir /out \
     && cp -r gradlew gradle build-logic settings.gradle.kts build.gradle.kts gradle.properties /out/ \
     && find modules apps -name build.gradle.kts -exec cp --parents {} /out/ \;
 
-FROM eclipse-temurin:25.0.4_7-jdk AS build
+FROM java-build-base AS build
 WORKDIR /workspace
 COPY --from=gradle-files /out/gradlew ./
 COPY --from=gradle-files /out/gradle gradle
@@ -33,6 +37,8 @@ RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,t
     && rm -f apps/api/build/quarkus-app/app.aot
 
 FROM eclipse-temurin:25.0.4_7-jre
+COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
+RUN sh /usr/local/bin/cetus-update-trust
 WORKDIR /app
 COPY --from=build /workspace/apps/api/build/quarkus-app/ ./
 # AOT cache (JEP 483/514): the classes the app loads, already parsed and linked, so it starts and warms up faster.
@@ -45,6 +51,8 @@ RUN java -XX:+UseSerialGC -XX:AOTCacheOutput=app.aot -Dquarkus.appcds.generate=t
 # SerialGC is what the JVM picks with one vCPU; it is explicit because the AOT cache was made with it.
 # Without -XX:AOTCache the service runs as before, only without the cache.
 ENV JAVA_OPTS="-XX:AOTCache=app.aot -XX:+UseSerialGC -XX:MaxRAMPercentage=40 -Duser.timezone=America/Bogota"
+RUN groupadd --gid 10001 cetus && useradd --uid 10001 --gid cetus --no-create-home cetus
+USER 10001:10001
 EXPOSE 8080
 # exec: java replaces the shell as PID 1 and gets the SIGTERM of a deploy, so Quarkus shuts down cleanly
 # instead of being killed when the stop timeout runs out.

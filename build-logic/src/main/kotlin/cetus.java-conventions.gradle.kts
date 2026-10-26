@@ -10,6 +10,10 @@ java {
     }
 }
 
+configurations.configureEach {
+    resolutionStrategy.force("org.postgresql:postgresql:42.7.14")
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.release = 25

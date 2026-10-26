@@ -10,15 +10,22 @@ const directHosts = new Set(["localhost", "127.0.0.1", "[::1]", "healthcheck.rai
 /**
  * Railway's edge also answers for cetus.cantte.com when reached directly, so without this anyone could skip
  * Cloudflare and send the CF-Connecting-IP they like (to the rate limit and the audit log). Without a secret
- * (development, tests) every request is let through.
+ * in development and tests every request is let through. Production public requests require a secret.
  */
-export function comesThroughEdge(request: Request, secret: string | undefined): boolean {
-  if (!secret) {
+export function comesThroughEdge(
+  request: Request,
+  secret: string | undefined,
+  production = false,
+): boolean {
+  if (!secret && !production) {
     return true;
   }
   const host = hostname(request.headers.get("host"));
   if (host.endsWith(".railway.internal") || directHosts.has(host)) {
     return true;
+  }
+  if (!secret || secret.length < 32) {
+    return false;
   }
   return sameSecret(request.headers.get(edgeSecretHeader) ?? "", secret);
 }

@@ -1,5 +1,7 @@
 # Build from the repository root: docker build -f apps/console/Dockerfile .
 FROM node:24.22.1-slim AS build
+COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
+RUN sh /usr/local/bin/cetus-update-trust
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -16,11 +18,16 @@ ARG CETUS_COMMIT_SHA
 RUN pnpm --filter @cetus/console build
 
 FROM node:24.22.1-slim
+COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
+RUN sh /usr/local/bin/cetus-update-trust
 WORKDIR /app
 RUN corepack enable
-COPY --from=build /app /app
+COPY --from=build --chown=node:node /app /app
+COPY --from=build --chown=node:node /root/.cache/node/corepack /home/node/.cache/node/corepack
 WORKDIR /app/apps/console
 ENV NODE_ENV=production
+ENV COREPACK_HOME=/home/node/.cache/node/corepack
+USER node
 EXPOSE 3000
 # Run "pnpm db:migrate" as Railway's pre-deploy command for this service.
 CMD ["pnpm", "start"]

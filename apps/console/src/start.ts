@@ -8,7 +8,9 @@ import { comesThroughEdge } from "./lib/edge";
 
 /** Refuses whatever reached Railway without passing through Cloudflare (see lib/edge.ts). */
 const edgeMiddleware = createMiddleware().server(({ request, next }) => {
-  if (!comesThroughEdge(request, process.env.CETUS_EDGE_SECRET)) {
+  if (
+    !comesThroughEdge(request, process.env.CETUS_EDGE_SECRET, process.env.NODE_ENV === "production")
+  ) {
     return new Response("Forbidden", { status: 403 });
   }
   return next();

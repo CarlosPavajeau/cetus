@@ -32,6 +32,28 @@ class ApiKeyFilterTest {
     }
 
     @Test
+    void revokedKeysAreUnauthorized() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Revoked SAS");
+        var created = user.request()
+                .body(Map.of("name", "ERP", "environment", "TEST"))
+                .post("/console/api-keys")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+        String secret = created.getString("secret");
+        call(secret).statusCode(404);
+
+        user.request()
+                .delete("/console/api-keys/" + created.getString("key.id"))
+                .then()
+                .statusCode(204);
+
+        call(secret).statusCode(401).body("code", equalTo("unauthorized"));
+    }
+
+    @Test
     void suspendedAccountsCannotUseTheirKeys() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Suspended SAS");

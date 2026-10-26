@@ -19,6 +19,28 @@ describe("comesThroughEdge", () => {
     ).toBe(true);
   });
 
+  it("refuses public production requests when the secret is missing, empty or short", () => {
+    for (const value of [undefined, "", "short"]) {
+      expect(comesThroughEdge(request("cetus.cantte.com"), value, true)).toBe(false);
+      expect(
+        comesThroughEdge(
+          request("cetus.cantte.com", { [edgeSecretHeader]: value ?? "" }),
+          value,
+          true,
+        ),
+      ).toBe(false);
+    }
+    expect(
+      comesThroughEdge(request("cetus.cantte.com", { [edgeSecretHeader]: secret }), secret, true),
+    ).toBe(true);
+  });
+
+  it("keeps production health checks and private requests working without a secret", () => {
+    for (const host of ["console.railway.internal", "healthcheck.railway.app", "localhost:3000"]) {
+      expect(comesThroughEdge(request(host), undefined, true)).toBe(true);
+    }
+  });
+
   it("refuses the public domain without the secret or with another one", () => {
     expect(comesThroughEdge(request("cetus.cantte.com"), secret)).toBe(false);
     expect(

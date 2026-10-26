@@ -19,7 +19,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
   RAILWAY_CLI_VERSION: "5.70.0"
   # The pushed commit, which is main's latest: the one Railway builds (scripts/railway-deploy.sh).
   CETUS_COMMIT_SHA: ${{ github.sha }}
@@ -40,6 +39,7 @@ jobs:
         with:
           filters: |
             java: &java
+              - infra/security/**
               - modules/**
               - build-logic/**
               - gradle/**
@@ -53,6 +53,7 @@ jobs:
               - *java
               - apps/worker/**
             console:
+              - infra/security/**
               - apps/console/**
               - package.json
               - pnpm-lock.yaml
@@ -64,6 +65,8 @@ jobs:
               - pnpm-workspace.yaml
 
   api:
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     needs: changes
     if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-24.04
@@ -73,6 +76,8 @@ jobs:
       - run: scripts/railway-deploy.sh api
 
   worker:
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     needs: [changes, api]
     # Runs when the API was skipped (nothing changed there), never after a failed API deploy.
     if: always() && needs.changes.outputs.worker == 'true' && needs.api.result != 'failure' && needs.api.result != 'cancelled'
@@ -83,6 +88,8 @@ jobs:
       - run: scripts/railway-deploy.sh worker
 
   console:
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     needs: [changes, api]
     if: always() && needs.changes.outputs.console == 'true' && needs.api.result != 'failure' && needs.api.result != 'cancelled'
     runs-on: ubuntu-24.04
