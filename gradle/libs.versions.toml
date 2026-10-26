@@ -1,6 +1,6 @@
 # Central catalog of versions.
 [versions]
-quarkus = "3.40.1"
+quarkus = "3.40.1.1"
 awssdk = "2.56.0"
 assertj = "3.27.7"
 resend = "4.28.0"

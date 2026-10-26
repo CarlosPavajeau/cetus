@@ -2,7 +2,7 @@
 # The heavy lifting lives in scripts/dev.sh and bench/bench.sh.
 
 [tools]
-java = "temurin-25.0.4+7.0.LTS"
+java = "temurin-25.0.5+8.0.LTS"
 node = "24.22.1"
 # Same as package.json#packageManager.
 pnpm = "10.34.7"
