@@ -39,18 +39,18 @@ public class WebhookPublisher {
     @Inject
     ObjectMapper mapper;
 
-    /** A change of the document's DIAN status. */
+    /** A change of the document's DIAN status; false when it was already published. */
     @Transactional(Transactional.TxType.MANDATORY)
-    public void publish(WebhookEventType type, DocumentEntity document) {
-        publish(type, document, null);
+    public boolean publish(WebhookEventType type, DocumentEntity document) {
+        return publish(type, document, null);
     }
 
     /**
      * Publishes the event once per document and type: if it was already published (the same fact reported
-     * twice), nothing happens.
+     * twice), nothing happens and it answers false.
      */
     @Transactional(Transactional.TxType.MANDATORY)
-    public void publish(WebhookEventType type, DocumentEntity document, DeliveryInfo delivery) {
+    public boolean publish(WebhookEventType type, DocumentEntity document, DeliveryInfo delivery) {
         UUID eventId = Ids.newId();
         String payload = payload(eventId, type, document, delivery);
         NativeQuery<?> insert = em.createNativeQuery("""
@@ -66,7 +66,7 @@ public class WebhookPublisher {
                 .setParameter("payload", payload, String.class)
                 .executeUpdate();
         if (inserted == 0) {
-            return;
+            return false;
         }
         for (WebhookEndpointEntity endpoint :
                 WebhookEndpointEntity.listSubscribed(document.accountId, document.environment, type.wireName())) {
@@ -77,6 +77,7 @@ public class WebhookPublisher {
             created.persist();
             jobs.enqueue(JobTypes.DELIVER_WEBHOOK, created.id);
         }
+        return true;
     }
 
     private String payload(UUID eventId, WebhookEventType type, DocumentEntity document, DeliveryInfo delivery) {
