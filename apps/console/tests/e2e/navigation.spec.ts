@@ -33,6 +33,7 @@ test("the sidebar stays collapsed to icons after a reload", async ({ page, organ
 
 test("the settings pages sit under the organization group", async ({ page, organization: _ }) => {
   await open(page, "/settings/members");
+  await expect(page.getByRole("navigation", { name: "Principal" })).toBeVisible();
 
   await expect(page.getByRole("navigation", { name: "breadcrumb" })).toContainText("Organización");
   await expect(page.getByRole("button", { name: /Pruebas SAS/ })).toBeVisible();

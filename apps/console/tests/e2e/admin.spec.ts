@@ -22,6 +22,7 @@ test("an admin suspends an account: its keys stop and its console turns read-onl
   await signIn(context, admin);
 
   await open(page, "/admin/organizations");
+  await expect(page.getByRole("navigation", { name: "Administración" })).toBeVisible();
   await page.getByRole("searchbox", { name: "Buscar organizaciones" }).fill(name);
   await page.keyboard.press("Enter");
   await page.getByRole("link", { name }).click();
