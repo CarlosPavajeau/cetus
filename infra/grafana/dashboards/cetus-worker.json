@@ -35,7 +35,29 @@
     ]
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "name": "Despliegues",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prometheus}"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "purple",
+        "expr": "count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"}) unless count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"} offset 10m)",
+        "step": "5m",
+        "titleFormat": "Despliegue de {{job}}",
+        "textFormat": "{{service_version}}",
+        "tagKeys": "job",
+        "useValueForTime": false,
+        "target": {
+          "refId": "Anno",
+          "expr": "count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"}) unless count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"} offset 10m)",
+          "interval": "5m"
+        }
+      }
+    ]
   },
   "links": [
     {

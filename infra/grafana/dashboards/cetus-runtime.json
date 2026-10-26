@@ -65,7 +65,29 @@
     ]
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "name": "Despliegues",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prometheus}"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "purple",
+        "expr": "count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"}) unless count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"} offset 10m)",
+        "step": "5m",
+        "titleFormat": "Despliegue de {{job}}",
+        "textFormat": "{{service_version}}",
+        "tagKeys": "job",
+        "useValueForTime": false,
+        "target": {
+          "refId": "Anno",
+          "expr": "count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"}) unless count by (job, service_version) (target_info{job=~\"cetus-api|cetus-worker\"} offset 10m)",
+          "interval": "5m"
+        }
+      }
+    ]
   },
   "links": [
     {
@@ -79,13 +101,88 @@
   ],
   "panels": [
     {
+      "id": 10,
+      "type": "table",
+      "title": "Versión desplegada",
+      "description": "Commit que reporta cada servicio. Durante un despliegue pueden aparecer dos.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 6
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "count by (job, service_version) (target_info{job=~\"$service\"})",
+          "format": "table",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true
+            },
+            "indexByName": {
+              "job": 0,
+              "service_version": 1
+            },
+            "renameByName": {
+              "job": "Servicio",
+              "service_version": "Commit"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Commit"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Ver el commit en GitHub",
+                    "url": "https://github.com/CarlosPavajeau/cetus/commit/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
       "id": 1,
       "type": "row",
       "title": "JVM",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 0,
+        "y": 6,
         "w": 24,
         "h": 1
       },
@@ -97,7 +194,7 @@
       "title": "Heap usado",
       "gridPos": {
         "x": 0,
-        "y": 1,
+        "y": 7,
         "w": 12,
         "h": 8
       },
@@ -165,7 +262,7 @@
       "title": "Pausas de GC",
       "gridPos": {
         "x": 12,
-        "y": 1,
+        "y": 7,
         "w": 12,
         "h": 8
       },
@@ -223,7 +320,7 @@
       "title": "Hilos vivos",
       "gridPos": {
         "x": 0,
-        "y": 9,
+        "y": 15,
         "w": 12,
         "h": 8
       },
@@ -280,7 +377,7 @@
       "title": "CPU del proceso",
       "gridPos": {
         "x": 12,
-        "y": 9,
+        "y": 15,
         "w": 12,
         "h": 8
       },
@@ -338,7 +435,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 23,
         "w": 24,
         "h": 1
       },
@@ -350,7 +447,7 @@
       "title": "Conexiones",
       "gridPos": {
         "x": 0,
-        "y": 18,
+        "y": 24,
         "w": 12,
         "h": 8
       },
@@ -429,7 +526,7 @@
       "title": "Esperando una conexión",
       "gridPos": {
         "x": 12,
-        "y": 18,
+        "y": 24,
         "w": 12,
         "h": 8
       },
@@ -503,7 +600,7 @@
       "title": "Espera promedio por una conexión",
       "gridPos": {
         "x": 0,
-        "y": 26,
+        "y": 32,
         "w": 12,
         "h": 8
       },
