@@ -3,6 +3,7 @@ package com.cantte.cetus.worker.support;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.dian.DianTransportException;
@@ -23,6 +24,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 class InstrumentedDianGatewayTest {
+
+    private static final String FAULT_REASON = "Documento con NIT 900123456 no autorizado";
 
     private final InMemorySpanExporter spans = InMemorySpanExporter.create();
     private final SdkTracerProvider provider = SdkTracerProvider.builder()
@@ -62,6 +65,16 @@ class InstrumentedDianGatewayTest {
     }
 
     @Test
+    void aFaultKeepsItsCodeButNotTheDiansText() {
+        assertThatThrownBy(() -> gateway.sendTestSetAsync("doc.zip", new byte[0], "set", null))
+                .isInstanceOf(DianFaultException.class);
+
+        SpanData span = spans.getFinishedSpanItems().getFirst();
+        assertThat(span.getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);
+        assertThat(span.getStatus().getDescription()).isEqualTo("Fault s:Client");
+    }
+
+    @Test
     void aDocumentTheDianDoesNotValidateIsAnError() {
         String trackId = UUID.randomUUID().toString();
 
@@ -84,7 +97,7 @@ class InstrumentedDianGatewayTest {
         assertThat(meters.find("cetus.dian.request.errors").counters()).isEmpty();
     }
 
-    /** Times out on sends and does not validate anything it is asked about. */
+    /** Times out on sync sends, faults on test sets and does not validate anything it is asked about. */
     private static final class Unreachable implements DianGateway {
 
         @Override
@@ -94,7 +107,7 @@ class InstrumentedDianGatewayTest {
 
         @Override
         public UploadResponse sendTestSetAsync(String zipFileName, byte[] zip, String testSetId, KeyMaterial keys) {
-            throw new DianTransportException("Timed out", true, null);
+            throw new DianFaultException("s:Client", List.of(), FAULT_REASON, "<xml/>");
         }
 
         @Override
