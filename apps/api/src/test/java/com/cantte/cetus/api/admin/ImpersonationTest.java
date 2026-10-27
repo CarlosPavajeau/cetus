@@ -123,8 +123,9 @@ class ImpersonationTest {
         bootstrap(customer, "Terminada SAS");
         QuarkusTransaction.requiringNew()
                 .run(() -> AccountEntity.findByOrganization(customer.organizationId())
-                        .orElseThrow()
-                        .status = "SUSPENDED");
+                                .orElseThrow()
+                                .status =
+                        AccountEntity.Status.SUSPENDED);
 
         customer.request().post("/console/impersonation/end").then().statusCode(403);
         customer.impersonatedBy(ADMIN.userId())

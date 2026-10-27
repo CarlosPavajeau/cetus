@@ -10,6 +10,8 @@ export type DianEnvironment = Exclude<Environment, "SANDBOX">;
 
 export type Account = Schemas["AccountView"];
 
+export type AccountStatus = Schemas["AccountStatus"];
+
 export type ApiKey = Schemas["ApiKeyView"];
 
 export type ApiKeyDetail = Schemas["ApiKeyDetail"];

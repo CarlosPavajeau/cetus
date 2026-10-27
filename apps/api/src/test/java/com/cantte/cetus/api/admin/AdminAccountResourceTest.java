@@ -307,7 +307,7 @@ class AdminAccountResourceTest {
                     AccountEntity account = AccountEntity.findById(accountId, LockModeType.PESSIMISTIC_WRITE);
                     locked.countDown();
                     await(release);
-                    account.status = "SUSPENDED";
+                    account.status = AccountEntity.Status.SUSPENDED;
                 }));
         locked.await(5, TimeUnit.SECONDS);
 
@@ -328,7 +328,7 @@ class AdminAccountResourceTest {
         suspension.get(5, TimeUnit.SECONDS);
 
         AccountEntity account = QuarkusTransaction.requiringNew().call(() -> AccountEntity.findById(accountId));
-        assertThat(account.status).isEqualTo("SUSPENDED");
+        assertThat(account.status).isEqualTo(AccountEntity.Status.SUSPENDED);
         assertThat(account.plan).isEqualTo("INICIAL");
     }
 
@@ -338,8 +338,9 @@ class AdminAccountResourceTest {
         String accountId = bootstrap(customer, "Cerrada SAS");
         QuarkusTransaction.requiringNew()
                 .run(() -> AccountEntity.findByOrganization(customer.organizationId())
-                        .orElseThrow()
-                        .status = "CLOSED");
+                                .orElseThrow()
+                                .status =
+                        AccountEntity.Status.CLOSED);
 
         ADMIN.request()
                 .body(Map.of("reason", "Volvió"))

@@ -5,9 +5,11 @@ import static com.cantte.cetus.persistence.NativeColumns.toOffsetDateTime;
 import com.cantte.cetus.api.admin.AdminViews.AccountSummaryView;
 import com.cantte.cetus.api.admin.AdminViews.FailedDocumentView;
 import com.cantte.cetus.api.admin.AdminViews.UsageCountView;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.usage.UsagePeriod;
+import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +40,8 @@ public class AdminAccountQueries {
     ObjectMapper mapper;
 
     /** Newest first; the next page starts below {@code before} (account ids are time-ordered UUIDs). */
-    public List<AccountSummaryView> list(String status, List<String> organizationIds, UUID before, int size) {
+    public List<AccountSummaryView> list(
+            AccountEntity.Status status, List<String> organizationIds, UUID before, int size) {
         StringBuilder sql = new StringBuilder("""
                 SELECT a.id, a.organization_id, a.name, a.status, a.plan, a.created_at,
                        (SELECT count(*) FROM billing.issuers i WHERE i.account_id = a.id AND i.environment <> 'SANDBOX'),
@@ -70,7 +73,7 @@ public class AdminAccountQueries {
                 .setParameter("weekAgo", OffsetDateTime.now().minusDays(7))
                 .setParameter("limit", size);
         if (status != null) {
-            query.setParameter("status", status);
+            query.setParameter("status", status.name());
         }
         if (organizationIds != null && !organizationIds.isEmpty()) {
             query.setParameter("organizationIds", organizationIds);
@@ -85,7 +88,7 @@ public class AdminAccountQueries {
                         (UUID) row[0],
                         (String) row[1],
                         (String) row[2],
-                        (String) row[3],
+                        AccountEntity.Status.valueOf((String) row[3]),
                         (String) row[4],
                         toOffsetDateTime(row[5]),
                         count(row[6]),
@@ -113,7 +116,7 @@ public class AdminAccountQueries {
                 .map(row -> new UsageCountView(
                         Environment.valueOf((String) row[0]),
                         DocumentType.valueOf((String) row[1]),
-                        (String) row[2],
+                        DocumentStatus.valueOf((String) row[2]),
                         count(row[3])))
                 .toList();
     }
@@ -139,7 +142,7 @@ public class AdminAccountQueries {
                         Environment.valueOf((String) row[2]),
                         DocumentType.valueOf((String) row[3]),
                         row[4] + String.valueOf(row[5]),
-                        (String) row[6],
+                        DocumentStatus.valueOf((String) row[6]),
                         (String) row[7],
                         (String) row[8],
                         errors((String) row[9]),

@@ -100,7 +100,7 @@ public class AccountResource {
     public record AccountView(
             UUID id,
             String name,
-            String status,
+            AccountEntity.Status status,
             String plan,
 
             @Schema(nullable = true, description = "Why the account is suspended, when it is")
@@ -111,7 +111,7 @@ public class AccountResource {
                     account.name,
                     account.status,
                     account.plan,
-                    "ACTIVE".equals(account.status) ? null : account.statusReason);
+                    account.status == AccountEntity.Status.ACTIVE ? null : account.statusReason);
         }
     }
 }

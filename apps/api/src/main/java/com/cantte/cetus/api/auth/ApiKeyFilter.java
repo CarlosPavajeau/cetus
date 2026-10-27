@@ -27,7 +27,6 @@ import java.util.Optional;
 @Priority(Priorities.AUTHENTICATION)
 public class ApiKeyFilter implements ContainerRequestFilter {
 
-    private static final String ACTIVE = "ACTIVE";
     /** lastUsedAt is shown to the minute: refreshing it more often would write the key row on every request. */
     private static final Duration LAST_USED_PRECISION = Duration.ofMinutes(1);
 
@@ -75,7 +74,7 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             ApiKeyRateLimiter.Limits limits = account[1] == null
                     ? null
                     : new ApiKeyRateLimiter.Limits((Integer) account[1], (Integer) account[2]);
-            return new Resolved(found, (String) account[0], limits);
+            return new Resolved(found, (AccountEntity.Status) account[0], limits);
         });
         if (resolved == null) {
             authenticated(null, "unauthorized");
@@ -86,7 +85,7 @@ public class ApiKeyFilter implements ContainerRequestFilter {
                 .setAttribute("cetus.account.id", resolved.key().accountId.toString())
                 .setAttribute("cetus.api_key.id", resolved.key().id.toString())
                 .setAttribute("environment", resolved.key().environment.name());
-        if (!ACTIVE.equals(resolved.accountStatus())) {
+        if (resolved.accountStatus() != AccountEntity.Status.ACTIVE) {
             authenticated(resolved.key().environment, "suspended");
             abort(request, Response.Status.FORBIDDEN, "account_suspended", "This account is suspended");
             return;
@@ -125,5 +124,6 @@ public class ApiKeyFilter implements ContainerRequestFilter {
         request.abortWith(ProblemDetail.response(status.getStatusCode(), code, message));
     }
 
-    private record Resolved(ApiKeyEntity key, String accountStatus, ApiKeyRateLimiter.Limits accountLimits) {}
+    private record Resolved(
+            ApiKeyEntity key, AccountEntity.Status accountStatus, ApiKeyRateLimiter.Limits accountLimits) {}
 }

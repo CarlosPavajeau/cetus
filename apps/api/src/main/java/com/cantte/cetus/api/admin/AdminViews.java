@@ -2,6 +2,7 @@ package com.cantte.cetus.api.admin;
 
 import com.cantte.cetus.api.console.IssuerViews;
 import com.cantte.cetus.api.usage.UsageViews.PeriodUsageView;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -23,7 +24,7 @@ public final class AdminViews {
             String organizationId,
 
             String name,
-            String status,
+            AccountEntity.Status status,
             String plan,
             OffsetDateTime createdAt,
             long issuers,
@@ -47,7 +48,7 @@ public final class AdminViews {
             UUID id,
             String organizationId,
             String name,
-            String status,
+            AccountEntity.Status status,
             String plan,
             @Schema(nullable = true) String statusReason,
             @Schema(nullable = true) OffsetDateTime statusChangedAt,
@@ -88,7 +89,8 @@ public final class AdminViews {
         }
     }
 
-    public record UsageCountView(Environment environment, DocumentType documentType, String status, long count) {}
+    public record UsageCountView(
+            Environment environment, DocumentType documentType, DocumentStatus status, long count) {}
 
     public record FailedDocumentView(
             UUID id,
@@ -99,7 +101,7 @@ public final class AdminViews {
             @Schema(description = "Prefix and consecutive, e.g. SETP990000001")
             String number,
 
-            String status,
+            DocumentStatus status,
             @Schema(nullable = true) String dianStatusCode,
             @Schema(nullable = true) String dianStatusMessage,
             List<String> dianErrors,

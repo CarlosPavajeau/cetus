@@ -84,7 +84,7 @@ public class ContactVerificationResource {
                 .orElseThrow(VerificationLinkNotFound::new);
         // No session here, so SuspendedAccountFilter does not apply: a suspended account stays read-only.
         AccountEntity account = AccountEntity.findById(contact.accountId);
-        if (!"ACTIVE".equals(account.status)) {
+        if (account.status != AccountEntity.Status.ACTIVE) {
             throw new DomainException("account_suspended", "This account is suspended");
         }
         String email = contact.pendingEmail;

@@ -1255,7 +1255,7 @@ export interface components {
             id: components["schemas"]["UUID"];
             organizationId: string;
             name: string;
-            status: string;
+            status: components["schemas"]["AccountStatus"];
             plan: string;
             statusReason: string | null;
             statusChangedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
@@ -1273,12 +1273,14 @@ export interface components {
             items: components["schemas"]["AccountSummaryView"][];
             nextCursor: components["schemas"]["UUID"] | null;
         };
+        /** @enum {string} */
+        AccountStatus: "ACTIVE" | "SUSPENDED" | "CLOSED";
         AccountSummaryView: {
             id: components["schemas"]["UUID"];
             /** @description Better Auth organization id */
             organizationId: string;
             name: string;
-            status: string;
+            status: components["schemas"]["AccountStatus"];
             plan: string;
             createdAt: components["schemas"]["OffsetDateTime"];
             /** Format: int64 */
@@ -1303,7 +1305,7 @@ export interface components {
         AccountView: {
             id: components["schemas"]["UUID"];
             name: string;
-            status: string;
+            status: components["schemas"]["AccountStatus"];
             plan: string;
             /** @description Why the account is suspended, when it is */
             statusReason: string | null;
@@ -2035,7 +2037,7 @@ export interface components {
             documentType: components["schemas"]["DocumentType"];
             /** @description Prefix and consecutive, e.g. SETP990000001 */
             number: string;
-            status: string;
+            status: components["schemas"]["DocumentStatus"];
             dianStatusCode: string | null;
             dianStatusMessage: string | null;
             dianErrors: string[];
@@ -2617,7 +2619,7 @@ export interface components {
         UsageCountView: {
             environment: components["schemas"]["Environment"];
             documentType: components["schemas"]["DocumentType"];
-            status: string;
+            status: components["schemas"]["DocumentStatus"];
             /** Format: int64 */
             count: number;
         };
