@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_admin/admin/users/")({
   }),
   loaderDeps: ({ search }) => search,
   loader: ({ context: { queryClient }, deps }) =>
-    queryClient.ensureInfiniteQueryData(adminUsersQuery(deps.q)),
+    queryClient.infiniteQuery({ ...adminUsersQuery(deps.q), staleTime: "static" }),
   component: Users,
 });
 

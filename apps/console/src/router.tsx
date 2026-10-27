@@ -19,7 +19,7 @@ export function getRouter() {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreload: "intent",
-    // Freshness is Query's job: let every preload reach ensureQueryData and its staleTime.
+    // Freshness is Query's job: let every preload reach the loader query and its staleTime.
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: RouteError,
   });

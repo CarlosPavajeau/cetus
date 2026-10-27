@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_app/developers/api-keys/$keyId")({
     if (!uuidPattern.test(params.keyId)) {
       throw notFound();
     }
-    const detail = await queryClient.ensureQueryData(apiKeyQuery(params.keyId));
+    const detail = await queryClient.query({ ...apiKeyQuery(params.keyId), staleTime: "static" });
     if (!detail) {
       throw notFound();
     }

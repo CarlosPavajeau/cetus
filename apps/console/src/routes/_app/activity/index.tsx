@@ -46,8 +46,8 @@ export const Route = createFileRoute("/_app/activity/")({
   // The key list names the API keys that acted; the log only carries their ids.
   loader: ({ context: { queryClient }, deps }) =>
     Promise.all([
-      queryClient.ensureInfiniteQueryData(auditLogQuery(deps.action)),
-      queryClient.ensureQueryData(apiKeysQuery),
+      queryClient.infiniteQuery({ ...auditLogQuery(deps.action), staleTime: "static" }),
+      queryClient.query({ ...apiKeysQuery, staleTime: "static" }),
     ]),
   component: Activity,
 });

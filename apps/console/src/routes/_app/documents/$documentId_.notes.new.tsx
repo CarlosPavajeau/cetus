@@ -16,7 +16,10 @@ export const Route = createFileRoute("/_app/documents/$documentId_/notes/new")({
     if (!uuidPattern.test(params.documentId)) {
       throw notFound();
     }
-    const invoice = await queryClient.ensureQueryData(documentDetailQuery(params.documentId));
+    const invoice = await queryClient.query({
+      ...documentDetailQuery(params.documentId),
+      staleTime: "static",
+    });
     // Notes only correct accepted invoices.
     if (!invoice || invoice.documentType !== "INVOICE" || invoice.status !== "ACCEPTED") {
       throw notFound();

@@ -34,7 +34,8 @@ import { type Environment, type Issuer, environments } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/issuers/")({
-  loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(issuersQuery),
+  loader: ({ context: { queryClient } }) =>
+    queryClient.query({ ...issuersQuery, staleTime: "static" }),
   component: Issuers,
 });
 

@@ -55,7 +55,7 @@ import { type AssignableMemberRole, assignableMemberRoles } from "~/lib/auth/per
 /** Who works in the organization, with which role, and who was invited. */
 export const Route = createFileRoute("/_app/settings/members")({
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(membersQuery);
+    await queryClient.query({ ...membersQuery, staleTime: "static" });
     return { crumb: "Miembros" };
   },
   component: Members,

@@ -21,7 +21,10 @@ import { dayFormat } from "~/features/audit-log/labels";
 
 export const Route = createFileRoute("/_admin/admin/users/$userId")({
   loader: async ({ context: { queryClient }, params }) => {
-    const person = await queryClient.ensureQueryData(adminUserQuery(params.userId));
+    const person = await queryClient.query({
+      ...adminUserQuery(params.userId),
+      staleTime: "static",
+    });
     if (!person) {
       throw notFound();
     }

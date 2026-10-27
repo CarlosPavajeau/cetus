@@ -30,8 +30,11 @@ import { useSettled } from "~/lib/useSettled";
 
 export const Route = createFileRoute("/_app/catalog/customers")({
   loader: async ({ context: { queryClient } }) => {
-    const environment = await queryClient.ensureQueryData(activeEnvironmentQuery);
-    await queryClient.ensureInfiniteQueryData(customerPagesQuery(environment, ""));
+    const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
+    await queryClient.infiniteQuery({
+      ...customerPagesQuery(environment, ""),
+      staleTime: "static",
+    });
   },
   component: Customers,
 });

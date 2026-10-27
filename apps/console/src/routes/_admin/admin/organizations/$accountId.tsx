@@ -26,7 +26,10 @@ import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
 
 export const Route = createFileRoute("/_admin/admin/organizations/$accountId")({
   loader: async ({ context: { queryClient }, params }) => {
-    const account = await queryClient.ensureQueryData(adminAccountQuery(params.accountId));
+    const account = await queryClient.query({
+      ...adminAccountQuery(params.accountId),
+      staleTime: "static",
+    });
     if (!account) {
       throw notFound();
     }

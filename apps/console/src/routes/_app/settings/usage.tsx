@@ -26,7 +26,7 @@ import { usageQuery } from "~/features/usage/queries";
 /** The account's plan and the billable documents of this month and the months before. */
 export const Route = createFileRoute("/_app/settings/usage")({
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(usageQuery);
+    await queryClient.query({ ...usageQuery, staleTime: "static" });
     return { crumb: "Plan y uso" };
   },
   component: Usage,

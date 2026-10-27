@@ -76,7 +76,7 @@ import { cn, crumbOf } from "~/lib/utils";
 export const Route = createFileRoute("/_app")({
   beforeLoad: requireMembership,
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(activeEnvironmentQuery);
+    await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
     return { sidebarOpen: isSidebarOpen() };
   },
   component: AppLayout,

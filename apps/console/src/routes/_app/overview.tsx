@@ -46,10 +46,13 @@ import { cn } from "~/lib/utils";
 export const Route = createFileRoute("/_app/overview")({
   loader: ({ context: { queryClient } }) =>
     Promise.all([
-      queryClient.ensureQueryData(accountQuery),
-      queryClient.ensureQueryData(issuersQuery),
-      queryClient.ensureQueryData(usageQuery),
-      queryClient.ensureInfiniteQueryData(documentsQuery({ environment: "SANDBOX" })),
+      queryClient.query({ ...accountQuery, staleTime: "static" }),
+      queryClient.query({ ...issuersQuery, staleTime: "static" }),
+      queryClient.query({ ...usageQuery, staleTime: "static" }),
+      queryClient.infiniteQuery({
+        ...documentsQuery({ environment: "SANDBOX" }),
+        staleTime: "static",
+      }),
     ]),
   component: Overview,
 });

@@ -11,7 +11,7 @@ import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 /** Who receives the account's notices, per category. */
 export const Route = createFileRoute("/_app/settings/contacts")({
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(contactsQuery);
+    await queryClient.query({ ...contactsQuery, staleTime: "static" });
     return { crumb: "Contactos" };
   },
   component: Contacts,

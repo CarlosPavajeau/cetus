@@ -28,7 +28,10 @@ export const Route = createFileRoute("/_app/issuers/$issuerId_/edit")({
     if (!uuidPattern.test(params.issuerId)) {
       throw notFound();
     }
-    const issuer = await queryClient.ensureQueryData(issuerDetailQuery(params.issuerId));
+    const issuer = await queryClient.query({
+      ...issuerDetailQuery(params.issuerId),
+      staleTime: "static",
+    });
     if (!issuer) {
       throw notFound();
     }

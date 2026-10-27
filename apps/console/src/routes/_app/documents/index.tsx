@@ -74,8 +74,11 @@ export const Route = createFileRoute("/_app/documents/")({
   },
   loaderDeps: ({ search }) => search,
   loader: async ({ context: { queryClient }, deps }) => {
-    const environment = await queryClient.ensureQueryData(activeEnvironmentQuery);
-    await queryClient.ensureInfiniteQueryData(documentsQuery(withEnvironment(deps, environment)));
+    const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
+    await queryClient.infiniteQuery({
+      ...documentsQuery(withEnvironment(deps, environment)),
+      staleTime: "static",
+    });
   },
   component: Documents,
 });

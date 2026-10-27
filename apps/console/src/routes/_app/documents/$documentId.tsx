@@ -67,7 +67,10 @@ export const Route = createFileRoute("/_app/documents/$documentId")({
     if (!uuidPattern.test(params.documentId)) {
       throw notFound();
     }
-    const document = await queryClient.ensureQueryData(documentDetailQuery(params.documentId));
+    const document = await queryClient.query({
+      ...documentDetailQuery(params.documentId),
+      staleTime: "static",
+    });
     if (!document) {
       throw notFound();
     }

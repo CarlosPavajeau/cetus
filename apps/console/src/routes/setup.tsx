@@ -54,7 +54,10 @@ export const Route = createFileRoute("/setup")({
   loaderDeps: ({ search }) => ({ issuerId: search.issuerId, new: search.new }),
   loader: async ({ context: { queryClient }, deps }) => {
     if (deps.issuerId) {
-      const issuer = await queryClient.ensureQueryData(issuerDetailQuery(deps.issuerId));
+      const issuer = await queryClient.query({
+        ...issuerDetailQuery(deps.issuerId),
+        staleTime: "static",
+      });
       if (!issuer) {
         throw redirect({ to: "/issuers" });
       }
@@ -67,14 +70,14 @@ export const Route = createFileRoute("/setup")({
     if (deps.new) {
       return;
     }
-    const issuers = await queryClient.ensureQueryData(issuersQuery);
+    const issuers = await queryClient.query({ ...issuersQuery, staleTime: "static" });
     const pending = issuers.find((issuer) => issuer.status === "ONBOARDING");
     // The sandbox sample needs no setup: an organization with only that one starts a new issuer here.
     if (!pending && issuers.some((issuer) => issuer.environment !== "SANDBOX")) {
       throw redirect({ to: "/issuers" });
     }
     if (pending) {
-      await queryClient.ensureQueryData(issuerDetailQuery(pending.id));
+      await queryClient.query({ ...issuerDetailQuery(pending.id), staleTime: "static" });
     }
   },
   component: Setup,
@@ -189,7 +192,7 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
    * once it is ready.
    */
   async function saved(issuerId: string) {
-    const detail = await queryClient.fetchQuery({ ...issuerDetailQuery(issuerId), staleTime: 0 });
+    const detail = await queryClient.query({ ...issuerDetailQuery(issuerId), staleTime: 0 });
     if (detail && detail.status !== "ONBOARDING") {
       await navigate({ to: "/issuers/$issuerId", params: { issuerId } });
       await queryClient.invalidateQueries({ queryKey: ["issuers"] });

@@ -83,7 +83,8 @@ import { type ApiKey, type Environment, environments } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/developers/api-keys/")({
-  loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(apiKeysQuery),
+  loader: ({ context: { queryClient } }) =>
+    queryClient.query({ ...apiKeysQuery, staleTime: "static" }),
   component: ApiKeys,
 });
 
