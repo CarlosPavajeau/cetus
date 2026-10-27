@@ -37,9 +37,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -74,7 +74,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
                 @Content(mediaType = ProblemDetail.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetail.class)))
 public class AdminAccountResource {
 
-    private static final Set<String> STATUSES = Set.of("ACTIVE", "SUSPENDED", "CLOSED");
     /** Bounds the IN list the console sends after searching organizations by name. */
     private static final int MAX_ORGANIZATION_IDS = 100;
 
@@ -101,13 +100,16 @@ public class AdminAccountResource {
     @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
     @APIResponse(responseCode = "200", description = "OK")
     public AccountPage list(
-            @QueryParam("status") String status,
+            @QueryParam("status") String statusName,
             @QueryParam("organizationId") List<String> organizationIds,
             @QueryParam("before") UUID before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
-        if (status != null && !STATUSES.contains(status)) {
-            throw new BadRequestException("Unknown status " + status);
-        }
+        AccountEntity.Status status = statusName == null
+                ? null
+                : Arrays.stream(AccountEntity.Status.values())
+                        .filter(each -> each.name().equals(statusName))
+                        .findFirst()
+                        .orElseThrow(() -> new BadRequestException("Unknown status " + statusName));
         if (organizationIds != null && organizationIds.size() > MAX_ORGANIZATION_IDS) {
             throw new BadRequestException("At most " + MAX_ORGANIZATION_IDS + " organization ids");
         }
@@ -135,10 +137,10 @@ public class AdminAccountResource {
     @APIResponse(responseCode = "200", description = "OK")
     public AccountDetailView suspend(@PathParam("id") UUID id, @Valid @NotNull StatusChangeRequest request) {
         AccountEntity account = lockedAccount(id);
-        if (!"ACTIVE".equals(account.status)) {
+        if (account.status != AccountEntity.Status.ACTIVE) {
             throw new DomainException("account_not_active", "Only an active account can be suspended");
         }
-        changeStatus(account, "SUSPENDED", request.reason(), AuditAction.ACCOUNT_SUSPENDED);
+        changeStatus(account, AccountEntity.Status.SUSPENDED, request.reason(), AuditAction.ACCOUNT_SUSPENDED);
         // The billing contact hears it from Cetus, with the same reason the console banner shows.
         notifications.request(
                 account.id,
@@ -157,10 +159,10 @@ public class AdminAccountResource {
     @APIResponse(responseCode = "200", description = "OK")
     public AccountDetailView reactivate(@PathParam("id") UUID id, @Valid @NotNull StatusChangeRequest request) {
         AccountEntity account = lockedAccount(id);
-        if (!"SUSPENDED".equals(account.status)) {
+        if (account.status != AccountEntity.Status.SUSPENDED) {
             throw new DomainException("account_not_suspended", "Only a suspended account can be reactivated");
         }
-        changeStatus(account, "ACTIVE", request.reason(), AuditAction.ACCOUNT_REACTIVATED);
+        changeStatus(account, AccountEntity.Status.ACTIVE, request.reason(), AuditAction.ACCOUNT_REACTIVATED);
         return detail(account);
     }
 
@@ -197,8 +199,8 @@ public class AdminAccountResource {
         return detail(account);
     }
 
-    private void changeStatus(AccountEntity account, String status, String reason, AuditAction action) {
-        String previous = account.status;
+    private void changeStatus(AccountEntity account, AccountEntity.Status status, String reason, AuditAction action) {
+        AccountEntity.Status previous = account.status;
         String why = reason.strip();
         account.status = status;
         account.statusReason = why;
@@ -211,7 +213,7 @@ public class AdminAccountResource {
                 action,
                 "account",
                 account.id,
-                Map.of("reason", why, "previousStatus", previous));
+                Map.of("reason", why, "previousStatus", previous.name()));
     }
 
     private AccountDetailView detail(AccountEntity account) {

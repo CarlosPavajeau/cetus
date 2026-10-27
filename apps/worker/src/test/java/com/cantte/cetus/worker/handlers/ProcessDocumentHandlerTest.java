@@ -93,7 +93,8 @@ class ProcessDocumentHandlerTest {
         UUID id = fixtures.invoice();
         QuarkusTransaction.requiringNew()
                 .run(() -> AccountEntity.<AccountEntity>findById(DocumentEntity.<DocumentEntity>findById(id).accountId)
-                        .status = "SUSPENDED");
+                                .status =
+                        AccountEntity.Status.SUSPENDED);
 
         process(id);
 

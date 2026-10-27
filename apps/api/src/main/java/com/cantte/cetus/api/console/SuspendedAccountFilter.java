@@ -43,11 +43,11 @@ public class SuspendedAccountFilter implements ContainerRequestFilter {
         if (organizationId == null || organizationId.isBlank()) {
             return;
         }
-        String status = QuarkusTransaction.requiringNew()
+        AccountEntity.Status status = QuarkusTransaction.requiringNew()
                 .call(() -> AccountEntity.findByOrganization(organizationId)
                         .map(account -> account.status)
                         .orElse(null));
-        if (status != null && !"ACTIVE".equals(status)) {
+        if (status != null && status != AccountEntity.Status.ACTIVE) {
             request.abortWith(ProblemDetail.response(403, "account_suspended", "This account is suspended"));
         }
     }

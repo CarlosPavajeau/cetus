@@ -74,7 +74,7 @@ public class CertificateUploadResource {
         CertificateUploadLinkEntity link = CertificateUploadLinkEntity.findUsableForUpdate(ApiKeys.hash(token))
                 .orElseThrow(UploadLinkNotFound::new);
         AccountEntity account = AccountEntity.findById(link.accountId);
-        if (!"ACTIVE".equals(account.status)) {
+        if (account.status != AccountEntity.Status.ACTIVE) {
             throw new DomainException("account_suspended", "This account is suspended");
         }
         IssuerEntity issuer = IssuerEntity.findById(link.issuerId);

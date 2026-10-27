@@ -23,7 +23,6 @@ import { documentStatusLabel, documentTypeLabel } from "~/features/documents/lab
 import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { planPrice, planTitle } from "~/features/usage/labels";
 import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
-import { entryOf } from "~/lib/utils";
 
 export const Route = createFileRoute("/_admin/admin/organizations/$accountId")({
   loader: async ({ context: { queryClient }, params }) => {
@@ -56,7 +55,7 @@ function AccountDetail() {
         title={account.name}
         status={
           <Badge variant={account.status === "ACTIVE" ? "secondary" : "destructive"}>
-            {entryOf(accountStatusLabel, account.status) ?? account.status}
+            {accountStatusLabel[account.status]}
           </Badge>
         }
         lead={`${planTitle(account.billableThisMonth.plan)} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
@@ -80,9 +79,7 @@ function AccountDetail() {
 
       {account.status !== "ACTIVE" && account.statusReason && (
         <Alert variant="destructive">
-          <AlertTitle>
-            Cuenta {entryOf(accountStatusLabel, account.status)?.toLowerCase()}
-          </AlertTitle>
+          <AlertTitle>Cuenta {accountStatusLabel[account.status].toLowerCase()}</AlertTitle>
           <AlertDescription>
             {account.statusReason}
             {account.statusChangedAt &&
@@ -213,9 +210,7 @@ function AccountDetail() {
                     <EnvironmentBadge environment={usage.environment} />
                   </TableCell>
                   <TableCell className="text-xs">{documentTypeLabel[usage.documentType]}</TableCell>
-                  <TableCell className="text-xs">
-                    {entryOf(documentStatusLabel, usage.status) ?? usage.status}
-                  </TableCell>
+                  <TableCell className="text-xs">{documentStatusLabel[usage.status]}</TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{usage.count}</TableCell>
                 </TableRow>
               ))}
@@ -251,7 +246,7 @@ function AccountDetail() {
                     </div>
                   </TableCell>
                   <TableCell className="align-top text-xs">
-                    {entryOf(documentStatusLabel, failure.status) ?? failure.status}
+                    {documentStatusLabel[failure.status]}
                     {failure.dianStatusCode && (
                       <span className="block text-2xs text-muted-foreground">
                         Código {failure.dianStatusCode}

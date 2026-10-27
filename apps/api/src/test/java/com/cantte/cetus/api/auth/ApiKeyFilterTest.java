@@ -60,10 +60,10 @@ class ApiKeyFilterTest {
         String apiKey = testKey(user);
         call(apiKey).statusCode(404);
 
-        setStatus(user, "SUSPENDED");
+        setStatus(user, AccountEntity.Status.SUSPENDED);
         call(apiKey).statusCode(403).body("code", equalTo("account_suspended"));
 
-        setStatus(user, "ACTIVE");
+        setStatus(user, AccountEntity.Status.ACTIVE);
         call(apiKey).statusCode(404);
     }
 
@@ -73,7 +73,7 @@ class ApiKeyFilterTest {
         bootstrap(user, "Closed SAS");
         String apiKey = testKey(user);
 
-        setStatus(user, "CLOSED");
+        setStatus(user, AccountEntity.Status.CLOSED);
         call(apiKey).statusCode(403).body("code", equalTo("account_suspended"));
     }
 
@@ -93,7 +93,7 @@ class ApiKeyFilterTest {
                 .path("secret");
     }
 
-    private static void setStatus(ConsoleUser user, String status) {
+    private static void setStatus(ConsoleUser user, AccountEntity.Status status) {
         QuarkusTransaction.requiringNew()
                 .run(() ->
                         AccountEntity.findByOrganization(user.organizationId()).orElseThrow().status = status);
