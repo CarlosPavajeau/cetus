@@ -42,8 +42,8 @@ export const Route = createFileRoute("/_app/issuers/$issuerId")({
       throw notFound();
     }
     const [issuer] = await Promise.all([
-      queryClient.ensureQueryData(issuerDetailQuery(params.issuerId)),
-      queryClient.ensureQueryData(issuersQuery),
+      queryClient.query({ ...issuerDetailQuery(params.issuerId), staleTime: "static" }),
+      queryClient.query({ ...issuersQuery, staleTime: "static" }),
     ]);
     if (!issuer) {
       throw notFound();

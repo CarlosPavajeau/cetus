@@ -33,8 +33,8 @@ import { type Environment, type WebhookEndpoint, environments } from "~/lib/api/
 export const Route = createFileRoute("/_app/developers/webhooks/")({
   loader: ({ context: { queryClient } }) =>
     Promise.all([
-      queryClient.ensureQueryData(webhookEndpointsQuery),
-      queryClient.ensureQueryData(webhookEventTypesQuery),
+      queryClient.query({ ...webhookEndpointsQuery, staleTime: "static" }),
+      queryClient.query({ ...webhookEventTypesQuery, staleTime: "static" }),
     ]),
   component: Webhooks,
 });

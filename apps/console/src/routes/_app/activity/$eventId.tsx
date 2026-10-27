@@ -37,8 +37,8 @@ export const Route = createFileRoute("/_app/activity/$eventId")({
       throw notFound();
     }
     const [entry] = await Promise.all([
-      queryClient.ensureQueryData(auditEntryQuery(id)),
-      queryClient.ensureQueryData(apiKeysQuery),
+      queryClient.query({ ...auditEntryQuery(id), staleTime: "static" }),
+      queryClient.query({ ...apiKeysQuery, staleTime: "static" }),
     ]);
     if (!entry) {
       throw notFound();

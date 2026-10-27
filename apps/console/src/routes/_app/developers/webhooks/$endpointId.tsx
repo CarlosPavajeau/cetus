@@ -43,8 +43,11 @@ export const Route = createFileRoute("/_app/developers/webhooks/$endpointId")({
       throw notFound();
     }
     const [endpoint] = await Promise.all([
-      queryClient.ensureQueryData(webhookEndpointQuery(params.endpointId)),
-      queryClient.ensureInfiniteQueryData(webhookDeliveriesQuery(params.endpointId)),
+      queryClient.query({ ...webhookEndpointQuery(params.endpointId), staleTime: "static" }),
+      queryClient.infiniteQuery({
+        ...webhookDeliveriesQuery(params.endpointId),
+        staleTime: "static",
+      }),
     ]);
     if (!endpoint) {
       throw notFound();

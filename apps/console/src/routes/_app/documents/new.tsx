@@ -23,10 +23,10 @@ import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/documents/new")({
   loader: async ({ context: { queryClient } }) => {
-    const environment = await queryClient.ensureQueryData(activeEnvironmentQuery);
+    const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
     await Promise.all([
-      queryClient.ensureQueryData(issuersQuery),
-      queryClient.ensureInfiniteQueryData(documentsQuery({ environment })),
+      queryClient.query({ ...issuersQuery, staleTime: "static" }),
+      queryClient.infiniteQuery({ ...documentsQuery({ environment }), staleTime: "static" }),
     ]);
     return { crumb: "Emitir factura" };
   },

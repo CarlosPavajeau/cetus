@@ -43,7 +43,7 @@ export const Route = createFileRoute("/_admin/admin/audit-log")({
   }),
   loaderDeps: ({ search }) => search,
   loader: ({ context: { queryClient }, deps }) =>
-    queryClient.ensureInfiniteQueryData(adminAuditLogQuery(deps)),
+    queryClient.infiniteQuery({ ...adminAuditLogQuery(deps), staleTime: "static" }),
   component: AdminAuditLog,
 });
 

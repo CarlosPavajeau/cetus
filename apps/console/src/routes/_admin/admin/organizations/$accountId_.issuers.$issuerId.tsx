@@ -25,9 +25,10 @@ import { issuerName } from "~/features/issuers/labels";
  */
 export const Route = createFileRoute("/_admin/admin/organizations/$accountId_/issuers/$issuerId")({
   loader: async ({ context: { queryClient }, params }) => {
-    const issuer = await queryClient.ensureQueryData(
-      adminIssuerQuery(params.accountId, params.issuerId),
-    );
+    const issuer = await queryClient.query({
+      ...adminIssuerQuery(params.accountId, params.issuerId),
+      staleTime: "static",
+    });
     if (!issuer) {
       throw notFound();
     }
