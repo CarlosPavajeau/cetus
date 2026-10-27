@@ -6,9 +6,9 @@
 
 /*
  * Never scan build output. The Docker context has no .gitignore, so the SSR build would pick up classes
- * from dist/client and emit a stylesheet whose hash differs from the one the client build shipped (404).
+ * from .output/public and emit a stylesheet whose hash differs from the one the client build shipped (404).
  */
-@source not "../dist";
+@source not "../.output";
 
 @custom-variant dark (&:is(.dark *));
 
