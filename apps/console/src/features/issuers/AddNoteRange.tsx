@@ -118,7 +118,10 @@ export function AddNoteRange({
                     name={field.name}
                     value={field.value}
                     onValueChange={(value) => {
-                      const next = value as NoteType;
+                      const next = typeItems.find((item) => item.value === value)?.value;
+                      if (!next) {
+                        return;
+                      }
                       field.onChange(next);
                       // Keep the suggested prefix in step with the type unless the person changed it.
                       if (!form.getFieldState("prefix").isDirty) {

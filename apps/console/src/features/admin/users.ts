@@ -120,9 +120,11 @@ export const getAdminUser = createServerFn({ method: "GET" })
     );
     return {
       ...toAdminUser(row),
-      memberships: memberships.map((m) => ({
-        ...m,
-        accountId: accountOf.get(m.organizationId) ?? null,
+      memberships: memberships.map(({ organizationId, organizationName, role }) => ({
+        organizationId,
+        organizationName,
+        role,
+        accountId: accountOf.get(organizationId) ?? null,
       })),
       isSelf: row.id === session.user.id,
     };

@@ -10,13 +10,15 @@ import { docsUrl } from "~/lib/docs";
 
 const year = new Date().getFullYear();
 
+const headlineDefault = ["Tu producto.", "Nuestra API.", "Conectados a la DIAN."] as const;
+
 /** Two columns from `lg` up: the form on the left, the product pitch on the right. */
 export function AuthLayout({
   icon,
   eyebrow = "CONSOLA CETUS",
   title,
   lead,
-  headline = ["Tu producto.", "Nuestra API.", "Conectados a la DIAN."],
+  headline = headlineDefault,
   children,
 }: {
   /** Shown in a tile above the eyebrow. */

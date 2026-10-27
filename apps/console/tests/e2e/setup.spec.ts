@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { type } from "arktype";
 
 import { addRange, createIssuer, uniqueNit } from "../support/issuers";
 import { testCertificate } from "../support/stack";
@@ -153,7 +154,9 @@ test("a test issuer that finished its test set leaves the TestSetId empty", asyn
 
   await expect(stepTitle(page, 3)).toBeVisible();
   const detail = await organization.api(`/console/issuers/${id}`);
-  const { software } = (await detail.json()) as { software: { testSetId: string | null } };
+  const { software } = type({ software: { testSetId: "string | null" } }).assert(
+    await detail.json(),
+  );
   expect(software.testSetId).toBeNull();
 });
 
@@ -194,7 +197,7 @@ test("a certificate with the wrong password is rejected and can be retried", asy
       email: "facturas@certificados.test",
     }),
   });
-  const { id } = (await created.json()) as { id: string };
+  const { id } = type({ id: "string" }).assert(await created.json());
   await organization.api(`/console/issuers/${id}/software`, {
     method: "PUT",
     body: JSON.stringify({ softwareId, pin: "12345", testSetId }),

@@ -35,6 +35,7 @@ import {
 } from "~/components/ui/sidebar";
 import { requirePlatformStaff } from "~/features/session/guard";
 import { authClient } from "~/lib/auth/client";
+import { crumbOf } from "~/lib/utils";
 
 /** The Cetus team's administration: staff with 2FA only (the API checks the same from the JWT). */
 export const Route = createFileRoute("/_admin")({
@@ -59,7 +60,7 @@ function AdminLayout() {
   const crumb = useMatches({
     select: (matches) =>
       matches.reduce<string | undefined>(
-        (found, match) => (match.loaderData as { crumb?: string } | undefined)?.crumb ?? found,
+        (found, match) => crumbOf(match.loaderData) ?? found,
         undefined,
       ),
   });

@@ -18,13 +18,12 @@ import { AccountPlanDialog } from "~/features/admin/AccountPlanDialog";
 import { AccountStatusDialog } from "~/features/admin/AccountStatusDialog";
 import { accountStatusLabel, memberRoleLabel } from "~/features/admin/labels";
 import { adminAccountQuery } from "~/features/admin/queries";
-import type { AccountStatus } from "~/features/admin/schema";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { documentStatusLabel, documentTypeLabel } from "~/features/documents/labels";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { planPrice, planTitle } from "~/features/usage/labels";
 import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
-import type { DocumentStatus } from "~/lib/api/types";
+import { entryOf } from "~/lib/utils";
 
 export const Route = createFileRoute("/_admin/admin/organizations/$accountId")({
   loader: async ({ context: { queryClient }, params }) => {
@@ -49,7 +48,6 @@ function AccountDetail() {
   const { accountId } = Route.useParams();
   const { platformRole } = Route.useRouteContext();
   const account = useSuspenseQuery(adminAccountQuery(accountId)).data!;
-  const status = account.status as AccountStatus;
   const isAdmin = platformRole === "admin";
 
   return (
@@ -57,13 +55,13 @@ function AccountDetail() {
       <PageHeader
         title={account.name}
         status={
-          <Badge variant={status === "ACTIVE" ? "secondary" : "destructive"}>
-            {accountStatusLabel[status] ?? account.status}
+          <Badge variant={account.status === "ACTIVE" ? "secondary" : "destructive"}>
+            {entryOf(accountStatusLabel, account.status) ?? account.status}
           </Badge>
         }
         lead={`${planTitle(account.billableThisMonth.plan)} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
         action={
-          isAdmin && status !== "CLOSED" ? (
+          isAdmin && account.status !== "CLOSED" ? (
             <div className="flex gap-2">
               <AccountPlanDialog
                 accountId={account.id}
@@ -73,16 +71,18 @@ function AccountDetail() {
               <AccountStatusDialog
                 accountId={account.id}
                 accountName={account.name}
-                action={status === "ACTIVE" ? "suspend" : "reactivate"}
+                action={account.status === "ACTIVE" ? "suspend" : "reactivate"}
               />
             </div>
           ) : undefined
         }
       />
 
-      {status !== "ACTIVE" && account.statusReason && (
+      {account.status !== "ACTIVE" && account.statusReason && (
         <Alert variant="destructive">
-          <AlertTitle>Cuenta {accountStatusLabel[status]?.toLowerCase()}</AlertTitle>
+          <AlertTitle>
+            Cuenta {entryOf(accountStatusLabel, account.status)?.toLowerCase()}
+          </AlertTitle>
           <AlertDescription>
             {account.statusReason}
             {account.statusChangedAt &&
@@ -214,7 +214,7 @@ function AccountDetail() {
                   </TableCell>
                   <TableCell className="text-xs">{documentTypeLabel[usage.documentType]}</TableCell>
                   <TableCell className="text-xs">
-                    {documentStatusLabel[usage.status as DocumentStatus] ?? usage.status}
+                    {entryOf(documentStatusLabel, usage.status) ?? usage.status}
                   </TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{usage.count}</TableCell>
                 </TableRow>
@@ -251,7 +251,7 @@ function AccountDetail() {
                     </div>
                   </TableCell>
                   <TableCell className="align-top text-xs">
-                    {documentStatusLabel[failure.status as DocumentStatus] ?? failure.status}
+                    {entryOf(documentStatusLabel, failure.status) ?? failure.status}
                     {failure.dianStatusCode && (
                       <span className="block text-2xs text-muted-foreground">
                         Código {failure.dianStatusCode}

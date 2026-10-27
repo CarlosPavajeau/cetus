@@ -11,6 +11,6 @@ type ImpersonatedSession = {
  * that holds the session (the console layout or the setup assistant).
  */
 export function useImpersonation(): ImpersonatedSession | null {
-  const context = useRouteContext({ strict: false }) as { session?: ImpersonatedSession | null };
+  const context = useRouteContext({ strict: false });
   return context.session?.impersonatedBy ? context.session : null;
 }

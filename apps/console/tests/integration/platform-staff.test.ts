@@ -49,15 +49,22 @@ describe("platform staff", () => {
       `/admin/list-users?searchField=email&searchValue=${encodeURIComponent(customer.email)}`,
     );
 
-    for (const [path, body] of [
-      ["/admin/ban-user", { userId: users[0]!.id }],
-      ["/admin/set-role", { userId: users[0]!.id, role: "admin" }],
-      ["/admin/impersonate-user", { userId: users[0]!.id }],
-      ["/admin/remove-user", { userId: users[0]!.id }],
-    ] as const) {
-      const response = await admin.authResponse(path, body);
-      expect(response.status, path).toBe(403);
-      expect(await response.json()).toMatchObject({ code: "USE_THE_ADMINISTRATION" });
+    const refusals = await Promise.all(
+      (
+        [
+          ["/admin/ban-user", { userId: users[0]!.id }],
+          ["/admin/set-role", { userId: users[0]!.id, role: "admin" }],
+          ["/admin/impersonate-user", { userId: users[0]!.id }],
+          ["/admin/remove-user", { userId: users[0]!.id }],
+        ] as const
+      ).map(async ([path, body]) => {
+        const response = await admin.authResponse(path, body);
+        return { path, status: response.status, body: await response.json() };
+      }),
+    );
+    for (const { path, status, body } of refusals) {
+      expect(status, path).toBe(403);
+      expect(body, path).toMatchObject({ code: "USE_THE_ADMINISTRATION" });
     }
     expect((await customer.api("/console/account")).status).toBe(200);
   });

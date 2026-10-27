@@ -64,7 +64,7 @@ export const startImpersonation = createServerFn({ method: "POST" })
 
 /** Ends the impersonation and restores the admin's own session; returns who was impersonated. */
 export const stopImpersonation = createServerFn({ method: "POST" }).handler(async () => {
-  const headers = new Headers(getRequestHeaders() as HeadersInit);
+  const headers = new Headers(getRequestHeaders());
   const current = await auth.api.getSession({ headers });
   if (!current?.session.impersonatedBy) {
     throw new Error("No estás viendo la consola como otra persona.");

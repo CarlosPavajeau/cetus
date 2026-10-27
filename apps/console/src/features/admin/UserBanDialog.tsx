@@ -1,7 +1,12 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { type Control, Controller, type Path, useForm } from "react-hook-form";
+import {
+  Controller,
+  type ControllerFieldState,
+  type ControllerRenderProps,
+  useForm,
+} from "react-hook-form";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
@@ -33,33 +38,22 @@ const durationLabel: Record<string, string> = {
 
 type Target = { id: string; email: string };
 
-function ReasonField<T extends { reason: string }>({
-  control,
+function ReasonField({
+  field,
+  fieldState,
   id,
 }: {
-  control: Control<T>;
+  field: Omit<ControllerRenderProps, "value"> & { value: string };
+  fieldState: ControllerFieldState;
   id: string;
 }) {
   return (
-    <Controller
-      name={"reason" as Path<T>}
-      control={control}
-      render={({ field, fieldState }) => (
-        <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={id}>Motivo</FieldLabel>
-          <Textarea
-            {...field}
-            value={field.value as string}
-            id={id}
-            rows={3}
-            maxLength={500}
-            aria-invalid={fieldState.invalid}
-          />
-          <FieldDescription>Queda en el registro de auditoría.</FieldDescription>
-          <FieldError errors={[fieldState.error]} />
-        </Field>
-      )}
-    />
+    <Field data-invalid={fieldState.invalid}>
+      <FieldLabel htmlFor={id}>Motivo</FieldLabel>
+      <Textarea {...field} id={id} rows={3} maxLength={500} aria-invalid={fieldState.invalid} />
+      <FieldDescription>Queda en el registro de auditoría.</FieldDescription>
+      <FieldError errors={[fieldState.error]} />
+    </Field>
   );
 }
 
@@ -125,7 +119,13 @@ export function BanUserDialog({ target }: { target: Target }) {
               </Field>
             )}
           />
-          <ReasonField control={form.control} id="ban-reason" />
+          <Controller
+            name="reason"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <ReasonField field={field} fieldState={fieldState} id="ban-reason" />
+            )}
+          />
           {form.formState.errors.root && (
             <Alert variant="destructive">
               <AlertDescription>{form.formState.errors.root.message}</AlertDescription>
@@ -181,7 +181,13 @@ export function UnbanUserDialog({ target }: { target: Target }) {
             <DialogTitle>Desbloquear a {target.email}</DialogTitle>
             <DialogDescription>Podrá volver a iniciar sesión en la consola.</DialogDescription>
           </DialogHeader>
-          <ReasonField control={form.control} id="unban-reason" />
+          <Controller
+            name="reason"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <ReasonField field={field} fieldState={fieldState} id="unban-reason" />
+            )}
+          />
           {form.formState.errors.root && (
             <Alert variant="destructive">
               <AlertDescription>{form.formState.errors.root.message}</AlertDescription>

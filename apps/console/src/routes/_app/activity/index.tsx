@@ -29,6 +29,7 @@ import { actionLabel, actorTypeLabel, dayFormat, timeFormat } from "~/features/a
 import { auditLogQuery } from "~/features/audit-log/queries";
 import type { ActivityEntry } from "~/features/audit-log/server";
 import { type AuditAction, auditActions, userAuditActions } from "~/lib/api/types";
+import { unknownValue } from "~/lib/utils";
 
 type ActivitySearch = { action?: AuditAction };
 
@@ -86,6 +87,8 @@ function Activity() {
         return entry.actorId?.startsWith("contact-verification-link:")
           ? "Enlace de verificación"
           : "Cetus";
+      default:
+        return unknownValue(entry.actorType);
     }
   }
 

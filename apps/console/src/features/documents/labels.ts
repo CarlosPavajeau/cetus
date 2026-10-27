@@ -6,6 +6,7 @@ import type {
   DocumentType,
   Environment,
 } from "~/lib/api/types";
+import { unknownValue, entryOf } from "~/lib/utils";
 
 export const documentTypeLabel: Record<DocumentType, string> = {
   INVOICE: "Factura",
@@ -125,11 +126,13 @@ export function describeEvent(event: DocumentEvent): { title: string; detail: st
       return { title: "Correo enviado al cliente", detail: event.message };
     case "DELIVERY_UPDATED":
       return {
-        title: `Correo ${deliveryStatusLabel[event.status as Delivery["status"]]?.toLowerCase() ?? event.status}`,
+        title: `Correo ${(event.status && entryOf(deliveryStatusLabel, event.status)?.toLowerCase()) ?? event.status}`,
         detail: event.message,
       };
     case "WEBHOOK_EVENT":
       return { title: "Webhook publicado", detail: event.message };
+    default:
+      return { title: unknownValue(event.kind), detail: event.message };
   }
 }
 

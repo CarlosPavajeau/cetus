@@ -1,5 +1,7 @@
 import { readFile } from "node:fs/promises";
 
+import { type } from "arktype";
+
 import type { TestOrganization } from "./organization";
 import { apiUrl, testCertificate } from "./stack";
 
@@ -35,7 +37,7 @@ export async function createIssuer(organization: TestOrganization, nit: string, 
       email: "facturas@emisores.test",
     }),
   });
-  return ((await response.json()) as { id: string }).id;
+  return type({ id: "string" }).assert(await response.json()).id;
 }
 
 /**
@@ -99,7 +101,7 @@ export async function createTestApiKey(organization: TestOrganization) {
     method: "POST",
     body: JSON.stringify({ name: "ERP", environment: "TEST" }),
   });
-  return ((await response.json()) as { secret: string }).secret;
+  return type({ secret: "string" }).assert(await response.json()).secret;
 }
 
 /** Issues an invoice through the integrator API, as an ERP would; returns its id and number. */
@@ -134,7 +136,7 @@ export async function issueInvoice(apiKey: string, issuerId: string, customerNam
   if (response.status !== 202) {
     throw new Error(`Issuing the invoice answered ${response.status}: ${await response.text()}`);
   }
-  return (await response.json()) as { id: string; number: string };
+  return type({ id: "string", number: "string" }).assert(await response.json());
 }
 
 /** Adds the range credit notes are numbered from, with no resolution, as the issuer page does. */
@@ -155,7 +157,7 @@ export async function waitForStatus(
   attemptsLeft = 60,
 ): Promise<string> {
   const response = await organization.api(`/console/documents/${documentId}`);
-  const { status } = (await response.json()) as { status: string };
+  const { status } = type({ status: "string" }).assert(await response.json());
   if (status !== "RECEIVED" && status !== "PROCESSING") {
     return status;
   }

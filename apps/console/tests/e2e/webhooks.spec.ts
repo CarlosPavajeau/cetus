@@ -1,3 +1,5 @@
+import { type } from "arktype";
+
 import {
   createTestApiKey,
   issueInvoice,
@@ -63,7 +65,7 @@ test("the deliveries of a document event show up in the endpoint's history", asy
     method: "POST",
     body: JSON.stringify({ url: "http://127.0.0.1:9/hook", environment: "TEST" }),
   });
-  const { endpoint } = (await created.json()) as { endpoint: { id: string } };
+  const { endpoint } = type({ endpoint: { id: "string" } }).assert(await created.json());
   const issuerId = await onboardIssuer(organization, uniqueNit(), "Avisos SAS", { testSet: false });
   const invoice = await issueInvoice(await createTestApiKey(organization), issuerId, "Cliente");
   expect(await waitForStatus(organization, invoice.id)).toBe("ACCEPTED");

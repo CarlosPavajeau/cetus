@@ -30,7 +30,7 @@ import { issuerName } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
-import type { Environment, Issuer } from "~/lib/api/types";
+import { type Environment, type Issuer, environments } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/issuers/")({
@@ -38,7 +38,9 @@ export const Route = createFileRoute("/_app/issuers/")({
   component: Issuers,
 });
 
-type EnvironmentFilter = Environment | "ALL";
+const environmentFilters = ["ALL", ...environments] as const;
+
+type EnvironmentFilter = (typeof environmentFilters)[number];
 
 function NewIssuer() {
   return (
@@ -103,7 +105,12 @@ function Issuers() {
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <Tabs
               value={environment}
-              onValueChange={(value) => setEnvironment(value as EnvironmentFilter)}
+              onValueChange={(value) => {
+                const next = environmentFilters.find((each) => each === value);
+                if (next) {
+                  setEnvironment(next);
+                }
+              }}
             >
               <TabsList className="gap-0.75">
                 <TabsTrigger value="ALL">

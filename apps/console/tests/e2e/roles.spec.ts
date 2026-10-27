@@ -2,12 +2,12 @@ import type { Page } from "@playwright/test";
 
 import { onboardIssuer, uniqueNit } from "../support/issuers";
 import { type TestOrganization, inviteMember, setMemberRole } from "../support/organization";
-import { consoleUrl } from "../support/stack";
+import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 async function signInAs(page: Page, person: TestOrganization) {
   await page.context().clearCookies();
-  await page.context().addCookies(person.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await page.context().addCookies(consoleCookies(person.cookies));
 }
 
 test("a plain member reads the keys, webhooks and issuers but changes none", async ({

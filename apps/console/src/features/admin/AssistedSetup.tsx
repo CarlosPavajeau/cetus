@@ -65,7 +65,9 @@ export function SoftwareDialog({ ids, issuer }: { ids: Ids; issuer: IssuerDetail
     try {
       await save.mutateAsync({ data: { ...ids, software } });
     } catch (error) {
-      form.setError("root", { message: (error as Error).message });
+      form.setError("root", {
+        message: error instanceof Error ? error.message : "No pudimos guardar el software.",
+      });
       return;
     }
     await invalidate();
@@ -132,7 +134,9 @@ export function RangeDialog({ ids, issuer }: { ids: Ids; issuer: IssuerDetail })
     try {
       await add.mutateAsync({ data: { ...ids, range } });
     } catch (error) {
-      form.setError("root", { message: (error as Error).message });
+      form.setError("root", {
+        message: error instanceof Error ? error.message : "No pudimos agregar el rango.",
+      });
       return;
     }
     await invalidate();

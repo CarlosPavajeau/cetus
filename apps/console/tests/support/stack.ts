@@ -31,3 +31,8 @@ export async function assertStackIsUp() {
     );
   }
 }
+
+/** Session cookies for the console, so a browser context signs in without the form. */
+export function consoleCookies(cookies: readonly { name: string; value: string }[]) {
+  return cookies.map((cookie) => ({ name: cookie.name, value: cookie.value, url: consoleUrl }));
+}

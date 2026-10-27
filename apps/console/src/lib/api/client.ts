@@ -55,7 +55,7 @@ function unwrap<R extends ApiResult>(result: R): SuccessData<R> {
       body.errors,
     );
   }
-  return result.data as SuccessData<R>;
+  return result.data;
 }
 
 /**
@@ -81,7 +81,7 @@ const publicClient = createClient<paths>({ baseUrl: env.CETUS_API_URL });
 
 publicClient.use({
   onRequest({ request }) {
-    const headers = new Headers(getRequestHeaders() as HeadersInit);
+    const headers = new Headers(getRequestHeaders());
     for (const [name, value] of Object.entries(clientOriginHeaders(headers))) {
       request.headers.set(name, value);
     }
@@ -100,7 +100,7 @@ export const publicApi = {
 };
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const headers = new Headers(getRequestHeaders() as HeadersInit);
+  const headers = new Headers(getRequestHeaders());
   const { token } = await auth.api.getToken({ headers });
   return { Authorization: `Bearer ${token}`, ...clientOriginHeaders(headers) };
 }

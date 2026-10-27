@@ -26,7 +26,7 @@ export function SetupProgress({
       </p>
       <ol className="flex gap-1.5">
         {steps.map((step, index) => {
-          const number = (index + 1) as Step;
+          const { number } = step;
           const isCurrent = number === current;
           const status = isCurrent ? "En este paso" : completed[index] ? "Completado" : "Pendiente";
           const label = `${number}. ${step.title} · ${status}`;

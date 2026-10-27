@@ -32,7 +32,7 @@ const places: Place[] = departments
       label: `${municipality.name}, ${department.name}`,
     })),
   )
-  .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  .toSorted((a, b) => a.name.localeCompare(b.name, "es"));
 
 /**
  * The customer's municipality, searched by name across the country. Picking one fills in its DANE code and

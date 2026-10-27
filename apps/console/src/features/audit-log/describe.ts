@@ -1,5 +1,6 @@
 import { conceptLabel } from "~/features/documents/labels";
 import type { AuditEntry } from "~/lib/api/types";
+import { unknownValue } from "~/lib/utils";
 
 import { dayFormat, timeFormat } from "./labels";
 
@@ -122,5 +123,7 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${label(contactCategoryLabel, data.category)} · ${data.previous ? `${text(data.previous)} → ` : ""}${text(data.email)}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":
       return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
+    default:
+      return unknownValue(entry.action);
   }
 }

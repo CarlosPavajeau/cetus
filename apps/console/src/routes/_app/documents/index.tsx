@@ -112,7 +112,7 @@ function FilterSelect({
     <Select
       items={items}
       value={value ?? "ALL"}
-      onValueChange={(next) => onChange(next === "ALL" || next === null ? undefined : String(next))}
+      onValueChange={(next) => onChange(next === "ALL" || next === null ? undefined : next)}
     >
       <SelectTrigger aria-label={label} className="min-w-40">
         <SelectValue />
@@ -210,13 +210,15 @@ function Documents() {
               items={typeItems}
               value={filters.type}
               label="Tipo de documento"
-              onChange={(value) => update({ type: value as DocumentFilters["type"] })}
+              onChange={(value) => update({ type: documentTypes.find((each) => each === value) })}
             />
             <FilterSelect
               items={statusItems}
               value={filters.status}
               label="Estado"
-              onChange={(value) => update({ status: value as DocumentFilters["status"] })}
+              onChange={(value) =>
+                update({ status: documentStatuses.find((each) => each === value) })
+              }
             />
             <IssueDateFilter from={filters.from} to={filters.to} onChange={update} />
             {/* Keyed by the applied text, so going back in history resets the box. */}

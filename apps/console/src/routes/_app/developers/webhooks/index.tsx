@@ -28,7 +28,7 @@ import { CreateWebhookEndpoint } from "~/features/webhooks/CreateWebhookEndpoint
 import { eventTypesSummary } from "~/features/webhooks/labels";
 import { webhookEndpointsQuery, webhookEventTypesQuery } from "~/features/webhooks/queries";
 import { WebhookStatusBadge } from "~/features/webhooks/WebhookStatusBadge";
-import type { Environment, WebhookEndpoint } from "~/lib/api/types";
+import { type Environment, type WebhookEndpoint, environments } from "~/lib/api/types";
 
 export const Route = createFileRoute("/_app/developers/webhooks/")({
   loader: ({ context: { queryClient } }) =>
@@ -39,7 +39,9 @@ export const Route = createFileRoute("/_app/developers/webhooks/")({
   component: Webhooks,
 });
 
-type EnvironmentFilter = Environment | "ALL";
+const environmentFilters = ["ALL", ...environments] as const;
+
+type EnvironmentFilter = (typeof environmentFilters)[number];
 
 function Webhooks() {
   const { data: endpoints } = useSuspenseQuery(webhookEndpointsQuery);
@@ -86,7 +88,12 @@ function Webhooks() {
         <section className="flex flex-col gap-4" aria-label="Tus webhooks">
           <Tabs
             value={environment}
-            onValueChange={(value) => setEnvironment(value as EnvironmentFilter)}
+            onValueChange={(value) => {
+              const next = environmentFilters.find((each) => each === value);
+              if (next) {
+                setEnvironment(next);
+              }
+            }}
           >
             <TabsList className="gap-0.75">
               <TabsTrigger value="ALL">

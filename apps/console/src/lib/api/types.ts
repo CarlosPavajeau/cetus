@@ -70,6 +70,9 @@ export type ProductRequest = Schemas["ProductRequest"];
 
 export type DocumentFile = "xml" | "pdf" | "attached-document";
 
+/** Runtime list for the environment filters. Must list every value of the API enum. */
+export const environments = ["SANDBOX", "TEST", "LIVE"] as const satisfies readonly Environment[];
+
 /** Runtime lists for the document filters and their validators. Must list every value of the API enums. */
 export const documentTypes = [
   "INVOICE",
@@ -162,6 +165,10 @@ export const userAuditActions = [
 type MissingAuditActions = Exclude<AuditAction, (typeof auditActions)[number]>;
 const _allAuditActionsListed: MissingAuditActions extends never ? true : MissingAuditActions = true;
 void _allAuditActionsListed;
+
+type MissingEnvironments = Exclude<Environment, (typeof environments)[number]>;
+const _allEnvironmentsListed: MissingEnvironments extends never ? true : MissingEnvironments = true;
+void _allEnvironmentsListed;
 
 type MissingDocumentTypes = Exclude<DocumentType, (typeof documentTypes)[number]>;
 const _allDocumentTypesListed: MissingDocumentTypes extends never ? true : MissingDocumentTypes =

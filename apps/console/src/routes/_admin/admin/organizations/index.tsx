@@ -21,6 +21,7 @@ import { accountStatusLabel } from "~/features/admin/labels";
 import { adminAccountsQuery } from "~/features/admin/queries";
 import { type AccountStatus, accountStatuses } from "~/features/admin/schema";
 import { dayFormat } from "~/features/audit-log/labels";
+import { entryOf } from "~/lib/utils";
 
 type OrganizationsSearch = { status?: AccountStatus; q?: string };
 
@@ -67,7 +68,7 @@ function Organizations() {
               navigate({
                 search: (prev) => ({
                   ...prev,
-                  status: value === "ALL" ? undefined : (value as AccountStatus),
+                  status: accountStatuses.find((each) => each === value),
                 }),
               })
             }
@@ -143,8 +144,8 @@ function Organizations() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusVariant[account.status as AccountStatus] ?? "outline"}>
-                        {accountStatusLabel[account.status as AccountStatus] ?? account.status}
+                      <Badge variant={entryOf(statusVariant, account.status) ?? "outline"}>
+                        {entryOf(accountStatusLabel, account.status) ?? account.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">

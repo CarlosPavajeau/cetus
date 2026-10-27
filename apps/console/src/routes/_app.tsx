@@ -70,7 +70,7 @@ import { requireMembership } from "~/features/session/guard";
 import { OrganizationSwitcher } from "~/features/session/OrganizationSwitcher";
 import { authClient } from "~/lib/auth/client";
 import { docsUrl } from "~/lib/docs";
-import { cn } from "~/lib/utils";
+import { cn, crumbOf } from "~/lib/utils";
 
 /** Protected layout: every child route requires a session. */
 export const Route = createFileRoute("/_app")({
@@ -158,7 +158,7 @@ function AppLayout() {
   const crumb = useMatches({
     select: (matches) =>
       matches.reduce<string | undefined>(
-        (found, match) => (match.loaderData as { crumb?: string } | undefined)?.crumb ?? found,
+        (found, match) => crumbOf(match.loaderData) ?? found,
         undefined,
       ),
   });
