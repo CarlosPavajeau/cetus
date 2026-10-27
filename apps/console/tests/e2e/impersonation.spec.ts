@@ -1,6 +1,6 @@
 import { createOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
-import { consoleUrl } from "../support/stack";
+import { consoleCookies, consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 test("an admin sees the console as a person, without touching their credentials, and comes back", async ({
@@ -10,7 +10,7 @@ test("an admin sees the console as a person, without touching their credentials,
   const name = `Asistida ${crypto.randomUUID().slice(0, 8)} SAS`;
   const customer = await createOrganization(name);
   const admin = await createPlatformStaff("admin");
-  await context.addCookies(admin.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await context.addCookies(consoleCookies(admin.cookies));
 
   await open(page, `/admin/users?q=${encodeURIComponent(customer.email)}`);
   await page.getByRole("link", { name: /Persona de pruebas/ }).click();

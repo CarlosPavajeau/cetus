@@ -68,7 +68,9 @@ export function NumberingStep({
     try {
       await add.mutateAsync({ data: { id: issuer.id, range: values } });
     } catch (error) {
-      form.setError("root", { message: (error as Error).message });
+      form.setError("root", {
+        message: error instanceof Error ? error.message : "No pudimos agregar el rango.",
+      });
       return;
     }
     await onSaved();

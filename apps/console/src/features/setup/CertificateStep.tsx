@@ -44,7 +44,9 @@ export function CertificateStep({
     try {
       await upload.mutateAsync({ data: { id: issuer.id, certificate: values } });
     } catch (error) {
-      form.setError("root", { message: (error as Error).message });
+      form.setError("root", {
+        message: error instanceof Error ? error.message : "No pudimos guardar el certificado.",
+      });
       return;
     }
     await onSaved();

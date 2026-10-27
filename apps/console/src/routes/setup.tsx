@@ -20,7 +20,13 @@ import { IssuerStep } from "~/features/setup/IssuerStep";
 import { NumberingStep } from "~/features/setup/NumberingStep";
 import { SetupProgress } from "~/features/setup/SetupProgress";
 import { SoftwareStep } from "~/features/setup/SoftwareStep";
-import { type Step, completedSteps, firstIncompleteStep } from "~/features/setup/steps";
+import {
+  type Step,
+  clampStep,
+  completedSteps,
+  firstIncompleteStep,
+  steps,
+} from "~/features/setup/steps";
 import type { IssuerDetail } from "~/lib/api/types";
 import { docsUrl } from "~/lib/docs";
 import { uuidPattern } from "~/lib/utils";
@@ -35,10 +41,10 @@ type SetupSearch = { step?: Step; issuerId?: string; new?: true };
  */
 export const Route = createFileRoute("/setup")({
   validateSearch: (search): SetupSearch => {
-    const step = Number(search.step);
+    const step = steps.find((each) => each.number === Number(search.step))?.number;
     const issuerId = typeof search.issuerId === "string" ? search.issuerId : "";
     return {
-      ...([1, 2, 3, 4].includes(step) && { step: step as Step }),
+      ...(step && { step }),
       ...(uuidPattern.test(issuerId)
         ? { issuerId }
         : (search.new === true || search.new === "true") && { new: true as const }),
@@ -163,7 +169,7 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
   const queryClient = useQueryClient();
   const reachable = firstIncompleteStep(issuer);
   // A step ahead of the first missing piece cannot be filled yet.
-  const step = Math.min(search.step ?? reachable, reachable) as Step;
+  const step = clampStep(Math.min(search.step ?? reachable, reachable));
 
   function goTo(next: Step, issuerId = issuer?.id) {
     return navigate({ search: { issuerId, step: next } });
@@ -174,7 +180,7 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
       // A new organization without issuers has nowhere else to go: the overview sends it back here.
       void navigate({ to: issuer || search.new ? "/issuers" : "/overview" });
     } else {
-      void goTo((step - 1) as Step);
+      void goTo(clampStep(step - 1));
     }
   }
 
@@ -193,7 +199,7 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
       await queryClient.invalidateQueries({ queryKey: issuersQuery.queryKey, exact: true });
     }
     // The URL names the issuer from now on, so a reload resumes this one and not another.
-    await goTo(Math.min(step + 1, 4) as Step, issuerId);
+    await goTo(clampStep(step + 1), issuerId);
   }
 
   return (

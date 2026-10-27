@@ -23,7 +23,7 @@ import { accountStatuses, planChangeSchema, statusChangeSchema } from "./schema"
  * before reading Better Auth's tables. The API checks it again from the JWT's `groups`.
  */
 export const requireStaff = createServerOnlyFn(async (only?: PlatformRole) => {
-  const headers = new Headers(getRequestHeaders() as HeadersInit);
+  const headers = new Headers(getRequestHeaders());
   const session = await auth.api.getSession({ headers });
   const role = platformRole(session?.user.role);
   if (
@@ -126,7 +126,13 @@ export const getAdminAccount = createServerFn({ method: "GET" })
     const emails = await emailsOf(detail.statusChangedBy ? [detail.statusChangedBy] : []);
     return {
       ...detail,
-      members: members.map((row) => ({ ...row, banned: Boolean(row.banned) })),
+      members: members.map(({ userId, name, email, role, banned }) => ({
+        userId,
+        name,
+        email,
+        role,
+        banned: Boolean(banned),
+      })),
       statusChangedByEmail: detail.statusChangedBy
         ? (emails.get(detail.statusChangedBy) ?? null)
         : null,

@@ -1,3 +1,4 @@
+import { type } from "arktype";
 import { describe, expect, test } from "vite-plus/test";
 
 import { createOrganization } from "../support/organization";
@@ -49,10 +50,12 @@ describe("console tokens in the API", () => {
       body: JSON.stringify(issuer),
     });
     expect(created.status).toBe(200);
-    const { id } = (await created.json()) as { id: string };
+    const { id } = type({ id: "string" }).assert(await created.json());
 
     // The other organization only has the sandbox sample every account starts with.
-    const visible = (await (await other.api("/console/issuers")).json()) as { id: string }[];
+    const visible = type({ id: "string" })
+      .array()
+      .assert(await (await other.api("/console/issuers")).json());
     expect(visible.map((each) => each.id)).not.toContain(id);
     expect((await other.api(`/console/issuers/${id}`)).status).toBe(404);
     const { environment: _, nit: __, ...update } = issuer;

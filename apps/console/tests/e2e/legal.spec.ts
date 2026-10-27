@@ -9,16 +9,16 @@ const currentConsents = [
   { document: "terms", version: legalDocuments.terms.version },
 ];
 
-test("the legal documents open without a session", async ({ page }) => {
-  for (const [path, title] of [
-    ["/legal/terminos", "Términos de servicio"],
-    ["/legal/privacidad", "Política de tratamiento de datos personales"],
-    ["/legal/encargo", "Acuerdo de encargo de datos personales"],
-  ] as const) {
+for (const [path, title] of [
+  ["/legal/terminos", "Términos de servicio"],
+  ["/legal/privacidad", "Política de tratamiento de datos personales"],
+  ["/legal/encargo", "Acuerdo de encargo de datos personales"],
+] as const) {
+  test(`${path} opens without a session`, async ({ page }) => {
     await open(page, path);
     await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
-  }
-});
+  });
+}
 
 test("signing up takes accepting the terms, and records the versions accepted", async ({
   page,

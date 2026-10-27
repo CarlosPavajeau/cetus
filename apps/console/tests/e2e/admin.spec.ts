@@ -3,12 +3,12 @@ import { type BrowserContext } from "@playwright/test";
 import { createTestApiKey } from "../support/issuers";
 import { type TestOrganization, createOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
-import { apiUrl, consoleUrl } from "../support/stack";
+import { apiUrl, consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 async function signIn(context: BrowserContext, who: TestOrganization) {
   await context.clearCookies();
-  await context.addCookies(who.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await context.addCookies(consoleCookies(who.cookies));
 }
 
 test("an admin suspends an account: its keys stop and its console turns read-only", async ({

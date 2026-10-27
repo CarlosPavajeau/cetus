@@ -27,6 +27,7 @@ import type { AdminActivityEntry } from "~/features/admin/server";
 import { describeEntry } from "~/features/audit-log/describe";
 import { actionLabel, actorTypeLabel, dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { type AuditAction, auditActions } from "~/lib/api/types";
+import { unknownValue } from "~/lib/utils";
 
 type AuditSearch = { accountId?: string; action?: AuditAction };
 
@@ -60,6 +61,8 @@ function actor(entry: AdminActivityEntry): string {
       return `Llave ${entry.actorId ?? ""}`;
     case "SYSTEM":
       return "Cetus";
+    default:
+      return unknownValue(entry.actorType);
   }
 }
 

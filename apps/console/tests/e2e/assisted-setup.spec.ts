@@ -1,7 +1,7 @@
 import { createIssuer, uniqueNit } from "../support/issuers";
 import { createOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
-import { consoleUrl, testCertificate } from "../support/stack";
+import { consoleCookies, consoleUrl, testCertificate } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 test("support sets up an issuer and the customer uploads the certificate through a one-time link", async ({
@@ -13,7 +13,7 @@ test("support sets up an issuer and the customer uploads the certificate through
   const customer = await createOrganization(name);
   await createIssuer(customer, uniqueNit(), "Emisor Acompañado SAS");
   const support = await createPlatformStaff("support");
-  await context.addCookies(support.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await context.addCookies(consoleCookies(support.cookies));
 
   await open(page, `/admin/organizations?q=${encodeURIComponent(name)}`);
   await page.getByRole("link", { name }).click();
@@ -62,7 +62,7 @@ test("support sets up an issuer and the customer uploads the certificate through
   await expect(page.getByText("Sin certificado.")).toHaveCount(0);
 
   await context.clearCookies();
-  await context.addCookies(customer.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await context.addCookies(consoleCookies(customer.cookies));
   await open(page, "/activity?action=CERTIFICATE_UPLOAD_LINK_CREATED");
   await expect(
     page.getByRole("row", { name: /Enlace de carga de certificado enviado/ }),

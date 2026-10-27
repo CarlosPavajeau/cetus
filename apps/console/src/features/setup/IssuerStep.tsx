@@ -68,7 +68,9 @@ export function IssuerStep({
         await onSaved(issuer.id);
       }
     } catch (error) {
-      form.setError("root", { message: (error as Error).message });
+      form.setError("root", {
+        message: error instanceof Error ? error.message : "No pudimos guardar el emisor.",
+      });
     }
   });
 
@@ -113,7 +115,12 @@ export function IssuerStep({
           <FieldSection title="Punto de partida">
             <RadioGroup
               value={environment}
-              onValueChange={(value) => setEnvironment(value as DianEnvironment)}
+              onValueChange={(value) => {
+                const next = startingPoints.find((option) => option.value === value);
+                if (next) {
+                  setEnvironment(next.value);
+                }
+              }}
               className="sm:grid-cols-2"
             >
               {startingPoints.map((option) => (

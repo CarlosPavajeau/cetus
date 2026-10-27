@@ -1,3 +1,5 @@
+import { type } from "arktype";
+
 import {
   addCreditNoteRange,
   addRange,
@@ -76,7 +78,7 @@ test("a production invoice asks for confirmation before it is issued", async ({
   const promoted = await organization.api(`/console/issuers/${testIssuerId}/promote`, {
     method: "POST",
   });
-  const { id: liveIssuerId } = (await promoted.json()) as { id: string };
+  const { id: liveIssuerId } = type({ id: "string" }).assert(await promoted.json());
   await addRange(organization, liveIssuerId, "FE");
 
   await open(page, "/documents/new");

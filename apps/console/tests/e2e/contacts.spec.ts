@@ -1,5 +1,5 @@
 import { inviteMember, setMemberRole } from "../support/organization";
-import { consoleUrl } from "../support/stack";
+import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 test("every category waits for the owner to confirm their address, and can point elsewhere", async ({
@@ -59,9 +59,7 @@ test("only the organization's owners and admins change the contacts", async ({
   expect(await refused.json()).toMatchObject({ code: "organization_role_forbidden" });
 
   await page.context().clearCookies();
-  await page
-    .context()
-    .addCookies(colleague.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await page.context().addCookies(consoleCookies(colleague.cookies));
   await open(page, "/settings/contacts");
   await expect(page.getByText("Solo lectura")).toBeVisible();
   await expect(page.getByText(owner.email).first()).toBeVisible();

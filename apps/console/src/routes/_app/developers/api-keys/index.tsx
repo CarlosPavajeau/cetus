@@ -79,7 +79,7 @@ import { createApiKey } from "~/features/api-keys/server";
 import { ReadOnlyNotice } from "~/features/session/ReadOnlyNotice";
 import { useImpersonation } from "~/features/session/useImpersonation";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
-import type { ApiKey, Environment } from "~/lib/api/types";
+import { type ApiKey, type Environment, environments } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/developers/api-keys/")({
@@ -115,7 +115,9 @@ const environmentItems: { label: string; value: Environment }[] = [
   { label: "Producción", value: "LIVE" },
 ];
 
-type EnvironmentFilter = Environment | "ALL";
+const environmentFilters = ["ALL", ...environments] as const;
+
+type EnvironmentFilter = (typeof environmentFilters)[number];
 type StatusFilter = "ALL" | "ACTIVE" | "REVOKED";
 
 const statusFilterItems: { label: string; value: StatusFilter }[] = [
@@ -174,7 +176,12 @@ function ApiKeys() {
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <Tabs
               value={environment}
-              onValueChange={(value) => setEnvironment(value as EnvironmentFilter)}
+              onValueChange={(value) => {
+                const next = environmentFilters.find((each) => each === value);
+                if (next) {
+                  setEnvironment(next);
+                }
+              }}
             >
               <TabsList className="gap-0.75">
                 <TabsTrigger value="ALL">
@@ -214,7 +221,12 @@ function ApiKeys() {
                     <DropdownMenuLabel>Estado</DropdownMenuLabel>
                     <DropdownMenuRadioGroup
                       value={status}
-                      onValueChange={(value) => setStatus(value as StatusFilter)}
+                      onValueChange={(value) => {
+                        const next = statusFilterItems.find((item) => item.value === value);
+                        if (next) {
+                          setStatus(next.value);
+                        }
+                      }}
                     >
                       {statusFilterItems.map((item) => (
                         <DropdownMenuRadioItem key={item.value} value={item.value}>

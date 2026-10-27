@@ -1,6 +1,6 @@
 import { createOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
-import { consoleUrl } from "../support/stack";
+import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 test("an admin bans a person: they lose their session at once and cannot sign in until unbanned", async ({
@@ -10,13 +10,11 @@ test("an admin bans a person: they lose their session at once and cannot sign in
 }) => {
   const customer = await createOrganization("Bloqueada SAS");
   const admin = await createPlatformStaff("admin");
-  await context.addCookies(admin.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await context.addCookies(consoleCookies(admin.cookies));
 
   // The customer is signed in, in their own browser.
   const customerContext = await browser.newContext();
-  await customerContext.addCookies(
-    customer.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })),
-  );
+  await customerContext.addCookies(consoleCookies(customer.cookies));
   const customerPage = await customerContext.newPage();
   await open(customerPage, "/activity");
   await expect(customerPage.getByRole("heading", { name: "Registro de actividad" })).toBeVisible();
@@ -63,7 +61,7 @@ test("the Cetus team cannot be banned, and support cannot ban anyone", async ({
 }) => {
   const support = await createPlatformStaff("support");
   const customer = await createOrganization();
-  await context.addCookies(support.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await context.addCookies(consoleCookies(support.cookies));
 
   await open(page, `/admin/users?q=${encodeURIComponent(customer.email)}`);
   await page.getByRole("link", { name: /Persona de pruebas/ }).click();
@@ -72,7 +70,7 @@ test("the Cetus team cannot be banned, and support cannot ban anyone", async ({
 
   const admin = await createPlatformStaff("admin");
   await context.clearCookies();
-  await context.addCookies(admin.cookies.map((cookie) => ({ ...cookie, url: consoleUrl })));
+  await context.addCookies(consoleCookies(admin.cookies));
   await open(page, `/admin/users?q=${encodeURIComponent(support.email)}`);
   await page.getByRole("link", { name: /Persona de pruebas/ }).click();
   await expect(page.getByText("Soporte Cetus")).toBeVisible();

@@ -43,7 +43,9 @@ export function SoftwareStep({
       try {
         await save.mutateAsync({ data: { id: issuer.id, software: values } });
       } catch (error) {
-        form.setError("root", { message: (error as Error).message });
+        form.setError("root", {
+          message: error instanceof Error ? error.message : "No pudimos guardar el software.",
+        });
         return;
       }
     }
