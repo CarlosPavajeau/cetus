@@ -2,6 +2,7 @@ import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
 export default defineConfig({
@@ -11,6 +12,7 @@ export default defineConfig({
   plugins: lazyPlugins(() => [
     tailwindcss(),
     tanstackStart(),
+    nitro(),
     viteReact(),
     // Last. Uploads hidden source maps and deletes them from the build; without SENTRY_AUTH_TOKEN it skips
     // the upload. Railway passes these to the Docker build (apps/console/Dockerfile).
@@ -73,6 +75,7 @@ export default defineConfig({
     ],
     ignorePatterns: [
       "dist/**",
+      ".output/**",
       ".tanstack/**",
       "src/routeTree.gen.ts",
       "src/lib/api/schema.d.ts",
@@ -95,6 +98,7 @@ export default defineConfig({
       "src/routeTree.gen.ts",
       "src/lib/api/schema.d.ts",
       "src/lib/auth/schema.ts",
+      ".output/**",
       "auth-migrations/**",
       "pnpm-lock.yaml",
     ],
