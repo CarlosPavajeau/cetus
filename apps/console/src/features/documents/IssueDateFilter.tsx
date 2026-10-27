@@ -12,6 +12,13 @@ import { formatDay } from "./labels";
 
 const isoFormat = "yyyy-MM-dd";
 
+function toIso(range: DateRange | undefined) {
+  return {
+    from: range?.from ? format(range.from, isoFormat) : undefined,
+    to: range?.to ? format(range.to, isoFormat) : undefined,
+  };
+}
+
 /** Issue date range, as ISO dates; either end may be open. */
 export function IssueDateFilter({
   from,
@@ -23,9 +30,11 @@ export function IssueDateFilter({
   onChange: (range: { from?: string; to?: string }) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const selected: DateRange | undefined = from
+  const applied: DateRange | undefined = from
     ? { from: parseISO(from), to: to ? parseISO(to) : undefined }
     : undefined;
+  // The range is applied when the popover closes, so picking both ends filters only once.
+  const [draft, setDraft] = useState<DateRange>();
   const label =
     from && to
       ? `${formatDay(from)} – ${formatDay(to)}`
@@ -37,7 +46,21 @@ export function IssueDateFilter({
 
   return (
     <div className="flex items-center gap-1">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (next) {
+            setDraft(applied);
+            return;
+          }
+          const picked = toIso(draft);
+          const current = toIso(applied);
+          if (picked.from !== current.from || picked.to !== current.to) {
+            onChange(picked);
+          }
+        }}
+      >
         <PopoverTrigger render={<Button variant="outline" className="font-normal" />}>
           <CalendarIcon data-icon="inline-start" className="text-muted-foreground" />
           {label}
@@ -48,17 +71,9 @@ export function IssueDateFilter({
             mode="range"
             locale={es}
             numberOfMonths={2}
-            selected={selected}
-            defaultMonth={selected?.from}
-            onSelect={(range) => {
-              onChange({
-                from: range?.from ? format(range.from, isoFormat) : undefined,
-                to: range?.to ? format(range.to, isoFormat) : undefined,
-              });
-              if (range?.from && range.to) {
-                setOpen(false);
-              }
-            }}
+            selected={draft}
+            defaultMonth={draft?.from}
+            onSelect={setDraft}
           />
         </PopoverContent>
       </Popover>
