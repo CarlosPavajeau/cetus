@@ -1,9 +1,11 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
-import { FieldDescription } from "~/components/ui/field";
+import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
+import { dayFormat } from "~/features/audit-log/labels";
 import type { IssuerDetail } from "~/lib/api/types";
 
 import { DateField, SecretField, TextField } from "./fields";
@@ -54,12 +56,12 @@ export function NumberingStep({
   onBack: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const habilitacion = issuer.environment === "TEST";
   const add = useMutation({ mutationFn: addNumberingRange });
+  const [editingRange, setEditingRange] = useState(false);
   const form = useForm({
-    resolver: arktypeResolver(
-      issuer.environment === "TEST" ? habilitacionNumberingSchema : numberingSchema,
-    ),
-    defaultValues: issuer.environment === "TEST" ? habilitacionRange : emptyRange,
+    resolver: arktypeResolver(habilitacion ? habilitacionNumberingSchema : numberingSchema),
+    defaultValues: habilitacion ? habilitacionRange : emptyRange,
   });
   const range = useWatch({ control: form.control });
   const { isSubmitting, errors } = form.formState;
@@ -77,102 +79,161 @@ export function NumberingStep({
   });
 
   const prefix = range.prefix?.toUpperCase() ?? "";
+  // A rejected range opens its fields, or the error would stay hidden behind the summary.
+  const rangeOpen =
+    editingRange || Object.keys(errors).some((key) => key !== "technicalKey" && key !== "root");
+  const technicalKey = (
+    <SecretField
+      control={form.control}
+      name="technicalKey"
+      label="Clave técnica"
+      optional={!habilitacion}
+      hint={habilitacion ? technicalKeyHint.TEST : technicalKeyHint.LIVE}
+    />
+  );
+  const rangeFields = (
+    <>
+      <FieldRow className="sm:grid-cols-2">
+        <TextField
+          control={form.control}
+          name="resolutionNumber"
+          label="Número de resolución"
+          inputMode="numeric"
+        />
+        <DateField control={form.control} name="resolutionDate" label="Fecha de resolución" />
+      </FieldRow>
+      <FieldRow>
+        <TextField control={form.control} name="prefix" label="Prefijo" autoComplete="off" />
+        <TextField control={form.control} name="from" label="Número inicial" inputMode="numeric" />
+        <TextField control={form.control} name="to" label="Número final" inputMode="numeric" />
+      </FieldRow>
+      <FieldRow className="sm:grid-cols-2">
+        <DateField control={form.control} name="validFrom" label="Vigencia desde" />
+        <DateField control={form.control} name="validTo" label="Vigencia hasta" />
+      </FieldRow>
+    </>
+  );
+
   return (
     <StepLayout
       step={4}
-      lead="Registra la resolución y el rango de numeración que utilizará este emisor."
+      lead={
+        habilitacion
+          ? "La DIAN asigna a todo set de pruebas el mismo rango de numeración. Solo te falta copiar su clave técnica."
+          : "Registra la resolución de facturación que la DIAN autorizó para este emisor."
+      }
       error={errors.root?.message}
       submitting={isSubmitting}
       onSubmit={onSubmit}
       onBack={onBack}
       guide={
         <>
-          <div className="flex flex-col gap-4 rounded-lg border bg-card p-5">
-            <p className="text-sm font-medium">Tu rango de numeración</p>
-            <p className="text-2xs text-muted-foreground">Factura electrónica · INVOICE</p>
-            <div className="flex flex-col gap-1.5 tabular-nums">
-              <p className="text-[17px]">
-                {prefix} {range.from || "—"}
+          {!habilitacion && (
+            <div className="flex flex-col gap-4 rounded-lg border bg-card p-5">
+              <p className="text-base font-medium">Tus facturas se numerarán</p>
+              <div className="flex flex-col gap-1.5 tabular-nums">
+                <p className="text-lg">
+                  {prefix} {range.from || "—"}
+                </p>
+                <p className="text-xs text-muted-foreground">hasta</p>
+                <p className="text-lg">
+                  {prefix} {range.to || "—"}
+                </p>
+              </div>
+              <div className="h-px bg-border" />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Resolución {range.resolutionNumber || "—"}
               </p>
-              <p className="text-2xs text-muted-foreground">hasta</p>
-              <p className="text-[17px]">
-                {prefix} {range.to || "—"}
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Vigencia: {isoDay(range.validFrom)} a {isoDay(range.validTo)}
               </p>
             </div>
-            <div className="h-px bg-border" />
-            <p className="text-2xs leading-relaxed text-muted-foreground">
-              Resolución {range.resolutionNumber || "—"}
-            </p>
-            <p className="text-2xs leading-relaxed text-muted-foreground">
-              Vigencia: {range.validFrom || "—"} a {range.validTo || "—"}
-            </p>
-          </div>
-          <StepGuide
-            title="Antes de finalizar"
-            lead="Compara estos datos con tu resolución de numeración."
-            tips={[
-              {
-                title: "Revisa el rango completo",
-                text: "Confirma el prefijo, los números inicial y final y las fechas de vigencia.",
-              },
-            ]}
-            note="Guardar conserva la configuración en Cetus. No confirma la autorización ni la validación de la DIAN."
-          />
+          )}
+          {habilitacion ? (
+            <StepGuide
+              title="¿Dónde está la clave técnica?"
+              lead="En el portal de habilitación de la DIAN, con el mismo usuario del paso 2."
+              numbered
+              tips={[
+                {
+                  title: "Abre tu software",
+                  text: "Busca el software que asociaste en «Configurar modos de operación».",
+                },
+                {
+                  title: "Consulta su rango de numeración",
+                  text: "Junto al rango con prefijo SETP aparece la clave técnica: una cadena larga de letras y números. Cópiala completa.",
+                },
+              ]}
+              note="Guardar conserva la configuración en Cetus. Al terminar, envías el set de pruebas desde la página del emisor."
+            />
+          ) : (
+            <StepGuide
+              title="Antes de finalizar"
+              lead="Compara estos datos con tu resolución de numeración."
+              tips={[
+                {
+                  title: "Revisa el rango completo",
+                  text: "Confirma el prefijo, los números inicial y final y las fechas de vigencia.",
+                },
+              ]}
+              note="Guardar conserva la configuración en Cetus. No confirma la autorización ni la validación de la DIAN."
+            />
+          )}
         </>
       }
     >
-      <FieldSection title="Resolución">
-        <div className="flex flex-col gap-1.75">
-          <p className="text-xs font-medium">Tipo de documento</p>
-          <div className="flex h-9 items-center gap-2.5 rounded-lg border px-3">
-            <span
-              className="flex size-3.25 items-center justify-center rounded-full border border-primary"
-              aria-hidden
-            >
-              <span className="size-1.25 rounded-full bg-primary" />
-            </span>
-            <span className="text-xs">Factura electrónica</span>
-          </div>
-          <FieldDescription className="text-[10px]">Código del documento: INVOICE</FieldDescription>
-        </div>
-        <FieldRow className="sm:grid-cols-2">
-          <TextField
-            control={form.control}
-            name="resolutionNumber"
-            label="Número de resolución"
-            inputMode="numeric"
-          />
-          <DateField control={form.control} name="resolutionDate" label="Fecha de resolución" />
-        </FieldRow>
-      </FieldSection>
-
-      <Separator />
-
-      <FieldSection title="Rango y vigencia">
-        <FieldRow>
-          <TextField control={form.control} name="prefix" label="Prefijo" autoComplete="off" />
-          <TextField
-            control={form.control}
-            name="from"
-            label="Número inicial"
-            inputMode="numeric"
-          />
-          <TextField control={form.control} name="to" label="Número final" inputMode="numeric" />
-        </FieldRow>
-        <FieldRow className="sm:grid-cols-2">
-          <DateField control={form.control} name="validFrom" label="Vigencia desde" />
-          <DateField control={form.control} name="validTo" label="Vigencia hasta" />
-        </FieldRow>
-      </FieldSection>
-
-      <Separator />
-
-      <SecretField
-        control={form.control}
-        name="technicalKey"
-        label={issuer.environment === "TEST" ? "Clave técnica" : "Clave técnica (opcional)"}
-        hint={issuer.environment === "TEST" ? technicalKeyHint.TEST : technicalKeyHint.LIVE}
-      />
+      {habilitacion ? (
+        <>
+          <FieldSection
+            title="Clave técnica del set de pruebas"
+            lead="Es el único dato que cambia de un software a otro."
+          >
+            {technicalKey}
+          </FieldSection>
+          <Separator />
+          <FieldSection
+            title="Rango del set de pruebas"
+            lead="Asignado por la DIAN a todos los sets de pruebas. No necesitas cambiarlo."
+          >
+            {rangeOpen ? (
+              rangeFields
+            ) : (
+              <div className="flex flex-col gap-4 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+                  <RangeItem label="Resolución" value={range.resolutionNumber} />
+                  <RangeItem label="Prefijo" value={prefix} />
+                  <RangeItem label="Números" value={`${range.from} a ${range.to}`} />
+                </dl>
+                <Button type="button" variant="ghost" onClick={() => setEditingRange(true)}>
+                  Editar rango
+                </Button>
+              </div>
+            )}
+          </FieldSection>
+        </>
+      ) : (
+        <>
+          <FieldSection title="Resolución de facturación" lead="Para facturas electrónicas.">
+            {rangeFields}
+          </FieldSection>
+          <Separator />
+          {technicalKey}
+        </>
+      )}
     </StepLayout>
+  );
+}
+
+/** A YYYY-MM-DD from the form, as the certificate step shows dates. Noon UTC is the same day in Bogotá. */
+function isoDay(value: string | undefined) {
+  return value ? dayFormat.format(new Date(`${value}T12:00:00Z`)) : "—";
+}
+
+function RangeItem({ label, value }: { label: string; value: string | undefined }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="tabular-nums">{value || "—"}</dd>
+    </div>
   );
 }

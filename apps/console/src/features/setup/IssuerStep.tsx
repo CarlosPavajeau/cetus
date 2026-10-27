@@ -1,42 +1,17 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-  FieldTitle,
-} from "~/components/ui/field";
-import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import { Separator } from "~/components/ui/separator";
-import type { DianEnvironment, IssuerDetail } from "~/lib/api/types";
+import type { IssuerDetail } from "~/lib/api/types";
 
 import { IssuerFields, issuerDefaults } from "./IssuerFields";
 import { issuerSchema } from "./schema";
 import { createIssuer, updateIssuer } from "./server";
-import { FieldSection, StepGuide, StepLayout } from "./StepLayout";
-
-const startingPoints = [
-  {
-    value: "TEST",
-    title: "Empiezo la habilitación en la DIAN",
-    description:
-      "Tu software aún no está habilitado: Cetus te acompaña en el set de pruebas antes de pasar a producción.",
-  },
-  {
-    value: "LIVE",
-    title: "Ya facturo electrónicamente con este software",
-    description:
-      "El Software ID y el PIN que usarás ya están habilitados en producción para este emisor. Si hoy facturas con un proveedor tecnológico, empieza la habilitación.",
-  },
-] as const;
+import { StepGuide, StepLayout } from "./StepLayout";
 
 /**
  * Step 1: the tax data of the issuer, as it appears in its RUT. Creates the issuer the first time,
- * in habilitación or, when its software is already enabled at the DIAN, directly in production.
+ * always in habilitación: production comes later, with «Pasar a producción».
  */
 export function IssuerStep({
   issuer,
@@ -49,7 +24,6 @@ export function IssuerStep({
 }) {
   const create = useMutation({ mutationFn: createIssuer });
   const update = useMutation({ mutationFn: updateIssuer });
-  const [environment, setEnvironment] = useState<DianEnvironment>("TEST");
   const form = useForm({
     resolver: arktypeResolver(issuerSchema),
     defaultValues: issuerDefaults(issuer),
@@ -59,7 +33,7 @@ export function IssuerStep({
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       if (!issuer) {
-        const created = await create.mutateAsync({ data: { environment, issuer: values } });
+        const created = await create.mutateAsync({ data: { issuer: values } });
         await onSaved(created.id);
       } else {
         if (isDirty) {
@@ -77,70 +51,38 @@ export function IssuerStep({
   return (
     <StepLayout
       step={1}
-      lead="Ingresa la información del emisor tal como aparece en su RUT."
+      lead="Con tu RUT a la mano, completa los datos de quien va a emitir las facturas."
       error={errors.root?.message}
       submitting={isSubmitting}
       onSubmit={onSubmit}
       onBack={onBack}
       guide={
         <StepGuide
-          title="Tu RUT, a la mano"
-          lead="Estos datos identifican a quien emitirá las facturas electrónicas."
+          title="Todo sale del RUT"
+          lead="Descarga una copia reciente desde los servicios en línea de la DIAN y tenla abierta mientras llenas el formulario."
+          numbered
           tips={[
             {
-              title: "Revisa la identificación",
-              text: "Usa el NIT y el nombre o razón social registrados en el RUT.",
+              title: "NIT y nombre",
+              text: "Están en la primera hoja del RUT. Escribe el NIT sin el dígito de verificación; nosotros lo calculamos para que lo compares.",
             },
             {
-              title: "Responsabilidades tributarias",
-              text: "Elige las que aparecen en la casilla 53 de tu RUT. Si no tienes ninguna, elige R-99-PN.",
+              title: "Responsabilidades",
+              text: "Están en la casilla 53. Solo marca las de la lista; si no tienes ninguna, marca «No aplica». Si aparece la 48, eres responsable de IVA.",
             },
             {
-              title: "Ubicación sin complicaciones",
-              text: "Los códigos geográficos acompañan a cada ubicación para ayudarte a revisar la correspondencia.",
+              title: "Dirección",
+              text: "Usa la dirección principal registrada en el RUT. El correo que escribas aparece en tus facturas.",
             },
           ]}
           note={
             issuer?.environment === "LIVE"
               ? "Este es el emisor de producción: sus facturas tienen validez fiscal ante la DIAN."
-              : issuer
-                ? "Este emisor está en habilitación: sus documentos no tienen validez fiscal."
-                : "El punto de partida no cambia después: un emisor en habilitación pasa a producción con «Pasar a producción»."
+              : "El emisor empieza en habilitación: sus documentos de prueba no tienen validez fiscal. Puedes corregir estos datos después."
           }
         />
       }
     >
-      {!issuer && (
-        <>
-          <FieldSection title="Punto de partida">
-            <RadioGroup
-              value={environment}
-              onValueChange={(value) => {
-                const next = startingPoints.find((option) => option.value === value);
-                if (next) {
-                  setEnvironment(next.value);
-                }
-              }}
-              className="sm:grid-cols-2"
-            >
-              {startingPoints.map((option) => (
-                <FieldLabel key={option.value} htmlFor={`environment-${option.value}`}>
-                  <Field orientation="horizontal">
-                    <FieldContent>
-                      <FieldTitle className="text-xs">{option.title}</FieldTitle>
-                      <FieldDescription className="text-[10px]">
-                        {option.description}
-                      </FieldDescription>
-                    </FieldContent>
-                    <RadioGroupItem value={option.value} id={`environment-${option.value}`} />
-                  </Field>
-                </FieldLabel>
-              ))}
-            </RadioGroup>
-          </FieldSection>
-          <Separator />
-        </>
-      )}
       <IssuerFields form={form} issuer={issuer} />
     </StepLayout>
   );

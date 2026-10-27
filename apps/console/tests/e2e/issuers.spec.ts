@@ -28,10 +28,11 @@ test("a second issuer is set up from the issuers page and resumed by its ID", as
   await open(page, "/issuers");
   await page.getByRole("link", { name: "Nuevo emisor" }).click();
   await expect(page).toHaveURL(/\/setup\?new=true$/);
+  await page.getByRole("button", { name: "Empezar" }).click();
   await expect(page.getByText("Paso 1 de 4")).toBeVisible();
-  await expect(page.getByLabel("Nombre o razón social")).toHaveValue("");
+  await expect(page.getByLabel("Razón social")).toHaveValue("");
 
-  await page.getByLabel("Nombre o razón social").fill("Segundo SAS");
+  await page.getByLabel("Razón social").fill("Segundo SAS");
   await page.getByLabel("NIT").fill("800197268");
   await pickTaxLevel(page, "O-13");
   await page.getByLabel("Dirección", { exact: true }).fill("Calle 10 # 5-20");
@@ -84,7 +85,7 @@ test("a test issuer in habilitación is promoted to production", async ({ page, 
   await expect(page).toHaveURL(/\/setup\?issuerId=[0-9a-f-]{36}$/);
   const liveId = new URL(page.url()).searchParams.get("issuerId")!;
   expect(liveId).not.toBe(testId);
-  await expect(page.getByText("LIVE · Producción")).toBeVisible();
+  await expect(page.getByText("Producción", { exact: true })).toBeVisible();
   await expect(page.getByText("Paso 4 de 4")).toBeVisible();
   await expect(page.getByLabel("Prefijo")).toHaveValue("");
 
@@ -114,9 +115,9 @@ test("an issuer in habilitación keeps its tax data in line with its RUT", async
   await expect(page).toHaveURL(new RegExp(`/issuers/${id}/edit$`));
   await expect(page.getByLabel("NIT")).toHaveAttribute("readonly");
   // The person type comes with the NIT: it is fixed once the issuer is set up.
-  await expect(page.getByLabel("Tipo de persona")).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /Persona jurídica/ })).toBeDisabled();
 
-  await page.getByLabel("Nombre o razón social").fill("Rut Colombia SAS");
+  await page.getByLabel("Razón social").fill("Rut Colombia SAS");
   await pickTaxLevel(page, "R-99-PN");
   await page.getByRole("button", { name: "Guardar cambios" }).click();
 

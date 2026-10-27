@@ -10,7 +10,6 @@ import {
   ComboboxList,
 } from "~/components/ui/combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "~/components/ui/field";
-import { Input } from "~/components/ui/input";
 
 import { type Department, type Municipality, departments } from "./divipola";
 import type { IssuerValues } from "./schema";
@@ -18,11 +17,10 @@ import type { IssuerValues } from "./schema";
 const byCode = (a: { code: string }, b: { code: string }) => a.code === b.code;
 
 /**
- * Country, department and municipality of the issuer. Picking a place from the DIVIPOLA catalog
+ * Department and municipality of the issuer, always in Colombia. Picking a place from the DIVIPOLA catalog
  * fills in both its name and its DANE code, which the DIAN requires.
  */
 export function LocationFields({ form }: { form: UseFormReturn<IssuerValues> }) {
-  const countryId = useId();
   const departmentId = useId();
   const municipalityId = useId();
   const department = useController({ control: form.control, name: "departmentCode" });
@@ -48,18 +46,8 @@ export function LocationFields({ form }: { form: UseFormReturn<IssuerValues> }) 
 
   return (
     <>
-      <Field className="gap-1.75">
-        <FieldLabel htmlFor={countryId} className="text-xs">
-          País
-        </FieldLabel>
-        <Input id={countryId} value="Colombia" readOnly />
-        <FieldDescription className="text-[10px]">Código de país: CO</FieldDescription>
-      </Field>
-
-      <Field data-invalid={department.fieldState.invalid} className="gap-1.75">
-        <FieldLabel htmlFor={departmentId} className="text-xs">
-          Departamento
-        </FieldLabel>
+      <Field data-invalid={department.fieldState.invalid} className="gap-2">
+        <FieldLabel htmlFor={departmentId}>Departamento</FieldLabel>
         <Combobox
           items={departments}
           value={selectedDepartment}
@@ -86,17 +74,15 @@ export function LocationFields({ form }: { form: UseFormReturn<IssuerValues> }) 
           </ComboboxContent>
         </Combobox>
         {selectedDepartment && (
-          <FieldDescription className="text-[10px]">
-            Código de departamento: {selectedDepartment.code}
+          <FieldDescription className="text-xs">
+            Código DANE: {selectedDepartment.code}
           </FieldDescription>
         )}
-        <FieldError errors={[department.fieldState.error]} className="text-[10px]" />
+        <FieldError errors={[department.fieldState.error]} className="text-xs" />
       </Field>
 
-      <Field data-invalid={municipality.fieldState.invalid} className="gap-1.75">
-        <FieldLabel htmlFor={municipalityId} className="text-xs">
-          Municipio
-        </FieldLabel>
+      <Field data-invalid={municipality.fieldState.invalid} className="gap-2">
+        <FieldLabel htmlFor={municipalityId}>Municipio</FieldLabel>
         <Combobox
           // Remount when the department changes so the search text starts empty.
           key={selectedDepartment?.code ?? "none"}
@@ -129,11 +115,11 @@ export function LocationFields({ form }: { form: UseFormReturn<IssuerValues> }) 
           </ComboboxContent>
         </Combobox>
         {selectedMunicipality && (
-          <FieldDescription className="text-[10px]">
-            Código de municipio: {selectedMunicipality.code}
+          <FieldDescription className="text-xs">
+            Código DANE: {selectedMunicipality.code}
           </FieldDescription>
         )}
-        <FieldError errors={[municipality.fieldState.error]} className="text-[10px]" />
+        <FieldError errors={[municipality.fieldState.error]} className="text-xs" />
       </Field>
     </>
   );

@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
+import { CheckIcon } from "lucide-react";
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
 import { type Step, steps } from "./steps";
 
 /**
- * "Paso n de 4" over a bar with one segment per step: filled up to the current step and for the
- * ones already saved. Each segment names its step in a tooltip, and the reachable ones link back to it.
+ * "Paso n de 4" over one item per step, each with its number and title: done ones show a check, and
+ * the reachable ones link back to their form.
  */
 export function SetupProgress({
   current,
@@ -20,48 +20,65 @@ export function SetupProgress({
   reachable: Step;
 }) {
   return (
-    <nav aria-label="Pasos de la configuración" className="flex flex-col gap-1">
-      <p className="text-[10px] text-muted-foreground uppercase">
+    <nav aria-label="Pasos de la configuración" className="flex flex-col gap-3">
+      <p className="text-xs tracking-wider text-muted-foreground uppercase">
         Paso {current} de {steps.length}
       </p>
-      <ol className="flex gap-1.5">
+      <ol className="grid grid-cols-4 gap-2">
         {steps.map((step, index) => {
           const { number } = step;
           const isCurrent = number === current;
-          const status = isCurrent ? "En este paso" : completed[index] ? "Completado" : "Pendiente";
-          const label = `${number}. ${step.title} · ${status}`;
-          const segment = (
-            <span
-              className={cn(
-                "block h-1 w-full rounded-full",
-                isCurrent || completed[index] ? "bg-primary" : "bg-border",
-              )}
-            />
-          );
-          // The segment is 4px tall; the padding gives it a comfortable target to hover and click.
-          const target =
-            "flex w-full py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring rounded-sm";
-          return (
-            <li key={step.title} className="flex-1" aria-current={isCurrent ? "step" : undefined}>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    !isCurrent && number <= reachable ? (
-                      <Link
-                        to="/setup"
-                        search={(prev) => ({ ...prev, step: number })}
-                        className={target}
-                      />
-                    ) : (
-                      <span className={target} />
-                    )
-                  }
+          const done = completed[index] === true;
+          const status = isCurrent ? "En este paso" : done ? "Completado" : "Pendiente";
+          const content = (
+            <>
+              <span
+                className={cn(
+                  "block h-1 w-full rounded-full",
+                  isCurrent || done ? "bg-primary" : "bg-border",
+                )}
+              />
+              <span className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "flex size-5 shrink-0 items-center justify-center rounded-full border text-2xs tabular-nums",
+                    isCurrent && "border-primary bg-primary text-primary-foreground",
+                    done && !isCurrent && "border-primary text-primary",
+                  )}
+                  aria-hidden
                 >
-                  {segment}
-                  <span className="sr-only">{label}</span>
-                </TooltipTrigger>
-                <TooltipContent>{label}</TooltipContent>
-              </Tooltip>
+                  {done && !isCurrent ? <CheckIcon className="size-3" /> : number}
+                </span>
+                <span
+                  className={cn(
+                    "truncate text-sm max-md:hidden",
+                    isCurrent ? "font-medium" : "text-muted-foreground",
+                  )}
+                  aria-hidden
+                >
+                  {step.title}
+                </span>
+              </span>
+              <span className="sr-only">{`${number}. ${step.title} · ${status}`}</span>
+            </>
+          );
+          const target = "flex w-full flex-col gap-2 rounded-sm pb-1 outline-none";
+          return (
+            <li key={step.title} className="min-w-0" aria-current={isCurrent ? "step" : undefined}>
+              {!isCurrent && number <= reachable ? (
+                <Link
+                  to="/setup"
+                  search={(prev) => ({ ...prev, step: number })}
+                  className={cn(
+                    target,
+                    "focus-visible:ring-3 focus-visible:ring-ring [&:hover_.truncate]:text-foreground",
+                  )}
+                >
+                  {content}
+                </Link>
+              ) : (
+                <span className={target}>{content}</span>
+              )}
             </li>
           );
         })}

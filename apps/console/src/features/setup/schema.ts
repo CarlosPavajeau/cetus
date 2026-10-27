@@ -1,5 +1,8 @@
 import { type } from "arktype";
 
+import { nitCheckDigit } from "~/features/issuance/nitCheckDigit";
+import { splitNit } from "~/features/issuance/schema";
+
 import { taxLevelCodes } from "./taxLevels";
 
 // One schema per step of the assistant, shared by its form and the server function that receives it.
@@ -12,8 +15,10 @@ export const issuerSchema = type({
   "+": "delete",
   legalName: required("Escribe el nombre o la razón social del RUT."),
   "tradeName?": "string | null",
-  nit: type(/^\d{5,15}$/).configure({
-    message: "Escribe el NIT sin dígito de verificación: de 5 a 15 números.",
+  // With or without its verification digit, as the RUT shows it: "900123456-7".
+  nit: type(/^\d{5,15}(-\d)?$/).configure({
+    message:
+      "Escribe el NIT con 5 a 15 números; el dígito de verificación va opcional tras un guion.",
   }),
   personType: "'NATURAL_PERSON' | 'LEGAL_ENTITY'",
   taxLevelCodes: type
@@ -30,6 +35,16 @@ export const issuerSchema = type({
   cityName: "string",
   email: type("string.email").configure({ message: "Escribe un correo válido." }),
   phone: type(/^[0-9+() -]{0,20}$/).configure({ message: "Escribe solo números." }),
+}).narrow((issuer, ctx) => {
+  const parts = splitNit(issuer.nit);
+  const expected = parts && nitCheckDigit(parts.nit);
+  if (parts?.checkDigit != null && parts.checkDigit !== expected) {
+    return ctx.reject({
+      path: ["nit"],
+      message: `El dígito de verificación de ese NIT es ${expected}. Revisa el NIT en el RUT.`,
+    });
+  }
+  return true;
 });
 
 export type IssuerValues = typeof issuerSchema.infer;

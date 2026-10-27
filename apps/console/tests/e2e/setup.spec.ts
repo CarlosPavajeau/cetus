@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { type } from "arktype";
 
-import { addRange, createIssuer, uniqueNit } from "../support/issuers";
+import { createIssuer, uniqueNit } from "../support/issuers";
 import { testCertificate } from "../support/stack";
 import { expect, open, pickTaxLevel, test } from "./fixtures";
 
@@ -11,8 +11,10 @@ const testSetId = "a09e2744-f1d7-4697-bbcf-613bc312450d";
 const stepTitle = (page: Page, step: number) => page.getByText(`Paso ${step} de 4`);
 
 async function fillIssuer(page: Page) {
-  await page.getByLabel("Nombre o razón social").fill("PAVAJEAU MAX CARLOS ANDRES");
-  await page.getByLabel("NIT").fill("1007870923");
+  await page.getByRole("radio", { name: /Persona natural/ }).click();
+  await page.getByLabel("Nombre completo").fill("PAVAJEAU MAX CARLOS ANDRES");
+  // Typed as the RUT shows it, verification digit included.
+  await page.getByLabel("NIT").pressSequentially("1007870923-1");
   await pickTaxLevel(page, "O-47");
   await page.getByLabel("Dirección", { exact: true }).fill("Carrera 11 #13B-62");
   await page.getByLabel("Código postal").fill("200001");
@@ -49,9 +51,10 @@ test("signing up opens the console in the sandbox, with the assistant one click 
   await expect(page.getByRole("complementary", { name: "Modo simulación" })).toBeVisible();
   await page.getByRole("link", { name: "Configurar emisor" }).click();
   await expect(page).toHaveURL(/\/setup$/);
+  // What to have at hand comes first; the form starts once the person is ready.
+  await expect(page.getByRole("heading", { name: "Antes de empezar" })).toBeVisible();
+  await page.getByRole("button", { name: "Empezar" }).click();
   await expect(stepTitle(page, 1)).toBeVisible();
-  // Habilitación is where a new issuer usually starts.
-  await expect(page.getByRole("radio", { name: /Empiezo la habilitación/ })).toBeChecked();
 });
 
 test("the assistant sets up the issuer and leaves it in habilitación", async ({
@@ -59,9 +62,14 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   organization: _,
 }) => {
   await open(page, "/setup");
+  await page.getByRole("button", { name: "Empezar" }).click();
 
   await fillIssuer(page);
-  await expect(page.getByText("Código de municipio: 20001")).toBeVisible();
+  await expect(page.getByText("Código DANE: 20001")).toBeVisible();
+  await page.getByLabel("NIT").fill("1007870923-5");
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByText("El dígito de verificación de ese NIT es 1.")).toBeVisible();
+  await page.getByLabel("NIT").fill("1007870923-1");
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(stepTitle(page, 2)).toBeVisible();
 
@@ -71,10 +79,10 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   // A step ahead is not reachable yet; a saved one links back to its form.
   await expect(page.getByRole("link", { name: /Certificado digital/ })).toHaveCount(0);
   await page.getByRole("link", { name: "1. Datos del emisor · Completado" }).click();
-  await expect(page.getByLabel("Nombre o razón social")).toHaveValue("PAVAJEAU MAX CARLOS ANDRES");
+  await expect(page.getByLabel("Nombre completo")).toHaveValue("PAVAJEAU MAX CARLOS ANDRES");
   await expect(page.getByLabel("Municipio")).toHaveValue("Valledupar");
   await expect(page.getByLabel("NIT")).toHaveAttribute("readonly", "");
-  await page.getByRole("button", { name: "Volver a configuración" }).waitFor();
+  await page.getByRole("button", { name: "Salir" }).waitFor();
   await page.getByLabel("Teléfono").fill("3000000000");
   await page.getByRole("button", { name: "Continuar" }).click();
 
@@ -91,10 +99,12 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
 
   await expect(stepTitle(page, 4)).toBeVisible();
   // The habilitación numbering comes filled in; only the technical key is the person's own.
+  await expect(page.getByLabel("Prefijo")).toHaveCount(0);
+  await expect(page.getByText("990000000 a 995000000")).toBeVisible();
+  await page.getByRole("button", { name: "Editar rango" }).click();
   await expect(page.getByLabel("Prefijo")).toHaveValue("SETP");
-  await expect(page.getByText("SETP 990000000")).toBeVisible();
   await page.getByLabel("Clave técnica").fill("fc8eac422eba16e22ffd8c6f94b3f40a6e38162c");
-  await page.getByRole("button", { name: "Guardar y finalizar" }).click();
+  await page.getByRole("button", { name: "Finalizar configuración" }).click();
 
   // The issuer's page, with the ID to send to the API.
   await expect(page).toHaveURL(/\/issuers\/[0-9a-f-]{36}$/);
@@ -109,36 +119,6 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   await expect(page.getByText("Emisor actualizado")).toBeVisible();
   await expect(page.getByText("Cambió teléfono")).toBeVisible();
   await expect(page.getByText("Estado del emisor cambiado")).toBeVisible();
-});
-
-test("an issuer already enabled at the DIAN starts directly in production", async ({
-  page,
-  organization,
-}) => {
-  await open(page, "/setup");
-  await page.getByRole("radio", { name: /Ya facturo electrónicamente/ }).click();
-  await fillIssuer(page);
-  await page.getByRole("button", { name: "Continuar" }).click();
-
-  // Production has no test set.
-  await expect(stepTitle(page, 2)).toBeVisible();
-  await expect(page.getByText("LIVE · Producción")).toBeVisible();
-  await expect(page.getByLabel("TestSetId / ID del set de pruebas")).toHaveCount(0);
-  await fillSoftware(page, { testSet: false });
-  await page.getByRole("button", { name: "Continuar" }).click();
-
-  await expect(stepTitle(page, 3)).toBeVisible();
-  await page.locator('input[type="file"]').setInputFiles(testCertificate.path);
-  await page.getByLabel("Contraseña del certificado").fill(testCertificate.password);
-  await page.getByRole("button", { name: "Continuar" }).click();
-
-  // The issuer's own resolution: nothing from habilitación comes filled in.
-  await expect(stepTitle(page, 4)).toBeVisible();
-  await expect(page.getByLabel("Prefijo")).toHaveValue("");
-  const issuerId = new URL(page.url()).searchParams.get("issuerId")!;
-  await addRange(organization, issuerId, "FE");
-  await open(page, `/issuers/${issuerId}`);
-  await expect(page.getByText("Habilitado", { exact: true })).toBeVisible();
 });
 
 test("a test issuer that finished its test set leaves the TestSetId empty", async ({
@@ -162,6 +142,7 @@ test("a test issuer that finished its test set leaves the TestSetId empty", asyn
 
 test("each step says what to fix before saving", async ({ page, organization: _ }) => {
   await open(page, "/setup");
+  await page.getByRole("button", { name: "Empezar" }).click();
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await expect(page.getByText("Escribe el nombre o la razón social del RUT.")).toBeVisible();

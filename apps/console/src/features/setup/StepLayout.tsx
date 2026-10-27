@@ -1,3 +1,4 @@
+import { ArrowUpRightIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -39,13 +40,13 @@ export function StepLayout({
     <form onSubmit={onSubmit} noValidate className="flex flex-1 flex-col">
       <div className="flex flex-col gap-5.5">
         <div className="flex flex-col gap-1.75">
-          <h2 className="font-heading text-[22px] font-normal tracking-tight">
+          <h2 className="font-heading text-2xl font-normal tracking-tight">
             {steps.at(step - 1)?.title}
           </h2>
-          <p className="text-sm text-muted-foreground">{lead}</p>
+          <p className="max-w-prose text-sm text-muted-foreground">{lead}</p>
         </div>
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="flex min-w-0 flex-1 flex-col gap-6 rounded-lg border p-4 sm:p-6">
+          <div className="flex min-w-0 flex-1 flex-col gap-7 rounded-lg border p-4 sm:p-6">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -53,7 +54,9 @@ export function StepLayout({
             )}
             {children}
           </div>
-          <aside className="flex w-full shrink-0 flex-col gap-5 lg:w-74">{guide}</aside>
+          <aside className="flex w-full shrink-0 flex-col gap-5 lg:sticky lg:top-6 lg:w-80">
+            {guide}
+          </aside>
         </div>
         {after}
       </div>
@@ -61,19 +64,19 @@ export function StepLayout({
       <div className="mt-auto flex flex-col gap-5 pt-7">
         <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5">
           <Button type="button" variant="outline" onClick={onBack} disabled={submitting}>
-            {step === 1 ? "Volver a configuración" : "Atrás"}
+            {step === 1 ? "Salir" : "Atrás"}
           </Button>
           <div className="flex items-center gap-4.5">
-            <p className="text-2xs text-muted-foreground max-sm:hidden">
+            <p className="text-xs text-muted-foreground max-sm:hidden">
               {next ? `Siguiente: ${next.title}` : "Último paso del asistente"}
             </p>
             <Button type="submit" disabled={submitting}>
               {submitting && <Spinner data-icon="inline-start" />}
-              {submitting ? "Guardando…" : next ? "Continuar" : "Guardar y finalizar"}
+              {submitting ? "Guardando…" : next ? "Continuar" : "Finalizar configuración"}
             </Button>
           </div>
         </div>
-        <div className="flex flex-wrap justify-between gap-2 text-[10px] text-muted-foreground">
+        <div className="flex flex-wrap justify-between gap-2 text-2xs text-muted-foreground">
           <p>Esta configuración no implica una validación ni habilitación ante la DIAN.</p>
           <p>Cetus · Colombia</p>
         </div>
@@ -83,10 +86,21 @@ export function StepLayout({
 }
 
 /** A titled group of fields inside the form panel. */
-export function FieldSection({ title, children }: { title: string; children: ReactNode }) {
+export function FieldSection({
+  title,
+  lead,
+  children,
+}: {
+  title: string;
+  lead?: string;
+  children: ReactNode;
+}) {
   return (
-    <section className="flex flex-col gap-4">
-      <h3 className="text-sm font-medium">{title}</h3>
+    <section className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-base font-medium">{title}</h3>
+        {lead && <p className="text-sm text-muted-foreground">{lead}</p>}
+      </div>
       {children}
     </section>
   );
@@ -101,33 +115,63 @@ export function FieldRow({ className, children }: { className?: string; children
   );
 }
 
-/** The card next to the form that explains where the data comes from. */
+/**
+ * The card next to the form that explains where the data comes from. Numbered tips are the steps
+ * to follow, in order, on the DIAN portal or with the documents at hand.
+ */
 export function StepGuide({
   title,
   lead,
   tips,
+  numbered,
+  link,
   note,
 }: {
   title: string;
   lead: string;
-  tips: { title: string; text: string }[];
+  tips: { title: string; text: ReactNode }[];
+  numbered?: boolean;
+  link?: { href: string; label: string };
   note: string;
 }) {
   return (
     <div className="flex flex-col gap-5 rounded-lg border bg-card p-5">
-      <div className="flex flex-col gap-2.5">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs leading-relaxed text-muted-foreground">{lead}</p>
+      <div className="flex flex-col gap-2">
+        <p className="text-base font-medium">{title}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{lead}</p>
       </div>
       <div className="h-px bg-border" />
-      {tips.map((tip) => (
-        <div key={tip.title} className="flex flex-col gap-1.5">
-          <p className="text-xs font-medium">{tip.title}</p>
-          <p className="text-2xs leading-relaxed text-muted-foreground">{tip.text}</p>
-        </div>
-      ))}
+      <ol className="flex flex-col gap-4">
+        {tips.map((tip, index) => (
+          <li key={tip.title} className="flex gap-3">
+            {numbered && (
+              <span
+                className="flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-2xs font-medium tabular-nums"
+                aria-hidden
+              >
+                {index + 1}
+              </span>
+            )}
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium">{tip.title}</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">{tip.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      {link && (
+        <a
+          href={link.href}
+          target="_blank"
+          rel="noreferrer"
+          className="flex w-fit items-center gap-1 text-sm font-medium underline-offset-4 hover:underline"
+        >
+          {link.label}
+          <ArrowUpRightIcon className="size-3.5" aria-hidden />
+        </a>
+      )}
       <div className="h-px bg-border" />
-      <p className="text-[10px] leading-relaxed text-muted-foreground">{note}</p>
+      <p className="text-xs leading-relaxed text-muted-foreground">{note}</p>
     </div>
   );
 }
@@ -143,11 +187,11 @@ export function SecretNotice({
   text: string;
 }) {
   return (
-    <div className="flex gap-2.5 rounded-md border bg-secondary p-3 [&_svg]:mt-0.5 [&_svg]:size-3.75 [&_svg]:shrink-0">
+    <div className="flex gap-2.5 rounded-md border p-3 [&_svg]:mt-0.5 [&_svg]:size-3.75 [&_svg]:shrink-0">
       {icon}
       <div className="flex flex-col gap-0.75 leading-normal">
-        <p className="text-2xs font-medium">{title}</p>
-        <p className="text-[10px] text-muted-foreground">{text}</p>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-xs text-muted-foreground">{text}</p>
       </div>
     </div>
   );

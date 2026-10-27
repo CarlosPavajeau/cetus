@@ -1,4 +1,4 @@
-import { UploadIcon } from "lucide-react";
+import { FileKeyIcon, UploadIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -67,13 +67,27 @@ export function CertificateDropzone({
           invalid && "border-destructive",
         )}
       >
-        <UploadIcon className="size-6.5 text-muted-foreground" aria-hidden />
-        <div className="flex flex-col gap-1.5">
-          <p className="text-sm">Arrastra tu archivo .p12 aquí</p>
-          <p className="text-2xs text-muted-foreground">o selecciónalo desde tu equipo</p>
-        </div>
+        {fileName ? (
+          <>
+            <FileKeyIcon className="size-6.5 text-primary" aria-hidden />
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm font-medium break-all">{fileName}</p>
+              <p className="text-xs text-muted-foreground">
+                Listo. Escribe su contraseña y continúa para verificarlo.
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <UploadIcon className="size-6.5 text-muted-foreground" aria-hidden />
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm">Arrastra tu archivo .p12 o .pfx aquí</p>
+              <p className="text-xs text-muted-foreground">o selecciónalo desde tu equipo</p>
+            </div>
+          </>
+        )}
         <Button type="button" variant="outline" onClick={() => input.current?.click()}>
-          Seleccionar archivo .p12
+          {fileName ? "Elegir otro archivo" : "Seleccionar archivo"}
         </Button>
         <input
           ref={input}
@@ -89,7 +103,7 @@ export function CertificateDropzone({
           }}
         />
       </div>
-      <p className="text-2xs text-muted-foreground" aria-live="polite">
+      <p className="sr-only" aria-live="polite">
         {fileName ? `Archivo seleccionado: ${fileName}` : "Ningún archivo seleccionado."}
       </p>
     </div>

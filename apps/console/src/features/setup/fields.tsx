@@ -6,22 +6,32 @@ import { type Control, type FieldPath, type FieldValues, useController } from "r
 
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
-import { Field, FieldDescription, FieldError, FieldLabel } from "~/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldTitle,
+} from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 
 type FieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: FieldPath<T>;
   label: string;
   hint?: ReactNode;
+  optional?: boolean;
 };
 
 /** Label, control, hint and error of one form field, laid out as in the assistant's design. */
-function FieldFrame({
+export function FieldFrame({
   id,
   label,
   hint,
+  optional,
   invalid,
   error,
   children,
@@ -29,18 +39,20 @@ function FieldFrame({
   id: string;
   label: string;
   hint?: ReactNode;
+  optional?: boolean;
   invalid: boolean;
   error?: { message?: string };
   children: ReactNode;
 }) {
   return (
-    <Field data-invalid={invalid} className="gap-1.75">
-      <FieldLabel htmlFor={id} className="text-xs">
+    <Field data-invalid={invalid} className="gap-2">
+      <FieldLabel htmlFor={id}>
         {label}
+        {optional && <span className="font-normal text-muted-foreground">(opcional)</span>}
       </FieldLabel>
       {children}
-      {hint && !invalid && <FieldDescription className="text-[10px]">{hint}</FieldDescription>}
-      <FieldError errors={[error]} className="text-[10px]" />
+      {hint && !invalid && <FieldDescription className="text-xs">{hint}</FieldDescription>}
+      <FieldError errors={[error]} className="text-xs" />
     </Field>
   );
 }
@@ -50,8 +62,14 @@ export function TextField<T extends FieldValues>({
   name,
   label,
   hint,
+  optional,
+  normalize,
   ...input
-}: FieldProps<T> & Omit<ComponentProps<typeof Input>, "name" | "id">) {
+}: FieldProps<T> &
+  Omit<ComponentProps<typeof Input>, "name" | "id"> & {
+    /** Cleans what the person types or pastes, such as the spaces around a copied ID. */
+    normalize?: (value: string) => string;
+  }) {
   const id = useId();
   const { field, fieldState } = useController({ control, name });
   return (
@@ -59,10 +77,19 @@ export function TextField<T extends FieldValues>({
       id={id}
       label={label}
       hint={hint}
+      optional={optional}
       invalid={fieldState.invalid}
       error={fieldState.error}
     >
-      <Input {...input} {...field} id={id} aria-invalid={fieldState.invalid} />
+      <Input
+        {...input}
+        {...field}
+        id={id}
+        aria-invalid={fieldState.invalid}
+        onChange={(event) =>
+          field.onChange(normalize ? normalize(event.target.value) : event.target.value)
+        }
+      />
     </FieldFrame>
   );
 }
@@ -73,6 +100,7 @@ export function SecretField<T extends FieldValues>({
   name,
   label,
   hint,
+  optional,
   ...input
 }: FieldProps<T> & Omit<ComponentProps<typeof Input>, "name" | "id" | "type">) {
   const id = useId();
@@ -83,6 +111,7 @@ export function SecretField<T extends FieldValues>({
       id={id}
       label={label}
       hint={hint}
+      optional={optional}
       invalid={fieldState.invalid}
       error={fieldState.error}
     >
@@ -166,5 +195,61 @@ export function DateField<T extends FieldValues>({ control, name, label, hint }:
         </PopoverContent>
       </Popover>
     </FieldFrame>
+  );
+}
+
+/**
+ * One choice among a few, each as a card with its title and an explanation, so the person reads the
+ * options instead of guessing from a closed list.
+ */
+export function ChoiceField<V extends string>({
+  label,
+  hint,
+  options,
+  value,
+  disabled,
+  onChange,
+  className,
+}: {
+  label: string;
+  hint?: ReactNode;
+  options: readonly { value: V; title: string; description: string }[];
+  value: V;
+  disabled?: boolean;
+  onChange: (value: V) => void;
+  className?: string;
+}) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <p id={id} className="text-sm leading-snug font-medium">
+        {label}
+      </p>
+      <RadioGroup
+        aria-labelledby={id}
+        value={value}
+        disabled={disabled}
+        onValueChange={(next) => {
+          const option = options.find((each) => each.value === next);
+          if (option) {
+            onChange(option.value);
+          }
+        }}
+        className={className}
+      >
+        {options.map((option) => (
+          <FieldLabel key={option.value} htmlFor={`${id}-${option.value}`}>
+            <Field orientation="horizontal">
+              <FieldContent>
+                <FieldTitle>{option.title}</FieldTitle>
+                <FieldDescription className="text-xs">{option.description}</FieldDescription>
+              </FieldContent>
+              <RadioGroupItem value={option.value} id={`${id}-${option.value}`} />
+            </Field>
+          </FieldLabel>
+        ))}
+      </RadioGroup>
+      {hint && <FieldDescription className="text-xs">{hint}</FieldDescription>}
+    </div>
   );
 }

@@ -185,7 +185,8 @@ export function RangeDialog({ ids, issuer }: { ids: Ids; issuer: IssuerDetail })
             <SecretField
               control={form.control}
               name="technicalKey"
-              label={issuer.environment === "TEST" ? "Clave técnica" : "Clave técnica (opcional)"}
+              label="Clave técnica"
+              optional={issuer.environment !== "TEST"}
               hint={issuer.environment === "TEST" ? technicalKeyHint.TEST : technicalKeyHint.LIVE}
             />
           </FieldGroup>
