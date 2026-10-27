@@ -101,7 +101,7 @@ export function InviteMember() {
                 </AlertDescription>
               </Alert>
             )}
-            <div className="flex items-center gap-2 rounded-md border bg-muted/40 p-2">
+            <div className="flex min-w-0 items-center gap-2 rounded-md border bg-muted/40 p-2">
               <code className="min-w-0 flex-1 truncate text-xs">{invited.url}</code>
               <CopyButton value={invited.url} label="Copiar enlace" />
             </div>
