@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type } from "arktype";
 
+import { splitNit } from "~/features/issuance/schema";
 import { api } from "~/lib/api/client";
 
 import { certificateSchema, issuerSchema, numberingSchema, softwareSchema } from "./schema";
@@ -11,7 +12,7 @@ import { call, rangeBody, softwareBody } from "./server-helpers";
 function issuerBody(values: IssuerValues) {
   return {
     legalName: values.legalName.trim(),
-    tradeName: values.tradeName ?? undefined,
+    tradeName: values.tradeName?.trim() || undefined,
     personType: values.personType,
     taxLevelCodes: values.taxLevelCodes,
     responsibleForIva: values.responsibleForIva,
@@ -31,18 +32,22 @@ function issuerBody(values: IssuerValues) {
 }
 
 /**
- * Creates the issuer in habilitación (TEST) or, when its software is already enabled at the DIAN,
- * directly in production (LIVE). The environment never changes afterwards.
+ * Creates the issuer in habilitación (TEST). The console never creates one directly in production:
+ * that issuer comes from promoting this one once its test set is accepted.
  */
 export const createIssuer = createServerFn({ method: "POST" })
-  .validator(type({ environment: "'TEST' | 'LIVE'", issuer: issuerSchema }))
-  .handler(({ data }) =>
-    call(() =>
+  .validator(type({ issuer: issuerSchema }))
+  .handler(({ data }) => {
+    const parts = splitNit(data.issuer.nit);
+    if (!parts) {
+      throw new Error("El NIT no tiene un formato válido.");
+    }
+    return call(() =>
       api.post("/console/issuers", {
-        body: { ...issuerBody(data.issuer), environment: data.environment, nit: data.issuer.nit },
+        body: { ...issuerBody(data.issuer), environment: "TEST", nit: parts.nit },
       }),
-    ),
-  );
+    );
+  });
 
 export const updateIssuer = createServerFn({ method: "POST" })
   .validator(type({ id: "string.uuid", issuer: issuerSchema }))

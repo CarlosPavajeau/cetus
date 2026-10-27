@@ -1,6 +1,6 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation } from "@tanstack/react-query";
-import { FileKeyIcon, LockKeyholeIcon } from "lucide-react";
+import { FileKeyIcon, LockKeyholeIcon, TriangleAlertIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useController, useForm, useWatch } from "react-hook-form";
 
@@ -16,6 +16,13 @@ import { SecretField } from "./fields";
 import { certificateSchema } from "./schema";
 import { setCertificate } from "./server";
 import { FieldSection, SecretNotice, StepGuide, StepLayout } from "./StepLayout";
+
+/** A certificate this close to its end should be renewed before the issuer starts invoicing. */
+const expiringDays = 30;
+
+function daysUntil(date: string) {
+  return Math.floor((new Date(date).getTime() - Date.now()) / 86_400_000);
+}
 
 /** Step 3: the issuer's .p12 signing certificate and its password. */
 export function CertificateStep({
@@ -57,40 +64,35 @@ export function CertificateStep({
     await onSaved();
   }
 
-  const review =
-    saved && !replacing
-      ? `Certificado verificado: vigente hasta el ${dayFormat.format(new Date(saved.validTo))}.`
-      : fileName
-        ? "Al continuar, Cetus verificará el archivo, su contraseña y su vigencia."
-        : "No hay un archivo seleccionado. Su contenido y vigencia no se han verificado.";
+  const expiring = saved !== null && daysUntil(saved.validTo) < expiringDays;
 
   return (
     <StepLayout
       step={3}
-      lead="Selecciona tu certificado digital en formato .p12 e ingresa su contraseña."
+      lead="Cetus firma cada factura con el certificado digital del emisor. Súbelo con su contraseña."
       error={errors.root?.message}
       submitting={isSubmitting}
       onSubmit={saved && !replacing ? keepSaved : save}
       onBack={onBack}
       guide={
         <StepGuide
-          title="El certificado firma tus documentos"
-          lead="Necesitas el archivo .p12 del emisor y la contraseña que lo acompaña."
+          title="Tu certificado de firma"
+          lead="Es un archivo .p12 o .pfx que te entrega una entidad de certificación digital acreditada por la ONAC, como Certicámara, GSE o Andes SCD."
           tips={[
             {
-              title: "Selecciona el archivo original",
-              text: "Si no lo tienes, solicítalo a quien te suministró el certificado digital.",
+              title: "A nombre del emisor",
+              text: "Debe estar emitido para el mismo NIT que registraste en el paso 1.",
             },
             {
-              title: "Usa su contraseña",
-              text: "No es la contraseña de Cetus ni la de tu cuenta en el portal DIAN.",
+              title: "Con su propia contraseña",
+              text: "Es la que te dio la entidad al entregarte el certificado. No es la de Cetus ni la del portal de la DIAN.",
             },
             {
-              title: saved && !replacing ? "Ya revisado" : "Aún no se ha revisado",
-              text: review,
+              title: "Lo verificamos al continuar",
+              text: "Revisamos el archivo, la contraseña y la vigencia antes de guardarlo. No necesitas convertirlo.",
             },
           ]}
-          note="Solo necesitas seleccionar el archivo .p12; no debes convertirlo ni pegar su contenido."
+          note="El certificado se guarda cifrado y nunca se puede descargar desde la consola."
         />
       }
     >
@@ -100,8 +102,8 @@ export function CertificateStep({
             <div className="flex min-w-0 items-start gap-3">
               <FileKeyIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
               <div className="flex min-w-0 flex-col gap-1">
-                <p className="truncate text-xs font-medium">{saved.subject}</p>
-                <p className="text-2xs text-muted-foreground">
+                <p className="text-sm font-medium wrap-anywhere">{saved.subject}</p>
+                <p className="text-xs text-muted-foreground">
                   Vigente del {dayFormat.format(new Date(saved.validFrom))} al{" "}
                   {dayFormat.format(new Date(saved.validTo))} · Serie {saved.serialNumber}
                 </p>
@@ -113,6 +115,16 @@ export function CertificateStep({
               </Button>
             )}
           </div>
+          {expiring && (
+            <Alert>
+              <TriangleAlertIcon />
+              <AlertTitle>Este certificado vence pronto</AlertTitle>
+              <AlertDescription>
+                Renuévalo con tu entidad de certificación y reemplázalo aquí para no interrumpir la
+                facturación.
+              </AlertDescription>
+            </Alert>
+          )}
         </FieldSection>
       ) : impersonation ? (
         <Alert>
@@ -136,13 +148,13 @@ export function CertificateStep({
               }}
               onError={(message) => form.setError("pkcs12Base64", { message })}
             />
-            <FieldError errors={[file.fieldState.error]} className="-mt-2 text-[10px]" />
+            <FieldError errors={[file.fieldState.error]} className="-mt-2 text-xs" />
           </FieldSection>
           <SecretField
             control={form.control}
             name="password"
             label="Contraseña del certificado"
-            hint="Usa la contraseña que recibiste con tu certificado digital."
+            hint="La que recibiste junto con el archivo del certificado."
           />
           {saved && (
             <Button

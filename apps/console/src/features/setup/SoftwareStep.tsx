@@ -1,14 +1,25 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation } from "@tanstack/react-query";
 import { LockKeyholeIcon } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import type { IssuerDetail } from "~/lib/api/types";
+import { uuidPattern } from "~/lib/utils";
 
 import { SecretField, TextField } from "./fields";
 import { softwareSchema } from "./schema";
 import { setSoftware } from "./server";
 import { FieldSection, SecretNotice, StepGuide, StepLayout } from "./StepLayout";
+
+/** The DIAN portal where an issuer registers its software and finds its test set. */
+const habilitacionPortal = "https://catalogo-vpfe-hab.dian.gov.co";
+
+/** IDs copied from the portal often bring spaces or a line break along. */
+const trimmed = (value: string) => value.trim();
+
+function uuidHint(value: string, fallback: string) {
+  return uuidPattern.test(value) ? "Formato correcto." : fallback;
+}
 
 /** Step 2: the Software ID, PIN and TestSetId copied from the DIAN habilitación portal. */
 export function SoftwareStep({
@@ -24,6 +35,7 @@ export function SoftwareStep({
   const habilitacion = issuer.environment === "TEST";
   const save = useMutation({ mutationFn: setSoftware });
   const form = useForm({
+    mode: "onTouched",
     resolver: arktypeResolver(softwareSchema),
     defaultValues: {
       softwareId: issuer.software?.softwareId ?? "",
@@ -32,6 +44,10 @@ export function SoftwareStep({
     },
   });
   const { isSubmitting, isDirty, errors } = form.formState;
+  const [softwareId, testSetId] = useWatch({
+    control: form.control,
+    name: ["softwareId", "testSetId"],
+  });
 
   const onSubmit = form.handleSubmit(async (values) => {
     // The API never returns the PIN: saved credentials are kept unless the person changes them.
@@ -57,7 +73,7 @@ export function SoftwareStep({
       step={2}
       lead={
         habilitacion
-          ? "Copia las credenciales de tu software desde el portal de habilitación de la DIAN."
+          ? "Registra a Cetus como tu software de facturación en el portal de la DIAN y copia aquí los datos que te entrega."
           : "Revisa las credenciales del software con el que facturarás en producción."
       }
       error={errors.root?.message}
@@ -65,39 +81,41 @@ export function SoftwareStep({
       onSubmit={onSubmit}
       onBack={onBack}
       guide={
-        <StepGuide
-          title="¿Dónde encuentro estos datos?"
-          lead="Ten acceso al portal de habilitación de facturación electrónica de la DIAN."
-          tips={[
-            {
-              title: "1. Identifica tu software",
-              text: "Consulta la información del software que registraste para este emisor.",
-            },
-            {
-              title: "2. Copia sus credenciales",
-              text: "Localiza el Software ID y el PIN del software. Conserva los valores completos.",
-            },
-            ...(habilitacion
-              ? [
-                  {
-                    title: "3. Ubica el set de pruebas",
-                    text: "Si aún no terminas el set de pruebas, copia su identificador en TestSetId. Si ya lo terminaste, déjalo vacío.",
-                  },
-                ]
-              : []),
-          ]}
-          note="Los nombres y la ubicación de las opciones pueden variar en el portal DIAN."
-        />
-      }
-      after={
-        <div className="flex flex-col gap-1.5 pt-4 text-muted-foreground">
-          <p className="text-2xs">
-            {issuer.legalName} · NIT {issuer.nit}
-          </p>
-          <p className="text-[10px]">
-            Estas credenciales corresponden al emisor que configuraste en el paso anterior.
-          </p>
-        </div>
+        habilitacion ? (
+          <StepGuide
+            title="En el portal de la DIAN"
+            lead="Ingresa al portal de habilitación de facturación electrónica con el usuario del emisor."
+            numbered
+            tips={[
+              {
+                title: "Abre los modos de operación",
+                text: "En el menú de habilitación, elige «Configurar modos de operación».",
+              },
+              {
+                title: "Registra un software propio",
+                text: "Selecciona «Software propio», ponle un nombre (por ejemplo, Cetus) y define un PIN que recuerdes. Guarda.",
+              },
+              {
+                title: "Copia el Software ID y el TestSetId",
+                text: "Aparecen en el detalle del software que acabas de asociar. Pégalos aquí junto con el PIN que definiste.",
+              },
+            ]}
+            link={{ href: habilitacionPortal, label: "Abrir el portal de habilitación" }}
+            note="Los nombres de los menús pueden cambiar en el portal de la DIAN."
+          />
+        ) : (
+          <StepGuide
+            title="El software de producción"
+            lead="Usa el software registrado para este emisor en el portal de facturación electrónica de producción."
+            tips={[
+              {
+                title: "Software ID y PIN",
+                text: "Son los del software con el que pasaste a producción. Conserva los valores completos.",
+              },
+            ]}
+            note="Los nombres y la ubicación de las opciones pueden variar en el portal de la DIAN."
+          />
+        )
       }
     >
       <FieldSection title="Credenciales del software">
@@ -107,7 +125,9 @@ export function SoftwareStep({
           label="Software ID"
           spellCheck={false}
           autoComplete="off"
-          hint="Identificador del software registrado en la DIAN."
+          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          normalize={trimmed}
+          hint={uuidHint(softwareId, "Tiene 36 caracteres, con guiones. Cópialo completo.")}
         />
         <SecretField
           control={form.control}
@@ -117,7 +137,7 @@ export function SoftwareStep({
           hint={
             configured
               ? "Ya está guardado. Escríbelo de nuevo solo si deseas reemplazarlo."
-              : "Ingresa el PIN asociado a ese mismo software."
+              : "El PIN que definiste al registrar el software en la DIAN."
           }
         />
         {/* Production has no test set. */}
@@ -128,7 +148,12 @@ export function SoftwareStep({
             label="TestSetId / ID del set de pruebas"
             spellCheck={false}
             autoComplete="off"
-            hint="Opcional: déjalo vacío si ya terminaste el set de pruebas."
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            normalize={trimmed}
+            hint={uuidHint(
+              testSetId,
+              "Identifica tu set de pruebas. Déjalo vacío solo si ya lo terminaste.",
+            )}
           />
         )}
       </FieldSection>
@@ -137,7 +162,7 @@ export function SoftwareStep({
         title="El PIN es un dato secreto."
         text="Mantenlo oculto y no lo compartas en mensajes o capturas de pantalla."
       />
-      <p className="text-2xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         Ingresar estas credenciales no confirma una conexión ni una validación con la DIAN.
       </p>
     </StepLayout>

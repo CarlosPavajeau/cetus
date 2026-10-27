@@ -2,27 +2,49 @@ import { useId } from "react";
 import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
 import { Checkbox } from "~/components/ui/checkbox";
-import { Field, FieldDescription, FieldError, FieldLabel } from "~/components/ui/field";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "~/components/ui/field";
+import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
+import { nitCheckDigit } from "~/features/issuance/nitCheckDigit";
+import { splitNit } from "~/features/issuance/schema";
 import type { IssuerDetail } from "~/lib/api/types";
 
-import { TextField } from "./fields";
+import { ChoiceField, FieldFrame, TextField } from "./fields";
 import { LocationFields } from "./LocationFields";
 import type { IssuerValues } from "./schema";
 import { FieldRow, FieldSection } from "./StepLayout";
 import { isTaxLevelCode, nextTaxLevels, taxLevelItems } from "./taxLevels";
 
-const personTypeItems = [
-  { value: "LEGAL_ENTITY", label: "Persona jurídica" },
-  { value: "NATURAL_PERSON", label: "Persona natural" },
+const personTypeOptions = [
+  {
+    value: "LEGAL_ENTITY",
+    title: "Persona jurídica",
+    description: "Una empresa o sociedad: SAS, LTDA, SA, fundación…",
+  },
+  {
+    value: "NATURAL_PERSON",
+    title: "Persona natural",
+    description: "Una persona que factura a su nombre: profesional independiente o comerciante.",
+  },
+] as const;
+
+const ivaOptions = [
+  {
+    value: "yes",
+    title: "Sí, soy responsable de IVA",
+    description: "Cobras IVA en tus ventas y lo declaras. En el RUT aparece la responsabilidad 48.",
+  },
+  {
+    value: "no",
+    title: "No soy responsable de IVA",
+    description: "No cobras IVA. En el RUT aparece la responsabilidad 49, o ninguna de las dos.",
+  },
 ] as const;
 
 export function issuerDefaults(issuer: IssuerDetail | null): IssuerValues {
@@ -57,117 +79,59 @@ export function IssuerFields({
   form: UseFormReturn<IssuerValues>;
   issuer: IssuerDetail | null;
 }) {
-  const ivaId = useId();
-  const personTypeId = useId();
-  const taxLevelsId = useId();
   const personTypeLocked = issuer !== null && issuer.status !== "ONBOARDING";
   const personType = useWatch({ control: form.control, name: "personType" });
 
   return (
     <>
-      <FieldSection title="Identificación tributaria">
-        <TextField
+      <FieldSection
+        title="¿Quién va a facturar?"
+        lead="Escribe los datos tal como aparecen en el RUT: la DIAN los compara en cada factura."
+      >
+        <Controller
+          name="personType"
           control={form.control}
-          name="legalName"
-          label="Nombre o razón social"
-          autoComplete="organization"
-          hint={
-            personType === "NATURAL_PERSON"
-              ? "Como en el RUT: apellidos y luego nombres, por ejemplo PEREZ GOMEZ ANA MARIA."
-              : undefined
-          }
+          render={({ field }) => (
+            <ChoiceField
+              label="Tipo de persona"
+              options={personTypeOptions}
+              value={field.value}
+              disabled={personTypeLocked}
+              onChange={field.onChange}
+              hint={
+                personTypeLocked
+                  ? "Viene con el NIT: no cambia una vez configurado el emisor."
+                  : undefined
+              }
+              className="sm:grid-cols-2"
+            />
+          )}
         />
-        <FieldRow>
+        <FieldRow className="sm:grid-cols-2">
+          <NitField form={form} readOnly={issuer !== null} />
+        </FieldRow>
+        <FieldRow className="sm:grid-cols-2">
           <TextField
             control={form.control}
-            name="nit"
-            label="NIT"
-            inputMode="numeric"
-            readOnly={issuer !== null}
+            name="legalName"
+            label={personType === "NATURAL_PERSON" ? "Nombre completo" : "Razón social"}
+            autoComplete="organization"
             hint={
-              issuer ? "El NIT no cambia una vez creado el emisor." : "Sin dígito de verificación."
+              personType === "NATURAL_PERSON"
+                ? "Como en el RUT: apellidos y luego nombres, por ejemplo PEREZ GOMEZ ANA MARIA."
+                : "Como en el RUT, incluida la sigla de la sociedad, por ejemplo COMERCIAL ANDINA SAS."
             }
           />
           <Controller
-            name="personType"
+            name="tradeName"
             control={form.control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1.75">
-                <FieldLabel htmlFor={personTypeId} className="text-xs">
-                  Tipo de persona
-                </FieldLabel>
-                <Select
-                  items={personTypeItems}
-                  name={field.name}
-                  value={field.value}
-                  disabled={personTypeLocked}
-                  onValueChange={(value) => field.onChange(value)}
-                >
-                  <SelectTrigger
-                    id={personTypeId}
-                    className="w-full"
-                    aria-invalid={fieldState.invalid}
-                    onBlur={field.onBlur}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {personTypeItems.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {personTypeLocked && !fieldState.invalid && (
-                  <FieldDescription className="text-[10px]">
-                    Viene con el NIT: no cambia una vez configurado el emisor.
-                  </FieldDescription>
-                )}
-                <FieldError errors={[fieldState.error]} className="text-[10px]" />
-              </Field>
-            )}
-          />
-          <Controller
-            name="taxLevelCodes"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-1.75">
-                <FieldLabel htmlFor={taxLevelsId} className="text-xs">
-                  Responsabilidades tributarias
-                </FieldLabel>
-                <Select
-                  multiple
-                  items={taxLevelItems}
-                  name={field.name}
-                  value={field.value}
-                  onValueChange={(value) => field.onChange(nextTaxLevels(field.value, value))}
-                >
-                  <SelectTrigger
-                    id={taxLevelsId}
-                    className="w-full"
-                    aria-invalid={fieldState.invalid}
-                    onBlur={field.onBlur}
-                  >
-                    <SelectValue>
-                      {(codes: string[]) => (codes.length > 0 ? codes.join(", ") : "Elige del RUT")}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent alignItemWithTrigger={false}>
-                    <SelectGroup>
-                      {taxLevelItems.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          <span className="font-mono text-xs">{item.value}</span>
-                          <span className="text-muted-foreground">{item.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <FieldError errors={[fieldState.error]} className="text-[10px]" />
-              </Field>
+              <TradeNameField
+                value={field.value ?? ""}
+                invalid={fieldState.invalid}
+                onBlur={field.onBlur}
+                onChange={(value) => field.onChange(value.trim() ? value : null)}
+              />
             )}
           />
         </FieldRow>
@@ -175,8 +139,47 @@ export function IssuerFields({
 
       <Separator />
 
-      <FieldSection title="Dirección del emisor">
+      <FieldSection
+        title="Información tributaria"
+        lead="La encuentras en la sección de responsabilidades del RUT (casilla 53)."
+      >
+        <Controller
+          name="taxLevelCodes"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <TaxLevelsField
+              value={field.value}
+              invalid={fieldState.invalid}
+              error={fieldState.error}
+              onChange={field.onChange}
+            />
+          )}
+        />
+        <Controller
+          name="responsibleForIva"
+          control={form.control}
+          render={({ field }) => (
+            <ChoiceField
+              label="¿Eres responsable de IVA?"
+              options={ivaOptions}
+              value={field.value ? "yes" : "no"}
+              onChange={(value) => field.onChange(value === "yes")}
+              className="sm:grid-cols-2"
+            />
+          )}
+        />
+      </FieldSection>
+
+      <Separator />
+
+      <FieldSection
+        title="Ubicación y contacto"
+        lead="La dirección principal del RUT y el correo que verán tus clientes en las facturas."
+      >
         <FieldRow className="sm:grid-cols-2">
+          <LocationFields form={form} />
+        </FieldRow>
+        <FieldRow className="sm:grid-cols-[1fr_13rem]">
           <TextField
             control={form.control}
             name="line"
@@ -189,23 +192,26 @@ export function IssuerFields({
             label="Código postal"
             inputMode="numeric"
             autoComplete="postal-code"
+            maxLength={6}
+            hint={
+              <>
+                Búscalo en{" "}
+                <a href="https://visor.codigopostal.gov.co" target="_blank" rel="noreferrer">
+                  codigopostal.gov.co
+                </a>
+                .
+              </>
+            }
           />
         </FieldRow>
-        <FieldRow>
-          <LocationFields form={form} />
-        </FieldRow>
-      </FieldSection>
-
-      <Separator />
-
-      <FieldSection title="Contacto y responsabilidad de IVA">
-        <FieldRow className="sm:grid-cols-[1fr_1fr_9.5rem]">
+        <FieldRow className="sm:grid-cols-2">
           <TextField
             control={form.control}
             name="email"
             label="Correo electrónico"
             type="email"
             autoComplete="email"
+            hint="Aparece en tus facturas como el correo del emisor."
           />
           <TextField
             control={form.control}
@@ -213,29 +219,128 @@ export function IssuerFields({
             label="Teléfono"
             type="tel"
             autoComplete="tel"
-          />
-          <Controller
-            name="responsibleForIva"
-            control={form.control}
-            render={({ field }) => (
-              <Field className="gap-1.75">
-                <FieldLabel htmlFor={ivaId} className="text-xs">
-                  Responsable de IVA
-                </FieldLabel>
-                <div className="flex h-9 items-center gap-2.5">
-                  <Checkbox
-                    id={ivaId}
-                    checked={field.value}
-                    onCheckedChange={(checked) => field.onChange(checked)}
-                    onBlur={field.onBlur}
-                  />
-                  <span className="text-xs">{field.value ? "Sí" : "No"}</span>
-                </div>
-              </Field>
-            )}
+            optional
           />
         </FieldRow>
       </FieldSection>
     </>
+  );
+}
+
+/**
+ * The NIT, with or without the verification digit the RUT shows next to it. The digit the DIAN
+ * computes is shown so the person can compare it; the schema rejects one that does not match.
+ */
+function NitField({ form, readOnly }: { form: UseFormReturn<IssuerValues>; readOnly: boolean }) {
+  const nit = useWatch({ control: form.control, name: "nit" });
+  const parts = splitNit(nit);
+  const checkDigit = parts && parts.nit.length >= 5 ? nitCheckDigit(parts.nit) : null;
+  return (
+    <TextField
+      control={form.control}
+      name="nit"
+      label="NIT"
+      inputMode="numeric"
+      readOnly={readOnly}
+      normalize={(value) => value.replace(/[^\d-]/g, "")}
+      hint={
+        readOnly
+          ? "El NIT no cambia una vez creado el emisor."
+          : checkDigit === null
+            ? "Con o sin el dígito de verificación: lo calculamos por ti."
+            : `Dígito de verificación: ${checkDigit}. Compáralo con el que aparece junto al NIT en el RUT.`
+      }
+    />
+  );
+}
+
+function TradeNameField({
+  value,
+  invalid,
+  onBlur,
+  onChange,
+}: {
+  value: string;
+  invalid: boolean;
+  onBlur: () => void;
+  onChange: (value: string) => void;
+}) {
+  const id = useId();
+  return (
+    <FieldFrame
+      id={id}
+      label="Nombre comercial"
+      optional
+      invalid={invalid}
+      hint="El nombre con el que te conocen tus clientes, si es distinto."
+    >
+      <Input
+        id={id}
+        value={value}
+        onBlur={onBlur}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={invalid}
+      />
+    </FieldFrame>
+  );
+}
+
+function TaxLevelsField({
+  value,
+  invalid,
+  error,
+  onChange,
+}: {
+  value: IssuerValues["taxLevelCodes"];
+  invalid: boolean;
+  error?: { message?: string };
+  onChange: (value: IssuerValues["taxLevelCodes"]) => void;
+}) {
+  const id = useId();
+  return (
+    <FieldSet className="gap-2">
+      <FieldLegend variant="label" className="mb-0 leading-snug">
+        Responsabilidades tributarias
+      </FieldLegend>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {taxLevelItems.map((item) => {
+          const checkboxId = `${id}-${item.value}`;
+          return (
+            <FieldLabel
+              key={item.value}
+              htmlFor={checkboxId}
+              className="flex w-full items-start gap-2.5 rounded-lg border p-2.5 font-normal has-data-checked:border-primary/30 has-data-checked:bg-primary/5"
+            >
+              <Checkbox
+                id={checkboxId}
+                className="mt-0.5"
+                aria-invalid={invalid}
+                checked={value.includes(item.value)}
+                onCheckedChange={(checked) =>
+                  onChange(
+                    nextTaxLevels(
+                      value,
+                      checked
+                        ? [...value, item.value]
+                        : value.filter((code) => code !== item.value),
+                    ),
+                  )
+                }
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm">{item.label}</span>
+                <span className="text-xs text-muted-foreground">Código {item.value}</span>
+              </span>
+            </FieldLabel>
+          );
+        })}
+      </div>
+      {!invalid && (
+        <FieldDescription className="text-xs">
+          Marca las que aparecen en tu RUT. Si no tienes ninguna de estas, marca «No aplica».
+        </FieldDescription>
+      )}
+      <FieldError errors={[error]} className="text-xs" />
+    </FieldSet>
   );
 }

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, BookOpenIcon, CircleHelpIcon } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "~/components/ui/badge";
 import {
@@ -27,6 +28,7 @@ import {
   firstIncompleteStep,
   steps,
 } from "~/features/setup/steps";
+import { Welcome } from "~/features/setup/Welcome";
 import type { IssuerDetail } from "~/lib/api/types";
 import { docsUrl } from "~/lib/docs";
 import { uuidPattern } from "~/lib/utils";
@@ -104,9 +106,9 @@ function ResumedSetup({ issuerId }: { issuerId: string }) {
 }
 
 const environmentLabel = {
-  TEST: "TEST · Pruebas",
-  LIVE: "LIVE · Producción",
-  SANDBOX: "SANDBOX · Simulación",
+  TEST: "Habilitación",
+  LIVE: "Producción",
+  SANDBOX: "Simulación",
 } as const;
 
 function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
@@ -149,11 +151,11 @@ function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
               Configura tu facturación electrónica
             </h1>
             <p className="text-sm text-muted-foreground">
-              Completa estos cuatro pasos para preparar tu emisor en Cetus: datos del emisor,
-              software DIAN, certificado digital y numeración.
+              {issuer
+                ? `${issuer.legalName} · NIT ${issuer.nit}-${issuer.checkDigit}`
+                : "Prepara tu emisor para facturar electrónicamente ante la DIAN."}
             </p>
           </div>
-          {/* A new issuer picks its environment in the first step. */}
           {issuer && (
             <Badge variant="outline" className="text-muted-foreground">
               {environmentLabel[issuer.environment]}
@@ -170,6 +172,7 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
+  const [started, setStarted] = useState(false);
   const reachable = firstIncompleteStep(issuer);
   // A step ahead of the first missing piece cannot be filled yet.
   const step = clampStep(Math.min(search.step ?? reachable, reachable));
@@ -178,10 +181,14 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
     return navigate({ search: { issuerId, step: next } });
   }
 
+  function exit() {
+    // A new organization without issuers has nowhere else to go: the overview sends it back here.
+    void navigate({ to: issuer || search.new ? "/issuers" : "/overview" });
+  }
+
   function back() {
     if (step === 1) {
-      // A new organization without issuers has nowhere else to go: the overview sends it back here.
-      void navigate({ to: issuer || search.new ? "/issuers" : "/overview" });
+      exit();
     } else {
       void goTo(clampStep(step - 1));
     }
@@ -205,8 +212,12 @@ function Assistant({ issuer }: { issuer: IssuerDetail | null }) {
     await goTo(clampStep(step + 1), issuerId);
   }
 
+  if (!issuer && !started) {
+    return <Welcome onStart={() => setStarted(true)} onExit={exit} />;
+  }
+
   return (
-    <div className="flex flex-1 flex-col gap-2.5">
+    <div className="flex flex-1 flex-col gap-6">
       <SetupProgress current={step} completed={completedSteps(issuer)} reachable={reachable} />
       {step === 1 || !issuer ? (
         <IssuerStep key={issuer?.id ?? "new"} issuer={issuer} onBack={back} onSaved={saved} />
