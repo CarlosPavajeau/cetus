@@ -38,6 +38,9 @@ class JobRunnerTest {
     @BeforeEach
     void reset() {
         dian.reset();
+        // The runner claims every ready job in the shared database, and other classes leave theirs pending:
+        // dozens of deliveries ahead of a test's own would hold its type's slots.
+        QuarkusTransaction.requiringNew().run(() -> JobEntity.delete("status", "PENDING"));
     }
 
     @Test
