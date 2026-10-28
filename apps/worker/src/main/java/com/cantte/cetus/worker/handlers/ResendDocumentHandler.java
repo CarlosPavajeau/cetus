@@ -8,9 +8,9 @@ import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.support.ContextLoader;
+import com.cantte.cetus.worker.support.DeliveryContext;
 import com.cantte.cetus.worker.support.DeliveryRecorder;
 import com.cantte.cetus.worker.support.EmailClients;
-import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.SandboxDeliveries;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -51,7 +51,7 @@ public class ResendDocumentHandler implements JobHandler {
         if (pending == null || pending.status != DocumentDeliveryEntity.Status.PENDING) {
             return;
         }
-        ProcessingContext ctx = loader.load(pending.documentId).orElse(null);
+        DeliveryContext ctx = loader.loadDelivery(pending.documentId).orElse(null);
         if (ctx == null || ctx.status() != DocumentStatus.ACCEPTED) {
             deliveries.deliveryFailed(pending.id, "The document is not accepted");
             return;

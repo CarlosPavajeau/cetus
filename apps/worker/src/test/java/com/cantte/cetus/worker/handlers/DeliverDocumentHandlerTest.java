@@ -14,6 +14,8 @@ import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity.Status;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
+import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.signing.XmlSupport;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.runner.RetryLater;
@@ -85,6 +87,21 @@ class DeliverDocumentHandlerTest {
 
         assertThat(jobTypes(accepted)).contains(JobTypes.DELIVER_DOCUMENT);
         assertThat(jobTypes(rejected)).doesNotContain(JobTypes.DELIVER_DOCUMENT);
+    }
+
+    @Test
+    void acceptedDocumentsDeliverWithoutProcessingCredentials() {
+        UUID id = acceptedInvoice();
+        QuarkusTransaction.requiringNew().run(() -> {
+            DocumentEntity doc = DocumentEntity.findById(id);
+            SoftwareCredentialEntity.delete("issuerId", doc.issuerId);
+            NumberingRangeEntity.<NumberingRangeEntity>findById(doc.numberingRangeId).technicalKeySealed = null;
+        });
+
+        deliver(id);
+
+        assertThat(artifactKinds(id)).contains(Kind.ATTACHED_DOCUMENT, Kind.PDF);
+        assertThat(singleDelivery(id).status).isEqualTo(Status.SENT);
     }
 
     @Test

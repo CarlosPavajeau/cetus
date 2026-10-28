@@ -21,11 +21,14 @@ import com.cantte.cetus.webhooks.WebhookPublisher;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
@@ -235,6 +238,31 @@ class ResultRecorderTest {
         return QuarkusTransaction.requiringNew()
                 .call(() -> NotificationEntity.<NotificationEntity>list(
                         "accountId = ?1 and kind = ?2", accountId, NotificationKind.PLAN_USAGE.name()));
+    }
+
+    @Test
+    void concurrentAcceptancesOfOneAccountCountExactlyAndNotifyOnce() throws Exception {
+        UUID invoice = liveDocument(fixtures.invoice());
+        UUID account = accountOf(invoice);
+        assignPlanWithQuota(account, 10);
+        var documents = new ArrayList<UUID>();
+        for (int i = 0; i < 16; i++) documents.add(fixtures.creditNote(invoice));
+        var start = new CountDownLatch(1);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var tasks = new ArrayList<Future<?>>();
+            for (UUID id : documents) {
+                tasks.add(executor.submit(() -> {
+                    await(start);
+                    recorder.completed(id, ACCEPTED);
+                    recorder.completed(id, ACCEPTED);
+                }));
+            }
+            start.countDown();
+            for (var task : tasks) task.get(20, TimeUnit.SECONDS);
+        }
+        assertThat(billed(invoice)).containsEntry(DocumentType.CREDIT_NOTE, 16L);
+        assertThat(notices(account)).hasSize(2);
+        assertThat(notices(account)).extracting(notice -> notice.dedupKey).doesNotHaveDuplicates();
     }
 
     private static UUID liveDocument(UUID id) {

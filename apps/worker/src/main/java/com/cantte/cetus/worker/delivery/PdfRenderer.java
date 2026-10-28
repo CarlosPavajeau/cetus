@@ -13,7 +13,7 @@ import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.NumberingAuthorization;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PaymentInfo;
-import com.cantte.cetus.worker.support.ProcessingContext;
+import com.cantte.cetus.worker.support.DeliverySnapshot;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.common.BitMatrix;
@@ -87,7 +87,7 @@ public final class PdfRenderer {
     public record Legend(String softwareName, String providerName, String providerNit) {}
 
     /** @param uniqueCode the CUFE (invoice) or CUDE (notes) the DIAN validated */
-    public byte[] render(ProcessingContext ctx, String uniqueCode, Legend legend) {
+    public byte[] render(DeliverySnapshot ctx, String uniqueCode, Legend legend) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document pdf = new Document(PageSize.LETTER, 36, 36, 36, 36);
         PdfWriter writer = PdfWriter.getInstance(pdf, out);
@@ -155,7 +155,7 @@ public final class PdfRenderer {
         }
     }
 
-    private static PdfPTable header(ProcessingContext ctx) {
+    private static PdfPTable header(DeliverySnapshot ctx) {
         Party supplier = ctx.supplier();
         PdfPTable table = table(new float[] {3, 2});
 
@@ -193,7 +193,7 @@ public final class PdfRenderer {
         return table;
     }
 
-    private static PdfPTable customer(ProcessingContext ctx) {
+    private static PdfPTable customer(DeliverySnapshot ctx) {
         Party customer = ctx.customer();
         PdfPTable table = table(new float[] {1});
         PdfPCell cell = boxed();
@@ -207,7 +207,7 @@ public final class PdfRenderer {
         return table;
     }
 
-    private static PdfPTable reference(ProcessingContext ctx) {
+    private static PdfPTable reference(DeliverySnapshot ctx) {
         PdfPTable table = table(new float[] {1});
         PdfPCell cell = boxed();
         cell.addElement(line("FACTURA QUE SE CORRIGE", SMALL_BOLD));
@@ -230,7 +230,7 @@ public final class PdfRenderer {
         return table;
     }
 
-    private static PdfPTable lines(ProcessingContext ctx) {
+    private static PdfPTable lines(DeliverySnapshot ctx) {
         PdfPTable table = table(new float[] {0.4f, 1.1f, 3.6f, 0.8f, 0.6f, 1.3f, 0.7f, 1.4f});
         table.setHeaderRows(1);
         for (String heading :
@@ -255,7 +255,7 @@ public final class PdfRenderer {
         return table;
     }
 
-    private static PdfPTable totals(ProcessingContext ctx) {
+    private static PdfPTable totals(DeliverySnapshot ctx) {
         MonetaryTotals totals = ctx.calculation().totals();
         PdfPTable table = table(new float[] {4, 1.6f, 1.4f});
         addTotal(table, "Subtotal", totals.lineExtensionAmount(), false);
@@ -297,8 +297,7 @@ public final class PdfRenderer {
         return paragraph;
     }
 
-    private static PdfPTable validation(
-            ProcessingContext ctx, String uniqueCode, Legend legend, PdfContentByte canvas) {
+    private static PdfPTable validation(DeliverySnapshot ctx, String uniqueCode, Legend legend, PdfContentByte canvas) {
         String qrContent = ctx.documentType() == DocumentType.INVOICE
                 ? QrCode.invoice(
                         ctx.fullNumber(),

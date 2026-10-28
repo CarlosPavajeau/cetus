@@ -3,7 +3,7 @@ package com.cantte.cetus.worker.delivery;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
-import com.cantte.cetus.worker.support.ProcessingContext;
+import com.cantte.cetus.worker.support.DeliverySnapshot;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -26,7 +26,7 @@ public record DeliveryEmail(String subject, String html, String text) {
      * The subject is fixed by the annex: "NIT;Name;Number;Type code;Trade name" (the optional line of
      * business is left out). The body is not regulated.
      */
-    public static DeliveryEmail of(ProcessingContext ctx) {
+    public static DeliveryEmail of(DeliverySnapshot ctx) {
         Party supplier = ctx.supplier();
         String tradeName = supplier.tradeName() == null || supplier.tradeName().isBlank()
                 ? supplier.legalName()
