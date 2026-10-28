@@ -16,7 +16,7 @@ export function ThemeSwitch({ className }: { className?: string }) {
   return (
     <fieldset
       className={cn(
-        "inline-flex h-9 items-center rounded-[calc(var(--radius-md)+3px)] bg-muted p-[3px]",
+        "inline-flex h-8 items-center rounded-[calc(var(--radius-md)+3px)] bg-muted p-[3px]",
         className,
       )}
     >
@@ -29,12 +29,12 @@ export function ThemeSwitch({ className }: { className?: string }) {
           aria-pressed={theme === value}
           onClick={() => setTheme(value)}
           className={cn(
-            "inline-flex size-7.5 items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring",
+            "inline-flex size-6.5 items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring",
             theme === value &&
               "bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30",
           )}
         >
-          <Icon fill="currentColor" className="size-3.5" />
+          <Icon fill="currentColor" className="size-3" />
         </button>
       ))}
     </fieldset>
