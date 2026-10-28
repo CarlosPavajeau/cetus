@@ -10,6 +10,8 @@ Datos agregados sin cuerpos, credenciales, SQL ni parámetros. Los logs y muestr
 - `caches.csv`: 257 emisores con webhooks; `new-256` es la variante nueva con 256 entradas por caché, `new` con 512/1 024/512.
 - `build-partial.csv`: tiempos de `document.build` de una matriz interrumpida; no es una matriz completa.
 - `remote.csv`: 2 docs/s con el datasource del worker detrás de un proxy de 5 ms por dirección.
+- `soak.csv` y `soak-backlog.csv`: soak de 30 min, 12/8 a 3,5 docs/s, tres repeticiones por variante.
+- `soak-historical.csv` y `soak-historical-backlog.csv`: soak de 30 min, 36/32 y pool 40 a 14 docs/s. La fila con exit code 99 se excluye: LocalStack terminó por memoria; la repetición válida corrió con LocalStack recreado.
 - `billing.csv`: contabilización LIVE aislada con Postgres real; la repetición 0 calienta y se excluye de las medianas. Los veredictos son locales; no es capacidad LIVE end-to-end.
 
 Los p95 de las tablas del README principal son medianas de los p95 de las repeticiones, no el p95 de todas las observaciones combinadas. SQL/KMS por documento se calculan con la suma de llamadas dividida por la suma de documentos. SQL incluye todo el stack y el polling. La entrega se observa por polling de un segundo y exige SKIPPED y registros de PDF y AttachedDocument.

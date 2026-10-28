@@ -18,7 +18,7 @@
       "tag": "cetus-bench-worker:performance-new",
       "id": "sha256:bf3e18d1abfaea01fbe6c6496438b5832af056e3f7e6ad2c72634133432d7ebf",
       "architecture": "arm64",
-      "usedFor": "second caches run and remote; imports tidied and capacities 512/1024/512",
+      "usedFor": "second caches run, remote and soaks; imports tidied and capacities 512/1024/512",
       "commit": "perf/worker-contexts"
     }
   ],
@@ -84,7 +84,8 @@
   ],
   "initialData": "same restored dump from /tmp/cetus-worker-comparison.Us55xH; approximately 104000 documents",
   "exclusions": [
-    "base instant repetition in 20261027-163326: harness exit code 2; retained in CSV and replaced with 20261027-170318"
+    "base instant repetition in 20261027-163326: harness exit code 2; retained in CSV and replaced with 20261027-170318",
+    "new soak-historical in 20261028-010314: exit code 99 after LocalStack was OOM-killed at 01:31; rerun in 20261028-080512 with LocalStack recreated and reseeded"
   ],
   "workerSourceTreeSha256": {
     "base": "2e22a59ee027afc22c5bfaa815dc14c823f76599fa1fd1c5bba4303dcfed61f8",
@@ -98,5 +99,13 @@
   "cachesInitialData": "same restored dump from /tmp/cetus-worker-comparison.c7tMnu (257 TEST issuers with one webhook endpoint each); backed up in bench/results/tmp-backup",
   "buildTimingIndex": "bench/results/worker-large-20261027-175526.tsv (interrupted; new 100-line repetition 3 and new 500-line runs missing)",
   "remoteIndex": "bench/results/worker-remote-20261027-202356.tsv",
-  "remoteProxy": "worker datasource only, 5 ms per direction per chunk; echo RTT about 12.09 ms"
+  "remoteProxy": "worker datasource only, 5 ms per direction per chunk; echo RTT about 12.09 ms",
+  "soakIndexes": {
+    "12/8, 3.5 docs/s": "bench/results/worker-soak-20261027-212636.tsv",
+    "36/32, pool 40, 14 docs/s": [
+      "bench/results/worker-soak-historical-20261028-003023.tsv",
+      "bench/results/worker-soak-historical-20261028-080340.tsv"
+    ]
+  },
+  "soakDuration": "30m per repetition, DIAN PT1.5S, 5 issuers, 2 lines"
 }

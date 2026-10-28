@@ -48,7 +48,7 @@ Perfiles (`PROFILE`, modelo abierto: k6 mantiene la tasa aunque el servidor se p
 
 `end-to-end` siempre mantiene `RATE` constante durante `DURATION` (5m por defecto); en ese escenario
 `PROFILE` solo nombra la carpeta, no aplica los escalones anteriores. Para un calentamiento corto usa
-`RATE=2 DURATION=1m`.
+`RATE=2 DURATION=1m`. Acepta un decimal (`RATE=3.5`), que k6 envía como llegadas cada 10 s.
 
 Antes de medir, calienta con un `smoke`: la JVM recién arrancada rinde mucho menos durante los primeros minutos.
 Para medir justamente eso, `coldstart` reinicia el API y el worker, anota en `run.txt` cuánto tardó cada uno en arrancar
@@ -297,7 +297,7 @@ CPU son por repetición; el RSS y la cola son máximos de las tres.
 A 25 docs/s ambas variantes acumulan cola: el techo coincide con `PROCESS_DOCUMENT` / latencia de la DIAN
 (32 / 1,5 s ≈ 21 docs/s), no con la CPU, que se queda en un tercio de la vCPU. El recurso que más se acerca
 a su límite es la memoria: ~750 MiB de 1 GiB. La variante nueva ahorra 2 descifrados KMS y ~7 consultas por
-documento, sin cambiar el techo. 20 docs/s sigue sin soak que confirme su estabilidad.
+documento, sin cambiar el techo. El soak de 30 min a 14 docs/s confirma esa tasa; 20 docs/s sigue sin soak.
 [historical.csv](evidence/2026-10-27-worker/historical.csv),
 [serie de colas](evidence/2026-10-27-worker/historical-backlog.csv) y
 [corridas completas](results/worker-historical-20261027-174126.tsv).
@@ -359,6 +359,31 @@ muestras aceptaron el 100% y resolvieron la entrega. La conclusión para producc
 Postgres/PgBouncer en la misma región: cada milisegundo de RTT pesa ~55 veces por documento.
 [remote.csv](evidence/2026-10-27-worker/remote.csv) y [corridas completas](results/worker-remote-20261027-202356.tsv).
 
+### Soaks de 30 minutos
+
+DIAN a 1,5 s, cinco emisores y dos líneas. 12/8 a 3,5 docs/s con tres repeticiones por variante; 36/32 con
+pool 40 a 14 docs/s con una repetición por variante. LocalStack guarda en memoria los objetos de S3
+(~63 KB por documento): en el primer intento la variante nueva de 36/32 corrió después de la base sobre el
+mismo LocalStack, Docker lo terminó por memoria a los 28 minutos y la cola creció por `UnknownHostException`
+hacia S3. Esa fila (exit code 99) se conserva y se excluye; la repetición válida corrió con LocalStack
+recreado y la siembra repetida, como la base.
+
+| Configuración | Variante | Documentos aceptados y entregados | p95 validación / entrega | SQL por documento | KMS por documento | CPU media del worker | RSS máximo | Máximo pendiente procesamiento / entrega |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 12/8, 3,5 docs/s | base | 3 × 6 301 (100%) | 1 547 / 2 026 ms | 94,4 | 2,00 | 7,8% | 623 MiB | 1 / 1 |
+| 12/8, 3,5 docs/s | nueva | 3 × 6 300–6 301 (100%) | 1 543 / 2 027 ms | 87,4 | 0,003 | 7,4% | 626 MiB | 1 / 1 |
+| 36/32, 14 docs/s | base | 25 200 (100%) | 1 531 / 2 014 ms | 94,2 | 2,00 | 22,1% | 787 MiB | 14 / 4 |
+| 36/32, 14 docs/s | nueva | 25 200 (100%) | 1 526 / 2 014 ms | 87,2 | 0,002 | 22,0% | 784 MiB | 17 / 1 |
+
+Ambas variantes sostienen las dos tasas durante 30 minutos sin crecimiento de colas. La memoria del worker se
+estabiliza (12/8: ~590–620 MiB; 36/32: ~650–690 MiB entre los minutos 5–10 y los últimos 5) y no muestra
+fuga; las repeticiones 2 y 3 de 12/8 reutilizan el contenedor y parten de ese nivel. Las pausas de GC suman
+~2,2–2,8 s por repetición de 12/8 y ~6 s en 36/32 en ambas variantes. La variante nueva elimina los descifrados
+KMS después del calentamiento y ~7 consultas por documento; latencia, CPU y RSS no cambian de forma medible
+con cinco emisores.
+[soak.csv](evidence/2026-10-27-worker/soak.csv),
+[soak-historical.csv](evidence/2026-10-27-worker/soak-historical.csv) y sus series de colas.
+
 ### Escalar a 2 vCPU o más
 
 Con la DIAN simulada a 1,5 s, el worker no está limitado por la CPU: a 20 docs/s usa ~34% de una vCPU, y
@@ -376,9 +401,7 @@ Ninguna de estas configuraciones se ha medido todavía con 2 vCPU.
 
 ### Pendiente
 
-- Soaks de 30 min con tres repeticiones por variante: candidatos 3,5 docs/s para 12/8 y 14 docs/s para 36/32.
-  Ningún punto corto de esta página demuestra capacidad sostenida.
-- Tasas fraccionarias en k6: `RATE` es entero; 3,5 docs/s requiere `rate`/`timeUnit` (35 por 10 s).
+- Más repeticiones del soak 36/32 (hubo una por variante) y un soak a 20 docs/s.
 - La matriz de construcción completa (nuevas de 100 y 500 líneas).
 - Mejoras no confirmadas: latencia con DIAN lenta, RSS con pocos emisores (subió en la referencia) y
   contabilización LIVE.
@@ -396,7 +419,7 @@ mise exec -- bench/worker-comparison.sh curve
 mise exec -- bench/worker-comparison.sh historical
 mise exec -- bench/worker-comparison.sh large
 STABLE_RATE=4 mise exec -- bench/worker-comparison.sh remote
-SOAK_RATE=3 mise exec -- bench/worker-comparison.sh soak
+SOAK_RATE=3.5 mise exec -- bench/worker-comparison.sh soak
 SOAK_RATE=14 mise exec -- bench/worker-comparison.sh soak-historical
 ```
 
@@ -404,7 +427,8 @@ Los valores de `STABLE_RATE` y `SOAK_RATE` son ejemplos: usa la tasa estable que
 el 70% de ella. `reference` prueba DIAN instantánea y 1,5 s; `curve`, 2/4/5/6/8 docs/s;
 `historical`, 15/20/25 con 36/32 y pool 40; `large`, 2/100/500 líneas a 2 docs/s.
 Cada grupo hace calentamiento de un minuto y tres repeticiones de dos minutos por punto
-(`REPETITIONS`, `DURATION_POINT`). Los soaks duran 30 minutos por repetición.
+(`REPETITIONS`, `DURATION_POINT`). Los soaks duran 30 minutos por repetición. LocalStack acumula en
+memoria cada documento: entre soaks largos recréalo y vuelve a sembrar (sus claves KMS no persisten).
 
 El script restaura el mismo snapshot de Postgres para ambas variantes, conserva LocalStack y sus claves,
 y espera la cola vacía entre corridas. Solo detiene y restaura servicios del proyecto `cetus-bench`.

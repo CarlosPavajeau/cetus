@@ -1,0 +1,4 @@
+variant,point,repetition,exit_code,documents,throughput,accepted,delivery_completed,artifacts_ready,validation_p95_ms,delivery_p95_ms,sql_calls,kms_decrypt_calls,worker_cpu_avg,worker_memory_max_mib,gc_pauses,gc_pause_ms,process_pending_max,delivery_pending_max,directory
+base,soak-historical,1,0,25200,13.984767589139711,1,1,1,1531,2014,2374164,50430,22.09777327935222,787.4,2043,6232.146000000007,14,4,bench/results/20261028-003149-end-to-end-constant
+new,soak-historical,1,99,22777,12.445653565069184,0.9976735168670027,0.9789700136102208,0.9784431663520218,2069.5999999999967,7573.449999999997,3457102,40,21.973212669683257,811.8,13,84.306,892,859,bench/results/20261028-010314-end-to-end-constant
+new,soak-historical,1,0,25200,13.985008459403975,1,1,1,1526,2014,2196729,60,21.973643724696355,783.7,2819,6033.881999999997,17,1,bench/results/20261028-080512-end-to-end-constant
