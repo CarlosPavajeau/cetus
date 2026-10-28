@@ -26,6 +26,13 @@ export const options = {
   },
   thresholds: {
     ...holds(rate),
+    ...(__ENV.WAIT_DELIVERY === "1"
+      ? {
+          delivery_completed: ["rate>0.99"],
+          artifacts_ready: ["rate>0.99"],
+          time_to_delivery: ["p(95)<30000"],
+        }
+      : {}),
     // Fast rejections or failed POSTs must not pass for capacity.
     accepted: ["rate>0.99"],
     "http_req_duration{name:POST /v1/invoices}": ["p(95)<500"],

@@ -1,0 +1,102 @@
+{
+  "baseCommit": "0ae61bf02fc2c975950cbb1c0162229e1dc9cecf",
+  "images": [
+    {
+      "tag": "cetus-bench-worker:performance-base",
+      "id": "sha256:7e76da841630a15644dfe0bb6fc2f061fcf990afaef665e23b6b701e723df8ad",
+      "sizeBytes": 716532656,
+      "architecture": "arm64"
+    },
+    {
+      "tag": "cetus-bench-worker:performance-new",
+      "id": "sha256:4da662f6399b0dad1a768f03a36cb845890ebbf3d4c41ea64afea86054b0f52f",
+      "sizeBytes": 716651530,
+      "architecture": "arm64",
+      "usedFor": "reference, curve, historical, large, build timing and the first caches run (capacity 256 each)"
+    },
+    {
+      "tag": "cetus-bench-worker:performance-new",
+      "id": "sha256:bf3e18d1abfaea01fbe6c6496438b5832af056e3f7e6ad2c72634133432d7ebf",
+      "architecture": "arm64",
+      "usedFor": "second caches run and remote; imports tidied and capacities 512/1024/512",
+      "commit": "perf/worker-contexts"
+    }
+  ],
+  "java": "Eclipse Temurin 25.0.4+7 (production Dockerfile)",
+  "javaOptions": "-XX:AOTCache=app.aot -XX:+UseSerialGC -XX:MaxRAMPercentage=40 -Duser.timezone=America/Bogota -Xlog:gc",
+  "worker": {
+    "cpu": 1,
+    "memoryMiB": 1024,
+    "concurrency": 12,
+    "processLimit": 8,
+    "deliveryLimit": 2,
+    "webhookLimit": 4,
+    "poolSize": 20
+  },
+  "api": {
+    "cpu": 1,
+    "memoryMiB": 1024
+  },
+  "console": {
+    "cpu": 1,
+    "memoryMiB": 512
+  },
+  "postgres": {
+    "cpu": 2,
+    "memoryMiB": 2048,
+    "via": "PgBouncer transaction pool, 20 server connections per user/database"
+  },
+  "caches": {
+    "base": {
+      "certificates": "unbounded, lazy expiry",
+      "webhooks": "unbounded, lazy expiry",
+      "credentials": "none"
+    },
+    "new": {
+      "capacity": {
+        "certificates": 512,
+        "credentials": 1024,
+        "webhooks": 512
+      },
+      "capacityBefore20261027Caches": 256,
+      "ttl": "PT10M",
+      "sweep": "PT1M",
+      "loadingStripesEach": 64
+    }
+  },
+  "environment": "TEST",
+  "issuers": 5,
+  "referenceLines": 2,
+  "rateDocsPerSecond": 2,
+  "referenceDurationSeconds": 120,
+  "repetitions": 3,
+  "warmupSeconds": 60,
+  "localDependencies": [
+    "DIAN mock",
+    "LocalStack KMS/S3",
+    "Postgres"
+  ],
+  "emails": "not configured; SKIPPED required",
+  "otlpSdkDisabled": true,
+  "referenceIndexes": [
+    "bench/results/worker-reference-20261027-163206.tsv",
+    "bench/results/worker-reference-20261027-170159.tsv"
+  ],
+  "initialData": "same restored dump from /tmp/cetus-worker-comparison.Us55xH; approximately 104000 documents",
+  "exclusions": [
+    "base instant repetition in 20261027-163326: harness exit code 2; retained in CSV and replaced with 20261027-170318"
+  ],
+  "workerSourceTreeSha256": {
+    "base": "2e22a59ee027afc22c5bfaa815dc14c823f76599fa1fd1c5bba4303dcfed61f8",
+    "new": "a12ee774404aca3b6d2effc24ce8e22a9e0daa20b85e0abc9c77c107c342a4c6"
+  },
+  "billingBenchmarkSourceSha256": "0820b2634a632103519d1af6602872e091b282ebcfe047e0938be8e4dfcf09ff",
+  "cachesIndexes": [
+    "bench/results/worker-caches-20261027-184859.tsv",
+    "bench/results/worker-caches-20261027-201317.tsv"
+  ],
+  "cachesInitialData": "same restored dump from /tmp/cetus-worker-comparison.c7tMnu (257 TEST issuers with one webhook endpoint each); backed up in bench/results/tmp-backup",
+  "buildTimingIndex": "bench/results/worker-large-20261027-175526.tsv (interrupted; new 100-line repetition 3 and new 500-line runs missing)",
+  "remoteIndex": "bench/results/worker-remote-20261027-202356.tsv",
+  "remoteProxy": "worker datasource only, 5 ms per direction per chunk; echo RTT about 12.09 ms"
+}
