@@ -38,17 +38,20 @@ for (const [variant, point, repetition, code, dir] of records) {
         const data = summary.metrics[name];
         return data ? ((data.values ?? data)[field] ?? "") : "";
     };
-    const calls = (file) =>
-        new Map(
-            read(file)
-                .trim()
-                .split("\n")
-                .slice(1)
-                .map((line) => {
-                    const [id, calls] = line.split(",");
-                    return [id, Number(calls)];
-                }),
-        );
+    const calls = (file) => {
+        const [header, ...lines] = read(file).trim().split("\n");
+        const columns = header.split(",");
+        const callsIndex = columns.indexOf("calls");
+        const keyIndexes = ["userid", "toplevel", "queryid"].map((name) => columns.indexOf(name)).filter((index) => index >= 0);
+        if (callsIndex < 0 || !keyIndexes.length) throw new Error(`Unexpected pg_stat_statements columns in ${file}`);
+        const counts = new Map();
+        for (const line of lines) {
+            const values = line.split(",");
+            const key = keyIndexes.map((index) => values[index]).join(":");
+            counts.set(key, (counts.get(key) ?? 0) + Number(values[callsIndex]));
+        }
+        return counts;
+    };
     const before = calls("sql-before.csv");
     const after = calls("sql-after.csv");
     const sqlCalls = [...after].reduce(

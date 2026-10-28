@@ -132,7 +132,7 @@ run() {
   local started
   started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   psql_bench -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements" >"$out/sql-setup.txt"
-  psql_bench -c "COPY (SELECT queryid, calls, total_exec_time, rows FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())) TO STDOUT WITH CSV HEADER" >"$out/sql-before.csv"
+  psql_bench -c "COPY (SELECT userid, toplevel, queryid, calls, total_exec_time, rows FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())) TO STDOUT WITH CSV HEADER" >"$out/sql-before.csv"
   collect "$out" &
   local collector=$!
   # The PID goes into the trap now: the local is gone by the time the shell exits.
@@ -150,7 +150,7 @@ run() {
   kill $collector 2>/dev/null || true
   trap - EXIT
   "${COMPOSE[@]}" logs --no-color --since "$started" api worker console >"$out/services.log" 2>&1 || true
-  psql_bench -c "COPY (SELECT queryid, calls, total_exec_time, rows FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())) TO STDOUT WITH CSV HEADER" >"$out/sql-after.csv"
+  psql_bench -c "COPY (SELECT userid, toplevel, queryid, calls, total_exec_time, rows FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())) TO STDOUT WITH CSV HEADER" >"$out/sql-after.csv"
   "${COMPOSE[@]}" logs --no-color --since "$started" localstack | awk '/AWS kms.Decrypt/ {count++} END {print "kms_decrypt_calls=" count+0}' >"$out/kms.txt"
   node "$BENCH/lib/summarize.mjs" "$out" | tee "$out/resources.txt"
   ok "Report: ${out#"$ROOT"/}/report.html"

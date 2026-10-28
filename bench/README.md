@@ -211,10 +211,10 @@ Las columnas de latencia son la mediana de los p95 de cada repetición; SQL y KM
 
 | DIAN / variante | p95 validación | p95 entrega observada | SQL/doc (stack) | KMS/doc | RSS máximo del worker |
 |---|---:|---:|---:|---:|---:|
-| Instantánea / base | 66 ms | 1 035 ms | 85,70 | 2,000 | 381,3 MiB |
-| Instantánea / nueva | 56 ms | 1 036 ms | 78,68 | 0,000 | 413,9 MiB |
-| 1,5 s / base | 1 558 ms | 2 037 ms | 94,70 | 2,014 | 350,8 MiB |
-| 1,5 s / nueva | 1 564 ms | 2 041 ms | 87,71 | 0,028 | 445,4 MiB |
+| Instantánea / base | 66 ms | 1 035 ms | 121,96 | 2,000 | 381,3 MiB |
+| Instantánea / nueva | 56 ms | 1 036 ms | 114,93 | 0,000 | 413,9 MiB |
+| 1,5 s / base | 1 558 ms | 2 037 ms | 133,97 | 2,014 | 350,8 MiB |
+| 1,5 s / nueva | 1 564 ms | 2 041 ms | 126,98 | 0,028 | 445,4 MiB |
 
 Todas las muestras válidas tuvieron 100% de aceptación, entregas `SKIPPED` y ambos artefactos registrados,
 sin cola pendiente acumulada de procesamiento ni entrega. El throughput de iteraciones, incluyendo el polling
@@ -349,8 +349,8 @@ emisores, tres repeticiones de 2 min por variante y el mismo snapshot.
 
 | Variante | p95 validación | p95 entrega observada | SQL/doc (stack) | KMS/doc | CPU media | RSS máximo |
 |---|---:|---:|---:|---:|---:|---:|
-| Base | 2 221 ms | 4 033 ms | 120,86 | 2,000 | 12,5% | 429 MiB |
-| Nueva | 2 185 ms | 3 034 ms | 112,55 | 0,000 | 13,0% | 418 MiB |
+| Base | 2 221 ms | 4 033 ms | 169,50 | 2,000 | 12,5% | 429 MiB |
+| Nueva | 2 185 ms | 3 034 ms | 160,78 | 0,000 | 13,0% | 418 MiB |
 
 Frente a la referencia sin proxy (1 558 / 1 564 ms), el RTT añade ~650 ms al p95 de validación: unas 55
 idas y vueltas por documento en la ruta del worker. La variante nueva recorta 36 ms de validación; la entrega
@@ -370,10 +370,10 @@ recreado y la siembra repetida, como la base.
 
 | Configuración | Variante | Documentos aceptados y entregados | p95 validación / entrega | SQL por documento | KMS por documento | CPU media del worker | RSS máximo | Máximo pendiente procesamiento / entrega |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| 12/8, 3,5 docs/s | base | 3 × 6 301 (100%) | 1 547 / 2 026 ms | 94,4 | 2,00 | 7,8% | 623 MiB | 1 / 1 |
-| 12/8, 3,5 docs/s | nueva | 3 × 6 300–6 301 (100%) | 1 543 / 2 027 ms | 87,4 | 0,003 | 7,4% | 626 MiB | 1 / 1 |
-| 36/32, 14 docs/s | base | 25 200 (100%) | 1 531 / 2 014 ms | 94,2 | 2,00 | 22,1% | 787 MiB | 14 / 4 |
-| 36/32, 14 docs/s | nueva | 25 200 (100%) | 1 526 / 2 014 ms | 87,2 | 0,002 | 22,0% | 784 MiB | 17 / 1 |
+| 12/8, 3,5 docs/s | base | 3 × 6 301 (100%) | 1 547 / 2 026 ms | 133,6 | 2,00 | 7,8% | 623 MiB | 1 / 1 |
+| 12/8, 3,5 docs/s | nueva | 3 × 6 300–6 301 (100%) | 1 543 / 2 027 ms | 126,6 | 0,003 | 7,4% | 626 MiB | 1 / 1 |
+| 36/32, 14 docs/s | base | 25 200 (100%) | 1 531 / 2 014 ms | 133,3 | 2,00 | 22,1% | 787 MiB | 14 / 4 |
+| 36/32, 14 docs/s | nueva | 25 200 (100%) | 1 526 / 2 014 ms | 126,2 | 0,002 | 22,0% | 784 MiB | 17 / 1 |
 
 Ambas variantes sostienen las dos tasas durante 30 minutos sin crecimiento de colas. La memoria del worker se
 estabiliza (12/8: ~590–620 MiB; 36/32: ~650–690 MiB entre los minutos 5–10 y los últimos 5) y no muestra
@@ -444,8 +444,9 @@ la resolución de `POLL_SECONDS` (1 s). Los enlaces de archivos confirman sus re
 abren y verifican el PDF, XML y ZIP.
 
 `run.txt` registra SHA, huella del diff, imágenes, JVM, límites y configuración efectiva de jobs/cachés/pool.
-`sql-before.csv` y `sql-after.csv` contienen contadores por queryid de `pg_stat_statements`, sin SQL ni parámetros;
-incluyen el stack completo, también el polling de k6, y no equivalen a consultas exclusivas del worker.
+`sql-before.csv` y `sql-after.csv` contienen contadores por usuario, nivel y queryid de `pg_stat_statements`, sin SQL ni parámetros;
+incluyen el stack completo, también el polling de k6, y no equivalen a consultas exclusivas del worker. Las corridas
+anteriores solo guardaban `queryid`; el resumen suma sus filas repetidas entre usuarios.
 `kms.txt` cuenta `kms.Decrypt` del LocalStack durante la corrida. Los logs de servicios se limitan a la ventana
 medida; la comparación habilita `-Xlog:gc`. CPU, memoria y colas se siguen muestreando cada 5 s.
 
