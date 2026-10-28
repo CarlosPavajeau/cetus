@@ -2,17 +2,15 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.webhooks.WebhookTargets;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.net.InetAddress;
 import java.net.Proxy;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import okhttp3.Dns;
 import okhttp3.OkHttpClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -30,11 +28,9 @@ import org.jetbrains.annotations.NotNull;
 @ApplicationScoped
 public class WebhookClients {
 
-    private static final Duration SECRET_TTL = Duration.ofMinutes(10);
-
     private final OkHttpClient http;
     private final boolean allowPrivateTargets;
-    private final Map<UUID, CachedSecret> secrets = new ConcurrentHashMap<>();
+    private final BoundedCache<SecretIdentity, String> secrets;
 
     @Inject
     SecretCipher cipher;
@@ -43,7 +39,9 @@ public class WebhookClients {
     public WebhookClients(
             @ConfigProperty(name = "cetus.webhooks.connect-timeout") Duration connectTimeout,
             @ConfigProperty(name = "cetus.webhooks.request-timeout") Duration requestTimeout,
-            @ConfigProperty(name = "cetus.webhooks.allow-private-targets") boolean allowPrivateTargets) {
+            @ConfigProperty(name = "cetus.webhooks.allow-private-targets") boolean allowPrivateTargets,
+            @ConfigProperty(name = "cetus.cache.webhooks.max-entries", defaultValue = "512") int capacity) {
+        this.secrets = new BoundedCache<>(capacity);
         this.allowPrivateTargets = allowPrivateTargets;
         this.http = new OkHttpClient.Builder()
                 .dns(allowPrivateTargets ? Dns.SYSTEM : new PublicOnlyDns(Dns.SYSTEM))
@@ -65,13 +63,12 @@ public class WebhookClients {
     }
 
     public String secret(UUID endpointId, byte[] sealed) {
-        CachedSecret cached = secrets.get(endpointId);
-        if (cached != null && cached.loadedAt().plus(SECRET_TTL).isAfter(Instant.now())) {
-            return cached.secret();
-        }
-        String secret = cipher.openText(sealed);
-        secrets.put(endpointId, new CachedSecret(secret, Instant.now()));
-        return secret;
+        return secrets.get(new SecretIdentity(endpointId, SealedFingerprint.of(sealed)), () -> cipher.openText(sealed));
+    }
+
+    @Scheduled(every = "1m")
+    void cleanUp() {
+        secrets.cleanUp();
     }
 
     /** Thrown by the lookup when a webhook host resolves to an internal address. */
@@ -107,5 +104,5 @@ public class WebhookClients {
         }
     }
 
-    private record CachedSecret(String secret, Instant loadedAt) {}
+    private record SecretIdentity(UUID endpointId, String fingerprint) {}
 }

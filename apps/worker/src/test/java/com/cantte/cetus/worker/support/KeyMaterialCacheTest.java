@@ -22,7 +22,7 @@ class KeyMaterialCacheTest {
     void aCertificateWithItsPasswordInStorageIsRotatedWithIt() throws Exception {
         FakeDocumentStorage storage = new FakeDocumentStorage();
         FakeSecretCipher cipher = new FakeSecretCipher();
-        KeyMaterialCache cache = new KeyMaterialCache();
+        KeyMaterialCache cache = new KeyMaterialCache(256);
         cache.storage = storage;
         cache.cipher = cipher;
         Instant start = Instant.parse("2026-10-23T12:00:00Z");
@@ -43,6 +43,30 @@ class KeyMaterialCacheTest {
         KeyMaterial rotated = cache.get(ref);
         assertThat(rotated).isNotSameAs(first);
         assertThat(rotated.certificate()).isEqualTo(first.certificate());
+    }
+
+    @Test
+    void passwordAndLocationChangesReloadImmediately() throws Exception {
+        var storage = new FakeDocumentStorage();
+        var cipher = new FakeSecretCipher();
+        var cache = new KeyMaterialCache(256);
+        cache.storage = storage;
+        cache.cipher = cipher;
+        var id = UUID.randomUUID();
+        byte[] original = testSigner();
+        storage.put(CERTIFICATE, cipher.seal(original), "application/octet-stream");
+        var firstRef = new ProcessingContext.CertificateRef(id, CERTIFICATE, cipher.sealText("cetus-test"));
+        var first = cache.get(firstRef);
+        assertThat(cache.get(new ProcessingContext.CertificateRef(id, CERTIFICATE, cipher.sealText("cetus-test"))))
+                .isSameAs(first);
+        storage.put(
+                CERTIFICATE, cipher.seal(withPassword(original, "cetus-test", "rotated")), "application/octet-stream");
+        var rotated = cache.get(new ProcessingContext.CertificateRef(id, CERTIFICATE, cipher.sealText("rotated")));
+        assertThat(rotated).isNotSameAs(first);
+        String moved = "certificates/moved.p12";
+        storage.put(moved, cipher.seal(original), "application/octet-stream");
+        assertThat(cache.get(new ProcessingContext.CertificateRef(id, moved, cipher.sealText("cetus-test"))))
+                .isNotSameAs(first);
     }
 
     private static byte[] testSigner() throws Exception {

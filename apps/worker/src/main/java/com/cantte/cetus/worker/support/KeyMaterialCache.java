@@ -4,15 +4,14 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Map;
+import java.util.Arrays;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Keeps decrypted certificates in memory for a few minutes, so KMS and S3 are not hit on
@@ -24,9 +23,12 @@ import java.util.concurrent.locks.ReentrantLock;
 @ApplicationScoped
 public class KeyMaterialCache {
 
-    private static final Duration TTL = Duration.ofMinutes(10);
-    private final Map<UUID, Entry> cache = new ConcurrentHashMap<>();
-    private final Map<UUID, ReentrantLock> loading = new ConcurrentHashMap<>();
+    private final BoundedCache<Identity, KeyMaterial> cache;
+
+    public KeyMaterialCache(
+            @ConfigProperty(name = "cetus.cache.certificates.max-entries", defaultValue = "512") int capacity) {
+        cache = new BoundedCache<>(capacity, Duration.ofMinutes(10), () -> clock.instant());
+    }
 
     @Inject
     DocumentStorage storage;
@@ -37,33 +39,29 @@ public class KeyMaterialCache {
     Clock clock = Clock.systemUTC();
 
     public KeyMaterial get(ProcessingContext.CertificateRef ref) {
-        Entry entry = fresh(ref.id());
-        if (entry != null) {
-            return entry.keys();
-        }
-        ReentrantLock lock = loading.computeIfAbsent(ref.id(), id -> new ReentrantLock());
-        lock.lock();
-        try {
-            entry = fresh(ref.id());
-            if (entry != null) {
-                return entry.keys();
-            }
+        Identity identity = new Identity(
+                ref.id(),
+                ref.s3Key(),
+                ref.passwordS3Key(),
+                ref.passwordSealed() == null ? null : SealedFingerprint.of(ref.passwordSealed()));
+        return cache.get(identity, () -> {
             byte[] pkcs12 = cipher.open(storage.get(ref.s3Key()));
             byte[] passwordSealed =
                     ref.passwordSealed() != null ? ref.passwordSealed() : storage.get(ref.passwordS3Key());
             char[] password = cipher.openText(passwordSealed).toCharArray();
-            KeyMaterial keys = Pkcs12Loader.load(pkcs12, password);
-            cache.put(ref.id(), new Entry(keys, clock.instant()));
-            return keys;
-        } finally {
-            lock.unlock();
-        }
+            try {
+                return Pkcs12Loader.load(pkcs12, password);
+            } finally {
+                Arrays.fill(password, '\0');
+                Arrays.fill(pkcs12, (byte) 0);
+            }
+        });
     }
 
-    private Entry fresh(UUID certificateId) {
-        Entry entry = cache.get(certificateId);
-        return entry != null && entry.loadedAt().plus(TTL).isAfter(clock.instant()) ? entry : null;
+    @Scheduled(every = "1m")
+    void cleanUp() {
+        cache.cleanUp();
     }
 
-    private record Entry(KeyMaterial keys, Instant loadedAt) {}
+    private record Identity(UUID id, String s3Key, String passwordS3Key, String passwordFingerprint) {}
 }
