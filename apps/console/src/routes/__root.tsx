@@ -1,10 +1,17 @@
 /// <reference types="vite/client" />
 import type { QueryClient } from "@tanstack/react-query";
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  ScriptOnce,
+  Scripts,
+  createRootRouteWithContext,
+} from "@tanstack/react-router";
 import { type ReactNode, Suspense, lazy } from "react";
 
 import { ShellError } from "~/components/RouteError";
 import { TooltipProvider } from "~/components/ui/tooltip";
+import { themeScript } from "~/features/theme/theme";
 
 import appCss from "~/styles.css?url";
 
@@ -35,9 +42,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
+  // The theme script sets the class before hydration.
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
+        <ScriptOnce>{themeScript}</ScriptOnce>
         <HeadContent />
       </head>
       <body>

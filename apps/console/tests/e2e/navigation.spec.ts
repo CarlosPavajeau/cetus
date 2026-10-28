@@ -56,3 +56,16 @@ test("the settings pages sit under the organization group", async ({ page, organ
   await expect(page.getByRole("navigation", { name: "breadcrumb" })).toContainText("Organización");
   await expect(page.getByRole("button", { name: /Pruebas SAS/ })).toBeVisible();
 });
+
+test("the theme switch keeps the dark theme after a reload", async ({ page, organization: _ }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await open(page, "/overview");
+  const html = page.locator("html");
+  await expect(html).not.toHaveClass(/dark/);
+
+  await page.getByRole("button", { name: "Cambiar el tema" }).click();
+  await expect(html).toHaveClass(/dark/);
+
+  await page.reload();
+  await expect(html).toHaveClass(/dark/);
+});

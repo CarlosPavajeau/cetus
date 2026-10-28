@@ -68,6 +68,7 @@ import { isSidebarOpen } from "~/features/layout/sidebar";
 import { EmailVerificationBanner } from "~/features/session/EmailVerificationBanner";
 import { requireMembership } from "~/features/session/guard";
 import { OrganizationSwitcher } from "~/features/session/OrganizationSwitcher";
+import { ThemeSwitch } from "~/features/theme/ThemeSwitch";
 import { authClient } from "~/lib/auth/client";
 import { docsUrl } from "~/lib/docs";
 import { cn, crumbOf } from "~/lib/utils";
@@ -277,6 +278,7 @@ function AppLayout() {
           </Breadcrumb>
           <div className="ml-auto flex items-center gap-2">
             <EnvironmentSelect />
+            <ThemeSwitch />
             <a
               href={docsUrl}
               target="_blank"
