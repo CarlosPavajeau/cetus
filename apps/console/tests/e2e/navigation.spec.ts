@@ -56,3 +56,38 @@ test("the settings pages sit under the organization group", async ({ page, organ
   await expect(page.getByRole("navigation", { name: "breadcrumb" })).toContainText("Organización");
   await expect(page.getByRole("button", { name: /Pruebas SAS/ })).toBeVisible();
 });
+
+test("the theme switch keeps the dark theme after a reload", async ({ page, organization: _ }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await open(page, "/overview");
+  const html = page.locator("html");
+  await expect(html).not.toHaveClass(/dark/);
+
+  const dark = page.getByRole("group", { name: "Tema" }).getByRole("button", { name: "Oscuro" });
+  await dark.click();
+  await expect(html).toHaveClass(/dark/);
+  await expect(dark).toHaveAttribute("aria-pressed", "true");
+
+  await page.reload();
+  await expect(html).toHaveClass(/dark/);
+});
+
+test("on a narrow phone the header fits and the theme switch moves to the sidebar", async ({
+  page,
+  organization: _,
+}) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await open(page, "/overview");
+  const scrollX = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(scrollX).toBe(0);
+
+  await page.getByRole("main").getByRole("button", { name: "Mostrar u ocultar menú" }).click();
+  const sidebar = page.getByRole("dialog", { name: "Navegación" });
+  await sidebar
+    .getByRole("group", { name: "Tema" })
+    .getByRole("button", { name: "Oscuro" })
+    .click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+});
