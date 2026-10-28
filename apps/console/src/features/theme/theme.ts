@@ -38,6 +38,13 @@ export function setTheme(theme: Theme) {
     // The choice still applies to this page; it only fails to outlive it.
     console.warn("The theme could not be stored", error);
   }
+  // Without this every color transition runs at once and the page smears into the new theme. Reading a
+  // computed style applies the new colors while the override is still in place.
+  const transitionsOff = document.createElement("style");
+  transitionsOff.textContent = "*,*::before,*::after{transition:none!important}";
+  document.head.append(transitionsOff);
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.style.colorScheme = theme;
+  getComputedStyle(document.body).getPropertyValue("color");
+  requestAnimationFrame(() => transitionsOff.remove());
 }

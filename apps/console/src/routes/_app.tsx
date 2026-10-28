@@ -217,6 +217,8 @@ function AppLayout() {
         </SidebarContent>
         <SidebarSeparator />
         <SidebarFooter>
+          {/* On a phone the header has no room for it; the sidebar opens as a sheet there. */}
+          <ThemeSwitch className="self-start sm:hidden" />
           <div className="flex items-center gap-2.5 px-0 py-1">
             <Monogram name={session.user.name} className="rounded-full" />
             <div className="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
@@ -278,7 +280,7 @@ function AppLayout() {
           </Breadcrumb>
           <div className="ml-auto flex items-center gap-2">
             <EnvironmentSelect />
-            <ThemeSwitch />
+            <ThemeSwitch className="max-sm:hidden" />
             <a
               href={docsUrl}
               target="_blank"
