@@ -9,12 +9,17 @@ const options = [
   { theme: "dark", label: "Oscuro", Icon: MoonIcon },
 ] as const;
 
-/** Same shape as the docs site's switch, so both read as one product. */
+/** Styled as the console's tabs, its other segmented control. */
 export function ThemeSwitch({ className }: { className?: string }) {
   const theme = useTheme();
 
   return (
-    <fieldset className={cn("inline-flex items-center gap-0.5 rounded-full border p-1", className)}>
+    <fieldset
+      className={cn(
+        "inline-flex h-9 items-center rounded-[calc(var(--radius-md)+3px)] bg-muted p-[3px]",
+        className,
+      )}
+    >
       <legend className="sr-only">Tema</legend>
       {options.map(({ theme: value, label, Icon }) => (
         <button
@@ -24,11 +29,12 @@ export function ThemeSwitch({ className }: { className?: string }) {
           aria-pressed={theme === value}
           onClick={() => setTheme(value)}
           className={cn(
-            "size-6.5 rounded-full border border-transparent p-1.5 text-muted-foreground outline-none hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring",
-            theme === value && "bg-accent text-accent-foreground",
+            "inline-flex size-7.5 items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring",
+            theme === value &&
+              "bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30",
           )}
         >
-          <Icon fill="currentColor" className="size-full" />
+          <Icon fill="currentColor" className="size-3.5" />
         </button>
       ))}
     </fieldset>
