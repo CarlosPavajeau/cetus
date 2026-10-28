@@ -5,21 +5,6 @@ name: Console tests
 
 on:
   pull_request:
-    paths:
-      - "apps/**"
-      - "modules/**"
-      - "infra/**"
-      - "scripts/dev.sh"
-      - "docker-compose.yml"
-      - "build.gradle.kts"
-      - "settings.gradle.kts"
-      - "gradle/**"
-      - "build-logic/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-      - "mise.toml"
-      - ".github/workflows/console-tests.yml"
   workflow_dispatch:
 
 permissions:
@@ -30,7 +15,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Filtered here rather than with `paths:` so the job always reports: a skipped job passes as a required check.
+  changes:
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: read
+    outputs:
+      stack: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.stack == 'true' }}
+    steps:
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            stack:
+              - "apps/**"
+              - "modules/**"
+              - "infra/**"
+              - "scripts/dev.sh"
+              - "docker-compose.yml"
+              - "build.gradle.kts"
+              - "settings.gradle.kts"
+              - "gradle/**"
+              - "build-logic/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "mise.toml"
+              - ".github/workflows/console-tests.yml"
+
   e2e:
+    needs: changes
+    if: needs.changes.outputs.stack == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
