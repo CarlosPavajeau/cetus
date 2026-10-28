@@ -14,6 +14,9 @@ x-aws: &aws
 x-java: &java
   # As in production: the pools go through PgBouncer in transaction mode, and Flyway and the worker's LISTEN
   # take a direct connection.
+  QUARKUS_OTEL_SDK_DISABLED: ${BENCH_OTEL_DISABLED:-true}
+  QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: ${BENCH_OTLP_ENDPOINT:-http://localhost:4318}
+  CETUS_OTEL_TRACE_RATIO: ${BENCH_TRACE_RATIO:-0.25}
   CETUS_DB_URL: jdbc:postgresql://pgbouncer:6432/cetus
   CETUS_DB_MIGRATION_URL: jdbc:postgresql://postgres:5432/cetus
   CETUS_JOBS_LISTEN_URL: jdbc:postgresql://postgres:5432/cetus
@@ -27,7 +30,7 @@ services:
       POSTGRES_DB: cetus
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    command: ["postgres", "-c", "max_connections=200"]
+    command: ["postgres", "-c", "max_connections=200", "-c", "shared_preload_libraries=pg_stat_statements"]
     # Docker's default 64 MB /dev/shm is too small for parallel queries and parallel VACUUM over these tables.
     shm_size: 512m
     ports:
@@ -96,6 +99,9 @@ services:
         condition: service_healthy
 
   console:
+    networks:
+      default:
+        aliases: [console.railway.internal]
     image: cetus-bench-console
     environment:
       DATABASE_URL: postgres://cetus_auth:cetus@postgres:5432/cetus
@@ -117,16 +123,18 @@ services:
       retries: 60
 
   api:
+    image: ${BENCH_API_IMAGE:-cetus-bench-api:latest}
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
     environment:
       <<: [*aws, *java]
-      CETUS_AUTH_JWKS_URL: http://console:3000/.well-known/jwks.json
+      CETUS_AUTH_JWKS_URL: http://console.railway.internal:3000/.well-known/jwks.json
       CETUS_AUTH_ISSUER: http://localhost:3100
       # The console reaches the API as http://api:8080, which plays the role of *.railway.internal.
       CETUS_PRIVATE_HOSTS: api,localhost,127.0.0.1
       # Measure the server, not the per-key limiter (bench.sh can put the production values back).
+      CETUS_WEBHOOKS_ALLOW_PRIVATE_TARGETS: ${BENCH_WEBHOOK_PRIVATE_TARGETS:-false}
       CETUS_RATE_LIMIT_REQUESTS_PER_SECOND: ${BENCH_RATE_LIMIT_RPS:-100000}
       CETUS_RATE_LIMIT_BURST: ${BENCH_RATE_LIMIT_BURST:-100000}
     ports:
@@ -148,19 +156,57 @@ services:
       interval: 2s
       retries: 90
 
+  build-span-sink:
+    image: cetus-bench-console
+    profiles: [timing]
+    user: "0:0"
+    entrypoint: [node, /sink/build-span-sink.mjs]
+    volumes:
+      - ./build-span-sink.mjs:/sink/build-span-sink.mjs:ro
+      - ./results/build-timing:/data
+    cpus: 0.25
+    mem_limit: 128m
+
+  webhook-receiver:
+    image: cetus-bench-console
+    profiles: [caches]
+    entrypoint: [node, /receiver/webhook-receiver.mjs]
+    volumes:
+      - ./webhook-receiver.mjs:/receiver/webhook-receiver.mjs:ro
+
+  postgres-latency:
+    image: cetus-bench-console
+    profiles: [latency]
+    entrypoint: [node, /proxy/postgres-latency.mjs]
+    volumes:
+      - ./postgres-latency.mjs:/proxy/postgres-latency.mjs:ro
+    environment:
+      DELAY_MS: "5"
+    depends_on:
+      pgbouncer:
+        condition: service_started
+
   worker:
+    image: ${BENCH_WORKER_IMAGE:-cetus-bench-worker:latest}
     build:
       context: ..
       dockerfile: apps/worker/Dockerfile
     environment:
       <<: [*aws, *java]
+      CETUS_DB_URL: ${BENCH_WORKER_DB_URL:-jdbc:postgresql://pgbouncer:6432/cetus}
+      CETUS_WEBHOOKS_ALLOW_PRIVATE_TARGETS: ${BENCH_WEBHOOK_PRIVATE_TARGETS:-false}
       CETUS_DIAN_TEST_URL: http://dian-mock:8090/WcfDianCustomerServices.svc
       # Object Lock retention would make LocalStack keep every benchmark object; 1 day is enough.
       CETUS_STORAGE_RETENTION_DAYS: "1"
       # The job runner's knobs, to try them without rebuilding (defaults: 12 jobs at once, 8 of them sending
       # documents to the DIAN, a 2s poll).
+      CETUS_CACHE_CERTIFICATES_MAX_ENTRIES: ${BENCH_CACHE_CERTIFICATES:-512}
+      CETUS_CACHE_CREDENTIALS_MAX_ENTRIES: ${BENCH_CACHE_CREDENTIALS:-1024}
+      CETUS_CACHE_WEBHOOKS_MAX_ENTRIES: ${BENCH_CACHE_WEBHOOKS:-512}
       CETUS_JOBS_CONCURRENCY: ${BENCH_JOBS_CONCURRENCY:-12}
       CETUS_JOBS_LIMIT_PROCESS_DOCUMENT: ${BENCH_JOBS_LIMIT_PROCESS_DOCUMENT:-8}
+      CETUS_JOBS_LIMIT_DELIVER_DOCUMENT: ${BENCH_JOBS_LIMIT_DELIVER_DOCUMENT:-2}
+      CETUS_JOBS_LIMIT_DELIVER_WEBHOOK: ${BENCH_JOBS_LIMIT_DELIVER_WEBHOOK:-4}
       CETUS_JOBS_POLL_INTERVAL: ${BENCH_JOBS_POLL_INTERVAL:-2s}
       # At least the concurrency + 4 (apps/worker application.properties).
       CETUS_DB_POOL_SIZE: ${BENCH_DB_POOL_SIZE:-20}

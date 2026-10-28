@@ -23,10 +23,10 @@ import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.ArtifactStore;
 import com.cantte.cetus.worker.support.ArtifactStore.Stored;
 import com.cantte.cetus.worker.support.ContextLoader;
+import com.cantte.cetus.worker.support.DeliveryContext;
 import com.cantte.cetus.worker.support.DeliveryRecorder;
 import com.cantte.cetus.worker.support.EmailClients;
 import com.cantte.cetus.worker.support.KeyMaterialCache;
-import com.cantte.cetus.worker.support.ProcessingContext;
 import com.cantte.cetus.worker.support.ProviderSettings;
 import com.cantte.cetus.worker.support.SandboxDeliveries;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -90,7 +90,7 @@ public class DeliverDocumentHandler implements JobHandler {
 
     @Override
     public void handle(JobEntity job) {
-        ProcessingContext ctx = loader.load(job.referenceId).orElse(null);
+        DeliveryContext ctx = loader.loadDelivery(job.referenceId).orElse(null);
         if (ctx == null || ctx.status() != DocumentStatus.ACCEPTED || deliveries.resolved(ctx.documentId())) {
             return;
         }
@@ -129,7 +129,7 @@ public class DeliverDocumentHandler implements JobHandler {
     }
 
     /** The AttachedDocument and the PDF of an accepted document, built and stored the first time. */
-    Files files(ProcessingContext ctx) {
+    Files files(DeliveryContext ctx) {
         Stored attached =
                 artifacts.latest(ctx.documentId(), Kind.ATTACHED_DOCUMENT).orElseGet(() -> attachedDocument(ctx));
         Stored pdf = artifacts.latest(ctx.documentId(), Kind.PDF).orElseGet(() -> pdf(ctx));
@@ -139,7 +139,7 @@ public class DeliverDocumentHandler implements JobHandler {
     record Files(Stored attached, Stored pdf) {}
 
     /** Emails both files in one zip under the delivery's idempotency key, and records how it went. */
-    void send(ProcessingContext ctx, Files files, EmailSender sender, UUID deliveryId, String recipient) {
+    void send(DeliveryContext ctx, Files files, EmailSender sender, UUID deliveryId, String recipient) {
         String zipName = files.attached().fileName().replaceFirst("\\.xml$", ".zip");
         byte[] zip = zip(files.attached(), files.pdf());
         if (zip.length > MAX_ZIP_BYTES) {
@@ -180,7 +180,7 @@ public class DeliverDocumentHandler implements JobHandler {
     }
 
     /** The signed document and the DIAN's ApplicationResponse in the container, signed by the issuer. */
-    private Stored attachedDocument(ProcessingContext ctx) {
+    private Stored attachedDocument(DeliveryContext ctx) {
         Stored signedXml = artifacts
                 .latest(ctx.documentId(), Kind.SIGNED_XML)
                 .orElseThrow(() -> new GiveUp("Accepted document " + ctx.documentId() + " has no signed XML", null));
@@ -211,7 +211,7 @@ public class DeliverDocumentHandler implements JobHandler {
         return new Stored(name, xml);
     }
 
-    private Stored pdf(ProcessingContext ctx) {
+    private Stored pdf(DeliveryContext ctx) {
         byte[] pdf = pdfRenderer.render(
                 ctx,
                 ctx.existingCufe(),

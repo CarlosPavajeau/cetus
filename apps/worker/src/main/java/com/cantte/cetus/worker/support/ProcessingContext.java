@@ -49,7 +49,8 @@ public record ProcessingContext(
         String trackId,
         boolean lastSendUnanswered,
         DocumentStatus status,
-        OffsetDateTime validatedAt) {
+        OffsetDateTime validatedAt)
+        implements DeliverySnapshot {
 
     public String fullNumber() {
         return prefix + number;

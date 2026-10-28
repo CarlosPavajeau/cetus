@@ -1,5 +1,6 @@
 // What one user does per iteration, for each surface. The scenarios combine these with a load profile.
 import { check, sleep } from "k6";
+import execution from "k6/execution";
 import http from "k6/http";
 import { Counter, Rate, Trend } from "k6/metrics";
 
@@ -26,27 +27,32 @@ function invoiceBody(issuerId) {
       legalName: `Cliente ${Math.floor(Math.random() * 500)}`,
     },
     payment: { method: "CASH", meansCode: "10" },
-    lines: [
-      {
-        itemCode: "SERV-1",
-        description: "Servicio de consultoría",
-        quantity: 1,
-        unitPrice: 100000,
-        taxes: [{ type: "IVA", percent: 19 }],
-      },
-      {
-        itemCode: "PROD-7",
-        description: "Licencia mensual",
-        quantity: 3,
-        unitPrice: 45000,
-        taxes: [{ type: "IVA", percent: 19 }],
-      },
-    ],
+    lines: Array.from({ length: Number(__ENV.LINES || 2) }, (_, index) =>
+      index % 2 === 0
+        ? {
+            itemCode: "SERV-1",
+            description: "Servicio de consultoría",
+            quantity: 1,
+            unitPrice: 100000,
+            taxes: [{ type: "IVA", percent: 19 }],
+          }
+        : {
+            itemCode: "PROD-7",
+            description: "Licencia mensual",
+            quantity: 3,
+            unitPrice: 45000,
+            taxes: [{ type: "IVA", percent: 19 }],
+          },
+    ),
   });
 }
 
 function apiHeaders(organization, extra = {}) {
-  return { "Content-Type": "application/json", Authorization: `Bearer ${organization.apiKey}`, ...extra };
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${organization.apiKey}`,
+    ...extra,
+  };
 }
 
 /** POST /v1/invoices; returns the new document's id, or null when it was not accepted for processing. */
@@ -95,6 +101,9 @@ export function publicApi() {
 
 // --- End to end: from POST to the DIAN's answer -----------------------------------------------------------------------
 
+const timeToDelivery = new Trend("time_to_delivery", true);
+const delivered = new Rate("delivery_completed");
+const artifactsReady = new Rate("artifacts_ready");
 const timeToFinal = new Trend("time_to_final_status", true);
 // From createdAt to dian.validatedAt as the API reports them: the queue plus the processing, without the
 // rounding of the polling interval.
@@ -109,12 +118,20 @@ const final = new Set(["ACCEPTED", "REJECTED", "FAILED"]);
  * status or END_TO_END_TIMEOUT seconds (180) pass. time_to_final_status is what an integrator waits.
  */
 export function endToEnd() {
-  const organization = organizationOf();
+  const issuerCount = Number(__ENV.ISSUERS || organizations.length);
+  if (!Number.isInteger(issuerCount) || issuerCount < 1 || issuerCount > organizations.length) {
+    throw new Error("ISSUERS must be between 1 and the number of seeded organizations");
+  }
+  const organization = organizations[execution.scenario.iterationInTest % issuerCount];
   const started = Date.now();
   const id = issueInvoice(organization);
   if (!id) {
     finalStatus.add(1, { status: "NOT_RECEIVED" });
     accepted.add(false);
+    if (__ENV.WAIT_DELIVERY === "1") {
+      delivered.add(false);
+      artifactsReady.add(false);
+    }
     return;
   }
   const pollSeconds = Number(__ENV.POLL_SECONDS || 1);
@@ -131,11 +148,51 @@ export function endToEnd() {
       }
       finalStatus.add(1, { status });
       accepted.add(status === "ACCEPTED");
+      if (status === "ACCEPTED" && __ENV.WAIT_DELIVERY === "1") {
+        waitDelivery(id, organization, started, deadline, response);
+      } else if (__ENV.WAIT_DELIVERY === "1") {
+        delivered.add(false);
+        artifactsReady.add(false);
+      }
       return;
     }
   }
+  if (__ENV.WAIT_DELIVERY === "1") {
+    delivered.add(false);
+    artifactsReady.add(false);
+  }
   finalStatus.add(1, { status: "TIMED_OUT" });
   accepted.add(false);
+}
+
+function waitDelivery(id, organization, started, deadline, initial) {
+  let response = initial;
+  while (Date.now() < deadline) {
+    const deliveries = response.status === 200 ? response.json("deliveries") : [];
+    const resolved = deliveries?.find((delivery) =>
+      ["SKIPPED", "SENT", "FAILED", "BOUNCED", "COMPLAINED", "DELIVERED"].includes(delivery.status),
+    );
+    if (resolved) {
+      timeToDelivery.add(Date.now() - started);
+      delivered.add(
+        __ENV.REQUIRE_SKIPPED !== "0"
+          ? resolved.status === "SKIPPED"
+          : ["SKIPPED", "SENT", "DELIVERED"].includes(resolved.status),
+      );
+      const files = ["pdf", "attached-document"].map((kind) =>
+        http.get(`${apiUrl}/v1/invoices/${id}/files/${kind}`, {
+          headers: apiHeaders(organization),
+          tags: { name: "GET /v1/invoices/{id}/files/{file}" },
+        }),
+      );
+      artifactsReady.add(files.every((file) => file.status === 200));
+      return;
+    }
+    sleep(Number(__ENV.POLL_SECONDS || 1));
+    response = getInvoice(id, organization);
+  }
+  delivered.add(false);
+  artifactsReady.add(false);
 }
 
 // --- Console: the Java API behind the BFF (/console) ------------------------------------------------------------------
@@ -199,20 +256,47 @@ const searchWeight = Number(__ENV.SEARCH_WEIGHT ?? 15);
 /** What the console's server asks the API for while someone works through their documents. */
 export function consoleApi(data) {
   const organization = organizationOf();
-  const action = weighted({ list: 45, nextPage: 10, search: searchWeight, detail: 20, issuers: 5, audit: 5 });
+  const action = weighted({
+    list: 45,
+    nextPage: 10,
+    search: searchWeight,
+    detail: 20,
+    issuers: 5,
+    audit: 5,
+  });
   if (action === "list") {
     consoleGet(organization, data, "/console/documents?limit=50", "GET /console/documents");
   } else if (action === "nextPage") {
-    const first = consoleGet(organization, data, "/console/documents?limit=50", "GET /console/documents");
+    const first = consoleGet(
+      organization,
+      data,
+      "/console/documents?limit=50",
+      "GET /console/documents",
+    );
     const cursor = first.status === 200 ? first.json("nextCursor") : null;
     if (cursor) {
-      consoleGet(organization, data, `/console/documents?limit=50&before=${cursor}`, "GET /console/documents?before");
+      consoleGet(
+        organization,
+        data,
+        `/console/documents?limit=50&before=${cursor}`,
+        "GET /console/documents?before",
+      );
     }
   } else if (action === "search") {
     const q = encodeURIComponent(`Cliente ${Math.floor(Math.random() * 500)}`);
-    consoleGet(organization, data, `/console/documents?limit=50&q=${q}`, "GET /console/documents?q");
+    consoleGet(
+      organization,
+      data,
+      `/console/documents?limit=50&q=${q}`,
+      "GET /console/documents?q",
+    );
   } else if (action === "detail") {
-    consoleGet(organization, data, `/console/documents/${pick(organization.documentIds)}`, "GET /console/documents/{id}");
+    consoleGet(
+      organization,
+      data,
+      `/console/documents/${pick(organization.documentIds)}`,
+      "GET /console/documents/{id}",
+    );
   } else if (action === "issuers") {
     consoleGet(organization, data, "/console/issuers", "GET /console/issuers");
   } else {

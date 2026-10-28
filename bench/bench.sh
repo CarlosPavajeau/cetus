@@ -39,7 +39,7 @@ up() {
 
 seed() {
   info "Creating tenants through the console and the API"
-  CONSOLE_URL=$CONSOLE_URL CETUS_API_URL=$API_URL node --import "$BENCH/lib/node-ts.mjs" "$BENCH/seed.ts"
+  DATABASE_URL=postgres://cetus_auth:cetus@localhost:5532/cetus CONSOLE_URL=$CONSOLE_URL CETUS_API_URL=$API_URL node --import "$BENCH/lib/node-ts.mjs" "$BENCH/seed.ts"
   local per_issuer=${BENCH_HISTORY_PER_ISSUER:-4000}
   info "Cloning $per_issuer documents per issuer so the console lists a realistic table"
   psql_bench -q -v per_issuer="$per_issuer" <"$BENCH/sql/clone-documents.sql"
@@ -111,6 +111,11 @@ run() {
   out="$BENCH/results/$(date +%Y%m%d-%H%M%S)-$scenario-${PROFILE:-smoke}"
   mkdir -p "$out"
   {
+    echo "variant=${BENCH_VARIANT:-unspecified}"
+    git -C "$ROOT" rev-parse HEAD
+    git -C "$ROOT" diff --binary | shasum -a 256
+    echo "lines=${LINES:-2} wait_delivery=${WAIT_DELIVERY:-0} require_skipped=${REQUIRE_SKIPPED:-1} issuers=${ISSUERS:-all}"
+    "${COMPOSE[@]}" images --format json
     echo "scenario=$scenario profile=${PROFILE:-smoke} rate=${RATE:-} duration=${DURATION:-} max_vus=${MAX_VUS:-}"
     curl -sf "$MOCK_URL/__mock" || true
     [ -n "${COLDSTART:-}" ] && printf '%s\n' "$COLDSTART"
@@ -118,9 +123,16 @@ run() {
       const c = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
       for (const [name, s] of Object.entries(c.services)) {
         console.log(`${name}: cpus=${s.cpus ?? "-"} mem=${s.mem_limit ?? "-"}`);
+        for (const [key, value] of Object.entries(s.environment ?? {})) {
+          if (key.startsWith("CETUS_JOBS_") || key.startsWith("CETUS_CACHE_") || key === "CETUS_DB_POOL_SIZE" || key === "JAVA_OPTS") console.log(`${name}: ${key}=${value}`);
+        }
       }'
   } >"$out/run.txt"
 
+  local started
+  started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  psql_bench -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements" >"$out/sql-setup.txt"
+  psql_bench -c "COPY (SELECT userid, toplevel, queryid, calls, total_exec_time, rows FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())) TO STDOUT WITH CSV HEADER" >"$out/sql-before.csv"
   collect "$out" &
   local collector=$!
   # The PID goes into the trap now: the local is gone by the time the shell exits.
@@ -137,7 +149,9 @@ run() {
     -e API_URL=$API_URL -e CONSOLE_URL=$CONSOLE_URL "$script" 2>&1 | tee "$out/k6.log" || status=$?
   kill $collector 2>/dev/null || true
   trap - EXIT
-  "${COMPOSE[@]}" logs --no-color --since 30m api worker console >"$out/services.log" 2>&1 || true
+  "${COMPOSE[@]}" logs --no-color --since "$started" api worker console >"$out/services.log" 2>&1 || true
+  psql_bench -c "COPY (SELECT userid, toplevel, queryid, calls, total_exec_time, rows FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())) TO STDOUT WITH CSV HEADER" >"$out/sql-after.csv"
+  "${COMPOSE[@]}" logs --no-color --since "$started" localstack | awk '/AWS kms.Decrypt/ {count++} END {print "kms_decrypt_calls=" count+0}' >"$out/kms.txt"
   node "$BENCH/lib/summarize.mjs" "$out" | tee "$out/resources.txt"
   ok "Report: ${out#"$ROOT"/}/report.html"
   return $status

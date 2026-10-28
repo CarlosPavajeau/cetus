@@ -1,6 +1,5 @@
 package com.cantte.cetus.worker.handlers;
 
-import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianGateway;
 import com.cantte.cetus.dian.DianResponse;
@@ -25,6 +24,7 @@ import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.support.ArtifactStore;
 import com.cantte.cetus.worker.support.ContextLoader;
+import com.cantte.cetus.worker.support.CredentialCache;
 import com.cantte.cetus.worker.support.DianClients;
 import com.cantte.cetus.worker.support.KeyMaterialCache;
 import com.cantte.cetus.worker.support.ProcessingContext;
@@ -79,7 +79,7 @@ public class ProcessDocumentHandler implements JobHandler {
     DianClients dianClients;
 
     @Inject
-    SecretCipher cipher;
+    CredentialCache credentials;
 
     @Inject
     FileSequence fileSequence;
@@ -164,14 +164,14 @@ public class ProcessDocumentHandler implements JobHandler {
         if (ctx.environment() == Environment.SANDBOX) {
             return sandbox.secrets(ctx.issuerId());
         }
-        String pin = cipher.openText(ctx.pinSealed());
+        String pin = credentials.open(ctx.pinSealed());
         // Retried until the range verification brings the DIAN's key: without it the CUFE would be invalid.
         if (ctx.documentType() == DocumentType.INVOICE
                 && ctx.environment() == Environment.LIVE
                 && ctx.technicalKeySealed() == null) {
             throw new IllegalStateException("The numbering range is still waiting for its technical key from the DIAN");
         }
-        String technicalKey = ctx.technicalKeySealed() == null ? "" : cipher.openText(ctx.technicalKeySealed());
+        String technicalKey = ctx.technicalKeySealed() == null ? "" : credentials.open(ctx.technicalKeySealed());
         return new DocumentSecrets(pin, technicalKey);
     }
 

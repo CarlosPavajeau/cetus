@@ -8,6 +8,7 @@ import com.cantte.cetus.domain.calc.TaxTotal;
 import com.cantte.cetus.domain.model.BillingReference;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.domain.model.NumberingAuthorization;
 import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
@@ -21,9 +22,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,17 +56,105 @@ public class ContextLoader {
         return Optional.ofNullable(doc).map(this::load);
     }
 
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public Optional<DeliveryContext> loadDelivery(UUID documentId) {
+        DocumentEntity doc = DocumentEntity.findById(documentId);
+        if (doc == null) return Optional.empty();
+        DeliveryData data = DocumentEntity.getEntityManager()
+                .createQuery("""
+                select new com.cantte.cetus.worker.support.ContextLoader$DeliveryData(
+                    i, r.resolutionNumber, r.validFrom, r.validTo, r.prefix, r.rangeFrom, r.rangeTo,
+                    c.id, c.s3Key, c.passwordSealed)
+                from IssuerEntity i
+                join NumberingRangeEntity r on r.id = :rangeId
+                left join SigningCertificateEntity c on c.issuerId = i.id and c.active = true
+                where i.id = :issuerId
+                """, DeliveryData.class)
+                .setParameter("rangeId", doc.numberingRangeId)
+                .setParameter("issuerId", doc.issuerId)
+                .getSingleResult();
+        ProcessingContext.CertificateRef certificate;
+        if (doc.environment == Environment.SANDBOX) {
+            certificate = sandbox.certificate();
+        } else {
+            if (data.certificateId() == null) throw new IllegalStateException("Issuer has no signing certificate");
+            certificate =
+                    new ProcessingContext.CertificateRef(data.certificateId(), data.s3Key(), data.passwordSealed());
+        }
+        return Optional.of(new DeliveryContext(
+                doc.id,
+                data.issuer().id,
+                doc.environment,
+                doc.documentType,
+                doc.operationType,
+                doc.prefix,
+                doc.number,
+                doc.issueDate,
+                doc.issueTime,
+                doc.dueDate,
+                doc.currency,
+                data.issuer().toParty(),
+                doc.customer,
+                doc.payment,
+                List.copyOf(doc.notes),
+                calculation(doc),
+                new NumberingAuthorization(
+                        data.resolutionNumber(),
+                        data.validFrom(),
+                        data.validTo(),
+                        data.prefix(),
+                        data.rangeFrom(),
+                        data.rangeTo()),
+                reference(doc),
+                doc.concept(),
+                doc.correctionDescription,
+                certificate,
+                doc.cufe,
+                doc.status,
+                doc.validatedAt));
+    }
+
+    public record ProcessingData(
+            IssuerEntity issuer,
+            NumberingRangeEntity range,
+            SoftwareCredentialEntity software,
+            SigningCertificateEntity certificate) {}
+
+    public record DeliveryData(
+            IssuerEntity issuer,
+            String resolutionNumber,
+            LocalDate validFrom,
+            LocalDate validTo,
+            String prefix,
+            long rangeFrom,
+            long rangeTo,
+            UUID certificateId,
+            String s3Key,
+            byte[] passwordSealed) {}
+
     private ProcessingContext load(DocumentEntity doc) {
-        IssuerEntity issuer = IssuerEntity.findById(doc.issuerId);
-        NumberingRangeEntity range = NumberingRangeEntity.findById(doc.numberingRangeId);
+        ProcessingData data = DocumentEntity.getEntityManager()
+                .createQuery("""
+                select new com.cantte.cetus.worker.support.ContextLoader$ProcessingData(i, r, s, c)
+                from IssuerEntity i
+                join NumberingRangeEntity r on r.id = :rangeId
+                left join SoftwareCredentialEntity s on s.issuerId = i.id and s.active = true
+                left join SigningCertificateEntity c on c.issuerId = i.id and c.active = true
+                where i.id = :issuerId
+                """, ProcessingData.class)
+                .setParameter("rangeId", doc.numberingRangeId)
+                .setParameter("issuerId", doc.issuerId)
+                .getSingleResult();
+        IssuerEntity issuer = data.issuer();
+        NumberingRangeEntity range = data.range();
         if (doc.environment == Environment.SANDBOX) {
             // Built with the sandbox credentials: no sealed PIN or technical key, no test set.
             return context(doc, issuer, range, null, sandbox.softwareId(), null, null, sandbox.certificate());
         }
-        SoftwareCredentialEntity software = SoftwareCredentialEntity.findActive(issuer.id)
-                .orElseThrow(() -> new IllegalStateException("Issuer has no software credentials"));
-        SigningCertificateEntity certificate = SigningCertificateEntity.findActive(issuer.id)
-                .orElseThrow(() -> new IllegalStateException("Issuer has no signing certificate"));
+        SoftwareCredentialEntity software = data.software();
+        SigningCertificateEntity certificate = data.certificate();
+        if (software == null) throw new IllegalStateException("Issuer has no software credentials");
+        if (certificate == null) throw new IllegalStateException("Issuer has no signing certificate");
         return context(
                 doc,
                 issuer,
@@ -139,13 +230,21 @@ public class ContextLoader {
     }
 
     /** Rebuilds the calculation stored at creation time. Never recalculated, so totals cannot drift. */
-    private static CalculationResult calculation(DocumentEntity doc) {
-        List<CalculatedLine> lines = new ArrayList<>();
+    static CalculationResult calculation(DocumentEntity doc) {
+        List<CalculatedLine> lines = new ArrayList<>(doc.lines.size());
+        Map<UUID, List<TaxAmount>> taxesByLine = new HashMap<>();
+        Map<TaxType, List<TaxAmount>> grouped = new EnumMap<>(TaxType.class);
+        for (DocumentTaxEntity tax : doc.taxes) {
+            if (tax.line == null) {
+                grouped.computeIfAbsent(tax.taxType, t -> new ArrayList<>()).add(toTaxAmount(tax));
+            } else {
+                taxesByLine
+                        .computeIfAbsent(tax.line.id, id -> new ArrayList<>())
+                        .add(toTaxAmount(tax));
+            }
+        }
         for (DocumentLineEntity line : doc.lines) {
-            List<TaxAmount> lineTaxes = doc.taxes.stream()
-                    .filter(tax -> tax.line != null && tax.line.id.equals(line.id))
-                    .map(ContextLoader::toTaxAmount)
-                    .toList();
+            List<TaxAmount> lineTaxes = List.copyOf(taxesByLine.getOrDefault(line.id, List.of()));
             lines.add(new CalculatedLine(
                     line.lineNumber,
                     line.itemCode,
@@ -157,11 +256,6 @@ public class ContextLoader {
                     lineTaxes));
         }
 
-        Map<TaxType, List<TaxAmount>> grouped = new EnumMap<>(TaxType.class);
-        doc.taxes.stream()
-                .filter(tax -> tax.line == null)
-                .forEach(tax -> grouped.computeIfAbsent(tax.taxType, t -> new ArrayList<>())
-                        .add(toTaxAmount(tax)));
         List<TaxTotal> totals = grouped.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparing(TaxType::dianCode)))
                 .map(entry -> new TaxTotal(

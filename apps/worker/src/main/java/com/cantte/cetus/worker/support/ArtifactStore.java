@@ -29,7 +29,7 @@ public class ArtifactStore {
     Tracer tracer;
 
     public void save(
-            ProcessingContext ctx,
+            DeliverySnapshot ctx,
             DocumentArtifactEntity.Kind kind,
             String fileName,
             byte[] content,

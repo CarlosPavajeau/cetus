@@ -1,0 +1,15 @@
+variant,point,repetition,exit_code,expected_builds,observed_builds,build_p50_ms,build_p95_ms,directory
+base,lines-2,1,0,61,61,8.382959,10.602542,bench/results/20261027-175646-end-to-end-constant
+base,lines-2,2,0,61,61,8.035167,12.10825,bench/results/20261027-175719-end-to-end-constant
+base,lines-2,3,0,61,61,7.6755,11.2045,bench/results/20261027-175751-end-to-end-constant
+base,lines-100,1,0,61,61,7.834916,10.598917,bench/results/20261027-175824-end-to-end-constant
+base,lines-100,2,0,61,61,7.939416,11.241375,bench/results/20261027-175856-end-to-end-constant
+base,lines-100,3,0,61,61,8.158583,10.603958,bench/results/20261027-175929-end-to-end-constant
+base,lines-500,1,0,61,61,9.113334,13.41675,bench/results/20261027-180001-end-to-end-constant
+base,lines-500,2,0,61,61,8.623542,13.101583,bench/results/20261027-180034-end-to-end-constant
+base,lines-500,3,0,60,60,8.684667,13.055709,bench/results/20261027-180106-end-to-end-constant
+new,lines-2,1,0,60,60,0.651041,1.135042,bench/results/20261027-180302-end-to-end-constant
+new,lines-2,2,0,61,61,0.638083,1.013917,bench/results/20261027-180335-end-to-end-constant
+new,lines-2,3,0,61,61,0.615959,0.963375,bench/results/20261027-180407-end-to-end-constant
+new,lines-100,1,0,61,61,1.309417,2.412417,bench/results/20261027-180439-end-to-end-constant
+new,lines-100,2,0,61,61,1.233583,1.8285,bench/results/20261027-180512-end-to-end-constant

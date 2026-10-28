@@ -19,8 +19,18 @@ import org.junit.jupiter.api.Test;
 class WebhookClientsTest {
 
     @Test
+    void aSecretRotationIsVisibleImmediately() {
+        var clients = new WebhookClients(Duration.ofSeconds(1), Duration.ofSeconds(1), false, 256);
+        var cipher = new FakeSecretCipher();
+        clients.cipher = cipher;
+        var endpoint = java.util.UUID.randomUUID();
+        assertThat(clients.secret(endpoint, cipher.sealText("first"))).isEqualTo("first");
+        assertThat(clients.secret(endpoint, cipher.sealText("rotated"))).isEqualTo("rotated");
+    }
+
+    @Test
     void theClientRefusesToConnectToInternalAddresses() {
-        WebhookClients clients = new WebhookClients(Duration.ofSeconds(1), Duration.ofSeconds(1), false);
+        WebhookClients clients = new WebhookClients(Duration.ofSeconds(1), Duration.ofSeconds(1), false, 256);
         Request request = new Request.Builder()
                 .url("http://localhost:9/hook")
                 .post(RequestBody.create("{}", MediaType.get("application/json")))
