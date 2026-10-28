@@ -6,8 +6,8 @@ import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import { Suspense, use } from "react";
 
-import { LegalLinks } from "~/components/LegalLinks";
 import { useMDXComponents } from "~/components/mdx";
+import { SidebarFooter } from "~/components/SidebarFooter";
 import { baseOptions } from "~/lib/layout";
 import { docs, source } from "~/lib/source";
 
@@ -71,7 +71,12 @@ function Page() {
   const { path, pageTree } = useFumadocsLoader(Route.useLoaderData());
 
   return (
-    <DocsLayout {...baseOptions()} tree={pageTree} sidebar={{ footer: <LegalLinks /> }}>
+    <DocsLayout
+      {...baseOptions()}
+      tree={pageTree}
+      themeSwitch={{ enabled: false }}
+      sidebar={{ footer: <SidebarFooter /> }}
+    >
       <Suspense>
         <Content path={path} />
       </Suspense>
