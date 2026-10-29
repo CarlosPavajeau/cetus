@@ -11,6 +11,7 @@ import {
 } from "~/components/ui/combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "~/components/ui/field";
 import { departments } from "~/features/setup/divipola";
+import { errorIdOf } from "~/features/setup/fields";
 
 import type { CustomerValues } from "./schema";
 
@@ -68,6 +69,7 @@ export function MunicipalityField({ form }: { form: UseFormReturn<CustomerValues
           placeholder="Busca por nombre"
           className="w-full"
           aria-invalid={fieldState.invalid}
+          aria-describedby={fieldState.invalid ? errorIdOf(id) : undefined}
           onBlur={field.onBlur}
           // Without it a picked municipality could not be removed, and the address would stay required.
           showClear={selected !== null}
@@ -87,7 +89,7 @@ export function MunicipalityField({ form }: { form: UseFormReturn<CustomerValues
       {selected && !fieldState.invalid && (
         <FieldDescription>Código DANE: {selected.code}</FieldDescription>
       )}
-      <FieldError errors={[fieldState.error]} />
+      <FieldError id={errorIdOf(id)} errors={[fieldState.error]} />
     </Field>
   );
 }

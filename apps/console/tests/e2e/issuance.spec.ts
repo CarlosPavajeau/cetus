@@ -47,7 +47,11 @@ test("an invoice is filled in by hand in habilitación", async ({ page, organiza
   await page.getByLabel("Número").fill("900123456-1");
   await expect(page.getByText("Dígito de verificación: 8")).toBeVisible();
   await page.getByRole("button", { name: "Emitir factura" }).click();
-  await expect(page.getByText("Escribe el nombre o la razón social.")).toBeVisible();
+  // The first invalid field takes the focus and describes its error.
+  await expect(page.getByLabel("Nombre o razón social")).toBeFocused();
+  await expect(page.getByLabel("Nombre o razón social")).toHaveAccessibleDescription(
+    "Escribe el nombre o la razón social.",
+  );
 
   await page.getByLabel("Nombre o razón social").fill("Comprador SAS");
   await page.getByLabel("Descripción de la línea 1").fill("Licencia anual");
@@ -167,6 +171,7 @@ test("the customer's location is optional as a whole", async ({ page, organizati
   // The first sandbox invoice comes with Bogotá and an address.
   await open(page, "/documents/new");
   await page.getByRole("button", { name: "Editar datos" }).click();
+  await expect(page.getByRole("combobox", { name: "Tipo de persona" })).toBeFocused();
   await page.getByLabel("Dirección (opcional)").fill("");
   await page.getByRole("button", { name: "Emitir factura" }).click();
   await expect(

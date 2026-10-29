@@ -18,6 +18,9 @@ type FieldProps<T extends FieldValues> = {
   optional?: boolean;
 };
 
+/** The id of a field's error, which its control names in `aria-describedby`. */
+export const errorIdOf = (id: string) => `${id}-error`;
+
 /** Label, control, hint and error of one form field, laid out as in the assistant's design. */
 export function FieldFrame({
   id,
@@ -44,7 +47,7 @@ export function FieldFrame({
       </FieldLabel>
       {children}
       {hint && !invalid && <FieldDescription>{hint}</FieldDescription>}
-      <FieldError errors={[error]} />
+      <FieldError id={errorIdOf(id)} errors={[error]} />
     </Field>
   );
 }
@@ -78,6 +81,7 @@ export function TextField<T extends FieldValues>({
         {...field}
         id={id}
         aria-invalid={fieldState.invalid}
+        aria-describedby={fieldState.invalid ? errorIdOf(id) : undefined}
         onChange={(event) =>
           field.onChange(normalize ? normalize(event.target.value) : event.target.value)
         }
@@ -116,6 +120,7 @@ export function SecretField<T extends FieldValues>({
           autoComplete="off"
           spellCheck={false}
           aria-invalid={fieldState.invalid}
+          aria-describedby={fieldState.invalid ? errorIdOf(id) : undefined}
         />
         <Button
           type="button"
@@ -161,6 +166,7 @@ export function DateField<T extends FieldValues>({ control, name, label, hint }:
               // oxlint-disable-next-line shadcn/no-restyle -- a picker trigger reads as a field value, not an action
               className="w-full justify-between font-normal"
               aria-invalid={fieldState.invalid}
+              aria-describedby={fieldState.invalid ? errorIdOf(id) : undefined}
               onBlur={field.onBlur}
             />
           }

@@ -2,7 +2,7 @@ import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type } from "arktype";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -110,6 +110,14 @@ export function InvoiceForm({
   const [customerMode, setCustomerMode] = useState<"fields" | "summary" | "sample">(
     sample ? "sample" : "fields",
   );
+  // Where the focus goes once the form renders: the first invalid field, or the customer's first field when
+  // its summary gives way to them. A new round each time, so the same request runs again.
+  const [focusRequest, setFocusRequest] = useState<{
+    target: "invalid" | "customer";
+    round: number;
+  } | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const customerRef = useRef<HTMLDivElement>(null);
   const customerSearch = useCustomerSearch(environment);
   const header = useForm<InvoiceHeaderValues>({
     resolver: arktypeResolver(invoiceHeaderSchema),
@@ -161,6 +169,20 @@ export function InvoiceForm({
     name: ["legalName", "identificationNumber"],
   });
 
+  useEffect(() => {
+    const target =
+      focusRequest?.target === "invalid"
+        ? formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        : focusRequest?.target === "customer"
+          ? customerRef.current?.querySelector<HTMLElement>("button, input")
+          : null;
+    target?.focus();
+  }, [focusRequest]);
+
+  function requestFocus(target: "invalid" | "customer") {
+    setFocusRequest((previous) => ({ target, round: (previous?.round ?? 0) + 1 }));
+  }
+
   async function submit() {
     const [headerValid, customerValid, linesValid] = await Promise.all([
       header.trigger(),
@@ -171,6 +193,7 @@ export function InvoiceForm({
       setCustomerMode("fields");
     }
     if (!headerValid || !customerValid || !linesValid) {
+      requestFocus("invalid");
       return;
     }
     const parsedHeader = invoiceHeaderSchema(header.getValues());
@@ -245,8 +268,10 @@ export function InvoiceForm({
 
   return (
     <form
+      ref={formRef}
       noValidate
-      className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]"
+      // Below xl, room for the sticky footer, so it never covers the field in focus.
+      className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_20rem] max-xl:[&_*]:scroll-mb-20"
       onSubmit={(event) => {
         event.preventDefault();
         void submit();
@@ -303,14 +328,19 @@ export function InvoiceForm({
             </Button>
           </div>
           {customerMode === "fields" ? (
-            <CustomerFields
-              form={customerForm}
-              emailHint="Le enviamos la factura cuando la DIAN la acepte."
-            />
+            <div ref={customerRef} className="contents">
+              <CustomerFields
+                form={customerForm}
+                emailHint="Le enviamos la factura cuando la DIAN la acepte."
+              />
+            </div>
           ) : (
             <CustomerSummary
               customer={customerForm.getValues()}
-              onEdit={() => setCustomerMode("fields")}
+              onEdit={() => {
+                setCustomerMode("fields");
+                requestFocus("customer");
+              }}
             />
           )}
           {customerMode !== "summary" && (
@@ -346,7 +376,7 @@ export function InvoiceForm({
             <dt className="text-muted-foreground">Para</dt>
             <dd className="break-words">
               {customerName ? (
-                `${customerName} · ${customerNumber}`
+                [customerName, customerNumber].filter(Boolean).join(" · ")
               ) : (
                 <span className="text-muted-foreground">Sin cliente</span>
               )}

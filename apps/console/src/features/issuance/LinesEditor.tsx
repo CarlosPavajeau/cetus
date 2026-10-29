@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { type } from "arktype";
 import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useId } from "react";
 import { Controller, type UseFormReturn, useFieldArray, useWatch } from "react-hook-form";
 
 import { Button } from "~/components/ui/button";
@@ -19,6 +20,7 @@ import { CatalogPicker } from "~/features/catalog/CatalogPicker";
 import { productUnavailable, toLineValues } from "~/features/catalog/schema";
 import { useProductSearch } from "~/features/catalog/useCatalogSearch";
 import { formatMoney } from "~/features/documents/labels";
+import { errorIdOf } from "~/features/setup/fields";
 import type { DocumentPreview, Environment, Product } from "~/lib/api/types";
 import { useSettled } from "~/lib/useSettled";
 import { cn } from "~/lib/utils";
@@ -80,6 +82,7 @@ export function LinesEditor({
     name: "lines",
   });
   const lines = useWatch({ control: form.control, name: "lines" });
+  const baseId = useId();
 
   function pickProduct(product: Product) {
     const line = toLineValues(product);
@@ -130,7 +133,11 @@ export function LinesEditor({
           />
         </div>
       )}
-      <div className="hidden grid-cols-[minmax(0,1fr)_5rem_8rem_12rem_7rem_2.25rem] gap-3 text-2xs text-muted-foreground @4xl:grid">
+      {/* The labels of each line name the fields; this row only shows them once, as a table. */}
+      <div
+        aria-hidden
+        className="hidden grid-cols-[minmax(0,1fr)_5rem_8rem_12rem_7rem_2.25rem] gap-3 text-2xs text-muted-foreground @4xl:grid"
+      >
         <span>Descripción</span>
         <span>Cantidad</span>
         <span>Precio unitario</span>
@@ -142,75 +149,102 @@ export function LinesEditor({
         {fields.map((field, index) => {
           const errors = form.formState.errors.lines?.[index];
           const subtotal = preview.totals?.lines[index]?.lineExtension;
+          const lineId = `${baseId}-${field.id}`;
           return (
             <li
               key={field.id}
               className="grid grid-cols-2 gap-3 @xl:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)_7rem_2.25rem] @xl:items-start @4xl:grid-cols-[minmax(0,1fr)_5rem_8rem_12rem_7rem_2.25rem]"
             >
-              <div className="col-span-2 @xl:col-span-5 @4xl:col-span-1">
+              <div className="col-span-2 flex flex-col gap-1 @xl:col-span-5 @4xl:col-span-1">
+                <LineLabel htmlFor={`${lineId}-description`} text="Descripción" index={index} />
                 <Input
                   {...form.register(`lines.${index}.description`)}
-                  aria-label={`Descripción de la línea ${index + 1}`}
+                  id={`${lineId}-description`}
                   placeholder="Producto o servicio"
                   aria-invalid={Boolean(errors?.description)}
+                  aria-describedby={
+                    errors?.description ? errorIdOf(`${lineId}-description`) : undefined
+                  }
                 />
-                <FieldError errors={[errors?.description]} size="xs" className="mt-1" />
+                <FieldError
+                  id={errorIdOf(`${lineId}-description`)}
+                  errors={[errors?.description]}
+                  size="xs"
+                />
               </div>
-              <div>
+              <div className="flex flex-col gap-1">
+                <LineLabel htmlFor={`${lineId}-quantity`} text="Cantidad" index={index} />
                 <Input
                   {...form.register(`lines.${index}.quantity`)}
-                  aria-label={`Cantidad de la línea ${index + 1}`}
+                  id={`${lineId}-quantity`}
                   inputMode="decimal"
                   aria-invalid={Boolean(errors?.quantity)}
+                  aria-describedby={errors?.quantity ? errorIdOf(`${lineId}-quantity`) : undefined}
                 />
-                <FieldError errors={[errors?.quantity]} size="xs" className="mt-1" />
+                <FieldError
+                  id={errorIdOf(`${lineId}-quantity`)}
+                  errors={[errors?.quantity]}
+                  size="xs"
+                />
               </div>
-              <div>
+              <div className="flex flex-col gap-1">
+                <LineLabel htmlFor={`${lineId}-unit-price`} text="Precio unitario" index={index} />
                 <Input
                   {...form.register(`lines.${index}.unitPrice`)}
-                  aria-label={`Precio unitario de la línea ${index + 1}`}
+                  id={`${lineId}-unit-price`}
                   inputMode="decimal"
                   placeholder="0"
                   aria-invalid={Boolean(errors?.unitPrice)}
+                  aria-describedby={
+                    errors?.unitPrice ? errorIdOf(`${lineId}-unit-price`) : undefined
+                  }
                 />
-                <FieldError errors={[errors?.unitPrice]} size="xs" className="mt-1" />
+                <FieldError
+                  id={errorIdOf(`${lineId}-unit-price`)}
+                  errors={[errors?.unitPrice]}
+                  size="xs"
+                />
               </div>
-              <Controller
-                control={form.control}
-                name={`lines.${index}.tax`}
-                render={({ field: tax }) => (
-                  <Select
-                    items={taxItems}
-                    value={tax.value}
-                    onValueChange={(value) => tax.onChange(value)}
-                  >
-                    <SelectTrigger
-                      aria-label={`Impuesto de la línea ${index + 1}`}
-                      className="col-span-2 w-full @xl:col-span-1"
-                      onBlur={tax.onBlur}
+              <div className="col-span-2 flex flex-col gap-1 @xl:col-span-1">
+                <LineLabel htmlFor={`${lineId}-tax`} text="Impuesto" index={index} />
+                <Controller
+                  control={form.control}
+                  name={`lines.${index}.tax`}
+                  render={({ field: tax }) => (
+                    <Select
+                      items={taxItems}
+                      value={tax.value}
+                      onValueChange={(value) => tax.onChange(value)}
                     >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {taxItems.map((item) => (
-                          <SelectItem key={item.value} value={item.value}>
-                            {item.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <p className="flex h-9 items-center text-xs tabular-nums @xl:justify-end">
-                {subtotal === undefined ? "—" : formatMoney(subtotal, currency)}
-              </p>
+                      <SelectTrigger id={`${lineId}-tax`} className="w-full" onBlur={tax.onBlur}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {taxItems.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-2xs leading-4 text-muted-foreground @xl:text-right @4xl:hidden">
+                  Subtotal
+                </span>
+                <p className="flex h-9 items-center text-xs tabular-nums @xl:justify-end">
+                  {subtotal === undefined ? "—" : formatMoney(subtotal, currency)}
+                </p>
+              </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="justify-self-end"
+                className="mt-5 justify-self-end @4xl:mt-0"
                 onClick={() => remove(index)}
                 disabled={fields.length === 1}
               >
@@ -233,6 +267,16 @@ export function LinesEditor({
         Agregar línea
       </Button>
     </div>
+  );
+}
+
+/** A field's label: shown on its own line, and only to screen readers once the table header names it. */
+function LineLabel({ htmlFor, text, index }: { htmlFor: string; text: string; index: number }) {
+  return (
+    <label htmlFor={htmlFor} className="text-2xs leading-4 text-muted-foreground @4xl:sr-only">
+      {text}
+      <span className="sr-only"> de la línea {index + 1}</span>
+    </label>
   );
 }
 
