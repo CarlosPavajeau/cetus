@@ -80,11 +80,18 @@ export function adminSupportTicketsQuery(status: SupportTicketStatus | undefined
   });
 }
 
-/** One ticket; null when it does not exist. */
+/** Its attachment links expire after 15 minutes (AdminSupportResource.DOWNLOAD_TTL). */
+const supportAttachmentLinksRefresh = 10 * 60 * 1000;
+
+/**
+ * One ticket; null when it does not exist. Fetched again before its attachment links expire, so a page
+ * left open still downloads them.
+ */
 export function adminSupportTicketQuery(id: string) {
   return queryOptions({
     queryKey: [...adminKey, "support-tickets", "detail", id],
     queryFn: () => getAdminSupportTicket({ data: { id } }),
+    refetchInterval: supportAttachmentLinksRefresh,
   });
 }
 
