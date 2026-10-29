@@ -35,7 +35,7 @@ export function EmailVerificationBanner({ email }: { email: string }) {
   return (
     <aside
       aria-label="Correo sin confirmar"
-      className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 bg-amber-100 px-4 py-1.5 text-xs text-amber-950 dark:bg-amber-950 dark:text-amber-100"
+      className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 bg-warning-surface px-4 py-1.5 text-xs text-warning-surface-foreground"
     >
       <span className="flex items-center gap-2">
         <MailWarningIcon className="size-3.5" aria-hidden />
@@ -53,7 +53,7 @@ export function EmailVerificationBanner({ email }: { email: string }) {
       <Button
         size="sm"
         variant="outline"
-        className="h-7 border-amber-950/30 bg-transparent dark:border-amber-100/30"
+        className="h-7 border-warning-surface-foreground/30 bg-transparent"
         onClick={() => send.mutate()}
         disabled={send.isPending || send.isSuccess}
       >

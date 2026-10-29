@@ -26,7 +26,7 @@ export function ImpersonationBanner() {
   return (
     <aside
       aria-label="Sesión de soporte"
-      className="sticky top-0 z-20 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 bg-amber-400 px-4 py-2 text-xs text-amber-950"
+      className="sticky top-0 z-20 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 bg-impersonation px-4 py-2 text-xs text-impersonation-foreground"
     >
       <span className="flex items-center gap-2">
         <EyeIcon className="size-3.5" aria-hidden />
@@ -36,7 +36,7 @@ export function ImpersonationBanner() {
       <Button
         size="sm"
         variant="outline"
-        className="h-7 border-amber-950/30 bg-transparent hover:bg-amber-300"
+        className="h-7 border-impersonation-foreground/30 bg-transparent hover:bg-impersonation-hover"
         onClick={() => stop.mutate({})}
         disabled={stop.isPending}
       >

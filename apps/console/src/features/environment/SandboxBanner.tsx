@@ -15,7 +15,7 @@ export function SandboxBanner() {
   return (
     <aside
       aria-label="Modo simulación"
-      className="flex items-center justify-center gap-2 bg-sky-100 px-4 py-1.5 text-xs text-sky-950 dark:bg-sky-950 dark:text-sky-100"
+      className="flex items-center justify-center gap-2 bg-info-surface px-4 py-1.5 text-xs text-info-surface-foreground"
     >
       <FlaskConicalIcon className="size-3.5" aria-hidden />
       <span>

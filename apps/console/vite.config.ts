@@ -45,6 +45,7 @@ export default defineConfig({
     },
     rules: {
       "shadcn/no-unknown-classes": "error",
+      "shadcn/no-raw-colors": "error",
       "react/react-in-jsx-scope": "off",
       "react/rules-of-hooks": "error",
       "react/exhaustive-deps": "warn",
