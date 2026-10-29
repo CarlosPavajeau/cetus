@@ -20,7 +20,7 @@ const badgeVariants = cva(
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
         secondary: "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive:
-          "bg-destructive/10 text-red-700 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:text-destructive dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+          "bg-destructive/10 text-destructive-foreground focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
         outline: "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         ghost: "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
@@ -64,11 +64,11 @@ const statusBadgeVariants = cva("", {
   variants: {
     status: {
       idle: "bg-secondary text-secondary-foreground",
-      info: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-      pending: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-      success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-      warning: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-      error: "bg-destructive/10 text-red-700 dark:bg-destructive/20 dark:text-destructive",
+      info: "bg-info/10 text-info-foreground",
+      pending: "bg-info/10 text-info-foreground",
+      success: "bg-success/10 text-success-foreground",
+      warning: "bg-warning/10 text-warning-foreground",
+      error: "bg-destructive/10 text-destructive-foreground dark:bg-destructive/20",
     },
   },
   defaultVariants: {

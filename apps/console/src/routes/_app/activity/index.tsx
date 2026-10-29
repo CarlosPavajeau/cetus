@@ -182,7 +182,7 @@ function Activity() {
                             {actorTypeLabel[entry.actorType]}
                             {entry.impersonatedBy && " · vía Soporte de Cetus"}
                           </span>
-                          <span className="text-[10px] leading-normal text-muted-foreground">
+                          <span className="text-3xs leading-normal text-muted-foreground">
                             {entry.ipAddress ? `IP ${entry.ipAddress}` : "IP no registrada"}
                           </span>
                         </div>

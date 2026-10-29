@@ -87,9 +87,9 @@ export function MunicipalityField({ form }: { form: UseFormReturn<CustomerValues
         </ComboboxContent>
       </Combobox>
       {selected && !fieldState.invalid && (
-        <FieldDescription className="text-[10px]">Código DANE: {selected.code}</FieldDescription>
+        <FieldDescription className="text-3xs">Código DANE: {selected.code}</FieldDescription>
       )}
-      <FieldError errors={[fieldState.error]} className="text-[10px]" />
+      <FieldError errors={[fieldState.error]} className="text-3xs" />
     </Field>
   );
 }

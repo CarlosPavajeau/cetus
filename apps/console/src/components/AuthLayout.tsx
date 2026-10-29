@@ -36,7 +36,7 @@ export function AuthLayout({
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <CetusMark />
-            <span className="text-[1.375rem] font-semibold">Cetus</span>
+            <span className="text-xl font-semibold">Cetus</span>
           </div>
           <a
             href={docsUrl}
@@ -63,8 +63,8 @@ export function AuthLayout({
               )}
               <div className="flex flex-col gap-3">
                 <p className="text-xs font-medium text-muted-foreground">{eyebrow}</p>
-                <h1 className="text-[2rem]/[1.2] font-semibold">{title}</h1>
-                <p className="text-[0.875rem]/[1.6] text-muted-foreground">{lead}</p>
+                <h1 className="text-3xl/[1.2] font-semibold">{title}</h1>
+                <p className="text-md/[1.6] text-muted-foreground">{lead}</p>
               </div>
             </div>
             {children}
@@ -86,23 +86,23 @@ export function AuthLayout({
         </footer>
       </div>
       <aside className="hidden p-6 lg:flex" aria-hidden="true">
-        <div className="flex flex-1 flex-col rounded-[calc(var(--radius)*2)] bg-secondary p-12 [@media(max-height:50rem)]:p-8">
+        <div className="flex flex-1 flex-col rounded-2xl bg-secondary p-12 [@media(max-height:50rem)]:p-8">
           <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <span className="size-1.5 rounded-[2px] bg-primary" />
+            <span className="size-1.5 rounded-xs bg-primary" />
             API DE FACTURACIÓN ELECTRÓNICA
           </p>
           <div className="max-h-28 min-h-6 flex-1" />
           <div className="flex flex-col gap-8">
             {/* Same height for every headline, so the diagram does not move between screens. */}
             <div className="flex min-h-55 flex-col gap-5 [@media(max-height:50rem)]:min-h-0">
-              <p className="text-4xl/[1.2] font-medium tracking-[-1px] text-card-foreground">
+              <p className="text-4xl/[1.2] font-medium tracking-tight text-card-foreground">
                 {headline.map((line) => (
                   <span key={line} className="block">
                     {line}
                   </span>
                 ))}
               </p>
-              <p className="text-[0.9375rem]/[1.6] text-muted-foreground">
+              <p className="text-base/[1.6] text-muted-foreground">
                 Factura electrónica para Colombia, como una API. Tú construyes el producto; nosotros
                 hablamos con la DIAN.
               </p>

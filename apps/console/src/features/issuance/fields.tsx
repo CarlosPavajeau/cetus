@@ -63,9 +63,9 @@ export function SelectField<T extends FieldValues>({
         </SelectContent>
       </Select>
       {hint && !fieldState.invalid && (
-        <FieldDescription className="text-[10px]">{hint}</FieldDescription>
+        <FieldDescription className="text-3xs">{hint}</FieldDescription>
       )}
-      <FieldError errors={[fieldState.error]} className="text-[10px]" />
+      <FieldError errors={[fieldState.error]} className="text-3xs" />
     </Field>
   );
 }
@@ -108,11 +108,11 @@ export function TaxLevelsField({ control }: { control: Control<CustomerValues> }
         </SelectContent>
       </Select>
       {!fieldState.invalid && (
-        <FieldDescription className="text-[10px]">
+        <FieldDescription className="text-3xs">
           Si no sabes, déjalo en R-99-PN (no aplica).
         </FieldDescription>
       )}
-      <FieldError errors={[fieldState.error]} className="text-[10px]" />
+      <FieldError errors={[fieldState.error]} className="text-3xs" />
     </Field>
   );
 }

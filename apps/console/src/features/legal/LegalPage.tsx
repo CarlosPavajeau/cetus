@@ -37,11 +37,11 @@ export function LegalPage({
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 md:px-6 md:py-14">
-        <h1 className="text-[2rem]/[1.2] font-semibold text-balance">{title}</h1>
+        <h1 className="text-3xl/[1.2] font-semibold text-balance">{title}</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           Vigente desde el {versionDate(version)}.
         </p>
-        <article className="mt-8 text-[0.9375rem]/[1.7] text-pretty [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-10 [&_h2]:scroll-mt-6 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-balance [&_li]:mt-1.5 [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-3 [&_strong]:font-semibold [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5">
+        <article className="mt-8 text-base/[1.7] text-pretty [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-10 [&_h2]:scroll-mt-6 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-balance [&_li]:mt-1.5 [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-3 [&_strong]:font-semibold [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5">
           {children}
         </article>
       </main>

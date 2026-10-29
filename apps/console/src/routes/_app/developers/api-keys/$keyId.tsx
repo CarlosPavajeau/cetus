@@ -115,7 +115,7 @@ function ApiKeyDetail() {
         className="flex flex-col gap-4 rounded-lg border p-5"
         aria-labelledby="configuration"
       >
-        <h2 id="configuration" className="text-[14px] font-medium">
+        <h2 id="configuration" className="text-md font-medium">
           Configuración
         </h2>
         <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
@@ -140,7 +140,7 @@ function ApiKeyDetail() {
 
       <section className="flex flex-col gap-3.25" aria-labelledby="usage">
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
-          <h2 id="usage" className="text-[14px] font-medium">
+          <h2 id="usage" className="text-md font-medium">
             Uso reciente
           </h2>
           <p className="text-2xs text-muted-foreground">
@@ -175,7 +175,7 @@ function ApiKeyDetail() {
           </Table>
         </div>
 
-        <p className="text-[10px] leading-normal text-muted-foreground">
+        <p className="text-3xs leading-normal text-muted-foreground">
           Solicitudes a la API, no documentos validados por la DIAN. Horarios de Colombia (UTC−5).
         </p>
       </section>
@@ -211,7 +211,7 @@ function RequestRow({ request }: { request: ApiKeyRequest }) {
       <TableCell className="h-11 pl-4 text-2xs text-muted-foreground tabular-nums">
         <span suppressHydrationWarning>{formatRequestTime(new Date(request.createdAt))}</span>
       </TableCell>
-      <TableCell className="text-[10px] leading-normal font-medium">{request.method}</TableCell>
+      <TableCell className="text-3xs leading-normal font-medium">{request.method}</TableCell>
       <TableCell className="max-w-0 truncate text-2xs text-muted-foreground">
         {request.path}
       </TableCell>
@@ -222,10 +222,7 @@ function RequestRow({ request }: { request: ApiKeyRequest }) {
         {countFormat.format(request.durationMs)} ms
       </TableCell>
       {/* The tail tells requests apart: the head of a UUID v7 is its timestamp. */}
-      <TableCell
-        className="pr-4 text-[10px] leading-normal text-muted-foreground"
-        title={request.id}
-      >
+      <TableCell className="pr-4 text-3xs leading-normal text-muted-foreground" title={request.id}>
         …{request.id.slice(-8)}
       </TableCell>
     </TableRow>

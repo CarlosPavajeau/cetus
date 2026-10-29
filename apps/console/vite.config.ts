@@ -26,7 +26,7 @@ export default defineConfig({
   ]),
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "promise"],
-    jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
+    jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }, "@shadcn/lint"],
     categories: {
       correctness: "error",
       suspicious: "warn",
@@ -41,8 +41,25 @@ export default defineConfig({
       react: {
         version: "19",
       },
+      shadcn: { ui: "~/components/ui" },
     },
     rules: {
+      "shadcn/no-unknown-classes": "error",
+      "shadcn/no-raw-colors": "error",
+      "shadcn/require-static-classes": "error",
+      "shadcn/no-arbitrary-values": [
+        "error",
+        {
+          allow: [
+            "layout",
+            "transition",
+            "rounded-[inherit]",
+            "leading-[normal]",
+            "rounded-[25%]",
+            "rounded-[calc(var(--radius-md)+3px)]",
+          ],
+        },
+      ],
       "react/react-in-jsx-scope": "off",
       "react/rules-of-hooks": "error",
       "react/exhaustive-deps": "warn",
@@ -54,7 +71,11 @@ export default defineConfig({
       "no-underscore-dangle": "off",
       "no-unused-vars": [
         "error",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
       ],
       "vite-plus/prefer-vite-plus-imports": "error",
     },
@@ -70,6 +91,8 @@ export default defineConfig({
           "react/no-array-index-key": "off",
           "react/set-state-in-effect": "off",
           "no-shadow": "off",
+          "shadcn/require-static-classes": "off",
+          "shadcn/no-arbitrary-values": "off",
         },
       },
     ],

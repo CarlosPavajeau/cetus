@@ -34,7 +34,7 @@ function Slots({
           aria-invalid={invalid}
           className={
             boxed
-              ? "aspect-square h-auto max-w-16 min-w-0 flex-1 rounded-lg border bg-card text-[1.75rem] font-medium dark:bg-card"
+              ? "aspect-square h-auto max-w-16 min-w-0 flex-1 rounded-lg border bg-card text-3xl font-medium dark:bg-card"
               : "h-10 min-w-0 flex-1 font-mono text-base"
           }
         />
