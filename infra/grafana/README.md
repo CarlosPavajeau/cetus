@@ -8,7 +8,7 @@ Lo que Grafana muestra y avisa de la plataforma: el API y el worker envían mét
 | `dashboards/cetus-overview.json` | Salud general: SLO, API, documentos, cola y errores recientes |
 | `dashboards/cetus-dian.json` | La DIAN: latencia y errores por operación, rechazos y tiempo hasta validación |
 | `dashboards/cetus-worker.json` | Jobs por tipo y resultado, duración, reintentos, muertos y emails |
-| `dashboards/cetus-runtime.json` | Commit desplegado, JVM (memoria, GC, hilos, CPU) y pool de conexiones de cada servicio |
+| `dashboards/cetus-runtime.json` | Commit desplegado, JVM (memoria, GC, hilos, CPU), pool de conexiones y cachés de cada servicio |
 | `alerts.json` | Reglas de alerta, en un formato corto que `scripts/grafana-sync.mjs` traduce al de Grafana |
 
 Los cuatro dashboards marcan con la anotación **Despliegues** cada vez que el API o el worker empiezan a reportar
