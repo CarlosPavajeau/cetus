@@ -7,6 +7,7 @@ import { CetusMark } from "~/components/CetusMark";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
 import { docsUrl } from "~/lib/docs";
+import { supportEmail } from "~/lib/support";
 
 const year = new Date().getFullYear();
 
@@ -74,8 +75,10 @@ export function AuthLayout({
         <footer className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-muted-foreground">
           <p className="text-xs whitespace-nowrap">© {year} Cetus</p>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm whitespace-nowrap">
-            {/* Placeholder until the help center exists. */}
-            <span>¿Necesitas ayuda?</span>
+            {/* Without a session there is no ticket: the help page is behind sign-in. */}
+            <a href={`mailto:${supportEmail}`} className="hover:text-foreground">
+              ¿Necesitas ayuda?
+            </a>
             <Link to="/legal/terminos" className="hover:text-foreground">
               Términos
             </Link>
