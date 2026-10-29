@@ -1,7 +1,10 @@
-import { describe, expect, test } from "vite-plus/test";
+import { type } from "arktype";
+import { assert, describe, expect, test } from "vite-plus/test";
 
 import { createOrganization } from "../support/organization";
 import { createPlatformStaff, enableTwoFactor, jwtClaims } from "../support/platform-staff";
+
+const userList = type({ users: type({ id: "string", email: "string" }).array() });
 
 // Platform roles reach the API only through the JWT's `groups` claim, and only with 2FA enabled.
 describe("platform staff", () => {
@@ -31,35 +34,42 @@ describe("platform staff", () => {
   test("support reads users but cannot ban them", async () => {
     const support = await createPlatformStaff("support");
     const customer = await createOrganization("Cliente SAS");
-    const { users } = await support.auth<{ users: { id: string; email: string }[] }>(
-      `/admin/list-users?searchField=email&searchValue=${encodeURIComponent(customer.email)}`,
+    const { users } = userList.assert(
+      await support.auth(
+        `/admin/list-users?searchField=email&searchValue=${encodeURIComponent(customer.email)}`,
+      ),
     );
     const target = users.find((user) => user.email === customer.email);
-    expect(target).toBeDefined();
+    assert.isDefined(target);
 
     expect((await support.api("/admin/me")).status).toBe(200);
-    const ban = await support.authResponse("/admin/ban-user", { userId: target!.id });
+    const ban = await support.authResponse("/admin/ban-user", { userId: target.id });
     expect(ban.status).toBe(403);
   });
 
   test("admin changes are refused over HTTP: they go through the console, which audits them", async () => {
     const admin = await createPlatformStaff("admin");
     const customer = await createOrganization("Cliente SAS");
-    const { users } = await admin.auth<{ users: { id: string; email: string }[] }>(
-      `/admin/list-users?searchField=email&searchValue=${encodeURIComponent(customer.email)}`,
+    const { users } = userList.assert(
+      await admin.auth(
+        `/admin/list-users?searchField=email&searchValue=${encodeURIComponent(customer.email)}`,
+      ),
     );
+    const [user] = users;
+    assert.isDefined(user);
 
     const refusals = await Promise.all(
       (
         [
-          ["/admin/ban-user", { userId: users[0]!.id }],
-          ["/admin/set-role", { userId: users[0]!.id, role: "admin" }],
-          ["/admin/impersonate-user", { userId: users[0]!.id }],
-          ["/admin/remove-user", { userId: users[0]!.id }],
+          ["/admin/ban-user", { userId: user.id }],
+          ["/admin/set-role", { userId: user.id, role: "admin" }],
+          ["/admin/impersonate-user", { userId: user.id }],
+          ["/admin/remove-user", { userId: user.id }],
         ] as const
       ).map(async ([path, body]) => {
         const response = await admin.authResponse(path, body);
-        return { path, status: response.status, body: await response.json() };
+        const answer: unknown = await response.json();
+        return { path, status: response.status, body: answer };
       }),
     );
     for (const { path, status, body } of refusals) {
@@ -72,7 +82,9 @@ describe("platform staff", () => {
   test("a customer with 2FA is still not staff", async () => {
     const customer = await createOrganization("Cliente SAS");
     await enableTwoFactor(customer);
-    const session = await customer.auth<{ user: { twoFactorEnabled: boolean } }>("/get-session");
+    const session = type({ user: { twoFactorEnabled: "boolean" } }).assert(
+      await customer.auth("/get-session"),
+    );
     expect(session.user.twoFactorEnabled).toBe(true);
 
     expect(jwtClaims(await customer.token())).toMatchObject({ groups: [] });

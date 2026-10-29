@@ -1,3 +1,5 @@
+import { type } from "arktype";
+
 import { totp } from "../support/platform-staff";
 import { expect, open, test } from "./fixtures";
 
@@ -34,10 +36,9 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
 });
 
 test("a backup code typed as shown, dash included, signs in", async ({ browser, organization }) => {
-  const { totpURI, backupCodes } = await organization.auth<{
-    totpURI: string;
-    backupCodes: string[];
-  }>("/two-factor/enable", { password: organization.password });
+  const { totpURI, backupCodes } = type({ totpURI: "string", backupCodes: "string[]" }).assert(
+    await organization.auth("/two-factor/enable", { password: organization.password }),
+  );
   const secret = new URL(totpURI).searchParams.get("secret") ?? "";
   await organization.auth("/two-factor/verify-totp", { code: totp(secret) });
   const [backupCode] = backupCodes;
