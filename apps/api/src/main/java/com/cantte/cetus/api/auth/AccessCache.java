@@ -19,7 +19,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 /**
  * What every request reads before it does anything: its API key, and its account's status and request
  * limits, found by ID or by organization. Changes reach this replica once committed; other replicas see them
- * within {@link #TTL} until a shared store backs these caches.
+ * within {@link #TTL} until a shared store backs these caches. Loads run in their own transaction, so a
+ * caller's uncommitted change is never cached.
  */
 @ApplicationScoped
 public class AccessCache {
@@ -57,7 +58,7 @@ public class AccessCache {
     public Optional<ApiKeyAccess> apiKey(String hash) {
         return apiKeys.find(
                 hash,
-                () -> QuarkusTransaction.joiningExisting()
+                () -> QuarkusTransaction.requiringNew()
                         .call(() -> ApiKeyEntity.findActiveByHash(hash)
                                 .map(key -> new ApiKeyAccess(key.id, key.accountId, key.environment))));
     }
@@ -65,7 +66,7 @@ public class AccessCache {
     public AccountAccess account(UUID accountId) {
         return accounts.get(
                 accountId.toString(),
-                () -> QuarkusTransaction.joiningExisting().call(() -> {
+                () -> QuarkusTransaction.requiringNew().call(() -> {
                     Object[] account = (Object[]) AccountEntity.getEntityManager()
                             .createQuery("""
                                     SELECT a.status,
@@ -87,7 +88,7 @@ public class AccessCache {
     public Optional<OrganizationAccount> organization(String organizationId) {
         return organizations.find(
                 organizationId,
-                () -> QuarkusTransaction.joiningExisting()
+                () -> QuarkusTransaction.requiringNew()
                         .call(() -> AccountEntity.findByOrganization(organizationId)
                                 .map(account -> new OrganizationAccount(account.id, account.status))));
     }
