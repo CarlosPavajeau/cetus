@@ -1,4 +1,4 @@
-package com.cantte.cetus.worker.support;
+package com.cantte.cetus.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -10,15 +10,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
-class BoundedCacheTest {
+class LocalCacheTest {
     @Test
     void expiresWithoutAccessAndEvictsLeastRecentlyUsed() {
         var now = new AtomicReference<>(Instant.EPOCH);
-        var cache = new BoundedCache<String, String>(2, Duration.ofMinutes(10), now::get);
+        var cache = new LocalCache<String, String>(2, Duration.ofMinutes(10), now::get);
         cache.get("a", () -> "first");
         cache.get("b", () -> "second");
         cache.get("a", () -> "unexpected");
@@ -34,7 +35,7 @@ class BoundedCacheTest {
 
     @Test
     void concurrentMissesLoadOnceAndOtherKeysRemainAccessible() throws Exception {
-        var cache = new BoundedCache<Integer, String>(256);
+        LocalCache<Integer, String> cache = sized(256);
         var loads = new AtomicInteger();
         var entered = new CountDownLatch(1);
         var release = new CountDownLatch(1);
@@ -79,7 +80,7 @@ class BoundedCacheTest {
 
     @Test
     void errorsAndIncompleteValuesAllowRetry() {
-        var cache = new BoundedCache<String, String>(256);
+        LocalCache<String, String> cache = sized(256);
         assertThatThrownBy(() -> cache.get("key", () -> {
                     throw new IllegalStateException("KMS unavailable");
                 }))
@@ -91,8 +92,69 @@ class BoundedCacheTest {
 
     @Test
     void moreThan256IdentitiesRemainBounded() {
-        var cache = new BoundedCache<Integer, String>(256);
+        LocalCache<Integer, String> cache = sized(256);
         for (int i = 0; i < 1000; i++) cache.get(i, () -> "secret");
         assertThat(cache.size()).isEqualTo(256);
+    }
+
+    @Test
+    void invalidatedKeysReload() {
+        LocalCache<String, String> cache = sized(256);
+        cache.get("a", () -> "first");
+        cache.get("b", () -> "second");
+        cache.invalidate("a");
+        assertThat(cache.get("a", () -> "reloaded")).isEqualTo("reloaded");
+        assertThat(cache.get("b", () -> "unexpected")).isEqualTo("second");
+        cache.invalidateAll();
+        assertThat(cache.size()).isZero();
+    }
+
+    @Test
+    void anInvalidationWaitsForTheLoadInProgress() throws Exception {
+        LocalCache<String, String> cache = sized(256);
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var load = executor.submit(() -> cache.get("key", () -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("Loader timed out");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+                return "stale";
+            }));
+            try {
+                assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
+                var invalidation = executor.submit(() -> cache.invalidate("key"));
+                assertThatThrownBy(() -> invalidation.get(200, TimeUnit.MILLISECONDS))
+                        .isInstanceOf(TimeoutException.class);
+                release.countDown();
+                assertThat(load.get(5, TimeUnit.SECONDS)).isEqualTo("stale");
+                invalidation.get(5, TimeUnit.SECONDS);
+            } finally {
+                release.countDown();
+            }
+        }
+        assertThat(cache.get("key", () -> "fresh")).isEqualTo("fresh");
+    }
+
+    @Test
+    void theRegistrySweepsEveryCacheItCreated() {
+        var now = new AtomicReference<>(Instant.EPOCH);
+        var caches = new LocalCaches(now::get);
+        LocalCache<String, String> first = caches.create(8, Duration.ofMinutes(1));
+        LocalCache<String, String> second = caches.create(8, Duration.ofMinutes(5));
+        first.get("a", () -> "first");
+        second.get("a", () -> "second");
+        now.set(Instant.EPOCH.plus(Duration.ofMinutes(2)));
+        caches.cleanUp();
+        assertThat(first.size()).isZero();
+        assertThat(second.size()).isEqualTo(1);
+    }
+
+    private static <K> LocalCache<K, String> sized(int capacity) {
+        return new LocalCache<>(capacity, Duration.ofMinutes(10), Instant::now);
     }
 }

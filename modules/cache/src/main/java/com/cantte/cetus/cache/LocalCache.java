@@ -1,6 +1,5 @@
-package com.cantte.cetus.worker.support;
+package com.cantte.cetus.cache;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -9,14 +8,14 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-final class BoundedCache<K, V> {
+final class LocalCache<K, V> implements Cache<K, V> {
     private final Map<K, Entry<V>> entries = new LinkedHashMap<>(16, 0.75f, true);
     private final ReentrantLock[] loading = new ReentrantLock[64];
     private final int capacity;
     private final Duration ttl;
     private final Supplier<Instant> now;
 
-    BoundedCache(int capacity, Duration ttl, Supplier<Instant> now) {
+    LocalCache(int capacity, Duration ttl, Supplier<Instant> now) {
         if (capacity < 1 || ttl.isNegative() || ttl.isZero()) {
             throw new IllegalArgumentException("Cache capacity and TTL must be positive");
         }
@@ -28,16 +27,13 @@ final class BoundedCache<K, V> {
         }
     }
 
-    BoundedCache(int capacity) {
-        this(capacity, Duration.ofMinutes(10), Clock.systemUTC()::instant);
-    }
-
-    V get(K key, Supplier<V> loader) {
+    @Override
+    public V get(K key, Supplier<V> loader) {
         V value = fresh(key);
         if (value != null) {
             return value;
         }
-        ReentrantLock lock = loading[Math.floorMod(key.hashCode(), loading.length)];
+        ReentrantLock lock = lockFor(key);
         lock.lock();
         try {
             value = fresh(key);
@@ -54,6 +50,39 @@ final class BoundedCache<K, V> {
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public void invalidate(K key) {
+        ReentrantLock lock = lockFor(key);
+        lock.lock();
+        try {
+            synchronized (entries) {
+                entries.remove(key);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void invalidateAll() {
+        for (ReentrantLock lock : loading) {
+            lock.lock();
+        }
+        try {
+            synchronized (entries) {
+                entries.clear();
+            }
+        } finally {
+            for (ReentrantLock lock : loading) {
+                lock.unlock();
+            }
+        }
+    }
+
+    private ReentrantLock lockFor(K key) {
+        return loading[Math.floorMod(key.hashCode(), loading.length)];
     }
 
     private V fresh(K key) {

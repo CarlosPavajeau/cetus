@@ -2,12 +2,12 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.aws.SecretCipher;
+import com.cantte.cetus.cache.Cache;
+import com.cantte.cetus.cache.Caches;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.Pkcs12Loader;
-import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.time.Clock;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.UUID;
@@ -23,11 +23,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class KeyMaterialCache {
 
-    private final BoundedCache<Identity, KeyMaterial> cache;
+    private final Cache<Identity, KeyMaterial> cache;
 
     public KeyMaterialCache(
+            Caches caches,
             @ConfigProperty(name = "cetus.cache.certificates.max-entries", defaultValue = "512") int capacity) {
-        cache = new BoundedCache<>(capacity, Duration.ofMinutes(10), () -> clock.instant());
+        cache = caches.local(capacity, Duration.ofMinutes(10));
     }
 
     @Inject
@@ -35,8 +36,6 @@ public class KeyMaterialCache {
 
     @Inject
     SecretCipher cipher;
-
-    Clock clock = Clock.systemUTC();
 
     public KeyMaterial get(ProcessingContext.CertificateRef ref) {
         Identity identity = new Identity(
@@ -56,11 +55,6 @@ public class KeyMaterialCache {
                 Arrays.fill(pkcs12, (byte) 0);
             }
         });
-    }
-
-    @Scheduled(every = "1m")
-    void cleanUp() {
-        cache.cleanUp();
     }
 
     private record Identity(UUID id, String s3Key, String passwordS3Key, String passwordFingerprint) {}

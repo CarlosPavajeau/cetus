@@ -2,15 +2,15 @@ package com.cantte.cetus.worker.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.cantte.cetus.cache.LocalCaches;
 import com.cantte.cetus.signing.KeyMaterial;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class KeyMaterialCacheTest {
@@ -22,11 +22,11 @@ class KeyMaterialCacheTest {
     void aCertificateWithItsPasswordInStorageIsRotatedWithIt() throws Exception {
         FakeDocumentStorage storage = new FakeDocumentStorage();
         FakeSecretCipher cipher = new FakeSecretCipher();
-        KeyMaterialCache cache = new KeyMaterialCache(256);
+        Instant start = Instant.parse("2026-10-23T12:00:00Z");
+        var now = new AtomicReference<>(start);
+        KeyMaterialCache cache = new KeyMaterialCache(new LocalCaches(now::get), 256);
         cache.storage = storage;
         cache.cipher = cipher;
-        Instant start = Instant.parse("2026-10-23T12:00:00Z");
-        cache.clock = Clock.fixed(start, ZoneOffset.UTC);
         var ref = new ProcessingContext.CertificateRef(UUID.randomUUID(), CERTIFICATE, null, PASSWORD);
 
         byte[] signer = testSigner();
@@ -38,7 +38,7 @@ class KeyMaterialCacheTest {
         storage.put(
                 CERTIFICATE, cipher.seal(withPassword(signer, "cetus-test", "rotated")), "application/octet-stream");
         storage.put(PASSWORD, cipher.sealText("rotated"), "application/octet-stream");
-        cache.clock = Clock.fixed(start.plus(Duration.ofMinutes(11)), ZoneOffset.UTC);
+        now.set(start.plus(Duration.ofMinutes(11)));
 
         KeyMaterial rotated = cache.get(ref);
         assertThat(rotated).isNotSameAs(first);
@@ -49,7 +49,7 @@ class KeyMaterialCacheTest {
     void passwordAndLocationChangesReloadImmediately() throws Exception {
         var storage = new FakeDocumentStorage();
         var cipher = new FakeSecretCipher();
-        var cache = new KeyMaterialCache(256);
+        var cache = new KeyMaterialCache(new LocalCaches(), 256);
         cache.storage = storage;
         cache.cipher = cipher;
         var id = UUID.randomUUID();
