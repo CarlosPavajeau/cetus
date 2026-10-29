@@ -15,20 +15,24 @@ test("a member opens a ticket with an attachment and sees it in the organization
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: "Enviar" }).click();
   await expect(dialog.getByText("Cuéntanos qué pasa")).toBeVisible();
-  await expect(dialog.getByText("Elige la prioridad del caso.")).toBeVisible();
+  await expect(dialog.getByRole("radiogroup", { name: "Prioridad" })).toHaveAccessibleDescription(
+    "Elige la prioridad del caso.",
+  );
 
   await dialog.getByLabel("Mensaje").fill("La factura de prueba no llega al correo del cliente.");
   await dialog.getByText("Algo está bloqueado, pero sigo emitiendo").click();
   await dialog
     .locator("#ticket-attachments")
     .setInputFiles({ name: "captura.png", mimeType: "image/png", buffer: png });
-  await expect(dialog.getByRole("button", { name: "Quitar captura.png" })).toBeEnabled();
+  await expect(dialog.getByText("captura.png adjuntado.")).toBeAttached();
   await dialog.getByRole("button", { name: "Enviar" }).click();
 
   await expect(dialog.getByText(/Recibimos tu caso #\d+/)).toBeVisible();
   await dialog.getByRole("button", { name: "Listo" }).click();
   const tickets = page.getByRole("region", { name: "Casos de la organización" });
-  await expect(tickets.getByText("La factura de prueba no llega")).toBeVisible();
+  await expect(
+    tickets.getByText("La factura de prueba no llega al correo del cliente."),
+  ).toBeVisible();
   await expect(tickets.getByText("Alta")).toBeVisible();
   await expect(tickets.getByText("Abierto")).toBeVisible();
   await expect(tickets.getByText(organization.email)).toBeVisible();
@@ -49,8 +53,12 @@ test("an attachment that is not an image or a PDF is refused before uploading", 
     buffer: Buffer.from("hola"),
   });
   await expect(
-    dialog.getByText("Adjunta imágenes JPEG, PNG, GIF o WebP, o archivos PDF."),
+    dialog
+      .getByRole("listitem")
+      .getByText("Adjunta imágenes JPEG, PNG, GIF o WebP, o archivos PDF."),
   ).toBeVisible();
+  // Screen readers hear it too: the list changes without moving focus.
+  await expect(dialog.getByText(/^notas\.txt no se adjuntó\./)).toBeAttached();
 });
 
 test("feedback goes to the team without opening a ticket", async ({ page, organization: _ }) => {

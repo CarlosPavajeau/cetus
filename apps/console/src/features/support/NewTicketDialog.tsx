@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -147,7 +147,7 @@ export function NewTicketDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {trigger && <DialogTrigger render={trigger} />}
-      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90svh] overflow-y-auto overscroll-contain sm:max-w-lg">
         {created ? (
           <>
             <DialogHeader>
@@ -182,9 +182,12 @@ export function NewTicketDialog({
                       id="ticket-message"
                       rows={5}
                       className="min-h-28"
-                      placeholder="Describe qué intentabas hacer, qué pasó y, si lo hay, el mensaje de error."
                       aria-invalid={fieldState.invalid}
+                      aria-describedby="ticket-message-hint"
                     />
+                    <FieldDescription id="ticket-message-hint">
+                      Qué intentabas hacer, qué pasó y, si lo hay, el mensaje de error.
+                    </FieldDescription>
                     <FieldError errors={[fieldState.error]} />
                   </Field>
                 )}
@@ -198,9 +201,9 @@ export function NewTicketDialog({
                       label="Prioridad"
                       options={priorityOptions}
                       value={field.value}
+                      error={fieldState.error?.message}
                       onChange={field.onChange}
                     />
-                    <FieldError errors={[fieldState.error]} />
                   </Field>
                 )}
               />
@@ -253,7 +256,7 @@ export function NewTicketDialog({
               <DialogClose render={<Button variant="outline" />} disabled={isSubmitting}>
                 Cancelar
               </DialogClose>
-              <Button type="submit" disabled={isSubmitting || uploading}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Spinner data-icon="inline-start" />}
                 {isSubmitting ? "Enviando…" : "Enviar"}
               </Button>

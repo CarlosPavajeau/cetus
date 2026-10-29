@@ -95,7 +95,6 @@ export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
                     id="feedback-message"
                     rows={5}
                     className="min-h-28"
-                    placeholder="Tus ideas, sugerencias o lo que no te gustó"
                     aria-invalid={fieldState.invalid}
                   />
                   <FieldError errors={[fieldState.error]} />

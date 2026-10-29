@@ -52,6 +52,8 @@ export function AttachmentDropzone({
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  // What happened to the last file, for screen readers: the list changes without moving focus.
+  const [announcement, setAnnouncement] = useState("");
   const full = value.length >= attachmentsMax;
 
   async function upload(key: string, file: File) {
@@ -66,8 +68,10 @@ export function AttachmentDropzone({
             : each,
         ),
       );
+      setAnnouncement(`${file.name} adjuntado.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "No pudimos subir el archivo.";
+      setAnnouncement(`${file.name} no se adjuntó. ${message}`);
       onChange((current) =>
         current.map((each) =>
           each.key === key ? { key, fileName: file.name, status: "failed", message } : each,
@@ -104,6 +108,12 @@ export function AttachmentDropzone({
       }
     }
     onChange((current) => [...current, ...added]);
+    const refused = added.filter((each) => each.status === "failed");
+    if (refused.length > 0) {
+      setAnnouncement(
+        refused.map((each) => `${each.fileName} no se adjuntó. ${each.message}`).join(" "),
+      );
+    }
   }
 
   return (
@@ -153,6 +163,9 @@ export function AttachmentDropzone({
           }}
         />
       </div>
+      <p className="sr-only" aria-live="polite">
+        {announcement}
+      </p>
       {value.length > 0 && (
         <ul className="flex flex-col gap-1.5" aria-label="Adjuntos">
           {value.map((attachment) => (
@@ -172,7 +185,7 @@ export function AttachmentDropzone({
                 />
               )}
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate">{attachment.fileName}</span>
+                <span className="break-all">{attachment.fileName}</span>
                 {attachment.status === "failed" && (
                   <span className="text-xs text-destructive">{attachment.message}</span>
                 )}

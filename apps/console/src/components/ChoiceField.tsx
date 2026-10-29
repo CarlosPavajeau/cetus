@@ -4,6 +4,7 @@ import {
   Field,
   FieldContent,
   FieldDescription,
+  FieldError,
   FieldLabel,
   FieldTitle,
 } from "~/components/ui/field";
@@ -19,6 +20,7 @@ export function ChoiceField<V extends string>({
   options,
   value,
   disabled,
+  error,
   onChange,
   className,
 }: {
@@ -28,6 +30,8 @@ export function ChoiceField<V extends string>({
   /** Null while nothing is chosen yet. */
   value: V | null;
   disabled?: boolean;
+  /** Why the choice is missing or wrong; tied to the group so assistive technology reads it. */
+  error?: string;
   onChange: (value: V) => void;
   className?: string;
 }) {
@@ -39,6 +43,8 @@ export function ChoiceField<V extends string>({
       </p>
       <RadioGroup
         aria-labelledby={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
         value={value}
         disabled={disabled}
         onValueChange={(next) => {
@@ -62,6 +68,7 @@ export function ChoiceField<V extends string>({
         ))}
       </RadioGroup>
       {hint && <FieldDescription size="sm">{hint}</FieldDescription>}
+      {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
     </div>
   );
 }

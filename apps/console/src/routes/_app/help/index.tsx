@@ -168,8 +168,7 @@ function Tickets() {
               <TableRow>
                 <TableHead className="px-5">Caso</TableHead>
                 <TableHead>Prioridad</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="pr-5 text-right">Fecha</TableHead>
+                <TableHead className="pr-5">Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -178,20 +177,19 @@ function Tickets() {
                   <TableCell className="max-w-md px-5 py-4 whitespace-normal">
                     <div className="flex flex-col gap-0.75">
                       <span className="font-medium">#{ticket.number}</span>
-                      <span className="line-clamp-2 text-xs text-muted-foreground">
+                      <span className="text-xs whitespace-pre-wrap text-muted-foreground">
                         {ticket.message}
+                      </span>
+                      <span className="text-2xs break-all text-muted-foreground">
+                        {dayFormat.format(new Date(ticket.createdAt))} · {ticket.userEmail}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>{priorityLabel[ticket.priority]}</TableCell>
-                  <TableCell>
+                  <TableCell className="pr-5">
                     <Badge variant={statusVariant[ticket.status]}>
                       {statusLabel[ticket.status]}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="pr-5 text-right">
-                    {dayFormat.format(new Date(ticket.createdAt))}
-                    <span className="block text-2xs text-muted-foreground">{ticket.userEmail}</span>
                   </TableCell>
                 </TableRow>
               ))}

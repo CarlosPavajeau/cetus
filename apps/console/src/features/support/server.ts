@@ -17,9 +17,16 @@ const messages: Record<string, string> = {
     "Mientras entras como otra persona no puedes escribir a soporte por ella.",
 };
 
-function userError(error: unknown): unknown {
-  if (error instanceof CetusApiError && messages[error.code]) {
-    return new Error(messages[error.code], { cause: error });
+/** An upload shares the API's code for too many requests, but its limit counts the organization's files. */
+const uploadMessages: Record<string, string> = {
+  ...messages,
+  support_too_many:
+    "Tu organización subió muchos archivos en la última hora. Espera unos minutos e inténtalo de nuevo.",
+};
+
+function userError(error: unknown, known = messages): unknown {
+  if (error instanceof CetusApiError && known[error.code]) {
+    return new Error(known[error.code], { cause: error });
   }
   return error;
 }
@@ -48,7 +55,7 @@ export const uploadSupportAttachment = createServerFn({ method: "POST" })
     try {
       return await api.post("/console/support-attachments", { body: data });
     } catch (error) {
-      throw userError(error);
+      throw userError(error, uploadMessages);
     }
   });
 
