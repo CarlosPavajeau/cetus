@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import { type } from "arktype";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { ChoiceField } from "~/components/ChoiceField";
@@ -73,6 +73,9 @@ export function NewTicketDialog({
   const open = openControlled ?? openOwn;
   const [attachments, setAttachments] = useState<readonly Attachment[]>([]);
   const [created, setCreated] = useState<SupportTicket | null>(null);
+  // Counts openings and closings: a send still running when the dialog closes must not show its result
+  // over a later draft.
+  const draft = useRef(0);
   const location = useLocation();
   const { data: issuers } = useQuery(issuersQuery);
   const { data: environment } = useQuery(activeEnvironmentQuery);
@@ -97,7 +100,7 @@ export function NewTicketDialog({
     })),
   ];
 
-  const onSend = form.handleSubmit(async (values) => {
+  async function sendValues(values: Values) {
     if (uploading) {
       form.setError("root", { message: "Espera a que terminen de subir los adjuntos." });
       return;
@@ -122,22 +125,31 @@ export function NewTicketDialog({
       }
       return;
     }
+    const sentFrom = draft.current;
     try {
-      setCreated(await create.mutateAsync({ data: parsed }));
+      const ticket = await create.mutateAsync({ data: parsed });
+      if (draft.current === sentFrom) {
+        setCreated(ticket);
+      }
     } catch (error) {
+      if (draft.current !== sentFrom) {
+        return;
+      }
       form.setError("root", {
         message:
           error instanceof Error ? error.message : "No pudimos enviar tu caso. Inténtalo de nuevo.",
       });
     }
-  });
+  }
 
   function setOpen(next: boolean) {
     if (openControlled === undefined) {
       setOpenOwn(next);
     }
     onOpenChange?.(next);
-    if (!next) {
+    draft.current += 1;
+    // On opening, so a new draft starts from the issuer named now, not from the one of the last draft.
+    if (next) {
       form.reset(defaultValues);
       setAttachments([]);
       setCreated(null);
@@ -162,7 +174,11 @@ export function NewTicketDialog({
             </DialogFooter>
           </>
         ) : (
-          <form onSubmit={onSend} noValidate className="grid gap-5">
+          <form
+            onSubmit={(event) => form.handleSubmit(sendValues)(event)}
+            noValidate
+            className="grid gap-5"
+          >
             <DialogHeader>
               <DialogTitle>Nuevo caso de soporte</DialogTitle>
               <DialogDescription>

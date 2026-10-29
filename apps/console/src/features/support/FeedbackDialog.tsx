@@ -1,7 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -27,6 +27,9 @@ import { sendFeedback } from "./server";
 export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
+  // Counts openings and closings: a send still running when the dialog closes must not show its result
+  // over a later draft.
+  const draft = useRef(0);
   const location = useLocation();
   const send = useMutation({ mutationFn: sendFeedback });
   const form = useForm({
@@ -35,11 +38,17 @@ export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
   });
   const { isSubmitting } = form.formState;
 
-  const onSend = form.handleSubmit(async (values) => {
+  async function sendValues(values: { message: string }) {
+    const sentFrom = draft.current;
     try {
       await send.mutateAsync({ data: { ...values, page: location.pathname.slice(0, 300) } });
-      setSent(true);
+      if (draft.current === sentFrom) {
+        setSent(true);
+      }
     } catch (error) {
+      if (draft.current !== sentFrom) {
+        return;
+      }
       form.setError("root", {
         message:
           error instanceof Error
@@ -47,10 +56,11 @@ export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
             : "No pudimos enviar tu opinión. Inténtalo de nuevo.",
       });
     }
-  });
+  }
 
   function onOpenChange(next: boolean) {
     setOpen(next);
+    draft.current += 1;
     if (!next) {
       form.reset();
       setSent(false);
@@ -75,7 +85,11 @@ export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
             </DialogFooter>
           </>
         ) : (
-          <form onSubmit={onSend} noValidate className="grid gap-5">
+          <form
+            onSubmit={(event) => form.handleSubmit(sendValues)(event)}
+            noValidate
+            className="grid gap-5"
+          >
             <DialogHeader>
               <DialogTitle>Comparte tu opinión</DialogTitle>
               <DialogDescription>

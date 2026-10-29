@@ -1,3 +1,4 @@
+import { createIssuer, uniqueNit } from "../support/issuers";
 import { expect, open, test } from "./fixtures";
 
 const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
@@ -68,4 +69,21 @@ test("feedback goes to the team without opening a ticket", async ({ page, organi
   await dialog.getByLabel("Tu opinión").fill("Me gustaría exportar los documentos a Excel.");
   await dialog.getByRole("button", { name: "Enviar" }).click();
   await expect(dialog.getByText("Gracias por escribirnos")).toBeVisible();
+});
+
+test("a new ticket after one about an issuer starts without that issuer", async ({
+  page,
+  organization,
+}) => {
+  const legalName = `Anterior ${crypto.randomUUID().slice(0, 8)} SAS`;
+  const issuerId = await createIssuer(organization, uniqueNit(), legalName);
+
+  await open(page, `/help?new=true&issuerId=${issuerId}`);
+  const issuer = page.getByRole("dialog").getByRole("combobox", { name: "Emisor (opcional)" });
+  await expect(issuer).toContainText(legalName);
+  await page.getByRole("dialog").getByRole("button", { name: "Cancelar" }).click();
+  await expect(page).toHaveURL(/\/help$/);
+
+  await page.getByRole("button", { name: "Nuevo caso" }).click();
+  await expect(issuer).toContainText("Ninguno en particular");
 });
