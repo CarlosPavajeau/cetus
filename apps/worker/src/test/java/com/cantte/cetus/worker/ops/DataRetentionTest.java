@@ -107,6 +107,28 @@ class DataRetentionTest {
         assertThat(storage.exists("support/" + account + "/" + recent)).isTrue();
     }
 
+    @Test
+    void anAttachmentWhoseFileCouldNotBeDeletedStaysForTheNextRun() {
+        UUID account = account();
+        UUID stuck = attachment(account, null, OffsetDateTime.now().minusDays(2));
+        String key = "support/" + account + "/" + stuck;
+        // A retained object refuses deletion, as S3 does when it fails.
+        storage.putRetained(key, new byte[] {1}, "image/png");
+        try {
+            retention.run();
+
+            assertThat(existing("support_attachments", List.of(stuck))).containsExactly(stuck);
+            assertThat(storage.exists(key)).isTrue();
+        } finally {
+            storage.release(key);
+        }
+
+        retention.run();
+
+        assertThat(existing("support_attachments", List.of(stuck))).isEmpty();
+        assertThat(storage.exists(key)).isFalse();
+    }
+
     private UUID attachment(UUID account, UUID ticket, OffsetDateTime createdAt) {
         UUID id = Ids.newId();
         String key = "support/" + account + "/" + id;

@@ -83,6 +83,7 @@ public class SupportTickets {
     @Transactional(Transactional.TxType.MANDATORY)
     public SupportAttachmentEntity upload(UploadAttachmentRequest request) {
         UUID accountId = context.accountId();
+        lockQuota("support-attachments:" + accountId);
         checkNotTooMany(SupportAttachmentEntity.countByAccountSince(accountId, windowStart()), ATTACHMENTS_PER_WINDOW);
         byte[] content;
         try {
@@ -112,6 +113,7 @@ public class SupportTickets {
     @Transactional(Transactional.TxType.MANDATORY)
     public SupportTicketEntity create(CreateTicketRequest request) {
         AccountEntity account = context.account();
+        lockQuota("support-tickets:" + context.userId());
         checkNotTooMany(SupportTicketEntity.countByUserSince(context.userId(), windowStart()), TICKETS_PER_WINDOW);
         IssuerEntity issuer = request.issuerId() == null
                 ? null
@@ -147,6 +149,7 @@ public class SupportTickets {
 
     @Transactional(Transactional.TxType.MANDATORY)
     public FeedbackEntity feedback(FeedbackRequest request) {
+        lockQuota("support-feedback:" + context.userId());
         checkNotTooMany(FeedbackEntity.countByUserSince(context.userId(), windowStart()), FEEDBACK_PER_WINDOW);
         FeedbackEntity feedback = new FeedbackEntity();
         feedback.id = Ids.newId();
@@ -197,6 +200,17 @@ public class SupportTickets {
 
     private static OffsetDateTime windowStart() {
         return OffsetDateTime.now().minus(WINDOW);
+    }
+
+    /**
+     * Held until the transaction ends, so two requests at once cannot both count the last slot of the hour, as
+     * {@code DocumentDrafts} does for the sandbox quota.
+     */
+    private static void lockQuota(String key) {
+        SupportTicketEntity.getEntityManager()
+                .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                .setParameter("key", key)
+                .getSingleResult();
     }
 
     private static void checkNotTooMany(long count, int limit) {

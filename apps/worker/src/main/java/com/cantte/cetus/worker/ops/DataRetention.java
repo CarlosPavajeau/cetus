@@ -62,6 +62,9 @@ public class DataRetention {
             "DELETE FROM billing.jobs WHERE reference_id IN (:ids)",
             "DELETE FROM billing.documents WHERE id IN (:ids)");
 
+    /** The most keys one S3 DeleteObjects request takes. */
+    static final int S3_DELETE_MAX = 1000;
+
     @Inject
     EntityManager em;
 
@@ -181,8 +184,8 @@ public class DataRetention {
                 }
                 return ids.size();
             });
-            for (int from = 0; from < keys.size(); from += 1000) {
-                List<String> chunk = keys.subList(from, Math.min(keys.size(), from + 1000));
+            for (int from = 0; from < keys.size(); from += S3_DELETE_MAX) {
+                List<String> chunk = keys.subList(from, Math.min(keys.size(), from + S3_DELETE_MAX));
                 try {
                     storage.delete(chunk);
                 } catch (RuntimeException e) {
@@ -194,32 +197,42 @@ public class DataRetention {
         return total;
     }
 
-    /** Like the sandbox documents: the rows of a batch go first, then their files. */
+    /**
+     * Unlike the sandbox documents, the files go first and the rows only once S3 confirms: no bucket rule
+     * expires support/, so a row is the only record of a file to retry. A batch fits one S3 delete (1,000
+     * keys). When S3 fails, the batch rolls back and the run stops; the next one tries those rows again.
+     */
     private long deleteUnsentAttachments(OffsetDateTime before) {
+        int limit = Math.min(batchSize, S3_DELETE_MAX);
         long total = 0;
         int batch;
         do {
-            List<String> keys = QuarkusTransaction.requiringNew().call(() -> {
-                @SuppressWarnings("unchecked")
-                List<String> deleted = em.createNativeQuery("""
-                                DELETE FROM billing.support_attachments
-                                WHERE id IN (SELECT id FROM billing.support_attachments
-                                             WHERE ticket_id IS NULL AND created_at < :before
-                                             LIMIT :limit FOR UPDATE SKIP LOCKED)
-                                RETURNING storage_key
-                                """, String.class)
-                        .setParameter("before", before)
-                        .setParameter("limit", batchSize)
-                        .getResultList();
-                return deleted;
-            });
-            batch = keys.size();
-            if (!keys.isEmpty()) {
-                try {
-                    storage.delete(keys);
-                } catch (RuntimeException e) {
-                    LOG.warnf(e, "Could not delete %d files of unsent support attachments", keys.size());
-                }
+            try {
+                batch = QuarkusTransaction.requiringNew().call(() -> {
+                    @SuppressWarnings("unchecked")
+                    List<Object[]> rows = em.createNativeQuery("""
+                                    SELECT id, storage_key FROM billing.support_attachments
+                                    WHERE ticket_id IS NULL AND created_at < :before
+                                    LIMIT :limit
+                                    FOR UPDATE SKIP LOCKED
+                                    """)
+                            .setParameter("before", before)
+                            .setParameter("limit", limit)
+                            .getResultList();
+                    if (rows.isEmpty()) {
+                        return 0;
+                    }
+                    storage.delete(rows.stream().map(row -> (String) row[1]).toList());
+                    em.createNativeQuery("DELETE FROM billing.support_attachments WHERE id IN (:ids)")
+                            .setParameter(
+                                    "ids",
+                                    rows.stream().map(row -> (UUID) row[0]).toList())
+                            .executeUpdate();
+                    return rows.size();
+                });
+            } catch (RuntimeException e) {
+                LOG.warnf(e, "Could not delete the files of unsent support attachments; the next run retries");
+                return total;
             }
             total += batch;
         } while (batch > 0);
