@@ -66,7 +66,7 @@ public class ConsoleProductResource {
             @QueryParam("q") @Size(max = 200) @Pattern(regexp = "[^\\p{Cntrl}]*") String q,
             @QueryParam("before") UUID before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
-        return catalog.products(context.account().id, environment, q, before, limit);
+        return catalog.products(context.accountId(), environment, q, before, limit);
     }
 
     @GET
@@ -74,7 +74,7 @@ public class ConsoleProductResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public ProductView get(@QueryParam("environment") @NotNull Environment environment, @PathParam("id") UUID id) {
-        return catalog.product(context.account().id, environment, id);
+        return catalog.product(context.accountId(), environment, id);
     }
 
     @POST
@@ -89,7 +89,7 @@ public class ConsoleProductResource {
     public Response create(
             @QueryParam("environment") @NotNull Environment environment, @Valid @NotNull ProductRequest request) {
         return Response.status(201)
-                .entity(catalog.createProduct(context.account().id, environment, request))
+                .entity(catalog.createProduct(context.accountId(), environment, request))
                 .build();
     }
 
@@ -101,7 +101,7 @@ public class ConsoleProductResource {
             @QueryParam("environment") @NotNull Environment environment,
             @PathParam("id") UUID id,
             @Valid @NotNull ProductRequest request) {
-        return catalog.updateProduct(context.account().id, environment, id, request);
+        return catalog.updateProduct(context.accountId(), environment, id, request);
     }
 
     @DELETE
@@ -109,7 +109,7 @@ public class ConsoleProductResource {
     @Transactional
     @APIResponse(responseCode = "204", description = "No Content")
     public Response delete(@QueryParam("environment") @NotNull Environment environment, @PathParam("id") UUID id) {
-        catalog.deleteProduct(context.account().id, environment, id);
+        catalog.deleteProduct(context.accountId(), environment, id);
         return Response.noContent().build();
     }
 }

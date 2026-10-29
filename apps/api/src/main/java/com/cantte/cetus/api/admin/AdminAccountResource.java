@@ -6,6 +6,7 @@ import com.cantte.cetus.api.admin.AdminViews.AccountSummaryView;
 import com.cantte.cetus.api.admin.AdminViews.PlanChangeRequest;
 import com.cantte.cetus.api.admin.AdminViews.StatusChangeRequest;
 import com.cantte.cetus.api.audit.RequestOriginResolver;
+import com.cantte.cetus.api.auth.AccessCache;
 import com.cantte.cetus.api.console.ConsoleContext;
 import com.cantte.cetus.api.console.IssuerViews;
 import com.cantte.cetus.api.error.ProblemDetail;
@@ -76,6 +77,9 @@ public class AdminAccountResource {
 
     /** Bounds the IN list the console sends after searching organizations by name. */
     private static final int MAX_ORGANIZATION_IDS = 100;
+
+    @Inject
+    AccessCache access;
 
     @Inject
     ConsoleContext context;
@@ -182,6 +186,7 @@ public class AdminAccountResource {
         }
         String previous = account.plan;
         account.plan = plan.code;
+        access.changed(account);
         auditLog.record(
                 account.id,
                 context.platformActor(),
@@ -203,6 +208,7 @@ public class AdminAccountResource {
         AccountEntity.Status previous = account.status;
         String why = reason.strip();
         account.status = status;
+        access.changed(account);
         account.statusReason = why;
         account.statusChangedAt = OffsetDateTime.now();
         account.statusChangedBy = context.userId();

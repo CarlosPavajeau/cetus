@@ -108,7 +108,7 @@ public class WebhookEndpointResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public List<WebhookEndpointView> list() {
-        return WebhookEndpointEntity.listByAccount(context.account().id).stream()
+        return WebhookEndpointEntity.listByAccount(context.accountId()).stream()
                 .map(WebhookEndpointView::from)
                 .toList();
     }
@@ -118,7 +118,7 @@ public class WebhookEndpointResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public WebhookEndpointView get(@PathParam("id") UUID id) {
-        WebhookEndpointEntity endpoint = find(context.account().id, id);
+        WebhookEndpointEntity endpoint = find(context.accountId(), id);
         return WebhookEndpointView.from(
                 endpoint,
                 endpoint.status == WebhookEndpointEntity.Status.DISABLED ? redeliveries.count(endpoint) : null);
@@ -143,7 +143,7 @@ public class WebhookEndpointResource {
         String secret = WebhookSignature.newSecret();
         WebhookEndpointEntity endpoint = new WebhookEndpointEntity();
         endpoint.id = Ids.newId();
-        endpoint.accountId = context.account().id;
+        endpoint.accountId = context.accountId();
         endpoint.environment = request.environment();
         endpoint.url = url;
         endpoint.description = request.description();
@@ -162,7 +162,7 @@ public class WebhookEndpointResource {
     @Transactional
     @APIResponse(responseCode = "204", description = "No Content")
     public void disable(@PathParam("id") UUID id) {
-        WebhookEndpointEntity endpoint = find(context.account().id, id);
+        WebhookEndpointEntity endpoint = find(context.accountId(), id);
         if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE) {
             endpoint.status = WebhookEndpointEntity.Status.DISABLED;
             endpoint.disabledAt = OffsetDateTime.now();
@@ -183,7 +183,7 @@ public class WebhookEndpointResource {
     public WebhookEndpointView enable(@PathParam("id") UUID id, @Valid EnableWebhookEndpointRequest request) {
         // Locked: a second enabling waits and finds it active, and the events being published are committed
         // before the missed ones are read (see WebhookEndpointEntity.listSubscribed).
-        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findForAccountForUpdate(context.account().id, id)
+        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findForAccountForUpdate(context.accountId(), id)
                 .orElseThrow(() -> new NotFoundException("Webhook endpoint not found"));
         if (endpoint.status == WebhookEndpointEntity.Status.DISABLED) {
             int redelivered = request != null && request.redeliver() ? redeliveries.redeliver(endpoint) : 0;
@@ -206,7 +206,7 @@ public class WebhookEndpointResource {
             @PathParam("id") UUID id,
             @QueryParam("before") UUID before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
-        WebhookEndpointEntity endpoint = find(context.account().id, id);
+        WebhookEndpointEntity endpoint = find(context.accountId(), id);
         int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
         // One more than asked tells whether there is a next page.
         List<WebhookDeliveryEntity> rows = WebhookDeliveryEntity.pageByEndpoint(endpoint.id, before, size + 1);
@@ -230,7 +230,7 @@ public class WebhookEndpointResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public WebhookDeliveryView retry(@PathParam("id") UUID id, @PathParam("deliveryId") UUID deliveryId) {
-        WebhookEndpointEntity endpoint = find(context.account().id, id);
+        WebhookEndpointEntity endpoint = find(context.accountId(), id);
         if (endpoint.status != WebhookEndpointEntity.Status.ACTIVE) {
             throw new DomainException("endpoint_disabled", "The endpoint is disabled");
         }

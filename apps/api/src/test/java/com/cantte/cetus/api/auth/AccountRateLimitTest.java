@@ -10,6 +10,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ValidatableResponse;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,9 @@ import org.junit.jupiter.api.Test;
 /** An account's own production limits, shared by its keys; a tiny one makes the third request go over it. */
 @QuarkusTest
 class AccountRateLimitTest {
+
+    @Inject
+    AccessCache access;
 
     /** A clock that never moves, so no token comes back however slow the requests are. */
     @BeforeEach
@@ -38,6 +42,7 @@ class AccountRateLimitTest {
             account.plan = "ESCALA";
             account.requestsPerSecond = 1;
             account.requestsBurst = 2;
+            access.changed(account);
         });
         String first = key(user, "LIVE");
         String second = key(user, "LIVE");

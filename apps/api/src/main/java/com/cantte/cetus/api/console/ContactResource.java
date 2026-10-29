@@ -73,7 +73,7 @@ public class ContactResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public List<ContactView> list() {
-        return AccountContactEntity.listByAccount(context.account().id).stream()
+        return AccountContactEntity.listByAccount(context.accountId()).stream()
                 .map(ContactView::from)
                 .toList();
     }
@@ -124,7 +124,7 @@ public class ContactResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public ContactView resendVerification(@PathParam("category") Category category) {
-        AccountContactEntity contact = AccountContacts.require(context.account().id, category);
+        AccountContactEntity contact = AccountContacts.require(context.accountId(), category);
         if (contact.pendingEmail == null) {
             throw new DomainException("no_pending_change", "The contact has no change waiting for verification");
         }
@@ -147,7 +147,7 @@ public class ContactResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public ContactView cancelChange(@PathParam("category") Category category) {
-        AccountContactEntity contact = AccountContacts.require(context.account().id, category);
+        AccountContactEntity contact = AccountContacts.require(context.accountId(), category);
         if (contact.pendingEmail != null) {
             cancel(contact);
         }

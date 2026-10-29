@@ -66,7 +66,7 @@ public class ConsoleCustomerResource {
             @QueryParam("q") @Size(max = 200) @Pattern(regexp = "[^\\p{Cntrl}]*") String q,
             @QueryParam("before") UUID before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
-        return catalog.customers(context.account().id, environment, q, before, limit);
+        return catalog.customers(context.accountId(), environment, q, before, limit);
     }
 
     @GET
@@ -74,7 +74,7 @@ public class ConsoleCustomerResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public CustomerView get(@QueryParam("environment") @NotNull Environment environment, @PathParam("id") UUID id) {
-        return catalog.customer(context.account().id, environment, id);
+        return catalog.customer(context.accountId(), environment, id);
     }
 
     @POST
@@ -90,7 +90,7 @@ public class ConsoleCustomerResource {
             @QueryParam("environment") @NotNull Environment environment,
             @Valid @NotNull InvoiceRequest.Customer request) {
         return Response.status(201)
-                .entity(catalog.createCustomer(context.account().id, environment, request))
+                .entity(catalog.createCustomer(context.accountId(), environment, request))
                 .build();
     }
 
@@ -102,7 +102,7 @@ public class ConsoleCustomerResource {
             @QueryParam("environment") @NotNull Environment environment,
             @PathParam("id") UUID id,
             @Valid @NotNull InvoiceRequest.Customer request) {
-        return catalog.updateCustomer(context.account().id, environment, id, request);
+        return catalog.updateCustomer(context.accountId(), environment, id, request);
     }
 
     @DELETE
@@ -110,7 +110,7 @@ public class ConsoleCustomerResource {
     @Transactional
     @APIResponse(responseCode = "204", description = "No Content")
     public Response delete(@QueryParam("environment") @NotNull Environment environment, @PathParam("id") UUID id) {
-        catalog.deleteCustomer(context.account().id, environment, id);
+        catalog.deleteCustomer(context.accountId(), environment, id);
         return Response.noContent().build();
     }
 }

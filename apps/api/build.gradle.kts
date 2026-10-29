@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":modules:webhooks"))
     implementation(project(":modules:notifications"))
     implementation(project(":modules:aws"))
+    implementation(project(":modules:cache"))
     // Only to verify the signature of Resend's delivery webhooks; the API never sends email.
     implementation(project(":modules:email"))
     // Only to validate uploaded certificates; the API never signs nor calls the DIAN.
