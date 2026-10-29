@@ -23,7 +23,9 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -76,9 +78,14 @@ public class SupportTicketResource {
         List<SupportTicketEntity> rows = SupportTicketEntity.pageByAccount(context.accountId(), before, size + 1);
         List<SupportTicketEntity> items = rows.subList(0, Math.min(rows.size(), size));
         UUID nextCursor = rows.size() > size ? items.getLast().id : null;
+        Map<UUID, List<SupportAttachmentEntity>> attachments =
+                SupportAttachmentEntity.listByTickets(
+                                items.stream().map(ticket -> ticket.id).toList())
+                        .stream()
+                        .collect(Collectors.groupingBy(attachment -> attachment.ticketId));
         return new SupportTicketPage(
                 items.stream()
-                        .map(ticket -> SupportTicketView.from(ticket, SupportAttachmentEntity.listByTicket(ticket.id)))
+                        .map(ticket -> SupportTicketView.from(ticket, attachments.getOrDefault(ticket.id, List.of())))
                         .toList(),
                 nextCursor);
     }

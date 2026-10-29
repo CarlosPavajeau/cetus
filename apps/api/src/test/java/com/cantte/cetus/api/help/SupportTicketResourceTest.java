@@ -23,6 +23,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +121,16 @@ class SupportTicketResourceTest {
                 .then()
                 .statusCode(400);
 
+        // The largest file fits in one request; a byte more is refused.
+        upload(owner, "grande.png", Arrays.copyOf(PNG, HelpViews.MAX_ATTACHMENT_BYTES));
+        owner.request()
+                .body(new UploadAttachmentRequest(
+                        "enorme.png", base64(Arrays.copyOf(PNG, HelpViews.MAX_ATTACHMENT_BYTES + 1))))
+                .post("/console/support-attachments")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("attachment_too_large"));
+
         ConsoleUser other = ConsoleUser.newOrganization();
         bootstrap(other, "Ajena SAS");
         String foreign = upload(other, "ajena.png", PNG);
@@ -161,6 +172,21 @@ class SupportTicketResourceTest {
                 .post("/console/support-tickets")
                 .then()
                 .statusCode(201);
+    }
+
+    @Test
+    void anAccountUploadsAFewDozenFilesAnHour() {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        bootstrap(owner, "Archivos SAS");
+        for (int i = 0; i < SupportTickets.ATTACHMENTS_PER_WINDOW; i++) {
+            upload(owner, "captura-" + i + ".png", PNG);
+        }
+        owner.request()
+                .body(new UploadAttachmentRequest("otra.png", base64(PNG)))
+                .post("/console/support-attachments")
+                .then()
+                .statusCode(429)
+                .body("code", equalTo("support_too_many"));
     }
 
     @Test

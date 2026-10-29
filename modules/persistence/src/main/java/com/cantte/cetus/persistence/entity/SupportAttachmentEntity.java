@@ -50,4 +50,12 @@ public class SupportAttachmentEntity extends PanacheEntityBase {
     public static List<SupportAttachmentEntity> listByTicket(UUID ticketId) {
         return list("ticketId = ?1 order by id", ticketId);
     }
+
+    public static List<SupportAttachmentEntity> listByTickets(Collection<UUID> ticketIds) {
+        return ticketIds.isEmpty() ? List.of() : list("ticketId in ?1 order by id", ticketIds);
+    }
+
+    public static long countByAccountSince(UUID accountId, OffsetDateTime since) {
+        return count("accountId = ?1 and createdAt >= ?2", accountId, since);
+    }
 }

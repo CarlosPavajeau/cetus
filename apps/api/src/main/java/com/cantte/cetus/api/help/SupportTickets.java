@@ -52,6 +52,9 @@ public class SupportTickets {
     static final Duration WINDOW = Duration.ofHours(1);
     static final int TICKETS_PER_WINDOW = 5;
     static final int FEEDBACK_PER_WINDOW = 10;
+    /** Enough for every ticket of the window with all its files; uploads never sent still take S3 space. */
+    static final int ATTACHMENTS_PER_WINDOW = TICKETS_PER_WINDOW * HelpViews.MAX_ATTACHMENTS;
+
     static final int RECENT_FAILURES = 5;
 
     private static final TypeReference<Map<String, Object>> MAP = new TypeReference<>() {};
@@ -79,6 +82,8 @@ public class SupportTickets {
 
     @Transactional(Transactional.TxType.MANDATORY)
     public SupportAttachmentEntity upload(UploadAttachmentRequest request) {
+        UUID accountId = context.accountId();
+        checkNotTooMany(SupportAttachmentEntity.countByAccountSince(accountId, windowStart()), ATTACHMENTS_PER_WINDOW);
         byte[] content;
         try {
             content = Base64.getDecoder().decode(request.contentBase64());
@@ -93,7 +98,7 @@ public class SupportTickets {
                         "attachment_type_unsupported", "Attach JPEG, PNG, GIF or WebP images, or PDF files"));
         SupportAttachmentEntity attachment = new SupportAttachmentEntity();
         attachment.id = Ids.newId();
-        attachment.accountId = context.accountId();
+        attachment.accountId = accountId;
         attachment.fileName = request.fileName().strip();
         attachment.contentType = contentType;
         attachment.size = content.length;
