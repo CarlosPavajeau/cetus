@@ -7,10 +7,11 @@ Todas son opcionales; sin ellas rigen los valores por defecto.
 | Variable | Servicio | Uso |
 |---|---|---|
 | `CETUS_OPS_ALERT_EMAIL` | worker | Buzón de alertas operativas. Sin él, las alertas solo quedan en el log (`WARN`) |
+| `CETUS_SUPPORT_EMAIL` | worker | Buzón de soporte: recibe los casos y opiniones de la consola, con el autor como `Reply-To`. Sin él, solo quedan en la base y en el log (`WARN`) |
 | `CETUS_CONSOLE_URL` | worker | URL de la consola para los enlaces de los avisos (por defecto `http://localhost:3000`) |
 | `CETUS_NOTIFICATIONS_FROM` | worker | Remitente de los avisos a contactos (por defecto, `CETUS_EMAIL_FROM`) |
 | `CETUS_STORAGE_RETENTION_DAYS` | worker | Días de bloqueo (Object Lock) de cada documento. En `prod`, 1826 |
-| `CETUS_RETENTION_*` | worker | Retención de datos: `API_KEY_REQUESTS` (30 días), `DONE_JOBS` (7), `NOTIFICATIONS` (365), `SANDBOX_DOCUMENTS` (10) |
+| `CETUS_RETENTION_*` | worker | Retención de datos: `API_KEY_REQUESTS` (30 días), `DONE_JOBS` (7), `NOTIFICATIONS` (365), `SANDBOX_DOCUMENTS` (10), `SUPPORT_ATTACHMENTS` (1, adjuntos de casos nunca enviados) |
 | `CETUS_JOBS_CONCURRENCY`, `CETUS_JOBS_LIMIT_*` | worker | Trabajos simultáneos en total (12) y por tipo |
 | `CETUS_RATE_LIMIT_REQUESTS_PER_SECOND`, `CETUS_RATE_LIMIT_BURST` | api | Límite por llave de API en `/v1/**` (10 y 20) |
 | `CETUS_SANDBOX_*` | api, worker | Límites del sandbox (ver abajo) |

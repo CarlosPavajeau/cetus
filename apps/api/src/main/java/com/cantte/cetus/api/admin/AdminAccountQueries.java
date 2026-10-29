@@ -123,18 +123,27 @@ public class AdminAccountQueries {
 
     /** The latest documents the DIAN rejected or that could not be sent, with the DIAN's errors; the sandbox's are practice. */
     public List<FailedDocumentView> recentFailures(UUID accountId) {
-        @SuppressWarnings("unchecked")
-        List<Object[]> rows = em.createNativeQuery("""
+        return recentFailures(accountId, null, RECENT_FAILURES);
+    }
+
+    /** {@link #recentFailures(UUID)} of one issuer, or of every issuer when {@code issuerId} is null. */
+    public List<FailedDocumentView> recentFailures(UUID accountId, UUID issuerId, int limit) {
+        Query query = em.createNativeQuery("""
                         SELECT id, issuer_id, environment, document_type, prefix, number, status,
                                dian_status_code, dian_status_message, CAST(dian_errors AS text), updated_at
                         FROM billing.documents
                         WHERE account_id = :account AND status IN ('REJECTED', 'FAILED') AND environment <> 'SANDBOX'
+                        %s
                         ORDER BY updated_at DESC
                         LIMIT :limit
-                        """)
+                        """.formatted(issuerId == null ? "" : "AND issuer_id = :issuer"))
                 .setParameter("account", accountId)
-                .setParameter("limit", RECENT_FAILURES)
-                .getResultList();
+                .setParameter("limit", limit);
+        if (issuerId != null) {
+            query.setParameter("issuer", issuerId);
+        }
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = query.getResultList();
         return rows.stream()
                 .map(row -> new FailedDocumentView(
                         (UUID) row[0],

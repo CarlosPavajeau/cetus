@@ -3,28 +3,12 @@ import { type } from "arktype";
 
 import { createIssuer, uniqueNit } from "../support/issuers";
 import { testCertificate } from "../support/stack";
-import { expect, open, pickTaxLevel, test } from "./fixtures";
+import { expect, fillIssuer, open, test } from "./fixtures";
 
 const softwareId = "381db121-bc49-4286-9067-ef982e3874e4";
 const testSetId = "a09e2744-f1d7-4697-bbcf-613bc312450d";
 
 const stepTitle = (page: Page, step: number) => page.getByText(`Paso ${step} de 4`);
-
-async function fillIssuer(page: Page) {
-  await page.getByRole("radio", { name: /Persona natural/ }).click();
-  await page.getByLabel("Nombre completo").fill("PAVAJEAU MAX CARLOS ANDRES");
-  // Typed as the RUT shows it, verification digit included.
-  await page.getByLabel("NIT").pressSequentially("1007870923-1");
-  await pickTaxLevel(page, "O-47");
-  await page.getByLabel("Dirección", { exact: true }).fill("Carrera 11 #13B-62");
-  await page.getByLabel("Código postal").fill("200001");
-  await page.getByLabel("Departamento").fill("Cesa");
-  await page.getByRole("option", { name: "Cesar", exact: true }).click();
-  await page.getByLabel("Municipio").fill("Valledu");
-  await page.getByRole("option", { name: "Valledupar" }).click();
-  await page.getByLabel("Correo electrónico").fill("facturas@pavajeau.test");
-  await page.getByLabel("Teléfono").fill("3167040705");
-}
 
 async function fillSoftware(page: Page, { testSet = true }: { testSet?: boolean } = {}) {
   await page.getByLabel("Software ID").fill(softwareId);

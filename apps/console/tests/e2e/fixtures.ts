@@ -33,3 +33,20 @@ export async function pickTaxLevel(page: Page, code: string) {
     .getByRole("checkbox", { name: code })
     .click();
 }
+
+/** Fills the assistant's first step for a natural person, as the RUT shows the data. */
+export async function fillIssuer(page: Page) {
+  await page.getByRole("radio", { name: /Persona natural/ }).click();
+  await page.getByLabel("Nombre completo").fill("PAVAJEAU MAX CARLOS ANDRES");
+  // Typed as the RUT shows it, verification digit included.
+  await page.getByLabel("NIT").pressSequentially("1007870923-1");
+  await pickTaxLevel(page, "O-47");
+  await page.getByLabel("Dirección", { exact: true }).fill("Carrera 11 #13B-62");
+  await page.getByLabel("Código postal").fill("200001");
+  await page.getByLabel("Departamento").fill("Cesa");
+  await page.getByRole("option", { name: "Cesar", exact: true }).click();
+  await page.getByLabel("Municipio").fill("Valledu");
+  await page.getByRole("option", { name: "Valledupar" }).click();
+  await page.getByLabel("Correo electrónico").fill("facturas@pavajeau.test");
+  await page.getByLabel("Teléfono").fill("3167040705");
+}

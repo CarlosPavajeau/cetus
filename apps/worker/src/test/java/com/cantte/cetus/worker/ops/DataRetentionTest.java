@@ -8,6 +8,8 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.SupportAttachmentEntity;
+import com.cantte.cetus.persistence.entity.SupportTicketEntity;
 import com.cantte.cetus.worker.handlers.DeliverDocumentHandler;
 import com.cantte.cetus.worker.handlers.ProcessDocumentHandler;
 import com.cantte.cetus.worker.support.FakeDocumentStorage;
@@ -76,6 +78,77 @@ class DataRetentionTest {
         assertThat(idempotencyKeys(account)).containsExactly("valid");
         assertThat(existing("jobs", List.of(oldDone, recentDone, oldDead, oldPending)))
                 .containsExactlyInAnyOrder(recentDone, oldDead, oldPending);
+    }
+
+    @Test
+    void attachmentsOfTicketsNeverSentGoAfterADay() {
+        UUID account = account();
+        UUID ticket = QuarkusTransaction.requiringNew().call(() -> {
+            SupportTicketEntity entity = new SupportTicketEntity();
+            entity.id = Ids.newId();
+            entity.number = SupportTicketEntity.nextNumber();
+            entity.accountId = account;
+            entity.userId = "user_" + UUID.randomUUID();
+            entity.userEmail = "persona@cliente.test";
+            entity.priority = SupportTicketEntity.Priority.LOW;
+            entity.message = "Hola";
+            entity.persist();
+            return entity.id;
+        });
+        UUID unsent = attachment(account, null, OffsetDateTime.now().minusDays(2));
+        UUID recent = attachment(account, null, OffsetDateTime.now().minusHours(2));
+        UUID sent = attachment(account, ticket, OffsetDateTime.now().minusDays(2));
+
+        retention.run();
+
+        assertThat(existing("support_attachments", List.of(unsent, recent, sent)))
+                .containsExactlyInAnyOrder(recent, sent);
+        assertThat(storage.exists("support/" + account + "/" + unsent)).isFalse();
+        assertThat(storage.exists("support/" + account + "/" + recent)).isTrue();
+    }
+
+    @Test
+    void anAttachmentWhoseFileCouldNotBeDeletedStaysForTheNextRun() {
+        UUID account = account();
+        UUID stuck = attachment(account, null, OffsetDateTime.now().minusDays(2));
+        String key = "support/" + account + "/" + stuck;
+        // A retained object refuses deletion, as S3 does when it fails.
+        storage.putRetained(key, new byte[] {1}, "image/png");
+        try {
+            retention.run();
+
+            assertThat(existing("support_attachments", List.of(stuck))).containsExactly(stuck);
+            assertThat(storage.exists(key)).isTrue();
+        } finally {
+            storage.release(key);
+        }
+
+        retention.run();
+
+        assertThat(existing("support_attachments", List.of(stuck))).isEmpty();
+        assertThat(storage.exists(key)).isFalse();
+    }
+
+    private UUID attachment(UUID account, UUID ticket, OffsetDateTime createdAt) {
+        UUID id = Ids.newId();
+        String key = "support/" + account + "/" + id;
+        storage.put(key, new byte[] {1}, "image/png");
+        QuarkusTransaction.requiringNew().run(() -> {
+            SupportAttachmentEntity entity = new SupportAttachmentEntity();
+            entity.id = id;
+            entity.accountId = account;
+            entity.ticketId = ticket;
+            entity.fileName = "a.png";
+            entity.contentType = "image/png";
+            entity.size = 1;
+            entity.storageKey = key;
+            entity.persistAndFlush();
+            em.createNativeQuery("UPDATE billing.support_attachments SET created_at = :createdAt WHERE id = :id")
+                    .setParameter("createdAt", createdAt)
+                    .setParameter("id", id)
+                    .executeUpdate();
+        });
+        return id;
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.cantte.cetus.api.console.ConsoleIssuance;
 import com.cantte.cetus.api.console.DocumentResends;
 import com.cantte.cetus.api.documents.DocumentDrafts;
 import com.cantte.cetus.api.documents.DocumentFiles;
+import com.cantte.cetus.api.help.SupportTickets;
 import com.cantte.cetus.api.json.SafeStrings;
 import com.cantte.cetus.domain.DomainException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
@@ -104,6 +105,11 @@ public class ErrorMappers {
 
     @ServerExceptionMapper
     public Response resendTooSoon(DocumentResends.TooSoon e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response supportTooMany(SupportTickets.TooMany e) {
         return e.getResponse();
     }
 

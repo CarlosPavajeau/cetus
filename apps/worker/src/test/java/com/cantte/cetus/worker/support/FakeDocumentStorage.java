@@ -33,6 +33,11 @@ public class FakeDocumentStorage extends DocumentStorage {
         return retained.contains(key);
     }
 
+    /** Lets a retained object be deleted again, as when its retention ends. */
+    public void release(String key) {
+        retained.remove(key);
+    }
+
     @Override
     public byte[] get(String key) {
         return objects.get(key).clone();

@@ -40,5 +40,8 @@ public enum AuditAction {
     CONTACT_CHANGE_REQUESTED,
     CONTACT_CHANGE_CANCELED,
     /** The new address followed its link and now receives the category's notices. */
-    CONTACT_VERIFIED
+    CONTACT_VERIFIED,
+    /** A help request from the console, emailed to the Cetus support mailbox. */
+    SUPPORT_TICKET_CREATED,
+    SUPPORT_TICKET_STATUS_CHANGED
 }

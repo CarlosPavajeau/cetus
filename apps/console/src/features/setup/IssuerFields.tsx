@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
+import { ChoiceField } from "~/components/ChoiceField";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
   Field,
@@ -16,7 +17,7 @@ import { nitCheckDigit } from "~/features/issuance/nitCheckDigit";
 import { splitNit } from "~/features/issuance/schema";
 import type { IssuerDetail } from "~/lib/api/types";
 
-import { ChoiceField, FieldFrame, TextField } from "./fields";
+import { FieldFrame, TextField } from "./fields";
 import { LocationFields } from "./LocationFields";
 import type { IssuerValues } from "./schema";
 import { FieldRow, FieldSection } from "./StepLayout";

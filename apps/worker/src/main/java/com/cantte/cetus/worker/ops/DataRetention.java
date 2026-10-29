@@ -31,6 +31,8 @@ import org.jboss.logging.Logger;
  *     (submissions, deliveries, webhook events, jobs) and their files in S3, stored without Object Lock for
  *     this. They have no fiscal value; an invoice goes with the notes that refer to it, however recent, so no
  *     document outlives the bucket's lifecycle rule on its files.</li>
+ *     <li>support attachments older than {@code cetus.retention.support-attachments} that no ticket took: the
+ *     person uploaded them and never sent the ticket.</li>
  * </ul>
  * In batches of {@code cetus.retention.batch-size}, each in its own short transaction, so a large backlog
  * never holds locks or writes a huge transaction. Two replicas running it at once only share the work.
@@ -60,6 +62,9 @@ public class DataRetention {
             "DELETE FROM billing.jobs WHERE reference_id IN (:ids)",
             "DELETE FROM billing.documents WHERE id IN (:ids)");
 
+    /** The most keys one S3 DeleteObjects request takes. */
+    static final int S3_DELETE_MAX = 1000;
+
     @Inject
     EntityManager em;
 
@@ -74,6 +79,9 @@ public class DataRetention {
 
     @ConfigProperty(name = "cetus.retention.sandbox-documents")
     Duration sandboxDocuments;
+
+    @ConfigProperty(name = "cetus.retention.support-attachments")
+    Duration supportAttachments;
 
     @ConfigProperty(name = "cetus.retention.batch-size")
     int batchSize;
@@ -115,6 +123,7 @@ public class DataRetention {
                       AND r.status = 'ACTIVE'))
                 """, now.minus(atLeastTheMinimum(notifications))));
         deleted.put("sandbox_documents", deleteSandboxDocuments(now.minus(sandboxDocuments)));
+        deleted.put("support_attachments", deleteUnsentAttachments(now.minus(supportAttachments)));
         LOG.infof("Data retention deleted %s", deleted);
         return deleted;
     }
@@ -175,13 +184,55 @@ public class DataRetention {
                 }
                 return ids.size();
             });
-            for (int from = 0; from < keys.size(); from += 1000) {
-                List<String> chunk = keys.subList(from, Math.min(keys.size(), from + 1000));
+            for (int from = 0; from < keys.size(); from += S3_DELETE_MAX) {
+                List<String> chunk = keys.subList(from, Math.min(keys.size(), from + S3_DELETE_MAX));
                 try {
                     storage.delete(chunk);
                 } catch (RuntimeException e) {
                     LOG.warnf(e, "Could not delete %d files of expired sandbox documents", chunk.size());
                 }
+            }
+            total += batch;
+        } while (batch > 0);
+        return total;
+    }
+
+    /**
+     * Unlike the sandbox documents, the files go first and the rows only once S3 confirms: no bucket rule
+     * expires support/, so a row is the only record of a file to retry. A batch fits one S3 delete (1,000
+     * keys). When S3 fails, the batch rolls back and the run stops; the next one tries those rows again.
+     */
+    private long deleteUnsentAttachments(OffsetDateTime before) {
+        int limit = Math.min(batchSize, S3_DELETE_MAX);
+        long total = 0;
+        int batch;
+        do {
+            try {
+                batch = QuarkusTransaction.requiringNew().call(() -> {
+                    @SuppressWarnings("unchecked")
+                    List<Object[]> rows = em.createNativeQuery("""
+                                    SELECT id, storage_key FROM billing.support_attachments
+                                    WHERE ticket_id IS NULL AND created_at < :before
+                                    LIMIT :limit
+                                    FOR UPDATE SKIP LOCKED
+                                    """)
+                            .setParameter("before", before)
+                            .setParameter("limit", limit)
+                            .getResultList();
+                    if (rows.isEmpty()) {
+                        return 0;
+                    }
+                    storage.delete(rows.stream().map(row -> (String) row[1]).toList());
+                    em.createNativeQuery("DELETE FROM billing.support_attachments WHERE id IN (:ids)")
+                            .setParameter(
+                                    "ids",
+                                    rows.stream().map(row -> (UUID) row[0]).toList())
+                            .executeUpdate();
+                    return rows.size();
+                });
+            } catch (RuntimeException e) {
+                LOG.warnf(e, "Could not delete the files of unsent support attachments; the next run retries");
+                return total;
             }
             total += batch;
         } while (batch > 0);

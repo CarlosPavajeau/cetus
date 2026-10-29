@@ -167,6 +167,8 @@ export default defineRailway((ctx) => {
       CETUS_EMAIL_FROM: "Facturas <facturas@cetus.cantte.com>",
       CETUS_EMAIL_TEST_RECIPIENT: preserve(),
       CETUS_OPS_ALERT_EMAIL: preserve(),
+      // The mailbox that receives the console's support tickets and feedback.
+      CETUS_SUPPORT_EMAIL: "contact@cantte.com",
       // Notices to the accounts' contacts: their sender and the console their links point to.
       CETUS_NOTIFICATIONS_FROM: "Notificaciones <notificaciones@cetus.cantte.com>",
       CETUS_CONSOLE_URL: "https://cetus.cantte.com",
