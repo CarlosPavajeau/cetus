@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { accountStatusLabel } from "~/features/admin/labels";
+import { accountStatusLabel, memberRoleLabel } from "~/features/admin/labels";
 import { adminKey, adminSupportTicketQuery } from "~/features/admin/queries";
 import { changeSupportTicketStatus } from "~/features/admin/support";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
@@ -134,7 +134,8 @@ function TicketDetail() {
             {accountStatusLabel[context.account.status]} · {context.account.plan}
           </Entry>
           <Entry label="Rol de quien escribe">
-            {context.organizationRoles.join(", ") || "Sin rol"}
+            {context.organizationRoles.map((role) => memberRoleLabel[role] ?? role).join(", ") ||
+              "Sin rol"}
           </Entry>
           <Entry label="Página">{context.page ? <code>{context.page}</code> : "Sin página"}</Entry>
           <Entry label="Ambiente">
@@ -196,7 +197,10 @@ function IssuerSnapshot({ ticket }: { ticket: AdminSupportTicketDetail }) {
           {issuer.ranges.length === 0
             ? "Ninguno"
             : issuer.ranges
-                .map((range) => `${range.prefix} ${range.from}–${range.to} (${range.status})`)
+                .map(
+                  (range) =>
+                    `${range.prefix} ${range.from}–${range.to} (${range.status === "ACTIVE" ? "activo" : "inactivo"})`,
+                )
                 .join(" · ")}
         </Entry>
         {issuer.testSet && (

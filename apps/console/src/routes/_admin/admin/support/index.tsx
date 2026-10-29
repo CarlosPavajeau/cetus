@@ -52,6 +52,12 @@ function statusOf(view: SupportView): SupportTicketStatus | undefined {
   return ticketStatuses.find((status) => status === view);
 }
 
+const attachmentPlurals = new Intl.PluralRules("es-CO");
+
+function attachmentCountLabel(count: number) {
+  return attachmentPlurals.select(count) === "one" ? "1 adjunto" : `${count} adjuntos`;
+}
+
 function dateTime(value: string) {
   const date = new Date(value);
   return `${dayFormat.format(date)}, ${timeFormat.format(date)}`;
@@ -160,7 +166,7 @@ function Tickets({ status }: { status: SupportTicketStatus | undefined }) {
                     {dateTime(ticket.createdAt)}
                     {ticket.attachmentCount > 0 && (
                       <span className="block text-2xs text-muted-foreground">
-                        {ticket.attachmentCount} adjunto{ticket.attachmentCount === 1 ? "" : "s"}
+                        {attachmentCountLabel(ticket.attachmentCount)}
                       </span>
                     )}
                   </TableCell>

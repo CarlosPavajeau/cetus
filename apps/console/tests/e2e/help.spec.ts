@@ -4,7 +4,7 @@ import { createIssuer, uniqueNit } from "../support/issuers";
 import { type TestOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
 import { consoleCookies } from "../support/stack";
-import { expect, open, test } from "./fixtures";
+import { expect, fillIssuer, open, test } from "./fixtures";
 
 async function signIn(context: BrowserContext, who: TestOrganization) {
   await context.clearCookies();
@@ -103,10 +103,14 @@ test("help from the assistant carries the issuer, and the team resolves the tick
   context,
   organization,
 }) => {
-  const legalName = `Ayuda ${crypto.randomUUID().slice(0, 8)} SAS`;
-  const issuerId = await createIssuer(organization, uniqueNit(), legalName);
+  const legalName = "PAVAJEAU MAX CARLOS ANDRES";
+  // The issuer does not exist yet when the assistant opens: its first step creates it.
+  await open(page, "/setup");
+  await page.getByRole("button", { name: "Empezar" }).click();
+  await fillIssuer(page);
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByLabel("Software ID")).toBeVisible();
 
-  await open(page, `/setup?issuerId=${issuerId}`);
   await page.getByRole("button", { name: "Pedir ayuda" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("combobox", { name: "Emisor (opcional)" })).toContainText(
@@ -127,6 +131,7 @@ test("help from the assistant carries the issuer, and the team resolves the tick
   await expect(page.getByRole("heading", { name: `Caso #${number}` })).toBeVisible();
   await expect(page.getByText(`Emisor: ${legalName}`)).toBeVisible();
   await expect(page.getByText("Sin configurar")).toBeVisible();
+  await expect(page.getByText("Dueño", { exact: true })).toBeVisible();
 
   await page.getByRole("combobox", { name: "Estado del caso" }).click();
   await page.getByRole("option", { name: "Resuelto" }).click();
