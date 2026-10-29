@@ -37,7 +37,6 @@ import { type Attachment, AttachmentDropzone } from "./AttachmentDropzone";
 import { supportTicketsQuery } from "./queries";
 import { ticketSchema } from "./schema";
 import { createSupportTicket } from "./server";
-import { SubmitShortcut, submitOnShortcut } from "./SubmitShortcut";
 
 const priorityOptions = [
   { value: "CRITICAL", title: "Crítica", description: "No puedo emitir o todo lo rechaza la DIAN" },
@@ -185,7 +184,6 @@ export function NewTicketDialog({
                       className="min-h-28"
                       placeholder="Describe qué intentabas hacer, qué pasó y, si lo hay, el mensaje de error."
                       aria-invalid={fieldState.invalid}
-                      onKeyDown={submitOnShortcut(onSend)}
                     />
                     <FieldError errors={[fieldState.error]} />
                   </Field>
@@ -258,7 +256,6 @@ export function NewTicketDialog({
               <Button type="submit" disabled={isSubmitting || uploading}>
                 {isSubmitting && <Spinner data-icon="inline-start" />}
                 {isSubmitting ? "Enviando…" : "Enviar"}
-                {!isSubmitting && <SubmitShortcut />}
               </Button>
             </DialogFooter>
           </form>

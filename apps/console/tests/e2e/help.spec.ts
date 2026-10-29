@@ -58,6 +58,6 @@ test("feedback goes to the team without opening a ticket", async ({ page, organi
   await page.getByRole("button", { name: "Escribir opinión" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Tu opinión").fill("Me gustaría exportar los documentos a Excel.");
-  await dialog.getByLabel("Tu opinión").press("ControlOrMeta+Enter");
+  await dialog.getByRole("button", { name: "Enviar" }).click();
   await expect(dialog.getByText("Gracias por escribirnos")).toBeVisible();
 });

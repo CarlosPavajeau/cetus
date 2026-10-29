@@ -22,7 +22,6 @@ import { Textarea } from "~/components/ui/textarea";
 
 import { feedbackSchema } from "./schema";
 import { sendFeedback } from "./server";
-import { SubmitShortcut, submitOnShortcut } from "./SubmitShortcut";
 
 /** An idea or an opinion for the Cetus team; it needs no answer, so it opens no ticket. */
 export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
@@ -98,7 +97,6 @@ export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
                     className="min-h-28"
                     placeholder="Tus ideas, sugerencias o lo que no te gustó"
                     aria-invalid={fieldState.invalid}
-                    onKeyDown={submitOnShortcut(onSend)}
                   />
                   <FieldError errors={[fieldState.error]} />
                 </Field>
@@ -116,7 +114,6 @@ export function FeedbackDialog({ trigger }: { trigger: ReactElement }) {
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Spinner data-icon="inline-start" />}
                 {isSubmitting ? "Enviando…" : "Enviar"}
-                {!isSubmitting && <SubmitShortcut />}
               </Button>
             </DialogFooter>
           </form>
