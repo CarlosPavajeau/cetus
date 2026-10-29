@@ -1,4 +1,5 @@
 import { conceptLabel } from "~/features/documents/labels";
+import { priorityLabel, statusLabel } from "~/features/support/labels";
 import type { AuditEntry } from "~/lib/api/types";
 import { unknownValue } from "~/lib/utils";
 
@@ -121,6 +122,10 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${label(contactCategoryLabel, data.category)} · ${text(data.email)}`;
     case "CONTACT_VERIFIED":
       return `${label(contactCategoryLabel, data.category)} · ${data.previous ? `${text(data.previous)} → ` : ""}${text(data.email)}`;
+    case "SUPPORT_TICKET_CREATED":
+      return `Caso #${text(data.number)} · Prioridad ${label(priorityLabel, data.priority)}`;
+    case "SUPPORT_TICKET_STATUS_CHANGED":
+      return `Caso #${text(data.number)} · ${label(statusLabel, data.statusPrevious)} → ${label(statusLabel, data.status)}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":
       return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
     default:

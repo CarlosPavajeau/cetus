@@ -16,6 +16,10 @@ public final class JobTypes {
     public static final String VERIFY_NUMBERING_RANGE = "VERIFY_NUMBERING_RANGE";
     /** Email a notice to the account's contacts. reference_id = notification_log id. */
     public static final String SEND_NOTIFICATION = "SEND_NOTIFICATION";
+    /** Email a support ticket to the Cetus support mailbox and its receipt to the person. reference_id = ticket id. */
+    public static final String SEND_SUPPORT_TICKET = "SEND_SUPPORT_TICKET";
+    /** Email an opinion shared from the console to the Cetus support mailbox. reference_id = feedback id. */
+    public static final String SEND_FEEDBACK = "SEND_FEEDBACK";
 
     private JobTypes() {}
 }

@@ -123,6 +123,26 @@ export type Usage = Schemas["UsageView"];
 
 export type CertificateUploadLink = Schemas["UploadLinkView"];
 
+export type SupportTicket = Schemas["SupportTicketView"];
+
+export type SupportTicketPage = Schemas["SupportTicketPage"];
+
+export type SupportTicketPriority = Schemas["SupportTicketPriority"];
+
+export type SupportTicketStatus = Schemas["SupportTicketStatus"];
+
+export type SupportAttachment = Schemas["AttachmentView"];
+
+export type AdminSupportTicketSummary = Schemas["AdminTicketSummaryView"];
+
+export type AdminSupportTicketPage = Schemas["AdminTicketPage"];
+
+export type AdminSupportTicketDetail = Schemas["AdminTicketDetailView"];
+
+export type AdminFeedback = Schemas["FeedbackView"];
+
+export type AdminFeedbackPage = Schemas["FeedbackPage"];
+
 /** Runtime list of audit actions for the filter and its validator. Must list every value of the API enum. */
 export const auditActions = [
   "ACCOUNT_CREATED",
@@ -155,6 +175,8 @@ export const auditActions = [
   "CONTACT_CHANGE_REQUESTED",
   "CONTACT_CHANGE_CANCELED",
   "CONTACT_VERIFIED",
+  "SUPPORT_TICKET_CREATED",
+  "SUPPORT_TICKET_STATUS_CHANGED",
 ] as const satisfies readonly AuditAction[];
 
 /** Actions on a person rather than an account: only the administration's log has them. */

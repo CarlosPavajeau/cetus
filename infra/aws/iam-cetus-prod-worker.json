@@ -20,6 +20,12 @@
       "Resource": "arn:aws:s3:::BUCKET/documents/sandbox/*"
     },
     {
+      "Sid": "SupportAttachments",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::BUCKET/support/*"
+    },
+    {
       "Sid": "OpenSecrets",
       "Effect": "Allow",
       "Action": "kms:Decrypt",

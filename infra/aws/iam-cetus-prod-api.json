@@ -14,6 +14,12 @@
       "Resource": "arn:aws:s3:::BUCKET/documents/*"
     },
     {
+      "Sid": "SupportAttachments",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject"],
+      "Resource": "arn:aws:s3:::BUCKET/support/*"
+    },
+    {
       "Sid": "SealSecrets",
       "Effect": "Allow",
       "Action": "kms:GenerateDataKey",

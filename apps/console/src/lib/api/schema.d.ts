@@ -174,6 +174,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Feedback */
+        get: operations["AdminSupportResource_feedback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/impersonations": {
         parameters: {
             query?: never;
@@ -218,6 +235,57 @@ export interface paths {
         /** List */
         get: operations["AdminPlanResource_list"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/support-tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["AdminSupportResource_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/support-tickets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["AdminSupportResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/support-tickets/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change Status */
+        put: operations["AdminSupportResource_changeStatus"];
         post?: never;
         delete?: never;
         options?: never;
@@ -624,6 +692,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Feedback */
+        post: operations["SupportTicketResource_feedback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/impersonation/end": {
         parameters: {
             query?: never;
@@ -812,6 +897,41 @@ export interface paths {
         post?: never;
         /** Delete */
         delete: operations["ConsoleProductResource_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/support-attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload */
+        post: operations["SupportTicketResource_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/support-tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["SupportTicketResource_list"];
+        put?: never;
+        /** Create */
+        post: operations["SupportTicketResource_create"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1273,6 +1393,13 @@ export interface components {
             items: components["schemas"]["AccountSummaryView"][];
             nextCursor: components["schemas"]["UUID"] | null;
         };
+        AccountSnapshot: {
+            id: components["schemas"]["UUID"];
+            organizationId: string;
+            name: string;
+            status: components["schemas"]["AccountStatus"];
+            plan: string;
+        };
         /** @enum {string} */
         AccountStatus: "ACTIVE" | "SUSPENDED" | "CLOSED";
         AccountSummaryView: {
@@ -1370,6 +1497,15 @@ export interface components {
             /** @description Nombre del país. Por defecto, Colombia. */
             countryName?: string;
         };
+        AdminAttachmentView: {
+            id: components["schemas"]["UUID"];
+            fileName: string;
+            contentType: string;
+            /** Format: int32 */
+            size: number;
+            /** @description Presigned download link, valid for a few minutes */
+            url: string;
+        };
         AdminAuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1395,6 +1531,41 @@ export interface components {
         AdminSessionView: {
             userId: string;
             roles: string[];
+        };
+        AdminTicketDetailView: {
+            id: components["schemas"]["UUID"];
+            /** Format: int64 */
+            number: number;
+            accountId: components["schemas"]["UUID"];
+            accountName: string;
+            userId: string;
+            userEmail: string;
+            priority: components["schemas"]["SupportTicketPriority"];
+            status: components["schemas"]["SupportTicketStatus"];
+            message: string;
+            context: components["schemas"]["SupportSnapshot"];
+            attachments: components["schemas"]["AdminAttachmentView"][];
+            createdAt: components["schemas"]["OffsetDateTime"];
+            updatedAt: components["schemas"]["OffsetDateTime"];
+        };
+        AdminTicketPage: {
+            items: components["schemas"]["AdminTicketSummaryView"][];
+            nextCursor: components["schemas"]["UUID"] | null;
+        };
+        AdminTicketSummaryView: {
+            id: components["schemas"]["UUID"];
+            /** Format: int64 */
+            number: number;
+            accountId: components["schemas"]["UUID"];
+            accountName: string;
+            userEmail: string;
+            priority: components["schemas"]["SupportTicketPriority"];
+            status: components["schemas"]["SupportTicketStatus"];
+            message: string;
+            /** Format: int32 */
+            attachmentCount: number;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            updatedAt: components["schemas"]["OffsetDateTime"];
         };
         ApiKeyDetail: {
             key: components["schemas"]["ApiKeyView"];
@@ -1424,8 +1595,15 @@ export interface components {
             /** @description Better Auth user id of the creator */
             createdBy: string | null;
         };
+        AttachmentView: {
+            id: components["schemas"]["UUID"];
+            fileName: string;
+            contentType: string;
+            /** Format: int32 */
+            size: number;
+        };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1488,6 +1666,9 @@ export interface components {
         ChangeContactRequest: {
             email: string;
         };
+        ChangeTicketStatusRequest: {
+            status: components["schemas"]["SupportTicketStatus"];
+        };
         /**
          * @description Canal de entrega.
          *
@@ -1521,6 +1702,16 @@ export interface components {
             address: components["schemas"]["AddressInput"];
             email: string;
             phone?: string;
+        };
+        CreateTicketRequest: {
+            message: string;
+            priority: components["schemas"]["SupportTicketPriority"];
+            /** @description The issuer the ticket is about; its state goes with the ticket */
+            issuerId?: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+            /** @description The environment the console showed, when no issuer is named */
+            environment?: ((string | components["schemas"]["Environment"] | null) | null) | components["schemas"]["Environment"] | null;
+            page?: string;
+            attachmentIds?: string[];
         };
         CreateWebhookEndpointRequest: {
             url: string;
@@ -2043,6 +2234,23 @@ export interface components {
             dianErrors: string[];
             updatedAt: components["schemas"]["OffsetDateTime"];
         };
+        FeedbackPage: {
+            items: components["schemas"]["FeedbackView"][];
+            nextCursor: components["schemas"]["UUID"] | null;
+        };
+        FeedbackRequest: {
+            message: string;
+            page?: string;
+        };
+        FeedbackView: {
+            id: components["schemas"]["UUID"];
+            accountId: components["schemas"]["UUID"];
+            accountName: string;
+            userEmail: string;
+            message: string;
+            page: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
         /** @description Un campo inválido de la petición. */
         FieldError: {
             /**
@@ -2544,6 +2752,37 @@ export interface components {
         StatusChangeRequest: {
             reason: string;
         };
+        SupportSnapshot: {
+            takenAt: components["schemas"]["OffsetDateTime"];
+            account: components["schemas"]["AccountSnapshot"];
+            environment: components["schemas"]["Environment"] | null;
+            organizationRoles: string[];
+            page: string | null;
+            issuer: components["schemas"]["IssuerDetailView"] | null;
+            /** @description The issuer's latest rejected or failed documents; empty without an issuer */
+            recentFailures: components["schemas"]["FailedDocumentView"][];
+        };
+        SupportTicketPage: {
+            items: components["schemas"]["SupportTicketView"][];
+            nextCursor: components["schemas"]["UUID"] | null;
+        };
+        /** @enum {string} */
+        SupportTicketPriority: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+        /** @enum {string} */
+        SupportTicketStatus: "OPEN" | "IN_PROGRESS" | "RESOLVED";
+        SupportTicketView: {
+            id: components["schemas"]["UUID"];
+            /** Format: int64 */
+            number: number;
+            priority: components["schemas"]["SupportTicketPriority"];
+            status: components["schemas"]["SupportTicketStatus"];
+            message: string;
+            userEmail: string;
+            issuerId: components["schemas"]["UUID"] | null;
+            attachments: components["schemas"]["AttachmentView"][];
+            createdAt: components["schemas"]["OffsetDateTime"];
+            updatedAt: components["schemas"]["OffsetDateTime"];
+        };
         /**
          * @description Impuesto.
          *
@@ -2605,6 +2844,10 @@ export interface components {
             address: components["schemas"]["AddressInput"];
             email: string;
             phone?: string;
+        };
+        UploadAttachmentRequest: {
+            fileName: string;
+            contentBase64: string;
         };
         UploadLinkView: {
             legalName: string;
@@ -3554,6 +3797,54 @@ export interface operations {
             };
         };
     };
+    AdminSupportResource_feedback: {
+        parameters: {
+            query?: {
+                before?: components["schemas"]["UUID"];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackPage"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     AdminImpersonationResource_start: {
         parameters: {
             query?: never;
@@ -3671,6 +3962,160 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminSupportResource_list: {
+        parameters: {
+            query?: {
+                before?: components["schemas"]["UUID"];
+                limit?: number;
+                status?: components["schemas"]["SupportTicketStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketPage"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminSupportResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketDetailView"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminSupportResource_changeStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeTicketStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketDetailView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5228,6 +5673,64 @@ export interface operations {
             };
         };
     };
+    SupportTicketResource_feedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     ImpersonationResource_end: {
         parameters: {
             query?: never;
@@ -6063,6 +6566,185 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SupportTicketResource_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadAttachmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SupportTicketResource_list: {
+        parameters: {
+            query?: {
+                before?: components["schemas"]["UUID"];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SupportTicketResource_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

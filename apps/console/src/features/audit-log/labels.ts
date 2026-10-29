@@ -31,6 +31,8 @@ export const actionLabel: Record<AuditAction, string> = {
   CONTACT_CHANGE_REQUESTED: "Cambio de contacto solicitado",
   CONTACT_CHANGE_CANCELED: "Cambio de contacto cancelado",
   CONTACT_VERIFIED: "Contacto verificado",
+  SUPPORT_TICKET_CREATED: "Caso de soporte abierto",
+  SUPPORT_TICKET_STATUS_CHANGED: "Estado del caso de soporte cambiado",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

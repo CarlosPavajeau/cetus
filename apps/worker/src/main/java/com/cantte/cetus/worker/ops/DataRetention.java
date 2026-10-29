@@ -31,6 +31,8 @@ import org.jboss.logging.Logger;
  *     (submissions, deliveries, webhook events, jobs) and their files in S3, stored without Object Lock for
  *     this. They have no fiscal value; an invoice goes with the notes that refer to it, however recent, so no
  *     document outlives the bucket's lifecycle rule on its files.</li>
+ *     <li>support attachments older than {@code cetus.retention.support-attachments} that no ticket took: the
+ *     person uploaded them and never sent the ticket.</li>
  * </ul>
  * In batches of {@code cetus.retention.batch-size}, each in its own short transaction, so a large backlog
  * never holds locks or writes a huge transaction. Two replicas running it at once only share the work.
@@ -75,6 +77,9 @@ public class DataRetention {
     @ConfigProperty(name = "cetus.retention.sandbox-documents")
     Duration sandboxDocuments;
 
+    @ConfigProperty(name = "cetus.retention.support-attachments")
+    Duration supportAttachments;
+
     @ConfigProperty(name = "cetus.retention.batch-size")
     int batchSize;
 
@@ -115,6 +120,7 @@ public class DataRetention {
                       AND r.status = 'ACTIVE'))
                 """, now.minus(atLeastTheMinimum(notifications))));
         deleted.put("sandbox_documents", deleteSandboxDocuments(now.minus(sandboxDocuments)));
+        deleted.put("support_attachments", deleteUnsentAttachments(now.minus(supportAttachments)));
         LOG.infof("Data retention deleted %s", deleted);
         return deleted;
     }
@@ -181,6 +187,38 @@ public class DataRetention {
                     storage.delete(chunk);
                 } catch (RuntimeException e) {
                     LOG.warnf(e, "Could not delete %d files of expired sandbox documents", chunk.size());
+                }
+            }
+            total += batch;
+        } while (batch > 0);
+        return total;
+    }
+
+    /** Like the sandbox documents: the rows of a batch go first, then their files. */
+    private long deleteUnsentAttachments(OffsetDateTime before) {
+        long total = 0;
+        int batch;
+        do {
+            List<String> keys = QuarkusTransaction.requiringNew().call(() -> {
+                @SuppressWarnings("unchecked")
+                List<String> deleted = em.createNativeQuery("""
+                                DELETE FROM billing.support_attachments
+                                WHERE id IN (SELECT id FROM billing.support_attachments
+                                             WHERE ticket_id IS NULL AND created_at < :before
+                                             LIMIT :limit FOR UPDATE SKIP LOCKED)
+                                RETURNING storage_key
+                                """, String.class)
+                        .setParameter("before", before)
+                        .setParameter("limit", batchSize)
+                        .getResultList();
+                return deleted;
+            });
+            batch = keys.size();
+            if (!keys.isEmpty()) {
+                try {
+                    storage.delete(keys);
+                } catch (RuntimeException e) {
+                    LOG.warnf(e, "Could not delete %d files of unsent support attachments", keys.size());
                 }
             }
             total += batch;
