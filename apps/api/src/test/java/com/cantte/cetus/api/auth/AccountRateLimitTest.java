@@ -5,6 +5,8 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.cache.LocalRateLimiter;
+import com.cantte.cetus.cache.RateLimiter;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusMock;
@@ -29,7 +31,7 @@ class AccountRateLimitTest {
         long now = System.nanoTime();
         QuarkusMock.installMockForType(
                 new ApiKeyRateLimiter(
-                        new ApiKeyRateLimiter.Limits(10, 20), new ApiKeyRateLimiter.Limits(5, 10), () -> now),
+                        new RateLimiter.Limits(10, 20), new RateLimiter.Limits(5, 10), new LocalRateLimiter(() -> now)),
                 ApiKeyRateLimiter.class);
     }
 

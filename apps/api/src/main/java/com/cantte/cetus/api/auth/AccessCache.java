@@ -2,6 +2,7 @@ package com.cantte.cetus.api.auth;
 
 import com.cantte.cetus.cache.Cache;
 import com.cantte.cetus.cache.Caches;
+import com.cantte.cetus.cache.RateLimiter;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -31,7 +32,7 @@ public class AccessCache {
     public record ApiKeyAccess(UUID id, UUID accountId, Environment environment) {}
 
     /** {@code limits} is null when the account has none of its own and its keys keep the per-key ones. */
-    public record AccountAccess(AccountEntity.Status status, ApiKeyRateLimiter.Limits limits) {}
+    public record AccountAccess(AccountEntity.Status status, RateLimiter.Limits limits) {}
 
     public record OrganizationAccount(UUID id, AccountEntity.Status status) {}
 
@@ -76,9 +77,9 @@ public class AccessCache {
                             .setParameter("id", accountId)
                             .getSingleResult();
                     // Each table sets the pair together or leaves both null, so the two values come from the same row.
-                    ApiKeyRateLimiter.Limits limits = account[1] == null
+                    RateLimiter.Limits limits = account[1] == null
                             ? null
-                            : new ApiKeyRateLimiter.Limits((Integer) account[1], (Integer) account[2]);
+                            : new RateLimiter.Limits((Integer) account[1], (Integer) account[2]);
                     return new AccountAccess((AccountEntity.Status) account[0], limits);
                 }));
     }

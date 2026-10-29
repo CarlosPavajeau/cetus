@@ -7,6 +7,7 @@ import com.cantte.cetus.api.usage.UsageViews.PeriodUsageView;
 import com.cantte.cetus.api.usage.UsageViews.PlanView;
 import com.cantte.cetus.api.usage.UsageViews.RequestLimitsView;
 import com.cantte.cetus.api.usage.UsageViews.UsageView;
+import com.cantte.cetus.cache.RateLimiter;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -59,7 +60,7 @@ public class AccountUsage {
         if (plan.requestsPerSecond != null) {
             return new RequestLimitsView(plan.requestsPerSecond, plan.requestsBurst, false);
         }
-        ApiKeyRateLimiter.Limits perKey = rateLimiter.perKey();
+        RateLimiter.Limits perKey = rateLimiter.perKey();
         return new RequestLimitsView(perKey.ratePerSecond(), perKey.burst(), true);
     }
 }
