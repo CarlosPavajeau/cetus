@@ -31,7 +31,7 @@ import type {
 } from "~/lib/api/types";
 
 import { SelectField } from "./fields";
-import { LinesEditor, emptyLine } from "./LinesEditor";
+import { LinesEditor, LinesTotals, emptyLine, useLinesPreview } from "./LinesEditor";
 import { type LinesFormValues, linesFormSchema } from "./schema";
 import {
   type IssueResult,
@@ -107,6 +107,7 @@ export function NoteForm({
     resolver: arktypeResolver(linesFormSchema),
     defaultValues: { lines: [emptyLine] },
   });
+  const linesPreview = useLinesPreview(lines);
   const issue = useMutation({
     mutationFn: async (note: NoteValues): Promise<IssueResult> => {
       if (noteType === "CREDIT_NOTE") {
@@ -228,7 +229,17 @@ export function NoteForm({
             invoice.balance !== null &&
             ` Puedes acreditar hasta ${money(invoice.balance)}.`}
         </p>
-        <LinesEditor form={lines} currency={invoice.currency} environment={invoice.environment} />
+        <LinesEditor
+          form={lines}
+          preview={linesPreview}
+          currency={invoice.currency}
+          environment={invoice.environment}
+        />
+        <LinesTotals
+          preview={linesPreview}
+          currency={invoice.currency}
+          className="ml-auto w-full max-w-xs"
+        />
       </FieldSection>
 
       {failure && (

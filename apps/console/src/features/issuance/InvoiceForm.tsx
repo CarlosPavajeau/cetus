@@ -2,7 +2,7 @@ import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type } from "arktype";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -33,8 +33,9 @@ import type { DocumentPreview, Environment, Issuer } from "~/lib/api/types";
 
 import { finalConsumer, paymentMeans } from "./catalogs";
 import { CustomerFields } from "./CustomerFields";
+import { CustomerSummary } from "./CustomerSummary";
 import { SelectField } from "./fields";
-import { LinesEditor, emptyLine } from "./LinesEditor";
+import { LinesEditor, LinesTotals, emptyLine, useLinesPreview } from "./LinesEditor";
 import {
   type CustomerValues,
   type InvoiceHeaderValues,
@@ -104,6 +105,19 @@ export function InvoiceForm({
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [saveCustomer, setSaveCustomer] = useState(false);
   const [picked, setPicked] = useState<PickedCustomer | null>(null);
+  // A customer from the catalog, the final consumer or the sample shows in one line until edited; only the
+  // sample, typed by no one, can still be saved from there.
+  const [customerMode, setCustomerMode] = useState<"fields" | "summary" | "sample">(
+    sample ? "sample" : "fields",
+  );
+  // Where the focus goes once the form renders: the first invalid field, or the customer's first field when
+  // its summary gives way to them. A new round each time, so the same request runs again.
+  const [focusRequest, setFocusRequest] = useState<{
+    target: "invalid" | "customer";
+    round: number;
+  } | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const customerRef = useRef<HTMLDivElement>(null);
   const customerSearch = useCustomerSearch(environment);
   const header = useForm<InvoiceHeaderValues>({
     resolver: arktypeResolver(invoiceHeaderSchema),
@@ -120,6 +134,7 @@ export function InvoiceForm({
     resolver: arktypeResolver(linesFormSchema),
     defaultValues: { lines: [sample ? sampleLine : emptyLine] },
   });
+  const preview = useLinesPreview(lines);
   const issue = useMutation({
     mutationFn: issueInvoice,
     onSuccess: async (result) => {
@@ -147,6 +162,26 @@ export function InvoiceForm({
         ? "No pudimos comunicarnos con Cetus. Revisa tu conexión e inténtalo de nuevo."
         : previewFailure;
   const method = useWatch({ control: header.control, name: "payment.method" });
+  const issuerId = useWatch({ control: header.control, name: "issuerId" });
+  const issuerSelected = issuers.find((candidate) => candidate.id === issuerId);
+  const [customerName, customerNumber] = useWatch({
+    control: customerForm.control,
+    name: ["legalName", "identificationNumber"],
+  });
+
+  useEffect(() => {
+    const target =
+      focusRequest?.target === "invalid"
+        ? formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        : focusRequest?.target === "customer"
+          ? customerRef.current?.querySelector<HTMLElement>("button, input")
+          : null;
+    target?.focus();
+  }, [focusRequest]);
+
+  function requestFocus(target: "invalid" | "customer") {
+    setFocusRequest((previous) => ({ target, round: (previous?.round ?? 0) + 1 }));
+  }
 
   async function submit() {
     const [headerValid, customerValid, linesValid] = await Promise.all([
@@ -154,7 +189,11 @@ export function InvoiceForm({
       customerForm.trigger(),
       lines.trigger(),
     ]);
+    if (!customerValid) {
+      setCustomerMode("fields");
+    }
     if (!headerValid || !customerValid || !linesValid) {
+      requestFocus("invalid");
       return;
     }
     const parsedHeader = invoiceHeaderSchema(header.getValues());
@@ -209,9 +248,18 @@ export function InvoiceForm({
     };
   }
 
+  function showSummary(customer: CustomerValues) {
+    customerForm.reset(customer, { keepIsSubmitted: true });
+    if (customerForm.formState.isSubmitted) {
+      void customerForm.trigger();
+    }
+    setSaveCustomer(false);
+    setCustomerMode("summary");
+  }
+
   function fillFinalConsumer() {
     setPicked(null);
-    customerForm.reset({ ...emptyCustomer, ...finalConsumer });
+    showSummary({ ...emptyCustomer, ...finalConsumer });
   }
 
   const confirmedIssuer = confirmation
@@ -220,121 +268,168 @@ export function InvoiceForm({
 
   return (
     <form
+      ref={formRef}
       noValidate
-      className="flex flex-col gap-8"
+      // Below xl, room for the sticky footer, so it never covers the field in focus.
+      className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_20rem] max-xl:[&_*]:scroll-mb-20"
       onSubmit={(event) => {
         event.preventDefault();
         void submit();
       }}
     >
-      <FieldSection title="Emisor">
-        <FieldRow className="sm:grid-cols-2">
-          <SelectField
-            control={header.control}
-            name="issuerId"
-            label="Empresa que factura"
-            items={issuers.map((issuer) => ({
-              value: issuer.id,
-              label: `${issuerName(issuer)} · NIT ${issuer.nit}-${issuer.checkDigit}`,
-            }))}
-          />
-        </FieldRow>
-      </FieldSection>
+      <div className="flex min-w-0 flex-col gap-8">
+        {issuers.length > 1 && (
+          <FieldSection title="Emisor">
+            <FieldRow className="sm:grid-cols-2">
+              <SelectField
+                control={header.control}
+                name="issuerId"
+                label="Empresa que factura"
+                items={issuers.map((candidate) => ({
+                  value: candidate.id,
+                  label: `${issuerName(candidate)} · NIT ${candidate.nit}-${candidate.checkDigit}`,
+                }))}
+              />
+            </FieldRow>
+          </FieldSection>
+        )}
 
-      <FieldSection title="Cliente">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          {customerSearch.saved && (
-            <div className="sm:w-80">
-              <CatalogPicker
-                label="Cliente guardado"
-                placeholder="Busca por nombre o documento"
-                empty="No hay clientes con ese nombre o documento."
-                items={customerSearch.items}
-                itemLabel={(customer) => `${customer.legalName} · ${customer.identificationNumber}`}
-                unavailable={customerUnavailable}
-                onSearch={customerSearch.setText}
-                onPick={(customer) => {
-                  const saved = toCustomerValues(customer);
-                  if (!saved) {
-                    return;
+        <FieldSection title="Cliente">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            {customerSearch.saved && (
+              <div className="sm:w-80">
+                <CatalogPicker
+                  label="Cliente guardado"
+                  placeholder="Busca por nombre o documento"
+                  empty="No hay clientes con ese nombre o documento."
+                  items={customerSearch.items}
+                  itemLabel={(customer) =>
+                    `${customer.legalName} · ${customer.identificationNumber}`
                   }
-                  customerForm.reset(saved.values, { keepIsSubmitted: true });
-                  if (customerForm.formState.isSubmitted) {
-                    void customerForm.trigger();
-                  }
-                  setPicked({
-                    identificationType: saved.values.identificationType,
-                    identificationNumber: saved.values.identificationNumber,
-                    extras: saved.extras,
-                  });
-                }}
+                  unavailable={customerUnavailable}
+                  onSearch={customerSearch.setText}
+                  onPick={(customer) => {
+                    const saved = toCustomerValues(customer);
+                    if (!saved) {
+                      return;
+                    }
+                    showSummary(saved.values);
+                    setPicked({
+                      identificationType: saved.values.identificationType,
+                      identificationNumber: saved.values.identificationNumber,
+                      extras: saved.extras,
+                    });
+                  }}
+                />
+              </div>
+            )}
+            <Button type="button" variant="outline" size="sm" onClick={fillFinalConsumer}>
+              Venta a consumidor final
+            </Button>
+          </div>
+          {customerMode === "fields" ? (
+            <div ref={customerRef} className="contents">
+              <CustomerFields
+                form={customerForm}
+                emailHint="Le enviamos la factura cuando la DIAN la acepte."
               />
             </div>
+          ) : (
+            <CustomerSummary
+              customer={customerForm.getValues()}
+              onEdit={() => {
+                setCustomerMode("fields");
+                requestFocus("customer");
+              }}
+            />
           )}
-          <Button type="button" variant="outline" size="sm" onClick={fillFinalConsumer}>
-            Venta a consumidor final
-          </Button>
-        </div>
-        <CustomerFields
-          form={customerForm}
-          emailHint="Le enviamos la factura cuando la DIAN la acepte."
-        />
-      </FieldSection>
-
-      <Field orientation="horizontal" className="-mt-4">
-        <Checkbox
-          id="save-customer"
-          checked={saveCustomer}
-          onCheckedChange={(checked) => setSaveCustomer(checked)}
-        />
-        <FieldLabel htmlFor="save-customer" size="xs" className="font-normal">
-          Guardar este cliente para la próxima factura
-        </FieldLabel>
-      </Field>
-
-      <FieldSection title="Productos o servicios">
-        <LinesEditor form={lines} currency="COP" environment={environment} />
-      </FieldSection>
-
-      <FieldSection title="Pago">
-        <FieldRow>
-          <SelectField
-            control={header.control}
-            name="payment.method"
-            label="Forma de pago"
-            items={paymentMethodItems}
-          />
-          <SelectField
-            control={header.control}
-            name="payment.meansCode"
-            label="Medio de pago"
-            items={paymentMeansItems}
-          />
-          {method === "CREDIT" && (
-            <DateField control={header.control} name="payment.dueDate" label="Vence el" />
+          {customerMode !== "summary" && (
+            <Field orientation="horizontal">
+              <Checkbox
+                id="save-customer"
+                checked={saveCustomer}
+                onCheckedChange={(checked) => setSaveCustomer(checked)}
+              />
+              <FieldLabel htmlFor="save-customer" size="xs" className="font-normal">
+                Guardar este cliente para la próxima factura
+              </FieldLabel>
+            </Field>
           )}
-        </FieldRow>
-      </FieldSection>
+        </FieldSection>
 
-      {failure && (
-        <Alert variant="destructive">
-          <AlertTitle>No se emitió la factura</AlertTitle>
-          <AlertDescription>{failure}</AlertDescription>
-        </Alert>
-      )}
-      {blockedReason && (
-        <Alert>
-          <AlertDescription>{blockedReason}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="flex justify-end">
-        <Button type="submit" disabled={issue.isPending || Boolean(blockedReason)}>
-          {issue.isPending && <Spinner data-icon="inline-start" />}
-          Emitir factura
-        </Button>
+        <FieldSection title="Productos o servicios">
+          <LinesEditor form={lines} preview={preview} currency="COP" environment={environment} />
+        </FieldSection>
       </div>
 
+      {/* Below xl the wrapper steps aside, so the footer sticks to the bottom of the whole form. */}
+      <div className="max-xl:contents xl:sticky xl:top-6 xl:flex xl:flex-col xl:gap-5 xl:rounded-lg xl:border xl:p-5">
+        <aside
+          aria-label="Resumen de la factura"
+          className="flex flex-col gap-5 max-xl:rounded-lg max-xl:border max-xl:p-4"
+        >
+          <dl className="grid gap-y-1.5 text-xs">
+            <dt className="text-muted-foreground">Factura de</dt>
+            <dd className="mb-1.5 break-words">
+              {issuerSelected ? issuerName(issuerSelected) : "Sin emisor"}
+            </dd>
+            <dt className="text-muted-foreground">Para</dt>
+            <dd className="break-words">
+              {customerName ? (
+                [customerName, customerNumber].filter(Boolean).join(" · ")
+              ) : (
+                <span className="text-muted-foreground">Sin cliente</span>
+              )}
+            </dd>
+          </dl>
+          <LinesTotals preview={preview} currency="COP" className="border-t pt-4" />
+          <div className="flex flex-col gap-4 border-t pt-4">
+            <SelectField
+              control={header.control}
+              name="payment.method"
+              label="Forma de pago"
+              items={paymentMethodItems}
+            />
+            <SelectField
+              control={header.control}
+              name="payment.meansCode"
+              label="Medio de pago"
+              items={paymentMeansItems}
+            />
+            {method === "CREDIT" && (
+              <DateField control={header.control} name="payment.dueDate" label="Vence el" />
+            )}
+          </div>
+          {failure && (
+            <Alert variant="destructive">
+              <AlertTitle>No se emitió la factura</AlertTitle>
+              <AlertDescription>{failure}</AlertDescription>
+            </Alert>
+          )}
+          {blockedReason && (
+            <Alert>
+              <AlertDescription>{blockedReason}</AlertDescription>
+            </Alert>
+          )}
+        </aside>
+
+        <div className="flex items-center justify-between gap-4 max-xl:sticky max-xl:bottom-0 max-xl:-mx-4 max-xl:border-t max-xl:bg-background max-xl:px-4 max-xl:py-3 md:max-xl:-mx-10 md:max-xl:px-10">
+          <p className="flex flex-col text-xs xl:hidden">
+            <span className="text-muted-foreground">Total</span>
+            <span className="text-base font-medium tabular-nums">
+              {preview.totals ? formatMoney(preview.totals.totals.payable, "COP") : "—"}
+            </span>
+          </p>
+          <Button
+            type="submit"
+            className="xl:w-full"
+            disabled={issue.isPending || Boolean(blockedReason)}
+          >
+            {issue.isPending && <Spinner data-icon="inline-start" />}
+            Emitir factura
+          </Button>
+        </div>
+      </div>
       <AlertDialog
         open={confirmation !== null}
         onOpenChange={(open) => {

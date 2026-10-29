@@ -19,6 +19,12 @@ test("saved products and customers fill in the next invoice", async ({ page, org
   await page.getByLabel("Agregar un producto guardado").fill("almuerzo");
   await page.getByRole("option", { name: "ALM-1 · Almuerzo ejecutivo" }).click();
   await expect(page.getByLabel("Descripción de la línea 2")).toHaveValue("Almuerzo ejecutivo");
+  await expect(page.getByLabel("Cantidad de la línea 2")).toBeFocused();
+  // The same product again adds to its line.
+  await page.getByLabel("Agregar un producto guardado").fill("almuerzo");
+  await page.getByRole("option", { name: "ALM-1 · Almuerzo ejecutivo" }).click();
+  await expect(page.getByLabel("Cantidad de la línea 2")).toHaveValue("2");
+  await expect(page.getByLabel("Descripción de la línea 3")).toHaveCount(0);
   await page
     .getByRole("checkbox", { name: "Guardar este cliente para la próxima factura" })
     .click();
@@ -42,6 +48,7 @@ test("saved products and customers fill in the next invoice", async ({ page, org
   await expect(page.getByLabel("Nombre o razón social")).toHaveValue("");
   await page.getByLabel("Cliente guardado").fill("ejemplo");
   await page.getByRole("option", { name: /^Cliente de Ejemplo SAS/ }).click();
+  await page.getByRole("button", { name: "Editar datos" }).click();
   await expect(page.getByLabel("Nombre o razón social")).toHaveValue("Cliente de Ejemplo SAS");
   await expect(page.getByLabel("Número")).toHaveValue(/^901234567-\d$/);
 
@@ -116,6 +123,7 @@ test("a customer is created and edited without issuing an invoice", async ({
   await open(page, "/documents/new");
   await page.getByLabel("Cliente guardado").fill("andina");
   await page.getByRole("option", { name: /^Distribuidora Andina del Norte SAS/ }).click();
+  await page.getByRole("button", { name: "Editar datos" }).click();
   await expect(page.getByLabel("Correo (opcional)")).toHaveValue("compras@andina.test");
   await expect(page.getByLabel("Dirección (opcional)")).toHaveValue("Carrera 43A # 1-50");
 });

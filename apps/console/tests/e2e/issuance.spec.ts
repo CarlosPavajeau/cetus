@@ -39,14 +39,19 @@ test("an invoice is filled in by hand in habilitación", async ({ page, organiza
   // An issuer in habilitación makes TEST the starting environment.
   await open(page, "/documents/new");
   await expect(page.getByRole("combobox", { name: "Ambiente" })).toHaveText(/Pruebas/);
-  await expect(page.getByRole("combobox", { name: "Empresa que factura" })).toHaveText(
-    /Manual SAS/,
+  // A single issuer needs no choosing: the summary names it.
+  await expect(page.getByRole("complementary", { name: "Resumen de la factura" })).toContainText(
+    "Manual SAS",
   );
 
   await page.getByLabel("Número").fill("900123456-1");
   await expect(page.getByText("Dígito de verificación: 8")).toBeVisible();
   await page.getByRole("button", { name: "Emitir factura" }).click();
-  await expect(page.getByText("Escribe el nombre o la razón social.")).toBeVisible();
+  // The first invalid field takes the focus and describes its error.
+  await expect(page.getByLabel("Nombre o razón social")).toBeFocused();
+  await expect(page.getByLabel("Nombre o razón social")).toHaveAccessibleDescription(
+    "Escribe el nombre o la razón social.",
+  );
 
   await page.getByLabel("Nombre o razón social").fill("Comprador SAS");
   await page.getByLabel("Descripción de la línea 1").fill("Licencia anual");
@@ -165,6 +170,8 @@ test("an accepted invoice is emailed again at most once a minute", async ({
 test("the customer's location is optional as a whole", async ({ page, organization: _ }) => {
   // The first sandbox invoice comes with Bogotá and an address.
   await open(page, "/documents/new");
+  await page.getByRole("button", { name: "Editar datos" }).click();
+  await expect(page.getByRole("combobox", { name: "Tipo de persona" })).toBeFocused();
   await page.getByLabel("Dirección (opcional)").fill("");
   await page.getByRole("button", { name: "Emitir factura" }).click();
   await expect(

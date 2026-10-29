@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { errorIdOf } from "~/features/setup/fields";
 import { nextTaxLevels, taxLevelItems } from "~/features/setup/taxLevels";
 
 import type { CustomerValues } from "./schema";
@@ -46,6 +47,7 @@ export function SelectField<T extends FieldValues>({
           id={id}
           className="w-full"
           aria-invalid={fieldState.invalid}
+          aria-describedby={fieldState.invalid ? errorIdOf(id) : undefined}
           onBlur={field.onBlur}
         >
           <SelectValue />
@@ -61,7 +63,7 @@ export function SelectField<T extends FieldValues>({
         </SelectContent>
       </Select>
       {hint && !fieldState.invalid && <FieldDescription>{hint}</FieldDescription>}
-      <FieldError errors={[fieldState.error]} />
+      <FieldError id={errorIdOf(id)} errors={[fieldState.error]} />
     </Field>
   );
 }
@@ -84,6 +86,7 @@ export function TaxLevelsField({ control }: { control: Control<CustomerValues> }
           id={id}
           className="w-full"
           aria-invalid={fieldState.invalid}
+          aria-describedby={fieldState.invalid ? errorIdOf(id) : undefined}
           onBlur={field.onBlur}
         >
           <SelectValue>
@@ -104,7 +107,7 @@ export function TaxLevelsField({ control }: { control: Control<CustomerValues> }
       {!fieldState.invalid && (
         <FieldDescription>Si no sabes, déjalo en R-99-PN (no aplica).</FieldDescription>
       )}
-      <FieldError errors={[fieldState.error]} />
+      <FieldError id={errorIdOf(id)} errors={[fieldState.error]} />
     </Field>
   );
 }
