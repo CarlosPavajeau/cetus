@@ -128,15 +128,22 @@ function ConfirmToSeeInvitations({ email }: { email: string }) {
 
   return (
     <Alert>
-      <AlertDescription className="flex flex-col items-start gap-3">
-        {send.isSuccess
-          ? `Te enviamos el enlace a ${email}. Ábrelo en este navegador para ver tus invitaciones.`
-          : `Si te invitaron a una organización, confirma primero que ${email} es tuyo para verla.`}
-        {send.error && <span className="text-destructive">{send.error.message}</span>}
-        <Button size="sm" variant="outline" disabled={send.isPending} onClick={() => send.mutate()}>
-          {send.isPending && <Spinner data-icon="inline-start" />}
-          {send.isSuccess ? "Reenviar el correo" : "Enviar el correo de confirmación"}
-        </Button>
+      <AlertDescription>
+        <div className="flex flex-col items-start gap-3">
+          {send.isSuccess
+            ? `Te enviamos el enlace a ${email}. Ábrelo en este navegador para ver tus invitaciones.`
+            : `Si te invitaron a una organización, confirma primero que ${email} es tuyo para verla.`}
+          {send.error && <span className="text-destructive">{send.error.message}</span>}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={send.isPending}
+            onClick={() => send.mutate()}
+          >
+            {send.isPending && <Spinner data-icon="inline-start" />}
+            {send.isSuccess ? "Reenviar el correo" : "Enviar el correo de confirmación"}
+          </Button>
+        </div>
       </AlertDescription>
     </Alert>
   );
@@ -177,7 +184,7 @@ function CreateWorkspace({ defaultName }: { defaultName: string }) {
           value={name}
           maxLength={100}
           onChange={(event) => setName(event.target.value)}
-          className="h-11 px-3"
+          size="lg"
         />
       </Field>
       {create.error && (

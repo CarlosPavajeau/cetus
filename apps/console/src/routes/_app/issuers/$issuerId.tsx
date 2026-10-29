@@ -366,7 +366,7 @@ function IssuerDetailPage() {
 
 function IssuerNotFound() {
   return (
-    <Empty className="border">
+    <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <BuildingIcon />

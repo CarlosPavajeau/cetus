@@ -61,7 +61,7 @@ function NewInvoice() {
     <>
       <PageHeader title="Emitir factura" lead={leads[environment]} />
       {usable.length === 0 ? (
-        <Empty className="border">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <BuildingIcon />

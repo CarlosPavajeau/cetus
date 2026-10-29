@@ -243,7 +243,7 @@ function ActivityEvent() {
 
 function EventNotFound() {
   return (
-    <Empty className="border">
+    <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <HistoryIcon />

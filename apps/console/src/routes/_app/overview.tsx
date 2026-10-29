@@ -80,7 +80,7 @@ function Overview() {
       />
 
       {environment === "SANDBOX" && !tried && (
-        <Empty className="border">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <FileTextIcon />
@@ -143,7 +143,7 @@ function Overview() {
         </CardHeader>
         <CardContent>
           {issuers.length === 0 ? (
-            <Empty className="border">
+            <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <BuildingIcon />

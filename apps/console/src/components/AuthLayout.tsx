@@ -136,9 +136,7 @@ export function AuthLayout({
                   <p className="font-medium">Primero pruebas. Después, producción.</p>
                   <p className="text-muted-foreground">La misma integración. Una nueva llave.</p>
                 </div>
-                <Badge variant="outline" className="text-muted-foreground">
-                  Sandbox
-                </Badge>
+                <Badge variant="muted">Sandbox</Badge>
               </div>
             </div>
           </div>

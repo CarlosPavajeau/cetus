@@ -79,6 +79,7 @@ export function OrganizationSwitcher({
                 size="lg"
                 variant="outline"
                 tooltip={name}
+                // oxlint-disable-next-line shadcn/no-restyle -- keeps the trigger highlighted while its menu is open
                 className="data-popup-open:bg-sidebar-accent"
               />
             }

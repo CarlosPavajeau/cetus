@@ -218,13 +218,15 @@ export function CertificateLink({ ids }: { ids: Ids }) {
       <Alert>
         <LinkIcon />
         <AlertTitle>Envía este enlace al cliente</AlertTitle>
-        <AlertDescription className="flex flex-col gap-2">
-          <span>
-            Sirve una sola vez y vence el {dayFormat.format(expiresAt)} a las{" "}
-            {timeFormat.format(expiresAt)}. No lo volverás a ver.
-          </span>
-          <code className="text-2xs break-all">{create.data.url}</code>
-          <CopyButton value={create.data.url} label="Copiar enlace" />
+        <AlertDescription>
+          <div className="flex flex-col gap-2">
+            <span>
+              Sirve una sola vez y vence el {dayFormat.format(expiresAt)} a las{" "}
+              {timeFormat.format(expiresAt)}. No lo volverás a ver.
+            </span>
+            <code className="text-2xs break-all">{create.data.url}</code>
+            <CopyButton value={create.data.url} label="Copiar enlace" />
+          </div>
         </AlertDescription>
       </Alert>
     );

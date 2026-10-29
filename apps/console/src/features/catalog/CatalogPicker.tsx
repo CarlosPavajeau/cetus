@@ -41,10 +41,8 @@ export function CatalogPicker<T extends { id: string }>({
   // Remounting clears the search text after each pick.
   const [round, setRound] = useState(0);
   return (
-    <Field className="gap-1.75">
-      <FieldLabel htmlFor={id} className="text-xs">
-        {label}
-      </FieldLabel>
+    <Field size="xs">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Combobox
         key={round}
         items={items}

@@ -201,10 +201,8 @@ export function NoteForm({
           control={header.control}
           name="description"
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid} className="gap-1.75">
-              <FieldLabel htmlFor={descriptionId} className="text-xs">
-                Descripción
-              </FieldLabel>
+            <Field data-invalid={fieldState.invalid} size="xs">
+              <FieldLabel htmlFor={descriptionId}>Descripción</FieldLabel>
               <Textarea
                 {...field}
                 id={descriptionId}
@@ -213,11 +211,11 @@ export function NoteForm({
                 aria-invalid={fieldState.invalid}
               />
               {!fieldState.invalid && (
-                <FieldDescription className="text-3xs">
+                <FieldDescription>
                   Queda en la nota como el motivo de la corrección.
                 </FieldDescription>
               )}
-              <FieldError errors={[fieldState.error]} className="text-3xs" />
+              <FieldError errors={[fieldState.error]} />
             </Field>
           )}
         />

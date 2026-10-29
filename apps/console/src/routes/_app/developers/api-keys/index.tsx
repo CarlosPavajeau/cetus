@@ -160,7 +160,7 @@ function ApiKeys() {
       </ReadOnlyNotice>
 
       {keys.length === 0 ? (
-        <Empty className="border">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <KeyRoundIcon />
@@ -184,7 +184,7 @@ function ApiKeys() {
                 }
               }}
             >
-              <TabsList className="gap-0.75">
+              <TabsList>
                 <TabsTrigger value="ALL">
                   Todas <span className="text-muted-foreground">{keys.length}</span>
                 </TabsTrigger>
@@ -280,7 +280,7 @@ function ApiKeys() {
         </section>
       )}
 
-      <Alert className="gap-y-1.25 p-5 has-[>svg]:gap-x-3.5">
+      <Alert size="lg">
         <ShieldCheckIcon className="size-5" />
         <AlertTitle>Tus credenciales, bajo control</AlertTitle>
         <AlertDescription>

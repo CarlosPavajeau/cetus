@@ -54,10 +54,8 @@ export function MunicipalityField({ form }: { form: UseFormReturn<CustomerValues
   }
 
   return (
-    <Field data-invalid={fieldState.invalid} className="gap-1.75">
-      <FieldLabel htmlFor={id} className="text-xs">
-        Municipio (opcional)
-      </FieldLabel>
+    <Field data-invalid={fieldState.invalid} size="xs">
+      <FieldLabel htmlFor={id}>Municipio (opcional)</FieldLabel>
       <Combobox
         items={places}
         value={selected}
@@ -87,9 +85,9 @@ export function MunicipalityField({ form }: { form: UseFormReturn<CustomerValues
         </ComboboxContent>
       </Combobox>
       {selected && !fieldState.invalid && (
-        <FieldDescription className="text-3xs">Código DANE: {selected.code}</FieldDescription>
+        <FieldDescription>Código DANE: {selected.code}</FieldDescription>
       )}
-      <FieldError errors={[fieldState.error]} className="text-3xs" />
+      <FieldError errors={[fieldState.error]} />
     </Field>
   );
 }

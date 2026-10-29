@@ -33,10 +33,8 @@ export function SelectField<T extends FieldValues>({
   const id = useId();
   const { field, fieldState } = useController({ control, name });
   return (
-    <Field data-invalid={fieldState.invalid} className="gap-1.75">
-      <FieldLabel htmlFor={id} className="text-xs">
-        {label}
-      </FieldLabel>
+    <Field data-invalid={fieldState.invalid} size="xs">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Select
         items={items}
         name={field.name}
@@ -62,10 +60,8 @@ export function SelectField<T extends FieldValues>({
           </SelectGroup>
         </SelectContent>
       </Select>
-      {hint && !fieldState.invalid && (
-        <FieldDescription className="text-3xs">{hint}</FieldDescription>
-      )}
-      <FieldError errors={[fieldState.error]} className="text-3xs" />
+      {hint && !fieldState.invalid && <FieldDescription>{hint}</FieldDescription>}
+      <FieldError errors={[fieldState.error]} />
     </Field>
   );
 }
@@ -75,10 +71,8 @@ export function TaxLevelsField({ control }: { control: Control<CustomerValues> }
   const id = useId();
   const { field, fieldState } = useController({ control, name: "taxLevelCodes" });
   return (
-    <Field data-invalid={fieldState.invalid} className="gap-1.75">
-      <FieldLabel htmlFor={id} className="text-xs">
-        Responsabilidades fiscales
-      </FieldLabel>
+    <Field data-invalid={fieldState.invalid} size="xs">
+      <FieldLabel htmlFor={id}>Responsabilidades fiscales</FieldLabel>
       <Select
         multiple
         items={taxLevelItems}
@@ -108,11 +102,9 @@ export function TaxLevelsField({ control }: { control: Control<CustomerValues> }
         </SelectContent>
       </Select>
       {!fieldState.invalid && (
-        <FieldDescription className="text-3xs">
-          Si no sabes, déjalo en R-99-PN (no aplica).
-        </FieldDescription>
+        <FieldDescription>Si no sabes, déjalo en R-99-PN (no aplica).</FieldDescription>
       )}
-      <FieldError errors={[fieldState.error]} className="text-3xs" />
+      <FieldError errors={[fieldState.error]} />
     </Field>
   );
 }

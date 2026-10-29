@@ -46,7 +46,7 @@ export function LocationFields({ form }: { form: UseFormReturn<IssuerValues> }) 
 
   return (
     <>
-      <Field data-invalid={department.fieldState.invalid} className="gap-2">
+      <Field data-invalid={department.fieldState.invalid} size="sm">
         <FieldLabel htmlFor={departmentId}>Departamento</FieldLabel>
         <Combobox
           items={departments}
@@ -74,14 +74,12 @@ export function LocationFields({ form }: { form: UseFormReturn<IssuerValues> }) 
           </ComboboxContent>
         </Combobox>
         {selectedDepartment && (
-          <FieldDescription className="text-xs">
-            Código DANE: {selectedDepartment.code}
-          </FieldDescription>
+          <FieldDescription>Código DANE: {selectedDepartment.code}</FieldDescription>
         )}
-        <FieldError errors={[department.fieldState.error]} className="text-xs" />
+        <FieldError errors={[department.fieldState.error]} />
       </Field>
 
-      <Field data-invalid={municipality.fieldState.invalid} className="gap-2">
+      <Field data-invalid={municipality.fieldState.invalid} size="sm">
         <FieldLabel htmlFor={municipalityId}>Municipio</FieldLabel>
         <Combobox
           // Remount when the department changes so the search text starts empty.
@@ -115,11 +113,9 @@ export function LocationFields({ form }: { form: UseFormReturn<IssuerValues> }) 
           </ComboboxContent>
         </Combobox>
         {selectedMunicipality && (
-          <FieldDescription className="text-xs">
-            Código DANE: {selectedMunicipality.code}
-          </FieldDescription>
+          <FieldDescription>Código DANE: {selectedMunicipality.code}</FieldDescription>
         )}
-        <FieldError errors={[municipality.fieldState.error]} className="text-xs" />
+        <FieldError errors={[municipality.fieldState.error]} />
       </Field>
     </>
   );

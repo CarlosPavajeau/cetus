@@ -53,7 +53,7 @@ function Customers() {
     <>
       <CatalogHeader action={<CustomerDialog environment={environment} />} />
       {items.length === 0 && q === "" ? (
-        <Empty className="border">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <UsersIcon />

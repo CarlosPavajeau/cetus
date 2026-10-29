@@ -67,7 +67,7 @@ function Webhooks() {
       </ReadOnlyNotice>
 
       {endpoints.length === 0 ? (
-        <Empty className="border">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <WebhookIcon />
@@ -95,7 +95,7 @@ function Webhooks() {
               }
             }}
           >
-            <TabsList className="gap-0.75">
+            <TabsList>
               <TabsTrigger value="ALL">
                 Todos <span className="text-muted-foreground">{endpoints.length}</span>
               </TabsTrigger>

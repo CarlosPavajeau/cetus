@@ -174,19 +174,21 @@ function AppLayout() {
   return (
     <SidebarProvider defaultOpen={sidebarOpen}>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="gap-3">
-          <div className="flex h-10 items-center gap-2.5 px-2 group-data-[collapsible=icon]:px-0.5">
-            <CetusMark />
-            <span className="font-heading text-lg font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
-              Cetus
-            </span>
+        <SidebarHeader>
+          <div className="flex flex-col gap-3">
+            <div className="flex h-10 items-center gap-2.5 px-2 group-data-[collapsible=icon]:px-0.5">
+              <CetusMark />
+              <span className="font-heading text-lg font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
+                Cetus
+              </span>
+            </div>
+            {session.activeOrganizationId && (
+              <OrganizationSwitcher
+                activeOrganizationId={session.activeOrganizationId}
+                locked={Boolean(session.impersonatedBy)}
+              />
+            )}
           </div>
-          {session.activeOrganizationId && (
-            <OrganizationSwitcher
-              activeOrganizationId={session.activeOrganizationId}
-              locked={Boolean(session.impersonatedBy)}
-            />
-          )}
         </SidebarHeader>
         <SidebarContent>
           <nav aria-label="Principal">
@@ -248,7 +250,7 @@ function AppLayout() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
           <Breadcrumb>
-            <BreadcrumbList className="gap-3 text-xs">
+            <BreadcrumbList>
               {current?.section && (
                 <>
                   <BreadcrumbItem className={cn(crumb && "max-sm:hidden")}>

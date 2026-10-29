@@ -243,7 +243,7 @@ function Documents() {
         )}
 
         {documents.length === 0 && !filtered ? (
-          <Empty className="border">
+          <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <FileTextIcon />

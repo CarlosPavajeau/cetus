@@ -84,7 +84,7 @@ function Issuers() {
       </ReadOnlyNotice>
 
       {issuers.length === 0 ? (
-        <Empty className="border">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <BuildingIcon />
@@ -113,7 +113,7 @@ function Issuers() {
                 }
               }}
             >
-              <TabsList className="gap-0.75">
+              <TabsList>
                 <TabsTrigger value="ALL">
                   Todos <span className="text-muted-foreground">{issuers.length}</span>
                 </TabsTrigger>

@@ -86,7 +86,7 @@ function SignIn() {
                   type="email"
                   autoComplete="email"
                   placeholder="tu@empresa.com"
-                  className="h-11 px-3"
+                  size="lg"
                   aria-invalid={fieldState.invalid}
                 />
                 <FieldError errors={[fieldState.error]} />

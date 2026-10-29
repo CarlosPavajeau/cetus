@@ -281,13 +281,13 @@ export function InvoiceForm({
         />
       </FieldSection>
 
-      <Field orientation="horizontal" className="-mt-4 gap-2">
+      <Field orientation="horizontal" className="-mt-4">
         <Checkbox
           id="save-customer"
           checked={saveCustomer}
           onCheckedChange={(checked) => setSaveCustomer(checked)}
         />
-        <FieldLabel htmlFor="save-customer" className="text-xs font-normal">
+        <FieldLabel htmlFor="save-customer" size="xs" className="font-normal">
           Guardar este cliente para la próxima factura
         </FieldLabel>
       </Field>
