@@ -26,7 +26,7 @@ export default defineConfig({
   ]),
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "promise"],
-    jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
+    jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }, "@shadcn/lint"],
     categories: {
       correctness: "error",
       suspicious: "warn",
@@ -41,8 +41,10 @@ export default defineConfig({
       react: {
         version: "19",
       },
+      shadcn: { ui: "~/components/ui" },
     },
     rules: {
+      "shadcn/no-unknown-classes": "error",
       "react/react-in-jsx-scope": "off",
       "react/rules-of-hooks": "error",
       "react/exhaustive-deps": "warn",
@@ -54,7 +56,11 @@ export default defineConfig({
       "no-underscore-dangle": "off",
       "no-unused-vars": [
         "error",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
       ],
       "vite-plus/prefer-vite-plus-imports": "error",
     },
