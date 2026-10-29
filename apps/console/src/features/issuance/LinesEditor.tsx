@@ -19,11 +19,12 @@ import { CatalogPicker } from "~/features/catalog/CatalogPicker";
 import { productUnavailable, toLineValues } from "~/features/catalog/schema";
 import { useProductSearch } from "~/features/catalog/useCatalogSearch";
 import { formatMoney } from "~/features/documents/labels";
-import type { Environment } from "~/lib/api/types";
+import type { DocumentPreview, Environment, Product } from "~/lib/api/types";
 import { useSettled } from "~/lib/useSettled";
+import { cn } from "~/lib/utils";
 
 import { taxPresetIds, taxPresets } from "./catalogs";
-import { type LineValues, type LinesFormValues, linesFormSchema } from "./schema";
+import { type LineValues, type LinesFormValues, decimal, linesFormSchema } from "./schema";
 import { previewDocument } from "./server";
 
 const taxItems = taxPresetIds.map((value) => ({ value, label: taxPresets[value].label }));
@@ -38,16 +39,37 @@ export const emptyLine: LineValues = {
 
 const taxLabel: Record<string, string> = { IVA: "IVA", INC: "Impuesto al consumo", ICA: "ICA" };
 
+export type LinesPreview = { totals: DocumentPreview | null; isFetching: boolean };
+
 /**
- * The lines of a document with their taxes, and the totals the API calculates for them: the console never
- * computes a tax, so what it shows is what the document will carry.
+ * The totals the API calculates for the lines: the console never computes a tax, so what it shows is what
+ * the document will carry.
  */
+export function useLinesPreview(form: UseFormReturn<LinesFormValues>): LinesPreview {
+  const lines = useWatch({ control: form.control, name: "lines" });
+  const settled = useSettled(lines, 400);
+  const valid = linesFormSchema({ lines: settled });
+  const preview = useQuery({
+    queryKey: ["issuance", "preview", settled],
+    queryFn: () => previewDocument({ data: { lines: settled } }),
+    enabled: !(valid instanceof type.errors),
+    placeholderData: keepPreviousData,
+  });
+  return {
+    totals: valid instanceof type.errors ? null : (preview.data ?? null),
+    isFetching: preview.isFetching,
+  };
+}
+
+/** The lines of a document with their taxes, and the subtotal of each one from the preview. */
 export function LinesEditor({
   form,
+  preview,
   currency,
   environment,
 }: {
   form: UseFormReturn<LinesFormValues>;
+  preview: LinesPreview;
   currency: string;
   /** Where the saved products come from. */
   environment: Environment;
@@ -58,19 +80,57 @@ export function LinesEditor({
     name: "lines",
   });
   const lines = useWatch({ control: form.control, name: "lines" });
-  const settled = useSettled(lines, 400);
-  const valid = linesFormSchema({ lines: settled });
-  const preview = useQuery({
-    queryKey: ["issuance", "preview", settled],
-    queryFn: () => previewDocument({ data: { lines: settled } }),
-    enabled: !(valid instanceof type.errors),
-    placeholderData: keepPreviousData,
-  });
-  const totals = valid instanceof type.errors ? null : preview.data;
+
+  function pickProduct(product: Product) {
+    const line = toLineValues(product);
+    if (!line) {
+      return;
+    }
+    const same = lines.findIndex(
+      (item) =>
+        item.description === line.description &&
+        item.unitPrice === line.unitPrice &&
+        item.tax === line.tax &&
+        item.unitCode === line.unitCode,
+    );
+    // The blank line a form starts with gives way to the product.
+    const blank = lines.findIndex((item) => !item.description && !item.unitPrice);
+    const index = same !== -1 ? same : blank !== -1 ? blank : fields.length;
+    if (same !== -1) {
+      const quantity = lines[same]?.quantity ?? "";
+      // A quantity being corrected is left for the person to finish.
+      if (decimal.test(quantity)) {
+        form.setValue(`lines.${same}.quantity`, String(Number((Number(quantity) + 1).toFixed(6))), {
+          shouldDirty: true,
+          shouldValidate: form.formState.isSubmitted,
+        });
+      }
+    } else if (blank !== -1) {
+      update(blank, line);
+    } else {
+      append(line, { shouldFocus: false });
+    }
+    // After the picker closes, which returns the focus to its box.
+    setTimeout(() => form.setFocus(`lines.${index}.quantity`, { shouldSelect: true }));
+  }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="hidden grid-cols-[1fr_6rem_9rem_12rem_8rem_2.25rem] gap-3 text-2xs text-muted-foreground md:grid">
+    <div className="@container flex flex-col gap-4">
+      {productSearch.saved && (
+        <div className="sm:max-w-sm">
+          <CatalogPicker
+            label="Agregar un producto guardado"
+            placeholder="Busca por código o descripción"
+            empty="No hay productos con ese código o descripción."
+            items={productSearch.items}
+            itemLabel={(product) => `${product.code} · ${product.description}`}
+            unavailable={productUnavailable}
+            onSearch={productSearch.setText}
+            onPick={pickProduct}
+          />
+        </div>
+      )}
+      <div className="hidden grid-cols-[minmax(0,1fr)_5rem_8rem_12rem_7rem_2.25rem] gap-3 text-2xs text-muted-foreground @4xl:grid">
         <span>Descripción</span>
         <span>Cantidad</span>
         <span>Precio unitario</span>
@@ -78,16 +138,16 @@ export function LinesEditor({
         <span className="text-right">Subtotal</span>
         <span />
       </div>
-      <ol className="flex flex-col gap-4 md:gap-3">
+      <ol className="flex flex-col gap-4 @4xl:gap-3">
         {fields.map((field, index) => {
           const errors = form.formState.errors.lines?.[index];
-          const subtotal = totals?.lines[index]?.lineExtension;
+          const subtotal = preview.totals?.lines[index]?.lineExtension;
           return (
             <li
               key={field.id}
-              className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_6rem_9rem_12rem_8rem_2.25rem] md:items-start"
+              className="grid grid-cols-2 gap-3 @xl:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)_7rem_2.25rem] @xl:items-start @4xl:grid-cols-[minmax(0,1fr)_5rem_8rem_12rem_7rem_2.25rem]"
             >
-              <div className="col-span-2 md:col-span-1">
+              <div className="col-span-2 @xl:col-span-5 @4xl:col-span-1">
                 <Input
                   {...form.register(`lines.${index}.description`)}
                   aria-label={`Descripción de la línea ${index + 1}`}
@@ -126,7 +186,7 @@ export function LinesEditor({
                   >
                     <SelectTrigger
                       aria-label={`Impuesto de la línea ${index + 1}`}
-                      className="col-span-2 w-full md:col-span-1"
+                      className="col-span-2 w-full @xl:col-span-1"
                       onBlur={tax.onBlur}
                     >
                       <SelectValue />
@@ -143,7 +203,7 @@ export function LinesEditor({
                   </Select>
                 )}
               />
-              <p className="flex h-9 items-center text-xs tabular-nums md:justify-end">
+              <p className="flex h-9 items-center text-xs tabular-nums @xl:justify-end">
                 {subtotal === undefined ? "—" : formatMoney(subtotal, currency)}
               </p>
               <Button
@@ -162,64 +222,55 @@ export function LinesEditor({
         })}
       </ol>
       <FieldError errors={[form.formState.errors.lines?.root ?? form.formState.errors.lines]} />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <Button type="button" variant="outline" size="sm" onClick={() => append(emptyLine)}>
-          <PlusIcon data-icon="inline-start" />
-          Agregar línea
-        </Button>
-        {productSearch.saved && (
-          <div className="sm:w-80">
-            <CatalogPicker
-              label="Agregar un producto guardado"
-              placeholder="Busca por código o descripción"
-              empty="No hay productos con ese código o descripción."
-              items={productSearch.items}
-              itemLabel={(product) => `${product.code} · ${product.description}`}
-              unavailable={productUnavailable}
-              onSearch={productSearch.setText}
-              onPick={(product) => {
-                const line = toLineValues(product);
-                if (!line) {
-                  return;
-                }
-                // The blank line a form starts with gives way to the product.
-                const blank = lines.findIndex((item) => !item.description && !item.unitPrice);
-                if (blank === -1) {
-                  append(line);
-                } else {
-                  update(blank, line);
-                }
-              }}
-            />
-          </div>
-        )}
-      </div>
-
-      <dl
-        aria-label="Totales"
-        aria-busy={preview.isFetching}
-        className="ml-auto grid w-full max-w-xs grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 text-xs"
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="self-start"
+        onClick={() => append(emptyLine)}
       >
-        <dt className="text-muted-foreground">Subtotal</dt>
-        <dd className="text-right tabular-nums">
-          {totals ? formatMoney(totals.totals.lineExtension, currency) : "—"}
-        </dd>
-        {totals?.taxes.map((tax) => (
-          <div key={`${tax.type}-${tax.percent}`} className="contents">
-            <dt className="text-muted-foreground">
-              {taxLabel[tax.type] ?? tax.type} {tax.percent} %
-            </dt>
-            <dd className="text-right tabular-nums">{formatMoney(tax.amount, currency)}</dd>
-          </div>
-        ))}
-        <dt className="flex items-center gap-2 font-medium">
-          Total
-          {preview.isFetching && <Spinner className="size-3" />}
-        </dt>
-        <dd className="text-right font-medium tabular-nums">
-          {totals ? formatMoney(totals.totals.payable, currency) : "—"}
-        </dd>
-      </dl>
+        <PlusIcon data-icon="inline-start" />
+        Agregar línea
+      </Button>
     </div>
+  );
+}
+
+/** The totals of the preview, with each tax apart. */
+export function LinesTotals({
+  preview: { totals, isFetching },
+  currency,
+  className,
+}: {
+  preview: LinesPreview;
+  currency: string;
+  className?: string;
+}) {
+  return (
+    <dl
+      aria-label="Totales"
+      aria-busy={isFetching}
+      className={cn("grid grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 text-xs", className)}
+    >
+      <dt className="text-muted-foreground">Subtotal</dt>
+      <dd className="text-right tabular-nums">
+        {totals ? formatMoney(totals.totals.lineExtension, currency) : "—"}
+      </dd>
+      {totals?.taxes.map((tax) => (
+        <div key={`${tax.type}-${tax.percent}`} className="contents">
+          <dt className="text-muted-foreground">
+            {taxLabel[tax.type] ?? tax.type} {tax.percent} %
+          </dt>
+          <dd className="text-right tabular-nums">{formatMoney(tax.amount, currency)}</dd>
+        </div>
+      ))}
+      <dt className="flex items-center gap-2 font-medium">
+        Total
+        {isFetching && <Spinner className="size-3" />}
+      </dt>
+      <dd className="text-right font-medium tabular-nums">
+        {totals ? formatMoney(totals.totals.payable, currency) : "—"}
+      </dd>
+    </dl>
   );
 }

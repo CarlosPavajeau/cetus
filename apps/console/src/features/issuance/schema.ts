@@ -23,7 +23,7 @@ export const trimmed = (
 
 const required = (message: string) => trimmed("string > 0", message);
 
-const decimal = /^\d{1,14}(\.\d{1,6})?$/;
+export const decimal = /^\d{1,14}(\.\d{1,6})?$/;
 
 export const lineSchema = type({
   "+": "delete",

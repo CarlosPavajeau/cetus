@@ -39,8 +39,9 @@ test("an invoice is filled in by hand in habilitación", async ({ page, organiza
   // An issuer in habilitación makes TEST the starting environment.
   await open(page, "/documents/new");
   await expect(page.getByRole("combobox", { name: "Ambiente" })).toHaveText(/Pruebas/);
-  await expect(page.getByRole("combobox", { name: "Empresa que factura" })).toHaveText(
-    /Manual SAS/,
+  // A single issuer needs no choosing: the summary names it.
+  await expect(page.getByRole("complementary", { name: "Resumen de la factura" })).toContainText(
+    "Manual SAS",
   );
 
   await page.getByLabel("Número").fill("900123456-1");
