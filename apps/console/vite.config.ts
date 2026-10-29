@@ -46,6 +46,7 @@ export default defineConfig({
     rules: {
       "shadcn/no-unknown-classes": "error",
       "shadcn/no-raw-colors": "error",
+      "shadcn/require-static-classes": "error",
       "react/react-in-jsx-scope": "off",
       "react/rules-of-hooks": "error",
       "react/exhaustive-deps": "warn",
@@ -77,6 +78,7 @@ export default defineConfig({
           "react/no-array-index-key": "off",
           "react/set-state-in-effect": "off",
           "no-shadow": "off",
+          "shadcn/require-static-classes": "off",
         },
       },
     ],
