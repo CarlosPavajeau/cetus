@@ -105,8 +105,11 @@ export function InvoiceForm({
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [saveCustomer, setSaveCustomer] = useState(false);
   const [picked, setPicked] = useState<PickedCustomer | null>(null);
-  // A customer from the catalog, or the final consumer, shows in one line until edited.
-  const [customerMode, setCustomerMode] = useState<"fields" | "summary">("fields");
+  // A customer from the catalog, the final consumer or the sample shows in one line until edited; only the
+  // sample, typed by no one, can still be saved from there.
+  const [customerMode, setCustomerMode] = useState<"fields" | "summary" | "sample">(
+    sample ? "sample" : "fields",
+  );
   const customerSearch = useCustomerSearch(environment);
   const header = useForm<InvoiceHeaderValues>({
     resolver: arktypeResolver(invoiceHeaderSchema),
@@ -299,28 +302,28 @@ export function InvoiceForm({
               Venta a consumidor final
             </Button>
           </div>
-          {customerMode === "summary" ? (
+          {customerMode === "fields" ? (
+            <CustomerFields
+              form={customerForm}
+              emailHint="Le enviamos la factura cuando la DIAN la acepte."
+            />
+          ) : (
             <CustomerSummary
               customer={customerForm.getValues()}
               onEdit={() => setCustomerMode("fields")}
             />
-          ) : (
-            <>
-              <CustomerFields
-                form={customerForm}
-                emailHint="Le enviamos la factura cuando la DIAN la acepte."
+          )}
+          {customerMode !== "summary" && (
+            <Field orientation="horizontal">
+              <Checkbox
+                id="save-customer"
+                checked={saveCustomer}
+                onCheckedChange={(checked) => setSaveCustomer(checked)}
               />
-              <Field orientation="horizontal">
-                <Checkbox
-                  id="save-customer"
-                  checked={saveCustomer}
-                  onCheckedChange={(checked) => setSaveCustomer(checked)}
-                />
-                <FieldLabel htmlFor="save-customer" size="xs" className="font-normal">
-                  Guardar este cliente para la próxima factura
-                </FieldLabel>
-              </Field>
-            </>
+              <FieldLabel htmlFor="save-customer" size="xs" className="font-normal">
+                Guardar este cliente para la próxima factura
+              </FieldLabel>
+            </Field>
           )}
         </FieldSection>
 

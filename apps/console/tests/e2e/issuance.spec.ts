@@ -166,6 +166,7 @@ test("an accepted invoice is emailed again at most once a minute", async ({
 test("the customer's location is optional as a whole", async ({ page, organization: _ }) => {
   // The first sandbox invoice comes with Bogotá and an address.
   await open(page, "/documents/new");
+  await page.getByRole("button", { name: "Editar datos" }).click();
   await page.getByLabel("Dirección (opcional)").fill("");
   await page.getByRole("button", { name: "Emitir factura" }).click();
   await expect(

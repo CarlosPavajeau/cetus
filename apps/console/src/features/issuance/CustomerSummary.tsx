@@ -4,7 +4,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "~/co
 import { identificationTypes } from "./catalogs";
 import type { CustomerValues } from "./schema";
 
-/** The customer in one line, for one picked from the catalog or the final consumer. */
+/** The customer in one line, for one picked from the catalog, the final consumer or the sample. */
 export function CustomerSummary({
   customer,
   onEdit,
