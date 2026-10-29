@@ -18,7 +18,7 @@ public class CredentialCache {
     public CredentialCache(
             Caches caches,
             @ConfigProperty(name = "cetus.cache.credentials.max-entries", defaultValue = "1024") int capacity) {
-        cache = caches.local(capacity, Duration.ofMinutes(10));
+        cache = caches.local("credentials", capacity, Duration.ofMinutes(10));
     }
 
     public String open(byte[] sealed) {

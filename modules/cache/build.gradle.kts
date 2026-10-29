@@ -7,6 +7,7 @@ dependencies {
     implementation(enforcedPlatform(libs.quarkus.bom))
     implementation(libs.quarkus.arc)
     implementation(libs.quarkus.scheduler)
+    implementation(libs.micrometer.core)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

@@ -43,7 +43,7 @@ public class WebhookClients {
             @ConfigProperty(name = "cetus.webhooks.allow-private-targets") boolean allowPrivateTargets,
             Caches caches,
             @ConfigProperty(name = "cetus.cache.webhooks.max-entries", defaultValue = "512") int capacity) {
-        this.secrets = caches.local(capacity, Duration.ofMinutes(10));
+        this.secrets = caches.local("webhook-secrets", capacity, Duration.ofMinutes(10));
         this.allowPrivateTargets = allowPrivateTargets;
         this.http = new OkHttpClient.Builder()
                 .dns(allowPrivateTargets ? Dns.SYSTEM : new PublicOnlyDns(Dns.SYSTEM))

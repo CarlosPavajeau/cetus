@@ -28,7 +28,7 @@ public class KeyMaterialCache {
     public KeyMaterialCache(
             Caches caches,
             @ConfigProperty(name = "cetus.cache.certificates.max-entries", defaultValue = "512") int capacity) {
-        cache = caches.local(capacity, Duration.ofMinutes(10));
+        cache = caches.local("certificates", capacity, Duration.ofMinutes(10));
     }
 
     @Inject

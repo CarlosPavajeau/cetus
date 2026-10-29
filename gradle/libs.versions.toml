@@ -39,6 +39,7 @@ quarkus-logging-json = { module = "io.quarkus:quarkus-logging-json" }
 # OpenTelemetry traces and logs, and Micrometer metrics exported through it (OTLP).
 quarkus-micrometer-opentelemetry = { module = "io.quarkus:quarkus-micrometer-opentelemetry" }
 quarkus-scheduler = { module = "io.quarkus:quarkus-scheduler" }
+micrometer-core = { module = "io.micrometer:micrometer-core" }
 quarkus-jaxb = { module = "io.quarkus:quarkus-jaxb" }
 quarkus-junit = { module = "io.quarkus:quarkus-junit" }
 quarkus-smallrye-jwt-build = { module = "io.quarkus:quarkus-smallrye-jwt-build" }

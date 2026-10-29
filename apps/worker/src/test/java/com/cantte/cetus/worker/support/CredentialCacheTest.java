@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.aws.SecretCipher;
 import com.cantte.cetus.cache.LocalCaches;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class CredentialCacheTest {
     @Test
     void reusesBySealedContentAndReloadsOnRotation() throws Exception {
-        var cache = new CredentialCache(new LocalCaches(), 256);
+        var cache = new CredentialCache(new LocalCaches(new SimpleMeterRegistry()), 256);
         var cipher = new CountingCipher();
         cache.cipher = cipher;
         byte[] original = {1, 2};
@@ -31,7 +32,7 @@ class CredentialCacheTest {
 
     @Test
     void kmsFailureIsPropagatedAndRetried() {
-        var cache = new CredentialCache(new LocalCaches(), 256);
+        var cache = new CredentialCache(new LocalCaches(new SimpleMeterRegistry()), 256);
         var cipher = new CountingCipher();
         cache.cipher = cipher;
         byte[] sealed = {5};

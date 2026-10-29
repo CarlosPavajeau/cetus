@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -28,25 +28,28 @@ final class LocalCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public V get(K key, Supplier<V> loader) {
+    public Optional<V> find(K key, Supplier<Optional<V>> loader) {
         V value = fresh(key);
         if (value != null) {
-            return value;
+            return Optional.of(value);
         }
         ReentrantLock lock = lockFor(key);
         lock.lock();
         try {
             value = fresh(key);
-            if (value == null) {
-                value = Objects.requireNonNull(loader.get());
+            if (value != null) {
+                return Optional.of(value);
+            }
+            Optional<V> loaded = loader.get();
+            loaded.ifPresent(found -> {
                 synchronized (entries) {
-                    entries.put(key, new Entry<>(value, now.get().plus(ttl)));
+                    entries.put(key, new Entry<>(found, now.get().plus(ttl)));
                     while (entries.size() > capacity) {
                         entries.remove(entries.keySet().iterator().next());
                     }
                 }
-            }
-            return value;
+            });
+            return loaded;
         } finally {
             lock.unlock();
         }

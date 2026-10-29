@@ -3,9 +3,11 @@ package com.cantte.cetus.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -98,6 +100,24 @@ class LocalCacheTest {
     }
 
     @Test
+    void valuesNotFoundAreLoadedAgain() {
+        LocalCache<String, String> cache = sized(256);
+        var loads = new AtomicInteger();
+        assertThat(cache.find("key", () -> {
+                    loads.incrementAndGet();
+                    return Optional.empty();
+                }))
+                .isEmpty();
+        assertThat(cache.find("key", () -> {
+                    loads.incrementAndGet();
+                    return Optional.of("created");
+                }))
+                .contains("created");
+        assertThat(cache.find("key", Optional::empty)).contains("created");
+        assertThat(loads).hasValue(2);
+    }
+
+    @Test
     void invalidatedKeysReload() {
         LocalCache<String, String> cache = sized(256);
         cache.get("a", () -> "first");
@@ -143,7 +163,7 @@ class LocalCacheTest {
     @Test
     void theRegistrySweepsEveryCacheItCreated() {
         var now = new AtomicReference<>(Instant.EPOCH);
-        var caches = new LocalCaches(now::get);
+        var caches = new LocalCaches(new SimpleMeterRegistry(), now::get);
         LocalCache<String, String> first = caches.create(8, Duration.ofMinutes(1));
         LocalCache<String, String> second = caches.create(8, Duration.ofMinutes(5));
         first.get("a", () -> "first");

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cantte.cetus.cache.LocalCaches;
 import com.cantte.cetus.signing.KeyMaterial;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -24,7 +25,7 @@ class KeyMaterialCacheTest {
         FakeSecretCipher cipher = new FakeSecretCipher();
         Instant start = Instant.parse("2026-10-23T12:00:00Z");
         var now = new AtomicReference<>(start);
-        KeyMaterialCache cache = new KeyMaterialCache(new LocalCaches(now::get), 256);
+        KeyMaterialCache cache = new KeyMaterialCache(new LocalCaches(new SimpleMeterRegistry(), now::get), 256);
         cache.storage = storage;
         cache.cipher = cipher;
         var ref = new ProcessingContext.CertificateRef(UUID.randomUUID(), CERTIFICATE, null, PASSWORD);
@@ -49,7 +50,7 @@ class KeyMaterialCacheTest {
     void passwordAndLocationChangesReloadImmediately() throws Exception {
         var storage = new FakeDocumentStorage();
         var cipher = new FakeSecretCipher();
-        var cache = new KeyMaterialCache(new LocalCaches(), 256);
+        var cache = new KeyMaterialCache(new LocalCaches(new SimpleMeterRegistry()), 256);
         cache.storage = storage;
         cache.cipher = cipher;
         var id = UUID.randomUUID();
