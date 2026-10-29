@@ -94,7 +94,7 @@ export function LinesEditor({
                   placeholder="Producto o servicio"
                   aria-invalid={Boolean(errors?.description)}
                 />
-                <FieldError errors={[errors?.description]} className="mt-1 text-[10px]" />
+                <FieldError errors={[errors?.description]} className="mt-1 text-3xs" />
               </div>
               <div>
                 <Input
@@ -103,7 +103,7 @@ export function LinesEditor({
                   inputMode="decimal"
                   aria-invalid={Boolean(errors?.quantity)}
                 />
-                <FieldError errors={[errors?.quantity]} className="mt-1 text-[10px]" />
+                <FieldError errors={[errors?.quantity]} className="mt-1 text-3xs" />
               </div>
               <div>
                 <Input
@@ -113,7 +113,7 @@ export function LinesEditor({
                   placeholder="0"
                   aria-invalid={Boolean(errors?.unitPrice)}
                 />
-                <FieldError errors={[errors?.unitPrice]} className="mt-1 text-[10px]" />
+                <FieldError errors={[errors?.unitPrice]} className="mt-1 text-3xs" />
               </div>
               <Controller
                 control={form.control}

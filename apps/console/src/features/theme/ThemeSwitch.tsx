@@ -16,7 +16,7 @@ export function ThemeSwitch({ className }: { className?: string }) {
   return (
     <fieldset
       className={cn(
-        "inline-flex h-8 items-center rounded-[calc(var(--radius-md)+3px)] bg-muted p-[3px]",
+        "inline-flex h-8 items-center rounded-[calc(var(--radius-md)+3px)] bg-muted p-0.75",
         className,
       )}
     >

@@ -51,7 +51,7 @@ function TwoFactor() {
       <CodeForm key={String(useBackupCode)} backup={useBackupCode} />
       <div className="flex flex-col items-center gap-5 text-center">
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[0.8125rem] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {useBackupCode
               ? "¿Ya tienes tu aplicación a mano?"
               : "¿No tienes acceso a tu aplicación?"}
@@ -73,7 +73,7 @@ function TwoFactor() {
         </div>
         <Link
           to="/sign-in"
-          className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground hover:text-foreground"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeftIcon className="size-3.5" />
           Volver a iniciar sesión
@@ -153,7 +153,7 @@ function CodeForm({ backup }: { backup: boolean }) {
                   <FieldError id="two-factor-code-error" errors={[fieldState.error]} />
                 ) : (
                   !backup && (
-                    <FieldDescription id="two-factor-code-description" className="text-[0.8125rem]">
+                    <FieldDescription id="two-factor-code-description" className="text-sm">
                       El código cambia periódicamente. Usa el más reciente.
                     </FieldDescription>
                   )
@@ -178,7 +178,7 @@ function CodeForm({ backup }: { backup: boolean }) {
                 <FieldLabel htmlFor="two-factor-trust">
                   Confiar en este dispositivo durante 30{"\u00A0"}días
                 </FieldLabel>
-                <FieldDescription id="two-factor-trust-description" className="text-[0.8125rem]">
+                <FieldDescription id="two-factor-trust-description" className="text-sm">
                   Solo si es un dispositivo personal. No lo actives en equipos públicos o
                   compartidos.
                 </FieldDescription>
@@ -191,7 +191,7 @@ function CodeForm({ backup }: { backup: boolean }) {
             <AlertDescription>{errors.root.message}</AlertDescription>
           </Alert>
         )}
-        <Button type="submit" size="lg" className="h-12 text-[0.9375rem]" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="h-12 text-base" disabled={isSubmitting}>
           {isSubmitting && <Spinner data-icon="inline-start" />}
           {isSubmitting ? "Verificando…" : "Verificar y continuar"}
         </Button>

@@ -47,6 +47,19 @@ export default defineConfig({
       "shadcn/no-unknown-classes": "error",
       "shadcn/no-raw-colors": "error",
       "shadcn/require-static-classes": "error",
+      "shadcn/no-arbitrary-values": [
+        "error",
+        {
+          allow: [
+            "layout",
+            "transition",
+            "rounded-[inherit]",
+            "leading-[normal]",
+            "rounded-[25%]",
+            "rounded-[calc(var(--radius-md)+3px)]",
+          ],
+        },
+      ],
       "react/react-in-jsx-scope": "off",
       "react/rules-of-hooks": "error",
       "react/exhaustive-deps": "warn",
@@ -79,6 +92,7 @@ export default defineConfig({
           "react/set-state-in-effect": "off",
           "no-shadow": "off",
           "shadcn/require-static-classes": "off",
+          "shadcn/no-arbitrary-values": "off",
         },
       },
     ],

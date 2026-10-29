@@ -213,11 +213,11 @@ export function NoteForm({
                 aria-invalid={fieldState.invalid}
               />
               {!fieldState.invalid && (
-                <FieldDescription className="text-[10px]">
+                <FieldDescription className="text-3xs">
                   Queda en la nota como el motivo de la corrección.
                 </FieldDescription>
               )}
-              <FieldError errors={[fieldState.error]} className="text-[10px]" />
+              <FieldError errors={[fieldState.error]} className="text-3xs" />
             </Field>
           )}
         />

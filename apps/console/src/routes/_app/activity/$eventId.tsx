@@ -136,7 +136,7 @@ function ActivityEvent() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <section className="flex flex-col gap-5.5 rounded-lg border p-6">
-          <h2 className="text-[14px] font-medium">Quién realizó la acción</h2>
+          <h2 className="text-md font-medium">Quién realizó la acción</h2>
           <div className="grid grid-cols-2 gap-x-6 gap-y-5.5">
             <DetailField label="Tipo de actor">
               {actorTypeLabel[entry.actorType]} · {entry.actorType}
@@ -168,7 +168,7 @@ function ActivityEvent() {
         </section>
 
         <section className="flex flex-col gap-5.5 rounded-lg border p-6">
-          <h2 className="text-[14px] font-medium">Recurso asociado</h2>
+          <h2 className="text-md font-medium">Recurso asociado</h2>
           <DetailField label="Tipo de recurso" mono={Boolean(entry.resourceType)}>
             {entry.resourceType ?? "No registrado"}
           </DetailField>
