@@ -65,7 +65,7 @@ describe("console tokens in the API", () => {
     });
     expect(edited.status).toBe(404);
 
-    const detail = await (await owner.api(`/console/issuers/${id}`)).json();
+    const detail: unknown = await (await owner.api(`/console/issuers/${id}`)).json();
     expect(detail).toMatchObject({ legalName: "Acme SAS", status: "ONBOARDING", software: null });
   });
 });

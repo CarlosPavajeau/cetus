@@ -49,7 +49,10 @@ function dateTime(value: string) {
 function AccountDetail() {
   const { accountId } = Route.useParams();
   const { platformRole } = Route.useRouteContext();
-  const account = useSuspenseQuery(adminAccountQuery(accountId)).data!;
+  const account = useSuspenseQuery(adminAccountQuery(accountId)).data;
+  if (!account) {
+    throw notFound();
+  }
   const isAdmin = platformRole === "admin";
 
   return (

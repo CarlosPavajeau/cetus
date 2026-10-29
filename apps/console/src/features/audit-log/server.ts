@@ -50,9 +50,9 @@ export const getAuditEntry = createServerFn({ method: "GET" })
 async function withActorEmails(entries: AuditEntry[]): Promise<ActivityEntry[]> {
   const userIds = [
     ...new Set(
-      entries
-        .filter((entry) => entry.actorType === "USER" && entry.actorId)
-        .map((entry) => entry.actorId!),
+      entries.flatMap((entry) =>
+        entry.actorType === "USER" && entry.actorId ? [entry.actorId] : [],
+      ),
     ),
   ];
   const emails = new Map<string, string>();

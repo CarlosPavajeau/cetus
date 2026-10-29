@@ -50,7 +50,7 @@ test("a second issuer is set up from the issuers page and resumed by its ID", as
   // The URL names the new issuer, not the first one still being set up.
   await expect(page.getByText("Paso 2 de 4")).toBeVisible();
   await expect(page).toHaveURL(/\/setup\?issuerId=[0-9a-f-]{36}&step=2$/);
-  const second = new URL(page.url()).searchParams.get("issuerId")!;
+  const second = new URL(page.url()).searchParams.get("issuerId") ?? "";
   expect(second).not.toBe(first);
   await expect(page.getByText("Segundo SAS · NIT 800197268")).toBeVisible();
 
@@ -83,7 +83,7 @@ test("a test issuer in habilitación is promoted to production", async ({ page, 
   // Software and certificate come along: only the production numbering is left, and nothing is
   // prefilled from habilitación.
   await expect(page).toHaveURL(/\/setup\?issuerId=[0-9a-f-]{36}$/);
-  const liveId = new URL(page.url()).searchParams.get("issuerId")!;
+  const liveId = new URL(page.url()).searchParams.get("issuerId") ?? "";
   expect(liveId).not.toBe(testId);
   await expect(page.getByText("Producción", { exact: true })).toBeVisible();
   await expect(page.getByText("Paso 4 de 4")).toBeVisible();

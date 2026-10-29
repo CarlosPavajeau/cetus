@@ -44,7 +44,10 @@ export const Route = createFileRoute("/_admin/admin/organizations/$accountId_/is
 
 function AdminIssuer() {
   const ids = Route.useParams();
-  const issuer = useSuspenseQuery(adminIssuerQuery(ids.accountId, ids.issuerId)).data!;
+  const issuer = useSuspenseQuery(adminIssuerQuery(ids.accountId, ids.issuerId)).data;
+  if (!issuer) {
+    throw notFound();
+  }
 
   return (
     <>

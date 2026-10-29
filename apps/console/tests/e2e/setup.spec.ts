@@ -109,7 +109,7 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   // The issuer's page, with the ID to send to the API.
   await expect(page).toHaveURL(/\/issuers\/[0-9a-f-]{36}$/);
   await expect(page.getByText("En habilitación")).toBeVisible();
-  await expect(page.getByTestId("issuer-id")).toHaveText(page.url().split("/").at(-1)!);
+  await expect(page.getByTestId("issuer-id")).toHaveText(page.url().split("/").at(-1) ?? "");
 
   // Nothing is left to set up.
   await open(page, "/setup");

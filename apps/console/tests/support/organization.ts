@@ -1,3 +1,5 @@
+import { type } from "arktype";
+
 import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
 
 import { markEmailVerified } from "./invitations";
@@ -14,7 +16,7 @@ export type TestOrganization = {
   /** Calls the Java API as this organization. */
   api: (path: string, init?: RequestInit) => Promise<Response>;
   /** Calls Better Auth (`/api/auth/*`) with this user's session; throws unless it answers 2xx. */
-  auth: <T = unknown>(path: string, body?: unknown) => Promise<T>;
+  auth: (path: string, body?: unknown) => Promise<unknown>;
   /** Like `auth`, but returns the raw response whatever its status. */
   authResponse: (path: string, body?: unknown) => Promise<Response>;
 };
@@ -49,12 +51,13 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
     return response;
   }
 
-  async function auth<T = unknown>(path: string, body?: unknown): Promise<T> {
+  async function auth(path: string, body?: unknown): Promise<unknown> {
     const response = await authResponse(path, body);
     if (!response.ok) {
       throw new Error(`${path} answered ${response.status}: ${await response.text()}`);
     }
-    return response.json();
+    const payload: unknown = await response.json();
+    return payload;
   }
 
   const signUp = await authResponse(
@@ -65,13 +68,15 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   if (!signUp.ok) {
     throw new Error(`/sign-up/email answered ${signUp.status}: ${await signUp.text()}`);
   }
-  const organization = await auth<{ id: string }>("/organization/create", {
-    name,
-    slug: `${name}-${id}`.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"),
-  });
+  const organization = type({ id: "string" }).assert(
+    await auth("/organization/create", {
+      name,
+      slug: `${name}-${id}`.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"),
+    }),
+  );
   await auth("/organization/set-active", { organizationId: organization.id });
 
-  const token = async () => (await auth<{ token: string }>("/token")).token;
+  const token = async () => type({ token: "string" }).assert(await auth("/token")).token;
   const api = async (path: string, init: RequestInit = {}) => {
     const headers = new Headers({
       "Content-Type": "application/json",
@@ -100,7 +105,9 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   };
 }
 
-type FullOrganization = { members: { id: string; role: string; user: { email: string } }[] };
+const fullOrganization = type({
+  members: type({ id: "string", role: "string", user: { email: "string" } }).array(),
+});
 
 /**
  * Signs up someone with an account of their own and brings them into the owner's organization with the
@@ -113,13 +120,14 @@ export async function inviteMember(
   const person = await createOrganization("Colega SAS");
   // Joining takes a confirmed address; the confirmation itself is tested in members.spec.ts.
   await markEmailVerified(person.email);
-  const invitation = await owner.auth<{ id: string; organizationId: string }>(
-    "/organization/invite-member",
-    { email: person.email, role },
+  const invitation = type({ id: "string", organizationId: "string" }).assert(
+    await owner.auth("/organization/invite-member", { email: person.email, role }),
   );
   await person.auth("/organization/accept-invitation", { invitationId: invitation.id });
   await person.auth("/organization/set-active", { organizationId: invitation.organizationId });
-  const organization = await owner.auth<FullOrganization>("/organization/get-full-organization");
+  const organization = fullOrganization.assert(
+    await owner.auth("/organization/get-full-organization"),
+  );
   const membership = organization.members.find((member) => member.user.email === person.email);
   if (!membership) {
     throw new Error(`${person.email} is not a member after accepting the invitation`);

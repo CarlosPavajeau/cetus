@@ -28,7 +28,10 @@ export function EmailVerificationBanner({ email }: { email: string }) {
   const { isSuccess, reset } = send;
 
   useEffect(() => {
-    const timer = isSuccess ? setTimeout(reset, resendDelayMs) : undefined;
+    if (!isSuccess) {
+      return undefined;
+    }
+    const timer = setTimeout(reset, resendDelayMs);
     return () => clearTimeout(timer);
   }, [isSuccess, reset]);
 

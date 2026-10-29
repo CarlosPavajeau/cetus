@@ -97,8 +97,10 @@ function BackToDocuments() {
 
 function DocumentDetailPage() {
   const { documentId } = Route.useParams();
-  // The loader already returned notFound for a missing document.
-  const document = useSuspenseQuery(documentDetailQuery(documentId)).data!;
+  const document = useSuspenseQuery(documentDetailQuery(documentId)).data;
+  if (!document) {
+    throw notFound();
+  }
   const money = (amount: number) => formatMoney(amount, document.currency);
   const isInvoice = document.documentType === "INVOICE";
 
@@ -143,7 +145,9 @@ function DocumentDetailPage() {
         )}
       </section>
 
-      {!isInvoice && document.invoice && <CorrectedInvoice document={document} />}
+      {!isInvoice && document.invoice && (
+        <CorrectedInvoice document={document} invoice={document.invoice} />
+      )}
 
       <Section id="parties" title="Emisor y cliente">
         <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
@@ -376,8 +380,13 @@ function InvoiceCorrections({ invoice }: { invoice: DocumentDetail }) {
   );
 }
 
-function CorrectedInvoice({ document }: { document: DocumentDetail }) {
-  const invoice = document.invoice!;
+function CorrectedInvoice({
+  document,
+  invoice,
+}: {
+  document: DocumentDetail;
+  invoice: NonNullable<DocumentDetail["invoice"]>;
+}) {
   return (
     <Section id="correction" title="Corrección">
       <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">

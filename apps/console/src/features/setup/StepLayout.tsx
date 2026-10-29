@@ -29,7 +29,7 @@ export function StepLayout({
   /** The error of the last save, if it failed. */
   error?: string;
   submitting: boolean;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void;
   onBack: () => void;
   /** Shown under the panel and the guide. */
   after?: ReactNode;

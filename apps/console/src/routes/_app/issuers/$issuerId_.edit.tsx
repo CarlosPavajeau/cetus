@@ -42,8 +42,10 @@ export const Route = createFileRoute("/_app/issuers/$issuerId_/edit")({
 
 function EditIssuerPage() {
   const { issuerId } = Route.useParams();
-  // The loader already returned notFound for a missing issuer.
-  const issuer = useSuspenseQuery(issuerDetailQuery(issuerId)).data!;
+  const issuer = useSuspenseQuery(issuerDetailQuery(issuerId)).data;
+  if (!issuer) {
+    throw notFound();
+  }
   return <EditIssuerForm issuer={issuer} />;
 }
 

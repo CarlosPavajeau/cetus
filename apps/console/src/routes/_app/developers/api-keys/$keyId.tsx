@@ -81,8 +81,10 @@ function ConfigurationEntry({ label, children }: { label: string; children: Reac
 
 function ApiKeyDetail() {
   const { keyId } = Route.useParams();
-  // The loader already returned notFound for a missing key.
-  const detail = useSuspenseQuery(apiKeyQuery(keyId)).data!;
+  const detail = useSuspenseQuery(apiKeyQuery(keyId)).data;
+  if (!detail) {
+    throw notFound();
+  }
   const { key, recentRequests, requestsLast24Hours } = detail;
   const revokedAt = key.revokedAt ? new Date(key.revokedAt) : null;
 

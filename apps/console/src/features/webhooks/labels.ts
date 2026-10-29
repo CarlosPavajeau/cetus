@@ -32,8 +32,9 @@ export function eventTypeLabel(type: string) {
 
 /** "Todos los eventos", or the subscribed ones. */
 export function eventTypesSummary(eventTypes: string[]) {
-  if (eventTypes.length === 0) {
+  const [first] = eventTypes;
+  if (first === undefined) {
     return "Todos los eventos";
   }
-  return eventTypes.length === 1 ? eventTypeLabel(eventTypes[0]!) : `${eventTypes.length} eventos`;
+  return eventTypes.length === 1 ? eventTypeLabel(first) : `${eventTypes.length} eventos`;
 }

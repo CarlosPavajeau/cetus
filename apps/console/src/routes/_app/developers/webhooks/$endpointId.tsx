@@ -72,8 +72,10 @@ function BackToWebhooks() {
 
 function WebhookEndpointPage() {
   const { endpointId } = Route.useParams();
-  // The loader already returned notFound for a missing endpoint.
-  const endpoint = useSuspenseQuery(webhookEndpointQuery(endpointId)).data!;
+  const endpoint = useSuspenseQuery(webhookEndpointQuery(endpointId)).data;
+  if (!endpoint) {
+    throw notFound();
+  }
   const { manage } = useMemberPermissions();
 
   return (

@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 
+import { type } from "arktype";
 import { config } from "dotenv";
 import { Pool } from "pg";
 
@@ -29,9 +30,9 @@ export async function createPlatformStaff(
 
 /** Enrolls and verifies TOTP, as the security page does; returns the authenticator's secret. */
 export async function enableTwoFactor(person: TestOrganization): Promise<string> {
-  const { totpURI } = await person.auth<{ totpURI: string }>("/two-factor/enable", {
-    password: person.password,
-  });
+  const { totpURI } = type({ totpURI: "string" }).assert(
+    await person.auth("/two-factor/enable", { password: person.password }),
+  );
   const secret = new URL(totpURI).searchParams.get("secret") ?? "";
   // 2FA stays off until the first code is verified.
   await person.auth("/two-factor/verify-totp", { code: totp(secret) });
@@ -43,7 +44,7 @@ export function totp(base32Secret: string, now = Date.now()): string {
   const counter = Buffer.alloc(8);
   counter.writeBigUInt64BE(BigInt(Math.floor(now / 1000 / 30)));
   const digest = createHmac("sha1", base32Decode(base32Secret)).update(counter).digest();
-  const offset = digest[digest.length - 1]! & 0x0f;
+  const offset = digest.readUInt8(digest.length - 1) & 0x0f;
   const code = (digest.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
   return String(code).padStart(6, "0");
 }
@@ -61,5 +62,7 @@ function base32Decode(value: string): Buffer {
 /** The claims of a JWT, without checking its signature (the API does that). */
 export function jwtClaims(token: string): Record<string, unknown> {
   const [, payload = ""] = token.split(".");
-  return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  return type("Record<string, unknown>").assert(
+    JSON.parse(Buffer.from(payload, "base64url").toString("utf8")),
+  );
 }

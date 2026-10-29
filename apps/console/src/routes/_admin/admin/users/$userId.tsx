@@ -39,7 +39,10 @@ export const Route = createFileRoute("/_admin/admin/users/$userId")({
 function UserDetail() {
   const { userId } = Route.useParams();
   const { platformRole } = Route.useRouteContext();
-  const person = useSuspenseQuery(adminUserQuery(userId)).data!;
+  const person = useSuspenseQuery(adminUserQuery(userId)).data;
+  if (!person) {
+    throw notFound();
+  }
   const banActive = person.banActive;
   // The Cetus team is never banned from here, the acting admin included.
   const canBan = platformRole === "admin" && !person.platformRole && !person.isSelf;

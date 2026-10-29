@@ -1,5 +1,6 @@
 import "@tanstack/react-start/server-only";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
+import { type } from "arktype";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { admin, jwt, organization, twoFactor } from "better-auth/plugins";
@@ -26,6 +27,12 @@ import {
   roles,
 } from "./permissions";
 import * as schema from "./schema";
+
+// definePayload types the plugins' fields (admin, two-factor, organization) as any.
+const tokenSubject = type({
+  user: { "role?": "string | null", "twoFactorEnabled?": "boolean | null" },
+  session: { "activeOrganizationId?": "string | null", "impersonatedBy?": "string | null" },
+});
 
 const adminReads = new Set([
   "/admin/list-users",
@@ -203,8 +210,9 @@ export const auth = betterAuth({
         audience: "cetus-api",
         expirationTime: "5m",
         definePayload: async ({ user, session }) => {
-          const role = platformRole(user.role);
-          const org = session.activeOrganizationId ?? null;
+          const subject = tokenSubject.assert({ user, session });
+          const role = platformRole(subject.user.role);
+          const org = subject.session.activeOrganizationId ?? null;
           return {
             email: user.email,
             org,
@@ -212,8 +220,8 @@ export const auth = betterAuth({
             // changes to some of them. Read on every token, so a role change applies within one request.
             orgRoles: org ? await memberRoles(user.id, org) : [],
             // SmallRye JWT reads `groups` as the caller's roles. Only staff with 2FA get them.
-            groups: role && user.twoFactorEnabled ? [role] : [],
-            impersonatedBy: session.impersonatedBy ?? null,
+            groups: role && subject.user.twoFactorEnabled ? [role] : [],
+            impersonatedBy: subject.session.impersonatedBy ?? null,
           };
         },
       },

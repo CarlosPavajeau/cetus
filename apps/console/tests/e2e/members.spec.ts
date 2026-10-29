@@ -8,6 +8,8 @@ import { enableTwoFactor, totp } from "../support/platform-staff";
 import { consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
+const createdInvitation = type({ id: "string" });
+
 test("a biller is invited by link, issues in production and is removed", async ({
   page,
   browser,
@@ -106,10 +108,12 @@ test("a biller is invited by link, issues in production and is removed", async (
 });
 
 test("an invitation only opens for its address", async ({ page, browser, organization: owner }) => {
-  const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
-    email: `e2e-otro-${crypto.randomUUID().slice(0, 8)}@cetus.test`,
-    role: "member",
-  });
+  const invitation = createdInvitation.assert(
+    await owner.auth("/organization/invite-member", {
+      email: `e2e-otro-${crypto.randomUUID().slice(0, 8)}@cetus.test`,
+      role: "member",
+    }),
+  );
 
   // Someone else, signed in with another address, cannot use it.
   await open(page, `/invitations/${invitation.id}`);
@@ -148,10 +152,12 @@ test("someone with 2FA comes back to the invitation after the second step", asyn
   const invited = await createOrganization("Con 2FA SAS");
   await markEmailVerified(invited.email);
   const secret = await enableTwoFactor(invited);
-  const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
-    email: invited.email,
-    role: "member",
-  });
+  const invitation = createdInvitation.assert(
+    await owner.auth("/organization/invite-member", {
+      email: invited.email,
+      role: "member",
+    }),
+  );
 
   const visitor = await browser.newContext();
   const page = await visitor.newPage();
@@ -174,10 +180,12 @@ test("whoever gets an invitation's link cannot join with its address without own
   organization: owner,
 }) => {
   const email = `e2e-ajeno-${crypto.randomUUID().slice(0, 8)}@cetus.test`;
-  const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
-    email,
-    role: "biller",
-  });
+  const invitation = createdInvitation.assert(
+    await owner.auth("/organization/invite-member", {
+      email,
+      role: "biller",
+    }),
+  );
 
   // Someone else signs up first with the invited address, from the link.
   const visitor = await browser.newContext();
@@ -199,8 +207,8 @@ test("whoever gets an invitation's link cannot join with its address without own
   });
   expect(accepted.status()).toBe(403);
   await expect(page.getByRole("button", { name: "Unirme" })).toHaveCount(0);
-  const members = await owner.auth<{ members: { user: { email: string } }[] }>(
-    "/organization/get-full-organization",
+  const members = type({ members: type({ user: { email: "string" } }).array() }).assert(
+    await owner.auth("/organization/get-full-organization"),
   );
   expect(members.members.map((member) => member.user.email)).not.toContain(email);
   await visitor.close();
@@ -208,10 +216,12 @@ test("whoever gets an invitation's link cannot join with its address without own
 
 test("two resends at once send the invitation once", async ({ context, organization: owner }) => {
   const email = `e2e-doble-${crypto.randomUUID().slice(0, 8)}@cetus.test`;
-  const invitation = await owner.auth<{ id: string }>("/organization/invite-member", {
-    email,
-    role: "member",
-  });
+  const invitation = createdInvitation.assert(
+    await owner.auth("/organization/invite-member", {
+      email,
+      role: "member",
+    }),
+  );
   await ageInvitation(invitation.id, 61);
 
   // Two tabs of the members page, as two admins would have them open.
