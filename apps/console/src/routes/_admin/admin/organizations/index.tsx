@@ -73,7 +73,7 @@ function Organizations() {
               })
             }
           >
-            <TabsList className="gap-0.75">
+            <TabsList>
               <TabsTrigger value="ALL">Todas</TabsTrigger>
               {accountStatuses.map((value) => (
                 <TabsTrigger key={value} value={value}>

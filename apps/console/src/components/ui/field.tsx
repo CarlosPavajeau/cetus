@@ -49,8 +49,15 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+type FieldSize = "default" | "sm" | "xs";
+
 const fieldVariants = cva("group/field flex w-full gap-2 data-[invalid=true]:text-destructive", {
   variants: {
+    size: {
+      default: "",
+      sm: "",
+      xs: "gap-1.75",
+    },
     orientation: {
       vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
       horizontal:
@@ -61,12 +68,14 @@ const fieldVariants = cva("group/field flex w-full gap-2 data-[invalid=true]:tex
   },
   defaultVariants: {
     orientation: "vertical",
+    size: "default",
   },
 });
 
 function Field({
   className,
   orientation = "vertical",
+  size = "default",
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
   return (
@@ -74,7 +83,8 @@ function Field({
       role="group"
       data-slot="field"
       data-orientation={orientation}
-      className={cn(fieldVariants({ orientation }), className)}
+      data-size={size}
+      className={cn(fieldVariants({ orientation, size }), className)}
       {...props}
     />
   );
@@ -90,13 +100,19 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>) {
+function FieldLabel({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<typeof Label> & { size?: FieldSize }) {
   return (
     <Label
       data-slot="field-label"
+      data-size={size}
       className={cn(
         "group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border has-[>[data-slot=field]]:not-has-[:disabled,[data-disabled]]:hover:bg-muted/50 has-[>[data-slot=field]]:has-[:focus-visible]:border-ring has-[>[data-slot=field]]:has-[:focus-visible]:ring-3 has-[>[data-slot=field]]:has-[:focus-visible]:ring-ring *:data-[slot=field]:p-2.5 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10",
         "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col",
+        "group-data-[size=xs]/field:text-xs data-[size=xs]:text-xs",
         className,
       )}
       {...props}
@@ -117,14 +133,20 @@ function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
+function FieldDescription({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<"p"> & { size?: FieldSize }) {
   return (
     <p
       data-slot="field-description"
+      data-size={size}
       className={cn(
         "text-left text-sm leading-normal font-normal text-muted-foreground group-has-data-horizontal/field:text-balance [[data-variant=legend]+&]:-mt-1.5",
         "last:mt-0 nth-last-2:-mt-1",
         "[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
+        "group-data-[size=sm]/field:text-xs group-data-[size=xs]/field:text-3xs data-[size=sm]:text-xs data-[size=xs]:text-3xs",
         className,
       )}
       {...props}
@@ -166,9 +188,11 @@ function FieldError({
   className,
   children,
   errors,
+  size = "default",
   ...props
 }: React.ComponentProps<"div"> & {
   errors?: Array<{ message?: string } | undefined>;
+  size?: FieldSize;
 }) {
   const content = useMemo(() => {
     if (children) {
@@ -200,7 +224,12 @@ function FieldError({
     <div
       role="alert"
       data-slot="field-error"
-      className={cn("text-sm font-normal text-destructive", className)}
+      data-size={size}
+      className={cn(
+        "text-sm font-normal text-destructive",
+        "group-data-[size=sm]/field:text-xs group-data-[size=xs]/field:text-3xs data-[size=sm]:text-xs data-[size=xs]:text-3xs",
+        className,
+      )}
       {...props}
     >
       {content}

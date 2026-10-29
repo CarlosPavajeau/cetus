@@ -96,7 +96,7 @@ function SignUp() {
                   id="sign-up-name"
                   autoComplete="name"
                   placeholder="Tu nombre y apellido"
-                  className="h-11 px-3"
+                  size="lg"
                   aria-invalid={fieldState.invalid}
                 />
                 <FieldError errors={[fieldState.error]} />
@@ -115,7 +115,7 @@ function SignUp() {
                   type="email"
                   autoComplete="email"
                   placeholder="tu@empresa.com"
-                  className="h-11 px-3"
+                  size="lg"
                   aria-invalid={fieldState.invalid}
                 />
                 <FieldError errors={[fieldState.error]} />

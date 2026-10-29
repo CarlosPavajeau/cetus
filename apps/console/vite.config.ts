@@ -60,6 +60,28 @@ export default defineConfig({
           ],
         },
       ],
+      "shadcn/no-restyle": [
+        "error",
+        {
+          allow: ["layout"],
+          contracts: [
+            {
+              // CollapsibleTrigger has no styled counterpart; other triggers use render={<Button …/>}.
+              pattern: "^CollapsibleTrigger$",
+              allow: ["layout", "color", "typography", "spacing", "shape", "effects", "motion"],
+            },
+            {
+              // Cells take per-column typography, tone and edge padding, as in the shadcn examples.
+              pattern: "^Table(Head|Cell|Header|Footer)$",
+              allow: ["layout", "typography", "color", "spacing"],
+            },
+            { pattern: "^(CardContent|PopoverContent|FieldGroup)$", allow: ["layout", "spacing"] },
+            { pattern: "^(Input|InputGroupInput)$", allow: ["layout", "font-mono", "uppercase"] },
+            // Checkbox and radio labels read as plain text, as in the shadcn examples.
+            { pattern: "^FieldLabel$", allow: ["layout", "font-normal"] },
+          ],
+        },
+      ],
       "react/react-in-jsx-scope": "off",
       "react/rules-of-hooks": "error",
       "react/exhaustive-deps": "warn",
@@ -93,6 +115,14 @@ export default defineConfig({
           "no-shadow": "off",
           "shadcn/require-static-classes": "off",
           "shadcn/no-arbitrary-values": "off",
+          "shadcn/no-restyle": "off",
+        },
+      },
+      {
+        // Composes the OTP primitives into the sign-in code field, in two looks of its own.
+        files: ["src/features/auth/CodeInput.tsx"],
+        rules: {
+          "shadcn/no-restyle": "off",
         },
       },
     ],

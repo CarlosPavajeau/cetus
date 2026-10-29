@@ -85,14 +85,14 @@ export function CustomerFields({
           control={form.control}
           name="responsibleForIva"
           render={({ field }) => (
-            <Field orientation="horizontal" className="gap-2 sm:pt-7">
+            <Field orientation="horizontal" className="sm:mt-7">
               <Checkbox
                 id={ivaId}
                 checked={field.value}
                 onCheckedChange={(checked) => field.onChange(checked)}
                 onBlur={field.onBlur}
               />
-              <FieldLabel htmlFor={ivaId} className="text-xs font-normal">
+              <FieldLabel htmlFor={ivaId} size="xs" className="font-normal">
                 Responsable de IVA
               </FieldLabel>
             </Field>

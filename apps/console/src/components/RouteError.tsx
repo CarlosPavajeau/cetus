@@ -29,7 +29,7 @@ export function RouteError({ error }: ErrorComponentProps) {
   }, [queryErrorResetBoundary]);
 
   return (
-    <Empty className="border">
+    <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <TriangleAlertIcon />

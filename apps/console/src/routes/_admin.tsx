@@ -127,7 +127,7 @@ function AdminLayout() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
           <Breadcrumb>
-            <BreadcrumbList className="gap-3 text-xs">
+            <BreadcrumbList>
               <BreadcrumbItem>Administración</BreadcrumbItem>
               <BreadcrumbSeparator>/</BreadcrumbSeparator>
               {current && crumb ? (

@@ -255,7 +255,7 @@ function DeliveryRow({
 
 function WebhookEndpointNotFound() {
   return (
-    <Empty className="border">
+    <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <WebhookIcon />

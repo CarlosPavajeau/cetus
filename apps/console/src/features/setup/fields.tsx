@@ -45,14 +45,14 @@ export function FieldFrame({
   children: ReactNode;
 }) {
   return (
-    <Field data-invalid={invalid} className="gap-2">
+    <Field data-invalid={invalid} size="sm">
       <FieldLabel htmlFor={id}>
         {label}
         {optional && <span className="font-normal text-muted-foreground">(opcional)</span>}
       </FieldLabel>
       {children}
-      {hint && !invalid && <FieldDescription className="text-xs">{hint}</FieldDescription>}
-      <FieldError errors={[error]} className="text-xs" />
+      {hint && !invalid && <FieldDescription>{hint}</FieldDescription>}
+      <FieldError errors={[error]} />
     </Field>
   );
 }
@@ -166,6 +166,7 @@ export function DateField<T extends FieldValues>({ control, name, label, hint }:
               id={id}
               type="button"
               variant="outline"
+              // oxlint-disable-next-line shadcn/no-restyle -- a picker trigger reads as a field value, not an action
               className="w-full justify-between font-normal"
               aria-invalid={fieldState.invalid}
               onBlur={field.onBlur}
@@ -239,17 +240,17 @@ export function ChoiceField<V extends string>({
       >
         {options.map((option) => (
           <FieldLabel key={option.value} htmlFor={`${id}-${option.value}`}>
-            <Field orientation="horizontal">
+            <Field orientation="horizontal" size="sm">
               <FieldContent>
                 <FieldTitle>{option.title}</FieldTitle>
-                <FieldDescription className="text-xs">{option.description}</FieldDescription>
+                <FieldDescription>{option.description}</FieldDescription>
               </FieldContent>
               <RadioGroupItem value={option.value} id={`${id}-${option.value}`} />
             </Field>
           </FieldLabel>
         ))}
       </RadioGroup>
-      {hint && <FieldDescription className="text-xs">{hint}</FieldDescription>}
+      {hint && <FieldDescription size="sm">{hint}</FieldDescription>}
     </div>
   );
 }

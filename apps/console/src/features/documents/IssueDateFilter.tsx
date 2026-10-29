@@ -61,7 +61,15 @@ export function IssueDateFilter({
           }
         }}
       >
-        <PopoverTrigger render={<Button variant="outline" className="font-normal" />}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              // oxlint-disable-next-line shadcn/no-restyle -- a picker trigger reads as a field value, not an action
+              className="font-normal"
+            />
+          }
+        >
           <CalendarIcon data-icon="inline-start" className="text-muted-foreground" />
           {label}
           <ChevronDownIcon data-icon="inline-end" className="text-muted-foreground" />

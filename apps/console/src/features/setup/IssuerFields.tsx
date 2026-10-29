@@ -3,11 +3,12 @@ import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
 import { Checkbox } from "~/components/ui/checkbox";
 import {
+  Field,
+  FieldContent,
   FieldDescription,
   FieldError,
   FieldLabel,
-  FieldLegend,
-  FieldSet,
+  FieldTitle,
 } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
@@ -298,49 +299,46 @@ function TaxLevelsField({
 }) {
   const id = useId();
   return (
-    <FieldSet className="gap-2">
-      <FieldLegend variant="label" className="mb-0 leading-snug">
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-2 text-sm leading-snug font-medium">
         Responsabilidades tributarias
-      </FieldLegend>
+      </legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {taxLevelItems.map((item) => {
           const checkboxId = `${id}-${item.value}`;
           return (
-            <FieldLabel
-              key={item.value}
-              htmlFor={checkboxId}
-              className="flex w-full items-start gap-2.5 rounded-lg border p-2.5 font-normal has-data-checked:border-primary/30 has-data-checked:bg-primary/5"
-            >
-              <Checkbox
-                id={checkboxId}
-                className="mt-0.5"
-                aria-invalid={invalid}
-                checked={value.includes(item.value)}
-                onCheckedChange={(checked) =>
-                  onChange(
-                    nextTaxLevels(
-                      value,
-                      checked
-                        ? [...value, item.value]
-                        : value.filter((code) => code !== item.value),
-                    ),
-                  )
-                }
-              />
-              <span className="flex flex-col gap-0.5">
-                <span className="text-sm">{item.label}</span>
-                <span className="text-xs text-muted-foreground">Código {item.value}</span>
-              </span>
+            <FieldLabel key={item.value} htmlFor={checkboxId}>
+              <Field orientation="horizontal" size="sm">
+                <Checkbox
+                  id={checkboxId}
+                  aria-invalid={invalid}
+                  checked={value.includes(item.value)}
+                  onCheckedChange={(checked) =>
+                    onChange(
+                      nextTaxLevels(
+                        value,
+                        checked
+                          ? [...value, item.value]
+                          : value.filter((code) => code !== item.value),
+                      ),
+                    )
+                  }
+                />
+                <FieldContent>
+                  <FieldTitle>{item.label}</FieldTitle>
+                  <FieldDescription>Código {item.value}</FieldDescription>
+                </FieldContent>
+              </Field>
             </FieldLabel>
           );
         })}
       </div>
       {!invalid && (
-        <FieldDescription className="text-xs">
+        <FieldDescription size="sm">
           Marca las que aparecen en tu RUT. Si no tienes ninguna de estas, marca «No aplica».
         </FieldDescription>
       )}
-      <FieldError errors={[error]} className="text-xs" />
-    </FieldSet>
+      <FieldError errors={[error]} size="sm" />
+    </fieldset>
   );
 }

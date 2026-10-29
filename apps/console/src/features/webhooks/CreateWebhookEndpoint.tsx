@@ -251,7 +251,8 @@ export function CreateWebhookEndpoint() {
                           />
                           <FieldLabel
                             htmlFor={`webhook-event-${eventType}`}
-                            className="text-xs font-normal"
+                            size="xs"
+                            className="font-normal"
                           >
                             {eventTypeLabel(eventType)}
                           </FieldLabel>

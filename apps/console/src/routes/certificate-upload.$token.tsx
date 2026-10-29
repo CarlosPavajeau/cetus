@@ -106,7 +106,7 @@ function UploadForm({ token }: { token: string }) {
             }}
             onError={(message) => form.setError("pkcs12Base64", { message })}
           />
-          <FieldError errors={[file.fieldState.error]} className="text-3xs" />
+          <FieldError errors={[file.fieldState.error]} size="xs" />
         </div>
         <SecretField
           control={form.control}

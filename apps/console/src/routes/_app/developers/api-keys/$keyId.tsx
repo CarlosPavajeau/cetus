@@ -231,7 +231,7 @@ function RequestRow({ request }: { request: ApiKeyRequest }) {
 
 function ApiKeyNotFound() {
   return (
-    <Empty className="border">
+    <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <KeyRoundIcon />

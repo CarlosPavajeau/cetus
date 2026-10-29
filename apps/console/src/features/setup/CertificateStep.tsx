@@ -148,7 +148,7 @@ export function CertificateStep({
               }}
               onError={(message) => form.setError("pkcs12Base64", { message })}
             />
-            <FieldError errors={[file.fieldState.error]} className="-mt-2 text-xs" />
+            <FieldError errors={[file.fieldState.error]} size="sm" className="-mt-2" />
           </FieldSection>
           <SecretField
             control={form.control}

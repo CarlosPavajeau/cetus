@@ -36,6 +36,7 @@ export function ImpersonationBanner() {
       <Button
         size="sm"
         variant="outline"
+        // oxlint-disable-next-line shadcn/no-restyle -- takes the banner's own tone, the only button on it
         className="h-7 border-impersonation-foreground/30 bg-transparent hover:bg-impersonation-hover"
         onClick={() => stop.mutate({})}
         disabled={stop.isPending}

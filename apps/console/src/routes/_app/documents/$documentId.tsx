@@ -467,7 +467,7 @@ function InvoiceNotes({ document }: { document: DocumentDetail }) {
 
 function DocumentNotFound() {
   return (
-    <Empty className="border">
+    <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <FileTextIcon />

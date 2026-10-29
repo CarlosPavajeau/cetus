@@ -116,7 +116,7 @@ function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
     <div className="flex min-h-svh flex-col bg-background">
       <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b px-4 md:px-10">
         <Breadcrumb>
-          <BreadcrumbList className="gap-3 text-xs">
+          <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink render={<Link to="/issuers" />}>Emisores</BreadcrumbLink>
             </BreadcrumbItem>
@@ -156,11 +156,7 @@ function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
                 : "Prepara tu emisor para facturar electrónicamente ante la DIAN."}
             </p>
           </div>
-          {issuer && (
-            <Badge variant="outline" className="text-muted-foreground">
-              {environmentLabel[issuer.environment]}
-            </Badge>
-          )}
+          {issuer && <Badge variant="muted">{environmentLabel[issuer.environment]}</Badge>}
         </div>
         <Assistant issuer={issuer} />
       </main>

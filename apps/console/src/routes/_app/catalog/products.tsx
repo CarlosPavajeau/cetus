@@ -62,7 +62,7 @@ function Products() {
     <>
       <CatalogHeader action={<ProductDialog environment={environment} />} />
       {items.length === 0 && q === "" ? (
-        <Empty className="border">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <PackageIcon />

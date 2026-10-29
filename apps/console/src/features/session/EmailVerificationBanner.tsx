@@ -53,6 +53,7 @@ export function EmailVerificationBanner({ email }: { email: string }) {
       <Button
         size="sm"
         variant="outline"
+        // oxlint-disable-next-line shadcn/no-restyle -- takes the banner's own tone, the only button on it
         className="h-7 border-warning-surface-foreground/30 bg-transparent"
         onClick={() => send.mutate()}
         disabled={send.isPending || send.isSuccess}

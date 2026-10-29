@@ -58,6 +58,7 @@ function TwoFactor() {
           </p>
           <Button
             variant="link"
+            // oxlint-disable-next-line shadcn/no-restyle -- a text link under the prompt, without a button's box
             className="h-auto p-0"
             onClick={() => setUseBackupCode((current) => !current)}
           >
@@ -153,7 +154,7 @@ function CodeForm({ backup }: { backup: boolean }) {
                   <FieldError id="two-factor-code-error" errors={[fieldState.error]} />
                 ) : (
                   !backup && (
-                    <FieldDescription id="two-factor-code-description" className="text-sm">
+                    <FieldDescription id="two-factor-code-description">
                       El código cambia periódicamente. Usa el más reciente.
                     </FieldDescription>
                   )
@@ -166,7 +167,7 @@ function CodeForm({ backup }: { backup: boolean }) {
           name="trustDevice"
           control={form.control}
           render={({ field }) => (
-            <Field orientation="horizontal" className="gap-3">
+            <Field orientation="horizontal">
               <Checkbox
                 id="two-factor-trust"
                 checked={field.value}
@@ -174,11 +175,11 @@ function CodeForm({ backup }: { backup: boolean }) {
                 onBlur={field.onBlur}
                 aria-describedby="two-factor-trust-description"
               />
-              <FieldContent className="gap-1">
+              <FieldContent>
                 <FieldLabel htmlFor="two-factor-trust">
                   Confiar en este dispositivo durante 30{"\u00A0"}días
                 </FieldLabel>
-                <FieldDescription id="two-factor-trust-description" className="text-sm">
+                <FieldDescription id="two-factor-trust-description">
                   Solo si es un dispositivo personal. No lo actives en equipos públicos o
                   compartidos.
                 </FieldDescription>
@@ -191,7 +192,7 @@ function CodeForm({ backup }: { backup: boolean }) {
             <AlertDescription>{errors.root.message}</AlertDescription>
           </Alert>
         )}
-        <Button type="submit" size="lg" className="h-12 text-base" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="h-11" disabled={isSubmitting}>
           {isSubmitting && <Spinner data-icon="inline-start" />}
           {isSubmitting ? "Verificando…" : "Verificar y continuar"}
         </Button>
