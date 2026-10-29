@@ -13,11 +13,11 @@ import {
   BookOpenIcon,
   BookUserIcon,
   BuildingIcon,
-  CircleHelpIcon,
   FileTextIcon,
   HistoryIcon,
   KeyRoundIcon,
   LayoutDashboardIcon,
+  LifeBuoyIcon,
   LogOutIcon,
   GaugeIcon,
   MailIcon,
@@ -40,7 +40,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
   Sidebar,
@@ -134,9 +134,19 @@ const navigation = [
   items: readonly NavigationItem[];
 }[];
 
-const pages = navigation.flatMap((group) =>
-  group.items.map((item) => ({ ...item, section: group.breadcrumb ? group.label : undefined })),
-);
+/** In the sidebar's footer and behind the header's help button, outside the groups. */
+const helpPage = {
+  to: "/help",
+  label: "Ayuda",
+  icon: LifeBuoyIcon,
+} as const satisfies NavigationItem;
+
+const pages = [
+  ...navigation.flatMap((group) =>
+    group.items.map((item) => ({ ...item, section: group.breadcrumb ? group.label : undefined })),
+  ),
+  { ...helpPage, section: undefined },
+];
 
 function AppLayout() {
   const { session } = Route.useRouteContext();
@@ -230,6 +240,16 @@ function AppLayout() {
           </div>
           <SidebarMenu>
             <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to={helpPage.to} />}
+                isActive={Boolean(matchRoute({ to: helpPage.to, fuzzy: true }))}
+                tooltip={helpPage.label}
+              >
+                <helpPage.icon />
+                <span>{helpPage.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton onClick={signOut} tooltip="Cerrar sesión">
                 <LogOutIcon />
                 <span>Cerrar sesión</span>
@@ -293,11 +313,13 @@ function AppLayout() {
               Documentación
               <ArrowUpRightIcon data-icon="inline-end" />
             </a>
-            {/* Placeholder until the help center exists. */}
-            <Button variant="ghost" size="icon-sm" disabled>
-              <CircleHelpIcon />
-              <span className="sr-only">Ayuda</span>
-            </Button>
+            <Link
+              to={helpPage.to}
+              className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+            >
+              <LifeBuoyIcon />
+              <span className="sr-only">{helpPage.label}</span>
+            </Link>
           </div>
         </header>
         <div className="flex w-full flex-1 flex-col gap-7 p-4 md:px-10 md:pt-9.5 md:pb-6">
@@ -309,8 +331,15 @@ function AppLayout() {
               <AlertDescription>
                 Puedes consultar tus documentos, pero no hacer cambios, y tus llaves de API no
                 funcionan.
-                {account.statusReason && ` Motivo: ${account.statusReason}.`} Escríbenos a soporte
-                si necesitas ayuda.
+                {account.statusReason && ` Motivo: ${account.statusReason}.`} Si necesitas ayuda,{" "}
+                <Link
+                  to={helpPage.to}
+                  search={{ new: true }}
+                  className="underline underline-offset-4"
+                >
+                  abre un caso de soporte
+                </Link>
+                .
               </AlertDescription>
             </Alert>
           )}

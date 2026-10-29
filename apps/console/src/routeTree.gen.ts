@@ -38,6 +38,7 @@ import { Route as AppCatalogProductsRouteImport } from './routes/_app/catalog/pr
 import { Route as AppDocumentsIndexRouteImport } from './routes/_app/documents/index'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/_app/documents/$documentId'
 import { Route as AppDocumentsNewRouteImport } from './routes/_app/documents/new'
+import { Route as AppHelpIndexRouteImport } from './routes/_app/help/index'
 import { Route as AppIssuersIndexRouteImport } from './routes/_app/issuers/index'
 import { Route as AppIssuersIssuerIdRouteImport } from './routes/_app/issuers/$issuerId'
 import { Route as AppSettingsContactsRouteImport } from './routes/_app/settings/contacts'
@@ -201,6 +202,11 @@ const AppDocumentsNewRoute = AppDocumentsNewRouteImport.update({
   path: '/documents/new',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHelpIndexRoute = AppHelpIndexRouteImport.update({
+  id: '/help/',
+  path: '/help/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppIssuersIndexRoute = AppIssuersIndexRouteImport.update({
   id: '/issuers/',
   path: '/issuers/',
@@ -334,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/activity/': typeof AppActivityIndexRoute
   '/catalog/': typeof AppCatalogIndexRoute
   '/documents/': typeof AppDocumentsIndexRoute
+  '/help/': typeof AppHelpIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
   '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
@@ -381,6 +388,7 @@ export interface FileRoutesByTo {
   '/activity': typeof AppActivityIndexRoute
   '/catalog': typeof AppCatalogIndexRoute
   '/documents': typeof AppDocumentsIndexRoute
+  '/help': typeof AppHelpIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
   '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
@@ -431,6 +439,7 @@ export interface FileRoutesById {
   '/_app/activity/': typeof AppActivityIndexRoute
   '/_app/catalog/': typeof AppCatalogIndexRoute
   '/_app/documents/': typeof AppDocumentsIndexRoute
+  '/_app/help/': typeof AppHelpIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_admin/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
   '/_admin/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
@@ -480,6 +489,7 @@ export interface FileRouteTypes {
     | '/activity/'
     | '/catalog/'
     | '/documents/'
+    | '/help/'
     | '/issuers/'
     | '/admin/organizations/$accountId'
     | '/admin/users/$userId'
@@ -527,6 +537,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/catalog'
     | '/documents'
+    | '/help'
     | '/issuers'
     | '/admin/organizations/$accountId'
     | '/admin/users/$userId'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/_app/activity/'
     | '/_app/catalog/'
     | '/_app/documents/'
+    | '/_app/help/'
     | '/_app/issuers/'
     | '/_admin/admin/organizations/$accountId'
     | '/_admin/admin/users/$userId'
@@ -817,6 +829,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDocumentsNewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/help/': {
+      id: '/_app/help/'
+      path: '/help'
+      fullPath: '/help/'
+      preLoaderRoute: typeof AppHelpIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/issuers/': {
       id: '/_app/issuers/'
       path: '/issuers'
@@ -984,6 +1003,7 @@ interface AppRouteChildren {
   AppActivityIndexRoute: typeof AppActivityIndexRoute
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
+  AppHelpIndexRoute: typeof AppHelpIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
   AppDevelopersWebhooksEndpointIdRoute: typeof AppDevelopersWebhooksEndpointIdRoute
@@ -1008,6 +1028,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppActivityIndexRoute: AppActivityIndexRoute,
   AppCatalogIndexRoute: AppCatalogIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
+  AppHelpIndexRoute: AppHelpIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
   AppDevelopersWebhooksEndpointIdRoute: AppDevelopersWebhooksEndpointIdRoute,
