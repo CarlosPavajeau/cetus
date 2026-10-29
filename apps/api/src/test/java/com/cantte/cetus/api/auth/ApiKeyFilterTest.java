@@ -2,20 +2,26 @@ package com.cantte.cetus.api.auth;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.startsWith;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.ApiKeyEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ValidatableResponse;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class ApiKeyFilterTest {
+
+    @Inject
+    AccessCache access;
 
     @Test
     void unknownKeysAreUnauthorized() {
@@ -51,6 +57,25 @@ class ApiKeyFilterTest {
                 .statusCode(204);
 
         call(secret).statusCode(401).body("code", equalTo("unauthorized"));
+    }
+
+    @Test
+    void usingAKeyRecordsWhenItWasLastUsed() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Used SAS");
+        var created = user.request()
+                .body(Map.of("name", "ERP", "environment", "TEST"))
+                .post("/console/api-keys")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+        UUID keyId = UUID.fromString(created.getString("key.id"));
+
+        call(created.getString("secret")).statusCode(404);
+
+        assertThat(QuarkusTransaction.requiringNew().call(() -> ApiKeyEntity.<ApiKeyEntity>findById(keyId).lastUsedAt))
+                .isNotNull();
     }
 
     @Test
@@ -93,9 +118,12 @@ class ApiKeyFilterTest {
                 .path("secret");
     }
 
-    private static void setStatus(ConsoleUser user, AccountEntity.Status status) {
-        QuarkusTransaction.requiringNew()
-                .run(() ->
-                        AccountEntity.findByOrganization(user.organizationId()).orElseThrow().status = status);
+    private void setStatus(ConsoleUser user, AccountEntity.Status status) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            AccountEntity account =
+                    AccountEntity.findByOrganization(user.organizationId()).orElseThrow();
+            account.status = status;
+            access.changed(account);
+        });
     }
 }

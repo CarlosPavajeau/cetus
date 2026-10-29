@@ -2,6 +2,8 @@ package com.cantte.cetus.api.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.cantte.cetus.cache.LocalRateLimiter;
+import com.cantte.cetus.cache.RateLimiter;
 import com.cantte.cetus.domain.model.Environment;
 import java.time.Duration;
 import java.util.UUID;
@@ -11,11 +13,11 @@ import org.junit.jupiter.api.Test;
 class ApiKeyRateLimiterTest {
 
     private static final UUID ACCOUNT = UUID.randomUUID();
-    private static final ApiKeyRateLimiter.Limits INICIAL = new ApiKeyRateLimiter.Limits(5, 20);
+    private static final RateLimiter.Limits INICIAL = new RateLimiter.Limits(5, 20);
 
     private final AtomicLong now = new AtomicLong();
-    private final ApiKeyRateLimiter limiter =
-            new ApiKeyRateLimiter(new ApiKeyRateLimiter.Limits(2, 3), new ApiKeyRateLimiter.Limits(1, 1), now::get);
+    private final ApiKeyRateLimiter limiter = new ApiKeyRateLimiter(
+            new RateLimiter.Limits(2, 3), new RateLimiter.Limits(1, 1), new LocalRateLimiter(now::get));
 
     @Test
     void allowsTheBurstThenAsksToWaitForTheNextToken() {
@@ -92,7 +94,7 @@ class ApiKeyRateLimiterTest {
         }
         assertThat(limiter.acquire(key, account, Environment.LIVE, INICIAL)).isPresent();
 
-        assertThat(limiter.acquire(key, account, Environment.LIVE, new ApiKeyRateLimiter.Limits(10, 40)))
+        assertThat(limiter.acquire(key, account, Environment.LIVE, new RateLimiter.Limits(10, 40)))
                 .isEmpty();
     }
 }

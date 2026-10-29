@@ -1,6 +1,8 @@
 package com.cantte.cetus.api.documents;
 
 import com.cantte.cetus.api.error.ProblemDetail;
+import com.cantte.cetus.cache.Cache;
+import com.cantte.cetus.cache.Caches;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.calc.CalculatedLine;
@@ -30,6 +32,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -56,6 +59,15 @@ public class DocumentDrafts {
     @ConfigProperty(name = "cetus.sandbox.daily-documents")
     int sandboxDailyDocuments;
 
+    private final Cache<String, Boolean> credentialed;
+
+    @Inject
+    public DocumentDrafts(
+            Caches caches,
+            @ConfigProperty(name = "cetus.cache.issuers.max-entries", defaultValue = "1024") int capacity) {
+        credentialed = caches.shared("issuer-credentials", capacity, Duration.ofSeconds(30), Boolean.class);
+    }
+
     /** Whether the issuer's status lets it issue in the environment: ENABLED, or TESTING with a test key. */
     public static boolean canIssue(IssuerEntity issuer, Environment environment) {
         return issuer.status == IssuerEntity.Status.ENABLED
@@ -70,14 +82,32 @@ public class DocumentDrafts {
             // Signed with Cetus' sandbox credentials, never with the issuer's.
             return;
         }
-        SoftwareCredentialEntity.findActive(issuer.id)
-                .orElseThrow(() ->
-                        new DomainException("issuer_missing_software", "The issuer has no DIAN software credentials"));
+        // Credentials are only ever replaced, never removed, so an issuer that had them keeps having them.
+        Optional<Boolean> ready = credentialed.find(
+                issuer.id.toString(),
+                () -> missingCredential(issuer.id)
+                        .map(missing -> Optional.<Boolean>empty())
+                        .orElse(Optional.of(Boolean.TRUE)));
+        if (ready.isEmpty()) {
+            Optional<DomainException> missing = missingCredential(issuer.id);
+            if (missing.isPresent()) {
+                throw missing.get();
+            }
+        }
+    }
+
+    private static Optional<DomainException> missingCredential(UUID issuerId) {
+        if (SoftwareCredentialEntity.findActive(issuerId).isEmpty()) {
+            return Optional.of(
+                    new DomainException("issuer_missing_software", "The issuer has no DIAN software credentials"));
+        }
         // An accepted test set takes no more documents, but habilitación still validates them with
         // SendBillSync: the worker switches to it on its own once the set is accepted.
-        if (SigningCertificateEntity.findActive(issuer.id).isEmpty()) {
-            throw new DomainException("issuer_missing_certificate", "The issuer has no signing certificate");
+        if (SigningCertificateEntity.findActive(issuerId).isEmpty()) {
+            return Optional.of(
+                    new DomainException("issuer_missing_certificate", "The issuer has no signing certificate"));
         }
+        return Optional.empty();
     }
 
     /**

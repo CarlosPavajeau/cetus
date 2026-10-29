@@ -58,7 +58,7 @@ public class AuditLogResource {
             @QueryParam("action") String action,
             @QueryParam("before") Long before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
-        return AuditPage.from(auditLog.list(context.account().id, parseAction(action), before, limit));
+        return AuditPage.from(auditLog.list(context.accountId(), parseAction(action), before, limit));
     }
 
     @GET
@@ -66,7 +66,7 @@ public class AuditLogResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public AuditEntry get(@PathParam("id") long id) {
-        return auditLog.find(context.account().id, id)
+        return auditLog.find(context.accountId(), id)
                 .map(AuditEntry::from)
                 .orElseThrow(() -> new NotFoundException("Audit entry not found"));
     }

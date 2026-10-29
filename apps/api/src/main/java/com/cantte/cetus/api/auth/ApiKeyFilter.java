@@ -3,10 +3,8 @@ package com.cantte.cetus.api.auth;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
-import com.cantte.cetus.persistence.entity.ApiKeyEntity;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.opentelemetry.api.trace.Span;
-import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
@@ -16,7 +14,6 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import java.time.Duration;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 
 /**
@@ -27,11 +24,11 @@ import java.util.Optional;
 @Priority(Priorities.AUTHENTICATION)
 public class ApiKeyFilter implements ContainerRequestFilter {
 
-    /** lastUsedAt is shown to the minute: refreshing it more often would write the key row on every request. */
-    private static final Duration LAST_USED_PRECISION = Duration.ofMinutes(1);
-
     @Inject
     ApiPrincipal principal;
+
+    @Inject
+    AccessCache access;
 
     @Inject
     ApiKeyRateLimiter rateLimiter;
@@ -50,50 +47,28 @@ public class ApiKeyFilter implements ContainerRequestFilter {
             abort(request, "Missing or malformed API key");
             return;
         }
-        String hash = ApiKeys.hash(header.substring("Bearer ".length()).trim());
-        Resolved resolved = QuarkusTransaction.requiringNew().call(() -> {
-            ApiKeyEntity found = ApiKeyEntity.findActiveByHash(hash).orElse(null);
-            if (found == null) {
-                return null;
-            }
-            OffsetDateTime now = OffsetDateTime.now();
-            if (found.lastUsedAt == null || found.lastUsedAt.isBefore(now.minus(LAST_USED_PRECISION))) {
-                found.lastUsedAt = now;
-            }
-            Object[] account = (Object[]) AccountEntity.getEntityManager()
-                    .createQuery("""
-                            SELECT a.status,
-                                   coalesce(a.requestsPerSecond, p.requestsPerSecond),
-                                   coalesce(a.requestsBurst, p.requestsBurst)
-                            FROM AccountEntity a JOIN PlanEntity p ON p.code = a.plan
-                            WHERE a.id = :id
-                            """)
-                    .setParameter("id", found.accountId)
-                    .getSingleResult();
-            // Each table sets the pair together or leaves both null, so the two values come from the same row.
-            ApiKeyRateLimiter.Limits limits = account[1] == null
-                    ? null
-                    : new ApiKeyRateLimiter.Limits((Integer) account[1], (Integer) account[2]);
-            return new Resolved(found, (AccountEntity.Status) account[0], limits);
-        });
-        if (resolved == null) {
+        Optional<AccessCache.ApiKeyAccess> found =
+                access.apiKey(ApiKeys.hash(header.substring("Bearer ".length()).trim()));
+        if (found.isEmpty()) {
             authenticated(null, "unauthorized");
             abort(request, "Invalid or revoked API key");
             return;
         }
+        AccessCache.ApiKeyAccess key = found.get();
+        access.used(key);
+        AccessCache.AccountAccess account = access.account(key.accountId());
         Span.current()
-                .setAttribute("cetus.account.id", resolved.key().accountId.toString())
-                .setAttribute("cetus.api_key.id", resolved.key().id.toString())
-                .setAttribute("environment", resolved.key().environment.name());
-        if (resolved.accountStatus() != AccountEntity.Status.ACTIVE) {
-            authenticated(resolved.key().environment, "suspended");
+                .setAttribute("cetus.account.id", key.accountId().toString())
+                .setAttribute("cetus.api_key.id", key.id().toString())
+                .setAttribute("environment", key.environment().name());
+        if (account.status() != AccountEntity.Status.ACTIVE) {
+            authenticated(key.environment(), "suspended");
             abort(request, Response.Status.FORBIDDEN, "account_suspended", "This account is suspended");
             return;
         }
-        ApiKeyEntity key = resolved.key();
-        Optional<Duration> wait = rateLimiter.acquire(key.id, key.accountId, key.environment, resolved.accountLimits());
+        Optional<Duration> wait = rateLimiter.acquire(key.id(), key.accountId(), key.environment(), account.limits());
         if (wait.isPresent()) {
-            authenticated(key.environment, "rate_limited");
+            authenticated(key.environment(), "rate_limited");
             long seconds = Math.max(1, (long) Math.ceil(wait.get().toMillis() / 1000.0));
             request.abortWith(ProblemDetail.builder(
                             429, "rate_limited", "Too many requests for this API key; retry in " + seconds + " s")
@@ -101,8 +76,8 @@ public class ApiKeyFilter implements ContainerRequestFilter {
                     .build());
             return;
         }
-        authenticated(key.environment, "ok");
-        principal.set(key.accountId, key.environment, key.id);
+        authenticated(key.environment(), "ok");
+        principal.set(key.accountId(), key.environment(), key.id());
     }
 
     /** {@code environment} is "none" when no key was found. */
@@ -123,7 +98,4 @@ public class ApiKeyFilter implements ContainerRequestFilter {
     private static void abort(ContainerRequestContext request, Response.Status status, String code, String message) {
         request.abortWith(ProblemDetail.response(status.getStatusCode(), code, message));
     }
-
-    private record Resolved(
-            ApiKeyEntity key, AccountEntity.Status accountStatus, ApiKeyRateLimiter.Limits accountLimits) {}
 }

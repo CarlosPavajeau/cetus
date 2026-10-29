@@ -25,6 +25,7 @@ include(
     "modules:email",
     "modules:webhooks",
     "modules:notifications",
+    "modules:cache",
     "apps:api",
     "apps:worker",
     "apps:dian-mock",

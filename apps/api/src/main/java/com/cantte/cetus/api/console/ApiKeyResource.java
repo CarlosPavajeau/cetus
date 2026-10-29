@@ -1,6 +1,7 @@
 package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
+import com.cantte.cetus.api.auth.AccessCache;
 import com.cantte.cetus.api.auth.ApiKeys;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.domain.Ids;
@@ -54,6 +55,9 @@ public class ApiKeyResource {
     static final int RECENT_REQUESTS = 10;
 
     @Inject
+    AccessCache access;
+
+    @Inject
     ConsoleContext context;
 
     @Inject
@@ -69,7 +73,7 @@ public class ApiKeyResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public List<ApiKeyView> list() {
-        return ApiKeyEntity.listByAccount(context.account().id).stream()
+        return ApiKeyEntity.listByAccount(context.accountId()).stream()
                 .map(ApiKeyView::from)
                 .toList();
     }
@@ -80,7 +84,7 @@ public class ApiKeyResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public ApiKeyDetail get(@PathParam("id") UUID id) {
-        UUID accountId = context.account().id;
+        UUID accountId = context.accountId();
         ApiKeyEntity key = find(accountId, id);
         return new ApiKeyDetail(
                 ApiKeyView.from(key),
@@ -98,7 +102,7 @@ public class ApiKeyResource {
         String secret = ApiKeys.generate(request.environment());
         ApiKeyEntity key = new ApiKeyEntity();
         key.id = Ids.newId();
-        key.accountId = context.account().id;
+        key.accountId = context.accountId();
         key.environment = request.environment();
         key.name = request.name();
         key.keyPrefix = ApiKeys.prefix(secret);
@@ -115,9 +119,10 @@ public class ApiKeyResource {
     @Transactional
     @APIResponse(responseCode = "204", description = "No Content")
     public void revoke(@PathParam("id") UUID id) {
-        ApiKeyEntity key = find(context.account().id, id);
+        ApiKeyEntity key = find(context.accountId(), id);
         if (key.revokedAt == null) {
             key.revokedAt = OffsetDateTime.now();
+            access.revoked(key);
             audit(AuditAction.API_KEY_REVOKED, key);
         }
     }

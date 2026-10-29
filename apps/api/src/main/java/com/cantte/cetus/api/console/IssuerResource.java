@@ -54,7 +54,7 @@ public class IssuerResource {
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public List<IssuerViews.IssuerView> list() {
-        return IssuerEntity.listByAccount(context.account().id).stream()
+        return IssuerEntity.listByAccount(context.accountId()).stream()
                 .map(IssuerViews.IssuerView::from)
                 .toList();
     }
@@ -64,7 +64,7 @@ public class IssuerResource {
     @APIResponse(responseCode = "200", description = "OK")
     public IssuerViews.IssuerView create(@Valid @NotNull IssuerViews.CreateIssuerRequest request) {
         return IssuerViews.IssuerView.from(
-                onboarding.create(context.account().id, request, context.actor(), origin.resolve()));
+                onboarding.create(context.accountId(), request, context.actor(), origin.resolve()));
     }
 
     @GET
@@ -157,7 +157,7 @@ public class IssuerResource {
     }
 
     private IssuerEntity issuer(UUID id) {
-        return IssuerEntity.findForAccount(context.account().id, id)
+        return IssuerEntity.findForAccount(context.accountId(), id)
                 .orElseThrow(() -> new NotFoundException("Issuer not found"));
     }
 }

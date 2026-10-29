@@ -1,8 +1,8 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.auth.AccessCache;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.persistence.entity.AccountEntity;
-import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.HttpMethod;
@@ -33,6 +33,9 @@ public class SuspendedAccountFilter implements ContainerRequestFilter {
     @Inject
     JsonWebToken jwt;
 
+    @Inject
+    AccessCache access;
+
     @Override
     public void filter(ContainerRequestContext request) {
         String path = request.getUriInfo().getPath();
@@ -43,10 +46,9 @@ public class SuspendedAccountFilter implements ContainerRequestFilter {
         if (organizationId == null || organizationId.isBlank()) {
             return;
         }
-        AccountEntity.Status status = QuarkusTransaction.requiringNew()
-                .call(() -> AccountEntity.findByOrganization(organizationId)
-                        .map(account -> account.status)
-                        .orElse(null));
+        AccountEntity.Status status = access.organization(organizationId)
+                .map(AccessCache.OrganizationAccount::status)
+                .orElse(null);
         if (status != null && status != AccountEntity.Status.ACTIVE) {
             request.abortWith(ProblemDetail.response(403, "account_suspended", "This account is suspended"));
         }

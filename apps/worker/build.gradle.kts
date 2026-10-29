@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":modules:dian-client"))
     implementation(project(":modules:aws"))
     implementation(project(":modules:email"))
+    implementation(project(":modules:cache"))
 
     implementation(libs.quarkus.arc)
     implementation(libs.quarkus.scheduler)

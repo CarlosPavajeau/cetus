@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.auth.AccessCache;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -10,6 +11,7 @@ import jakarta.json.JsonString;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
@@ -22,6 +24,9 @@ public class ConsoleContext {
 
     @Inject
     JsonWebToken jwt;
+
+    @Inject
+    AccessCache access;
 
     public String userId() {
         return jwt.getSubject();
@@ -77,9 +82,17 @@ public class ConsoleContext {
         return org;
     }
 
+    public UUID accountId() {
+        return access.organization(organizationId())
+                .map(AccessCache.OrganizationAccount::id)
+                .orElseThrow(ConsoleContext::accountNotFound);
+    }
+
     public AccountEntity account() {
-        return AccountEntity.findByOrganization(organizationId())
-                .orElseThrow(
-                        () -> new DomainException("account_not_found", "The organization has no Cetus account yet"));
+        return AccountEntity.findByOrganization(organizationId()).orElseThrow(ConsoleContext::accountNotFound);
+    }
+
+    private static DomainException accountNotFound() {
+        return new DomainException("account_not_found", "The organization has no Cetus account yet");
     }
 }

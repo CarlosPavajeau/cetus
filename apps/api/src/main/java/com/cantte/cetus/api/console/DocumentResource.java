@@ -132,7 +132,7 @@ public class DocumentResource {
             @QueryParam("q") @Size(max = 200) @Pattern(regexp = "[^\\p{Cntrl}]*") String q,
             @QueryParam("before") UUID before,
             @QueryParam("limit") @DefaultValue("50") int limit) {
-        UUID accountId = context.account().id;
+        UUID accountId = context.accountId();
         int size = Math.clamp(limit, 1, MAX_PAGE_SIZE);
         DocumentEntity.Search search = new DocumentEntity.Search(environment, type, status, issuerId, from, to, q);
         // One more than asked tells whether there is a next page.
@@ -259,7 +259,7 @@ public class DocumentResource {
         if (request.issuerId() == null) {
             throw new DomainException("issuer_required", "Choose the issuer of the invoice");
         }
-        UUID accountId = context.account().id;
+        UUID accountId = context.accountId();
         IssuerEntity issuer = IssuerEntity.findForAccount(accountId, request.issuerId())
                 .orElseThrow(() -> new NotFoundException("Issuer not found"));
         Environment environment = issuer.environment;
@@ -438,7 +438,7 @@ public class DocumentResource {
             @Schema(description = "The credit note") UUID id, String number) {}
 
     private DocumentEntity find(UUID id) {
-        return DocumentEntity.<DocumentEntity>find("id = ?1 and accountId = ?2", id, context.account().id)
+        return DocumentEntity.<DocumentEntity>find("id = ?1 and accountId = ?2", id, context.accountId())
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Document not found"));
     }

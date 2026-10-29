@@ -1,8 +1,9 @@
 package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.aws.SecretCipher;
+import com.cantte.cetus.cache.Cache;
+import com.cantte.cetus.cache.Caches;
 import com.cantte.cetus.webhooks.WebhookTargets;
-import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.net.InetAddress;
@@ -30,7 +31,7 @@ public class WebhookClients {
 
     private final OkHttpClient http;
     private final boolean allowPrivateTargets;
-    private final BoundedCache<SecretIdentity, String> secrets;
+    private final Cache<SecretIdentity, String> secrets;
 
     @Inject
     SecretCipher cipher;
@@ -40,8 +41,9 @@ public class WebhookClients {
             @ConfigProperty(name = "cetus.webhooks.connect-timeout") Duration connectTimeout,
             @ConfigProperty(name = "cetus.webhooks.request-timeout") Duration requestTimeout,
             @ConfigProperty(name = "cetus.webhooks.allow-private-targets") boolean allowPrivateTargets,
+            Caches caches,
             @ConfigProperty(name = "cetus.cache.webhooks.max-entries", defaultValue = "512") int capacity) {
-        this.secrets = new BoundedCache<>(capacity);
+        this.secrets = caches.local("webhook-secrets", capacity, Duration.ofMinutes(10));
         this.allowPrivateTargets = allowPrivateTargets;
         this.http = new OkHttpClient.Builder()
                 .dns(allowPrivateTargets ? Dns.SYSTEM : new PublicOnlyDns(Dns.SYSTEM))
@@ -64,11 +66,6 @@ public class WebhookClients {
 
     public String secret(UUID endpointId, byte[] sealed) {
         return secrets.get(new SecretIdentity(endpointId, SealedFingerprint.of(sealed)), () -> cipher.openText(sealed));
-    }
-
-    @Scheduled(every = "1m")
-    void cleanUp() {
-        secrets.cleanUp();
     }
 
     /** Thrown by the lookup when a webhook host resolves to an internal address. */

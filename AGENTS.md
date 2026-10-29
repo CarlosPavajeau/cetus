@@ -179,7 +179,7 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
   (commit SHA), `deployment.environment.name`.
 - Own metrics start with `cetus.`. Their attributes come from a closed list of low-cardinality values:
   `document.type`, `environment` (`SANDBOX`, `TEST`, `LIVE`), `outcome`, `dian.operation`, `job.type`,
-  `error.kind`. Adding another one needs review.
+  `error.kind`, `cache.name`. Adding another one needs review.
 - IDs go in spans and logs, never in metrics: `cetus.document.id`, `cetus.account.id`, `cetus.issuer.id`,
   `cetus.job.id`, `cetus.reference.id` (what a job works on), `dian.track_id`. No `account_id` and no issuer
   NIT in metrics. `JobRunner` puts the job's IDs in the MDC, so every log line of a job carries them.

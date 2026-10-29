@@ -5,11 +5,14 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.cache.LocalRateLimiter;
+import com.cantte.cetus.cache.RateLimiter;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ValidatableResponse;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,13 +22,16 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class AccountRateLimitTest {
 
+    @Inject
+    AccessCache access;
+
     /** A clock that never moves, so no token comes back however slow the requests are. */
     @BeforeEach
     void freezeTheClock() {
         long now = System.nanoTime();
         QuarkusMock.installMockForType(
                 new ApiKeyRateLimiter(
-                        new ApiKeyRateLimiter.Limits(10, 20), new ApiKeyRateLimiter.Limits(5, 10), () -> now),
+                        new RateLimiter.Limits(10, 20), new RateLimiter.Limits(5, 10), new LocalRateLimiter(() -> now)),
                 ApiKeyRateLimiter.class);
     }
 
@@ -38,6 +44,7 @@ class AccountRateLimitTest {
             account.plan = "ESCALA";
             account.requestsPerSecond = 1;
             account.requestsBurst = 2;
+            access.changed(account);
         });
         String first = key(user, "LIVE");
         String second = key(user, "LIVE");
