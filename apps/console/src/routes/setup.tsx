@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { ArrowUpRightIcon, BookOpenIcon, CircleHelpIcon } from "lucide-react";
+import { ArrowUpRightIcon, BookOpenIcon, LifeBuoyIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "~/components/ui/badge";
@@ -29,6 +29,7 @@ import {
   steps,
 } from "~/features/setup/steps";
 import { Welcome } from "~/features/setup/Welcome";
+import { NewTicketDialog } from "~/features/support/NewTicketDialog";
 import type { IssuerDetail } from "~/lib/api/types";
 import { docsUrl } from "~/lib/docs";
 import { uuidPattern } from "~/lib/utils";
@@ -137,11 +138,15 @@ function SetupPage({ issuer }: { issuer: IssuerDetail | null }) {
             Documentación
             <ArrowUpRightIcon data-icon="inline-end" />
           </a>
-          {/* Placeholder until the help center exists, as in the console header. */}
-          <Button variant="ghost" size="icon-sm" disabled>
-            <CircleHelpIcon />
-            <span className="sr-only">Ayuda</span>
-          </Button>
+          <NewTicketDialog
+            issuerId={issuer?.id}
+            trigger={
+              <Button variant="ghost" size="sm">
+                <LifeBuoyIcon data-icon="inline-start" />
+                Pedir ayuda
+              </Button>
+            }
+          />
         </div>
       </header>
       <main className="flex flex-1 flex-col gap-7 px-4 pt-9 pb-6 md:px-10">

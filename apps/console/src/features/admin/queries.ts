@@ -1,10 +1,11 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 
-import type { AuditAction } from "~/lib/api/types";
+import type { AuditAction, SupportTicketStatus } from "~/lib/api/types";
 
 import { getAdminIssuer } from "./issuers";
 import type { AccountStatus } from "./schema";
 import { getAdminAccount, listAdminAccounts, listAdminAuditLog, listAdminPlans } from "./server";
+import { getAdminSupportTicket, listAdminFeedback, listAdminSupportTickets } from "./support";
 import { getAdminUser, listAdminUsers } from "./users";
 
 /** Prefix of everything the administration caches, for invalidating after a change. */
@@ -69,3 +70,27 @@ export function adminIssuerQuery(accountId: string, issuerId: string) {
     queryFn: () => getAdminIssuer({ data: { accountId, issuerId } }),
   });
 }
+
+export function adminSupportTicketsQuery(status: SupportTicketStatus | undefined) {
+  return infiniteQueryOptions({
+    queryKey: [...adminKey, "support-tickets", { status }],
+    queryFn: ({ pageParam }) => listAdminSupportTickets({ data: { status, before: pageParam } }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+}
+
+/** One ticket; null when it does not exist. */
+export function adminSupportTicketQuery(id: string) {
+  return queryOptions({
+    queryKey: [...adminKey, "support-tickets", "detail", id],
+    queryFn: () => getAdminSupportTicket({ data: { id } }),
+  });
+}
+
+export const adminFeedbackQuery = infiniteQueryOptions({
+  queryKey: [...adminKey, "feedback"],
+  queryFn: ({ pageParam }) => listAdminFeedback({ data: { before: pageParam } }),
+  initialPageParam: undefined as string | undefined,
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+});

@@ -1,5 +1,15 @@
+import { type BrowserContext } from "@playwright/test";
+
 import { createIssuer, uniqueNit } from "../support/issuers";
+import { type TestOrganization } from "../support/organization";
+import { createPlatformStaff } from "../support/platform-staff";
+import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
+
+async function signIn(context: BrowserContext, who: TestOrganization) {
+  await context.clearCookies();
+  await context.addCookies(consoleCookies(who.cookies));
+}
 
 const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
 
@@ -86,4 +96,45 @@ test("a new ticket after one about an issuer starts without that issuer", async 
 
   await page.getByRole("button", { name: "Nuevo caso" }).click();
   await expect(issuer).toContainText("Ninguno en particular");
+});
+
+test("help from the assistant carries the issuer, and the team resolves the ticket", async ({
+  page,
+  context,
+  organization,
+}) => {
+  const legalName = `Ayuda ${crypto.randomUUID().slice(0, 8)} SAS`;
+  const issuerId = await createIssuer(organization, uniqueNit(), legalName);
+
+  await open(page, `/setup?issuerId=${issuerId}`);
+  await page.getByRole("button", { name: "Pedir ayuda" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("combobox", { name: "Emisor (opcional)" })).toContainText(
+    legalName,
+  );
+  await dialog.getByLabel("Mensaje").fill("No encuentro el Software ID en el portal de la DIAN.");
+  await dialog.getByText("Busco orientación").click();
+  await dialog.getByRole("button", { name: "Enviar" }).click();
+  const number = (await dialog.getByText(/Recibimos tu caso #\d+/).textContent())?.match(
+    /\d+/,
+  )?.[0];
+  expect(number).toBeTruthy();
+
+  const support = await createPlatformStaff("support");
+  await signIn(context, support);
+  await open(page, "/admin/support");
+  await page.getByRole("link", { name: `#${number}` }).click();
+  await expect(page.getByRole("heading", { name: `Caso #${number}` })).toBeVisible();
+  await expect(page.getByText(`Emisor: ${legalName}`)).toBeVisible();
+  await expect(page.getByText("Sin configurar")).toBeVisible();
+
+  await page.getByRole("combobox", { name: "Estado del caso" }).click();
+  await page.getByRole("option", { name: "Resuelto" }).click();
+  await expect(page.getByRole("combobox", { name: "Estado del caso" })).toContainText("Resuelto");
+
+  await signIn(context, organization);
+  await open(page, "/help");
+  await expect(
+    page.getByRole("region", { name: "Casos de la organización" }).getByText("Resuelto"),
+  ).toBeVisible();
 });

@@ -48,6 +48,8 @@ import { Route as AppSettingsUsageRouteImport } from './routes/_app/settings/usa
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
 import { Route as AdminAdminOrganizationsAccountIdRouteImport } from './routes/_admin/admin/organizations/$accountId'
+import { Route as AdminAdminSupportIndexRouteImport } from './routes/_admin/admin/support/index'
+import { Route as AdminAdminSupportTicketIdRouteImport } from './routes/_admin/admin/support/$ticketId'
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
 import { Route as AdminAdminUsersUserIdRouteImport } from './routes/_admin/admin/users/$userId'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
@@ -254,6 +256,17 @@ const AdminAdminOrganizationsAccountIdRoute =
     path: '/admin/organizations/$accountId',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAdminSupportIndexRoute = AdminAdminSupportIndexRouteImport.update({
+  id: '/admin/support/',
+  path: '/admin/support/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminSupportTicketIdRoute =
+  AdminAdminSupportTicketIdRouteImport.update({
+    id: '/admin/support/$ticketId',
+    path: '/admin/support/$ticketId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminUsersIndexRoute = AdminAdminUsersIndexRouteImport.update({
   id: '/admin/users/',
   path: '/admin/users/',
@@ -343,11 +356,13 @@ export interface FileRoutesByFullPath {
   '/help/': typeof AppHelpIndexRoute
   '/issuers/': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/admin/support/$ticketId': typeof AdminAdminSupportTicketIdRoute
   '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/support/': typeof AdminAdminSupportIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
@@ -391,11 +406,13 @@ export interface FileRoutesByTo {
   '/help': typeof AppHelpIndexRoute
   '/issuers': typeof AppIssuersIndexRoute
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/admin/support/$ticketId': typeof AdminAdminSupportTicketIdRoute
   '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/support': typeof AdminAdminSupportIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
@@ -442,11 +459,13 @@ export interface FileRoutesById {
   '/_app/help/': typeof AppHelpIndexRoute
   '/_app/issuers/': typeof AppIssuersIndexRoute
   '/_admin/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
+  '/_admin/admin/support/$ticketId': typeof AdminAdminSupportTicketIdRoute
   '/_admin/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/_app/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/_admin/admin/support/': typeof AdminAdminSupportIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
@@ -492,11 +511,13 @@ export interface FileRouteTypes {
     | '/help/'
     | '/issuers/'
     | '/admin/organizations/$accountId'
+    | '/admin/support/$ticketId'
     | '/admin/users/$userId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations/'
+    | '/admin/support/'
     | '/admin/users/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
@@ -540,11 +561,13 @@ export interface FileRouteTypes {
     | '/help'
     | '/issuers'
     | '/admin/organizations/$accountId'
+    | '/admin/support/$ticketId'
     | '/admin/users/$userId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations'
+    | '/admin/support'
     | '/admin/users'
     | '/developers/api-keys'
     | '/developers/webhooks'
@@ -590,11 +613,13 @@ export interface FileRouteTypes {
     | '/_app/help/'
     | '/_app/issuers/'
     | '/_admin/admin/organizations/$accountId'
+    | '/_admin/admin/support/$ticketId'
     | '/_admin/admin/users/$userId'
     | '/_app/developers/api-keys/$keyId'
     | '/_app/developers/webhooks/$endpointId'
     | '/_app/issuers/$issuerId_/edit'
     | '/_admin/admin/organizations/'
+    | '/_admin/admin/support/'
     | '/_admin/admin/users/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
@@ -899,6 +924,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminOrganizationsAccountIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/support/': {
+      id: '/_admin/admin/support/'
+      path: '/admin/support'
+      fullPath: '/admin/support/'
+      preLoaderRoute: typeof AdminAdminSupportIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/support/$ticketId': {
+      id: '/_admin/admin/support/$ticketId'
+      path: '/admin/support/$ticketId'
+      fullPath: '/admin/support/$ticketId'
+      preLoaderRoute: typeof AdminAdminSupportTicketIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/users/': {
       id: '/_admin/admin/users/'
       path: '/admin/users'
@@ -969,8 +1008,10 @@ interface AdminRouteChildren {
   AdminAdminAuditLogRoute: typeof AdminAdminAuditLogRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminOrganizationsAccountIdRoute: typeof AdminAdminOrganizationsAccountIdRoute
+  AdminAdminSupportTicketIdRoute: typeof AdminAdminSupportTicketIdRoute
   AdminAdminUsersUserIdRoute: typeof AdminAdminUsersUserIdRoute
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
+  AdminAdminSupportIndexRoute: typeof AdminAdminSupportIndexRoute
   AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
   AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute: typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
@@ -979,8 +1020,10 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminAuditLogRoute: AdminAdminAuditLogRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminOrganizationsAccountIdRoute: AdminAdminOrganizationsAccountIdRoute,
+  AdminAdminSupportTicketIdRoute: AdminAdminSupportTicketIdRoute,
   AdminAdminUsersUserIdRoute: AdminAdminUsersUserIdRoute,
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
+  AdminAdminSupportIndexRoute: AdminAdminSupportIndexRoute,
   AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,
   AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute:
     AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute,
