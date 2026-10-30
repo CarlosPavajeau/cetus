@@ -33,6 +33,9 @@ import org.jboss.logging.Logger;
  *     document outlives the bucket's lifecycle rule on its files.</li>
  *     <li>support attachments older than {@code cetus.retention.support-attachments} that no ticket took: the
  *     person uploaded them and never sent the ticket.</li>
+ *     <li>provider events (Resend, Wompi) processed or ignored more than
+ *     {@code cetus.retention.inbound-webhook-events} ago. Failed ones stay for a person to look at; a payment keeps
+ *     its transaction in payment_transactions.</li>
  * </ul>
  * In batches of {@code cetus.retention.batch-size}, each in its own short transaction, so a large backlog
  * never holds locks or writes a huge transaction. Two replicas running it at once only share the work.
@@ -83,6 +86,9 @@ public class DataRetention {
     @ConfigProperty(name = "cetus.retention.support-attachments")
     Duration supportAttachments;
 
+    @ConfigProperty(name = "cetus.retention.inbound-webhook-events")
+    Duration inboundWebhookEvents;
+
     @ConfigProperty(name = "cetus.retention.batch-size")
     int batchSize;
 
@@ -122,6 +128,12 @@ public class DataRetention {
                                       THEN CAST(split_part(dedup_key, ':', 2) AS uuid) END
                       AND r.status = 'ACTIVE'))
                 """, now.minus(atLeastTheMinimum(notifications))));
+        deleted.put(
+                "inbound_webhook_events",
+                deleteInBatches(
+                        "inbound_webhook_events",
+                        "status IN ('PROCESSED', 'IGNORED') AND received_at < :before",
+                        now.minus(inboundWebhookEvents)));
         deleted.put("sandbox_documents", deleteSandboxDocuments(now.minus(sandboxDocuments)));
         deleted.put("support_attachments", deleteUnsentAttachments(now.minus(supportAttachments)));
         LOG.infof("Data retention deleted %s", deleted);

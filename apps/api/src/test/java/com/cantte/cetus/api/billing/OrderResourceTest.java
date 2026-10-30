@@ -68,7 +68,12 @@ class OrderResourceTest {
                 .statusCode(200)
                 .body("reference", equalTo(reference))
                 .body("checkout.signature", equalTo(checkout.get("signature")));
-        owner.request().get("/console/orders").then().statusCode(200).body("[0].id", equalTo(id));
+        owner.request()
+                .get("/console/orders")
+                .then()
+                .statusCode(200)
+                .body("[0].id", equalTo(id))
+                .body("[0].checkout.signature", equalTo(checkout.get("signature")));
         owner.request()
                 .get("/console/audit-log")
                 .then()

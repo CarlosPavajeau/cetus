@@ -238,7 +238,7 @@ class PaymentSettlementTest {
     @Test
     void anEventOfNoOrderOrNoTransactionIsIgnored() throws Exception {
         String foreign = newTransactionId();
-        wompi.put(Transaction.of(foreign, "OTRA-TIENDA-1", "APPROVED", 100));
+        wompi.put(Transaction.of(foreign, "OTRA-TIENDA-" + UUID.randomUUID(), "APPROVED", 100));
 
         UUID unknownOrder = receive(foreign, "APPROVED").orElseThrow();
         UUID unknownTransaction = receive(newTransactionId(), "APPROVED").orElseThrow();

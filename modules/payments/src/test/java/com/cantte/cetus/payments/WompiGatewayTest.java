@@ -173,7 +173,7 @@ class WompiGatewayTest {
     }
 
     @Test
-    void readsATransactionWithThePrivateKey() {
+    void readsATransactionWithThePrivateKey() throws IOException {
         responseBody = new Envelope(new Transaction(
                 "1292-1602113476-10985",
                 "CET-1",
@@ -196,7 +196,8 @@ class WompiGatewayTest {
         assertThat(transaction.paymentMethodType()).isEqualTo("CARD");
         assertThat(transaction.statusMessage()).contains("Transacción aprobada");
         assertThat(transaction.finalizedAt()).contains(Instant.parse("2026-10-30T15:00:05Z"));
-        assertThat(transaction.raw()).contains("\"reference\":\"CET-1\"");
+        assertThat(JSON.readValue(transaction.raw(), Transaction.class).reference())
+                .isEqualTo("CET-1");
     }
 
     @Test
