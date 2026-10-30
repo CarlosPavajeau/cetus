@@ -18,6 +18,8 @@ dependencies {
     implementation(project(":modules:email"))
     // Only to validate uploaded certificates; the API never signs nor calls the DIAN.
     implementation(project(":modules:signing"))
+    // Only to sign checkouts and verify Wompi's events; the worker asks Wompi for the transactions.
+    implementation(project(":modules:payments"))
 
     implementation(libs.quarkus.arc)
     implementation(libs.quarkus.rest)

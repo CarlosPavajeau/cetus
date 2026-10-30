@@ -5,6 +5,9 @@ import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PersonType;
+import com.cantte.cetus.payments.Checkout;
+import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
@@ -19,6 +22,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -209,6 +213,116 @@ public final class BillingViews {
                     party.email(),
                     party.phone(),
                     profile.updatedAt);
+        }
+    }
+
+    @Schema(description = "What to buy: a version of the catalog the account is offered now")
+    public record CreateOrderRequest(
+            @Schema(description = "The id of the version in GET /console/plans") @NotNull
+            UUID planVersionId) {}
+
+    @Schema(description = "A line of an order, with the amounts it applied, in cents of COP")
+    public record OrderItemView(
+            BillingOrderItemEntity.Type itemType,
+
+            @Schema(nullable = true, description = "The version bought; null for overage and adjustments")
+            UUID planVersionId,
+
+            String description,
+            int quantity,
+
+            @Schema(description = "Final") long unitPriceCents,
+
+            long baseCents,
+            BigDecimal taxRate,
+            long taxCents,
+            long totalCents) {
+
+        static OrderItemView from(BillingOrderItemEntity item) {
+            return new OrderItemView(
+                    item.itemType,
+                    item.planVersionId,
+                    item.description,
+                    item.quantity,
+                    item.unitPriceCents,
+                    item.baseCents,
+                    item.taxRate,
+                    item.taxCents,
+                    item.totalCents);
+        }
+    }
+
+    @Schema(description = "The signed parameters of Wompi's checkout, for its widget or its hosted page")
+    public record CheckoutView(
+            @Schema(description = "The hosted page with every parameter in its query")
+            URI link,
+
+            String publicKey,
+            String reference,
+            long amountInCents,
+            String currency,
+
+            @Schema(description = "As signed; send it unchanged")
+            String expirationTime,
+
+            @Schema(description = "Where Wompi sends the customer back; it never confirms the payment")
+            URI redirectUrl,
+
+            @Schema(description = "signature:integrity") String signature) {
+
+        static CheckoutView from(Checkout checkout) {
+            return new CheckoutView(
+                    checkout.link(),
+                    checkout.publicKey(),
+                    checkout.reference(),
+                    checkout.amountCents(),
+                    checkout.currency(),
+                    checkout.expirationTime(),
+                    checkout.redirectUrl(),
+                    checkout.signature());
+        }
+    }
+
+    @Schema(description = "A purchase and its payment status, in cents of COP")
+    public record OrderView(
+            UUID id,
+            BillingOrderEntity.Kind kind,
+            BillingOrderEntity.Status status,
+
+            @Schema(description = "What Wompi knows the order by")
+            String reference,
+
+            long subtotalCents,
+            long taxCents,
+            long totalCents,
+            String currency,
+            List<OrderItemView> items,
+
+            @Schema(description = "After it an unpaid order expires")
+            OffsetDateTime expiresAt,
+
+            @Schema(nullable = true) OffsetDateTime paidAt,
+
+            OffsetDateTime createdAt,
+
+            @Schema(nullable = true, description = "Only while the order is pending and has not expired")
+            CheckoutView checkout) {
+
+        static OrderView from(BillingOrderEntity order, List<BillingOrderItemEntity> items, CheckoutView checkout) {
+            return new OrderView(
+                    order.id,
+                    order.kind,
+                    order.status,
+                    order.reference,
+                    order.subtotalCents,
+                    order.taxCents,
+                    order.totalCents,
+                    order.currency,
+                    items.stream().map(OrderItemView::from).toList(),
+                    order.expiresAt,
+                    order.paidAt,
+                    order.createdAt,
+                    checkout);
         }
     }
 }

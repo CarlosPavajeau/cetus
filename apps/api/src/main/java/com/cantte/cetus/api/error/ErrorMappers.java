@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.error;
 
+import com.cantte.cetus.api.billing.Orders;
 import com.cantte.cetus.api.console.ConsoleIssuance;
 import com.cantte.cetus.api.console.DocumentResends;
 import com.cantte.cetus.api.documents.DocumentDrafts;
@@ -116,6 +117,11 @@ public class ErrorMappers {
 
     @ServerExceptionMapper
     public Response sandboxDailyLimit(DocumentDrafts.SandboxDailyLimit e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response paymentsUnavailable(Orders.PaymentsUnavailable e) {
         return e.getResponse();
     }
 
