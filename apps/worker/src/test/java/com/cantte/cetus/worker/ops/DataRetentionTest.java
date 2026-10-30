@@ -71,6 +71,10 @@ class DataRetentionTest {
         UUID recentDone = job("DONE", now.minusDays(6));
         UUID oldDead = job("DEAD", now.minusDays(400));
         UUID oldPending = job("PENDING", now.minusDays(30));
+        UUID oldProcessed = inboundEvent("PROCESSED", now.minusDays(31));
+        UUID oldIgnored = inboundEvent("IGNORED", now.minusDays(31));
+        UUID oldFailed = inboundEvent("FAILED", now.minusDays(31));
+        UUID recentProcessed = inboundEvent("PROCESSED", now.minusDays(29));
 
         retention.run();
 
@@ -79,6 +83,21 @@ class DataRetentionTest {
         assertThat(idempotencyKeys(account)).containsExactly("valid");
         assertThat(existing("jobs", List.of(oldDone, recentDone, oldDead, oldPending)))
                 .containsExactlyInAnyOrder(recentDone, oldDead, oldPending);
+        assertThat(existing("inbound_webhook_events", List.of(oldProcessed, oldIgnored, oldFailed, recentProcessed)))
+                .containsExactlyInAnyOrder(oldFailed, recentProcessed);
+    }
+
+    private UUID inboundEvent(String status, OffsetDateTime receivedAt) {
+        return QuarkusTransaction.requiringNew().call(() -> (UUID) em.createNativeQuery("""
+                                INSERT INTO billing.inbound_webhook_events
+                                    (provider, event_id, event_type, payload, status, received_at)
+                                VALUES ('RESEND', :eventId, 'email.delivered', '{}', :status, :receivedAt)
+                                RETURNING id
+                                """, UUID.class)
+                .setParameter("eventId", "msg_" + UUID.randomUUID())
+                .setParameter("status", status)
+                .setParameter("receivedAt", receivedAt)
+                .getSingleResult());
     }
 
     @Test
