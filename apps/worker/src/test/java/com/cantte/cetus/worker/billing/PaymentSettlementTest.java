@@ -15,6 +15,7 @@ import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
 import com.cantte.cetus.worker.handlers.CheckPaymentHandler;
 import com.cantte.cetus.worker.handlers.ProcessWebhookEventHandler;
 import com.cantte.cetus.worker.ops.OpsAlerts;
+import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.support.FakeResend;
 import com.cantte.cetus.worker.support.FakeResendResource;
 import com.cantte.cetus.worker.support.FakeWompi;
@@ -26,9 +27,12 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,7 +53,9 @@ class PaymentSettlementTest {
 
     record EventData(EventTransaction transaction) {}
 
-    record Event(String event, EventData data, String environment) {}
+    record Signature(List<String> properties, String checksum) {}
+
+    record Event(String event, EventData data, String environment, Signature signature, long timestamp) {}
 
     @Inject
     PaymentSettlement settlement;
@@ -250,6 +256,31 @@ class PaymentSettlementTest {
     }
 
     @Test
+    void aStoredEventIsOnlyActedOnIfItStillVerifies() throws Exception {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        String transactionId = newTransactionId();
+        wompi.put(Transaction.of(transactionId, order.reference, "APPROVED", 2_490_000));
+        String forged = json.writeValueAsString(new Event(
+                "transaction.updated",
+                new EventData(new EventTransaction(transactionId, "APPROVED")),
+                "test",
+                new Signature(List.of("transaction.id", "transaction.status"), "0".repeat(64)),
+                Instant.now().getEpochSecond()));
+        UUID event = QuarkusTransaction.requiringNew()
+                .call(() -> InboundWebhookEventEntity.record(
+                                InboundWebhookEventEntity.Provider.WOMPI,
+                                "forged-" + transactionId,
+                                "transaction.updated",
+                                forged)
+                        .orElseThrow());
+
+        assertThat(catchThrowable(() -> events.handle(jobFor(event)))).isInstanceOf(GiveUp.class);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PENDING);
+        assertThat(wompi.requests()).isZero();
+    }
+
+    @Test
     void aWompiOutageIsRetried() throws Exception {
         BillingOrderEntity order =
                 fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
@@ -267,14 +298,23 @@ class PaymentSettlementTest {
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
     }
 
-    /** Stores the event as the API does; empty when it was already received. */
+    /** Stores the event as the API does, signed with the test events secret; empty when it was already received. */
     private Optional<UUID> receive(String transactionId, String status) throws Exception {
-        String payload = json.writeValueAsString(
-                new Event("transaction.updated", new EventData(new EventTransaction(transactionId, status)), "test"));
+        long timestamp = Instant.now().getEpochSecond();
+        String checksum = HexFormat.of()
+                .formatHex(MessageDigest.getInstance("SHA-256")
+                        .digest((transactionId + status + timestamp + FakeWompiResource.EVENTS_SECRET)
+                                .getBytes(StandardCharsets.UTF_8)));
+        String payload = json.writeValueAsString(new Event(
+                "transaction.updated",
+                new EventData(new EventTransaction(transactionId, status)),
+                "test",
+                new Signature(List.of("transaction.id", "transaction.status"), checksum),
+                timestamp));
         return QuarkusTransaction.requiringNew()
                 .call(() -> InboundWebhookEventEntity.record(
                         InboundWebhookEventEntity.Provider.WOMPI,
-                        "transaction.updated:" + transactionId + ":" + status,
+                        "transaction.id=" + transactionId + "|transaction.status=" + status,
                         "transaction.updated",
                         payload));
     }
