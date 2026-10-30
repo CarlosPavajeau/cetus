@@ -34,6 +34,27 @@ class PriceTest {
         assertThat(split.totalCents()).isEqualTo(price * 100);
     }
 
+    /** Every final price of the catalog, in pesos: without VAT, the whole price is the base. */
+    @ParameterizedTest
+    @CsvSource({"39000", "149000", "399000", "119000", "249000", "590000", "24900", "99900", "159900"})
+    void aRateOfZeroLeavesEachCatalogPriceAsTheBase(long price) {
+        Price split = new Price(price * 100, true, BigDecimal.ZERO);
+
+        assertThat(split.baseCents()).isEqualTo(price * 100);
+        assertThat(split.taxCents()).isZero();
+        assertThat(split.totalCents()).isEqualTo(price * 100);
+    }
+
+    @Test
+    void aRateOfZeroKeepsTheCentsOfAPrice() {
+        for (boolean taxIncluded : new boolean[] {true, false}) {
+            Price split = new Price(12_345, taxIncluded, BigDecimal.ZERO);
+
+            assertThat(split.baseCents()).isEqualTo(12_345);
+            assertThat(split.taxCents()).isZero();
+        }
+    }
+
     @Test
     void addsTheTaxToAPriceWithoutIt() {
         Price price = new Price(10_050, false, VAT);
@@ -41,11 +62,6 @@ class PriceTest {
         assertThat(price.baseCents()).isEqualTo(10_050);
         assertThat(price.taxCents()).isEqualTo(1_900);
         assertThat(price.totalCents()).isEqualTo(11_950);
-    }
-
-    @Test
-    void anExemptPriceHasNoTax() {
-        assertThat(new Price(100_00, true, BigDecimal.ZERO).taxCents()).isZero();
     }
 
     @Test

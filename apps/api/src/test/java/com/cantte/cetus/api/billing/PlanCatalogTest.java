@@ -29,7 +29,7 @@ class PlanCatalogTest {
     private static final ConsoleUser SUPPORT = ConsoleUser.platformStaff(PlatformRoles.SUPPORT);
 
     @Test
-    void theCatalogComesLoadedWithItsTerms() {
+    void theCatalogComesLoadedWithItsTermsAndNoVat() {
         JsonPath offers = customer("Catálogo SAS")
                 .request()
                 .get("/console/plans")
@@ -44,10 +44,12 @@ class PlanCatalogTest {
         Map<String, Object> negocio = offers.getMap("find { it.code == 'NEGOCIO' }");
         assertThat(negocio).containsEntry("kind", "PACKAGE").containsEntry("validityMonths", 12);
         assertThat(offers.getMap("find { it.code == 'NEGOCIO' }.version"))
+                .containsEntry("version", 2)
                 .containsEntry("priceCents", 24_900_000)
                 .containsEntry("taxIncluded", true)
-                .containsEntry("baseCents", 20_924_400)
-                .containsEntry("taxCents", 3_975_600)
+                .containsEntry("baseCents", 24_900_000)
+                .containsEntry("taxCents", 0)
+                .containsEntry("totalCents", 24_900_000)
                 .containsEntry("documentsIncluded", 1200)
                 .containsEntry("issuersIncluded", 1)
                 .containsEntry("priceOverageCents", null);
@@ -58,6 +60,34 @@ class PlanCatalogTest {
         assertThat(offers.getMap("find { it.code == 'INICIAL' }.version"))
                 .containsEntry("priceCents", 3_900_000)
                 .containsEntry("priceOverageCents", 15_000);
+    }
+
+    @Test
+    void theVersionsWithVatWereClosedWhereTheOnesWithoutItStart() {
+        String inicial = SUPPORT.request()
+                .get("/admin/plans/catalog")
+                .then()
+                .extract()
+                .jsonPath()
+                .getString("find { it.code == 'INICIAL' }.id");
+
+        List<Map<String, Object>> versions = SUPPORT.request()
+                .get("/admin/plans/" + inicial + "/versions")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getList("$");
+
+        assertThat(versions).extracting(version -> version.get("version")).containsExactly(2, 1);
+        assertThat(versions.get(0)).containsEntry("taxRate", 0.0f).containsEntry("validTo", null);
+        assertThat(versions.get(1)).containsEntry("taxRate", 0.19f);
+        assertThat(versions.get(1).get("validTo")).isEqualTo(versions.get(0).get("validFrom"));
+        assertThat(versions.get(0))
+                .containsEntry("priceCents", versions.get(1).get("priceCents"))
+                .containsEntry("documentsIncluded", versions.get(1).get("documentsIncluded"))
+                .containsEntry("issuersIncluded", versions.get(1).get("issuersIncluded"))
+                .containsEntry("priceOverageCents", versions.get(1).get("priceOverageCents"));
     }
 
     @Test
