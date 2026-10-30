@@ -9,10 +9,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.Table;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
- * What a plan includes; see V24 and V31. A null limit is no limit, and a null price is agreed by contract. Only a
- * subscription is an account's plan; a package or a top-up is bought once and lasts {@link #validityMonths}.
+ * A plan of the catalog; see V24, V31 and V32. What it sells lives in its versions ({@link PlanVersionEntity}).
+ * The subscription columns (price, documents, issuers, overage, requests, grace) still set the limits of the
+ * accounts on the plan until subscriptions arrive; a null limit is no limit. A package or a top-up is bought
+ * once, lasts {@link #validityMonths} and is never an account's plan.
  */
 @Entity
 @Table(name = "plans")
@@ -24,7 +28,12 @@ public class PlanEntity extends PanacheEntityBase {
         TOPUP
     }
 
+    public static final String CODE_FREE = "FREE";
+
     @Id
+    public UUID id;
+
+    /** Unique, for people and code to name the plan. */
     public String code;
 
     public String name;
@@ -35,6 +44,14 @@ public class PlanEntity extends PanacheEntityBase {
     /** How long the documents of a package or a top-up last; null for a subscription, whose are monthly. */
     @Column(name = "validity_months")
     public Integer validityMonths;
+
+    /** The kind of product an account must have to buy this one: a top-up requires a package. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "requires_kind")
+    public Kind requiresKind;
+
+    /** Shown in the catalog to everyone; an unlisted plan (Socios) is sold through versions for one account. */
+    public boolean listed = true;
 
     /** Whether it is still sold; a retired plan keeps its row for the accounts and orders that reference it. */
     public boolean active = true;
@@ -70,18 +87,27 @@ public class PlanEntity extends PanacheEntityBase {
 
     /** The plan of an account; every account references one. */
     public static PlanEntity of(AccountEntity account) {
-        PlanEntity plan = findById(account.plan);
+        PlanEntity plan = findById(account.planId);
         if (plan == null) {
-            throw new IllegalStateException("Account " + account.id + " has an unknown plan " + account.plan);
+            throw new IllegalStateException("Account " + account.id + " has an unknown plan " + account.planId);
         }
         return plan;
+    }
+
+    public static Optional<PlanEntity> findByCode(String code) {
+        return find("code", code).firstResultOptional();
+    }
+
+    /** A plan the code always has, such as {@link #CODE_FREE}. */
+    public static PlanEntity byCode(String code) {
+        return findByCode(code).orElseThrow(() -> new IllegalStateException("There is no plan " + code));
     }
 
     public static List<PlanEntity> listAssignable() {
         return list("assignable = true order by coalesce(priceMonthlyCop, 0), code");
     }
 
-    public static PlanEntity lock(String code) {
-        return findById(code, LockModeType.PESSIMISTIC_WRITE);
+    public static Optional<PlanEntity> lock(UUID id) {
+        return findByIdOptional(id, LockModeType.PESSIMISTIC_WRITE);
     }
 }

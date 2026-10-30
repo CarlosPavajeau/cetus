@@ -34,7 +34,9 @@ public class AccountEntity extends PanacheEntityBase {
     @Enumerated(EnumType.STRING)
     public Status status = Status.ACTIVE;
 
-    public String plan = "FREE";
+    /** Its {@link PlanEntity}; a new account starts on {@link PlanEntity#CODE_FREE}. */
+    @Column(name = "plan_id")
+    public UUID planId;
     /** Why the status last changed (e.g. the suspension reason); null while it never changed. */
     @Column(name = "status_reason")
     public String statusReason;

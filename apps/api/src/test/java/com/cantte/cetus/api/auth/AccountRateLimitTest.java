@@ -8,6 +8,7 @@ import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.cache.LocalRateLimiter;
 import com.cantte.cetus.cache.RateLimiter;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -41,7 +42,7 @@ class AccountRateLimitTest {
         UUID accountId = UUID.fromString(bootstrap(user, "Limitada SAS"));
         QuarkusTransaction.requiringNew().run(() -> {
             AccountEntity account = AccountEntity.findById(accountId);
-            account.plan = "ESCALA";
+            account.planId = PlanEntity.byCode("ESCALA").id;
             account.requestsPerSecond = 1;
             account.requestsBurst = 2;
             access.changed(account);

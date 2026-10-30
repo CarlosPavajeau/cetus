@@ -4,28 +4,44 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
 
-/** A price before tax, in cents as Wompi takes it, and the tax rate that applies to it (0.19 is 19 %). */
-public record Price(long amountCents, BigDecimal taxRate) {
+/**
+ * A price in cents, as Wompi takes it, split into base and tax. With the tax included (the catalog's prices are
+ * final), the base is the price over one plus the rate, rounded half up to the peso, and the tax is the rest, so
+ * base and tax always add up to the price. Without it, the tax is the base times the rate, rounded the same way.
+ */
+public record Price(long cents, boolean taxIncluded, BigDecimal taxRate) {
+
+    private static final BigDecimal CENTS_PER_PESO = BigDecimal.valueOf(100);
 
     public Price {
         Objects.requireNonNull(taxRate, "taxRate");
-        if (amountCents < 0) {
-            throw new IllegalArgumentException("A price is not negative: " + amountCents);
+        if (cents < 0) {
+            throw new IllegalArgumentException("A price is not negative: " + cents);
         }
         if (taxRate.signum() < 0 || taxRate.compareTo(BigDecimal.ONE) >= 0) {
             throw new IllegalArgumentException("A tax rate is between 0 and 1: " + taxRate);
         }
     }
 
-    /** Rounded half up to the cent. */
+    public long baseCents() {
+        return taxIncluded
+                ? toPeso(BigDecimal.valueOf(cents).divide(BigDecimal.ONE.add(taxRate), 6, RoundingMode.HALF_UP))
+                : cents;
+    }
+
     public long taxCents() {
-        return BigDecimal.valueOf(amountCents)
-                .multiply(taxRate)
-                .setScale(0, RoundingMode.HALF_UP)
-                .longValueExact();
+        return taxIncluded
+                ? cents - baseCents()
+                : toPeso(BigDecimal.valueOf(cents).multiply(taxRate));
     }
 
     public long totalCents() {
-        return amountCents + taxCents();
+        return baseCents() + taxCents();
+    }
+
+    private static long toPeso(BigDecimal cents) {
+        return cents.divide(CENTS_PER_PESO, 0, RoundingMode.HALF_UP)
+                .multiply(CENTS_PER_PESO)
+                .longValueExact();
     }
 }

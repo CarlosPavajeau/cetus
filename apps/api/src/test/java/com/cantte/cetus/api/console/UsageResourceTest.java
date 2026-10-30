@@ -8,6 +8,7 @@ import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -45,7 +46,8 @@ class UsageResourceTest {
     void showsThisMonthAgainstThePlanAndTheMonthsBefore() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(bootstrap(customer, "Facturadora SAS"));
-        QuarkusTransaction.requiringNew().run(() -> AccountEntity.<AccountEntity>findById(accountId).plan = "INICIAL");
+        QuarkusTransaction.requiringNew()
+                .run(() -> AccountEntity.<AccountEntity>findById(accountId).planId = PlanEntity.byCode("INICIAL").id);
         YearMonth now = UsagePeriod.current();
         bill(accountId, now, DocumentType.INVOICE, 205);
         bill(accountId, now, DocumentType.DEBIT_NOTE, 1);

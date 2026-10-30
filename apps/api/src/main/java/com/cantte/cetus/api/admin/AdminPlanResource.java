@@ -2,9 +2,9 @@ package com.cantte.cetus.api.admin;
 
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.billing.BillingViews.CreatePlanRequest;
-import com.cantte.cetus.api.billing.BillingViews.CreatePriceRequest;
+import com.cantte.cetus.api.billing.BillingViews.CreateVersionRequest;
 import com.cantte.cetus.api.billing.BillingViews.PlanOfferView;
-import com.cantte.cetus.api.billing.BillingViews.PlanPriceView;
+import com.cantte.cetus.api.billing.BillingViews.PlanVersionView;
 import com.cantte.cetus.api.billing.PlanCatalog;
 import com.cantte.cetus.api.console.ConsoleContext;
 import com.cantte.cetus.api.error.ProblemDetail;
@@ -23,13 +23,14 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
- * The plans an admin can assign to an account, and the catalog Cetus sells. Partner contracts and subscriptions
- * are added by hand; an admin puts packages and top-ups on sale and gives any plan a new price version.
+ * The plans an admin can assign to an account, and the catalog Cetus sells: an admin adds plans and versions of
+ * their terms, public or private to one account (Socios), never edits them.
  */
 @Path("/admin/plans")
 @Produces(MediaType.APPLICATION_JSON)
@@ -76,7 +77,16 @@ public class AdminPlanResource {
     }
 
     @GET
-    @Path("/{code}/prices")
+    @Path("/catalog")
+    @Transactional
+    @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
+    @APIResponse(responseCode = "200", description = "OK")
+    public List<PlanOfferView> catalog() {
+        return catalog.all();
+    }
+
+    @GET
+    @Path("/{id}/versions")
     @Transactional
     @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
     @APIResponse(responseCode = "200", description = "OK")
@@ -87,12 +97,12 @@ public class AdminPlanResource {
                     @Content(
                             mediaType = ProblemDetail.MEDIA_TYPE,
                             schema = @Schema(implementation = ProblemDetail.class)))
-    public List<PlanPriceView> prices(@PathParam("code") String code) {
-        return catalog.prices(code);
+    public List<PlanVersionView> versions(@PathParam("id") UUID id) {
+        return catalog.versions(id);
     }
 
     @POST
-    @Path("/{code}/prices")
+    @Path("/{id}/versions")
     @Transactional
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed(PlatformRoles.ADMIN)
@@ -111,7 +121,7 @@ public class AdminPlanResource {
                     @Content(
                             mediaType = ProblemDetail.MEDIA_TYPE,
                             schema = @Schema(implementation = ProblemDetail.class)))
-    public PlanPriceView addPrice(@PathParam("code") String code, @Valid @NotNull CreatePriceRequest request) {
-        return catalog.addPrice(code, request, context.platformActor(), origin.resolve());
+    public PlanVersionView addVersion(@PathParam("id") UUID id, @Valid @NotNull CreateVersionRequest request) {
+        return catalog.addVersion(id, request, context.platformActor(), origin.resolve());
     }
 }

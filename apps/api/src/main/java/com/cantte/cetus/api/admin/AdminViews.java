@@ -6,7 +6,9 @@ import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -77,7 +79,7 @@ public final class AdminViews {
                     account.organizationId,
                     account.name,
                     account.status,
-                    account.plan,
+                    PlanEntity.of(account).code,
                     account.statusReason,
                     account.statusChangedAt,
                     account.statusChangedBy,
@@ -109,7 +111,7 @@ public final class AdminViews {
 
     /** A plan change says why, like a status change; it is audited with the previous plan. */
     public record PlanChangeRequest(
-            @NotBlank String plan,
+            @NotNull UUID planId,
             @NotBlank @Size(min = 3, max = 500) String reason) {}
 
     /** Suspending or reactivating an account always says why; the account's members see the reason. */

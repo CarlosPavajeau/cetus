@@ -142,7 +142,7 @@ class ResultRecorderTest {
         UUID accountId = accountOf(id);
         String plan = assignPlanWithQuota(accountId, 5);
         QuarkusTransaction.requiringNew().run(() -> {
-            PlanEntity entity = PlanEntity.findById(plan);
+            PlanEntity entity = PlanEntity.byCode(plan);
             entity.documentsGrace = 2;
             entity.priceOverageCop = null;
         });
@@ -162,7 +162,8 @@ class ResultRecorderTest {
     void anAccountWithoutAQuotaHearsNothing() {
         UUID id = liveDocument(fixtures.invoice());
         QuarkusTransaction.requiringNew()
-                .run(() -> AccountEntity.<AccountEntity>findById(accountOf(id)).plan = "SOCIOS");
+                .run(() ->
+                        AccountEntity.<AccountEntity>findById(accountOf(id)).planId = PlanEntity.byCode("SOCIOS").id);
 
         recorder.completed(id, ACCEPTED);
 
@@ -239,12 +240,13 @@ class ResultRecorderTest {
     private static String assignPlanWithQuota(UUID accountId, int included) {
         return QuarkusTransaction.requiringNew().call(() -> {
             PlanEntity plan = new PlanEntity();
-            plan.code = "TEST_" + Ids.newId();
+            plan.id = Ids.newId();
+            plan.code = "TEST_" + plan.id;
             plan.name = "Prueba";
             plan.documentsIncluded = included;
             plan.priceOverageCop = 1500;
             plan.persist();
-            AccountEntity.<AccountEntity>findById(accountId).plan = plan.code;
+            AccountEntity.<AccountEntity>findById(accountId).planId = plan.id;
             return plan.code;
         });
     }

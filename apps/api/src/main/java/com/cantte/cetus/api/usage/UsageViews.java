@@ -3,6 +3,7 @@ package com.cantte.cetus.api.usage;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import java.util.List;
+import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public final class UsageViews {
@@ -11,6 +12,7 @@ public final class UsageViews {
 
     @Schema(description = "What a plan includes. A null limit is no limit; a null price is agreed by contract.")
     public record PlanView(
+            UUID id,
             String code,
             String name,
             @Schema(nullable = true) Long priceMonthlyCop,
@@ -38,6 +40,7 @@ public final class UsageViews {
 
         public static PlanView from(PlanEntity plan) {
             return new PlanView(
+                    plan.id,
                     plan.code,
                     plan.name,
                     plan.priceMonthlyCop,

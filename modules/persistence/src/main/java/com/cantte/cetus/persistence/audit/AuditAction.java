@@ -46,8 +46,8 @@ public enum AuditAction {
     SUPPORT_TICKET_STATUS_CHANGED,
     /** A plan put on sale by the Cetus team; recorded without an account, like the ones below. */
     PLAN_CREATED,
-    /** A new version of a plan's price, which closes the one before it. */
-    PLAN_PRICE_ADDED,
+    /** New terms for a plan, which close its version before them; a private one is recorded on its account. */
+    PLAN_VERSION_ADDED,
     /** Who Cetus invoices for the account's purchases. */
     BILLING_PROFILE_UPDATED
 }

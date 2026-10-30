@@ -177,15 +177,15 @@ public class AdminAccountResource {
     @APIResponse(responseCode = "200", description = "OK")
     public AccountDetailView changePlan(@PathParam("id") UUID id, @Valid @NotNull PlanChangeRequest request) {
         AccountEntity account = lockedAccount(id);
-        PlanEntity plan = PlanEntity.findById(request.plan());
-        if (plan == null || !plan.assignable) {
-            throw new DomainException("plan_unknown", "There is no assignable plan " + request.plan());
-        }
-        if (plan.code.equals(account.plan)) {
+        PlanEntity plan = PlanEntity.<PlanEntity>findByIdOptional(request.planId())
+                .filter(found -> found.assignable)
+                .orElseThrow(
+                        () -> new DomainException("plan_unknown", "There is no assignable plan " + request.planId()));
+        if (plan.id.equals(account.planId)) {
             throw new DomainException("plan_unchanged", "The account already has the plan " + plan.code);
         }
-        String previous = account.plan;
-        account.plan = plan.code;
+        String previous = PlanEntity.of(account).code;
+        account.planId = plan.id;
         access.changed(account);
         auditLog.record(
                 account.id,

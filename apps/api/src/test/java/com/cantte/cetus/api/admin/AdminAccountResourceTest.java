@@ -18,6 +18,7 @@ import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -248,19 +249,19 @@ class AdminAccountResourceTest {
                 .statusCode(200)
                 .body("code", contains("FREE", "SOCIOS", "INICIAL", "CRECIMIENTO", "ESCALA"));
         SUPPORT.request()
-                .body(Map.of("plan", "INICIAL", "reason", "Contrató el plan"))
+                .body(Map.of("planId", planId("INICIAL"), "reason", "Contrató el plan"))
                 .put("/admin/accounts/" + accountId + "/plan")
                 .then()
                 .statusCode(403);
         ADMIN.request()
-                .body(Map.of("plan", "PLATINO", "reason", "Contrató el plan"))
+                .body(Map.of("planId", UUID.randomUUID(), "reason", "Contrató el plan"))
                 .put("/admin/accounts/" + accountId + "/plan")
                 .then()
                 .statusCode(422)
                 .body("code", equalTo("plan_unknown"));
 
         ADMIN.request()
-                .body(Map.of("plan", "INICIAL", "reason", " Contrató el plan "))
+                .body(Map.of("planId", planId("INICIAL"), "reason", " Contrató el plan "))
                 .put("/admin/accounts/" + accountId + "/plan")
                 .then()
                 .statusCode(200)
@@ -272,7 +273,7 @@ class AdminAccountResourceTest {
                 .body("billableThisMonth.overage", equalTo(3))
                 .body("billableThisMonth.costOverageCop", equalTo(450));
         ADMIN.request()
-                .body(Map.of("plan", "INICIAL", "reason", "Otra vez"))
+                .body(Map.of("planId", planId("INICIAL"), "reason", "Otra vez"))
                 .put("/admin/accounts/" + accountId + "/plan")
                 .then()
                 .statusCode(422)
@@ -321,7 +322,7 @@ class AdminAccountResourceTest {
             release.countDown();
         });
         ADMIN.request()
-                .body(Map.of("plan", "INICIAL", "reason", "Contrató el plan"))
+                .body(Map.of("planId", planId("INICIAL"), "reason", "Contrató el plan"))
                 .put("/admin/accounts/" + accountId + "/plan")
                 .then()
                 .statusCode(200);
@@ -329,7 +330,7 @@ class AdminAccountResourceTest {
 
         AccountEntity account = QuarkusTransaction.requiringNew().call(() -> AccountEntity.findById(accountId));
         assertThat(account.status).isEqualTo(AccountEntity.Status.SUSPENDED);
-        assertThat(account.plan).isEqualTo("INICIAL");
+        assertThat(account.planId).isEqualTo(planId("INICIAL"));
     }
 
     @Test
@@ -396,5 +397,9 @@ class AdminAccountResourceTest {
             document.dianStatusCode = "99";
             document.dianErrors = errors;
         });
+    }
+
+    private static UUID planId(String code) {
+        return QuarkusTransaction.requiringNew().call(() -> PlanEntity.byCode(code).id);
     }
 }

@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
@@ -124,12 +125,14 @@ class PlanIssuerLimitTest {
 
     private static void assignPlan(String accountId, String plan) {
         QuarkusTransaction.requiringNew()
-                .run(() -> AccountEntity.<AccountEntity>findById(UUID.fromString(accountId)).plan = plan);
+                .run(() -> AccountEntity.<AccountEntity>findById(UUID.fromString(accountId)).planId =
+                        PlanEntity.byCode(plan).id);
     }
 
     private static void assignPlan(ConsoleUser user, String plan) {
         QuarkusTransaction.requiringNew()
                 .run(() ->
-                        AccountEntity.findByOrganization(user.organizationId()).orElseThrow().plan = plan);
+                        AccountEntity.findByOrganization(user.organizationId()).orElseThrow().planId =
+                                PlanEntity.byCode(plan).id);
     }
 }

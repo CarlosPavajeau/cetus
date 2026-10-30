@@ -25,7 +25,7 @@ class PlanDocumentLimitTest {
 
     @Test
     void theFreePlanTakesTwentyFiveDocumentsAndFiveOfGrace() {
-        PlanEntity free = QuarkusTransaction.requiringNew().call(() -> PlanEntity.findById("FREE"));
+        PlanEntity free = QuarkusTransaction.requiringNew().call(() -> PlanEntity.byCode(PlanEntity.CODE_FREE));
 
         assertThat(free.priceMonthlyCop).isZero();
         assertThat(free.documentsIncluded).isEqualTo(25);
@@ -94,12 +94,13 @@ class PlanDocumentLimitTest {
         ConsoleFixtures.addDebitNoteRange(user, issuerId);
         QuarkusTransaction.requiringNew().run(() -> {
             PlanEntity plan = new PlanEntity();
-            plan.code = "TEST_" + Ids.newId();
+            plan.id = Ids.newId();
+            plan.code = "TEST_" + plan.id;
             plan.name = "Prueba";
             plan.documentsIncluded = included;
             plan.documentsGrace = grace;
             plan.persist();
-            AccountEntity.<AccountEntity>findById(UUID.fromString(accountId)).plan = plan.code;
+            AccountEntity.<AccountEntity>findById(UUID.fromString(accountId)).planId = plan.id;
         });
         String key = user.request()
                 .body(Map.of("name", "ERP", "environment", "LIVE"))

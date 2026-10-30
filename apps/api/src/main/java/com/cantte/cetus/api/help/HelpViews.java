@@ -5,6 +5,7 @@ import com.cantte.cetus.api.console.IssuerViews.IssuerDetailView;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.FeedbackEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.SupportAttachmentEntity;
 import com.cantte.cetus.persistence.entity.SupportTicketEntity;
 import com.cantte.cetus.persistence.entity.SupportTicketEntity.Priority;
@@ -109,7 +110,8 @@ public final class HelpViews {
     public record AccountSnapshot(
             UUID id, String organizationId, String name, AccountEntity.Status status, String plan) {
         static AccountSnapshot from(AccountEntity account) {
-            return new AccountSnapshot(account.id, account.organizationId, account.name, account.status, account.plan);
+            return new AccountSnapshot(
+                    account.id, account.organizationId, account.name, account.status, PlanEntity.of(account).code);
         }
     }
 

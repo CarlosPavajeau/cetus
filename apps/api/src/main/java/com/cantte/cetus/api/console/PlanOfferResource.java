@@ -14,7 +14,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
-/** The plans on sale and the price each has now. */
+/** The plans the account can buy and the terms each has now, its own private versions included. */
 @Path("/console/plans")
 @Produces(MediaType.APPLICATION_JSON)
 @APIResponse(
@@ -25,12 +25,15 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 public class PlanOfferResource {
 
     @Inject
+    ConsoleContext context;
+
+    @Inject
     PlanCatalog catalog;
 
     @GET
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
     public List<PlanOfferView> list() {
-        return catalog.offers();
+        return catalog.offers(context.accountId());
     }
 }

@@ -33,7 +33,7 @@ public class PlanDocumentLimit {
         List<Number> limits = DocumentEntity.getEntityManager()
                 .createNativeQuery("""
                         SELECT p.documents_included + p.documents_grace
-                        FROM billing.accounts a JOIN billing.plans p ON p.code = a.plan
+                        FROM billing.accounts a JOIN billing.plans p ON p.id = a.plan_id
                         WHERE a.id = :account AND p.documents_grace IS NOT NULL
                         """)
                 .setParameter("account", accountId)

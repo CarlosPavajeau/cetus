@@ -4,16 +4,15 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 import com.cantte.cetus.api.admin.PlatformRoles;
 import com.cantte.cetus.api.support.ConsoleUser;
-import com.cantte.cetus.persistence.entity.PlanPriceEntity;
+import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
+import io.restassured.response.Response;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -22,7 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** Admins put packages and top-ups on sale with versioned prices; customers see the price that applies now. */
+/** The catalog of plans and the versions of their terms, public or private to one account. */
 @QuarkusTest
 class PlanCatalogTest {
 
@@ -30,42 +29,62 @@ class PlanCatalogTest {
     private static final ConsoleUser SUPPORT = ConsoleUser.platformStaff(PlatformRoles.SUPPORT);
 
     @Test
-    void aPackageIsSoldAtTheCurrentVersionOfItsPrice() {
-        String code = newPackage();
-        ConsoleUser customer = ConsoleUser.newOrganization();
-        bootstrap(customer, "Compradora SAS");
-        customer.request().get("/console/plans").then().statusCode(200).body("code", not(hasItem(code)));
-
-        price(code, 39_000_000, "0.19", null)
-                .then()
-                .statusCode(200)
-                .body("version", equalTo(1))
-                .body("taxCents", equalTo(7_410_000))
-                .body("totalCents", equalTo(46_410_000))
-                .body("validTo", nullValue());
-        JsonPath offers = customer.request()
+    void theCatalogComesLoadedWithItsTerms() {
+        JsonPath offers = customer("Catálogo SAS")
+                .request()
                 .get("/console/plans")
                 .then()
                 .statusCode(200)
                 .extract()
                 .jsonPath();
-        Map<String, Object> offer = offers.getMap("find { it.code == '%s' }".formatted(code));
-        assertThat(offer).containsEntry("kind", "PACKAGE").containsEntry("documentsIncluded", 1200);
-        assertThat(offers.getInt("find { it.code == '%s' }.price.totalCents".formatted(code)))
-                .isEqualTo(46_410_000);
 
+        assertThat(offers.getList("code", String.class))
+                .contains("INICIAL", "EMPRENDEDOR", "RECARGA_100")
+                .doesNotContain("FREE", "SOCIOS");
+        Map<String, Object> negocio = offers.getMap("find { it.code == 'NEGOCIO' }");
+        assertThat(negocio).containsEntry("kind", "PACKAGE").containsEntry("validityMonths", 12);
+        assertThat(offers.getMap("find { it.code == 'NEGOCIO' }.version"))
+                .containsEntry("priceCents", 24_900_000)
+                .containsEntry("taxIncluded", true)
+                .containsEntry("baseCents", 20_924_400)
+                .containsEntry("taxCents", 3_975_600)
+                .containsEntry("documentsIncluded", 1200)
+                .containsEntry("issuersIncluded", 1)
+                .containsEntry("priceOverageCents", null);
+        assertThat(offers.getMap("find { it.code == 'RECARGA_100' }"))
+                .containsEntry("kind", "TOPUP")
+                .containsEntry("requiresKind", "PACKAGE");
+        assertThat(offers.getMap("find { it.code == 'RECARGA_100' }.version")).containsEntry("issuersIncluded", null);
+        assertThat(offers.getMap("find { it.code == 'INICIAL' }.version"))
+                .containsEntry("priceCents", 3_900_000)
+                .containsEntry("priceOverageCents", 15_000);
+    }
+
+    @Test
+    void aNewVersionWaitsForItsStartAndClosesTheOneBefore() {
+        String id = newPlan("PACKAGE", 12, null, true);
+        ConsoleUser customer = customer("Compradora SAS");
+        assertThat(codes(customer)).doesNotContain(codeOf(id));
+
+        version(id, packageTerms(11_900_000))
+                .then()
+                .statusCode(200)
+                .body("version", equalTo(1))
+                .body("validTo", nullValue());
         OffsetDateTime next = OffsetDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
-        price(code, 45_000_000, "0.19", next).then().statusCode(200).body("version", equalTo(2));
+        Map<String, Object> later = packageTerms(13_900_000);
+        later.put("validFrom", next.toString());
+        version(id, later).then().statusCode(200).body("version", equalTo(2));
 
         assertThat(customer.request()
                         .get("/console/plans")
                         .then()
                         .extract()
                         .jsonPath()
-                        .getInt("find { it.code == '%s' }.price.version".formatted(code)))
+                        .getInt("find { it.id == '%s' }.version.version".formatted(id)))
                 .isEqualTo(1);
         List<Map<String, Object>> versions = SUPPORT.request()
-                .get("/admin/plans/" + code + "/prices")
+                .get("/admin/plans/" + id + "/versions")
                 .then()
                 .statusCode(200)
                 .extract()
@@ -77,89 +96,208 @@ class PlanCatalogTest {
     }
 
     @Test
-    void aPriceStartsAfterTheOneBeforeAndNeverInThePast() {
-        String code = newPackage();
-        price(code, 100, "0.19", null).then().statusCode(200);
+    void aVersionHasTheTermsOfItsKindAndStartsAfterTheOneBefore() {
+        String topUp = newPlan("TOPUP", 12, "PACKAGE", true);
+        Map<String, Object> withIssuers = packageTerms(2_490_000);
+        version(topUp, withIssuers).then().statusCode(422).body("code", equalTo("version_issuers_invalid"));
+        String pack = newPlan("PACKAGE", 12, null, true);
+        Map<String, Object> withOverage = packageTerms(100);
+        withOverage.put("priceOverageCents", 15_000);
+        version(pack, withOverage).then().statusCode(422).body("code", equalTo("version_overage_invalid"));
+        String subscription = newPlan("SUBSCRIPTION", null, null, true);
+        version(subscription, packageTerms(100))
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("version_overage_invalid"));
 
-        price(code, 200, "0.19", OffsetDateTime.now().minusDays(1))
-                .then()
-                .statusCode(422)
-                .body("code", equalTo("price_valid_from_past"));
-        OffsetDateTime later = OffsetDateTime.now().plusDays(10);
-        price(code, 200, "0.19", later).then().statusCode(200);
-        price(code, 300, "0.19", later.minusDays(1))
-                .then()
-                .statusCode(422)
-                .body("code", equalTo("price_valid_from_before_current"));
-        price(code, 300, "1", null).then().statusCode(400);
-        price("NO_EXISTE_" + suffix(), 300, "0.19", null).then().statusCode(404);
+        version(pack, packageTerms(100)).then().statusCode(200);
+        Map<String, Object> past = packageTerms(200);
+        past.put("validFrom", OffsetDateTime.now().minusDays(1).toString());
+        version(pack, past).then().statusCode(422).body("code", equalTo("version_valid_from_past"));
+        Map<String, Object> later = packageTerms(200);
+        later.put("validFrom", OffsetDateTime.now().plusDays(10).toString());
+        version(pack, later).then().statusCode(200);
+        Map<String, Object> before = packageTerms(300);
+        before.put("validFrom", OffsetDateTime.now().plusDays(9).toString());
+        version(pack, before).then().statusCode(422).body("code", equalTo("version_valid_from_before_current"));
+        Map<String, Object> wholeRate = packageTerms(300);
+        wholeRate.put("taxRate", "1");
+        version(pack, wholeRate).then().statusCode(400);
+        version(UUID.randomUUID().toString(), packageTerms(300)).then().statusCode(404);
     }
 
     @Test
-    void aPriceIsNeverEditedOrDeleted() {
-        String code = newPackage();
-        price(code, 100, "0.19", null).then().statusCode(200);
+    void anUnlistedPlanIsSoldThroughVersionsForOneAccount() {
+        String socios = newPlan("SUBSCRIPTION", null, null, false);
+        ConsoleUser partner = customer("Socia SAS");
+        String partnerAccount =
+                partner.request().get("/console/account").then().extract().path("id");
+        ConsoleUser other = customer("Ajena SAS");
+        Map<String, Object> terms = subscriptionTerms(100_000_000);
 
-        assertThatThrownBy(() -> QuarkusTransaction.requiringNew()
-                        .run(() -> PlanPriceEntity.findOpen(code).orElseThrow().amountCents = 1))
-                .hasStackTraceContaining("a plan price only takes its valid_to, once");
-        assertThatThrownBy(() -> QuarkusTransaction.requiringNew()
-                        .run(() -> PlanPriceEntity.findOpen(code).orElseThrow().delete()))
-                .hasStackTraceContaining("plan_prices are never deleted");
+        version(socios, terms).then().statusCode(422).body("code", equalTo("version_account_required"));
+        terms.put("accountId", partnerAccount);
+        version(socios, terms).then().statusCode(200).body("accountId", equalTo(partnerAccount));
+        Map<String, Object> listed = packageTerms(100);
+        listed.put("accountId", partnerAccount);
+        version(newPlan("PACKAGE", 12, null, true), listed)
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("version_private_listed"));
+
+        assertThat(partner.request()
+                        .get("/console/plans")
+                        .then()
+                        .extract()
+                        .jsonPath()
+                        .getLong("find { it.id == '%s' }.version.priceCents".formatted(socios)))
+                .isEqualTo(100_000_000);
+        assertThat(ids(other)).doesNotContain(socios);
     }
 
     @Test
-    void onlyAdminsPutPackagesOnSaleAndSubscriptionsComeByMigration() {
-        Map<String, Object> request = planRequest("PAQ_" + suffix(), "PACKAGE");
+    void aVersionIsNeverEditedOrDeleted() {
+        String id = newPlan("PACKAGE", 12, null, true);
+        version(id, packageTerms(100)).then().statusCode(200);
+        UUID planId = UUID.fromString(id);
+
+        assertThatThrownBy(() -> QuarkusTransaction.requiringNew()
+                        .run(() -> PlanVersionEntity.findOpen(planId, null).orElseThrow().priceCents = 1))
+                .hasStackTraceContaining("a plan version only takes its valid_to, once");
+        assertThatThrownBy(() -> QuarkusTransaction.requiringNew()
+                        .run(() -> PlanVersionEntity.findOpen(planId, null)
+                                .orElseThrow()
+                                .delete()))
+                .hasStackTraceContaining("plan_versions are never deleted");
+    }
+
+    @Test
+    void onlyAdminsAddPlansAndEachKindHasItsShape() {
+        Map<String, Object> request = planRequest("PAQ_" + suffix(), "PACKAGE", 12, null, true);
         SUPPORT.request().body(request).post("/admin/plans").then().statusCode(403);
-        ConsoleUser customer = ConsoleUser.newOrganization();
-        bootstrap(customer, "Curiosa SAS");
-        customer.request().body(request).post("/admin/plans").then().statusCode(403);
+        customer("Curiosa SAS")
+                .request()
+                .body(request)
+                .post("/admin/plans")
+                .then()
+                .statusCode(403);
 
         ADMIN.request()
-                .body(planRequest("SUS_" + suffix(), "SUBSCRIPTION"))
+                .body(planRequest("SUS_" + suffix(), "SUBSCRIPTION", 12, null, true))
                 .post("/admin/plans")
                 .then()
                 .statusCode(422)
-                .body("code", equalTo("plan_kind_invalid"));
+                .body("code", equalTo("plan_validity_invalid"));
         ADMIN.request()
-                .body(planRequest("INICIAL", "TOPUP"))
+                .body(planRequest("PAQ_" + suffix(), "PACKAGE", 12, "PACKAGE", true))
+                .post("/admin/plans")
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("plan_requires_kind_invalid"));
+        ADMIN.request()
+                .body(planRequest("INICIAL", "SUBSCRIPTION", null, null, true))
                 .post("/admin/plans")
                 .then()
                 .statusCode(422)
                 .body("code", equalTo("plan_exists"));
         ADMIN.request()
-                .body(planRequest("recarga minúscula", "TOPUP"))
+                .body(planRequest("recarga minúscula", "TOPUP", 12, null, true))
                 .post("/admin/plans")
                 .then()
                 .statusCode(400);
+        assertThat(SUPPORT.request()
+                        .get("/admin/plans/catalog")
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .jsonPath()
+                        .getList("code", String.class))
+                .contains("FREE", "SOCIOS", "EMPRENDEDOR");
     }
 
-    private static String newPackage() {
-        String code = "PAQ_" + suffix();
-        ADMIN.request()
-                .body(planRequest(code, "PACKAGE"))
+    /** A new plan of the kind; returns its id. */
+    private static String newPlan(String kind, Integer validityMonths, String requiresKind, boolean listed) {
+        String code = kind.substring(0, 3) + "_" + suffix();
+        return ADMIN.request()
+                .body(planRequest(code, kind, validityMonths, requiresKind, listed))
                 .post("/admin/plans")
                 .then()
                 .statusCode(200)
                 .body("code", equalTo(code))
                 .body("active", equalTo(true))
-                .body("price", nullValue());
-        return code;
+                .body("version", nullValue())
+                .extract()
+                .path("id");
     }
 
-    private static Map<String, Object> planRequest(String code, String kind) {
-        return Map.of(
-                "code", code, "name", "Paquete 1.200", "kind", kind, "documentsIncluded", 1200, "validityMonths", 12);
-    }
-
-    private static io.restassured.response.Response price(
-            String code, long amountCents, String taxRate, OffsetDateTime validFrom) {
-        Map<String, Object> request = new HashMap<>(Map.of("amountCents", amountCents, "taxRate", taxRate));
-        if (validFrom != null) {
-            request.put("validFrom", validFrom.toString());
+    private static Map<String, Object> planRequest(
+            String code, String kind, Integer validityMonths, String requiresKind, boolean listed) {
+        Map<String, Object> request =
+                new HashMap<>(Map.of("code", code, "name", "Plan de prueba", "kind", kind, "listed", listed));
+        if (validityMonths != null) {
+            request.put("validityMonths", validityMonths);
         }
-        return ADMIN.request().body(request).post("/admin/plans/" + code + "/prices");
+        if (requiresKind != null) {
+            request.put("requiresKind", requiresKind);
+        }
+        return request;
+    }
+
+    private static Map<String, Object> packageTerms(long priceCents) {
+        return new HashMap<>(Map.of(
+                "priceCents",
+                priceCents,
+                "taxIncluded",
+                true,
+                "taxRate",
+                "0.19",
+                "documentsIncluded",
+                300,
+                "issuersIncluded",
+                1));
+    }
+
+    private static Map<String, Object> subscriptionTerms(long priceCents) {
+        Map<String, Object> terms = packageTerms(priceCents);
+        terms.put("priceOverageCents", 4_000);
+        return terms;
+    }
+
+    private static Response version(String planId, Map<String, Object> terms) {
+        return ADMIN.request().body(terms).post("/admin/plans/" + planId + "/versions");
+    }
+
+    private static ConsoleUser customer(String name) {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, name);
+        return user;
+    }
+
+    private static List<String> codes(ConsoleUser customer) {
+        return customer.request()
+                .get("/console/plans")
+                .then()
+                .extract()
+                .jsonPath()
+                .getList("code", String.class);
+    }
+
+    private static List<String> ids(ConsoleUser customer) {
+        return customer.request()
+                .get("/console/plans")
+                .then()
+                .extract()
+                .jsonPath()
+                .getList("id", String.class);
+    }
+
+    private static String codeOf(String planId) {
+        return SUPPORT.request()
+                .get("/admin/plans/catalog")
+                .then()
+                .extract()
+                .jsonPath()
+                .getString("find { it.id == '%s' }.code".formatted(planId));
     }
 
     private static String suffix() {

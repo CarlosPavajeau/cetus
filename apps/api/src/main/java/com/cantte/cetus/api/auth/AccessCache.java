@@ -72,7 +72,7 @@ public class AccessCache {
                                     SELECT a.status,
                                            coalesce(a.requestsPerSecond, p.requestsPerSecond),
                                            coalesce(a.requestsBurst, p.requestsBurst)
-                                    FROM AccountEntity a JOIN PlanEntity p ON p.code = a.plan
+                                    FROM AccountEntity a JOIN PlanEntity p ON p.id = a.planId
                                     WHERE a.id = :id
                                     """)
                             .setParameter("id", accountId)
