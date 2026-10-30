@@ -126,19 +126,30 @@ public class OpsAlertChecks {
 
     /**
      * Each share of the VAT threshold the year's paid orders reached, once a year: the key carries the year and the
-     * share, and an income that only grows keeps them known. Nothing without the UVT and the threshold configured.
+     * share, and the category is never forgotten (see {@link Category#forgotten()}), so a refund that takes the
+     * income back under a share does not make it report again. In January the previous year is checked too: what
+     * it took in after the last daily run of December is reported then, against the threshold configured now.
+     * Nothing without the UVT and the threshold configured.
      */
-    List<OpsAlert> vatThreshold(int year) {
+    List<OpsAlert> vatThreshold(LocalDate today) {
         Optional<VatThreshold> threshold = uvtValueCop.flatMap(
                 value -> vatThresholdUvt.map(units -> new VatThreshold(value, units, vatAlertPercents)));
         if (threshold.isEmpty()) {
             return List.of();
         }
+        List<Integer> years =
+                today.getMonthValue() == 1 ? List.of(today.getYear() - 1, today.getYear()) : List.of(today.getYear());
+        return years.stream()
+                .flatMap(year -> vatThreshold(threshold.get(), year).stream())
+                .toList();
+    }
+
+    private static List<OpsAlert> vatThreshold(VatThreshold threshold, int year) {
         long revenueCents = BillingOrderEntity.revenueCents(
                 LocalDate.of(year, 1, 1).atStartOfDay(Dates.BOGOTA).toOffsetDateTime(),
                 LocalDate.of(year + 1, 1, 1).atStartOfDay(Dates.BOGOTA).toOffsetDateTime());
         NumberFormat pesos = NumberFormat.getIntegerInstance(Locale.of("es", "CO"));
-        return threshold.get().crossed(revenueCents).stream()
+        return threshold.crossed(revenueCents).stream()
                 .map(percent -> OpsAlert.of(
                         Category.VAT_THRESHOLD,
                         year + ":" + percent,
@@ -148,7 +159,7 @@ public class OpsAlertChecks {
                                         year,
                                         pesos.format(revenueCents / 100),
                                         percent,
-                                        pesos.format(threshold.get().limitCents() / 100))))
+                                        pesos.format(threshold.limitCents() / 100))))
                 .toList();
     }
 

@@ -39,6 +39,9 @@ class OpsAlertsTest {
     OpsAlerts alerts;
 
     @Inject
+    OpsAlertChecks checks;
+
+    @Inject
     WorkerFixtures fixtures;
 
     @Inject
@@ -169,24 +172,51 @@ class OpsAlertsTest {
                 .call(() -> BillingOrderEntity.revenueCents(yearStart, yearStart.plusYears(1)));
         // The test profile's threshold is $1,000,000: reach 90 % of it with one more paid order.
         long limitCents = 100_000_000L;
-        BillingOrderEntity order =
-                fixtures.order(Math.max(1, limitCents * 9 / 10 - revenueCents), OffsetDateTime.now());
-        QuarkusTransaction.requiringNew().run(() -> {
-            BillingOrderEntity paid = BillingOrderEntity.findById(order.id);
-            paid.status = BillingOrderEntity.Status.PAID;
-            paid.paidAt = OffsetDateTime.now();
-        });
+        UUID order = paid(Math.max(1, limitCents * 9 / 10 - revenueCents), OffsetDateTime.now());
 
         List<OpsAlert> sent = alerts.run(Run.DAILY);
 
-        assertThat(keys(sent)).contains("vat_threshold:" + year + ":70", "vat_threshold:" + year + ":90");
+        String ninety = "vat_threshold:" + year + ":90";
+        assertThat(keys(sent)).contains("vat_threshold:" + year + ":70", ninety);
         assertThat(sent)
-                .filteredOn(alert -> alert.key().equals("vat_threshold:" + year + ":90"))
+                .filteredOn(alert -> alert.key().equals(ninety))
                 .singleElement()
                 .extracting(OpsAlert::summary)
                 .asString()
                 .contains("el 90 % del tope de no responsable de IVA ($1.000.000)");
         assertThat(keys(alerts.run(Run.DAILY))).noneMatch(key -> key.startsWith("vat_threshold:"));
+
+        // A refund takes the income back under the shares; crossing them again that year is not reported again.
+        QuarkusTransaction.requiringNew()
+                .run(() -> BillingOrderEntity.<BillingOrderEntity>findById(order).status =
+                        BillingOrderEntity.Status.REFUNDED);
+        assertThat(keys(alerts.run(Run.DAILY))).noneMatch(key -> key.startsWith("vat_threshold:"));
+        assertThat(known(ninety)).isTrue();
+        paid(limitCents, OffsetDateTime.now());
+        assertThat(keys(alerts.run(Run.DAILY))).noneMatch(key -> key.startsWith("vat_threshold:"));
+    }
+
+    @Test
+    void inJanuaryWhatTheYearBeforeTookInLateIsReported() {
+        // A year no other test pays in: 95 % of the threshold paid on its last evening, after the daily run.
+        paid(95_000_000L, OffsetDateTime.parse("2097-12-31T20:00:00-05:00"));
+
+        assertThat(keys(checks.vatThreshold(LocalDate.of(2097, 12, 31))))
+                .containsExactlyInAnyOrder("vat_threshold:2097:70", "vat_threshold:2097:90");
+        assertThat(keys(checks.vatThreshold(LocalDate.of(2098, 1, 1))))
+                .containsExactlyInAnyOrder("vat_threshold:2097:70", "vat_threshold:2097:90");
+        assertThat(keys(checks.vatThreshold(LocalDate.of(2098, 2, 1)))).isEmpty();
+    }
+
+    /** A purchase paid at the instant; returns the order's id. */
+    private UUID paid(long totalCents, OffsetDateTime paidAt) {
+        UUID order = fixtures.order(totalCents, paidAt.plusDays(1)).id;
+        QuarkusTransaction.requiringNew().run(() -> {
+            BillingOrderEntity paid = BillingOrderEntity.findById(order);
+            paid.status = BillingOrderEntity.Status.PAID;
+            paid.paidAt = paidAt;
+        });
+        return order;
     }
 
     private static List<String> keys(List<OpsAlert> sent) {

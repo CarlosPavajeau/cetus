@@ -15,6 +15,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -130,8 +131,7 @@ public class OpsAlerts {
             case CERTIFICATE_EXPIRING -> checks.expiringCertificates();
             case RANGE_RUNNING_OUT -> checks.rangesRunningOut();
             case PAYMENT_REVIEW -> checks.paymentsToReview();
-            case VAT_THRESHOLD ->
-                checks.vatThreshold(LocalDate.now(Dates.BOGOTA).getYear());
+            case VAT_THRESHOLD -> checks.vatThreshold(LocalDate.now(Dates.BOGOTA));
         };
     }
 
@@ -152,13 +152,19 @@ public class OpsAlerts {
         return known;
     }
 
-    /** A condition that cleared is forgotten, so it is reported again if it comes back. */
+    /** A condition that cleared is forgotten, so it is reported again if it comes back; see {@link Category#forgotten()}. */
     private void forgetCleared(Set<String> current, Set<String> known) {
         List<String> cleared =
                 known.stream().filter(key -> !current.contains(key)).toList();
+        List<String> forgotten = Arrays.stream(Category.values())
+                .filter(Category::forgotten)
+                .map(Category::id)
+                .toList();
         if (!cleared.isEmpty()) {
-            em.createNativeQuery("DELETE FROM billing.ops_alerts WHERE alert_key IN (:keys)")
+            em.createNativeQuery(
+                            "DELETE FROM billing.ops_alerts WHERE alert_key IN (:keys) AND category IN (:categories)")
                     .setParameter("keys", cleared)
+                    .setParameter("categories", forgotten)
                     .executeUpdate();
         }
     }
