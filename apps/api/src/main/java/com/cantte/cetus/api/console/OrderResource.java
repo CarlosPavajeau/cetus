@@ -52,7 +52,13 @@ public class OrderResource {
     @POST
     @Transactional
     @Consumes(MediaType.APPLICATION_JSON)
-    @APIResponse(responseCode = "201", description = "Created, with its checkout")
+    @APIResponse(
+            responseCode = "201",
+            description = "Created, with its checkout",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = OrderView.class)))
     @APIResponse(
             responseCode = "422",
             description = "Unprocessable Entity",
