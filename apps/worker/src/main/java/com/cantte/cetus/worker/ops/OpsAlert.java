@@ -14,7 +14,8 @@ public record OpsAlert(String key, Category category, boolean repeats, String su
         DOCUMENT_STUCK,
         RANGE_UNVERIFIED,
         CERTIFICATE_EXPIRING,
-        RANGE_RUNNING_OUT;
+        RANGE_RUNNING_OUT,
+        PAYMENT_REVIEW;
 
         String id() {
             return name().toLowerCase();

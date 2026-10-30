@@ -109,6 +109,22 @@ public class OpsAlertChecks {
                 .toList();
     }
 
+    /** Orders a payment left for a person: another amount, or an approval or a void that does not fit. */
+    List<OpsAlert> paymentsToReview() {
+        return rows("""
+                SELECT o.id::text, o.reference, o.review_reason
+                FROM billing.billing_orders o
+                WHERE o.review_reason IS NOT NULL
+                ORDER BY o.updated_at
+                """, Map.of()).stream()
+                .map(r -> OpsAlert.of(
+                        Category.PAYMENT_REVIEW,
+                        r[0],
+                        false,
+                        "Orden %s (%s) requiere revisión: %s".formatted(r[1], r[0], shorten(r[2]))))
+                .toList();
+    }
+
     /** Active ranges with less than {@code range-min-available} of their numbers left, or about to expire. */
     List<OpsAlert> rangesRunningOut() {
         return rows(

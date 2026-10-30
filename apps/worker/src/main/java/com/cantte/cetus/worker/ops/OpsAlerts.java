@@ -25,7 +25,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 /**
- * Emails the operators (CETUS_OPS_ALERT_EMAIL) about what needs a person: dead jobs and stuck documents
+ * Emails the operators (CETUS_OPS_ALERT_EMAIL) about what needs a person: dead jobs, stuck documents and payments to review
  * every few minutes; expiring certificates and ranges running out once a day. Each condition is sent
  * once and repeated at most once a day while it persists (see ops_alerts). Safe on many replicas: a run
  * holds a Postgres advisory lock, and a replica that does not get it skips the run.
@@ -38,7 +38,8 @@ public class OpsAlerts {
     private static final long LOCK_ID = 0x6365747573_6f7073L;
 
     public enum Run {
-        FREQUENT(EnumSet.of(Category.JOB_DEAD, Category.DOCUMENT_STUCK, Category.RANGE_UNVERIFIED)),
+        FREQUENT(EnumSet.of(
+                Category.JOB_DEAD, Category.DOCUMENT_STUCK, Category.RANGE_UNVERIFIED, Category.PAYMENT_REVIEW)),
         DAILY(EnumSet.of(Category.CERTIFICATE_EXPIRING, Category.RANGE_RUNNING_OUT));
 
         final Set<Category> categories;
@@ -125,6 +126,7 @@ public class OpsAlerts {
             case RANGE_UNVERIFIED -> checks.unverifiedRanges();
             case CERTIFICATE_EXPIRING -> checks.expiringCertificates();
             case RANGE_RUNNING_OUT -> checks.rangesRunningOut();
+            case PAYMENT_REVIEW -> checks.paymentsToReview();
         };
     }
 

@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":modules:aws"))
     implementation(project(":modules:email"))
     implementation(project(":modules:cache"))
+    implementation(project(":modules:payments"))
 
     implementation(libs.quarkus.arc)
     implementation(libs.quarkus.scheduler)
