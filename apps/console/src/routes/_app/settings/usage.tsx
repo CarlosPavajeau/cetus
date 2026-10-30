@@ -16,6 +16,7 @@ import {
   formatCount,
   periodLabel,
   planDocuments,
+  planDocumentsLimit,
   planOverage,
   planPrice,
   planTitle,
@@ -35,7 +36,8 @@ export const Route = createFileRoute("/_app/settings/usage")({
 function Usage() {
   const { data: usage } = useSuspenseQuery(usageQuery);
   const { plan } = usage.current;
-  const unassigned = plan.code === "FREE";
+  const free = plan.code === "FREE";
+  const limit = planDocumentsLimit(plan);
 
   return (
     <>
@@ -44,25 +46,24 @@ function Usage() {
         lead="Cuentan los documentos que la DIAN acepta en producción: facturas y notas. Las pruebas de habilitación y la simulación no cuentan."
       />
 
-      {unassigned && (
+      {free && (
         <Alert>
-          <AlertTitle>Aún no tienes un plan</AlertTitle>
+          <AlertTitle>Estás en el plan Gratis</AlertTitle>
           <AlertDescription>
-            Medimos tu uso sin límites mientras el equipo de Cetus te asigna uno. Escríbenos para
-            elegir el plan que se ajuste a tu volumen.
+            Es para probar Cetus en producción con pocos documentos al mes. Escríbenos para elegir
+            el plan que se ajuste a tu volumen.
           </AlertDescription>
         </Alert>
       )}
 
-      <Section
-        id="usage-plan"
-        title={unassigned ? plan.name : `${planTitle(plan)} · ${planPrice(plan)}`}
-      >
+      <Section id="usage-plan" title={`${planTitle(plan)} · ${planPrice(plan)}`}>
         <dl className="grid gap-4 sm:grid-cols-4">
           <Entry label="Documentos incluidos">{planDocuments(plan)}</Entry>
           <Entry label="Documentos adicionales">
-            {planOverage(plan) ??
-              (plan.documentsIncluded === null ? "No aplica" : "Según tu contrato")}
+            {limit === null
+              ? (planOverage(plan) ??
+                (plan.documentsIncluded === null ? "No aplica" : "Según tu contrato"))
+              : `Hasta ${formatCount(limit)} al mes; después, solo notas crédito`}
           </Entry>
           <Entry label="Emisores en producción">
             {plan.issuersIncluded === null

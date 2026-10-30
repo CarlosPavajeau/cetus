@@ -3,11 +3,12 @@ import { Progress, ProgressLabel, ProgressValue } from "~/components/ui/progress
 import { documentTypeLabel } from "~/features/documents/labels";
 import type { PeriodUsage } from "~/lib/api/types";
 
-import { formatCop, formatCount, periodLabel } from "./labels";
+import { formatCop, formatCount, periodLabel, planDocumentsLimit } from "./labels";
 
 /** The billable documents of a month against the plan's quota, with the overage when it went over. */
 export function PeriodUsageSummary({ usage }: { usage: PeriodUsage }) {
   const included = usage.plan.documentsIncluded;
+  const limit = planDocumentsLimit(usage.plan);
 
   return (
     <div className="flex flex-col gap-4">
@@ -27,8 +28,11 @@ export function PeriodUsageSummary({ usage }: { usage: PeriodUsage }) {
       {usage.overage > 0 && (
         <p className="text-xs text-muted-foreground">
           {formatCount(usage.overage)} documentos por encima del plan
-          {usage.costOverageCop !== null && ` · ${formatCop(usage.costOverageCop)} de excedente`}.
-          La facturación no se detiene.
+          {usage.costOverageCop !== null &&
+            ` · ${formatCop(usage.costOverageCop)} de excedente`}.{" "}
+          {limit === null
+            ? "La facturación no se detiene."
+            : `Al llegar a ${formatCount(limit)}, la emisión en producción se detiene hasta el mes siguiente; las notas crédito siempre se pueden emitir.`}
         </p>
       )}
       <dl className="grid gap-4 sm:grid-cols-3">

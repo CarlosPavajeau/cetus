@@ -2562,6 +2562,11 @@ export interface components {
             documentsIncluded: number | null;
             /**
              * Format: int32
+             * @description Documents a month may take above the included ones before new ones are refused, credit notes aside; null never refuses them
+             */
+            documentsGrace: number | null;
+            /**
+             * Format: int32
              * @description Price of each document above the included ones
              */
             priceOverageCop: number | null;
@@ -3067,6 +3072,20 @@ export interface components {
         };
         /** @description `product_exists`: ya hay un producto con ese código. */
         ProductRejected: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description `plan_document_limit`: la cuenta ya emitió en producción los documentos que su plan permite este
+         *     mes. Puedes emitir de nuevo el mes siguiente, hora de Colombia, o al cambiar de plan. Las notas
+         *     crédito nunca reciben este error.
+         */
+        PlanDocumentLimit: {
             headers: {
                 "X-Request-Id": components["headers"]["X-Request-Id"];
                 [name: string]: unknown;
@@ -7456,6 +7475,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PlanDocumentLimit"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["IdempotencyConflict"];
@@ -7557,6 +7577,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PlanDocumentLimit"];
             403: components["responses"]["Forbidden"];
             409: components["responses"]["IdempotencyConflict"];
             422: components["responses"]["InvoiceRejected"];
