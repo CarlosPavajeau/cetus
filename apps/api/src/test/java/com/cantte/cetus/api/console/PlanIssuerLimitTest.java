@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
@@ -69,6 +70,22 @@ class PlanIssuerLimitTest {
                 .containsOnly("plan_issuer_limit");
     }
 
+    @Test
+    void requestsRacingForTheSameNitCreateItOnce() throws Exception {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        assignPlan(bootstrap(user, "Duplicada SAS"), "CRECIMIENTO");
+        Callable<Response> create =
+                () -> user.request().body(issuerRequest("900444555", "LIVE")).post("/console/issuers");
+
+        List<Response> responses = race(List.of(create, create));
+
+        assertThat(responses).extracting(Response::statusCode).containsExactlyInAnyOrder(200, 422);
+        assertThat(responses)
+                .filteredOn(response -> response.statusCode() == 422)
+                .extracting(response -> response.jsonPath().getString("code"))
+                .containsOnly("issuer_already_exists");
+    }
+
     /** Runs the requests at once, on threads that see the test's classes as RestAssured needs. */
     private static List<Response> race(List<Callable<Response>> racers) throws Exception {
         ClassLoader classes = Thread.currentThread().getContextClassLoader();
@@ -98,9 +115,9 @@ class PlanIssuerLimitTest {
     }
 
     @Test
-    void anAccountWithoutAPlanHasNoLimit() {
+    void aPlanWithoutALimitTakesAnyNumber() {
         ConsoleUser user = ConsoleUser.newOrganization();
-        bootstrap(user, "Libre SAS");
+        assignPlan(bootstrap(user, "Socios SAS"), "SOCIOS");
 
         createIssuer(user, "900111222", "LIVE");
         createIssuer(user, "900333444", "LIVE");
@@ -108,12 +125,14 @@ class PlanIssuerLimitTest {
 
     private static void assignPlan(String accountId, String plan) {
         QuarkusTransaction.requiringNew()
-                .run(() -> AccountEntity.<AccountEntity>findById(UUID.fromString(accountId)).plan = plan);
+                .run(() -> AccountEntity.<AccountEntity>findById(UUID.fromString(accountId)).planId =
+                        PlanEntity.byCode(plan).id);
     }
 
     private static void assignPlan(ConsoleUser user, String plan) {
         QuarkusTransaction.requiringNew()
                 .run(() ->
-                        AccountEntity.findByOrganization(user.organizationId()).orElseThrow().plan = plan);
+                        AccountEntity.findByOrganization(user.organizationId()).orElseThrow().planId =
+                                PlanEntity.byCode(plan).id);
     }
 }

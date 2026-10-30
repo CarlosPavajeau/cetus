@@ -29,6 +29,7 @@ import com.cantte.cetus.persistence.entity.DocumentTaxEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
@@ -72,6 +73,7 @@ public class WorkerFixtures {
             account.id = Ids.newId();
             account.organizationId = "org_" + account.id;
             account.name = "Worker SAS";
+            account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
             account.persist();
 
             IssuerEntity issuer = new IssuerEntity();
@@ -149,6 +151,7 @@ public class WorkerFixtures {
             account.id = Ids.newId();
             account.organizationId = "org_" + account.id;
             account.name = "Sandbox SAS";
+            account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
             account.persist();
 
             IssuerEntity issuer = new IssuerEntity();

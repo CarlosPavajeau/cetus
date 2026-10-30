@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * Some changes are only for the organization's owners and admins (its member roles, carried in the token's
  * "orgRoles" claim): who receives the account's notices, the API keys, the webhooks and the issuers, whose
- * certificate and promotion decide what is issued in the company's name. Other members only read them and
+ * certificate and promotion decide what is issued in the company's name, and whom Cetus invoices. Other members only read them and
  * answer 403. A token without the claim has no roles, so it is refused too.
  */
 @Provider
@@ -25,8 +25,12 @@ public class OrganizationRoleFilter implements ContainerRequestFilter {
 
     private static final Set<String> READS = Set.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS);
 
-    private static final List<String> MANAGED =
-            List.of("/console/contacts", "/console/api-keys", "/console/webhook-endpoints", "/console/issuers");
+    private static final List<String> MANAGED = List.of(
+            "/console/contacts",
+            "/console/api-keys",
+            "/console/webhook-endpoints",
+            "/console/issuers",
+            "/console/billing-profile");
 
     @Inject
     ConsoleContext context;

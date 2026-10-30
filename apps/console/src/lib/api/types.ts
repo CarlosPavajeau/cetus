@@ -177,12 +177,16 @@ export const auditActions = [
   "CONTACT_VERIFIED",
   "SUPPORT_TICKET_CREATED",
   "SUPPORT_TICKET_STATUS_CHANGED",
+  "PLAN_CREATED",
+  "PLAN_VERSION_ADDED",
+  "BILLING_PROFILE_UPDATED",
 ] as const satisfies readonly AuditAction[];
 
-/** Actions on a person rather than an account: only the administration's log has them. */
+/** Actions on a person or on the plan catalog rather than an account: only the administration's log has them. */
 export const userAuditActions = [
   "USER_BANNED",
   "USER_UNBANNED",
+  "PLAN_CREATED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.

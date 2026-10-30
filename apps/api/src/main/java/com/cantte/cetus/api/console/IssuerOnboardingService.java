@@ -89,22 +89,15 @@ public class IssuerOnboardingService {
             throw new DomainException(
                     "check_digit_invalid", "The NIT check digit does not match (expected " + checkDigit + ")");
         }
+        requireNewNit(accountId, request);
         if (request.environment() == Environment.SANDBOX) {
             requireSandboxIssuerSlot(accountId);
         }
         if (request.environment() == Environment.LIVE) {
             requirePlanIssuerSlot(accountId);
         }
-        boolean exists = IssuerEntity.count(
-                        "accountId = ?1 and environment = ?2 and nit = ?3",
-                        accountId,
-                        request.environment(),
-                        request.nit())
-                > 0;
-        if (exists) {
-            throw new DomainException(
-                    "issuer_already_exists", "This NIT already has an issuer in " + request.environment());
-        }
+        // Again under the slot's lock: a request for the same NIT may have committed while this one waited for it.
+        requireNewNit(accountId, request);
         IssuerEntity issuer = new IssuerEntity();
         issuer.id = Ids.newId();
         issuer.accountId = accountId;
@@ -128,6 +121,19 @@ public class IssuerOnboardingService {
             sandboxIssuers.enable(issuer);
         }
         return issuer;
+    }
+
+    private static void requireNewNit(UUID accountId, IssuerViews.CreateIssuerRequest request) {
+        boolean exists = IssuerEntity.count(
+                        "accountId = ?1 and environment = ?2 and nit = ?3",
+                        accountId,
+                        request.environment(),
+                        request.nit())
+                > 0;
+        if (exists) {
+            throw new DomainException(
+                    "issuer_already_exists", "This NIT already has an issuer in " + request.environment());
+        }
     }
 
     /**

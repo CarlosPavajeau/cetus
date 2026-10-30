@@ -158,12 +158,17 @@ public record NotificationEmail(String subject, String html, String text) {
                                         data.get("included"),
                                         data.get("plan"),
                                         data.get("period")),
-                        "La facturación no se detiene: %s Si esperas más volumen, escríbenos para cambiar de plan."
-                                .formatted(
-                                        data.containsKey("priceOverage")
-                                                ? "cada documento adicional se cobra a %s."
-                                                        .formatted(data.get("priceOverage"))
-                                                : "los documentos adicionales se cobran según tu contrato."),
+                        data.containsKey("limit")
+                                ? ("Al llegar a %s documentos en el mes, la emisión en producción se detiene hasta el"
+                                                + " mes siguiente; las notas crédito siempre se pueden emitir. Para"
+                                                + " seguir facturando, escríbenos y elige un plan.")
+                                        .formatted(data.get("limit"))
+                                : "La facturación no se detiene: %s Si esperas más volumen, escríbenos para cambiar de plan."
+                                        .formatted(
+                                                data.containsKey("priceOverage")
+                                                        ? "cada documento adicional se cobra a %s."
+                                                                .formatted(data.get("priceOverage"))
+                                                        : "los documentos adicionales se cobran según tu contrato."),
                         "Ver el uso del plan",
                         "/settings/usage");
         };

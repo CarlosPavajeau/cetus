@@ -43,5 +43,11 @@ public enum AuditAction {
     CONTACT_VERIFIED,
     /** A help request from the console, emailed to the Cetus support mailbox. */
     SUPPORT_TICKET_CREATED,
-    SUPPORT_TICKET_STATUS_CHANGED
+    SUPPORT_TICKET_STATUS_CHANGED,
+    /** A plan put on sale by the Cetus team; recorded without an account, like the ones below. */
+    PLAN_CREATED,
+    /** New terms for a plan, which close its version before them; a private one is recorded on its account. */
+    PLAN_VERSION_ADDED,
+    /** Who Cetus invoices for the account's purchases. */
+    BILLING_PROFILE_UPDATED
 }

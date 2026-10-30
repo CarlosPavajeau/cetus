@@ -43,7 +43,7 @@ public class AdminAccountQueries {
     public List<AccountSummaryView> list(
             AccountEntity.Status status, List<String> organizationIds, UUID before, int size) {
         StringBuilder sql = new StringBuilder("""
-                SELECT a.id, a.organization_id, a.name, a.status, a.plan, a.created_at,
+                SELECT a.id, a.organization_id, a.name, a.status, p.code, a.created_at,
                        (SELECT count(*) FROM billing.issuers i WHERE i.account_id = a.id AND i.environment <> 'SANDBOX'),
                        (SELECT count(*) FROM billing.issuers i
                         WHERE i.account_id = a.id AND i.environment = 'LIVE' AND i.status = 'ENABLED'),
@@ -54,7 +54,7 @@ public class AdminAccountQueries {
                           AND d.created_at >= :weekAgo),
                        (SELECT max(d.updated_at) FROM billing.documents d
                         WHERE d.account_id = a.id AND d.environment <> 'SANDBOX' AND d.status IN ('REJECTED', 'FAILED'))
-                FROM billing.accounts a
+                FROM billing.accounts a JOIN billing.plans p ON p.id = a.plan_id
                 WHERE true
                 """);
         if (status != null) {

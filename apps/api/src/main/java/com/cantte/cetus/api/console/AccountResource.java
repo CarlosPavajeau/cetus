@@ -7,6 +7,7 @@ import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -71,6 +72,7 @@ public class AccountResource {
         account.id = Ids.newId();
         account.organizationId = context.organizationId();
         account.name = request.name();
+        account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
         account.persist();
         // The creator is the organization's owner: every category waits for them to verify their address.
         context.email().ifPresent(email -> contacts.seedOwner(account.id, email));
@@ -110,7 +112,7 @@ public class AccountResource {
                     account.id,
                     account.name,
                     account.status,
-                    account.plan,
+                    PlanEntity.of(account).code,
                     account.status == AccountEntity.Status.ACTIVE ? null : account.statusReason);
         }
     }

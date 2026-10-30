@@ -1,6 +1,7 @@
 package com.cantte.cetus.api.documents;
 
 import com.cantte.cetus.api.error.ProblemDetail;
+import com.cantte.cetus.api.usage.PlanDocumentLimit;
 import com.cantte.cetus.cache.Cache;
 import com.cantte.cetus.cache.Caches;
 import com.cantte.cetus.domain.DomainException;
@@ -55,6 +56,9 @@ public class DocumentDrafts {
 
     @Inject
     MeterRegistry meters;
+
+    @Inject
+    PlanDocumentLimit planDocuments;
 
     @ConfigProperty(name = "cetus.sandbox.daily-documents")
     int sandboxDailyDocuments;
@@ -141,6 +145,9 @@ public class DocumentDrafts {
         ZonedDateTime now = ZonedDateTime.now(DianTime.ZONE).truncatedTo(ChronoUnit.SECONDS);
         if (environment == Environment.SANDBOX) {
             requireSandboxQuota(accountId, now);
+        }
+        if (environment == Environment.LIVE) {
+            planDocuments.require(accountId, type);
         }
         NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, now.toLocalDate())
                 .orElseThrow(() -> new DomainException(

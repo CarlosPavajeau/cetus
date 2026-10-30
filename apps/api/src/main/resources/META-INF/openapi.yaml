@@ -237,6 +237,18 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetail"
+    PlanDocumentLimit:
+      description: |
+        `plan_document_limit`: la cuenta ya emitió en producción los documentos que su plan permite este
+        mes. Puedes emitir de nuevo el mes siguiente, hora de Colombia, o al cambiar de plan. Las notas
+        crédito nunca reciben este error.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
     TooManyRequests:
       description: |
         `rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan. Espera los

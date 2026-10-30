@@ -6,6 +6,7 @@ import com.cantte.cetus.api.documents.DocumentDrafts;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.help.SupportTickets;
 import com.cantte.cetus.api.json.SafeStrings;
+import com.cantte.cetus.api.usage.PlanDocumentLimit;
 import com.cantte.cetus.domain.DomainException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
@@ -115,6 +116,11 @@ public class ErrorMappers {
 
     @ServerExceptionMapper
     public Response sandboxDailyLimit(DocumentDrafts.SandboxDailyLimit e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response planDocumentLimit(PlanDocumentLimit.Reached e) {
         return e.getResponse();
     }
 

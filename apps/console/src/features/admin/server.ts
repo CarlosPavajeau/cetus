@@ -170,7 +170,7 @@ export const changeAccountPlan = createServerFn({ method: "POST" })
     await requireStaff("admin");
     return api.put("/admin/accounts/{id}/plan", {
       params: { path: { id: data.id } },
-      body: { plan: data.plan, reason: data.reason },
+      body: { planId: data.planId, reason: data.reason },
     });
   });
 

@@ -525,6 +525,9 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
+          "402": {
+            "$ref": "#/components/responses/PlanDocumentLimit"
+          },
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
@@ -699,6 +702,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PlanDocumentLimit"
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
@@ -1614,6 +1620,21 @@
       },
       "NotFound": {
         "description": "`not_found`: no existe en el ambiente de la llave. Un recurso de otro ambiente tampoco se encuentra.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "PlanDocumentLimit": {
+        "description": "`plan_document_limit`: la cuenta ya emitió en producción los documentos que su plan permite este\nmes. Puedes emitir de nuevo el mes siguiente, hora de Colombia, o al cambiar de plan. Las notas\ncrédito nunca reciben este error.\n",
         "headers": {
           "X-Request-Id": {
             "$ref": "#/components/headers/X-Request-Id"
