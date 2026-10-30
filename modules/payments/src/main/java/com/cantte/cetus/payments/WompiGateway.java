@@ -21,12 +21,15 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 /**
  * {@link PaymentGateway} on Wompi's REST API (https://docs.wompi.co/docs/colombia/). Checkouts are signed with
@@ -37,8 +40,16 @@ public final class WompiGateway implements PaymentGateway {
 
     public static final URI CHECKOUT_URL = URI.create("https://checkout.wompi.co/p/");
 
-    /** The signed property that names the transaction of a transaction event. */
-    private static final String TRANSACTION_ID = "transaction.id";
+    /**
+     * The signed properties of a transaction event, in Wompi's order. Only with exactly these, and values of their
+     * shapes, does an event name a transaction: the checksum covers the values joined without a separator, not the
+     * property names, so any other list could cut the same text into another id.
+     */
+    private static final List<String> TRANSACTION_PROPERTIES =
+            List.of("transaction.id", "transaction.status", "transaction.amount_in_cents");
+
+    private static final Pattern TRANSACTION_ID = Pattern.compile("\\d+-\\d+-\\d+");
+    private static final Pattern DIGITS = Pattern.compile("\\d+");
 
     private static final int NOT_FOUND = 404;
     private static final int TOO_MANY_REQUESTS = 429;
@@ -118,6 +129,7 @@ public final class WompiGateway implements PaymentGateway {
             return new Invalid("unsigned");
         }
         StringBuilder concatenated = new StringBuilder();
+        List<String> paths = new ArrayList<>();
         Map<String, String> signed = new LinkedHashMap<>();
         JsonNode data = event.path("data");
         for (JsonNode property : properties) {
@@ -128,6 +140,7 @@ public final class WompiGateway implements PaymentGateway {
             if (!value.isValueNode()) {
                 return new Invalid("signed property missing");
             }
+            paths.add(property.asText());
             signed.put(property.asText(), value.asText());
             concatenated.append(value.asText());
         }
@@ -141,13 +154,24 @@ public final class WompiGateway implements PaymentGateway {
         if (!environment.equals(keys.environment().code())) {
             return new OtherEnvironment(environment);
         }
-        // The checksum covers the values, not where they are: what the event is about comes only from the signed
-        // paths, and the key names each path, so moving a value to another field is another event.
-        String key = signed.entrySet().stream()
-                .map(entry -> entry.getKey() + "=" + entry.getValue())
-                .collect(Collectors.joining("|"));
-        return new Verified(
-                new PaymentEvent(key, event.path("event").asText(""), Optional.ofNullable(signed.get(TRANSACTION_ID))));
+        // Every rearrangement of a genuine event that still verifies has its checksum, and so do Wompi's resends.
+        return new Verified(new PaymentEvent(
+                checksum.toLowerCase(Locale.ROOT), event.path("event").asText(""), transactionIdOf(paths, signed)));
+    }
+
+    private static Optional<String> transactionIdOf(List<String> paths, Map<String, String> signed) {
+        if (!paths.equals(TRANSACTION_PROPERTIES)) {
+            return Optional.empty();
+        }
+        String id = signed.get("transaction.id");
+        boolean statusKnown = Arrays.stream(PaymentStatus.values())
+                .anyMatch(status -> status.name().equals(signed.get("transaction.status")));
+        return TRANSACTION_ID.matcher(id).matches()
+                        && statusKnown
+                        && DIGITS.matcher(signed.get("transaction.amount_in_cents"))
+                                .matches()
+                ? Optional.of(id)
+                : Optional.empty();
     }
 
     private HttpResponse<String> send(HttpRequest request) {
