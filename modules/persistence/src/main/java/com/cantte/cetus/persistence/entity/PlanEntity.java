@@ -3,19 +3,41 @@ package com.cantte.cetus.persistence.entity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.Table;
 import java.util.List;
 
-/** What a plan includes; see V24. A null limit is no limit, and a null price is agreed by contract. */
+/**
+ * What a plan includes; see V24 and V31. A null limit is no limit, and a null price is agreed by contract. Only a
+ * subscription is an account's plan; a package or a top-up is bought once and lasts {@link #validityMonths}.
+ */
 @Entity
 @Table(name = "plans")
 public class PlanEntity extends PanacheEntityBase {
+
+    public enum Kind {
+        SUBSCRIPTION,
+        PACKAGE,
+        TOPUP
+    }
 
     @Id
     public String code;
 
     public String name;
+
+    @Enumerated(EnumType.STRING)
+    public Kind kind = Kind.SUBSCRIPTION;
+
+    /** How long the documents of a package or a top-up last; null for a subscription, whose are monthly. */
+    @Column(name = "validity_months")
+    public Integer validityMonths;
+
+    /** Whether it is still sold; a retired plan keeps its row for the accounts and orders that reference it. */
+    public boolean active = true;
 
     @Column(name = "price_monthly_cop")
     public Long priceMonthlyCop;
@@ -57,5 +79,9 @@ public class PlanEntity extends PanacheEntityBase {
 
     public static List<PlanEntity> listAssignable() {
         return list("assignable = true order by coalesce(priceMonthlyCop, 0), code");
+    }
+
+    public static PlanEntity lock(String code) {
+        return findById(code, LockModeType.PESSIMISTIC_WRITE);
     }
 }
