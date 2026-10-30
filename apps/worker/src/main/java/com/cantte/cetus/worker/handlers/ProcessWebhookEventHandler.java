@@ -1,6 +1,8 @@
 package com.cantte.cetus.worker.handlers;
 
 import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.payments.EventCheck;
+import com.cantte.cetus.payments.PaymentEvent;
 import com.cantte.cetus.payments.PaymentGateway;
 import com.cantte.cetus.payments.PaymentRejectedException;
 import com.cantte.cetus.payments.PaymentTransaction;
@@ -13,8 +15,6 @@ import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.PaymentClients;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -32,7 +32,6 @@ import java.util.UUID;
 @ApplicationScoped
 public class ProcessWebhookEventHandler implements JobHandler {
 
-    static final String TRANSACTION_UPDATED = "transaction.updated";
     /** How long events wait for the Wompi keys to be set. */
     private static final Duration UNCONFIGURED_DELAY = Duration.ofMinutes(30);
 
@@ -48,9 +47,6 @@ public class ProcessWebhookEventHandler implements JobHandler {
 
     @Inject
     EmailEvents emails;
-
-    @Inject
-    ObjectMapper json;
 
     @Override
     public String type() {
@@ -78,20 +74,22 @@ public class ProcessWebhookEventHandler implements JobHandler {
         finish(job.referenceId, Status.FAILED, reason);
     }
 
-    private Result wompi(Received event) throws IOException {
-        if (!TRANSACTION_UPDATED.equals(event.type())) {
-            return new Result(Status.IGNORED, "Not about a transaction");
-        }
-        JsonNode id =
-                json.readTree(event.payload()).path("data").path("transaction").path("id");
-        if (!id.isValueNode() || id.asText().isBlank()) {
-            throw new GiveUp("The event names no transaction");
-        }
+    /**
+     * The stored event is checked again and only its signed values are used: the checksum covers the values, not
+     * the rest of the body.
+     */
+    private Result wompi(Received event) {
         PaymentGateway gateway =
                 payments.gateway().orElseThrow(() -> new RetryLater(UNCONFIGURED_DELAY, "Payments are not configured"));
+        if (!(gateway.verifyEvent(event.payload()) instanceof EventCheck.Verified(PaymentEvent verified))) {
+            throw new GiveUp("The stored event no longer verifies with the events secret");
+        }
+        if (verified.transactionId().isEmpty()) {
+            return new Result(Status.IGNORED, "Not about a transaction");
+        }
         Optional<PaymentTransaction> transaction;
         try {
-            transaction = gateway.transaction(id.asText());
+            transaction = gateway.transaction(verified.transactionId().get());
         } catch (PaymentRejectedException e) {
             throw new GiveUp(e.getMessage(), e);
         }
