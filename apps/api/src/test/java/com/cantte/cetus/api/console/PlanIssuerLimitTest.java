@@ -69,6 +69,22 @@ class PlanIssuerLimitTest {
                 .containsOnly("plan_issuer_limit");
     }
 
+    @Test
+    void requestsRacingForTheSameNitCreateItOnce() throws Exception {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        assignPlan(bootstrap(user, "Duplicada SAS"), "CRECIMIENTO");
+        Callable<Response> create =
+                () -> user.request().body(issuerRequest("900444555", "LIVE")).post("/console/issuers");
+
+        List<Response> responses = race(List.of(create, create));
+
+        assertThat(responses).extracting(Response::statusCode).containsExactlyInAnyOrder(200, 422);
+        assertThat(responses)
+                .filteredOn(response -> response.statusCode() == 422)
+                .extracting(response -> response.jsonPath().getString("code"))
+                .containsOnly("issuer_already_exists");
+    }
+
     /** Runs the requests at once, on threads that see the test's classes as RestAssured needs. */
     private static List<Response> race(List<Callable<Response>> racers) throws Exception {
         ClassLoader classes = Thread.currentThread().getContextClassLoader();

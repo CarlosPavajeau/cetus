@@ -50,6 +50,21 @@ class PlanDocumentLimitTest {
     }
 
     @Test
+    void theConsoleGetsTheSameCode() {
+        Live live = live(1, 0);
+        invoice(live).then().statusCode(202);
+
+        live.user()
+                .request()
+                .header("Idempotency-Key", UUID.randomUUID().toString())
+                .body(invoiceBody(live))
+                .post("/console/documents/invoices")
+                .then()
+                .statusCode(402)
+                .body("code", equalTo("plan_document_limit"));
+    }
+
+    @Test
     void creditNotesAreTakenAboveTheLimit() {
         Live live = live(1, 0);
         String invoiceId = invoice(live).then().statusCode(202).extract().path("id");
@@ -67,7 +82,7 @@ class PlanDocumentLimitTest {
         invoice(live).then().statusCode(202);
     }
 
-    private record Live(String issuerId, String apiKey) {}
+    private record Live(ConsoleUser user, String issuerId, String apiKey) {}
 
     /** A production issuer with every range, on a plan of its own with the given documents and grace. */
     private static Live live(int included, Integer grace) {
@@ -93,23 +108,24 @@ class PlanDocumentLimitTest {
                 .statusCode(200)
                 .extract()
                 .path("secret");
-        return new Live(issuerId, key);
+        return new Live(user, issuerId, key);
     }
 
     private static Response invoice(Live live) {
-        return create(
-                live,
-                "/v1/invoices",
-                Map.of(
-                        "issuerId", live.issuerId(),
-                        "customer",
-                                Map.of(
-                                        "personType", "NATURAL_PERSON",
-                                        "identificationType", "CITIZEN_ID",
-                                        "identificationNumber", "1020304050",
-                                        "legalName", "Consumidor Final"),
-                        "payment", Map.of("method", "CASH", "meansCode", "10"),
-                        "lines", List.of(line(1000))));
+        return create(live, "/v1/invoices", invoiceBody(live));
+    }
+
+    private static Map<String, Object> invoiceBody(Live live) {
+        return Map.of(
+                "issuerId", live.issuerId(),
+                "customer",
+                        Map.of(
+                                "personType", "NATURAL_PERSON",
+                                "identificationType", "CITIZEN_ID",
+                                "identificationNumber", "1020304050",
+                                "legalName", "Consumidor Final"),
+                "payment", Map.of("method", "CASH", "meansCode", "10"),
+                "lines", List.of(line(1000)));
     }
 
     private static Response creditNote(Live live, String invoiceId) {
