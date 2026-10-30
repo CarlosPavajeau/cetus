@@ -2,6 +2,7 @@ package com.cantte.cetus.payments;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.cantte.cetus.payments.EventCheck.Invalid;
 import com.cantte.cetus.payments.EventCheck.OtherEnvironment;
@@ -68,7 +69,10 @@ class WompiGatewayTest {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", exchange -> {
             last.set(new Exchange(
-                    exchange.getRequestURI().getRawPath(),
+                    exchange.getRequestURI().getRawPath()
+                            + (exchange.getRequestURI().getRawQuery() == null
+                                    ? ""
+                                    : "?" + exchange.getRequestURI().getRawQuery()),
                     exchange.getRequestHeaders().getFirst("Authorization")));
             byte[] response = JSON.writeValueAsBytes(responseBody);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -205,6 +209,30 @@ class WompiGatewayTest {
         assertThat(transaction.status().isFinal()).isFalse();
         assertThat(transaction.finalizedAt()).isEmpty();
         assertThat(transaction.statusMessage()).isEmpty();
+    }
+
+    @Test
+    void searchesTheTransactionsOfAReference() {
+        responseBody = new Envelope(List.of(
+                new Transaction(
+                        "1-2-3", "CET-1", "DECLINED", 100, "COP", "CARD", null, "2026-10-30T15:00:00.000Z", null),
+                new Transaction(
+                        "1-2-4",
+                        "CET-1",
+                        "APPROVED",
+                        100,
+                        "COP",
+                        "CARD",
+                        null,
+                        "2026-10-30T15:01:00.000Z",
+                        "2026-10-30T15:01:04.000Z")));
+
+        List<PaymentTransaction> transactions = gateway(DOCS_KEYS).transactions("CET 1");
+
+        assertThat(last.get()).isEqualTo(new Exchange("/v1/transactions?reference=CET+1", "Bearer prv_prod_example"));
+        assertThat(transactions)
+                .extracting(PaymentTransaction::id, PaymentTransaction::status)
+                .containsExactly(tuple("1-2-3", PaymentStatus.DECLINED), tuple("1-2-4", PaymentStatus.APPROVED));
     }
 
     @Test

@@ -81,18 +81,29 @@ public final class WompiGateway implements PaymentGateway {
 
     @Override
     public Optional<PaymentTransaction> transaction(String id) {
-        HttpRequest request = HttpRequest.newBuilder(
-                        URI.create(baseUrl + "/transactions/" + URLEncoder.encode(id, StandardCharsets.UTF_8)))
-                .timeout(readTimeout)
-                .header("Accept", "application/json")
-                .header("Authorization", "Bearer " + keys.privateKey())
-                .GET()
-                .build();
-        HttpResponse<String> response = send(request);
+        HttpResponse<String> response = send(get("/transactions/" + URLEncoder.encode(id, StandardCharsets.UTF_8)));
         if (response.statusCode() == NOT_FOUND) {
             return Optional.empty();
         }
-        return Optional.of(transactionOf(data(response)));
+        JsonNode data = body(response).path("data");
+        if (!data.isObject()) {
+            throw new PaymentRejectedException("Wompi answered without data", null);
+        }
+        return Optional.of(transactionOf(data));
+    }
+
+    /** Not in Wompi's guides, but in its API: {@code GET /transactions?reference=} with the private key. */
+    @Override
+    public List<PaymentTransaction> transactions(String reference) {
+        HttpResponse<String> response =
+                send(get("/transactions?reference=" + URLEncoder.encode(reference, StandardCharsets.UTF_8)));
+        JsonNode data = body(response).path("data");
+        if (!data.isArray()) {
+            throw new PaymentRejectedException("Wompi answered without a list of transactions", null);
+        }
+        List<PaymentTransaction> transactions = new ArrayList<>();
+        data.forEach(transaction -> transactions.add(transactionOf(transaction)));
+        return transactions;
     }
 
     @Override
@@ -177,13 +188,18 @@ public final class WompiGateway implements PaymentGateway {
         }
     }
 
-    private JsonNode data(HttpResponse<String> response) {
+    private HttpRequest get(String path) {
+        return HttpRequest.newBuilder(URI.create(baseUrl + path))
+                .timeout(readTimeout)
+                .header("Accept", "application/json")
+                .header("Authorization", "Bearer " + keys.privateKey())
+                .GET()
+                .build();
+    }
+
+    private JsonNode body(HttpResponse<String> response) {
         try {
-            JsonNode data = json.readTree(response.body()).path("data");
-            if (!data.isObject()) {
-                throw new PaymentRejectedException("Wompi answered without data", null);
-            }
-            return data;
+            return json.readTree(response.body());
         } catch (JsonProcessingException e) {
             throw new PaymentRejectedException("Wompi answered what is not JSON", e);
         }
