@@ -124,8 +124,7 @@ class WompiGatewayTest {
 
         assertThat(check)
                 .isEqualTo(new Verified(new PaymentEvent(
-                        "transaction.id=1234-1610641025-49201|transaction.status=APPROVED"
-                                + "|transaction.amount_in_cents=4490000",
+                        documentedChecksum().toLowerCase(),
                         "transaction.updated",
                         Optional.of("1234-1610641025-49201"))));
     }
@@ -157,30 +156,34 @@ class WompiGatewayTest {
     }
 
     @Test
-    void onlyTheSignedPathsSayWhatTheEventIsAbout() throws IOException {
+    void aSignedIdMovedToAnotherFieldNamesNoTransaction() throws IOException {
         // A captured event with its signed id moved to another field and a forged one in its place: the same
         // values in the same order still match the checksum.
-        String moved = JSON.writeValueAsString(new Event(
-                "nequi_token.updated",
+        PaymentEvent event = verified(rearranged(
+                List.of("original_id", "transaction.status", "transaction.amount_in_cents"),
                 Map.of(
                         "original_id",
                         "1234-1610641025-49201",
                         "transaction",
-                        Map.of("id", "9999-forged", "status", "APPROVED", "amount_in_cents", 4490000)),
-                "prod",
-                new Signature(
-                        List.of("original_id", "transaction.status", "transaction.amount_in_cents"),
-                        documentedChecksum()),
-                1530291411));
+                        Map.of("id", "9999-1-1", "status", "APPROVED", "amount_in_cents", 4490000))));
 
-        EventCheck check = gateway(DOCS_KEYS).verifyEvent(moved);
-
-        assertThat(check).isInstanceOf(Verified.class);
-        PaymentEvent event = ((Verified) check).event();
         assertThat(event.transactionId()).isEmpty();
-        assertThat(event.key())
-                .isEqualTo("original_id=1234-1610641025-49201|transaction.status=APPROVED"
-                        + "|transaction.amount_in_cents=4490000");
+        assertThat(event.key()).isEqualTo(documentedChecksum().toLowerCase());
+    }
+
+    @Test
+    void theSignedTextCutDifferentlyNamesNoTransaction() throws IOException {
+        // "1234-1610641025-49201" + "APPROVED" + "4490000" cut so the id loses its last digit.
+        PaymentEvent shifted = verified(rearranged(
+                List.of("transaction.id", "x", "transaction.status", "transaction.amount_in_cents"),
+                Map.of(
+                        "x",
+                        "1",
+                        "transaction",
+                        Map.of("id", "1234-1610641025-4920", "status", "APPROVED", "amount_in_cents", 4490000))));
+
+        assertThat(shifted.transactionId()).isEmpty();
+        assertThat(shifted.key()).isEqualTo(documentedChecksum().toLowerCase());
     }
 
     @Test
@@ -344,6 +347,18 @@ class WompiGatewayTest {
     private void respond(int status, Object body) {
         this.status = status;
         this.responseBody = body;
+    }
+
+    private PaymentEvent verified(String body) {
+        EventCheck check = gateway(DOCS_KEYS).verifyEvent(body);
+        assertThat(check).isInstanceOf(Verified.class);
+        return ((Verified) check).event();
+    }
+
+    /** The documented event's signed text, under other signed properties and fields. */
+    private static String rearranged(List<String> properties, Object data) throws IOException {
+        return JSON.writeValueAsString(new Event(
+                "transaction.updated", data, "prod", new Signature(properties, documentedChecksum()), 1530291411));
     }
 
     /**

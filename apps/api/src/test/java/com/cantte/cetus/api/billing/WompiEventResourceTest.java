@@ -12,15 +12,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.junit.jupiter.api.Test;
 
-/** Wompi's events: stored once each when signed for this environment, and handed to the worker. */
+/** Wompi's events: stored once each, by checksum, when signed for this environment, and handed to the worker. */
 @QuarkusTest
 class WompiEventResourceTest {
 
@@ -40,22 +42,22 @@ class WompiEventResourceTest {
 
     record Event(String event, Data data, String environment, Signature signature, long timestamp) {}
 
+    /** An approved transaction event as Wompi signs it, and its checksum. */
+    record Signed(String body, String checksum) {}
+
     @Inject
     ObjectMapper json;
 
     @Test
     void aSignedEventIsStoredOnceAndHandedToTheWorker() throws Exception {
-        String transactionId = "12239576-" + UUID.randomUUID();
-        String body = event(transactionId, "test", EVENTS_SECRET);
+        Signed event = event(EVENTS_SECRET, "test");
 
-        post(body).then().statusCode(200);
-        post(body).then().statusCode(200);
+        post(event.body()).then().statusCode(200);
+        post(event.body()).then().statusCode(200);
 
         List<InboundWebhookEventEntity> stored = QuarkusTransaction.requiringNew()
                 .call(() -> InboundWebhookEventEntity.<InboundWebhookEventEntity>list(
-                        "eventId",
-                        "transaction.id=" + transactionId
-                                + "|transaction.status=APPROVED|transaction.amount_in_cents=2490000"));
+                        "eventId", event.checksum().toLowerCase()));
         assertThat(stored).hasSize(1);
         assertThat(stored.getFirst().provider).isEqualTo(InboundWebhookEventEntity.Provider.WOMPI);
         assertThat(stored.getFirst().status).isEqualTo(InboundWebhookEventEntity.Status.RECEIVED);
@@ -68,47 +70,48 @@ class WompiEventResourceTest {
 
     @Test
     void aForgedEventIsRefusedAndNotStored() throws Exception {
-        String transactionId = "12239576-" + UUID.randomUUID();
+        Signed forged = event("test_events_forged", "test");
 
-        post(event(transactionId, "test", "test_events_forged"))
-                .then()
-                .statusCode(401)
-                .body("code", equalTo("invalid_signature"));
+        post(forged.body()).then().statusCode(401).body("code", equalTo("invalid_signature"));
         post("not json").then().statusCode(401);
 
-        assertThat(storedFor(transactionId)).isZero();
+        assertThat(storedFor(forged)).isZero();
     }
 
     @Test
     void anEventOfTheOtherEnvironmentIsAcknowledgedButNotStored() throws Exception {
-        String transactionId = "12239576-" + UUID.randomUUID();
+        Signed event = event(EVENTS_SECRET, "prod");
 
-        post(event(transactionId, "prod", EVENTS_SECRET)).then().statusCode(200);
+        post(event.body()).then().statusCode(200);
 
-        assertThat(storedFor(transactionId)).isZero();
+        assertThat(storedFor(event)).isZero();
     }
 
-    private static io.restassured.response.Response post(String body) {
+    private static Response post(String body) {
         return given().contentType(ContentType.JSON).body(body).post("/internal/webhooks/wompi");
     }
 
-    private static long storedFor(String transactionId) {
+    private static long storedFor(Signed event) {
         return QuarkusTransaction.requiringNew()
-                .call(() -> InboundWebhookEventEntity.count("eventId like ?1", "%" + transactionId + "%"));
+                .call(() -> InboundWebhookEventEntity.count(
+                        "eventId", event.checksum().toLowerCase()));
     }
 
-    /** A transaction.updated event signed as Wompi does, with the given secret. */
-    private String event(String transactionId, String environment, String secret) throws Exception {
+    /** An approved transaction.updated event of a new transaction, signed as Wompi does with {@code secret}. */
+    private Signed event(String secret, String environment) throws Exception {
+        String transactionId = "12239576-" + System.nanoTime() + "-"
+                + ThreadLocalRandom.current().nextInt(100_000);
         String checksum = HexFormat.of()
                 .formatHex(MessageDigest.getInstance("SHA-256")
                         .digest((transactionId + "APPROVED" + 2_490_000 + TIMESTAMP + secret)
                                 .getBytes(StandardCharsets.UTF_8)))
                 .toUpperCase();
-        return json.writeValueAsString(new Event(
+        String body = json.writeValueAsString(new Event(
                 "transaction.updated",
                 new Data(new Transaction(transactionId, "APPROVED", 2_490_000)),
                 environment,
                 new Signature(List.of("transaction.id", "transaction.status", "transaction.amount_in_cents"), checksum),
                 TIMESTAMP));
+        return new Signed(body, checksum);
     }
 }

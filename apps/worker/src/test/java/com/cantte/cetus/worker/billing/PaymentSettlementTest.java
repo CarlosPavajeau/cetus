@@ -22,6 +22,7 @@ import com.cantte.cetus.worker.support.FakeWompi;
 import com.cantte.cetus.worker.support.FakeWompi.Transaction;
 import com.cantte.cetus.worker.support.FakeWompiResource;
 import com.cantte.cetus.worker.support.WorkerFixtures;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -39,6 +40,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +51,10 @@ import org.junit.jupiter.api.Test;
 @QuarkusTestResource(FakeResendResource.class)
 class PaymentSettlementTest {
 
-    record EventTransaction(String id, String status) {}
+    record EventTransaction(
+            String id,
+            String status,
+            @JsonProperty("amount_in_cents") long amountInCents) {}
 
     record EventData(EventTransaction transaction) {}
 
@@ -263,7 +268,7 @@ class PaymentSettlementTest {
         wompi.put(Transaction.of(transactionId, order.reference, "APPROVED", 2_490_000));
         String forged = json.writeValueAsString(new Event(
                 "transaction.updated",
-                new EventData(new EventTransaction(transactionId, "APPROVED")),
+                new EventData(new EventTransaction(transactionId, "APPROVED", 2_490_000)),
                 "test",
                 new Signature(List.of("transaction.id", "transaction.status"), "0".repeat(64)),
                 Instant.now().getEpochSecond()));
@@ -300,23 +305,20 @@ class PaymentSettlementTest {
 
     /** Stores the event as the API does, signed with the test events secret; empty when it was already received. */
     private Optional<UUID> receive(String transactionId, String status) throws Exception {
-        long timestamp = Instant.now().getEpochSecond();
+        long timestamp = 1_793_397_544L;
         String checksum = HexFormat.of()
                 .formatHex(MessageDigest.getInstance("SHA-256")
-                        .digest((transactionId + status + timestamp + FakeWompiResource.EVENTS_SECRET)
+                        .digest((transactionId + status + 2_490_000 + timestamp + FakeWompiResource.EVENTS_SECRET)
                                 .getBytes(StandardCharsets.UTF_8)));
         String payload = json.writeValueAsString(new Event(
                 "transaction.updated",
-                new EventData(new EventTransaction(transactionId, status)),
+                new EventData(new EventTransaction(transactionId, status, 2_490_000)),
                 "test",
-                new Signature(List.of("transaction.id", "transaction.status"), checksum),
+                new Signature(List.of("transaction.id", "transaction.status", "transaction.amount_in_cents"), checksum),
                 timestamp));
         return QuarkusTransaction.requiringNew()
                 .call(() -> InboundWebhookEventEntity.record(
-                        InboundWebhookEventEntity.Provider.WOMPI,
-                        "transaction.id=" + transactionId + "|transaction.status=" + status,
-                        "transaction.updated",
-                        payload));
+                        InboundWebhookEventEntity.Provider.WOMPI, checksum, "transaction.updated", payload));
     }
 
     private JobEntity jobFor(UUID eventId) {
@@ -345,8 +347,10 @@ class PaymentSettlementTest {
                 "{}");
     }
 
+    /** A transaction id of Wompi's shape, unique to the test. */
     private static String newTransactionId() {
-        return "12345-" + UUID.randomUUID();
+        return "12239576-" + System.nanoTime() + "-"
+                + ThreadLocalRandom.current().nextInt(100_000);
     }
 
     private static BillingOrderEntity orderOf(UUID id) {
