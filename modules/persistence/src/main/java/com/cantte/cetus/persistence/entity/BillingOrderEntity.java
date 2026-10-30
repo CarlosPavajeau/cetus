@@ -109,6 +109,19 @@ public class BillingOrderEntity extends PanacheEntityBase {
                 .list();
     }
 
+    /** What the orders paid in [from, to) add up to; a refunded order is no longer PAID and does not count. */
+    public static long revenueCents(OffsetDateTime from, OffsetDateTime to) {
+        return ((Number) getEntityManager()
+                        .createNativeQuery("""
+                                SELECT coalesce(sum(total_cents), 0) FROM billing.billing_orders
+                                WHERE status = 'PAID' AND paid_at >= :from AND paid_at < :to
+                                """)
+                        .setParameter("from", from)
+                        .setParameter("to", to)
+                        .getSingleResult())
+                .longValue();
+    }
+
     /**
      * Whether the account paid for a plan of the kind that still lasts: bought within its validity months. Until
      * credits exist (phase 3) a paid order is what proves a package.

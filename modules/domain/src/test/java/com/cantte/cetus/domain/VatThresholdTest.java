@@ -25,6 +25,13 @@ class VatThresholdTest {
     }
 
     @Test
+    void crossesEveryShareBelowTheIncome() {
+        assertThat(threshold.crossed(122_499_999_99L)).isEmpty();
+        assertThat(threshold.crossed(122_500_000_00L)).containsExactly(70);
+        assertThat(threshold.crossed(200_000_000_00L)).containsExactly(70, 90);
+    }
+
+    @Test
     void refusesValuesThatCannotBeAThreshold() {
         assertThatThrownBy(() -> new VatThreshold(0, 3_500, List.of(70))).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new VatThreshold(50_000, 3_500, List.of()))

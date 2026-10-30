@@ -9,7 +9,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 /**
  * The VAT threshold of the year, from configuration: the UVT's value and the threshold in UVT change every year and
  * must be confirmed with the accountant, so the code never fixes them. Without both, there is no threshold to report
- * against. The yearly revenue report and the admins' alerts read it once paid orders exist (phase 2).
+ * against. The yearly revenue report reads it; the worker's VAT alerts read the same properties.
  */
 @ApplicationScoped
 public class VatThresholds {

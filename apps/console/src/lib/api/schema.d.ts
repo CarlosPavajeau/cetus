@@ -174,6 +174,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/billing/revenue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Revenue */
+        get: operations["AdminBillingResource_revenue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/feedback": {
         parameters: {
             query?: never;
@@ -3049,6 +3066,32 @@ export interface components {
             /** @description Another address; leave it out to use the first delivery's */
             email?: string | null;
         };
+        /** @description The income of the paid orders in a calendar year (Colombia time), in cents of COP */
+        RevenueView: {
+            /** Format: int32 */
+            year: number;
+            /** Format: int64 */
+            revenueCents: number;
+            /**
+             * Format: int64
+             * @description The UVT's value configured; null without a threshold
+             */
+            uvtValueCop: number | null;
+            /**
+             * Format: int32
+             * @description The threshold in UVT configured; null without a threshold
+             */
+            thresholdUvt: number | null;
+            /**
+             * Format: int64
+             * @description The threshold in cents; null without one
+             */
+            thresholdCents: number | null;
+            /** @description Share of the threshold reached, in %; null without a threshold */
+            thresholdPercent: number | null;
+            /** @description The alert shares the income reached, lowest first */
+            alertPercentsReached: number[];
+        };
         SoftwareRequest: {
             softwareId: string;
             pin: string;
@@ -4108,6 +4151,44 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminBillingResource_revenue: {
+        parameters: {
+            query?: {
+                year?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevenueView"];
                 };
             };
             /** @description Not Authorized */

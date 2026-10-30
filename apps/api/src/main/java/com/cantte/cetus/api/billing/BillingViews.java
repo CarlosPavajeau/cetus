@@ -325,4 +325,24 @@ public final class BillingViews {
                     checkout);
         }
     }
+
+    @Schema(description = "The income of the paid orders in a calendar year (Colombia time), in cents of COP")
+    public record RevenueView(
+            int year,
+            long revenueCents,
+
+            @Schema(nullable = true, description = "The UVT's value configured; null without a threshold")
+            Long uvtValueCop,
+
+            @Schema(nullable = true, description = "The threshold in UVT configured; null without a threshold")
+            Integer thresholdUvt,
+
+            @Schema(nullable = true, description = "The threshold in cents; null without one")
+            Long thresholdCents,
+
+            @Schema(nullable = true, description = "Share of the threshold reached, in %; null without a threshold")
+            BigDecimal thresholdPercent,
+
+            @Schema(description = "The alert shares the income reached, lowest first")
+            List<Integer> alertPercentsReached) {}
 }
