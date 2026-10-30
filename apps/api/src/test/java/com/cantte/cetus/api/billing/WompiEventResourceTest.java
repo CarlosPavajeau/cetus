@@ -53,7 +53,9 @@ class WompiEventResourceTest {
 
         List<InboundWebhookEventEntity> stored = QuarkusTransaction.requiringNew()
                 .call(() -> InboundWebhookEventEntity.<InboundWebhookEventEntity>list(
-                        "eventId", "transaction.updated:" + transactionId + ":APPROVED:2490000"));
+                        "eventId",
+                        "transaction.id=" + transactionId
+                                + "|transaction.status=APPROVED|transaction.amount_in_cents=2490000"));
         assertThat(stored).hasSize(1);
         assertThat(stored.getFirst().provider).isEqualTo(InboundWebhookEventEntity.Provider.WOMPI);
         assertThat(stored.getFirst().status).isEqualTo(InboundWebhookEventEntity.Status.RECEIVED);

@@ -10,6 +10,7 @@ import java.util.Map;
 public class FakeWompiResource implements QuarkusTestResourceLifecycleManager {
 
     public static final String PRIVATE_KEY = "prv_test_cetus";
+    public static final String EVENTS_SECRET = "test_events_cetus";
 
     @Override
     public Map<String, String> start() {
