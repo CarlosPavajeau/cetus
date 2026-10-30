@@ -33,6 +33,9 @@ export const actionLabel: Record<AuditAction, string> = {
   CONTACT_VERIFIED: "Contacto verificado",
   SUPPORT_TICKET_CREATED: "Caso de soporte abierto",
   SUPPORT_TICKET_STATUS_CHANGED: "Estado del caso de soporte cambiado",
+  PLAN_CREATED: "Plan puesto a la venta",
+  PLAN_PRICE_ADDED: "Precio de plan agregado",
+  BILLING_PROFILE_UPDATED: "Perfil de facturación actualizado",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

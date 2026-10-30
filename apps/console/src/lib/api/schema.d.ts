@@ -235,7 +235,26 @@ export interface paths {
         /** List */
         get: operations["AdminPlanResource_list"];
         put?: never;
-        post?: never;
+        /** Create */
+        post: operations["AdminPlanResource_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/plans/{code}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prices */
+        get: operations["AdminPlanResource_prices"];
+        put?: never;
+        /** Add Price */
+        post: operations["AdminPlanResource_addPrice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -391,6 +410,24 @@ export interface paths {
         /** Get */
         get: operations["AuditLogResource_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/billing-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["BillingProfileResource_get"];
+        /** Save */
+        put: operations["BillingProfileResource_save"];
         post?: never;
         delete?: never;
         options?: never;
@@ -858,6 +895,23 @@ export interface paths {
         get?: never;
         /** Set Software */
         put: operations["IssuerResource_setSoftware"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["PlanOfferResource_list"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1603,7 +1657,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_PRICE_ADDED" | "BILLING_PROFILE_UPDATED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1635,6 +1689,23 @@ export interface components {
         };
         /** @enum {string} */
         BanEventType: "BANNED" | "UNBANNED";
+        /** @description Who Cetus invoices for the account's purchases */
+        BillingProfileView: {
+            personType: components["schemas"]["PersonType"];
+            identificationType: components["schemas"]["IdentificationType"];
+            identificationNumber: string;
+            checkDigit: string | null;
+            legalName: string;
+            tradeName: string | null;
+            taxLevelCodes: string[];
+            /** @enum {string} */
+            taxScheme: "IVA" | "NOT_APPLICABLE";
+            address: components["schemas"]["Address"] | null;
+            /** @description Where the invoices of the purchases go */
+            email: string;
+            phone: string | null;
+            updatedAt: components["schemas"]["OffsetDateTime"];
+        };
         BootstrapRequest: {
             name: string;
         };
@@ -1702,6 +1773,36 @@ export interface components {
             address: components["schemas"]["AddressInput"];
             email: string;
             phone?: string;
+        };
+        /** @description A package or a top-up for sale; subscriptions come with their limits in a migration */
+        CreatePlanRequest: {
+            /**
+             * @description Uppercase letters, digits and underscores
+             * @example PAQUETE_1200
+             */
+            code: string;
+            name: string;
+            /** @enum {string} */
+            kind: "PACKAGE" | "TOPUP";
+            /** Format: int32 */
+            documentsIncluded: number;
+            /** Format: int32 */
+            validityMonths: number;
+        };
+        CreatePriceRequest: {
+            /**
+             * Format: int64
+             * @description Before tax, in cents of COP
+             * @example 39000000
+             */
+            amountCents: number;
+            /**
+             * @description 0.19 is 19 %
+             * @example 0.19
+             */
+            taxRate: number;
+            /** @description When it starts; now when left out. Never in the past */
+            validFrom?: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
         CreateTicketRequest: {
             message: string;
@@ -2408,6 +2509,8 @@ export interface components {
             tradeName: string | null;
             status: components["schemas"]["IssuerStatus"];
         };
+        /** @enum {string} */
+        Kind: "SUBSCRIPTION" | "PACKAGE" | "TOPUP";
         /** @description Una línea del documento: un producto o servicio. */
         Line: {
             /**
@@ -2548,6 +2651,45 @@ export interface components {
         PlanChangeRequest: {
             plan: string;
             reason: string;
+        };
+        /** @description A plan of the catalog and the price it has now */
+        PlanOfferView: {
+            code: string;
+            name: string;
+            kind: components["schemas"]["Kind"];
+            /**
+             * Format: int32
+             * @description Documents each month for a subscription, or for the whole validity of a package or a top-up; null is no limit
+             */
+            documentsIncluded: number | null;
+            /**
+             * Format: int32
+             * @description Months a package or a top-up lasts; null for a subscription
+             */
+            validityMonths: number | null;
+            active: boolean;
+            /** @description The price that applies now; null when the plan has none */
+            price: components["schemas"]["PlanPriceView"] | null;
+        };
+        /** @description A version of a plan's price, in cents of COP */
+        PlanPriceView: {
+            /** Format: int32 */
+            version: number;
+            /**
+             * Format: int64
+             * @description Before tax
+             */
+            amountCents: number;
+            currency: string;
+            /** @description 0.19 is 19 % */
+            taxRate: number;
+            /** Format: int64 */
+            taxCents: number;
+            /** Format: int64 */
+            totalCents: number;
+            validFrom: components["schemas"]["OffsetDateTime"];
+            /** @description When the next version starts; null while it is the last one */
+            validTo: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
         /** @description What a plan includes. A null limit is no limit; a null price is agreed by contract. */
         PlanView: {
@@ -3990,6 +4132,176 @@ export interface operations {
             };
         };
     };
+    AdminPlanResource_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOfferView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminPlanResource_prices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanPriceView"][];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminPlanResource_addPrice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePriceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanPriceView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     AdminSupportResource_list: {
         parameters: {
             query?: {
@@ -4567,6 +4879,93 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    BillingProfileResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingProfileView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no billing profile yet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    BillingProfileResource_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Customer"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingProfileView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6325,6 +6724,35 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PlanOfferResource_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOfferView"][];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
