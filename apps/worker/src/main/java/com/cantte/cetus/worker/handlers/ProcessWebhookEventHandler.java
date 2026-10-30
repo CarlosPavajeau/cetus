@@ -8,6 +8,7 @@ import com.cantte.cetus.persistence.entity.InboundWebhookEventEntity;
 import com.cantte.cetus.persistence.entity.InboundWebhookEventEntity.Status;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement;
+import com.cantte.cetus.worker.delivery.EmailEvents;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.runner.RetryLater;
@@ -24,8 +25,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Acts on an event a provider sent, stored by the API once its signature was checked. A Wompi event only names
- * the transaction: its status and amount come from asking Wompi, so a replayed or reordered event changes
+ * Acts on an event a provider sent, stored by the API once its signature was checked. A Resend event moves the
+ * delivery of its email. A Wompi event only names the transaction: its status and amount come from asking Wompi, so a replayed or reordered event changes
  * nothing that Wompi does not confirm.
  */
 @ApplicationScoped
@@ -46,6 +47,9 @@ public class ProcessWebhookEventHandler implements JobHandler {
     PaymentSettlement settlement;
 
     @Inject
+    EmailEvents emails;
+
+    @Inject
     ObjectMapper json;
 
     @Override
@@ -61,7 +65,10 @@ public class ProcessWebhookEventHandler implements JobHandler {
         }
         Result result = switch (received.get().provider()) {
             case WOMPI -> wompi(received.get());
-            case RESEND -> throw new GiveUp("Resend events are still processed by the API");
+            case RESEND ->
+                emails.apply(received.get().payload())
+                        ? new Result(Status.PROCESSED, null)
+                        : new Result(Status.IGNORED, "No delivery sent the email");
         };
         finish(job.referenceId, result.status(), result.note());
     }
