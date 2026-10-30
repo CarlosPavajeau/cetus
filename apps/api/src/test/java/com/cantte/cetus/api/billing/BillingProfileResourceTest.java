@@ -1,14 +1,21 @@
 package com.cantte.cetus.api.billing;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import io.quarkus.test.junit.QuarkusTest;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 /** Who Cetus invoices for an account's purchases, validated like the customer of an invoice. */
@@ -69,6 +76,37 @@ class BillingProfileResourceTest {
                 .then()
                 .statusCode(422)
                 .body("code", equalTo("customer_check_digit_invalid"));
+    }
+
+    @Test
+    void firstSavesAtOnceBothSucceed() throws Exception {
+        ConsoleUser owner = ConsoleUser.newOrganization();
+        bootstrap(owner, "Simultanea SAS");
+        ClassLoader classes = Thread.currentThread().getContextClassLoader();
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2, task -> {
+            Thread thread = new Thread(task);
+            thread.setContextClassLoader(classes);
+            return thread;
+        });
+        try {
+            List<Future<Integer>> saves = new ArrayList<>();
+            for (String email : List.of("a@simultanea.test", "b@simultanea.test")) {
+                saves.add(pool.submit(() -> {
+                    start.await();
+                    return owner.request()
+                            .body(profile(email))
+                            .put("/console/billing-profile")
+                            .statusCode();
+                }));
+            }
+            start.countDown();
+            for (Future<Integer> save : saves) {
+                assertThat(save.get(30, TimeUnit.SECONDS)).isEqualTo(200);
+            }
+        } finally {
+            pool.shutdownNow();
+        }
     }
 
     @Test

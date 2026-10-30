@@ -42,6 +42,11 @@ public class BillingProfiles {
             throw new DomainException(
                     "billing_profile_email_required", "The billing profile needs the email its invoices go to");
         }
+        // A lock per account until the transaction ends, so two first saves do not both insert the profile.
+        BillingProfileEntity.getEntityManager()
+                .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                .setParameter("key", "billing-profile:" + accountId)
+                .getSingleResult();
         BillingProfileEntity profile = BillingProfileEntity.findById(accountId);
         if (profile == null) {
             profile = new BillingProfileEntity();
