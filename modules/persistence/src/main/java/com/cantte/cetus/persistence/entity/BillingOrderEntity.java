@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
@@ -88,6 +89,13 @@ public class BillingOrderEntity extends PanacheEntityBase {
     @PreUpdate
     void touch() {
         updatedAt = OffsetDateTime.now();
+    }
+
+    /** The order with the reference, locked until the transaction ends. */
+    public static Optional<BillingOrderEntity> lockByReference(String reference) {
+        return find("reference = ?1", reference)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
     }
 
     public static Optional<BillingOrderEntity> findForAccount(UUID id, UUID accountId) {

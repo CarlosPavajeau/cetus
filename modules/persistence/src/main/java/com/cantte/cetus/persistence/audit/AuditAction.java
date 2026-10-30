@@ -51,5 +51,7 @@ public enum AuditAction {
     /** Who Cetus invoices for the account's purchases. */
     BILLING_PROFILE_UPDATED,
     /** A purchase placed from the console, waiting for its payment. */
-    BILLING_ORDER_CREATED
+    BILLING_ORDER_CREATED,
+    /** Wompi approved the order's payment; recorded by Cetus itself. */
+    BILLING_ORDER_PAID
 }
