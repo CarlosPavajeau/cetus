@@ -8,7 +8,6 @@ import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.billing.Price;
 import com.cantte.cetus.payments.CheckoutRequest;
-import com.cantte.cetus.payments.PaymentGateway;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
@@ -63,7 +62,9 @@ public class Orders {
 
     @Transactional(Transactional.TxType.MANDATORY)
     public OrderView create(UUID accountId, CreateOrderRequest request, Actor actor, RequestOrigin origin) {
-        PaymentGateway gateway = payments.gateway().orElseThrow(PaymentsUnavailable::new);
+        if (payments.gateway().isEmpty()) {
+            throw new PaymentsUnavailable();
+        }
         boolean offered = catalog.offers(accountId).stream()
                 .anyMatch(
                         offer -> offer.version() != null && offer.version().id().equals(request.planVersionId()));
@@ -130,29 +131,29 @@ public class Orders {
                         "plan", plan.code,
                         "version", version.version,
                         "totalCents", order.totalCents));
-        return view(order, List.of(item), Optional.of(gateway));
+        return view(order, List.of(item));
     }
 
     @Transactional(Transactional.TxType.MANDATORY)
     public OrderView get(UUID accountId, UUID orderId) {
         BillingOrderEntity order = BillingOrderEntity.findForAccount(orderId, accountId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-        return view(order, BillingOrderItemEntity.listByOrder(order.id), payments.gateway());
+        return view(order, BillingOrderItemEntity.listByOrder(order.id));
     }
 
     @Transactional(Transactional.TxType.MANDATORY)
     public List<OrderView> list(UUID accountId, int limit) {
         return BillingOrderEntity.listByAccount(accountId, limit).stream()
-                .map(order -> view(order, BillingOrderItemEntity.listByOrder(order.id), Optional.empty()))
+                .map(order -> view(order, BillingOrderItemEntity.listByOrder(order.id)))
                 .toList();
     }
 
     /** The checkout only while the order can still be paid; signing again gives the same parameters. */
-    private OrderView view(
-            BillingOrderEntity order, List<BillingOrderItemEntity> items, Optional<PaymentGateway> gateway) {
+    private OrderView view(BillingOrderEntity order, List<BillingOrderItemEntity> items) {
         boolean payable =
                 order.status == BillingOrderEntity.Status.PENDING && order.expiresAt.isAfter(OffsetDateTime.now());
-        Optional<CheckoutView> checkout = gateway.filter(g -> payable)
+        Optional<CheckoutView> checkout = payments.gateway()
+                .filter(g -> payable)
                 .map(g -> CheckoutView.from(g.checkout(new CheckoutRequest(
                         order.reference,
                         order.totalCents,
