@@ -15,7 +15,8 @@ public record OpsAlert(String key, Category category, boolean repeats, String su
         RANGE_UNVERIFIED,
         CERTIFICATE_EXPIRING,
         RANGE_RUNNING_OUT,
-        PAYMENT_REVIEW;
+        PAYMENT_REVIEW,
+        VAT_THRESHOLD;
 
         String id() {
             return name().toLowerCase();

@@ -3,6 +3,7 @@ package com.cantte.cetus.worker.ops;
 import com.cantte.cetus.email.EmailException;
 import com.cantte.cetus.email.EmailMessage;
 import com.cantte.cetus.email.EmailSender;
+import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.ops.OpsAlert.Category;
 import com.cantte.cetus.worker.support.EmailClients;
 import io.quarkus.scheduler.Scheduled;
@@ -11,6 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -26,7 +28,8 @@ import org.jboss.logging.Logger;
 
 /**
  * Emails the operators (CETUS_OPS_ALERT_EMAIL) about what needs a person: dead jobs, stuck documents and payments to review
- * every few minutes; expiring certificates and ranges running out once a day. Each condition is sent
+ * every few minutes; expiring certificates, ranges running out and the
+ * income nearing the VAT threshold once a day. Each condition is sent
  * once and repeated at most once a day while it persists (see ops_alerts). Safe on many replicas: a run
  * holds a Postgres advisory lock, and a replica that does not get it skips the run.
  */
@@ -40,7 +43,7 @@ public class OpsAlerts {
     public enum Run {
         FREQUENT(EnumSet.of(
                 Category.JOB_DEAD, Category.DOCUMENT_STUCK, Category.RANGE_UNVERIFIED, Category.PAYMENT_REVIEW)),
-        DAILY(EnumSet.of(Category.CERTIFICATE_EXPIRING, Category.RANGE_RUNNING_OUT));
+        DAILY(EnumSet.of(Category.CERTIFICATE_EXPIRING, Category.RANGE_RUNNING_OUT, Category.VAT_THRESHOLD));
 
         final Set<Category> categories;
 
@@ -127,6 +130,8 @@ public class OpsAlerts {
             case CERTIFICATE_EXPIRING -> checks.expiringCertificates();
             case RANGE_RUNNING_OUT -> checks.rangesRunningOut();
             case PAYMENT_REVIEW -> checks.paymentsToReview();
+            case VAT_THRESHOLD ->
+                checks.vatThreshold(LocalDate.now(Dates.BOGOTA).getYear());
         };
     }
 

@@ -1,15 +1,21 @@
 package com.cantte.cetus.worker.ops;
 
+import com.cantte.cetus.domain.billing.VatThreshold;
+import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.ops.OpsAlert.Category;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /** The queries behind each alert category. Ids and dates come back as text: they only go into an email. */
@@ -30,6 +36,15 @@ public class OpsAlertChecks {
 
     @ConfigProperty(name = "cetus.alerts.range-min-available")
     double rangeMinAvailable;
+
+    @ConfigProperty(name = "cetus.billing.uvt-value-cop")
+    Optional<Long> uvtValueCop;
+
+    @ConfigProperty(name = "cetus.billing.vat-threshold-uvt")
+    Optional<Integer> vatThresholdUvt;
+
+    @ConfigProperty(name = "cetus.billing.vat-threshold-alert-percents")
+    List<Integer> vatAlertPercents;
 
     /** Jobs the worker gave up on. A dead PROCESS_DOCUMENT also leaves its document FAILED for good. */
     List<OpsAlert> deadJobs() {
@@ -106,6 +121,34 @@ public class OpsAlertChecks {
                         r[0],
                         true,
                         "%s %s (NIT %s): el certificado de firma vence el %s".formatted(r[1], r[2], r[3], r[4])))
+                .toList();
+    }
+
+    /**
+     * Each share of the VAT threshold the year's paid orders reached, once a year: the key carries the year and the
+     * share, and an income that only grows keeps them known. Nothing without the UVT and the threshold configured.
+     */
+    List<OpsAlert> vatThreshold(int year) {
+        Optional<VatThreshold> threshold = uvtValueCop.flatMap(
+                value -> vatThresholdUvt.map(units -> new VatThreshold(value, units, vatAlertPercents)));
+        if (threshold.isEmpty()) {
+            return List.of();
+        }
+        long revenueCents = BillingOrderEntity.revenueCents(
+                LocalDate.of(year, 1, 1).atStartOfDay(Dates.BOGOTA).toOffsetDateTime(),
+                LocalDate.of(year + 1, 1, 1).atStartOfDay(Dates.BOGOTA).toOffsetDateTime());
+        NumberFormat pesos = NumberFormat.getIntegerInstance(Locale.of("es", "CO"));
+        return threshold.get().crossed(revenueCents).stream()
+                .map(percent -> OpsAlert.of(
+                        Category.VAT_THRESHOLD,
+                        year + ":" + percent,
+                        false,
+                        "Los ingresos de %d llegan a $%s, el %d %% del tope de no responsable de IVA ($%s)"
+                                .formatted(
+                                        year,
+                                        pesos.format(revenueCents / 100),
+                                        percent,
+                                        pesos.format(threshold.get().limitCents() / 100))))
                 .toList();
     }
 

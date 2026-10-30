@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.email.EmailException;
+import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.ops.OpsAlerts.Run;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeResend;
@@ -17,6 +19,8 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -154,6 +158,35 @@ class OpsAlertsTest {
         assertThat(known(key)).isFalse();
 
         assertThat(keys(alerts.run(Run.FREQUENT))).contains(key);
+    }
+
+    @Test
+    void theIncomeOfTheYearIsReportedOnceAtEachShareOfTheVatThreshold() {
+        int year = LocalDate.now(Dates.BOGOTA).getYear();
+        OffsetDateTime yearStart =
+                LocalDate.of(year, 1, 1).atStartOfDay(Dates.BOGOTA).toOffsetDateTime();
+        long revenueCents = QuarkusTransaction.requiringNew()
+                .call(() -> BillingOrderEntity.revenueCents(yearStart, yearStart.plusYears(1)));
+        // The test profile's threshold is $1,000,000: reach 90 % of it with one more paid order.
+        long limitCents = 100_000_000L;
+        BillingOrderEntity order =
+                fixtures.order(Math.max(1, limitCents * 9 / 10 - revenueCents), OffsetDateTime.now());
+        QuarkusTransaction.requiringNew().run(() -> {
+            BillingOrderEntity paid = BillingOrderEntity.findById(order.id);
+            paid.status = BillingOrderEntity.Status.PAID;
+            paid.paidAt = OffsetDateTime.now();
+        });
+
+        List<OpsAlert> sent = alerts.run(Run.DAILY);
+
+        assertThat(keys(sent)).contains("vat_threshold:" + year + ":70", "vat_threshold:" + year + ":90");
+        assertThat(sent)
+                .filteredOn(alert -> alert.key().equals("vat_threshold:" + year + ":90"))
+                .singleElement()
+                .extracting(OpsAlert::summary)
+                .asString()
+                .contains("el 90 % del tope de no responsable de IVA ($1.000.000)");
+        assertThat(keys(alerts.run(Run.DAILY))).noneMatch(key -> key.startsWith("vat_threshold:"));
     }
 
     private static List<String> keys(List<OpsAlert> sent) {
