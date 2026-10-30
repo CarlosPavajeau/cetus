@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.delivery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobTypes;
@@ -19,6 +20,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,9 @@ class EmailEventsTest {
 
     @Inject
     ObjectMapper json;
+
+    @Inject
+    EntityManager em;
 
     @Test
     void aDeliveredEventMarksTheDeliveryAndIsPublished() throws Exception {
@@ -89,6 +94,47 @@ class EmailEventsTest {
     }
 
     @Test
+    void aFailedUpdateRollsBackAndTheRetryAppliesItOnce() throws Exception {
+        UUID invoice = fixtures.invoice();
+        String emailId = "email-" + UUID.randomUUID();
+        UUID deliveryId = fixtures.sentDelivery(invoice, emailId);
+        fixtures.webhookEndpoint(invoice, environmentOf(invoice), "https://hooks.example.com");
+        UUID event = receive("email.bounced", emailId, new Bounce("Mailbox full", "Transient"));
+        String failing = "fail_webhook_event_" + UUID.randomUUID().toString().replace("-", "");
+
+        // The outbound webhook is written after the delivery changes: failing it must undo the change.
+        sql("""
+                CREATE FUNCTION billing.%1$s() RETURNS trigger AS $$
+                BEGIN
+                    IF NEW.document_id = '%2$s' THEN RAISE EXCEPTION 'injected failure'; END IF;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql
+                """.formatted(failing, invoice));
+        sql("CREATE TRIGGER %1$s BEFORE INSERT ON billing.webhook_events FOR EACH ROW EXECUTE FUNCTION billing.%1$s()"
+                .formatted(failing));
+        try {
+            assertThat(catchThrowable(() -> process(event))).hasStackTraceContaining("injected failure");
+        } finally {
+            sql("DROP TRIGGER %1$s ON billing.webhook_events".formatted(failing));
+            sql("DROP FUNCTION billing.%s()".formatted(failing));
+        }
+
+        assertThat(deliveryOf(deliveryId).status).isEqualTo(Status.SENT);
+        assertThat(webhookTypes(invoice)).isEmpty();
+        assertThat(eventOf(event).status).isEqualTo(InboundWebhookEventEntity.Status.RECEIVED);
+
+        process(event);
+
+        DocumentDeliveryEntity delivery = deliveryOf(deliveryId);
+        assertThat(delivery.status).isEqualTo(Status.BOUNCED);
+        assertThat(delivery.error).isEqualTo("Mailbox full");
+        assertThat(webhookTypes(invoice)).containsExactly("document.delivery_failed");
+        assertThat(eventOf(event).status).isEqualTo(InboundWebhookEventEntity.Status.PROCESSED);
+        assertThat(eventOf(event).attempts).isEqualTo(2);
+    }
+
+    @Test
     void anEventOfAnUnknownEmailIsIgnored() throws Exception {
         UUID event = receive("email.delivered", "email-" + UUID.randomUUID(), null);
 
@@ -109,6 +155,11 @@ class EmailEventsTest {
 
     private void process(UUID eventId) throws Exception {
         handler.handle(fixtures.pendingJob(JobTypes.PROCESS_WEBHOOK_EVENT, eventId));
+    }
+
+    private void sql(String statement) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> em.createNativeQuery(statement).executeUpdate());
     }
 
     private static Environment environmentOf(UUID documentId) {
