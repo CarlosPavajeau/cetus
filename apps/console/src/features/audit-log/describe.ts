@@ -127,8 +127,8 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "SUPPORT_TICKET_STATUS_CHANGED":
       return `Caso #${text(data.number)} · ${label(statusLabel, data.statusPrevious)} → ${label(statusLabel, data.status)}`;
     case "PLAN_CREATED":
-      return `${text(data.name)} (${text(data.plan)}) · ${text(data.documentsIncluded)} documentos por ${text(data.validityMonths)} meses`;
-    case "PLAN_PRICE_ADDED":
+      return `${text(data.name)} (${text(data.plan)})${data.validityMonths ? ` · ${text(data.validityMonths)} meses` : ""}`;
+    case "PLAN_VERSION_ADDED":
       return `${text(data.plan)} · versión ${text(data.version)} desde el ${dayFormat.format(new Date(text(data.validFrom)))}`;
     case "BILLING_PROFILE_UPDATED":
       return `${text(data.legalName)} · ${text(data.identificationNumber)}`;

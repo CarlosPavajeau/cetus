@@ -243,18 +243,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/plans/{code}/prices": {
+    "/admin/plans/catalog": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Prices */
-        get: operations["AdminPlanResource_prices"];
+        /** Catalog */
+        get: operations["AdminPlanResource_catalog"];
         put?: never;
-        /** Add Price */
-        post: operations["AdminPlanResource_addPrice"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/plans/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versions */
+        get: operations["AdminPlanResource_versions"];
+        put?: never;
+        /** Add Version */
+        post: operations["AdminPlanResource_addVersion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1657,7 +1674,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_PRICE_ADDED" | "BILLING_PROFILE_UPDATED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1774,7 +1791,7 @@ export interface components {
             email: string;
             phone?: string;
         };
-        /** @description A package or a top-up for sale; subscriptions come with their limits in a migration */
+        /** @description A plan for the catalog; what it sells comes in its versions */
         CreatePlanRequest: {
             /**
              * @description Uppercase letters, digits and underscores
@@ -1782,27 +1799,16 @@ export interface components {
              */
             code: string;
             name: string;
-            /** @enum {string} */
-            kind: "PACKAGE" | "TOPUP";
-            /** Format: int32 */
-            documentsIncluded: number;
-            /** Format: int32 */
-            validityMonths: number;
-        };
-        CreatePriceRequest: {
+            kind: components["schemas"]["Kind"];
             /**
-             * Format: int64
-             * @description Before tax, in cents of COP
-             * @example 39000000
+             * Format: int32
+             * @description Required for a package or a top-up; none for a subscription
              */
-            amountCents: number;
-            /**
-             * @description 0.19 is 19 %
-             * @example 0.19
-             */
-            taxRate: number;
-            /** @description When it starts; now when left out. Never in the past */
-            validFrom?: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            validityMonths?: number | null;
+            /** @description Only for a top-up: the product an account must have to buy it */
+            requiresKind?: ((string | components["schemas"]["Kind"] | null) | null) | components["schemas"]["Kind"] | null;
+            /** @description False for a plan sold only through private versions, like Socios */
+            listed: boolean;
         };
         CreateTicketRequest: {
             message: string;
@@ -1813,6 +1819,38 @@ export interface components {
             environment?: ((string | components["schemas"]["Environment"] | null) | null) | components["schemas"]["Environment"] | null;
             page?: string;
             attachmentIds?: string[];
+        };
+        /** @description New terms for a plan; they close the open version of the same owner when they start */
+        CreateVersionRequest: {
+            /**
+             * Format: int64
+             * @description In cents of COP
+             * @example 11900000
+             */
+            priceCents: number;
+            /** @description Whether priceCents already includes the tax, as the catalog's prices do */
+            taxIncluded: boolean;
+            /**
+             * @description 0.19 is 19 %
+             * @example 0.19
+             */
+            taxRate: number;
+            /** Format: int32 */
+            documentsIncluded: number;
+            /**
+             * Format: int32
+             * @description Required, except for a top-up, which includes none
+             */
+            issuersIncluded?: number | null;
+            /**
+             * Format: int64
+             * @description Required for a subscription; none for the other kinds
+             */
+            priceOverageCents?: number | null;
+            /** @description The account of a private version; required for an unlisted plan */
+            accountId?: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+            /** @description When it starts; now when left out. Never in the past */
+            validFrom?: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
         CreateWebhookEndpointRequest: {
             url: string;
@@ -2649,50 +2687,71 @@ export interface components {
          */
         PersonType: "LEGAL_ENTITY" | "NATURAL_PERSON";
         PlanChangeRequest: {
-            plan: string;
+            planId: components["schemas"]["UUID"];
             reason: string;
         };
-        /** @description A plan of the catalog and the price it has now */
+        /** @description A plan of the catalog and the version that applies now */
         PlanOfferView: {
+            id: components["schemas"]["UUID"];
             code: string;
             name: string;
             kind: components["schemas"]["Kind"];
             /**
              * Format: int32
-             * @description Documents each month for a subscription, or for the whole validity of a package or a top-up; null is no limit
-             */
-            documentsIncluded: number | null;
-            /**
-             * Format: int32
              * @description Months a package or a top-up lasts; null for a subscription
              */
             validityMonths: number | null;
+            /** @description The product an account must have to buy it: a top-up needs a package */
+            requiresKind: ((string | components["schemas"]["Kind"] | null) | null) | components["schemas"]["Kind"] | null;
+            /** @description Shown to everyone; an unlisted plan is sold through versions for one account */
+            listed: boolean;
             active: boolean;
-            /** @description The price that applies now; null when the plan has none */
-            price: components["schemas"]["PlanPriceView"] | null;
+            /** @description The version that applies now; null when the plan has none */
+            version: components["schemas"]["PlanVersionView"] | null;
         };
-        /** @description A version of a plan's price, in cents of COP */
-        PlanPriceView: {
+        /** @description The terms of a plan for a while, in cents of COP */
+        PlanVersionView: {
+            id: components["schemas"]["UUID"];
             /** Format: int32 */
             version: number;
+            /** @description The account a private version is for; null for the public one */
+            accountId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
             /**
              * Format: int64
-             * @description Before tax
+             * @description As stored: final when taxIncluded
              */
-            amountCents: number;
-            currency: string;
+            priceCents: number;
+            taxIncluded: boolean;
             /** @description 0.19 is 19 % */
             taxRate: number;
+            /** Format: int64 */
+            baseCents: number;
             /** Format: int64 */
             taxCents: number;
             /** Format: int64 */
             totalCents: number;
+            /**
+             * Format: int32
+             * @description Each month for a subscription; for the whole validity of a package or a top-up
+             */
+            documentsIncluded: number;
+            /**
+             * Format: int32
+             * @description Production issuers it includes; null for a top-up
+             */
+            issuersIncluded: number | null;
+            /**
+             * Format: int64
+             * @description Price of each document above the included ones; subscriptions only
+             */
+            priceOverageCents: number | null;
             validFrom: components["schemas"]["OffsetDateTime"];
             /** @description When the next version starts; null while it is the last one */
             validTo: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
         /** @description What a plan includes. A null limit is no limit; a null price is agreed by contract. */
         PlanView: {
+            id: components["schemas"]["UUID"];
             code: string;
             name: string;
             /** Format: int64 */
@@ -4188,12 +4247,48 @@ export interface operations {
             };
         };
     };
-    AdminPlanResource_prices: {
+    AdminPlanResource_catalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOfferView"][];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminPlanResource_versions: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                code: string;
+                id: components["schemas"]["UUID"];
             };
             cookie?: never;
         };
@@ -4205,7 +4300,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PlanPriceView"][];
+                    "application/json": components["schemas"]["PlanVersionView"][];
                 };
             };
             /** @description Not Authorized */
@@ -4235,18 +4330,18 @@ export interface operations {
             };
         };
     };
-    AdminPlanResource_addPrice: {
+    AdminPlanResource_addVersion: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                code: string;
+                id: components["schemas"]["UUID"];
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreatePriceRequest"];
+                "application/json": components["schemas"]["CreateVersionRequest"];
             };
         };
         responses: {
@@ -4256,7 +4351,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PlanPriceView"];
+                    "application/json": components["schemas"]["PlanVersionView"];
                 };
             };
             /** @description Bad Request */

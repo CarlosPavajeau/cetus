@@ -178,7 +178,7 @@ export const auditActions = [
   "SUPPORT_TICKET_CREATED",
   "SUPPORT_TICKET_STATUS_CHANGED",
   "PLAN_CREATED",
-  "PLAN_PRICE_ADDED",
+  "PLAN_VERSION_ADDED",
   "BILLING_PROFILE_UPDATED",
 ] as const satisfies readonly AuditAction[];
 
@@ -187,7 +187,6 @@ export const userAuditActions = [
   "USER_BANNED",
   "USER_UNBANNED",
   "PLAN_CREATED",
-  "PLAN_PRICE_ADDED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.

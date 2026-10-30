@@ -68,7 +68,7 @@ function AccountDetail() {
               <AccountPlanDialog
                 accountId={account.id}
                 accountName={account.name}
-                plan={account.plan}
+                planId={account.billableThisMonth.plan.id}
               />
               <AccountStatusDialog
                 accountId={account.id}

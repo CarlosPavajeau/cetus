@@ -29,25 +29,25 @@ import { changeAccountPlan } from "./server";
 export function AccountPlanDialog({
   accountId,
   accountName,
-  plan,
+  planId,
 }: {
   accountId: string;
   accountName: string;
-  plan: string;
+  planId: string;
 }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const plans = useQuery({ ...adminPlansQuery, enabled: open });
   const form = useForm({
     resolver: arktypeResolver(planChangeSchema),
-    defaultValues: { plan, reason: "" },
+    defaultValues: { planId, reason: "" },
   });
   const change = useMutation({
     mutationFn: changeAccountPlan,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: adminKey });
       setOpen(false);
-      form.reset({ plan: form.getValues("plan"), reason: "" });
+      form.reset({ planId: form.getValues("planId"), reason: "" });
     },
     onError: () => {
       form.setError("root", {
@@ -57,8 +57,8 @@ export function AccountPlanDialog({
   });
 
   const onSubmit = form.handleSubmit((values) => {
-    if (values.plan === plan) {
-      form.setError("plan", { message: "La cuenta ya tiene este plan." });
+    if (values.planId === planId) {
+      form.setError("planId", { message: "La cuenta ya tiene este plan." });
       return;
     }
     change.mutate({ data: { id: accountId, ...values } });
@@ -77,7 +77,7 @@ export function AccountPlanDialog({
             </DialogDescription>
           </DialogHeader>
           <Controller
-            name="plan"
+            name="planId"
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
@@ -91,8 +91,8 @@ export function AccountPlanDialog({
                 ) : (
                   <RadioGroup value={field.value} onValueChange={field.onChange} aria-label="Plan">
                     {plans.data.map((option) => (
-                      <label key={option.code} className="flex items-start gap-2 text-sm">
-                        <RadioGroupItem value={option.code} className="mt-0.5" />
+                      <label key={option.id} className="flex items-start gap-2 text-sm">
+                        <RadioGroupItem value={option.id} className="mt-0.5" />
                         <span className="flex flex-col gap-0.5">
                           {option.name}
                           <span className="text-xs text-muted-foreground">
