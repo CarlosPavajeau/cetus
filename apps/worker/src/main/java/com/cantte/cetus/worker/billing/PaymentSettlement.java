@@ -22,8 +22,8 @@ import org.jboss.logging.Logger;
 /**
  * Applies a transaction as Wompi reports it to the order of its reference, in one transaction with the order
  * locked: the webhook and the reconciliation may bring the same payment at once, and it pays the order once.
- * A final status never goes back, an approved payment of another amount waits for a person, and an approval
- * after the order expired still pays it.
+ * A final status never goes back, an approved payment of another amount or a second approved payment waits for a
+ * person, and an approval after the order expired still pays it.
  */
 @ApplicationScoped
 public class PaymentSettlement {
@@ -75,7 +75,17 @@ public class PaymentSettlement {
 
     private Outcome approve(BillingOrderEntity order, PaymentTransactionEntity payment) {
         if (order.status == BillingOrderEntity.Status.PAID) {
-            return Outcome.ALREADY_PAID;
+            boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
+                    .anyMatch(other ->
+                            other.status == PaymentTransactionEntity.Status.APPROVED && !other.id.equals(payment.id));
+            if (!paidByAnother) {
+                return Outcome.ALREADY_PAID;
+            }
+            review(
+                    order,
+                    "Wompi aprobó la transacción %s de una orden que otra ya pagó: el cliente pagó dos veces"
+                            .formatted(payment.providerTransactionId));
+            return Outcome.REVIEW;
         }
         if (payment.amountCents != order.totalCents || !payment.currency.equals(order.currency)) {
             review(
