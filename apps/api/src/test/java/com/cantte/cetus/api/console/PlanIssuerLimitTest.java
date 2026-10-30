@@ -98,9 +98,9 @@ class PlanIssuerLimitTest {
     }
 
     @Test
-    void anAccountWithoutAPlanHasNoLimit() {
+    void aPlanWithoutALimitTakesAnyNumber() {
         ConsoleUser user = ConsoleUser.newOrganization();
-        bootstrap(user, "Libre SAS");
+        assignPlan(bootstrap(user, "Socios SAS"), "SOCIOS");
 
         createIssuer(user, "900111222", "LIVE");
         createIssuer(user, "900333444", "LIVE");

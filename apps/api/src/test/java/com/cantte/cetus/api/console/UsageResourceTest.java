@@ -3,7 +3,6 @@ package com.cantte.cetus.api.console;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.domain.model.DocumentType;
@@ -20,7 +19,7 @@ import org.junit.jupiter.api.Test;
 class UsageResourceTest {
 
     @Test
-    void aNewAccountHasNoPlanAndNothingBilled() {
+    void aNewAccountStartsOnTheFreePlanWithNothingBilled() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         bootstrap(customer, "Nueva SAS");
         YearMonth now = UsagePeriod.current();
@@ -31,13 +30,14 @@ class UsageResourceTest {
                 .statusCode(200)
                 .body("current.period", equalTo(now.toString()))
                 .body("current.plan.code", equalTo("FREE"))
-                .body("current.plan.documentsIncluded", nullValue())
+                .body("current.plan.documentsIncluded", equalTo(25))
+                .body("current.plan.documentsGrace", equalTo(5))
                 .body("current.total", equalTo(0))
                 .body("current.documents.documentType", contains("INVOICE", "CREDIT_NOTE", "DEBIT_NOTE"))
                 .body("issuersLive", equalTo(0))
-                .body("requests.requestsPerSecond", equalTo(10f))
-                .body("requests.requestsBurst", equalTo(20))
-                .body("requests.perKey", equalTo(true))
+                .body("requests.requestsPerSecond", equalTo(1f))
+                .body("requests.requestsBurst", equalTo(10))
+                .body("requests.perKey", equalTo(false))
                 .body("months.period", contains(months(now)));
     }
 

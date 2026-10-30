@@ -23,6 +23,13 @@ public class PlanEntity extends PanacheEntityBase {
     @Column(name = "documents_included")
     public Integer documentsIncluded;
 
+    /**
+     * Production documents a month may take above {@link #documentsIncluded} before new ones are refused; null
+     * never refuses them and bills the overage. Credit notes are always taken.
+     */
+    @Column(name = "documents_grace")
+    public Integer documentsGrace;
+
     @Column(name = "price_overage_cop")
     public Integer priceOverageCop;
 

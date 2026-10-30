@@ -194,7 +194,9 @@ public class ResultRecorder {
                     "total", Numbers.count(total),
                     "included", Numbers.count(plan.documentsIncluded),
                     "period", Dates.month(period)));
-            if (plan.priceOverageCop != null) {
+            if (plan.documentsGrace != null) {
+                data.put("limit", Numbers.count(plan.documentsIncluded + plan.documentsGrace));
+            } else if (plan.priceOverageCop != null) {
                 data.put("priceOverage", Numbers.cop(plan.priceOverageCop));
             }
             notifications.request(

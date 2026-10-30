@@ -18,6 +18,12 @@ public final class UsageViews {
             @Schema(nullable = true, description = "Billable documents included each month")
             Integer documentsIncluded,
 
+            @Schema(
+                    nullable = true,
+                    description = "Documents a month may take above the included ones before new ones are refused,"
+                            + " credit notes aside; null never refuses them")
+            Integer documentsGrace,
+
             @Schema(nullable = true, description = "Price of each document above the included ones")
             Integer priceOverageCop,
 
@@ -36,6 +42,7 @@ public final class UsageViews {
                     plan.name,
                     plan.priceMonthlyCop,
                     plan.documentsIncluded,
+                    plan.documentsGrace,
                     plan.priceOverageCop,
                     plan.issuersIncluded,
                     plan.requestsPerSecond,

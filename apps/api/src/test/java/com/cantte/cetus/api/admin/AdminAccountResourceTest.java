@@ -240,7 +240,7 @@ class AdminAccountResourceTest {
                 .then()
                 .body("plan", equalTo("FREE"))
                 .body("billableThisMonth.total", equalTo(203))
-                .body("billableThisMonth.overage", equalTo(0))
+                .body("billableThisMonth.overage", equalTo(178))
                 .body("billableThisMonth.costOverageCop", nullValue());
         SUPPORT.request()
                 .get("/admin/plans")

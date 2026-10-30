@@ -107,6 +107,31 @@ class SendNotificationHandlerTest {
     }
 
     @Test
+    void aPlanUsageNoticeOfAPlanThatStopsIssuingSaysWhen() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
+        UUID id = request(
+                accountId,
+                NotificationKind.PLAN_USAGE,
+                Map.of(
+                        "plan", "Gratis",
+                        "percent", "100",
+                        "total", "25",
+                        "included", "25",
+                        "period", "octubre de 2026",
+                        "limit", "30"));
+
+        handler.handle(fixtures.notificationJob(id));
+
+        assertThat(resend.requests())
+                .singleElement()
+                .satisfies(request -> assertThat(request.body().get("text").asText())
+                        .contains("Al llegar a 30 documentos en el mes, la emisión en producción se detiene")
+                        .contains("las notas crédito siempre se pueden emitir")
+                        .doesNotContain("La facturación no se detiene"));
+    }
+
+    @Test
     void aRetryAfterAPartialFailureReusesTheKeysOfTheEmailsAlreadySent() {
         UUID accountId = account();
         fixtures.contacts(accountId, "a-tech@cetus.test", "b-fiscal@cetus.test", "billing@cetus.test");

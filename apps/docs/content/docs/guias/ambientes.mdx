@@ -46,6 +46,11 @@ exige la DIAN; cuando lo acepta, tu empresa queda lista para producción.
 Con tu empresa habilitada y la resolución de numeración de producción, la llave `cetus_live_` emite
 documentos con validez fiscal. Cada documento aceptado cuenta en el plan de tu cuenta.
 
+Toda cuenta empieza en el plan **Gratis**, para probar Cetus en producción: 25 documentos al mes, una empresa
+y una petición por segundo, con ráfagas de 10. Pasados 30 documentos en el mes (hora de Colombia), las
+facturas y las notas débito responden `402 plan_document_limit` hasta el mes siguiente o hasta que cambies
+de plan. Las notas crédito siempre se emiten, porque son la única forma de corregir una factura.
+
 <Callout type="warn">
     Una llave `live` emite documentos reales: guárdala en el servidor, nunca en el navegador ni en
     una aplicación móvil. Si se filtra, revócala en **Llaves de API** y crea otra.

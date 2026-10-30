@@ -76,6 +76,7 @@ public class InvoiceResource {
                             schema = @Schema(implementation = InvoiceResponse.class),
                             examples = @ExampleObject(name = "recibida", ref = "InvoiceReceived")))
     @APIResponse(responseCode = "400", ref = "BadRequest")
+    @APIResponse(responseCode = "402", ref = "PlanDocumentLimit")
     @APIResponse(responseCode = "409", ref = "IdempotencyConflict")
     @APIResponse(responseCode = "422", ref = "InvoiceRejected")
     @APIResponse(responseCode = "429", ref = "TooManyDocuments")

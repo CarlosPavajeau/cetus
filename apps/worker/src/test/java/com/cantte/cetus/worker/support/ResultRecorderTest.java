@@ -137,8 +137,32 @@ class ResultRecorderTest {
     }
 
     @Test
+    void aPlanThatStopsIssuingSaysWhereInsteadOfAnOverage() {
+        UUID id = liveDocument(fixtures.invoice());
+        UUID accountId = accountOf(id);
+        String plan = assignPlanWithQuota(accountId, 5);
+        QuarkusTransaction.requiringNew().run(() -> {
+            PlanEntity entity = PlanEntity.findById(plan);
+            entity.documentsGrace = 2;
+            entity.priceOverageCop = null;
+        });
+        count(accountId, 4);
+
+        recorder.completed(id, ACCEPTED);
+
+        assertThat(notices(accountId))
+                .singleElement()
+                .satisfies(notice -> assertThat(notice.data)
+                        .containsEntry("percent", "100")
+                        .containsEntry("limit", "7")
+                        .doesNotContainKey("priceOverage"));
+    }
+
+    @Test
     void anAccountWithoutAQuotaHearsNothing() {
         UUID id = liveDocument(fixtures.invoice());
+        QuarkusTransaction.requiringNew()
+                .run(() -> AccountEntity.<AccountEntity>findById(accountOf(id)).plan = "SOCIOS");
 
         recorder.completed(id, ACCEPTED);
 
