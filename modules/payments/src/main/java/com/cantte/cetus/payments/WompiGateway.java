@@ -21,11 +21,12 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HexFormat;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * {@link PaymentGateway} on Wompi's REST API (https://docs.wompi.co/docs/colombia/). Checkouts are signed with
@@ -35,6 +36,9 @@ import java.util.Optional;
 public final class WompiGateway implements PaymentGateway {
 
     public static final URI CHECKOUT_URL = URI.create("https://checkout.wompi.co/p/");
+
+    /** The signed property that names the transaction of a transaction event. */
+    private static final String TRANSACTION_ID = "transaction.id";
 
     private static final int NOT_FOUND = 404;
     private static final int TOO_MANY_REQUESTS = 429;
@@ -113,8 +117,8 @@ public final class WompiGateway implements PaymentGateway {
         if (!properties.isArray() || properties.isEmpty() || checksum.isEmpty() || !timestamp.isIntegralNumber()) {
             return new Invalid("unsigned");
         }
-        StringBuilder signed = new StringBuilder();
-        List<String> values = new ArrayList<>();
+        StringBuilder concatenated = new StringBuilder();
+        Map<String, String> signed = new LinkedHashMap<>();
         JsonNode data = event.path("data");
         for (JsonNode property : properties) {
             JsonNode value = data;
@@ -124,12 +128,12 @@ public final class WompiGateway implements PaymentGateway {
             if (!value.isValueNode()) {
                 return new Invalid("signed property missing");
             }
-            values.add(value.asText());
-            signed.append(value.asText());
+            signed.put(property.asText(), value.asText());
+            concatenated.append(value.asText());
         }
-        signed.append(timestamp.asText()).append(keys.eventsSecret());
+        concatenated.append(timestamp.asText()).append(keys.eventsSecret());
         if (!MessageDigest.isEqual(
-                sha256(signed.toString()).getBytes(StandardCharsets.US_ASCII),
+                sha256(concatenated.toString()).getBytes(StandardCharsets.US_ASCII),
                 checksum.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII))) {
             return new Invalid("checksum mismatch");
         }
@@ -137,12 +141,13 @@ public final class WompiGateway implements PaymentGateway {
         if (!environment.equals(keys.environment().code())) {
             return new OtherEnvironment(environment);
         }
-        String type = event.path("event").asText("");
-        Optional<String> transactionId = Optional.of(data.path("transaction").path("id"))
-                .filter(JsonNode::isValueNode)
-                .map(JsonNode::asText);
-        // The signed properties name what the event says (id, status, amount): a resend carries the same ones.
-        return new Verified(new PaymentEvent(type + ":" + String.join(":", values), type, transactionId));
+        // The checksum covers the values, not where they are: what the event is about comes only from the signed
+        // paths, and the key names each path, so moving a value to another field is another event.
+        String key = signed.entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.joining("|"));
+        return new Verified(
+                new PaymentEvent(key, event.path("event").asText(""), Optional.ofNullable(signed.get(TRANSACTION_ID))));
     }
 
     private HttpResponse<String> send(HttpRequest request) {

@@ -120,7 +120,8 @@ class WompiGatewayTest {
 
         assertThat(check)
                 .isEqualTo(new Verified(new PaymentEvent(
-                        "transaction.updated:1234-1610641025-49201:APPROVED:4490000",
+                        "transaction.id=1234-1610641025-49201|transaction.status=APPROVED"
+                                + "|transaction.amount_in_cents=4490000",
                         "transaction.updated",
                         Optional.of("1234-1610641025-49201"))));
     }
@@ -149,6 +150,45 @@ class WompiGatewayTest {
         assertThat(gateway(DOCS_KEYS).verifyEvent(forged)).isEqualTo(new Invalid("checksum mismatch"));
         assertThat(gateway(DOCS_KEYS).verifyEvent("not json")).isInstanceOf(Invalid.class);
         assertThat(gateway(DOCS_KEYS).verifyEvent("[]")).isInstanceOf(Invalid.class);
+    }
+
+    @Test
+    void onlyTheSignedPathsSayWhatTheEventIsAbout() throws IOException {
+        // A captured event with its signed id moved to another field and a forged one in its place: the same
+        // values in the same order still match the checksum.
+        String moved = JSON.writeValueAsString(new Event(
+                "nequi_token.updated",
+                Map.of(
+                        "original_id",
+                        "1234-1610641025-49201",
+                        "transaction",
+                        Map.of("id", "9999-forged", "status", "APPROVED", "amount_in_cents", 4490000)),
+                "prod",
+                new Signature(
+                        List.of("original_id", "transaction.status", "transaction.amount_in_cents"),
+                        documentedChecksum()),
+                1530291411));
+
+        EventCheck check = gateway(DOCS_KEYS).verifyEvent(moved);
+
+        assertThat(check).isInstanceOf(Verified.class);
+        PaymentEvent event = ((Verified) check).event();
+        assertThat(event.transactionId()).isEmpty();
+        assertThat(event.key())
+                .isEqualTo("original_id=1234-1610641025-49201|transaction.status=APPROVED"
+                        + "|transaction.amount_in_cents=4490000");
+    }
+
+    @Test
+    void theUnsignedTypeDoesNotChangeTheKey() throws IOException {
+        String documented = documentedEvent("prod", documentedChecksum());
+        String retyped = documented.replace("transaction.updated", "nequi_token.updated");
+
+        PaymentEvent original = ((Verified) gateway(DOCS_KEYS).verifyEvent(documented)).event();
+        PaymentEvent changed = ((Verified) gateway(DOCS_KEYS).verifyEvent(retyped)).event();
+
+        assertThat(changed.key()).isEqualTo(original.key());
+        assertThat(changed.type()).isEqualTo("nequi_token.updated");
     }
 
     @Test
