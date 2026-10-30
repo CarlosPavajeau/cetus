@@ -20,7 +20,8 @@ import java.util.Optional;
 
 /**
  * Asks Wompi for every transaction of an order's reference and applies them, for the payments whose event was
- * lost or never sent. Enqueued by {@code PaymentReconciliation}.
+ * lost or never sent, paid orders included: a lost void or a second charge only shows there. Enqueued by
+ * {@code PaymentReconciliation}.
  */
 @ApplicationScoped
 public class CheckPaymentHandler implements JobHandler {
@@ -42,7 +43,6 @@ public class CheckPaymentHandler implements JobHandler {
     public void handle(JobEntity job) {
         Optional<String> reference = QuarkusTransaction.requiringNew()
                 .call(() -> Optional.<BillingOrderEntity>ofNullable(BillingOrderEntity.findById(job.referenceId))
-                        .filter(order -> order.status != BillingOrderEntity.Status.PAID)
                         .map(order -> order.reference));
         if (reference.isEmpty()) {
             return;
