@@ -134,6 +134,8 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${text(data.legalName)} · ${text(data.identificationNumber)}`;
     case "BILLING_ORDER_CREATED":
       return `${text(data.plan)} · ${text(data.reference)}`;
+    case "BILLING_ORDER_PAID":
+      return `${text(data.reference)} · ${text(data.paymentMethodType)}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":
       return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
     default:
