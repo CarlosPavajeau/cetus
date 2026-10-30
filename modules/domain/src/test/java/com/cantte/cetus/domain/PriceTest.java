@@ -56,6 +56,17 @@ class PriceTest {
     }
 
     @Test
+    void theTaxIsNeverNegativeWhenRoundingPassesThePrice() {
+        for (long cents = 0; cents <= 100_00; cents++) {
+            Price split = new Price(cents, true, VAT);
+
+            assertThat(split.taxCents()).as("tax of %d cents", cents).isNotNegative();
+            assertThat(split.totalCents()).isEqualTo(cents);
+        }
+        assertThat(new Price(199, true, VAT).baseCents()).isEqualTo(199);
+    }
+
+    @Test
     void addsTheTaxToAPriceWithoutIt() {
         Price price = new Price(10_050, false, VAT);
 

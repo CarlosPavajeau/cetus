@@ -28,8 +28,11 @@ public record Price(long cents, boolean taxIncluded, BigDecimal taxRate) {
         if (taxRate.signum() == 0) {
             return cents;
         }
+        // Rounding to the peso may pass a price with cents of its own; the tax is never negative.
         return taxIncluded
-                ? toPeso(BigDecimal.valueOf(cents).divide(BigDecimal.ONE.add(taxRate), 6, RoundingMode.HALF_UP))
+                ? Math.min(
+                        cents,
+                        toPeso(BigDecimal.valueOf(cents).divide(BigDecimal.ONE.add(taxRate), 6, RoundingMode.HALF_UP)))
                 : cents;
     }
 
