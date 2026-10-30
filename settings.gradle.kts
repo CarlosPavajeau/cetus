@@ -26,6 +26,7 @@ include(
     "modules:webhooks",
     "modules:notifications",
     "modules:cache",
+    "modules:payments",
     "apps:api",
     "apps:worker",
     "apps:dian-mock",
