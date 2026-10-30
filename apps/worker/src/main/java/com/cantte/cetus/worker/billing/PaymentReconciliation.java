@@ -17,8 +17,10 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 /**
  * Covers the events Wompi never delivers: every few minutes it enqueues a CHECK_PAYMENT for each order still
  * pending after {@code cetus.billing.reconciliation-after}, and for each order that expired less than
- * {@code cetus.billing.reconciliation-expired-for} ago (a PSE payment may be approved after it). An order with a
- * check waiting gets no other. Safe on many replicas: a run holds a Postgres advisory lock.
+ * {@code cetus.billing.reconciliation-expired-for} ago (a PSE payment may be approved after it). An order paid less
+ * than {@code cetus.billing.reconciliation-paid-for} ago is checked once a day, for a void or a second charge whose
+ * event was lost. An order with a check waiting gets no other. Safe on many replicas: a run holds a Postgres
+ * advisory lock.
  */
 @ApplicationScoped
 public class PaymentReconciliation {
@@ -40,6 +42,9 @@ public class PaymentReconciliation {
 
     @ConfigProperty(name = "cetus.billing.reconciliation-expired-for")
     Duration expiredFor;
+
+    @ConfigProperty(name = "cetus.billing.reconciliation-paid-for")
+    Duration paidFor;
 
     @Scheduled(
             every = "${cetus.billing.reconciliation-interval}",
@@ -66,9 +71,17 @@ public class PaymentReconciliation {
                           AND NOT EXISTS (SELECT 1 FROM billing.jobs j
                                           WHERE j.reference_id = o.id AND j.job_type = :type
                                             AND j.status IN ('PENDING', 'RUNNING'))
+                        UNION
+                        SELECT o.id FROM billing.billing_orders o
+                        WHERE o.status = 'PAID' AND o.paid_at > :paidAfter
+                          AND NOT EXISTS (SELECT 1 FROM billing.jobs j
+                                          WHERE j.reference_id = o.id AND j.job_type = :type
+                                            AND (j.status IN ('PENDING', 'RUNNING') OR j.created_at > :checkedAfter))
                         """, UUID.class)
                 .setParameter("createdBefore", now.minus(after))
                 .setParameter("expiredAfter", now.minus(expiredFor))
+                .setParameter("paidAfter", now.minus(paidFor))
+                .setParameter("checkedAfter", now.minusDays(1))
                 .setParameter("type", JobTypes.CHECK_PAYMENT)
                 .getResultList();
         orders.forEach(order -> jobs.enqueue(JobTypes.CHECK_PAYMENT, order));

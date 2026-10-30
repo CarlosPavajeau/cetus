@@ -30,6 +30,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -171,6 +172,58 @@ class PaymentSettlementTest {
                 .anySatisfy(alert -> assertThat(alert.summary()).contains(order.reference));
         assertThat(alerts.run(OpsAlerts.Run.FREQUENT))
                 .noneSatisfy(alert -> assertThat(alert.summary()).contains(order.reference));
+    }
+
+    @Test
+    void aSecondApprovedChargeWaitsForAPerson() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        String first = newTransactionId();
+        String second = newTransactionId();
+
+        assertThat(settlement.apply(transaction(first, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.PAID);
+        assertThat(settlement.apply(transaction(first, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.ALREADY_PAID);
+        assertThat(orderOf(order.id).reviewReason).isNull();
+
+        assertThat(settlement.apply(transaction(second, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.REVIEW);
+
+        BillingOrderEntity reviewed = orderOf(order.id);
+        assertThat(reviewed.status).isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(reviewed.reviewReason).contains(second).contains("pagó dos veces");
+        assertThat(paidAudits(order.id)).isEqualTo(1);
+    }
+
+    @Test
+    void aLostVoidOfARecentlyPaidOrderIsFoundByTheReconciliation() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        String transactionId = newTransactionId();
+        settlement.apply(transaction(transactionId, order.reference, PaymentStatus.APPROVED, 2_490_000));
+        BillingOrderEntity old = fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        Instant threeDaysAgo = Instant.now().minus(Duration.ofDays(3));
+        settlement.apply(new PaymentTransaction(
+                newTransactionId(),
+                old.reference,
+                PaymentStatus.APPROVED,
+                2_490_000,
+                "COP",
+                "CARD",
+                Optional.empty(),
+                threeDaysAgo,
+                Optional.of(threeDaysAgo),
+                "{}"));
+        wompi.put(Transaction.of(transactionId, order.reference, "VOIDED", 2_490_000));
+
+        assertThat(reconciliation.run()).contains(order.id).doesNotContain(old.id);
+        assertThat(reconciliation.run()).doesNotContain(order.id);
+
+        checks.handle(checkJobOf(order.id));
+
+        assertThat(transactionOf(transactionId).status).isEqualTo(PaymentTransactionEntity.Status.VOIDED);
+        assertThat(orderOf(order.id).reviewReason).contains(transactionId);
     }
 
     @Test
