@@ -72,6 +72,7 @@ mise run setup
 mise run dev
 mise run dev-mock      # same, plus the DIAN mock (:8090) with the worker pointing at it
 mise run api           # a single service; also console, worker, mock, infra
+mise run tunnel        # public URL to the local API, for Wompi's sandbox events
 
 # Java build and tests
 mise exec -- ./gradlew build
