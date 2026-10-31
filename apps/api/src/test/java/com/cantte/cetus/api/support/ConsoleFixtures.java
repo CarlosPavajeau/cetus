@@ -68,7 +68,11 @@ public final class ConsoleFixtures {
         return createIssuer(user, nit, "TEST");
     }
 
+    /** A LIVE issuer needs a product: the account gets a package first unless it has a lot. */
     public static String createIssuer(ConsoleUser user, String nit, String environment) {
+        if (environment.equals("LIVE")) {
+            Credits.ensurePackage(user);
+        }
         return user.request()
                 .body(issuerRequest(nit, environment))
                 .post("/console/issuers")

@@ -3436,11 +3436,12 @@ export interface components {
             };
         };
         /**
-         * @description `plan_document_limit`: la cuenta ya emitió en producción los documentos que su plan permite este
-         *     mes. Puedes emitir de nuevo el mes siguiente, hora de Colombia, o al cambiar de plan. Las notas
-         *     crédito nunca reciben este error.
+         * @description La cuenta no tiene con qué emitir el documento en producción.
+         *     `no_active_product`: no tiene un paquete vigente. `insufficient_credits`: usó sus créditos y su margen
+         *     de cortesía (el 10 % de su último paquete o recarga, mínimo 10 documentos). Compra un paquete o una
+         *     recarga para seguir emitiendo. Las notas crédito nunca reciben este error.
          */
-        PlanDocumentLimit: {
+        CreditsRefused: {
             headers: {
                 "X-Request-Id": components["headers"]["X-Request-Id"];
                 [name: string]: unknown;
@@ -8319,7 +8320,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
-            402: components["responses"]["PlanDocumentLimit"];
+            402: components["responses"]["CreditsRefused"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["IdempotencyConflict"];
@@ -8421,7 +8422,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
-            402: components["responses"]["PlanDocumentLimit"];
+            402: components["responses"]["CreditsRefused"];
             403: components["responses"]["Forbidden"];
             409: components["responses"]["IdempotencyConflict"];
             422: components["responses"]["InvoiceRejected"];

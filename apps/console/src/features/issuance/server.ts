@@ -45,8 +45,10 @@ const messages: Record<string, string> = {
   payment_due_date_required: "Una venta a crédito necesita fecha de vencimiento.",
   invoice_not_accepted: "Solo se pueden emitir notas sobre facturas aceptadas por la DIAN.",
   credit_note_exceeds_balance: "La nota crédito supera lo que queda por acreditar de la factura.",
-  plan_document_limit:
-    "Ya emitiste en producción los documentos que tu plan permite este mes. Las notas crédito siempre se pueden emitir; para seguir facturando, cambia de plan.",
+  no_active_product:
+    "Tu cuenta no tiene un paquete vigente para emitir en producción. Las notas crédito siempre se pueden emitir; para seguir facturando, compra un paquete.",
+  insufficient_credits:
+    "Usaste tus créditos y tu margen de cortesía. Las notas crédito siempre se pueden emitir; para seguir facturando, compra una recarga.",
   sandbox_daily_limit:
     "Ya emitiste los documentos de simulación permitidos por hoy. Vuelve a intentarlo mañana.",
   organization_role_forbidden:
