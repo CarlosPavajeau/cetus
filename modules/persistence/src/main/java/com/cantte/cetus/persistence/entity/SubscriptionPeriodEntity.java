@@ -82,6 +82,25 @@ public class SubscriptionPeriodEntity extends PanacheEntityBase {
         return findByIdOptional(id, LockModeType.PESSIMISTIC_WRITE);
     }
 
+    /** The subscription the period belongs to, read without loading nor locking the period. */
+    public static UUID subscriptionOf(UUID periodId) {
+        return getEntityManager()
+                .createQuery("SELECT p.subscriptionId FROM SubscriptionPeriodEntity p WHERE p.id = :id", UUID.class)
+                .setParameter("id", periodId)
+                .getSingleResult();
+    }
+
+    /** The account the period bills, read without loading nor locking anything, to take its locks in order. */
+    public static UUID accountOf(UUID periodId) {
+        return getEntityManager()
+                .createQuery(
+                        "SELECT s.accountId FROM SubscriptionPeriodEntity p, SubscriptionEntity s"
+                                + " WHERE p.id = :id AND s.id = p.subscriptionId",
+                        UUID.class)
+                .setParameter("id", periodId)
+                .getSingleResult();
+    }
+
     public static Optional<SubscriptionPeriodEntity> findByOpeningOrder(UUID orderId) {
         return find("openingOrderId", orderId).firstResultOptional();
     }

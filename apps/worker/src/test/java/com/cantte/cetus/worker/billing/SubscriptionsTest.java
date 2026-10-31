@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -296,6 +298,29 @@ class SubscriptionsTest {
                 .contains("ya tenía una suscripción");
         assertThat(subscriptionOf(accountId).planVersionId)
                 .isEqualTo(QuarkusTransaction.requiringNew().call(() -> currentVersion("INICIAL").id));
+    }
+
+    @Test
+    void twoSubscriptionsPaidAtOnceStartOneAndLeaveTheOtherForReview() throws Exception {
+        UUID accountId = QuarkusTransaction.requiringNew()
+                .call(() -> DocumentEntity.<DocumentEntity>findById(fixtures.invoice()).accountId);
+        fixtures.billingProfile(accountId);
+        BillingOrderEntity first = fixtures.planOrder(accountId, "INICIAL");
+        BillingOrderEntity second = fixtures.planOrder(accountId, "CRECIMIENTO");
+
+        CompletableFuture<Outcome> one = CompletableFuture.supplyAsync(() -> settlement.apply(approved(first)));
+        CompletableFuture<Outcome> other = CompletableFuture.supplyAsync(() -> settlement.apply(approved(second)));
+
+        assertThat(List.of(one.get(30, TimeUnit.SECONDS), other.get(30, TimeUnit.SECONDS)))
+                .containsOnly(Outcome.PAID);
+        assertThat(QuarkusTransaction.requiringNew().call(() -> SubscriptionEntity.count("accountId", accountId)))
+                .isEqualTo(1);
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() ->
+                                BillingOrderEntity.<BillingOrderEntity>list("id in ?1", List.of(first.id, second.id))))
+                .filteredOn(order -> order.reviewReason != null)
+                .singleElement()
+                .satisfies(order -> assertThat(order.reviewReason).contains("ya tenía una suscripción"));
     }
 
     /** An account with a billing profile whose order of the plan was just paid. */

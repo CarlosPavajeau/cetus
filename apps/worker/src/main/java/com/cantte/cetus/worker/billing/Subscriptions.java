@@ -20,6 +20,7 @@ import com.cantte.cetus.worker.notifications.Numbers;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -35,7 +36,8 @@ import org.jboss.logging.Logger;
  * bills the overage its DIAN accepted and opens the next one with the order that renews it, unpaid until the
  * customer pays it (PAST_DUE, which still issues); paying that order grants the period's lot. A renewal unpaid
  * after the grace days cancels it. Each step locks what it changes and checks it was not done, so running it again
- * does nothing.
+ * does nothing. Every step locks in the same order, so two of them never wait on each other: the account's credits,
+ * then the subscription, then the period.
  */
 @ApplicationScoped
 public class Subscriptions {
@@ -123,8 +125,10 @@ public class Subscriptions {
     }
 
     private void renew(BillingOrderEntity order, SubscriptionPeriodEntity period) {
+        ledger.lock(order.accountId);
         SubscriptionEntity subscription =
                 SubscriptionEntity.lock(period.subscriptionId).orElseThrow();
+        SubscriptionPeriodEntity.getEntityManager().refresh(period, LockModeType.PESSIMISTIC_WRITE);
         if (subscription.status == SubscriptionEntity.Status.CANCELED) {
             PaymentSettlement.review(
                     order, "Se pagó la renovación de una suscripción ya cancelada; el periodo no se otorgó");
@@ -163,13 +167,14 @@ public class Subscriptions {
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public boolean close(UUID periodId, OffsetDateTime now) {
+        ledger.lock(SubscriptionPeriodEntity.accountOf(periodId));
+        SubscriptionEntity subscription = SubscriptionEntity.lock(SubscriptionPeriodEntity.subscriptionOf(periodId))
+                .orElseThrow();
         SubscriptionPeriodEntity period =
                 SubscriptionPeriodEntity.lock(periodId).orElseThrow();
         if (period.status == SubscriptionPeriodEntity.Status.CLOSED || period.endsAt.isAfter(now)) {
             return false;
         }
-        SubscriptionEntity subscription =
-                SubscriptionEntity.lock(period.subscriptionId).orElseThrow();
         if (subscription.status == SubscriptionEntity.Status.PAST_DUE) {
             // The period ended with its own renewal unpaid: it is not renewed again over an unpaid one.
             finish(subscription, period, now);
@@ -232,6 +237,7 @@ public class Subscriptions {
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public boolean lapse(UUID subscriptionId, OffsetDateTime now) {
+        ledger.lock(SubscriptionEntity.accountOf(subscriptionId));
         SubscriptionEntity subscription =
                 SubscriptionEntity.lock(subscriptionId).orElseThrow();
         if (subscription.status != SubscriptionEntity.Status.PAST_DUE

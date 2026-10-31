@@ -83,6 +83,14 @@ public class SubscriptionEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
+    /** The subscription's account, read without loading nor locking it, to take its locks in order. */
+    public static UUID accountOf(UUID id) {
+        return getEntityManager()
+                .createQuery("SELECT s.accountId FROM SubscriptionEntity s WHERE s.id = :id", UUID.class)
+                .setParameter("id", id)
+                .getSingleResult();
+    }
+
     public static Optional<SubscriptionEntity> lock(UUID id) {
         return findByIdOptional(id, LockModeType.PESSIMISTIC_WRITE);
     }
