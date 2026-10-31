@@ -125,7 +125,7 @@ public class PaymentSettlement {
     }
 
     /** The first reason stays: a later one is logged, and the person reviewing sees every transaction. */
-    private static void review(BillingOrderEntity order, String reason) {
+    static void review(BillingOrderEntity order, String reason) {
         LOG.warnf("Order %s needs review: %s", order.id, reason);
         if (order.reviewReason == null) {
             order.reviewReason = reason;

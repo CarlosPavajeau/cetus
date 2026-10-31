@@ -71,10 +71,7 @@ public class PlanCatalog {
                 .toList();
     }
 
-    /**
-     * A plan without versions yet. It is never assigned as an account's plan: the subscriptions that are carry
-     * their limits in a migration until subscriptions are sold (phase 6).
-     */
+    /** A plan without versions yet. A subscription plan made here has no request limits of its own. */
     @Transactional(Transactional.TxType.MANDATORY)
     public PlanOfferView create(CreatePlanRequest request, Actor actor, RequestOrigin origin) {
         boolean lasts = request.kind() != PlanEntity.Kind.SUBSCRIPTION;
@@ -96,7 +93,6 @@ public class PlanCatalog {
         plan.validityMonths = request.validityMonths();
         plan.requiresKind = request.requiresKind();
         plan.listed = request.listed();
-        plan.assignable = false;
         plan.persist();
         Map<String, Object> data = new HashMap<>();
         data.put("plan", plan.code);

@@ -3,7 +3,7 @@ import { Progress, ProgressLabel, ProgressValue } from "~/components/ui/progress
 import { formatCount } from "~/features/usage/labels";
 import type { AccountCredits } from "~/lib/api/types";
 
-/** What is left of the credits in force, the grace margin used and the production issuers. */
+/** What is left of the credits in force, the grace margin of a package and the production issuers. */
 export function CreditsSummary({ credits }: { credits: AccountCredits }) {
   const used = credits.granted - credits.available;
 
@@ -22,7 +22,7 @@ export function CreditsSummary({ credits }: { credits: AccountCredits }) {
           <span className="text-sm font-medium tabular-nums">{formatCount(credits.available)}</span>
         </Entry>
         <Entry label="Margen de cortesía usado">
-          {credits.product
+          {credits.productPackage && credits.subscription === null
             ? `${formatCount(credits.graceUsed)} de ${formatCount(credits.graceMargin)} documentos`
             : "No aplica"}
         </Entry>

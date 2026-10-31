@@ -31,8 +31,8 @@ class CreditMovementsAppendOnlyTest {
                 Statement statement = connection.createStatement()) {
             statement.executeUpdate("""
                     WITH account AS (
-                        INSERT INTO billing.accounts (id, organization_id, name, plan_id)
-                        SELECT uuidv7(), 'org_ledger', 'Acme', id FROM billing.plans WHERE code = 'FREE'
+                        INSERT INTO billing.accounts (id, organization_id, name)
+                        VALUES (uuidv7(), 'org_ledger', 'Acme')
                         RETURNING id
                     )
                     INSERT INTO billing.credit_movements (account_id, type, quantity, actor_type)

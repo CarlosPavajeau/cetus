@@ -8,8 +8,6 @@ import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.domain.DomainException;
-import com.cantte.cetus.domain.Ids;
-import com.cantte.cetus.domain.billing.Price;
 import com.cantte.cetus.payments.CheckoutRequest;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
@@ -21,13 +19,13 @@ import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
+import com.cantte.cetus.persistence.entity.SubscriptionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.net.URI;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -45,11 +43,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @ApplicationScoped
 public class Orders {
-
-    public static final String CURRENCY = "COP";
-
-    private static final SecureRandom RANDOM = new SecureRandom();
-    private static final char[] BASE32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".toCharArray();
 
     @Inject
     PlanCatalog catalog;
@@ -86,11 +79,18 @@ public class Orders {
         }
         PlanVersionEntity version = PlanVersionEntity.findById(request.planVersionId());
         PlanEntity plan = PlanEntity.findById(version.planId);
-        if (plan.kind == PlanEntity.Kind.SUBSCRIPTION || version.priceCents == 0) {
-            throw new DomainException("plan_not_purchasable", "This plan cannot be bought from the console yet");
+        if (version.priceCents == 0) {
+            throw new DomainException("plan_not_purchasable", "This plan cannot be bought from the console");
+        }
+        if (SubscriptionEntity.findCurrent(accountId).isPresent()) {
+            throw new DomainException(
+                    "subscription_active",
+                    plan.kind == PlanEntity.Kind.SUBSCRIPTION
+                            ? "The account already has a subscription; change its plan instead"
+                            : "A subscription bills its overage; packages and top-ups are not sold alongside it");
         }
         OffsetDateTime now = OffsetDateTime.now();
-        if (plan.requiresKind != null && !entitlements.of(accountId, now).product()) {
+        if (plan.requiresKind != null && !entitlements.of(accountId, now).productPackage()) {
             throw new DomainException(
                     "plan_requires_product",
                     "Buying " + plan.name + " needs a "
@@ -101,35 +101,18 @@ public class Orders {
             throw new DomainException(
                     "billing_profile_required", "Set who Cetus invoices for the account before buying");
         }
-        Price price = new Price(version.priceCents, version.taxIncluded, version.taxRate);
-
-        BillingOrderEntity order = new BillingOrderEntity();
-        order.id = Ids.newId();
-        order.accountId = accountId;
-        order.kind = BillingOrderEntity.Kind.PURCHASE;
-        order.status = BillingOrderEntity.Status.PENDING;
-        order.reference = reference();
-        order.subtotalCents = price.baseCents();
-        order.taxCents = price.taxCents();
-        order.totalCents = price.totalCents();
-        order.currency = CURRENCY;
-        order.billingProfile = profile.party;
-        order.expiresAt = now.plus(orderTtl);
-        order.persist();
-
-        BillingOrderItemEntity item = new BillingOrderItemEntity();
-        item.id = Ids.newId();
-        item.orderId = order.id;
-        item.itemType = BillingOrderItemEntity.Type.PLAN;
-        item.planVersionId = version.id;
-        item.description = plan.name;
-        item.quantity = 1;
-        item.unitPriceCents = price.totalCents();
-        item.baseCents = price.baseCents();
-        item.taxRate = version.taxRate;
-        item.taxCents = price.taxCents();
-        item.totalCents = price.totalCents();
-        item.persist();
+        BillingOrderEntity order =
+                BillingOrderEntity.open(accountId, BillingOrderEntity.Kind.PURCHASE, profile, now.plus(orderTtl));
+        BillingOrderItemEntity item = BillingOrderItemEntity.add(
+                order,
+                BillingOrderItemEntity.Type.PLAN,
+                version.id,
+                null,
+                plan.name,
+                1,
+                version.priceCents,
+                version.taxIncluded,
+                version.taxRate);
 
         auditLog.record(
                 accountId,
@@ -207,25 +190,6 @@ public class Orders {
                         order.expiresAt.toInstant(),
                         consoleUrl.resolve("/billing/orders/" + order.id)))));
         return OrderView.from(order, items, checkout.orElse(null), invoice);
-    }
-
-    /** "CET-" and 26 characters of Crockford's base32: 128 random bits. */
-    static String reference() {
-        byte[] bytes = new byte[16];
-        RANDOM.nextBytes(bytes);
-        StringBuilder reference = new StringBuilder("CET-");
-        int buffer = 0;
-        int bits = 0;
-        for (byte b : bytes) {
-            buffer = (buffer << 8) | (b & 0xff);
-            bits += 8;
-            while (bits >= 5) {
-                reference.append(BASE32[(buffer >>> (bits - 5)) & 31]);
-                bits -= 5;
-            }
-        }
-        reference.append(BASE32[(buffer << (5 - bits)) & 31]);
-        return reference.toString();
     }
 
     /** Without the Wompi keys nothing can be charged. */

@@ -4,10 +4,11 @@ import static com.cantte.cetus.api.support.IssuedDocuments.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
+import com.cantte.cetus.api.auth.AccessCache;
 import com.cantte.cetus.api.support.ConsoleFixtures;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.Credits;
-import com.cantte.cetus.domain.Ids;
+import com.cantte.cetus.api.support.Subscriptions;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.persistence.entity.AccountEntity;
@@ -15,7 +16,6 @@ import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.CreditReservationEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
@@ -42,6 +42,12 @@ class DocumentCreditsTest {
 
     @Inject
     Credits credits;
+
+    @Inject
+    Subscriptions subscriptions;
+
+    @Inject
+    AccessCache access;
 
     @Test
     void withoutAProductOnlyCreditNotesAreIssued() {
@@ -99,6 +105,50 @@ class DocumentCreditsTest {
     }
 
     @Test
+    void aSubscriptionIssuesPastItsCreditsAsOverageUpToItsLimit() throws Exception {
+        Live live = live();
+        Subscriptions.Started subscription = subscriptions.subscribe(live.accountId(), "INICIAL", 20);
+        Subscriptions.overageLimit(subscription.subscriptionId(), 30 * 15_000);
+        // The plan's shared limits would throttle the race; the account's own are wide.
+        QuarkusTransaction.requiringNew().run(() -> {
+            AccountEntity account = AccountEntity.findById(live.accountId());
+            account.requestsPerSecond = 1000;
+            account.requestsBurst = 1000;
+            access.changed(account);
+        });
+
+        List<Callable<Response>> racers = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            racers.add(() -> invoice(live));
+        }
+        List<Response> responses = race(racers);
+
+        assertThat(responses).filteredOn(r -> r.statusCode() == 202).hasSize(50);
+        assertThat(responses)
+                .filteredOn(r -> r.statusCode() == 402)
+                .hasSize(50)
+                .allSatisfy(r -> assertThat(r.jsonPath().getString("code")).isEqualTo("overage_limit_reached"));
+        assertThat(reservations(live.accountId()))
+                .filteredOn(reservation -> reservation.kind == CreditReservationEntity.Kind.CREDIT)
+                .hasSize(20);
+        assertThat(reservations(live.accountId()))
+                .filteredOn(reservation -> reservation.kind == CreditReservationEntity.Kind.OVERAGE)
+                .hasSize(30)
+                .allSatisfy(reservation ->
+                        assertThat(reservation.subscriptionPeriodId).isEqualTo(subscription.periodId()));
+        assertThat(reservations(live.accountId()))
+                .filteredOn(reservation -> reservation.kind == CreditReservationEntity.Kind.GRACE)
+                .isEmpty();
+
+        String invoiceId = acceptedInvoiceOf(live.accountId());
+        creditNote(live, invoiceId).then().statusCode(202);
+        debitNote(live, invoiceId).then().statusCode(402).body("code", equalTo("overage_limit_reached"));
+
+        Subscriptions.overageLimit(subscription.subscriptionId(), 31 * 15_000);
+        debitNote(live, invoiceId).then().statusCode(202);
+    }
+
+    @Test
     void aProductPastItsValidityIsNoProduct() {
         Live live = live();
         credits.grant(live.accountId(), "EMPRENDEDOR", 300, OffsetDateTime.now().minusMinutes(1));
@@ -124,10 +174,7 @@ class DocumentCreditsTest {
 
     private record Live(UUID accountId, ConsoleUser user, String issuerId, String apiKey) {}
 
-    /**
-     * A production issuer with every range and no product, on a plan of its own without request limits, so a race
-     * of requests is not throttled.
-     */
+    /** A production issuer with every range and no product, whose keys keep the per-key request limits. */
     private static Live live() {
         ConsoleUser user = ConsoleUser.newOrganization();
         String accountId = ConsoleFixtures.bootstrap(user, "Créditos SAS");
@@ -136,14 +183,6 @@ class DocumentCreditsTest {
         ConsoleFixtures.addCreditNoteRange(user, issuerId);
         ConsoleFixtures.addDebitNoteRange(user, issuerId);
         Credits.expireAll(UUID.fromString(accountId));
-        QuarkusTransaction.requiringNew().run(() -> {
-            PlanEntity plan = new PlanEntity();
-            plan.id = Ids.newId();
-            plan.code = "TEST_" + plan.id;
-            plan.name = "Prueba";
-            plan.persist();
-            AccountEntity.<AccountEntity>findById(UUID.fromString(accountId)).planId = plan.id;
-        });
         return new Live(UUID.fromString(accountId), user, issuerId, liveKey(user));
     }
 

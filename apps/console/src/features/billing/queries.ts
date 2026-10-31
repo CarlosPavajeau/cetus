@@ -1,12 +1,24 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getBillingProfile, getCredits, getOrder, listOrders, listPlanOffers } from "./server";
+import {
+  getBillingProfile,
+  getCredits,
+  getOrder,
+  getSubscription,
+  listOrders,
+  listPlanOffers,
+} from "./server";
 
 export const billingKey = ["billing"] as const;
 
 export const creditsQuery = queryOptions({
   queryKey: [...billingKey, "credits"],
   queryFn: () => getCredits(),
+});
+
+export const subscriptionQuery = queryOptions({
+  queryKey: [...billingKey, "subscription"],
+  queryFn: () => getSubscription(),
 });
 
 export const planOffersQuery = queryOptions({

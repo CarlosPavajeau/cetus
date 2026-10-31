@@ -59,5 +59,16 @@ public enum AuditAction {
     /** Credits added or taken by the Cetus team to correct a balance. */
     CREDITS_ADJUSTED,
     /** A document the worker gave up on, resolved by the Cetus team as not issued: its credit is given back. */
-    DOCUMENT_CREDIT_RELEASED
+    DOCUMENT_CREDIT_RELEASED,
+    /** The account paid its first period and the subscription started; recorded by Cetus itself. */
+    SUBSCRIPTION_STARTED,
+    /** How much overage a period may run up before new documents are refused. */
+    SUBSCRIPTION_OVERAGE_LIMIT_CHANGED,
+    /** The plan the next period takes, or the change undone. */
+    SUBSCRIPTION_PLAN_SCHEDULED,
+    /** The subscription ends with its period, or goes on again. */
+    SUBSCRIPTION_CANCEL_SCHEDULED,
+    SUBSCRIPTION_CANCEL_UNDONE,
+    /** The subscription ended, unpaid or as its owner chose; recorded by Cetus itself. */
+    SUBSCRIPTION_CANCELED
 }

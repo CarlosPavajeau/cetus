@@ -16,6 +16,7 @@ import {
   documentsLabel,
   formatCents,
   issuersLabel,
+  overageLabel,
   planKindLabel,
   priceBreakdown,
   purchasable,
@@ -25,7 +26,7 @@ import { PurchaseDialog } from "~/features/billing/PurchaseDialog";
 import { billingProfileQuery, creditsQuery, planOffersQuery } from "~/features/billing/queries";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 
-/** The packages and top-ups the account can buy now, at their final price. */
+/** The subscriptions, packages and top-ups the account can buy now, at their final price. */
 export const Route = createFileRoute("/_app/billing/products")({
   loader: async ({ context: { queryClient } }) => {
     await Promise.all([
@@ -46,13 +47,13 @@ function Products() {
   const { manage } = useMemberPermissions();
   const impersonating = Boolean(session.impersonatedBy);
   const buyer = manage && !impersonating;
-  const products = offers.filter((offer) => purchasable(offer, credits.product));
+  const products = offers.filter((offer) => purchasable(offer, credits));
 
   return (
     <>
       <PageHeader
         title="Comprar créditos"
-        lead="Un paquete anual trae los créditos y los emisores de producción de un año. Las recargas suman créditos a un paquete vigente por 12 meses desde la compra. Los precios son finales."
+        lead="Una suscripción mensual trae los documentos de cada mes y cobra el excedente al cierre. Un paquete anual trae los créditos y los emisores de producción de un año, y las recargas le suman créditos por 12 meses desde la compra. Los precios son finales."
       />
 
       {impersonating ? (
@@ -81,10 +82,20 @@ function Products() {
           </AlertAction>
         </Alert>
       )}
-      {!credits.product && (
-        <p className="text-sm text-muted-foreground">
-          Las recargas aparecen cuando tienes un paquete anual vigente.
-        </p>
+      {credits.subscription !== null ? (
+        <Alert>
+          <AlertTitle>{`Tienes la suscripción ${credits.subscription}`}</AlertTitle>
+          <AlertDescription>
+            Los documentos por encima de los del mes se cobran como excedente, así que no necesitas
+            paquetes ni recargas. Puedes cambiar de plan desde Facturación.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        !credits.productPackage && (
+          <p className="text-sm text-muted-foreground">
+            Las recargas aparecen cuando tienes un paquete anual vigente.
+          </p>
+        )
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -97,6 +108,9 @@ function Products() {
             <CardContent className="flex flex-col gap-3">
               <p className="text-2xl font-semibold tabular-nums">
                 {formatCents(offer.version.totalCents)}
+                {offer.kind === "SUBSCRIPTION" && (
+                  <span className="text-sm font-normal text-muted-foreground"> al mes</span>
+                )}
               </p>
               <p className="text-xs text-muted-foreground">{priceBreakdown(offer.version)}</p>
               <ul className="flex flex-col gap-1 text-sm">
@@ -105,6 +119,9 @@ function Products() {
                   <li>{issuersLabel(offer.version.issuersIncluded)}</li>
                 )}
                 {offer.validityMonths !== null && <li>{validityLabel(offer.validityMonths)}</li>}
+                {offer.version.priceOverageCents !== null && (
+                  <li>{overageLabel(offer.version.priceOverageCents)}</li>
+                )}
               </ul>
             </CardContent>
             {buyer && profile !== null && (

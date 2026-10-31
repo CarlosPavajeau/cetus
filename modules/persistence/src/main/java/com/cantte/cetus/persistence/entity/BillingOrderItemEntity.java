@@ -1,5 +1,7 @@
 package com.cantte.cetus.persistence.entity;
 
+import com.cantte.cetus.domain.Ids;
+import com.cantte.cetus.domain.billing.Price;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +38,10 @@ public class BillingOrderItemEntity extends PanacheEntityBase {
     @Column(name = "plan_version_id")
     public UUID planVersionId;
 
+    /** The subscription period the item pays: the one a plan item opens, or the one whose overage it bills. */
+    @Column(name = "subscription_period_id")
+    public UUID subscriptionPeriodId;
+
     public String description;
 
     public int quantity;
@@ -55,6 +61,42 @@ public class BillingOrderItemEntity extends PanacheEntityBase {
 
     @Column(name = "total_cents")
     public long totalCents;
+
+    /**
+     * Adds an item at a final unit price to the order, whose amounts grow by the item's.
+     *
+     * @param planVersionId the version a plan item sells; null for overage and adjustments
+     */
+    public static BillingOrderItemEntity add(
+            BillingOrderEntity order,
+            Type type,
+            UUID planVersionId,
+            UUID subscriptionPeriodId,
+            String description,
+            int quantity,
+            long unitPriceCents,
+            boolean taxIncluded,
+            BigDecimal taxRate) {
+        Price price = new Price(Math.multiplyExact(unitPriceCents, quantity), taxIncluded, taxRate);
+        BillingOrderItemEntity item = new BillingOrderItemEntity();
+        item.id = Ids.newId();
+        item.orderId = order.id;
+        item.itemType = type;
+        item.planVersionId = planVersionId;
+        item.subscriptionPeriodId = subscriptionPeriodId;
+        item.description = description;
+        item.quantity = quantity;
+        item.unitPriceCents = unitPriceCents;
+        item.baseCents = price.baseCents();
+        item.taxRate = taxRate;
+        item.taxCents = price.taxCents();
+        item.totalCents = price.totalCents();
+        item.persist();
+        order.subtotalCents += item.baseCents;
+        order.taxCents += item.taxCents;
+        order.totalCents += item.totalCents;
+        return item;
+    }
 
     public static List<BillingOrderItemEntity> listByOrder(UUID orderId) {
         return list("orderId = ?1 order by id", orderId);

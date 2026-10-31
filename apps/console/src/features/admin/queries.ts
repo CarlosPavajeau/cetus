@@ -4,7 +4,7 @@ import type { AuditAction, SupportTicketStatus } from "~/lib/api/types";
 
 import { getAdminIssuer } from "./issuers";
 import type { AccountStatus } from "./schema";
-import { getAdminAccount, listAdminAccounts, listAdminAuditLog, listAdminPlans } from "./server";
+import { getAdminAccount, listAdminAccounts, listAdminAuditLog } from "./server";
 import { getAdminSupportTicket, listAdminFeedback, listAdminSupportTickets } from "./support";
 import { getAdminUser, listAdminUsers } from "./users";
 
@@ -27,12 +27,6 @@ export function adminAccountQuery(id: string) {
     queryFn: () => getAdminAccount({ data: { id } }),
   });
 }
-
-export const adminPlansQuery = queryOptions({
-  queryKey: [...adminKey, "plans"],
-  queryFn: () => listAdminPlans(),
-  staleTime: Infinity,
-});
 
 export function adminAuditLogQuery(filters: { accountId?: string; action?: AuditAction }) {
   return infiniteQueryOptions({

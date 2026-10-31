@@ -108,10 +108,18 @@ public final class HelpViews {
             List<FailedDocumentView> recentFailures) {}
 
     public record AccountSnapshot(
-            UUID id, String organizationId, String name, AccountEntity.Status status, String plan) {
+            UUID id,
+            String organizationId,
+            String name,
+            AccountEntity.Status status,
+            @Schema(nullable = true) String product) {
         static AccountSnapshot from(AccountEntity account) {
             return new AccountSnapshot(
-                    account.id, account.organizationId, account.name, account.status, PlanEntity.of(account).code);
+                    account.id,
+                    account.organizationId,
+                    account.name,
+                    account.status,
+                    PlanEntity.productName(account.id).orElse(null));
         }
     }
 

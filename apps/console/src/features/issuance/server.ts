@@ -45,8 +45,10 @@ const messages: Record<string, string> = {
   payment_due_date_required: "Una venta a crédito necesita fecha de vencimiento.",
   invoice_not_accepted: "Solo se pueden emitir notas sobre facturas aceptadas por la DIAN.",
   credit_note_exceeds_balance: "La nota crédito supera lo que queda por acreditar de la factura.",
+  overage_limit_reached:
+    "Tu suscripción llegó a su límite de excedente de este periodo. Las notas crédito siempre se pueden emitir; el dueño de la cuenta puede ampliar el límite en Facturación.",
   no_active_product:
-    "Tu cuenta no tiene un paquete vigente para emitir en producción. Las notas crédito siempre se pueden emitir; para seguir facturando, compra un paquete.",
+    "Tu cuenta no tiene una suscripción ni un paquete vigente para emitir en producción. Las notas crédito siempre se pueden emitir; para seguir facturando, contrata una suscripción o compra un paquete.",
   insufficient_credits:
     "Usaste tus créditos y tu margen de cortesía. Las notas crédito siempre se pueden emitir; para seguir facturando, compra una recarga.",
   sandbox_daily_limit:

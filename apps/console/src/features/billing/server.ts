@@ -4,7 +4,7 @@ import { type } from "arktype";
 import type { DocumentFileUrl } from "~/features/documents/server";
 import { customerExtrasSchema, toCustomerRequest } from "~/features/issuance/schema";
 import { CetusApiError, api } from "~/lib/api/client";
-import type { BillingProfile, DocumentFile, Order } from "~/lib/api/types";
+import type { BillingProfile, DocumentFile, Order, Subscription } from "~/lib/api/types";
 
 import { billingProfileSchema } from "./schema";
 
@@ -48,15 +48,28 @@ export const getBillingProfile = createServerFn({ method: "GET" }).handler(
   },
 );
 
+/** The account's subscription, or null without one. */
+export const getSubscription = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Subscription | null> => {
+    try {
+      return await api.get("/console/subscription");
+    } catch (error) {
+      if (error instanceof CetusApiError && error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+);
+
 export type BillingResult = { ok: true } | { ok: false; message: string };
 
 export type OrderResult = { ok: true; order: Order } | { ok: false; message: string };
 
 const messages: Record<string, string> = {
   organization_role_forbidden:
-    "Solo los dueños y administradores de la organización pueden comprar y cambiar el perfil de facturación.",
-  impersonation_forbidden:
-    "Las compras y el perfil de facturación los cambia la persona de la cuenta.",
+    "Solo los dueños y administradores de la organización pueden comprar y cambiar la facturación.",
+  impersonation_forbidden: "Las compras y la facturación las cambia la persona de la cuenta.",
   account_suspended: "La cuenta está suspendida: no se pueden hacer compras ni cambios.",
   customer_identification_invalid: "El número de identificación no tiene un formato válido.",
   customer_check_digit_invalid: "El dígito de verificación del NIT no corresponde.",
@@ -64,6 +77,10 @@ const messages: Record<string, string> = {
   plan_version_not_offered: "Ese producto cambió o ya no está a la venta. Recarga la página.",
   plan_not_purchasable: "Ese producto no se puede comprar desde la consola.",
   plan_requires_product: "Las recargas solo se compran con un paquete anual vigente.",
+  subscription_active:
+    "La cuenta ya tiene una suscripción: su excedente reemplaza a los paquetes y las recargas. Para cambiar de plan, prográmalo desde Facturación.",
+  subscription_ending:
+    "La suscripción termina con este periodo. Reanúdala antes de cambiar de plan.",
   payments_not_configured: "Los pagos no están disponibles en este momento. Intenta más tarde.",
 };
 
@@ -119,5 +136,51 @@ export const getOrderInvoiceFileUrl = createServerFn({ method: "GET" })
         return { url: null, message: "La factura todavía no está disponible." };
       }
       throw error;
+    }
+  });
+
+export type SubscriptionResult =
+  | { ok: true; subscription: Subscription }
+  | { ok: false; message: string };
+
+/** How much overage a period may run up, in COP cents; credit notes always go through. */
+export const setOverageLimit = createServerFn({ method: "POST" })
+  .validator(type({ overageLimitCents: "0 <= number.integer <= 100000000000" }))
+  .handler(async ({ data }): Promise<SubscriptionResult> => {
+    try {
+      const subscription = await api.put("/console/subscription/overage-limit", {
+        body: { overageLimitCents: data.overageLimitCents },
+      });
+      return { ok: true, subscription };
+    } catch (error) {
+      return refusal(error, "No pudimos cambiar el límite de excedente.");
+    }
+  });
+
+/** The plan of the next period; null keeps the current one. */
+export const schedulePlanNext = createServerFn({ method: "POST" })
+  .validator(type({ planVersionId: "string.uuid | null" }))
+  .handler(async ({ data }): Promise<SubscriptionResult> => {
+    try {
+      const subscription = await api.put("/console/subscription/plan-next", {
+        body: { planVersionId: data.planVersionId },
+      });
+      return { ok: true, subscription };
+    } catch (error) {
+      return refusal(error, "No pudimos programar el cambio de plan.");
+    }
+  });
+
+/** Ends the subscription with the open period, or keeps it renewing. */
+export const setCancellation = createServerFn({ method: "POST" })
+  .validator(type({ cancel: "boolean" }))
+  .handler(async ({ data }): Promise<SubscriptionResult> => {
+    try {
+      const subscription = data.cancel
+        ? await api.post("/console/subscription/cancellation")
+        : await api.delete("/console/subscription/cancellation");
+      return { ok: true, subscription };
+    } catch (error) {
+      return refusal(error, "No pudimos cambiar la cancelación de la suscripción.");
     }
   });

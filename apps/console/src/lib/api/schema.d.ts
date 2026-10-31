@@ -157,23 +157,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/accounts/{id}/plan": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Change Plan */
-        put: operations["AdminAccountResource_changePlan"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/admin/accounts/{id}/reactivation": {
         parameters: {
             query?: never;
@@ -317,8 +300,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List */
-        get: operations["AdminPlanResource_list"];
+        get?: never;
         put?: never;
         /** Create */
         post: operations["AdminPlanResource_create"];
@@ -1127,6 +1109,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["SubscriptionResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/subscription/cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["SubscriptionResource_cancel"];
+        /** Resume */
+        delete: operations["SubscriptionResource_resume"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/subscription/overage-limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Overage Limit */
+        put: operations["SubscriptionResource_overageLimit"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/subscription/plan-next": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Plan Next */
+        put: operations["SubscriptionResource_planNext"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/support-attachments": {
         parameters: {
             query?: never;
@@ -1598,8 +1649,12 @@ export interface components {
     schemas: {
         /** @description The account's credits: what is left, its lots and the latest movements */
         AccountCreditsView: {
-            /** @description Whether a package in force lets the account issue in production */
+            /** @description Whether a subscription or a package in force lets the account issue in production */
             product: boolean;
+            /** @description Whether a package is in force */
+            productPackage: boolean;
+            /** @description The plan of the subscription that is not canceled; null without one */
+            subscription: string | null;
             /**
              * Format: int32
              * @description Credits left in the lots that have not expired
@@ -1617,12 +1672,12 @@ export interface components {
             graceUsed: number;
             /**
              * Format: int32
-             * @description Documents the package allows without credits; 0 without a product
+             * @description Documents the package allows without credits; 0 without one or with a subscription
              */
             graceMargin: number;
             /**
              * Format: int32
-             * @description Production issuers the packages in force include
+             * @description Production issuers the subscription and the packages in force include
              */
             issuersIncluded: number;
             /**
@@ -1640,7 +1695,8 @@ export interface components {
             organizationId: string;
             name: string;
             status: components["schemas"]["AccountStatus"];
-            plan: string;
+            /** @description Its subscription's plan, else its package in force; null without one */
+            product: string | null;
             statusReason: string | null;
             statusChangedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description Better Auth user id */
@@ -1649,7 +1705,7 @@ export interface components {
             issuers: components["schemas"]["IssuerView"][];
             /** @description Documents created this month in every environment, by status */
             usageThisMonth: components["schemas"]["UsageCountView"][];
-            /** @description Billable documents this month against the account's plan */
+            /** @description Billable documents this month */
             billableThisMonth: components["schemas"]["PeriodUsageView"];
             recentFailures: components["schemas"]["FailedDocumentView"][];
         };
@@ -1662,7 +1718,7 @@ export interface components {
             organizationId: string;
             name: string;
             status: components["schemas"]["AccountStatus"];
-            plan: string;
+            product: string | null;
         };
         /** @enum {string} */
         AccountStatus: "ACTIVE" | "SUSPENDED" | "CLOSED";
@@ -1672,7 +1728,8 @@ export interface components {
             organizationId: string;
             name: string;
             status: components["schemas"]["AccountStatus"];
-            plan: string;
+            /** @description Its subscription's plan, else its package in force; null without one */
+            product: string | null;
             createdAt: components["schemas"]["OffsetDateTime"];
             /** Format: int64 */
             issuers: number;
@@ -1697,7 +1754,8 @@ export interface components {
             id: components["schemas"]["UUID"];
             name: string;
             status: components["schemas"]["AccountStatus"];
-            plan: string;
+            /** @description Its subscription's plan, else its package in force; null without one */
+            product: string | null;
             /** @description Why the account is suspended, when it is */
             statusReason: string | null;
         };
@@ -1873,7 +1931,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -2991,6 +3049,13 @@ export interface components {
             /** @description Cetus' electronic invoice of the order, once it is issued */
             invoice: ((components["schemas"]["OrderInvoiceView"] | null) | null) | components["schemas"]["OrderInvoiceView"] | null;
         };
+        OverageLimitRequest: {
+            /**
+             * Format: int64
+             * @description In COP cents; 0 refuses every overage document but credit notes
+             */
+            overageLimitCents: number;
+        };
         /** @description Cómo se paga la factura. */
         Payment: {
             /** @description Contado o crédito. */
@@ -3014,24 +3079,13 @@ export interface components {
          * @enum {string}
          */
         PaymentMethod: "CASH" | "CREDIT";
-        /** @description Billable documents (production, accepted by the DIAN) of a month against the plan */
+        /** @description Billable documents (production, accepted by the DIAN) of a month */
         PeriodUsageView: {
             /** @description Calendar month in Colombia, YYYY-MM */
             period: string;
-            plan: components["schemas"]["PlanView"];
             documents: components["schemas"]["DocumentCountView"][];
             /** Format: int64 */
             total: number;
-            /**
-             * Format: int64
-             * @description Documents above the plan's included ones; 0 without a limit
-             */
-            overage: number;
-            /**
-             * Format: int64
-             * @description Overage times its price, in COP; null when the plan has no price
-             */
-            costOverageCop: number | null;
         };
         /**
          * @description Tipo de persona.
@@ -3041,9 +3095,9 @@ export interface components {
          * @enum {string}
          */
         PersonType: "LEGAL_ENTITY" | "NATURAL_PERSON";
-        PlanChangeRequest: {
-            planId: components["schemas"]["UUID"];
-            reason: string;
+        PlanNextRequest: {
+            /** @description A subscription version offered to the account; null undoes the change */
+            planVersionId?: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
         };
         /** @description A plan of the catalog and the version that applies now */
         PlanOfferView: {
@@ -3103,44 +3157,6 @@ export interface components {
             validFrom: components["schemas"]["OffsetDateTime"];
             /** @description When the next version starts; null while it is the last one */
             validTo: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
-        };
-        /** @description What a plan includes. A null limit is no limit; a null price is agreed by contract. */
-        PlanView: {
-            id: components["schemas"]["UUID"];
-            code: string;
-            name: string;
-            /** Format: int64 */
-            priceMonthlyCop: number | null;
-            /**
-             * Format: int32
-             * @description Billable documents included each month
-             */
-            documentsIncluded: number | null;
-            /**
-             * Format: int32
-             * @description Documents a month may take above the included ones before new ones are refused, credit notes aside; null never refuses them
-             */
-            documentsGrace: number | null;
-            /**
-             * Format: int32
-             * @description Price of each document above the included ones
-             */
-            priceOverageCop: number | null;
-            /**
-             * Format: int32
-             * @description Production issuers (NIT) the account may have
-             */
-            issuersIncluded: number | null;
-            /**
-             * Format: int32
-             * @description Production API requests a second, shared by the account's keys
-             */
-            requestsPerSecond: number | null;
-            /**
-             * Format: int32
-             * @description Production API requests the account may make at once
-             */
-            requestsBurst: number | null;
         };
         PreviewLine: {
             /** Format: int32 */
@@ -3342,11 +3358,77 @@ export interface components {
         /** @enum {string} */
         Status1: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED";
         /** @enum {string} */
-        Status2: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        Status2: "ACTIVE" | "PAST_DUE" | "CANCELED";
         /** @enum {string} */
-        Status3: "ACTIVE" | "DISABLED";
+        Status3: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        /** @enum {string} */
+        Status4: "ACTIVE" | "DISABLED";
         StatusChangeRequest: {
             reason: string;
+        };
+        /** @description The open month of a subscription */
+        SubscriptionPeriodView: {
+            /** Format: int32 */
+            number: number;
+            startsAt: components["schemas"]["OffsetDateTime"];
+            /** @description When the period closes and the next one is renewed */
+            endsAt: components["schemas"]["OffsetDateTime"];
+            /** Format: int32 */
+            documentsIncluded: number;
+            /**
+             * Format: int32
+             * @description Left in the period's lot; null until the order that opens it is paid
+             */
+            documentsAvailable: number | null;
+            /**
+             * Format: int32
+             * @description Documents past the credits, billed at the close; credit notes included
+             */
+            overage: number;
+            /**
+             * Format: int32
+             * @description The overage that counts against the limit: credit notes aside
+             */
+            overageLimited: number;
+            /** Format: int64 */
+            priceOverageCents: number;
+            /**
+             * Format: int64
+             * @description What the overage so far costs at the close
+             */
+            overageCostCents: number;
+            /** @description The order that opened the period while it is unpaid */
+            renewalOrderId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+        };
+        /** @description The account's subscription that is not canceled */
+        SubscriptionView: {
+            id: components["schemas"]["UUID"];
+            status: components["schemas"]["Status2"];
+            planCode: string;
+            planName: string;
+            /** @description The terms the open period was sold at */
+            version: components["schemas"]["PlanVersionView"];
+            /** @description The plan the next period takes, when a change is scheduled */
+            planNextName: string | null;
+            planVersionNextId: components["schemas"]["UUID"] | null;
+            /** @description Whether it ends with the open period instead of renewing */
+            cancelAtPeriodEnd: boolean;
+            /**
+             * Format: int64
+             * @description How much overage a period may run up before new documents are refused
+             */
+            overageLimitCents: number;
+            /**
+             * Format: int32
+             * @description overageLimitCents in documents at the period's overage price
+             */
+            overageLimit: number;
+            startedAt: components["schemas"]["OffsetDateTime"];
+            /** @description Since when the renewal is unpaid */
+            pastDueAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            /** @description When an unpaid renewal cancels the subscription */
+            payBy: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            period: components["schemas"]["SubscriptionPeriodView"];
         };
         SupportSnapshot: {
             takenAt: components["schemas"]["OffsetDateTime"];
@@ -3466,12 +3548,12 @@ export interface components {
             /** Format: int64 */
             count: number;
         };
-        /** @description The account's plan and its billable documents: this month in detail, and the months before */
+        /** @description The account's billable documents: this month in detail, and the months before */
         UsageView: {
             current: components["schemas"]["PeriodUsageView"];
             /**
              * Format: int64
-             * @description Production issuers the account has, against the plan's included ones
+             * @description Production issuers the account has
              */
             issuersLive: number;
             /** @description The last months, newest first, this month included */
@@ -3497,7 +3579,7 @@ export interface components {
             eventId: components["schemas"]["UUID"];
             eventType: string;
             documentId: components["schemas"]["UUID"];
-            status: components["schemas"]["Status2"];
+            status: components["schemas"]["Status3"];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
@@ -3516,7 +3598,7 @@ export interface components {
             environment: components["schemas"]["Environment"];
             /** @description Empty means all event types */
             eventTypes: string[];
-            status: components["schemas"]["Status3"];
+            status: components["schemas"]["Status4"];
             disabledAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description AUTOMATIC when Cetus disabled it after failing for days */
             disabledReason: ((string | components["schemas"]["DisabledReason"] | null) | null) | components["schemas"]["DisabledReason"] | null;
@@ -3677,9 +3759,11 @@ export interface components {
         };
         /**
          * @description La cuenta no tiene con qué emitir el documento en producción.
-         *     `no_active_product`: no tiene un paquete vigente. `insufficient_credits`: usó sus créditos y su margen
-         *     de cortesía (el 10 % de su último paquete o recarga, mínimo 10 documentos). Compra un paquete o una
-         *     recarga para seguir emitiendo. Las notas crédito nunca reciben este error.
+         *     `no_active_product`: no tiene una suscripción ni un paquete vigente. `insufficient_credits`: usó sus
+         *     créditos y su margen de cortesía (el 10 % de su último paquete o recarga, mínimo 10 documentos); compra
+         *     una recarga para seguir emitiendo. `overage_limit_reached`: la suscripción llegó a su límite de excedente
+         *     del periodo; el dueño de la cuenta puede ampliarlo en la consola, o esperar al siguiente periodo. Las
+         *     notas crédito nunca reciben este error.
          */
         CreditsRefused: {
             headers: {
@@ -4344,75 +4428,6 @@ export interface operations {
             };
         };
     };
-    AdminAccountResource_changePlan: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["schemas"]["UUID"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PlanChangeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AccountDetailView"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Authorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-        };
-    };
     AdminAccountResource_reactivate: {
         parameters: {
             query?: never;
@@ -4842,42 +4857,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    AdminPlanResource_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PlanView"][];
-                };
-            };
-            /** @description Not Authorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
             };
         };
     };
@@ -7987,6 +7966,227 @@ export interface operations {
                 };
             };
             /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SubscriptionResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no subscription */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SubscriptionResource_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no subscription */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SubscriptionResource_resume: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no subscription */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SubscriptionResource_overageLimit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverageLimitRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no subscription */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    SubscriptionResource_planNext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanNextRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no subscription */
             404: {
                 headers: {
                     [name: string]: unknown;

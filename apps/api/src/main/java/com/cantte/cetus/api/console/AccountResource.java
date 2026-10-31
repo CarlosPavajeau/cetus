@@ -72,7 +72,6 @@ public class AccountResource {
         account.id = Ids.newId();
         account.organizationId = context.organizationId();
         account.name = request.name();
-        account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
         account.persist();
         // The creator is the organization's owner: every category waits for them to verify their address.
         context.email().ifPresent(email -> contacts.seedOwner(account.id, email));
@@ -103,7 +102,11 @@ public class AccountResource {
             UUID id,
             String name,
             AccountEntity.Status status,
-            String plan,
+
+            @Schema(
+                    nullable = true,
+                    description = "Its subscription's plan, else its package in force; null without one")
+            String product,
 
             @Schema(nullable = true, description = "Why the account is suspended, when it is")
             String statusReason) {
@@ -112,7 +115,7 @@ public class AccountResource {
                     account.id,
                     account.name,
                     account.status,
-                    PlanEntity.of(account).code,
+                    PlanEntity.productName(account.id).orElse(null),
                     account.status == AccountEntity.Status.ACTIVE ? null : account.statusReason);
         }
     }

@@ -1,5 +1,6 @@
 package com.cantte.cetus.persistence.entity;
 
+import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.Party;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
@@ -10,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,11 @@ import org.hibernate.type.SqlTypes;
 @Entity
 @Table(name = "billing_orders")
 public class BillingOrderEntity extends PanacheEntityBase {
+
+    public static final String CURRENCY = "COP";
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final char[] BASE32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".toCharArray();
 
     public enum Kind {
         PURCHASE,
@@ -89,6 +96,44 @@ public class BillingOrderEntity extends PanacheEntityBase {
     @PreUpdate
     void touch() {
         updatedAt = OffsetDateTime.now();
+    }
+
+    /**
+     * A pending order without items, in COP and invoiced to the billing profile as it is now; {@link
+     * BillingOrderItemEntity#add} adds its items and amounts.
+     */
+    public static BillingOrderEntity open(
+            UUID accountId, Kind kind, BillingProfileEntity profile, OffsetDateTime expiresAt) {
+        BillingOrderEntity order = new BillingOrderEntity();
+        order.id = Ids.newId();
+        order.accountId = accountId;
+        order.kind = kind;
+        order.status = Status.PENDING;
+        order.reference = reference();
+        order.currency = CURRENCY;
+        order.billingProfile = profile.party;
+        order.expiresAt = expiresAt;
+        order.persist();
+        return order;
+    }
+
+    /** "CET-" and 26 characters of Crockford's base32: 128 random bits. */
+    public static String reference() {
+        byte[] bytes = new byte[16];
+        RANDOM.nextBytes(bytes);
+        StringBuilder reference = new StringBuilder("CET-");
+        int buffer = 0;
+        int bits = 0;
+        for (byte b : bytes) {
+            buffer = (buffer << 8) | (b & 0xff);
+            bits += 8;
+            while (bits >= 5) {
+                reference.append(BASE32[(buffer >>> (bits - 5)) & 31]);
+                bits -= 5;
+            }
+        }
+        reference.append(BASE32[(buffer << (5 - bits)) & 31]);
+        return reference.toString();
     }
 
     /** The order with the reference, locked until the transaction ends. */

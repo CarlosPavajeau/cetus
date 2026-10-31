@@ -5,13 +5,13 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.api.support.Subscriptions;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.usage.UsagePeriod;
-import com.cantte.cetus.persistence.entity.AccountEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import java.time.YearMonth;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -19,8 +19,11 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class UsageResourceTest {
 
+    @Inject
+    Subscriptions subscriptions;
+
     @Test
-    void aNewAccountStartsOnTheFreePlanWithNothingBilled() {
+    void aNewAccountHasNothingBilledAndThePerKeyLimits() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         bootstrap(customer, "Nueva SAS");
         YearMonth now = UsagePeriod.current();
@@ -30,24 +33,20 @@ class UsageResourceTest {
                 .then()
                 .statusCode(200)
                 .body("current.period", equalTo(now.toString()))
-                .body("current.plan.code", equalTo("FREE"))
-                .body("current.plan.documentsIncluded", equalTo(25))
-                .body("current.plan.documentsGrace", equalTo(5))
                 .body("current.total", equalTo(0))
                 .body("current.documents.documentType", contains("INVOICE", "CREDIT_NOTE", "DEBIT_NOTE"))
                 .body("issuersLive", equalTo(0))
-                .body("requests.requestsPerSecond", equalTo(1f))
-                .body("requests.requestsBurst", equalTo(10))
-                .body("requests.perKey", equalTo(false))
+                .body("requests.requestsPerSecond", equalTo(10f))
+                .body("requests.requestsBurst", equalTo(20))
+                .body("requests.perKey", equalTo(true))
                 .body("months.period", contains(months(now)));
     }
 
     @Test
-    void showsThisMonthAgainstThePlanAndTheMonthsBefore() {
+    void showsThisMonthAndTheMonthsBeforeWithTheSubscriptionsLimits() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(bootstrap(customer, "Facturadora SAS"));
-        QuarkusTransaction.requiringNew()
-                .run(() -> AccountEntity.<AccountEntity>findById(accountId).planId = PlanEntity.byCode("INICIAL").id);
+        subscriptions.subscribe(accountId, "INICIAL", 200);
         YearMonth now = UsagePeriod.current();
         bill(accountId, now, DocumentType.INVOICE, 205);
         bill(accountId, now, DocumentType.DEBIT_NOTE, 1);
@@ -58,13 +57,10 @@ class UsageResourceTest {
                 .get("/console/usage")
                 .then()
                 .statusCode(200)
-                .body("current.plan.name", equalTo("Inicial"))
                 .body("requests.requestsPerSecond", equalTo(5f))
                 .body("requests.requestsBurst", equalTo(20))
                 .body("requests.perKey", equalTo(false))
                 .body("current.total", equalTo(206))
-                .body("current.overage", equalTo(6))
-                .body("current.costOverageCop", equalTo(900))
                 .body("months.total", contains(206, 0, 40, 0, 0, 0));
     }
 

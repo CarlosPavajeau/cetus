@@ -6,6 +6,7 @@ import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.CreditReservationEntity;
+import com.cantte.cetus.persistence.entity.SubscriptionPeriodEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -44,8 +45,9 @@ public class CreditLedger {
     boolean enforce;
 
     /**
-     * Grants a lot, after settling with it the grace documents already accepted. Granting a source again does
-     * nothing.
+     * Grants a lot, after settling with it the grace documents already accepted and, for a subscription period's
+     * lot, the overage documents its period ran up before the lot came (a renewal paid late). Granting a source
+     * again does nothing.
      *
      * @return the new lot, or empty when the source already had one
      */
@@ -74,6 +76,14 @@ public class CreditLedger {
         lot.status = CreditGrantEntity.Status.ACTIVE;
         lot.persist();
         move(accountId, lot.id, null, null, CreditMovementEntity.Type.GRANT, quantity, actor, reason);
+        if (source.type() == CreditGrantEntity.SourceType.SUBSCRIPTION_PERIOD) {
+            for (CreditReservationEntity overage : CreditReservationEntity.listOverageOpen(source.id())) {
+                if (lot.remaining == 0) {
+                    break;
+                }
+                settle(overage, lot);
+            }
+        }
         for (CreditReservationEntity grace : CreditReservationEntity.listGraceOpen(accountId)) {
             if (lot.remaining == 0) {
                 break;
@@ -86,32 +96,33 @@ public class CreditLedger {
     }
 
     /**
-     * Reserves a credit for a LIVE document: from the lot that expires first, else within the package's grace
-     * margin. A credit note is never refused.
+     * Reserves a credit for a LIVE document: from the lot that expires first, else as overage of the
+     * subscription's open period, else within the package's grace margin. A credit note is never refused.
      *
-     * @throws CreditRefused without a product, or with the grace margin used up
+     * @throws CreditRefused without a product, or with the overage limit or the grace margin used up
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public CreditReservationEntity reserve(UUID accountId, UUID documentId, DocumentType type, OffsetDateTime now) {
         lock(accountId);
         List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(accountId, now);
+        Entitlements.Entitlement entitlement = entitlements.of(accountId, now);
         if (type != DocumentType.CREDIT_NOTE) {
-            Optional<CreditRefused> refusal = refusal(accountId, lots, now);
+            Optional<CreditRefused> refusal = refusal(accountId, lots, entitlement);
             if (refusal.isPresent()) {
                 refuse(accountId, refusal.get());
-                CreditReservationEntity waived = reserveGrace(accountId, documentId);
-                // Issued only because the credits were observed: no later lot pays for it.
+                CreditReservationEntity waived = reserveWithoutLot(accountId, documentId, entitlement);
+                // Issued only because the credits were observed: no later lot pays for it, nor is it billed.
                 waived.settled = true;
                 return waived;
             }
         }
         if (lots.isEmpty()) {
-            return reserveGrace(accountId, documentId);
+            return reserveWithoutLot(accountId, documentId, entitlement);
         }
         CreditGrantEntity lot = lots.getFirst();
         take(lot);
         CreditReservationEntity reservation =
-                reservation(accountId, documentId, lot.id, CreditReservationEntity.Kind.CREDIT);
+                reservation(accountId, documentId, lot.id, CreditReservationEntity.Kind.CREDIT, null);
         move(
                 accountId,
                 lot.id,
@@ -133,9 +144,10 @@ public class CreditLedger {
     }
 
     /**
-     * Confirms the document's reservations once the DIAN accepts it; a grace one is settled if a lot has credits.
-     * A reservation released while the document seemed dead (support resolved it as not issued, then a late attempt
-     * got it accepted) is charged again: from the lot that expires first, else as grace the next lot settles.
+     * Confirms the document's reservations once the DIAN accepts it; a grace or overage one is settled if a lot has
+     * credits, and an overage one whose period already closed moves to the open period, which bills it. A
+     * reservation released while the document seemed dead (support resolved it as not issued, then a late attempt
+     * got it accepted) is charged again: from the lot that expires first, else as overage or grace.
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void confirm(UUID documentId, OffsetDateTime now) {
@@ -147,10 +159,13 @@ public class CreditLedger {
         for (CreditReservationEntity reservation : reservations) {
             switch (reservation.status) {
                 case RESERVED -> {
-                    if (reservation.kind == CreditReservationEntity.Kind.GRACE && !reservation.settled) {
+                    if (reservation.kind != CreditReservationEntity.Kind.CREDIT && !reservation.settled) {
                         CreditGrantEntity.lockAvailable(reservation.accountId, now).stream()
                                 .findFirst()
                                 .ifPresent(lot -> settle(reservation, lot));
+                    }
+                    if (reservation.kind == CreditReservationEntity.Kind.OVERAGE && !reservation.settled) {
+                        reopen(reservation, now);
                     }
                 }
                 case RELEASED -> recharge(reservation, now);
@@ -171,17 +186,27 @@ public class CreditLedger {
         }
     }
 
-    /** Takes the released reservation's credit again, from the lot that expires first or as unsettled grace. */
+    /**
+     * Takes the released reservation's credit again: from the lot that expires first, else as overage of the open
+     * period or as unsettled grace.
+     */
     private void recharge(CreditReservationEntity reservation, OffsetDateTime now) {
         List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(reservation.accountId, now);
         reservation.settled = false;
         if (lots.isEmpty()) {
-            reservation.kind = CreditReservationEntity.Kind.GRACE;
+            Optional<Entitlements.Subscribed> subscription =
+                    entitlements.of(reservation.accountId, now).subscription();
+            reservation.kind = subscription.isPresent()
+                    ? CreditReservationEntity.Kind.OVERAGE
+                    : CreditReservationEntity.Kind.GRACE;
+            reservation.subscriptionPeriodId =
+                    subscription.map(Entitlements.Subscribed::periodId).orElse(null);
             reservation.grantId = null;
         } else {
             CreditGrantEntity lot = lots.getFirst();
             take(lot);
             reservation.kind = CreditReservationEntity.Kind.CREDIT;
+            reservation.subscriptionPeriodId = null;
             reservation.grantId = lot.id;
         }
         move(
@@ -198,7 +223,7 @@ public class CreditLedger {
     /**
      * Gives back what the document reserved when it was not issued. A credit goes back to its lot, and expires at
      * once if the lot already did (a lot past its date the daily expiry has not reached yet gets it back and
-     * expires with it); a grace document is neither settled nor billed.
+     * expires with it); a grace or overage document is neither settled nor billed.
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void release(UUID documentId, Actor actor, String reason) {
@@ -305,6 +330,87 @@ public class CreditLedger {
     }
 
     /**
+     * Bills the overage documents the period's DIAN accepted and no lot paid: each is settled with a BILL_OVERAGE
+     * movement, so it is billed once.
+     *
+     * @return how many were billed
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public int billOverage(UUID accountId, UUID periodId) {
+        lock(accountId);
+        List<CreditReservationEntity> overage = CreditReservationEntity.listOverageOpen(periodId);
+        for (CreditReservationEntity reservation : overage) {
+            reservation.settled = true;
+            move(
+                    accountId,
+                    null,
+                    reservation.id,
+                    reservation.documentId,
+                    CreditMovementEntity.Type.BILL_OVERAGE,
+                    0,
+                    Actor.system(),
+                    null);
+        }
+        return overage.stream().mapToInt(reservation -> reservation.quantity).sum();
+    }
+
+    /**
+     * Expires what the account's subscription lots have left above the cap, from the lot that expires first: a
+     * subscription carries at most that many unused documents into a new period.
+     *
+     * @return credits expired
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public int capSubscription(UUID accountId, int cap, OffsetDateTime now) {
+        lock(accountId);
+        List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(accountId, now).stream()
+                .filter(lot -> lot.sourceType == CreditGrantEntity.SourceType.SUBSCRIPTION_PERIOD)
+                .toList();
+        int pending = lots.stream().mapToInt(lot -> lot.remaining).sum() - cap;
+        int expired = 0;
+        for (CreditGrantEntity lot : lots) {
+            if (pending <= 0) {
+                break;
+            }
+            int taken = Math.min(pending, lot.remaining);
+            lot.remaining -= taken;
+            if (lot.remaining == 0) {
+                lot.status = CreditGrantEntity.Status.EXHAUSTED;
+            }
+            move(
+                    accountId,
+                    lot.id,
+                    null,
+                    null,
+                    CreditMovementEntity.Type.EXPIRE,
+                    -taken,
+                    Actor.system(),
+                    "Saldo de suscripción por encima de " + cap + " documentos");
+            pending -= taken;
+            expired += taken;
+        }
+        return expired;
+    }
+
+    /**
+     * Overage documents of the open period not released and not paid by a lot, which its close will bill. Credit
+     * notes are billed too but never count against the limit, so they are left out when the limit asks.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public int overageUsed(UUID periodId, boolean creditNotes) {
+        return ((Number) em.createNativeQuery("""
+                                SELECT count(*) FROM billing.credit_reservations r
+                                JOIN billing.documents d ON d.id = r.document_id
+                                WHERE r.subscription_period_id = :period AND r.kind = 'OVERAGE' AND NOT r.settled
+                                  AND r.status <> 'RELEASED' AND (:creditNotes OR d.document_type <> 'CREDIT_NOTE')
+                                """)
+                        .setParameter("period", periodId)
+                        .setParameter("creditNotes", creditNotes)
+                        .getSingleResult())
+                .intValue();
+    }
+
+    /**
      * @param available credits left in the lots that have not expired
      * @param granted credits the lots in force (active or exhausted, not expired) were granted with
      * @param grantLastId the newest lot in force; null without one
@@ -342,14 +448,25 @@ public class CreditLedger {
                 entitlements.of(accountId, now));
     }
 
-    private Optional<CreditRefused> refusal(UUID accountId, List<CreditGrantEntity> lots, OffsetDateTime now) {
-        Entitlements.Entitlement entitlement = entitlements.of(accountId, now);
+    private Optional<CreditRefused> refusal(
+            UUID accountId, List<CreditGrantEntity> lots, Entitlements.Entitlement entitlement) {
         if (!entitlement.product()) {
             return Optional.of(new CreditRefused(
                     CreditRefused.Reason.NO_ACTIVE_PRODUCT,
-                    "The account has no active package; credit notes can still be issued"));
+                    "The account has no subscription nor active package; credit notes can still be issued"));
         }
         if (!lots.isEmpty()) {
+            return Optional.empty();
+        }
+        if (entitlement.subscription().isPresent()) {
+            Entitlements.Subscribed subscription = entitlement.subscription().get();
+            if (overageUsed(subscription.periodId(), false) >= subscription.overageLimit()) {
+                return Optional.of(new CreditRefused(
+                        CreditRefused.Reason.OVERAGE_LIMIT_REACHED,
+                        "The subscription reached its overage limit of " + subscription.overageLimit()
+                                + " documents this period; the account owner can raise it, and credit notes can"
+                                + " still be issued"));
+            }
             return Optional.empty();
         }
         if (graceUsed(accountId) >= entitlement.graceMargin()) {
@@ -373,24 +490,53 @@ public class CreditLedger {
                 .intValue();
     }
 
-    private CreditReservationEntity reserveGrace(UUID accountId, UUID documentId) {
-        CreditReservationEntity reservation =
-                reservation(accountId, documentId, null, CreditReservationEntity.Kind.GRACE);
+    /** Overage of the subscription's open period with one, grace of the package without it. */
+    private CreditReservationEntity reserveWithoutLot(
+            UUID accountId, UUID documentId, Entitlements.Entitlement entitlement) {
+        CreditReservationEntity reservation = reservation(
+                accountId,
+                documentId,
+                null,
+                entitlement.subscription().isPresent()
+                        ? CreditReservationEntity.Kind.OVERAGE
+                        : CreditReservationEntity.Kind.GRACE,
+                entitlement
+                        .subscription()
+                        .map(Entitlements.Subscribed::periodId)
+                        .orElse(null));
         move(accountId, null, reservation.id, documentId, CreditMovementEntity.Type.RESERVE, -1, Actor.system(), null);
         return reservation;
     }
 
-    /** Pays a confirmed grace document with a credit of the lot. */
-    private void settle(CreditReservationEntity grace, CreditGrantEntity lot) {
+    /** An overage document accepted after its period closed is billed with the open one, if any. */
+    private void reopen(CreditReservationEntity overage, OffsetDateTime now) {
+        SubscriptionPeriodEntity period = SubscriptionPeriodEntity.findById(overage.subscriptionPeriodId);
+        if (period.status == SubscriptionPeriodEntity.Status.OPEN) {
+            return;
+        }
+        Optional<Entitlements.Subscribed> subscription =
+                entitlements.of(overage.accountId, now).subscription();
+        if (subscription.isPresent()) {
+            overage.subscriptionPeriodId = subscription.get().periodId();
+            return;
+        }
+        // The subscription ended with its period: no later order can bill it.
+        LOG.warnf(
+                "Overage document %s was accepted after its subscription ended; it is not billed", overage.documentId);
+        overage.settled = true;
+    }
+
+    /** Pays a grace or overage document with a credit of the lot. */
+    private void settle(CreditReservationEntity reservation, CreditGrantEntity lot) {
         take(lot);
-        grace.settled = true;
+        reservation.settled = true;
         move(
                 lot.accountId,
                 lot.id,
-                grace.id,
-                grace.documentId,
+                reservation.id,
+                reservation.documentId,
                 CreditMovementEntity.Type.SETTLE,
-                -grace.quantity,
+                -reservation.quantity,
                 Actor.system(),
                 null);
     }
@@ -418,13 +564,18 @@ public class CreditLedger {
     }
 
     private static CreditReservationEntity reservation(
-            UUID accountId, UUID documentId, UUID grantId, CreditReservationEntity.Kind kind) {
+            UUID accountId,
+            UUID documentId,
+            UUID grantId,
+            CreditReservationEntity.Kind kind,
+            UUID subscriptionPeriodId) {
         CreditReservationEntity reservation = new CreditReservationEntity();
         reservation.id = Ids.newId();
         reservation.accountId = accountId;
         reservation.documentId = documentId;
         reservation.grantId = grantId;
         reservation.kind = kind;
+        reservation.subscriptionPeriodId = subscriptionPeriodId;
         reservation.quantity = 1;
         reservation.status = CreditReservationEntity.Status.RESERVED;
         reservation.persist();

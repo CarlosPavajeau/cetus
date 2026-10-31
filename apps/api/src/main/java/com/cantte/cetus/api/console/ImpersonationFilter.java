@@ -36,7 +36,10 @@ public class ImpersonationFilter implements ContainerRequestFilter {
             new Rule(HttpMethod.POST, Pattern.compile("/console/support-attachments")),
             new Rule(HttpMethod.POST, Pattern.compile("/console/feedback")),
             new Rule(HttpMethod.PUT, Pattern.compile("/console/billing-profile")),
-            new Rule(HttpMethod.POST, Pattern.compile("/console/orders")));
+            new Rule(HttpMethod.POST, Pattern.compile("/console/orders")),
+            new Rule(HttpMethod.PUT, Pattern.compile("/console/subscription/.+")),
+            new Rule(HttpMethod.POST, Pattern.compile("/console/subscription/.+")),
+            new Rule(HttpMethod.DELETE, Pattern.compile("/console/subscription/.+")));
 
     @Inject
     ConsoleContext context;

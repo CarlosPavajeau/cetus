@@ -2,9 +2,11 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.credits.CreditLedger;
+import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.billing.CreditAlerts;
+import com.cantte.cetus.domain.billing.OverageAlerts;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -19,7 +21,10 @@ import com.cantte.cetus.persistence.entity.CreditReservationEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
+import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import com.cantte.cetus.persistence.entity.SubscriptionEntity;
 import com.cantte.cetus.persistence.usage.UsageCounters;
 import com.cantte.cetus.webhooks.WebhookEventType;
 import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
@@ -35,6 +40,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /** Short transactions that persist the outcome of each step. */
@@ -185,8 +191,9 @@ public class ResultRecorder {
 
     /**
      * Counts the document in its month, for the statistics, and tells the billing contact when the credits in force
-     * reach a share of what they were granted with, or when the document took the package's grace margin. Each lot
-     * starts the notices again; a document that reserved nothing, like Cetus' own invoices, tells nothing.
+     * reach a share of what they were granted with, when the document took the package's grace margin, or, for a
+     * subscription, when the period's overage reaches a share of its limit. Each lot or period starts the notices
+     * again; a document that reserved nothing, like Cetus' own invoices, tells nothing.
      */
     private void bill(DocumentEntity doc) {
         usage.record(doc.accountId, UsagePeriod.of(doc.validatedAt), doc.documentType);
@@ -195,6 +202,18 @@ public class ResultRecorder {
             return;
         }
         CreditLedger.Balance balance = credits.balance(doc.accountId, doc.validatedAt);
+        Optional<Entitlements.Subscribed> subscription = balance.entitlement().subscription();
+        if (subscription.isPresent()) {
+            boolean overage = doc.documentType != DocumentType.CREDIT_NOTE
+                    && reservations.stream()
+                            .anyMatch(r -> r.kind == CreditReservationEntity.Kind.OVERAGE
+                                    && r.status == CreditReservationEntity.Status.CONFIRMED
+                                    && !r.settled);
+            if (overage) {
+                overageNotice(doc.accountId, subscription.get());
+            }
+            return;
+        }
         if (balance.grantLastId() == null) {
             return;
         }
@@ -222,6 +241,23 @@ public class ResultRecorder {
                                 "percent", percent.toString(),
                                 "available", Numbers.count(balance.available()),
                                 "granted", Numbers.count(balance.granted()))));
+    }
+
+    private void overageNotice(UUID accountId, Entitlements.Subscribed subscription) {
+        int used = credits.overageUsed(subscription.periodId(), false);
+        OverageAlerts.reached(used, subscription.overageLimit()).ifPresent(percent -> {
+            SubscriptionEntity current = SubscriptionEntity.findById(subscription.id());
+            PlanVersionEntity version = PlanVersionEntity.findById(current.planVersionId);
+            notifications.request(
+                    accountId,
+                    NotificationKind.SUBSCRIPTION_OVERAGE,
+                    "subscription_overage:%s:%d".formatted(subscription.periodId(), percent),
+                    Map.of(
+                            "percent", percent.toString(),
+                            "used", Numbers.count(used),
+                            "limit", Numbers.count(subscription.overageLimit()),
+                            "plan", PlanEntity.<PlanEntity>findById(version.planId).name));
+        });
     }
 
     /** The DIAN accepted the issuer's test set; the API stops taking test invoices for it. */

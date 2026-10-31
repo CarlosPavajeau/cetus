@@ -16,7 +16,7 @@ import { member, organization, user } from "~/lib/auth/schema";
 import { auth } from "~/lib/auth/server";
 import { db } from "~/lib/db";
 
-import { accountStatuses, planChangeSchema, statusChangeSchema } from "./schema";
+import { accountStatuses, statusChangeSchema } from "./schema";
 
 /**
  * Server functions are reachable by anyone with a session, so each one checks the platform role (and 2FA)
@@ -156,21 +156,6 @@ export const reactivateAccount = createServerFn({ method: "POST" })
     return api.post("/admin/accounts/{id}/reactivation", {
       params: { path: { id: data.id } },
       body: { reason: data.reason },
-    });
-  });
-
-export const listAdminPlans = createServerFn({ method: "GET" }).handler(async () => {
-  await requireStaff();
-  return api.get("/admin/plans");
-});
-
-export const changeAccountPlan = createServerFn({ method: "POST" })
-  .validator(planChangeSchema.and({ id: "string.uuid" }))
-  .handler(async ({ data }) => {
-    await requireStaff("admin");
-    return api.put("/admin/accounts/{id}/plan", {
-      params: { path: { id: data.id } },
-      body: { planId: data.planId, reason: data.reason },
     });
   });
 

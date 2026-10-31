@@ -21,6 +21,7 @@ import { accountStatusLabel } from "~/features/admin/labels";
 import { adminAccountsQuery } from "~/features/admin/queries";
 import { type AccountStatus, accountStatuses } from "~/features/admin/schema";
 import { dayFormat } from "~/features/audit-log/labels";
+import { productLabel } from "~/features/billing/labels";
 
 type OrganizationsSearch = { status?: AccountStatus; q?: string };
 
@@ -138,7 +139,7 @@ function Organizations() {
                           {account.name}
                         </Link>
                         <span className="text-2xs text-muted-foreground">
-                          Plan {account.plan.toLowerCase()} · desde{" "}
+                          {productLabel(account.product)} · desde{" "}
                           {dayFormat.format(new Date(account.createdAt))}
                         </span>
                       </div>

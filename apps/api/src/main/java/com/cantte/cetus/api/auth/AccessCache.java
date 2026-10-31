@@ -7,6 +7,7 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.ApiKeyEntity;
+import com.cantte.cetus.persistence.entity.SubscriptionEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -32,7 +33,10 @@ public class AccessCache {
 
     public record ApiKeyAccess(UUID id, UUID accountId, Environment environment) {}
 
-    /** {@code limits} is null when the account has none of its own and its keys keep the per-key ones. */
+    /**
+     * {@code limits}: the account's own, else its subscription plan's; null when neither has any and its keys keep
+     * the per-key ones. A subscription started or ended by the worker shows within {@link #TTL}.
+     */
     public record AccountAccess(AccountEntity.Status status, RateLimiter.Limits limits) {}
 
     public record OrganizationAccount(UUID id, AccountEntity.Status status) {}
@@ -72,10 +76,14 @@ public class AccessCache {
                                     SELECT a.status,
                                            coalesce(a.requestsPerSecond, p.requestsPerSecond),
                                            coalesce(a.requestsBurst, p.requestsBurst)
-                                    FROM AccountEntity a JOIN PlanEntity p ON p.id = a.planId
+                                    FROM AccountEntity a
+                                    LEFT JOIN SubscriptionEntity s ON s.accountId = a.id AND s.status <> :canceled
+                                    LEFT JOIN PlanVersionEntity v ON v.id = s.planVersionId
+                                    LEFT JOIN PlanEntity p ON p.id = v.planId
                                     WHERE a.id = :id
                                     """)
                             .setParameter("id", accountId)
+                            .setParameter("canceled", SubscriptionEntity.Status.CANCELED)
                             .getSingleResult();
                     // Each table sets the pair together or leaves both null, so the two values come from the same row.
                     RateLimiter.Limits limits = account[1] == null

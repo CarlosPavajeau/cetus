@@ -170,7 +170,8 @@ public class IssuerOnboardingService {
             credits.refuse(
                     accountId,
                     new CreditRefused(
-                            CreditRefused.Reason.NO_ACTIVE_PRODUCT, "Production issuers need a package in force"));
+                            CreditRefused.Reason.NO_ACTIVE_PRODUCT,
+                            "Production issuers need a subscription or a package in force"));
             return;
         }
         IssuerEntity.getEntityManager()

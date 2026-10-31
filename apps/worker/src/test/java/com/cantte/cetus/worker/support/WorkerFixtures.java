@@ -25,6 +25,7 @@ import com.cantte.cetus.persistence.entity.AccountContactEntity;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
+import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.DocumentLineEntity;
@@ -103,12 +104,21 @@ public class WorkerFixtures {
         });
     }
 
+    /** Sets who Cetus invoices for the account, as the console does before a purchase. */
+    public void billingProfile(UUID accountId) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            BillingProfileEntity profile = new BillingProfileEntity();
+            profile.accountId = accountId;
+            profile.assign(party());
+            profile.persist();
+        });
+    }
+
     private static AccountEntity newAccount(String name) {
         AccountEntity account = new AccountEntity();
         account.id = Ids.newId();
         account.organizationId = "org_" + account.id;
         account.name = name;
-        account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
         account.persist();
         return account;
     }
@@ -123,7 +133,14 @@ public class WorkerFixtures {
         order.subtotalCents = totalCents;
         order.totalCents = totalCents;
         order.currency = "COP";
-        order.billingProfile = new Party(
+        order.billingProfile = party();
+        order.expiresAt = expiresAt;
+        order.persist();
+        return order;
+    }
+
+    private static Party party() {
+        return new Party(
                 PersonType.LEGAL_ENTITY,
                 IdentificationType.NIT,
                 "900123456",
@@ -136,9 +153,6 @@ public class WorkerFixtures {
                 ADDRESS,
                 "facturas@compradora.test",
                 null);
-        order.expiresAt = expiresAt;
-        order.persist();
-        return order;
     }
 
     /** Creates the issuer and an invoice in RECEIVED; returns the invoice id. */
@@ -221,7 +235,6 @@ public class WorkerFixtures {
             account.id = Ids.newId();
             account.organizationId = "org_" + account.id;
             account.name = "Sandbox SAS";
-            account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
             account.persist();
 
             IssuerEntity issuer = new IssuerEntity();

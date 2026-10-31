@@ -1,3 +1,4 @@
+import { formatCents } from "~/features/billing/labels";
 import { conceptLabel } from "~/features/documents/labels";
 import { priorityLabel, statusLabel } from "~/features/support/labels";
 import type { AuditEntry } from "~/lib/api/types";
@@ -51,6 +52,11 @@ function text(value: unknown): string {
     return "";
   }
   return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+/** An amount in cents of COP, as the subscription records keep it. */
+function cents(value: unknown): string {
+  return typeof value === "number" ? formatCents(value) : text(value);
 }
 
 function label(labels: Record<string, string>, value: unknown): string {
@@ -142,6 +148,19 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${text(data.quantity)} documentos · Motivo: ${text(data.reason)}`;
     case "DOCUMENT_CREDIT_RELEASED":
       return `Motivo: ${text(data.reason)}`;
+    case "SUBSCRIPTION_STARTED":
+      return `${text(data.plan)} · ${text(data.reference)}`;
+    case "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED":
+      return `${cents(data.overageLimitCentsPrevious)} → ${cents(data.overageLimitCents)}`;
+    case "SUBSCRIPTION_PLAN_SCHEDULED":
+      return data.plan === data.planPrevious
+        ? `Sigue en ${text(data.plan)}`
+        : `${text(data.planPrevious)} → ${text(data.plan)} desde el siguiente periodo`;
+    case "SUBSCRIPTION_CANCEL_SCHEDULED":
+    case "SUBSCRIPTION_CANCEL_UNDONE":
+      return text(data.plan);
+    case "SUBSCRIPTION_CANCELED":
+      return `${text(data.plan)} · ${data.reason === "UNPAID" ? "Renovación sin pagar" : "Pedido por la cuenta"}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":
       return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
     default:

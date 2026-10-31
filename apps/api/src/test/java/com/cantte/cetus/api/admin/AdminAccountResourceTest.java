@@ -11,22 +11,23 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.api.support.Credits;
 import com.cantte.cetus.api.support.IssuedDocuments;
+import com.cantte.cetus.api.support.Subscriptions;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.persistence.LockModeType;
+import jakarta.inject.Inject;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,12 @@ class AdminAccountResourceTest {
 
     private static final ConsoleUser ADMIN = ConsoleUser.platformStaff(PlatformRoles.ADMIN);
     private static final ConsoleUser SUPPORT = ConsoleUser.platformStaff(PlatformRoles.SUPPORT);
+
+    @Inject
+    Credits credits;
+
+    @Inject
+    Subscriptions subscriptions;
 
     @Test
     void onlyPlatformStaffReadAccounts() {
@@ -230,107 +237,36 @@ class AdminAccountResourceTest {
     }
 
     @Test
-    void anAdminChangesThePlanAndTheUsageIsBilledAgainstIt() {
+    void theAccountShowsItsProductAndItsBillableDocuments() {
         ConsoleUser customer = ConsoleUser.newOrganization();
-        String accountId = bootstrap(customer, "Planeada SAS");
+        String accountId = bootstrap(customer, "Suscrita SAS");
         bill(UUID.fromString(accountId), DocumentType.INVOICE, 190);
         bill(UUID.fromString(accountId), DocumentType.CREDIT_NOTE, 13);
 
         ADMIN.request()
                 .get("/admin/accounts/" + accountId)
                 .then()
-                .body("plan", equalTo("FREE"))
-                .body("billableThisMonth.total", equalTo(203))
-                .body("billableThisMonth.overage", equalTo(178))
-                .body("billableThisMonth.costOverageCop", nullValue());
-        SUPPORT.request()
-                .get("/admin/plans")
-                .then()
-                .statusCode(200)
-                .body("code", contains("FREE", "SOCIOS", "INICIAL", "CRECIMIENTO", "ESCALA"));
-        SUPPORT.request()
-                .body(Map.of("planId", planId("INICIAL"), "reason", "Contrató el plan"))
-                .put("/admin/accounts/" + accountId + "/plan")
-                .then()
-                .statusCode(403);
-        ADMIN.request()
-                .body(Map.of("planId", UUID.randomUUID(), "reason", "Contrató el plan"))
-                .put("/admin/accounts/" + accountId + "/plan")
-                .then()
-                .statusCode(422)
-                .body("code", equalTo("plan_unknown"));
-
-        ADMIN.request()
-                .body(Map.of("planId", planId("INICIAL"), "reason", " Contrató el plan "))
-                .put("/admin/accounts/" + accountId + "/plan")
-                .then()
-                .statusCode(200)
-                .body("plan", equalTo("INICIAL"))
+                .body("product", nullValue())
                 .body("billableThisMonth.period", equalTo(UsagePeriod.current().toString()))
-                .body("billableThisMonth.plan.documentsIncluded", equalTo(200))
                 .body("billableThisMonth.documents.find { it.documentType == 'INVOICE' }.count", equalTo(190))
-                .body("billableThisMonth.total", equalTo(203))
-                .body("billableThisMonth.overage", equalTo(3))
-                .body("billableThisMonth.costOverageCop", equalTo(450));
-        ADMIN.request()
-                .body(Map.of("planId", planId("INICIAL"), "reason", "Otra vez"))
-                .put("/admin/accounts/" + accountId + "/plan")
-                .then()
-                .statusCode(422)
-                .body("code", equalTo("plan_unchanged"));
+                .body("billableThisMonth.total", equalTo(203));
+
+        credits.grant(
+                UUID.fromString(accountId),
+                "NEGOCIO",
+                1200,
+                OffsetDateTime.now().plusYears(1));
+        ADMIN.request().get("/admin/accounts/" + accountId).then().body("product", equalTo("Negocio"));
+
+        subscriptions.subscribe(UUID.fromString(accountId), "INICIAL", 200);
+        ADMIN.request().get("/admin/accounts/" + accountId).then().body("product", equalTo("Inicial"));
         SUPPORT.request()
                 .queryParam("organizationId", customer.organizationId())
                 .get("/admin/accounts")
                 .then()
-                .body("items[0].plan", equalTo("INICIAL"))
+                .body("items[0].product", equalTo("Inicial"))
                 .body("items[0].liveDocumentsThisMonth", equalTo(203));
-
-        customer.request()
-                .queryParam("action", "ACCOUNT_PLAN_CHANGED")
-                .get("/console/audit-log")
-                .then()
-                .body("items", hasSize(1))
-                .body("items[0].actorId", equalTo(ADMIN.userId()))
-                .body("items[0].data.plan", equalTo("INICIAL"))
-                .body("items[0].data.planPrevious", equalTo("FREE"))
-                .body("items[0].data.reason", equalTo("Contrató el plan"));
-    }
-
-    @Test
-    void aPlanChangeWaitsForASuspensionAndKeepsIt() throws Exception {
-        ConsoleUser customer = ConsoleUser.newOrganization();
-        UUID accountId = UUID.fromString(bootstrap(customer, "Concurrente SAS"));
-        CountDownLatch locked = new CountDownLatch(1);
-        CountDownLatch release = new CountDownLatch(1);
-        // A suspension holds the account while it commits.
-        CompletableFuture<Void> suspension = CompletableFuture.runAsync(() -> QuarkusTransaction.requiringNew()
-                .run(() -> {
-                    AccountEntity account = AccountEntity.findById(accountId, LockModeType.PESSIMISTIC_WRITE);
-                    locked.countDown();
-                    await(release);
-                    account.status = AccountEntity.Status.SUSPENDED;
-                }));
-        locked.await(5, TimeUnit.SECONDS);
-
-        // The plan change starts while the suspension holds the account, and must wait for it to commit.
-        CompletableFuture.runAsync(() -> {
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            release.countDown();
-        });
-        ADMIN.request()
-                .body(Map.of("planId", planId("INICIAL"), "reason", "Contrató el plan"))
-                .put("/admin/accounts/" + accountId + "/plan")
-                .then()
-                .statusCode(200);
-        suspension.get(5, TimeUnit.SECONDS);
-
-        AccountEntity account = QuarkusTransaction.requiringNew().call(() -> AccountEntity.findById(accountId));
-        assertThat(account.status).isEqualTo(AccountEntity.Status.SUSPENDED);
-        assertThat(account.planId).isEqualTo(planId("INICIAL"));
+        customer.request().get("/console/account").then().body("product", equalTo("Inicial"));
     }
 
     @Test
@@ -397,9 +333,5 @@ class AdminAccountResourceTest {
             document.dianStatusCode = "99";
             document.dianErrors = errors;
         });
-    }
-
-    private static UUID planId(String code) {
-        return QuarkusTransaction.requiringNew().call(() -> PlanEntity.byCode(code).id);
     }
 }

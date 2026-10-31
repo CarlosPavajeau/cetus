@@ -1,74 +1,22 @@
 package com.cantte.cetus.api.usage;
 
 import com.cantte.cetus.domain.model.DocumentType;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import java.util.List;
-import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public final class UsageViews {
 
     private UsageViews() {}
 
-    @Schema(description = "What a plan includes. A null limit is no limit; a null price is agreed by contract.")
-    public record PlanView(
-            UUID id,
-            String code,
-            String name,
-            @Schema(nullable = true) Long priceMonthlyCop,
-
-            @Schema(nullable = true, description = "Billable documents included each month")
-            Integer documentsIncluded,
-
-            @Schema(
-                    nullable = true,
-                    description = "Documents a month may take above the included ones before new ones are refused,"
-                            + " credit notes aside; null never refuses them")
-            Integer documentsGrace,
-
-            @Schema(nullable = true, description = "Price of each document above the included ones")
-            Integer priceOverageCop,
-
-            @Schema(nullable = true, description = "Production issuers (NIT) the account may have")
-            Integer issuersIncluded,
-
-            @Schema(nullable = true, description = "Production API requests a second, shared by the account's keys")
-            Integer requestsPerSecond,
-
-            @Schema(nullable = true, description = "Production API requests the account may make at once")
-            Integer requestsBurst) {
-
-        public static PlanView from(PlanEntity plan) {
-            return new PlanView(
-                    plan.id,
-                    plan.code,
-                    plan.name,
-                    plan.priceMonthlyCop,
-                    plan.documentsIncluded,
-                    plan.documentsGrace,
-                    plan.priceOverageCop,
-                    plan.issuersIncluded,
-                    plan.requestsPerSecond,
-                    plan.requestsBurst);
-        }
-    }
-
     public record DocumentCountView(DocumentType documentType, long count) {}
 
-    @Schema(description = "Billable documents (production, accepted by the DIAN) of a month against the plan")
+    @Schema(description = "Billable documents (production, accepted by the DIAN) of a month")
     public record PeriodUsageView(
             @Schema(description = "Calendar month in Colombia, YYYY-MM")
             String period,
 
-            PlanView plan,
             List<DocumentCountView> documents,
-            long total,
-
-            @Schema(description = "Documents above the plan's included ones; 0 without a limit")
-            long overage,
-
-            @Schema(nullable = true, description = "Overage times its price, in COP; null when the plan has no price")
-            Long costOverageCop) {}
+            long total) {}
 
     public record MonthTotalView(
             @Schema(description = "Calendar month in Colombia, YYYY-MM")
@@ -76,11 +24,11 @@ public final class UsageViews {
 
             long total) {}
 
-    @Schema(description = "The account's plan and its billable documents: this month in detail, and the months before")
+    @Schema(description = "The account's billable documents: this month in detail, and the months before")
     public record UsageView(
             PeriodUsageView current,
 
-            @Schema(description = "Production issuers the account has, against the plan's included ones")
+            @Schema(description = "Production issuers the account has")
             long issuersLive,
 
             @Schema(description = "The last months, newest first, this month included")
