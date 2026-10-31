@@ -23,6 +23,8 @@ import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.AccountContactEntity;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.DocumentLineEntity;
 import com.cantte.cetus.persistence.entity.DocumentTaxEntity;
@@ -65,6 +67,47 @@ public class WorkerFixtures {
 
     @Inject
     SecretCipher cipher;
+
+    /**
+     * A pending purchase of {@code totalCents} for a new account, payable until {@code expiresAt}; returns the
+     * order. Its reference is unique to it, as the API makes them.
+     */
+    public BillingOrderEntity order(long totalCents, OffsetDateTime expiresAt) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            AccountEntity account = new AccountEntity();
+            account.id = Ids.newId();
+            account.organizationId = "org_" + account.id;
+            account.name = "Compradora SAS";
+            account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
+            account.persist();
+
+            BillingOrderEntity order = new BillingOrderEntity();
+            order.id = Ids.newId();
+            order.accountId = account.id;
+            order.kind = BillingOrderEntity.Kind.PURCHASE;
+            order.status = BillingOrderEntity.Status.PENDING;
+            order.reference = "CET-" + order.id;
+            order.subtotalCents = totalCents;
+            order.totalCents = totalCents;
+            order.currency = "COP";
+            order.billingProfile = new Party(
+                    PersonType.LEGAL_ENTITY,
+                    IdentificationType.NIT,
+                    "900123456",
+                    "8",
+                    "Compradora SAS",
+                    null,
+                    List.of("O-13"),
+                    "01",
+                    "IVA",
+                    ADDRESS,
+                    "facturas@compradora.test",
+                    null);
+            order.expiresAt = expiresAt;
+            order.persist();
+            return order;
+        });
+    }
 
     /** Creates the issuer and an invoice in RECEIVED; returns the invoice id. */
     public UUID invoice() {
@@ -268,6 +311,22 @@ public class WorkerFixtures {
             endpoint.secretSealed = cipher.sealText(secret);
             endpoint.persist();
             return new Endpoint(endpoint.id, secret);
+        });
+    }
+
+    /** An email of the document Resend accepted under {@code messageId}; returns the delivery id. */
+    public UUID sentDelivery(UUID documentId, String messageId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            DocumentDeliveryEntity delivery = new DocumentDeliveryEntity();
+            delivery.id = Ids.newId();
+            delivery.documentId = documentId;
+            delivery.recipient = "cliente@example.com";
+            delivery.status = DocumentDeliveryEntity.Status.SENT;
+            delivery.attempts = 1;
+            delivery.providerMessageId = messageId;
+            delivery.sentAt = OffsetDateTime.now();
+            delivery.persist();
+            return delivery.id;
         });
     }
 

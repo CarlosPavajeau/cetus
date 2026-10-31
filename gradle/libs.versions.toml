@@ -24,6 +24,7 @@ quarkus-arc = { module = "io.quarkus:quarkus-arc" }
 quarkus-rest = { module = "io.quarkus:quarkus-rest" }
 quarkus-rest-jackson = { module = "io.quarkus:quarkus-rest-jackson" }
 quarkus-jackson = { module = "io.quarkus:quarkus-jackson" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 quarkus-hibernate-orm-panache = { module = "io.quarkus:quarkus-hibernate-orm-panache" }
 quarkus-hibernate-validator = { module = "io.quarkus:quarkus-hibernate-validator" }
 quarkus-jdbc-postgresql = { module = "io.quarkus:quarkus-jdbc-postgresql" }

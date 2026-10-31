@@ -28,8 +28,13 @@ public record VatThreshold(long uvtValueCop, int uvt, List<Integer> alertPercent
 
     /** The highest alert share the year's income reached, if any. */
     public Optional<Integer> reached(long revenueCents) {
+        return crossed(revenueCents).stream().max(Comparator.naturalOrder());
+    }
+
+    /** Every alert share the year's income reached, lowest first. */
+    public List<Integer> crossed(long revenueCents) {
         return alertPercents.stream()
                 .filter(percent -> revenueCents * 100 >= limitCents() * percent)
-                .max(Comparator.naturalOrder());
+                .toList();
     }
 }

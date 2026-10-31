@@ -2,13 +2,9 @@ package com.cantte.cetus.api.email;
 
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.email.ResendWebhookVerifier;
-import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
-import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity.Status;
-import com.cantte.cetus.persistence.entity.DocumentEntity;
-import com.cantte.cetus.webhooks.WebhookEventType;
-import com.cantte.cetus.webhooks.WebhookPublisher;
-import com.cantte.cetus.webhooks.WebhookPublisher.DeliveryInfo;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.cantte.cetus.jobs.JobQueue;
+import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.persistence.entity.InboundWebhookEventEntity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.inject.Inject;
@@ -20,27 +16,28 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.jboss.logging.Logger;
 
 /**
  * Resend's delivery events (webhook). Only accepted with a valid signature from the endpoint secret
- * (RESEND_WEBHOOK_SECRET); each event moves the delivery that sent the email it names.
+ * (RESEND_WEBHOOK_SECRET). The events that move a delivery are stored once each, keyed by their svix-id, and
+ * acted on by the worker (PROCESS_WEBHOOK_EVENT); any other type is acknowledged and dropped.
  */
 @Path("/internal/email-events")
 public class EmailEventResource {
 
-    private static final Logger LOG = Logger.getLogger(EmailEventResource.class);
+    /** The delivery outcomes the worker records; Resend may send other types if the webhook subscribes to them. */
+    static final Set<String> HANDLED = Set.of("email.delivered", "email.bounced", "email.complained", "email.failed");
 
     @Inject
     ObjectMapper json;
 
     @Inject
-    WebhookPublisher webhooks;
+    JobQueue jobs;
 
     private final Optional<ResendWebhookVerifier> verifier;
 
@@ -65,73 +62,15 @@ public class EmailEventResource {
         if (!verifier.get().verify(id, timestamp, signature, body)) {
             return error(Response.Status.UNAUTHORIZED, "invalid_signature", "The webhook signature is not valid");
         }
-        JsonNode event = json.readTree(body);
-        String type = event.path("type").asText();
-        String emailId = event.path("data").path("email_id").asText(null);
-        Status status = switch (type) {
-            case "email.delivered" -> Status.DELIVERED;
-            case "email.bounced" -> Status.BOUNCED;
-            case "email.complained" -> Status.COMPLAINED;
-            case "email.failed" -> Status.FAILED;
-            default -> null;
-        };
-        if (status != null && emailId != null) {
-            apply(emailId, status, reason(event), occurredAt(event));
+        String type = json.readTree(body).path("type").asText();
+        if (HANDLED.contains(type)) {
+            QuarkusTransaction.requiringNew().run(() -> {
+                Optional<UUID> stored =
+                        InboundWebhookEventEntity.record(InboundWebhookEventEntity.Provider.RESEND, id, type, body);
+                stored.ifPresent(eventId -> jobs.enqueue(JobTypes.PROCESS_WEBHOOK_EVENT, eventId));
+            });
         }
         return Response.ok().build();
-    }
-
-    private void apply(String emailId, Status status, String reason, OffsetDateTime at) {
-        QuarkusTransaction.requiringNew().run(() -> {
-            Optional<DocumentDeliveryEntity> found = DocumentDeliveryEntity.findByProviderMessageId(emailId);
-            if (found.isEmpty()) {
-                // Another environment's email, or one sent before the delivery was recorded: nothing to update.
-                LOG.debugf("Email event for unknown email %s", emailId);
-                return;
-            }
-            DocumentDeliveryEntity delivery = found.get();
-            // Events can arrive out of order: a late "delivered" never hides a bounce or a complaint.
-            boolean downgrade = status == Status.DELIVERED
-                    && (delivery.status == Status.BOUNCED
-                            || delivery.status == Status.COMPLAINED
-                            || delivery.status == Status.FAILED);
-            boolean changed = !downgrade && delivery.status != status;
-            if (!downgrade) {
-                delivery.status = status;
-                if (reason != null) {
-                    delivery.error = reason;
-                }
-            }
-            if (changed) {
-                // Same transaction as the change; a repeated event changes nothing and publishes nothing.
-                webhooks.publish(
-                        status == Status.DELIVERED
-                                ? WebhookEventType.DOCUMENT_DELIVERED
-                                : WebhookEventType.DOCUMENT_DELIVERY_FAILED,
-                        DocumentEntity.findById(delivery.documentId),
-                        new DeliveryInfo(status.name(), delivery.recipient, delivery.error));
-            }
-            if (delivery.lastEventAt == null || at.isAfter(delivery.lastEventAt)) {
-                delivery.lastEventAt = at;
-            }
-        });
-    }
-
-    private static String reason(JsonNode event) {
-        JsonNode bounce = event.path("data").path("bounce");
-        if (!bounce.isMissingNode()) {
-            return bounce.path("message").asText(bounce.path("type").asText(null));
-        }
-        JsonNode failed = event.path("data").path("failed");
-        return failed.isMissingNode() ? null : failed.path("reason").asText(null);
-    }
-
-    private static OffsetDateTime occurredAt(JsonNode event) {
-        try {
-            return OffsetDateTime.parse(event.path("created_at").asText());
-        } catch (DateTimeParseException e) {
-            return OffsetDateTime.now();
-        }
     }
 
     private static Response error(Response.Status status, String code, String message) {

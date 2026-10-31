@@ -174,6 +174,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/billing/revenue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Revenue */
+        get: operations["AdminBillingResource_revenue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/feedback": {
         parameters: {
             query?: never;
@@ -912,6 +929,41 @@ export interface paths {
         get?: never;
         /** Set Software */
         put: operations["IssuerResource_setSoftware"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["OrderResource_list"];
+        put?: never;
+        /** Create */
+        post: operations["OrderResource_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["OrderResource_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1674,7 +1726,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1764,6 +1816,28 @@ export interface components {
          * @enum {string}
          */
         Channel: "EMAIL";
+        /** @description The signed parameters of Wompi's checkout, for its widget or its hosted page */
+        CheckoutView: {
+            /**
+             * Format: uri
+             * @description The hosted page with every parameter in its query
+             */
+            link: string;
+            publicKey: string;
+            reference: string;
+            /** Format: int64 */
+            amountInCents: number;
+            currency: string;
+            /** @description As signed; send it unchanged */
+            expirationTime: string;
+            /**
+             * Format: uri
+             * @description Where Wompi sends the customer back; it never confirms the payment
+             */
+            redirectUrl: string;
+            /** @description signature:integrity */
+            signature: string;
+        };
         ContactView: {
             id: components["schemas"]["UUID"];
             category: components["schemas"]["Category"];
@@ -1790,6 +1864,11 @@ export interface components {
             address: components["schemas"]["AddressInput"];
             email: string;
             phone?: string;
+        };
+        /** @description What to buy: a version of the catalog the account is offered now */
+        CreateOrderRequest: {
+            /** @description The id of the version in GET /console/plans */
+            planVersionId: components["schemas"]["UUID"];
         };
         /** @description A plan for the catalog; what it sells comes in its versions */
         CreatePlanRequest: {
@@ -2549,6 +2628,8 @@ export interface components {
         };
         /** @enum {string} */
         Kind: "SUBSCRIPTION" | "PACKAGE" | "TOPUP";
+        /** @enum {string} */
+        Kind1: "PURCHASE" | "RENEWAL" | "MANUAL";
         /** @description Una línea del documento: un producto o servicio. */
         Line: {
             /**
@@ -2636,6 +2717,49 @@ export interface components {
          * @example 2022-03-10T12:15:50-04:00
          */
         OffsetDateTime: string;
+        /** @description A line of an order, with the amounts it applied, in cents of COP */
+        OrderItemView: {
+            itemType: components["schemas"]["Type"];
+            /** @description The version bought; null for overage and adjustments */
+            planVersionId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+            description: string;
+            /** Format: int32 */
+            quantity: number;
+            /**
+             * Format: int64
+             * @description Final
+             */
+            unitPriceCents: number;
+            /** Format: int64 */
+            baseCents: number;
+            taxRate: number;
+            /** Format: int64 */
+            taxCents: number;
+            /** Format: int64 */
+            totalCents: number;
+        };
+        /** @description A purchase and its payment status, in cents of COP */
+        OrderView: {
+            id: components["schemas"]["UUID"];
+            kind: components["schemas"]["Kind1"];
+            status: components["schemas"]["Status"];
+            /** @description What Wompi knows the order by */
+            reference: string;
+            /** Format: int64 */
+            subtotalCents: number;
+            /** Format: int64 */
+            taxCents: number;
+            /** Format: int64 */
+            totalCents: number;
+            currency: string;
+            items: components["schemas"]["OrderItemView"][];
+            /** @description After it an unpaid order expires */
+            expiresAt: components["schemas"]["OffsetDateTime"];
+            paidAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            /** @description Only while the order is pending and has not expired */
+            checkout: ((components["schemas"]["CheckoutView"] | null) | null) | components["schemas"]["CheckoutView"] | null;
+        };
         /** @description Cómo se paga la factura. */
         Payment: {
             /** @description Contado o crédito. */
@@ -2942,6 +3066,32 @@ export interface components {
             /** @description Another address; leave it out to use the first delivery's */
             email?: string | null;
         };
+        /** @description The income of the paid orders in a calendar year (Colombia time), in cents of COP */
+        RevenueView: {
+            /** Format: int32 */
+            year: number;
+            /** Format: int64 */
+            revenueCents: number;
+            /**
+             * Format: int64
+             * @description The UVT's value configured; null without a threshold
+             */
+            uvtValueCop: number | null;
+            /**
+             * Format: int32
+             * @description The threshold in UVT configured; null without a threshold
+             */
+            thresholdUvt: number | null;
+            /**
+             * Format: int64
+             * @description The threshold in cents; null without one
+             */
+            thresholdCents: number | null;
+            /** @description Share of the threshold reached, in %; null without a threshold */
+            thresholdPercent: number | null;
+            /** @description The alert shares the income reached, lowest first */
+            alertPercentsReached: number[];
+        };
         SoftwareRequest: {
             softwareId: string;
             pin: string;
@@ -2952,9 +3102,11 @@ export interface components {
             testSetId: string | null;
         };
         /** @enum {string} */
-        Status: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        Status: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED";
         /** @enum {string} */
-        Status1: "ACTIVE" | "DISABLED";
+        Status1: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        /** @enum {string} */
+        Status2: "ACTIVE" | "DISABLED";
         StatusChangeRequest: {
             reason: string;
         };
@@ -3039,6 +3191,8 @@ export interface components {
              */
             payable: number;
         };
+        /** @enum {string} */
+        Type: "PLAN" | "OVERAGE" | "ADJUSTMENT";
         /** Format: uuid */
         UUID: string;
         UpdateIssuerRequest: {
@@ -3103,7 +3257,7 @@ export interface components {
             eventId: components["schemas"]["UUID"];
             eventType: string;
             documentId: components["schemas"]["UUID"];
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status1"];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
@@ -3122,7 +3276,7 @@ export interface components {
             environment: components["schemas"]["Environment"];
             /** @description Empty means all event types */
             eventTypes: string[];
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status2"];
             disabledAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description AUTOMATIC when Cetus disabled it after failing for days */
             disabledReason: ((string | components["schemas"]["DisabledReason"] | null) | null) | components["schemas"]["DisabledReason"] | null;
@@ -3997,6 +4151,44 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminBillingResource_revenue: {
+        parameters: {
+            query?: {
+                year?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevenueView"];
                 };
             };
             /** @description Not Authorized */
@@ -6819,6 +7011,135 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    OrderResource_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"][];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    OrderResource_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created, with its checkout */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Payments are not configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    OrderResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

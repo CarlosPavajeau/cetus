@@ -3,6 +3,7 @@ package com.cantte.cetus.worker.ops;
 import com.cantte.cetus.email.EmailException;
 import com.cantte.cetus.email.EmailMessage;
 import com.cantte.cetus.email.EmailSender;
+import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.ops.OpsAlert.Category;
 import com.cantte.cetus.worker.support.EmailClients;
 import io.quarkus.scheduler.Scheduled;
@@ -11,8 +12,10 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +28,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 /**
- * Emails the operators (CETUS_OPS_ALERT_EMAIL) about what needs a person: dead jobs and stuck documents
- * every few minutes; expiring certificates and ranges running out once a day. Each condition is sent
+ * Emails the operators (CETUS_OPS_ALERT_EMAIL) about what needs a person: dead jobs, stuck documents and payments to review
+ * every few minutes; expiring certificates, ranges running out and the
+ * income nearing the VAT threshold once a day. Each condition is sent
  * once and repeated at most once a day while it persists (see ops_alerts). Safe on many replicas: a run
  * holds a Postgres advisory lock, and a replica that does not get it skips the run.
  */
@@ -38,8 +42,9 @@ public class OpsAlerts {
     private static final long LOCK_ID = 0x6365747573_6f7073L;
 
     public enum Run {
-        FREQUENT(EnumSet.of(Category.JOB_DEAD, Category.DOCUMENT_STUCK, Category.RANGE_UNVERIFIED)),
-        DAILY(EnumSet.of(Category.CERTIFICATE_EXPIRING, Category.RANGE_RUNNING_OUT));
+        FREQUENT(EnumSet.of(
+                Category.JOB_DEAD, Category.DOCUMENT_STUCK, Category.RANGE_UNVERIFIED, Category.PAYMENT_REVIEW)),
+        DAILY(EnumSet.of(Category.CERTIFICATE_EXPIRING, Category.RANGE_RUNNING_OUT, Category.VAT_THRESHOLD));
 
         final Set<Category> categories;
 
@@ -125,6 +130,8 @@ public class OpsAlerts {
             case RANGE_UNVERIFIED -> checks.unverifiedRanges();
             case CERTIFICATE_EXPIRING -> checks.expiringCertificates();
             case RANGE_RUNNING_OUT -> checks.rangesRunningOut();
+            case PAYMENT_REVIEW -> checks.paymentsToReview();
+            case VAT_THRESHOLD -> checks.vatThreshold(LocalDate.now(Dates.BOGOTA));
         };
     }
 
@@ -145,13 +152,19 @@ public class OpsAlerts {
         return known;
     }
 
-    /** A condition that cleared is forgotten, so it is reported again if it comes back. */
+    /** A condition that cleared is forgotten, so it is reported again if it comes back; see {@link Category#forgotten()}. */
     private void forgetCleared(Set<String> current, Set<String> known) {
         List<String> cleared =
                 known.stream().filter(key -> !current.contains(key)).toList();
+        List<String> forgotten = Arrays.stream(Category.values())
+                .filter(Category::forgotten)
+                .map(Category::id)
+                .toList();
         if (!cleared.isEmpty()) {
-            em.createNativeQuery("DELETE FROM billing.ops_alerts WHERE alert_key IN (:keys)")
+            em.createNativeQuery(
+                            "DELETE FROM billing.ops_alerts WHERE alert_key IN (:keys) AND category IN (:categories)")
                     .setParameter("keys", cleared)
+                    .setParameter("categories", forgotten)
                     .executeUpdate();
         }
     }

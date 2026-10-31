@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.email.EmailException;
+import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.ops.OpsAlerts.Run;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeResend;
@@ -17,6 +19,8 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +37,9 @@ class OpsAlertsTest {
 
     @Inject
     OpsAlerts alerts;
+
+    @Inject
+    OpsAlertChecks checks;
 
     @Inject
     WorkerFixtures fixtures;
@@ -154,6 +161,62 @@ class OpsAlertsTest {
         assertThat(known(key)).isFalse();
 
         assertThat(keys(alerts.run(Run.FREQUENT))).contains(key);
+    }
+
+    @Test
+    void theIncomeOfTheYearIsReportedOnceAtEachShareOfTheVatThreshold() {
+        int year = LocalDate.now(Dates.BOGOTA).getYear();
+        OffsetDateTime yearStart =
+                LocalDate.of(year, 1, 1).atStartOfDay(Dates.BOGOTA).toOffsetDateTime();
+        long revenueCents = QuarkusTransaction.requiringNew()
+                .call(() -> BillingOrderEntity.revenueCents(yearStart, yearStart.plusYears(1)));
+        // The test profile's threshold is $1,000,000: reach 90 % of it with one more paid order.
+        long limitCents = 100_000_000L;
+        UUID order = paid(Math.max(1, limitCents * 9 / 10 - revenueCents), OffsetDateTime.now());
+
+        List<OpsAlert> sent = alerts.run(Run.DAILY);
+
+        String ninety = "vat_threshold:" + year + ":90";
+        assertThat(keys(sent)).contains("vat_threshold:" + year + ":70", ninety);
+        assertThat(sent)
+                .filteredOn(alert -> alert.key().equals(ninety))
+                .singleElement()
+                .extracting(OpsAlert::summary)
+                .asString()
+                .contains("el 90 % del tope de no responsable de IVA ($1.000.000)");
+        assertThat(keys(alerts.run(Run.DAILY))).noneMatch(key -> key.startsWith("vat_threshold:"));
+
+        // A refund takes the income back under the shares; crossing them again that year is not reported again.
+        QuarkusTransaction.requiringNew()
+                .run(() -> BillingOrderEntity.<BillingOrderEntity>findById(order).status =
+                        BillingOrderEntity.Status.REFUNDED);
+        assertThat(keys(alerts.run(Run.DAILY))).noneMatch(key -> key.startsWith("vat_threshold:"));
+        assertThat(known(ninety)).isTrue();
+        paid(limitCents, OffsetDateTime.now());
+        assertThat(keys(alerts.run(Run.DAILY))).noneMatch(key -> key.startsWith("vat_threshold:"));
+    }
+
+    @Test
+    void inJanuaryWhatTheYearBeforeTookInLateIsReported() {
+        // A year no other test pays in: 95 % of the threshold paid on its last evening, after the daily run.
+        paid(95_000_000L, OffsetDateTime.parse("2097-12-31T20:00:00-05:00"));
+
+        assertThat(keys(checks.vatThreshold(LocalDate.of(2097, 12, 31))))
+                .containsExactlyInAnyOrder("vat_threshold:2097:70", "vat_threshold:2097:90");
+        assertThat(keys(checks.vatThreshold(LocalDate.of(2098, 1, 1))))
+                .containsExactlyInAnyOrder("vat_threshold:2097:70", "vat_threshold:2097:90");
+        assertThat(keys(checks.vatThreshold(LocalDate.of(2098, 2, 1)))).isEmpty();
+    }
+
+    /** A purchase paid at the instant; returns the order's id. */
+    private UUID paid(long totalCents, OffsetDateTime paidAt) {
+        UUID order = fixtures.order(totalCents, paidAt.plusDays(1)).id;
+        QuarkusTransaction.requiringNew().run(() -> {
+            BillingOrderEntity paid = BillingOrderEntity.findById(order);
+            paid.status = BillingOrderEntity.Status.PAID;
+            paid.paidAt = paidAt;
+        });
+        return order;
     }
 
     private static List<String> keys(List<OpsAlert> sent) {

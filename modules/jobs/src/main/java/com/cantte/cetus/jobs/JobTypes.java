@@ -21,5 +21,10 @@ public final class JobTypes {
     /** Email an opinion shared from the console to the Cetus support mailbox. reference_id = feedback id. */
     public static final String SEND_FEEDBACK = "SEND_FEEDBACK";
 
+    /** Act on an event received from a provider (Wompi, Resend). reference_id = inbound webhook event id. */
+    public static final String PROCESS_WEBHOOK_EVENT = "PROCESS_WEBHOOK_EVENT";
+    /** Ask Wompi for the payments of an order whose event may never come. reference_id = billing order id. */
+    public static final String CHECK_PAYMENT = "CHECK_PAYMENT";
+
     private JobTypes() {}
 }

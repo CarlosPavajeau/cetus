@@ -49,5 +49,9 @@ public enum AuditAction {
     /** New terms for a plan, which close its version before them; a private one is recorded on its account. */
     PLAN_VERSION_ADDED,
     /** Who Cetus invoices for the account's purchases. */
-    BILLING_PROFILE_UPDATED
+    BILLING_PROFILE_UPDATED,
+    /** A purchase placed from the console, waiting for its payment. */
+    BILLING_ORDER_CREATED,
+    /** Wompi approved the order's payment; recorded by Cetus itself. */
+    BILLING_ORDER_PAID
 }
