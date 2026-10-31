@@ -44,43 +44,52 @@ export async function grantPackage(organization: TestOrganization) {
 /**
  * Starts a subscription of the organization's account to the plan's current public version, as the worker does
  * once its first order is paid: an active subscription, its first period from now and the period's lot. No
- * endpoint starts one without a payment, so this writes straight to the database the local stack uses.
+ * endpoint starts one without a payment, so this writes straight to the "billing" schema the local stack uses,
+ * as the API's own Postgres user: the console's only reaches "auth".
  */
 export async function subscribe(organization: TestOrganization, planCode: string) {
   const account = type({ id: "string" }).assert(
     await (await organization.api("/console/account")).json(),
   );
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const connectionString = process.env.CETUS_TEST_BILLING_DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("Set CETUS_TEST_BILLING_DATABASE_URL in apps/console/.env (see .env.example)");
+  }
+  const pool = new Pool({ connectionString });
   try {
-    await pool.query(
+    // The ids come first: a statement's own CTEs never see each other's rows, so the period is inserted with
+    // its lot's id instead of being updated afterwards.
+    const started = await pool.query(
       `WITH version AS (
          SELECT v.id, v.price_cents, v.documents_included FROM billing.plan_versions v
          JOIN billing.plans p ON p.id = v.plan_id
          WHERE p.code = $2 AND v.account_id IS NULL AND v.valid_from <= now()
            AND (v.valid_to IS NULL OR v.valid_to > now())
+       ), ids AS (
+         SELECT uuidv7() AS subscription_id, uuidv7() AS period_id, uuidv7() AS grant_id
        ), subscription AS (
-         INSERT INTO billing.subscriptions (account_id, plan_version_id, status, overage_limit_cents, started_at)
-         SELECT $1, id, 'ACTIVE', price_cents * 3, now() FROM version
-         RETURNING id
-       ), period AS (
-         INSERT INTO billing.subscription_periods (subscription_id, number, plan_version_id, starts_at, ends_at, status)
-         SELECT subscription.id, 1, version.id, now(), now() + interval '1 month', 'OPEN' FROM subscription, version
-         RETURNING id, plan_version_id, ends_at
+         INSERT INTO billing.subscriptions (id, account_id, plan_version_id, status, overage_limit_cents, started_at)
+         SELECT ids.subscription_id, $1, version.id, 'ACTIVE', version.price_cents * 3, now() FROM ids, version
        ), lot AS (
-         INSERT INTO billing.credit_grants (account_id, plan_version_id, source_type, source_id, quantity, remaining,
-                                            expires_at, status)
-         SELECT $1, period.plan_version_id, 'SUBSCRIPTION_PERIOD', period.id, version.documents_included,
-                version.documents_included, period.ends_at + interval '60 days', 'ACTIVE'
-         FROM period, version
-         RETURNING id, quantity
+         INSERT INTO billing.credit_grants (id, account_id, plan_version_id, source_type, source_id, quantity,
+                                            remaining, expires_at, status)
+         SELECT ids.grant_id, $1, version.id, 'SUBSCRIPTION_PERIOD', ids.period_id, version.documents_included,
+                version.documents_included, now() + interval '1 month' + interval '60 days', 'ACTIVE'
+         FROM ids, version
        ), movement AS (
          INSERT INTO billing.credit_movements (account_id, grant_id, type, quantity, actor_type)
-         SELECT $1, lot.id, 'GRANT', lot.quantity, 'SYSTEM' FROM lot
+         SELECT $1, ids.grant_id, 'GRANT', version.documents_included, 'SYSTEM' FROM ids, version
        )
-       UPDATE billing.subscription_periods SET grant_id = lot.id FROM lot, period
-       WHERE subscription_periods.id = period.id`,
+       INSERT INTO billing.subscription_periods (id, subscription_id, number, plan_version_id, starts_at, ends_at,
+                                                 status, grant_id)
+       SELECT ids.period_id, ids.subscription_id, 1, version.id, now(), now() + interval '1 month', 'OPEN',
+              ids.grant_id
+       FROM ids, version`,
       [account.id, planCode],
     );
+    if (started.rowCount !== 1) {
+      throw new Error(`The catalog has no public version of ${planCode} in force`);
+    }
   } finally {
     await pool.end();
   }

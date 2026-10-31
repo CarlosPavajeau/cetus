@@ -94,6 +94,8 @@ public class Subscriptions {
     }
 
     private void start(BillingOrderEntity order, PlanVersionEntity version, PlanEntity plan) {
+        // Two subscriptions paid at once: the second waits here and finds the first instead of failing the payment.
+        ledger.lock(order.accountId);
         if (SubscriptionEntity.lockCurrent(order.accountId).isPresent()) {
             PaymentSettlement.review(
                     order, "La cuenta ya tenía una suscripción al pagarse la orden de %s".formatted(plan.name));

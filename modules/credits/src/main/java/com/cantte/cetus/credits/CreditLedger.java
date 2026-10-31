@@ -606,7 +606,12 @@ public class CreditLedger {
         movement.persist();
     }
 
-    private void lock(UUID accountId) {
+    /**
+     * Holds the account's credits lock until the transaction ends. Whoever changes what the account's credits depend
+     * on, such as starting its subscription, takes it first so two such changes never run at once.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public void lock(UUID accountId) {
         em.createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
                 .setParameter("key", "credits:" + accountId)
                 .getSingleResult();

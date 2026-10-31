@@ -5,6 +5,12 @@ import { type TestOrganization, inviteMember } from "../support/organization";
 import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
+/** The text with each COP amount as Intl writes it: "$", a no-break space, then the digits. */
+function cop(text: string) {
+  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(escaped.replaceAll("\\$", "\\$\\s"));
+}
+
 async function signInAs(page: Page, person: TestOrganization) {
   await page.context().clearCookies();
   await page.context().addCookies(consoleCookies(person.cookies));
@@ -30,7 +36,7 @@ test("a new account has no product and sees subscriptions and packages for sale"
   await expect(page.getByText("Precio final, sin IVA").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: /^Recarga/ })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Inicial" })).toBeVisible();
-  await expect(page.getByText("$150 por documento adicional")).toBeVisible();
+  await expect(page.getByText(cop("$150 por documento adicional"))).toBeVisible();
 });
 
 test("a subscribed account sees its period, changes its overage limit and buys no packages", async ({
@@ -43,8 +49,8 @@ test("a subscribed account sees its period, changes its overage limit and buys n
   await expect(page.getByText(/^Suscripción Inicial$/).first()).toBeVisible();
   const subscription = page.getByRole("region", { name: "Suscripción Inicial" });
   await expect(subscription.getByText("0 de 200", { exact: true })).toBeVisible();
-  await expect(subscription.getByText("0 documentos · $0")).toBeVisible();
-  await expect(subscription.getByText("$117.000 · 0 de 780 documentos")).toBeVisible();
+  await expect(subscription.getByText(cop("0 documentos · $0"))).toBeVisible();
+  await expect(subscription.getByText(cop("$117.000 · 0 de 780 documentos"))).toBeVisible();
   await expect(page.getByRole("link", { name: "Comprar créditos" })).toHaveCount(0);
 
   await subscription.getByRole("button", { name: "Cambiar límite" }).click();
@@ -52,7 +58,7 @@ test("a subscribed account sees its period, changes its overage limit and buys n
   await dialog.getByLabel("Límite por periodo, en pesos").fill("300000");
   await dialog.getByRole("button", { name: "Guardar límite" }).click();
   await expect(dialog).toBeHidden();
-  await expect(subscription.getByText("$300.000 · 0 de 2.000 documentos")).toBeVisible();
+  await expect(subscription.getByText(cop("$300.000 · 0 de 2.000 documentos"))).toBeVisible();
 
   await subscription.getByRole("button", { name: "Cancelar suscripción" }).click();
   await page
