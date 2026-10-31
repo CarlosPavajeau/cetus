@@ -8,6 +8,9 @@ node = "24.22.1"
 pnpm = "10.34.7"
 # Load generator for bench/.
 k6 = "2.3.0"
+# Public tunnel to the local API, for Wompi's events (mise run tunnel). Taken before its 7 days by choice: the
+# tunnel warns that older releases are outdated.
+cloudflared = "2026.10.7"
 
 [tasks.setup]
 description = "First-time setup: pnpm install, containers, auth migrations, Java build"
@@ -36,6 +39,16 @@ run = "scripts/dev.sh worker"
 [tasks.mock]
 description = "Start only the DIAN mock (:8090)"
 run = "scripts/dev.sh mock"
+
+[tasks.tunnel]
+description = "Public HTTPS URL for Wompi's sandbox events to the local API: the named tunnel CETUS_TUNNEL, else a quick one"
+run = """
+if [ -n "${CETUS_TUNNEL:-}" ]; then
+  cloudflared tunnel --no-autoupdate --config infra/cloudflared/dev.yml run "$CETUS_TUNNEL"
+else
+  cloudflared tunnel --no-autoupdate --url http://localhost:8080
+fi
+"""
 
 [tasks.infra]
 description = "Start Postgres and LocalStack and wait until they are ready"

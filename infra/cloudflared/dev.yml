@@ -1,0 +1,7 @@
+# Ingress of the named development tunnel (`mise run tunnel` with CETUS_TUNNEL set): Wompi's sandbox events reach
+# the local API through a fixed public hostname, and every other path gets a 404 instead of the local API.
+# The tunnel and its credentials (~/.cloudflared) belong to each developer; see apps/api/.env.example.
+ingress:
+  - path: ^/internal/webhooks/wompi$
+    service: http://localhost:8080
+  - service: http_status:404
