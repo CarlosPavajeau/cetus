@@ -2,7 +2,9 @@ package com.cantte.cetus.api.billing;
 
 import com.cantte.cetus.api.billing.BillingViews.CheckoutView;
 import com.cantte.cetus.api.billing.BillingViews.CreateOrderRequest;
+import com.cantte.cetus.api.billing.BillingViews.OrderInvoiceView;
 import com.cantte.cetus.api.billing.BillingViews.OrderView;
+import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.domain.DomainException;
@@ -16,6 +18,7 @@ import com.cantte.cetus.persistence.audit.RequestOrigin;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
+import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -29,8 +32,10 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -57,6 +62,9 @@ public class Orders {
 
     @Inject
     Entitlements entitlements;
+
+    @Inject
+    DocumentFiles files;
 
     @ConfigProperty(name = "cetus.billing.order-ttl")
     Duration orderTtl;
@@ -135,25 +143,59 @@ public class Orders {
                         "plan", plan.code,
                         "version", version.version,
                         "totalCents", order.totalCents));
-        return view(order, List.of(item));
+        return view(order, List.of(item), null);
     }
 
     @Transactional(Transactional.TxType.MANDATORY)
     public OrderView get(UUID accountId, UUID orderId) {
         BillingOrderEntity order = BillingOrderEntity.findForAccount(orderId, accountId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-        return view(order, BillingOrderItemEntity.listByOrder(order.id));
+        return views(List.of(order)).getFirst();
     }
 
     @Transactional(Transactional.TxType.MANDATORY)
     public List<OrderView> list(UUID accountId, int limit) {
-        return BillingOrderEntity.listByAccount(accountId, limit).stream()
-                .map(order -> view(order, BillingOrderItemEntity.listByOrder(order.id)))
+        return views(BillingOrderEntity.listByAccount(accountId, limit));
+    }
+
+    /**
+     * A short-lived URL to one of the files of the order's invoice. The invoice belongs to Cetus' own account, so it
+     * is reached only through an order of the caller's account.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public DocumentFiles.DocumentFileResponse invoiceFile(UUID accountId, UUID orderId, String file) {
+        BillingOrderEntity order = BillingOrderEntity.findForAccount(orderId, accountId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        if (order.invoiceDocumentId == null) {
+            throw new DocumentFiles.FileNotAvailable(file);
+        }
+        DocumentEntity invoice = DocumentEntity.findById(order.invoiceDocumentId);
+        return files.presign(invoice.accountId, invoice.environment, invoice.id, invoice.documentType, file);
+    }
+
+    /** The orders with their items and invoices, read in one query each. */
+    private List<OrderView> views(List<BillingOrderEntity> orders) {
+        Map<UUID, List<BillingOrderItemEntity>> items =
+                BillingOrderItemEntity.listByOrders(
+                                orders.stream().map(order -> order.id).toList())
+                        .stream()
+                        .collect(Collectors.groupingBy(item -> item.orderId));
+        Map<UUID, OrderInvoiceView> invoices = DocumentEntity.listNumberStatus(orders.stream()
+                        .map(order -> order.invoiceDocumentId)
+                        .filter(Objects::nonNull)
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(DocumentEntity.NumberStatus::id, OrderInvoiceView::from));
+        return orders.stream()
+                .map(order -> view(
+                        order,
+                        items.getOrDefault(order.id, List.of()),
+                        order.invoiceDocumentId == null ? null : invoices.get(order.invoiceDocumentId)))
                 .toList();
     }
 
     /** The checkout only while the order can still be paid; signing again gives the same parameters. */
-    private OrderView view(BillingOrderEntity order, List<BillingOrderItemEntity> items) {
+    private OrderView view(BillingOrderEntity order, List<BillingOrderItemEntity> items, OrderInvoiceView invoice) {
         boolean payable =
                 order.status == BillingOrderEntity.Status.PENDING && order.expiresAt.isAfter(OffsetDateTime.now());
         Optional<CheckoutView> checkout = payments.gateway()
@@ -164,7 +206,7 @@ public class Orders {
                         order.currency,
                         order.expiresAt.toInstant(),
                         consoleUrl.resolve("/billing/orders/" + order.id)))));
-        return OrderView.from(order, items, checkout.orElse(null));
+        return OrderView.from(order, items, checkout.orElse(null), invoice);
     }
 
     /** "CET-" and 26 characters of Crockford's base32: 128 random bits. */

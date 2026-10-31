@@ -65,7 +65,7 @@ public class DocumentFiles {
     /** The document exists but the file is not generated yet (not accepted, or delivery still running). */
     public static class FileNotAvailable extends jakarta.ws.rs.WebApplicationException {
 
-        FileNotAvailable(String file) {
+        public FileNotAvailable(String file) {
             super(ProblemDetail.response(404, "file_not_available", "The " + file + " file is not available yet"));
         }
     }
