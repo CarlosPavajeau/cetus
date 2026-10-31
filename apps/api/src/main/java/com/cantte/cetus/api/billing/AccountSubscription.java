@@ -6,6 +6,7 @@ import com.cantte.cetus.api.billing.BillingViews.SubscriptionView;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.billing.OverageLimit;
+import com.cantte.cetus.domain.billing.Price;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
@@ -167,7 +168,11 @@ public class AccountSubscription {
                         overage,
                         ledger.overageUsed(period.id, false),
                         versionPeriod.priceOverageCents,
-                        overage * versionPeriod.priceOverageCents,
+                        new Price(
+                                        Math.multiplyExact(overage, versionPeriod.priceOverageCents),
+                                        versionPeriod.taxIncluded,
+                                        versionPeriod.taxRate)
+                                .totalCents(),
                         unpaid ? opening.id : null));
     }
 

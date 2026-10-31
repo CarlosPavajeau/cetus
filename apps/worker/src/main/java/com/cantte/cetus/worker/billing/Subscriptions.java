@@ -154,8 +154,8 @@ public class Subscriptions {
     }
 
     /**
-     * Closes the period if it ended: bills its overage and, unless the subscription ends with it, opens the next
-     * one with the order that renews it.
+     * Closes the period if it ended: bills its overage and, unless the subscription ends with it (canceled by its
+     * owner, or still unpaid), opens the next one with the order that renews it.
      *
      * @return whether it closed now
      */
@@ -168,6 +168,12 @@ public class Subscriptions {
         }
         SubscriptionEntity subscription =
                 SubscriptionEntity.lock(period.subscriptionId).orElseThrow();
+        if (subscription.status == SubscriptionEntity.Status.PAST_DUE) {
+            // The period ended with its own renewal unpaid: it is not renewed again over an unpaid one.
+            finish(subscription, period, now);
+            cancel(subscription, now, "UNPAID");
+            return true;
+        }
         if (subscription.cancelAtPeriodEnd) {
             finish(subscription, period, now);
             cancel(subscription, now, "REQUESTED");

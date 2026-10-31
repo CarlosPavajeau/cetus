@@ -188,11 +188,11 @@ public class CreditLedger {
 
     /**
      * Takes the released reservation's credit again: from the lot that expires first, else as overage of the open
-     * period or as unsettled grace.
+     * period or as grace. A reservation is only released while RESERVED, when the one thing that settles it is
+     * being waived while observing: without a lot it stays waived, neither billed nor paid by a later lot.
      */
     private void recharge(CreditReservationEntity reservation, OffsetDateTime now) {
         List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(reservation.accountId, now);
-        reservation.settled = false;
         if (lots.isEmpty()) {
             Optional<Entitlements.Subscribed> subscription =
                     entitlements.of(reservation.accountId, now).subscription();
@@ -206,6 +206,7 @@ public class CreditLedger {
             CreditGrantEntity lot = lots.getFirst();
             take(lot);
             reservation.kind = CreditReservationEntity.Kind.CREDIT;
+            reservation.settled = false;
             reservation.subscriptionPeriodId = null;
             reservation.grantId = lot.id;
         }

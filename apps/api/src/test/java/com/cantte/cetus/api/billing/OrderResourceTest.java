@@ -17,6 +17,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
@@ -25,6 +26,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 /** Purchases placed from the console: built by the server from the catalog and signed for Wompi's checkout. */
@@ -37,6 +39,10 @@ class OrderResourceTest {
 
     @Inject
     Credits credits;
+
+    /** Whatever apps/api/.env sets for local purchases, which Wompi refuses on localhost. */
+    @ConfigProperty(name = "cetus.console.url")
+    URI consoleUrl;
 
     @Inject
     Subscriptions subscriptions;
@@ -66,7 +72,11 @@ class OrderResourceTest {
                 .containsEntry("reference", reference)
                 .containsEntry("amountInCents", 24_900_000)
                 .containsEntry("currency", "COP")
-                .containsEntry("redirectUrl", "http://localhost:3000/billing/orders/" + order.getString("id"));
+                .containsEntry(
+                        "redirectUrl",
+                        consoleUrl
+                                .resolve("/billing/orders/" + order.getString("id"))
+                                .toString());
         assertThat(checkout.get("signature"))
                 .isEqualTo(sha256(reference + 24_900_000 + "COP" + checkout.get("expirationTime") + INTEGRITY_SECRET));
         assertThat((String) checkout.get("link")).startsWith("https://checkout.wompi.co/p/?public-key=pub_test_cetus");

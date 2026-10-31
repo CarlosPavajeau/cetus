@@ -159,6 +159,27 @@ class SubscriptionsTest {
     }
 
     @Test
+    void aPeriodThatEndsWithItsRenewalUnpaidEndsTheSubscriptionInsteadOfRenewingAgain() {
+        UUID accountId = subscribed("INICIAL");
+        SubscriptionEntity subscription = subscriptionOf(accountId);
+        SubscriptionPeriodEntity first = openPeriod(subscription.id);
+        close(first.id, first.endsAt.plusMinutes(1));
+        OffsetDateTime pastDueAt = subscriptionOf(accountId).pastDueAt;
+        SubscriptionPeriodEntity second = openPeriod(subscription.id);
+
+        assertThat(close(second.id, second.endsAt.plusMinutes(1))).isTrue();
+
+        SubscriptionEntity ended = QuarkusTransaction.requiringNew()
+                .call(() -> SubscriptionEntity.<SubscriptionEntity>findById(subscription.id));
+        assertThat(ended.status).isEqualTo(SubscriptionEntity.Status.CANCELED);
+        assertThat(pastDueAt).isNotNull();
+        assertThat(renewalsOf(accountId)).hasSize(1);
+        assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_CANCELED))
+                .singleElement()
+                .satisfies(notice -> assertThat(notice.data).containsEntry("reason", "UNPAID"));
+    }
+
+    @Test
     void aRenewalPaidLatePaysWithItsLotTheOverageOfItsOwnPeriod() {
         UUID accountId = subscribed("INICIAL");
         SubscriptionEntity subscription = subscriptionOf(accountId);
