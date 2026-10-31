@@ -5,10 +5,7 @@ import com.cantte.cetus.cache.Cache;
 import com.cantte.cetus.cache.Caches;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.domain.DomainException;
-import com.cantte.cetus.domain.Ids;
-import com.cantte.cetus.domain.calc.CalculatedLine;
 import com.cantte.cetus.domain.calc.CalculationResult;
-import com.cantte.cetus.domain.calc.TaxAmount;
 import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
@@ -17,10 +14,7 @@ import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import com.cantte.cetus.persistence.entity.DocumentLineEntity;
-import com.cantte.cetus.persistence.entity.DocumentTaxEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
-import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -147,49 +141,7 @@ public class DocumentDrafts {
         if (environment == Environment.SANDBOX) {
             requireSandboxQuota(accountId, now);
         }
-        NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, now.toLocalDate())
-                .orElseThrow(() -> new DomainException(
-                        "no_active_numbering_range", "The issuer has no active numbering range for " + label(type)));
-        if (type == DocumentType.INVOICE && environment == Environment.LIVE && range.technicalKeySealed == null) {
-            throw new DomainException(
-                    "technical_key_pending",
-                    "The numbering range is waiting for its technical key from the DIAN; try again in a few minutes");
-        }
-
-        DocumentEntity doc = new DocumentEntity();
-        doc.id = Ids.newId();
-        doc.accountId = accountId;
-        doc.issuerId = issuer.id;
-        doc.environment = environment;
-        doc.documentType = type;
-        doc.numberingRangeId = range.id;
-        doc.prefix = range.prefix;
-        doc.number = range.take();
-        doc.issueDate = now.toLocalDate();
-        doc.issueTime = now.toLocalTime();
-        doc.lineExtensionAmount = calculation.totals().lineExtensionAmount();
-        doc.taxExclusiveAmount = calculation.totals().taxExclusiveAmount();
-        doc.taxInclusiveAmount = calculation.totals().taxInclusiveAmount();
-        doc.payableAmount = calculation.totals().payableAmount();
-
-        for (CalculatedLine line : calculation.lines()) {
-            DocumentLineEntity lineEntity = new DocumentLineEntity();
-            lineEntity.id = Ids.newId();
-            lineEntity.document = doc;
-            lineEntity.lineNumber = line.number();
-            lineEntity.itemCode = line.itemCode();
-            lineEntity.description = line.description();
-            lineEntity.quantity = line.quantity();
-            lineEntity.unitCode = line.unitCode();
-            lineEntity.unitPrice = line.unitPrice();
-            lineEntity.lineExtensionAmount = line.lineExtensionAmount();
-            doc.lines.add(lineEntity);
-            for (TaxAmount tax : line.taxes()) {
-                doc.taxes.add(tax(doc, lineEntity, tax));
-            }
-        }
-        calculation.taxTotals().forEach(total -> total.subtotals().forEach(sub -> doc.taxes.add(tax(doc, null, sub))));
-        return doc;
+        return DocumentEntity.draft(accountId, issuer, environment, type, calculation, now);
     }
 
     /**
@@ -266,25 +218,5 @@ public class DocumentDrafts {
                     .header("Retry-After", Math.max(1, untilMidnight.toSeconds()))
                     .build());
         }
-    }
-
-    private static String label(DocumentType type) {
-        return switch (type) {
-            case INVOICE -> "invoices";
-            case CREDIT_NOTE -> "credit notes";
-            case DEBIT_NOTE -> "debit notes";
-        };
-    }
-
-    private static DocumentTaxEntity tax(DocumentEntity doc, DocumentLineEntity line, TaxAmount amount) {
-        DocumentTaxEntity tax = new DocumentTaxEntity();
-        tax.id = Ids.newId();
-        tax.document = doc;
-        tax.line = line;
-        tax.taxType = amount.type();
-        tax.taxableAmount = amount.taxableAmount();
-        tax.percent = amount.percent();
-        tax.taxAmount = amount.amount();
-        return tax;
     }
 }
