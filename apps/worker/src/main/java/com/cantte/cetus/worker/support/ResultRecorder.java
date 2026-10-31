@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.aws.DocumentStorage;
+import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.DocumentStatus;
@@ -13,6 +14,7 @@ import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.AfterCommit;
+import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
@@ -71,6 +73,9 @@ public class ResultRecorder {
 
     @Inject
     Notifications notifications;
+
+    @Inject
+    CreditLedger credits;
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void artifact(UUID documentId, DocumentArtifactEntity.Kind kind, DocumentStorage.StoredObject stored) {
@@ -147,8 +152,11 @@ public class ResultRecorder {
             // Same transaction as the status change: an accepted document is always delivered.
             jobs.enqueue(JobTypes.DELIVER_DOCUMENT, documentId);
             if (doc.environment == Environment.LIVE) {
+                credits.confirm(documentId, doc.validatedAt);
                 bill(doc);
             }
+        } else if (doc.environment == Environment.LIVE) {
+            credits.release(documentId, Actor.system(), "Rechazado por la DIAN");
         }
         webhooks.publish(
                 WebhookEventType.forDocument(doc.documentType, response.valid() ? Outcome.ACCEPTED : Outcome.REJECTED),

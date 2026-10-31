@@ -7,11 +7,13 @@ import static org.hamcrest.Matchers.nullValue;
 
 import com.cantte.cetus.api.admin.PlatformRoles;
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.api.support.Credits;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
@@ -29,6 +31,9 @@ class OrderResourceTest {
     private static final ConsoleUser ADMIN = ConsoleUser.platformStaff(PlatformRoles.ADMIN);
     /** The integrity secret of the test profile. */
     private static final String INTEGRITY_SECRET = "test_integrity_cetus";
+
+    @Inject
+    Credits credits;
 
     @Test
     void anOwnerBuysAPackageAndGetsASignedCheckout() throws Exception {
@@ -95,16 +100,17 @@ class OrderResourceTest {
     @Test
     void aTopUpNeedsAPackageInForce() {
         ConsoleUser owner = customer("Recarga SAS");
+        UUID accountId = UUID.fromString(
+                owner.request().get("/console/account").then().extract().path("id"));
         String topUp = versionOf(owner, "RECARGA_100");
 
         order(owner, topUp).then().statusCode(422).body("code", equalTo("plan_requires_product"));
 
-        String pack =
-                order(owner, versionOf(owner, "EMPRENDEDOR")).then().extract().path("id");
-        markPaid(pack, OffsetDateTime.now().minusMonths(13));
+        credits.grant(accountId, "RECARGA_500", 500, OffsetDateTime.now().plusMonths(6));
+        credits.grant(accountId, "EMPRENDEDOR", 300, OffsetDateTime.now().minusDays(1));
         order(owner, topUp).then().statusCode(422).body("code", equalTo("plan_requires_product"));
 
-        markPaid(pack, OffsetDateTime.now().minusMonths(11));
+        credits.grant(accountId, "EMPRENDEDOR", 1, OffsetDateTime.now().plusMonths(1));
         order(owner, topUp).then().statusCode(201).body("totalCents", equalTo(2_490_000));
     }
 
@@ -163,14 +169,6 @@ class OrderResourceTest {
 
     private static Response order(ConsoleUser owner, String planVersionId) {
         return owner.request().body(Map.of("planVersionId", planVersionId)).post("/console/orders");
-    }
-
-    private static void markPaid(String orderId, OffsetDateTime paidAt) {
-        QuarkusTransaction.requiringNew().run(() -> {
-            BillingOrderEntity order = BillingOrderEntity.findById(UUID.fromString(orderId));
-            order.status = BillingOrderEntity.Status.PAID;
-            order.paidAt = paidAt;
-        });
     }
 
     /** An unlisted package with a version only for the account; returns the version's id. */

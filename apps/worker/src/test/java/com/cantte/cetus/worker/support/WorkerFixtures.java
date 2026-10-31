@@ -24,6 +24,7 @@ import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.AccountContactEntity;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.DocumentLineEntity;
@@ -32,6 +33,7 @@ import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
+import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
@@ -73,51 +75,76 @@ public class WorkerFixtures {
      * order. Its reference is unique to it, as the API makes them.
      */
     public BillingOrderEntity order(long totalCents, OffsetDateTime expiresAt) {
-        return QuarkusTransaction.requiringNew().call(() -> {
-            AccountEntity account = new AccountEntity();
-            account.id = Ids.newId();
-            account.organizationId = "org_" + account.id;
-            account.name = "Compradora SAS";
-            account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
-            account.persist();
+        return QuarkusTransaction.requiringNew()
+                .call(() -> pendingOrder(newAccount("Compradora SAS").id, totalCents, expiresAt));
+    }
 
-            BillingOrderEntity order = new BillingOrderEntity();
-            order.id = Ids.newId();
-            order.accountId = account.id;
-            order.kind = BillingOrderEntity.Kind.PURCHASE;
-            order.status = BillingOrderEntity.Status.PENDING;
-            order.reference = "CET-" + order.id;
-            order.subtotalCents = totalCents;
-            order.totalCents = totalCents;
-            order.currency = "COP";
-            order.billingProfile = new Party(
-                    PersonType.LEGAL_ENTITY,
-                    IdentificationType.NIT,
-                    "900123456",
-                    "8",
-                    "Compradora SAS",
-                    null,
-                    List.of("O-13"),
-                    "01",
-                    "IVA",
-                    ADDRESS,
-                    "facturas@compradora.test",
-                    null);
-            order.expiresAt = expiresAt;
-            order.persist();
+    /** A pending purchase by the account of the current public version of the plan, as the console makes it. */
+    public BillingOrderEntity planOrder(UUID accountId, String planCode) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            PlanVersionEntity version = PlanVersionEntity.findCurrent(
+                            PlanEntity.byCode(planCode).id, null, OffsetDateTime.now())
+                    .orElseThrow();
+            BillingOrderEntity order = pendingOrder(
+                    accountId, version.priceCents, OffsetDateTime.now().plusHours(1));
+            BillingOrderItemEntity item = new BillingOrderItemEntity();
+            item.id = Ids.newId();
+            item.orderId = order.id;
+            item.itemType = BillingOrderItemEntity.Type.PLAN;
+            item.planVersionId = version.id;
+            item.description = planCode;
+            item.quantity = 1;
+            item.unitPriceCents = version.priceCents;
+            item.baseCents = version.priceCents;
+            item.taxRate = BigDecimal.ZERO;
+            item.totalCents = version.priceCents;
+            item.persist();
             return order;
         });
+    }
+
+    private static AccountEntity newAccount(String name) {
+        AccountEntity account = new AccountEntity();
+        account.id = Ids.newId();
+        account.organizationId = "org_" + account.id;
+        account.name = name;
+        account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
+        account.persist();
+        return account;
+    }
+
+    private static BillingOrderEntity pendingOrder(UUID accountId, long totalCents, OffsetDateTime expiresAt) {
+        BillingOrderEntity order = new BillingOrderEntity();
+        order.id = Ids.newId();
+        order.accountId = accountId;
+        order.kind = BillingOrderEntity.Kind.PURCHASE;
+        order.status = BillingOrderEntity.Status.PENDING;
+        order.reference = "CET-" + order.id;
+        order.subtotalCents = totalCents;
+        order.totalCents = totalCents;
+        order.currency = "COP";
+        order.billingProfile = new Party(
+                PersonType.LEGAL_ENTITY,
+                IdentificationType.NIT,
+                "900123456",
+                "8",
+                "Compradora SAS",
+                null,
+                List.of("O-13"),
+                "01",
+                "IVA",
+                ADDRESS,
+                "facturas@compradora.test",
+                null);
+        order.expiresAt = expiresAt;
+        order.persist();
+        return order;
     }
 
     /** Creates the issuer and an invoice in RECEIVED; returns the invoice id. */
     public UUID invoice() {
         return QuarkusTransaction.requiringNew().call(() -> {
-            AccountEntity account = new AccountEntity();
-            account.id = Ids.newId();
-            account.organizationId = "org_" + account.id;
-            account.name = "Worker SAS";
-            account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
-            account.persist();
+            AccountEntity account = newAccount("Worker SAS");
 
             IssuerEntity issuer = new IssuerEntity();
             issuer.id = Ids.newId();
@@ -242,6 +269,19 @@ public class WorkerFixtures {
                             "issuerId = ?1 and documentType = ?2", issuer.id, DocumentType.INVOICE)
                     .singleResult();
             return document(accountId, issuer.id, range, DocumentType.INVOICE, Environment.SANDBOX, "900108281").id;
+        });
+    }
+
+    /** Another invoice in RECEIVED of the account, from the issuer and range {@link #invoice} created. */
+    public UUID invoiceFor(UUID accountId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            IssuerEntity issuer = IssuerEntity.<IssuerEntity>find(
+                            "accountId = ?1 and environment = ?2", accountId, Environment.TEST)
+                    .singleResult();
+            NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find(
+                            "issuerId = ?1 and documentType = ?2", issuer.id, DocumentType.INVOICE)
+                    .singleResult();
+            return document(accountId, issuer.id, range, DocumentType.INVOICE, Environment.TEST, "900108281").id;
         });
     }
 

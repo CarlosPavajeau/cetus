@@ -136,6 +136,12 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${text(data.plan)} · ${text(data.reference)}`;
     case "BILLING_ORDER_PAID":
       return `${text(data.reference)} · ${text(data.paymentMethodType)}`;
+    case "CREDITS_GRANTED":
+      return `${text(data.plan)} · ${text(data.quantity)} documentos hasta el ${dayFormat.format(new Date(text(data.expiresAt)))} · Motivo: ${text(data.reason)}`;
+    case "CREDITS_ADJUSTED":
+      return `${text(data.quantity)} documentos · Motivo: ${text(data.reason)}`;
+    case "DOCUMENT_CREDIT_RELEASED":
+      return `Motivo: ${text(data.reason)}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":
       return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
     default:

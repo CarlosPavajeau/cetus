@@ -15,7 +15,9 @@ public enum NotificationKind {
     REJECTIONS_SPIKE(Set.of(Category.FISCAL, Category.TECHNICAL)),
     ACCOUNT_SUSPENDED(Set.of(Category.BILLING)),
     /** The month's billable documents reached 80 % or 100 % of the plan's quota. */
-    PLAN_USAGE(Set.of(Category.BILLING));
+    PLAN_USAGE(Set.of(Category.BILLING)),
+    /** The account has more production issuers than its products include, after a package expired. */
+    ISSUERS_OVER_LIMIT(Set.of(Category.BILLING));
 
     private final Set<Category> categories;
 

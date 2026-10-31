@@ -1,9 +1,9 @@
 package com.cantte.cetus.api.documents;
 
 import com.cantte.cetus.api.error.ProblemDetail;
-import com.cantte.cetus.api.usage.PlanDocumentLimit;
 import com.cantte.cetus.cache.Cache;
 import com.cantte.cetus.cache.Caches;
+import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.calc.CalculatedLine;
@@ -30,6 +30,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -58,7 +59,7 @@ public class DocumentDrafts {
     MeterRegistry meters;
 
     @Inject
-    PlanDocumentLimit planDocuments;
+    CreditLedger credits;
 
     @ConfigProperty(name = "cetus.sandbox.daily-documents")
     int sandboxDailyDocuments;
@@ -146,9 +147,6 @@ public class DocumentDrafts {
         if (environment == Environment.SANDBOX) {
             requireSandboxQuota(accountId, now);
         }
-        if (environment == Environment.LIVE) {
-            planDocuments.require(accountId, type);
-        }
         NumberingRangeEntity range = NumberingRangeEntity.lockActive(issuer.id, type, now.toLocalDate())
                 .orElseThrow(() -> new DomainException(
                         "no_active_numbering_range", "The issuer has no active numbering range for " + label(type)));
@@ -195,14 +193,18 @@ public class DocumentDrafts {
     }
 
     /**
-     * Persists the document and enqueues its processing, in the caller's transaction. A SANDBOX document
-     * waits one to three seconds first, about what the DIAN takes, so an integration does not count on an
-     * answer faster than production will give.
+     * Persists the document, reserves its credit when it is LIVE and enqueues its processing, in the caller's
+     * transaction: a refused credit undoes the number too. A SANDBOX document waits one to three seconds
+     * first, about what the DIAN takes, so an integration does not count on an answer faster than production
+     * will give.
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void submit(DocumentEntity doc) {
         // Flush so the database-generated createdAt is in the response.
         doc.persistAndFlush();
+        if (doc.environment == Environment.LIVE) {
+            credits.reserve(doc.accountId, doc.id, doc.documentType, OffsetDateTime.now());
+        }
         Duration delay = doc.environment == Environment.SANDBOX
                 ? Duration.ofMillis(ThreadLocalRandom.current().nextLong(1000, 3001))
                 : Duration.ZERO;

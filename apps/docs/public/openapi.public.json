@@ -526,7 +526,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "402": {
-            "$ref": "#/components/responses/PlanDocumentLimit"
+            "$ref": "#/components/responses/CreditsRefused"
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
@@ -704,7 +704,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "402": {
-            "$ref": "#/components/responses/PlanDocumentLimit"
+            "$ref": "#/components/responses/CreditsRefused"
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
@@ -1543,6 +1543,21 @@
           }
         }
       },
+      "CreditsRefused": {
+        "description": "La cuenta no tiene con qué emitir el documento en producción.\n`no_active_product`: no tiene un paquete vigente. `insufficient_credits`: usó sus créditos y su margen\nde cortesía (el 10 % de su último paquete o recarga, mínimo 10 documentos). Compra un paquete o una\nrecarga para seguir emitiendo. Las notas crédito nunca reciben este error.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
       "CustomerRejected": {
         "description": "- `customer_exists`: ya hay un cliente con ese tipo y número de identificación.\n- `customer_identification_invalid`, `customer_check_digit_invalid`: la identificación no tiene\n  el formato de su tipo o el dígito de verificación no corresponde.\n",
         "headers": {
@@ -1620,21 +1635,6 @@
       },
       "NotFound": {
         "description": "`not_found`: no existe en el ambiente de la llave. Un recurso de otro ambiente tampoco se encuentra.\n",
-        "headers": {
-          "X-Request-Id": {
-            "$ref": "#/components/headers/X-Request-Id"
-          }
-        },
-        "content": {
-          "application/problem+json": {
-            "schema": {
-              "$ref": "#/components/schemas/ProblemDetail"
-            }
-          }
-        }
-      },
-      "PlanDocumentLimit": {
-        "description": "`plan_document_limit`: la cuenta ya emitió en producción los documentos que su plan permite este\nmes. Puedes emitir de nuevo el mes siguiente, hora de Colombia, o al cambiar de plan. Las notas\ncrédito nunca reciben este error.\n",
         "headers": {
           "X-Request-Id": {
             "$ref": "#/components/headers/X-Request-Id"

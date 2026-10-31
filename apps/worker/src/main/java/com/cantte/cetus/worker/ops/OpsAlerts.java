@@ -44,7 +44,11 @@ public class OpsAlerts {
     public enum Run {
         FREQUENT(EnumSet.of(
                 Category.JOB_DEAD, Category.DOCUMENT_STUCK, Category.RANGE_UNVERIFIED, Category.PAYMENT_REVIEW)),
-        DAILY(EnumSet.of(Category.CERTIFICATE_EXPIRING, Category.RANGE_RUNNING_OUT, Category.VAT_THRESHOLD));
+        DAILY(EnumSet.of(
+                Category.CERTIFICATE_EXPIRING,
+                Category.RANGE_RUNNING_OUT,
+                Category.VAT_THRESHOLD,
+                Category.CREDIT_LEDGER_MISMATCH));
 
         final Set<Category> categories;
 
@@ -132,6 +136,7 @@ public class OpsAlerts {
             case RANGE_RUNNING_OUT -> checks.rangesRunningOut();
             case PAYMENT_REVIEW -> checks.paymentsToReview();
             case VAT_THRESHOLD -> checks.vatThreshold(LocalDate.now(Dates.BOGOTA));
+            case CREDIT_LEDGER_MISMATCH -> checks.creditLedgerMismatches();
         };
     }
 

@@ -2,6 +2,9 @@ package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.aws.SecretCipher;
+import com.cantte.cetus.credits.CreditLedger;
+import com.cantte.cetus.credits.CreditRefused;
+import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.dian.Hashing;
@@ -14,11 +17,9 @@ import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.audit.RequestOrigin;
-import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity.VerificationStatus;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.signing.KeyMaterial;
@@ -46,6 +47,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @ApplicationScoped
 public class IssuerOnboardingService {
+
+    @Inject
+    Entitlements entitlements;
+
+    @Inject
+    CreditLedger credits;
 
     @Inject
     SecretCipher cipher;
@@ -153,12 +160,17 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * Production issuers are what the plan sells per NIT; a plan without a limit takes any number. Locked per
-     * account like the sandbox slots, so two requests cannot both take the last one.
+     * Production issuers need a product, and are as many as its lots include. Locked per account like the
+     * sandbox slots, so two requests cannot both take the last one. An account above its limit (a package that
+     * expired) keeps its issuers and only cannot add more.
      */
     private void requirePlanIssuerSlot(UUID accountId) {
-        Integer included = PlanEntity.of(AccountEntity.findById(accountId)).issuersIncluded;
-        if (included == null) {
+        Entitlements.Entitlement entitlement = entitlements.of(accountId, OffsetDateTime.now());
+        if (!entitlement.product()) {
+            credits.refuse(
+                    accountId,
+                    new CreditRefused(
+                            CreditRefused.Reason.NO_ACTIVE_PRODUCT, "Production issuers need a package in force"));
             return;
         }
         IssuerEntity.getEntityManager()
@@ -166,9 +178,12 @@ public class IssuerOnboardingService {
                 .setParameter("key", "live-issuers:" + accountId)
                 .getSingleResult();
         long issuers = IssuerEntity.count("accountId = ?1 and environment = ?2", accountId, Environment.LIVE);
-        if (issuers >= included) {
-            throw new DomainException(
-                    "plan_issuer_limit", "The account's plan includes " + included + " production issuers");
+        if (issuers >= entitlement.issuersIncluded()) {
+            credits.refuse(
+                    accountId,
+                    new CreditRefused(
+                            CreditRefused.Reason.ISSUER_LIMIT_REACHED,
+                            "The account's products include " + entitlement.issuersIncluded() + " production issuers"));
         }
     }
 

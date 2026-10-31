@@ -1,5 +1,6 @@
 import { type } from "arktype";
 
+import { grantPackage } from "../support/credits";
 import { ageInvitation, invitationExpiry, markEmailVerified } from "../support/invitations";
 import { addRange, onboardIssuer, uniqueNit } from "../support/issuers";
 import { createOrganization } from "../support/organization";
@@ -15,6 +16,7 @@ test("a biller is invited by link, issues in production and is removed", async (
 }) => {
   // A production issuer makes LIVE the starting environment of whoever joins.
   const testIssuerId = await onboardIssuer(owner, uniqueNit(), "Facturas SAS", { testSet: false });
+  await grantPackage(owner);
   const promoted = await owner.api(`/console/issuers/${testIssuerId}/promote`, { method: "POST" });
   expect(promoted.status).toBe(200);
   const { id: liveIssuerId } = type({ id: "string" }).assert(await promoted.json());

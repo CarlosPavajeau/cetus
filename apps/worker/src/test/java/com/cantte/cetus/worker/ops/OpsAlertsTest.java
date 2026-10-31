@@ -3,8 +3,12 @@ package com.cantte.cetus.worker.ops;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.cantte.cetus.credits.CreditLedger;
+import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.email.EmailException;
+import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.worker.notifications.Dates;
@@ -49,6 +53,9 @@ class OpsAlertsTest {
 
     @Inject
     EntityManager em;
+
+    @Inject
+    CreditLedger ledger;
 
     @BeforeEach
     void reset() {
@@ -217,6 +224,33 @@ class OpsAlertsTest {
             paid.paidAt = paidAt;
         });
         return order;
+    }
+
+    @Test
+    void aCreditLotThatDisagreesWithItsMovementsIsReported() {
+        UUID accountId = QuarkusTransaction.requiringNew()
+                .call(() -> DocumentEntity.<DocumentEntity>findById(fixtures.invoice()).accountId);
+        CreditGrantEntity lot = QuarkusTransaction.requiringNew()
+                .call(() -> ledger.grant(
+                                accountId,
+                                new CreditLedger.Source(CreditGrantEntity.SourceType.ADJUSTMENT, Ids.newId()),
+                                null,
+                                10,
+                                OffsetDateTime.now().plusMonths(1),
+                                Actor.system(),
+                                "Prueba")
+                        .orElseThrow());
+        String key = "credit_ledger_mismatch:" + lot.id;
+        assertThat(keys(checks.creditLedgerMismatches())).doesNotContain(key);
+
+        QuarkusTransaction.requiringNew()
+                .run(() -> CreditGrantEntity.<CreditGrantEntity>findById(lot.id).remaining = 9);
+        try {
+            assertThat(keys(checks.creditLedgerMismatches())).contains(key);
+        } finally {
+            QuarkusTransaction.requiringNew()
+                    .run(() -> CreditGrantEntity.<CreditGrantEntity>findById(lot.id).remaining = 10);
+        }
     }
 
     private static List<String> keys(List<OpsAlert> sent) {

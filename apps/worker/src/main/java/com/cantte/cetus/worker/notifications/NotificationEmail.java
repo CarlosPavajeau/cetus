@@ -171,6 +171,15 @@ public record NotificationEmail(String subject, String html, String text) {
                                                         : "los documentos adicionales se cobran según tu contrato."),
                         "Ver el uso del plan",
                         "/settings/usage");
+            case ISSUERS_OVER_LIMIT ->
+                new Body(
+                        "Tienes más emisores en producción de los que incluye tu paquete",
+                        "%s tiene %s emisores en producción y sus paquetes vigentes incluyen %s."
+                                .formatted(account, data.get("issuers"), data.get("included")),
+                        "Tus emisores siguen activos y facturando, pero no puedes agregar otros hasta comprar un paquete"
+                                + " que incluya más emisores.",
+                        "Ver los productos",
+                        "/settings/usage");
         };
     }
 

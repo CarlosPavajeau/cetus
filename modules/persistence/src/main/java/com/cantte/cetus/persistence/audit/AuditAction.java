@@ -53,5 +53,11 @@ public enum AuditAction {
     /** A purchase placed from the console, waiting for its payment. */
     BILLING_ORDER_CREATED,
     /** Wompi approved the order's payment; recorded by Cetus itself. */
-    BILLING_ORDER_PAID
+    BILLING_ORDER_PAID,
+    /** A lot of a plan given by the Cetus team, such as a courtesy package. */
+    CREDITS_GRANTED,
+    /** Credits added or taken by the Cetus team to correct a balance. */
+    CREDITS_ADJUSTED,
+    /** A document the worker gave up on, resolved by the Cetus team as not issued: its credit is given back. */
+    DOCUMENT_CREDIT_RELEASED
 }

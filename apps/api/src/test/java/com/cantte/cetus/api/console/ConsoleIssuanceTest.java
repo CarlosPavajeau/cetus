@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.api.support.Credits;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
@@ -271,6 +272,7 @@ class ConsoleIssuanceTest {
 
     private static String liveIssuer(ConsoleUser user) {
         String testId = onboard(user).issuerId();
+        Credits.ensurePackage(user);
         String liveId = user.request()
                 .post("/console/issuers/" + testId + "/promote")
                 .then()

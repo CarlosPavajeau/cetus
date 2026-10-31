@@ -76,7 +76,7 @@ public class DebitNoteResource {
                             schema = @Schema(implementation = DebitNoteResponse.class)))
     @APIResponse(responseCode = "400", ref = "BadRequest")
     @APIResponse(responseCode = "404", ref = "NotFound")
-    @APIResponse(responseCode = "402", ref = "PlanDocumentLimit")
+    @APIResponse(responseCode = "402", ref = "CreditsRefused")
     @APIResponse(responseCode = "409", ref = "IdempotencyConflict")
     @APIResponse(responseCode = "422", ref = "CorrectionRejected")
     @APIResponse(responseCode = "429", ref = "TooManyDocuments")
