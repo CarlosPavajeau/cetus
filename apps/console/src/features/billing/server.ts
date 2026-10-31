@@ -55,6 +55,8 @@ export type OrderResult = { ok: true; order: Order } | { ok: false; message: str
 const messages: Record<string, string> = {
   organization_role_forbidden:
     "Solo los dueños y administradores de la organización pueden comprar y cambiar el perfil de facturación.",
+  impersonation_forbidden:
+    "Las compras y el perfil de facturación los cambia la persona de la cuenta.",
   account_suspended: "La cuenta está suspendida: no se pueden hacer compras ni cambios.",
   customer_identification_invalid: "El número de identificación no tiene un formato válido.",
   customer_check_digit_invalid: "El dígito de verificación del NIT no corresponde.",

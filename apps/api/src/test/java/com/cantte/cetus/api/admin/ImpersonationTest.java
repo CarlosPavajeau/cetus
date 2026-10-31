@@ -89,6 +89,18 @@ class ImpersonationTest {
                 .delete("/console/api-keys/" + UUID.randomUUID())
                 .then()
                 .statusCode(403);
+        customer.impersonatedBy(ADMIN.userId())
+                .body(Map.of("planVersionId", UUID.randomUUID()))
+                .post("/console/orders")
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("impersonation_forbidden"));
+        customer.impersonatedBy(ADMIN.userId())
+                .body(Map.of())
+                .put("/console/billing-profile")
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("impersonation_forbidden"));
         customer.impersonatedBy(ADMIN.userId()).get("/console/issuers").then().statusCode(200);
 
         // Other changes go through, recorded as the user's with the admin next to them.

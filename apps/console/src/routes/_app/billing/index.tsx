@@ -46,7 +46,9 @@ function Billing() {
   const { data: credits } = useSuspenseQuery(creditsQuery);
   const { data: profile } = useSuspenseQuery(billingProfileQuery);
   const { data: usage } = useSuspenseQuery(usageQuery);
+  const { session } = Route.useRouteContext();
   const { manage } = useMemberPermissions();
+  const buyer = manage && !session.impersonatedBy;
   const graceStarted = credits.product && credits.available === 0 && credits.graceUsed > 0;
 
   return (
@@ -172,7 +174,7 @@ function Billing() {
       <Section
         id="billing-profile"
         title="Perfil de facturación"
-        action={manage && <BillingProfileDialog profile={profile} />}
+        action={buyer && <BillingProfileDialog profile={profile} />}
       >
         {profile === null ? (
           <p className="text-sm text-muted-foreground">

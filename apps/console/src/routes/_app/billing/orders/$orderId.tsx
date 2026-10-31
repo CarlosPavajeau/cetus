@@ -108,8 +108,11 @@ function OrderPage() {
       )}
       {order.status === "PENDING" && !pending && (
         <Alert>
-          <AlertTitle>La orden venció sin pago</AlertTitle>
-          <AlertDescription>Puedes comprar de nuevo cuando quieras.</AlertDescription>
+          <AlertTitle>Venció el plazo para pagar esta orden</AlertTitle>
+          <AlertDescription>
+            Si ya pagaste, espera la confirmación de Wompi: la orden se actualizará sola. Si no,
+            puedes comprar de nuevo.
+          </AlertDescription>
         </Alert>
       )}
 
