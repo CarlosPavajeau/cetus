@@ -38,6 +38,8 @@ export const actionLabel: Record<AuditAction, string> = {
   BILLING_PROFILE_UPDATED: "Perfil de facturación actualizado",
   BILLING_ORDER_CREATED: "Orden de compra creada",
   BILLING_ORDER_PAID: "Orden de compra pagada",
+  CREDITS_GRANTED: "Créditos otorgados",
+  CREDITS_ADJUSTED: "Créditos ajustados",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

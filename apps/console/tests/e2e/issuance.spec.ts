@@ -1,5 +1,6 @@
 import { type } from "arktype";
 
+import { grantPackage } from "../support/credits";
 import {
   addCreditNoteRange,
   addRange,
@@ -80,6 +81,7 @@ test("a production invoice asks for confirmation before it is issued", async ({
   const testIssuerId = await onboardIssuer(organization, uniqueNit(), "Produccion SAS", {
     testSet: false,
   });
+  await grantPackage(organization);
   const promoted = await organization.api(`/console/issuers/${testIssuerId}/promote`, {
     method: "POST",
   });

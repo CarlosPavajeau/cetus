@@ -182,6 +182,8 @@ export const auditActions = [
   "BILLING_PROFILE_UPDATED",
   "BILLING_ORDER_CREATED",
   "BILLING_ORDER_PAID",
+  "CREDITS_GRANTED",
+  "CREDITS_ADJUSTED",
 ] as const satisfies readonly AuditAction[];
 
 /** Actions on a person or on the plan catalog rather than an account: only the administration's log has them. */
