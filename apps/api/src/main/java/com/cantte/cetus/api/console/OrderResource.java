@@ -4,6 +4,7 @@ import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.billing.BillingViews.CreateOrderRequest;
 import com.cantte.cetus.api.billing.BillingViews.OrderView;
 import com.cantte.cetus.api.billing.Orders;
+import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.error.ProblemDetail;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
@@ -98,5 +100,27 @@ public class OrderResource {
                             schema = @Schema(implementation = ProblemDetail.class)))
     public OrderView get(@PathParam("id") UUID id) {
         return orders.get(context.accountId(), id);
+    }
+
+    /**
+     * A short-lived URL to download a file of the order's invoice: {@code xml}, {@code pdf} or
+     * {@code attached-document}. 404 file_not_available until the invoice and its file exist.
+     */
+    @GET
+    @Path("/{id}/invoice/files/{file}")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    @APIResponse(
+            responseCode = "404",
+            description = "Not Found",
+            content =
+                    @Content(
+                            mediaType = ProblemDetail.MEDIA_TYPE,
+                            schema = @Schema(implementation = ProblemDetail.class)))
+    public DocumentFiles.DocumentFileResponse invoiceFile(
+            @PathParam("id") UUID id,
+            @Parameter(schema = @Schema(enumeration = {"xml", "pdf", "attached-document"})) @PathParam("file")
+                    String file) {
+        return orders.invoiceFile(context.accountId(), id, file);
     }
 }

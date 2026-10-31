@@ -169,8 +169,8 @@ public record NotificationEmail(String subject, String html, String text) {
                                                         ? "cada documento adicional se cobra a %s."
                                                                 .formatted(data.get("priceOverage"))
                                                         : "los documentos adicionales se cobran según tu contrato."),
-                        "Ver el uso del plan",
-                        "/settings/usage");
+                        "Ver la facturación",
+                        "/billing");
             case ISSUERS_OVER_LIMIT ->
                 new Body(
                         "Tienes más emisores en producción de los que incluye tu paquete",
@@ -179,7 +179,27 @@ public record NotificationEmail(String subject, String html, String text) {
                         "Tus emisores siguen activos y facturando, pero no puedes agregar otros hasta comprar un paquete"
                                 + " que incluya más emisores.",
                         "Ver los productos",
-                        "/settings/usage");
+                        "/billing/products");
+            case CREDITS_USAGE ->
+                new Body(
+                        "Usaste el %s%% de tus créditos".formatted(data.get("percent")),
+                        "%s usó el %s%% de los %s créditos de sus paquetes y recargas vigentes: le quedan %s."
+                                .formatted(account, data.get("percent"), data.get("granted"), data.get("available")),
+                        "Cuando se acaben, podrás emitir unos documentos más dentro del margen de cortesía de tu"
+                                + " paquete; después, solo notas crédito. Compra una recarga para seguir facturando sin"
+                                + " interrupciones.",
+                        "Comprar créditos",
+                        "/billing/products");
+            case CREDITS_GRACE ->
+                new Body(
+                        "Se acabaron tus créditos: estás usando el margen de cortesía",
+                        "%s no tiene créditos disponibles y ya emitió %s de los %s documentos del margen de cortesía."
+                                .formatted(account, data.get("graceUsed"), data.get("graceMargin")),
+                        "Al agotar el margen, la emisión en producción se detiene; las notas crédito siempre se pueden"
+                                + " emitir. Los documentos del margen se descuentan del siguiente paquete o recarga que"
+                                + " compres.",
+                        "Comprar créditos",
+                        "/billing/products");
         };
     }
 

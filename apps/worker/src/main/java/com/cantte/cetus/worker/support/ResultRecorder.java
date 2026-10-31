@@ -4,10 +4,10 @@ import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
+import com.cantte.cetus.domain.billing.CreditAlerts;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
-import com.cantte.cetus.domain.usage.UsageAlerts;
 import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
@@ -15,17 +15,15 @@ import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.audit.Actor;
-import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.CreditReservationEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.persistence.usage.UsageCounters;
 import com.cantte.cetus.webhooks.WebhookEventType;
 import com.cantte.cetus.webhooks.WebhookEventType.Outcome;
 import com.cantte.cetus.webhooks.WebhookPublisher;
-import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.notifications.Numbers;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -34,9 +32,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.YearMonth;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -187,32 +183,45 @@ public class ResultRecorder {
                 .increment();
     }
 
-    /** Counts the document in its month and tells the billing contact when the month reaches a share of the plan. */
+    /**
+     * Counts the document in its month, for the statistics, and tells the billing contact when the credits in force
+     * reach a share of what they were granted with, or when the document took the package's grace margin. Each lot
+     * starts the notices again; a document that reserved nothing, like Cetus' own invoices, tells nothing.
+     */
     private void bill(DocumentEntity doc) {
-        YearMonth period = UsagePeriod.of(doc.validatedAt);
-        long total = usage.record(doc.accountId, period, doc.documentType);
-        PlanEntity plan = PlanEntity.of(AccountEntity.findById(doc.accountId));
-        if (plan.documentsIncluded == null) {
+        usage.record(doc.accountId, UsagePeriod.of(doc.validatedAt), doc.documentType);
+        List<CreditReservationEntity> reservations = CreditReservationEntity.listByDocument(doc.id);
+        if (reservations.isEmpty()) {
             return;
         }
-        UsageAlerts.reached(total, plan.documentsIncluded).ifPresent(percent -> {
-            Map<String, String> data = new HashMap<>(Map.of(
-                    "plan", plan.name,
-                    "percent", percent.toString(),
-                    "total", Numbers.count(total),
-                    "included", Numbers.count(plan.documentsIncluded),
-                    "period", Dates.month(period)));
-            if (plan.documentsGrace != null) {
-                data.put("limit", Numbers.count(plan.documentsIncluded + plan.documentsGrace));
-            } else if (plan.priceOverageCop != null) {
-                data.put("priceOverage", Numbers.cop(plan.priceOverageCop));
-            }
+        CreditLedger.Balance balance = credits.balance(doc.accountId, doc.validatedAt);
+        if (balance.grantLastId() == null) {
+            return;
+        }
+        boolean grace = doc.documentType != DocumentType.CREDIT_NOTE
+                && reservations.stream()
+                        .anyMatch(r -> r.kind == CreditReservationEntity.Kind.GRACE
+                                && r.status == CreditReservationEntity.Status.CONFIRMED
+                                && !r.settled);
+        if (grace) {
             notifications.request(
                     doc.accountId,
-                    NotificationKind.PLAN_USAGE,
-                    "plan_usage:%s:%s:%s:%d".formatted(doc.accountId, period, plan.code, percent),
-                    data);
-        });
+                    NotificationKind.CREDITS_GRACE,
+                    "credits_grace:%s:%s".formatted(doc.accountId, balance.grantLastId()),
+                    Map.of(
+                            "graceUsed", Numbers.count(balance.graceUsed()),
+                            "graceMargin", Numbers.count(balance.entitlement().graceMargin())));
+            return;
+        }
+        CreditAlerts.reached(balance.granted() - balance.available(), balance.granted())
+                .ifPresent(percent -> notifications.request(
+                        doc.accountId,
+                        NotificationKind.CREDITS_USAGE,
+                        "credits_usage:%s:%s:%d".formatted(doc.accountId, balance.grantLastId(), percent),
+                        Map.of(
+                                "percent", percent.toString(),
+                                "available", Numbers.count(balance.available()),
+                                "granted", Numbers.count(balance.granted()))));
     }
 
     /** The DIAN accepted the issuer's test set; the API stops taking test invoices for it. */

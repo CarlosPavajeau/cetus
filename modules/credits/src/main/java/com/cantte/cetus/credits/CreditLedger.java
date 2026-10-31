@@ -306,21 +306,40 @@ public class CreditLedger {
 
     /**
      * @param available credits left in the lots that have not expired
+     * @param granted credits the lots in force (active or exhausted, not expired) were granted with
+     * @param grantLastId the newest lot in force; null without one
      * @param graceUsed grace documents not settled nor released, credit notes aside
      */
-    public record Balance(int available, int graceUsed, Entitlements.Entitlement entitlement) {}
+    public record Balance(
+            int available, int granted, UUID grantLastId, int graceUsed, Entitlements.Entitlement entitlement) {}
 
     @Transactional(Transactional.TxType.MANDATORY)
     public Balance balance(UUID accountId, OffsetDateTime now) {
-        int available = ((Number) em.createNativeQuery("""
-                                SELECT coalesce(sum(remaining), 0) FROM billing.credit_grants
-                                WHERE account_id = :account AND status = 'ACTIVE' AND expires_at > :now
-                                """)
-                        .setParameter("account", accountId)
-                        .setParameter("now", now)
-                        .getSingleResult())
-                .intValue();
-        return new Balance(available, graceUsed(accountId), entitlements.of(accountId, now));
+        Object[] totals = (Object[]) em.createNativeQuery("""
+                        SELECT coalesce(sum(remaining) FILTER (WHERE status = 'ACTIVE'), 0),
+                               coalesce(sum(quantity), 0)
+                        FROM billing.credit_grants
+                        WHERE account_id = :account AND status IN ('ACTIVE', 'EXHAUSTED') AND expires_at > :now
+                        """)
+                .setParameter("account", accountId)
+                .setParameter("now", now)
+                .getSingleResult();
+        @SuppressWarnings("unchecked")
+        List<UUID> newest = em.createNativeQuery("""
+                        SELECT id FROM billing.credit_grants
+                        WHERE account_id = :account AND status IN ('ACTIVE', 'EXHAUSTED') AND expires_at > :now
+                        ORDER BY created_at DESC, id DESC
+                        LIMIT 1
+                        """, UUID.class)
+                .setParameter("account", accountId)
+                .setParameter("now", now)
+                .getResultList();
+        return new Balance(
+                ((Number) totals[0]).intValue(),
+                ((Number) totals[1]).intValue(),
+                newest.isEmpty() ? null : newest.getFirst(),
+                graceUsed(accountId),
+                entitlements.of(accountId, now));
     }
 
     private Optional<CreditRefused> refusal(UUID accountId, List<CreditGrantEntity> lots, OffsetDateTime now) {

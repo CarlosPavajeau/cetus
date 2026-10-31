@@ -124,7 +124,7 @@ const navigation = [
       },
       { to: "/settings/members", label: "Miembros", icon: UsersIcon },
       { to: "/settings/contacts", label: "Contactos", icon: MailIcon },
-      { to: "/settings/usage", label: "Plan y uso", icon: GaugeIcon },
+      { to: "/billing", label: "Facturación", icon: GaugeIcon },
       { to: "/settings/security", label: "Seguridad", icon: ShieldIcon },
     ],
   },

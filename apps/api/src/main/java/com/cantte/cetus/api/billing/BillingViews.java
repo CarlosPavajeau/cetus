@@ -2,6 +2,7 @@ package com.cantte.cetus.api.billing;
 
 import com.cantte.cetus.domain.billing.Price;
 import com.cantte.cetus.domain.model.Address;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PersonType;
@@ -9,6 +10,9 @@ import com.cantte.cetus.payments.Checkout;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
+import com.cantte.cetus.persistence.entity.CreditGrantEntity;
+import com.cantte.cetus.persistence.entity.CreditMovementEntity;
+import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import jakarta.validation.constraints.DecimalMax;
@@ -306,9 +310,16 @@ public final class BillingViews {
             OffsetDateTime createdAt,
 
             @Schema(nullable = true, description = "Only while the order is pending and has not expired")
-            CheckoutView checkout) {
+            CheckoutView checkout,
 
-        static OrderView from(BillingOrderEntity order, List<BillingOrderItemEntity> items, CheckoutView checkout) {
+            @Schema(nullable = true, description = "Cetus' electronic invoice of the order, once it is issued")
+            OrderInvoiceView invoice) {
+
+        static OrderView from(
+                BillingOrderEntity order,
+                List<BillingOrderItemEntity> items,
+                CheckoutView checkout,
+                OrderInvoiceView invoice) {
             return new OrderView(
                     order.id,
                     order.kind,
@@ -322,9 +333,97 @@ public final class BillingViews {
                     order.expiresAt,
                     order.paidAt,
                     order.createdAt,
-                    checkout);
+                    checkout,
+                    invoice);
         }
     }
+
+    @Schema(description = "The electronic invoice Cetus issued for an order; its files download once it is accepted")
+    public record OrderInvoiceView(
+            @Schema(description = "Prefix and number, such as CET1001")
+            String number,
+
+            DocumentStatus status) {
+
+        static OrderInvoiceView from(DocumentEntity.NumberStatus doc) {
+            return new OrderInvoiceView(doc.fullNumber(), doc.status());
+        }
+    }
+
+    @Schema(description = "A lot of credits and what is left of it")
+    public record CreditLotView(
+            UUID id,
+
+            @Schema(nullable = true, description = "The product the lot comes from; null for an adjustment")
+            String planName,
+
+            @Schema(nullable = true, description = "null for an adjustment")
+            PlanEntity.Kind planKind,
+
+            CreditGrantEntity.SourceType sourceType,
+            int quantity,
+            int remaining,
+            OffsetDateTime expiresAt,
+            CreditGrantEntity.Status status,
+            OffsetDateTime createdAt) {}
+
+    @Schema(description = "A change to the account's credits")
+    public record CreditMovementView(
+            UUID id,
+            CreditMovementEntity.Type type,
+
+            @Schema(description = "Positive when credits are added, negative when they are taken")
+            int quantity,
+
+            @Schema(nullable = true, description = "The document that reserved, used or gave back the credit")
+            UUID documentId,
+
+            @Schema(enumeration = {"USER", "API_KEY", "PLATFORM", "SYSTEM"})
+            String actorType,
+
+            @Schema(nullable = true) String reason,
+
+            OffsetDateTime createdAt) {
+
+        public static CreditMovementView from(CreditMovementEntity movement) {
+            return new CreditMovementView(
+                    movement.id,
+                    movement.type,
+                    movement.quantity,
+                    movement.documentId,
+                    movement.actorType,
+                    movement.reason,
+                    movement.createdAt);
+        }
+    }
+
+    @Schema(description = "The account's credits: what is left, its lots and the latest movements")
+    public record AccountCreditsView(
+            @Schema(description = "Whether a package in force lets the account issue in production")
+            boolean product,
+
+            @Schema(description = "Credits left in the lots that have not expired")
+            int available,
+
+            @Schema(description = "Credits the lots in force were granted with")
+            int granted,
+
+            @Schema(description = "Documents issued without credits, not yet paid by a lot; credit notes aside")
+            int graceUsed,
+
+            @Schema(description = "Documents the package allows without credits; 0 without a product")
+            int graceMargin,
+
+            @Schema(description = "Production issuers the packages in force include")
+            int issuersIncluded,
+
+            @Schema(description = "Production issuers the account has")
+            long issuersLive,
+
+            @Schema(description = "Every lot, newest first") List<CreditLotView> lots,
+
+            @Schema(description = "The latest, newest first")
+            List<CreditMovementView> movements) {}
 
     @Schema(description = "The income of the paid orders in a calendar year (Colombia time), in cents of COP")
     public record RevenueView(

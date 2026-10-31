@@ -15,9 +15,11 @@ import { type CustomerValues, splitNit } from "./schema";
 /** The customer's fields, as an invoice and the catalog ask for them. */
 export function CustomerFields({
   form,
+  emailLabel = "Correo (opcional)",
   emailHint,
 }: {
   form: UseFormReturn<CustomerValues>;
+  emailLabel?: string;
   emailHint?: string;
 }) {
   const ivaId = useId();
@@ -63,7 +65,7 @@ export function CustomerFields({
         <TextField
           control={form.control}
           name="email"
-          label="Correo (opcional)"
+          label={emailLabel}
           type="email"
           hint={emailHint}
           autoComplete="off"

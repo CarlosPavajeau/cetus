@@ -641,6 +641,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["CreditResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/customers": {
         parameters: {
             query?: never;
@@ -1031,6 +1048,23 @@ export interface paths {
         };
         /** Get */
         get: operations["OrderResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/orders/{id}/invoice/files/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Invoice File */
+        get: operations["OrderResource_invoiceFile"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1562,6 +1596,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description The account's credits: what is left, its lots and the latest movements */
+        AccountCreditsView: {
+            /** @description Whether a package in force lets the account issue in production */
+            product: boolean;
+            /**
+             * Format: int32
+             * @description Credits left in the lots that have not expired
+             */
+            available: number;
+            /**
+             * Format: int32
+             * @description Credits the lots in force were granted with
+             */
+            granted: number;
+            /**
+             * Format: int32
+             * @description Documents issued without credits, not yet paid by a lot; credit notes aside
+             */
+            graceUsed: number;
+            /**
+             * Format: int32
+             * @description Documents the package allows without credits; 0 without a product
+             */
+            graceMargin: number;
+            /**
+             * Format: int32
+             * @description Production issuers the packages in force include
+             */
+            issuersIncluded: number;
+            /**
+             * Format: int64
+             * @description Production issuers the account has
+             */
+            issuersLive: number;
+            /** @description Every lot, newest first */
+            lots: components["schemas"]["CreditLotView"][];
+            /** @description The latest, newest first */
+            movements: components["schemas"]["CreditMovementView"][];
+        };
         AccountDetailView: {
             id: components["schemas"]["UUID"];
             organizationId: string;
@@ -2020,6 +2093,38 @@ export interface components {
             endpoint: components["schemas"]["WebhookEndpointView"];
             /** @description whsec_ signing secret; it is not shown again */
             secret: string;
+        };
+        /** @description A lot of credits and what is left of it */
+        CreditLotView: {
+            id: components["schemas"]["UUID"];
+            /** @description The product the lot comes from; null for an adjustment */
+            planName: string | null;
+            /** @description null for an adjustment */
+            planKind: ((string | components["schemas"]["Kind"] | null) | null) | components["schemas"]["Kind"] | null;
+            sourceType: components["schemas"]["SourceType"];
+            /** Format: int32 */
+            quantity: number;
+            /** Format: int32 */
+            remaining: number;
+            expiresAt: components["schemas"]["OffsetDateTime"];
+            status: components["schemas"]["Status"];
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
+        /** @description A change to the account's credits */
+        CreditMovementView: {
+            id: components["schemas"]["UUID"];
+            type: components["schemas"]["Type"];
+            /**
+             * Format: int32
+             * @description Positive when credits are added, negative when they are taken
+             */
+            quantity: number;
+            /** @description The document that reserved, used or gave back the credit */
+            documentId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+            /** @enum {string} */
+            actorType: "USER" | "API_KEY" | "PLATFORM" | "SYSTEM";
+            reason: string | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
         };
         /**
          * @description Concepto de la nota crédito (tabla 13.2.4 del anexo).
@@ -2585,7 +2690,7 @@ export interface components {
             /** Format: int32 */
             remaining: number;
             expiresAt: components["schemas"]["OffsetDateTime"];
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status"];
             createdAt: components["schemas"]["OffsetDateTime"];
         };
         /**
@@ -2788,7 +2893,7 @@ export interface components {
             id: components["schemas"]["UUID"];
             grantId: components["schemas"]["UUID"] | null;
             documentId: components["schemas"]["UUID"] | null;
-            type: components["schemas"]["Type1"];
+            type: components["schemas"]["Type"];
             /** Format: int32 */
             quantity: number;
             actorType: string;
@@ -2835,9 +2940,15 @@ export interface components {
          * @example 2022-03-10T12:15:50-04:00
          */
         OffsetDateTime: string;
+        /** @description The electronic invoice Cetus issued for an order; its files download once it is accepted */
+        OrderInvoiceView: {
+            /** @description Prefix and number, such as CET1001 */
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+        };
         /** @description A line of an order, with the amounts it applied, in cents of COP */
         OrderItemView: {
-            itemType: components["schemas"]["Type"];
+            itemType: components["schemas"]["Type1"];
             /** @description The version bought; null for overage and adjustments */
             planVersionId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
             description: string;
@@ -2860,7 +2971,7 @@ export interface components {
         OrderView: {
             id: components["schemas"]["UUID"];
             kind: components["schemas"]["Kind1"];
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status1"];
             /** @description What Wompi knows the order by */
             reference: string;
             /** Format: int64 */
@@ -2877,6 +2988,8 @@ export interface components {
             createdAt: components["schemas"]["OffsetDateTime"];
             /** @description Only while the order is pending and has not expired */
             checkout: ((components["schemas"]["CheckoutView"] | null) | null) | components["schemas"]["CheckoutView"] | null;
+            /** @description Cetus' electronic invoice of the order, once it is issued */
+            invoice: ((components["schemas"]["OrderInvoiceView"] | null) | null) | components["schemas"]["OrderInvoiceView"] | null;
         };
         /** @description Cómo se paga la factura. */
         Payment: {
@@ -3225,9 +3338,9 @@ export interface components {
         /** @enum {string} */
         SourceType: "ORDER_ITEM" | "SUBSCRIPTION_PERIOD" | "PROMO" | "ADJUSTMENT";
         /** @enum {string} */
-        Status: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED";
+        Status: "ACTIVE" | "EXHAUSTED" | "EXPIRED" | "REVOKED";
         /** @enum {string} */
-        Status1: "ACTIVE" | "EXHAUSTED" | "EXPIRED" | "REVOKED";
+        Status1: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED";
         /** @enum {string} */
         Status2: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
         /** @enum {string} */
@@ -3317,9 +3430,9 @@ export interface components {
             payable: number;
         };
         /** @enum {string} */
-        Type: "PLAN" | "OVERAGE" | "ADJUSTMENT";
+        Type: "GRANT" | "RESERVE" | "CONFIRM" | "RELEASE" | "EXPIRE" | "SETTLE" | "BILL_OVERAGE" | "ADJUST" | "REVOKE";
         /** @enum {string} */
-        Type1: "GRANT" | "RESERVE" | "CONFIRM" | "RELEASE" | "EXPIRE" | "SETTLE" | "BILL_OVERAGE" | "ADJUST" | "REVOKE";
+        Type1: "PLAN" | "OVERAGE" | "ADJUSTMENT";
         /** Format: uuid */
         UUID: string;
         UpdateIssuerRequest: {
@@ -6025,6 +6138,35 @@ export interface operations {
             };
         };
     };
+    CreditResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountCreditsView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     ConsoleCustomerResource_list: {
         parameters: {
             query: {
@@ -7512,6 +7654,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    OrderResource_invoiceFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: "xml" | "pdf" | "attached-document";
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFileResponse"];
                 };
             };
             /** @description Forbidden */

@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,5 +58,10 @@ public class BillingOrderItemEntity extends PanacheEntityBase {
 
     public static List<BillingOrderItemEntity> listByOrder(UUID orderId) {
         return list("orderId = ?1 order by id", orderId);
+    }
+
+    /** The items of every order, each order's in the order {@link #listByOrder} gives them. */
+    public static List<BillingOrderItemEntity> listByOrders(Collection<UUID> orderIds) {
+        return orderIds.isEmpty() ? List.of() : list("orderId in ?1 order by id", orderIds);
     }
 }

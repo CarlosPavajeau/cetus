@@ -30,6 +30,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -263,6 +264,28 @@ public class DocumentEntity extends PanacheEntityBase {
     }
 
     public record StatusCount(DocumentType documentType, DocumentStatus status, long count) {}
+
+    /** The number and status of each document, without loading the rest of it. */
+    public static List<NumberStatus> listNumberStatus(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return getEntityManager()
+                .createQuery("""
+                        select new com.cantte.cetus.persistence.entity.DocumentEntity$NumberStatus(
+                            d.id, d.prefix, d.number, d.status)
+                        from DocumentEntity d
+                        where d.id in :ids""", NumberStatus.class)
+                .setParameter("ids", ids)
+                .getResultList();
+    }
+
+    public record NumberStatus(UUID id, String prefix, long number, DocumentStatus status) {
+
+        public String fullNumber() {
+            return prefix + number;
+        }
+    }
 
     public static Optional<DocumentEntity> findForAccount(UUID accountId, UUID documentId, Environment environment) {
         return find("id = ?1 and accountId = ?2 and environment = ?3", documentId, accountId, environment)

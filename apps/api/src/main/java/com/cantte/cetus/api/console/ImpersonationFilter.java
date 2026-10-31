@@ -14,8 +14,9 @@ import java.util.regex.Pattern;
 /**
  * While a Cetus admin impersonates a console user, the actions that hand over or replace credentials stay
  * with the customer: uploading a certificate, creating or revoking API keys and changing who receives the
- * account's notices answer 403. So does emailing a document again, which can name any address, and asking
- * Cetus for help or sharing feedback, which speak for the person.
+ * account's notices answer 403. So does emailing a document again, which can name any address, asking
+ * Cetus for help or sharing feedback, which speak for the person, and buying or changing who Cetus invoices,
+ * which commit the customer's money.
  */
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -33,7 +34,9 @@ public class ImpersonationFilter implements ContainerRequestFilter {
             new Rule(HttpMethod.POST, Pattern.compile("/console/documents/[^/]+/deliveries")),
             new Rule(HttpMethod.POST, Pattern.compile("/console/support-tickets")),
             new Rule(HttpMethod.POST, Pattern.compile("/console/support-attachments")),
-            new Rule(HttpMethod.POST, Pattern.compile("/console/feedback")));
+            new Rule(HttpMethod.POST, Pattern.compile("/console/feedback")),
+            new Rule(HttpMethod.PUT, Pattern.compile("/console/billing-profile")),
+            new Rule(HttpMethod.POST, Pattern.compile("/console/orders")));
 
     @Inject
     ConsoleContext context;

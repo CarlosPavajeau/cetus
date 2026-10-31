@@ -8,7 +8,9 @@ import static org.hamcrest.Matchers.nullValue;
 import com.cantte.cetus.api.admin.PlatformRoles;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.Credits;
+import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
@@ -165,6 +167,65 @@ class OrderResourceTest {
         });
 
         owner.request().get("/console/orders/" + id).then().statusCode(200).body("checkout", nullValue());
+    }
+
+    @Test
+    void theBuyerDownloadsTheInvoiceCetusIssuedForItsOrder() {
+        ConsoleUser owner = customer("Facturada SAS");
+        String id =
+                order(owner, versionOf(owner, "EMPRENDEDOR")).then().extract().path("id");
+
+        owner.request().get("/console/orders/" + id).then().statusCode(200).body("invoice", nullValue());
+        owner.request()
+                .get("/console/orders/" + id + "/invoice/files/pdf")
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("file_not_available"));
+
+        UUID invoiceId = IssuedDocuments.invoice(IssuedDocuments.issuer("Cetus Plataforma SAS"));
+        QuarkusTransaction.requiringNew().run(() -> {
+            BillingOrderEntity order = BillingOrderEntity.findById(UUID.fromString(id));
+            order.status = BillingOrderEntity.Status.PAID;
+            order.paidAt = OffsetDateTime.now();
+            order.invoiceDocumentId = invoiceId;
+        });
+        IssuedDocuments.accept(invoiceId);
+        String key = IssuedDocuments.artifact(invoiceId, DocumentArtifactEntity.Kind.PDF, "fv.pdf");
+
+        JsonPath order = owner.request()
+                .get("/console/orders/" + id)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+        assertThat(order.getString("invoice.status")).isEqualTo("ACCEPTED");
+        assertThat(order.getString("invoice.number")).isNotBlank();
+        String url = owner.member("member")
+                .request()
+                .get("/console/orders/" + id + "/invoice/files/pdf")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("url");
+        assertThat(url).contains(key);
+        String unpaid =
+                order(owner, versionOf(owner, "NEGOCIO")).then().extract().path("id");
+        JsonPath list = owner.request()
+                .get("/console/orders")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+        assertThat(list.getString("find { it.id == '%s' }.invoice.number".formatted(id)))
+                .isEqualTo(order.getString("invoice.number"));
+        assertThat(list.getMap("find { it.id == '%s' }".formatted(unpaid))).containsEntry("invoice", null);
+        assertThat(list.getList("find { it.id == '%s' }.items".formatted(unpaid)))
+                .hasSize(1);
+        customer("Ajena Factura SAS")
+                .request()
+                .get("/console/orders/" + id + "/invoice/files/pdf")
+                .then()
+                .statusCode(404);
     }
 
     private static Response order(ConsoleUser owner, String planVersionId) {
