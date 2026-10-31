@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /** The queries behind each alert category. Ids and dates come back as text: they only go into an email. */
@@ -45,6 +46,12 @@ public class OpsAlertChecks {
 
     @ConfigProperty(name = "cetus.billing.vat-threshold-alert-percents")
     List<Integer> vatAlertPercents;
+
+    @ConfigProperty(name = "cetus.billing.invoice-issuer-id")
+    Optional<UUID> invoiceIssuerId;
+
+    @ConfigProperty(name = "cetus.billing.invoice-due-after")
+    Duration invoiceDueAfter;
 
     /** Jobs the worker gave up on. A dead PROCESS_DOCUMENT also leaves its document FAILED for good. */
     List<OpsAlert> deadJobs() {
@@ -178,6 +185,30 @@ public class OpsAlertChecks {
                         false,
                         "El lote de créditos %s de la cuenta %s tiene %s y sus movimientos suman %s"
                                 .formatted(r[0], r[1], r[2], r[3])))
+                .toList();
+    }
+
+    /**
+     * Paid orders whose invoice is not accepted a while after the payment: not issued yet, rejected, or stuck. A
+     * rejected invoice is not issued again on its own; a person fixes what the DIAN refused first. Nothing without
+     * the billing issuer configured.
+     */
+    List<OpsAlert> billingInvoicesMissing() {
+        if (invoiceIssuerId.isEmpty()) {
+            return List.of();
+        }
+        return rows("""
+                SELECT o.id::text, o.reference, coalesce(d.prefix || d.number || ' ' || d.status, 'sin factura')
+                FROM billing.billing_orders o
+                LEFT JOIN billing.documents d ON d.id = o.invoice_document_id
+                WHERE o.status = 'PAID' AND o.paid_at < :before AND (d.id IS NULL OR d.status <> 'ACCEPTED')
+                ORDER BY o.paid_at
+                """, Map.of("before", OffsetDateTime.now().minus(invoiceDueAfter))).stream()
+                .map(r -> OpsAlert.of(
+                        Category.BILLING_INVOICE_MISSING,
+                        r[0],
+                        false,
+                        "La orden pagada %s (%s) no tiene su factura aceptada: %s".formatted(r[1], r[0], r[2])))
                 .toList();
     }
 

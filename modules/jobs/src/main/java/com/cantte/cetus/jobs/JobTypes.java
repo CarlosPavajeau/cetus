@@ -25,6 +25,8 @@ public final class JobTypes {
     public static final String PROCESS_WEBHOOK_EVENT = "PROCESS_WEBHOOK_EVENT";
     /** Ask Wompi for the payments of an order whose event may never come. reference_id = billing order id. */
     public static final String CHECK_PAYMENT = "CHECK_PAYMENT";
+    /** Issue Cetus' own invoice for a paid order. reference_id = billing order id. */
+    public static final String ISSUE_BILLING_INVOICE = "ISSUE_BILLING_INVOICE";
 
     private JobTypes() {}
 }

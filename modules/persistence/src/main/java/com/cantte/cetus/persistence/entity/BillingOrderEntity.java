@@ -98,6 +98,11 @@ public class BillingOrderEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
+    /** The order, locked until the transaction ends. */
+    public static Optional<BillingOrderEntity> lock(UUID id) {
+        return Optional.ofNullable(findById(id, LockModeType.PESSIMISTIC_WRITE));
+    }
+
     public static Optional<BillingOrderEntity> findForAccount(UUID id, UUID accountId) {
         return find("id = ?1 and accountId = ?2", id, accountId).firstResultOptional();
     }
