@@ -45,6 +45,10 @@ public class CreditReservationEntity extends PanacheEntityBase {
     @Enumerated(EnumType.STRING)
     public Kind kind;
 
+    /** The subscription period an overage document is billed in; null for the other kinds. */
+    @Column(name = "subscription_period_id")
+    public UUID subscriptionPeriodId;
+
     public int quantity;
 
     @Enumerated(EnumType.STRING)
@@ -66,6 +70,15 @@ public class CreditReservationEntity extends PanacheEntityBase {
 
     public static List<CreditReservationEntity> listByDocument(UUID documentId) {
         return list("documentId = ?1 order by createdAt, id", documentId);
+    }
+
+    /** Overage documents of the period accepted and neither billed nor paid by a lot, oldest first. */
+    public static List<CreditReservationEntity> listOverageOpen(UUID periodId) {
+        return list(
+                "subscriptionPeriodId = ?1 and kind = ?2 and not settled and status = ?3 order by createdAt, id",
+                periodId,
+                Kind.OVERAGE,
+                Status.CONFIRMED);
     }
 
     /** Grace documents not released and not yet paid by a lot, oldest first. */

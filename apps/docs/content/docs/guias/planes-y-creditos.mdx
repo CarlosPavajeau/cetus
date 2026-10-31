@@ -1,0 +1,64 @@
+---
+title: Planes y créditos
+description: Suscripciones mensuales con excedente, paquetes anuales y recargas, y cómo se consumen los documentos.
+---
+
+Para emitir en producción tu cuenta necesita una **suscripción mensual** o un **paquete anual** vigente. La
+simulación y las pruebas de habilitación son ilimitadas y no consumen nada. Los contratas en la consola, en
+**Facturación** > **Comprar créditos**, y pagas en Wompi.
+
+Cada factura, nota crédito o nota débito de producción usa un documento de tu saldo: lo reserva al crearse, lo
+consume cuando la DIAN la acepta y lo devuelve si la rechaza. Primero se usan los documentos que vencen antes.
+Las notas crédito siempre se emiten, porque son la única forma de corregir una factura.
+
+## Suscripciones
+
+Pagas el mes por anticipado y recibes los documentos del plan para ese mes (el **periodo**). Si se acaban,
+**sigues emitiendo**: cada documento adicional es **excedente** y se cobra al cierre del periodo, al precio de
+excedente de tu plan, junto con la mensualidad siguiente.
+
+Por ejemplo, con el plan Inicial (200 documentos al mes y excedente de $150) y 260 documentos en el mes, la
+orden de renovación es de $48.000: $39.000 de la mensualidad más 60 × $150.
+
+- **Límite de excedente.** Por seguridad, cada periodo admite excedente hasta un límite, por defecto tres veces
+  la mensualidad. Te avisamos al llegar al 50 % y al 100 %. Al alcanzarlo, las facturas y las notas débito
+  responden `402 overage_limit_reached` hasta el siguiente periodo. Los dueños y administradores de la cuenta
+  pueden ampliarlo en **Facturación** > **Cambiar límite**.
+- **Documentos no usados.** Los documentos de un periodo siguen vigentes hasta 60 días después de que termina,
+  y nunca acumulas más de dos mensualidades de documentos: al empezar un periodo, lo que pase de ese tope
+  vence.
+- **Renovación.** Al cerrar cada periodo te enviamos la orden de renovación al contacto de facturación. Puedes
+  seguir emitiendo mientras está pendiente; los documentos de ese tiempo se pagan con los del nuevo periodo
+  cuando pagas la orden. Si no la pagas en 7 días, la suscripción se cancela. Los documentos que ya tenías
+  conservan su vigencia.
+- **Cambio de plan y cancelación.** Aplican desde el siguiente periodo, sin prorrateo: en **Facturación**
+  eliges **Cambiar plan** o **Cancelar suscripción**. Al cancelar, el último cierre cobra solo el excedente
+  de ese periodo.
+
+## Paquetes y recargas
+
+Un paquete anual trae los documentos y los emisores de producción de un año. Las recargas le suman documentos
+por 12 meses desde la compra y solo se compran con un paquete vigente.
+
+Si se acaban tus documentos, tienes un **margen de cortesía** del 10 % de tu último paquete o recarga (mínimo
+10 documentos), que se descuenta de tu siguiente compra. Superado el margen, las facturas y las notas débito
+responden `402 insufficient_credits`.
+
+Una cuenta tiene una suscripción o un paquete, no ambos: con una suscripción no compras paquetes ni recargas,
+porque el excedente los reemplaza. Si pasas de un paquete a una suscripción, los documentos del paquete se
+conservan hasta su vencimiento y se usan primero.
+
+## Emisores en producción
+
+Cada plan y cada paquete incluyen un número de emisores (NIT) en producción. Si tu cuenta queda con más de
+los incluidos, por un cambio de plan o el vencimiento de un paquete, ninguno se desactiva: solo no puedes
+agregar otros hasta tener un plan que los incluya (`402 issuer_limit_reached`).
+
+## Respuestas `402`
+
+| Código                  | Qué pasó                                             | Qué hacer                                       |
+| ----------------------- | ---------------------------------------------------- | ----------------------------------------------- |
+| `no_active_product`     | La cuenta no tiene suscripción ni paquete vigente.   | Contrata una suscripción o compra un paquete.   |
+| `insufficient_credits`  | Se acabaron los documentos y el margen del paquete.  | Compra una recarga.                             |
+| `overage_limit_reached` | La suscripción llegó a su límite de excedente.       | Amplía el límite o espera al siguiente periodo. |
+| `issuer_limit_reached`  | La cuenta ya tiene los emisores que incluye su plan. | Elige un plan o un paquete con más emisores.    |

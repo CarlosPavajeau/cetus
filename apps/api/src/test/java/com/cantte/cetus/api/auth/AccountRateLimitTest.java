@@ -2,13 +2,14 @@ package com.cantte.cetus.api.auth;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.api.support.Subscriptions;
 import com.cantte.cetus.cache.LocalRateLimiter;
 import com.cantte.cetus.cache.RateLimiter;
 import com.cantte.cetus.persistence.entity.AccountEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -26,6 +27,9 @@ class AccountRateLimitTest {
     @Inject
     AccessCache access;
 
+    @Inject
+    Subscriptions subscriptions;
+
     /** A clock that never moves, so no token comes back however slow the requests are. */
     @BeforeEach
     void freezeTheClock() {
@@ -42,7 +46,6 @@ class AccountRateLimitTest {
         UUID accountId = UUID.fromString(bootstrap(user, "Limitada SAS"));
         QuarkusTransaction.requiringNew().run(() -> {
             AccountEntity account = AccountEntity.findById(accountId);
-            account.planId = PlanEntity.byCode("ESCALA").id;
             account.requestsPerSecond = 1;
             account.requestsBurst = 2;
             access.changed(account);
@@ -62,9 +65,23 @@ class AccountRateLimitTest {
                 .then()
                 .body("requests.requestsPerSecond", equalTo(1f))
                 .body("requests.requestsBurst", equalTo(2))
-                .body("requests.perKey", equalTo(false))
-                .body("current.plan.requestsPerSecond", equalTo(20))
-                .body("current.plan.requestsBurst", equalTo(60));
+                .body("requests.perKey", equalTo(false));
+    }
+
+    @Test
+    void withoutLimitsOfItsOwnAnAccountTakesItsSubscriptionPlans() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        UUID accountId = UUID.fromString(bootstrap(user, "Suscrita SAS"));
+        subscriptions.subscribe(accountId, "INICIAL", 200);
+        QuarkusTransaction.requiringNew().run(() -> access.changed(AccountEntity.findById(accountId)));
+
+        assertThat(access.account(accountId).limits()).isEqualTo(new RateLimiter.Limits(5, 20));
+        user.request()
+                .get("/console/usage")
+                .then()
+                .body("requests.requestsPerSecond", equalTo(5f))
+                .body("requests.requestsBurst", equalTo(20))
+                .body("requests.perKey", equalTo(false));
     }
 
     private static ValidatableResponse call(String apiKey) {

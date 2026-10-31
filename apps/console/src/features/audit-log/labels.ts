@@ -41,6 +41,12 @@ export const actionLabel: Record<AuditAction, string> = {
   CREDITS_GRANTED: "Créditos otorgados",
   CREDITS_ADJUSTED: "Créditos ajustados",
   DOCUMENT_CREDIT_RELEASED: "Crédito de documento liberado",
+  SUBSCRIPTION_STARTED: "Suscripción iniciada",
+  SUBSCRIPTION_OVERAGE_LIMIT_CHANGED: "Límite de excedente cambiado",
+  SUBSCRIPTION_PLAN_SCHEDULED: "Cambio de plan programado",
+  SUBSCRIPTION_CANCEL_SCHEDULED: "Cancelación programada",
+  SUBSCRIPTION_CANCEL_UNDONE: "Cancelación deshecha",
+  SUBSCRIPTION_CANCELED: "Suscripción terminada",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

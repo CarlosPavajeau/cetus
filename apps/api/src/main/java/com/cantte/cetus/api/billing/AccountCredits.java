@@ -10,6 +10,7 @@ import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
+import com.cantte.cetus.persistence.entity.SubscriptionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -41,6 +42,11 @@ public class AccountCredits {
                 .toList());
         return new AccountCreditsView(
                 balance.entitlement().product(),
+                balance.entitlement().productPackage(),
+                SubscriptionEntity.findCurrent(accountId)
+                        .map(subscription -> PlanVersionEntity.<PlanVersionEntity>findById(subscription.planVersionId))
+                        .map(version -> PlanEntity.<PlanEntity>findById(version.planId).name)
+                        .orElse(null),
                 balance.available(),
                 balance.granted(),
                 balance.graceUsed(),

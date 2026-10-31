@@ -173,8 +173,8 @@ public record NotificationEmail(String subject, String html, String text) {
                         "/billing");
             case ISSUERS_OVER_LIMIT ->
                 new Body(
-                        "Tienes más emisores en producción de los que incluye tu paquete",
-                        "%s tiene %s emisores en producción y sus paquetes vigentes incluyen %s."
+                        "Tienes más emisores en producción de los que incluye tu plan",
+                        "%s tiene %s emisores en producción y su suscripción y paquetes vigentes incluyen %s."
                                 .formatted(account, data.get("issuers"), data.get("included")),
                         "Tus emisores siguen activos y facturando, pero no puedes agregar otros hasta comprar un paquete"
                                 + " que incluya más emisores.",
@@ -200,6 +200,53 @@ public record NotificationEmail(String subject, String html, String text) {
                                 + " compres.",
                         "Comprar créditos",
                         "/billing/products");
+            case SUBSCRIPTION_RENEWAL ->
+                new Body(
+                        "Renueva tu suscripción %s".formatted(data.get("plan")),
+                        "Empezó un nuevo periodo de la suscripción %s de %s, hasta el %s. La orden de renovación por %s"
+                                        .formatted(data.get("plan"), account, data.get("periodEnd"), data.get("total"))
+                                + " incluye la mensualidad y %s documentos de excedente del periodo anterior."
+                                        .formatted(data.get("overage")),
+                        "Págala antes del %s para recibir los documentos del periodo. Mientras tanto puedes seguir"
+                                        .formatted(data.get("dueBy"))
+                                + " emitiendo; si no se paga, la suscripción se cancela.",
+                        "Pagar la renovación",
+                        "/billing/orders/" + data.get("orderId"));
+            case SUBSCRIPTION_PAST_DUE ->
+                new Body(
+                        "Tu suscripción %s tiene un pago pendiente".formatted(data.get("plan")),
+                        "La renovación de la suscripción %s de %s por %s sigue sin pagarse."
+                                .formatted(data.get("plan"), account, data.get("total")),
+                        "Si no se paga antes del %s, la suscripción se cancela y la emisión en producción se detiene"
+                                        .formatted(data.get("dueBy"))
+                                + " cuando se acaben los documentos ya otorgados.",
+                        "Pagar la renovación",
+                        "/billing/orders/" + data.get("orderId"));
+            case SUBSCRIPTION_CANCELED ->
+                new Body(
+                        "Tu suscripción %s terminó".formatted(data.get("plan")),
+                        "La suscripción %s de %s terminó el %s %s."
+                                .formatted(
+                                        data.get("plan"),
+                                        account,
+                                        data.get("canceledAt"),
+                                        "UNPAID".equals(data.get("reason"))
+                                                ? "porque su renovación no se pagó"
+                                                : "como se pidió"),
+                        "Los documentos ya otorgados conservan su vigencia. Para seguir emitiendo en producción después"
+                                + " de usarlos, contrata una suscripción o un paquete.",
+                        "Ver los productos",
+                        "/billing/products");
+            case SUBSCRIPTION_OVERAGE ->
+                new Body(
+                        "Usaste el %s%% de tu límite de excedente".formatted(data.get("percent")),
+                        "%s emitió %s documentos de excedente en este periodo de su suscripción %s; su límite es %s."
+                                .formatted(account, data.get("used"), data.get("plan"), data.get("limit")),
+                        "Cada documento de excedente se cobra al cierre del periodo. Al llegar al límite, la emisión en"
+                                + " producción se detiene hasta el siguiente periodo, salvo las notas crédito; el dueño"
+                                + " de la cuenta puede ampliarlo en Facturación.",
+                        "Ver la suscripción",
+                        "/billing");
         };
     }
 

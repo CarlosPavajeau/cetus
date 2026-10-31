@@ -24,7 +24,15 @@ public enum NotificationKind {
     /** The account ran out of credits and issues within its package's grace margin. */
     CREDITS_GRACE(Set.of(Category.BILLING)),
     /** The account has more production issuers than its products include, after a package expired. */
-    ISSUERS_OVER_LIMIT(Set.of(Category.BILLING));
+    ISSUERS_OVER_LIMIT(Set.of(Category.BILLING)),
+    /** A subscription period closed: the order that renews it, with the closed period's overage, waits to be paid. */
+    SUBSCRIPTION_RENEWAL(Set.of(Category.BILLING)),
+    /** The renewal is still unpaid days after the period started; the subscription is canceled after the grace. */
+    SUBSCRIPTION_PAST_DUE(Set.of(Category.BILLING)),
+    /** The subscription ended, unpaid or as its owner chose; the lots already granted keep their validity. */
+    SUBSCRIPTION_CANCELED(Set.of(Category.BILLING)),
+    /** The subscription's period ran up 50 % or 100 % of its overage limit. */
+    SUBSCRIPTION_OVERAGE(Set.of(Category.BILLING));
 
     private final Set<Category> categories;
 

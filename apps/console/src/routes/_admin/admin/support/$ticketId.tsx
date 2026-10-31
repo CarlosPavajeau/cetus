@@ -28,6 +28,7 @@ import { accountStatusLabel, memberRoleLabel } from "~/features/admin/labels";
 import { adminKey, adminSupportTicketQuery } from "~/features/admin/queries";
 import { changeSupportTicketStatus } from "~/features/admin/support";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
+import { productLabel } from "~/features/billing/labels";
 import { documentStatusLabel, documentTypeLabel } from "~/features/documents/labels";
 import { issuerName, statusLabel as issuerStatusLabel } from "~/features/issuers/labels";
 import { priorityLabel, statusLabel } from "~/features/support/labels";
@@ -130,8 +131,8 @@ function TicketDetail() {
               {context.account.name}
             </Link>
           </Entry>
-          <Entry label="Estado y plan">
-            {accountStatusLabel[context.account.status]} · {context.account.plan}
+          <Entry label="Estado y producto">
+            {accountStatusLabel[context.account.status]} · {productLabel(context.account.product)}
           </Entry>
           <Entry label="Rol de quien escribe">
             {context.organizationRoles.map((role) => memberRoleLabel[role] ?? role).join(", ") ||

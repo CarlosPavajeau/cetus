@@ -10,6 +10,7 @@ import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.persistence.entity.AccountEntity;
+import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,8 +43,9 @@ public class AdminAccountQueries {
     /** Newest first; the next page starts below {@code before} (account ids are time-ordered UUIDs). */
     public List<AccountSummaryView> list(
             AccountEntity.Status status, List<String> organizationIds, UUID before, int size) {
-        StringBuilder sql = new StringBuilder("""
-                SELECT a.id, a.organization_id, a.name, a.status, p.code, a.created_at,
+        StringBuilder sql = new StringBuilder(
+                "SELECT a.id, a.organization_id, a.name, a.status, " + PlanEntity.SQL_PRODUCT_NAME + """
+                , a.created_at,
                        (SELECT count(*) FROM billing.issuers i WHERE i.account_id = a.id AND i.environment <> 'SANDBOX'),
                        (SELECT count(*) FROM billing.issuers i
                         WHERE i.account_id = a.id AND i.environment = 'LIVE' AND i.status = 'ENABLED'),
@@ -54,7 +56,7 @@ public class AdminAccountQueries {
                           AND d.created_at >= :weekAgo),
                        (SELECT max(d.updated_at) FROM billing.documents d
                         WHERE d.account_id = a.id AND d.environment <> 'SANDBOX' AND d.status IN ('REJECTED', 'FAILED'))
-                FROM billing.accounts a JOIN billing.plans p ON p.id = a.plan_id
+                FROM billing.accounts a
                 WHERE true
                 """);
         if (status != null) {

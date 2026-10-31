@@ -14,14 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { AccountPlanDialog } from "~/features/admin/AccountPlanDialog";
 import { AccountStatusDialog } from "~/features/admin/AccountStatusDialog";
 import { accountStatusLabel, memberRoleLabel } from "~/features/admin/labels";
 import { adminAccountQuery } from "~/features/admin/queries";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
+import { productLabel } from "~/features/billing/labels";
 import { documentStatusLabel, documentTypeLabel } from "~/features/documents/labels";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
-import { planPrice, planTitle } from "~/features/usage/labels";
 import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
 
 export const Route = createFileRoute("/_admin/admin/organizations/$accountId")({
@@ -61,21 +60,14 @@ function AccountDetail() {
             {accountStatusLabel[account.status]}
           </Badge>
         }
-        lead={`${planTitle(account.billableThisMonth.plan)} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
+        lead={`${productLabel(account.product)} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
         action={
           isAdmin && account.status !== "CLOSED" ? (
-            <div className="flex gap-2">
-              <AccountPlanDialog
-                accountId={account.id}
-                accountName={account.name}
-                planId={account.billableThisMonth.plan.id}
-              />
-              <AccountStatusDialog
-                accountId={account.id}
-                accountName={account.name}
-                action={account.status === "ACTIVE" ? "suspend" : "reactivate"}
-              />
-            </div>
+            <AccountStatusDialog
+              accountId={account.id}
+              accountName={account.name}
+              action={account.status === "ACTIVE" ? "suspend" : "reactivate"}
+            />
           ) : undefined
         }
       />
@@ -186,10 +178,7 @@ function AccountDetail() {
         </Section>
       </div>
 
-      <Section
-        id="account-billing"
-        title={`${planTitle(account.billableThisMonth.plan)} · ${planPrice(account.billableThisMonth.plan)}`}
-      >
+      <Section id="account-billing" title="Documentos facturables este mes">
         <PeriodUsageSummary usage={account.billableThisMonth} />
       </Section>
 

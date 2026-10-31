@@ -8,7 +8,6 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -27,7 +26,12 @@ public final class AdminViews {
 
             String name,
             AccountEntity.Status status,
-            String plan,
+
+            @Schema(
+                    nullable = true,
+                    description = "Its subscription's plan, else its package in force; null without one")
+            String product,
+
             OffsetDateTime createdAt,
             long issuers,
 
@@ -51,7 +55,12 @@ public final class AdminViews {
             String organizationId,
             String name,
             AccountEntity.Status status,
-            String plan,
+
+            @Schema(
+                    nullable = true,
+                    description = "Its subscription's plan, else its package in force; null without one")
+            String product,
+
             @Schema(nullable = true) String statusReason,
             @Schema(nullable = true) OffsetDateTime statusChangedAt,
 
@@ -64,7 +73,7 @@ public final class AdminViews {
             @Schema(description = "Documents created this month in every environment, by status")
             List<UsageCountView> usageThisMonth,
 
-            @Schema(description = "Billable documents this month against the account's plan")
+            @Schema(description = "Billable documents this month")
             PeriodUsageView billableThisMonth,
 
             List<FailedDocumentView> recentFailures) {
@@ -79,7 +88,7 @@ public final class AdminViews {
                     account.organizationId,
                     account.name,
                     account.status,
-                    PlanEntity.of(account).code,
+                    PlanEntity.productName(account.id).orElse(null),
                     account.statusReason,
                     account.statusChangedAt,
                     account.statusChangedBy,
@@ -108,11 +117,6 @@ public final class AdminViews {
             @Schema(nullable = true) String dianStatusMessage,
             List<String> dianErrors,
             OffsetDateTime updatedAt) {}
-
-    /** A plan change says why, like a status change; it is audited with the previous plan. */
-    public record PlanChangeRequest(
-            @NotNull UUID planId,
-            @NotBlank @Size(min = 3, max = 500) String reason) {}
 
     /** Suspending or reactivating an account always says why; the account's members see the reason. */
     public record StatusChangeRequest(

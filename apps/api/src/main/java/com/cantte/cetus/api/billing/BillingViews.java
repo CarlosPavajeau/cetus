@@ -15,10 +15,12 @@ import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
+import com.cantte.cetus.persistence.entity.SubscriptionEntity;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -399,8 +401,16 @@ public final class BillingViews {
 
     @Schema(description = "The account's credits: what is left, its lots and the latest movements")
     public record AccountCreditsView(
-            @Schema(description = "Whether a package in force lets the account issue in production")
+            @Schema(description = "Whether a subscription or a package in force lets the account issue in production")
             boolean product,
+
+            @Schema(description = "Whether a package is in force")
+            boolean productPackage,
+
+            @Schema(
+                    nullable = true,
+                    description = "The plan of the subscription that is not canceled; null without one")
+            String subscription,
 
             @Schema(description = "Credits left in the lots that have not expired")
             int available,
@@ -411,10 +421,10 @@ public final class BillingViews {
             @Schema(description = "Documents issued without credits, not yet paid by a lot; credit notes aside")
             int graceUsed,
 
-            @Schema(description = "Documents the package allows without credits; 0 without a product")
+            @Schema(description = "Documents the package allows without credits; 0 without one or with a subscription")
             int graceMargin,
 
-            @Schema(description = "Production issuers the packages in force include")
+            @Schema(description = "Production issuers the subscription and the packages in force include")
             int issuersIncluded,
 
             @Schema(description = "Production issuers the account has")
@@ -444,4 +454,80 @@ public final class BillingViews {
 
             @Schema(description = "The alert shares the income reached, lowest first")
             List<Integer> alertPercentsReached) {}
+
+    @Schema(description = "The open month of a subscription")
+    public record SubscriptionPeriodView(
+            int number,
+            OffsetDateTime startsAt,
+
+            @Schema(description = "When the period closes and the next one is renewed")
+            OffsetDateTime endsAt,
+
+            int documentsIncluded,
+
+            @Schema(
+                    nullable = true,
+                    description = "Left in the period's lot; null until the order that opens it is paid")
+            Integer documentsAvailable,
+
+            @Schema(description = "Documents past the credits, billed at the close; credit notes included")
+            int overage,
+
+            @Schema(description = "The overage that counts against the limit: credit notes aside")
+            int overageLimited,
+
+            long priceOverageCents,
+
+            @Schema(description = "What the overage so far costs at the close")
+            long overageCostCents,
+
+            @Schema(nullable = true, description = "The order that opened the period while it is unpaid")
+            UUID renewalOrderId) {}
+
+    @Schema(description = "The account's subscription that is not canceled")
+    public record SubscriptionView(
+            UUID id,
+            SubscriptionEntity.Status status,
+            String planCode,
+            String planName,
+
+            @Schema(description = "The terms the open period was sold at")
+            PlanVersionView version,
+
+            @Schema(nullable = true, description = "The plan the next period takes, when a change is scheduled")
+            String planNextName,
+
+            @Schema(nullable = true) UUID planVersionNextId,
+
+            @Schema(description = "Whether it ends with the open period instead of renewing")
+            boolean cancelAtPeriodEnd,
+
+            @Schema(description = "How much overage a period may run up before new documents are refused")
+            long overageLimitCents,
+
+            @Schema(description = "overageLimitCents in documents at the period's overage price")
+            int overageLimit,
+
+            OffsetDateTime startedAt,
+
+            @Schema(nullable = true, description = "Since when the renewal is unpaid")
+            OffsetDateTime pastDueAt,
+
+            @Schema(nullable = true, description = "When an unpaid renewal cancels the subscription")
+            OffsetDateTime payBy,
+
+            SubscriptionPeriodView period) {}
+
+    public record OverageLimitRequest(
+            @Schema(description = "In COP cents; 0 refuses every overage document but credit notes")
+            @NotNull
+            @Min(0)
+            @Max(100_000_000_000L)
+            Long overageLimitCents) {}
+
+    public record PlanNextRequest(
+            @Schema(
+                    nullable = true,
+                    description = "A subscription version offered to the account; null undoes the change")
+            UUID planVersionId) {}
 }

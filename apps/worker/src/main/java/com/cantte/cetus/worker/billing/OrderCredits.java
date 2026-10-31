@@ -33,7 +33,8 @@ public class OrderCredits {
             PlanEntity plan =
                     PlanEntity.<PlanEntity>findByIdOptional(version.planId).orElseThrow();
             if (plan.kind == PlanEntity.Kind.SUBSCRIPTION) {
-                throw new IllegalStateException("Order " + order.id + " sells a subscription before phase 6");
+                // Its lot belongs to the period it pays (Subscriptions).
+                continue;
             }
             ledger.grant(
                     order.accountId,

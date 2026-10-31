@@ -3,7 +3,6 @@ package com.cantte.cetus.api.admin;
 import com.cantte.cetus.api.admin.AdminViews.AccountDetailView;
 import com.cantte.cetus.api.admin.AdminViews.AccountPage;
 import com.cantte.cetus.api.admin.AdminViews.AccountSummaryView;
-import com.cantte.cetus.api.admin.AdminViews.PlanChangeRequest;
 import com.cantte.cetus.api.admin.AdminViews.StatusChangeRequest;
 import com.cantte.cetus.api.audit.RequestOriginResolver;
 import com.cantte.cetus.api.auth.AccessCache;
@@ -19,7 +18,6 @@ import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.LockModeType;
@@ -31,7 +29,6 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -167,40 +164,6 @@ public class AdminAccountResource {
             throw new DomainException("account_not_suspended", "Only a suspended account can be reactivated");
         }
         changeStatus(account, AccountEntity.Status.ACTIVE, request.reason(), AuditAction.ACCOUNT_REACTIVATED);
-        return detail(account);
-    }
-
-    @PUT
-    @Path("/{id}/plan")
-    @Transactional
-    @RolesAllowed(PlatformRoles.ADMIN)
-    @APIResponse(responseCode = "200", description = "OK")
-    public AccountDetailView changePlan(@PathParam("id") UUID id, @Valid @NotNull PlanChangeRequest request) {
-        AccountEntity account = lockedAccount(id);
-        PlanEntity plan = PlanEntity.<PlanEntity>findByIdOptional(request.planId())
-                .filter(found -> found.assignable)
-                .orElseThrow(
-                        () -> new DomainException("plan_unknown", "There is no assignable plan " + request.planId()));
-        if (plan.id.equals(account.planId)) {
-            throw new DomainException("plan_unchanged", "The account already has the plan " + plan.code);
-        }
-        String previous = PlanEntity.of(account).code;
-        account.planId = plan.id;
-        access.changed(account);
-        auditLog.record(
-                account.id,
-                context.platformActor(),
-                origin.resolve(),
-                AuditAction.ACCOUNT_PLAN_CHANGED,
-                "account",
-                account.id,
-                Map.of(
-                        "plan",
-                        plan.code,
-                        "planPrevious",
-                        previous,
-                        "reason",
-                        request.reason().strip()));
         return detail(account);
     }
 

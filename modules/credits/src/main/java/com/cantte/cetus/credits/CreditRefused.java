@@ -6,7 +6,8 @@ public class CreditRefused extends RuntimeException {
     public enum Reason {
         NO_ACTIVE_PRODUCT("no_active_product"),
         INSUFFICIENT_CREDITS("insufficient_credits"),
-        ISSUER_LIMIT_REACHED("issuer_limit_reached");
+        ISSUER_LIMIT_REACHED("issuer_limit_reached"),
+        OVERAGE_LIMIT_REACHED("overage_limit_reached");
 
         public final String code;
 

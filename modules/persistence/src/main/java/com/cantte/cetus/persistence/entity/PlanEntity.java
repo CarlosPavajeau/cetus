@@ -8,15 +8,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.Table;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A plan of the catalog; see V24, V31 and V32. What it sells lives in its versions ({@link PlanVersionEntity}).
- * The subscription columns (price, documents, issuers, overage, requests, grace) still set the limits of the
- * accounts on the plan until subscriptions arrive; a null limit is no limit. A package or a top-up is bought
- * once, lasts {@link #validityMonths} and is never an account's plan.
+ * A plan of the catalog; see V31, V32 and V39. What it sells lives in its versions ({@link PlanVersionEntity}).
+ * A subscription renews every month; a package or a top-up is bought once and lasts {@link #validityMonths}.
  */
 @Entity
 @Table(name = "plans")
@@ -27,8 +24,6 @@ public class PlanEntity extends PanacheEntityBase {
         PACKAGE,
         TOPUP
     }
-
-    public static final String CODE_FREE = "FREE";
 
     @Id
     public UUID id;
@@ -56,26 +51,10 @@ public class PlanEntity extends PanacheEntityBase {
     /** Whether it is still sold; a retired plan keeps its row for the accounts and orders that reference it. */
     public boolean active = true;
 
-    @Column(name = "price_monthly_cop")
-    public Long priceMonthlyCop;
-
-    @Column(name = "documents_included")
-    public Integer documentsIncluded;
-
     /**
-     * Production documents a month may take above {@link #documentsIncluded} before new ones are refused; null
-     * never refuses them and bills the overage. Credit notes are always taken.
+     * Production API requests a second for the accounts subscribed to the plan, shared by their keys; null keeps
+     * the API's per-key limit. Subscriptions only.
      */
-    @Column(name = "documents_grace")
-    public Integer documentsGrace;
-
-    @Column(name = "price_overage_cop")
-    public Integer priceOverageCop;
-
-    @Column(name = "issuers_included")
-    public Integer issuersIncluded;
-
-    /** Production API requests a second, shared by the account's keys; null keeps the API's per-key limit. */
     @Column(name = "requests_per_second")
     public Integer requestsPerSecond;
 
@@ -83,28 +62,36 @@ public class PlanEntity extends PanacheEntityBase {
     @Column(name = "requests_burst")
     public Integer requestsBurst;
 
-    public boolean assignable;
+    /**
+     * SQL for the name of the product of the account {@code a.id} now: its subscription's plan, else the package in
+     * force that lasts longest; null without one.
+     */
+    public static final String SQL_PRODUCT_NAME = """
+            coalesce(
+                (SELECT p.name FROM billing.subscriptions s
+                 JOIN billing.plan_versions v ON v.id = s.plan_version_id JOIN billing.plans p ON p.id = v.plan_id
+                 WHERE s.account_id = a.id AND s.status <> 'CANCELED'),
+                (SELECT p.name FROM billing.credit_grants g
+                 JOIN billing.plan_versions v ON v.id = g.plan_version_id JOIN billing.plans p ON p.id = v.plan_id
+                 WHERE g.account_id = a.id AND p.kind = 'PACKAGE' AND g.status IN ('ACTIVE', 'EXHAUSTED')
+                   AND g.expires_at > now()
+                 ORDER BY g.expires_at DESC, g.id DESC LIMIT 1))""";
 
-    /** The plan of an account; every account references one. */
-    public static PlanEntity of(AccountEntity account) {
-        PlanEntity plan = findById(account.planId);
-        if (plan == null) {
-            throw new IllegalStateException("Account " + account.id + " has an unknown plan " + account.planId);
-        }
-        return plan;
+    /** The name of the account's product now ({@link #SQL_PRODUCT_NAME}), if it has one. */
+    public static Optional<String> productName(UUID accountId) {
+        return Optional.ofNullable((String) getEntityManager()
+                .createNativeQuery("SELECT " + SQL_PRODUCT_NAME + " FROM billing.accounts a WHERE a.id = :account")
+                .setParameter("account", accountId)
+                .getSingleResult());
     }
 
     public static Optional<PlanEntity> findByCode(String code) {
         return find("code", code).firstResultOptional();
     }
 
-    /** A plan the code always has, such as {@link #CODE_FREE}. */
+    /** A plan the code always has. */
     public static PlanEntity byCode(String code) {
         return findByCode(code).orElseThrow(() -> new IllegalStateException("There is no plan " + code));
-    }
-
-    public static List<PlanEntity> listAssignable() {
-        return list("assignable = true order by coalesce(priceMonthlyCop, 0), code");
     }
 
     public static Optional<PlanEntity> lock(UUID id) {

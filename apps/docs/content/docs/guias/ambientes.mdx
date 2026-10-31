@@ -44,14 +44,14 @@ exige la DIAN; cuando lo acepta, tu empresa queda lista para producción.
 ## Producción
 
 Con tu empresa habilitada y la resolución de numeración de producción, la llave `cetus_live_` emite
-documentos con validez fiscal. Emitir en producción requiere un paquete vigente: cada factura, nota crédito o
-nota débito reserva un documento de tu saldo al crearse, lo consume cuando la DIAN la acepta y lo devuelve si
-la rechaza. Primero se usan los documentos que vencen antes.
+documentos con validez fiscal. Emitir en producción requiere una suscripción mensual o un paquete anual
+vigente: cada factura, nota crédito o nota débito reserva un documento de tu saldo al crearse, lo consume
+cuando la DIAN la acepta y lo devuelve si la rechaza. Primero se usan los documentos que vencen antes.
 
-Sin un paquete vigente, las facturas y las notas débito responden `402 no_active_product`. Si se acaban tus
-documentos, tienes un margen de cortesía del 10 % de tu último paquete o recarga (mínimo 10 documentos), que
-se descuenta de tu siguiente compra; superado el margen, responden `402 insufficient_credits`. Las notas
-crédito siempre se emiten, porque son la única forma de corregir una factura.
+Sin una suscripción ni un paquete vigente, las facturas y las notas débito responden
+`402 no_active_product`. Con una suscripción, los documentos por encima de los del mes se cobran como
+excedente; con un paquete, tienes un margen de cortesía. Las notas crédito siempre se emiten, porque son la
+única forma de corregir una factura. Ver [Planes y créditos](/guias/planes-y-creditos).
 
 <Callout type="warn">
     Una llave `live` emite documentos reales: guárdala en el servidor, nunca en el navegador ni en

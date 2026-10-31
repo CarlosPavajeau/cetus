@@ -3,7 +3,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { Entry, Section } from "~/components/DetailSection";
 import { PageHeader } from "~/components/PageHeader";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { buttonVariants } from "~/components/ui/button";
 import {
   Table,
@@ -22,18 +22,32 @@ import {
   lotTitle,
   movementTypeLabel,
 } from "~/features/billing/labels";
-import { billingProfileQuery, creditsQuery } from "~/features/billing/queries";
+import {
+  billingProfileQuery,
+  creditsQuery,
+  planOffersQuery,
+  subscriptionQuery,
+} from "~/features/billing/queries";
+import {
+  CancellationDialog,
+  OverageLimitDialog,
+  PlanNextDialog,
+} from "~/features/billing/SubscriptionDialogs";
+import { SubscriptionSummary } from "~/features/billing/SubscriptionSummary";
 import { identificationTypeLabel } from "~/features/documents/labels";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import { formatCount, periodLabel } from "~/features/usage/labels";
 import { usageQuery } from "~/features/usage/queries";
+import type { PlanOffer, PlanVersion } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
-/** The account's credits, its billing profile and its billable documents. */
+/** The account's subscription, its credits, its billing profile and its billable documents. */
 export const Route = createFileRoute("/_app/billing/")({
   loader: async ({ context: { queryClient } }) => {
     await Promise.all([
       queryClient.query({ ...creditsQuery, staleTime: "static" }),
+      queryClient.query({ ...subscriptionQuery, staleTime: "static" }),
+      queryClient.query({ ...planOffersQuery, staleTime: "static" }),
       queryClient.query({ ...billingProfileQuery, staleTime: "static" }),
       queryClient.query({ ...usageQuery, staleTime: "static" }),
     ]);
@@ -44,26 +58,33 @@ export const Route = createFileRoute("/_app/billing/")({
 
 function Billing() {
   const { data: credits } = useSuspenseQuery(creditsQuery);
+  const { data: subscription } = useSuspenseQuery(subscriptionQuery);
+  const { data: offers } = useSuspenseQuery(planOffersQuery);
   const { data: profile } = useSuspenseQuery(billingProfileQuery);
   const { data: usage } = useSuspenseQuery(usageQuery);
   const { session } = Route.useRouteContext();
   const { manage } = useMemberPermissions();
   const buyer = manage && !session.impersonatedBy;
-  const graceStarted = credits.product && credits.available === 0 && credits.graceUsed > 0;
+  const graceStarted =
+    subscription === null && credits.product && credits.available === 0 && credits.graceUsed > 0;
+  const subscriptionOffers = offers.filter(
+    (offer): offer is PlanOffer & { version: PlanVersion } =>
+      offer.kind === "SUBSCRIPTION" && offer.version !== null && offer.version.totalCents > 0,
+  );
 
   return (
     <>
       <PageHeader
         title="Facturación"
-        lead="Cada documento que emites en producción usa un crédito: facturas, notas crédito y notas débito. La simulación y las pruebas de habilitación no usan créditos."
+        lead="Cada documento que emites en producción usa un crédito: facturas, notas crédito y notas débito. Con una suscripción, los documentos por encima de los del mes se cobran como excedente. La simulación y las pruebas de habilitación no usan créditos."
       />
 
       {!credits.product && (
         <Alert>
-          <AlertTitle>No tienes un paquete vigente</AlertTitle>
+          <AlertTitle>No tienes una suscripción ni un paquete vigente</AlertTitle>
           <AlertDescription>
-            Para emitir en producción y agregar emisores de producción necesitas un paquete anual.
-            Las notas crédito siempre se pueden emitir.
+            Para emitir en producción y agregar emisores de producción necesitas una suscripción
+            mensual o un paquete anual. Las notas crédito siempre se pueden emitir.
           </AlertDescription>
         </Alert>
       )}
@@ -78,6 +99,52 @@ function Billing() {
         </Alert>
       )}
 
+      {subscription?.payBy && subscription.period.renewalOrderId && (
+        <Alert variant="destructive">
+          <AlertTitle>La renovación de tu suscripción está pendiente de pago</AlertTitle>
+          <AlertDescription>
+            {`Págala antes del ${formatDateTime(new Date(subscription.payBy))}. Mientras tanto puedes seguir emitiendo; si no se paga, la suscripción se cancela.`}
+          </AlertDescription>
+          <AlertAction>
+            <Link
+              to="/billing/orders/$orderId"
+              params={{ orderId: subscription.period.renewalOrderId }}
+              className={cn(buttonVariants({ size: "sm" }))}
+            >
+              Pagar renovación
+            </Link>
+          </AlertAction>
+        </Alert>
+      )}
+      {subscription?.cancelAtPeriodEnd && (
+        <Alert>
+          <AlertTitle>Tu suscripción termina con este periodo</AlertTitle>
+          <AlertDescription>
+            {`No se renueva el ${dateFormat.format(new Date(subscription.period.endsAt))}. Puedes reanudarla antes de esa fecha.`}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {subscription && (
+        <Section
+          id="billing-subscription"
+          title={`Suscripción ${subscription.planName}`}
+          action={
+            buyer && (
+              <div className="flex flex-wrap gap-2">
+                <OverageLimitDialog subscription={subscription} />
+                {!subscription.cancelAtPeriodEnd && (
+                  <PlanNextDialog subscription={subscription} offers={subscriptionOffers} />
+                )}
+                <CancellationDialog subscription={subscription} />
+              </div>
+            )
+          }
+        >
+          <SubscriptionSummary subscription={subscription} />
+        </Section>
+      )}
+
       <Section
         id="billing-credits"
         title="Saldo"
@@ -86,9 +153,11 @@ function Billing() {
             <Link to="/billing/orders" className={cn(buttonVariants({ variant: "outline" }))}>
               Órdenes y facturas
             </Link>
-            <Link to="/billing/products" className={cn(buttonVariants())}>
-              Comprar créditos
-            </Link>
+            {subscription === null && (
+              <Link to="/billing/products" className={cn(buttonVariants())}>
+                Comprar créditos
+              </Link>
+            )}
           </div>
         }
       >
@@ -98,7 +167,8 @@ function Billing() {
       <Section id="billing-lots" title="Lotes de créditos">
         {credits.lots.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Todavía no tienes créditos. Compra un paquete para emitir en producción.
+            Todavía no tienes créditos. Contrata una suscripción o compra un paquete para emitir en
+            producción.
           </p>
         ) : (
           <Table>

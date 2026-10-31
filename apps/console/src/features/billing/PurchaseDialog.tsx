@@ -22,6 +22,7 @@ import {
   documentsLabel,
   formatCents,
   issuersLabel,
+  overageLabel,
   planKindLabel,
   priceBreakdown,
   validityLabel,
@@ -83,18 +84,25 @@ export function PurchaseDialog({
         <DialogHeader>
           <DialogTitle>Comprar {offer.name}</DialogTitle>
           <DialogDescription>
-            Pagas en Wompi con tarjeta, PSE, Nequi u otros medios. Los créditos se acreditan cuando
-            Wompi confirma el pago.
+            {offer.kind === "SUBSCRIPTION"
+              ? "Pagas en Wompi el primer mes con tarjeta, PSE, Nequi u otros medios. La suscripción empieza cuando Wompi confirma el pago; cada mes recibirás la orden de renovación con el excedente del mes anterior."
+              : "Pagas en Wompi con tarjeta, PSE, Nequi u otros medios. Los créditos se acreditan cuando Wompi confirma el pago."}
           </DialogDescription>
         </DialogHeader>
         <dl className="grid gap-4 sm:grid-cols-2">
           <Entry label="Producto">{planKindLabel[offer.kind]}</Entry>
-          <Entry label="Incluye">{documentsLabel(version.documentsIncluded)}</Entry>
+          <Entry label="Incluye">
+            {documentsLabel(version.documentsIncluded)}
+            {offer.kind === "SUBSCRIPTION" && " al mes"}
+          </Entry>
           {version.issuersIncluded !== null && (
             <Entry label="Emisores">{issuersLabel(version.issuersIncluded)}</Entry>
           )}
           {offer.validityMonths !== null && (
             <Entry label="Vigencia">{validityLabel(offer.validityMonths)}</Entry>
+          )}
+          {version.priceOverageCents !== null && (
+            <Entry label="Excedente">{overageLabel(version.priceOverageCents)}</Entry>
           )}
           <Entry label="Total">
             <span className="text-sm font-medium tabular-nums">

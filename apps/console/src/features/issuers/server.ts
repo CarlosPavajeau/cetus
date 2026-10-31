@@ -28,8 +28,9 @@ const promotionMessages: Record<string, string> = {
   issuer_not_promotable: "Solo un emisor de pruebas en habilitación puede pasar a producción.",
   issuer_already_promoted: "Este NIT ya tiene su emisor de producción.",
   issuer_limit_reached:
-    "Tu paquete no incluye más emisores en producción. Compra un paquete que incluya más emisores.",
-  no_active_product: "Para tener emisores en producción necesitas un paquete vigente.",
+    "Tu plan no incluye más emisores en producción. Elige una suscripción o un paquete que incluya más emisores.",
+  no_active_product:
+    "Para tener emisores en producción necesitas una suscripción o un paquete vigente.",
 };
 
 /** Creates the production issuer of a test issuer in habilitación and returns it. */

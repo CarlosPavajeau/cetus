@@ -62,6 +62,7 @@ function OrderPage() {
   useEffect(() => {
     if (status === "PAID") {
       void queryClient.invalidateQueries({ queryKey: [...billingKey, "credits"] });
+      void queryClient.invalidateQueries({ queryKey: [...billingKey, "subscription"] });
       void queryClient.invalidateQueries({ queryKey: [...billingKey, "orders"], exact: true });
     }
   }, [status, queryClient]);

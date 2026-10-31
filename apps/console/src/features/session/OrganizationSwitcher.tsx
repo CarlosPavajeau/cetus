@@ -18,6 +18,7 @@ import {
   useSidebar,
 } from "~/components/ui/sidebar";
 import { accountQuery } from "~/features/account/queries";
+import { creditsProductLabel } from "~/features/billing/labels";
 import { creditsQuery } from "~/features/billing/queries";
 import { authClient } from "~/lib/auth/client";
 
@@ -88,7 +89,7 @@ export function OrganizationSwitcher({
               <span className="truncate text-sm font-medium">{name}</span>
               {credits && (
                 <span className="truncate text-2xs text-muted-foreground">
-                  {credits.product ? "Paquete vigente" : "Sin paquete vigente"}
+                  {creditsProductLabel(credits)}
                 </span>
               )}
             </span>

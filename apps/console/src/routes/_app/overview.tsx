@@ -33,6 +33,7 @@ import { accountQuery } from "~/features/account/queries";
 import { accountStatusLabel } from "~/features/admin/labels";
 import { accountStatuses } from "~/features/admin/schema";
 import { CreditsSummary } from "~/features/billing/CreditsSummary";
+import { creditsProductLabel } from "~/features/billing/labels";
 import { creditsQuery } from "~/features/billing/queries";
 import { documentsQuery } from "~/features/documents/queries";
 import { useActiveEnvironment } from "~/features/environment/queries";
@@ -75,7 +76,7 @@ function Overview() {
     <>
       <PageHeader
         title={account.name}
-        lead={`${credits.product ? "Paquete vigente" : "Sin paquete vigente"} · cuenta ${statusText.toLowerCase()}`}
+        lead={`${creditsProductLabel(credits)} · cuenta ${statusText.toLowerCase()}`}
       />
 
       {environment === "SANDBOX" && !tried && (

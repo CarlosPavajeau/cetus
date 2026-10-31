@@ -8,7 +8,6 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.SupportAttachmentEntity;
 import com.cantte.cetus.persistence.entity.SupportTicketEntity;
 import com.cantte.cetus.worker.handlers.DeliverDocumentHandler;
@@ -310,7 +309,6 @@ class DataRetentionTest {
             account.id = Ids.newId();
             account.organizationId = "org_" + account.id;
             account.name = "Retención SAS";
-            account.planId = PlanEntity.byCode(PlanEntity.CODE_FREE).id;
             account.persist();
             return account.id;
         });

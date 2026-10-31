@@ -34,9 +34,6 @@ public class AccountEntity extends PanacheEntityBase {
     @Enumerated(EnumType.STRING)
     public Status status = Status.ACTIVE;
 
-    /** Its {@link PlanEntity}; a new account starts on {@link PlanEntity#CODE_FREE}. */
-    @Column(name = "plan_id")
-    public UUID planId;
     /** Why the status last changed (e.g. the suspension reason); null while it never changed. */
     @Column(name = "status_reason")
     public String statusReason;
@@ -47,7 +44,7 @@ public class AccountEntity extends PanacheEntityBase {
     @Column(name = "status_changed_by")
     public String statusChangedBy;
 
-    /** The account's own production API limits, above its plan's; null follows the plan. Set by hand. */
+    /** The account's own production API limits, above its subscription's; null follows it. Set by hand. */
     @Column(name = "requests_per_second")
     public Integer requestsPerSecond;
 

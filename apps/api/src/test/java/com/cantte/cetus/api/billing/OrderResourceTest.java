@@ -9,6 +9,7 @@ import com.cantte.cetus.api.admin.PlatformRoles;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.Credits;
 import com.cantte.cetus.api.support.IssuedDocuments;
+import com.cantte.cetus.api.support.Subscriptions;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -16,6 +17,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
@@ -24,6 +26,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 /** Purchases placed from the console: built by the server from the catalog and signed for Wompi's checkout. */
@@ -36,6 +39,13 @@ class OrderResourceTest {
 
     @Inject
     Credits credits;
+
+    /** Whatever apps/api/.env sets for local purchases, which Wompi refuses on localhost. */
+    @ConfigProperty(name = "cetus.console.url")
+    URI consoleUrl;
+
+    @Inject
+    Subscriptions subscriptions;
 
     @Test
     void anOwnerBuysAPackageAndGetsASignedCheckout() throws Exception {
@@ -62,7 +72,11 @@ class OrderResourceTest {
                 .containsEntry("reference", reference)
                 .containsEntry("amountInCents", 24_900_000)
                 .containsEntry("currency", "COP")
-                .containsEntry("redirectUrl", "http://localhost:3000/billing/orders/" + order.getString("id"));
+                .containsEntry(
+                        "redirectUrl",
+                        consoleUrl
+                                .resolve("/billing/orders/" + order.getString("id"))
+                                .toString());
         assertThat(checkout.get("signature"))
                 .isEqualTo(sha256(reference + 24_900_000 + "COP" + checkout.get("expirationTime") + INTEGRITY_SECRET));
         assertThat((String) checkout.get("link")).startsWith("https://checkout.wompi.co/p/?public-key=pub_test_cetus");
@@ -117,10 +131,33 @@ class OrderResourceTest {
     }
 
     @Test
-    void subscriptionsAreNotSoldYet() {
+    void aSubscriptionIsBoughtForItsMonthlyFeeEvenWithAPackage() {
         ConsoleUser owner = customer("Suscriptora SAS");
+        UUID accountId = UUID.fromString(
+                owner.request().get("/console/account").then().extract().path("id"));
+        credits.grant(accountId, "EMPRENDEDOR", 300, OffsetDateTime.now().plusMonths(6));
+        String inicial = versionOf(owner, "INICIAL");
 
-        order(owner, versionOf(owner, "INICIAL")).then().statusCode(422).body("code", equalTo("plan_not_purchasable"));
+        order(owner, inicial)
+                .then()
+                .statusCode(201)
+                .body("kind", equalTo("PURCHASE"))
+                .body("totalCents", equalTo(3_900_000))
+                .body("items[0].planVersionId", equalTo(inicial))
+                .body("items[0].unitPriceCents", equalTo(3_900_000));
+    }
+
+    @Test
+    void aSubscribedAccountBuysNoOtherSubscriptionPackageOrTopUp() {
+        ConsoleUser owner = customer("Ya Suscrita SAS");
+        UUID accountId = UUID.fromString(
+                owner.request().get("/console/account").then().extract().path("id"));
+        credits.grant(accountId, "EMPRENDEDOR", 300, OffsetDateTime.now().plusMonths(6));
+        subscriptions.subscribe(accountId, "INICIAL", 200);
+
+        for (String code : List.of("CRECIMIENTO", "NEGOCIO", "RECARGA_100")) {
+            order(owner, versionOf(owner, code)).then().statusCode(422).body("code", equalTo("subscription_active"));
+        }
     }
 
     @Test

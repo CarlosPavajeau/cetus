@@ -31,7 +31,8 @@ public class OrganizationRoleFilter implements ContainerRequestFilter {
             "/console/webhook-endpoints",
             "/console/issuers",
             "/console/billing-profile",
-            "/console/orders");
+            "/console/orders",
+            "/console/subscription");
 
     @Inject
     ConsoleContext context;

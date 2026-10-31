@@ -115,8 +115,6 @@ export type AdminAuditEntry = Schemas["AdminAuditEntry"];
 
 export type AdminAuditPage = Schemas["AdminAuditPage"];
 
-export type Plan = Schemas["PlanView"];
-
 export type PeriodUsage = Schemas["PeriodUsageView"];
 
 export type Usage = Schemas["UsageView"];
@@ -140,6 +138,10 @@ export type Order = Schemas["OrderView"];
 export type OrderStatus = Order["status"];
 
 export type OrderInvoice = Schemas["OrderInvoiceView"];
+
+export type Subscription = Schemas["SubscriptionView"];
+
+export type SubscriptionStatus = Subscription["status"];
 
 export type CertificateUploadLink = Schemas["UploadLinkView"];
 
@@ -205,6 +207,12 @@ export const auditActions = [
   "CREDITS_GRANTED",
   "CREDITS_ADJUSTED",
   "DOCUMENT_CREDIT_RELEASED",
+  "SUBSCRIPTION_STARTED",
+  "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED",
+  "SUBSCRIPTION_PLAN_SCHEDULED",
+  "SUBSCRIPTION_CANCEL_SCHEDULED",
+  "SUBSCRIPTION_CANCEL_UNDONE",
+  "SUBSCRIPTION_CANCELED",
 ] as const satisfies readonly AuditAction[];
 
 /** Actions on a person or on the plan catalog rather than an account: only the administration's log has them. */

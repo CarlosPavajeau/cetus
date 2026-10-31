@@ -15,8 +15,9 @@ const messages: Record<string, string> = {
   issuer_already_exists:
     "Ya tienes un emisor con este NIT en este entorno. Búscalo en la lista de emisores.",
   issuer_limit_reached:
-    "Tu paquete no incluye más emisores en producción. Compra un paquete que incluya más emisores.",
-  no_active_product: "Para tener emisores en producción necesitas un paquete vigente.",
+    "Tu plan no incluye más emisores en producción. Elige una suscripción o un paquete que incluya más emisores.",
+  no_active_product:
+    "Para tener emisores en producción necesitas una suscripción o un paquete vigente.",
   invalid_request: "Revisa los datos del formulario: alguno no tiene el formato esperado.",
 };
 

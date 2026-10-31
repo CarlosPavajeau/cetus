@@ -8,8 +8,6 @@ import com.cantte.cetus.api.billing.BillingViews.PlanVersionView;
 import com.cantte.cetus.api.billing.PlanCatalog;
 import com.cantte.cetus.api.console.ConsoleContext;
 import com.cantte.cetus.api.error.ProblemDetail;
-import com.cantte.cetus.api.usage.UsageViews.PlanView;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -29,8 +27,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
- * The plans an admin can assign to an account, and the catalog Cetus sells: an admin adds plans and versions of
- * their terms, public or private to one account (Socios), never edits them.
+ * The catalog Cetus sells: an admin adds plans and versions of their terms, public or private to one account
+ * (Socios), never edits them.
  */
 @Path("/admin/plans")
 @Produces(MediaType.APPLICATION_JSON)
@@ -49,16 +47,6 @@ public class AdminPlanResource {
 
     @Inject
     RequestOriginResolver origin;
-
-    @GET
-    @Transactional
-    @RolesAllowed({PlatformRoles.ADMIN, PlatformRoles.SUPPORT})
-    @APIResponse(responseCode = "200", description = "OK")
-    public List<PlanView> list() {
-        return PlanEntity.<PlanEntity>listAssignable().stream()
-                .map(PlanView::from)
-                .toList();
-    }
 
     @POST
     @Transactional
