@@ -3,18 +3,13 @@ package com.cantte.cetus.worker.support;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.cantte.cetus.dian.DianResponse;
-import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.usage.UsagePeriod;
 import com.cantte.cetus.jobs.JobTypes;
-import com.cantte.cetus.notifications.NotificationKind;
-import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
-import com.cantte.cetus.persistence.entity.NotificationEntity;
-import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.usage.UsageCounters;
 import com.cantte.cetus.webhooks.WebhookEventType;
 import com.cantte.cetus.webhooks.WebhookPublisher;
@@ -109,68 +104,6 @@ class ResultRecorderTest {
     }
 
     @Test
-    void theBillingContactHearsOnceWhenTheMonthReachesEachShareOfThePlan() {
-        UUID id = liveDocument(fixtures.invoice());
-        UUID accountId = accountOf(id);
-        String plan = assignPlanWithQuota(accountId, 5);
-        count(accountId, 3);
-
-        recorder.completed(id, ACCEPTED);
-        count(accountId, 2);
-        recorder.completed(fixtures.creditNote(id), ACCEPTED);
-        recorder.completed(fixtures.debitNote(id), ACCEPTED);
-
-        String period = UsagePeriod.current().toString();
-        assertThat(notices(accountId))
-                .extracting(notice -> notice.dedupKey)
-                .containsExactlyInAnyOrder(
-                        "plan_usage:%s:%s:%s:80".formatted(accountId, period, plan),
-                        "plan_usage:%s:%s:%s:100".formatted(accountId, period, plan));
-        assertThat(notices(accountId))
-                .filteredOn(notice -> notice.dedupKey.endsWith(":80"))
-                .singleElement()
-                .satisfies(notice -> assertThat(notice.data)
-                        .containsEntry("percent", "80")
-                        .containsEntry("total", "4")
-                        .containsEntry("included", "5")
-                        .containsEntry("priceOverage", "$1.500"));
-    }
-
-    @Test
-    void aPlanThatStopsIssuingSaysWhereInsteadOfAnOverage() {
-        UUID id = liveDocument(fixtures.invoice());
-        UUID accountId = accountOf(id);
-        String plan = assignPlanWithQuota(accountId, 5);
-        QuarkusTransaction.requiringNew().run(() -> {
-            PlanEntity entity = PlanEntity.byCode(plan);
-            entity.documentsGrace = 2;
-            entity.priceOverageCop = null;
-        });
-        count(accountId, 4);
-
-        recorder.completed(id, ACCEPTED);
-
-        assertThat(notices(accountId))
-                .singleElement()
-                .satisfies(notice -> assertThat(notice.data)
-                        .containsEntry("percent", "100")
-                        .containsEntry("limit", "7")
-                        .doesNotContainKey("priceOverage"));
-    }
-
-    @Test
-    void anAccountWithoutAQuotaHearsNothing() {
-        UUID id = liveDocument(fixtures.invoice());
-        QuarkusTransaction.requiringNew()
-                .run(() ->
-                        AccountEntity.<AccountEntity>findById(accountOf(id)).planId = PlanEntity.byCode("SOCIOS").id);
-
-        recorder.completed(id, ACCEPTED);
-
-        assertThat(notices(accountOf(id))).isEmpty();
-    }
-
-    @Test
     void aWriteThatStartedBeforeTheVerdictWaitsForItAndKeepsIt() throws Exception {
         UUID id = liveDocument(fixtures.invoice());
         CountDownLatch locked = new CountDownLatch(1);
@@ -236,41 +169,9 @@ class ResultRecorderTest {
                 .call(() -> DocumentEntity.<DocumentEntity>findById(documentId).accountId);
     }
 
-    /** A plan of its own, so its notices never collide with another test's; returns its code. */
-    private static String assignPlanWithQuota(UUID accountId, int included) {
-        return QuarkusTransaction.requiringNew().call(() -> {
-            PlanEntity plan = new PlanEntity();
-            plan.id = Ids.newId();
-            plan.code = "TEST_" + plan.id;
-            plan.name = "Prueba";
-            plan.documentsIncluded = included;
-            plan.priceOverageCop = 1500;
-            plan.persist();
-            AccountEntity.<AccountEntity>findById(accountId).planId = plan.id;
-            return plan.code;
-        });
-    }
-
-    /** Bills documents issued earlier this month. */
-    private void count(UUID accountId, int documents) {
-        QuarkusTransaction.requiringNew().run(() -> {
-            for (int i = 0; i < documents; i++) {
-                usage.record(accountId, UsagePeriod.current(), DocumentType.INVOICE);
-            }
-        });
-    }
-
-    private static List<NotificationEntity> notices(UUID accountId) {
-        return QuarkusTransaction.requiringNew()
-                .call(() -> NotificationEntity.<NotificationEntity>list(
-                        "accountId = ?1 and kind = ?2", accountId, NotificationKind.PLAN_USAGE.name()));
-    }
-
     @Test
-    void concurrentAcceptancesOfOneAccountCountExactlyAndNotifyOnce() throws Exception {
+    void concurrentAcceptancesOfOneAccountCountExactly() throws Exception {
         UUID invoice = liveDocument(fixtures.invoice());
-        UUID account = accountOf(invoice);
-        assignPlanWithQuota(account, 10);
         var documents = new ArrayList<UUID>();
         for (int i = 0; i < 16; i++) documents.add(fixtures.creditNote(invoice));
         var start = new CountDownLatch(1);
@@ -287,8 +188,6 @@ class ResultRecorderTest {
             for (var task : tasks) task.get(20, TimeUnit.SECONDS);
         }
         assertThat(billed(invoice)).containsEntry(DocumentType.CREDIT_NOTE, 16L);
-        assertThat(notices(account)).hasSize(2);
-        assertThat(notices(account)).extracting(notice -> notice.dedupKey).doesNotHaveDuplicates();
     }
 
     private static UUID liveDocument(UUID id) {

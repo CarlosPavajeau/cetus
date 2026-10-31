@@ -102,8 +102,32 @@ class SendNotificationHandlerTest {
             assertThat(request.body().get("text").asText())
                     .contains("200 de los 200 documentos que incluye el plan Inicial en octubre de 2026")
                     .contains("cada documento adicional se cobra a $150")
-                    .contains("/settings/usage");
+                    .contains("/billing");
         });
+    }
+
+    @Test
+    void aCreditsNoticeSaysWhatIsLeftAndWhereToBuyMore() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
+        UUID usage = request(
+                accountId,
+                NotificationKind.CREDITS_USAGE,
+                Map.of("percent", "80", "available", "60", "granted", "300"));
+        UUID grace = request(accountId, NotificationKind.CREDITS_GRACE, Map.of("graceUsed", "1", "graceMargin", "30"));
+
+        handler.handle(fixtures.notificationJob(usage));
+        handler.handle(fixtures.notificationJob(grace));
+
+        assertThat(resend.requests()).hasSize(2);
+        assertThat(resend.requests().getFirst().body().get("subject").asText())
+                .isEqualTo("[Cetus] Usaste el 80% de tus créditos");
+        assertThat(resend.requests().getFirst().body().get("text").asText())
+                .contains("de los 300 créditos de sus paquetes y recargas vigentes: le quedan 60")
+                .contains("/billing/products");
+        assertThat(resend.requests().getLast().body().get("text").asText())
+                .contains("ya emitió 1 de los 30 documentos del margen de cortesía")
+                .contains("/billing/products");
     }
 
     @Test
