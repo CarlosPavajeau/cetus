@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":modules:signing"))
     // Only to sign checkouts and verify Wompi's events; the worker asks Wompi for the transactions.
     implementation(project(":modules:payments"))
+    implementation(project(":modules:credits"))
 
     implementation(libs.quarkus.arc)
     implementation(libs.quarkus.rest)

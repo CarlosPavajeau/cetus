@@ -4,6 +4,7 @@ import com.cantte.cetus.api.billing.BillingViews.CheckoutView;
 import com.cantte.cetus.api.billing.BillingViews.CreateOrderRequest;
 import com.cantte.cetus.api.billing.BillingViews.OrderView;
 import com.cantte.cetus.api.error.ProblemDetail;
+import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.billing.Price;
@@ -54,6 +55,9 @@ public class Orders {
     @Inject
     AuditLog auditLog;
 
+    @Inject
+    Entitlements entitlements;
+
     @ConfigProperty(name = "cetus.billing.order-ttl")
     Duration orderTtl;
 
@@ -78,7 +82,7 @@ public class Orders {
             throw new DomainException("plan_not_purchasable", "This plan cannot be bought from the console yet");
         }
         OffsetDateTime now = OffsetDateTime.now();
-        if (plan.requiresKind != null && !BillingOrderEntity.hasLasting(accountId, plan.requiresKind, now)) {
+        if (plan.requiresKind != null && !entitlements.of(accountId, now).product()) {
             throw new DomainException(
                     "plan_requires_product",
                     "Buying " + plan.name + " needs a "

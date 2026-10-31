@@ -121,26 +121,4 @@ public class BillingOrderEntity extends PanacheEntityBase {
                         .getSingleResult())
                 .longValue();
     }
-
-    /**
-     * Whether the account paid for a plan of the kind that still lasts: bought within its validity months. Until
-     * credits exist (phase 3) a paid order is what proves a package.
-     */
-    public static boolean hasLasting(UUID accountId, PlanEntity.Kind kind, OffsetDateTime at) {
-        return !getEntityManager()
-                .createNativeQuery("""
-                        SELECT 1 FROM billing.billing_orders o
-                        JOIN billing.billing_order_items i ON i.order_id = o.id
-                        JOIN billing.plan_versions v ON v.id = i.plan_version_id
-                        JOIN billing.plans p ON p.id = v.plan_id
-                        WHERE o.account_id = :account AND o.status = 'PAID' AND p.kind = :kind
-                          AND o.paid_at + make_interval(months => p.validity_months) > :at
-                        LIMIT 1
-                        """)
-                .setParameter("account", accountId)
-                .setParameter("kind", kind.name())
-                .setParameter("at", at)
-                .getResultList()
-                .isEmpty();
-    }
 }

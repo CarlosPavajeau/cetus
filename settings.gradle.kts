@@ -27,6 +27,7 @@ include(
     "modules:notifications",
     "modules:cache",
     "modules:payments",
+    "modules:credits",
     "apps:api",
     "apps:worker",
     "apps:dian-mock",
