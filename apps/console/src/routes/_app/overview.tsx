@@ -32,14 +32,13 @@ import {
 import { accountQuery } from "~/features/account/queries";
 import { accountStatusLabel } from "~/features/admin/labels";
 import { accountStatuses } from "~/features/admin/schema";
+import { CreditsSummary } from "~/features/billing/CreditsSummary";
+import { creditsQuery } from "~/features/billing/queries";
 import { documentsQuery } from "~/features/documents/queries";
 import { useActiveEnvironment } from "~/features/environment/queries";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
-import { planTitle } from "~/features/usage/labels";
-import { PeriodUsageSummary } from "~/features/usage/PeriodUsageSummary";
-import { usageQuery } from "~/features/usage/queries";
 import { docsUrl } from "~/lib/docs";
 import { cn } from "~/lib/utils";
 
@@ -48,7 +47,7 @@ export const Route = createFileRoute("/_app/overview")({
     Promise.all([
       queryClient.query({ ...accountQuery, staleTime: "static" }),
       queryClient.query({ ...issuersQuery, staleTime: "static" }),
-      queryClient.query({ ...usageQuery, staleTime: "static" }),
+      queryClient.query({ ...creditsQuery, staleTime: "static" }),
       queryClient.infiniteQuery({
         ...documentsQuery({ environment: "SANDBOX" }),
         staleTime: "static",
@@ -60,7 +59,7 @@ export const Route = createFileRoute("/_app/overview")({
 function Overview() {
   const { data: account } = useSuspenseQuery(accountQuery);
   const { data: issuers } = useSuspenseQuery(issuersQuery);
-  const { data: usage } = useSuspenseQuery(usageQuery);
+  const { data: credits } = useSuspenseQuery(creditsQuery);
   const { data: sandboxDocuments } = useSuspenseInfiniteQuery(
     documentsQuery({ environment: "SANDBOX" }),
   );
@@ -76,7 +75,7 @@ function Overview() {
     <>
       <PageHeader
         title={account.name}
-        lead={`${planTitle(usage.current.plan)} · cuenta ${statusText.toLowerCase()}`}
+        lead={`${credits.product ? "Paquete vigente" : "Sin paquete vigente"} · cuenta ${statusText.toLowerCase()}`}
       />
 
       {environment === "SANDBOX" && !tried && (
@@ -120,17 +119,17 @@ function Overview() {
       {fiscal && (
         <Card>
           <CardHeader>
-            <CardTitle>Uso del mes</CardTitle>
+            <CardTitle>Créditos</CardTitle>
             <CardDescription>
-              Documentos que la DIAN aceptó en producción, contra lo que incluye tu plan.
+              Cada documento que emites en producción usa un crédito de tus paquetes y recargas.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PeriodUsageSummary usage={usage.current} />
+            <CreditsSummary credits={credits} />
           </CardContent>
           <CardFooter>
-            <Link to="/settings/usage" className={cn(buttonVariants({ variant: "outline" }))}>
-              Ver plan y uso
+            <Link to="/billing" className={cn(buttonVariants({ variant: "outline" }))}>
+              Ver facturación
             </Link>
           </CardFooter>
         </Card>

@@ -58,6 +58,7 @@ import {
 } from "~/features/documents/labels";
 import { documentDetailQuery } from "~/features/documents/queries";
 import { ResendDocument } from "~/features/documents/ResendDocument";
+import { getDocumentFileUrl } from "~/features/documents/server";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import type { DocumentDetail } from "~/lib/api/types";
 import { cn, uuidPattern } from "~/lib/utils";
@@ -115,7 +116,9 @@ function DocumentDetailPage() {
             {isInvoice && document.status === "ACCEPTED" && (
               <InvoiceCorrections invoice={document} />
             )}
-            <DocumentDownloads documentId={document.id} />
+            <DocumentDownloads
+              getUrl={(file) => getDocumentFileUrl({ data: { id: document.id, file } })}
+            />
           </div>
         }
       />

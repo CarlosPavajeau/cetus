@@ -100,12 +100,28 @@ export function customerUnavailable(customer: Customer): string | null {
   return toCustomerValues(customer) === null ? "solo por API" : null;
 }
 
+/** What a saved customer and a billing profile share: the party the form fills. */
+export type SavedParty = Pick<
+  Customer,
+  | "personType"
+  | "identificationType"
+  | "identificationNumber"
+  | "checkDigit"
+  | "legalName"
+  | "tradeName"
+  | "taxLevelCodes"
+  | "taxScheme"
+  | "address"
+  | "email"
+  | "phone"
+>;
+
 /**
  * A saved customer as the form's customer and what travels beside it, or null when the form cannot hold it
  * whole. Nothing saved is replaced by a default.
  */
 export function toCustomerValues(
-  customer: Customer,
+  customer: SavedParty,
 ): { values: CustomerValues; extras: CustomerExtras } | null {
   const identificationType = formIdentificationTypes.find(
     (value) => value === customer.identificationType,

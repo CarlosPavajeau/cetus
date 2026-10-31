@@ -18,8 +18,7 @@ import {
   useSidebar,
 } from "~/components/ui/sidebar";
 import { accountQuery } from "~/features/account/queries";
-import { planTitle } from "~/features/usage/labels";
-import { usageQuery } from "~/features/usage/queries";
+import { creditsQuery } from "~/features/billing/queries";
 import { authClient } from "~/lib/auth/client";
 
 const organizationsQuery = queryOptions({
@@ -47,7 +46,7 @@ export function OrganizationSwitcher({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: account } = useQuery(accountQuery);
-  const { data: usage } = useQuery(usageQuery);
+  const { data: credits } = useQuery(creditsQuery);
   const { data: organizations, isError: organizationsFailed } = useQuery(organizationsQuery);
   const name =
     account?.name ??
@@ -87,9 +86,9 @@ export function OrganizationSwitcher({
             <Monogram name={name} />
             <span className="grid flex-1 text-left leading-tight">
               <span className="truncate text-sm font-medium">{name}</span>
-              {usage && (
+              {credits && (
                 <span className="truncate text-2xs text-muted-foreground">
-                  {planTitle(usage.current.plan)}
+                  {credits.product ? "Paquete vigente" : "Sin paquete vigente"}
                 </span>
               )}
             </span>

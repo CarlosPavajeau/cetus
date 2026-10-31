@@ -32,6 +32,8 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
+import { Route as AppBillingIndexRouteImport } from './routes/_app/billing/index'
+import { Route as AppBillingProductsRouteImport } from './routes/_app/billing/products'
 import { Route as AppCatalogIndexRouteImport } from './routes/_app/catalog/index'
 import { Route as AppCatalogCustomersRouteImport } from './routes/_app/catalog/customers'
 import { Route as AppCatalogProductsRouteImport } from './routes/_app/catalog/products'
@@ -52,6 +54,8 @@ import { Route as AdminAdminSupportIndexRouteImport } from './routes/_admin/admi
 import { Route as AdminAdminSupportTicketIdRouteImport } from './routes/_admin/admin/support/$ticketId'
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
 import { Route as AdminAdminUsersUserIdRouteImport } from './routes/_admin/admin/users/$userId'
+import { Route as AppBillingOrdersIndexRouteImport } from './routes/_app/billing/orders/index'
+import { Route as AppBillingOrdersOrderIdRouteImport } from './routes/_app/billing/orders/$orderId'
 import { Route as AppDevelopersApiKeysIndexRouteImport } from './routes/_app/developers/api-keys/index'
 import { Route as AppDevelopersApiKeysKeyIdRouteImport } from './routes/_app/developers/api-keys/$keyId'
 import { Route as AppDevelopersWebhooksIndexRouteImport } from './routes/_app/developers/webhooks/index'
@@ -174,6 +178,16 @@ const AppActivityEventIdRoute = AppActivityEventIdRouteImport.update({
   path: '/activity/$eventId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBillingIndexRoute = AppBillingIndexRouteImport.update({
+  id: '/billing/',
+  path: '/billing/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBillingProductsRoute = AppBillingProductsRouteImport.update({
+  id: '/billing/products',
+  path: '/billing/products',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCatalogIndexRoute = AppCatalogIndexRouteImport.update({
   id: '/catalog/',
   path: '/catalog/',
@@ -277,6 +291,16 @@ const AdminAdminUsersUserIdRoute = AdminAdminUsersUserIdRouteImport.update({
   path: '/admin/users/$userId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AppBillingOrdersIndexRoute = AppBillingOrdersIndexRouteImport.update({
+  id: '/billing/orders/',
+  path: '/billing/orders/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBillingOrdersOrderIdRoute = AppBillingOrdersOrderIdRouteImport.update({
+  id: '/billing/orders/$orderId',
+  path: '/billing/orders/$orderId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDevelopersApiKeysIndexRoute =
   AppDevelopersApiKeysIndexRouteImport.update({
     id: '/developers/api-keys/',
@@ -339,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/billing/products': typeof AppBillingProductsRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
   '/catalog/products': typeof AppCatalogProductsRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -351,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/activity/': typeof AppActivityIndexRoute
+  '/billing/': typeof AppBillingIndexRoute
   '/catalog/': typeof AppCatalogIndexRoute
   '/documents/': typeof AppDocumentsIndexRoute
   '/help/': typeof AppHelpIndexRoute
@@ -358,12 +384,14 @@ export interface FileRoutesByFullPath {
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
   '/admin/support/$ticketId': typeof AdminAdminSupportTicketIdRoute
   '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
+  '/billing/orders/$orderId': typeof AppBillingOrdersOrderIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/admin/support/': typeof AdminAdminSupportIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/billing/orders/': typeof AppBillingOrdersIndexRoute
   '/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
   '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
@@ -389,6 +417,7 @@ export interface FileRoutesByTo {
   '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
+  '/billing/products': typeof AppBillingProductsRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
   '/catalog/products': typeof AppCatalogProductsRoute
   '/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -401,6 +430,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin': typeof AdminAdminIndexRoute
   '/activity': typeof AppActivityIndexRoute
+  '/billing': typeof AppBillingIndexRoute
   '/catalog': typeof AppCatalogIndexRoute
   '/documents': typeof AppDocumentsIndexRoute
   '/help': typeof AppHelpIndexRoute
@@ -408,12 +438,14 @@ export interface FileRoutesByTo {
   '/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
   '/admin/support/$ticketId': typeof AdminAdminSupportTicketIdRoute
   '/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
+  '/billing/orders/$orderId': typeof AppBillingOrdersOrderIdRoute
   '/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/issuers/$issuerId/edit': typeof AppIssuersIssuerIdEditRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
   '/admin/support': typeof AdminAdminSupportIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
+  '/billing/orders': typeof AppBillingOrdersIndexRoute
   '/developers/api-keys': typeof AppDevelopersApiKeysIndexRoute
   '/developers/webhooks': typeof AppDevelopersWebhooksIndexRoute
   '/documents/$documentId/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
@@ -442,6 +474,7 @@ export interface FileRoutesById {
   '/legal/terminos': typeof LegalTerminosRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
+  '/_app/billing/products': typeof AppBillingProductsRoute
   '/_app/catalog/customers': typeof AppCatalogCustomersRoute
   '/_app/catalog/products': typeof AppCatalogProductsRoute
   '/_app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -454,6 +487,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_app/activity/': typeof AppActivityIndexRoute
+  '/_app/billing/': typeof AppBillingIndexRoute
   '/_app/catalog/': typeof AppCatalogIndexRoute
   '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/help/': typeof AppHelpIndexRoute
@@ -461,12 +495,14 @@ export interface FileRoutesById {
   '/_admin/admin/organizations/$accountId': typeof AdminAdminOrganizationsAccountIdRoute
   '/_admin/admin/support/$ticketId': typeof AdminAdminSupportTicketIdRoute
   '/_admin/admin/users/$userId': typeof AdminAdminUsersUserIdRoute
+  '/_app/billing/orders/$orderId': typeof AppBillingOrdersOrderIdRoute
   '/_app/developers/api-keys/$keyId': typeof AppDevelopersApiKeysKeyIdRoute
   '/_app/developers/webhooks/$endpointId': typeof AppDevelopersWebhooksEndpointIdRoute
   '/_app/issuers/$issuerId_/edit': typeof AppIssuersIssuerIdEditRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/_admin/admin/support/': typeof AdminAdminSupportIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/_app/billing/orders/': typeof AppBillingOrdersIndexRoute
   '/_app/developers/api-keys/': typeof AppDevelopersApiKeysIndexRoute
   '/_app/developers/webhooks/': typeof AppDevelopersWebhooksIndexRoute
   '/_app/documents/$documentId_/notes/new': typeof AppDocumentsDocumentIdNotesNewRoute
@@ -494,6 +530,7 @@ export interface FileRouteTypes {
     | '/legal/terminos'
     | '/admin/audit-log'
     | '/activity/$eventId'
+    | '/billing/products'
     | '/catalog/customers'
     | '/catalog/products'
     | '/documents/$documentId'
@@ -506,6 +543,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/admin/'
     | '/activity/'
+    | '/billing/'
     | '/catalog/'
     | '/documents/'
     | '/help/'
@@ -513,12 +551,14 @@ export interface FileRouteTypes {
     | '/admin/organizations/$accountId'
     | '/admin/support/$ticketId'
     | '/admin/users/$userId'
+    | '/billing/orders/$orderId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations/'
     | '/admin/support/'
     | '/admin/users/'
+    | '/billing/orders/'
     | '/developers/api-keys/'
     | '/developers/webhooks/'
     | '/documents/$documentId/notes/new'
@@ -544,6 +584,7 @@ export interface FileRouteTypes {
     | '/legal/terminos'
     | '/admin/audit-log'
     | '/activity/$eventId'
+    | '/billing/products'
     | '/catalog/customers'
     | '/catalog/products'
     | '/documents/$documentId'
@@ -556,6 +597,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/admin'
     | '/activity'
+    | '/billing'
     | '/catalog'
     | '/documents'
     | '/help'
@@ -563,12 +605,14 @@ export interface FileRouteTypes {
     | '/admin/organizations/$accountId'
     | '/admin/support/$ticketId'
     | '/admin/users/$userId'
+    | '/billing/orders/$orderId'
     | '/developers/api-keys/$keyId'
     | '/developers/webhooks/$endpointId'
     | '/issuers/$issuerId/edit'
     | '/admin/organizations'
     | '/admin/support'
     | '/admin/users'
+    | '/billing/orders'
     | '/developers/api-keys'
     | '/developers/webhooks'
     | '/documents/$documentId/notes/new'
@@ -596,6 +640,7 @@ export interface FileRouteTypes {
     | '/legal/terminos'
     | '/_admin/admin/audit-log'
     | '/_app/activity/$eventId'
+    | '/_app/billing/products'
     | '/_app/catalog/customers'
     | '/_app/catalog/products'
     | '/_app/documents/$documentId'
@@ -608,6 +653,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/_admin/admin/'
     | '/_app/activity/'
+    | '/_app/billing/'
     | '/_app/catalog/'
     | '/_app/documents/'
     | '/_app/help/'
@@ -615,12 +661,14 @@ export interface FileRouteTypes {
     | '/_admin/admin/organizations/$accountId'
     | '/_admin/admin/support/$ticketId'
     | '/_admin/admin/users/$userId'
+    | '/_app/billing/orders/$orderId'
     | '/_app/developers/api-keys/$keyId'
     | '/_app/developers/webhooks/$endpointId'
     | '/_app/issuers/$issuerId_/edit'
     | '/_admin/admin/organizations/'
     | '/_admin/admin/support/'
     | '/_admin/admin/users/'
+    | '/_app/billing/orders/'
     | '/_app/developers/api-keys/'
     | '/_app/developers/webhooks/'
     | '/_app/documents/$documentId_/notes/new'
@@ -812,6 +860,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActivityEventIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/billing/': {
+      id: '/_app/billing/'
+      path: '/billing'
+      fullPath: '/billing/'
+      preLoaderRoute: typeof AppBillingIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/billing/products': {
+      id: '/_app/billing/products'
+      path: '/billing/products'
+      fullPath: '/billing/products'
+      preLoaderRoute: typeof AppBillingProductsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/catalog/': {
       id: '/_app/catalog/'
       path: '/catalog'
@@ -952,6 +1014,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminUsersUserIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_app/billing/orders/': {
+      id: '/_app/billing/orders/'
+      path: '/billing/orders'
+      fullPath: '/billing/orders/'
+      preLoaderRoute: typeof AppBillingOrdersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/billing/orders/$orderId': {
+      id: '/_app/billing/orders/$orderId'
+      path: '/billing/orders/$orderId'
+      fullPath: '/billing/orders/$orderId'
+      preLoaderRoute: typeof AppBillingOrdersOrderIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/developers/api-keys/': {
       id: '/_app/developers/api-keys/'
       path: '/developers/api-keys'
@@ -1034,6 +1110,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 interface AppRouteChildren {
   AppOverviewRoute: typeof AppOverviewRoute
   AppActivityEventIdRoute: typeof AppActivityEventIdRoute
+  AppBillingProductsRoute: typeof AppBillingProductsRoute
   AppCatalogCustomersRoute: typeof AppCatalogCustomersRoute
   AppCatalogProductsRoute: typeof AppCatalogProductsRoute
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
@@ -1044,13 +1121,16 @@ interface AppRouteChildren {
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppSettingsUsageRoute: typeof AppSettingsUsageRoute
   AppActivityIndexRoute: typeof AppActivityIndexRoute
+  AppBillingIndexRoute: typeof AppBillingIndexRoute
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppHelpIndexRoute: typeof AppHelpIndexRoute
   AppIssuersIndexRoute: typeof AppIssuersIndexRoute
+  AppBillingOrdersOrderIdRoute: typeof AppBillingOrdersOrderIdRoute
   AppDevelopersApiKeysKeyIdRoute: typeof AppDevelopersApiKeysKeyIdRoute
   AppDevelopersWebhooksEndpointIdRoute: typeof AppDevelopersWebhooksEndpointIdRoute
   AppIssuersIssuerIdEditRoute: typeof AppIssuersIssuerIdEditRoute
+  AppBillingOrdersIndexRoute: typeof AppBillingOrdersIndexRoute
   AppDevelopersApiKeysIndexRoute: typeof AppDevelopersApiKeysIndexRoute
   AppDevelopersWebhooksIndexRoute: typeof AppDevelopersWebhooksIndexRoute
   AppDocumentsDocumentIdNotesNewRoute: typeof AppDocumentsDocumentIdNotesNewRoute
@@ -1059,6 +1139,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppOverviewRoute: AppOverviewRoute,
   AppActivityEventIdRoute: AppActivityEventIdRoute,
+  AppBillingProductsRoute: AppBillingProductsRoute,
   AppCatalogCustomersRoute: AppCatalogCustomersRoute,
   AppCatalogProductsRoute: AppCatalogProductsRoute,
   AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
@@ -1069,13 +1150,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppSettingsUsageRoute: AppSettingsUsageRoute,
   AppActivityIndexRoute: AppActivityIndexRoute,
+  AppBillingIndexRoute: AppBillingIndexRoute,
   AppCatalogIndexRoute: AppCatalogIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppHelpIndexRoute: AppHelpIndexRoute,
   AppIssuersIndexRoute: AppIssuersIndexRoute,
+  AppBillingOrdersOrderIdRoute: AppBillingOrdersOrderIdRoute,
   AppDevelopersApiKeysKeyIdRoute: AppDevelopersApiKeysKeyIdRoute,
   AppDevelopersWebhooksEndpointIdRoute: AppDevelopersWebhooksEndpointIdRoute,
   AppIssuersIssuerIdEditRoute: AppIssuersIssuerIdEditRoute,
+  AppBillingOrdersIndexRoute: AppBillingOrdersIndexRoute,
   AppDevelopersApiKeysIndexRoute: AppDevelopersApiKeysIndexRoute,
   AppDevelopersWebhooksIndexRoute: AppDevelopersWebhooksIndexRoute,
   AppDocumentsDocumentIdNotesNewRoute: AppDocumentsDocumentIdNotesNewRoute,

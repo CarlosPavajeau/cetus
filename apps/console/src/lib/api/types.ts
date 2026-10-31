@@ -121,6 +121,26 @@ export type PeriodUsage = Schemas["PeriodUsageView"];
 
 export type Usage = Schemas["UsageView"];
 
+export type AccountCredits = Schemas["AccountCreditsView"];
+
+export type CreditLot = AccountCredits["lots"][number];
+
+export type CreditMovement = AccountCredits["movements"][number];
+
+export type PlanOffer = Schemas["PlanOfferView"];
+
+export type PlanKind = PlanOffer["kind"];
+
+export type PlanVersion = Schemas["PlanVersionView"];
+
+export type BillingProfile = Schemas["BillingProfileView"];
+
+export type Order = Schemas["OrderView"];
+
+export type OrderStatus = Order["status"];
+
+export type OrderInvoice = Schemas["OrderInvoiceView"];
+
 export type CertificateUploadLink = Schemas["UploadLinkView"];
 
 export type SupportTicket = Schemas["SupportTicketView"];

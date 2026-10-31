@@ -11,7 +11,7 @@ import {
 import { Spinner } from "~/components/ui/spinner";
 import type { DocumentFile } from "~/lib/api/types";
 
-import { getDocumentFileUrl } from "./server";
+import type { DocumentFileUrl } from "./server";
 
 const files: { file: DocumentFile; label: string }[] = [
   { file: "pdf", label: "PDF" },
@@ -23,9 +23,13 @@ const files: { file: DocumentFile; label: string }[] = [
  * The document's files. Each click asks for a fresh presigned URL, which lives a few minutes and downloads
  * the file under its DIAN name.
  */
-export function DocumentDownloads({ documentId }: { documentId: string }) {
+export function DocumentDownloads({
+  getUrl,
+}: {
+  getUrl: (file: DocumentFile) => Promise<DocumentFileUrl>;
+}) {
   const download = useMutation({
-    mutationFn: (file: DocumentFile) => getDocumentFileUrl({ data: { id: documentId, file } }),
+    mutationFn: getUrl,
     onSuccess: (result) => {
       if (result.url) {
         window.location.assign(result.url);
