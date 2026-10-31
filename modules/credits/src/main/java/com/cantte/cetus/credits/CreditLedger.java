@@ -37,8 +37,8 @@ public class CreditLedger {
     Entitlements entitlements;
 
     /**
-     * false while observing: a document the credits would refuse is reserved as grace and only logged, so the
-     * numbers can be checked before anyone gets a 402.
+     * false while observing: nothing is refused, only logged, so the numbers can be checked before anyone gets a
+     * 402. A document that would have been refused is reserved as grace already settled: no lot ever pays for it.
      */
     @ConfigProperty(name = "cetus.credits.enforce", defaultValue = "true")
     boolean enforce;
@@ -94,19 +94,17 @@ public class CreditLedger {
     @Transactional(Transactional.TxType.MANDATORY)
     public CreditReservationEntity reserve(UUID accountId, UUID documentId, DocumentType type, OffsetDateTime now) {
         lock(accountId);
+        List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(accountId, now);
         if (type != DocumentType.CREDIT_NOTE) {
-            Optional<CreditRefused> refusal = refusal(accountId, now);
+            Optional<CreditRefused> refusal = refusal(accountId, lots, now);
             if (refusal.isPresent()) {
-                if (enforce) {
-                    throw refusal.get();
-                }
-                LOG.warnf(
-                        "Account %s would be refused document %s (%s); reserved as grace while observing",
-                        accountId, documentId, refusal.get().reason);
-                return reserveGrace(accountId, documentId);
+                refuse(accountId, refusal.get());
+                CreditReservationEntity waived = reserveGrace(accountId, documentId);
+                // Issued only because the credits were observed: no later lot pays for it.
+                waived.settled = true;
+                return waived;
             }
         }
-        List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(accountId, now);
         if (lots.isEmpty()) {
             return reserveGrace(accountId, documentId);
         }
@@ -126,6 +124,14 @@ public class CreditLedger {
         return reservation;
     }
 
+    /** Throws the refusal, or only logs it while observing. */
+    public void refuse(UUID accountId, CreditRefused refusal) {
+        if (enforce) {
+            throw refusal;
+        }
+        LOG.warnf("Account %s would be refused (%s) if the credits were enforced", accountId, refusal.reason.code);
+    }
+
     /** Confirms the document's reservations once the DIAN accepts it; a grace one is settled if a lot has credits. */
     @Transactional(Transactional.TxType.MANDATORY)
     public void confirm(UUID documentId, OffsetDateTime now) {
@@ -140,7 +146,7 @@ public class CreditLedger {
                     0,
                     Actor.system(),
                     null);
-            if (reservation.kind == CreditReservationEntity.Kind.GRACE) {
+            if (reservation.kind == CreditReservationEntity.Kind.GRACE && !reservation.settled) {
                 CreditGrantEntity.lockAvailable(reservation.accountId, now).stream()
                         .findFirst()
                         .ifPresent(lot -> settle(reservation, lot));
@@ -276,14 +282,14 @@ public class CreditLedger {
         return new Balance(available, graceUsed(accountId), entitlements.of(accountId, now));
     }
 
-    private Optional<CreditRefused> refusal(UUID accountId, OffsetDateTime now) {
+    private Optional<CreditRefused> refusal(UUID accountId, List<CreditGrantEntity> lots, OffsetDateTime now) {
         Entitlements.Entitlement entitlement = entitlements.of(accountId, now);
         if (!entitlement.product()) {
             return Optional.of(new CreditRefused(
                     CreditRefused.Reason.NO_ACTIVE_PRODUCT,
                     "The account has no active package; credit notes can still be issued"));
         }
-        if (!CreditGrantEntity.lockAvailable(accountId, now).isEmpty()) {
+        if (!lots.isEmpty()) {
             return Optional.empty();
         }
         if (graceUsed(accountId) >= entitlement.graceMargin()) {

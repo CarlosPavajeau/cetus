@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** While observing, a document the credits would refuse is issued and reserved as grace. */
+/** While observing, a document the credits would refuse is issued as grace that no lot will pay for. */
 @QuarkusTest
 @TestProfile(CreditsObservationTest.Observing.class)
 class CreditsObservationTest {
@@ -29,7 +29,7 @@ class CreditsObservationTest {
     }
 
     @Test
-    void aDocumentWithoutAProductIsReservedAsGrace() {
+    void aDocumentWithoutAProductIsIssuedAsWaivedGrace() {
         ConsoleUser user = ConsoleUser.newOrganization();
         String accountId = ConsoleFixtures.bootstrap(user, "Observada SAS");
         String issuerId = ConsoleFixtures.completeSetup(user, ConsoleFixtures.createIssuer(user, "900123456", "LIVE"))
@@ -76,5 +76,6 @@ class CreditsObservationTest {
                         .getFirst());
         assertThat(reservation.kind).isEqualTo(CreditReservationEntity.Kind.GRACE);
         assertThat(reservation.accountId).isEqualTo(UUID.fromString(accountId));
+        assertThat(reservation.settled).isTrue();
     }
 }
