@@ -132,10 +132,32 @@ public class CreditLedger {
         LOG.warnf("Account %s would be refused (%s) if the credits were enforced", accountId, refusal.reason.code);
     }
 
-    /** Confirms the document's reservations once the DIAN accepts it; a grace one is settled if a lot has credits. */
+    /**
+     * Confirms the document's reservations once the DIAN accepts it; a grace one is settled if a lot has credits.
+     * A reservation released while the document seemed dead (support resolved it as not issued, then a late attempt
+     * got it accepted) is charged again: from the lot that expires first, else as grace the next lot settles.
+     */
     @Transactional(Transactional.TxType.MANDATORY)
     public void confirm(UUID documentId, OffsetDateTime now) {
-        for (CreditReservationEntity reservation : reserved(documentId)) {
+        List<CreditReservationEntity> reservations = CreditReservationEntity.listByDocument(documentId);
+        if (reservations.isEmpty()) {
+            return;
+        }
+        lock(reservations.getFirst().accountId);
+        for (CreditReservationEntity reservation : reservations) {
+            switch (reservation.status) {
+                case RESERVED -> {
+                    if (reservation.kind == CreditReservationEntity.Kind.GRACE && !reservation.settled) {
+                        CreditGrantEntity.lockAvailable(reservation.accountId, now).stream()
+                                .findFirst()
+                                .ifPresent(lot -> settle(reservation, lot));
+                    }
+                }
+                case RELEASED -> recharge(reservation, now);
+                case CONFIRMED -> {
+                    continue;
+                }
+            }
             reservation.status = CreditReservationEntity.Status.CONFIRMED;
             move(
                     reservation.accountId,
@@ -146,12 +168,31 @@ public class CreditLedger {
                     0,
                     Actor.system(),
                     null);
-            if (reservation.kind == CreditReservationEntity.Kind.GRACE && !reservation.settled) {
-                CreditGrantEntity.lockAvailable(reservation.accountId, now).stream()
-                        .findFirst()
-                        .ifPresent(lot -> settle(reservation, lot));
-            }
         }
+    }
+
+    /** Takes the released reservation's credit again, from the lot that expires first or as unsettled grace. */
+    private void recharge(CreditReservationEntity reservation, OffsetDateTime now) {
+        List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(reservation.accountId, now);
+        reservation.settled = false;
+        if (lots.isEmpty()) {
+            reservation.kind = CreditReservationEntity.Kind.GRACE;
+            reservation.grantId = null;
+        } else {
+            CreditGrantEntity lot = lots.getFirst();
+            take(lot);
+            reservation.kind = CreditReservationEntity.Kind.CREDIT;
+            reservation.grantId = lot.id;
+        }
+        move(
+                reservation.accountId,
+                reservation.grantId,
+                reservation.id,
+                reservation.documentId,
+                CreditMovementEntity.Type.RESERVE,
+                -reservation.quantity,
+                Actor.system(),
+                "Aceptado por la DIAN después de liberarse");
     }
 
     /**

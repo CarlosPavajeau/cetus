@@ -118,6 +118,52 @@ class VerdictCreditsTest {
         assertThat(reservationOf(invoice).status).isEqualTo(CreditReservationEntity.Status.RESERVED);
     }
 
+    @Test
+    void aDocumentAcceptedAfterSupportReleasedItsCreditIsChargedAgain() {
+        UUID first = live(fixtures.invoice());
+        UUID accountId = accountOf(first);
+        UUID second = live(fixtures.invoiceFor(accountId));
+        CreditGrantEntity lot = grant(accountId, 1, OffsetDateTime.now().plusMonths(1));
+        reserve(accountId, first, second);
+        release(second);
+
+        recorder.completed(second, ACCEPTED);
+
+        CreditReservationEntity charged = reservationOf(second);
+        assertThat(charged.status).isEqualTo(CreditReservationEntity.Status.CONFIRMED);
+        assertThat(charged.kind).isEqualTo(CreditReservationEntity.Kind.GRACE);
+        assertThat(charged.grantId).isNull();
+        assertThat(charged.settled).isFalse();
+        assertThat(lotOf(lot.id).remaining).isZero();
+
+        QuarkusTransaction.requiringNew().run(() -> ledger.confirm(second, OffsetDateTime.now()));
+        assertThat(movementsOf(second))
+                .filteredOn(movement -> movement.type == CreditMovementEntity.Type.CONFIRM)
+                .hasSize(1);
+    }
+
+    @Test
+    void aReleasedCreditComesBackFromALotWhenOneHasCredits() {
+        UUID invoice = live(fixtures.invoice());
+        UUID accountId = accountOf(invoice);
+        CreditGrantEntity lot = grant(accountId, 2, OffsetDateTime.now().plusMonths(1));
+        reserve(accountId, invoice);
+        release(invoice);
+
+        recorder.completed(invoice, ACCEPTED);
+
+        CreditReservationEntity charged = reservationOf(invoice);
+        assertThat(charged.status).isEqualTo(CreditReservationEntity.Status.CONFIRMED);
+        assertThat(charged.grantId).isEqualTo(lot.id);
+        assertThat(lotOf(lot.id).remaining).isEqualTo(1);
+        assertThat(sumOfMovements(lot.id)).isEqualTo(1);
+    }
+
+    private void release(UUID documentId) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> ledger.release(documentId, Actor.system(), "Resuelto como no emitido"));
+    }
+
     private CreditGrantEntity grant(UUID accountId, int quantity, OffsetDateTime expiresAt) {
         return QuarkusTransaction.requiringNew()
                 .call(() -> ledger.grant(
