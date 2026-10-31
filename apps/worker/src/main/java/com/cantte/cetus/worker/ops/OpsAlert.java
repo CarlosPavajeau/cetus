@@ -16,6 +16,7 @@ public record OpsAlert(String key, Category category, boolean repeats, String su
         CERTIFICATE_EXPIRING(true),
         RANGE_RUNNING_OUT(true),
         PAYMENT_REVIEW(true),
+        CREDIT_LEDGER_MISMATCH(true),
         /** Its keys carry the year: a share is reported once that year, even if the income falls under it again. */
         VAT_THRESHOLD(false);
 

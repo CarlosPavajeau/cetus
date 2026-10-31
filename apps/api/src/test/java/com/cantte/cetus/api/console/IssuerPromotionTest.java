@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleUser;
+import com.cantte.cetus.api.support.Credits;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import org.junit.jupiter.api.Test;
@@ -90,6 +91,7 @@ class IssuerPromotionTest {
     }
 
     private static io.restassured.response.Response promote(ConsoleUser user, String issuerId) {
+        Credits.ensurePackage(user);
         return user.request().post("/console/issuers/" + issuerId + "/promote");
     }
 }

@@ -1,3 +1,4 @@
+import { grantPackage } from "../support/credits";
 import { addRange, createIssuer, onboardIssuer } from "../support/issuers";
 import { expect, open, pickTaxLevel, test } from "./fixtures";
 
@@ -74,6 +75,7 @@ test("an issuer of another organization is not found", async ({ page, organizati
 
 test("a test issuer in habilitación is promoted to production", async ({ page, organization }) => {
   const testId = await onboardIssuer(organization, "900123456", "Produccion SAS");
+  await grantPackage(organization);
 
   await open(page, `/issuers/${testId}`);
   await page.getByRole("button", { name: "Pasar a producción" }).click();

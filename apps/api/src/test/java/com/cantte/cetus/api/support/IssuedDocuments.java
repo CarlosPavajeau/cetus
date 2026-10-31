@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** A TEST issuer with an API key, and invoices left as the worker leaves them once accepted and delivered. */
+/** A TEST or LIVE issuer with an API key, and invoices left as the worker leaves them once accepted and delivered. */
 public final class IssuedDocuments {
 
     private IssuedDocuments() {}
@@ -31,6 +31,21 @@ public final class IssuedDocuments {
         String issuerId = ConsoleFixtures.onboard(user).issuerId();
         String key = user.request()
                 .body(Map.of("name", "ERP", "environment", "TEST"))
+                .post("/console/api-keys")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("secret");
+        return new Issuer(issuerId, key);
+    }
+
+    /** A LIVE issuer with every credential and an API key, its account with a package. */
+    public static Issuer liveIssuer(ConsoleUser user, String name) {
+        ConsoleFixtures.bootstrap(user, name);
+        String issuerId = ConsoleFixtures.completeSetup(user, ConsoleFixtures.createIssuer(user, "900123456", "LIVE"))
+                .issuerId();
+        String key = user.request()
+                .body(Map.of("name", "ERP", "environment", "LIVE"))
                 .post("/console/api-keys")
                 .then()
                 .statusCode(200)

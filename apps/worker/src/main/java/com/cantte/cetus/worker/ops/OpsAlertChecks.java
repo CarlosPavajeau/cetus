@@ -163,6 +163,24 @@ public class OpsAlertChecks {
                 .toList();
     }
 
+    /** Credit lots whose remaining is not the sum of their movements: a write went around the ledger. */
+    List<OpsAlert> creditLedgerMismatches() {
+        return rows("""
+                SELECT g.id::text, g.account_id::text, g.remaining::text, coalesce(sum(m.quantity), 0)::text
+                FROM billing.credit_grants g
+                LEFT JOIN billing.credit_movements m ON m.grant_id = g.id
+                GROUP BY g.id
+                HAVING g.remaining <> coalesce(sum(m.quantity), 0)
+                """, Map.of()).stream()
+                .map(r -> OpsAlert.of(
+                        Category.CREDIT_LEDGER_MISMATCH,
+                        r[0],
+                        false,
+                        "El lote de créditos %s de la cuenta %s tiene %s y sus movimientos suman %s"
+                                .formatted(r[0], r[1], r[2], r[3])))
+                .toList();
+    }
+
     /** Orders a payment left for a person: another amount, or an approval or a void that does not fit. */
     List<OpsAlert> paymentsToReview() {
         return rows("""
