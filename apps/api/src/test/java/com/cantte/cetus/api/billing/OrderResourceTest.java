@@ -28,12 +28,12 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class OrderResourceTest {
 
-    @Inject
-    Credits credits;
-
     private static final ConsoleUser ADMIN = ConsoleUser.platformStaff(PlatformRoles.ADMIN);
     /** The integrity secret of the test profile. */
     private static final String INTEGRITY_SECRET = "test_integrity_cetus";
+
+    @Inject
+    Credits credits;
 
     @Test
     void anOwnerBuysAPackageAndGetsASignedCheckout() throws Exception {
