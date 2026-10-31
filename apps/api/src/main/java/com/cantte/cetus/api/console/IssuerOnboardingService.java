@@ -2,6 +2,7 @@ package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.aws.SecretCipher;
+import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.credits.CreditRefused;
 import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.domain.DomainException;
@@ -49,6 +50,9 @@ public class IssuerOnboardingService {
 
     @Inject
     Entitlements entitlements;
+
+    @Inject
+    CreditLedger credits;
 
     @Inject
     SecretCipher cipher;
@@ -163,8 +167,11 @@ public class IssuerOnboardingService {
     private void requirePlanIssuerSlot(UUID accountId) {
         Entitlements.Entitlement entitlement = entitlements.of(accountId, OffsetDateTime.now());
         if (!entitlement.product()) {
-            throw new CreditRefused(
-                    CreditRefused.Reason.NO_ACTIVE_PRODUCT, "Production issuers need a package in force");
+            credits.refuse(
+                    accountId,
+                    new CreditRefused(
+                            CreditRefused.Reason.NO_ACTIVE_PRODUCT, "Production issuers need a package in force"));
+            return;
         }
         IssuerEntity.getEntityManager()
                 .createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
@@ -172,9 +179,11 @@ public class IssuerOnboardingService {
                 .getSingleResult();
         long issuers = IssuerEntity.count("accountId = ?1 and environment = ?2", accountId, Environment.LIVE);
         if (issuers >= entitlement.issuersIncluded()) {
-            throw new CreditRefused(
-                    CreditRefused.Reason.ISSUER_LIMIT_REACHED,
-                    "The account's products include " + entitlement.issuersIncluded() + " production issuers");
+            credits.refuse(
+                    accountId,
+                    new CreditRefused(
+                            CreditRefused.Reason.ISSUER_LIMIT_REACHED,
+                            "The account's products include " + entitlement.issuersIncluded() + " production issuers"));
         }
     }
 
