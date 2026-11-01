@@ -487,8 +487,24 @@ class WompiGatewayTest {
         assertThat(last.get()).isEqualTo(new Exchange("/v1/refunds", "Bearer prv_prod_example"));
         assertThat(JSON.readValue(sent.get().body(), SentRefund.class))
                 .isEqualTo(new SentRefund("1-2-3", 150_000, "Pedido", "CET-1-R1"));
-        assertThat(refund)
-                .isEqualTo(new Refund(Optional.of("v2_refund_abc123"), Refund.Status.APPROVED, Optional.of("")));
+        assertThat(refund).isEqualTo(new Refund(Optional.of("1523"), Refund.Status.APPROVED, Optional.of("")));
+    }
+
+    @Test
+    void readsARefundByItsId() {
+        respond(200, new Envelope(new RefundAnswer(32458, "APPROVED", null, null, 5_000_000, "1-2-3", null)));
+
+        Optional<Refund> refund = gateway(DOCS_KEYS).refundOf("32458");
+
+        assertThat(last.get()).isEqualTo(new Exchange("/v1/refunds/32458", "Bearer prv_prod_example"));
+        assertThat(refund).contains(new Refund(Optional.of("32458"), Refund.Status.APPROVED, Optional.empty()));
+    }
+
+    @Test
+    void anUnknownRefundIsEmpty() {
+        respond(404, new ErrorBody(new ErrorBody.Error("NOT_FOUND_ERROR", "La entidad solicitada no existe")));
+
+        assertThat(gateway(DOCS_KEYS).refundOf("1")).isEmpty();
     }
 
     @Test

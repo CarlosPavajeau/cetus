@@ -112,7 +112,8 @@ public class PaymentSettlement {
     }
 
     private Outcome approve(BillingOrderEntity order, PaymentTransactionEntity payment) {
-        if (order.status == BillingOrderEntity.Status.PAID) {
+        // Wompi keeps a refunded payment APPROVED: a refunded order was paid by it all the same.
+        if (order.status == BillingOrderEntity.Status.PAID || order.status == BillingOrderEntity.Status.REFUNDED) {
             boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
                     .anyMatch(other ->
                             other.status == PaymentTransactionEntity.Status.APPROVED && !other.id.equals(payment.id));

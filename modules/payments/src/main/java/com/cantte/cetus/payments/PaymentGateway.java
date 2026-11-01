@@ -64,4 +64,13 @@ public interface PaymentGateway {
      * @throws PaymentRejectedException when the provider refuses the refund: it was not made
      */
     Refund refund(RefundRequest request);
+
+    /**
+     * A refund as the provider has it now, to learn how one answered PENDING ended.
+     *
+     * @return empty when the provider does not know the id
+     * @throws PaymentTransientException when the provider cannot be reached or fails; ask again later
+     * @throws PaymentRejectedException when the provider refuses the request or answers what cannot be read
+     */
+    Optional<Refund> refundOf(String id);
 }

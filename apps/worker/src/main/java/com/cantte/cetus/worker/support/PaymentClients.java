@@ -110,6 +110,11 @@ public class PaymentClients {
                 return call("payments.refund", () -> gateway.refund(request));
             }
 
+            @Override
+            public Optional<Refund> refundOf(String id) {
+                return call("payments.refund_status", () -> gateway.refundOf(id));
+            }
+
             private <T> T call(String span, Supplier<T> work) {
                 String outcome = "failed";
                 try {

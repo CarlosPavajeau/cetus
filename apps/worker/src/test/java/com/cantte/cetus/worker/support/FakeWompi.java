@@ -24,7 +24,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * Wompi API stand-in for worker tests: answers GET /v1/transactions/{id} and GET /v1/transactions?reference=
  * from the transactions a test puts, takes charges to saved sources (POST /v1/transactions, PENDING until a test
  * puts their outcome, a reference once), takes refunds (POST /v1/refunds, decided as {@link #refunding(String)}
- * says), serves the terms in force (GET /v1/merchants/info), and answers 503 while {@link #down(boolean)}. Only the
+ * says, PENDING ones until {@link #decideRefunds(String)}) and answers for them (GET /v1/refunds/{id}), serves the terms in force (GET /v1/merchants/info), and answers 503 while {@link #down(boolean)}. Only the
  * private key is accepted.
  */
 @ApplicationScoped
@@ -102,6 +102,7 @@ public class FakeWompi {
     private final AtomicInteger requests = new AtomicInteger();
     private final List<Charge> charges = new CopyOnWriteArrayList<>();
     private final List<RefundAsked> refunds = new CopyOnWriteArrayList<>();
+    private final Map<Long, RefundBody> refundsById = new ConcurrentHashMap<>();
     private volatile String refundStatus = "APPROVED";
     private volatile boolean down;
     private volatile boolean refusing;
@@ -153,6 +154,20 @@ public class FakeWompi {
         refundStatus = status;
     }
 
+    /** Decides every refund still PENDING, as Wompi does seconds after taking it. */
+    public void decideRefunds(String status) {
+        refundsById.replaceAll((id, refund) -> "PENDING".equals(refund.status())
+                ? new RefundBody(
+                        refund.id(),
+                        status,
+                        refund.statusMessage(),
+                        refund.v2RefundId(),
+                        refund.amountInCents(),
+                        refund.transactionId(),
+                        refund.reference())
+                : refund);
+    }
+
     /** The refunds asked, the first first. */
     public List<RefundAsked> refunds() {
         return List.copyOf(refunds);
@@ -171,6 +186,7 @@ public class FakeWompi {
         transactions.clear();
         charges.clear();
         refunds.clear();
+        refundsById.clear();
         refundStatus = "APPROVED";
         requests.set(0);
         down = false;
@@ -241,19 +257,31 @@ public class FakeWompi {
             reply(exchange, 503, new ErrorBody(new ErrorBody.Error("SERVICE_UNAVAILABLE", "down")));
             return;
         }
+        if (exchange.getRequestMethod().equals("GET")) {
+            String id = exchange.getRequestURI().getPath().substring("/v1/refunds/".length());
+            RefundBody found = id.matches("\\d+") ? refundsById.get(Long.parseLong(id)) : null;
+            if (found == null) {
+                reply(
+                        exchange,
+                        404,
+                        new ErrorBody(new ErrorBody.Error("NOT_FOUND_ERROR", "La entidad solicitada no existe")));
+                return;
+            }
+            reply(exchange, 200, new Envelope(found));
+            return;
+        }
         RefundAsked asked = JSON.readValue(exchange.getRequestBody(), RefundAsked.class);
         refunds.add(asked);
-        reply(
-                exchange,
-                201,
-                new Envelope(new RefundBody(
-                        refunds.size(),
-                        refundStatus,
-                        "DECLINED".equals(refundStatus) ? "Tiempo límite sin encontrar fondos excedido" : "",
-                        "v2_refund_" + refunds.size(),
-                        asked.amountInCents(),
-                        asked.transactionId(),
-                        asked.reference())));
+        RefundBody refund = new RefundBody(
+                refunds.size(),
+                refundStatus,
+                "DECLINED".equals(refundStatus) ? "Tiempo límite sin encontrar fondos excedido" : null,
+                null,
+                asked.amountInCents(),
+                asked.transactionId(),
+                asked.reference());
+        refundsById.put(refund.id(), refund);
+        reply(exchange, 201, new Envelope(refund));
     }
 
     private static void reply(HttpExchange exchange, int status, Object body) throws IOException {

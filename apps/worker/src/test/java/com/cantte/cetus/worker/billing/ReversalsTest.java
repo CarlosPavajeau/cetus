@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.billing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.credits.Entitlements;
@@ -20,6 +21,7 @@ import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
 import com.cantte.cetus.worker.handlers.RefundOrderHandler;
+import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.FakeResendResource;
 import com.cantte.cetus.worker.support.FakeWompi;
 import com.cantte.cetus.worker.support.FakeWompiResource;
@@ -28,6 +30,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -106,6 +109,8 @@ class ReversalsTest {
 
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
         assertThat(debtsOf(accountId)).isEmpty();
+        assertThat(settlement.apply(transaction(order, PaymentStatus.APPROVED))).isEqualTo(Outcome.ALREADY_PAID);
+        assertThat(orderOf(order.id).reviewReason).isNull();
     }
 
     @Test
@@ -252,7 +257,38 @@ class ReversalsTest {
         });
         PaymentReversalEntity approved = reversalOf(reversal);
         assertThat(approved.status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
-        assertThat(approved.providerRefundId).isEqualTo("v2_refund_1");
+        assertThat(approved.providerRefundId).isEqualTo("1");
+        assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.REVOKED);
+    }
+
+    @Test
+    void aRefundWompiTakesPendingIsFollowedUntilItIsDecided() {
+        UUID accountId = account();
+        BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");
+        UUID reversal = request(order.id, 500_000);
+        wompi.refunding("PENDING");
+
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(1)));
+        assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.SUBMITTED);
+        assertThat(reversalOf(reversal).providerRefundId).isEqualTo("1");
+        QuarkusTransaction.requiringNew()
+                .run(() -> PaymentReversalEntity.getEntityManager()
+                        .createNativeQuery(
+                                "UPDATE billing.payment_reversals SET created_at = now() - interval '2 hours'"
+                                        + " WHERE id = :id")
+                        .setParameter("id", reversal)
+                        .executeUpdate());
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(30)));
+
+        wompi.decideRefunds("APPROVED");
+        refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal));
+
+        assertThat(wompi.refunds()).hasSize(1);
+        assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
         assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.REVOKED);
     }
 

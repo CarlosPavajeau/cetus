@@ -195,8 +195,9 @@ public final class WompiGateway implements PaymentGateway {
     }
 
     /**
-     * Refunds V2: the refund comes back decided, with Wompi's own id. An answer that cannot be read, or a status it
-     * does not document, is read as PENDING: Wompi took the request, so the money may have gone back.
+     * Refunds V2. Checked in the sandbox: the refund usually comes back PENDING with Wompi's numeric id, and is
+     * decided seconds later ({@link #refundOf}). An answer that cannot be read, or a status it does not document,
+     * is read as PENDING: Wompi took the request, so the money may have gone back.
      */
     @Override
     public Refund refund(RefundRequest request) {
@@ -214,15 +215,29 @@ public final class WompiGateway implements PaymentGateway {
         } catch (PaymentRejectedException e) {
             return new Refund(Optional.empty(), Refund.Status.PENDING, Optional.empty());
         }
+        return refundFrom(data);
+    }
+
+    @Override
+    public Optional<Refund> refundOf(String id) {
+        HttpResponse<String> response = send(get("/refunds/" + URLEncoder.encode(id, StandardCharsets.UTF_8)));
+        if (response.statusCode() == NOT_FOUND) {
+            return Optional.empty();
+        }
+        JsonNode data = body(response).path("data");
+        if (!data.isObject()) {
+            throw new PaymentRejectedException("Wompi answered without data", null);
+        }
+        return Optional.of(refundFrom(data));
+    }
+
+    private static Refund refundFrom(JsonNode data) {
         Refund.Status status = optional(data, "status")
                 .flatMap(name -> Arrays.stream(Refund.Status.values())
                         .filter(known -> known.name().equals(name))
                         .findFirst())
                 .orElse(Refund.Status.PENDING);
-        return new Refund(
-                optional(data, "v2_refund_id").or(() -> optional(data, "id")),
-                status,
-                optional(data, "status_message"));
+        return new Refund(optional(data, "id"), status, optional(data, "status_message"));
     }
 
     @Override
