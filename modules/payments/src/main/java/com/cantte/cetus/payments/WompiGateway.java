@@ -32,9 +32,9 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
- * {@link PaymentGateway} on Wompi's REST API (https://docs.wompi.co/docs/colombia/). Checkouts are signed with
- * the integrity secret, transactions are read with the private key and events are authenticated with the
- * events secret. One instance per set of keys: its HttpClient and connection pool are shared by every call.
+ * {@link PaymentGateway} on Wompi's REST API (https://docs.wompi.co/docs/colombia/). Checkouts and charges are
+ * signed with the integrity secret, transactions and payment sources go with the private key and events are
+ * authenticated with the events secret. One instance per set of keys: its HttpClient and connection pool are shared by every call.
  */
 public final class WompiGateway implements PaymentGateway {
 
@@ -119,6 +119,79 @@ public final class WompiGateway implements PaymentGateway {
         List<PaymentTransaction> transactions = new ArrayList<>();
         data.forEach(transaction -> transactions.add(transactionOf(transaction)));
         return transactions;
+    }
+
+    /** {@code GET /merchants/info} replaced {@code GET /merchants/{public key}}, retired on 2026-10-31. */
+    @Override
+    public CardSetup cardSetup() {
+        JsonNode data = body(send(HttpRequest.newBuilder(URI.create(baseUrl + "/merchants/info"))
+                        .timeout(readTimeout)
+                        .header("Accept", "application/json")
+                        .header("x-merchant-public-key", keys.publicKey())
+                        .GET()
+                        .build()))
+                .path("data");
+        try {
+            return new CardSetup(
+                    keys.publicKey(),
+                    URI.create(baseUrl + "/tokens/cards"),
+                    acceptanceOf(data.path("presigned_acceptance")),
+                    acceptanceOf(data.path("presigned_personal_data_auth")));
+        } catch (IllegalArgumentException e) {
+            throw new PaymentRejectedException("Unreadable Wompi merchant: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public PaymentSource saveCard(CardSourceRequest request) {
+        Map<String, Object> source = new LinkedHashMap<>();
+        source.put("type", "CARD");
+        source.put("token", request.cardToken());
+        source.put("customer_email", request.customerEmail());
+        source.put("acceptance_token", request.acceptanceToken());
+        source.put("accept_personal_auth", request.personalDataAuthToken());
+        JsonNode data = body(send(post("/payment_sources", source))).path("data");
+        try {
+            return new PaymentSource(
+                    required(data, "id"),
+                    PaymentSource.Status.valueOf(required(data, "status")),
+                    required(data.path("public_data"), "last_four"));
+        } catch (IllegalArgumentException e) {
+            throw new PaymentRejectedException("Unreadable Wompi payment source: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Wompi takes the source's id as a number and requires the integrity signature, without an expiration. Not
+     * {@code recurrent}: that one is for the same amount on a schedule, and a renewal carries its overage.
+     */
+    @Override
+    public PaymentTransaction charge(ChargeRequest request) {
+        CardSetup setup = cardSetup();
+        long sourceId;
+        try {
+            sourceId = Long.parseLong(request.sourceId());
+        } catch (NumberFormatException e) {
+            throw new PaymentRejectedException("A Wompi payment source id is a number", e);
+        }
+        Map<String, Object> transaction = new LinkedHashMap<>();
+        transaction.put("amount_in_cents", request.amountCents());
+        transaction.put("currency", request.currency());
+        transaction.put(
+                "signature",
+                sha256(request.reference() + request.amountCents() + request.currency() + keys.integritySecret()));
+        transaction.put("customer_email", request.customerEmail());
+        transaction.put("reference", request.reference());
+        transaction.put("payment_source_id", sourceId);
+        transaction.put("payment_method", Map.of("installments", 1));
+        transaction.put("recurrent", false);
+        transaction.put("acceptance_token", setup.endUserPolicy().token());
+        transaction.put("accept_personal_auth", setup.personalDataAuth().token());
+        JsonNode data = body(send(post("/transactions", transaction))).path("data");
+        if (!data.isObject()) {
+            throw new PaymentRejectedException("Wompi answered without data", null);
+        }
+        return transactionOf(data);
     }
 
     @Override
@@ -224,6 +297,27 @@ public final class WompiGateway implements PaymentGateway {
                 .header("Authorization", "Bearer " + keys.privateKey())
                 .GET()
                 .build();
+    }
+
+    private HttpRequest post(String path, Map<String, Object> body) {
+        String text;
+        try {
+            text = json.writeValueAsString(body);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("A map of strings and numbers is always JSON", e);
+        }
+        return HttpRequest.newBuilder(URI.create(baseUrl + path))
+                .timeout(readTimeout)
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + keys.privateKey())
+                .POST(HttpRequest.BodyPublishers.ofString(text, StandardCharsets.UTF_8))
+                .build();
+    }
+
+    private static CardSetup.AcceptanceDocument acceptanceOf(JsonNode presigned) {
+        return new CardSetup.AcceptanceDocument(
+                required(presigned, "acceptance_token"), URI.create(required(presigned, "permalink")));
     }
 
     private JsonNode body(HttpResponse<String> response) {
