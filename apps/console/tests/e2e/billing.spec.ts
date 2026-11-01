@@ -106,8 +106,11 @@ test("a subscribed account saves a card for its renewals and removes it", async 
   if (await unavailable.isVisible()) {
     return;
   }
-  await dialog.getByLabel("Número de la tarjeta").fill("4242 4242 4242 4242");
-  await dialog.getByLabel("Vencimiento (MM/AA)").fill("08/29");
+  await dialog.getByLabel("Número de la tarjeta").pressSequentially("4242424242424242");
+  await expect(dialog.getByLabel("Número de la tarjeta")).toHaveValue("4242 4242 4242 4242");
+  await expect(dialog.getByText("Visa", { exact: true })).toBeVisible();
+  await dialog.getByLabel("Vencimiento (MM/AA)").pressSequentially("0829");
+  await expect(dialog.getByLabel("Vencimiento (MM/AA)")).toHaveValue("08/29");
   await dialog.getByLabel("Código de seguridad").fill("123");
   await dialog.getByLabel("Nombre en la tarjeta").fill("Prueba Cetus");
   await save.click();

@@ -36,9 +36,32 @@ function luhn(number: string) {
   return sum % 10 === 0;
 }
 
+type Expiry = { month: string; year: string };
+
+/** "08/29", "0829" or "8/29" → { month: "08", year: "29" }; null for anything else. */
+function expiryOf(text: string): Expiry | null {
+  const [, monthText, year] = /^\s*(\d{1,2})\s*\/?\s*(\d{2})\s*$/.exec(text) ?? [];
+  if (
+    monthText === undefined ||
+    year === undefined ||
+    (monthText.length === 1 && !text.includes("/"))
+  ) {
+    return null;
+  }
+  const month = Number(monthText);
+  return month >= 1 && month <= 12 ? { month: monthText.padStart(2, "0"), year } : null;
+}
+
+/** A card works through the last day of its month. */
+function expired(expiry: Expiry, today: Date) {
+  const year = 2000 + Number(expiry.year);
+  const month = Number(expiry.month);
+  return year * 12 + month < today.getFullYear() * 12 + today.getMonth() + 1;
+}
+
 /**
- * The card as the person writes it, only ever sent to Wompi from the browser. The expiry is MM/AA; both of
- * Wompi's documents must be accepted.
+ * The card as the person writes it, only ever sent to Wompi from the browser. The expiry is MM/AA, with or without
+ * the slash; both of Wompi's documents must be accepted.
  */
 export const cardFormSchema = type({
   number: type("string")
@@ -49,16 +72,18 @@ export const cardFormSchema = type({
         : ctx.reject({ message: "Escribe el número completo de la tarjeta." }),
     ),
   expiry: type("string")
-    .pipe((text) => /^\s*(\d{1,2})\s*\/\s*(\d{2})\s*$/.exec(text))
-    .narrow((match, ctx) =>
-      match !== null && Number(match[1]) >= 1 && Number(match[1]) <= 12
+    .pipe(expiryOf)
+    .narrow((expiry, ctx) =>
+      expiry !== null
         ? true
         : ctx.reject({ message: "Escribe el vencimiento como MM/AA." }),
     )
-    .pipe((match) => ({
-      month: (match?.[1] ?? "").padStart(2, "0"),
-      year: match?.[2] ?? "",
-    })),
+    .narrow((expiry, ctx) =>
+      expiry === null || !expired(expiry, new Date())
+        ? true
+        : ctx.reject({ message: "La tarjeta ya venció. Usa otra tarjeta." }),
+    )
+    .pipe((expiry) => ({ month: expiry?.month ?? "", year: expiry?.year ?? "" })),
   cvc: type("string.trim").narrow((cvc, ctx) =>
     /^\d{3,4}$/.test(cvc) ? true : ctx.reject({ message: "Escribe los 3 o 4 dígitos del código." }),
   ),

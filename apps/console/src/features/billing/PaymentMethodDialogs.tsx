@@ -1,7 +1,8 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CreditCardIcon } from "lucide-react";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
@@ -18,9 +19,22 @@ import {
 } from "~/components/ui/dialog";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "~/components/ui/input-group";
 import { Spinner } from "~/components/ui/spinner";
 import type { Order, PaymentMethod } from "~/lib/api/types";
 
+import {
+  cardBrandLabel,
+  cardBrandOf,
+  formatCardNumber,
+  formatCvc,
+  formatExpiry,
+} from "./cardInput";
 import { cardLabel } from "./labels";
 import { billingKey } from "./queries";
 import { type CardForm, cardFormSchema } from "./schema";
@@ -60,6 +74,7 @@ export function PaymentMethodDialog({ paymentMethod }: { paymentMethod: PaymentM
     gcTime: 0,
   });
   const form = useForm({ resolver: arktypeResolver(cardFormSchema), defaultValues: emptyCard });
+  const number = useWatch({ control: form.control, name: "number" });
   const save = useMutation({
     mutationFn: async (card: CardForm): Promise<BillingResult> => {
       if (!setup.data?.ok) {
@@ -127,19 +142,34 @@ export function PaymentMethodDialog({ paymentMethod }: { paymentMethod: PaymentM
             <Controller
               name="number"
               control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="card-number">Número de la tarjeta</FieldLabel>
-                  <Input
-                    {...field}
-                    id="card-number"
-                    inputMode="numeric"
-                    autoComplete="cc-number"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  <FieldError errors={[fieldState.error]} />
-                </Field>
-              )}
+              render={({ field, fieldState }) => {
+                const brand = cardBrandOf(field.value);
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="card-number">Número de la tarjeta</FieldLabel>
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <CreditCardIcon />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        {...field}
+                        onChange={(event) => field.onChange(formatCardNumber(event.target.value))}
+                        id="card-number"
+                        inputMode="numeric"
+                        autoComplete="cc-number"
+                        placeholder="0000 0000 0000 0000"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {brand && (
+                        <InputGroupAddon align="inline-end">
+                          <InputGroupText>{cardBrandLabel[brand]}</InputGroupText>
+                        </InputGroupAddon>
+                      )}
+                    </InputGroup>
+                    <FieldError errors={[fieldState.error]} />
+                  </Field>
+                );
+              }}
             />
             <div className="grid gap-4 sm:grid-cols-2">
               <Controller
@@ -150,6 +180,7 @@ export function PaymentMethodDialog({ paymentMethod }: { paymentMethod: PaymentM
                     <FieldLabel htmlFor="card-expiry">Vencimiento (MM/AA)</FieldLabel>
                     <Input
                       {...field}
+                      onChange={(event) => field.onChange(formatExpiry(event.target.value))}
                       id="card-expiry"
                       inputMode="numeric"
                       autoComplete="cc-exp"
@@ -168,7 +199,9 @@ export function PaymentMethodDialog({ paymentMethod }: { paymentMethod: PaymentM
                     <FieldLabel htmlFor="card-cvc">Código de seguridad</FieldLabel>
                     <Input
                       {...field}
+                      onChange={(event) => field.onChange(formatCvc(event.target.value))}
                       id="card-cvc"
+                      placeholder={cardBrandOf(number) === "AMEX" ? "0000" : "000"}
                       inputMode="numeric"
                       autoComplete="cc-csc"
                       aria-invalid={fieldState.invalid}
