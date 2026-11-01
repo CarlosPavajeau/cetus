@@ -9,6 +9,7 @@ import com.cantte.cetus.domain.billing.Consumption;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.notifications.NotificationKind;
+import com.cantte.cetus.payments.PaymentRejectedException;
 import com.cantte.cetus.payments.PaymentStatus;
 import com.cantte.cetus.payments.PaymentTransaction;
 import com.cantte.cetus.persistence.audit.Actor;
@@ -296,13 +297,7 @@ class ReversalsTest {
                         RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(1)));
         assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.SUBMITTED);
         assertThat(reversalOf(reversal).providerRefundId).isEqualTo("1");
-        QuarkusTransaction.requiringNew()
-                .run(() -> PaymentReversalEntity.getEntityManager()
-                        .createNativeQuery(
-                                "UPDATE billing.payment_reversals SET created_at = now() - interval '2 hours'"
-                                        + " WHERE id = :id")
-                        .setParameter("id", reversal)
-                        .executeUpdate());
+        requestedHoursAgo(reversal, 2);
         assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
                 .isInstanceOfSatisfying(
                         RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(30)));
@@ -313,6 +308,31 @@ class ReversalsTest {
         assertThat(wompi.refunds()).hasSize(1);
         assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
         assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.REVOKED);
+    }
+
+    @Test
+    void aRefundWompiCannotDescribeIsRetriedWithBackoffAndOneItCannotReachIsFollowedLess() {
+        UUID reversal = request(paid(account(), "EMPRENDEDOR").id, 500_000);
+        wompi.refunding("PENDING");
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOf(RetryLater.class);
+
+        wompi.garbling(true);
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOf(PaymentRejectedException.class);
+        wompi.garbling(false);
+
+        wompi.down(true);
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(1)));
+        requestedHoursAgo(reversal, 2);
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(30)));
+
+        assertThat(wompi.refunds()).hasSize(1);
+        assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.SUBMITTED);
     }
 
     @Test
@@ -434,6 +454,16 @@ class ReversalsTest {
 
     private static BillingOrderEntity orderOf(UUID orderId) {
         return QuarkusTransaction.requiringNew().call(() -> BillingOrderEntity.findById(orderId));
+    }
+
+    private static void requestedHoursAgo(UUID reversalId, int hours) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> PaymentReversalEntity.getEntityManager()
+                        .createNativeQuery("UPDATE billing.payment_reversals SET created_at = now() - make_interval("
+                                + "hours => :hours) WHERE id = :id")
+                        .setParameter("hours", hours)
+                        .setParameter("id", reversalId)
+                        .executeUpdate());
     }
 
     private static PaymentReversalEntity reversalOf(UUID reversalId) {

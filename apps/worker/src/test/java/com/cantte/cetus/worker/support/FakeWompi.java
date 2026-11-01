@@ -144,7 +144,7 @@ public class FakeWompi {
         refusing = value;
     }
 
-    /** Every charge made, but answered with what cannot be read, as when its answer is lost. */
+    /** Every charge made and every refund looked up, but answered with what cannot be read. */
     public void garbling(boolean value) {
         garbling = value;
     }
@@ -267,7 +267,7 @@ public class FakeWompi {
                         new ErrorBody(new ErrorBody.Error("NOT_FOUND_ERROR", "La entidad solicitada no existe")));
                 return;
             }
-            reply(exchange, 200, new Envelope(found));
+            reply(exchange, 200, garbling ? Map.of() : new Envelope(found));
             return;
         }
         RefundAsked asked = JSON.readValue(exchange.getRequestBody(), RefundAsked.class);

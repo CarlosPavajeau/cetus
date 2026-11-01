@@ -54,7 +54,7 @@ public class RefundOrderHandler implements JobHandler {
 
     private record Ask(RefundRequest request) implements Step {}
 
-    private record Follow(String refundId) implements Step {}
+    private record Follow(String refundId, OffsetDateTime requestedAt) implements Step {}
 
     private record Nothing() implements Step {}
 
@@ -90,9 +90,10 @@ public class RefundOrderHandler implements JobHandler {
                 Optional<Refund> found;
                 try {
                     found = gateway.refundOf(follow.refundId());
-                } catch (PaymentTransientException | PaymentRejectedException e) {
+                } catch (PaymentTransientException e) {
                     throw new RetryLater(
-                            UNDECIDED_DELAY, "Wompi could not say how the refund ended: " + e.getMessage());
+                            undecidedDelay(follow.requestedAt()),
+                            "Wompi could not say how the refund ended: " + e.getMessage());
                 }
                 if (found.isEmpty()) {
                     LOG.warnf("Refund %s left for a person to check: Wompi does not know it", job.referenceId);
@@ -123,7 +124,7 @@ public class RefundOrderHandler implements JobHandler {
             return new Nothing();
         }
         if (reversal.status == PaymentReversalEntity.Status.SUBMITTED && reversal.providerRefundId != null) {
-            return new Follow(reversal.providerRefundId);
+            return new Follow(reversal.providerRefundId, reversal.createdAt);
         }
         if (reversal.status != PaymentReversalEntity.Status.REQUESTED) {
             return new Nothing();
@@ -158,7 +159,11 @@ public class RefundOrderHandler implements JobHandler {
             LOG.warnf("Refund %s of order %s left for a person to check: Wompi gave no id", reversal.id, order.id);
             return Optional.empty();
         }
-        boolean recent = reversal.createdAt.isAfter(OffsetDateTime.now().minus(UNDECIDED_RECENT));
-        return Optional.of(recent ? UNDECIDED_DELAY : UNDECIDED_LATE_DELAY);
+        return Optional.of(undecidedDelay(reversal.createdAt));
+    }
+
+    private static Duration undecidedDelay(OffsetDateTime requestedAt) {
+        boolean recent = requestedAt.isAfter(OffsetDateTime.now().minus(UNDECIDED_RECENT));
+        return recent ? UNDECIDED_DELAY : UNDECIDED_LATE_DELAY;
     }
 }
