@@ -19,6 +19,7 @@ import com.cantte.cetus.persistence.entity.SubscriptionPeriodEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
 import com.cantte.cetus.worker.handlers.ChargeOrderHandler;
 import com.cantte.cetus.worker.handlers.CheckPaymentHandler;
+import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.FakeResendResource;
 import com.cantte.cetus.worker.support.FakeWompi;
@@ -413,8 +414,9 @@ class AutoChargeTest {
     void aCardAboutToExpireIsWarnedOfOnce() {
         UUID accountId = subscribed();
         PaymentMethodEntity card = fixtures.card(accountId, sourceId());
-        OffsetDateTime now = OffsetDateTime.now();
-        YearMonth next = YearMonth.from(now).plusMonths(1);
+        // Already November in UTC, still October in Bogotá: the month that counts is Bogotá's.
+        OffsetDateTime now = OffsetDateTime.parse("2026-11-01T02:56:00Z");
+        YearMonth next = YearMonth.from(now.atZoneSameInstant(Dates.BOGOTA)).plusMonths(1);
         QuarkusTransaction.requiringNew().run(() -> {
             PaymentMethodEntity expiring = PaymentMethodEntity.findById(card.id);
             expiring.expYear = next.getYear();
