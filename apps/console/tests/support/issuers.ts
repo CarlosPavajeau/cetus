@@ -102,17 +102,43 @@ export async function addRange(
   }
 }
 
+/** The sample issuer every new organization starts with. */
+export async function sandboxIssuer(organization: TestOrganization) {
+  const response = await organization.api("/console/issuers");
+  const issuers = type({ id: "string", environment: "string" })
+    .array()
+    .assert(await response.json());
+  const sample = issuers.find((issuer) => issuer.environment === "SANDBOX");
+  if (!sample) {
+    throw new Error("The organization has no sandbox issuer");
+  }
+  return sample.id;
+}
+
 /** Creates a TEST API key for the organization and returns its secret. */
 export async function createTestApiKey(organization: TestOrganization) {
+  return createApiKey(organization, "TEST");
+}
+
+/** Creates an API key of an environment for the organization and returns its secret. */
+export async function createApiKey(
+  organization: TestOrganization,
+  environment: "SANDBOX" | "TEST" | "LIVE",
+) {
   const response = await organization.api("/console/api-keys", {
     method: "POST",
-    body: JSON.stringify({ name: "ERP", environment: "TEST" }),
+    body: JSON.stringify({ name: "ERP", environment }),
   });
   return type({ secret: "string" }).assert(await response.json()).secret;
 }
 
 /** Issues an invoice through the integrator API, as an ERP would; returns its id and number. */
-export async function issueInvoice(apiKey: string, issuerId: string, customerName: string) {
+export async function issueInvoice(
+  apiKey: string,
+  issuerId: string,
+  customerName: string,
+  customerIdentification = "1020304050",
+) {
   const response = await fetch(`${apiUrl}/v1/invoices`, {
     method: "POST",
     headers: {
@@ -125,7 +151,7 @@ export async function issueInvoice(apiKey: string, issuerId: string, customerNam
       customer: {
         personType: "NATURAL_PERSON",
         identificationType: "CITIZEN_ID",
-        identificationNumber: "1020304050",
+        identificationNumber: customerIdentification,
         legalName: customerName,
       },
       payment: { method: "CASH", meansCode: "10" },

@@ -273,3 +273,17 @@ export type ContactCategory = Schemas["Category"];
 export type Contact = Schemas["ContactView"];
 
 export type ContactVerification = Schemas["VerificationView"];
+
+export type Metrics = Schemas["MetricsView"];
+
+export type StatusCounts = Schemas["StatusCountsView"];
+
+export type MetricsRule = Schemas["RuleView"];
+
+export type DianRuleKind = MetricsRule["kind"];
+
+export type IssuerAlerts = Schemas["AlertsView"];
+
+export type CertificateAlert = Schemas["CertificateAlertView"];
+
+export type RangeAlert = Schemas["RangeAlertView"];

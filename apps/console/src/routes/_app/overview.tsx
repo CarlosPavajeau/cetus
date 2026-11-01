@@ -1,5 +1,5 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowUpRightIcon, BuildingIcon, FileTextIcon } from "lucide-react";
 
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
@@ -36,16 +36,32 @@ import { CreditsSummary } from "~/features/billing/CreditsSummary";
 import { creditsProductLabel } from "~/features/billing/labels";
 import { creditsQuery } from "~/features/billing/queries";
 import { documentsQuery } from "~/features/documents/queries";
-import { useActiveEnvironment } from "~/features/environment/queries";
+import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
 import { issuerName, statusLabel } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
+import { Activity } from "~/features/metrics/Activity";
+import { IssuerAlerts } from "~/features/metrics/IssuerAlerts";
+import {
+  type Period,
+  periodDefault,
+  periodRange,
+  periods,
+  todayInColombia,
+} from "~/features/metrics/periods";
+import { alertsQuery, metricsQuery } from "~/features/metrics/queries";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import { docsUrl } from "~/lib/docs";
 import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/overview")({
-  loader: ({ context: { queryClient } }) =>
-    Promise.all([
+  // An unknown period is dropped instead of failing the page.
+  validateSearch: (search: Record<string, unknown>): { period?: Period } => ({
+    period: periods.find((each) => each !== periodDefault && each === search.period),
+  }),
+  loaderDeps: ({ search }) => ({ period: search.period ?? periodDefault }),
+  loader: async ({ context: { queryClient }, deps }) => {
+    const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
+    await Promise.all([
       queryClient.query({ ...accountQuery, staleTime: "static" }),
       queryClient.query({ ...issuersQuery, staleTime: "static" }),
       queryClient.query({ ...creditsQuery, staleTime: "static" }),
@@ -53,7 +69,13 @@ export const Route = createFileRoute("/_app/overview")({
         ...documentsQuery({ environment: "SANDBOX" }),
         staleTime: "static",
       }),
-    ]),
+      queryClient.query({
+        ...metricsQuery(environment, periodRange(deps.period, todayInColombia())),
+        staleTime: "static",
+      }),
+      queryClient.query({ ...alertsQuery(environment), staleTime: "static" }),
+    ]);
+  },
   component: Overview,
 });
 
@@ -65,6 +87,12 @@ function Overview() {
     documentsQuery({ environment: "SANDBOX" }),
   );
   const environment = useActiveEnvironment();
+  const period = Route.useSearch({ select: (search) => search.period ?? periodDefault });
+  const { data: metrics } = useSuspenseQuery(
+    metricsQuery(environment, periodRange(period, todayInColombia())),
+  );
+  const { data: alerts } = useSuspenseQuery(alertsQuery(environment));
+  const navigate = useNavigate({ from: Route.fullPath });
   const { manage } = useMemberPermissions();
   // A new organization only has the sandbox sample, which needs no setup.
   const fiscal = issuers.some((issuer) => issuer.environment !== "SANDBOX");
@@ -97,6 +125,18 @@ function Overview() {
             </Link>
           </EmptyContent>
         </Empty>
+      )}
+
+      {alerts.certificates.length + alerts.ranges.length > 0 && <IssuerAlerts alerts={alerts} />}
+
+      {!(environment === "SANDBOX" && !tried) && (
+        <Activity
+          metrics={metrics}
+          period={period}
+          onPeriodChange={(next) =>
+            navigate({ search: { period: next === periodDefault ? undefined : next } })
+          }
+        />
       )}
 
       {!fiscal && manage && (
