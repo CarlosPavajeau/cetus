@@ -302,6 +302,28 @@ class AutoChargeTest {
     }
 
     @Test
+    void aRetryCanceledForWantOfACardDoesNotHoldBackItsDaysReminder() {
+        UUID accountId = subscribed();
+        PaymentMethodEntity card = fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        OffsetDateTime closing = chargesOf(renewal.id).getFirst().runAt;
+        decline(renewal.id);
+        decline(renewal.id);
+        QuarkusTransaction.requiringNew().run(() -> {
+            PaymentMethodEntity removed = PaymentMethodEntity.findById(card.id);
+            removed.status = PaymentMethodEntity.Status.REMOVED;
+            removed.removedAt = OffsetDateTime.now();
+        });
+        PaymentChargeEntity third = chargesOf(renewal.id).getLast();
+        charges.handle(jobOf(third.id));
+        assertThat(chargesOf(renewal.id).getLast().status).isEqualTo(PaymentChargeEntity.Status.CANCELED);
+
+        remind(subscriptionOf(accountId).id, closing.plusDays(3).plusHours(1));
+
+        assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_PAST_DUE)).hasSize(1);
+    }
+
+    @Test
     void noReminderGoesOutWhileAChargeAskedForFromTheConsoleWaits() {
         UUID accountId = subscribed();
         PaymentMethodEntity card = fixtures.card(accountId, sourceId());
