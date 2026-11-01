@@ -183,6 +183,43 @@ class AutoChargeTest {
     }
 
     @Test
+    void aDeclineOfARenewalPaidOtherwiseMeanwhileIsNotTold() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        charges.handle(jobOf(chargesOf(renewal.id).getFirst().id));
+
+        assertThat(settlement.apply(approved(renewal.reference, renewal.totalCents)))
+                .isEqualTo(Outcome.PAID);
+        decline(chargesOf(renewal.id).getFirst());
+
+        assertThat(chargesOf(renewal.id))
+                .singleElement()
+                .satisfies(charge -> assertThat(charge.status).isEqualTo(PaymentChargeEntity.Status.FAILED));
+        assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_CHARGE_FAILED))
+                .isEmpty();
+    }
+
+    @Test
+    void anAttemptGivenUpOnIsApprovedWhenItsTransactionTurnsOutApproved() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        PaymentChargeEntity first = chargesOf(renewal.id).getFirst();
+        charges.handle(jobOf(first.id));
+        charges.onDead(jobOf(first.id), "Wompi kept failing");
+        assertThat(chargesOf(renewal.id).getFirst().status).isEqualTo(PaymentChargeEntity.Status.FAILED);
+
+        PaymentChargeEntity given = chargesOf(renewal.id).getFirst();
+        assertThat(settlement.apply(approved(given.providerTransactionId, given.reference, renewal.totalCents)))
+                .isEqualTo(Outcome.PAID);
+
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.APPROVED, PaymentChargeEntity.Status.CANCELED);
+    }
+
+    @Test
     void aChargeWompiRefusesFailsAndIsTriedAgain() {
         UUID accountId = subscribed();
         fixtures.card(accountId, sourceId());
@@ -340,9 +377,13 @@ class AutoChargeTest {
     }
 
     private static PaymentTransaction approved(String reference, long amount) {
+        return approved("12239576-" + System.nanoTime() + "-1", reference, amount);
+    }
+
+    private static PaymentTransaction approved(String id, String reference, long amount) {
         Instant now = Instant.now();
         return new PaymentTransaction(
-                "12239576-" + System.nanoTime() + "-1",
+                id,
                 reference,
                 PaymentStatus.APPROVED,
                 amount,

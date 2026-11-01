@@ -4,6 +4,7 @@ import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
+import com.cantte.cetus.payments.PaymentStatus;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
@@ -65,7 +66,8 @@ public class AutoCharge {
 
     /**
      * Records how the provider answered an attempt's transaction; the order is locked by the caller. A final
-     * answer is kept: a late PENDING or a second outcome changes nothing.
+     * answer is kept: a late PENDING or a second outcome changes nothing. An approval still wins over a failure
+     * recorded without the provider's answer, when its job gave up while the transaction was being made.
      */
     void on(@Observes PaymentSettlement.ChargeSettled settled) {
         PaymentChargeEntity charge =
@@ -73,13 +75,16 @@ public class AutoCharge {
         if (charge.providerTransactionId == null) {
             charge.providerTransactionId = settled.transactionId();
         }
-        if (charge.status != PaymentChargeEntity.Status.SUBMITTED) {
+        boolean open = charge.status == PaymentChargeEntity.Status.SUBMITTED
+                || charge.status == PaymentChargeEntity.Status.FAILED;
+        if (settled.status() == PaymentStatus.APPROVED && open) {
+            charge.status = PaymentChargeEntity.Status.APPROVED;
+            charge.failureMessage = null;
             return;
         }
-        switch (settled.status()) {
-            case APPROVED -> charge.status = PaymentChargeEntity.Status.APPROVED;
-            case DECLINED, ERROR -> fail(charge, settled.message().orElse(null), OffsetDateTime.now());
-            case PENDING, VOIDED -> {}
+        if (charge.status == PaymentChargeEntity.Status.SUBMITTED
+                && (settled.status() == PaymentStatus.DECLINED || settled.status() == PaymentStatus.ERROR)) {
+            fail(charge, settled.message().orElse(null), OffsetDateTime.now());
         }
     }
 
@@ -150,7 +155,8 @@ public class AutoCharge {
         LOG.infof(
                 "Charge %s of order %s failed; %s",
                 charge.id, order.id, retryAt.map(at -> "tried again at " + at).orElse("not tried again"));
-        if (charge.origin != PaymentChargeEntity.Origin.AUTO) {
+        // Only a renewal still unpaid is news: one paid otherwise meanwhile needs no notice.
+        if (charge.origin != PaymentChargeEntity.Origin.AUTO || order.status != BillingOrderEntity.Status.PENDING) {
             return;
         }
         PaymentMethodEntity method = PaymentMethodEntity.findById(charge.paymentMethodId);
