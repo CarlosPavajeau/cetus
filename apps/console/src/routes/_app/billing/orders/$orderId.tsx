@@ -17,10 +17,12 @@ import {
 } from "~/components/ui/empty";
 import { Spinner } from "~/components/ui/spinner";
 import { formatDateTime } from "~/features/api-keys/formats";
-import { formatCents } from "~/features/billing/labels";
+import { chargeStatusLabel, formatCents } from "~/features/billing/labels";
 import { OrderInvoiceDownloads } from "~/features/billing/OrderInvoiceDownloads";
 import { OrderStatusBadge } from "~/features/billing/OrderStatusBadge";
-import { billingKey, orderQuery } from "~/features/billing/queries";
+import { ChargeOrderButton } from "~/features/billing/PaymentMethodDialogs";
+import { billingKey, orderQuery, paymentMethodQuery } from "~/features/billing/queries";
+import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { Order } from "~/lib/api/types";
 import { cn, uuidPattern } from "~/lib/utils";
 
@@ -35,7 +37,10 @@ export const Route = createFileRoute("/_app/billing/orders/$orderId")({
     if (!uuidPattern.test(params.orderId)) {
       throw notFound();
     }
-    const order = await queryClient.query({ ...orderQuery(params.orderId), staleTime: "static" });
+    const [order] = await Promise.all([
+      queryClient.query({ ...orderQuery(params.orderId), staleTime: "static" }),
+      queryClient.query({ ...paymentMethodQuery, staleTime: "static" }),
+    ]);
     if (!order) {
       throw notFound();
     }
@@ -57,6 +62,10 @@ function OrderPage() {
     refetchInterval: (query) =>
       awaitingPayment(query.state.data ?? null) ? PENDING_REFRESH_MS : false,
   });
+  const { data: paymentMethod } = useSuspenseQuery(paymentMethodQuery);
+  const { session } = Route.useRouteContext();
+  const { manage } = useMemberPermissions();
+  const buyer = manage && !session.impersonatedBy;
   const status = order?.status;
 
   useEffect(() => {
@@ -117,14 +126,41 @@ function OrderPage() {
         </Alert>
       )}
 
+      {pending && order.charge?.status === "FAILED" && (
+        <Alert variant="destructive">
+          <AlertTitle>La tarjeta no aceptó el cobro</AlertTitle>
+          <AlertDescription>
+            {`${order.charge.failureMessage ?? "Wompi rechazó el cobro."} Puedes pagar con otro medio o cambiar la tarjeta en Facturación.`}
+          </AlertDescription>
+        </Alert>
+      )}
+      {pending && order.charge?.status === "SCHEDULED" && order.charge.origin === "AUTO" && (
+        <Alert>
+          <AlertTitle>Cobro automático programado</AlertTitle>
+          <AlertDescription>
+            {`Volveremos a cobrar a tu tarjeta el ${formatDateTime(new Date(order.charge.runAt))}. Si prefieres, paga ahora.`}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Section
         id="order-detail"
         title="Detalle"
         action={
           pending && order.checkout ? (
-            <a href={order.checkout.link} className={cn(buttonVariants())}>
-              Ir a pagar
-            </a>
+            <div className="flex flex-wrap items-start justify-end gap-2">
+              <a
+                href={order.checkout.link}
+                className={cn(
+                  buttonVariants({ variant: buyer && paymentMethod ? "outline" : "default" }),
+                )}
+              >
+                Ir a pagar
+              </a>
+              {buyer && paymentMethod && (
+                <ChargeOrderButton order={order} paymentMethod={paymentMethod} />
+              )}
+            </div>
           ) : (
             <Link to="/billing" className={cn(buttonVariants({ variant: "outline" }))}>
               Ver el saldo
@@ -143,6 +179,11 @@ function OrderPage() {
           <Entry label={order.paidAt ? "Pagada" : "Vence"}>
             {formatDateTime(new Date(order.paidAt ?? order.expiresAt))}
           </Entry>
+          {order.charge && (
+            <Entry label="Cobro a la tarjeta">
+              {`${chargeStatusLabel[order.charge.status]} · intento ${order.charge.attempt}`}
+            </Entry>
+          )}
           <Entry label="Factura">
             {order.invoice ? (
               <OrderInvoiceDownloads orderId={order.id} invoice={order.invoice} />

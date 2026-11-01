@@ -4,7 +4,14 @@ import { type } from "arktype";
 import type { DocumentFileUrl } from "~/features/documents/server";
 import { customerExtrasSchema, toCustomerRequest } from "~/features/issuance/schema";
 import { CetusApiError, api } from "~/lib/api/client";
-import type { BillingProfile, DocumentFile, Order, Subscription } from "~/lib/api/types";
+import type {
+  BillingProfile,
+  CardSetup,
+  DocumentFile,
+  Order,
+  PaymentMethod,
+  Subscription,
+} from "~/lib/api/types";
 
 import { billingProfileSchema } from "./schema";
 
@@ -62,6 +69,20 @@ export const getSubscription = createServerFn({ method: "GET" }).handler(
   },
 );
 
+/** The card that pays the renewals, or null without one. */
+export const getPaymentMethod = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PaymentMethod | null> => {
+    try {
+      return await api.get("/console/payment-method");
+    } catch (error) {
+      if (error instanceof CetusApiError && error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+);
+
 export type BillingResult = { ok: true } | { ok: false; message: string };
 
 export type OrderResult = { ok: true; order: Order } | { ok: false; message: string };
@@ -82,6 +103,11 @@ const messages: Record<string, string> = {
   subscription_ending:
     "La suscripción termina con este periodo. Reanúdala antes de cambiar de plan.",
   payments_not_configured: "Los pagos no están disponibles en este momento. Intenta más tarde.",
+  payments_unavailable: "Wompi no responde en este momento. Intenta de nuevo en unos minutos.",
+  payment_method_declined: "Wompi no aceptó la tarjeta. Revisa los datos o usa otra tarjeta.",
+  payment_method_required: "Guarda una tarjeta antes de pagar con ella.",
+  order_not_payable: "Esta orden ya no está pendiente de pago.",
+  charge_in_progress: "Ya hay un cobro de esta orden esperando la respuesta de Wompi.",
 };
 
 /** A refusal of the API, explained; an outage or a server error is thrown. */
@@ -119,6 +145,70 @@ export const createOrder = createServerFn({ method: "POST" })
       return { ok: true, order };
     } catch (error) {
       return refusal(error, "No pudimos crear la orden.");
+    }
+  });
+
+export type CardSetupResult = { ok: true; setup: CardSetup } | { ok: false; message: string };
+
+/** Wompi's public key and the terms to accept, to tokenize a card in the browser. */
+export const getCardSetup = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CardSetupResult> => {
+    try {
+      return { ok: true, setup: await api.get("/console/payment-method/setup") };
+    } catch (error) {
+      return refusal(error, "No pudimos preparar el formulario de la tarjeta.");
+    }
+  },
+);
+
+export type PaymentMethodResult =
+  | { ok: true; paymentMethod: PaymentMethod }
+  | { ok: false; message: string };
+
+/** Saves the card the browser tokenized with Wompi; the card itself never comes here. */
+export const savePaymentMethod = createServerFn({ method: "POST" })
+  .validator(
+    type({
+      cardToken: "0 < string <= 200",
+      acceptanceToken: "0 < string <= 4000",
+      personalDataAuthToken: "0 < string <= 4000",
+      brand: "0 < string <= 30",
+      expMonth: "1 <= number.integer <= 12",
+      expYear: "2000 <= number.integer <= 2199",
+    }),
+  )
+  .handler(async ({ data }): Promise<PaymentMethodResult> => {
+    try {
+      const paymentMethod = await api.put("/console/payment-method", { body: data });
+      return { ok: true, paymentMethod };
+    } catch (error) {
+      return refusal(error, "No pudimos guardar la tarjeta.");
+    }
+  });
+
+/** The card is no longer charged; renewals wait to be paid from their order. */
+export const removePaymentMethod = createServerFn({ method: "POST" }).handler(
+  async (): Promise<BillingResult> => {
+    try {
+      await api.delete("/console/payment-method");
+      return { ok: true };
+    } catch (error) {
+      return refusal(error, "No pudimos quitar la tarjeta.");
+    }
+  },
+);
+
+/** Charges the pending order to the saved card; the order tells how it went. */
+export const chargeOrder = createServerFn({ method: "POST" })
+  .validator(type({ id: "string.uuid" }))
+  .handler(async ({ data }): Promise<OrderResult> => {
+    try {
+      const order = await api.post("/console/orders/{id}/charge", {
+        params: { path: { id: data.id } },
+      });
+      return { ok: true, order };
+    } catch (error) {
+      return refusal(error, "No pudimos cobrar la orden a la tarjeta.");
     }
   });
 

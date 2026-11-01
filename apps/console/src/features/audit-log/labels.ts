@@ -47,6 +47,9 @@ export const actionLabel: Record<AuditAction, string> = {
   SUBSCRIPTION_CANCEL_SCHEDULED: "Cancelación programada",
   SUBSCRIPTION_CANCEL_UNDONE: "Cancelación deshecha",
   SUBSCRIPTION_CANCELED: "Suscripción terminada",
+  PAYMENT_METHOD_SAVED: "Tarjeta guardada",
+  PAYMENT_METHOD_REMOVED: "Tarjeta quitada",
+  BILLING_ORDER_CHARGE_REQUESTED: "Cobro a la tarjeta pedido",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

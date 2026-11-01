@@ -17,14 +17,21 @@ import { dateFormat, formatDateTime } from "~/features/api-keys/formats";
 import { BillingProfileDialog } from "~/features/billing/BillingProfileDialog";
 import { CreditsSummary } from "~/features/billing/CreditsSummary";
 import {
+  cardExpiryLabel,
+  cardLabel,
   lotSourceLabel,
   lotStatusLabel,
   lotTitle,
   movementTypeLabel,
 } from "~/features/billing/labels";
 import {
+  PaymentMethodDialog,
+  RemovePaymentMethodDialog,
+} from "~/features/billing/PaymentMethodDialogs";
+import {
   billingProfileQuery,
   creditsQuery,
+  paymentMethodQuery,
   planOffersQuery,
   subscriptionQuery,
 } from "~/features/billing/queries";
@@ -50,6 +57,7 @@ export const Route = createFileRoute("/_app/billing/")({
       queryClient.query({ ...planOffersQuery, staleTime: "static" }),
       queryClient.query({ ...billingProfileQuery, staleTime: "static" }),
       queryClient.query({ ...usageQuery, staleTime: "static" }),
+      queryClient.query({ ...paymentMethodQuery, staleTime: "static" }),
     ]);
     return { crumb: "Facturación" };
   },
@@ -62,6 +70,7 @@ function Billing() {
   const { data: offers } = useSuspenseQuery(planOffersQuery);
   const { data: profile } = useSuspenseQuery(billingProfileQuery);
   const { data: usage } = useSuspenseQuery(usageQuery);
+  const { data: paymentMethod } = useSuspenseQuery(paymentMethodQuery);
   const { session } = Route.useRouteContext();
   const { manage } = useMemberPermissions();
   const buyer = manage && !session.impersonatedBy;
@@ -142,6 +151,34 @@ function Billing() {
           }
         >
           <SubscriptionSummary subscription={subscription} />
+        </Section>
+      )}
+
+      {(subscription || paymentMethod) && (
+        <Section
+          id="billing-payment-method"
+          title="Cobro automático"
+          action={
+            buyer && (
+              <div className="flex flex-wrap gap-2">
+                {paymentMethod && <RemovePaymentMethodDialog paymentMethod={paymentMethod} />}
+                <PaymentMethodDialog paymentMethod={paymentMethod} />
+              </div>
+            )
+          }
+        >
+          {paymentMethod ? (
+            <dl className="grid gap-4 sm:grid-cols-3">
+              <Entry label="Tarjeta">{cardLabel(paymentMethod)}</Entry>
+              <Entry label="Vence">{cardExpiryLabel(paymentMethod)}</Entry>
+              <Entry label="Guardada">{dateFormat.format(new Date(paymentMethod.createdAt))}</Entry>
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Sin tarjeta guardada: cada renovación te llega como una orden para pagar con el medio
+              que prefieras. Con una tarjeta, la cobramos sola y te avisamos antes de cada cobro.
+            </p>
+          )}
         </Section>
       )}
 

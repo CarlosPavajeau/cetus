@@ -3,7 +3,9 @@ import type {
   AccountCredits,
   CreditLot,
   CreditMovement,
+  OrderCharge,
   OrderStatus,
+  PaymentMethod,
   PlanKind,
   PlanOffer,
   PlanVersion,
@@ -48,6 +50,24 @@ export const orderStatusLabel: Record<OrderStatus, string> = {
   FAILED: "Pago rechazado",
   EXPIRED: "Vencida",
   REFUNDED: "Reembolsada",
+};
+
+/** "VISA ••4242". */
+export function cardLabel(paymentMethod: Pick<PaymentMethod, "brand" | "lastFour">) {
+  return `${paymentMethod.brand} ••${paymentMethod.lastFour}`;
+}
+
+/** "08/29". */
+export function cardExpiryLabel(paymentMethod: Pick<PaymentMethod, "expMonth" | "expYear">) {
+  return `${String(paymentMethod.expMonth).padStart(2, "0")}/${String(paymentMethod.expYear % 100).padStart(2, "0")}`;
+}
+
+export const chargeStatusLabel: Record<OrderCharge["status"], string> = {
+  SCHEDULED: "Programado",
+  SUBMITTED: "Esperando a Wompi",
+  APPROVED: "Aprobado",
+  FAILED: "Rechazado",
+  CANCELED: "Cancelado",
 };
 
 export const lotStatusLabel: Record<CreditLot["status"], string> = {
