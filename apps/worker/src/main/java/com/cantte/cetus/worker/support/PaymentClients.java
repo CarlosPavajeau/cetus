@@ -1,10 +1,14 @@
 package com.cantte.cetus.worker.support;
 
+import com.cantte.cetus.payments.CardSetup;
+import com.cantte.cetus.payments.CardSourceRequest;
+import com.cantte.cetus.payments.ChargeRequest;
 import com.cantte.cetus.payments.Checkout;
 import com.cantte.cetus.payments.CheckoutRequest;
 import com.cantte.cetus.payments.EventCheck;
 import com.cantte.cetus.payments.PaymentGateway;
 import com.cantte.cetus.payments.PaymentRejectedException;
+import com.cantte.cetus.payments.PaymentSource;
 import com.cantte.cetus.payments.PaymentTransaction;
 import com.cantte.cetus.payments.WompiGateway;
 import com.cantte.cetus.payments.WompiKeys;
@@ -82,6 +86,21 @@ public class PaymentClients {
             @Override
             public EventCheck verifyEvent(String body) {
                 return gateway.verifyEvent(body);
+            }
+
+            @Override
+            public CardSetup cardSetup() {
+                return call("payments.card_setup", gateway::cardSetup);
+            }
+
+            @Override
+            public PaymentSource saveCard(CardSourceRequest request) {
+                return call("payments.save_card", () -> gateway.saveCard(request));
+            }
+
+            @Override
+            public PaymentTransaction charge(ChargeRequest request) {
+                return call("payments.charge", () -> gateway.charge(request));
             }
 
             private <T> T call(String span, Supplier<T> work) {

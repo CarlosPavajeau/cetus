@@ -7,6 +7,7 @@ import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
 import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -44,20 +45,43 @@ public class PaymentSettlement {
     /** Fired inside the transaction that pays the order; phase 3 grants the order's credits on it. */
     public record OrderPaid(UUID orderId, UUID accountId) {}
 
+    /**
+     * Fired with the order locked for each transaction of a charge to a saved card, with the status kept for it,
+     * which a late event does not move back.
+     */
+    public record ChargeSettled(UUID chargeId, String transactionId, PaymentStatus status, Optional<String> message) {}
+
     @Inject
     AuditLog auditLog;
 
     @Inject
     Event<OrderPaid> orderPaid;
 
+    @Inject
+    Event<ChargeSettled> chargeSettled;
+
+    /** The reference is the order's (its checkout) or one of its charges to a saved card. */
     @Transactional
     public Outcome apply(PaymentTransaction transaction) {
-        Optional<BillingOrderEntity> found = BillingOrderEntity.lockByReference(transaction.reference());
+        Optional<PaymentChargeEntity> charge = PaymentChargeEntity.findByReference(transaction.reference());
+        Optional<BillingOrderEntity> found = charge.isPresent()
+                ? BillingOrderEntity.lock(charge.get().orderId)
+                : BillingOrderEntity.lockByReference(transaction.reference());
         if (found.isEmpty()) {
             return Outcome.UNKNOWN_ORDER;
         }
         BillingOrderEntity order = found.get();
         PaymentTransactionEntity stored = record(order, transaction);
+        Outcome outcome = settle(order, stored);
+        charge.ifPresent(attempt -> chargeSettled.fire(new ChargeSettled(
+                attempt.id,
+                stored.providerTransactionId,
+                PaymentStatus.valueOf(stored.status.name()),
+                Optional.ofNullable(stored.statusMessage))));
+        return outcome;
+    }
+
+    private Outcome settle(BillingOrderEntity order, PaymentTransactionEntity stored) {
         return switch (stored.status) {
             case APPROVED -> approve(order, stored);
             case VOIDED -> {

@@ -247,6 +247,55 @@ public record NotificationEmail(String subject, String html, String text) {
                                 + " de la cuenta puede ampliarlo en Facturación.",
                         "Ver la suscripción",
                         "/billing");
+            case SUBSCRIPTION_CHARGE_SCHEDULED ->
+                new Body(
+                        "Cobraremos tu renovación de %s".formatted(data.get("plan")),
+                        "Empezó un nuevo periodo de la suscripción %s de %s, hasta el %s. Cobraremos %s a tu tarjeta %s"
+                                        .formatted(
+                                                data.get("plan"),
+                                                account,
+                                                data.get("periodEnd"),
+                                                data.get("total"),
+                                                data.get("card"))
+                                + ": la mensualidad y %s documentos de excedente del periodo anterior."
+                                        .formatted(data.get("overage")),
+                        "No tienes que hacer nada. Si el cobro no pasa te avisaremos; también puedes pagar la renovación"
+                                + " con otro medio antes del %s.".formatted(data.get("dueBy")),
+                        "Ver la renovación",
+                        "/billing/orders/" + data.get("orderId"));
+            case SUBSCRIPTION_CHARGE_FAILED ->
+                new Body(
+                        "No pudimos cobrar tu renovación de %s".formatted(data.get("plan")),
+                        "Tu tarjeta %s no aceptó el cobro de %s de la renovación de la suscripción %s de %s%s."
+                                .formatted(
+                                        data.get("card"),
+                                        data.get("total"),
+                                        data.get("plan"),
+                                        account,
+                                        data.get("reason").isEmpty() ? "" : " (" + data.get("reason") + ")"),
+                        (data.get("retryAt").isEmpty()
+                                        ? "No volveremos a intentarlo."
+                                        : "Lo intentaremos de nuevo el %s.".formatted(data.get("retryAt")))
+                                + " Paga la renovación con otro medio o cambia la tarjeta antes del %s; si no se paga,"
+                                        .formatted(data.get("dueBy"))
+                                + " la suscripción se cancela.",
+                        "Pagar la renovación",
+                        "/billing/orders/" + data.get("orderId"));
+            case PAYMENT_METHOD_EXPIRING ->
+                new Body(
+                        "Tu tarjeta %s %s"
+                                .formatted(
+                                        data.get("card"),
+                                        "true".equals(data.get("expired")) ? "venció" : "está por vencer"),
+                        "La tarjeta %s con la que %s paga su suscripción %s en %s."
+                                .formatted(
+                                        data.get("card"),
+                                        account,
+                                        "true".equals(data.get("expired")) ? "venció" : "vence",
+                                        data.get("expiry")),
+                        "Cámbiala antes de la próxima renovación para que el cobro automático no falle.",
+                        "Cambiar la tarjeta",
+                        "/billing");
         };
     }
 

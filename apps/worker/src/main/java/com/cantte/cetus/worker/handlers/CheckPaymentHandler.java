@@ -6,6 +6,7 @@ import com.cantte.cetus.payments.PaymentRejectedException;
 import com.cantte.cetus.payments.PaymentTransaction;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.runner.JobHandler;
@@ -15,11 +16,13 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
- * Asks Wompi for every transaction of an order's reference and applies them, for the payments whose event was
+ * Asks Wompi for every transaction of an order's reference, and of each of its charges to a saved card, and applies them, for the payments whose event was
  * lost or never sent, paid orders included: a lost void or a second charge only shows there. Enqueued by
  * {@code PaymentReconciliation}.
  */
@@ -41,17 +44,24 @@ public class CheckPaymentHandler implements JobHandler {
 
     @Override
     public void handle(JobEntity job) {
-        Optional<String> reference = QuarkusTransaction.requiringNew()
+        List<String> references = QuarkusTransaction.requiringNew()
                 .call(() -> Optional.<BillingOrderEntity>ofNullable(BillingOrderEntity.findById(job.referenceId))
-                        .map(order -> order.reference));
-        if (reference.isEmpty()) {
+                        .map(order -> Stream.concat(
+                                        Stream.of(order.reference),
+                                        PaymentChargeEntity.listByOrder(order.id).stream()
+                                                .map(charge -> charge.reference))
+                                .toList())
+                        .orElse(List.of()));
+        if (references.isEmpty()) {
             return;
         }
         PaymentGateway gateway =
                 payments.gateway().orElseThrow(() -> new RetryLater(UNCONFIGURED_DELAY, "Payments are not configured"));
-        List<PaymentTransaction> transactions;
+        List<PaymentTransaction> transactions = new ArrayList<>();
         try {
-            transactions = gateway.transactions(reference.get());
+            for (String reference : references) {
+                transactions.addAll(gateway.transactions(reference));
+            }
         } catch (PaymentRejectedException e) {
             throw new GiveUp(e.getMessage(), e);
         }
