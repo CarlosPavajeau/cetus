@@ -74,9 +74,7 @@ export const cardFormSchema = type({
   expiry: type("string")
     .pipe(expiryOf)
     .narrow((expiry, ctx) =>
-      expiry !== null
-        ? true
-        : ctx.reject({ message: "Escribe el vencimiento como MM/AA." }),
+      expiry !== null ? true : ctx.reject({ message: "Escribe el vencimiento como MM/AA." }),
     )
     .narrow((expiry, ctx) =>
       expiry === null || !expired(expiry, new Date())
