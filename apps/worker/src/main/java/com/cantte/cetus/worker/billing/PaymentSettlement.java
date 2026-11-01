@@ -112,7 +112,8 @@ public class PaymentSettlement {
     }
 
     private Outcome approve(BillingOrderEntity order, PaymentTransactionEntity payment) {
-        // Wompi keeps a refunded payment APPROVED, and a charged back one is VOIDED: either paid a refunded order.
+        // Wompi keeps a refunded payment APPROVED and a charged back one VOIDED: the one that paid a refunded order is
+        // either, and an approval of any other is a new payment.
         if (order.status == BillingOrderEntity.Status.PAID || order.status == BillingOrderEntity.Status.REFUNDED) {
             boolean refunded = order.status == BillingOrderEntity.Status.REFUNDED;
             boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
@@ -124,8 +125,11 @@ public class PaymentSettlement {
             }
             review(
                     order,
-                    "Wompi aprobó la transacción %s de una orden que otra ya pagó: el cliente pagó dos veces"
-                            .formatted(payment.providerTransactionId));
+                    refunded
+                            ? "Wompi aprobó la transacción %s de una orden ya devuelta: un pago nuevo sin créditos"
+                                    .formatted(payment.providerTransactionId)
+                            : "Wompi aprobó la transacción %s de una orden que otra ya pagó: el cliente pagó dos veces"
+                                    .formatted(payment.providerTransactionId));
             return Outcome.REVIEW;
         }
         if (payment.amountCents != order.totalCents || !payment.currency.equals(order.currency)) {
