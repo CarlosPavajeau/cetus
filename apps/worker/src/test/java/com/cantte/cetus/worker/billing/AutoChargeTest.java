@@ -19,7 +19,7 @@ import com.cantte.cetus.persistence.entity.SubscriptionPeriodEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
 import com.cantte.cetus.worker.handlers.ChargeOrderHandler;
 import com.cantte.cetus.worker.handlers.CheckPaymentHandler;
-import com.cantte.cetus.worker.runner.GiveUp;
+import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.FakeResendResource;
 import com.cantte.cetus.worker.support.FakeWompi;
 import com.cantte.cetus.worker.support.FakeWompi.Transaction;
@@ -226,8 +226,7 @@ class AutoChargeTest {
         BillingOrderEntity renewal = close(accountId);
         wompi.refusing(true);
 
-        PaymentChargeEntity first = chargesOf(renewal.id).getFirst();
-        assertThatThrownBy(() -> charges.handle(jobOf(first.id))).isInstanceOf(GiveUp.class);
+        charges.handle(jobOf(chargesOf(renewal.id).getFirst().id));
 
         assertThat(chargesOf(renewal.id))
                 .extracting(charge -> charge.status, charge -> charge.failureMessage)
@@ -236,6 +235,95 @@ class AutoChargeTest {
                         tuple(PaymentChargeEntity.Status.SCHEDULED, null));
         assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_CHARGE_FAILED))
                 .hasSize(1);
+    }
+
+    @Test
+    void aChargeWhoseAnswerCannotBeReadIsFoundInsteadOfFailed() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        wompi.garbling(true);
+
+        charges.handle(jobOf(chargesOf(renewal.id).getFirst().id));
+
+        assertThat(wompi.charges()).hasSize(1);
+        assertThat(chargesOf(renewal.id)).singleElement().satisfies(charge -> {
+            assertThat(charge.status).isEqualTo(PaymentChargeEntity.Status.SUBMITTED);
+            assertThat(charge.providerTransactionId).isNotNull();
+        });
+        assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_CHARGE_FAILED))
+                .isEmpty();
+    }
+
+    @Test
+    void whileWompiCannotSayWhetherItChargedTheAttemptWaitsAndIsNotChargedOnceTheOrderIsPaid() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        JobEntity job = jobOf(chargesOf(renewal.id).getFirst().id);
+        wompi.down(true);
+
+        assertThatThrownBy(() -> charges.handle(job)).isInstanceOf(RetryLater.class);
+        assertThat(chargesOf(renewal.id).getFirst().status).isEqualTo(PaymentChargeEntity.Status.SUBMITTED);
+
+        assertThat(settlement.apply(approved(renewal.reference, renewal.totalCents)))
+                .isEqualTo(Outcome.PAID);
+        wompi.down(false);
+        charges.handle(job);
+
+        assertThat(wompi.charges()).isEmpty();
+        assertThat(chargesOf(renewal.id).getFirst().status).isEqualTo(PaymentChargeEntity.Status.CANCELED);
+    }
+
+    @Test
+    void aVoidSeenBeforeItsApprovalFailsTheAttempt() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        charges.handle(jobOf(chargesOf(renewal.id).getFirst().id));
+        PaymentChargeEntity submitted = chargesOf(renewal.id).getFirst();
+
+        Instant now = Instant.now();
+        settlement.apply(new PaymentTransaction(
+                submitted.providerTransactionId,
+                submitted.reference,
+                PaymentStatus.VOIDED,
+                renewal.totalCents,
+                "COP",
+                "CARD",
+                Optional.empty(),
+                now,
+                Optional.of(now),
+                "{}"));
+
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.FAILED, PaymentChargeEntity.Status.SCHEDULED);
+    }
+
+    @Test
+    void noReminderGoesOutWhileAChargeAskedForFromTheConsoleWaits() {
+        UUID accountId = subscribed();
+        PaymentMethodEntity card = fixtures.card(accountId, sourceId());
+        QuarkusTransaction.requiringNew().run(() -> {
+            PaymentMethodEntity removed = PaymentMethodEntity.findById(card.id);
+            removed.status = PaymentMethodEntity.Status.REMOVED;
+            removed.removedAt = OffsetDateTime.now();
+        });
+        BillingOrderEntity renewal = close(accountId);
+        PaymentMethodEntity replacement = fixtures.card(accountId, sourceId());
+        QuarkusTransaction.requiringNew()
+                .run(() -> PaymentChargeEntity.schedule(
+                        BillingOrderEntity.lock(renewal.id).orElseThrow(),
+                        PaymentMethodEntity.findById(replacement.id),
+                        PaymentChargeEntity.Origin.MANUAL,
+                        OffsetDateTime.now()));
+
+        remind(
+                subscriptionOf(accountId).id,
+                subscriptionOf(accountId).pastDueAt.plusDays(3).plusHours(1));
+
+        assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_PAST_DUE)).isEmpty();
     }
 
     @Test

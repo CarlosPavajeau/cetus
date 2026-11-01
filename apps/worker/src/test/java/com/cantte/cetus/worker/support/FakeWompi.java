@@ -90,6 +90,7 @@ public class FakeWompi {
     private final List<Charge> charges = new CopyOnWriteArrayList<>();
     private volatile boolean down;
     private volatile boolean refusing;
+    private volatile boolean garbling;
     private HttpServer server;
 
     @PostConstruct
@@ -126,6 +127,11 @@ public class FakeWompi {
         refusing = value;
     }
 
+    /** Every charge made, but answered with what cannot be read, as when its answer is lost. */
+    public void garbling(boolean value) {
+        garbling = value;
+    }
+
     public int requests() {
         return requests.get();
     }
@@ -141,6 +147,7 @@ public class FakeWompi {
         requests.set(0);
         down = false;
         refusing = false;
+        garbling = false;
     }
 
     private void handle(HttpExchange exchange) throws IOException {
@@ -197,7 +204,7 @@ public class FakeWompi {
                 "PENDING",
                 charge.amountInCents());
         transactions.put(transaction.id(), transaction);
-        reply(exchange, 201, new Envelope(transaction));
+        reply(exchange, 201, garbling ? Map.of() : new Envelope(transaction));
     }
 
     private static void reply(HttpExchange exchange, int status, Object body) throws IOException {

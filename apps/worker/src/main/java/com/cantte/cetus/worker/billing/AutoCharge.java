@@ -82,8 +82,9 @@ public class AutoCharge {
             charge.failureMessage = null;
             return;
         }
+        // A void seen before its approval, as events arrive out of order, ends the attempt as a decline does.
         if (charge.status == PaymentChargeEntity.Status.SUBMITTED
-                && (settled.status() == PaymentStatus.DECLINED || settled.status() == PaymentStatus.ERROR)) {
+                && settled.status().isFinal()) {
             fail(charge, settled.message().orElse(null), OffsetDateTime.now());
         }
     }

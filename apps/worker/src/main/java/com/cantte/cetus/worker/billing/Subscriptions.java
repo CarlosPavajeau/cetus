@@ -266,7 +266,7 @@ public class Subscriptions {
 
     /**
      * Reminds the billing contact of an unpaid renewal on each reminder day of the grace, once per period and day.
-     * A renewal charged to the card is not reminded while an attempt waits, nor for the days before its last one:
+     * A renewal charged to the card is not reminded while any attempt waits, nor for the days before its last one:
      * each declined attempt already told the contact.
      *
      * @return reminders requested now
@@ -286,11 +286,15 @@ public class Subscriptions {
         SubscriptionPeriodEntity period =
                 SubscriptionPeriodEntity.findOpen(subscription.id).orElseThrow();
         BillingOrderEntity order = BillingOrderEntity.findById(period.openingOrderId);
-        List<PaymentChargeEntity> charges = PaymentChargeEntity.listByOrder(order.id).stream()
+        List<PaymentChargeEntity> charges = PaymentChargeEntity.listByOrder(order.id);
+        if (charges.stream().anyMatch(charge -> charge.status.isLive())) {
+            return 0;
+        }
+        List<PaymentChargeEntity> automatic = charges.stream()
                 .filter(charge -> charge.origin == PaymentChargeEntity.Origin.AUTO)
                 .toList();
         OffsetDateTime reminderAt = subscription.pastDueAt.plusDays(day.get());
-        if (!charges.isEmpty() && (charges.getLast().status.isLive() || !reminderAt.isAfter(charges.getLast().runAt))) {
+        if (!automatic.isEmpty() && !reminderAt.isAfter(automatic.getLast().runAt)) {
             return 0;
         }
         PlanVersionEntity version = PlanVersionEntity.findById(period.planVersionId);
