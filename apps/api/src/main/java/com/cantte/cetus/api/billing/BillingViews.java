@@ -6,6 +6,7 @@ import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PersonType;
+import com.cantte.cetus.payments.CardSetup;
 import com.cantte.cetus.payments.Checkout;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
@@ -13,6 +14,8 @@ import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
+import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
@@ -315,13 +318,17 @@ public final class BillingViews {
             CheckoutView checkout,
 
             @Schema(nullable = true, description = "Cetus' electronic invoice of the order, once it is issued")
-            OrderInvoiceView invoice) {
+            OrderInvoiceView invoice,
+
+            @Schema(nullable = true, description = "The last attempt to charge the order to the saved card")
+            OrderChargeView charge) {
 
         static OrderView from(
                 BillingOrderEntity order,
                 List<BillingOrderItemEntity> items,
                 CheckoutView checkout,
-                OrderInvoiceView invoice) {
+                OrderInvoiceView invoice,
+                OrderChargeView charge) {
             return new OrderView(
                     order.id,
                     order.kind,
@@ -336,9 +343,94 @@ public final class BillingViews {
                     order.paidAt,
                     order.createdAt,
                     checkout,
-                    invoice);
+                    invoice,
+                    charge);
         }
     }
+
+    @Schema(description = "An attempt to charge an order to the saved card")
+    public record OrderChargeView(
+            int attempt,
+            PaymentChargeEntity.Origin origin,
+            PaymentChargeEntity.Status status,
+
+            @Schema(description = "When it runs, or ran") OffsetDateTime runAt,
+
+            @Schema(nullable = true, description = "Wompi's reason when the card was declined")
+            String failureMessage) {
+
+        static OrderChargeView from(PaymentChargeEntity charge) {
+            return new OrderChargeView(
+                    charge.attempt, charge.origin, charge.status, charge.runAt, charge.failureMessage);
+        }
+    }
+
+    @Schema(description = "The card the account saved to pay its renewals; only what can be shown of it")
+    public record PaymentMethodView(
+            UUID id,
+
+            @Schema(description = "Such as VISA or MASTERCARD")
+            String brand,
+
+            String lastFour,
+            int expMonth,
+            int expYear,
+            OffsetDateTime createdAt) {
+
+        static PaymentMethodView from(PaymentMethodEntity method) {
+            return new PaymentMethodView(
+                    method.id, method.brand, method.lastFour, method.expMonth, method.expYear, method.createdAt);
+        }
+    }
+
+    @Schema(
+            description = "What the browser needs to tokenize a card with Wompi, so the card never reaches Cetus, and"
+                    + " the terms the customer accepts first")
+    public record CardSetupView(
+            String publicKey,
+
+            @Schema(description = "Where the browser posts the card, with the public key as its Bearer token")
+            URI tokenizationUrl,
+
+            AcceptanceView endUserPolicy,
+            AcceptanceView personalDataAuth) {
+
+        static CardSetupView from(CardSetup setup) {
+            return new CardSetupView(
+                    setup.publicKey(),
+                    setup.tokenizationUrl(),
+                    new AcceptanceView(
+                            setup.endUserPolicy().token(), setup.endUserPolicy().permalink()),
+                    new AcceptanceView(
+                            setup.personalDataAuth().token(),
+                            setup.personalDataAuth().permalink()));
+        }
+    }
+
+    @Schema(description = "A Wompi document the customer accepts: the link to read it and the token of the acceptance")
+    public record AcceptanceView(String token, URI permalink) {}
+
+    public record SavePaymentMethodRequest(
+            @Schema(description = "The token Wompi gave the browser for the card (tok_…)") @NotBlank @Size(max = 200)
+            String cardToken,
+
+            @Schema(description = "The token of Wompi's terms the customer accepted") @NotBlank @Size(max = 4000)
+            String acceptanceToken,
+
+            @Schema(description = "The token of Wompi's personal data authorization the customer accepted")
+            @NotBlank
+            @Size(max = 4000)
+            String personalDataAuthToken,
+
+            @Schema(description = "As Wompi answered the tokenization, such as VISA")
+            @NotBlank
+            @Pattern(regexp = "[A-Z][A-Z_ ]{1,29}")
+            String brand,
+
+            @NotNull @Min(1) @Max(12) Integer expMonth,
+
+            @Schema(description = "With its four digits") @NotNull @Min(2000) @Max(2199)
+            Integer expYear) {}
 
     @Schema(description = "The electronic invoice Cetus issued for an order; its files download once it is accepted")
     public record OrderInvoiceView(

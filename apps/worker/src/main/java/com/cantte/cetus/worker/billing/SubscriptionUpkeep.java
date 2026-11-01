@@ -13,7 +13,7 @@ import org.jboss.logging.Logger;
 
 /**
  * Every so often: closes the subscription periods that ended and opens their renewals, reminds of the renewals
- * still unpaid and cancels the subscriptions whose grace ran out, one period or subscription per transaction. Each
+ * still unpaid, cancels the subscriptions whose grace ran out and warns of the saved cards about to expire, one period or subscription per transaction. Each
  * step checks under a lock that it was not done, so replicas running it at once only repeat reads.
  */
 @ApplicationScoped
@@ -23,6 +23,9 @@ public class SubscriptionUpkeep {
 
     @Inject
     Subscriptions subscriptions;
+
+    @Inject
+    AutoCharge autoCharge;
 
     @Scheduled(
             every = "${cetus.billing.subscription-interval}",
@@ -61,6 +64,11 @@ public class SubscriptionUpkeep {
                         "Past due subscription %s could not be tended; it is tried again on the next run",
                         subscription);
             }
+        }
+        try {
+            QuarkusTransaction.requiringNew().call(() -> autoCharge.warnExpiring(now));
+        } catch (RuntimeException e) {
+            LOG.errorf(e, "Expiring cards could not be warned of; they are tried again on the next run");
         }
         if (closed > 0 || canceled > 0) {
             LOG.infof("%d subscription periods closed, %d subscriptions canceled unpaid", closed, canceled);

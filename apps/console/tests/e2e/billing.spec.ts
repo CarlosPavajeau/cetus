@@ -73,6 +73,63 @@ test("a subscribed account sees its period, changes its overage limit and buys n
   await expect(page.getByRole("button", { name: "Comprar" })).toHaveCount(0);
 });
 
+test("a subscribed account saves a card for its renewals and removes it", async ({
+  page,
+  organization,
+}) => {
+  await subscribe(organization, "INICIAL");
+  const profile = await organization.api("/console/billing-profile", {
+    method: "PUT",
+    body: JSON.stringify({
+      personType: "LEGAL_ENTITY",
+      identificationType: "NIT",
+      identificationNumber: "900123456",
+      legalName: "Tarjeta E2E SAS",
+      taxLevelCodes: ["O-13"],
+      taxScheme: "IVA",
+      email: "facturas@tarjeta-e2e.test",
+    }),
+  });
+  expect(profile.ok).toBe(true);
+
+  await open(page, "/billing");
+  const automatic = page.getByRole("region", { name: "Cobro automático" });
+  await expect(automatic.getByText(/^Sin tarjeta guardada/)).toBeVisible();
+  await automatic.getByRole("button", { name: "Activar cobro automático" }).click();
+  const dialog = page.getByRole("dialog");
+  // The card goes from the browser to Wompi's sandbox; a stack without Wompi's keys cannot save one.
+  const unavailable = dialog.getByText(
+    "Los pagos no están disponibles en este momento. Intenta más tarde.",
+  );
+  const save = dialog.getByRole("button", { name: "Guardar tarjeta" });
+  await expect(save.and(page.locator(":enabled")).or(unavailable)).toBeVisible();
+  if (await unavailable.isVisible()) {
+    return;
+  }
+  await dialog.getByLabel("Número de la tarjeta").pressSequentially("4242424242424242");
+  await expect(dialog.getByLabel("Número de la tarjeta")).toHaveValue("4242 4242 4242 4242");
+  await expect(dialog.getByText("Visa", { exact: true })).toBeVisible();
+  await dialog.getByLabel("Vencimiento (MM/AA)").pressSequentially("0829");
+  await expect(dialog.getByLabel("Vencimiento (MM/AA)")).toHaveValue("08/29");
+  await dialog.getByLabel("Código de seguridad").fill("123");
+  await dialog.getByLabel("Nombre en la tarjeta").fill("Prueba Cetus");
+  await save.click();
+  await expect(
+    dialog.getByText("Acepta los términos de Wompi para guardar la tarjeta."),
+  ).toBeVisible();
+  await dialog.getByRole("checkbox", { name: /términos y condiciones de Wompi/ }).click();
+  await dialog.getByRole("checkbox", { name: /tratamiento de mis datos personales/ }).click();
+  await save.click();
+  // Two calls to Wompi's sandbox: the browser tokenizes the card, then the API saves it.
+  await expect(dialog).toBeHidden({ timeout: 30_000 });
+  await expect(automatic.getByText("VISA ••4242")).toBeVisible();
+  await expect(automatic.getByText("08/29")).toBeVisible();
+
+  await automatic.getByRole("button", { name: "Quitar tarjeta" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Quitar tarjeta" }).click();
+  await expect(automatic.getByText(/^Sin tarjeta guardada/)).toBeVisible();
+});
+
 test("old links to the plan page land on billing", async ({ page, organization: _owner }) => {
   await open(page, "/settings/usage");
 

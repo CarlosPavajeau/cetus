@@ -32,7 +32,13 @@ public enum NotificationKind {
     /** The subscription ended, unpaid or as its owner chose; the lots already granted keep their validity. */
     SUBSCRIPTION_CANCELED(Set.of(Category.BILLING)),
     /** The subscription's period ran up 50 % or 100 % of its overage limit. */
-    SUBSCRIPTION_OVERAGE(Set.of(Category.BILLING));
+    SUBSCRIPTION_OVERAGE(Set.of(Category.BILLING)),
+    /** A subscription period closed and its renewal, with the closed period's overage, is charged to the saved card. */
+    SUBSCRIPTION_CHARGE_SCHEDULED(Set.of(Category.BILLING)),
+    /** The saved card was declined for the renewal; it is tried again, or the renewal waits to be paid otherwise. */
+    SUBSCRIPTION_CHARGE_FAILED(Set.of(Category.BILLING)),
+    /** The card that pays the renewals expires this month or the next, or already did. */
+    PAYMENT_METHOD_EXPIRING(Set.of(Category.BILLING));
 
     private final Set<Category> categories;
 

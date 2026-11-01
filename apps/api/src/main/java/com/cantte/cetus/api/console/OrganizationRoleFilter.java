@@ -32,7 +32,8 @@ public class OrganizationRoleFilter implements ContainerRequestFilter {
             "/console/issuers",
             "/console/billing-profile",
             "/console/orders",
-            "/console/subscription");
+            "/console/subscription",
+            "/console/payment-method");
 
     @Inject
     ConsoleContext context;

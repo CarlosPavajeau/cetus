@@ -2,12 +2,15 @@ package com.cantte.cetus.api.billing;
 
 import com.cantte.cetus.api.billing.BillingViews.CheckoutView;
 import com.cantte.cetus.api.billing.BillingViews.CreateOrderRequest;
+import com.cantte.cetus.api.billing.BillingViews.OrderChargeView;
 import com.cantte.cetus.api.billing.BillingViews.OrderInvoiceView;
 import com.cantte.cetus.api.billing.BillingViews.OrderView;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.error.ProblemDetail;
 import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.domain.DomainException;
+import com.cantte.cetus.jobs.JobQueue;
+import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.payments.CheckoutRequest;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
@@ -17,6 +20,8 @@ import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
+import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
@@ -58,6 +63,9 @@ public class Orders {
 
     @Inject
     DocumentFiles files;
+
+    @Inject
+    JobQueue jobs;
 
     @ConfigProperty(name = "cetus.billing.order-ttl")
     Duration orderTtl;
@@ -126,7 +134,7 @@ public class Orders {
                         "plan", plan.code,
                         "version", version.version,
                         "totalCents", order.totalCents));
-        return view(order, List.of(item), null);
+        return view(order, List.of(item), null, null);
     }
 
     @Transactional(Transactional.TxType.MANDATORY)
@@ -163,6 +171,12 @@ public class Orders {
                                 orders.stream().map(order -> order.id).toList())
                         .stream()
                         .collect(Collectors.groupingBy(item -> item.orderId));
+        Map<UUID, OrderChargeView> charges =
+                PaymentChargeEntity.listByOrders(
+                                orders.stream().map(order -> order.id).toList())
+                        .stream()
+                        .collect(Collectors.toMap(
+                                charge -> charge.orderId, OrderChargeView::from, (first, later) -> later));
         Map<UUID, OrderInvoiceView> invoices = DocumentEntity.listNumberStatus(orders.stream()
                         .map(order -> order.invoiceDocumentId)
                         .filter(Objects::nonNull)
@@ -173,12 +187,17 @@ public class Orders {
                 .map(order -> view(
                         order,
                         items.getOrDefault(order.id, List.of()),
-                        order.invoiceDocumentId == null ? null : invoices.get(order.invoiceDocumentId)))
+                        order.invoiceDocumentId == null ? null : invoices.get(order.invoiceDocumentId),
+                        charges.get(order.id)))
                 .toList();
     }
 
     /** The checkout only while the order can still be paid; signing again gives the same parameters. */
-    private OrderView view(BillingOrderEntity order, List<BillingOrderItemEntity> items, OrderInvoiceView invoice) {
+    private OrderView view(
+            BillingOrderEntity order,
+            List<BillingOrderItemEntity> items,
+            OrderInvoiceView invoice,
+            OrderChargeView charge) {
         boolean payable =
                 order.status == BillingOrderEntity.Status.PENDING && order.expiresAt.isAfter(OffsetDateTime.now());
         Optional<CheckoutView> checkout = payments.gateway()
@@ -189,7 +208,60 @@ public class Orders {
                         order.currency,
                         order.expiresAt.toInstant(),
                         consoleUrl.resolve("/billing/orders/" + order.id)))));
-        return OrderView.from(order, items, checkout.orElse(null), invoice);
+        return OrderView.from(order, items, checkout.orElse(null), invoice, charge);
+    }
+
+    /**
+     * Charges a pending order to the account's saved card now, as its owner asks from the console; the worker makes
+     * the charge. An attempt of the renewal still waiting for its day gives way to this one; one already sent must
+     * be answered first.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public OrderView charge(UUID accountId, UUID orderId, Actor actor, RequestOrigin origin) {
+        if (payments.gateway().isEmpty()) {
+            throw new PaymentsUnavailable();
+        }
+        BillingOrderEntity.findForAccount(orderId, accountId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        BillingOrderEntity order = BillingOrderEntity.lock(orderId).orElseThrow();
+        OffsetDateTime now = OffsetDateTime.now();
+        if (order.status != BillingOrderEntity.Status.PENDING || !order.expiresAt.isAfter(now)) {
+            throw new DomainException("order_not_payable", "The order is no longer waiting to be paid");
+        }
+        PaymentMethodEntity card = PaymentMethodEntity.findActive(accountId)
+                .orElseThrow(() ->
+                        new DomainException("payment_method_required", "Save a card before charging an order to it"));
+        Optional<PaymentChargeEntity> live = PaymentChargeEntity.findLive(order.id);
+        if (live.isPresent()) {
+            PaymentChargeEntity waiting =
+                    PaymentChargeEntity.lock(live.get().id).orElseThrow();
+            if (waiting.status == PaymentChargeEntity.Status.SUBMITTED) {
+                throw new ChargeInProgress();
+            }
+            waiting.status = PaymentChargeEntity.Status.CANCELED;
+            // Before the new attempt is inserted: an order has one live attempt at most.
+            PaymentChargeEntity.flush();
+        }
+        PaymentChargeEntity charge = PaymentChargeEntity.schedule(order, card, PaymentChargeEntity.Origin.MANUAL, now);
+        jobs.enqueue(JobTypes.CHARGE_ORDER, charge.id);
+        auditLog.record(
+                accountId,
+                actor,
+                origin,
+                AuditAction.BILLING_ORDER_CHARGE_REQUESTED,
+                "billing_order",
+                order.id,
+                Map.of("reference", charge.reference, "card", card.label(), "totalCents", order.totalCents));
+        return views(List.of(order)).getFirst();
+    }
+
+    /** An attempt to charge the order was sent to Wompi and has no answer yet. */
+    public static class ChargeInProgress extends WebApplicationException {
+
+        ChargeInProgress() {
+            super(ProblemDetail.response(
+                    409, "charge_in_progress", "A charge of this order is waiting for Wompi's answer"));
+        }
     }
 
     /** Without the Wompi keys nothing can be charged. */

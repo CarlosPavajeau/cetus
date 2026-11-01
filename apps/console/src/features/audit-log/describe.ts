@@ -159,6 +159,11 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "SUBSCRIPTION_CANCEL_SCHEDULED":
     case "SUBSCRIPTION_CANCEL_UNDONE":
       return text(data.plan);
+    case "PAYMENT_METHOD_SAVED":
+    case "PAYMENT_METHOD_REMOVED":
+      return text(data.card);
+    case "BILLING_ORDER_CHARGE_REQUESTED":
+      return `${text(data.reference)} · ${text(data.card)} · ${cents(data.totalCents)}`;
     case "SUBSCRIPTION_CANCELED":
       return `${text(data.plan)} · ${data.reason === "UNPAID" ? "Renovación sin pagar" : "Pedido por la cuenta"}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":

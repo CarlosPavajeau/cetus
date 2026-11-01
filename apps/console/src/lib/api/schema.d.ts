@@ -1038,6 +1038,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/orders/{id}/charge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Charge */
+        post: operations["OrderResource_charge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/orders/{id}/invoice/files/{file}": {
         parameters: {
             query?: never;
@@ -1047,6 +1064,42 @@ export interface paths {
         };
         /** Invoice File */
         get: operations["OrderResource_invoiceFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/payment-method": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["PaymentMethodResource_get"];
+        /** Save */
+        put: operations["PaymentMethodResource_save"];
+        post?: never;
+        /** Remove */
+        delete: operations["PaymentMethodResource_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/payment-method/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Setup */
+        get: operations["PaymentMethodResource_setup"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1647,6 +1700,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description A Wompi document the customer accepts: the link to read it and the token of the acceptance */
+        AcceptanceView: {
+            token: string;
+            /** Format: uri */
+            permalink: string;
+        };
         /** @description The account's credits: what is left, its lots and the latest movements */
         AccountCreditsView: {
             /** @description Whether a subscription or a package in force lets the account issue in production */
@@ -1931,7 +1990,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -1990,6 +2049,17 @@ export interface components {
             /** @description The credit note */
             id: components["schemas"]["UUID"];
             number: string;
+        };
+        /** @description What the browser needs to tokenize a card with Wompi, so the card never reaches Cetus, and the terms the customer accepts first */
+        CardSetupView: {
+            publicKey: string;
+            /**
+             * Format: uri
+             * @description Where the browser posts the card, with the public key as its Bearer token
+             */
+            tokenizationUrl: string;
+            endUserPolicy: components["schemas"]["AcceptanceView"];
+            personalDataAuth: components["schemas"]["AcceptanceView"];
         };
         /** @enum {string} */
         Category: "TECHNICAL" | "FISCAL" | "BILLING";
@@ -2998,6 +3068,17 @@ export interface components {
          * @example 2022-03-10T12:15:50-04:00
          */
         OffsetDateTime: string;
+        /** @description An attempt to charge an order to the saved card */
+        OrderChargeView: {
+            /** Format: int32 */
+            attempt: number;
+            origin: components["schemas"]["Origin"];
+            status: components["schemas"]["Status1"];
+            /** @description When it runs, or ran */
+            runAt: components["schemas"]["OffsetDateTime"];
+            /** @description Wompi's reason when the card was declined */
+            failureMessage: string | null;
+        };
         /** @description The electronic invoice Cetus issued for an order; its files download once it is accepted */
         OrderInvoiceView: {
             /** @description Prefix and number, such as CET1001 */
@@ -3029,7 +3110,7 @@ export interface components {
         OrderView: {
             id: components["schemas"]["UUID"];
             kind: components["schemas"]["Kind1"];
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status2"];
             /** @description What Wompi knows the order by */
             reference: string;
             /** Format: int64 */
@@ -3048,7 +3129,11 @@ export interface components {
             checkout: ((components["schemas"]["CheckoutView"] | null) | null) | components["schemas"]["CheckoutView"] | null;
             /** @description Cetus' electronic invoice of the order, once it is issued */
             invoice: ((components["schemas"]["OrderInvoiceView"] | null) | null) | components["schemas"]["OrderInvoiceView"] | null;
+            /** @description The last attempt to charge the order to the saved card */
+            charge: ((components["schemas"]["OrderChargeView"] | null) | null) | components["schemas"]["OrderChargeView"] | null;
         };
+        /** @enum {string} */
+        Origin: "AUTO" | "MANUAL";
         OverageLimitRequest: {
             /**
              * Format: int64
@@ -3079,6 +3164,18 @@ export interface components {
          * @enum {string}
          */
         PaymentMethod: "CASH" | "CREDIT";
+        /** @description The card the account saved to pay its renewals; only what can be shown of it */
+        PaymentMethodView: {
+            id: components["schemas"]["UUID"];
+            /** @description Such as VISA or MASTERCARD */
+            brand: string;
+            lastFour: string;
+            /** Format: int32 */
+            expMonth: number;
+            /** Format: int32 */
+            expYear: number;
+            createdAt: components["schemas"]["OffsetDateTime"];
+        };
         /** @description Billable documents (production, accepted by the DIAN) of a month */
         PeriodUsageView: {
             /** @description Calendar month in Colombia, YYYY-MM */
@@ -3342,6 +3439,23 @@ export interface components {
             /** @description The alert shares the income reached, lowest first */
             alertPercentsReached: number[];
         };
+        SavePaymentMethodRequest: {
+            /** @description The token Wompi gave the browser for the card (tok_…) */
+            cardToken: string;
+            /** @description The token of Wompi's terms the customer accepted */
+            acceptanceToken: string;
+            /** @description The token of Wompi's personal data authorization the customer accepted */
+            personalDataAuthToken: string;
+            /** @description As Wompi answered the tokenization, such as VISA */
+            brand: string;
+            /** Format: int32 */
+            expMonth: number;
+            /**
+             * Format: int32
+             * @description With its four digits
+             */
+            expYear: number;
+        };
         SoftwareRequest: {
             softwareId: string;
             pin: string;
@@ -3356,13 +3470,15 @@ export interface components {
         /** @enum {string} */
         Status: "ACTIVE" | "EXHAUSTED" | "EXPIRED" | "REVOKED";
         /** @enum {string} */
-        Status1: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED";
+        Status1: "SCHEDULED" | "SUBMITTED" | "APPROVED" | "FAILED" | "CANCELED";
         /** @enum {string} */
-        Status2: "ACTIVE" | "PAST_DUE" | "CANCELED";
+        Status2: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED";
         /** @enum {string} */
-        Status3: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        Status3: "ACTIVE" | "PAST_DUE" | "CANCELED";
         /** @enum {string} */
-        Status4: "ACTIVE" | "DISABLED";
+        Status4: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        /** @enum {string} */
+        Status5: "ACTIVE" | "DISABLED";
         StatusChangeRequest: {
             reason: string;
         };
@@ -3403,7 +3519,7 @@ export interface components {
         /** @description The account's subscription that is not canceled */
         SubscriptionView: {
             id: components["schemas"]["UUID"];
-            status: components["schemas"]["Status2"];
+            status: components["schemas"]["Status3"];
             planCode: string;
             planName: string;
             /** @description The terms the open period was sold at */
@@ -3579,7 +3695,7 @@ export interface components {
             eventId: components["schemas"]["UUID"];
             eventType: string;
             documentId: components["schemas"]["UUID"];
-            status: components["schemas"]["Status3"];
+            status: components["schemas"]["Status4"];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
@@ -3598,7 +3714,7 @@ export interface components {
             environment: components["schemas"]["Environment"];
             /** @description Empty means all event types */
             eventTypes: string[];
-            status: components["schemas"]["Status4"];
+            status: components["schemas"]["Status5"];
             disabledAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description AUTOMATIC when Cetus disabled it after failing for days */
             disabledReason: ((string | components["schemas"]["DisabledReason"] | null) | null) | components["schemas"]["DisabledReason"] | null;
@@ -7655,6 +7771,73 @@ export interface operations {
             };
         };
     };
+    OrderResource_charge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The charge is on its way */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description A charge of the order waits for Wompi's answer */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The order is not payable, or the account has no saved card */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Payments are not configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     OrderResource_invoiceFile: {
         parameters: {
             query?: never;
@@ -7687,6 +7870,176 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PaymentMethodResource_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethodView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no saved card */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PaymentMethodResource_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePaymentMethodRequest"];
+            };
+        };
+        responses: {
+            /** @description Saved, replacing the card before */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethodView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Payments are not configured, or Wompi is not answering */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PaymentMethodResource_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No longer charged */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The account has no saved card */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PaymentMethodResource_setup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardSetupView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Payments are not configured, or Wompi is not answering */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

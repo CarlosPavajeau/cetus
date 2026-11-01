@@ -143,6 +143,12 @@ export type Subscription = Schemas["SubscriptionView"];
 
 export type SubscriptionStatus = Subscription["status"];
 
+export type PaymentMethod = Schemas["PaymentMethodView"];
+
+export type CardSetup = Schemas["CardSetupView"];
+
+export type OrderCharge = Schemas["OrderChargeView"];
+
 export type CertificateUploadLink = Schemas["UploadLinkView"];
 
 export type SupportTicket = Schemas["SupportTicketView"];
@@ -213,6 +219,9 @@ export const auditActions = [
   "SUBSCRIPTION_CANCEL_SCHEDULED",
   "SUBSCRIPTION_CANCEL_UNDONE",
   "SUBSCRIPTION_CANCELED",
+  "PAYMENT_METHOD_SAVED",
+  "PAYMENT_METHOD_REMOVED",
+  "BILLING_ORDER_CHARGE_REQUESTED",
 ] as const satisfies readonly AuditAction[];
 
 /** Actions on a person or on the plan catalog rather than an account: only the administration's log has them. */

@@ -28,4 +28,31 @@ public interface PaymentGateway {
 
     /** Checks an event's signature and environment; makes no call. */
     EventCheck verifyEvent(String body);
+
+    /**
+     * What the browser needs to tokenize a card, with the terms in force to accept.
+     *
+     * @throws PaymentTransientException when the provider cannot be reached or fails; ask again later
+     * @throws PaymentRejectedException when the provider refuses the request or answers what cannot be read
+     */
+    CardSetup cardSetup();
+
+    /**
+     * Saves a tokenized card to charge it later. A card the issuer would decline is still saved: it is declined
+     * when charged.
+     *
+     * @throws PaymentTransientException when the provider cannot be reached or fails; ask again later
+     * @throws PaymentRejectedException when the provider refuses the token, the terms or the request
+     */
+    PaymentSource saveCard(CardSourceRequest request);
+
+    /**
+     * Charges a saved source, accepting the terms in force on the customer's behalf as they accepted when saving it.
+     * The transaction usually comes back PENDING; its outcome arrives like any other's.
+     *
+     * @throws PaymentTransientException when the provider cannot be reached or fails; the charge may have been
+     *     made, so look for the reference's transactions before charging again
+     * @throws PaymentRejectedException when the provider refuses the charge, such as a reference already used
+     */
+    PaymentTransaction charge(ChargeRequest request);
 }

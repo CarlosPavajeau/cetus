@@ -11,6 +11,8 @@ import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.CreditGrantEntity;
+import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
+import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
@@ -24,6 +26,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +55,9 @@ public class Subscriptions {
 
     @Inject
     AuditLog auditLog;
+
+    @Inject
+    AutoCharge autoCharge;
 
     /** How long a renewal waits to be paid before the subscription is canceled. */
     @ConfigProperty(name = "cetus.billing.subscription-grace")
@@ -215,17 +221,22 @@ public class Subscriptions {
         subscription.nextPlanVersionId = null;
         subscription.status = SubscriptionEntity.Status.PAST_DUE;
         subscription.pastDueAt = now;
+        Optional<PaymentMethodEntity> card = autoCharge.schedule(order, now);
+        Map<String, String> data = new HashMap<>(Map.of(
+                "plan", planNext.name,
+                "periodEnd", Dates.bogota(next.endsAt),
+                "total", Numbers.cop(order.totalCents / 100),
+                "overage", Numbers.count(overage),
+                "dueBy", Dates.bogota(order.expiresAt),
+                "orderId", order.id.toString()));
+        card.ifPresent(method -> data.put("card", method.label()));
         notifications.request(
                 subscription.accountId,
-                NotificationKind.SUBSCRIPTION_RENEWAL,
-                "subscription_renewal:%s".formatted(next.id),
-                Map.of(
-                        "plan", planNext.name,
-                        "periodEnd", Dates.bogota(next.endsAt),
-                        "total", Numbers.cop(order.totalCents / 100),
-                        "overage", Numbers.count(overage),
-                        "dueBy", Dates.bogota(order.expiresAt),
-                        "orderId", order.id.toString()));
+                card.isPresent()
+                        ? NotificationKind.SUBSCRIPTION_CHARGE_SCHEDULED
+                        : NotificationKind.SUBSCRIPTION_RENEWAL,
+                (card.isPresent() ? "subscription_charge_scheduled:%s" : "subscription_renewal:%s").formatted(next.id),
+                data);
         return true;
     }
 
@@ -255,6 +266,8 @@ public class Subscriptions {
 
     /**
      * Reminds the billing contact of an unpaid renewal on each reminder day of the grace, once per period and day.
+     * A renewal charged to the card is not reminded while any attempt waits, nor for the days before its last
+     * declined one: each declined renewal attempt already told the contact.
      *
      * @return reminders requested now
      */
@@ -273,6 +286,18 @@ public class Subscriptions {
         SubscriptionPeriodEntity period =
                 SubscriptionPeriodEntity.findOpen(subscription.id).orElseThrow();
         BillingOrderEntity order = BillingOrderEntity.findById(period.openingOrderId);
+        List<PaymentChargeEntity> charges = PaymentChargeEntity.listByOrder(order.id);
+        if (charges.stream().anyMatch(charge -> charge.status.isLive())) {
+            return 0;
+        }
+        List<PaymentChargeEntity> declined = charges.stream()
+                .filter(charge -> charge.origin == PaymentChargeEntity.Origin.AUTO
+                        && charge.status == PaymentChargeEntity.Status.FAILED)
+                .toList();
+        OffsetDateTime reminderAt = subscription.pastDueAt.plusDays(day.get());
+        if (!declined.isEmpty() && !reminderAt.isAfter(declined.getLast().runAt)) {
+            return 0;
+        }
         PlanVersionEntity version = PlanVersionEntity.findById(period.planVersionId);
         PlanEntity plan = PlanEntity.findById(version.planId);
         return notifications

@@ -13,6 +13,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -59,10 +60,41 @@ class WompiGatewayTest {
 
     record Exchange(String path, String authorization) {}
 
+    record Sent(String method, String merchantKey, String body) {}
+
+    record Presigned(String acceptanceToken, String permalink, String type) {}
+
+    record Merchant(Presigned presignedAcceptance, Presigned presignedPersonalDataAuth) {}
+
+    record PublicData(String bin, String lastFour, String type) {}
+
+    record Source(long id, PublicData publicData, String type, String status, String customerEmail) {}
+
+    record Installments(int installments) {}
+
+    record SentSource(
+            String type, String token, String customerEmail, String acceptanceToken, String acceptPersonalAuth) {}
+
+    record SentCharge(
+            long amountInCents,
+            String currency,
+            String signature,
+            String customerEmail,
+            String reference,
+            long paymentSourceId,
+            Installments paymentMethod,
+            boolean recurrent,
+            String acceptanceToken,
+            String acceptPersonalAuth) {}
+
     private HttpServer server;
     private final AtomicReference<Exchange> last = new AtomicReference<>();
+    private final AtomicReference<Sent> sent = new AtomicReference<>();
     private volatile int status = 200;
     private volatile Object responseBody;
+    private volatile Object merchantBody = new Envelope(new Merchant(
+            new Presigned("eyJ.policy", "https://wompi.com/terminos.pdf", "END_USER_POLICY"),
+            new Presigned("eyJ.data", "https://wompi.com/datos.pdf", "PERSONAL_DATA_AUTH")));
 
     @BeforeEach
     void start() throws IOException {
@@ -74,6 +106,12 @@ class WompiGatewayTest {
                                     ? ""
                                     : "?" + exchange.getRequestURI().getRawQuery()),
                     exchange.getRequestHeaders().getFirst("Authorization")));
+            sent.set(new Sent(
+                    exchange.getRequestMethod(),
+                    exchange.getRequestHeaders().getFirst("x-merchant-public-key"),
+                    new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8)));
+            Object responseBody =
+                    exchange.getRequestURI().getPath().endsWith("/merchants/info") ? merchantBody : this.responseBody;
             byte[] response = JSON.writeValueAsBytes(responseBody);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(status, response.length);
@@ -334,6 +372,94 @@ class WompiGatewayTest {
         assertThat(new WompiKeys("pub_test_a", "prv_test_b", "test_integrity_c", "test_events_d").environment())
                 .isEqualTo(WompiKeys.Environment.SANDBOX);
         assertThat(DOCS_KEYS.toString()).doesNotContain("prod_events_");
+    }
+
+    @Test
+    void theCardSetupCarriesThePublicKeyAndTheTermsInForce() {
+        CardSetup setup = gateway(DOCS_KEYS).cardSetup();
+
+        assertThat(last.get()).isEqualTo(new Exchange("/v1/merchants/info", null));
+        assertThat(sent.get().merchantKey()).isEqualTo("pub_prod_example");
+        assertThat(setup.publicKey()).isEqualTo("pub_prod_example");
+        assertThat(setup.tokenizationUrl().toString()).endsWith("/v1/tokens/cards");
+        assertThat(setup.endUserPolicy())
+                .isEqualTo(
+                        new CardSetup.AcceptanceDocument("eyJ.policy", URI.create("https://wompi.com/terminos.pdf")));
+        assertThat(setup.personalDataAuth())
+                .isEqualTo(new CardSetup.AcceptanceDocument("eyJ.data", URI.create("https://wompi.com/datos.pdf")));
+    }
+
+    @Test
+    void aMerchantWithoutTermsIsRejected() {
+        merchantBody = new Envelope(Map.of());
+
+        assertThatThrownBy(() -> gateway(DOCS_KEYS).cardSetup()).isInstanceOf(PaymentRejectedException.class);
+    }
+
+    @Test
+    void savesACardWithThePrivateKeyAndTheAcceptedTerms() throws IOException {
+        responseBody = new Envelope(
+                new Source(3891, new PublicData("424242", "4242", "CARD"), "CARD", "AVAILABLE", "ana@example.com"));
+
+        PaymentSource source = gateway(DOCS_KEYS)
+                .saveCard(new CardSourceRequest("tok_prod_1", "ana@example.com", "eyJ.policy", "eyJ.data"));
+
+        assertThat(last.get()).isEqualTo(new Exchange("/v1/payment_sources", "Bearer prv_prod_example"));
+        assertThat(sent.get().method()).isEqualTo("POST");
+        assertThat(JSON.readValue(sent.get().body(), SentSource.class))
+                .isEqualTo(new SentSource("CARD", "tok_prod_1", "ana@example.com", "eyJ.policy", "eyJ.data"));
+        assertThat(source).isEqualTo(new PaymentSource("3891", PaymentSource.Status.AVAILABLE, "4242"));
+    }
+
+    @Test
+    void anInvalidCardTokenIsRejected() {
+        respond(422, new ErrorBody(new ErrorBody.Error("INPUT_VALIDATION_ERROR", null)));
+
+        assertThatThrownBy(() -> gateway(DOCS_KEYS)
+                        .saveCard(new CardSourceRequest("tok_nope", "ana@example.com", "eyJ.policy", "eyJ.data")))
+                .isInstanceOf(PaymentRejectedException.class)
+                .hasMessageContaining("INPUT_VALIDATION_ERROR");
+    }
+
+    @Test
+    void chargesASourceSignedWithoutExpirationAndWithTheTermsInForce() throws IOException {
+        responseBody = new Envelope(new Transaction(
+                "1-2-3", "CET-1-1", "PENDING", 4_800_000, "COP", "CARD", null, "2026-11-01T02:05:40.887Z", null));
+
+        PaymentTransaction transaction =
+                gateway(DOCS_KEYS).charge(new ChargeRequest("CET-1-1", 4_800_000, "COP", "ana@example.com", "3891"));
+
+        assertThat(last.get()).isEqualTo(new Exchange("/v1/transactions", "Bearer prv_prod_example"));
+        assertThat(JSON.readValue(sent.get().body(), SentCharge.class))
+                .isEqualTo(new SentCharge(
+                        4_800_000,
+                        "COP",
+                        WompiGateway.sha256("CET-1-14800000COP" + "prod_integrity_Z5mMke9x0k8gpErbDqwrJXMqsI6SFli6"),
+                        "ana@example.com",
+                        "CET-1-1",
+                        3891,
+                        new Installments(1),
+                        false,
+                        "eyJ.policy",
+                        "eyJ.data"));
+        assertThat(transaction.status()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(transaction.reference()).isEqualTo("CET-1-1");
+    }
+
+    @Test
+    void aReferenceAlreadyUsedIsRejected() {
+        respond(422, new ErrorBody(new ErrorBody.Error("INPUT_VALIDATION_ERROR", null)));
+
+        assertThatThrownBy(() ->
+                        gateway(DOCS_KEYS).charge(new ChargeRequest("CET-1-1", 100, "COP", "ana@example.com", "3891")))
+                .isInstanceOf(PaymentRejectedException.class);
+    }
+
+    @Test
+    void aSourceIdThatIsNotANumberIsRejected() {
+        assertThatThrownBy(() ->
+                        gateway(DOCS_KEYS).charge(new ChargeRequest("CET-1-1", 100, "COP", "ana@example.com", "src_1")))
+                .isInstanceOf(PaymentRejectedException.class);
     }
 
     private WompiGateway gateway(WompiKeys keys) {

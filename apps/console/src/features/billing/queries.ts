@@ -4,6 +4,7 @@ import {
   getBillingProfile,
   getCredits,
   getOrder,
+  getPaymentMethod,
   getSubscription,
   listOrders,
   listPlanOffers,
@@ -29,6 +30,11 @@ export const planOffersQuery = queryOptions({
 export const billingProfileQuery = queryOptions({
   queryKey: [...billingKey, "profile"],
   queryFn: () => getBillingProfile(),
+});
+
+export const paymentMethodQuery = queryOptions({
+  queryKey: [...billingKey, "payment-method"],
+  queryFn: () => getPaymentMethod(),
 });
 
 export const ordersQuery = queryOptions({

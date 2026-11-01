@@ -70,5 +70,11 @@ public enum AuditAction {
     SUBSCRIPTION_CANCEL_SCHEDULED,
     SUBSCRIPTION_CANCEL_UNDONE,
     /** The subscription ended, unpaid or as its owner chose; recorded by Cetus itself. */
-    SUBSCRIPTION_CANCELED
+    SUBSCRIPTION_CANCELED,
+    /** A card saved to pay the renewals, replacing the one before. */
+    PAYMENT_METHOD_SAVED,
+    /** The saved card is no longer charged. */
+    PAYMENT_METHOD_REMOVED,
+    /** A pending order charged to the saved card, as asked from the console. */
+    BILLING_ORDER_CHARGE_REQUESTED
 }

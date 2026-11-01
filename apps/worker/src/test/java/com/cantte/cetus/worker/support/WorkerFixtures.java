@@ -33,6 +33,7 @@ import com.cantte.cetus.persistence.entity.DocumentTaxEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
+import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
@@ -101,6 +102,26 @@ public class WorkerFixtures {
             item.totalCents = version.priceCents;
             item.persist();
             return order;
+        });
+    }
+
+    /** A card saved by the account to pay its renewals, as the console saves it; returns it. */
+    public PaymentMethodEntity card(UUID accountId, String sourceId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            PaymentMethodEntity method = new PaymentMethodEntity();
+            method.id = Ids.newId();
+            method.accountId = accountId;
+            method.provider = PaymentMethodEntity.Provider.WOMPI;
+            method.providerSourceId = sourceId;
+            method.type = PaymentMethodEntity.Type.CARD;
+            method.brand = "VISA";
+            method.lastFour = "4242";
+            method.expMonth = 8;
+            method.expYear = 2029;
+            method.customerEmail = "facturacion@example.com";
+            method.status = PaymentMethodEntity.Status.ACTIVE;
+            method.persist();
+            return method;
         });
     }
 
