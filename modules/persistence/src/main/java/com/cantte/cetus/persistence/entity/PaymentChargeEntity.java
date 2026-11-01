@@ -88,9 +88,8 @@ public class PaymentChargeEntity extends PanacheEntityBase {
     public static PaymentChargeEntity schedule(
             BillingOrderEntity order, PaymentMethodEntity method, Origin origin, OffsetDateTime runAt) {
         int attempt = ((Number) getEntityManager()
-                                .createQuery(
-                                        "SELECT coalesce(max(c.attempt), 0) FROM PaymentChargeEntity c"
-                                                + " WHERE c.orderId = :order")
+                                .createQuery("SELECT coalesce(max(c.attempt), 0) FROM PaymentChargeEntity c"
+                                        + " WHERE c.orderId = :order")
                                 .setParameter("order", order.id)
                                 .getSingleResult())
                         .intValue()

@@ -95,15 +95,10 @@ public class PaymentMethodEntity extends PanacheEntityBase {
 
     /** The active cards of subscribed accounts that cannot be charged after {@code last}. */
     public static List<PaymentMethodEntity> listExpiringBy(YearMonth last) {
-        return list(
-                """
+        return list("""
                 status = ?1 and (expYear < ?2 or (expYear = ?2 and expMonth <= ?3))
                 and accountId in (select s.accountId from SubscriptionEntity s where s.status <> ?4)
                 order by id
-                """,
-                Status.ACTIVE,
-                last.getYear(),
-                last.getMonthValue(),
-                SubscriptionEntity.Status.CANCELED);
+                """, Status.ACTIVE, last.getYear(), last.getMonthValue(), SubscriptionEntity.Status.CANCELED);
     }
 }
