@@ -1,11 +1,19 @@
 import { ArrowUpRightIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { Spinner } from "~/components/ui/spinner";
 import { cn } from "~/lib/utils";
 
+import type { PortalCapture } from "./dianPortal";
 import { type Step, steps } from "./steps";
 
 /**
@@ -129,7 +137,7 @@ export function StepGuide({
 }: {
   title: string;
   lead: string;
-  tips: { title: string; text: ReactNode }[];
+  tips: { title: string; text: ReactNode; capture?: PortalCapture }[];
   numbered?: boolean;
   link?: { href: string; label: string };
   note: string;
@@ -152,9 +160,10 @@ export function StepGuide({
                 {index + 1}
               </span>
             )}
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
               <p className="text-sm font-medium">{tip.title}</p>
               <p className="text-xs leading-relaxed text-muted-foreground">{tip.text}</p>
+              {tip.capture && <CapturePreview title={tip.title} capture={tip.capture} />}
             </div>
           </li>
         ))}
@@ -173,6 +182,52 @@ export function StepGuide({
       <div className="h-px bg-border" />
       <p className="text-xs leading-relaxed text-muted-foreground">{note}</p>
     </div>
+  );
+}
+
+/** A thumbnail of a portal screenshot that opens it at full size. */
+function CapturePreview({ title, capture }: { title: string; capture: PortalCapture }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <figure className="mt-1.5 flex flex-col gap-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={`Ampliar la captura: ${capture.alt}`}
+        className="overflow-hidden rounded-md border transition-opacity outline-none hover:opacity-85 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <img
+          src={capture.src}
+          alt=""
+          width={capture.width}
+          height={capture.height}
+          loading="lazy"
+          decoding="async"
+          className="h-auto w-full"
+        />
+      </button>
+      <figcaption className="text-2xs text-muted-foreground">
+        Captura del portal, {capture.capturedAt}
+      </figcaption>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>
+              Captura del portal de la DIAN, {capture.capturedAt}.
+            </DialogDescription>
+          </DialogHeader>
+          <img
+            src={capture.src}
+            alt={capture.alt}
+            width={capture.width}
+            height={capture.height}
+            decoding="async"
+            className="h-auto w-full rounded-md border"
+          />
+        </DialogContent>
+      </Dialog>
+    </figure>
   );
 }
 

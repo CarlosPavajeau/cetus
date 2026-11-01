@@ -6,13 +6,11 @@ import { useForm, useWatch } from "react-hook-form";
 import type { IssuerDetail } from "~/lib/api/types";
 import { uuidPattern } from "~/lib/utils";
 
+import { habilitacionPortal, portalCaptures } from "./dianPortal";
 import { SecretField, TextField } from "./fields";
 import { softwareSchema } from "./schema";
 import { setSoftware } from "./server";
 import { FieldSection, SecretNotice, StepGuide, StepLayout } from "./StepLayout";
-
-/** The DIAN portal where an issuer registers its software and finds its test set. */
-const habilitacionPortal = "https://catalogo-vpfe-hab.dian.gov.co";
 
 /** IDs copied from the portal often bring spaces or a line break along. */
 const trimmed = (value: string) => value.trim();
@@ -89,19 +87,21 @@ export function SoftwareStep({
             tips={[
               {
                 title: "Abre los modos de operación",
-                text: "En el menú de habilitación, elige «Configurar modos de operación».",
+                text: "En el menú, entra a «Registro y habilitación» › «Documentos electrónicos» › «Factura electrónica» y pulsa «Configurar modos de operación».",
+                capture: portalCaptures.contributor,
               },
               {
                 title: "Registra un software propio",
-                text: "Selecciona «Software propio», ponle un nombre (por ejemplo, Cetus) y define un PIN que recuerdes. Guarda.",
+                text: "Elige «Software propio», escribe el nombre del software (por ejemplo, Cetus) y un PIN de 5 números que recuerdes. Copia el «ID del SW» y pulsa «Asociar».",
+                capture: portalCaptures.operationModes,
               },
               {
-                title: "Copia el Software ID y el TestSetId",
-                text: "Aparecen en el detalle del software que acabas de asociar. Pégalos aquí junto con el PIN que definiste.",
+                title: "Copia el TestSetId",
+                text: "Tu software aparece en «Listado de modos de operación asociados»; su «Id» es el Software ID. El ojo de «Acciones» abre su set de pruebas.",
               },
             ]}
             link={{ href: habilitacionPortal, label: "Abrir el portal de habilitación" }}
-            note="Los nombres de los menús pueden cambiar en el portal de la DIAN."
+            note="Si el portal no coincide con las capturas, la DIAN lo cambió: pídenos ayuda y lo revisamos."
           />
         ) : (
           <StepGuide
@@ -137,7 +137,7 @@ export function SoftwareStep({
           hint={
             configured
               ? "Ya está guardado. Escríbelo de nuevo solo si deseas reemplazarlo."
-              : "El PIN que definiste al registrar el software en la DIAN."
+              : "Los 5 números que definiste al registrar el software en la DIAN."
           }
         />
         {/* Production has no test set. */}

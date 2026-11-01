@@ -55,7 +55,9 @@ export const softwareSchema = type({
     message: "Pega el Software ID completo, como aparece en el portal de la DIAN.",
   }),
   // Empty when the software is already configured and the PIN is kept.
-  pin: "string",
+  pin: type(/^(\d{5})?$/).configure({
+    message: "El PIN tiene 5 números, como lo definiste en la DIAN.",
+  }),
   // Only habilitación has a test set, and only until it is accepted: empty once it is done.
   testSetId: type("string.uuid | ''").configure({
     message: "Pega el TestSetId completo, como aparece en el portal de la DIAN.",

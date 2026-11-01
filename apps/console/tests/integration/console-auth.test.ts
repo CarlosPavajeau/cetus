@@ -17,7 +17,7 @@ const issuer = {
     departmentCode: "20",
     departmentName: "Cesar",
     postalCode: "200001",
-    line: "Carrera 11 #13B-62",
+    line: "Calle 1 # 2-3",
     countryCode: "CO",
     countryName: "Colombia",
   },

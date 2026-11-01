@@ -8,6 +8,7 @@ import { Separator } from "~/components/ui/separator";
 import { dayFormat } from "~/features/audit-log/labels";
 import type { IssuerDetail } from "~/lib/api/types";
 
+import { portalCaptures } from "./dianPortal";
 import { DateField, SecretField, TextField } from "./fields";
 import { habilitacionNumberingSchema, type NumberingValues, numberingSchema } from "./schema";
 import { addNumberingRange } from "./server";
@@ -157,11 +158,12 @@ export function NumberingStep({
               tips={[
                 {
                   title: "Abre tu software",
-                  text: "Busca el software que asociaste en «Configurar modos de operación».",
+                  text: "En «Configurar modos de operación», búscalo en «Listado de modos de operación asociados».",
                 },
                 {
-                  title: "Consulta su rango de numeración",
-                  text: "Junto al rango con prefijo SETP aparece la clave técnica: una cadena larga de letras y números. Cópiala completa.",
+                  title: "Consulta sus rangos de prueba",
+                  text: "El ícono de «Rangos de prueba» muestra el rango con prefijo SETP y su «Llave técnica»: una cadena larga de letras y números. Cópiala completa.",
+                  capture: portalCaptures.testRanges,
                 },
               ]}
               note="Guardar conserva la configuración en Cetus. Al terminar, envías el set de pruebas desde la página del emisor."
