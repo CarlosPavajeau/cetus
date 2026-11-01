@@ -210,6 +210,29 @@ class ReversalsTest {
     }
 
     @Test
+    void aNewPaymentOfAChargedBackOrderWaitsForAPerson() {
+        UUID accountId = account();
+        BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");
+        settlement.apply(transaction(order, PaymentStatus.VOIDED));
+        Instant now = Instant.now();
+        PaymentTransaction another = new PaymentTransaction(
+                "12239578-" + order.id,
+                order.reference,
+                PaymentStatus.APPROVED,
+                order.totalCents,
+                "COP",
+                "CARD",
+                Optional.empty(),
+                now,
+                Optional.of(now),
+                "{}");
+
+        assertThat(settlement.apply(another)).isEqualTo(Outcome.REVIEW);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
+        assertThat(orderOf(order.id).reviewReason).contains(another.id());
+    }
+
+    @Test
     void aWholeRefundOfTheOpenPeriodEndsTheSubscriptionWithItsOverageAsADebt() {
         UUID accountId = account();
         BillingOrderEntity order = paid(accountId, "INICIAL");

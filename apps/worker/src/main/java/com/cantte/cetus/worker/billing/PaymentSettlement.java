@@ -112,11 +112,13 @@ public class PaymentSettlement {
     }
 
     private Outcome approve(BillingOrderEntity order, PaymentTransactionEntity payment) {
-        // Wompi keeps a refunded payment APPROVED: a refunded order was paid by it all the same.
+        // Wompi keeps a refunded payment APPROVED, and a charged back one is VOIDED: either paid a refunded order.
         if (order.status == BillingOrderEntity.Status.PAID || order.status == BillingOrderEntity.Status.REFUNDED) {
+            boolean refunded = order.status == BillingOrderEntity.Status.REFUNDED;
             boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
-                    .anyMatch(other ->
-                            other.status == PaymentTransactionEntity.Status.APPROVED && !other.id.equals(payment.id));
+                    .anyMatch(other -> !other.id.equals(payment.id)
+                            && (other.status == PaymentTransactionEntity.Status.APPROVED
+                                    || refunded && other.status == PaymentTransactionEntity.Status.VOIDED));
             if (!paidByAnother) {
                 return Outcome.ALREADY_PAID;
             }
