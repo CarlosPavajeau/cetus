@@ -3,6 +3,7 @@ package com.cantte.cetus.dian.simulated;
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.dian.DianTransportException;
+import com.cantte.cetus.domain.dian.DianRule;
 import com.cantte.cetus.signing.KeyMaterial;
 import com.cantte.cetus.signing.XadesSigner;
 import com.cantte.cetus.signing.XmlSupport;
@@ -17,8 +18,6 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -38,7 +37,6 @@ public final class SimulatedDian {
     private static final String DIAN_NIT = "800197268";
     private static final String DIAN_NAME = "Unidad Especial Dirección de Impuestos y Aduanas Nacionales";
     private static final ZoneId COLOMBIA = ZoneId.of("America/Bogota");
-    private static final Pattern RULE = Pattern.compile("^Regla:\\s*([^,]+?)\\s*,\\s*[^:]+:\\s*(.*)$");
 
     private static final String FAJ43B =
             "Regla: FAJ43b, Notificación: Nombre informado No corresponde al registrado en el RUT con respecto al Nit suminstrado.";
@@ -142,8 +140,11 @@ public final class SimulatedDian {
                 String.valueOf(10_000_000 + Math.floorMod(document.uniqueCode().hashCode(), 90_000_000));
         StringBuilder lines = new StringBuilder(line(1, "0000", "0"));
         for (int i = 0; i < errors.size(); i++) {
-            Matcher rule = RULE.matcher(errors.get(i));
-            lines.append(rule.matches() ? line(i + 2, rule.group(1), rule.group(2)) : line(i + 2, "", errors.get(i)));
+            int number = i + 2;
+            String error = errors.get(i);
+            lines.append(DianRule.parse(error)
+                    .map(rule -> line(number, rule.code(), rule.message()))
+                    .orElseGet(() -> line(number, "", error)));
         }
         String xml = "<ApplicationResponse xmlns=\"urn:oasis:names:specification:ubl:schema:xsd:ApplicationResponse-2\""
                 + " xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\""

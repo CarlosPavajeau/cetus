@@ -2,10 +2,12 @@ package com.cantte.cetus.worker.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.dian.DianFaultException;
 import com.cantte.cetus.dian.DianTransportException;
+import com.cantte.cetus.domain.dian.DianRule;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
@@ -26,6 +28,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -56,6 +59,9 @@ class SandboxProcessingTest {
 
     @Inject
     DocumentStorage storage;
+
+    @Inject
+    EntityManager em;
 
     @BeforeEach
     void reset() {
@@ -143,6 +149,26 @@ class SandboxProcessingTest {
         assertThat(doc.status).isEqualTo(DocumentStatus.REJECTED);
         assertThat(doc.dianStatusCode).isEqualTo("99");
         assertThat(doc.dianErrors).anySatisfy(error -> assertThat(error).startsWith("Regla: FAK26, Rechazo:"));
+        assertThat(rules(id))
+                .extracting(DianRule::code, DianRule::kind)
+                .containsExactlyInAnyOrder(
+                        tuple("FAK26", DianRule.Kind.REJECTION),
+                        tuple("FAB10a", DianRule.Kind.REJECTION),
+                        tuple("FAJ43b", DianRule.Kind.NOTIFICATION));
+    }
+
+    @Test
+    void anAcceptanceKeepsItsNotificationRule() {
+        UUID id = fixtures.sandboxInvoice("1000000001");
+
+        process(id);
+
+        assertThat(document(id).status).isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(rules(id)).singleElement().satisfies(rule -> {
+            assertThat(rule.code()).isEqualTo("FAJ43b");
+            assertThat(rule.kind()).isEqualTo(DianRule.Kind.NOTIFICATION);
+            assertThat(rule.message()).startsWith("Nombre informado No corresponde");
+        });
     }
 
     @Test
@@ -259,6 +285,20 @@ class SandboxProcessingTest {
 
     private static DocumentArtifactEntity artifact(UUID id, Kind kind) {
         return artifacts(id).stream().filter(a -> a.kind == kind).findFirst().orElseThrow();
+    }
+
+    private List<DianRule> rules(UUID id) {
+        List<?> rows = QuarkusTransaction.requiringNew()
+                .call(() -> em.createNativeQuery(
+                                "SELECT rule, kind, message FROM billing.document_dian_rules WHERE document_id = :id",
+                                Object[].class)
+                        .setParameter("id", id)
+                        .getResultList());
+        return rows.stream()
+                .map(row -> (Object[]) row)
+                .map(columns -> new DianRule(
+                        (String) columns[0], DianRule.Kind.valueOf((String) columns[1]), (String) columns[2]))
+                .toList();
     }
 
     private static List<String> submissions(UUID id) {
