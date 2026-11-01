@@ -92,12 +92,12 @@ public class ChargeOrderHandler implements JobHandler {
     }
 
     /**
-     * Unexpected failures only, since Wompi's are retried: the attempt fails so the order can be paid otherwise. If
-     * Wompi did make the charge, the reconciliation finds it and its approval still wins.
+     * Unexpected failures only, since Wompi's are retried. The attempt stays SUBMITTED, as Wompi may have made the
+     * charge: the reconciliation applies its transaction, or abandons the attempt if there is none.
      */
     @Override
     public void onDead(JobEntity job, String reason) {
-        autoCharge.refused(job.referenceId, OffsetDateTime.now());
+        LOG.warnf("Charge %s left unanswered for the reconciliation: %s", job.referenceId, reason);
     }
 
     /** The attempt's transaction, if Wompi made one; waits while Wompi cannot say. */

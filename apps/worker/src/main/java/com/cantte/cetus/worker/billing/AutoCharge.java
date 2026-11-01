@@ -7,6 +7,7 @@ import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.payments.PaymentStatus;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
+import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
 import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
 import com.cantte.cetus.worker.notifications.Dates;
@@ -14,6 +15,7 @@ import com.cantte.cetus.worker.notifications.Numbers;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -21,6 +23,7 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -66,8 +69,7 @@ public class AutoCharge {
 
     /**
      * Records how the provider answered an attempt's transaction; the order is locked by the caller. A final
-     * answer is kept: a late PENDING or a second outcome changes nothing. An approval still wins over a failure
-     * recorded without the provider's answer, when its job gave up while the transaction was being made.
+     * answer is kept: a late PENDING or a second outcome changes nothing.
      */
     void on(@Observes PaymentSettlement.ChargeSettled settled) {
         PaymentChargeEntity charge =
@@ -75,16 +77,15 @@ public class AutoCharge {
         if (charge.providerTransactionId == null) {
             charge.providerTransactionId = settled.transactionId();
         }
-        boolean open = charge.status == PaymentChargeEntity.Status.SUBMITTED
-                || charge.status == PaymentChargeEntity.Status.FAILED;
-        if (settled.status() == PaymentStatus.APPROVED && open) {
+        if (charge.status != PaymentChargeEntity.Status.SUBMITTED) {
+            return;
+        }
+        if (settled.status() == PaymentStatus.APPROVED) {
             charge.status = PaymentChargeEntity.Status.APPROVED;
-            charge.failureMessage = null;
             return;
         }
         // A void seen before its approval, as events arrive out of order, ends the attempt as a decline does.
-        if (charge.status == PaymentChargeEntity.Status.SUBMITTED
-                && settled.status().isFinal()) {
+        if (settled.status().isFinal()) {
             fail(charge, settled.message().orElse(null), OffsetDateTime.now());
         }
     }
@@ -110,6 +111,38 @@ public class AutoCharge {
         if (charge.status == PaymentChargeEntity.Status.SUBMITTED) {
             fail(charge, REFUSED, now);
         }
+    }
+
+    /**
+     * Abandons the order's attempts left SUBMITTED without an answer by a job that died, among the references of
+     * which Wompi has no transaction: the charge was never made. Neither a retry nor a notice follows; the order can
+     * be paid again. An attempt whose job still waits or runs is left to it.
+     */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void abandon(UUID orderId, Set<String> unknownReferences) {
+        if (unknownReferences.isEmpty() || BillingOrderEntity.lock(orderId).isEmpty()) {
+            return;
+        }
+        for (PaymentChargeEntity charge : PaymentChargeEntity.listByOrder(orderId)) {
+            boolean unanswered =
+                    charge.status == PaymentChargeEntity.Status.SUBMITTED && charge.providerTransactionId == null;
+            if (unanswered && unknownReferences.contains(charge.reference) && !hasLiveJob(charge.id)) {
+                PaymentChargeEntity.getEntityManager().refresh(charge, LockModeType.PESSIMISTIC_WRITE);
+                charge.status = PaymentChargeEntity.Status.CANCELED;
+                LOG.warnf(
+                        "Charge %s of order %s was abandoned: its job died and Wompi never made it",
+                        charge.id, orderId);
+            }
+        }
+    }
+
+    private static boolean hasLiveJob(UUID chargeId) {
+        return JobEntity.count(
+                        "jobType = ?1 and referenceId = ?2 and status in ?3",
+                        JobTypes.CHARGE_ORDER,
+                        chargeId,
+                        List.of("PENDING", "RUNNING"))
+                > 0;
     }
 
     /**

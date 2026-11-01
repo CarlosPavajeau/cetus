@@ -202,22 +202,50 @@ class AutoChargeTest {
     }
 
     @Test
-    void anAttemptGivenUpOnIsApprovedWhenItsTransactionTurnsOutApproved() {
+    void anAttemptWhoseJobDiedIsLeftForTheReconciliationAndItsApprovalPaysTheOrder() {
         UUID accountId = subscribed();
         fixtures.card(accountId, sourceId());
         BillingOrderEntity renewal = close(accountId);
         PaymentChargeEntity first = chargesOf(renewal.id).getFirst();
         charges.handle(jobOf(first.id));
-        charges.onDead(jobOf(first.id), "Wompi kept failing");
-        assertThat(chargesOf(renewal.id).getFirst().status).isEqualTo(PaymentChargeEntity.Status.FAILED);
+        charges.onDead(jobOf(first.id), "The settlement kept failing");
+        PaymentChargeEntity left = chargesOf(renewal.id).getFirst();
+        assertThat(left.status).isEqualTo(PaymentChargeEntity.Status.SUBMITTED);
 
-        PaymentChargeEntity given = chargesOf(renewal.id).getFirst();
-        assertThat(settlement.apply(approved(given.providerTransactionId, given.reference, renewal.totalCents)))
-                .isEqualTo(Outcome.PAID);
+        wompi.put(Transaction.of(left.providerTransactionId, left.reference, "APPROVED", renewal.totalCents));
+        checks.handle(fixtures.pendingJob(JobTypes.CHECK_PAYMENT, renewal.id));
+
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.APPROVED);
+        assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_CHARGE_FAILED))
+                .isEmpty();
+    }
+
+    @Test
+    void theReconciliationAbandonsAnAttemptWompiNeverMadeOnlyOnceItsJobDied() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        JobEntity job = jobOf(chargesOf(renewal.id).getFirst().id);
+        wompi.down(true);
+        assertThatThrownBy(() -> charges.handle(job)).isInstanceOf(RetryLater.class);
+        wompi.down(false);
+
+        checks.handle(fixtures.pendingJob(JobTypes.CHECK_PAYMENT, renewal.id));
+        assertThat(chargesOf(renewal.id).getFirst().status).isEqualTo(PaymentChargeEntity.Status.SUBMITTED);
+
+        QuarkusTransaction.requiringNew().run(() -> JobEntity.<JobEntity>findById(job.id).status = "DEAD");
+        checks.handle(fixtures.pendingJob(JobTypes.CHECK_PAYMENT, renewal.id));
 
         assertThat(chargesOf(renewal.id))
                 .extracting(charge -> charge.status)
-                .containsExactly(PaymentChargeEntity.Status.APPROVED, PaymentChargeEntity.Status.CANCELED);
+                .containsExactly(PaymentChargeEntity.Status.CANCELED);
+        assertThat(wompi.charges()).isEmpty();
+        assertThat(notices(accountId, NotificationKind.SUBSCRIPTION_CHARGE_FAILED))
+                .isEmpty();
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PENDING);
     }
 
     @Test
