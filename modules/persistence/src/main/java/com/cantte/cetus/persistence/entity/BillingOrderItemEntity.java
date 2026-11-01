@@ -98,6 +98,28 @@ public class BillingOrderItemEntity extends PanacheEntityBase {
         return item;
     }
 
+    /** Moves the item, with the amounts it applied, to another order, whose amounts grow by the item's. */
+    public static BillingOrderItemEntity copy(BillingOrderEntity order, BillingOrderItemEntity source) {
+        BillingOrderItemEntity item = new BillingOrderItemEntity();
+        item.id = Ids.newId();
+        item.orderId = order.id;
+        item.itemType = source.itemType;
+        item.planVersionId = source.planVersionId;
+        item.subscriptionPeriodId = source.subscriptionPeriodId;
+        item.description = source.description;
+        item.quantity = source.quantity;
+        item.unitPriceCents = source.unitPriceCents;
+        item.baseCents = source.baseCents;
+        item.taxRate = source.taxRate;
+        item.taxCents = source.taxCents;
+        item.totalCents = source.totalCents;
+        item.persist();
+        order.subtotalCents += item.baseCents;
+        order.taxCents += item.taxCents;
+        order.totalCents += item.totalCents;
+        return item;
+    }
+
     public static List<BillingOrderItemEntity> listByOrder(UUID orderId) {
         return list("orderId = ?1 order by id", orderId);
     }

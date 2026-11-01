@@ -184,15 +184,29 @@ class SubscriptionsTest {
         List<BillingOrderEntity> debts = QuarkusTransaction.requiringNew()
                 .call(() -> BillingOrderEntity.<BillingOrderEntity>list(
                         "accountId = ?1 and kind = ?2", accountId, BillingOrderEntity.Kind.DEBT));
+        BillingOrderEntity renewal = renewalsOf(accountId).getFirst();
+        BillingOrderItemEntity billed = itemsOf(renewal.id).stream()
+                .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
+                .findFirst()
+                .orElseThrow();
         assertThat(debts).singleElement().satisfies(debt -> {
             assertThat(debt.expiresAt).isNull();
+            assertThat(debt.totalCents).isEqualTo(billed.totalCents);
             assertThat(itemsOf(debt.id)).singleElement().satisfies(item -> {
                 assertThat(item.itemType).isEqualTo(BillingOrderItemEntity.Type.OVERAGE);
                 assertThat(item.quantity).isEqualTo(2);
                 assertThat(item.subscriptionPeriodId).isEqualTo(first.id);
+                assertThat(item.totalCents).isEqualTo(billed.totalCents);
             });
         });
         assertThat(notices(accountId, NotificationKind.ACCOUNT_DEBT)).hasSize(1);
+        assertThat(renewal.status).isEqualTo(BillingOrderEntity.Status.CANCELED);
+
+        assertThat(settlement.apply(approved(renewal))).isEqualTo(Outcome.REVIEW);
+        BillingOrderEntity late = QuarkusTransaction.requiringNew()
+                .call(() -> BillingOrderEntity.<BillingOrderEntity>findById(renewal.id));
+        assertThat(late.status).isEqualTo(BillingOrderEntity.Status.CANCELED);
+        assertThat(late.reviewReason).contains("CANCELED");
     }
 
     @Test

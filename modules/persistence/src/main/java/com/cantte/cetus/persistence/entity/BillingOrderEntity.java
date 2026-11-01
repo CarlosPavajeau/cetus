@@ -43,7 +43,10 @@ public class BillingOrderEntity extends PanacheEntityBase {
         FAILED,
         EXPIRED,
         REFUNDED,
-        /** A debt the Cetus team forgave. */
+        /**
+         * Never to be paid: a debt the Cetus team forgave, or a renewal whose overage went to a debt when its
+         * subscription ended unpaid. A payment approved for it waits for a person.
+         */
         CANCELED
     }
 

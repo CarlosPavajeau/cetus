@@ -130,11 +130,20 @@ function OrderPage() {
           </AlertDescription>
         </Alert>
       )}
-      {order.status === "CANCELED" && (
+      {order.status === "CANCELED" && order.kind === "DEBT" && (
         <Alert>
           <AlertTitle>Saldo condonado</AlertTitle>
           <AlertDescription>
             El equipo de Cetus condonó este saldo: no tienes que pagarlo.
+          </AlertDescription>
+        </Alert>
+      )}
+      {order.status === "CANCELED" && order.kind !== "DEBT" && (
+        <Alert>
+          <AlertTitle>Orden anulada</AlertTitle>
+          <AlertDescription>
+            Tu suscripción terminó sin que se pagara esta renovación. El excedente que cobraba pasó
+            a un saldo pendiente en Facturación; esta orden ya no se paga.
           </AlertDescription>
         </Alert>
       )}

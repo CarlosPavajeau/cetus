@@ -250,6 +250,17 @@ class AdminOrderResourceTest {
                 .containsExactly("PAYMENT_MISSING", "INVOICE_MISSING");
         assertThat(month.getList("orders.find { it.orderId == '%s' }.issues".formatted(voided), String.class))
                 .containsExactly("PAYMENT_MISSING", "INVOICE_MISSING");
+        UUID paidBefore = paidOrder(customer.accountId(), true, inMonth.minusMonths(1));
+        payment(paidBefore, TOTAL_CENTS, inMonth);
+        JsonPath withSecond = SUPPORT.request()
+                .get("/admin/billing/reconciliation?month=2097-05")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+        assertThat(withSecond.getList("orders.find { it.orderId == '%s' }.issues".formatted(paidBefore), String.class))
+                .contains("PAYMENT_DUPLICATE");
+        assertThat(withSecond.getLong("paidCents")).isEqualTo(3 * TOTAL_CENTS);
         SUPPORT.request()
                 .get("/admin/billing/reconciliation?month=2097-13")
                 .then()

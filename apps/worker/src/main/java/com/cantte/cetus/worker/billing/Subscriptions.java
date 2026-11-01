@@ -345,13 +345,14 @@ public class Subscriptions {
      */
     private void finish(SubscriptionEntity subscription, SubscriptionPeriodEntity period, OffsetDateTime now) {
         int overage = bill(subscription, period, now);
-        List<BillingOrderItemEntity> unpaid = Optional.ofNullable(period.openingOrderId)
+        Optional<BillingOrderEntity> renewal = Optional.ofNullable(period.openingOrderId)
                 .map(id -> BillingOrderEntity.<BillingOrderEntity>findById(id))
                 .filter(opening -> opening.status == BillingOrderEntity.Status.PENDING
-                        || opening.status == BillingOrderEntity.Status.EXPIRED)
-                .map(opening -> BillingOrderItemEntity.listByOrder(opening.id).stream()
-                        .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
-                        .toList())
+                        || opening.status == BillingOrderEntity.Status.EXPIRED);
+        List<BillingOrderItemEntity> unpaid = renewal.map(
+                        opening -> BillingOrderItemEntity.listByOrder(opening.id).stream()
+                                .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
+                                .toList())
                 .orElse(List.of());
         if (overage == 0 && unpaid.isEmpty()) {
             return;
@@ -359,16 +360,11 @@ public class Subscriptions {
         BillingOrderEntity order = BillingOrderEntity.open(
                 subscription.accountId, BillingOrderEntity.Kind.DEBT, profile(subscription.accountId), null);
         for (BillingOrderItemEntity item : unpaid) {
-            BillingOrderItemEntity.add(
-                    order,
-                    BillingOrderItemEntity.Type.OVERAGE,
-                    null,
-                    item.subscriptionPeriodId,
-                    item.description,
-                    item.quantity,
-                    item.unitPriceCents,
-                    true,
-                    item.taxRate);
+            BillingOrderItemEntity.copy(order, item);
+        }
+        if (!unpaid.isEmpty()) {
+            // The debt bills that overage now: paying the renewal too would bill it twice.
+            renewal.get().status = BillingOrderEntity.Status.CANCELED;
         }
         PlanVersionEntity version = PlanVersionEntity.findById(period.planVersionId);
         overageItem(order, period, version, overage);

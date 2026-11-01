@@ -51,7 +51,7 @@ export const orderStatusLabel: Record<OrderStatus, string> = {
   FAILED: "Pago rechazado",
   EXPIRED: "Vencida",
   REFUNDED: "Reembolsada",
-  CANCELED: "Condonada",
+  CANCELED: "Anulada",
 };
 
 export const reversalKindLabel: Record<OrderReversal["kind"], string> = {

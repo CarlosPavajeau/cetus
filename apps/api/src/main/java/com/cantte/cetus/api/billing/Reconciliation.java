@@ -235,7 +235,7 @@ public class Reconciliation {
         return orders;
     }
 
-    /** Orders paid in the month, with money back in it, or with a payment approved in it that did not pay them. */
+    /** Orders paid in the month, with money back in it, or with a payment approved in it, such as a second one. */
     private List<UUID> orderIds(OffsetDateTime from, OffsetDateTime to) {
         return em.createNativeQuery("""
                         SELECT o.id FROM billing.billing_orders o
@@ -246,8 +246,7 @@ public class Reconciliation {
                            OR (r.status IN ('REQUESTED', 'SUBMITTED') AND r.created_at < :to)
                         UNION
                         SELECT t.order_id FROM billing.payment_transactions t
-                        JOIN billing.billing_orders o ON o.id = t.order_id
-                        WHERE t.status = 'APPROVED' AND o.paid_at IS NULL
+                        WHERE t.status = 'APPROVED'
                           AND coalesce(t.finalized_at, t.created_at) >= :from
                           AND coalesce(t.finalized_at, t.created_at) < :to
                         """, UUID.class)
