@@ -112,17 +112,24 @@ public class PaymentSettlement {
     }
 
     private Outcome approve(BillingOrderEntity order, PaymentTransactionEntity payment) {
-        if (order.status == BillingOrderEntity.Status.PAID) {
+        // Wompi keeps a refunded payment APPROVED and a charged back one VOIDED: the one that paid a refunded order is
+        // either, and an approval of any other is a new payment.
+        if (order.status == BillingOrderEntity.Status.PAID || order.status == BillingOrderEntity.Status.REFUNDED) {
+            boolean refunded = order.status == BillingOrderEntity.Status.REFUNDED;
             boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
-                    .anyMatch(other ->
-                            other.status == PaymentTransactionEntity.Status.APPROVED && !other.id.equals(payment.id));
+                    .anyMatch(other -> !other.id.equals(payment.id)
+                            && (other.status == PaymentTransactionEntity.Status.APPROVED
+                                    || refunded && other.status == PaymentTransactionEntity.Status.VOIDED));
             if (!paidByAnother) {
                 return Outcome.ALREADY_PAID;
             }
             review(
                     order,
-                    "Wompi aprobó la transacción %s de una orden que otra ya pagó: el cliente pagó dos veces"
-                            .formatted(payment.providerTransactionId));
+                    refunded
+                            ? "Wompi aprobó la transacción %s de una orden ya devuelta: un pago nuevo sin créditos"
+                                    .formatted(payment.providerTransactionId)
+                            : "Wompi aprobó la transacción %s de una orden que otra ya pagó: el cliente pagó dos veces"
+                                    .formatted(payment.providerTransactionId));
             return Outcome.REVIEW;
         }
         if (payment.amountCents != order.totalCents || !payment.currency.equals(order.currency)) {

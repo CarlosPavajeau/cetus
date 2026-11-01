@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.billing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.credits.Entitlements;
@@ -8,6 +9,7 @@ import com.cantte.cetus.domain.billing.Consumption;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.notifications.NotificationKind;
+import com.cantte.cetus.payments.PaymentRejectedException;
 import com.cantte.cetus.payments.PaymentStatus;
 import com.cantte.cetus.payments.PaymentTransaction;
 import com.cantte.cetus.persistence.audit.Actor;
@@ -20,6 +22,7 @@ import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
 import com.cantte.cetus.worker.handlers.RefundOrderHandler;
+import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.FakeResendResource;
 import com.cantte.cetus.worker.support.FakeWompi;
 import com.cantte.cetus.worker.support.FakeWompiResource;
@@ -28,6 +31,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -106,6 +110,8 @@ class ReversalsTest {
 
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
         assertThat(debtsOf(accountId)).isEmpty();
+        assertThat(settlement.apply(transaction(order, PaymentStatus.APPROVED))).isEqualTo(Outcome.ALREADY_PAID);
+        assertThat(orderOf(order.id).reviewReason).isNull();
     }
 
     @Test
@@ -205,6 +211,29 @@ class ReversalsTest {
     }
 
     @Test
+    void aNewPaymentOfAChargedBackOrderWaitsForAPerson() {
+        UUID accountId = account();
+        BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");
+        settlement.apply(transaction(order, PaymentStatus.VOIDED));
+        Instant now = Instant.now();
+        PaymentTransaction another = new PaymentTransaction(
+                "12239578-" + order.id,
+                order.reference,
+                PaymentStatus.APPROVED,
+                order.totalCents,
+                "COP",
+                "CARD",
+                Optional.empty(),
+                now,
+                Optional.of(now),
+                "{}");
+
+        assertThat(settlement.apply(another)).isEqualTo(Outcome.REVIEW);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
+        assertThat(orderOf(order.id).reviewReason).contains(another.id());
+    }
+
+    @Test
     void aWholeRefundOfTheOpenPeriodEndsTheSubscriptionWithItsOverageAsADebt() {
         UUID accountId = account();
         BillingOrderEntity order = paid(accountId, "INICIAL");
@@ -252,8 +281,58 @@ class ReversalsTest {
         });
         PaymentReversalEntity approved = reversalOf(reversal);
         assertThat(approved.status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
-        assertThat(approved.providerRefundId).isEqualTo("v2_refund_1");
+        assertThat(approved.providerRefundId).isEqualTo("1");
         assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.REVOKED);
+    }
+
+    @Test
+    void aRefundWompiTakesPendingIsFollowedUntilItIsDecided() {
+        UUID accountId = account();
+        BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");
+        UUID reversal = request(order.id, 500_000);
+        wompi.refunding("PENDING");
+
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(1)));
+        assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.SUBMITTED);
+        assertThat(reversalOf(reversal).providerRefundId).isEqualTo("1");
+        requestedHoursAgo(reversal, 2);
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(30)));
+
+        wompi.decideRefunds("APPROVED");
+        refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal));
+
+        assertThat(wompi.refunds()).hasSize(1);
+        assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
+        assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.REVOKED);
+    }
+
+    @Test
+    void aRefundWompiCannotDescribeIsRetriedWithBackoffAndOneItCannotReachIsFollowedLess() {
+        UUID reversal = request(paid(account(), "EMPRENDEDOR").id, 500_000);
+        wompi.refunding("PENDING");
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOf(RetryLater.class);
+
+        wompi.garbling(true);
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOf(PaymentRejectedException.class);
+        wompi.garbling(false);
+
+        wompi.down(true);
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(1)));
+        requestedHoursAgo(reversal, 2);
+        assertThatThrownBy(() -> refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, reversal)))
+                .isInstanceOfSatisfying(
+                        RetryLater.class, retry -> assertThat(retry.delay()).isEqualTo(Duration.ofMinutes(30)));
+
+        assertThat(wompi.refunds()).hasSize(1);
+        assertThat(reversalOf(reversal).status).isEqualTo(PaymentReversalEntity.Status.SUBMITTED);
     }
 
     @Test
@@ -375,6 +454,16 @@ class ReversalsTest {
 
     private static BillingOrderEntity orderOf(UUID orderId) {
         return QuarkusTransaction.requiringNew().call(() -> BillingOrderEntity.findById(orderId));
+    }
+
+    private static void requestedHoursAgo(UUID reversalId, int hours) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> PaymentReversalEntity.getEntityManager()
+                        .createNativeQuery("UPDATE billing.payment_reversals SET created_at = now() - make_interval("
+                                + "hours => :hours) WHERE id = :id")
+                        .setParameter("hours", hours)
+                        .setParameter("id", reversalId)
+                        .executeUpdate());
     }
 
     private static PaymentReversalEntity reversalOf(UUID reversalId) {

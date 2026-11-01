@@ -23,9 +23,12 @@ import java.util.UUID;
 import org.jboss.logging.Logger;
 
 /**
- * Asks Wompi to refund an order's payment, once. The refund is marked SUBMITTED before Wompi is called and is never
- * asked again: when Wompi does not answer, or answers without a decision, the money may have gone back, and the
- * refund waits for a person to check it in Wompi's dashboard (alert REFUND_UNRESOLVED).
+ * Asks Wompi to refund an order's payment, once, and follows it until Wompi decides. The refund is marked SUBMITTED
+ * before Wompi is called and is never asked again. Wompi answers it PENDING and decides seconds later, so the job
+ * runs again and asks for the refund by its id until it is approved or fails: every minute for the first hour,
+ * then every half hour. When Wompi does not answer the
+ * request, or answers without an id, the money may have gone back and the refund waits for a person to check it
+ * in Wompi's dashboard (alert REFUND_UNRESOLVED).
  */
 @ApplicationScoped
 public class RefundOrderHandler implements JobHandler {
@@ -33,12 +36,27 @@ public class RefundOrderHandler implements JobHandler {
     private static final Logger LOG = Logger.getLogger(RefundOrderHandler.class);
 
     private static final Duration UNCONFIGURED_DELAY = Duration.ofMinutes(30);
+    /** Between two looks at a refund Wompi has not decided yet, while it is recent. */
+    private static final Duration UNDECIDED_DELAY = Duration.ofMinutes(1);
+    /** Between two looks at one still undecided after {@link #UNDECIDED_RECENT}; a person is alerted by then. */
+    private static final Duration UNDECIDED_LATE_DELAY = Duration.ofMinutes(30);
+
+    private static final Duration UNDECIDED_RECENT = Duration.ofHours(1);
 
     @Inject
     PaymentClients payments;
 
     @Inject
     Reversals reversals;
+
+    /** What the run does with the refund. */
+    private sealed interface Step {}
+
+    private record Ask(RefundRequest request) implements Step {}
+
+    private record Follow(String refundId, OffsetDateTime requestedAt) implements Step {}
+
+    private record Nothing() implements Step {}
 
     @Override
     public String type() {
@@ -49,60 +67,103 @@ public class RefundOrderHandler implements JobHandler {
     public void handle(JobEntity job) {
         PaymentGateway gateway =
                 payments.gateway().orElseThrow(() -> new RetryLater(UNCONFIGURED_DELAY, "Payments are not configured"));
-        Optional<RefundRequest> request = QuarkusTransaction.requiringNew().call(() -> submit(job.referenceId));
-        if (request.isEmpty()) {
-            return;
-        }
+        Step step = QuarkusTransaction.requiringNew().call(() -> claim(job.referenceId));
         Refund refund;
-        try {
-            refund = gateway.refund(request.get());
-        } catch (PaymentTransientException e) {
-            LOG.warnf(
-                    "Refund %s left for a person to check: Wompi did not answer (%s)", job.referenceId, e.getMessage());
-            return;
-        } catch (PaymentRejectedException e) {
-            LOG.infof("Wompi refused refund %s: %s", job.referenceId, e.getMessage());
-            refund = new Refund(Optional.empty(), Refund.Status.DECLINED, Optional.of(e.getMessage()));
+        switch (step) {
+            case Nothing nothing -> {
+                return;
+            }
+            case Ask ask -> {
+                try {
+                    refund = gateway.refund(ask.request());
+                } catch (PaymentTransientException e) {
+                    LOG.warnf(
+                            "Refund %s left for a person to check: Wompi did not answer (%s)",
+                            job.referenceId, e.getMessage());
+                    return;
+                } catch (PaymentRejectedException e) {
+                    LOG.infof("Wompi refused refund %s: %s", job.referenceId, e.getMessage());
+                    refund = new Refund(Optional.empty(), Refund.Status.DECLINED, Optional.of(e.getMessage()));
+                }
+            }
+            case Follow follow -> {
+                Optional<Refund> found;
+                try {
+                    found = gateway.refundOf(follow.refundId());
+                } catch (PaymentTransientException e) {
+                    throw new RetryLater(
+                            undecidedDelay(follow.requestedAt()),
+                            "Wompi could not say how the refund ended: " + e.getMessage());
+                }
+                if (found.isEmpty()) {
+                    LOG.warnf("Refund %s left for a person to check: Wompi does not know it", job.referenceId);
+                    return;
+                }
+                refund = found.get();
+            }
         }
         Refund answered = refund;
-        QuarkusTransaction.requiringNew().run(() -> settle(job.referenceId, answered));
+        Optional<Duration> next = QuarkusTransaction.requiringNew().call(() -> settle(job.referenceId, answered));
+        if (next.isPresent()) {
+            throw new RetryLater(next.get(), "Wompi has not decided the refund yet");
+        }
     }
 
-    /** Marks the refund SUBMITTED and returns what to ask Wompi, unless it was already asked. */
-    private static Optional<RefundRequest> submit(UUID reversalId) {
+    /**
+     * Marks a requested refund SUBMITTED and returns what to ask Wompi; a submitted one with Wompi's id is followed;
+     * any other is left alone.
+     */
+    private static Step claim(UUID reversalId) {
         Optional<PaymentReversalEntity> found = PaymentReversalEntity.findByIdOptional(reversalId);
         if (found.isEmpty()) {
-            return Optional.empty();
+            return new Nothing();
         }
         BillingOrderEntity.lock(found.get().orderId).orElseThrow();
         PaymentReversalEntity reversal = PaymentReversalEntity.lock(reversalId).orElseThrow();
-        if (reversal.status != PaymentReversalEntity.Status.REQUESTED
-                || reversal.mode != PaymentReversalEntity.Mode.WOMPI) {
-            return Optional.empty();
+        if (reversal.mode != PaymentReversalEntity.Mode.WOMPI) {
+            return new Nothing();
+        }
+        if (reversal.status == PaymentReversalEntity.Status.SUBMITTED && reversal.providerRefundId != null) {
+            return new Follow(reversal.providerRefundId, reversal.createdAt);
+        }
+        if (reversal.status != PaymentReversalEntity.Status.REQUESTED) {
+            return new Nothing();
         }
         reversal.status = PaymentReversalEntity.Status.SUBMITTED;
-        return Optional.of(new RefundRequest(
+        return new Ask(new RefundRequest(
                 reversal.providerTransactionId, reversal.amountCents, reversal.reason, reversal.reference));
     }
 
-    private void settle(UUID reversalId, Refund refund) {
+    /** @return when to look again, while Wompi has not decided and the refund can be followed by its id */
+    private Optional<Duration> settle(UUID reversalId, Refund refund) {
         PaymentReversalEntity found = PaymentReversalEntity.<PaymentReversalEntity>findByIdOptional(reversalId)
                 .orElseThrow();
         BillingOrderEntity order = BillingOrderEntity.lock(found.orderId).orElseThrow();
         PaymentReversalEntity reversal = PaymentReversalEntity.lock(reversalId).orElseThrow();
         if (reversal.status != PaymentReversalEntity.Status.SUBMITTED) {
-            return;
+            return Optional.empty();
         }
         reversal.providerRefundId = refund.id().orElse(reversal.providerRefundId);
         reversal.failureMessage =
                 refund.message().filter(message -> !message.isBlank()).orElse(null);
         if (refund.status() == Refund.Status.APPROVED) {
             reversals.approve(order, reversal, OffsetDateTime.now());
-        } else if (refund.status().isFailed()) {
+            return Optional.empty();
+        }
+        if (refund.status().isFailed()) {
             reversal.status = PaymentReversalEntity.Status.FAILED;
             LOG.infof("Refund %s of order %s failed (%s)", reversal.id, order.id, refund.status());
-        } else {
-            LOG.warnf("Refund %s of order %s left for a person to check: Wompi has not decided", reversal.id, order.id);
+            return Optional.empty();
         }
+        if (reversal.providerRefundId == null) {
+            LOG.warnf("Refund %s of order %s left for a person to check: Wompi gave no id", reversal.id, order.id);
+            return Optional.empty();
+        }
+        return Optional.of(undecidedDelay(reversal.createdAt));
+    }
+
+    private static Duration undecidedDelay(OffsetDateTime requestedAt) {
+        boolean recent = requestedAt.isAfter(OffsetDateTime.now().minus(UNDECIDED_RECENT));
+        return recent ? UNDECIDED_DELAY : UNDECIDED_LATE_DELAY;
     }
 }
