@@ -195,8 +195,8 @@ public final class WompiGateway implements PaymentGateway {
     }
 
     /**
-     * Refunds V2: the refund comes back decided, with Wompi's own id. A status it does not document is read as
-     * PENDING, since the money may have gone back.
+     * Refunds V2: the refund comes back decided, with Wompi's own id. An answer that cannot be read, or a status it
+     * does not document, is read as PENDING: Wompi took the request, so the money may have gone back.
      */
     @Override
     public Refund refund(RefundRequest request) {
@@ -207,7 +207,13 @@ public final class WompiGateway implements PaymentGateway {
             refund.put("reason", request.reason());
         }
         refund.put("reference", request.reference());
-        JsonNode data = body(send(post("/refunds", refund))).path("data");
+        HttpResponse<String> response = send(post("/refunds", refund));
+        JsonNode data;
+        try {
+            data = body(response).path("data");
+        } catch (PaymentRejectedException e) {
+            return new Refund(Optional.empty(), Refund.Status.PENDING, Optional.empty());
+        }
         Refund.Status status = optional(data, "status")
                 .flatMap(name -> Arrays.stream(Refund.Status.values())
                         .filter(known -> known.name().equals(name))

@@ -112,7 +112,16 @@ function OrderPage() {
           </AlertDescription>
         </Alert>
       )}
-      {order.status === "PAID" && (
+      {order.status === "PAID" && order.reversals.length > 0 && (
+        <Alert>
+          <AlertTitle>Pago devuelto en parte</AlertTitle>
+          <AlertDescription>
+            Se devolvió parte del pago de esta orden y los documentos que incluía y no se habían
+            usado ya no están disponibles.
+          </AlertDescription>
+        </Alert>
+      )}
+      {order.status === "PAID" && order.reversals.length === 0 && (
         <Alert>
           <AlertTitle>Pago confirmado</AlertTitle>
           <AlertDescription>

@@ -302,10 +302,9 @@ public record NotificationEmail(String subject, String html, String text) {
             case ORDER_REFUNDED ->
                 new Body(
                         "Reembolsamos %s de tu orden %s".formatted(data.get("amount"), data.get("reference")),
-                        "Devolvimos %s de la orden %s de %s al medio con el que se pagó."
+                        "Registramos la devolución de %s de la orden %s de %s."
                                 .formatted(data.get("amount"), data.get("reference"), account),
-                        "Los documentos que la orden incluía y no se habían usado ya no están disponibles. El dinero"
-                                + " puede tardar unos días en verse, según tu banco.",
+                        "Los documentos que la orden incluía y no se habían usado ya no están disponibles.",
                         "Ver la orden",
                         "/billing/orders/" + data.get("orderId"));
             case ACCOUNT_DEBT ->

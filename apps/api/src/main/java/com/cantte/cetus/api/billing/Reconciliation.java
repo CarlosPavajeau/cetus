@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -222,12 +223,12 @@ public class Reconciliation {
         OffsetDateTime from = month.atDay(1).atStartOfDay(Revenue.COLOMBIA).toOffsetDateTime();
         OffsetDateTime to =
                 month.plusMonths(1).atDay(1).atStartOfDay(Revenue.COLOMBIA).toOffsetDateTime();
-        List<UUID> waiting = em.createNativeQuery("""
+        Set<UUID> waiting = Set.copyOf(em.createNativeQuery("""
                         SELECT j.reference_id FROM billing.jobs j
                         WHERE j.job_type = :type AND j.status IN ('PENDING', 'RUNNING')
                         """, UUID.class)
                 .setParameter("type", JobTypes.CHECK_PAYMENT)
-                .getResultList();
+                .getResultList());
         List<UUID> orders = orderIds(from, to).stream()
                 .filter(order -> !waiting.contains(order))
                 .toList();
