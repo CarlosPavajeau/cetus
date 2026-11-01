@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { BillingProfileDialog } from "~/features/billing/BillingProfileDialog";
+import { DebtAlert } from "~/features/billing/DebtAlert";
 import {
   documentsLabel,
   formatCents,
@@ -71,6 +72,7 @@ function Products() {
           </Alert>
         )
       )}
+      {credits.debtOrderId !== null && <DebtAlert orderId={credits.debtOrderId} />}
       {buyer && profile === null && (
         <Alert>
           <AlertTitle>Completa el perfil de facturación</AlertTitle>
@@ -124,7 +126,7 @@ function Products() {
                 )}
               </ul>
             </CardContent>
-            {buyer && profile !== null && (
+            {buyer && profile !== null && credits.debtOrderId === null && (
               <CardFooter>
                 <PurchaseDialog offer={offer} version={offer.version} profile={profile} />
               </CardFooter>

@@ -98,7 +98,7 @@ public class ProcessWebhookEventHandler implements JobHandler {
         }
         return switch (settlement.apply(transaction.get())) {
             case UNKNOWN_ORDER -> new Result(Status.IGNORED, "No order has the reference");
-            case PAID, ALREADY_PAID, REVIEW, RECORDED -> new Result(Status.PROCESSED, null);
+            case PAID, ALREADY_PAID, REVIEW, RECORDED, CHARGED_BACK -> new Result(Status.PROCESSED, null);
         };
     }
 

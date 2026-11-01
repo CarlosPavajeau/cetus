@@ -4,6 +4,7 @@ import type {
   CreditLot,
   CreditMovement,
   OrderCharge,
+  OrderReversal,
   OrderStatus,
   PaymentMethod,
   PlanKind,
@@ -50,6 +51,12 @@ export const orderStatusLabel: Record<OrderStatus, string> = {
   FAILED: "Pago rechazado",
   EXPIRED: "Vencida",
   REFUNDED: "Reembolsada",
+  CANCELED: "Anulada",
+};
+
+export const reversalKindLabel: Record<OrderReversal["kind"], string> = {
+  REFUND: "Reembolso",
+  CHARGEBACK: "Contracargo",
 };
 
 /** "VISA ••4242". */

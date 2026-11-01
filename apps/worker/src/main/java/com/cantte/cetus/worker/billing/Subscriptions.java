@@ -97,7 +97,7 @@ public class Subscriptions {
             }
             case RENEWAL ->
                 SubscriptionPeriodEntity.findByOpeningOrder(order.id).ifPresent(period -> renew(order, period));
-            case MANUAL -> {}
+            case MANUAL, DEBT -> {}
         }
     }
 
@@ -314,19 +314,75 @@ public class Subscriptions {
                 .orElse(0);
     }
 
-    /** Closes the subscription's last period, with its overage billed in an order of its own when it has any. */
+    /**
+     * Cancels the subscription at once because the order that paid its open period went back: the period closes
+     * with its overage billed as a debt.
+     *
+     * @param reason REFUNDED or CHARGEBACK
+     * @return whether it was canceled now
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public boolean end(UUID subscriptionId, OffsetDateTime now, String reason) {
+        ledger.lock(SubscriptionEntity.accountOf(subscriptionId));
+        SubscriptionEntity subscription =
+                SubscriptionEntity.lock(subscriptionId).orElseThrow();
+        if (subscription.status == SubscriptionEntity.Status.CANCELED) {
+            return false;
+        }
+        SubscriptionPeriodEntity period = SubscriptionPeriodEntity.findOpen(subscription.id)
+                .flatMap(open -> SubscriptionPeriodEntity.lock(open.id))
+                .orElseThrow(() -> new IllegalStateException(
+                        "Subscription " + subscription.id + " is not canceled and has no open period"));
+        finish(subscription, period, now);
+        cancel(subscription, now, reason);
+        return true;
+    }
+
+    /**
+     * Closes the subscription's last period, with its overage billed as a debt when it has any: those documents
+     * were issued, and no later renewal will bill them. So is the overage of the period before, when the renewal
+     * that billed it with this period's fee was never paid.
+     */
     private void finish(SubscriptionEntity subscription, SubscriptionPeriodEntity period, OffsetDateTime now) {
         int overage = bill(subscription, period, now);
-        if (overage == 0) {
+        Optional<BillingOrderEntity> renewal = Optional.ofNullable(period.openingOrderId)
+                .map(id -> BillingOrderEntity.<BillingOrderEntity>findById(id))
+                .filter(opening -> opening.status == BillingOrderEntity.Status.PENDING
+                        || opening.status == BillingOrderEntity.Status.EXPIRED);
+        List<BillingOrderItemEntity> unpaid = renewal.map(
+                        opening -> BillingOrderItemEntity.listByOrder(opening.id).stream()
+                                .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
+                                .toList())
+                .orElse(List.of());
+        if (overage == 0 && unpaid.isEmpty()) {
             return;
         }
         BillingOrderEntity order = BillingOrderEntity.open(
-                subscription.accountId,
-                BillingOrderEntity.Kind.RENEWAL,
-                profile(subscription.accountId),
-                now.plus(grace));
-        overageItem(order, period, PlanVersionEntity.findById(period.planVersionId), overage);
+                subscription.accountId, BillingOrderEntity.Kind.DEBT, profile(subscription.accountId), null);
+        for (BillingOrderItemEntity item : unpaid) {
+            BillingOrderItemEntity.copy(order, item);
+        }
+        if (!unpaid.isEmpty()) {
+            // The debt bills that overage now: paying the renewal too would bill it twice.
+            renewal.get().status = BillingOrderEntity.Status.CANCELED;
+        }
+        PlanVersionEntity version = PlanVersionEntity.findById(period.planVersionId);
+        overageItem(order, period, version, overage);
         period.closingOrderId = order.id;
+        int documents =
+                overage + unpaid.stream().mapToInt(item -> item.quantity).sum();
+        notifications.request(
+                subscription.accountId,
+                NotificationKind.ACCOUNT_DEBT,
+                "account_debt:%s".formatted(order.id),
+                Map.of(
+                        "total", Numbers.cop(order.totalCents / 100),
+                        "concept",
+                                "%s documentos de excedente de la suscripción %s"
+                                        .formatted(
+                                                Numbers.count(documents),
+                                                PlanEntity.<PlanEntity>findById(version.planId).name),
+                        "orderId", order.id.toString()));
     }
 
     private void cancel(SubscriptionEntity subscription, OffsetDateTime now, String reason) {

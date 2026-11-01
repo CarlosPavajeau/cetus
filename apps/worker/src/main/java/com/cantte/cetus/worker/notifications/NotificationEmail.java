@@ -230,9 +230,12 @@ public record NotificationEmail(String subject, String html, String text) {
                                         data.get("plan"),
                                         account,
                                         data.get("canceledAt"),
-                                        "UNPAID".equals(data.get("reason"))
-                                                ? "porque su renovación no se pagó"
-                                                : "como se pidió"),
+                                        switch (data.get("reason")) {
+                                            case "UNPAID" -> "porque su renovación no se pagó";
+                                            case "REFUNDED" -> "porque se reembolsó su pago";
+                                            case "CHARGEBACK" -> "porque el banco reversó su pago";
+                                            case null, default -> "como se pidió";
+                                        }),
                         "Los documentos ya otorgados conservan su vigencia. Para seguir emitiendo en producción después"
                                 + " de usarlos, contrata una suscripción o un paquete.",
                         "Ver los productos",
@@ -296,6 +299,23 @@ public record NotificationEmail(String subject, String html, String text) {
                         "Cámbiala antes de la próxima renovación para que el cobro automático no falle.",
                         "Cambiar la tarjeta",
                         "/billing");
+            case ORDER_REFUNDED ->
+                new Body(
+                        "Reembolsamos %s de tu orden %s".formatted(data.get("amount"), data.get("reference")),
+                        "Registramos la devolución de %s de la orden %s de %s."
+                                .formatted(data.get("amount"), data.get("reference"), account),
+                        "Los documentos que la orden incluía y no se habían usado ya no están disponibles.",
+                        "Ver la orden",
+                        "/billing/orders/" + data.get("orderId"));
+            case ACCOUNT_DEBT ->
+                new Body(
+                        "Tienes un saldo pendiente de %s".formatted(data.get("total")),
+                        "%s tiene un saldo pendiente de %s por %s."
+                                .formatted(account, data.get("total"), data.get("concept")),
+                        "Págalo para volver a comprar paquetes, recargas o suscripciones; mientras tanto puedes seguir"
+                                + " emitiendo con lo que tengas disponible.",
+                        "Pagar el saldo",
+                        "/billing/orders/" + data.get("orderId"));
         };
     }
 

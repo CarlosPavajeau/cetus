@@ -15,7 +15,7 @@ import java.util.Optional;
 
 /**
  * What the paid orders add up to in a calendar year, Colombia time, against the income up to which Cetus' holder
- * stays not responsible for VAT. Refunded orders do not count.
+ * stays not responsible for VAT. Money that went back (refunds, chargebacks) counts against the year it went back in.
  */
 @ApplicationScoped
 public class Revenue {

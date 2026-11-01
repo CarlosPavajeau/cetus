@@ -4,6 +4,7 @@ import com.cantte.cetus.api.billing.BillingViews.CheckoutView;
 import com.cantte.cetus.api.billing.BillingViews.CreateOrderRequest;
 import com.cantte.cetus.api.billing.BillingViews.OrderChargeView;
 import com.cantte.cetus.api.billing.BillingViews.OrderInvoiceView;
+import com.cantte.cetus.api.billing.BillingViews.OrderReversalView;
 import com.cantte.cetus.api.billing.BillingViews.OrderView;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.error.ProblemDetail;
@@ -22,6 +23,7 @@ import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
 import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
@@ -39,6 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -90,6 +93,10 @@ public class Orders {
         if (version.priceCents == 0) {
             throw new DomainException("plan_not_purchasable", "This plan cannot be bought from the console");
         }
+        if (BillingOrderEntity.hasDebt(accountId)) {
+            throw new DomainException(
+                    "account_has_debt", "The account owes what it used and did not pay; pay that order first");
+        }
         if (SubscriptionEntity.findCurrent(accountId).isPresent()) {
             throw new DomainException(
                     "subscription_active",
@@ -134,7 +141,7 @@ public class Orders {
                         "plan", plan.code,
                         "version", version.version,
                         "totalCents", order.totalCents));
-        return view(order, List.of(item), null, null);
+        return view(order, List.of(item), null, null, List.of());
     }
 
     @Transactional(Transactional.TxType.MANDATORY)
@@ -164,6 +171,24 @@ public class Orders {
         return files.presign(invoice.accountId, invoice.environment, invoice.id, invoice.documentType, file);
     }
 
+    /**
+     * A short-lived URL to one of the files of a credit note of money that went back from the order; like the
+     * invoice, it belongs to Cetus' own account and is reached only through the order.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public DocumentFiles.DocumentFileResponse creditNoteFile(
+            UUID accountId, UUID orderId, UUID documentId, String file) {
+        BillingOrderEntity order = BillingOrderEntity.findForAccount(orderId, accountId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        boolean credited = PaymentReversalEntity.listByOrder(order.id).stream()
+                .anyMatch(reversal -> documentId.equals(reversal.creditNoteDocumentId));
+        if (!credited) {
+            throw new NotFoundException("Credit note not found");
+        }
+        DocumentEntity note = DocumentEntity.findById(documentId);
+        return files.presign(note.accountId, note.environment, note.id, note.documentType, file);
+    }
+
     /** The orders with their items and invoices, read in one query each. */
     private List<OrderView> views(List<BillingOrderEntity> orders) {
         Map<UUID, List<BillingOrderItemEntity>> items =
@@ -177,8 +202,17 @@ public class Orders {
                         .stream()
                         .collect(Collectors.toMap(
                                 charge -> charge.orderId, OrderChargeView::from, (first, later) -> later));
-        Map<UUID, OrderInvoiceView> invoices = DocumentEntity.listNumberStatus(orders.stream()
-                        .map(order -> order.invoiceDocumentId)
+        Map<UUID, List<PaymentReversalEntity>> reversals =
+                PaymentReversalEntity.listByOrders(
+                                orders.stream().map(order -> order.id).toList())
+                        .stream()
+                        .filter(reversal -> reversal.status == PaymentReversalEntity.Status.APPROVED)
+                        .collect(Collectors.groupingBy(reversal -> reversal.orderId));
+        Map<UUID, OrderInvoiceView> invoices = DocumentEntity.listNumberStatus(Stream.concat(
+                                orders.stream().map(order -> order.invoiceDocumentId),
+                                reversals.values().stream()
+                                        .flatMap(List::stream)
+                                        .map(reversal -> reversal.creditNoteDocumentId))
                         .filter(Objects::nonNull)
                         .toList())
                 .stream()
@@ -188,7 +222,14 @@ public class Orders {
                         order,
                         items.getOrDefault(order.id, List.of()),
                         order.invoiceDocumentId == null ? null : invoices.get(order.invoiceDocumentId),
-                        charges.get(order.id)))
+                        charges.get(order.id),
+                        reversals.getOrDefault(order.id, List.of()).stream()
+                                .map(reversal -> OrderReversalView.from(
+                                        reversal,
+                                        reversal.creditNoteDocumentId == null
+                                                ? null
+                                                : invoices.get(reversal.creditNoteDocumentId)))
+                                .toList()))
                 .toList();
     }
 
@@ -197,18 +238,20 @@ public class Orders {
             BillingOrderEntity order,
             List<BillingOrderItemEntity> items,
             OrderInvoiceView invoice,
-            OrderChargeView charge) {
-        boolean payable =
-                order.status == BillingOrderEntity.Status.PENDING && order.expiresAt.isAfter(OffsetDateTime.now());
+            OrderChargeView charge,
+            List<OrderReversalView> reversals) {
+        OffsetDateTime now = OffsetDateTime.now();
+        // A debt never expires: its checkout lasts as long as a new order's.
+        OffsetDateTime checkoutExpiresAt = order.expiresAt == null ? now.plus(orderTtl) : order.expiresAt;
         Optional<CheckoutView> checkout = payments.gateway()
-                .filter(g -> payable)
+                .filter(g -> order.isPayable(now))
                 .map(g -> CheckoutView.from(g.checkout(new CheckoutRequest(
                         order.reference,
                         order.totalCents,
                         order.currency,
-                        order.expiresAt.toInstant(),
+                        checkoutExpiresAt.toInstant(),
                         consoleUrl.resolve("/billing/orders/" + order.id)))));
-        return OrderView.from(order, items, checkout.orElse(null), invoice, charge);
+        return OrderView.from(order, items, checkout.orElse(null), invoice, charge, reversals);
     }
 
     /**
@@ -225,7 +268,7 @@ public class Orders {
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         BillingOrderEntity order = BillingOrderEntity.lock(orderId).orElseThrow();
         OffsetDateTime now = OffsetDateTime.now();
-        if (order.status != BillingOrderEntity.Status.PENDING || !order.expiresAt.isAfter(now)) {
+        if (!order.isPayable(now)) {
             throw new DomainException("order_not_payable", "The order is no longer waiting to be paid");
         }
         PaymentMethodEntity card = PaymentMethodEntity.findActive(accountId)

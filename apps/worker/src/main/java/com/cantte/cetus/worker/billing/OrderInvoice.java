@@ -14,8 +14,8 @@ import org.jboss.logging.Logger;
 
 /**
  * Enqueues the invoice of an order in the transaction that pays it. A sweep enqueues it for the paid orders that never
- * had one, such as those paid before the billing issuer was configured; an order whose invoice job died is left to
- * the ops alert. Safe on many replicas: a sweep holds a Postgres advisory lock.
+ * had one, such as those paid before the billing issuer was configured, and the credit note of each approved reversal
+ * of an invoiced order that never had one; an order whose invoice job died is left to the ops alert. Safe on many replicas: a sweep holds a Postgres advisory lock.
  */
 @ApplicationScoped
 public class OrderInvoice {
@@ -71,6 +71,21 @@ public class OrderInvoice {
         orders.forEach(order -> jobs.enqueue(JobTypes.ISSUE_BILLING_INVOICE, order));
         if (!orders.isEmpty()) {
             LOG.infof("Enqueued the invoices of %d paid orders that had none", orders.size());
+        }
+        List<UUID> reversals = em.createNativeQuery("""
+                        SELECT r.id FROM billing.payment_reversals r
+                        JOIN billing.billing_orders o ON o.id = r.order_id
+                        WHERE r.status = 'APPROVED' AND r.credit_note_document_id IS NULL
+                          AND o.invoice_document_id IS NOT NULL
+                          AND NOT EXISTS (SELECT 1 FROM billing.jobs j
+                                          WHERE j.reference_id = r.id AND j.job_type = :type)
+                        ORDER BY r.approved_at
+                        """, UUID.class)
+                .setParameter("type", JobTypes.ISSUE_BILLING_CREDIT_NOTE)
+                .getResultList();
+        reversals.forEach(reversal -> jobs.enqueue(JobTypes.ISSUE_BILLING_CREDIT_NOTE, reversal));
+        if (!reversals.isEmpty()) {
+            LOG.infof("Enqueued the credit notes of %d reversals that had none", reversals.size());
         }
         return orders;
     }

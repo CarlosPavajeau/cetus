@@ -13,6 +13,7 @@ import {
   HistoryIcon,
   LifeBuoyIcon,
   LogOutIcon,
+  ScaleIcon,
   UsersIcon,
 } from "lucide-react";
 
@@ -54,6 +55,7 @@ const navigation = [
   { to: "/admin/organizations", label: "Organizaciones", icon: BuildingIcon },
   { to: "/admin/users", label: "Usuarios", icon: UsersIcon },
   { to: "/admin/support", label: "Soporte", icon: LifeBuoyIcon },
+  { to: "/admin/billing", label: "Conciliación", icon: ScaleIcon },
   { to: "/admin/audit-log", label: "Auditoría", icon: HistoryIcon },
 ] as const;
 

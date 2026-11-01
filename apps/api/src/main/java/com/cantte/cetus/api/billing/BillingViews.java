@@ -16,6 +16,7 @@ import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
 import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
@@ -307,7 +308,7 @@ public final class BillingViews {
             String currency,
             List<OrderItemView> items,
 
-            @Schema(description = "After it an unpaid order expires")
+            @Schema(nullable = true, description = "After it an unpaid order expires; a debt never does")
             OffsetDateTime expiresAt,
 
             @Schema(nullable = true) OffsetDateTime paidAt,
@@ -321,14 +322,18 @@ public final class BillingViews {
             OrderInvoiceView invoice,
 
             @Schema(nullable = true, description = "The last attempt to charge the order to the saved card")
-            OrderChargeView charge) {
+            OrderChargeView charge,
+
+            @Schema(description = "Money that went back from the order, first first")
+            List<OrderReversalView> reversals) {
 
         static OrderView from(
                 BillingOrderEntity order,
                 List<BillingOrderItemEntity> items,
                 CheckoutView checkout,
                 OrderInvoiceView invoice,
-                OrderChargeView charge) {
+                OrderChargeView charge,
+                List<OrderReversalView> reversals) {
             return new OrderView(
                     order.id,
                     order.kind,
@@ -344,7 +349,30 @@ public final class BillingViews {
                     order.createdAt,
                     checkout,
                     invoice,
-                    charge);
+                    charge,
+                    reversals);
+        }
+    }
+
+    @Schema(description = "Money that went back from a paid order: a refund, or a chargeback of the bank")
+    public record OrderReversalView(
+            PaymentReversalEntity.Kind kind,
+            long amountCents,
+            OffsetDateTime approvedAt,
+
+            @Schema(nullable = true, description = "Cetus' credit note over the order's invoice")
+            UUID creditNoteDocumentId,
+
+            @Schema(nullable = true, description = "Its number and status, once it is issued")
+            OrderInvoiceView creditNote) {
+
+        static OrderReversalView from(PaymentReversalEntity reversal, OrderInvoiceView creditNote) {
+            return new OrderReversalView(
+                    reversal.kind,
+                    reversal.amountCents,
+                    reversal.approvedAt,
+                    reversal.creditNoteDocumentId,
+                    creditNote);
         }
     }
 
@@ -521,6 +549,11 @@ public final class BillingViews {
 
             @Schema(description = "Production issuers the account has")
             long issuersLive,
+
+            @Schema(
+                    nullable = true,
+                    description = "The pending debt that blocks new purchases until it is paid; null without one")
+            UUID debtOrderId,
 
             @Schema(description = "Every lot, newest first") List<CreditLotView> lots,
 

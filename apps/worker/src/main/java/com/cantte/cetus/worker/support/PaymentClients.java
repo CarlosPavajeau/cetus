@@ -10,6 +10,8 @@ import com.cantte.cetus.payments.PaymentGateway;
 import com.cantte.cetus.payments.PaymentRejectedException;
 import com.cantte.cetus.payments.PaymentSource;
 import com.cantte.cetus.payments.PaymentTransaction;
+import com.cantte.cetus.payments.Refund;
+import com.cantte.cetus.payments.RefundRequest;
 import com.cantte.cetus.payments.WompiGateway;
 import com.cantte.cetus.payments.WompiKeys;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -101,6 +103,11 @@ public class PaymentClients {
             @Override
             public PaymentTransaction charge(ChargeRequest request) {
                 return call("payments.charge", () -> gateway.charge(request));
+            }
+
+            @Override
+            public Refund refund(RefundRequest request) {
+                return call("payments.refund", () -> gateway.refund(request));
             }
 
             private <T> T call(String span, Supplier<T> work) {

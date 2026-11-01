@@ -142,8 +142,7 @@ public class ChargeOrderHandler implements JobHandler {
             return Optional.empty();
         }
         Optional<PaymentMethodEntity> card = PaymentMethodEntity.findActive(order.accountId);
-        boolean payable =
-                order.status == BillingOrderEntity.Status.PENDING && order.expiresAt.isAfter(OffsetDateTime.now());
+        boolean payable = order.isPayable(OffsetDateTime.now());
         if (!payable || card.isEmpty()) {
             charge.status = PaymentChargeEntity.Status.CANCELED;
             return Optional.empty();

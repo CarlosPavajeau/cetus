@@ -29,6 +29,12 @@ public final class JobTypes {
     public static final String CHARGE_ORDER = "CHARGE_ORDER";
     /** Issue Cetus' own invoice for a paid order. reference_id = billing order id. */
     public static final String ISSUE_BILLING_INVOICE = "ISSUE_BILLING_INVOICE";
+    /** Ask Wompi to refund an order's payment. reference_id = payment reversal id. */
+    public static final String REFUND_ORDER = "REFUND_ORDER";
+    /** Approve a reversal registered by a person and apply it. reference_id = payment reversal id. */
+    public static final String APPLY_REVERSAL = "APPLY_REVERSAL";
+    /** Issue the credit note of an approved reversal over Cetus' own invoice. reference_id = payment reversal id. */
+    public static final String ISSUE_BILLING_CREDIT_NOTE = "ISSUE_BILLING_CREDIT_NOTE";
 
     private JobTypes() {}
 }

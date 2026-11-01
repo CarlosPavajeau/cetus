@@ -194,6 +194,37 @@ public final class WompiGateway implements PaymentGateway {
         return transactionOf(data);
     }
 
+    /**
+     * Refunds V2: the refund comes back decided, with Wompi's own id. An answer that cannot be read, or a status it
+     * does not document, is read as PENDING: Wompi took the request, so the money may have gone back.
+     */
+    @Override
+    public Refund refund(RefundRequest request) {
+        Map<String, Object> refund = new LinkedHashMap<>();
+        refund.put("transaction_id", request.transactionId());
+        refund.put("amount_in_cents", request.amountCents());
+        if (request.reason() != null && !request.reason().isBlank()) {
+            refund.put("reason", request.reason());
+        }
+        refund.put("reference", request.reference());
+        HttpResponse<String> response = send(post("/refunds", refund));
+        JsonNode data;
+        try {
+            data = body(response).path("data");
+        } catch (PaymentRejectedException e) {
+            return new Refund(Optional.empty(), Refund.Status.PENDING, Optional.empty());
+        }
+        Refund.Status status = optional(data, "status")
+                .flatMap(name -> Arrays.stream(Refund.Status.values())
+                        .filter(known -> known.name().equals(name))
+                        .findFirst())
+                .orElse(Refund.Status.PENDING);
+        return new Refund(
+                optional(data, "v2_refund_id").or(() -> optional(data, "id")),
+                status,
+                optional(data, "status_message"));
+    }
+
     @Override
     public EventCheck verifyEvent(String body) {
         JsonNode event;

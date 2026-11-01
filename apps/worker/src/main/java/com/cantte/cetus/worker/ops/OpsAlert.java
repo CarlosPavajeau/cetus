@@ -18,6 +18,9 @@ public record OpsAlert(String key, Category category, boolean repeats, String su
         PAYMENT_REVIEW(true),
         CREDIT_LEDGER_MISMATCH(true),
         BILLING_INVOICE_MISSING(true),
+        /** A Wompi refund Wompi never decided: the money may have gone back, and a person checks. */
+        REFUND_UNRESOLVED(true),
+        BILLING_CREDIT_NOTE_MISSING(true),
         /** Its keys carry the year: a share is reported once that year, even if the income falls under it again. */
         VAT_THRESHOLD(false);
 

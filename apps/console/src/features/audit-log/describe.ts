@@ -164,11 +164,33 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return text(data.card);
     case "BILLING_ORDER_CHARGE_REQUESTED":
       return `${text(data.reference)} · ${text(data.card)} · ${cents(data.totalCents)}`;
+    case "BILLING_ORDER_REFUND_REQUESTED":
+      return `${text(data.reference)} · ${cents(data.amountCents)} · ${data.mode === "WOMPI" ? "En Wompi" : "Hecho por fuera"} · ${text(data.reason)}`;
+    case "BILLING_ORDER_REFUND_RESOLVED":
+      return `${text(data.reference)} · ${data.approved === true ? "Aprobado" : "No se hizo"} · ${text(data.reason)}`;
+    case "BILLING_ORDER_REFUNDED":
+    case "BILLING_ORDER_CHARGEBACK":
+      return `${text(data.reference)} · ${cents(data.amountCents)}${typeof data.debtCents === "number" && data.debtCents > 0 ? ` · deuda de ${cents(data.debtCents)}` : ""}`;
+    case "BILLING_ORDER_DEBT_WAIVED":
+      return `${text(data.reference)} · ${cents(data.totalCents)} · ${text(data.reason)}`;
     case "SUBSCRIPTION_CANCELED":
-      return `${text(data.plan)} · ${data.reason === "UNPAID" ? "Renovación sin pagar" : "Pedido por la cuenta"}`;
+      return `${text(data.plan)} · ${subscriptionEndLabel(data.reason)}`;
     case "CERTIFICATE_UPLOAD_LINK_CREATED":
       return `Vence el ${dayFormat.format(new Date(text(data.expiresAt)))} a las ${timeFormat.format(new Date(text(data.expiresAt)))}`;
     default:
       return unknownValue(entry.action);
+  }
+}
+
+function subscriptionEndLabel(reason: unknown) {
+  switch (reason) {
+    case "UNPAID":
+      return "Renovación sin pagar";
+    case "REFUNDED":
+      return "Pago reembolsado";
+    case "CHARGEBACK":
+      return "Contracargo";
+    default:
+      return "Pedido por la cuenta";
   }
 }

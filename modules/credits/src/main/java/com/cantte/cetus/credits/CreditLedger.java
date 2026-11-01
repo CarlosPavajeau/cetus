@@ -291,6 +291,30 @@ public class CreditLedger {
     }
 
     /**
+     * Takes back a lot whose payment went back: what it has left is lost and it no longer counts as a product. A
+     * credit its documents still hold is revoked when they are released; what they used stays used.
+     *
+     * @return credits revoked now
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public int revoke(UUID lotId, Actor actor, String reason) {
+        CreditGrantEntity lot = CreditGrantEntity.<CreditGrantEntity>findByIdOptional(lotId)
+                .orElseThrow(() -> new IllegalArgumentException("No lot " + lotId));
+        lock(lot.accountId);
+        lot = CreditGrantEntity.lock(lotId).orElseThrow();
+        if (lot.status == CreditGrantEntity.Status.REVOKED) {
+            return 0;
+        }
+        int revoked = lot.status == CreditGrantEntity.Status.ACTIVE ? lot.remaining : 0;
+        if (revoked > 0) {
+            move(lot.accountId, lot.id, null, null, CreditMovementEntity.Type.REVOKE, -revoked, actor, reason);
+        }
+        lot.remaining = 0;
+        lot.status = CreditGrantEntity.Status.REVOKED;
+        return revoked;
+    }
+
+    /**
      * A correction by a person: a positive quantity grants a lot without product until expiresAt, a negative one
      * takes credits from the lots first expiring first.
      *

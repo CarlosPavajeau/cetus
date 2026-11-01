@@ -47,7 +47,9 @@ public class OpsAlerts {
                 Category.DOCUMENT_STUCK,
                 Category.RANGE_UNVERIFIED,
                 Category.PAYMENT_REVIEW,
-                Category.BILLING_INVOICE_MISSING)),
+                Category.BILLING_INVOICE_MISSING,
+                Category.REFUND_UNRESOLVED,
+                Category.BILLING_CREDIT_NOTE_MISSING)),
         DAILY(EnumSet.of(
                 Category.CERTIFICATE_EXPIRING,
                 Category.RANGE_RUNNING_OUT,
@@ -142,6 +144,8 @@ public class OpsAlerts {
             case VAT_THRESHOLD -> checks.vatThreshold(LocalDate.now(Dates.BOGOTA));
             case CREDIT_LEDGER_MISMATCH -> checks.creditLedgerMismatches();
             case BILLING_INVOICE_MISSING -> checks.billingInvoicesMissing();
+            case REFUND_UNRESOLVED -> checks.refundsUnresolved();
+            case BILLING_CREDIT_NOTE_MISSING -> checks.billingCreditNotesMissing();
         };
     }
 

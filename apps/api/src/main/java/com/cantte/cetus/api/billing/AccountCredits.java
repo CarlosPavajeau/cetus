@@ -5,6 +5,7 @@ import com.cantte.cetus.api.billing.BillingViews.CreditLotView;
 import com.cantte.cetus.api.billing.BillingViews.CreditMovementView;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
@@ -53,6 +54,7 @@ public class AccountCredits {
                 balance.entitlement().graceMargin(),
                 balance.entitlement().issuersIncluded(),
                 IssuerEntity.count("accountId = ?1 and environment = ?2", accountId, Environment.LIVE),
+                BillingOrderEntity.findDebt(accountId).map(order -> order.id).orElse(null),
                 lots.stream()
                         .map(lot -> lot(lot, lot.planVersionId == null ? null : plans.get(lot.planVersionId)))
                         .toList(),

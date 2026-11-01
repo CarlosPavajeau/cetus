@@ -50,6 +50,11 @@ export const actionLabel: Record<AuditAction, string> = {
   PAYMENT_METHOD_SAVED: "Tarjeta guardada",
   PAYMENT_METHOD_REMOVED: "Tarjeta quitada",
   BILLING_ORDER_CHARGE_REQUESTED: "Cobro a la tarjeta pedido",
+  BILLING_ORDER_REFUND_REQUESTED: "Reembolso pedido",
+  BILLING_ORDER_REFUND_RESOLVED: "Reembolso resuelto",
+  BILLING_ORDER_REFUNDED: "Orden reembolsada",
+  BILLING_ORDER_CHARGEBACK: "Contracargo",
+  BILLING_ORDER_DEBT_WAIVED: "Deuda condonada",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

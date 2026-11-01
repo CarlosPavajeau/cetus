@@ -2,6 +2,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 
 import type { AuditAction, SupportTicketStatus } from "~/lib/api/types";
 
+import { getReconciliation, listAdminOrders } from "./billing";
 import { getAdminIssuer } from "./issuers";
 import type { AccountStatus } from "./schema";
 import { getAdminAccount, listAdminAccounts, listAdminAuditLog } from "./server";
@@ -95,3 +96,19 @@ export const adminFeedbackQuery = infiniteQueryOptions({
   initialPageParam: undefined as string | undefined,
   getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 });
+
+/** The account's latest orders with their reversals. */
+export function adminOrdersQuery(accountId: string) {
+  return queryOptions({
+    queryKey: [...adminKey, "accounts", "orders", accountId],
+    queryFn: () => listAdminOrders({ data: { accountId } }),
+  });
+}
+
+/** A month of sales crossed with Wompi and the invoices; month is "2026-10". */
+export function reconciliationQuery(month: string) {
+  return queryOptions({
+    queryKey: [...adminKey, "reconciliation", month],
+    queryFn: () => getReconciliation({ data: { month } }),
+  });
+}

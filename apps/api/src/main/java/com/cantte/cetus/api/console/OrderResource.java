@@ -163,4 +163,27 @@ public class OrderResource {
                     String file) {
         return orders.invoiceFile(context.accountId(), id, file);
     }
+
+    /**
+     * A short-lived URL to download a file of the credit note of money that went back from the order: {@code xml},
+     * {@code pdf} or {@code attached-document}. 404 file_not_available until the note and its file exist.
+     */
+    @GET
+    @Path("/{id}/credit-notes/{documentId}/files/{file}")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "OK")
+    @APIResponse(
+            responseCode = "404",
+            description = "Not Found",
+            content =
+                    @Content(
+                            mediaType = ProblemDetail.MEDIA_TYPE,
+                            schema = @Schema(implementation = ProblemDetail.class)))
+    public DocumentFiles.DocumentFileResponse creditNoteFile(
+            @PathParam("id") UUID id,
+            @PathParam("documentId") UUID documentId,
+            @Parameter(schema = @Schema(enumeration = {"xml", "pdf", "attached-document"})) @PathParam("file")
+                    String file) {
+        return orders.creditNoteFile(context.accountId(), id, documentId, file);
+    }
 }

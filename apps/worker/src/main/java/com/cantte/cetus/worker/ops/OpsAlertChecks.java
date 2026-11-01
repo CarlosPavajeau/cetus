@@ -25,6 +25,8 @@ public class OpsAlertChecks {
 
     /** A dead job is reported while it is this recent; older ones were already reported or are history. */
     private static final Duration DEAD_JOB_WINDOW = Duration.ofDays(7);
+    /** Wompi decides a refund when it is asked; one without a decision after this waits for a person. */
+    private static final Duration REFUND_DUE_AFTER = Duration.ofHours(1);
 
     @Inject
     EntityManager em;
@@ -209,6 +211,49 @@ public class OpsAlertChecks {
                         r[0],
                         false,
                         "La orden pagada %s (%s) no tiene su factura aceptada: %s".formatted(r[1], r[0], r[2])))
+                .toList();
+    }
+
+    /** Wompi refunds sent a while ago without a decision; a person resolves them from the administration. */
+    List<OpsAlert> refundsUnresolved() {
+        return rows("""
+                SELECT r.id::text, r.reference, o.id::text
+                FROM billing.payment_reversals r
+                JOIN billing.billing_orders o ON o.id = r.order_id
+                WHERE r.status = 'SUBMITTED' AND r.updated_at < :before
+                ORDER BY r.updated_at
+                """, Map.of("before", OffsetDateTime.now().minus(REFUND_DUE_AFTER))).stream()
+                .map(r -> OpsAlert.of(
+                        Category.REFUND_UNRESOLVED,
+                        r[0],
+                        false,
+                        "El reembolso %s de la orden %s no tiene respuesta de Wompi: revísalo en su panel y resuélvelo"
+                                .formatted(r[1], r[2])))
+                .toList();
+    }
+
+    /**
+     * Approved reversals of invoiced orders whose credit note is not accepted a while later: not issued yet,
+     * rejected, or stuck. Nothing without the billing issuer configured.
+     */
+    List<OpsAlert> billingCreditNotesMissing() {
+        if (invoiceIssuerId.isEmpty()) {
+            return List.of();
+        }
+        return rows("""
+                SELECT r.id::text, r.reference, coalesce(d.prefix || d.number || ' ' || d.status, 'sin nota crédito')
+                FROM billing.payment_reversals r
+                JOIN billing.billing_orders o ON o.id = r.order_id
+                LEFT JOIN billing.documents d ON d.id = r.credit_note_document_id
+                WHERE r.status = 'APPROVED' AND o.invoice_document_id IS NOT NULL AND r.approved_at < :before
+                  AND (d.id IS NULL OR d.status <> 'ACCEPTED')
+                ORDER BY r.approved_at
+                """, Map.of("before", OffsetDateTime.now().minus(invoiceDueAfter))).stream()
+                .map(r -> OpsAlert.of(
+                        Category.BILLING_CREDIT_NOTE_MISSING,
+                        r[0],
+                        false,
+                        "El reverso %s no tiene su nota crédito aceptada: %s".formatted(r[1], r[2])))
                 .toList();
     }
 

@@ -23,8 +23,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 /**
  * Wompi API stand-in for worker tests: answers GET /v1/transactions/{id} and GET /v1/transactions?reference=
  * from the transactions a test puts, takes charges to saved sources (POST /v1/transactions, PENDING until a test
- * puts their outcome, a reference once), serves the terms in force (GET /v1/merchants/info), and answers 503 while
- * {@link #down(boolean)}. Only the private key is accepted.
+ * puts their outcome, a reference once), takes refunds (POST /v1/refunds, decided as {@link #refunding(String)}
+ * says), serves the terms in force (GET /v1/merchants/info), and answers 503 while {@link #down(boolean)}. Only the
+ * private key is accepted.
  */
 @ApplicationScoped
 public class FakeWompi {
@@ -72,6 +73,18 @@ public class FakeWompi {
             String acceptanceToken,
             String acceptPersonalAuth) {}
 
+    /** A refund as the worker asks for it. */
+    public record RefundAsked(long amountInCents, String transactionId, String reason, String reference) {}
+
+    private record RefundBody(
+            long id,
+            String status,
+            String statusMessage,
+            String v2RefundId,
+            long amountInCents,
+            String transactionId,
+            String reference) {}
+
     private record Presigned(String acceptanceToken, String permalink, String type) {}
 
     private record Merchant(Presigned presignedAcceptance, Presigned presignedPersonalDataAuth) {}
@@ -88,6 +101,8 @@ public class FakeWompi {
     private final Map<String, Transaction> transactions = new ConcurrentHashMap<>();
     private final AtomicInteger requests = new AtomicInteger();
     private final List<Charge> charges = new CopyOnWriteArrayList<>();
+    private final List<RefundAsked> refunds = new CopyOnWriteArrayList<>();
+    private volatile String refundStatus = "APPROVED";
     private volatile boolean down;
     private volatile boolean refusing;
     private volatile boolean garbling;
@@ -98,6 +113,7 @@ public class FakeWompi {
         server = HttpServer.create(new InetSocketAddress("localhost", port), 0);
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         server.createContext("/v1/transactions", this::handle);
+        server.createContext("/v1/refunds", this::refund);
         server.createContext(
                 "/v1/merchants/info",
                 exchange -> reply(
@@ -132,6 +148,16 @@ public class FakeWompi {
         garbling = value;
     }
 
+    /** How Wompi decides the refunds asked from now on: APPROVED (the default), DECLINED, PENDING… */
+    public void refunding(String status) {
+        refundStatus = status;
+    }
+
+    /** The refunds asked, the first first. */
+    public List<RefundAsked> refunds() {
+        return List.copyOf(refunds);
+    }
+
     public int requests() {
         return requests.get();
     }
@@ -144,6 +170,8 @@ public class FakeWompi {
     public void reset() {
         transactions.clear();
         charges.clear();
+        refunds.clear();
+        refundStatus = "APPROVED";
         requests.set(0);
         down = false;
         refusing = false;
@@ -205,6 +233,27 @@ public class FakeWompi {
                 charge.amountInCents());
         transactions.put(transaction.id(), transaction);
         reply(exchange, 201, garbling ? Map.of() : new Envelope(transaction));
+    }
+
+    private void refund(HttpExchange exchange) throws IOException {
+        requests.incrementAndGet();
+        if (down) {
+            reply(exchange, 503, new ErrorBody(new ErrorBody.Error("SERVICE_UNAVAILABLE", "down")));
+            return;
+        }
+        RefundAsked asked = JSON.readValue(exchange.getRequestBody(), RefundAsked.class);
+        refunds.add(asked);
+        reply(
+                exchange,
+                201,
+                new Envelope(new RefundBody(
+                        refunds.size(),
+                        refundStatus,
+                        "DECLINED".equals(refundStatus) ? "Tiempo límite sin encontrar fondos excedido" : "",
+                        "v2_refund_" + refunds.size(),
+                        asked.amountInCents(),
+                        asked.transactionId(),
+                        asked.reference())));
     }
 
     private static void reply(HttpExchange exchange, int status, Object body) throws IOException {

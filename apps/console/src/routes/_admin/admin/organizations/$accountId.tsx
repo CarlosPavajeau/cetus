@@ -15,8 +15,9 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { AccountStatusDialog } from "~/features/admin/AccountStatusDialog";
+import { AdminOrders } from "~/features/admin/AdminOrders";
 import { accountStatusLabel, memberRoleLabel } from "~/features/admin/labels";
-import { adminAccountQuery } from "~/features/admin/queries";
+import { adminAccountQuery, adminOrdersQuery } from "~/features/admin/queries";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { productLabel } from "~/features/billing/labels";
 import { documentStatusLabel, documentTypeLabel } from "~/features/documents/labels";
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_admin/admin/organizations/$accountId")({
     if (!account) {
       throw notFound();
     }
+    await queryClient.query({ ...adminOrdersQuery(params.accountId), staleTime: "static" });
     return { crumb: account.name };
   },
   component: AccountDetail,
@@ -177,6 +179,10 @@ function AccountDetail() {
           )}
         </Section>
       </div>
+
+      <Section id="account-orders" title="Órdenes">
+        <AdminOrders accountId={account.id} isAdmin={isAdmin} />
+      </Section>
 
       <Section id="account-billing" title="Documentos facturables este mes">
         <PeriodUsageSummary usage={account.billableThisMonth} />

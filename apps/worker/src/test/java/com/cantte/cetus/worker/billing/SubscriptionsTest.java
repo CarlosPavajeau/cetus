@@ -161,6 +161,55 @@ class SubscriptionsTest {
     }
 
     @Test
+    void theOverageOfAnUnpaidRenewalIsLeftAsADebtWhenTheSubscriptionLapses() {
+        UUID accountId = subscribed("INICIAL");
+        SubscriptionEntity subscription = subscriptionOf(accountId);
+        QuarkusTransaction.requiringNew().run(() -> {
+            int left = CreditGrantEntity.listByAccount(accountId).getFirst().remaining;
+            ledger.adjust(
+                    accountId,
+                    -left,
+                    null,
+                    new Actor(Actor.ActorType.PLATFORM, UUID.randomUUID().toString()),
+                    "Sin créditos",
+                    OffsetDateTime.now());
+        });
+        accepted(accountId, 2);
+        SubscriptionPeriodEntity first = openPeriod(subscription.id);
+        OffsetDateTime closing = first.endsAt.plusMinutes(1);
+        close(first.id, closing);
+
+        tend(subscription.id, closing.plusDays(7).plusMinutes(1));
+
+        List<BillingOrderEntity> debts = QuarkusTransaction.requiringNew()
+                .call(() -> BillingOrderEntity.<BillingOrderEntity>list(
+                        "accountId = ?1 and kind = ?2", accountId, BillingOrderEntity.Kind.DEBT));
+        BillingOrderEntity renewal = renewalsOf(accountId).getFirst();
+        BillingOrderItemEntity billed = itemsOf(renewal.id).stream()
+                .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
+                .findFirst()
+                .orElseThrow();
+        assertThat(debts).singleElement().satisfies(debt -> {
+            assertThat(debt.expiresAt).isNull();
+            assertThat(debt.totalCents).isEqualTo(billed.totalCents);
+            assertThat(itemsOf(debt.id)).singleElement().satisfies(item -> {
+                assertThat(item.itemType).isEqualTo(BillingOrderItemEntity.Type.OVERAGE);
+                assertThat(item.quantity).isEqualTo(2);
+                assertThat(item.subscriptionPeriodId).isEqualTo(first.id);
+                assertThat(item.totalCents).isEqualTo(billed.totalCents);
+            });
+        });
+        assertThat(notices(accountId, NotificationKind.ACCOUNT_DEBT)).hasSize(1);
+        assertThat(renewal.status).isEqualTo(BillingOrderEntity.Status.CANCELED);
+
+        assertThat(settlement.apply(approved(renewal))).isEqualTo(Outcome.REVIEW);
+        BillingOrderEntity late = QuarkusTransaction.requiringNew()
+                .call(() -> BillingOrderEntity.<BillingOrderEntity>findById(renewal.id));
+        assertThat(late.status).isEqualTo(BillingOrderEntity.Status.CANCELED);
+        assertThat(late.reviewReason).contains("CANCELED");
+    }
+
+    @Test
     void aPeriodThatEndsWithItsRenewalUnpaidEndsTheSubscriptionInsteadOfRenewingAgain() {
         UUID accountId = subscribed("INICIAL");
         SubscriptionEntity subscription = subscriptionOf(accountId);

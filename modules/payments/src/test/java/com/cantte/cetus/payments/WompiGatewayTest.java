@@ -87,11 +87,25 @@ class WompiGatewayTest {
             String acceptanceToken,
             String acceptPersonalAuth) {}
 
+    private record RefundAnswer(
+            long id,
+            String status,
+            String statusMessage,
+            String v2RefundId,
+            long amountInCents,
+            String transactionId,
+            String reference) {}
+
+    private record SentRefund(String transactionId, long amountInCents, String reason, String reference) {}
+
     private HttpServer server;
     private final AtomicReference<Exchange> last = new AtomicReference<>();
     private final AtomicReference<Sent> sent = new AtomicReference<>();
     private volatile int status = 200;
     private volatile Object responseBody;
+    /** Sent as is instead of {@link #responseBody}, for an answer that is not JSON. */
+    private volatile byte[] rawResponse;
+
     private volatile Object merchantBody = new Envelope(new Merchant(
             new Presigned("eyJ.policy", "https://wompi.com/terminos.pdf", "END_USER_POLICY"),
             new Presigned("eyJ.data", "https://wompi.com/datos.pdf", "PERSONAL_DATA_AUTH")));
@@ -112,7 +126,7 @@ class WompiGatewayTest {
                     new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8)));
             Object responseBody =
                     exchange.getRequestURI().getPath().endsWith("/merchants/info") ? merchantBody : this.responseBody;
-            byte[] response = JSON.writeValueAsBytes(responseBody);
+            byte[] response = rawResponse != null ? rawResponse : JSON.writeValueAsBytes(responseBody);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(status, response.length);
             exchange.getResponseBody().write(response);
@@ -460,6 +474,54 @@ class WompiGatewayTest {
         assertThatThrownBy(() ->
                         gateway(DOCS_KEYS).charge(new ChargeRequest("CET-1-1", 100, "COP", "ana@example.com", "src_1")))
                 .isInstanceOf(PaymentRejectedException.class);
+    }
+
+    @Test
+    void asksForARefundWithThePrivateKeyAndReadsItsDecision() throws IOException {
+        respond(
+                201,
+                new Envelope(new RefundAnswer(1523, "APPROVED", "", "v2_refund_abc123", 150_000, "1-2-3", "CET-1-R1")));
+
+        Refund refund = gateway(DOCS_KEYS).refund(new RefundRequest("1-2-3", 150_000, "Pedido", "CET-1-R1"));
+
+        assertThat(last.get()).isEqualTo(new Exchange("/v1/refunds", "Bearer prv_prod_example"));
+        assertThat(JSON.readValue(sent.get().body(), SentRefund.class))
+                .isEqualTo(new SentRefund("1-2-3", 150_000, "Pedido", "CET-1-R1"));
+        assertThat(refund)
+                .isEqualTo(new Refund(Optional.of("v2_refund_abc123"), Refund.Status.APPROVED, Optional.of("")));
+    }
+
+    @Test
+    void aDeclinedRefundKeepsItsReason() {
+        respond(
+                201,
+                new Envelope(new RefundAnswer(
+                        1524, "DECLINED", "Tiempo límite sin encontrar fondos excedido", null, 150_000, "1-2-3", "R")));
+
+        Refund refund = gateway(DOCS_KEYS).refund(new RefundRequest("1-2-3", 150_000, null, "R"));
+
+        assertThat(refund.status()).isEqualTo(Refund.Status.DECLINED);
+        assertThat(refund.id()).contains("1524");
+        assertThat(refund.message()).contains("Tiempo límite sin encontrar fondos excedido");
+    }
+
+    @Test
+    void aRefusedRefundIsRejected() {
+        respond(422, new ErrorBody(new ErrorBody.Error("INPUT_VALIDATION_ERROR", null)));
+
+        assertThatThrownBy(() -> gateway(DOCS_KEYS).refund(new RefundRequest("1-2-3", 150_000, null, "R")))
+                .isInstanceOf(PaymentRejectedException.class);
+    }
+
+    @Test
+    void anAcceptedRefundThatCannotBeReadIsPending() {
+        status = 201;
+        rawResponse = "<html>ok</html>".getBytes(StandardCharsets.UTF_8);
+
+        Refund refund = gateway(DOCS_KEYS).refund(new RefundRequest("1-2-3", 150_000, null, "R"));
+
+        assertThat(refund.status()).isEqualTo(Refund.Status.PENDING);
+        assertThat(refund.id()).isEmpty();
     }
 
     private WompiGateway gateway(WompiKeys keys) {

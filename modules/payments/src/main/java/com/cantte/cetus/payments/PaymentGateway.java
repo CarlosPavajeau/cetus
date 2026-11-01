@@ -55,4 +55,13 @@ public interface PaymentGateway {
      * @throws PaymentRejectedException when the provider refuses the charge, such as a reference already used
      */
     PaymentTransaction charge(ChargeRequest request);
+
+    /**
+     * Gives money of an approved transaction back, all of it or part.
+     *
+     * @throws PaymentTransientException when the provider cannot be reached or fails; the refund may have been made,
+     *     so a person checks before asking again
+     * @throws PaymentRejectedException when the provider refuses the refund: it was not made
+     */
+    Refund refund(RefundRequest request);
 }

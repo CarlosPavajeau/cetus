@@ -24,7 +24,7 @@ import org.jboss.logging.Logger;
  * Applies a transaction as Wompi reports it to the order of its reference, in one transaction with the order
  * locked: the webhook and the reconciliation may bring the same payment at once, and it pays the order once.
  * A final status never goes back, an approved payment of another amount or a second approved payment waits for a
- * person, and an approval after the order expired still pays it.
+ * person, an approval after the order expired still pays it, and a void of a paid order's payment is a chargeback.
  */
 @ApplicationScoped
 public class PaymentSettlement {
@@ -38,6 +38,8 @@ public class PaymentSettlement {
         REVIEW,
         /** A payment attempt that does not pay the order (pending, declined, failed). */
         RECORDED,
+        /** The payment of a paid order was voided with no refund to explain it: applied as a chargeback. */
+        CHARGED_BACK,
         /** No order has the reference: another merchant integration or a test payment. */
         UNKNOWN_ORDER
     }
@@ -53,6 +55,9 @@ public class PaymentSettlement {
 
     @Inject
     AuditLog auditLog;
+
+    @Inject
+    Reversals reversals;
 
     @Inject
     Event<OrderPaid> orderPaid;
@@ -88,10 +93,19 @@ public class PaymentSettlement {
                 if (order.status != BillingOrderEntity.Status.PAID) {
                     yield Outcome.RECORDED;
                 }
-                review(
-                        order,
-                        "Wompi anuló la transacción %s de una orden pagada".formatted(stored.providerTransactionId));
-                yield Outcome.REVIEW;
+                boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
+                        .anyMatch(other -> other.status == PaymentTransactionEntity.Status.APPROVED
+                                && !other.id.equals(stored.id));
+                if (paidByAnother) {
+                    review(
+                            order,
+                            "Wompi anuló la transacción %s y otra aprobada sigue pagando la orden"
+                                    .formatted(stored.providerTransactionId));
+                    yield Outcome.REVIEW;
+                }
+                yield reversals.chargeBack(order, stored.providerTransactionId).isPresent()
+                        ? Outcome.CHARGED_BACK
+                        : Outcome.RECORDED;
             }
             case PENDING, DECLINED, ERROR -> Outcome.RECORDED;
         };
