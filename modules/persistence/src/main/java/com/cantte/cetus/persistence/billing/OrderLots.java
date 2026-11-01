@@ -12,8 +12,8 @@ import java.util.UUID;
 
 /**
  * The lots an order paid for and what the account used of them: a package's or a top-up's lot per plan item, and
- * the lot of the subscription period the order opened. Used means reserved by a document and not released, or
- * paying a grace or overage document; credits that expired, were revoked or taken by an adjustment were not used.
+ * the lot of the subscription period the order opened. Used means taken by a document the DIAN accepted; credits
+ * that expired, were revoked or taken by an adjustment were not used.
  */
 public final class OrderLots {
 
@@ -61,12 +61,19 @@ public final class OrderLots {
         return of(orderId).stream().mapToLong(Item::consumedCents).sum();
     }
 
-    /** Documents of the lot used: what reservations and settlements took from it, less what releases gave back. */
+    /**
+     * Documents of the lot used: those the DIAN accepted that took a credit of it or that it paid as grace or
+     * overage. A document still waiting for the DIAN is not counted, since it may be released.
+     */
     public static int consumed(UUID lotId) {
-        return -((Number) Panache.getEntityManager()
+        return ((Number) Panache.getEntityManager()
                         .createNativeQuery("""
-                                SELECT coalesce(sum(quantity), 0) FROM billing.credit_movements
-                                WHERE grant_id = :lot AND type IN ('RESERVE', 'RELEASE', 'SETTLE')
+                                SELECT coalesce(sum(r.quantity), 0) FROM billing.credit_reservations r
+                                WHERE r.status = 'CONFIRMED'
+                                  AND (r.grant_id = :lot
+                                       OR EXISTS (SELECT 1 FROM billing.credit_movements m
+                                                  WHERE m.reservation_id = r.id AND m.grant_id = :lot
+                                                    AND m.type = 'SETTLE'))
                                 """)
                         .setParameter("lot", lotId)
                         .getSingleResult())

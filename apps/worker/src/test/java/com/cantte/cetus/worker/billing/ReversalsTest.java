@@ -109,10 +109,13 @@ class ReversalsTest {
     }
 
     @Test
-    void aChargebackLeavesWhatWasUsedAsADebt() {
+    void aChargebackLeavesWhatTheDianAcceptedAsADebt() {
         UUID accountId = account();
         BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");
         accept(accountId, 3);
+        UUID waiting = fixtures.invoiceFor(accountId);
+        QuarkusTransaction.requiringNew()
+                .run(() -> ledger.reserve(accountId, waiting, DocumentType.INVOICE, OffsetDateTime.now()));
         int quantity = lotsOf(accountId).getFirst().quantity;
 
         UUID reversal = register(order.id, PaymentReversalEntity.Kind.CHARGEBACK, order.totalCents);
@@ -133,6 +136,42 @@ class ReversalsTest {
         assertThat(notices(accountId, NotificationKind.ACCOUNT_DEBT)).hasSize(1);
         assertThat(QuarkusTransaction.requiringNew().call(() -> BillingOrderEntity.hasDebt(accountId)))
                 .isTrue();
+    }
+
+    @Test
+    void aVoidOfASecondPaymentWaitsForAPersonWhileTheFirstStillPays() {
+        UUID accountId = account();
+        BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");
+        Instant now = Instant.now();
+        PaymentTransaction second = new PaymentTransaction(
+                "12239577-" + order.id,
+                order.reference,
+                PaymentStatus.APPROVED,
+                order.totalCents,
+                "COP",
+                "CARD",
+                Optional.empty(),
+                now,
+                Optional.of(now),
+                "{}");
+        settlement.apply(second);
+
+        PaymentTransaction voided = new PaymentTransaction(
+                second.id(),
+                second.reference(),
+                PaymentStatus.VOIDED,
+                second.amountCents(),
+                "COP",
+                "CARD",
+                Optional.empty(),
+                now,
+                Optional.of(now),
+                "{}");
+        assertThat(settlement.apply(voided)).isEqualTo(Outcome.REVIEW);
+
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(reversalsOf(order.id)).isEmpty();
+        assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.ACTIVE);
     }
 
     @Test
@@ -240,6 +279,12 @@ class ReversalsTest {
         assertThat(reversalOf(second).status).isEqualTo(PaymentReversalEntity.Status.SUBMITTED);
         assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.ACTIVE);
 
+        assertThat(reversals.apply(second)).isFalse();
+        QuarkusTransaction.requiringNew().run(() -> {
+            PaymentReversalEntity resolved = PaymentReversalEntity.findById(second);
+            resolved.mode = PaymentReversalEntity.Mode.EXTERNAL;
+            resolved.status = PaymentReversalEntity.Status.REQUESTED;
+        });
         assertThat(reversals.apply(second)).isTrue();
         assertThat(reversalOf(second).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
     }

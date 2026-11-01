@@ -179,11 +179,61 @@ class AdminOrderResourceTest {
     }
 
     @Test
+    void anApprovedResolutionIsAppliedOnceAndCannotBeResolvedAgain() {
+        Customer customer = customer("Aprobada Tarde SAS");
+        UUID orderId = paidOrder(customer.accountId(), true);
+        UUID reversalId = submitted(orderId);
+        String resolution = path(customer.accountId(), "/" + orderId + "/reversals/" + reversalId + "/resolution");
+
+        JsonPath resolved = ADMIN.request()
+                .body(Map.of("approved", true, "reason", "Aprobado en el panel de Wompi"))
+                .post(resolution)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+
+        assertThat(resolved.getString("reversals[0].status")).isEqualTo("REQUESTED");
+        assertThat(resolved.getString("reversals[0].mode")).isEqualTo("EXTERNAL");
+        assertThat(jobs(JobTypes.APPLY_REVERSAL, reversalId)).hasSize(1);
+        ADMIN.request()
+                .body(Map.of("approved", false, "reason", "Cambié de opinión"))
+                .post(resolution)
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("reversal_not_unresolved"));
+    }
+
+    @Test
+    void aRefundGoesBackFromThePaymentOfTheOrdersAmount() {
+        Customer customer = customer("Dos Pagos SAS");
+        UUID orderId = paidOrder(customer.accountId(), false);
+        String other = payment(orderId, TOTAL_CENTS - 100, OffsetDateTime.now().minusMinutes(5));
+        String paying = payment(orderId, TOTAL_CENTS, OffsetDateTime.now());
+
+        JsonPath order = SUPPORT.request()
+                .get(path(customer.accountId(), ""))
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+
+        assertThat(order.getString("[0].transactionId")).isEqualTo(paying).isNotEqualTo(other);
+    }
+
+    @Test
     void theMonthsReconciliationShowsWhatDoesNotAddUp() {
         Customer customer = customer("Conciliada SAS");
         OffsetDateTime inMonth = OffsetDateTime.parse("2097-05-10T12:00:00-05:00");
         UUID withPayment = paidOrder(customer.accountId(), true, inMonth);
         UUID withoutPayment = paidOrder(customer.accountId(), false, inMonth);
+        UUID voided = paidOrder(customer.accountId(), false, inMonth);
+        String voidedId = payment(voided, TOTAL_CENTS, inMonth);
+        QuarkusTransaction.requiringNew()
+                .run(() -> PaymentTransactionEntity.findByProviderId(PaymentTransactionEntity.Provider.WOMPI, voidedId)
+                                .orElseThrow()
+                                .status =
+                        PaymentTransactionEntity.Status.VOIDED);
 
         JsonPath month = SUPPORT.request()
                 .get("/admin/billing/reconciliation?month=2097-05")
@@ -192,11 +242,13 @@ class AdminOrderResourceTest {
                 .extract()
                 .jsonPath();
 
-        assertThat(month.getLong("paidCents")).isEqualTo(2 * TOTAL_CENTS);
-        assertThat(month.getLong("netCents")).isEqualTo(2 * TOTAL_CENTS);
+        assertThat(month.getLong("paidCents")).isEqualTo(3 * TOTAL_CENTS);
+        assertThat(month.getLong("netCents")).isEqualTo(3 * TOTAL_CENTS);
         assertThat(month.getList("orders.find { it.orderId == '%s' }.issues".formatted(withPayment), String.class))
                 .containsExactly("INVOICE_MISSING");
         assertThat(month.getList("orders.find { it.orderId == '%s' }.issues".formatted(withoutPayment), String.class))
+                .containsExactly("PAYMENT_MISSING", "INVOICE_MISSING");
+        assertThat(month.getList("orders.find { it.orderId == '%s' }.issues".formatted(voided), String.class))
                 .containsExactly("PAYMENT_MISSING", "INVOICE_MISSING");
         SUPPORT.request()
                 .get("/admin/billing/reconciliation?month=2097-13")
@@ -237,7 +289,7 @@ class AdminOrderResourceTest {
 
     /** An order of the account paid at the instant, with Wompi's approved transaction or without one. */
     private static UUID paidOrder(UUID accountId, boolean withPayment, OffsetDateTime paidAt) {
-        return QuarkusTransaction.requiringNew().call(() -> {
+        UUID orderId = QuarkusTransaction.requiringNew().call(() -> {
             BillingOrderEntity order = order(accountId, BillingOrderEntity.Kind.PURCHASE, paidAt.plusDays(1));
             BillingOrderItemEntity.add(
                     order,
@@ -251,22 +303,31 @@ class AdminOrderResourceTest {
                     BigDecimal.ZERO);
             order.status = BillingOrderEntity.Status.PAID;
             order.paidAt = paidAt;
-            if (withPayment) {
-                PaymentTransactionEntity payment = new PaymentTransactionEntity();
-                payment.id = Ids.newId();
-                payment.orderId = order.id;
-                payment.provider = PaymentTransactionEntity.Provider.WOMPI;
-                payment.providerTransactionId = "12239576-" + order.id;
-                payment.status = PaymentTransactionEntity.Status.APPROVED;
-                payment.amountCents = TOTAL_CENTS;
-                payment.currency = "COP";
-                payment.paymentMethodType = "CARD";
-                payment.raw = "{}";
-                payment.providerCreatedAt = paidAt;
-                payment.finalizedAt = paidAt;
-                payment.persist();
-            }
             return order.id;
+        });
+        if (withPayment) {
+            payment(orderId, TOTAL_CENTS, paidAt);
+        }
+        return orderId;
+    }
+
+    /** An approved Wompi transaction of the order; returns its id in Wompi. */
+    private static String payment(UUID orderId, long amountCents, OffsetDateTime at) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            PaymentTransactionEntity payment = new PaymentTransactionEntity();
+            payment.id = Ids.newId();
+            payment.orderId = orderId;
+            payment.provider = PaymentTransactionEntity.Provider.WOMPI;
+            payment.providerTransactionId = "12239576-" + payment.id;
+            payment.status = PaymentTransactionEntity.Status.APPROVED;
+            payment.amountCents = amountCents;
+            payment.currency = "COP";
+            payment.paymentMethodType = "CARD";
+            payment.raw = "{}";
+            payment.providerCreatedAt = at;
+            payment.finalizedAt = at;
+            payment.persist();
+            return payment.providerTransactionId;
         });
     }
 

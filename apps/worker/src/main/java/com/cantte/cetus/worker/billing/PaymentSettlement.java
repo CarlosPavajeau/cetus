@@ -93,6 +93,16 @@ public class PaymentSettlement {
                 if (order.status != BillingOrderEntity.Status.PAID) {
                     yield Outcome.RECORDED;
                 }
+                boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
+                        .anyMatch(other -> other.status == PaymentTransactionEntity.Status.APPROVED
+                                && !other.id.equals(stored.id));
+                if (paidByAnother) {
+                    review(
+                            order,
+                            "Wompi anuló la transacción %s y otra aprobada sigue pagando la orden"
+                                    .formatted(stored.providerTransactionId));
+                    yield Outcome.REVIEW;
+                }
                 yield reversals.chargeBack(order, stored.providerTransactionId).isPresent()
                         ? Outcome.CHARGED_BACK
                         : Outcome.RECORDED;

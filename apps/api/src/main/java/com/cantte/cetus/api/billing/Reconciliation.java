@@ -36,7 +36,7 @@ public class Reconciliation {
 
     /** What does not add up in an order. */
     public enum Issue {
-        /** Paid with no approved transaction. */
+        /** Paid with no approved transaction, and no money back that explains it. */
         PAYMENT_MISSING,
         /** The approved transaction is for another amount. */
         PAYMENT_AMOUNT_MISMATCH,
@@ -267,7 +267,9 @@ public class Reconciliation {
                 .filter(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED)
                 .toList();
         boolean paid = order.paidAt != null;
-        if (paid && payments.isEmpty()) {
+        boolean reversed =
+                reversals.stream().anyMatch(reversal -> reversal.status == PaymentReversalEntity.Status.APPROVED);
+        if (paid && approved.isEmpty() && !reversed) {
             issues.add(Issue.PAYMENT_MISSING);
         }
         if (approved.stream()

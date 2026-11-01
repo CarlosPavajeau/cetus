@@ -32,12 +32,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import java.time.OffsetDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -299,6 +297,9 @@ public class AdminOrderResource {
         }
         String reason = request.reason().strip();
         if (request.approved()) {
+            // Settled by what a person saw, it is applied like a refund made elsewhere and cannot be resolved again.
+            reversal.mode = PaymentReversalEntity.Mode.EXTERNAL;
+            reversal.status = PaymentReversalEntity.Status.REQUESTED;
             jobs.enqueue(JobTypes.APPLY_REVERSAL, reversal.id);
         } else {
             reversal.status = PaymentReversalEntity.Status.FAILED;
@@ -362,16 +363,35 @@ public class AdminOrderResource {
     }
 
     private static Optional<PaymentTransactionEntity> approvedTransaction(UUID orderId) {
-        return PaymentTransactionEntity.listByOrder(orderId).stream()
+        BillingOrderEntity order = BillingOrderEntity.findById(orderId);
+        return paying(order, PaymentTransactionEntity.listByOrder(orderId));
+    }
+
+    /**
+     * The approved transaction that paid the order: one of another amount only waited for review, so one of the
+     * order's own amount comes first.
+     */
+    private static Optional<PaymentTransactionEntity> paying(
+            BillingOrderEntity order, List<PaymentTransactionEntity> payments) {
+        List<PaymentTransactionEntity> approved = payments.stream()
                 .filter(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED)
-                .findFirst();
+                .toList();
+        return approved.stream()
+                .filter(payment -> payment.amountCents == order.totalCents && order.currency.equals(payment.currency))
+                .findFirst()
+                .or(() -> approved.stream().findFirst());
     }
 
     private static List<AdminOrderView> views(List<BillingOrderEntity> orders) {
         List<UUID> ids = orders.stream().map(order -> order.id).toList();
         Map<UUID, List<PaymentReversalEntity>> reversals = PaymentReversalEntity.listByOrders(ids).stream()
                 .collect(Collectors.groupingBy(reversal -> reversal.orderId));
-        Map<UUID, PaymentTransactionEntity> approved = approvedTransactions(ids);
+        Map<UUID, List<PaymentTransactionEntity>> payments = ids.isEmpty()
+                ? Map.of()
+                : PaymentTransactionEntity.<PaymentTransactionEntity>list(
+                                "orderId in ?1 order by providerCreatedAt", ids)
+                        .stream()
+                        .collect(Collectors.groupingBy(payment -> payment.orderId));
         return orders.stream()
                 .map(order -> {
                     List<PaymentReversalEntity> own = reversals.getOrDefault(order.id, List.of());
@@ -382,7 +402,8 @@ public class AdminOrderResource {
                     boolean paid = order.paidAt != null;
                     long consumed = paid ? OrderLots.consumedCents(order.id) : 0;
                     long refundable = paid ? order.totalCents - reversed : 0;
-                    Optional<PaymentTransactionEntity> payment = Optional.ofNullable(approved.get(order.id));
+                    Optional<PaymentTransactionEntity> payment =
+                            paying(order, payments.getOrDefault(order.id, List.of()));
                     return new AdminOrderView(
                             order.id,
                             order.kind,
@@ -403,18 +424,6 @@ public class AdminOrderResource {
                             own.stream().map(ReversalView::from).toList());
                 })
                 .toList();
-    }
-
-    private static Map<UUID, PaymentTransactionEntity> approvedTransactions(Collection<UUID> orderIds) {
-        if (orderIds.isEmpty()) {
-            return Map.of();
-        }
-        return PaymentTransactionEntity.<PaymentTransactionEntity>list(
-                        "orderId in ?1 and status = ?2 order by providerCreatedAt",
-                        orderIds,
-                        PaymentTransactionEntity.Status.APPROVED)
-                .stream()
-                .collect(Collectors.toMap(payment -> payment.orderId, Function.identity(), (first, second) -> first));
     }
 
     private static AccountEntity account(UUID id) {

@@ -54,8 +54,8 @@ public class Reversals {
     Event<ReversalApproved> approved;
 
     /**
-     * Approves a reversal a person registered (a refund made elsewhere or a chargeback), or a Wompi refund left
-     * unanswered that a person found approved in Wompi's dashboard, and applies it.
+     * Approves a reversal a person registered (a refund made elsewhere, a chargeback, or a Wompi refund left
+     * unanswered that a person found approved in Wompi's dashboard) and applies it.
      *
      * @return whether it was applied now
      */
@@ -65,11 +65,8 @@ public class Reversals {
                 .orElseThrow(() -> new IllegalArgumentException("No reversal " + reversalId));
         BillingOrderEntity order = BillingOrderEntity.lock(found.orderId).orElseThrow();
         PaymentReversalEntity reversal = PaymentReversalEntity.lock(reversalId).orElseThrow();
-        boolean registered = reversal.status == PaymentReversalEntity.Status.REQUESTED
-                && reversal.mode == PaymentReversalEntity.Mode.EXTERNAL;
-        boolean confirmed = reversal.status == PaymentReversalEntity.Status.SUBMITTED
-                && reversal.mode == PaymentReversalEntity.Mode.WOMPI;
-        if (!registered && !confirmed) {
+        if (reversal.status != PaymentReversalEntity.Status.REQUESTED
+                || reversal.mode != PaymentReversalEntity.Mode.EXTERNAL) {
             return false;
         }
         approve(order, reversal, OffsetDateTime.now());

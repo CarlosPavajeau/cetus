@@ -340,18 +340,41 @@ public class Subscriptions {
 
     /**
      * Closes the subscription's last period, with its overage billed as a debt when it has any: those documents
-     * were issued, and no later renewal will bill them.
+     * were issued, and no later renewal will bill them. So is the overage of the period before, when the renewal
+     * that billed it with this period's fee was never paid.
      */
     private void finish(SubscriptionEntity subscription, SubscriptionPeriodEntity period, OffsetDateTime now) {
         int overage = bill(subscription, period, now);
-        if (overage == 0) {
+        List<BillingOrderItemEntity> unpaid = Optional.ofNullable(period.openingOrderId)
+                .map(id -> BillingOrderEntity.<BillingOrderEntity>findById(id))
+                .filter(opening -> opening.status == BillingOrderEntity.Status.PENDING
+                        || opening.status == BillingOrderEntity.Status.EXPIRED)
+                .map(opening -> BillingOrderItemEntity.listByOrder(opening.id).stream()
+                        .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
+                        .toList())
+                .orElse(List.of());
+        if (overage == 0 && unpaid.isEmpty()) {
             return;
         }
         BillingOrderEntity order = BillingOrderEntity.open(
                 subscription.accountId, BillingOrderEntity.Kind.DEBT, profile(subscription.accountId), null);
+        for (BillingOrderItemEntity item : unpaid) {
+            BillingOrderItemEntity.add(
+                    order,
+                    BillingOrderItemEntity.Type.OVERAGE,
+                    null,
+                    item.subscriptionPeriodId,
+                    item.description,
+                    item.quantity,
+                    item.unitPriceCents,
+                    true,
+                    item.taxRate);
+        }
         PlanVersionEntity version = PlanVersionEntity.findById(period.planVersionId);
         overageItem(order, period, version, overage);
         period.closingOrderId = order.id;
+        int documents =
+                overage + unpaid.stream().mapToInt(item -> item.quantity).sum();
         notifications.request(
                 subscription.accountId,
                 NotificationKind.ACCOUNT_DEBT,
@@ -361,7 +384,7 @@ public class Subscriptions {
                         "concept",
                                 "%s documentos de excedente de la suscripción %s"
                                         .formatted(
-                                                Numbers.count(overage),
+                                                Numbers.count(documents),
                                                 PlanEntity.<PlanEntity>findById(version.planId).name),
                         "orderId", order.id.toString()));
     }
