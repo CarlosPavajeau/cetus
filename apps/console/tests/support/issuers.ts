@@ -13,6 +13,13 @@ export function uniqueNit() {
   return `9${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
 }
 
+/** Software credentials as the DIAN portal would hand them over: the DIAN mock takes any. */
+export const testSoftware = {
+  softwareId: crypto.randomUUID(),
+  pin: "12345",
+  testSetId: crypto.randomUUID(),
+};
+
 /** Creates an issuer through the API, as step 1 of the assistant would. */
 export async function createIssuer(organization: TestOrganization, nit: string, legalName: string) {
   const response = await organization.api("/console/issuers", {
@@ -54,9 +61,9 @@ export async function onboardIssuer(
   await organization.api(`/console/issuers/${id}/software`, {
     method: "PUT",
     body: JSON.stringify({
-      softwareId: "381db121-bc49-4286-9067-ef982e3874e4",
-      pin: "12345",
-      testSetId: testSet ? "a09e2744-f1d7-4697-bbcf-613bc312450d" : undefined,
+      softwareId: testSoftware.softwareId,
+      pin: testSoftware.pin,
+      testSetId: testSet ? testSoftware.testSetId : undefined,
     }),
   });
   await organization.api(`/console/issuers/${id}/certificate`, {

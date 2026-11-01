@@ -1,5 +1,8 @@
 import { type Page, test as base } from "@playwright/test";
 
+import { nitCheckDigit } from "~/features/issuance/nitCheckDigit";
+
+import { uniqueNit } from "../support/issuers";
 import { type TestOrganization, createOrganization } from "../support/organization";
 import { consoleCookies } from "../support/stack";
 
@@ -42,19 +45,30 @@ export async function pickTaxLevel(page: Page, code: string) {
     .click();
 }
 
+/** A natural person with a NIT no other test uses. */
+export function sampleIssuer() {
+  const nit = uniqueNit();
+  const checkDigit = nitCheckDigit(nit);
+  if (checkDigit === null) {
+    throw new Error(`${nit} is not a NIT`);
+  }
+  return { legalName: "PERSONA DE PRUEBAS", nit, checkDigit };
+}
+
 /** Fills the assistant's first step for a natural person, as the RUT shows the data. */
-export async function fillIssuer(page: Page) {
+export async function fillIssuer(page: Page, issuer = sampleIssuer()) {
   await page.getByRole("radio", { name: /Persona natural/ }).click();
-  await page.getByLabel("Nombre completo").fill("PAVAJEAU MAX CARLOS ANDRES");
+  await page.getByLabel("Nombre completo").fill(issuer.legalName);
   // Typed as the RUT shows it, verification digit included.
-  await page.getByLabel("NIT").pressSequentially("1007870923-1");
+  await page.getByLabel("NIT").pressSequentially(`${issuer.nit}-${issuer.checkDigit}`);
   await pickTaxLevel(page, "O-47");
-  await page.getByLabel("Dirección", { exact: true }).fill("Carrera 11 #13B-62");
+  await page.getByLabel("Dirección", { exact: true }).fill("Calle 1 # 2-3");
   await page.getByLabel("Código postal").fill("200001");
   await page.getByLabel("Departamento").fill("Cesa");
   await page.getByRole("option", { name: "Cesar", exact: true }).click();
   await page.getByLabel("Municipio").fill("Valledu");
   await page.getByRole("option", { name: "Valledupar" }).click();
-  await page.getByLabel("Correo electrónico").fill("facturas@pavajeau.test");
-  await page.getByLabel("Teléfono").fill("3167040705");
+  await page.getByLabel("Correo electrónico").fill("facturas@emisores.test");
+  await page.getByLabel("Teléfono").fill("6011234567");
+  return issuer;
 }

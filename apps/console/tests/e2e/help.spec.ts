@@ -103,11 +103,10 @@ test("help from the assistant carries the issuer, and the team resolves the tick
   context,
   organization,
 }) => {
-  const legalName = "PAVAJEAU MAX CARLOS ANDRES";
   // The issuer does not exist yet when the assistant opens: its first step creates it.
   await open(page, "/setup");
   await page.getByRole("button", { name: "Empezar" }).click();
-  await fillIssuer(page);
+  const { legalName } = await fillIssuer(page);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByLabel("Software ID")).toBeVisible();
 

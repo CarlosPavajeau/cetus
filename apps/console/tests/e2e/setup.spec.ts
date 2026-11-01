@@ -1,12 +1,11 @@
 import type { Page } from "@playwright/test";
 import { type } from "arktype";
 
-import { createIssuer, uniqueNit } from "../support/issuers";
+import { createIssuer, testSoftware, uniqueNit } from "../support/issuers";
 import { testCertificate } from "../support/stack";
 import { expect, fillIssuer, open, test } from "./fixtures";
 
-const softwareId = "381db121-bc49-4286-9067-ef982e3874e4";
-const testSetId = "a09e2744-f1d7-4697-bbcf-613bc312450d";
+const { softwareId, testSetId } = testSoftware;
 
 const stepTitle = (page: Page, step: number) => page.getByText(`Paso ${step} de 4`);
 
@@ -48,12 +47,15 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   await open(page, "/setup");
   await page.getByRole("button", { name: "Empezar" }).click();
 
-  await fillIssuer(page);
+  const issuer = await fillIssuer(page);
   await expect(page.getByText("Código DANE: 20001")).toBeVisible();
-  await page.getByLabel("NIT").fill("1007870923-5");
+  const checkDigitWrong = String((Number(issuer.checkDigit) + 1) % 10);
+  await page.getByLabel("NIT").fill(`${issuer.nit}-${checkDigitWrong}`);
   await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByText("El dígito de verificación de ese NIT es 1.")).toBeVisible();
-  await page.getByLabel("NIT").fill("1007870923-1");
+  await expect(
+    page.getByText(`El dígito de verificación de ese NIT es ${issuer.checkDigit}.`),
+  ).toBeVisible();
+  await page.getByLabel("NIT").fill(`${issuer.nit}-${issuer.checkDigit}`);
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(stepTitle(page, 2)).toBeVisible();
 
@@ -63,7 +65,7 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   // A step ahead is not reachable yet; a saved one links back to its form.
   await expect(page.getByRole("link", { name: /Certificado digital/ })).toHaveCount(0);
   await page.getByRole("link", { name: "1. Datos del emisor · Completado" }).click();
-  await expect(page.getByLabel("Nombre completo")).toHaveValue("PAVAJEAU MAX CARLOS ANDRES");
+  await expect(page.getByLabel("Nombre completo")).toHaveValue(issuer.legalName);
   await expect(page.getByLabel("Municipio")).toHaveValue("Valledupar");
   await expect(page.getByLabel("NIT")).toHaveAttribute("readonly", "");
   await page.getByRole("button", { name: "Salir" }).waitFor();
@@ -71,7 +73,7 @@ test("the assistant sets up the issuer and leaves it in habilitación", async ({
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await expect(stepTitle(page, 2)).toBeVisible();
-  await expect(page.getByText("PAVAJEAU MAX CARLOS ANDRES · NIT 1007870923")).toBeVisible();
+  await expect(page.getByText(`${issuer.legalName} · NIT ${issuer.nit}`)).toBeVisible();
   await fillSoftware(page);
   await page.getByRole("button", { name: "Continuar" }).click();
 

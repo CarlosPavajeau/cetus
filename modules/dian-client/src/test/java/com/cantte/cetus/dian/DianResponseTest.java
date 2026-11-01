@@ -3,6 +3,7 @@ package com.cantte.cetus.dian;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class DianResponseTest {
@@ -10,9 +11,7 @@ class DianResponseTest {
     @Test
     void recognizesATestSetTheDianAlreadyAccepted() {
         // As returned by GetStatusZip in habilitación once the set was accepted.
-        assertThat(response(
-                                "2",
-                                "Set de prueba con identificador a09e2744-f1d7-4697-bbcf-613bc312450d se encuentra Aceptado.")
+        assertThat(response("2", "Set de prueba con identificador " + UUID.randomUUID() + " se encuentra Aceptado.")
                         .testSetAlreadyAccepted())
                 .isTrue();
     }

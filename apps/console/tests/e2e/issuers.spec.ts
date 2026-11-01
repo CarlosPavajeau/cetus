@@ -1,5 +1,5 @@
 import { grantPackage } from "../support/credits";
-import { addRange, createIssuer, onboardIssuer } from "../support/issuers";
+import { addRange, createIssuer, onboardIssuer, testSoftware } from "../support/issuers";
 import { expect, open, pickTaxLevel, test } from "./fixtures";
 
 test("the issuers page shows each issuer's ID for the API", async ({ page, organization }) => {
@@ -93,7 +93,7 @@ test("a test issuer in habilitación is promoted to production", async ({ page, 
 
   // Production keeps the software, without a test set.
   await page.getByRole("link", { name: "2. Software DIAN · Completado" }).click();
-  await expect(page.getByLabel("Software ID")).toHaveValue("381db121-bc49-4286-9067-ef982e3874e4");
+  await expect(page.getByLabel("Software ID")).toHaveValue(testSoftware.softwareId);
   await expect(page.getByLabel("TestSetId / ID del set de pruebas")).toHaveCount(0);
 
   await addRange(organization, liveId, "FE");
