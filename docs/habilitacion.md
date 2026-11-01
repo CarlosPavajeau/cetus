@@ -47,3 +47,21 @@ La habilitación se completa en el portal de la DIAN; Cetus no puede verificarla
 el mismo software (sin set de pruebas) y una copia del certificado si sigue vigente. Solo falta la numeración de
 la resolución, que el asistente pide a continuación. El worker verifica cada rango de producción contra la DIAN
 (ver [Operación](operations.md#verificación-del-rango)).
+
+## Capturas del portal
+
+Las guías de los pasos 2 y 4 del asistente muestran capturas del portal de habilitación
+(`apps/console/public/images/dian/`, en WebP de 1200 px de ancho). Se toman a mano con una sesión real: el
+portal pide un token que llega al correo del RUT, así que no se pueden generar con Playwright.
+
+| Archivo | Paso | Qué muestra |
+|---|---|---|
+| `facturador-electronico.webp` | 2 | «Facturador electrónico» (Registro y habilitación › Documentos electrónicos › Factura electrónica), con «Configurar modos de operación» |
+| `modos-operacion.webp` | 2 | «Software propio» con «Nombre del software», «Pin del SW» e «ID del SW», y el listado de modos de operación asociados |
+| `rangos-prueba.webp` | 4 | «Rangos de numeración de prueba»: el rango `SETP` con su «Llave técnica» |
+
+- **Antes de versionarlas**, tapar con bloques sólidos (no con desenfoque) el NIT, los nombres, los correos, el
+  Software ID, el PIN y la llave técnica. Lo más simple es reemplazar el texto en la página antes de capturarla.
+- **Revisarlas cada trimestre**, o antes si un caso de soporte del asistente dice que el portal no coincide. Al
+  reemplazarlas, corregir los nombres de los menús en `SoftwareStep.tsx` y `NumberingStep.tsx` y la fecha en
+  `apps/console/src/features/setup/dianPortal.ts`.
