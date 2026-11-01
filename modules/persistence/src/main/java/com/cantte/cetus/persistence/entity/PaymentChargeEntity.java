@@ -11,6 +11,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -119,6 +120,11 @@ public class PaymentChargeEntity extends PanacheEntityBase {
     public static Optional<PaymentChargeEntity> findLive(UUID orderId) {
         return find("orderId = ?1 and status in ?2", orderId, List.of(Status.SCHEDULED, Status.SUBMITTED))
                 .firstResultOptional();
+    }
+
+    /** The attempts of the orders, each order's first first. */
+    public static List<PaymentChargeEntity> listByOrders(Collection<UUID> orderIds) {
+        return orderIds.isEmpty() ? List.of() : list("orderId in ?1 order by attempt", orderIds);
     }
 
     /** The order's attempts, the first first. */
