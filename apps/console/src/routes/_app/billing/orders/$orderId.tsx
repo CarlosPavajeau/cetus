@@ -1,7 +1,7 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ReceiptIcon } from "lucide-react";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 
 import { Entry, Section } from "~/components/DetailSection";
 import { PageHeader } from "~/components/PageHeader";
@@ -17,7 +17,7 @@ import {
 } from "~/components/ui/empty";
 import { Spinner } from "~/components/ui/spinner";
 import { formatDateTime } from "~/features/api-keys/formats";
-import { chargeStatusLabel, formatCents } from "~/features/billing/labels";
+import { chargeStatusLabel, formatCents, reversalKindLabel } from "~/features/billing/labels";
 import { OrderInvoiceDownloads } from "~/features/billing/OrderInvoiceDownloads";
 import { OrderStatusBadge } from "~/features/billing/OrderStatusBadge";
 import { ChargeOrderButton } from "~/features/billing/PaymentMethodDialogs";
@@ -51,7 +51,11 @@ export const Route = createFileRoute("/_app/billing/orders/$orderId")({
 });
 
 function awaitingPayment(order: Order | null) {
-  return order !== null && order.status === "PENDING" && new Date(order.expiresAt) > new Date();
+  return (
+    order !== null &&
+    order.status === "PENDING" &&
+    (order.expiresAt === null || new Date(order.expiresAt) > new Date())
+  );
 }
 
 function OrderPage() {
@@ -88,7 +92,17 @@ function OrderPage() {
         lead={`Orden ${order.reference}`}
       />
 
-      {pending && (
+      {pending && order.kind === "DEBT" && (
+        <Alert variant="destructive">
+          <AlertTitle>Saldo pendiente</AlertTitle>
+          <AlertDescription>
+            Son documentos que tu cuenta ya usó y no se pagaron. Mientras esté pendiente no puedes
+            comprar paquetes, recargas ni suscripciones; puedes seguir emitiendo con lo que tengas
+            disponible.
+          </AlertDescription>
+        </Alert>
+      )}
+      {pending && order.kind !== "DEBT" && (
         <Alert>
           <Spinner />
           <AlertTitle>Esperando la confirmación de Wompi</AlertTitle>
@@ -104,6 +118,23 @@ function OrderPage() {
           <AlertDescription>
             Tus créditos ya están disponibles. Te enviaremos la factura electrónica al correo de
             facturación.
+          </AlertDescription>
+        </Alert>
+      )}
+      {order.status === "REFUNDED" && (
+        <Alert>
+          <AlertTitle>Orden reembolsada</AlertTitle>
+          <AlertDescription>
+            El pago de esta orden se devolvió y los documentos que incluía y no se habían usado ya
+            no están disponibles.
+          </AlertDescription>
+        </Alert>
+      )}
+      {order.status === "CANCELED" && (
+        <Alert>
+          <AlertTitle>Saldo condonado</AlertTitle>
+          <AlertDescription>
+            El equipo de Cetus condonó este saldo: no tienes que pagarlo.
           </AlertDescription>
         </Alert>
       )}
@@ -176,9 +207,11 @@ function OrderPage() {
             <span className="tabular-nums">{formatCents(order.totalCents)}</span>
           </Entry>
           <Entry label="Creada">{formatDateTime(new Date(order.createdAt))}</Entry>
-          <Entry label={order.paidAt ? "Pagada" : "Vence"}>
-            {formatDateTime(new Date(order.paidAt ?? order.expiresAt))}
-          </Entry>
+          {(order.paidAt ?? order.expiresAt) !== null && (
+            <Entry label={order.paidAt ? "Pagada" : "Vence"}>
+              {formatDateTime(new Date(order.paidAt ?? order.expiresAt ?? order.createdAt))}
+            </Entry>
+          )}
           {order.charge && (
             <Entry label="Cobro a la tarjeta">
               {`${chargeStatusLabel[order.charge.status]} · intento ${order.charge.attempt}`}
@@ -193,6 +226,34 @@ function OrderPage() {
           </Entry>
         </dl>
       </Section>
+
+      {order.reversals.length > 0 && (
+        <Section id="order-reversals" title="Devoluciones">
+          <dl className="grid gap-4 sm:grid-cols-4">
+            {order.reversals.map((reversal) => (
+              <Fragment key={`${reversal.kind}-${reversal.approvedAt}`}>
+                <Entry label={reversalKindLabel[reversal.kind]}>
+                  <span className="tabular-nums">{formatCents(reversal.amountCents)}</span>
+                </Entry>
+                <Entry label="Fecha">{formatDateTime(new Date(reversal.approvedAt))}</Entry>
+                <Entry label="Nota crédito">
+                  {reversal.creditNote && reversal.creditNoteDocumentId ? (
+                    <OrderInvoiceDownloads
+                      orderId={order.id}
+                      invoice={reversal.creditNote}
+                      creditNoteId={reversal.creditNoteDocumentId}
+                    />
+                  ) : order.invoice ? (
+                    "Se emite en unos minutos"
+                  ) : (
+                    "Sin factura que acreditar"
+                  )}
+                </Entry>
+              </Fragment>
+            ))}
+          </dl>
+        </Section>
+      )}
     </>
   );
 }

@@ -149,6 +149,18 @@ export type CardSetup = Schemas["CardSetupView"];
 
 export type OrderCharge = Schemas["OrderChargeView"];
 
+export type OrderReversal = Schemas["OrderReversalView"];
+
+export type AdminOrder = Schemas["AdminOrderView"];
+
+export type AdminReversal = Schemas["ReversalView"];
+
+export type Reconciliation = Schemas["ReconciliationView"];
+
+export type ReconciliationOrder = Schemas["OrderLineView"];
+
+export type ReconciliationIssue = ReconciliationOrder["issues"][number];
+
 export type CertificateUploadLink = Schemas["UploadLinkView"];
 
 export type SupportTicket = Schemas["SupportTicketView"];
@@ -222,6 +234,11 @@ export const auditActions = [
   "PAYMENT_METHOD_SAVED",
   "PAYMENT_METHOD_REMOVED",
   "BILLING_ORDER_CHARGE_REQUESTED",
+  "BILLING_ORDER_REFUND_REQUESTED",
+  "BILLING_ORDER_REFUND_RESOLVED",
+  "BILLING_ORDER_REFUNDED",
+  "BILLING_ORDER_CHARGEBACK",
+  "BILLING_ORDER_DEBT_WAIVED",
 ] as const satisfies readonly AuditAction[];
 
 /** Actions on a person or on the plan catalog rather than an account: only the administration's log has them. */

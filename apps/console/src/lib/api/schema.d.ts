@@ -140,6 +140,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/accounts/{accountId}/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Orders */
+        get: operations["AdminOrderResource_orders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/orders/{orderId}/chargeback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Charge Back */
+        post: operations["AdminOrderResource_chargeBack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/orders/{orderId}/refunds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refund */
+        post: operations["AdminOrderResource_refund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/orders/{orderId}/reversals/{reversalId}/resolution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve */
+        post: operations["AdminOrderResource_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{accountId}/orders/{orderId}/waiver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Waive */
+        post: operations["AdminOrderResource_waive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/accounts/{id}": {
         parameters: {
             query?: never;
@@ -202,6 +287,40 @@ export interface paths {
         get: operations["AdminAuditLogResource_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/billing/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reconciliation */
+        get: operations["AdminBillingResource_reconciliation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/billing/reconciliation/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh */
+        post: operations["AdminBillingResource_refresh"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1055,6 +1174,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/orders/{id}/credit-notes/{documentId}/files/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Credit Note File */
+        get: operations["OrderResource_creditNoteFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/orders/{id}/invoice/files/{file}": {
         parameters: {
             query?: never;
@@ -1744,6 +1880,8 @@ export interface components {
              * @description Production issuers the account has
              */
             issuersLive: number;
+            /** @description The pending debt that blocks new purchases until it is paid; null without one */
+            debtOrderId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
             /** @description Every lot, newest first */
             lots: components["schemas"]["CreditLotView"][];
             /** @description The latest, newest first */
@@ -1915,6 +2053,44 @@ export interface components {
             /** Format: int64 */
             nextCursor: number | null;
         };
+        /** @description An order of the account with what went back from it */
+        AdminOrderView: {
+            id: components["schemas"]["UUID"];
+            kind: components["schemas"]["Kind"];
+            status: components["schemas"]["Status"];
+            reference: string;
+            /** Format: int64 */
+            totalCents: number;
+            expiresAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            paidAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
+            reviewReason: string | null;
+            /** @description The approved Wompi transaction a refund goes back from */
+            transactionId: string | null;
+            paymentMethodType: string | null;
+            invoiceDocumentId: components["schemas"]["UUID"] | null;
+            /**
+             * Format: int64
+             * @description What approved reversals gave back
+             */
+            reversedCents: number;
+            /**
+             * Format: int64
+             * @description What the account used of the order: its share of each lot, overage in full
+             */
+            consumedCents: number;
+            /**
+             * Format: int64
+             * @description What can still go back: paid and not given back yet
+             */
+            refundableCents: number;
+            /**
+             * Format: int64
+             * @description The refund that leaves the account paying only for what it used
+             */
+            refundSuggestedCents: number;
+            reversals: components["schemas"]["ReversalView"][];
+        };
         AdminSessionView: {
             userId: string;
             roles: string[];
@@ -1990,7 +2166,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED" | "BILLING_ORDER_REFUND_REQUESTED" | "BILLING_ORDER_REFUND_RESOLVED" | "BILLING_ORDER_REFUNDED" | "BILLING_ORDER_CHARGEBACK" | "BILLING_ORDER_DEBT_WAIVED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -2113,6 +2289,11 @@ export interface components {
             /** @description signature:integrity */
             signature: string;
         };
+        /** @description Orders whose payments are asked to Wompi again */
+        ChecksView: {
+            /** Format: int32 */
+            ordersChecked: number;
+        };
         ContactView: {
             id: components["schemas"]["UUID"];
             category: components["schemas"]["Category"];
@@ -2153,14 +2334,14 @@ export interface components {
              */
             code: string;
             name: string;
-            kind: components["schemas"]["Kind"];
+            kind: components["schemas"]["Kind2"];
             /**
              * Format: int32
              * @description Required for a package or a top-up; none for a subscription
              */
             validityMonths?: number | null;
             /** @description Only for a top-up: the product an account must have to buy it */
-            requiresKind?: ((string | components["schemas"]["Kind"] | null) | null) | components["schemas"]["Kind"] | null;
+            requiresKind?: ((string | components["schemas"]["Kind2"] | null) | null) | components["schemas"]["Kind2"] | null;
             /** @description False for a plan sold only through private versions, like Socios */
             listed: boolean;
         };
@@ -2228,14 +2409,14 @@ export interface components {
             /** @description The product the lot comes from; null for an adjustment */
             planName: string | null;
             /** @description null for an adjustment */
-            planKind: ((string | components["schemas"]["Kind"] | null) | null) | components["schemas"]["Kind"] | null;
+            planKind: ((string | components["schemas"]["Kind2"] | null) | null) | components["schemas"]["Kind2"] | null;
             sourceType: components["schemas"]["SourceType"];
             /** Format: int32 */
             quantity: number;
             /** Format: int32 */
             remaining: number;
             expiresAt: components["schemas"]["OffsetDateTime"];
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status2"];
             createdAt: components["schemas"]["OffsetDateTime"];
         };
         /** @description A change to the account's credits */
@@ -2746,6 +2927,13 @@ export interface components {
         };
         /** @enum {string} */
         DocumentType: "INVOICE" | "CREDIT_NOTE" | "DEBIT_NOTE";
+        /** @description An electronic document of Cetus' own issuer */
+        DocumentView: {
+            id: components["schemas"]["UUID"];
+            number: string;
+            status: components["schemas"]["DocumentStatus"];
+            payableAmount: number;
+        };
         EnableWebhookEndpointRequest: {
             /** @description Send again the events it missed while failing or disabled */
             redeliver?: boolean;
@@ -2818,7 +3006,7 @@ export interface components {
             /** Format: int32 */
             remaining: number;
             expiresAt: components["schemas"]["OffsetDateTime"];
-            status: components["schemas"]["Status"];
+            status: components["schemas"]["Status2"];
             createdAt: components["schemas"]["OffsetDateTime"];
         };
         /**
@@ -2923,6 +3111,8 @@ export interface components {
             /** @description Entregas de la factura aceptada al cliente. */
             deliveries: components["schemas"]["DeliveryView"][];
         };
+        /** @enum {string} */
+        Issue: "PAYMENT_MISSING" | "PAYMENT_AMOUNT_MISMATCH" | "PAYMENT_DUPLICATE" | "PAYMENT_UNMATCHED" | "INVOICE_MISSING" | "CREDIT_NOTE_MISSING" | "REFUND_UNRESOLVED" | "REVIEW_PENDING";
         IssuedDocument: {
             id: components["schemas"]["UUID"];
             number: string;
@@ -2966,9 +3156,11 @@ export interface components {
             status: components["schemas"]["IssuerStatus"];
         };
         /** @enum {string} */
-        Kind: "SUBSCRIPTION" | "PACKAGE" | "TOPUP";
+        Kind: "PURCHASE" | "RENEWAL" | "MANUAL" | "DEBT";
         /** @enum {string} */
-        Kind1: "PURCHASE" | "RENEWAL" | "MANUAL";
+        Kind1: "REFUND" | "CHARGEBACK";
+        /** @enum {string} */
+        Kind2: "SUBSCRIPTION" | "PACKAGE" | "TOPUP";
         /** @description Una línea del documento: un producto o servicio. */
         Line: {
             /**
@@ -3011,6 +3203,8 @@ export interface components {
         };
         /** Format: date */
         LocalDate: string;
+        /** @enum {string} */
+        Mode: "WOMPI" | "EXTERNAL";
         MonthTotalView: {
             /** @description Calendar month in Colombia, YYYY-MM */
             period: string;
@@ -3073,7 +3267,7 @@ export interface components {
             /** Format: int32 */
             attempt: number;
             origin: components["schemas"]["Origin"];
-            status: components["schemas"]["Status1"];
+            status: components["schemas"]["Status3"];
             /** @description When it runs, or ran */
             runAt: components["schemas"]["OffsetDateTime"];
             /** @description Wompi's reason when the card was declined */
@@ -3106,11 +3300,37 @@ export interface components {
             /** Format: int64 */
             totalCents: number;
         };
+        /** @description An order of the month and what does not add up in it */
+        OrderLineView: {
+            orderId: components["schemas"]["UUID"];
+            accountId: components["schemas"]["UUID"];
+            reference: string;
+            kind: components["schemas"]["Kind"];
+            status: components["schemas"]["Status"];
+            /** Format: int64 */
+            totalCents: number;
+            paidAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            payments: components["schemas"]["PaymentView"][];
+            invoice: components["schemas"]["DocumentView"] | null;
+            reversals: components["schemas"]["ReversalLineView"][];
+            issues: components["schemas"]["Issue"][];
+        };
+        /** @description Money that went back from a paid order: a refund, or a chargeback of the bank */
+        OrderReversalView: {
+            kind: components["schemas"]["Kind1"];
+            /** Format: int64 */
+            amountCents: number;
+            approvedAt: components["schemas"]["OffsetDateTime"];
+            /** @description Cetus' credit note over the order's invoice */
+            creditNoteDocumentId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+            /** @description Its number and status, once it is issued */
+            creditNote: ((components["schemas"]["OrderInvoiceView"] | null) | null) | components["schemas"]["OrderInvoiceView"] | null;
+        };
         /** @description A purchase and its payment status, in cents of COP */
         OrderView: {
             id: components["schemas"]["UUID"];
-            kind: components["schemas"]["Kind1"];
-            status: components["schemas"]["Status2"];
+            kind: components["schemas"]["Kind"];
+            status: components["schemas"]["Status"];
             /** @description What Wompi knows the order by */
             reference: string;
             /** Format: int64 */
@@ -3121,8 +3341,8 @@ export interface components {
             totalCents: number;
             currency: string;
             items: components["schemas"]["OrderItemView"][];
-            /** @description After it an unpaid order expires */
-            expiresAt: components["schemas"]["OffsetDateTime"];
+            /** @description After it an unpaid order expires; a debt never does */
+            expiresAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             paidAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             createdAt: components["schemas"]["OffsetDateTime"];
             /** @description Only while the order is pending and has not expired */
@@ -3131,6 +3351,8 @@ export interface components {
             invoice: ((components["schemas"]["OrderInvoiceView"] | null) | null) | components["schemas"]["OrderInvoiceView"] | null;
             /** @description The last attempt to charge the order to the saved card */
             charge: ((components["schemas"]["OrderChargeView"] | null) | null) | components["schemas"]["OrderChargeView"] | null;
+            /** @description Money that went back from the order, first first */
+            reversals: components["schemas"]["OrderReversalView"][];
         };
         /** @enum {string} */
         Origin: "AUTO" | "MANUAL";
@@ -3176,6 +3398,15 @@ export interface components {
             expYear: number;
             createdAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @description A Wompi transaction of the order */
+        PaymentView: {
+            transactionId: string;
+            status: components["schemas"]["Status5"];
+            /** Format: int64 */
+            amountCents: number;
+            paymentMethodType: string;
+            finalizedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
         /** @description Billable documents (production, accepted by the DIAN) of a month */
         PeriodUsageView: {
             /** @description Calendar month in Colombia, YYYY-MM */
@@ -3201,14 +3432,14 @@ export interface components {
             id: components["schemas"]["UUID"];
             code: string;
             name: string;
-            kind: components["schemas"]["Kind"];
+            kind: components["schemas"]["Kind2"];
             /**
              * Format: int32
              * @description Months a package or a top-up lasts; null for a subscription
              */
             validityMonths: number | null;
             /** @description The product an account must have to buy it: a top-up needs a package */
-            requiresKind: ((string | components["schemas"]["Kind"] | null) | null) | components["schemas"]["Kind"] | null;
+            requiresKind: ((string | components["schemas"]["Kind2"] | null) | null) | components["schemas"]["Kind2"] | null;
             /** @description Shown to everyone; an unlisted plan is sold through versions for one account */
             listed: boolean;
             active: boolean;
@@ -3394,6 +3625,47 @@ export interface components {
             /** @description Si su estado le permite emitir con esta llave. */
             readyToIssue: boolean;
         };
+        ReasonRequest: {
+            reason: string;
+        };
+        /** @description A month of sales crossed with Wompi and the invoices, in cents of COP */
+        ReconciliationView: {
+            month: string;
+            /**
+             * Format: int64
+             * @description Orders paid in the month
+             */
+            paidCents: number;
+            /**
+             * Format: int64
+             * @description Money that went back in the month, from orders of any month
+             */
+            reversedCents: number;
+            /** Format: int64 */
+            netCents: number;
+            /**
+             * Format: int64
+             * @description Accepted invoices of the orders paid in the month
+             */
+            invoicedCents: number;
+            /**
+             * Format: int64
+             * @description Accepted credit notes of the money that went back in the month
+             */
+            creditedCents: number;
+            /**
+             * Format: int32
+             * @description Orders with something that does not add up
+             */
+            ordersWithIssues: number;
+            orders: components["schemas"]["OrderLineView"][];
+        };
+        RefundRequest: {
+            /** Format: int64 */
+            amountCents: number;
+            mode: components["schemas"]["Mode"];
+            reason: string;
+        };
         ReleaseRequest: {
             reason: string;
         };
@@ -3412,6 +3684,10 @@ export interface components {
         ResendRequest: {
             /** @description Another address; leave it out to use the first delivery's */
             email?: string | null;
+        };
+        ResolutionRequest: {
+            approved: boolean;
+            reason: string;
         };
         /** @description The income of the paid orders in a calendar year (Colombia time), in cents of COP */
         RevenueView: {
@@ -3438,6 +3714,44 @@ export interface components {
             thresholdPercent: number | null;
             /** @description The alert shares the income reached, lowest first */
             alertPercentsReached: number[];
+        };
+        /** @description Money that went back from the order */
+        ReversalLineView: {
+            reference: string;
+            kind: components["schemas"]["Kind1"];
+            status: components["schemas"]["Status1"];
+            /** Format: int64 */
+            amountCents: number;
+            approvedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            creditNote: components["schemas"]["DocumentView"] | null;
+        };
+        /** @description Money that went back, or is going back, from a paid order */
+        ReversalView: {
+            id: components["schemas"]["UUID"];
+            /** Format: int32 */
+            number: number;
+            kind: components["schemas"]["Kind1"];
+            mode: components["schemas"]["Mode"];
+            reference: string;
+            /** Format: int64 */
+            amountCents: number;
+            status: components["schemas"]["Status1"];
+            reason: string;
+            failureMessage: string | null;
+            /**
+             * Format: int32
+             * @description Unused credits of the order revoked when it was approved
+             */
+            creditsRevoked: number | null;
+            /**
+             * Format: int64
+             * @description What the account used and owes after a chargeback
+             */
+            debtCents: number | null;
+            debtOrderId: components["schemas"]["UUID"] | null;
+            creditNoteDocumentId: components["schemas"]["UUID"] | null;
+            approvedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            createdAt: components["schemas"]["OffsetDateTime"];
         };
         SavePaymentMethodRequest: {
             /** @description The token Wompi gave the browser for the card (tok_…) */
@@ -3468,17 +3782,21 @@ export interface components {
         /** @enum {string} */
         SourceType: "ORDER_ITEM" | "SUBSCRIPTION_PERIOD" | "PROMO" | "ADJUSTMENT";
         /** @enum {string} */
-        Status: "ACTIVE" | "EXHAUSTED" | "EXPIRED" | "REVOKED";
+        Status: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED" | "CANCELED";
         /** @enum {string} */
-        Status1: "SCHEDULED" | "SUBMITTED" | "APPROVED" | "FAILED" | "CANCELED";
+        Status1: "REQUESTED" | "SUBMITTED" | "APPROVED" | "FAILED";
         /** @enum {string} */
-        Status2: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED";
+        Status2: "ACTIVE" | "EXHAUSTED" | "EXPIRED" | "REVOKED";
         /** @enum {string} */
-        Status3: "ACTIVE" | "PAST_DUE" | "CANCELED";
+        Status3: "SCHEDULED" | "SUBMITTED" | "APPROVED" | "FAILED" | "CANCELED";
         /** @enum {string} */
-        Status4: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        Status4: "ACTIVE" | "PAST_DUE" | "CANCELED";
         /** @enum {string} */
-        Status5: "ACTIVE" | "DISABLED";
+        Status5: "PENDING" | "APPROVED" | "DECLINED" | "VOIDED" | "ERROR";
+        /** @enum {string} */
+        Status6: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        /** @enum {string} */
+        Status7: "ACTIVE" | "DISABLED";
         StatusChangeRequest: {
             reason: string;
         };
@@ -3519,7 +3837,7 @@ export interface components {
         /** @description The account's subscription that is not canceled */
         SubscriptionView: {
             id: components["schemas"]["UUID"];
-            status: components["schemas"]["Status3"];
+            status: components["schemas"]["Status4"];
             planCode: string;
             planName: string;
             /** @description The terms the open period was sold at */
@@ -3695,7 +4013,7 @@ export interface components {
             eventId: components["schemas"]["UUID"];
             eventType: string;
             documentId: components["schemas"]["UUID"];
-            status: components["schemas"]["Status4"];
+            status: components["schemas"]["Status6"];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
@@ -3714,7 +4032,7 @@ export interface components {
             environment: components["schemas"]["Environment"];
             /** @description Empty means all event types */
             eventTypes: string[];
-            status: components["schemas"]["Status5"];
+            status: components["schemas"]["Status7"];
             disabledAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description AUTOMATIC when Cetus disabled it after failing for days */
             disabledReason: ((string | components["schemas"]["DisabledReason"] | null) | null) | components["schemas"]["DisabledReason"] | null;
@@ -4479,6 +4797,380 @@ export interface operations {
             };
         };
     };
+    AdminOrderResource_orders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOrderView"][];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminOrderResource_chargeBack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                orderId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOrderView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminOrderResource_refund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                orderId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefundRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOrderView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminOrderResource_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                orderId: components["schemas"]["UUID"];
+                reversalId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolutionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOrderView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminOrderResource_waive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["schemas"]["UUID"];
+                orderId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOrderView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     AdminAccountResource_get: {
         parameters: {
             query?: never;
@@ -4713,6 +5405,82 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminBillingResource_reconciliation: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationView"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminBillingResource_refresh: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecksView"];
                 };
             };
             /** @description Not Authorized */
@@ -7829,6 +8597,48 @@ export interface operations {
             };
             /** @description Payments are not configured */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    OrderResource_creditNoteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: components["schemas"]["UUID"];
+                file: "xml" | "pdf" | "attached-document";
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFileResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

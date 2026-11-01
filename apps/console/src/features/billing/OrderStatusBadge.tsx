@@ -9,6 +9,7 @@ const badgeStatus: Record<OrderStatus, BadgeStatus> = {
   FAILED: "error",
   EXPIRED: "idle",
   REFUNDED: "warning",
+  CANCELED: "idle",
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {

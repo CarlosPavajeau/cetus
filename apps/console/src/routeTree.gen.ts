@@ -30,6 +30,7 @@ import { Route as LegalPrivacidadRouteImport } from './routes/legal.privacidad'
 import { Route as LegalTerminosRouteImport } from './routes/legal.terminos'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
+import { Route as AdminAdminBillingRouteImport } from './routes/_admin/admin/billing'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
 import { Route as AppBillingIndexRouteImport } from './routes/_app/billing/index'
@@ -166,6 +167,11 @@ const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
 const AdminAdminAuditLogRoute = AdminAdminAuditLogRouteImport.update({
   id: '/admin/audit-log',
   path: '/admin/audit-log',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminBillingRoute = AdminAdminBillingRouteImport.update({
+  id: '/admin/billing',
+  path: '/admin/billing',
   getParentRoute: () => AdminRoute,
 } as any)
 const AppActivityIndexRoute = AppActivityIndexRouteImport.update({
@@ -362,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/legal/privacidad': typeof LegalPrivacidadRoute
   '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
+  '/admin/billing': typeof AdminAdminBillingRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/billing/products': typeof AppBillingProductsRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
@@ -416,6 +423,7 @@ export interface FileRoutesByTo {
   '/legal/privacidad': typeof LegalPrivacidadRoute
   '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
+  '/admin/billing': typeof AdminAdminBillingRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/billing/products': typeof AppBillingProductsRoute
   '/catalog/customers': typeof AppCatalogCustomersRoute
@@ -473,6 +481,7 @@ export interface FileRoutesById {
   '/legal/privacidad': typeof LegalPrivacidadRoute
   '/legal/terminos': typeof LegalTerminosRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
+  '/_admin/admin/billing': typeof AdminAdminBillingRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/billing/products': typeof AppBillingProductsRoute
   '/_app/catalog/customers': typeof AppCatalogCustomersRoute
@@ -529,6 +538,7 @@ export interface FileRouteTypes {
     | '/legal/privacidad'
     | '/legal/terminos'
     | '/admin/audit-log'
+    | '/admin/billing'
     | '/activity/$eventId'
     | '/billing/products'
     | '/catalog/customers'
@@ -583,6 +593,7 @@ export interface FileRouteTypes {
     | '/legal/privacidad'
     | '/legal/terminos'
     | '/admin/audit-log'
+    | '/admin/billing'
     | '/activity/$eventId'
     | '/billing/products'
     | '/catalog/customers'
@@ -639,6 +650,7 @@ export interface FileRouteTypes {
     | '/legal/privacidad'
     | '/legal/terminos'
     | '/_admin/admin/audit-log'
+    | '/_admin/admin/billing'
     | '/_app/activity/$eventId'
     | '/_app/billing/products'
     | '/_app/catalog/customers'
@@ -844,6 +856,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/audit-log'
       fullPath: '/admin/audit-log'
       preLoaderRoute: typeof AdminAdminAuditLogRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/billing': {
+      id: '/_admin/admin/billing'
+      path: '/admin/billing'
+      fullPath: '/admin/billing'
+      preLoaderRoute: typeof AdminAdminBillingRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_app/activity/': {
@@ -1082,6 +1101,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAdminAuditLogRoute: typeof AdminAdminAuditLogRoute
+  AdminAdminBillingRoute: typeof AdminAdminBillingRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminOrganizationsAccountIdRoute: typeof AdminAdminOrganizationsAccountIdRoute
   AdminAdminSupportTicketIdRoute: typeof AdminAdminSupportTicketIdRoute
@@ -1094,6 +1114,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminAuditLogRoute: AdminAdminAuditLogRoute,
+  AdminAdminBillingRoute: AdminAdminBillingRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminOrganizationsAccountIdRoute: AdminAdminOrganizationsAccountIdRoute,
   AdminAdminSupportTicketIdRoute: AdminAdminSupportTicketIdRoute,

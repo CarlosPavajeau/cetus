@@ -16,6 +16,7 @@ import {
 import { dateFormat, formatDateTime } from "~/features/api-keys/formats";
 import { BillingProfileDialog } from "~/features/billing/BillingProfileDialog";
 import { CreditsSummary } from "~/features/billing/CreditsSummary";
+import { DebtAlert } from "~/features/billing/DebtAlert";
 import {
   cardExpiryLabel,
   cardLabel,
@@ -88,6 +89,7 @@ function Billing() {
         lead="Cada documento que emites en producción usa un crédito: facturas, notas crédito y notas débito. Con una suscripción, los documentos por encima de los del mes se cobran como excedente. La simulación y las pruebas de habilitación no usan créditos."
       />
 
+      {credits.debtOrderId !== null && <DebtAlert orderId={credits.debtOrderId} />}
       {!credits.product && (
         <Alert>
           <AlertTitle>No tienes una suscripción ni un paquete vigente</AlertTitle>

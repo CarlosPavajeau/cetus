@@ -98,6 +98,8 @@ const messages: Record<string, string> = {
   plan_version_not_offered: "Ese producto cambió o ya no está a la venta. Recarga la página.",
   plan_not_purchasable: "Ese producto no se puede comprar desde la consola.",
   plan_requires_product: "Las recargas solo se compran con un paquete anual vigente.",
+  account_has_debt:
+    "Tu cuenta tiene un saldo pendiente. Págalo desde Facturación para volver a comprar.",
   subscription_active:
     "La cuenta ya tiene una suscripción: su excedente reemplaza a los paquetes y las recargas. Para cambiar de plan, prográmalo desde Facturación.",
   subscription_ending:
@@ -209,6 +211,35 @@ export const chargeOrder = createServerFn({ method: "POST" })
       return { ok: true, order };
     } catch (error) {
       return refusal(error, "No pudimos cobrar la orden a la tarjeta.");
+    }
+  });
+
+/** A short-lived URL to a file of a credit note of money that went back from the order, or why there is none yet. */
+export const getOrderCreditNoteFileUrl = createServerFn({ method: "GET" })
+  .validator(
+    type({
+      id: "string.uuid",
+      documentId: "string.uuid",
+      file: "'xml' | 'pdf' | 'attached-document'",
+    }),
+  )
+  .handler(async ({ data }): Promise<DocumentFileUrl> => {
+    try {
+      const { url } = await api.get("/console/orders/{id}/credit-notes/{documentId}/files/{file}", {
+        params: {
+          path: {
+            id: data.id,
+            documentId: data.documentId,
+            file: data.file satisfies DocumentFile,
+          },
+        },
+      });
+      return { url };
+    } catch (error) {
+      if (error instanceof CetusApiError && error.code === "file_not_available") {
+        return { url: null, message: "La nota crédito todavía no está disponible." };
+      }
+      throw error;
     }
   });
 
