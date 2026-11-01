@@ -54,9 +54,9 @@ export function formatCardNumber(value: string) {
 }
 
 /**
- * The expiry as MM/AA whatever way it is typed: "0129" and "01/29" give "01/29", "1/29" gives "01/29", and a
- * first digit above 1 can only be a month of one digit, so "3" gives "03". A slash the person typed is kept, so
- * erasing the year leaves "01/" and then "01".
+ * The expiry as MM/AA whatever way it is typed: "0129" and "01/29" give "01/29", and a first digit above 1 can
+ * only be a month of one digit, so "3" gives "03". A month the person ends with a slash stays as typed ("1/29",
+ * read as January), so editing it never fills in a 0; erasing the year leaves "01/" and then "01".
  */
 export function formatExpiry(value: string) {
   const slash = value.indexOf("/");
@@ -66,10 +66,7 @@ export function formatExpiry(value: string) {
       .slice(slash + 1)
       .replace(/\D/g, "")
       .slice(0, 2);
-    if (month === "") {
-      return "";
-    }
-    return `${month.length === 1 && year !== "" ? `0${month}` : month}/${year}`;
+    return month === "" ? "" : `${month}/${year}`;
   }
   let digits = value.replace(/\D/g, "");
   if (/^[2-9]/.test(digits)) {
@@ -82,4 +79,67 @@ export function formatExpiry(value: string) {
 /** Only digits, at most four: American Express prints four, the rest three. */
 export function formatCvc(value: string) {
   return value.replace(/\D/g, "").slice(0, 4);
+}
+
+export type Formatted = { value: string; caret: number };
+
+const digitsOf = (text: string) => text.replace(/\D/g, "");
+
+/** Where the caret goes in the text to sit right after its count-th digit. */
+function caretAfter(text: string, count: number) {
+  if (count === 0) {
+    return 0;
+  }
+  let seen = 0;
+  for (let index = 0; index < text.length; index++) {
+    if (/\d/.test(text.charAt(index))) {
+      seen++;
+      if (seen === count) {
+        return index + 1;
+      }
+    }
+  }
+  return text.length;
+}
+
+/**
+ * Formats what the person just typed and keeps the caret on the same digit, so editing in the middle of a
+ * formatted value does not jump to its end. Erasing a separator (a space, the slash) erases the digit next to it
+ * instead, or the key would seem to do nothing; a month the format pads with a 0 keeps the caret after it.
+ */
+export function reformat(
+  raw: string,
+  caret: number,
+  previous: string,
+  format: (value: string) => string,
+  deletion: "backward" | "forward" | null,
+): Formatted {
+  let text = raw;
+  let before = digitsOf(raw.slice(0, caret)).length;
+  const separatorErased =
+    deletion !== null && raw.length < previous.length && digitsOf(raw) === digitsOf(previous);
+  if (separatorErased) {
+    const target = deletion === "backward" ? before : before + 1;
+    const index = caretAfter(raw, target) - 1;
+    if (target > 0 && index >= 0 && index < raw.length) {
+      text = raw.slice(0, index) + raw.slice(index + 1);
+      before = deletion === "backward" ? before - 1 : before;
+    }
+  }
+  const value = format(text);
+  const added = digitsOf(value).length - digitsOf(text).length;
+  if (added > 0) {
+    before += added;
+  }
+  if (before >= digitsOf(value).length && caret >= raw.length) {
+    return { value, caret: value.length };
+  }
+  let position = caretAfter(value, before);
+  // A caret that stood after a separator, such as the expiry's slash, stays after it.
+  if (!separatorErased && caret > 0 && /\D/.test(raw.charAt(caret - 1))) {
+    while (position < value.length && /\D/.test(value.charAt(position))) {
+      position++;
+    }
+  }
+  return { value, caret: position };
 }

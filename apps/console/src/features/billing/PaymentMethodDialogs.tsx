@@ -35,6 +35,7 @@ import {
   formatCvc,
   formatExpiry,
 } from "./cardInput";
+import { formattedChange } from "./formattedChange";
 import { cardLabel } from "./labels";
 import { billingKey } from "./queries";
 import { type CardForm, cardFormSchema } from "./schema";
@@ -153,7 +154,7 @@ export function PaymentMethodDialog({ paymentMethod }: { paymentMethod: PaymentM
                       </InputGroupAddon>
                       <InputGroupInput
                         {...field}
-                        onChange={(event) => field.onChange(formatCardNumber(event.target.value))}
+                        onChange={formattedChange(formatCardNumber, field.value, field.onChange)}
                         id="card-number"
                         inputMode="numeric"
                         autoComplete="cc-number"
@@ -180,7 +181,7 @@ export function PaymentMethodDialog({ paymentMethod }: { paymentMethod: PaymentM
                     <FieldLabel htmlFor="card-expiry">Vencimiento (MM/AA)</FieldLabel>
                     <Input
                       {...field}
-                      onChange={(event) => field.onChange(formatExpiry(event.target.value))}
+                      onChange={formattedChange(formatExpiry, field.value, field.onChange)}
                       id="card-expiry"
                       inputMode="numeric"
                       autoComplete="cc-exp"
@@ -199,7 +200,7 @@ export function PaymentMethodDialog({ paymentMethod }: { paymentMethod: PaymentM
                     <FieldLabel htmlFor="card-cvc">Código de seguridad</FieldLabel>
                     <Input
                       {...field}
-                      onChange={(event) => field.onChange(formatCvc(event.target.value))}
+                      onChange={formattedChange(formatCvc, field.value, field.onChange)}
                       id="card-cvc"
                       placeholder={cardBrandOf(number) === "AMEX" ? "0000" : "000"}
                       inputMode="numeric"

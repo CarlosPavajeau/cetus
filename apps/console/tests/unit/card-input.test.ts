@@ -6,6 +6,7 @@ import {
   formatCardNumber,
   formatCvc,
   formatExpiry,
+  reformat,
 } from "~/features/billing/cardInput";
 import { cardFormSchema } from "~/features/billing/schema";
 
@@ -24,7 +25,7 @@ describe("formatExpiry", () => {
   it("puts the slash in whatever way the expiry is typed", () => {
     expect(formatExpiry("0129")).toBe("01/29");
     expect(formatExpiry("01/29")).toBe("01/29");
-    expect(formatExpiry("1/29")).toBe("01/29");
+    expect(formatExpiry("1/29")).toBe("1/29");
     expect(formatExpiry("012")).toBe("01/2");
   });
 
@@ -90,5 +91,62 @@ describe("cardFormSchema", () => {
   it("keeps only digits in the security code", () => {
     expect(formatCvc("1a2 3")).toBe("123");
     expect(formatCvc("12345")).toBe("1234");
+  });
+});
+
+describe("reformat", () => {
+  it("keeps the caret on the digit typed in the middle of the number", () => {
+    // "4242 4242|" → a 9 typed after the 6th digit of "4242 42|42".
+    expect(reformat("4242 429242", 8, "4242 4242", formatCardNumber, null)).toEqual({
+      value: "4242 4292 42",
+      caret: 8,
+    });
+  });
+
+  it("moves past a space the format inserts before the caret", () => {
+    expect(reformat("42424", 5, "4242", formatCardNumber, null)).toEqual({
+      value: "4242 4",
+      caret: 6,
+    });
+  });
+
+  it("erases the digit before a space when backspace hits the space", () => {
+    // Caret after "4242 " and backspace: the browser erased the space.
+    expect(reformat("42424242", 4, "4242 4242", formatCardNumber, "backward")).toEqual({
+      value: "4244 242",
+      caret: 3,
+    });
+  });
+
+  it("erases the digit after a space when delete hits the space", () => {
+    expect(reformat("42424242", 4, "4242 4242", formatCardNumber, "forward")).toEqual({
+      value: "4242 242",
+      caret: 4,
+    });
+  });
+
+  it("keeps the caret after a month the format pads", () => {
+    expect(reformat("3", 1, "", formatExpiry, null)).toEqual({ value: "03", caret: 2 });
+  });
+
+  it("keeps the caret after the slash when the year's first digit is erased", () => {
+    expect(reformat("08/9", 3, "08/29", formatExpiry, "backward")).toEqual({
+      value: "08/9",
+      caret: 3,
+    });
+    expect(reformat("08/39", 4, "08/9", formatExpiry, null)).toEqual({ value: "08/39", caret: 4 });
+  });
+
+  it("edits the month without filling in a 0", () => {
+    expect(reformat("0/39", 1, "08/39", formatExpiry, "backward")).toEqual({
+      value: "0/39",
+      caret: 1,
+    });
+    expect(reformat("09/39", 2, "0/39", formatExpiry, null)).toEqual({ value: "09/39", caret: 2 });
+  });
+
+  it("goes on typing the year after a slash", () => {
+    expect(reformat("01/2", 4, "01/", formatExpiry, null)).toEqual({ value: "01/2", caret: 4 });
+    expect(reformat("012", 3, "01", formatExpiry, null)).toEqual({ value: "01/2", caret: 4 });
   });
 });
