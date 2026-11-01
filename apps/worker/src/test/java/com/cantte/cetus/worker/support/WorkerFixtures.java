@@ -337,22 +337,32 @@ public class WorkerFixtures {
         return note(invoiceId, DocumentType.DEBIT_NOTE, "ND", DebitNoteConcept.INTEREST.name(), "Intereses de mora");
     }
 
+    /** An NC range of the issuer, without resolution or technical key, as credit notes take. */
+    public void creditNoteRange(UUID issuerId) {
+        QuarkusTransaction.requiringNew().run(() -> noteRange(issuerId, DocumentType.CREDIT_NOTE, "NC"));
+    }
+
+    private static NumberingRangeEntity noteRange(UUID issuerId, DocumentType type, String prefix) {
+        NumberingRangeEntity range = new NumberingRangeEntity();
+        range.id = Ids.newId();
+        range.issuerId = issuerId;
+        range.documentType = type;
+        range.prefix = prefix;
+        range.rangeFrom = 1;
+        range.rangeTo = 99999999;
+        // CUDEs are unique too, and every seeded issuer shares the NIT.
+        range.nextNumber = ThreadLocalRandom.current().nextLong(1, 99999999);
+        range.persist();
+        return range;
+    }
+
     private UUID note(UUID invoiceId, DocumentType type, String prefix, String concept, String description) {
         return QuarkusTransaction.requiringNew().call(() -> {
             DocumentEntity invoice = DocumentEntity.findById(invoiceId);
             invoice.status = DocumentStatus.ACCEPTED;
             invoice.cufe = Hashing.sha384Hex("cufe-" + invoice.id);
 
-            NumberingRangeEntity range = new NumberingRangeEntity();
-            range.id = Ids.newId();
-            range.issuerId = invoice.issuerId;
-            range.documentType = type;
-            range.prefix = prefix;
-            range.rangeFrom = 1;
-            range.rangeTo = 99999999;
-            // CUDEs are unique too, and every seeded issuer shares the NIT.
-            range.nextNumber = ThreadLocalRandom.current().nextLong(1, 99999999);
-            range.persist();
+            NumberingRangeEntity range = noteRange(invoice.issuerId, type, prefix);
 
             DocumentEntity note = document(
                     invoice.accountId,

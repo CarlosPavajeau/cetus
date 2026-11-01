@@ -38,7 +38,11 @@ public enum NotificationKind {
     /** The saved card was declined for the renewal; it is tried again, or the renewal waits to be paid otherwise. */
     SUBSCRIPTION_CHARGE_FAILED(Set.of(Category.BILLING)),
     /** The card that pays the renewals expires this month or the next, or already did. */
-    PAYMENT_METHOD_EXPIRING(Set.of(Category.BILLING));
+    PAYMENT_METHOD_EXPIRING(Set.of(Category.BILLING)),
+    /** Money of a paid order went back to the customer; the order's unused documents were revoked. */
+    ORDER_REFUNDED(Set.of(Category.BILLING)),
+    /** The account owes what it consumed and did not pay; new purchases wait until it is paid. */
+    ACCOUNT_DEBT(Set.of(Category.BILLING));
 
     private final Set<Category> categories;
 

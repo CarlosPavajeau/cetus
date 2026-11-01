@@ -97,7 +97,7 @@ public class Subscriptions {
             }
             case RENEWAL ->
                 SubscriptionPeriodEntity.findByOpeningOrder(order.id).ifPresent(period -> renew(order, period));
-            case MANUAL -> {}
+            case MANUAL, DEBT -> {}
         }
     }
 
@@ -314,19 +314,56 @@ public class Subscriptions {
                 .orElse(0);
     }
 
-    /** Closes the subscription's last period, with its overage billed in an order of its own when it has any. */
+    /**
+     * Cancels the subscription at once because the order that paid its open period went back: the period closes
+     * with its overage billed as a debt.
+     *
+     * @param reason REFUNDED or CHARGEBACK
+     * @return whether it was canceled now
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public boolean end(UUID subscriptionId, OffsetDateTime now, String reason) {
+        ledger.lock(SubscriptionEntity.accountOf(subscriptionId));
+        SubscriptionEntity subscription =
+                SubscriptionEntity.lock(subscriptionId).orElseThrow();
+        if (subscription.status == SubscriptionEntity.Status.CANCELED) {
+            return false;
+        }
+        SubscriptionPeriodEntity period = SubscriptionPeriodEntity.findOpen(subscription.id)
+                .flatMap(open -> SubscriptionPeriodEntity.lock(open.id))
+                .orElseThrow(() -> new IllegalStateException(
+                        "Subscription " + subscription.id + " is not canceled and has no open period"));
+        finish(subscription, period, now);
+        cancel(subscription, now, reason);
+        return true;
+    }
+
+    /**
+     * Closes the subscription's last period, with its overage billed as a debt when it has any: those documents
+     * were issued, and no later renewal will bill them.
+     */
     private void finish(SubscriptionEntity subscription, SubscriptionPeriodEntity period, OffsetDateTime now) {
         int overage = bill(subscription, period, now);
         if (overage == 0) {
             return;
         }
         BillingOrderEntity order = BillingOrderEntity.open(
-                subscription.accountId,
-                BillingOrderEntity.Kind.RENEWAL,
-                profile(subscription.accountId),
-                now.plus(grace));
-        overageItem(order, period, PlanVersionEntity.findById(period.planVersionId), overage);
+                subscription.accountId, BillingOrderEntity.Kind.DEBT, profile(subscription.accountId), null);
+        PlanVersionEntity version = PlanVersionEntity.findById(period.planVersionId);
+        overageItem(order, period, version, overage);
         period.closingOrderId = order.id;
+        notifications.request(
+                subscription.accountId,
+                NotificationKind.ACCOUNT_DEBT,
+                "account_debt:%s".formatted(order.id),
+                Map.of(
+                        "total", Numbers.cop(order.totalCents / 100),
+                        "concept",
+                                "%s documentos de excedente de la suscripción %s"
+                                        .formatted(
+                                                Numbers.count(overage),
+                                                PlanEntity.<PlanEntity>findById(version.planId).name),
+                        "orderId", order.id.toString()));
     }
 
     private void cancel(SubscriptionEntity subscription, OffsetDateTime now, String reason) {

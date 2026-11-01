@@ -7,7 +7,9 @@ import com.cantte.cetus.api.admin.PlatformRoles;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.Party;
+import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
@@ -37,14 +39,18 @@ class RevenueTest {
         order(
                 account,
                 BillingOrderEntity.Status.PAID,
-                2_250_000_000L,
+                2_251_000_000L,
                 OffsetDateTime.parse("2099-12-31T23:30:00-05:00"));
-        order(
+        UUID refunded = order(
                 account,
                 BillingOrderEntity.Status.REFUNDED,
                 5_000_000_000L,
                 OffsetDateTime.parse("2099-03-01T12:00:00-05:00"));
-        order(account, BillingOrderEntity.Status.PAID, 1_000_000L, OffsetDateTime.parse("2098-12-31T22:00:00-05:00"));
+        reverse(refunded, 5_000_000_000L, OffsetDateTime.parse("2099-03-02T12:00:00-05:00"));
+        // Paid the year before and partly refunded in this one: the refund lowers this year's income.
+        UUID previous = order(
+                account, BillingOrderEntity.Status.PAID, 2_000_000L, OffsetDateTime.parse("2098-12-31T22:00:00-05:00"));
+        reverse(previous, 1_000_000L, OffsetDateTime.parse("2099-01-10T12:00:00-05:00"));
 
         JsonPath revenue = SUPPORT.request()
                 .get("/admin/billing/revenue?year=" + YEAR)
@@ -67,7 +73,7 @@ class RevenueTest {
                         .extract()
                         .jsonPath()
                         .getLong("revenueCents"))
-                .isGreaterThanOrEqualTo(1_000_000L);
+                .isGreaterThanOrEqualTo(2_000_000L);
     }
 
     @Test
@@ -87,9 +93,25 @@ class RevenueTest {
                 owner.request().get("/console/account").then().extract().path("id"));
     }
 
-    private static void order(
-            UUID accountId, BillingOrderEntity.Status status, long totalCents, OffsetDateTime paidAt) {
+    private static void reverse(UUID orderId, long amountCents, OffsetDateTime approvedAt) {
         QuarkusTransaction.requiringNew().run(() -> {
+            BillingOrderEntity order = BillingOrderEntity.findById(orderId);
+            PaymentReversalEntity reversal = PaymentReversalEntity.request(
+                    order,
+                    PaymentReversalEntity.Kind.REFUND,
+                    PaymentReversalEntity.Mode.EXTERNAL,
+                    amountCents,
+                    null,
+                    Actor.system(),
+                    "Devolución");
+            reversal.status = PaymentReversalEntity.Status.APPROVED;
+            reversal.approvedAt = approvedAt;
+        });
+    }
+
+    private static UUID order(
+            UUID accountId, BillingOrderEntity.Status status, long totalCents, OffsetDateTime paidAt) {
+        return QuarkusTransaction.requiringNew().call(() -> {
             BillingOrderEntity order = new BillingOrderEntity();
             order.id = Ids.newId();
             order.accountId = accountId;
@@ -104,6 +126,7 @@ class RevenueTest {
             order.expiresAt = paidAt.plusDays(1);
             order.paidAt = paidAt;
             order.persist();
+            return order.id;
         });
     }
 }

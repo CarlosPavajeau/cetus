@@ -32,7 +32,9 @@ public class BillingOrderEntity extends PanacheEntityBase {
     public enum Kind {
         PURCHASE,
         RENEWAL,
-        MANUAL
+        MANUAL,
+        /** What the account consumed and did not pay; it never expires and blocks purchases while pending. */
+        DEBT
     }
 
     public enum Status {
@@ -40,7 +42,9 @@ public class BillingOrderEntity extends PanacheEntityBase {
         PAID,
         FAILED,
         EXPIRED,
-        REFUNDED
+        REFUNDED,
+        /** A debt the Cetus team forgave. */
+        CANCELED
     }
 
     @Id
@@ -74,6 +78,7 @@ public class BillingOrderEntity extends PanacheEntityBase {
     @Column(name = "billing_profile")
     public Party billingProfile;
 
+    /** Null only for a debt, which never expires. */
     @Column(name = "expires_at")
     public OffsetDateTime expiresAt;
 
@@ -104,6 +109,11 @@ public class BillingOrderEntity extends PanacheEntityBase {
      */
     public static BillingOrderEntity open(
             UUID accountId, Kind kind, BillingProfileEntity profile, OffsetDateTime expiresAt) {
+        return open(accountId, kind, profile.party, expiresAt);
+    }
+
+    /** Like {@link #open(UUID, Kind, BillingProfileEntity, OffsetDateTime)}, invoiced to whom another order copied. */
+    public static BillingOrderEntity open(UUID accountId, Kind kind, Party billingProfile, OffsetDateTime expiresAt) {
         BillingOrderEntity order = new BillingOrderEntity();
         order.id = Ids.newId();
         order.accountId = accountId;
@@ -111,10 +121,30 @@ public class BillingOrderEntity extends PanacheEntityBase {
         order.status = Status.PENDING;
         order.reference = reference();
         order.currency = CURRENCY;
-        order.billingProfile = profile.party;
+        order.billingProfile = billingProfile;
         order.expiresAt = expiresAt;
         order.persist();
         return order;
+    }
+
+    /** Pending and not expired; a debt never expires. */
+    public boolean isPayable(OffsetDateTime at) {
+        return status == Status.PENDING && (expiresAt == null || expiresAt.isAfter(at));
+    }
+
+    /** Whether the account owes a debt, which blocks new purchases. */
+    public static boolean hasDebt(UUID accountId) {
+        return findDebt(accountId).isPresent();
+    }
+
+    /** The account's oldest pending debt. */
+    public static Optional<BillingOrderEntity> findDebt(UUID accountId) {
+        return find(
+                        "accountId = ?1 and kind = ?2 and status = ?3 order by createdAt, id",
+                        accountId,
+                        Kind.DEBT,
+                        Status.PENDING)
+                .firstResultOptional();
     }
 
     /** "CET-" and 26 characters of Crockford's base32: 128 random bits. */
@@ -159,12 +189,17 @@ public class BillingOrderEntity extends PanacheEntityBase {
                 .list();
     }
 
-    /** What the orders paid in [from, to) add up to; a refunded order is no longer PAID and does not count. */
+    /**
+     * What the orders paid in [from, to) add up to, less the money that went back from any order in [from, to): a
+     * refund or a chargeback lowers the income of the year it happens in.
+     */
     public static long revenueCents(OffsetDateTime from, OffsetDateTime to) {
         return ((Number) getEntityManager()
                         .createNativeQuery("""
-                                SELECT coalesce(sum(total_cents), 0) FROM billing.billing_orders
-                                WHERE status = 'PAID' AND paid_at >= :from AND paid_at < :to
+                                SELECT (SELECT coalesce(sum(total_cents), 0) FROM billing.billing_orders
+                                        WHERE status IN ('PAID', 'REFUNDED') AND paid_at >= :from AND paid_at < :to)
+                                     - (SELECT coalesce(sum(amount_cents), 0) FROM billing.payment_reversals
+                                        WHERE status = 'APPROVED' AND approved_at >= :from AND approved_at < :to)
                                 """)
                         .setParameter("from", from)
                         .setParameter("to", to)

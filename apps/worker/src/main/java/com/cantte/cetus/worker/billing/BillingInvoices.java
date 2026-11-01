@@ -120,7 +120,7 @@ public class BillingInvoices {
     }
 
     /** Prices are final while the holder is not responsible for VAT; an item with a tax rate needs this changed. */
-    private static LineInput line(BillingOrderItemEntity item) {
+    static LineInput line(BillingOrderItemEntity item) {
         if (item.taxRate.signum() != 0) {
             throw new UnsupportedTaxRate(item);
         }
@@ -161,7 +161,7 @@ public class BillingInvoices {
                 .orElse("ZZZ");
     }
 
-    private static void requireReady(IssuerEntity issuer) {
+    static void requireReady(IssuerEntity issuer) {
         boolean enabled = issuer.status == IssuerEntity.Status.ENABLED
                 || (issuer.environment == Environment.TEST && issuer.status == IssuerEntity.Status.TESTING);
         if (!enabled) {

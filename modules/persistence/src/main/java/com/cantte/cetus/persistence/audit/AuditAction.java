@@ -76,5 +76,15 @@ public enum AuditAction {
     /** The saved card is no longer charged. */
     PAYMENT_METHOD_REMOVED,
     /** A pending order charged to the saved card, as asked from the console. */
-    BILLING_ORDER_CHARGE_REQUESTED
+    BILLING_ORDER_CHARGE_REQUESTED,
+    /** Money of a paid order asked back from Wompi, or a refund made elsewhere registered by the Cetus team. */
+    BILLING_ORDER_REFUND_REQUESTED,
+    /** A Wompi refund left unanswered, settled by the Cetus team as its dashboard shows it. */
+    BILLING_ORDER_REFUND_RESOLVED,
+    /** A refund approved: the order's unused credits are revoked. */
+    BILLING_ORDER_REFUNDED,
+    /** The bank took the order's payment back: its unused credits are revoked and what was used becomes a debt. */
+    BILLING_ORDER_CHARGEBACK,
+    /** A debt the Cetus team forgave. */
+    BILLING_ORDER_DEBT_WAIVED
 }

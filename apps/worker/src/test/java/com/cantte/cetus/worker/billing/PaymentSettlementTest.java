@@ -151,9 +151,12 @@ class PaymentSettlementTest {
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
 
         assertThat(settlement.apply(transaction(transactionId, order.reference, PaymentStatus.VOIDED, 2_490_000)))
-                .isEqualTo(Outcome.REVIEW);
+                .isEqualTo(Outcome.CHARGED_BACK);
+        assertThat(settlement.apply(transaction(transactionId, order.reference, PaymentStatus.VOIDED, 2_490_000)))
+                .isEqualTo(Outcome.RECORDED);
         assertThat(transactionOf(transactionId).status).isEqualTo(PaymentTransactionEntity.Status.VOIDED);
-        assertThat(orderOf(order.id).reviewReason).contains(transactionId);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
+        assertThat(orderOf(order.id).reviewReason).isNull();
     }
 
     @Test
@@ -223,7 +226,7 @@ class PaymentSettlementTest {
         checks.handle(checkJobOf(order.id));
 
         assertThat(transactionOf(transactionId).status).isEqualTo(PaymentTransactionEntity.Status.VOIDED);
-        assertThat(orderOf(order.id).reviewReason).contains(transactionId);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
     }
 
     @Test
