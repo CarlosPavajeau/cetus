@@ -3,6 +3,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import type { AuditAction, SupportTicketStatus } from "~/lib/api/types";
 
 import { getReconciliation, listAdminOrders } from "./billing";
+import { listIncidents } from "./incidents";
 import { getAdminIssuer } from "./issuers";
 import type { AccountStatus } from "./schema";
 import { getAdminAccount, listAdminAccounts, listAdminAuditLog } from "./server";
@@ -112,3 +113,8 @@ export function reconciliationQuery(month: string) {
     queryFn: () => getReconciliation({ data: { month } }),
   });
 }
+
+export const adminIncidentsQuery = queryOptions({
+  queryKey: [...adminKey, "incidents"],
+  queryFn: () => listIncidents(),
+});

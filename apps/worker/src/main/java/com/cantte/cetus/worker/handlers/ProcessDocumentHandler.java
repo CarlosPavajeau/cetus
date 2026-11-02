@@ -11,6 +11,7 @@ import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.FileSequence;
+import com.cantte.cetus.persistence.entity.DianSubmissionEntity.ErrorKind;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.signing.KeyMaterial;
@@ -40,7 +41,6 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -186,13 +186,11 @@ public class ProcessDocumentHandler implements JobHandler {
         try {
             response = dian.sendBillSync(zipName, zip, keys);
         } catch (DianTransportException e) {
-            recorder.submission(
+            recorder.unanswered(
                     ctx.documentId(),
                     "SendBillSync",
-                    null,
-                    e.isTimeout(),
-                    null,
-                    List.of(e.getMessage()),
+                    transportErrorKind(e),
+                    e.getMessage(),
                     System.currentTimeMillis() - start);
             throw e;
         } catch (DianFaultException e) {
@@ -220,13 +218,11 @@ public class ProcessDocumentHandler implements JobHandler {
         try {
             upload = dian.sendTestSetAsync(zipName, zip, ctx.testSetId(), keys);
         } catch (DianTransportException e) {
-            recorder.submission(
+            recorder.unanswered(
                     ctx.documentId(),
                     "SendTestSetAsync",
-                    null,
-                    e.isTimeout(),
-                    null,
-                    List.of(e.getMessage()),
+                    transportErrorKind(e),
+                    e.getMessage(),
                     System.currentTimeMillis() - start);
             throw e;
         } catch (DianFaultException e) {
@@ -277,13 +273,11 @@ public class ProcessDocumentHandler implements JobHandler {
     }
 
     private void recordFault(ProcessingContext ctx, String operation, DianFaultException e, long start) {
-        recorder.submission(
+        recorder.unanswered(
                 ctx.documentId(),
                 operation,
-                null,
-                false,
-                null,
-                List.of(e.getMessage()),
+                e.retryable() ? ErrorKind.FAULT : null,
+                e.getMessage(),
                 System.currentTimeMillis() - start);
         artifacts.save(
                 ctx,
@@ -292,6 +286,10 @@ public class ProcessDocumentHandler implements JobHandler {
                 e.rawXml().getBytes(StandardCharsets.UTF_8),
                 "application/xml");
         recorder.failed(ctx.documentId(), "DIAN fault: " + e.getMessage());
+    }
+
+    private static ErrorKind transportErrorKind(DianTransportException e) {
+        return e.isTimeout() ? ErrorKind.TIMEOUT : ErrorKind.TRANSPORT;
     }
 
     /** A client fault repeats on every attempt and burns a file sequence each time, so stop retrying. */

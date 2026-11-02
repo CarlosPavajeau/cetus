@@ -86,5 +86,9 @@ public enum AuditAction {
     /** The bank took the order's payment back: its unused credits are revoked and what was used becomes a debt. */
     BILLING_ORDER_CHARGEBACK,
     /** A debt the Cetus team forgave. */
-    BILLING_ORDER_DEBT_WAIVED
+    BILLING_ORDER_DEBT_WAIVED,
+    /** An incident published on the status page and in the console, its changes, and its end. */
+    STATUS_INCIDENT_OPENED,
+    STATUS_INCIDENT_UPDATED,
+    STATUS_INCIDENT_RESOLVED
 }

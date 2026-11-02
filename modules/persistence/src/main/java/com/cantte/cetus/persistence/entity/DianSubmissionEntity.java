@@ -3,6 +3,8 @@ package com.cantte.cetus.persistence.entity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -45,6 +47,18 @@ public class DianSubmissionEntity extends PanacheEntityBase {
 
     @Column(name = "duration_ms")
     public Integer durationMs;
+
+    /** Why the call got no answer; null when the DIAN answered. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "error_kind")
+    public ErrorKind errorKind;
+
+    public enum ErrorKind {
+        TIMEOUT,
+        TRANSPORT,
+        /** A server fault, worth retrying; a client fault is the document's problem, not the DIAN's. */
+        FAULT
+    }
 
     /**
      * True when the last send may have reached the DIAN without us receiving the answer: a timeout,

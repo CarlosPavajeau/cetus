@@ -9,6 +9,7 @@ export function baseOptions(): BaseLayoutProps {
     links: [
       { text: "Guías", url: "/", active: "nested-url" },
       { text: "Referencia de la API", url: "/reference" },
+      { text: "Estado", url: "/estado" },
       { text: "Iniciar sesión", url: `${consoleUrl}/sign-in`, external: true, secondary: true },
       { text: "Crear cuenta", url: `${consoleUrl}/sign-up`, external: true, secondary: true },
     ],
