@@ -21,6 +21,11 @@ const config = {
 
 const series = ["accepted", "rejected", "failed", "inProgress"] as const;
 
+/** Recharts sorts the legend and the tooltip by name; they follow the stack instead. */
+function stackOrder(item: { dataKey?: unknown }) {
+  return series.findIndex((key) => key === item.dataKey);
+}
+
 /** The period's documents per issue day, stacked by outcome. */
 export function DailyChart({ metrics }: { metrics: Metrics }) {
   const data = metrics.days.map((day) => ({ date: day.date, ...day.documents }));
@@ -41,6 +46,7 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
           />
           <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={32} />
           <ChartTooltip
+            itemSorter={stackOrder}
             content={
               <ChartTooltipContent
                 labelFormatter={(_, payload) => {
@@ -50,7 +56,7 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
               />
             }
           />
-          <ChartLegend content={<ChartLegendContent />} />
+          <ChartLegend itemSorter={stackOrder} content={<ChartLegendContent />} />
           {series.map((key) => (
             <Bar key={key} dataKey={key} stackId="documents" fill={`var(--color-${key})`} />
           ))}
