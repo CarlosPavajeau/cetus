@@ -10,18 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SplatRouteImport } from './routes/$'
-import { Route as EstadoRouteImport } from './routes/estado'
 import { Route as ReferenceRouteImport } from './routes/reference'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EstadoRoute = EstadoRouteImport.update({
-  id: '/estado',
-  path: '/estado',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReferenceRoute = ReferenceRouteImport.update({
@@ -37,34 +31,30 @@ const ApiSearchRoute = ApiSearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/$': typeof SplatRoute
-  '/estado': typeof EstadoRoute
   '/reference': typeof ReferenceRoute
   '/api/search': typeof ApiSearchRoute
 }
 export interface FileRoutesByTo {
   '/$': typeof SplatRoute
-  '/estado': typeof EstadoRoute
   '/reference': typeof ReferenceRoute
   '/api/search': typeof ApiSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/$': typeof SplatRoute
-  '/estado': typeof EstadoRoute
   '/reference': typeof ReferenceRoute
   '/api/search': typeof ApiSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/$' | '/estado' | '/reference' | '/api/search'
+  fullPaths: '/$' | '/reference' | '/api/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/$' | '/estado' | '/reference' | '/api/search'
-  id: '__root__' | '/$' | '/estado' | '/reference' | '/api/search'
+  to: '/$' | '/reference' | '/api/search'
+  id: '__root__' | '/$' | '/reference' | '/api/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
-  EstadoRoute: typeof EstadoRoute
   ReferenceRoute: typeof ReferenceRoute
   ApiSearchRoute: typeof ApiSearchRoute
 }
@@ -76,13 +66,6 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof SplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/estado': {
-      id: '/estado'
-      path: '/estado'
-      fullPath: '/estado'
-      preLoaderRoute: typeof EstadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reference': {
@@ -104,7 +87,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
-  EstadoRoute: EstadoRoute,
   ReferenceRoute: ReferenceRoute,
   ApiSearchRoute: ApiSearchRoute,
 }

@@ -1,7 +1,7 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 
 import { CetusMark } from "~/components/CetusMark";
-import { consoleUrl } from "~/lib/site";
+import { consoleUrl, statusUrl } from "~/lib/site";
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -9,7 +9,7 @@ export function baseOptions(): BaseLayoutProps {
     links: [
       { text: "Guías", url: "/", active: "nested-url" },
       { text: "Referencia de la API", url: "/reference" },
-      { text: "Estado", url: "/estado" },
+      { text: "Estado", url: statusUrl, external: true },
       { text: "Iniciar sesión", url: `${consoleUrl}/sign-in`, external: true, secondary: true },
       { text: "Crear cuenta", url: `${consoleUrl}/sign-up`, external: true, secondary: true },
     ],

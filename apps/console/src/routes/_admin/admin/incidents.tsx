@@ -19,8 +19,8 @@ import { resolveIncident } from "~/features/admin/incidents";
 import { adminIncidentsQuery, adminKey } from "~/features/admin/queries";
 import { dayFormat, timeFormat } from "~/features/audit-log/labels";
 import { componentLabel, impactLabel } from "~/features/status/labels";
+import { statusPageUrl } from "~/features/status/links";
 import type { Incident } from "~/lib/api/types";
-import { docsUrl } from "~/lib/docs";
 
 export const Route = createFileRoute("/_admin/admin/incidents")({
   loader: ({ context: { queryClient } }) =>
@@ -44,17 +44,17 @@ function Incidents() {
         title="Incidentes"
         lead={
           <>
-            Lo que se publica en la{" "}
+            Lo que muestra el aviso de la consola. Las fallas de la DIAN se detectan solas; publica
+            un incidente para explicar algo más, y publícalo también en la{" "}
             <a
-              href={`${docsUrl}/estado`}
+              href={statusPageUrl}
               target="_blank"
               rel="noreferrer"
               className="underline underline-offset-4"
             >
               página de estado
-            </a>{" "}
-            y en el aviso de la consola. Las fallas de la DIAN se detectan solas; publica un
-            incidente para explicar algo más.
+            </a>
+            .
           </>
         }
         action={admin && <IncidentDialog />}
