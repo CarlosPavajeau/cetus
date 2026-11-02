@@ -1,7 +1,26 @@
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
 
-function Progress({ className, children, value, ...props }: ProgressPrimitive.Root.Props) {
+const progressIndicatorVariants = cva("h-full transition-all", {
+  variants: {
+    variant: {
+      default: "bg-primary",
+      destructive: "bg-destructive",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+function Progress({
+  className,
+  children,
+  value,
+  variant,
+  ...props
+}: ProgressPrimitive.Root.Props & VariantProps<typeof progressIndicatorVariants>) {
   return (
     <ProgressPrimitive.Root
       value={value}
@@ -11,7 +30,7 @@ function Progress({ className, children, value, ...props }: ProgressPrimitive.Ro
     >
       {children}
       <ProgressTrack>
-        <ProgressIndicator />
+        <ProgressIndicator variant={variant} />
       </ProgressTrack>
     </ProgressPrimitive.Root>
   );
@@ -30,11 +49,16 @@ function ProgressTrack({ className, ...props }: ProgressPrimitive.Track.Props) {
   );
 }
 
-function ProgressIndicator({ className, ...props }: ProgressPrimitive.Indicator.Props) {
+function ProgressIndicator({
+  className,
+  variant,
+  ...props
+}: ProgressPrimitive.Indicator.Props & VariantProps<typeof progressIndicatorVariants>) {
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      data-variant={variant}
+      className={cn(progressIndicatorVariants({ variant }), className)}
       {...props}
     />
   );

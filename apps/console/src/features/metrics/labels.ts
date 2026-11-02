@@ -5,6 +5,10 @@ const dayMonth = new Intl.DateTimeFormat("es-CO", {
   timeZone: "UTC",
 });
 const dayMonthYear = new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeZone: "UTC" });
+const instantLong = new Intl.DateTimeFormat("es-CO", {
+  dateStyle: "long",
+  timeZone: "America/Bogota",
+});
 
 export function formatPercent(share: number) {
   return percent.format(share);
@@ -45,4 +49,9 @@ export function formatDay(day: string) {
 /** "26 de octubre de 2026" for a YYYY-MM-DD day. */
 export function formatDayLong(day: string) {
   return dayMonthYear.format(new Date(`${day}T00:00:00Z`));
+}
+
+/** "26 de octubre de 2026" for an instant, on its calendar day in Colombia. */
+export function formatInstantLong(instant: string) {
+  return instantLong.format(new Date(instant));
 }
