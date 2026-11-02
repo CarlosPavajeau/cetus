@@ -1,0 +1,33 @@
+---
+title: Registro de cambios
+description: Los cambios de la API, del más reciente al más antiguo.
+---
+
+Los cambios de la API `/v1`, del más reciente al más antiguo. Ver [Versionado](/versionado) para saber
+cuáles pueden llegar sin aviso.
+
+## 2026-11-02
+
+- `type` de los errores de `/v1` es ahora el enlace a la entrada de su código en el
+  [catálogo de errores](/errores), en lugar de `about:blank`.
+- La especificación documenta el error `500 internal_error` en todos los endpoints, y el encabezado
+  `X-Request-Id` también en las respuestas `401`, `403` y `429`. Ya se enviaban.
+
+## 2026-10-31
+
+- Suscripciones mensuales con excedente. Nuevo error `402 overage_limit_reached`: la suscripción llegó a su
+  límite de excedente del periodo.
+- `402 no_active_product` ahora también tiene en cuenta las suscripciones. Ver
+  [Planes y créditos](/guias/planes-y-creditos).
+
+## 2026-10-30
+
+- Cada factura y nota débito de producción reserva un documento del saldo de la cuenta al crearse. Nuevos
+  errores `402 no_active_product` (sin un paquete vigente) e `402 insufficient_credits` (sin créditos ni
+  margen de cortesía). Las notas crédito nunca los reciben.
+
+## 2026-10-25
+
+- Publicación de la API `/v1`: facturas, notas crédito, notas débito, emisores, clientes y productos.
+- Nuevo error `422 technical_key_pending`: Cetus consulta a la DIAN la clave técnica de los rangos de
+  producción, y la factura espera hasta tenerla.
