@@ -31,12 +31,19 @@ test("a new account has no product and sees subscriptions and packages for sale"
     page.getByRole("region", { name: "Documentos facturables por mes" }).getByRole("row"),
   ).toHaveCount(7);
 
-  await page.getByRole("link", { name: "Comprar créditos" }).click();
-  await expect(page.getByRole("heading", { name: "Negocio" })).toBeVisible();
-  await expect(page.getByText("Precio final, sin IVA").first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: /^Recarga/ })).toHaveCount(0);
+  await page.getByRole("link", { name: "Ver planes" }).click();
   await expect(page.getByRole("heading", { name: "Inicial" })).toBeVisible();
+  await expect(page.getByText("Precio final, sin IVA").first()).toBeVisible();
   await expect(page.getByText(cop("$150 por documento adicional"))).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Negocio" })).toHaveCount(0);
+
+  await page.getByRole("tab", { name: "Anual" }).click();
+  await expect(page).toHaveURL(/periodo=anual/);
+  await expect(page.getByRole("heading", { name: "Negocio" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Inicial" })).toHaveCount(0);
+  await expect(
+    page.getByText("Para comprar una recarga necesitas un paquete anual vigente."),
+  ).toBeVisible();
 });
 
 test("a subscribed account sees its period, changes its overage limit and buys no packages", async ({
@@ -51,7 +58,7 @@ test("a subscribed account sees its period, changes its overage limit and buys n
   await expect(subscription.getByText("0 de 200", { exact: true })).toBeVisible();
   await expect(subscription.getByText(cop("0 documentos · $0"))).toBeVisible();
   await expect(subscription.getByText(cop("$117.000 · 0 de 780 documentos"))).toBeVisible();
-  await expect(page.getByRole("link", { name: "Comprar créditos" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Ver planes" })).toHaveCount(0);
 
   await subscription.getByRole("button", { name: "Cambiar límite" }).click();
   const dialog = page.getByRole("dialog");
@@ -153,7 +160,7 @@ test("an account with a package sees its lot and buys after setting its billing 
   await expect(page.getByRole("cell", { name: "Contador" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Paquete de las pruebas e2e" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Comprar créditos" }).click();
+  await page.getByRole("link", { name: "Ver planes" }).click();
   await expect(page.getByRole("heading", { name: "Recarga de 100 documentos" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Comprar" })).toHaveCount(0);
 
@@ -168,7 +175,7 @@ test("an account with a package sees its lot and buys after setting its billing 
   await expect(dialog).toHaveCount(0);
 
   const topUp = page
-    .locator('[data-slot="card"]')
+    .getByRole("listitem")
     .filter({ has: page.getByRole("heading", { name: "Recarga de 100 documentos" }) });
   await topUp.getByRole("button", { name: "Comprar" }).click();
   await expect(dialog.getByText("Compradora Andina SAS")).toBeVisible();

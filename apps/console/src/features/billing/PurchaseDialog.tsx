@@ -37,7 +37,9 @@ export function PurchaseDialog({
   offer,
   version,
   profile,
+  variant = "default",
 }: {
+  variant?: "default" | "outline";
   offer: PlanOffer;
   version: PlanVersion;
   profile: BillingProfile;
@@ -79,7 +81,9 @@ export function PurchaseDialog({
         }
       }}
     >
-      <DialogTrigger render={<Button />}>Comprar</DialogTrigger>
+      <DialogTrigger render={<Button variant={variant} aria-label={`Comprar ${offer.name}`} />}>
+        Comprar
+      </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Comprar {offer.name}</DialogTitle>

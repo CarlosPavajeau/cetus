@@ -194,7 +194,7 @@ function Billing() {
             </Link>
             {subscription === null && (
               <Link to="/billing/products" className={cn(buttonVariants())}>
-                Comprar créditos
+                Ver planes
               </Link>
             )}
           </div>

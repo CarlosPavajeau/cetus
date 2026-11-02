@@ -133,6 +133,48 @@ export function overageLabel(priceOverageCents: number) {
   return `${formatCents(priceOverageCents)} por documento adicional`;
 }
 
+export type PricedOffer = PlanOffer & { version: PlanVersion };
+
+/** An offer with a price today: the catalog shows it whether or not the account can buy it. */
+export function priced(offer: PlanOffer): offer is PricedOffer {
+  return offer.version !== null && offer.version.totalCents > 0;
+}
+
+/** " al mes" for a subscription, " al año" for a 12-month package or top-up. */
+export function pricePeriodLabel(offer: Pick<PlanOffer, "kind" | "validityMonths">) {
+  if (offer.kind === "SUBSCRIPTION") {
+    return "al mes";
+  }
+  if (offer.validityMonths === null) {
+    return null;
+  }
+  return offer.validityMonths === 12 ? "al año" : `por ${formatCount(offer.validityMonths)} meses`;
+}
+
+/** What each included document costs at the plan's price. */
+export function documentCostCents(version: Pick<PlanVersion, "totalCents" | "documentsIncluded">) {
+  if (version.documentsIncluded <= 0) {
+    throw new Error("A priced plan includes documents");
+  }
+  return version.totalCents / version.documentsIncluded;
+}
+
+export function documentCostLabel(cents: number) {
+  return `${formatCentsPrecise(cents)} por documento incluido`;
+}
+
+const copPrecise = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** "$74,50" or "$195", for unit costs that a whole-peso rounding would distort. */
+function formatCentsPrecise(cents: number) {
+  return Number.isInteger(cents / 100) ? formatCents(cents) : copPrecise.format(cents / 100);
+}
+
 /**
  * What the account can buy now: a subscription or a package without a subscription, and a top-up with a package
  * in force and no subscription, which bills its overage instead.
