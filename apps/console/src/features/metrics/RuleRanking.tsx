@@ -7,7 +7,6 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { formatRecentDateTime } from "~/features/api-keys/formats";
 import { explanations } from "~/features/documents/dian-errors";
 import { formatCount } from "~/features/usage/labels";
 import type { DianRuleKind, MetricsRule } from "~/lib/api/types";
@@ -57,7 +56,6 @@ function RuleTable({ rules, empty }: { rules: MetricsRule[]; empty: string }) {
           <TableHead>Regla</TableHead>
           <TableHead>Qué significa</TableHead>
           <TableHead className="text-right">Documentos</TableHead>
-          <TableHead>Última vez</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -75,7 +73,6 @@ function RuleTable({ rules, empty }: { rules: MetricsRule[]; empty: string }) {
               <TableCell className="text-right tabular-nums">
                 {formatCount(rule.documents)}
               </TableCell>
-              <TableCell>{formatRecentDateTime(new Date(rule.seenAt))}</TableCell>
             </TableRow>
           );
         })}

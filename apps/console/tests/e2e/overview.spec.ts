@@ -1,4 +1,11 @@
-import { createApiKey, issueInvoice, sandboxIssuer, waitForStatus } from "../support/issuers";
+import {
+  createApiKey,
+  createIssuer,
+  issueInvoice,
+  sandboxIssuer,
+  uniqueNit,
+  waitForStatus,
+} from "../support/issuers";
 import { expect, open, test } from "./fixtures";
 
 test("the overview shows how the period's documents went and the DIAN's rules", async ({
@@ -18,6 +25,12 @@ test("the overview shows how the period's documents went and the DIAN's rules", 
   await expect(page.getByRole("heading", { name: "Documentos emitidos" })).toBeVisible();
   await expect(page.getByText(/^50\s?%$/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Aceptados: 1" })).toBeVisible();
+  // The chart's days are also text, for screen readers.
+  await expect(page.getByRole("figure").getByRole("listitem")).toContainText([
+    /Aceptados 1, Rechazados 1, Fallidos 0, En curso 0$/,
+  ]);
+  // With a key, the account no longer needs the invitation to integrate.
+  await expect(page.getByRole("heading", { name: "Integra tu sistema" })).toHaveCount(0);
   await expect(page.getByRole("cell", { name: "FAK26" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "FAB10a" })).toBeVisible();
   await page.getByRole("tab", { name: "Notificaciones" }).click();
@@ -42,4 +55,17 @@ test("a new organization sees its first invoice invitation instead of empty metr
 
   await expect(page.getByText("Emite tu primera factura simulada")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Documentos emitidos" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Integra tu sistema" })).toBeVisible();
+});
+
+test("an issuer left halfway is resumed from the overview", async ({ page, organization }) => {
+  const issuerId = await createIssuer(organization, uniqueNit(), "A Medias SAS");
+
+  await open(page, "/overview");
+
+  await expect(
+    page.getByRole("heading", { name: "Termina de configurar A Medias SAS" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Continuar configuración" }).click();
+  await expect(page).toHaveURL(new RegExp(`/setup\\?issuerId=${issuerId}`));
 });

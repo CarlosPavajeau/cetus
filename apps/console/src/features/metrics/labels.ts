@@ -10,8 +10,11 @@ export function formatPercent(share: number) {
   return percent.format(share);
 }
 
-/** "48 s", "2 min 5 s" or "1 h 3 min": the DIAN answers in seconds, or much later while it is down. */
+/** "menos de 1 s", "48 s", "2 min 5 s" or "1 h 3 min": the DIAN answers in seconds, or much later while it is down. */
 export function formatDuration(seconds: number) {
+  if (seconds < 1) {
+    return "menos de 1 s";
+  }
   const total = Math.round(seconds);
   if (total < 60) {
     return `${total} s`;

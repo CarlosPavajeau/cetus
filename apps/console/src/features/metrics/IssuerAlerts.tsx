@@ -71,17 +71,15 @@ function RangeUsage({ range }: { range: RangeAlert }) {
 
   return (
     <div className="flex flex-col gap-1">
+      <Link
+        to="/issuers/$issuerId"
+        params={{ issuerId: range.issuerId }}
+        className="self-start text-xs font-medium underline-offset-4 hover:underline"
+      >
+        {range.issuerName}
+      </Link>
       <Progress value={range.used} max={range.total}>
-        <ProgressLabel>
-          <Link
-            to="/issuers/$issuerId"
-            params={{ issuerId: range.issuerId }}
-            className="underline-offset-4 hover:underline"
-          >
-            {range.issuerName}
-          </Link>
-          {` · ${name}`}
-        </ProgressLabel>
+        <ProgressLabel>{name}</ProgressLabel>
         <ProgressValue>
           {() =>
             `${formatCount(range.used)} de ${formatCount(range.total)} (${formatPercent(range.used / range.total)})`
@@ -90,7 +88,7 @@ function RangeUsage({ range }: { range: RangeAlert }) {
       </Progress>
       {range.runningOut && (
         <p className="text-2xs font-medium text-destructive-foreground">
-          {`Quedan ${formatCount(Math.max(0, range.total - range.used))} números: solicita una nueva resolución a la DIAN.`}
+          {`${remainingText(range.total - range.used)}: solicita una nueva resolución a la DIAN.`}
         </p>
       )}
       {range.validTo !== null && range.daysLeft !== null && (
@@ -107,6 +105,15 @@ function RangeUsage({ range }: { range: RangeAlert }) {
       )}
     </div>
   );
+}
+
+const plural = new Intl.PluralRules("es-CO");
+
+function remainingText(numbers: number) {
+  const left = Math.max(0, numbers);
+  return plural.select(left) === "one"
+    ? `Queda ${formatCount(left)} número`
+    : `Quedan ${formatCount(left)} números`;
 }
 
 function daysText(days: number) {

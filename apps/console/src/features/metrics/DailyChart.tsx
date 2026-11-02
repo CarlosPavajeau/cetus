@@ -8,6 +8,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "~/components/ui/chart";
+import { formatCount } from "~/features/usage/labels";
 import type { Metrics } from "~/lib/api/types";
 
 import { formatDay, formatDayLong } from "./labels";
@@ -62,6 +63,17 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
           ))}
         </BarChart>
       </ChartContainer>
+      <ul className="sr-only">
+        {metrics.days
+          .filter((day) => day.documents.total > 0)
+          .map((day) => (
+            <li key={day.date}>
+              {`${formatDayLong(day.date)}: ${series
+                .map((key) => `${config[key].label} ${formatCount(day.documents[key])}`)
+                .join(", ")}`}
+            </li>
+          ))}
+      </ul>
     </figure>
   );
 }

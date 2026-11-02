@@ -49,7 +49,7 @@ export function MetricTiles({ metrics }: { metrics: Metrics }) {
         detail={
           validation.secondsP95 === null
             ? "Sin respuestas de la DIAN"
-            : `Promedio · 95 % en menos de ${formatDuration(validation.secondsP95)}`
+            : `Promedio. El ${formatPercent(0.95)} tardó ${validation.secondsP95 < 1 ? "" : "hasta "}${formatDuration(validation.secondsP95)}`
         }
       />
     </dl>
@@ -75,7 +75,7 @@ export function OutcomeLinks({ metrics }: { metrics: Metrics }) {
           <Link
             to="/documents"
             search={{ status: outcome.status, from: metrics.from, to: metrics.to }}
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             {outcome.label}:{" "}
             <span className="font-medium text-foreground tabular-nums">
