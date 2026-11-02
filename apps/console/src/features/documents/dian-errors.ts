@@ -54,6 +54,15 @@ export const explanations: Record<string, DianRuleExplanation> = {
     action:
       "La nota débito debe llevar el nombre del concepto de corrección de la tabla 13.2.5 del anexo; el motivo libre va en las notas.",
   },
+  CAK55: {
+    title: "El cliente no tiene correo electrónico.",
+    action:
+      "La DIAN acepta el documento, pero espera el correo del adquiriente. Agrégalo al cliente: sin correo, Cetus tampoco puede enviarle el documento.",
+  },
+  RUT01: {
+    title: "La DIAN todavía no valida el estado del RUT.",
+    action: "Es un aviso informativo de la DIAN. No tienes que corregir nada.",
+  },
   FAK26: {
     title: "Una responsabilidad tributaria del cliente no está en la lista de la DIAN.",
     action:
