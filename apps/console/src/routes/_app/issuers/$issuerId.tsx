@@ -110,8 +110,10 @@ function invoiceExample(issuerId: string) {
 
 function IssuerDetailPage() {
   const { issuerId } = Route.useParams();
-  // The loader already returned notFound for a missing issuer.
-  const issuer = useSuspenseQuery(issuerDetailQuery(issuerId)).data!;
+  const issuer = useSuspenseQuery(issuerDetailQuery(issuerId)).data;
+  if (!issuer) {
+    throw notFound();
+  }
   const { data: issuers } = useSuspenseQuery(issuersQuery);
   const { manage } = useMemberPermissions();
   const sandbox = issuer.environment === "SANDBOX";

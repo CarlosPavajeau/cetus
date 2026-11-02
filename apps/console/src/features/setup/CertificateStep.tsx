@@ -59,7 +59,7 @@ export function CertificateStep({
     await onSaved();
   });
 
-  async function keepSaved(event: React.FormEvent<HTMLFormElement>) {
+  async function keepSaved(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     await onSaved();
   }

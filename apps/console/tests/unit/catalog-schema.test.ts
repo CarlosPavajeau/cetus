@@ -49,13 +49,16 @@ const product: Product = {
 
 describe("toCustomerValues", () => {
   it("keeps everything saved: responsibilities in the form, the rest beside it", () => {
-    expect(toCustomerValues(customer)).toEqual({
-      values: expect.objectContaining({
-        identificationNumber: "900123456-8",
-        taxLevelCodes: ["O-13", "O-15"],
-        municipalityCode: "11001",
-      }),
-      extras: { tradeName: "Comprador", phone: "6015550000", postalCode: "110111" },
+    const form = toCustomerValues(customer);
+    expect(form?.values).toMatchObject({
+      identificationNumber: "900123456-8",
+      taxLevelCodes: ["O-13", "O-15"],
+      municipalityCode: "11001",
+    });
+    expect(form?.extras).toEqual({
+      tradeName: "Comprador",
+      phone: "6015550000",
+      postalCode: "110111",
     });
   });
 

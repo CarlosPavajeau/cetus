@@ -51,8 +51,13 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
             content={
               <ChartTooltipContent
                 labelFormatter={(_, payload) => {
-                  const date: unknown = payload[0]?.payload?.date;
-                  return typeof date === "string" ? formatDayLong(date) : "";
+                  const row: unknown = payload[0]?.payload;
+                  return typeof row === "object" &&
+                    row !== null &&
+                    "date" in row &&
+                    typeof row.date === "string"
+                    ? formatDayLong(row.date)
+                    : "";
                 }}
               />
             }

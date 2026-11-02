@@ -95,8 +95,9 @@ export const retryWebhookDelivery = createServerFn({ method: "POST" })
       });
       return { ok: true };
     } catch (error) {
-      if (error instanceof CetusApiError && retryMessages[error.code]) {
-        return { ok: false, message: retryMessages[error.code]! };
+      const message = error instanceof CetusApiError ? retryMessages[error.code] : undefined;
+      if (message) {
+        return { ok: false, message };
       }
       throw error;
     }

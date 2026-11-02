@@ -226,7 +226,7 @@ function Overview() {
                           <ArrowUpRightIcon
                             data-icon="inline-end"
                             strokeWidth={2}
-                            absoluteStrokeWidth
+                            nonScalingStroke
                           />
                         </a>
                         <Link

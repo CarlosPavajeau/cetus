@@ -90,8 +90,10 @@ function dataType(value: unknown): string {
 
 function ActivityEvent() {
   const { eventId } = Route.useParams();
-  // The loader already returned notFound for a missing entry.
-  const entry = useSuspenseQuery(auditEntryQuery(Number(eventId))).data!;
+  const entry = useSuspenseQuery(auditEntryQuery(Number(eventId))).data;
+  if (!entry) {
+    throw notFound();
+  }
   const { data: keys } = useSuspenseQuery(apiKeysQuery);
   const createdAt = new Date(entry.createdAt);
   const fields = Object.entries(entry.data);
