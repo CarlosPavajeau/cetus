@@ -37,7 +37,7 @@ export function Activity({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Actividad</CardTitle>
+        <CardTitle>Documentos emitidos</CardTitle>
         <CardDescription>
           {`Documentos de ${environmentLabel[metrics.environment].toLowerCase()} por fecha de emisión.`}
         </CardDescription>

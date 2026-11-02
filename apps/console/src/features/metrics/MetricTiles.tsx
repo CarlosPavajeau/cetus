@@ -32,7 +32,7 @@ export function MetricTiles({ metrics }: { metrics: Metrics }) {
       <Tile
         label="Tasa de aceptación"
         value={acceptanceRate === null ? "—" : formatPercent(acceptanceRate)}
-        detail={`${formatCount(totals.accepted)} aceptados de ${formatCount(totals.accepted + totals.rejected)} con respuesta`}
+        detail={`Aceptados: ${formatCount(totals.accepted)} de ${formatCount(totals.accepted + totals.rejected)} con respuesta`}
       />
       <Tile
         label="Monto facturado"

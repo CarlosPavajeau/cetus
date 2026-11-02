@@ -15,8 +15,8 @@ test("the overview shows how the period's documents went and the DIAN's rules", 
 
   await open(page, "/overview");
 
-  await expect(page.getByText("Actividad", { exact: true })).toBeVisible();
-  await expect(page.getByText(/^50\s%$/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Documentos emitidos" })).toBeVisible();
+  await expect(page.getByText(/^50\s?%$/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Aceptados: 1" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "FAK26" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "FAB10a" })).toBeVisible();
@@ -41,5 +41,5 @@ test("a new organization sees its first invoice invitation instead of empty metr
   await open(page, "/overview");
 
   await expect(page.getByText("Emite tu primera factura simulada")).toBeVisible();
-  await expect(page.getByText("Actividad", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Documentos emitidos" })).toHaveCount(0);
 });
