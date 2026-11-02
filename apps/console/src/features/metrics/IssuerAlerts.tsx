@@ -154,7 +154,11 @@ function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: bo
 
   return (
     <li className="flex flex-col gap-1">
-      <Progress value={range.used} max={range.total}>
+      <Progress
+        value={range.used}
+        max={range.total}
+        variant={attention ? "destructive" : "default"}
+      >
         <ProgressLabel>
           {rangeName(range)}
           {issuerShown && (
