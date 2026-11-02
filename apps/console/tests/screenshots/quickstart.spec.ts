@@ -12,7 +12,12 @@ async function open(page: Page, path: string) {
 }
 
 async function capture(page: Page, name: string, mask: Locator[] = []) {
-  await page.screenshot({ path: `${directory}${name}.png`, mask, maskColor: "#e4e4e7" });
+  await page.screenshot({
+    path: `${directory}${name}.png`,
+    mask,
+    maskColor: "#e4e4e7",
+    animations: "disabled",
+  });
 }
 
 // A confirmed address, so the screens show no banner asking for it.

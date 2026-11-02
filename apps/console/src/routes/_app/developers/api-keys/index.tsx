@@ -286,8 +286,9 @@ function ApiKeys() {
         <AlertDescription>
           <p>
             Usa una llave por integración y envíala en el encabezado{" "}
-            <code>Authorization: Bearer …</code>. Las llaves de pruebas envían a la habilitación de
-            la DIAN y no emiten documentos con validez fiscal.
+            <code>Authorization: Bearer …</code>. Solo las llaves de producción emiten documentos
+            con validez fiscal: las de pruebas envían a la habilitación de la DIAN y las de
+            simulación no llegan a la DIAN.
           </p>
         </AlertDescription>
       </Alert>
@@ -460,7 +461,7 @@ function CreateApiKeyDialog() {
             <DialogHeader>
               <DialogTitle>Nueva llave</DialogTitle>
               <DialogDescription>
-                Las llaves de pruebas envían a la habilitación de la DIAN.
+                Cada llave trabaja en un solo ambiente: lo que emites con ella solo existe allí.
               </DialogDescription>
             </DialogHeader>
             <FieldGroup>
