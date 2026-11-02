@@ -68,7 +68,7 @@ Monitores en Better Stack (cada 3 minutos, desde una región que la regla de pa�
 
 | Monitor | Tipo | URL | Sano cuando |
 |---|---|---|---|
-| API | HTTP status | `https://cetus-api.cantte.com/v1/issuers` | Responde 401 (sin API key responde sin tocar la base) |
+| API | HTTP status | `https://cetus-api.cantte.com/status` | Responde 2XX (Better Stack solo acepta 2XX; `/status` sale de caché) |
 | Consola | HTTP status | `https://cetus.cantte.com/sign-in` | Responde 200 |
 | Procesamiento | Palabra clave | `https://cetus-api.cantte.com/status` | Contiene `"component":"PROCESSING","status":"OPERATIONAL"` |
 | DIAN · producción | Palabra clave | `https://cetus-api.cantte.com/status` | Contiene `"component":"DIAN_LIVE","status":"OPERATIONAL"` |
