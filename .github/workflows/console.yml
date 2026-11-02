@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: console-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Filtered here rather than with `paths:` so the job always reports: a skipped job passes as a required check.
   changes:
