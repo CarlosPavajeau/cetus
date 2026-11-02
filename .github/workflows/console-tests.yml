@@ -44,11 +44,17 @@ jobs:
               - "mise.toml"
               - ".github/workflows/console-tests.yml"
 
-  e2e:
+  # Each shard starts its own stack, so the Playwright tests split across runners without sharing a database.
+  e2e-shard:
+    name: e2e (${{ matrix.shard }}/${{ strategy.job-total }})
     needs: changes
     if: needs.changes.outputs.stack == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -114,10 +120,11 @@ jobs:
           exit 1
 
       - name: Integration tests
+        if: matrix.shard == 1
         run: pnpm --filter @cetus/console test:integration
 
       - name: End-to-end tests
-        run: pnpm --filter @cetus/console test:e2e
+        run: pnpm --filter @cetus/console test:e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           CI: true
 
@@ -125,7 +132,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             apps/console/playwright-report/
             apps/console/test-results/
@@ -135,6 +142,32 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: service-logs
+          name: service-logs-${{ matrix.shard }}
           path: .logs/
           retention-days: 7
+
+  # The required check. A skipped dependency reports as skipped, not failed, so the shards' result is checked
+  # here explicitly; when the filter finds no stack changes the shards are skipped and this passes.
+  e2e:
+    needs: [changes, e2e-shard]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check the shards
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          STACK_CHANGED: ${{ needs.changes.outputs.stack }}
+          SHARDS_RESULT: ${{ needs.e2e-shard.result }}
+        run: |
+          if [ "$CHANGES_RESULT" != success ]; then
+            echo "::error::The change filter ended with '$CHANGES_RESULT'"
+            exit 1
+          fi
+          if [ "$STACK_CHANGED" != true ]; then
+            echo "No stack changes; the end-to-end tests were skipped"
+            exit 0
+          fi
+          if [ "$SHARDS_RESULT" != success ]; then
+            echo "::error::The end-to-end shards ended with '$SHARDS_RESULT'"
+            exit 1
+          fi

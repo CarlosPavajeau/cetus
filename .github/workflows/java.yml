@@ -2,15 +2,19 @@
 # and worker tests, so the runner needs Docker and nothing else.
 name: Java
 
+# Runs on main too because setup-gradle only writes its cache there, and pull requests can only read caches
+# written on main: without it every check that runs Gradle starts with an empty Gradle home and build cache.
 on:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
   group: java-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Filtered here rather than with `paths:` so the job always reports: a skipped job passes as a required check.
@@ -19,10 +23,11 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      java: ${{ steps.filter.outputs.java }}
+      java: ${{ github.event_name == 'push' || steps.filter.outputs.java == 'true' }}
     steps:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
+        if: github.event_name == 'pull_request'
         with:
           filters: |
             java:
