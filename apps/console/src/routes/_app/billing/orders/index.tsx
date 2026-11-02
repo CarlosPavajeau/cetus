@@ -51,7 +51,7 @@ function Orders() {
           </EmptyHeader>
           <EmptyContent>
             <Link to="/billing/products" className={cn(buttonVariants())}>
-              Comprar créditos
+              Ver planes
             </Link>
           </EmptyContent>
         </Empty>
