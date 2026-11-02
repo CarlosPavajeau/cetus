@@ -55,6 +55,9 @@ export const actionLabel: Record<AuditAction, string> = {
   BILLING_ORDER_REFUNDED: "Orden reembolsada",
   BILLING_ORDER_CHARGEBACK: "Contracargo",
   BILLING_ORDER_DEBT_WAIVED: "Deuda condonada",
+  STATUS_INCIDENT_OPENED: "Incidente publicado",
+  STATUS_INCIDENT_UPDATED: "Incidente editado",
+  STATUS_INCIDENT_RESOLVED: "Incidente resuelto",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

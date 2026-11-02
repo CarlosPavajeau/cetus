@@ -239,13 +239,19 @@ export const auditActions = [
   "BILLING_ORDER_REFUNDED",
   "BILLING_ORDER_CHARGEBACK",
   "BILLING_ORDER_DEBT_WAIVED",
+  "STATUS_INCIDENT_OPENED",
+  "STATUS_INCIDENT_UPDATED",
+  "STATUS_INCIDENT_RESOLVED",
 ] as const satisfies readonly AuditAction[];
 
-/** Actions on a person or on the plan catalog rather than an account: only the administration's log has them. */
+/** Actions on a person, the plan catalog or the status page rather than an account: only the administration's log has them. */
 export const userAuditActions = [
   "USER_BANNED",
   "USER_UNBANNED",
   "PLAN_CREATED",
+  "STATUS_INCIDENT_OPENED",
+  "STATUS_INCIDENT_UPDATED",
+  "STATUS_INCIDENT_RESOLVED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.
