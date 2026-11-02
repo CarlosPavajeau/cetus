@@ -47,7 +47,6 @@ reglas de cardinalidad de `AGENTS.md`.
 
 | Alerta | Condición | Severidad |
 |---|---|---|
-| Sitio caído | Todos los chequeos sintéticos de un sitio fallaron durante 10 minutos (dos chequeos seguidos) | critical |
 | Servicio sin telemetría | El API o el worker llevan 5 minutos sin enviar métricas (el worker no tiene chequeo público) | critical |
 | Jobs muertos | Algún job pasó a `DEAD` en 15 minutos | high |
 | Cola atascada | El job listo más antiguo lleva más de 5 minutos, sostenido 2 minutos | high |
@@ -59,25 +58,28 @@ Cada alerta enlaza a su panel y dice qué revisar primero. Sin datos (por ejempl
 
 ## Página de estado
 
-Los clientes no ven Grafana. Ven `https://cetus-docs.cantte.com/estado` y un aviso en la consola, los dos alimentados
-por `GET /status` del API (`PlatformStatus`), que calcula los componentes desde la base con los mismos umbrales de
-"DIAN con fallas" y "Cola atascada". Lo que no se detecta solo se publica como incidente en la consola de
-administración (*Incidentes*).
+Los clientes no ven Grafana. Ven la página de estado en Better Stack (`https://status.cantte.com/es`, en `statusUrl` de
+docs y `statusPageUrl` de la consola) y un aviso en la consola. Better Stack mide la disponibilidad desde fuera, guarda
+el historial y avisa al equipo por correo, así que reemplaza a los chequeos sintéticos de Grafana. El aviso de la
+consola lee `GET /status` del API (`PlatformStatus`), que calcula los componentes desde la base con los mismos
+umbrales de "DIAN con fallas" y "Cola atascada".
+
+Monitores en Better Stack (cada 3 minutos, desde una región que la regla de países de Cloudflare deje pasar):
+
+| Monitor | Tipo | URL | Sano cuando |
+|---|---|---|---|
+| API | HTTP status | `https://cetus-api.cantte.com/status` | Responde 2XX (Better Stack solo acepta 2XX; `/status` sale de caché) |
+| Consola | HTTP status | `https://cetus.cantte.com/sign-in` | Responde 200 |
+| Procesamiento | Palabra clave | `https://cetus-api.cantte.com/status` | Contiene `"component":"PROCESSING","status":"OPERATIONAL"` |
+| DIAN · producción | Palabra clave | `https://cetus-api.cantte.com/status` | Contiene `"component":"DIAN_LIVE","status":"OPERATIONAL"` |
+| DIAN · habilitación | Palabra clave | `https://cetus-api.cantte.com/status` | Contiene `"component":"DIAN_TEST","status":"OPERATIONAL"` |
+
+Los monitores de palabra clave fallan también si el API no responde. En la página, API, Consola y Procesamiento van
+bajo "Cetus" y los de la DIAN bajo "DIAN".
+Los incidentes se publican en los dos lados: en Better Stack para la página y en la consola de administración
+(*Incidentes*) para el aviso.
 
 ## Configuración manual
-
-**Chequeos sintéticos** (*Testing & synthetics → Synthetics → Add new check → HTTP*), desde **una sonda, cada 5
-minutos**: con dos chequeos son unas 17 mil ejecuciones al mes, dentro de la cuota gratuita (cada minuto y desde varias
-sondas la agotaban). El *job* debe ser exactamente el de la tabla: la alerta "Sitio caído" filtra por él.
-
-| Job | URL | Respuesta válida |
-|---|---|---|
-| `health-api` | `https://cetus-api.cantte.com/v1/issuers` | 401 (sin API key responde sin tocar la base) |
-| `health-console` | `https://cetus.cantte.com/sign-in` | 200 |
-
-Los docs no llevan chequeo: son estáticos en Cloudflare Pages. Su página `/estado` lee `GET /status` del API desde el
-navegador y muestra "La API de Cetus no responde" si no contesta, así que también avisa a los clientes cuando el API
-cae.
 
 **Sentry** (picos de errores de la consola): *Alerts → Create alert → Issues*, "Number of events in an issue is
 more than 20 in 5 minutes" y "A new issue is created", notificando al mismo correo o canal.

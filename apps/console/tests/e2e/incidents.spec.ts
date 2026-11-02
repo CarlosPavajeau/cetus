@@ -1,5 +1,7 @@
 import { type BrowserContext } from "@playwright/test";
 
+import { statusPageUrl } from "~/features/status/links";
+
 import { type TestOrganization, createOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
 import { consoleCookies } from "../support/stack";
@@ -37,7 +39,7 @@ test("an incident an admin publishes shows in every console until it is resolved
   await expect(banner.getByText(title)).toBeVisible();
   await expect(banner.getByRole("link", { name: "Ver estado" })).toHaveAttribute(
     "href",
-    /\/estado$/,
+    statusPageUrl,
   );
 
   await signIn(context, admin);

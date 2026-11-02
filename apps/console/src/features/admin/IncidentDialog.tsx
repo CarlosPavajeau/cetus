@@ -83,8 +83,8 @@ export function IncidentDialog({ incident }: { incident?: Incident }) {
           <DialogHeader>
             <DialogTitle>{incident ? "Editar incidente" : "Publicar incidente"}</DialogTitle>
             <DialogDescription>
-              Aparece en la página de estado y en la consola de todas las cuentas hasta que lo
-              resuelvas.
+              Aparece en la consola de todas las cuentas hasta que lo resuelvas. La página de estado
+              se actualiza aparte, en Better Stack.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>

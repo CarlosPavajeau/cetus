@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 
 import { useActiveEnvironment, usePageEnvironment } from "~/features/environment/queries";
 import type { Environment, StatusComponent } from "~/lib/api/types";
-import { docsUrl } from "~/lib/docs";
 
+import { statusPageUrl } from "./links";
 import { platformStatusQuery } from "./queries";
 
 const dianComponent: Record<Environment, StatusComponent | null> = {
@@ -65,7 +65,7 @@ function Line({ children }: { children: ReactNode }) {
       <span>
         {children}{" "}
         <a
-          href={`${docsUrl}/estado`}
+          href={statusPageUrl}
           target="_blank"
           rel="noreferrer"
           className="underline underline-offset-4"

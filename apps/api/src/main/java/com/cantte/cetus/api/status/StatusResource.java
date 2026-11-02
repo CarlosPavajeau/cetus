@@ -10,8 +10,8 @@ import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 /**
- * Public and outside /v1, for the docs' status page and the console's incident banner: it needs no API key and
- * is not part of the published API.
+ * Public and outside /v1, for the console's incident banner and the status page's keyword monitors on Better
+ * Stack: it needs no API key and is not part of the published API.
  */
 @Path("/status")
 @APIResponse(responseCode = "500", ref = "InternalError")
