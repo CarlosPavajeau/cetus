@@ -13,7 +13,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @Schema(name = "ProblemDetail", description = "Un error, como problem detail (RFC 9457).")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ProblemDetail(
-        @Schema(description = "Tipo del problema (RFC 9457).", example = "about:blank")
+        @Schema(
+                description = "Tipo del problema (RFC 9457): la entrada de su código en el catálogo de errores.",
+                example = "https://cetus-docs.cantte.com/errores#issuer_not_ready")
         String type,
 
         @Schema(description = "Nombre del estado HTTP.", example = "Unprocessable Entity")

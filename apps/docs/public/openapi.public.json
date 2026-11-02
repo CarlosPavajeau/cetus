@@ -113,6 +113,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyDocuments"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -157,6 +160,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -204,6 +210,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -273,6 +282,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -327,6 +339,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -387,6 +402,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -428,6 +446,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -463,6 +484,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -542,6 +566,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyDocuments"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -586,6 +613,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -633,6 +663,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -717,6 +750,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyDocuments"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -766,6 +802,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -813,6 +852,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -852,6 +894,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -895,6 +940,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -964,6 +1012,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -1018,6 +1069,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -1078,6 +1132,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -1119,6 +1176,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -1154,6 +1214,9 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "security": [
@@ -1272,7 +1335,7 @@
       "InvalidRequestProblem": {
         "summary": "Campo inválido",
         "value": {
-          "type": "about:blank",
+          "type": "https://cetus-docs.cantte.com/errores#invalid_request",
           "title": "Bad Request",
           "status": 400,
           "detail": "The request is invalid",
@@ -1361,7 +1424,7 @@
       "IssuerRequiredProblem": {
         "summary": "Falta el emisor",
         "value": {
-          "type": "about:blank",
+          "type": "https://cetus-docs.cantte.com/errores#issuer_required",
           "title": "Unprocessable Entity",
           "status": 422,
           "detail": "The account has several issuers in the SANDBOX environment; send issuerId",
@@ -1590,6 +1653,11 @@
       },
       "Forbidden": {
         "description": "`account_suspended`: la cuenta está suspendida y sus llaves no pueden operar.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
         "content": {
           "application/problem+json": {
             "schema": {
@@ -1600,6 +1668,21 @@
       },
       "IdempotencyConflict": {
         "description": "`idempotency_in_progress`: otra petición con la misma `Idempotency-Key` todavía se está\nprocesando. Reintenta en unos segundos.\n",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetail"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "`internal_error`: un error inesperado de Cetus. Reintenta con la misma `Idempotency-Key`; si sigue\npasando, escríbenos con el `X-Request-Id`.\n",
         "headers": {
           "X-Request-Id": {
             "$ref": "#/components/headers/X-Request-Id"
@@ -1666,6 +1749,9 @@
       "TooManyDocuments": {
         "description": "`rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan.\n`sandbox_daily_limit`: la cuenta ya emitió los documentos de simulación del día; el límite se\nreinicia a medianoche, hora de Colombia. En ambos casos, espera los segundos de `Retry-After`.\n",
         "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          },
           "Retry-After": {
             "$ref": "#/components/headers/Retry-After"
           }
@@ -1681,6 +1767,9 @@
       "TooManyRequests": {
         "description": "`rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan. Espera los\nsegundos de `Retry-After`.\n",
         "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          },
           "Retry-After": {
             "$ref": "#/components/headers/Retry-After"
           }
@@ -1695,6 +1784,11 @@
       },
       "Unauthorized": {
         "description": "`unauthorized`: falta el encabezado `Authorization` o la llave no existe o fue revocada.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        },
         "content": {
           "application/problem+json": {
             "schema": {
@@ -2340,7 +2434,7 @@
             "$ref": "#/components/schemas/UUID"
           },
           "concept": {
-            "description": "Concepto de la nota (tabla 13.2.4 del anexo).",
+            "description": "Concepto de la nota (tabla 13.2.5 del anexo).",
             "type": "string",
             "$ref": "#/components/schemas/DebitNoteConcept"
           },
@@ -3120,9 +3214,9 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "Tipo del problema (RFC 9457).",
+            "description": "Tipo del problema (RFC 9457): la entrada de su código en el catálogo de errores.",
             "examples": [
-              "about:blank"
+              "https://cetus-docs.cantte.com/errores#issuer_not_ready"
             ]
           },
           "title": {

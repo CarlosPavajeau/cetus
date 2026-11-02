@@ -1,4 +1,12 @@
 {
   "title": "Documentación",
-  "pages": ["index", "---Inicio rápido---", "...inicio-rapido", "---Guías---", "...guias"]
+  "pages": [
+    "index",
+    "---Inicio rápido---",
+    "...inicio-rapido",
+    "---Guías---",
+    "...guias",
+    "---Referencia---",
+    "errores"
+  ]
 }

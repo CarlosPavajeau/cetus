@@ -30,7 +30,7 @@ class ApiKeyFilterTest {
                 .then()
                 .statusCode(401)
                 .contentType("application/problem+json")
-                .body("type", equalTo("about:blank"))
+                .body("type", equalTo("https://cetus-docs.cantte.com/errores#unauthorized"))
                 .body("title", equalTo("Unauthorized"))
                 .body("status", equalTo(401))
                 .body("instance", startsWith("/v1/invoices/"))

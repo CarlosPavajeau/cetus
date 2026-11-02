@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev --port 3001",
-    "build": "node scripts/postman.mjs && vp build",
+    "build": "node scripts/postman.mjs && node scripts/check-error-catalog.mjs && vp build",
     "preview": "vp preview --port 3001",
     "postman": "node scripts/postman.mjs",
     "typecheck": "tsc --noEmit",

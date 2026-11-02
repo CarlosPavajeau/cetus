@@ -55,7 +55,7 @@ class OpenApiFilterTest {
                 assertThat(operation.get("responses"))
                         .as(name)
                         .asInstanceOf(MAP)
-                        .containsKeys("401", "403", "429");
+                        .containsKeys("401", "403", "429", "500");
             });
         }
     }
