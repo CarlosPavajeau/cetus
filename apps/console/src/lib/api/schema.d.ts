@@ -2725,7 +2725,7 @@ export interface components {
         DebitNoteRequest: {
             /** @description La factura que se corrige. Debe estar aceptada por la DIAN. */
             invoiceId: components["schemas"]["UUID"];
-            /** @description Concepto de la nota (tabla 13.2.4 del anexo). */
+            /** @description Concepto de la nota (tabla 13.2.5 del anexo). */
             concept: components["schemas"]["DebitNoteConcept"];
             /**
              * @description Motivo de la nota; aparece en el documento.
@@ -3583,8 +3583,8 @@ export interface components {
         /** @description Un error, como problem detail (RFC 9457). */
         ProblemDetail: {
             /**
-             * @description Tipo del problema (RFC 9457).
-             * @example about:blank
+             * @description Tipo del problema (RFC 9457): la entrada de su código en el catálogo de errores.
+             * @example https://cetus-docs.cantte.com/errores#issuer_not_ready
              */
             type: string;
             /**
@@ -4213,6 +4213,7 @@ export interface components {
         /** @description `unauthorized`: falta el encabezado `Authorization` o la llave no existe o fue revocada. */
         Unauthorized: {
             headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
                 [name: string]: unknown;
             };
             content: {
@@ -4222,6 +4223,7 @@ export interface components {
         /** @description `account_suspended`: la cuenta está suspendida y sus llaves no pueden operar. */
         Forbidden: {
             headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
                 [name: string]: unknown;
             };
             content: {
@@ -4357,6 +4359,7 @@ export interface components {
          */
         TooManyRequests: {
             headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
                 "Retry-After": components["headers"]["Retry-After"];
                 [name: string]: unknown;
             };
@@ -4371,7 +4374,21 @@ export interface components {
          */
         TooManyDocuments: {
             headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
                 "Retry-After": components["headers"]["Retry-After"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /**
+         * @description `internal_error`: un error inesperado de Cetus. Reintenta con la misma `Idempotency-Key`; si sigue
+         *     pasando, escríbenos con el `X-Request-Id`.
+         */
+        InternalError: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
                 [name: string]: unknown;
             };
             content: {
@@ -10228,6 +10245,7 @@ export interface operations {
             409: components["responses"]["IdempotencyConflict"];
             422: components["responses"]["CorrectionRejected"];
             429: components["responses"]["TooManyDocuments"];
+            500: components["responses"]["InternalError"];
         };
     };
     CreditNoteResource_get: {
@@ -10255,6 +10273,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     CreditNoteResource_file: {
@@ -10288,6 +10307,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["FileNotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     CustomerResource_list: {
@@ -10319,6 +10339,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     CustomerResource_create: {
@@ -10348,6 +10369,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             422: components["responses"]["CustomerRejected"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     CustomerResource_get: {
@@ -10374,6 +10396,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     CustomerResource_update: {
@@ -10406,6 +10429,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             422: components["responses"]["CustomerRejected"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     CustomerResource_delete: {
@@ -10430,6 +10454,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     DebitNoteResource_create: {
@@ -10472,6 +10497,7 @@ export interface operations {
             409: components["responses"]["IdempotencyConflict"];
             422: components["responses"]["CorrectionRejected"];
             429: components["responses"]["TooManyDocuments"];
+            500: components["responses"]["InternalError"];
         };
     };
     DebitNoteResource_get: {
@@ -10499,6 +10525,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     DebitNoteResource_file: {
@@ -10532,6 +10559,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["FileNotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     InvoiceResource_create: {
@@ -10573,6 +10601,7 @@ export interface operations {
             409: components["responses"]["IdempotencyConflict"];
             422: components["responses"]["InvoiceRejected"];
             429: components["responses"]["TooManyDocuments"];
+            500: components["responses"]["InternalError"];
         };
     };
     InvoiceResource_get: {
@@ -10600,6 +10629,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     InvoiceResource_file: {
@@ -10633,6 +10663,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["FileNotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     PublicIssuerResource_list: {
@@ -10656,6 +10687,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     PublicIssuerResource_get: {
@@ -10682,6 +10714,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     ProductResource_list: {
@@ -10713,6 +10746,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     ProductResource_create: {
@@ -10742,6 +10776,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             422: components["responses"]["ProductRejected"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     ProductResource_get: {
@@ -10768,6 +10803,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     ProductResource_update: {
@@ -10800,6 +10836,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             422: components["responses"]["ProductRejected"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
     ProductResource_delete: {
@@ -10824,6 +10861,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
         };
     };
 }
