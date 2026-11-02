@@ -12,6 +12,7 @@ import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
+import com.cantte.cetus.persistence.entity.DianSubmissionEntity.ErrorKind;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
@@ -249,6 +250,9 @@ class ProcessDocumentHandlerTest {
         DianFaultException fault = catchThrowableOfType(DianFaultException.class, () -> process(id));
 
         assertThat(fault.retryable()).isTrue();
+        assertThat(submissions(id))
+                .singleElement()
+                .satisfies(s -> assertThat(s.errorKind).isEqualTo(ErrorKind.FAULT));
         assertThat(document(id).status).isEqualTo(DocumentStatus.FAILED);
         assertThat(artifacts(id)).contains(Kind.DIAN_RESPONSE);
 
@@ -266,6 +270,9 @@ class ProcessDocumentHandlerTest {
         GiveUp giveUp = catchThrowableOfType(GiveUp.class, () -> process(id));
 
         assertThat(giveUp).hasMessageContaining("s:Sender");
+        assertThat(submissions(id))
+                .singleElement()
+                .satisfies(s -> assertThat(s.errorKind).isNull());
         assertThat(document(id).status).isEqualTo(DocumentStatus.FAILED);
     }
 
@@ -278,9 +285,10 @@ class ProcessDocumentHandlerTest {
         DianTransportException timeout = catchThrowableOfType(DianTransportException.class, () -> process(id));
 
         assertThat(timeout.isTimeout()).isTrue();
-        assertThat(submissions(id))
-                .singleElement()
-                .satisfies(s -> assertThat(s.timedOut).isTrue());
+        assertThat(submissions(id)).singleElement().satisfies(s -> {
+            assertThat(s.timedOut).isTrue();
+            assertThat(s.errorKind).isEqualTo(ErrorKind.TIMEOUT);
+        });
         assertThat(document(id).status).isEqualTo(DocumentStatus.PROCESSING);
 
         process(id);
@@ -313,6 +321,9 @@ class ProcessDocumentHandlerTest {
 
         DianTransportException error = catchThrowableOfType(DianTransportException.class, () -> process(id));
         assertThat(error.isTimeout()).isFalse();
+        assertThat(submissions(id))
+                .singleElement()
+                .satisfies(s -> assertThat(s.errorKind).isEqualTo(ErrorKind.TRANSPORT));
 
         process(id);
 

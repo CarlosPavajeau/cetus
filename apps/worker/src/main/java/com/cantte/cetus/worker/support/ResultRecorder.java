@@ -121,6 +121,25 @@ public class ResultRecorder {
         submission.persist();
     }
 
+    /** A call the DIAN did not answer: a timeout, an I/O or HTTP error, or a SOAP fault. */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void unanswered(
+            UUID documentId,
+            String operation,
+            DianSubmissionEntity.ErrorKind errorKind,
+            String error,
+            long durationMs) {
+        DianSubmissionEntity submission = new DianSubmissionEntity();
+        submission.id = Ids.newId();
+        submission.documentId = documentId;
+        submission.operation = operation;
+        submission.timedOut = errorKind == DianSubmissionEntity.ErrorKind.TIMEOUT;
+        submission.errorKind = errorKind;
+        submission.durationMs = (int) durationMs;
+        submission.errors = new ArrayList<>(List.of(error));
+        submission.persist();
+    }
+
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void cufe(UUID documentId, String cufe) {
         DocumentEntity doc = DocumentEntity.lock(documentId);
