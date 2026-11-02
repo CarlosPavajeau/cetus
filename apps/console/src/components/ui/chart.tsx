@@ -168,7 +168,7 @@ function ChartTooltipContent({
                 )}
               >
                 {formatter && item.value !== undefined && item.name !== undefined ? (
-                  formatter(item.value, item.name, item, index, item.payload)
+                  formatter(item.value, item.name, item, index, payload)
                 ) : (
                   <>
                     {itemConfig?.icon ? (
