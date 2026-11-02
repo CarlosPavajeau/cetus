@@ -1,6 +1,7 @@
 -- The rules the DIAN reported in each verdict, read once from its texts ("Regla: FAK26, Rechazo: …") so the console
 -- can rank them with a GROUP BY. The worker writes them with the verdict (ResultRecorder.completed); this loads
--- the verdicts already recorded, with the same format as DianRule.
+-- the verdicts already recorded, with the same format as DianRule. regexp_matches, unlike regexp_match, yields no row
+-- for an error outside that format instead of a row of NULLs.
 CREATE TABLE document_dian_rules (
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     rule        TEXT NOT NULL,
@@ -13,7 +14,7 @@ INSERT INTO document_dian_rules (document_id, rule, kind, message)
 SELECT d.id, m[1], CASE WHEN lower(m[2]) = 'rechazo' THEN 'REJECTION' ELSE 'NOTIFICATION' END, btrim(m[3])
 FROM documents d
 CROSS JOIN LATERAL jsonb_array_elements_text(d.dian_errors) AS e(error)
-CROSS JOIN LATERAL regexp_match(btrim(e.error), '^Regla:\s*([^,]*[^,\s])\s*,\s*(Rechazo|Notificaci[oó]n)\s*:\s*(.*)$', 'i') AS m
+CROSS JOIN LATERAL regexp_matches(btrim(e.error), '^Regla:\s*([^,]*[^,\s])\s*,\s*(Rechazo|Notificaci[oó]n)\s*:\s*(.*)$', 'i') AS m
 WHERE d.status IN ('ACCEPTED', 'REJECTED')
 ON CONFLICT DO NOTHING;
 
