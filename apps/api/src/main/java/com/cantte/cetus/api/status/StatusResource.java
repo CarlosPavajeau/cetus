@@ -14,6 +14,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
  * is not part of the published API.
  */
 @Path("/status")
+@APIResponse(responseCode = "500", ref = "InternalError")
 @Produces(MediaType.APPLICATION_JSON)
 public class StatusResource {
 

@@ -171,6 +171,10 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "BILLING_ORDER_REFUNDED":
     case "BILLING_ORDER_CHARGEBACK":
       return `${text(data.reference)} · ${cents(data.amountCents)}${typeof data.debtCents === "number" && data.debtCents > 0 ? ` · deuda de ${cents(data.debtCents)}` : ""}`;
+    case "STATUS_INCIDENT_OPENED":
+    case "STATUS_INCIDENT_UPDATED":
+    case "STATUS_INCIDENT_RESOLVED":
+      return `${text(data.component)} · ${text(data.impact)} · ${text(data.title)}`;
     case "BILLING_ORDER_DEBT_WAIVED":
       return `${text(data.reference)} · ${cents(data.totalCents)} · ${text(data.reason)}`;
     case "SUBSCRIPTION_CANCELED":

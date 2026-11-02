@@ -395,6 +395,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["AdminIncidentResource_list"];
+        put?: never;
+        /** Open */
+        post: operations["AdminIncidentResource_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/incidents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update */
+        put: operations["AdminIncidentResource_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/incidents/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve */
+        post: operations["AdminIncidentResource_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/me": {
         parameters: {
             query?: never;
@@ -1557,6 +1609,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["StatusResource_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/credit-notes": {
         parameters: {
             query?: never;
@@ -2214,7 +2283,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED" | "BILLING_ORDER_REFUND_REQUESTED" | "BILLING_ORDER_REFUND_RESOLVED" | "BILLING_ORDER_REFUNDED" | "BILLING_ORDER_CHARGEBACK" | "BILLING_ORDER_DEBT_WAIVED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED" | "BILLING_ORDER_REFUND_REQUESTED" | "BILLING_ORDER_REFUND_RESOLVED" | "BILLING_ORDER_REFUNDED" | "BILLING_ORDER_CHARGEBACK" | "BILLING_ORDER_DEBT_WAIVED" | "STATUS_INCIDENT_OPENED" | "STATUS_INCIDENT_UPDATED" | "STATUS_INCIDENT_RESOLVED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -2352,6 +2421,12 @@ export interface components {
         ChecksView: {
             /** Format: int32 */
             ordersChecked: number;
+        };
+        /** @enum {string} */
+        ComponentStatus: "OPERATIONAL" | "DEGRADED" | "OUTAGE";
+        ComponentView: {
+            component: components["schemas"]["StatusComponent"];
+            status: components["schemas"]["ComponentStatus"];
         };
         ContactView: {
             id: components["schemas"]["UUID"];
@@ -3097,6 +3172,23 @@ export interface components {
             reason: string;
             expiresAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @enum {string} */
+        IncidentImpact: "DEGRADED" | "OUTAGE";
+        IncidentRequest: {
+            component: components["schemas"]["StatusComponent"];
+            impact: components["schemas"]["IncidentImpact"];
+            title: string;
+            message: string;
+        };
+        IncidentView: {
+            id: components["schemas"]["UUID"];
+            component: components["schemas"]["StatusComponent"];
+            impact: components["schemas"]["IncidentImpact"];
+            title: string;
+            message: string;
+            startedAt: components["schemas"]["OffsetDateTime"];
+            resolvedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
         /** @description La factura que corrige una nota. */
         InvoiceRef: {
             /** @description Identificador de la factura. */
@@ -3570,6 +3662,13 @@ export interface components {
             /** @description When the next version starts; null while it is the last one */
             validTo: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
+        /** @description What the status page and the console show: each component and the recent incidents */
+        PlatformStatusView: {
+            status: components["schemas"]["ComponentStatus"];
+            components: components["schemas"]["ComponentView"][];
+            incidents: components["schemas"]["IncidentView"][];
+            checkedAt: components["schemas"]["OffsetDateTime"];
+        };
         PreviewLine: {
             /** Format: int32 */
             lineNumber: number;
@@ -3918,6 +4017,8 @@ export interface components {
         StatusChangeRequest: {
             reason: string;
         };
+        /** @enum {string} */
+        StatusComponent: "API" | "PROCESSING" | "DIAN_LIVE" | "DIAN_TEST";
         /** @description Documents by outcome; in progress is received, processing or submitted */
         StatusCountsView: {
             /** Format: int64 */
@@ -5861,6 +5962,221 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminIncidentResource_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentView"][];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminIncidentResource_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IncidentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminIncidentResource_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IncidentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminIncidentResource_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentView"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10204,6 +10520,27 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
+        };
+    };
+    StatusResource_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformStatusView"];
+                };
+            };
+            500: components["responses"]["InternalError"];
         };
     };
     CreditNoteResource_create: {

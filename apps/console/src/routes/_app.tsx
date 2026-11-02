@@ -68,6 +68,7 @@ import { isSidebarOpen } from "~/features/layout/sidebar";
 import { EmailVerificationBanner } from "~/features/session/EmailVerificationBanner";
 import { requireMembership } from "~/features/session/guard";
 import { OrganizationSwitcher } from "~/features/session/OrganizationSwitcher";
+import { IncidentBanner } from "~/features/status/IncidentBanner";
 import { ThemeSwitch } from "~/features/theme/ThemeSwitch";
 import { authClient } from "~/lib/auth/client";
 import { docsUrl } from "~/lib/docs";
@@ -262,6 +263,7 @@ function AppLayout() {
       <SidebarInset>
         <ImpersonationBanner />
         <SandboxBanner />
+        <IncidentBanner />
         {/* While impersonating, the address is the person's to confirm, not support's. */}
         {!session.user.emailVerified && !session.impersonatedBy && (
           <EmailVerificationBanner email={session.user.email} />
