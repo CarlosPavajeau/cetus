@@ -47,7 +47,7 @@ reglas de cardinalidad de `AGENTS.md`.
 
 | Alerta | Condición | Severidad |
 |---|---|---|
-| Sitio caído | Todos los chequeos sintéticos de un sitio fallaron durante 3 minutos | critical |
+| Sitio caído | Todos los chequeos sintéticos de un sitio fallaron durante 10 minutos (dos chequeos seguidos) | critical |
 | Servicio sin telemetría | El API o el worker llevan 5 minutos sin enviar métricas (el worker no tiene chequeo público) | critical |
 | Jobs muertos | Algún job pasó a `DEAD` en 15 minutos | high |
 | Cola atascada | El job listo más antiguo lleva más de 5 minutos, sostenido 2 minutos | high |
@@ -57,16 +57,27 @@ reglas de cardinalidad de `AGENTS.md`.
 
 Cada alerta enlaza a su panel y dice qué revisar primero. Sin datos (por ejemplo, sin tráfico) quedan en OK.
 
+## Página de estado
+
+Los clientes no ven Grafana. Ven `https://cetus-docs.cantte.com/estado` y un aviso en la consola, los dos alimentados
+por `GET /status` del API (`PlatformStatus`), que calcula los componentes desde la base con los mismos umbrales de
+"DIAN con fallas" y "Cola atascada". Lo que no se detecta solo se publica como incidente en la consola de
+administración (*Incidentes*).
+
 ## Configuración manual
 
-**Chequeos sintéticos** (*Testing & synthetics → Synthetics → Add new check → HTTP*), desde dos o más sondas, cada
-minuto. El *job* debe ser exactamente el de la tabla: la alerta "Sitio caído" filtra por él.
+**Chequeos sintéticos** (*Testing & synthetics → Synthetics → Add new check → HTTP*), desde **una sonda, cada 5
+minutos**: con dos chequeos son unas 17 mil ejecuciones al mes, dentro de la cuota gratuita (cada minuto y desde varias
+sondas la agotaban). El *job* debe ser exactamente el de la tabla: la alerta "Sitio caído" filtra por él.
 
 | Job | URL | Respuesta válida |
 |---|---|---|
 | `health-api` | `https://cetus-api.cantte.com/v1/issuers` | 401 (sin API key responde sin tocar la base) |
 | `health-console` | `https://cetus.cantte.com/sign-in` | 200 |
-| `health-docs` | `https://cetus-docs.cantte.com/` | 200 |
+
+Los docs no llevan chequeo: son estáticos en Cloudflare Pages. Su página `/estado` lee `GET /status` del API desde el
+navegador y muestra "La API de Cetus no responde" si no contesta, así que también avisa a los clientes cuando el API
+cae.
 
 **Sentry** (picos de errores de la consola): *Alerts → Create alert → Issues*, "Number of events in an issue is
 more than 20 in 5 minutes" y "A new issue is created", notificando al mismo correo o canal.
