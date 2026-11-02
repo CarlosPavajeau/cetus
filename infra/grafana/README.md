@@ -58,7 +58,7 @@ Cada alerta enlaza a su panel y dice qué revisar primero. Sin datos (por ejempl
 
 ## Página de estado
 
-Los clientes no ven Grafana. Ven la página de estado en Better Stack (`https://status.cantte.com`, en `statusUrl` de
+Los clientes no ven Grafana. Ven la página de estado en Better Stack (`https://status.cantte.com/es`, en `statusUrl` de
 docs y `statusPageUrl` de la consola) y un aviso en la consola. Better Stack mide la disponibilidad desde fuera, guarda
 el historial y avisa al equipo por correo, así que reemplaza a los chequeos sintéticos de Grafana. El aviso de la
 consola lee `GET /status` del API (`PlatformStatus`), que calcula los componentes desde la base con los mismos
