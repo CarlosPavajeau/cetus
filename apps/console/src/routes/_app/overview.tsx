@@ -1,10 +1,10 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowUpRightIcon, FileTextIcon } from "lucide-react";
+import { ArrowUpRightIcon, FileTextIcon, PlusIcon } from "lucide-react";
 
 import { PageHeader } from "~/components/PageHeader";
 import { buttonVariants } from "~/components/ui/button";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Empty,
   EmptyContent,
@@ -13,6 +13,14 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "~/components/ui/empty";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "~/components/ui/item";
 import { accountQuery } from "~/features/account/queries";
 import { accountStatusLabel } from "~/features/admin/labels";
 import { accountStatuses } from "~/features/admin/schema";
@@ -24,7 +32,7 @@ import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environ
 import { issuerName } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 import { Activity } from "~/features/metrics/Activity";
-import { IssuerAlerts } from "~/features/metrics/IssuerAlerts";
+import { IssuerWarnings, NumberingUsage } from "~/features/metrics/IssuerAlerts";
 import {
   type Period,
   periodDefault,
@@ -90,14 +98,30 @@ function Overview() {
   const status = accountStatuses.find((each) => each === account.status);
   const statusText = status === undefined ? account.status : accountStatusLabel[status];
 
+  const sandboxFirst = environment === "SANDBOX" && !tried;
+  const steps = {
+    configure: !fiscal && manage,
+    resume: settingUp !== undefined && manage,
+    integrate: !integrated,
+  };
+  const stepping = Object.values(steps).some(Boolean);
+
   return (
     <>
       <PageHeader
         title={account.name}
         lead={`${creditsProductLabel(credits)} · cuenta ${statusText.toLowerCase()}`}
+        action={
+          !sandboxFirst && (
+            <Link to="/documents/new" className={cn(buttonVariants())}>
+              <PlusIcon data-icon="inline-start" />
+              Emitir factura
+            </Link>
+          )
+        }
       />
 
-      {environment === "SANDBOX" && !tried && (
+      {sandboxFirst && (
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -117,9 +141,9 @@ function Overview() {
         </Empty>
       )}
 
-      {alerts.certificates.length + alerts.ranges.length > 0 && <IssuerAlerts alerts={alerts} />}
+      <IssuerWarnings alerts={alerts} />
 
-      {!(environment === "SANDBOX" && !tried) && (
+      {!sandboxFirst && (
         <Activity
           metrics={metrics}
           period={period}
@@ -129,69 +153,97 @@ function Overview() {
         />
       )}
 
-      {!fiscal && manage && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Factura con validez fiscal</CardTitle>
-            <CardDescription>
-              Cuando quieras facturar ante la DIAN, configura tu empresa: su NIT, el software
-              registrado en la DIAN, el certificado de firma y la resolución de numeración. El
-              asistente te guía paso a paso.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Link to="/setup" className={cn(buttonVariants({ variant: "outline" }))}>
-              Configurar emisor
-            </Link>
-          </CardFooter>
-        </Card>
-      )}
-
-      {settingUp && manage && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{`Termina de configurar ${issuerName(settingUp)}`}</CardTitle>
-            <CardDescription>
-              El emisor sigue en habilitación. Retoma el asistente en el paso donde lo dejaste.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Link
-              to="/setup"
-              search={{ issuerId: settingUp.id }}
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              Continuar configuración
-            </Link>
-          </CardFooter>
-        </Card>
-      )}
-
-      {!integrated && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Integra tu sistema</CardTitle>
-            <CardDescription>
-              Crea una llave de simulación y envía tu primera factura a{" "}
-              <code>POST /v1/invoices</code>. Las llaves de pruebas envían a la habilitación de la
-              DIAN; las de producción, a facturación real.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Link to="/developers/api-keys" className={cn(buttonVariants({ variant: "outline" }))}>
-              Crear llave de API
-            </Link>
-            <a
-              href={`${docsUrl}/inicio-rapido/desarrolladores`}
-              target="_blank"
-              rel="noreferrer"
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              Ver el inicio rápido
-              <ArrowUpRightIcon data-icon="inline-end" strokeWidth={2} absoluteStrokeWidth />
-            </a>
-          </CardFooter>
-        </Card>
+      {(stepping || alerts.ranges.length > 0) && (
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          {stepping && (
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle>Próximos pasos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ItemGroup>
+                  {steps.configure && (
+                    <Item variant="outline">
+                      <ItemContent>
+                        <ItemTitle>
+                          <h3>Factura con validez fiscal</h3>
+                        </ItemTitle>
+                        <ItemDescription>
+                          Configura tu NIT, el software registrado en la DIAN, el certificado de
+                          firma y la resolución de numeración. El asistente te guía.
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <Link
+                          to="/setup"
+                          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                        >
+                          Configurar emisor
+                        </Link>
+                      </ItemActions>
+                    </Item>
+                  )}
+                  {steps.resume && settingUp && (
+                    <Item variant="outline">
+                      <ItemContent>
+                        <ItemTitle>
+                          <h3>{`Termina de configurar ${issuerName(settingUp)}`}</h3>
+                        </ItemTitle>
+                        <ItemDescription>
+                          Sigue en habilitación. Retoma el asistente donde lo dejaste.
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <Link
+                          to="/setup"
+                          search={{ issuerId: settingUp.id }}
+                          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                        >
+                          Continuar configuración
+                        </Link>
+                      </ItemActions>
+                    </Item>
+                  )}
+                  {steps.integrate && (
+                    <Item variant="outline">
+                      <ItemContent>
+                        <ItemTitle>
+                          <h3>Integra tu sistema</h3>
+                        </ItemTitle>
+                        <ItemDescription>
+                          Crea una llave de API y envía tu primera factura a{" "}
+                          <code>POST /v1/invoices</code>.
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <a
+                          href={`${docsUrl}/inicio-rapido/desarrolladores`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+                        >
+                          Ver el inicio rápido
+                          <ArrowUpRightIcon
+                            data-icon="inline-end"
+                            strokeWidth={2}
+                            absoluteStrokeWidth
+                          />
+                        </a>
+                        <Link
+                          to="/developers/api-keys"
+                          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                        >
+                          Crear llave de API
+                        </Link>
+                      </ItemActions>
+                    </Item>
+                  )}
+                </ItemGroup>
+              </CardContent>
+            </Card>
+          )}
+          {alerts.ranges.length > 0 && <NumberingUsage ranges={alerts.ranges} />}
+        </div>
       )}
     </>
   );
