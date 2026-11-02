@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     api(project(":modules:signing"))
+    implementation(project(":modules:domain"))
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

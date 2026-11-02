@@ -17,6 +17,7 @@ import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.audit.Actor;
+import com.cantte.cetus.persistence.dian.DocumentDianRules;
 import com.cantte.cetus.persistence.entity.CreditReservationEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
@@ -72,6 +73,9 @@ public class ResultRecorder {
 
     @Inject
     UsageCounters usage;
+
+    @Inject
+    DocumentDianRules dianRules;
 
     @Inject
     Notifications notifications;
@@ -150,6 +154,7 @@ public class ResultRecorder {
         doc.dianStatusMessage = response.statusDescription();
         doc.dianErrors = new ArrayList<>(response.errors());
         doc.validatedAt = OffsetDateTime.now();
+        dianRules.record(documentId, response.errors());
         if (response.valid()) {
             // Same transaction as the status change: an accepted document is always delivered.
             jobs.enqueue(JobTypes.DELIVER_DOCUMENT, documentId);

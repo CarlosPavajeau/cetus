@@ -550,6 +550,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["AlertsResource_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/api-keys": {
         parameters: {
             query?: never;
@@ -1115,6 +1132,23 @@ export interface paths {
         get?: never;
         /** Set Software */
         put: operations["IssuerResource_setSoftware"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["MetricsResource_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -2130,6 +2164,20 @@ export interface components {
             createdAt: components["schemas"]["OffsetDateTime"];
             updatedAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @description What needs attention in an environment's issuers */
+        AlertsView: {
+            certificates: components["schemas"]["CertificateAlertView"][];
+            ranges: components["schemas"]["RangeAlertView"][];
+        };
+        /** @description What the documents the DIAN accepted add up to, in one currency */
+        AmountView: {
+            currency: string;
+            invoiced: number;
+            debited: number;
+            credited: number;
+            /** @description Invoiced plus debited minus credited */
+            net: number;
+        };
         ApiKeyDetail: {
             key: components["schemas"]["ApiKeyView"];
             /** Format: int64 */
@@ -2239,6 +2287,17 @@ export interface components {
         };
         /** @enum {string} */
         Category: "TECHNICAL" | "FISCAL" | "BILLING";
+        /** @description An issuer's signing certificate that expires soon or has expired */
+        CertificateAlertView: {
+            issuerId: components["schemas"]["UUID"];
+            issuerName: string;
+            validTo: components["schemas"]["OffsetDateTime"];
+            /**
+             * Format: int64
+             * @description Days left in Colombia; negative once it expired
+             */
+            daysLeft: number;
+        };
         CertificateRequest: {
             pkcs12Base64: string;
             password: string;
@@ -2642,6 +2701,11 @@ export interface components {
             createdAt: components["schemas"]["OffsetDateTime"];
             /** @description Cuándo cambió por última vez. */
             updatedAt: components["schemas"]["OffsetDateTime"];
+        };
+        /** @description Documents issued on a day, by outcome */
+        DayView: {
+            date: components["schemas"]["LocalDate"];
+            documents: components["schemas"]["StatusCountsView"];
         };
         /**
          * @description Concepto de la nota débito (tabla 13.2.5 del anexo).
@@ -3161,6 +3225,8 @@ export interface components {
         Kind1: "REFUND" | "CHARGEBACK";
         /** @enum {string} */
         Kind2: "SUBSCRIPTION" | "PACKAGE" | "TOPUP";
+        /** @enum {string} */
+        Kind3: "REJECTION" | "NOTIFICATION";
         /** @description Una línea del documento: un producto o servicio. */
         Line: {
             /**
@@ -3203,6 +3269,24 @@ export interface components {
         };
         /** Format: date */
         LocalDate: string;
+        /** @description An environment's documents issued in a period, by issue date in Colombia */
+        MetricsView: {
+            environment: components["schemas"]["Environment"];
+            from: components["schemas"]["LocalDate"];
+            to: components["schemas"]["LocalDate"];
+            totals: components["schemas"]["StatusCountsView"];
+            /**
+             * Format: double
+             * @description Accepted over accepted plus rejected; null with no verdict
+             */
+            acceptanceRate: number | null;
+            /** @description Every day of the period, oldest first */
+            days: components["schemas"]["DayView"][];
+            amounts: components["schemas"]["AmountView"][];
+            validation: components["schemas"]["ValidationTimeView"];
+            /** @description The most frequent rules of each kind, most frequent first */
+            rules: components["schemas"]["RuleView"][];
+        };
         /** @enum {string} */
         Mode: "WOMPI" | "EXTERNAL";
         MonthTotalView: {
@@ -3625,6 +3709,29 @@ export interface components {
             /** @description Si su estado le permite emitir con esta llave. */
             readyToIssue: boolean;
         };
+        /** @description An active numbering range and how much of it was used */
+        RangeAlertView: {
+            id: components["schemas"]["UUID"];
+            issuerId: components["schemas"]["UUID"];
+            issuerName: string;
+            documentType: components["schemas"]["DocumentType"];
+            prefix: string | null;
+            /** Format: int64 */
+            used: number;
+            /** Format: int64 */
+            total: number;
+            /** @example 2022-03-10 */
+            validTo: ((string | components["schemas"]["LocalDate"] | null) | null) | components["schemas"]["LocalDate"] | null;
+            /**
+             * Format: int64
+             * @description Days left of its resolution in Colombia
+             */
+            daysLeft: number | null;
+            /** @description True from 80 % of its numbers used */
+            runningOut: boolean;
+            /** @description True from 30 days before its resolution ends */
+            expiring: boolean;
+        };
         ReasonRequest: {
             reason: string;
         };
@@ -3753,6 +3860,17 @@ export interface components {
             approvedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             createdAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @description A DIAN rule and how many of the period's documents it was reported for */
+        RuleView: {
+            rule: string;
+            kind: components["schemas"]["Kind3"];
+            /** Format: int64 */
+            documents: number;
+            /** @description The DIAN's message in the latest verdict */
+            message: string;
+            /** @description The latest verdict that reported it */
+            seenAt: components["schemas"]["OffsetDateTime"];
+        };
         SavePaymentMethodRequest: {
             /** @description The token Wompi gave the browser for the card (tok_…) */
             cardToken: string;
@@ -3799,6 +3917,19 @@ export interface components {
         Status7: "ACTIVE" | "DISABLED";
         StatusChangeRequest: {
             reason: string;
+        };
+        /** @description Documents by outcome; in progress is received, processing or submitted */
+        StatusCountsView: {
+            /** Format: int64 */
+            accepted: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: int64 */
+            failed: number;
+            /** Format: int64 */
+            inProgress: number;
+            /** Format: int64 */
+            total: number;
         };
         /** @description The open month of a subscription */
         SubscriptionPeriodView: {
@@ -3993,6 +4124,18 @@ export interface components {
             /** @description The last months, newest first, this month included */
             months: components["schemas"]["MonthTotalView"][];
             requests: components["schemas"]["RequestLimitsView"];
+        };
+        /** @description From the document's creation to the DIAN's verdict */
+        ValidationTimeView: {
+            /**
+             * Format: int64
+             * @description Documents with a verdict
+             */
+            documents: number;
+            /** Format: double */
+            secondsAverage: number | null;
+            /** Format: double */
+            secondsP95: number | null;
         };
         /** @enum {string} */
         VerificationStatus: "PENDING" | "VERIFIED" | "MISMATCH" | "ERROR";
@@ -6251,6 +6394,37 @@ export interface operations {
             };
         };
     };
+    AlertsResource_get: {
+        parameters: {
+            query: {
+                environment: components["schemas"]["Environment"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertsView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     ApiKeyResource_list: {
         parameters: {
             query?: never;
@@ -8401,6 +8575,48 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    MetricsResource_get: {
+        parameters: {
+            query: {
+                environment: components["schemas"]["Environment"];
+                from: components["schemas"]["LocalDate"];
+                to: components["schemas"]["LocalDate"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricsView"];
+                };
+            };
+            /** @description Invalid period */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

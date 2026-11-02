@@ -1,27 +1,12 @@
-import { type } from "arktype";
-
 import {
   createTestApiKey,
   issueInvoice,
   onboardIssuer,
+  sandboxIssuer,
   uniqueNit,
   waitForStatus,
 } from "../support/issuers";
-import type { TestOrganization } from "../support/organization";
 import { expect, open, test } from "./fixtures";
-
-/** The sample issuer every new organization starts with. */
-async function sandboxIssuer(organization: TestOrganization) {
-  const response = await organization.api("/console/issuers");
-  const issuers = type({ id: "string", environment: "string" })
-    .array()
-    .assert(await response.json());
-  const sample = issuers.find((issuer) => issuer.environment === "SANDBOX");
-  if (!sample) {
-    throw new Error("The organization has no sandbox issuer");
-  }
-  return sample.id;
-}
 
 test("a new organization issues a simulated invoice without any setup", async ({
   page,

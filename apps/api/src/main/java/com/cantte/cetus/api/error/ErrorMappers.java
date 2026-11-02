@@ -3,6 +3,7 @@ package com.cantte.cetus.api.error;
 import com.cantte.cetus.api.billing.Orders;
 import com.cantte.cetus.api.console.ConsoleIssuance;
 import com.cantte.cetus.api.console.DocumentResends;
+import com.cantte.cetus.api.console.MetricsResource;
 import com.cantte.cetus.api.documents.DocumentDrafts;
 import com.cantte.cetus.api.documents.DocumentFiles;
 import com.cantte.cetus.api.help.SupportTickets;
@@ -107,6 +108,11 @@ public class ErrorMappers {
 
     @ServerExceptionMapper
     public Response resendTooSoon(DocumentResends.TooSoon e) {
+        return e.getResponse();
+    }
+
+    @ServerExceptionMapper
+    public Response invalidPeriod(MetricsResource.InvalidPeriod e) {
         return e.getResponse();
     }
 

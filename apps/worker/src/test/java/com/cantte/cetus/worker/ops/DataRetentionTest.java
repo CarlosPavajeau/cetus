@@ -172,7 +172,8 @@ class DataRetentionTest {
 
     @Test
     void sandboxDocumentsGoWithTheirRecordsAndFilesAfterTenDays() {
-        UUID invoice = fixtures.sandboxInvoice("900108281");
+        // Accepted with a notification rule, so it also leaves a row in document_dian_rules.
+        UUID invoice = fixtures.sandboxInvoice("1000000001");
         fixtures.webhookEndpoint(invoice, Environment.SANDBOX, "http://localhost:4000/hooks");
         processAndDeliver(invoice);
         UUID note = fixtures.creditNote(invoice);
@@ -188,6 +189,7 @@ class DataRetentionTest {
                 .allSatisfy(key -> assertThat(storage.exists(key)).isTrue());
         List<UUID> webhookJobs = webhookJobs(invoice);
         assertThat(webhookJobs).isNotEmpty();
+        assertThat(count("document_dian_rules", List.of(invoice, note))).isPositive();
 
         retention.run();
 
@@ -196,14 +198,18 @@ class DataRetentionTest {
         assertThat(existing("documents", List.of(invoice, note, recent, testInvoice)))
                 .containsExactlyInAnyOrder(recent, testInvoice);
         assertThat(files).noneSatisfy(key -> assertThat(storage.exists(key)).isTrue());
-        assertThat(QuarkusTransaction.requiringNew()
-                        .call(() -> ((Number) em.createNativeQuery(
-                                                "SELECT count(*) FROM billing.dian_submissions WHERE document_id IN (:ids)")
-                                        .setParameter("ids", List.of(invoice, note))
-                                        .getSingleResult())
-                                .longValue()))
-                .isZero();
+        assertThat(count("dian_submissions", List.of(invoice, note))).isZero();
+        assertThat(count("document_dian_rules", List.of(invoice, note))).isZero();
         assertThat(existing("jobs", webhookJobs)).isEmpty();
+    }
+
+    private long count(String table, List<UUID> documentIds) {
+        return QuarkusTransaction.requiringNew()
+                .call(() -> ((Number) em.createNativeQuery(
+                                        "SELECT count(*) FROM billing." + table + " WHERE document_id IN (:ids)")
+                                .setParameter("ids", documentIds)
+                                .getSingleResult())
+                        .longValue());
     }
 
     private void processAndDeliver(UUID documentId) {

@@ -61,6 +61,7 @@ public class DataRetention {
             "DELETE FROM billing.webhook_events WHERE document_id IN (:ids)",
             "DELETE FROM billing.document_deliveries WHERE document_id IN (:ids)",
             "DELETE FROM billing.dian_submissions WHERE document_id IN (:ids)",
+            "DELETE FROM billing.document_dian_rules WHERE document_id IN (:ids)",
             "DELETE FROM billing.document_artifacts WHERE document_id IN (:ids)",
             "DELETE FROM billing.jobs WHERE reference_id IN (:ids)",
             "DELETE FROM billing.documents WHERE id IN (:ids)");
