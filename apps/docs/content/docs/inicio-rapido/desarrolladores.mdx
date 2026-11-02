@@ -267,29 +267,9 @@ Antes de confiar en un webhook, verifica su firma. Cetus firma según
 [Standard Webhooks](https://www.standardwebhooks.com/), así que sirve cualquiera de sus librerías. Sin
 librería, en Node.js:
 
-```js
-import { createHmac, timingSafeEqual } from "node:crypto";
+<include lang="js">../../../snippets/webhooks/verify.js</include>
 
-/** `rawBody` es el cuerpo tal como llegó, antes de convertirlo a JSON. */
-export function verifyCetusWebhook(headers, rawBody, secret) {
-    const id = headers["webhook-id"];
-    const timestamp = headers["webhook-timestamp"];
-    if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) {
-        return false;
-    }
-    const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
-    const expected = createHmac("sha256", key).update(`${id}.${timestamp}.${rawBody}`).digest();
-    return headers["webhook-signature"].split(" ").some((signature) => {
-        const [version, value] = signature.split(",");
-        const received = Buffer.from(value ?? "", "base64");
-        return (
-            version === "v1" &&
-            received.length === expected.length &&
-            timingSafeEqual(received, expected)
-        );
-    });
-}
-```
+La guía de [Webhooks](/guias/webhooks#verifica-la-firma) trae el mismo código en Python, PHP, Java y C#.
 
 Responde con cualquier código 2xx para confirmar la entrega; si no, Cetus reintenta durante unas horas.
 `webhook-id` es el mismo en cada reintento: úsalo para no procesar dos veces el mismo evento.
@@ -343,6 +323,6 @@ Un rechazo se ve así:
 - **Pruebas y producción.** Cuando configures tu empresa ante la DIAN, solo cambias la llave: `cetus_test_`
   para las pruebas de habilitación y `cetus_live_` para producción. Ver [Ambientes](/guias/ambientes).
 - **Notas crédito y débito.** Se emiten sobre una factura aceptada con `POST /v1/credit-notes` y
-  `POST /v1/debit-notes`. Ver la [referencia](/reference#tag/notas-crédito).
+  `POST /v1/debit-notes`. Ver [Notas crédito y débito](/guias/notas-credito-y-debito).
 - **Postman.** La [colección de Postman](/cetus.postman_collection.json) guarda el `id` de cada documento que
   creas y lo usa en las consultas siguientes.

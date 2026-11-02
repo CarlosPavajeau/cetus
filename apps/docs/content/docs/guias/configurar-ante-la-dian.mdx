@@ -1,0 +1,141 @@
+---
+title: Configurar tu empresa ante la DIAN
+description: De la habilitación a tu primera factura con validez fiscal, paso a paso.
+---
+
+Para emitir facturas con validez fiscal, tu empresa (el **emisor**) pasa por dos etapas ante la DIAN:
+
+1. **Habilitación**: registras a Cetus como tu software en el portal de la DIAN y envías un **set de
+   pruebas**, un grupo de facturas de ensayo que la DIAN revisa antes de autorizarte. Se hace en el
+   ambiente **Pruebas**.
+2. **Producción**: con la habilitación terminada y una **resolución de numeración** (la autorización de
+   la DIAN para un rango de números de factura), emites documentos reales en el ambiente **Producción**.
+
+Todo se hace desde la consola, con **Configurar emisor**. Solo el dueño y los administradores de la
+organización pueden configurar emisores.
+
+## Antes de empezar
+
+Ten a mano:
+
+- **Tu RUT actualizado.** De ahí salen el NIT, el nombre, las responsabilidades tributarias y la dirección.
+- **Acceso al portal de la DIAN**, con el usuario del representante legal o de la persona natural, en el
+  servicio de facturación electrónica.
+- **Tu certificado de firma digital**: el archivo `.p12` o `.pfx` a nombre del emisor y su contraseña. Lo
+  entrega una entidad de certificación acreditada por la ONAC, como Certicámara, GSE o Andes SCD.
+
+Toma unos 20 minutos. Cada paso se guarda al continuar, así que puedes salir y retomarlo donde lo dejaste.
+
+## Habilitación
+
+En el **Resumen** de la consola, pulsa **Configurar emisor**. El asistente tiene cuatro pasos.
+
+<Steps>
+<Step>
+
+### Datos del emisor
+
+Copia los datos del RUT: tipo de persona, NIT (el dígito de verificación se calcula solo), razón social,
+responsabilidad de IVA, responsabilidades tributarias y dirección.
+
+Escribe la razón social **exactamente** como aparece en el RUT. La DIAN la compara con cada factura y, si
+no coincide, la acepta con la notificación `FAJ43b`.
+
+</Step>
+<Step>
+
+### Software DIAN
+
+En el [portal de habilitación](https://catalogo-vpfe-hab.dian.gov.co) registras a Cetus como tu software:
+
+1. En el menú, entra a «Registro y habilitación» › «Documentos electrónicos» › «Factura electrónica» y pulsa
+   «Configurar modos de operación».
+
+    ![Página «Facturador electrónico» del portal de habilitación, con el botón «Configurar modos de operación»](/images/dian/facturador-electronico.webp)
+
+2. Elige «Software propio», escribe el nombre del software (por ejemplo, Cetus) y un **PIN** de 5 números
+   que recuerdes. Copia el «ID del SW» y pulsa «Asociar».
+3. Tu software aparece en «Listado de modos de operación asociados». Su «Id» es el **Software ID**, y el
+   ojo de «Acciones» abre su set de pruebas, con el **TestSetId**.
+
+    ![Página «Configurar modos de operación» con «Software propio» elegido y el listado de modos de operación asociados](/images/dian/modos-operacion.webp)
+
+En la consola, escribe el Software ID (36 caracteres, con guiones), el PIN y el TestSetId.
+
+<Callout>
+    Las capturas son de noviembre de 2026. Si el portal no coincide, la DIAN lo cambió: escríbenos
+    desde **Ayuda** y lo revisamos.
+</Callout>
+
+</Step>
+<Step>
+
+### Certificado digital
+
+Sube el archivo `.p12` o `.pfx` y escribe su contraseña: la que te dio la entidad al entregarte el
+certificado, no la de Cetus ni la del portal de la DIAN. Debe estar emitido para el mismo NIT del paso 1.
+
+Cetus revisa el archivo, la contraseña y la vigencia antes de guardarlo. El certificado se guarda cifrado y
+nunca se puede descargar desde la consola.
+
+¿Lo tiene otra persona, por ejemplo tu contador? Pídenos desde **Ayuda** un enlace de carga: sirve una sola
+vez, dura 48 horas y no necesita cuenta en Cetus.
+
+</Step>
+<Step>
+
+### Numeración
+
+Todo set de pruebas usa el mismo rango (prefijo `SETP`), así que el asistente ya lo trae. Solo falta su
+**clave técnica**: en el portal de habilitación, en «Listado de modos de operación asociados», el ícono de
+«Rangos de prueba» muestra el rango `SETP` con su «Llave técnica». Cópiala completa.
+
+![Página «Rangos de numeración de prueba» con el rango SETP y su llave técnica](/images/dian/rangos-prueba.webp)
+
+</Step>
+</Steps>
+
+Con los cuatro pasos, el emisor queda **en pruebas** (`TESTING`).
+
+## Envía el set de pruebas
+
+Emite las facturas que pide tu set en el ambiente **Pruebas**, de cualquiera de estas formas:
+
+- **Desde la consola**: cambia el ambiente a **Pruebas** y pulsa **Emitir factura**. Ver
+  [Emitir desde la consola](/guias/emitir-desde-la-consola).
+- **Por API**: crea una llave `cetus_test_` en **Llaves de API** y envía `POST /v1/invoices`. Si tienes
+  varios emisores, usa el **ID para la API** que muestra la página del emisor como `issuerId`.
+
+La página del emisor muestra el **Avance del set de pruebas**: cuántos documentos aceptó y rechazó la DIAN.
+Compáralo con lo que pide el set en el portal de la DIAN, que es quien dice cuándo terminaste. Cuando la
+DIAN acepta el set, la página lo indica.
+
+Un documento rechazado no cuenta para el set: lee la regla en el detalle del documento, corrige y emite uno
+nuevo. Ver [Ciclo de vida](/guias/ciclo-de-vida#rechazos).
+
+## Pasa a producción
+
+1. **Solicita la resolución de numeración** de producción en el portal de facturación electrónica de la
+   DIAN, asociada a tu software.
+2. En la página del emisor de pruebas, pulsa **Pasar a producción** y luego **Crear emisor de
+   producción**. Cetus crea el emisor de producción con los mismos datos tributarios, el mismo software y
+   una copia del certificado. El emisor de pruebas sigue funcionando.
+3. El asistente se abre de nuevo en el emisor de producción. Revisa el software y el certificado, y
+   registra la resolución: número, fecha, prefijo, números inicial y final y fechas de vigencia. Deja vacía
+   la clave técnica: Cetus la consulta a la DIAN al guardar el rango.
+
+Con eso, el emisor queda **habilitado** (`ENABLED`) y emite con validez fiscal desde la consola en
+**Producción** o con una llave `cetus_live_`. Emitir en producción requiere un plan vigente: ver
+[Planes y créditos](/guias/planes-y-creditos).
+
+## Notas crédito y débito
+
+Cada tipo de nota necesita su propio rango de numeración, sin resolución. En la página del emisor, pulsa
+**Rango de notas**, elige **Nota crédito** o **Nota débito** y escribe un prefijo (por ejemplo, `NC`
+o `ND`) y los números inicial y final. Ver [Notas crédito y débito](/guias/notas-credito-y-debito).
+
+## Avisos
+
+Cetus avisa al contacto fiscal de tu cuenta (en **Contactos**) cuando el certificado
+está por vencer (a 30, 7 y 1 día), cuando un rango llega al 80 % y al 95 % de su consumo y cuando una
+resolución está a 30 y a 7 días de vencer. El **Resumen** muestra los mismos avisos.

@@ -1,0 +1,356 @@
+---
+title: Errores
+description: Los códigos de error de la API y las reglas de la DIAN más frecuentes, con su causa y su solución.
+---
+
+Hay dos tipos de error, y se manejan distinto:
+
+- **Errores de Cetus**: la petición no se aceptó. Responden con un código HTTP `4xx` o `5xx` y no crean
+  ningún documento. Ver [Códigos de Cetus](#códigos-de-cetus).
+- **Rechazos de la DIAN**: Cetus aceptó el documento (`202`), pero la DIAN lo rechazó al validarlo. El
+  documento queda `REJECTED` y `dian.errors` trae cada regla. Ver
+  [Reglas de la DIAN](#reglas-de-la-dian).
+
+## Formato
+
+Todo error de Cetus es un _problem detail_ ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)), con el
+tipo de contenido `application/problem+json`:
+
+```json
+{
+    "type": "https://cetus-docs.cantte.com/errores#issuer_required",
+    "title": "Unprocessable Entity",
+    "status": 422,
+    "detail": "The account has several issuers in the SANDBOX environment; send issuerId",
+    "instance": "/v1/invoices",
+    "code": "issuer_required"
+}
+```
+
+| Campo      | Qué es                                                                     |
+| ---------- | -------------------------------------------------------------------------- |
+| `code`     | El código del error. **Decide según este campo**: no cambia.               |
+| `type`     | El enlace a la entrada de su código en esta página.                        |
+| `title`    | El nombre del estado HTTP.                                                 |
+| `status`   | El estado HTTP.                                                            |
+| `detail`   | Una explicación para personas. Puede cambiar: no la compares en tu código. |
+| `instance` | La ruta de la petición.                                                    |
+| `errors`   | Solo en `invalid_request`: cada campo inválido, con `field` y `message`.   |
+
+Cada respuesta trae el encabezado `X-Request-Id`. Si escribes a soporte, inclúyelo: con él encontramos tu
+petición.
+
+### Qué reintentar
+
+- `429` y `409`: sí, después de esperar (`Retry-After` dice cuántos segundos, cuando viene).
+- `500` y errores de red: sí, con la **misma** `Idempotency-Key`, así no emites dos veces. Ver
+  [Idempotencia](/guias/idempotencia).
+- `400`, `401`, `402`, `403`, `404` y `422`: no. Repetir la misma petición da el mismo error: corrige
+  primero. Un `400` o un `422` no gasta la `Idempotency-Key`.
+
+## Códigos de Cetus
+
+### Autenticación y límites
+
+#### `unauthorized`
+
+**401.** Falta el encabezado `Authorization: Bearer …`, está mal escrito, o la llave no existe o fue
+revocada.
+
+Revisa que envías la llave completa, con el prefijo `Bearer `. Si la revocaste, crea otra en **Llaves de
+API**.
+
+#### `account_suspended`
+
+**403.** La cuenta está suspendida y sus llaves no pueden operar. La consola muestra el motivo en un banner.
+
+Escríbenos desde **Ayuda** en la consola o a [contact@cantte.com](mailto:contact@cantte.com).
+
+#### `rate_limited`
+
+**429.** Superaste las peticiones por segundo de tu llave o, en producción, las de tu plan, que comparten
+todas las llaves de la cuenta. Ver [Planes y créditos](/guias/planes-y-creditos).
+
+Espera los segundos de `Retry-After` y reintenta. Si envías lotes, reparte las peticiones en el tiempo.
+
+#### `sandbox_daily_limit`
+
+**429.** La cuenta ya emitió los 200 documentos de simulación del día. El límite se reinicia a medianoche,
+hora de Colombia; `Retry-After` dice cuántos segundos faltan.
+
+### Petición
+
+#### `invalid_request`
+
+**400.** El cuerpo no es JSON válido, no corresponde al contrato o algún campo no cumple sus reglas. También
+cuando falta el encabezado `Idempotency-Key` o es demasiado largo. `errors` dice qué campo y por qué:
+
+```json
+"errors": [{ "field": "lines[0].quantity", "message": "must be greater than 0" }]
+```
+
+Corrige los campos y reintenta. Consulta las reglas de cada campo en la [referencia](/reference).
+
+#### `not_found`
+
+**404.** El recurso no existe en el ambiente de la llave. Un documento creado con una llave de pruebas no
+existe para una llave de producción, y al revés. Ver [Ambientes](/guias/ambientes).
+
+También responde así una ruta que no existe, o un archivo distinto de `xml`, `pdf` y `attached-document`.
+
+#### `file_not_available`
+
+**404.** El documento existe, pero el archivo todavía no. El XML firmado aparece cuando Cetus envía el
+documento, y el PDF y el AttachedDocument cuando la DIAN lo acepta.
+
+Espera a que el documento quede `ACCEPTED` (con un [webhook](/guias/webhooks) o consultándolo) y vuelve a
+pedirlo.
+
+#### `idempotency_in_progress`
+
+**409.** Otra petición con la misma `Idempotency-Key` todavía se está procesando. Reintenta en unos
+segundos: recibirás la respuesta de la primera. Ver [Idempotencia](/guias/idempotencia).
+
+#### `idempotency_mismatch`
+
+**422.** La `Idempotency-Key` ya se usó con un cuerpo distinto. Si es otro documento, usa una llave nueva;
+si es el mismo, envía exactamente el mismo cuerpo.
+
+#### `http_405`
+
+**405.** El método no existe en esa ruta (por ejemplo, `PUT /v1/invoices/{id}`: las facturas no se
+modifican). Revisa la [referencia](/reference).
+
+#### `http_406`
+
+**406.** El encabezado `Accept` pide un formato que Cetus no responde. Envía `Accept: application/json` o no
+lo envíes.
+
+#### `http_415`
+
+**415.** El cuerpo no es JSON. Envía `Content-Type: application/json`.
+
+#### `internal_error`
+
+**500.** Un error inesperado de Cetus. Reintenta con la misma `Idempotency-Key`. Si sigue pasando, escríbenos
+con el `X-Request-Id`.
+
+### Emisor y numeración
+
+#### `issuer_not_found`
+
+**422.** El `issuerId` no existe en el ambiente de la llave, o, sin `issuerId`, ninguno de tus emisores puede
+emitir con esa llave.
+
+Copia el ID del emisor de su página en la consola (**ID para la API**) o de `GET /v1/issuers`, y usa una llave
+de su ambiente.
+
+#### `issuer_required`
+
+**422.** Tienes varios emisores que pueden emitir con esa llave y no enviaste `issuerId`. Envíalo; lo
+encuentras en `GET /v1/issuers`.
+
+#### `issuer_not_ready`
+
+**422.** El emisor no puede emitir en este ambiente: le falta configuración, está deshabilitado o todavía
+está en habilitación y la llave es de producción.
+
+Termina su configuración en la consola. Un emisor en pruebas (`TESTING`) solo emite con llaves
+`cetus_test_`. Ver [Configurar tu empresa ante la DIAN](/guias/configurar-ante-la-dian).
+
+#### `issuer_missing_software`
+
+**422.** El emisor no tiene registrado el software de la DIAN (Software ID y PIN). Complétalo en el paso
+**Software DIAN** del asistente.
+
+#### `issuer_missing_certificate`
+
+**422.** El emisor no tiene un certificado de firma vigente. Súbelo en el paso **Certificado digital** del
+asistente. Si el anterior venció, sube el renovado.
+
+#### `no_active_numbering_range`
+
+**422.** El emisor no tiene un rango de numeración vigente para este tipo de documento: no existe, se agotó
+o venció su resolución.
+
+Para facturas, registra la nueva resolución en la página del emisor. Para notas, crea su rango con **Rango
+de notas**.
+
+#### `technical_key_pending`
+
+**422.** El rango de numeración de producción todavía espera su clave técnica de la DIAN, que Cetus consulta
+sola al guardarlo. Reintenta en unos minutos. Si persiste, revisa el rango en la página del emisor.
+
+### Documento
+
+#### `customer_identification_invalid`
+
+**422.** El número de identificación del adquiriente no tiene el formato de su `identificationType` (por
+ejemplo, letras en una cédula). Escribe solo el número, sin puntos ni guiones, y sin el dígito de
+verificación en un NIT.
+
+#### `customer_check_digit_invalid`
+
+**422.** El `checkDigit` no corresponde al NIT. Cópialo del RUT del adquiriente, o no lo envíes y Cetus lo
+calcula.
+
+#### `payment_due_date_required`
+
+**422.** Un pago a crédito (`payment.method: CREDIT`) necesita `payment.dueDate`.
+
+#### `lines_required`
+
+**422.** El documento no tiene líneas. Envía al menos una en `lines`.
+
+#### `line_description_required`
+
+**422.** Una línea no tiene `description`.
+
+#### `line_quantity_invalid`
+
+**422.** La `quantity` de una línea falta o es cero o negativa.
+
+#### `line_price_invalid`
+
+**422.** El `unitPrice` de una línea falta o es negativo.
+
+#### `line_tax_invalid`
+
+**422.** Un impuesto de una línea no tiene `type`, o su `percent` no está entre 0 y 100.
+
+#### `amount_too_large`
+
+**422.** El total del documento supera el máximo que acepta la DIAN. Divide la venta en varios documentos.
+
+### Notas crédito y débito
+
+#### `invoice_not_accepted`
+
+**422.** La factura que corriges no está `ACCEPTED`. Solo se corrige una factura aceptada; si la DIAN la
+rechazó, emite una nueva. Ver [Notas crédito y débito](/guias/notas-credito-y-debito).
+
+#### `credit_note_exceeds_balance`
+
+**422.** La nota crédito supera lo que queda por acreditar de la factura. Consulta `balance` en
+`GET /v1/invoices/{id}` y ajusta las líneas.
+
+#### `credit_note_lines_required`
+
+**422.** Solo una anulación (`CANCELLATION`) puede omitir las líneas. Con otro concepto, envía las líneas que
+se acreditan.
+
+### Catálogo
+
+#### `customer_exists`
+
+**422.** Ya hay un cliente con ese tipo y número de identificación en el ambiente. Búscalo en
+`GET /v1/customers` y actualízalo con `PUT`.
+
+#### `product_exists`
+
+**422.** Ya hay un producto con ese código en el ambiente. Búscalo en `GET /v1/products` y actualízalo con
+`PUT`.
+
+### Plan y créditos
+
+Solo en producción, al emitir facturas y notas débito. Las notas crédito nunca reciben estos errores. Ver
+[Planes y créditos](/guias/planes-y-creditos).
+
+#### `no_active_product`
+
+**402.** La cuenta no tiene una suscripción ni un paquete vigente. El dueño puede contratar uno en
+**Facturación**.
+
+#### `insufficient_credits`
+
+**402.** La cuenta usó los documentos de su paquete y su margen de cortesía. Compra una recarga en
+**Facturación**.
+
+#### `overage_limit_reached`
+
+**402.** La suscripción llegó a su límite de excedente del periodo. El dueño puede ampliarlo en
+**Facturación**, o esperar al siguiente periodo.
+
+## Reglas de la DIAN
+
+Cuando la DIAN rechaza un documento, `dian.errors` trae cada regla que no se cumplió:
+
+```json
+"errors": ["Regla: FAK26, Rechazo: Responsabilidad informada para receptor no valida según lista."]
+```
+
+- **Rechazo**: el documento queda `REJECTED` y no tiene validez. Corrige y emite uno **nuevo**, con otra
+  `Idempotency-Key`: el rechazado conserva su número, pero no se reenvía.
+- **Notificación**: la DIAN avisa de algo, pero acepta el documento. Conviene corregirlo para las próximas.
+
+Estas son las más frecuentes. Para las demás, el texto de la DIAN dice qué revisar; si no queda claro,
+escríbenos con el número del documento.
+
+### FAJ43b
+
+**Notificación.** El nombre del emisor no coincide con el del RUT.
+
+Edita los datos del emisor en la consola y copia la razón social exactamente como aparece en el RUT,
+incluidas tildes, puntos y la sigla de la sociedad.
+
+### DAJ39
+
+**Notificación.** El emisor no figura como responsable de IVA.
+
+La DIAN espera el tributo 01 (IVA). Si el emisor sí es responsable de IVA, actualízalo en sus datos
+tributarios; si no lo es, puedes ignorar el aviso.
+
+### CAK55
+
+**Notificación.** El documento no informa el correo electrónico del adquiriente.
+
+La DIAN lo acepta igual, pero sin correo Cetus tampoco puede entregarle el documento (la entrega queda
+`SKIPPED`). Envía `customer.email` o agrégalo al cliente en la consola. En una nota, el adquiriente es el de
+la factura que corrige. Ver [Entrega por correo](/guias/entrega-por-correo).
+
+### RUT01
+
+**Notificación.** "La validación del estado del RUT próximamente estará disponible."
+
+Es un aviso informativo de la DIAN, que aparece en documentos aceptados. No tienes que corregir nada.
+
+### FAK26
+
+**Rechazo.** Una responsabilidad tributaria del adquiriente no está en la lista de la DIAN.
+
+Revisa las responsabilidades del adquiriente (`customer.taxLevelCodes`) contra su RUT. Si no las conoces,
+deja solo `R-99-PN` (no responsable), que es el valor por defecto.
+
+### FAB10a
+
+**Rechazo.** El prefijo de numeración no corresponde a la resolución del punto de facturación.
+
+Revisa en la página del emisor que el prefijo del rango sea el mismo de la resolución que muestra el portal
+de la DIAN.
+
+### FAD06
+
+**Rechazo.** El CUFE no corresponde a los datos de la factura.
+
+Casi siempre es una clave técnica equivocada en el rango de numeración. En producción, Cetus la toma de la
+DIAN: en la página del emisor, pulsa **Usar la clave técnica de la DIAN** si el rango dice **No coincide**.
+En habilitación, cópiala de nuevo del portal.
+
+### CBF04
+
+**Rechazo.** La descripción de la corrección en una nota crédito no es el nombre del concepto de la tabla
+13.2.4.
+
+Cetus la escribe por ti a partir de `concept`, así que en producción no deberías verla. Si aparece,
+escríbenos con el número de la nota.
+
+### DBF04
+
+**Rechazo.** Igual que `CBF04`, para una nota débito (tabla 13.2.5).
+
+### 90
+
+**Rechazo.** La DIAN ya tenía un documento con el mismo CUFE o CUDE.
+
+El documento ya había llegado a la DIAN. No lo emitas de nuevo: consulta su estado en el portal de la DIAN y
+escríbenos con el número para conciliarlo.

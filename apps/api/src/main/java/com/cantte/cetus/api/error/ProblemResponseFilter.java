@@ -10,7 +10,8 @@ import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 /**
  * Completes every {@link ProblemDetail} on its way out, whether it comes from an exception mapper, a request
  * filter's {@code abortWith} or a resource: {@code instance} is the request path, still escaped so it addresses the same resource, and {@code type} points at the
- * code's documentation when {@code cetus.api.problem-type-base} is set ({@code about:blank} otherwise).
+ * code's documentation when {@code cetus.api.problem-type-base} is set ({@code about:blank} otherwise). Only the
+ * public API's codes are documented, so console and admin errors keep {@code about:blank}.
  */
 public class ProblemResponseFilter {
 
@@ -25,9 +26,11 @@ public class ProblemResponseFilter {
         if (!(response.getEntity() instanceof ProblemDetail problem)) {
             return;
         }
-        String type = typeBase.map(base -> base + problem.code()).orElse(problem.type());
-        response.setEntity(
-                problem.withContext(type, request.getUriInfo().getRequestUri().getRawPath()));
+        String path = request.getUriInfo().getRequestUri().getRawPath();
+        String type = typeBase.filter(base -> path.startsWith("/v1/"))
+                .map(base -> base + problem.code())
+                .orElse(problem.type());
+        response.setEntity(problem.withContext(type, path));
         response.getHeaders().putSingle(HttpHeaders.CONTENT_TYPE, ProblemDetail.MEDIA_TYPE);
     }
 }

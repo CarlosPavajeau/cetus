@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { explanations } from "~/features/documents/dian-errors";
+import { dianRuleDocsUrl, explanations } from "~/features/documents/dian-errors";
 import { formatCount } from "~/features/usage/labels";
 import type { DianRuleKind, MetricsRule } from "~/lib/api/types";
 
@@ -67,7 +67,17 @@ function RuleTable({ rules, empty }: { rules: MetricsRule[]; empty: string }) {
               <TableCell className="max-w-md whitespace-normal">
                 <p>{explanation?.title ?? rule.message}</p>
                 {explanation && (
-                  <p className="text-2xs text-muted-foreground">{explanation.action}</p>
+                  <p className="text-2xs text-muted-foreground">
+                    {explanation.action}{" "}
+                    <a
+                      href={dianRuleDocsUrl(rule.rule)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-4 hover:text-foreground"
+                    >
+                      Ver en la documentación ↗
+                    </a>
+                  </p>
                 )}
               </TableCell>
               <TableCell className="text-right tabular-nums">

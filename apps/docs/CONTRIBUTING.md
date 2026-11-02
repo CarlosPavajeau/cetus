@@ -21,6 +21,10 @@ pnpm --filter @cetus/docs build   # prerenderiza todo; un enlace interno roto ro
 - Después de cambiar la API pública, regenera la especificación y súbela en el mismo PR:
   `mise run docs-spec`. El workflow de contrato falla si quedó desactualizada.
 - La colección de Postman se genera en cada build (`scripts/postman.mjs`); no se versiona.
+- Todo cambio de `openapi.public.json` que note un integrador lleva su entrada en `content/docs/cambios.mdx`,
+  con la fecha en que llega a producción. Un cambio incompatible no entra en `/v1` (ver `versionado.mdx`).
+- Un código de error nuevo necesita su entrada en `content/docs/errores.mdx` (un encabezado `####` con el
+  código): el build falla sin ella.
 
 ## Capturas de la consola
 
@@ -32,6 +36,15 @@ pnpm --filter @cetus/console screenshots
 ```
 
 Vuelve a tomarlas cuando cambien las pantallas que muestran.
+
+## Ejemplos de verificación de webhooks
+
+Los ejemplos de [Webhooks](content/docs/guias/webhooks.mdx) viven en `snippets/webhooks` y las páginas los
+incluyen con `<include>`. Después de cambiarlos, pruébalos (PHP y C# corren en Docker):
+
+```bash
+pnpm --filter @cetus/docs check:snippets
+```
 
 ## Estilo
 

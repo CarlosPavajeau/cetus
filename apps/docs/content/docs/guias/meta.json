@@ -1,4 +1,15 @@
 {
   "title": "Guías",
-  "pages": ["ambientes", "planes-y-creditos", "ciclo-de-vida", "idempotencia"]
+  "pages": [
+    "ambientes",
+    "configurar-ante-la-dian",
+    "emitir-desde-la-consola",
+    "ciclo-de-vida",
+    "idempotencia",
+    "notas-credito-y-debito",
+    "entrega-por-correo",
+    "webhooks",
+    "planes-y-creditos",
+    "factura-o-documento-pos"
+  ]
 }

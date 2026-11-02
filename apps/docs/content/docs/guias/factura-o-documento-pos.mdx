@@ -1,0 +1,41 @@
+---
+title: Factura electrónica o documento POS
+description: Qué diferencia hay entre la factura electrónica de venta y el documento equivalente POS electrónico, y qué emite Cetus.
+---
+
+Si vendes en un punto de venta (una tienda, un restaurante, un mostrador), es probable que hayas oído de
+dos documentos electrónicos distintos. Esta página explica la diferencia y qué puedes emitir con Cetus.
+
+## Los dos documentos
+
+- **Factura electrónica de venta.** Es el documento principal de la facturación electrónica. La DIAN la
+  valida antes de que llegue al cliente y lleva un CUFE (su código único). Identifica al comprador, así que
+  le sirve para soportar costos, deducciones e IVA descontable.
+- **Documento equivalente POS electrónico.** Reemplaza al tiquete de máquina registradora (el tiquete POS
+  en papel) desde la
+  [Resolución 000165 de 2023](https://normograma.dian.gov.co/dian/compilacion/docs/resolucion_dian_0165_2023.htm)
+  de la DIAN. Está pensado para ventas de mostrador, muchas veces a consumidores finales sin identificar.
+  Tiene su propio anexo técnico, su propia numeración y un CUDE en lugar del CUFE.
+
+## Qué emite Cetus
+
+Cetus emite **facturas electrónicas de venta**, **notas crédito** y **notas débito**. Todavía no emite el
+documento equivalente POS electrónico.
+
+Si tu negocio puede expedir el documento POS, también puede expedir una factura electrónica de venta en su
+lugar: la factura siempre cumple el deber de facturar. Para ventas a un consumidor final sin identificar,
+usa como adquiriente sus datos mínimos (por ejemplo, `legalName` "Consumidor Final"), como en el
+[inicio rápido](/inicio-rapido/desarrolladores#emite-una-factura).
+
+Lo que cambia frente al tiquete POS es la espera: la factura se emite al instante, pero la DIAN la valida en
+segundo plano, en unos segundos. Si imprimes en el momento de la venta, ten en cuenta el
+[ciclo de vida](/guias/ciclo-de-vida) del documento.
+
+<Callout type="warn">
+    Esta página es una orientación general, no asesoría tributaria. Las reglas del documento POS
+    (quién está obligado, desde cuándo y en qué casos el comprador puede pedir factura) han cambiado
+    varias veces desde 2023. Confírmalas con tu contador o en el normograma de la DIAN.
+</Callout>
+
+¿Te interesa emitir documentos POS electrónicos con Cetus? Escríbenos desde **Ayuda** en la consola: nos
+ayuda a decidir cuándo construirlo.

@@ -1,0 +1,57 @@
+---
+title: Versionado
+description: Qué cambios pueden llegar sin aviso, cuáles no y con cuánta anticipación te avisamos.
+---
+
+La versión de la API va en la ruta: todas las peticiones de hoy van a `/v1`. Dentro de una versión, Cetus
+solo hace cambios **compatibles**: tu integración sigue funcionando sin tocarla.
+
+## Cambios compatibles
+
+Pueden llegar en cualquier momento, sin aviso previo. Se anotan en el [registro de cambios](/cambios).
+
+- Endpoints nuevos.
+- Campos opcionales nuevos en las peticiones.
+- Campos nuevos en las respuestas y en los webhooks.
+- Valores nuevos en los campos de las respuestas que son una lista cerrada, como `status` o
+  `deliveries[].status`.
+- Tipos de evento nuevos en los webhooks. Un webhook sin eventos marcados empieza a recibirlos.
+- Códigos de error nuevos, para casos que antes no se distinguían.
+- Cambios en los textos para personas: `detail` de los errores, `title`, descripciones y mensajes.
+- Encabezados nuevos en las respuestas.
+- Límites de peticiones por segundo más altos.
+
+Para que estos cambios no te afecten:
+
+- Ignora los campos, los eventos y los encabezados que no conozcas.
+- Trata un valor desconocido de una lista cerrada como un caso más (por ejemplo, un `status` nuevo como
+  "en curso"), sin fallar.
+- Decide según `code`, nunca según `detail`.
+- No dependas del orden de los campos de un JSON ni del de los eventos de un webhook.
+
+## Cambios incompatibles
+
+Estos cambios **nunca** llegan a `/v1`:
+
+- Quitar o renombrar un endpoint, un campo, un evento o un valor de una lista cerrada.
+- Cambiar el tipo o el formato de un campo.
+- Volver obligatorio un campo de una petición, o agregar uno obligatorio.
+- Cambiar el significado de un campo, de un estado o de un código de error.
+- Cambiar el formato de la firma de los webhooks.
+
+Si un cambio así hace falta, llega en una versión nueva (`/v2`). Entonces:
+
+- Te avisamos por correo, al contacto técnico de tu cuenta, al menos **90 días** antes de publicarla, y lo
+  anotamos en el [registro de cambios](/cambios).
+- `/v1` sigue funcionando al menos **6 meses** después de publicada `/v2`, con la fecha de retiro anunciada.
+- Durante ese tiempo, las respuestas de `/v1` traen los encabezados `Deprecation` y `Sunset`, con la fecha de
+  retiro.
+
+## Excepciones
+
+Por seguridad, o porque la DIAN cambia sus reglas con plazos más cortos, un cambio puede llegar con menos
+anticipación. Por ejemplo, una regla nueva de validación de la DIAN rechaza documentos desde la fecha que
+ella fija, y Cetus la aplica desde ese día. En esos casos te avisamos tan pronto como lo sepamos.
+
+Los cambios en el ambiente de simulación (sus escenarios y sus límites) se anotan en el registro de cambios,
+pero no siguen estos plazos.

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev --port 3001",
-    "build": "node scripts/postman.mjs && vp build",
+    "build": "node scripts/postman.mjs && node scripts/check-error-catalog.mjs && vp build",
     "preview": "vp preview --port 3001",
     "postman": "node scripts/postman.mjs",
     "typecheck": "tsc --noEmit",
@@ -12,7 +12,8 @@
     "check:fix": "vp check --fix",
     "lint": "vp lint",
     "format": "vp fmt",
-    "format:check": "vp fmt --check"
+    "format:check": "vp fmt --check",
+    "check:snippets": "node scripts/check-webhook-snippets.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.3.0",

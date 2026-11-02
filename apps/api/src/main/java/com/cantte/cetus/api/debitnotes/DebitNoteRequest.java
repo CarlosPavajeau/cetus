@@ -20,7 +20,7 @@ public record DebitNoteRequest(
         @Schema(description = "La factura que se corrige. Debe estar aceptada por la DIAN.") @NotNull
         UUID invoiceId,
 
-        @Schema(description = "Concepto de la nota (tabla 13.2.4 del anexo).") @NotNull
+        @Schema(description = "Concepto de la nota (tabla 13.2.5 del anexo).") @NotNull
         DebitNoteConcept concept,
 
         @Schema(description = "Motivo de la nota; aparece en el documento.", example = "Factura emitida por error")

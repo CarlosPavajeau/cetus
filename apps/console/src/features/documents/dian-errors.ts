@@ -1,3 +1,5 @@
+import { docsUrl } from "~/lib/docs";
+
 /**
  * The DIAN answers each failed validation rule as text: "Regla: FAJ43b, Notificación: Nombre informado…".
  * A rejection ("Rechazo") stops the document; a notification ("Notificación") does not, but points at data
@@ -52,6 +54,25 @@ export const explanations: Record<string, DianRuleExplanation> = {
     action:
       "La nota débito debe llevar el nombre del concepto de corrección de la tabla 13.2.5 del anexo; el motivo libre va en las notas.",
   },
+  CAK55: {
+    title: "El cliente no tiene correo electrónico.",
+    action:
+      "La DIAN acepta el documento, pero espera el correo del adquiriente. Agrégalo al cliente: sin correo, Cetus tampoco puede enviarle el documento.",
+  },
+  RUT01: {
+    title: "La DIAN todavía no valida el estado del RUT.",
+    action: "Es un aviso informativo de la DIAN. No tienes que corregir nada.",
+  },
+  FAK26: {
+    title: "Una responsabilidad tributaria del cliente no está en la lista de la DIAN.",
+    action:
+      "Revisa las responsabilidades del cliente contra su RUT. Si no las conoces, deja solo R-99-PN (no responsable).",
+  },
+  FAB10a: {
+    title: "El prefijo no corresponde a la resolución de numeración.",
+    action:
+      "Revisa en la página del emisor que el prefijo del rango sea el mismo de la resolución que muestra el portal de la DIAN.",
+  },
   FAD06: {
     title: "El CUFE no corresponde a los datos de la factura.",
     action:
@@ -71,4 +92,9 @@ export function parseDianError(text: string): DianError {
     message: message.trim(),
     explanation: explanations[rule] ?? null,
   };
+}
+
+/** The rule's entry in the error catalog of the documentation site; only rules with an explanation have one. */
+export function dianRuleDocsUrl(rule: string): string {
+  return `${docsUrl}/errores#${rule.toLowerCase()}`;
 }

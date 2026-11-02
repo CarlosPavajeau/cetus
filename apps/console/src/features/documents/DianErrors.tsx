@@ -3,7 +3,7 @@ import { CircleAlertIcon, InfoIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import type { DocumentDetail } from "~/lib/api/types";
 
-import { type DianError, parseDianError } from "./dian-errors";
+import { type DianError, dianRuleDocsUrl, parseDianError } from "./dian-errors";
 
 function DianErrorItem({ error }: { error: DianError }) {
   return (
@@ -18,6 +18,16 @@ function DianErrorItem({ error }: { error: DianError }) {
         <>
           <span>{error.explanation.action}</span>
           <span className="text-muted-foreground">DIAN: {error.message}</span>
+          {error.rule && (
+            <a
+              href={dianRuleDocsUrl(error.rule)}
+              target="_blank"
+              rel="noreferrer"
+              className="w-fit underline underline-offset-4 hover:text-foreground"
+            >
+              Ver en la documentación ↗
+            </a>
+          )}
         </>
       )}
     </li>

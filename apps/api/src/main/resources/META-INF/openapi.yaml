@@ -129,12 +129,18 @@ components:
               $ref: "#/components/examples/InvalidRequestProblem"
     Unauthorized:
       description: "`unauthorized`: falta el encabezado `Authorization` o la llave no existe o fue revocada."
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetail"
     Forbidden:
       description: "`account_suspended`: la cuenta está suspendida y sus llaves no pueden operar."
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
       content:
         application/problem+json:
           schema:
@@ -257,6 +263,8 @@ components:
         `rate_limited`: superaste las solicitudes por segundo de tu llave o de tu plan. Espera los
         segundos de `Retry-After`.
       headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
         Retry-After:
           $ref: "#/components/headers/Retry-After"
       content:
@@ -269,8 +277,21 @@ components:
         `sandbox_daily_limit`: la cuenta ya emitió los documentos de simulación del día; el límite se
         reinicia a medianoche, hora de Colombia. En ambos casos, espera los segundos de `Retry-After`.
       headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
         Retry-After:
           $ref: "#/components/headers/Retry-After"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    InternalError:
+      description: |
+        `internal_error`: un error inesperado de Cetus. Reintenta con la misma `Idempotency-Key`; si sigue
+        pasando, escríbenos con el `X-Request-Id`.
+      headers:
+        X-Request-Id:
+          $ref: "#/components/headers/X-Request-Id"
       content:
         application/problem+json:
           schema:
@@ -463,7 +484,7 @@ components:
     InvalidRequestProblem:
       summary: Campo inválido
       value:
-        type: about:blank
+        type: https://cetus-docs.cantte.com/errores#invalid_request
         title: Bad Request
         status: 400
         detail: The request is invalid
@@ -475,7 +496,7 @@ components:
     IssuerRequiredProblem:
       summary: Falta el emisor
       value:
-        type: about:blank
+        type: https://cetus-docs.cantte.com/errores#issuer_required
         title: Unprocessable Entity
         status: 422
         detail: The account has several issuers in the SANDBOX environment; send issuerId

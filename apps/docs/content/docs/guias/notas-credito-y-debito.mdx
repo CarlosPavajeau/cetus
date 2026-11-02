@@ -1,0 +1,142 @@
+---
+title: Notas crédito y débito
+description: Cómo corregir una factura aceptada, anularla o cobrar un valor adicional.
+---
+
+Una factura aceptada por la DIAN no se modifica ni se borra. Se corrige con una nota sobre ella:
+
+- La **nota crédito** disminuye su valor o la anula: devoluciones, descuentos, ajustes de precio o una
+  factura emitida por error.
+- La **nota débito** le suma un valor: intereses, gastos por cobrar o un cambio de precio.
+
+Las dos pasan por el mismo [ciclo de vida](/guias/ciclo-de-vida) que una factura: responden `202` con el
+estado `RECEIVED`, la DIAN las valida y llegan los webhooks `credit_note.*` y `debit_note.*`. Exigen
+`Idempotency-Key`, igual que las facturas.
+
+## Antes de emitir
+
+- La factura debe estar `ACCEPTED`. Si no, la nota responde `422 invoice_not_accepted`.
+- El emisor necesita un rango de numeración para cada tipo de nota. En la simulación ya viene (`NCS` para
+  notas crédito y `NDS` para notas débito); en pruebas y producción lo creas en la página del emisor. Ver
+  [Configurar tu empresa ante la DIAN](/guias/configurar-ante-la-dian#notas-crédito-y-débito).
+- La nota se emite con el mismo emisor y en el mismo ambiente que la factura: usa una llave del mismo
+  ambiente.
+
+## Conceptos
+
+Cada nota lleva un `concept` de la tabla del anexo técnico de la DIAN. Cetus pone en el XML el nombre que
+exige la DIAN; tu motivo va en `description` y aparece en la nota.
+
+**Nota crédito** (tabla 13.2.4):
+
+| `concept`                | Código DIAN | Para qué                                                               |
+| ------------------------ | ----------- | ---------------------------------------------------------------------- |
+| `PARTIAL_RETURN`         | 1           | Devolución parcial de los bienes o no aceptación parcial del servicio. |
+| `CANCELLATION`           | 2           | Anulación de la factura.                                               |
+| `REBATE`                 | 3           | Rebaja o descuento parcial o total.                                    |
+| `PRICE_ADJUSTMENT`       | 4           | Ajuste de precio.                                                      |
+| `EARLY_PAYMENT_DISCOUNT` | 5           | Descuento comercial por pronto pago.                                   |
+| `VOLUME_DISCOUNT`        | 6           | Descuento comercial por volumen de ventas.                             |
+
+**Nota débito** (tabla 13.2.5):
+
+| `concept`      | Código DIAN | Para qué           |
+| -------------- | ----------- | ------------------ |
+| `INTEREST`     | 1           | Intereses.         |
+| `EXPENSES`     | 2           | Gastos por cobrar. |
+| `VALUE_CHANGE` | 3           | Cambio del valor.  |
+| `OTHER`        | 4           | Otros.             |
+
+## Anular una factura
+
+Una nota crédito `CANCELLATION` **sin líneas** acredita la factura completa: Cetus copia sus líneas.
+
+```bash
+curl https://cetus-api.cantte.com/v1/credit-notes \
+  -H "Authorization: Bearer $CETUS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: anulacion-pedido-1001" \
+  -d '{
+    "invoiceId": "ID_DE_LA_FACTURA",
+    "concept": "CANCELLATION",
+    "description": "Factura emitida por error"
+  }'
+```
+
+Cualquier otro concepto exige `lines`; sin ellas responde `422 credit_note_lines_required`.
+
+## Acreditar una parte
+
+Envía solo lo que se devuelve o se descuenta, con los mismos campos de las líneas de una factura:
+
+```bash
+curl https://cetus-api.cantte.com/v1/credit-notes \
+  -H "Authorization: Bearer $CETUS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: devolucion-pedido-1001" \
+  -d '{
+    "invoiceId": "ID_DE_LA_FACTURA",
+    "concept": "PARTIAL_RETURN",
+    "description": "El cliente devolvió dos cajas",
+    "lines": [
+      {
+        "itemCode": "PROD-001",
+        "description": "Caja de guantes de nitrilo",
+        "quantity": 2,
+        "unitPrice": 25000,
+        "taxes": [{ "type": "IVA", "percent": 19 }]
+      }
+    ]
+  }'
+```
+
+### Lo que queda por acreditar
+
+`GET /v1/invoices/{id}` trae `balance`: el total de la factura más las notas débito aceptadas, menos las
+notas crédito aceptadas o en proceso. Una nota crédito por encima de ese saldo responde
+`422 credit_note_exceeds_balance`. Las notas emitidas sobre la factura aparecen en `creditNotes` y
+`debitNotes`, con su número, estado, concepto y total.
+
+## Cobrar un valor adicional
+
+La nota débito siempre lleva sus líneas (de 1 a 500):
+
+```bash
+curl https://cetus-api.cantte.com/v1/debit-notes \
+  -H "Authorization: Bearer $CETUS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: intereses-pedido-1001" \
+  -d '{
+    "invoiceId": "ID_DE_LA_FACTURA",
+    "concept": "INTEREST",
+    "description": "Intereses por pago tardío",
+    "lines": [
+      {
+        "itemCode": "INT-MORA",
+        "description": "Intereses de mora de noviembre",
+        "quantity": 1,
+        "unitPrice": 3500
+      }
+    ]
+  }'
+```
+
+## En producción
+
+Cada nota usa un documento de tu saldo, como una factura. Una nota débito sin plan vigente o sin saldo
+responde `402`; una nota crédito **siempre** se emite, porque es la única forma de corregir una factura. Ver
+[Planes y créditos](/guias/planes-y-creditos).
+
+## Desde la consola
+
+En el detalle de una factura aceptada, el menú **Corregir factura** trae **Nota crédito** y **Nota
+débito**, y **Anular factura** emite una nota crédito `CANCELLATION` por el total. Ver
+[Emitir desde la consola](/guias/emitir-desde-la-consola#corrige-una-factura).
+
+<Sandbox>
+    En la simulación, las notas crédito sobre facturas al adquiriente `1000000005` se rechazan con
+    la regla `CBF04`, para que practiques el manejo de un rechazo.
+</Sandbox>
+
+Consulta los campos completos en la referencia:
+[notas crédito](/reference#tag/notas-crédito) y [notas débito](/reference#tag/notas-débito).

@@ -43,6 +43,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @APIResponse(responseCode = "401", ref = "Unauthorized")
 @APIResponse(responseCode = "403", ref = "Forbidden")
 @APIResponse(responseCode = "429", ref = "TooManyRequests")
+@APIResponse(responseCode = "500", ref = "InternalError")
 public class CustomerResource {
 
     @Inject

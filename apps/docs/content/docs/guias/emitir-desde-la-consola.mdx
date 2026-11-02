@@ -1,0 +1,112 @@
+---
+title: Emitir desde la consola
+description: Factura, corrige y reenvía documentos desde el navegador, sin escribir código.
+---
+
+La consola de Cetus sirve para facturar a mano: no necesitas un sistema propio ni conocimientos técnicos.
+Esta guía cubre el trabajo diario en producción. Si todavía no has probado Cetus, empieza por el
+[inicio rápido desde la consola](/inicio-rapido/consola), que usa la simulación.
+
+## Antes de facturar de verdad
+
+- Tu empresa debe estar configurada ante la DIAN y habilitada. Ver
+  [Configurar tu empresa ante la DIAN](/guias/configurar-ante-la-dian).
+- Tu cuenta necesita un plan vigente. Ver [Planes y créditos](/guias/planes-y-creditos).
+- Tu usuario debe poder emitir en producción (ver abajo).
+
+## El ambiente
+
+El selector de ambiente, en la cabecera, define dónde trabajas: **Simulación**, **Pruebas** o
+**Producción**. Los documentos, los clientes y los productos de cada ambiente están separados. Lo que emites
+en **Producción** va a la DIAN con validez fiscal; en los otros dos, no.
+
+## Quién puede emitir
+
+En **Miembros**, el dueño y los administradores invitan personas y eligen su rol:
+
+| Rol               | Qué puede hacer                                                   |
+| ----------------- | ----------------------------------------------------------------- |
+| **Administrador** | Todo, incluidos emisores, llaves, webhooks, contactos y miembros. |
+| **Facturador**    | Emite en producción y usa el catálogo; consulta lo demás.         |
+| **Miembro**       | Consulta y emite en pruebas y simulación.                         |
+
+El rol **Facturador** es para quien hace las facturas del día a día sin administrar la cuenta.
+
+## Emite una factura
+
+En **Documentos**, pulsa **Emitir factura**.
+
+1. **Emisor**: la empresa que factura, si tienes más de una.
+2. **Cliente**: busca uno guardado por nombre o documento, o escribe sus datos. El dígito de verificación
+   de un NIT se calcula solo, y el municipio se busca por nombre. Si escribes su correo, Cetus le envía la
+   factura cuando la DIAN la acepte. Marca **Guardar este cliente para la próxima factura** para no
+   escribirlo de nuevo.
+3. **Productos o servicios**: una línea por cada uno, con cantidad, precio e impuesto. El impuesto se elige
+   por su nombre:
+
+    | Opción                  | Cuándo                                         |
+    | ----------------------- | ---------------------------------------------- |
+    | IVA 19 %                | La tarifa general.                             |
+    | IVA 5 %                 | Bienes y servicios con tarifa diferencial.     |
+    | Exento de IVA (0 %)     | Exentos: llevan IVA, con tarifa cero.          |
+    | Excluido de IVA         | Excluidos: no llevan IVA.                      |
+    | Impuesto al consumo 8 % | Restaurantes, bares y otros que cobran el INC. |
+
+4. **Forma de pago**: **De contado** o **A crédito** (con fecha de vencimiento), y el **Medio de pago**:
+   efectivo, transferencia bancaria, consignación, tarjeta de crédito o débito, cheque u otro.
+
+Los totales se calculan mientras escribes, con las mismas reglas que usa Cetus al emitir.
+
+### La confirmación
+
+En **Producción**, **Emitir factura** abre un resumen con el emisor, el cliente y el total, y la pregunta
+**¿Emitir esta factura en producción?** Revisa con calma: una factura aceptada solo se corrige con una nota
+crédito. **Revisar** vuelve al formulario y **Emitir en producción** la envía.
+
+## Sigue el resultado
+
+El detalle de la factura se actualiza solo hasta que la DIAN responde, en segundos:
+
+- **Aceptado**: la factura tiene validez fiscal. Si el cliente tiene correo, le llega con el PDF.
+- **Rechazado**: la factura no tiene validez. La página explica cada regla de la DIAN en palabras claras y
+  qué corregir. Emite una factura nueva con los datos corregidos.
+
+Ver [Ciclo de vida](/guias/ciclo-de-vida) para los demás estados.
+
+## Descarga y reenvía
+
+En el detalle de una factura aceptada:
+
+- **Descargar** trae el **PDF**, el **XML** firmado y el **AttachedDocument** (lo que recibe el cliente).
+- **Reenviar correo** le envía otra vez el PDF y el AttachedDocument, a su correo o a otro que escribas en
+  **Enviar a**. Puedes reenviar una vez por minuto, cuando terminó la entrega anterior.
+
+La sección **Entrega al cliente** dice si el correo llegó. Ver [Entrega por correo](/guias/entrega-por-correo).
+
+## Corrige una factura
+
+Una factura aceptada no se edita. En su detalle:
+
+- **Corregir factura** › **Nota crédito**: devuelve o descuenta una parte. Eliges el concepto, el motivo y
+  las líneas que se acreditan.
+- **Corregir factura** › **Nota débito**: cobra un valor adicional, como intereses o gastos.
+- **Anular factura**: emite una nota crédito por el total. Escribe el motivo.
+
+Cada nota necesita su rango de numeración en el emisor. Ver
+[Notas crédito y débito](/guias/notas-credito-y-debito).
+
+## Clientes y productos
+
+En **Catálogo** guardas los clientes y productos que usas seguido:
+
+- **Clientes**: sus datos tributarios, dirección y correo. Al emitir, búscalos por nombre o documento.
+- **Productos**: descripción, precio, unidad e impuesto por defecto. Al emitir, se agregan como una línea
+  que puedes ajustar.
+
+Lo que guardas en un ambiente no aparece en los otros. Algunos clientes creados por API (por ejemplo, con
+dirección en el exterior) solo se pueden editar por API.
+
+## Si algo falla
+
+En **Ayuda**, pulsa **Nuevo caso**: el caso queda con el estado de tu cuenta adjunto y te respondemos
+por correo.
