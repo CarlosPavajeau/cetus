@@ -55,7 +55,8 @@ public class ConsoleMetrics {
     EntityManager em;
 
     public MetricsView metrics(UUID accountId, Environment environment, LocalDate from, LocalDate to) {
-        Map<LocalDate, Map<DocumentStatus, Long>> byDay = byDay(accountId, environment, from, to);
+        Scope scope = new Scope(accountId, environment, from, to);
+        Map<LocalDate, Map<DocumentStatus, Long>> byDay = byDay(scope);
         List<DayView> days = from.datesUntil(to.plusDays(1))
                 .map(date -> new DayView(date, counts(byDay.getOrDefault(date, Map.of()))))
                 .toList();
@@ -65,58 +66,52 @@ public class ConsoleMetrics {
         long verdicts = totals.accepted() + totals.rejected();
         Double acceptanceRate = verdicts == 0 ? null : (double) totals.accepted() / verdicts;
         return new MetricsView(
-                environment,
-                from,
-                to,
-                totals,
-                acceptanceRate,
-                days,
-                amounts(accountId, environment, from, to),
-                validation(accountId, environment, from, to),
-                rules(accountId, environment, from, to));
+                environment, from, to, totals, acceptanceRate, days, amounts(scope), validation(scope), rules(scope));
     }
 
-    private Map<LocalDate, Map<DocumentStatus, Long>> byDay(
-            UUID accountId, Environment environment, LocalDate from, LocalDate to) {
+    private Map<LocalDate, Map<DocumentStatus, Long>> byDay(Scope scope) {
         Map<LocalDate, Map<DocumentStatus, Long>> days = new TreeMap<>();
         rows(
                         "SELECT d.issue_date, d.status, count(*) FROM billing.documents d WHERE " + PERIOD
                                 + " GROUP BY d.issue_date, d.status",
-                        accountId,
-                        environment,
-                        from,
-                        to)
+                        scope)
                 .forEach(row -> days.computeIfAbsent(toLocalDate(row[0]), date -> new EnumMap<>(DocumentStatus.class))
                         .put(DocumentStatus.valueOf((String) row[1]), count(row[2])));
         return days;
     }
 
-    private static StatusCountsView counts(Map<DocumentStatus, Long> byStatus) {
-        long accepted = 0;
-        long rejected = 0;
-        long failed = 0;
-        long inProgress = 0;
-        for (Map.Entry<DocumentStatus, Long> entry : byStatus.entrySet()) {
-            long count = entry.getValue();
-            switch (entry.getKey()) {
-                case ACCEPTED -> accepted += count;
-                case REJECTED -> rejected += count;
-                case FAILED -> failed += count;
-                case RECEIVED, PROCESSING, SUBMITTED -> inProgress += count;
-            }
+    private enum Outcome {
+        ACCEPTED,
+        REJECTED,
+        FAILED,
+        IN_PROGRESS;
+
+        static Outcome of(DocumentStatus status) {
+            return switch (status) {
+                case ACCEPTED -> ACCEPTED;
+                case REJECTED -> REJECTED;
+                case FAILED -> FAILED;
+                case RECEIVED, PROCESSING, SUBMITTED -> IN_PROGRESS;
+            };
         }
+    }
+
+    private static StatusCountsView counts(Map<DocumentStatus, Long> byStatus) {
+        Map<Outcome, Long> byOutcome = new EnumMap<>(Outcome.class);
+        byStatus.forEach((status, count) -> byOutcome.merge(Outcome.of(status), count, Long::sum));
+        long accepted = byOutcome.getOrDefault(Outcome.ACCEPTED, 0L);
+        long rejected = byOutcome.getOrDefault(Outcome.REJECTED, 0L);
+        long failed = byOutcome.getOrDefault(Outcome.FAILED, 0L);
+        long inProgress = byOutcome.getOrDefault(Outcome.IN_PROGRESS, 0L);
         return new StatusCountsView(accepted, rejected, failed, inProgress, accepted + rejected + failed + inProgress);
     }
 
-    private List<AmountView> amounts(UUID accountId, Environment environment, LocalDate from, LocalDate to) {
+    private List<AmountView> amounts(Scope scope) {
         Map<String, Map<DocumentType, BigDecimal>> byCurrency = new TreeMap<>();
         rows(
                         "SELECT d.currency, d.document_type, sum(d.payable_amount) FROM billing.documents d WHERE "
                                 + PERIOD + " AND d.status = 'ACCEPTED' GROUP BY d.currency, d.document_type",
-                        accountId,
-                        environment,
-                        from,
-                        to)
+                        scope)
                 .forEach(row -> byCurrency
                         .computeIfAbsent(row[0].toString().strip(), currency -> new EnumMap<>(DocumentType.class))
                         .put(DocumentType.valueOf((String) row[1]), (BigDecimal) row[2]));
@@ -136,19 +131,17 @@ public class ConsoleMetrics {
                 .toList();
     }
 
-    private ValidationTimeView validation(UUID accountId, Environment environment, LocalDate from, LocalDate to) {
+    private ValidationTimeView validation(Scope scope) {
         Object[] row = rows("""
                         SELECT count(*), avg(seconds), percentile_cont(0.95) WITHIN GROUP (ORDER BY seconds)
                         FROM (SELECT extract(epoch FROM d.validated_at - d.created_at) AS seconds
                               FROM billing.documents d
                               WHERE %s AND d.status IN ('ACCEPTED', 'REJECTED') AND d.validated_at IS NOT NULL) v
-                        """.formatted(PERIOD), accountId, environment, from, to)
-                .findFirst()
-                .orElseThrow();
+                        """.formatted(PERIOD), scope).findFirst().orElseThrow();
         return new ValidationTimeView(count(row[0]), seconds(row[1]), seconds(row[2]));
     }
 
-    private List<RuleView> rules(UUID accountId, Environment environment, LocalDate from, LocalDate to) {
+    private List<RuleView> rules(Scope scope) {
         return rows("""
                         SELECT rule, kind, documents, message, seen_at FROM (
                             SELECT r.rule, r.kind, count(*) AS documents,
@@ -162,7 +155,7 @@ public class ConsoleMetrics {
                         ) ranked
                         WHERE position <= :rules
                         ORDER BY kind, documents DESC, rule
-                        """.formatted(PERIOD), accountId, environment, from, to, Map.of("rules", RULES_PER_KIND))
+                        """.formatted(PERIOD), scope, Map.of("rules", RULES_PER_KIND))
                 .map(row -> new RuleView(
                         (String) row[0],
                         DianRule.Kind.valueOf((String) row[1]),
@@ -230,22 +223,19 @@ public class ConsoleMetrics {
         return new AlertsView(certificates, ranges);
     }
 
-    private Stream<Object[]> rows(String sql, UUID accountId, Environment environment, LocalDate from, LocalDate to) {
-        return rows(sql, accountId, environment, from, to, Map.of());
+    /** The documents of an account's environment issued between two days, both included. */
+    private record Scope(UUID accountId, Environment environment, LocalDate from, LocalDate to) {}
+
+    private Stream<Object[]> rows(String sql, Scope scope) {
+        return rows(sql, scope, Map.of());
     }
 
-    private Stream<Object[]> rows(
-            String sql,
-            UUID accountId,
-            Environment environment,
-            LocalDate from,
-            LocalDate to,
-            Map<String, Object> parameters) {
+    private Stream<Object[]> rows(String sql, Scope scope, Map<String, Object> parameters) {
         Map<String, Object> all = new TreeMap<>(parameters);
-        all.put("account", accountId);
-        all.put("environment", environment.name());
-        all.put("from", from);
-        all.put("to", to);
+        all.put("account", scope.accountId());
+        all.put("environment", scope.environment().name());
+        all.put("from", scope.from());
+        all.put("to", scope.to());
         return query(sql, all);
     }
 
