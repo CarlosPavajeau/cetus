@@ -1,0 +1,68 @@
+---
+title: Entrega por correo
+description: Cómo le llega al cliente su factura, cómo saber si la recibió y qué hacer si no.
+---
+
+La DIAN exige entregarle al adquiriente (tu cliente) el documento validado. Cetus lo hace por ti: cuando la
+DIAN acepta una factura, una nota crédito o una nota débito, la envía por correo al `customer.email` del
+documento.
+
+## Qué recibe el cliente
+
+Un correo con un `.zip` que trae dos archivos, como pide el anexo técnico:
+
+- El **AttachedDocument**: el XML firmado del documento junto con la respuesta de validación de la DIAN.
+  Es lo que el cliente carga en su sistema contable.
+- El **PDF**: la representación gráfica, con el CUFE y el código QR.
+
+El asunto sigue el formato de la DIAN: `NIT;Razón social;Número;Código del tipo de documento;Nombre
+comercial`. Si el cliente responde el correo, la respuesta le llega al correo del emisor.
+
+Solo se entrega lo aceptado. Un documento rechazado no se envía.
+
+## Cuándo no se envía
+
+- **El cliente no tiene correo.** Si no envías `customer.email`, la entrega queda `SKIPPED`: entrégale el
+  documento por tu cuenta (descarga el PDF y el AttachedDocument con `GET /v1/invoices/{id}/files/{file}`).
+- **Ambiente de pruebas.** Los documentos de habilitación no llegan al adquiriente, porque no tienen validez
+  fiscal.
+- **Simulación.** Ver abajo.
+
+## Cómo saber si llegó
+
+`GET /v1/invoices/{id}` (y los de las notas) trae `deliveries`, una entrada por cada envío:
+
+| `status`     | Qué significa                                           |
+| ------------ | ------------------------------------------------------- |
+| `PENDING`    | En cola.                                                |
+| `SENT`       | El proveedor de correo la recibió.                      |
+| `DELIVERED`  | Llegó al buzón del destinatario.                        |
+| `BOUNCED`    | Rebotó: la dirección no existe o el buzón no la acepta. |
+| `COMPLAINED` | El destinatario la marcó como correo no deseado.        |
+| `SKIPPED`    | No se envió: no había a quién enviarla.                 |
+| `FAILED`     | El proveedor de correo la rechazó.                      |
+
+`BOUNCED`, `COMPLAINED`, `SKIPPED` y `FAILED` significan que el cliente **no** lo recibió: entrégale el
+documento por otro medio. `error` dice por qué.
+
+Con [webhooks](/guias/webhooks) no necesitas consultar: `document.delivered` avisa cuando llegó y
+`document.delivery_failed` cuando no llegó, con `data.delivery` (`status`, `recipient` y `reason`).
+
+## Reenviar
+
+Desde la consola, en el detalle de un documento aceptado, **Reenviar correo** envía otra vez el PDF y el
+AttachedDocument en un solo correo, a la dirección del cliente o a otra que escribas en **Enviar a**. Sirve
+cuando el cliente perdió el correo o la primera dirección estaba mal.
+
+- Solo después de que termina la entrega anterior, y como máximo una vez por minuto.
+- Cada reenvío agrega una entrada a `deliveries`.
+
+<Sandbox>
+    En la simulación, los correos **nunca** llegan al adquiriente: van al contacto técnico verificado de
+    tu cuenta (en **Contactos**), con `[Simulación]` en el asunto y un aviso de que el documento no tiene
+    validez fiscal. Así ves exactamente lo que recibiría tu cliente.
+
+    - Como máximo 30 correos al día por cuenta, contando los reenvíos.
+    - Sin contacto técnico verificado, la entrega queda `SKIPPED`.
+
+</Sandbox>

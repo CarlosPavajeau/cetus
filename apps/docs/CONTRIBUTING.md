@@ -33,6 +33,15 @@ pnpm --filter @cetus/console screenshots
 
 Vuelve a tomarlas cuando cambien las pantallas que muestran.
 
+## Ejemplos de verificación de webhooks
+
+Los ejemplos de [Webhooks](content/docs/guias/webhooks.mdx) viven en `snippets/webhooks` y las páginas los
+incluyen con `<include>`. Después de cambiarlos, pruébalos (PHP y C# corren en Docker):
+
+```bash
+pnpm --filter @cetus/docs check:snippets
+```
+
 ## Estilo
 
 - Tutea al lector y usa oraciones cortas, en voz activa.

@@ -24,8 +24,8 @@ RECEIVED → PROCESSING → SUBMITTED → ACCEPTED
 ## Cómo enterarte del resultado
 
 - **Webhooks** (recomendado): registra una URL en la consola y Cetus te avisa con `invoice.accepted`,
-  `invoice.rejected` o `invoice.failed` (y los equivalentes `credit_note.*` y `debit_note.*`). Ver el
-  [inicio rápido](/inicio-rapido/desarrolladores#recibe-un-webhook).
+  `invoice.rejected` o `invoice.failed` (y los equivalentes `credit_note.*` y `debit_note.*`). Ver
+  [Webhooks](/guias/webhooks).
 - **Consulta**: `GET /v1/invoices/{id}` (o `/v1/credit-notes/{id}`, `/v1/debit-notes/{id}`). Si consultas en
   ciclo, espera unos segundos entre intentos.
 
@@ -56,6 +56,6 @@ soporte.
   `attached-document`.
 - **Entrega al cliente**: si el adquiriente tiene correo, Cetus le envía el AttachedDocument y el PDF.
   `deliveries` en la factura, y los webhooks `document.delivered` y `document.delivery_failed`, dicen si
-  llegó.
+  llegó. Ver [Entrega por correo](/guias/entrega-por-correo).
 - **Correcciones**: una factura aceptada no se modifica. Se anula o disminuye con una nota crédito y se
-  aumenta con una nota débito.
+  aumenta con una nota débito. Ver [Notas crédito y débito](/guias/notas-credito-y-debito).

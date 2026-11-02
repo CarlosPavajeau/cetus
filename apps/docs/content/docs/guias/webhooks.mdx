@@ -1,0 +1,160 @@
+---
+title: Webhooks
+description: Recibe en tu servidor el resultado de cada documento, verifica la firma y maneja los reintentos.
+---
+
+Un webhook es una URL de tu servidor a la que Cetus envía un `POST` cada vez que cambia uno de tus
+documentos. Así te enteras de la respuesta de la DIAN sin consultar el estado una y otra vez.
+
+## Registra un webhook
+
+En la consola, ve a **Webhooks** y pulsa **Registrar webhook**:
+
+- **URL**: la dirección de tu servidor. En producción debe ser `https`.
+- **Ambiente**: cada webhook recibe los eventos de un solo ambiente: **Simulación (sin la DIAN)**,
+  **Pruebas (habilitación DIAN)** o **Producción**.
+- **Eventos**: marca los que te interesan. Sin ninguno marcado, recibe todos, incluidos los que se
+  agreguen después.
+
+Al registrarlo, la consola muestra el **secreto de firma** (`whsec_…`) **una sola vez**. Guárdalo en tu
+servidor como cualquier otra credencial: con él verificas que cada `POST` viene de Cetus.
+
+Solo el dueño y los administradores de la organización registran, desactivan y reactivan webhooks.
+
+## Eventos
+
+| Evento                                                            | Cuándo                                                                                                          |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `invoice.accepted`, `credit_note.accepted`, `debit_note.accepted` | La DIAN aceptó el documento.                                                                                    |
+| `invoice.rejected`, `credit_note.rejected`, `debit_note.rejected` | La DIAN lo rechazó. `data.dian.errors` dice por qué.                                                            |
+| `invoice.failed`, `credit_note.failed`, `debit_note.failed`       | Cetus no pudo enviarlo después de todos sus reintentos.                                                         |
+| `document.delivered`                                              | El correo con el documento llegó al cliente. Ver [Entrega por correo](/guias/entrega-por-correo).               |
+| `document.delivery_failed`                                        | El correo no llegó (rebotó, fue marcado como no deseado o no había a quién enviarlo): entrégalo por otro medio. |
+
+Cada hecho se publica **una sola vez**, con un `id` propio.
+
+## El cuerpo
+
+```json
+{
+    "id": "0199f6b0-7c11-7a52-9e3d-2b4c6d8e0f12",
+    "type": "invoice.accepted",
+    "createdAt": "2026-10-25T15:04:05.123Z",
+    "environment": "LIVE",
+    "data": {
+        "id": "0199f6b0-0a2e-7d41-8c3f-5e6a7b8c9d01",
+        "documentType": "INVOICE",
+        "number": "FE1024",
+        "status": "ACCEPTED",
+        "cufe": "…",
+        "issueDate": "2026-10-25",
+        "externalReference": "pedido-1001",
+        "referencedInvoiceId": null,
+        "dian": { "statusCode": "00", "statusMessage": "Procesado Correctamente.", "errors": [] }
+    }
+}
+```
+
+- `data.id` es el documento: con él lo consultas en `GET /v1/invoices/{id}` (o en el endpoint de su tipo).
+- `data.externalReference` es la referencia que enviaste al crearlo, para encontrarlo en tu sistema.
+- `data.referencedInvoiceId` es la factura que corrige una nota; es `null` en las facturas.
+- Los eventos `document.*` traen además `data.delivery`, con `status`, `recipient` y `reason`.
+
+Ignora los campos y los tipos de evento que no conozcas: Cetus puede agregar nuevos sin aviso.
+
+## Verifica la firma
+
+Cada `POST` trae tres encabezados, según [Standard Webhooks](https://www.standardwebhooks.com/):
+
+- `webhook-id`: el `id` del evento, igual en cada reintento.
+- `webhook-timestamp`: el momento del envío, en segundos Unix.
+- `webhook-signature`: `v1,` seguido del HMAC-SHA256 en base64 de `<webhook-id>.<webhook-timestamp>.<cuerpo>`,
+  con la parte del secreto que sigue a `whsec_`, decodificada de base64, como llave. Puede traer varias firmas
+  separadas por espacios: basta con que una coincida.
+
+Antes de procesar un evento:
+
+1. Calcula la firma sobre el **cuerpo tal como llegó**, antes de convertirlo a JSON: si lo vuelves a
+   serializar, cambia un espacio y la firma no coincide.
+2. Compárala en tiempo constante.
+3. Rechaza los envíos con más de 5 minutos de diferencia con tu reloj, para que nadie pueda repetir uno
+   viejo.
+
+Cualquier librería de Standard Webhooks (o la de Svix) sirve. Sin librería:
+
+<Tabs items={["JavaScript", "Python", "PHP", "Java", "C#"]}>
+<Tab value="JavaScript">
+
+<include lang="js">../../../snippets/webhooks/verify.js</include>
+
+Con Express, toma el cuerpo sin convertir con `express.raw({ type: "application/json" })` y pásalo como
+`req.body.toString("utf8")`.
+
+</Tab>
+<Tab value="Python">
+
+<include lang="python">../../../snippets/webhooks/verify.py</include>
+
+Con Flask, el cuerpo sin convertir es `request.get_data()`; con Django, `request.body`.
+
+</Tab>
+<Tab value="PHP">
+
+<include lang="php">../../../snippets/webhooks/verify.php</include>
+
+Sin framework, los encabezados están en `$_SERVER['HTTP_WEBHOOK_ID']`, `$_SERVER['HTTP_WEBHOOK_TIMESTAMP']` y
+`$_SERVER['HTTP_WEBHOOK_SIGNATURE']`.
+
+</Tab>
+<Tab value="Java">
+
+<include lang="java">../../../snippets/webhooks/CetusWebhooks.java</include>
+
+Con Spring, recibe el cuerpo como `@RequestBody byte[] body` y los encabezados con `@RequestHeader`.
+
+</Tab>
+<Tab value="C#">
+
+<include lang="csharp">../../../snippets/webhooks/CetusWebhooks.cs</include>
+
+Con ASP.NET Core, lee el cuerpo sin convertir copiando `Request.Body` a un `MemoryStream`.
+
+</Tab>
+</Tabs>
+
+Si la firma no coincide, responde `400` y descarta el evento.
+
+## Responde rápido
+
+Cualquier respuesta `2xx` confirma la entrega. Cetus espera hasta 10 segundos: responde de inmediato y haz
+el trabajo pesado después (por ejemplo, en una cola).
+
+`webhook-id` es el mismo en cada reintento. Guarda los que ya procesaste y descarta los repetidos: un evento
+puede llegar más de una vez, por ejemplo si tu respuesta se pierde en la red. Los eventos tampoco llegan
+siempre en orden; si necesitas el estado actual, consulta el documento.
+
+## Reintentos
+
+Un timeout, un error de red o una respuesta distinta de `2xx` se reintenta con espera creciente: hasta 10
+intentos durante unas 4 o 5 horas. El cuerpo es el mismo en cada intento. Si respondes `410 Gone`, Cetus deja
+de reintentar ese evento.
+
+En la consola, la página de cada webhook muestra el historial de entregas, con el estado y la respuesta de
+cada una, y **Reenviar** envía otra vez un evento con el mismo `id` y cuerpo.
+
+## Desactivación automática
+
+- Tras **10 fallas seguidas**, Cetus avisa a los contactos técnicos de tu cuenta (en **Contactos**).
+- Si el webhook sigue fallando **3 días**, sin ninguna respuesta `2xx` en medio, se desactiva solo y se
+  avisa de nuevo. Sus entregas pendientes se cancelan.
+
+Cuando corrijas tu servidor, pulsa **Reactivar** en la página del webhook. Al reactivarlo puedes reenviar los
+eventos que no recibió mientras fallaba o estaba desactivado.
+
+## Restricciones de la URL
+
+- En producción, solo `https`.
+- Cetus no envía a direcciones internas (`localhost`, redes privadas) y no sigue redirecciones: registra la
+  URL final.
+- Para probar en tu equipo, usa un túnel público (por ejemplo, ngrok o Cloudflare Tunnel) o
+  [webhook.site](https://webhook.site).
