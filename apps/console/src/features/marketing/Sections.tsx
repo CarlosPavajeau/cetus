@@ -1,4 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import {
+  ArrowRightIcon,
   BellRingIcon,
   FileCheck2Icon,
   FileMinusIcon,
@@ -18,6 +20,7 @@ import { docsUrl } from "~/lib/docs";
 
 import { CodeBlock } from "./CodeBlock";
 import { ConsoleCta } from "./ConsoleCta";
+import { linkButtonVariants } from "./linkButton";
 import { Section } from "./Section";
 import type { SnippetName } from "./snippets";
 import { WhatsAppButton } from "./WhatsAppButton";
@@ -242,6 +245,26 @@ export function BusinessSection({
           loading="lazy"
           className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 lg:col-span-3 dark:outline-white/10"
         />
+      </div>
+    </Section>
+  );
+}
+
+export function CalculatorSection() {
+  return (
+    <Section
+      eyebrow="Calculadora"
+      title="¿Debes facturar electrónicamente?"
+      lead="Si eres persona natural, depende de tus ingresos y de cómo trabajas. Respóndelo en un minuto, sin registrarte."
+    >
+      <div>
+        <Link
+          to="/estoy-obligado-a-facturar"
+          className={linkButtonVariants({ variant: "outline", size: "lg" })}
+        >
+          Hacer el cálculo
+          <ArrowRightIcon data-icon="inline-end" />
+        </Link>
       </div>
     </Section>
   );

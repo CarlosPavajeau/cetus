@@ -31,4 +31,4 @@ export function marketingHead({
 /** Cached at the edge for a few minutes: the HTML is the same with or without a session. */
 export const marketingCacheControl = "public, max-age=0, s-maxage=300, stale-while-revalidate=600";
 
-export const marketingPaths = ["/", "/precios"] as const;
+export const marketingPaths = ["/", "/precios", "/estoy-obligado-a-facturar"] as const;

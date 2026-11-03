@@ -1,9 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { type } from "arktype";
 
-import { publicApi } from "~/lib/api/client";
+import { legalDocuments } from "~/features/legal/documents";
+import { CetusApiError, publicApi } from "~/lib/api/client";
 import { env } from "~/lib/env";
 
 import { highlight } from "./highlight";
+import { type LeadResult, leadEmail, leadTrap } from "./leads";
 import { type SnippetName, snippets } from "./snippets";
 
 /** What the marketing pages need from the server's environment; all of it is public. */
@@ -29,4 +32,64 @@ export const highlightSnippets = createServerFn({ method: "GET" }).handler(
 
 function highlightSnippet(name: SnippetName) {
   return highlight(snippets[name].code, snippets[name].lang);
+}
+
+/** The trust band's figures and the calculator's cap; counted across every account, so the API caches them. */
+export const getLandingFigures = createServerFn({ method: "GET" }).handler(() =>
+  publicApi.get("/console/public/landing"),
+);
+
+const answer = type("'YES' | 'NO' | 'UNKNOWN'");
+
+const calculatorLeadInput = type({
+  email: leadEmail,
+  website: leadTrap,
+  answers: type({ personType: "'LEGAL_ENTITY'" }).or({
+    personType: "'NATURAL_PERSON'",
+    simpleRegime: answer,
+    incomeOverCap: answer,
+    severalEstablishments: answer,
+    otherConditions: answer,
+  }),
+});
+
+/** Emails the calculator's result to the visitor, who authorized it under the current privacy policy. */
+export const sendCalculatorLead = createServerFn({ method: "POST" })
+  .validator(calculatorLeadInput)
+  .handler(({ data }) =>
+    submitLead(data.website, () =>
+      publicApi.post("/console/public/leads/calculator", {
+        body: {
+          email: data.email,
+          policyVersion: legalDocuments.privacy.version,
+          answers: data.answers,
+        },
+      }),
+    ),
+  );
+
+/**
+ * A filled trap means a bot: it gets the same success as a person and nothing reaches the API. The API's quota is
+ * the one answer a person can act on.
+ */
+async function submitLead(trap: string, send: () => Promise<unknown>): Promise<LeadResult> {
+  if (trap !== "") {
+    return { ok: true };
+  }
+  try {
+    await send();
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof CetusApiError && error.status === 429) {
+      return {
+        ok: false,
+        message:
+          "Recibimos varias solicitudes desde tu conexión o con este correo. Inténtalo de nuevo en un rato.",
+      };
+    }
+    if (error instanceof CetusApiError && error.status === 400) {
+      return { ok: false, message: "Revisa el correo: no parece una dirección válida." };
+    }
+    throw error;
+  }
 }

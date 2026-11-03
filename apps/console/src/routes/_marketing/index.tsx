@@ -16,6 +16,7 @@ import { RequestDemo } from "~/features/marketing/RequestDemo";
 import { Section } from "~/features/marketing/Section";
 import {
   BusinessSection,
+  CalculatorSection,
   FeaturesSection,
   SecuritySection,
   StepsSection,
@@ -91,6 +92,7 @@ function Landing() {
       <StepsSection html={html} />
       <WebhooksSection />
       <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
+      <CalculatorSection />
       <Section
         id="precios"
         eyebrow="Precios"

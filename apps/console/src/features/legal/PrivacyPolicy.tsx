@@ -72,6 +72,15 @@ export function PrivacyPolicy() {
         plan al Cliente y para cumplir las obligaciones contables y tributarias de Cetus.
       </p>
       <p>
+        <strong>Prospectos:</strong> el correo y lo que se escribe en los formularios de las páginas
+        públicas, sin necesidad de una cuenta: las respuestas de la calculadora «¿Estoy obligado a
+        facturar?», los datos del formulario de Socios (nombre, empresa, teléfono y número de
+        empresas) y la integración por la que se pide un aviso. Los usamos solo para lo que la
+        persona pide en cada formulario: enviarle el resultado de la calculadora, responderle sobre
+        el programa de Socios o avisarle cuando la integración esté disponible. Para esto último, el
+        correo queda en una lista de Resend desde la que se puede dar de baja.
+      </p>
+      <p>
         <strong>Comunicaciones comerciales:</strong> solo con autorización separada, que se puede
         revocar en cualquier momento, Cetus puede enviar novedades del producto. Los avisos del
         servicio no son comunicaciones comerciales.
@@ -90,11 +99,12 @@ export function PrivacyPolicy() {
 
       <h2>5. Autorización</h2>
       <p>
-        El usuario autoriza el tratamiento al crear su cuenta, marcando la casilla de aceptación.
-        Cetus conserva la prueba de esa autorización: la versión aceptada, la fecha, la dirección IP
-        y el navegador. Cetus no trata datos sensibles ni datos de niños, niñas o adolescentes; el
-        servicio está dirigido a mayores de edad que actúan en nombre de una empresa o de su propia
-        actividad.
+        El usuario autoriza el tratamiento al crear su cuenta, y quien deja su correo en un
+        formulario público al enviarlo, en ambos casos marcando la casilla de autorización. Cetus
+        conserva la prueba de esa autorización: la versión aceptada, la fecha y la dirección IP, y
+        el navegador en el caso de las cuentas. Cetus no trata datos sensibles ni datos de niños,
+        niñas o adolescentes; el servicio está dirigido a mayores de edad que actúan en nombre de
+        una empresa o de su propia actividad.
       </p>
 
       <h2>6. Derechos de los titulares</h2>
@@ -179,11 +189,11 @@ export function PrivacyPolicy() {
         elegido. Cetus no usa cookies de publicidad ni de analítica.
       </p>
       <p>
-        Para saber cómo se usan la página de inicio, la de precios y el registro, Cetus mide las
-        visitas y los clics con PostHog, sin cookies y sin guardar nada en el navegador: PostHog
-        recibe la página, el navegador y la dirección IP, que usa para estimar el país y la ciudad y
-        para agrupar las visitas del mismo día sin identificar a la persona. No recibe el nombre, el
-        correo ni otros datos del formulario. La consola, después de iniciar sesión, no se mide.
+        Para saber cómo se usan las páginas públicas y el registro, Cetus mide las visitas y los
+        clics con PostHog, sin cookies y sin guardar nada en el navegador: PostHog recibe la página,
+        el navegador y la dirección IP, que usa para estimar el país y la ciudad y para agrupar las
+        visitas del mismo día sin identificar a la persona. No recibe el nombre, el correo ni otros
+        datos del formulario. La consola, después de iniciar sesión, no se mide.
       </p>
 
       <h2>11. Conservación</h2>
@@ -194,6 +204,10 @@ export function PrivacyPolicy() {
         </li>
         <li>Documentos de simulación: diez días.</li>
         <li>Avisos enviados a los contactos: un año.</li>
+        <li>
+          Correos y datos de los formularios públicos: un año; en la lista de una integración, hasta
+          que se avise de su lanzamiento o la persona se dé de baja.
+        </li>
         <li>Registro de peticiones a la API: treinta días.</li>
         <li>
           Prueba de la autorización y registro de auditoría: mientras exista la cuenta y el tiempo

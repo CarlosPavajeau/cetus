@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { type } from "arktype";
 
 import { formatCents } from "~/features/billing/labels";
@@ -76,4 +77,42 @@ test("the pricing page lists the annual packages", async ({ page }) => {
       ),
     ),
   );
+});
+
+function octet() {
+  return Math.floor(Math.random() * 254) + 1;
+}
+
+/** Each test leaves its leads from its own IP, so the API's hourly quota per IP never trips a rerun. */
+async function fromFreshIp(page: Page) {
+  await page.setExtraHTTPHeaders({ "cf-connecting-ip": `10.${octet()}.${octet()}.${octet()}` });
+}
+
+test("the calculator answers a natural person and emails the result", async ({ page }) => {
+  await fromFreshIp(page);
+  await open(page, "/estoy-obligado-a-facturar");
+
+  await page.getByText("Persona natural", { exact: true }).click();
+  const answer = (question: RegExp, value: string) =>
+    page.getByRole("radiogroup", { name: question }).getByText(value, { exact: true }).click();
+  await answer(/régimen simple/i, "No");
+  await answer(/ingresos brutos/, "No");
+  await answer(/más de un establecimiento/, "Sí");
+  await answer(/franquicias/, "No sé");
+
+  await expect(
+    page.getByRole("heading", { name: "Debes facturar electrónicamente" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Con más de un establecimiento eres responsable de IVA."),
+  ).toBeVisible();
+
+  const email = `calculadora-${crypto.randomUUID()}@ejemplo.com`;
+  await page.getByLabel("Correo", { exact: true }).fill(email);
+  await page.getByRole("button", { name: "Enviarme el resultado" }).click();
+  await expect(page.getByText("Para escribirte necesitamos tu autorización.")).toBeVisible();
+  await page.getByRole("checkbox", { name: /Autorizo a Cetus/ }).click();
+  await page.getByRole("button", { name: "Enviarme el resultado" }).click();
+
+  await expect(page.getByText(`Te enviamos el resultado a ${email}.`)).toBeVisible();
 });
