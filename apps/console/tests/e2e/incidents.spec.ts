@@ -34,7 +34,7 @@ test("an incident an admin publishes shows in every console until it is resolved
   await expect(row.getByText("Abierto")).toBeVisible();
 
   await signIn(context, customer);
-  await open(page, "/");
+  await open(page, "/overview");
   const banner = page.getByRole("complementary", { name: "Incidentes" });
   await expect(banner.getByText(title)).toBeVisible();
   await expect(banner.getByRole("link", { name: "Ver estado" })).toHaveAttribute(
@@ -48,6 +48,6 @@ test("an incident an admin publishes shows in every console until it is resolved
   await expect(row.getByText(/Resuelto el/)).toBeVisible();
 
   await signIn(context, customer);
-  await open(page, "/");
+  await open(page, "/overview");
   await expect(page.getByText(title)).toBeHidden();
 });

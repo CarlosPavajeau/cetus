@@ -1,8 +1,10 @@
 package com.cantte.cetus.api.billing;
 
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -183,6 +185,35 @@ class PlanCatalogTest {
                         .getLong("find { it.id == '%s' }.version.priceCents".formatted(socios)))
                 .isEqualTo(100_000_000);
         assertThat(ids(other)).doesNotContain(socios);
+    }
+
+    @Test
+    void thePublicCatalogNeedsNoSignInAndShowsOnlyListedPlans() {
+        String socios = newPlan("SUBSCRIPTION", null, null, false);
+        String partnerAccount = customer("Socia Pública SAS")
+                .request()
+                .get("/console/account")
+                .then()
+                .extract()
+                .path("id");
+        Map<String, Object> terms = subscriptionTerms(100_000_000);
+        terms.put("accountId", partnerAccount);
+        version(socios, terms).then().statusCode(200);
+
+        Response response = given().get("/public/plans");
+
+        response.then().statusCode(200).header("Cache-Control", containsString("max-age=300"));
+        JsonPath offers = response.jsonPath();
+        assertThat(offers.getList("code", String.class))
+                .contains("INICIAL", "CRECIMIENTO", "ESCALA", "EMPRENDEDOR", "RECARGA_1000")
+                .doesNotContain("FREE", "SOCIOS");
+        assertThat(offers.getList("id", String.class)).doesNotContain(socios);
+        assertThat(offers.getList("version.accountId")).containsOnlyNulls();
+        assertThat(offers.getMap("find { it.code == 'CRECIMIENTO' }.version"))
+                .containsEntry("totalCents", 14_900_000)
+                .containsEntry("documentsIncluded", 2000)
+                .containsEntry("issuersIncluded", 3)
+                .containsEntry("priceOverageCents", 8_000);
     }
 
     @Test

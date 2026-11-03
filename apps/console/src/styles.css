@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist-mono";
 
 /*
  * Never scan build output. The Docker context has no .gitignore, so the SSR build would pick up classes
@@ -15,6 +16,9 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --tracking-display: -0.045em;
+  --tracking-heading: -0.04em;
   --text-3xs: 0.625rem;
   --text-3xs--line-height: 1.5;
   --text-2xs: 0.6875rem;
@@ -25,6 +29,9 @@
   --text-sm--line-height: 1.5;
   --text-md: 0.875rem;
   --text-md--line-height: 1.5;
+  --text-display: clamp(2.5rem, 6vw, 4.5rem);
+  --text-display--line-height: 1.1;
+  --spacing-section: clamp(4rem, 10vw, 8rem);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -111,7 +118,7 @@
   --impersonation-hover: var(--color-amber-300);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -181,9 +188,40 @@
       center bottom / 100% 1rem no-repeat scroll;
 }
 
+/* Inter's single-storey a, open digits and rounded quotes, for the marketing pages' lighter headings. */
+@utility font-marketing {
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+
+/* Shiki's output (features/marketing/highlight.ts) carries both themes as variables. */
+.code-block .shiki,
+.code-block .shiki span {
+  color: var(--shiki-light);
+  background-color: transparent;
+}
+
+.dark .code-block .shiki,
+.dark .code-block .shiki span {
+  color: var(--shiki-dark);
+}
+
+.code-block[data-line-numbers] .shiki code {
+  counter-reset: line;
+}
+
+.code-block[data-line-numbers] .shiki .line::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 2ch;
+  margin-right: 1.5ch;
+  text-align: right;
+  color: var(--muted-foreground);
+}
+
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;

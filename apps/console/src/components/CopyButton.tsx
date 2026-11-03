@@ -8,16 +8,19 @@ export function CopyButton({
   value,
   label,
   iconOnly = false,
+  onCopy,
 }: {
   value: string;
   /** What is copied, for assistive technology: "Copiar ID del emisor". */
   label: string;
   iconOnly?: boolean;
+  onCopy?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
     await navigator.clipboard.writeText(value);
+    onCopy?.();
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

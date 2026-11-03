@@ -15,7 +15,7 @@ export const legalOwner = {
 export const legalDocuments = {
   terms: { version: "2026-10-24", title: "Términos de servicio", path: "/legal/terminos" },
   privacy: {
-    version: "2026-10-24",
+    version: "2026-11-02",
     title: "Política de tratamiento de datos personales",
     path: "/legal/privacidad",
   },

@@ -57,6 +57,18 @@ public class PlanCatalog {
                 .toList();
     }
 
+    /** What anyone can see before signing in: the listed plans with their public version now. */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public List<PlanOfferView> publicOffers() {
+        OffsetDateTime now = OffsetDateTime.now();
+        return PlanEntity.<PlanEntity>list("active = true and listed = true").stream()
+                .flatMap(plan -> PlanVersionEntity.findCurrent(plan.id, null, now)
+                        .map(version -> PlanOfferView.from(plan, PlanVersionView.from(version)))
+                        .stream())
+                .sorted(CATALOG_ORDER)
+                .toList();
+    }
+
     /** Every plan, sold or retired, with its public version now. */
     @Transactional(Transactional.TxType.MANDATORY)
     public List<PlanOfferView> all() {

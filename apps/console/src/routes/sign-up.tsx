@@ -12,20 +12,26 @@ import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
-import { invitationSearch } from "~/features/auth/session-start";
 import { createWorkspace } from "~/features/auth/workspace";
 import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
 import { LegalLink } from "~/features/legal/LegalLink";
+import { track } from "~/features/marketing/analytics";
+import { signUpSearch } from "~/features/marketing/links";
+import { useAnalytics } from "~/features/marketing/useAnalytics";
 import { authClient } from "~/lib/auth/client";
 
-/** `invitation`: the invitation the person came to accept; they join that organization instead of a new one. */
+/**
+ * `invitation`: the invitation the person came to accept; they join that organization instead of a new one.
+ * `audience` and `ref`: where a new visitor came from, for the analytics of the sign-up.
+ */
 export const Route = createFileRoute("/sign-up")({
-  validateSearch: invitationSearch,
+  validateSearch: signUpSearch,
   component: SignUp,
 });
 
 function SignUp() {
-  const { invitation } = Route.useSearch();
+  const { invitation, audience, ref } = Route.useSearch();
+  useAnalytics();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -62,6 +68,7 @@ function SignUp() {
       return;
     }
 
+    track({ name: "sign_up", audience: audience ?? null, ref: ref ?? null });
     // Sign-up does not ask for the company, so the workspace starts with the person's name.
     if (!(await createWorkspace(name))) {
       form.setError("root", {
