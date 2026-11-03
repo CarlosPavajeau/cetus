@@ -68,6 +68,36 @@ export const sendCalculatorLead = createServerFn({ method: "POST" })
     ),
   );
 
+/** The partner form as the browser parsed it; the API checks the lengths again. */
+const partnerLeadInput = type({
+  email: "string",
+  website: leadTrap,
+  name: "string",
+  company: "string",
+  phone: "string",
+  companies: "1 <= number.integer <= 10000",
+  message: "string",
+});
+
+/** The partner form, for the support mailbox to answer. */
+export const sendPartnerLead = createServerFn({ method: "POST" })
+  .validator(partnerLeadInput)
+  .handler(({ data }) =>
+    submitLead(data.website, () =>
+      publicApi.post("/console/public/leads/partners", {
+        body: {
+          email: data.email,
+          policyVersion: legalDocuments.privacy.version,
+          name: data.name,
+          company: data.company || undefined,
+          phone: data.phone || undefined,
+          companies: data.companies,
+          message: data.message || undefined,
+        },
+      }),
+    ),
+  );
+
 /**
  * A filled trap means a bot: it gets the same success as a person and nothing reaches the API. The API's quota is
  * the one answer a person can act on.

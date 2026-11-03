@@ -19,7 +19,13 @@ export type MarketingEvent =
   | { name: "lead_submitted"; kind: LeadKind };
 
 /** The pages PostHog may see; the console behind the sign-in is not measured. */
-const measuredPaths = new Set(["/", "/precios", "/estoy-obligado-a-facturar", "/sign-up"]);
+const measuredPaths = new Set([
+  "/",
+  "/precios",
+  "/estoy-obligado-a-facturar",
+  "/contadores",
+  "/sign-up",
+]);
 
 let client: Promise<PostHog> | undefined;
 

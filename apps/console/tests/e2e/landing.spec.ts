@@ -116,3 +116,29 @@ test("the calculator answers a natural person and emails the result", async ({ p
 
   await expect(page.getByText(`Te enviamos el resultado a ${email}.`)).toBeVisible();
 });
+
+test("accountants see the multi-issuer plans and can ask to be partners", async ({ page }) => {
+  const contador = (await publicPlans()).find((offer) => offer.name === "Contador");
+  await fromFreshIp(page);
+  await open(page, "/contadores");
+
+  if (contador === undefined) {
+    throw new Error("The catalog has no Contador package");
+  }
+  await expect(page.getByRole("article", { name: "Contador" })).toContainText(
+    formatCents(contador.version.totalCents),
+  );
+  const form = page.getByRole("form", { name: "Quiero ser socio" });
+  const email = `socio-${crypto.randomUUID()}@ejemplo.com`;
+  await form.getByLabel("Nombre", { exact: true }).fill("Ana Contadora");
+  await form.getByLabel("Correo", { exact: true }).fill(email);
+  await form.getByLabel("¿Cuántas empresas manejas?").fill("doce");
+  await form.getByRole("checkbox", { name: /Autorizo a Cetus/ }).click();
+  await form.getByRole("button", { name: "Quiero ser socio" }).click();
+  await expect(form.getByText("Escribe cuántas empresas manejas")).toBeVisible();
+
+  await form.getByLabel("¿Cuántas empresas manejas?").fill("12");
+  await form.getByRole("button", { name: "Quiero ser socio" }).click();
+
+  await expect(page.getByText(`Recibimos tus datos. Te escribiremos a ${email}.`)).toBeVisible();
+});

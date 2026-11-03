@@ -1,17 +1,15 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
-import { CheckIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
-import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
-import { LegalLink } from "~/features/legal/LegalLink";
 
 import { type LeadKind, track } from "./analytics";
+import { ConsentField, LeadSent, TrapField, leadFailure } from "./LeadFields";
 import { type LeadResult, emptyLeadContact, leadContactSchema } from "./leads";
 
 export type LeadContact = { email: string; website: string };
@@ -27,7 +25,7 @@ export function LeadContactForm({
 }: {
   title?: string;
   submitLabel: string;
-  /** What the person authorizes, after "Autorizo a Cetus a usar este correo para": "avisarme cuando…". */
+  /** See {@link ConsentField}. */
   purpose: string;
   kind: LeadKind;
   onSubmit: (contact: LeadContact) => Promise<LeadResult>;
@@ -51,19 +49,12 @@ export function LeadContactForm({
       track({ name: "lead_submitted", kind });
       setSentTo(contact.email);
     } catch {
-      form.setError("root", {
-        message: "No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo.",
-      });
+      form.setError("root", { message: leadFailure });
     }
   });
 
   if (sentTo) {
-    return (
-      <output className="flex gap-2 text-md/6 text-pretty">
-        <CheckIcon className="mt-1 size-4 shrink-0 text-success-foreground" />
-        {sent(sentTo)}
-      </output>
-    );
+    return <LeadSent>{sent(sentTo)}</LeadSent>;
   }
 
   return (
@@ -95,35 +86,17 @@ export function LeadContactForm({
           name="consent"
           control={form.control}
           render={({ field, fieldState }) => (
-            <Field orientation="horizontal" data-invalid={fieldState.invalid}>
-              <Checkbox
-                id={`${id}-consent`}
-                checked={field.value}
-                onCheckedChange={(checked) => field.onChange(checked)}
-                onBlur={field.onBlur}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={`${id}-consent-error`}
-              />
-              <div className="flex flex-col gap-1.5">
-                <FieldLabel htmlFor={`${id}-consent`} className="block font-normal">
-                  Autorizo a Cetus a usar este correo para {purpose}, según la{" "}
-                  <LegalLink document="privacy">política de datos</LegalLink>.
-                </FieldLabel>
-                <FieldError id={`${id}-consent-error`} errors={[fieldState.error]} />
-              </div>
-            </Field>
+            <ConsentField
+              id={`${id}-consent`}
+              purpose={purpose}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error}
+            />
           )}
         />
-        <div aria-hidden="true" className="sr-only">
-          <label htmlFor={`${id}-website`}>Deja este campo vacío</label>
-          <input
-            {...form.register("website")}
-            id={`${id}-website`}
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-          />
-        </div>
+        <TrapField id={`${id}-website`} {...form.register("website")} />
         {errors.root && (
           <Alert variant="destructive">
             <AlertDescription>{errors.root.message}</AlertDescription>

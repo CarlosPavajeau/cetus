@@ -29,6 +29,11 @@ export function MarketingFooter() {
             </Link>
           </li>
           <li>
+            <Link to="/contadores" className="hover:text-foreground">
+              Para contadores
+            </Link>
+          </li>
+          <li>
             <a href={statusPageUrl} className="hover:text-foreground">
               Estado del servicio
             </a>

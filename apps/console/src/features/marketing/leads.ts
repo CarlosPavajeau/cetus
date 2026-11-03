@@ -35,3 +35,39 @@ export type LeadContactValues = typeof leadContactSchema.inferIn;
 export const emptyLeadContact: LeadContactValues = { email: "", consent: false, website: "" };
 
 export type LeadResult = { ok: true } | { ok: false; message: string };
+
+const required = (message: string, max: number) =>
+  type("string.trim").to(type(`0 < string <= ${max}`).configure({ message }));
+
+const optional = (max: number, message: string) =>
+  type("string.trim").to(type(`string <= ${max}`).configure({ message }));
+
+/** The partner form: who writes, and how many companies they handle. */
+export const partnerLeadSchema = leadContactSchema.and({
+  name: required("Escribe tu nombre.", 120),
+  company: optional(160, "El nombre de la firma admite hasta 160 caracteres."),
+  phone: type("string.trim").to(
+    type(/^$|^[+0-9 ()-]{7,20}$/).configure({
+      message: "Escribe un teléfono de 7 a 20 dígitos, por ejemplo +57 300 000 0000.",
+    }),
+  ),
+  companies: type("string.trim").to(
+    type("string.integer.parse")
+      .to("1 <= number <= 10000")
+      .configure({ message: "Escribe cuántas empresas manejas, por ejemplo 12." }),
+  ),
+  message: optional(2000, "El mensaje admite hasta 2.000 caracteres."),
+});
+
+export type PartnerLeadValues = typeof partnerLeadSchema.inferIn;
+
+export type PartnerLead = typeof partnerLeadSchema.infer;
+
+export const emptyPartnerLead: PartnerLeadValues = {
+  ...emptyLeadContact,
+  name: "",
+  company: "",
+  phone: "",
+  companies: "",
+  message: "",
+};

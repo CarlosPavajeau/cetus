@@ -6,6 +6,7 @@ const robots = `User-agent: *
 Allow: /$
 Allow: /precios
 Allow: /estoy-obligado-a-facturar
+Allow: /contadores
 Allow: /legal/
 Disallow: /
 
