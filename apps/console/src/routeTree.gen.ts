@@ -9,18 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as MarketingRouteImport } from './routes/_marketing'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as DotwellKnownJwksDotjsonRouteImport } from './routes/[.]well-known/jwks[.]json'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
+import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
+import { Route as MarketingPreciosRouteImport } from './routes/_marketing/precios'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
 import { Route as InvitationsInvitationIdRouteImport } from './routes/invitations.$invitationId'
@@ -66,17 +70,16 @@ import { Route as AppIssuersIssuerIdEditRouteImport } from './routes/_app/issuer
 import { Route as AppDocumentsDocumentIdNotesNewRouteImport } from './routes/_app/documents/$documentId_.notes.new'
 import { Route as AdminAdminOrganizationsAccountIdIssuersIssuerIdRouteImport } from './routes/_admin/admin/organizations/$accountId_.issuers.$issuerId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingRoute = MarketingRouteImport.update({
+  id: '/_marketing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -94,6 +97,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
@@ -107,6 +115,11 @@ const SignInRoute = SignInRouteImport.update({
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TwoFactorRoute = TwoFactorRouteImport.update({
@@ -123,6 +136,16 @@ const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
   getParentRoute: () => AppRoute,
+} as any)
+const MarketingIndexRoute = MarketingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingPreciosRoute = MarketingPreciosRouteImport.update({
+  id: '/precios',
+  path: '/precios',
+  getParentRoute: () => MarketingRoute,
 } as any)
 const CertificateUploadTokenRoute = CertificateUploadTokenRouteImport.update({
   id: '/certificate-upload/$token',
@@ -356,16 +379,19 @@ const AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof MarketingIndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/organizations': typeof OrganizationsRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/two-factor': typeof TwoFactorRoute
   '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/overview': typeof AppOverviewRoute
+  '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
@@ -412,16 +438,19 @@ export interface FileRoutesByFullPath {
   '/admin/organizations/$accountId/issuers/$issuerId': typeof AdminAdminOrganizationsAccountIdIssuersIssuerIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof MarketingIndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/organizations': typeof OrganizationsRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/two-factor': typeof TwoFactorRoute
   '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/overview': typeof AppOverviewRoute
+  '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
@@ -469,18 +498,21 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_admin': typeof AdminRouteWithChildren
   '/_app': typeof AppRouteWithChildren
+  '/_marketing': typeof MarketingRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/organizations': typeof OrganizationsRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/two-factor': typeof TwoFactorRoute
   '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/_app/overview': typeof AppOverviewRoute
+  '/_marketing/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
@@ -488,6 +520,7 @@ export interface FileRoutesById {
   '/legal/encargo': typeof LegalEncargoRoute
   '/legal/privacidad': typeof LegalPrivacidadRoute
   '/legal/terminos': typeof LegalTerminosRoute
+  '/_marketing/': typeof MarketingIndexRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_admin/admin/billing': typeof AdminAdminBillingRoute
   '/_admin/admin/incidents': typeof AdminAdminIncidentsRoute
@@ -533,12 +566,15 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/organizations'
     | '/reset-password'
+    | '/robots.txt'
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/two-factor'
     | '/.well-known/jwks.json'
     | '/overview'
+    | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
     | '/invitations/$invitationId'
@@ -589,12 +625,15 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/organizations'
     | '/reset-password'
+    | '/robots.txt'
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/two-factor'
     | '/.well-known/jwks.json'
     | '/overview'
+    | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
     | '/invitations/$invitationId'
@@ -641,18 +680,21 @@ export interface FileRouteTypes {
     | '/admin/organizations/$accountId/issuers/$issuerId'
   id:
     | '__root__'
-    | '/'
     | '/_admin'
     | '/_app'
+    | '/_marketing'
     | '/forgot-password'
     | '/organizations'
     | '/reset-password'
+    | '/robots.txt'
     | '/setup'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/two-factor'
     | '/.well-known/jwks.json'
     | '/_app/overview'
+    | '/_marketing/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
     | '/invitations/$invitationId'
@@ -660,6 +702,7 @@ export interface FileRouteTypes {
     | '/legal/encargo'
     | '/legal/privacidad'
     | '/legal/terminos'
+    | '/_marketing/'
     | '/_admin/admin/audit-log'
     | '/_admin/admin/billing'
     | '/_admin/admin/incidents'
@@ -700,15 +743,17 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
+  MarketingRoute: typeof MarketingRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   OrganizationsRoute: typeof OrganizationsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SetupRoute: typeof SetupRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TwoFactorRoute: typeof TwoFactorRoute
   DotwellKnownJwksDotjsonRoute: typeof DotwellKnownJwksDotjsonRoute
   CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
@@ -723,13 +768,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_admin': {
       id: '/_admin'
       path: ''
@@ -742,6 +780,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_marketing': {
+      id: '/_marketing'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof MarketingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -765,6 +810,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setup': {
       id: '/setup'
       path: '/setup'
@@ -784,6 +836,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-up'
       fullPath: '/sign-up'
       preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/two-factor': {
@@ -806,6 +865,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/overview'
       preLoaderRoute: typeof AppOverviewRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_marketing/': {
+      id: '/_marketing/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof MarketingIndexRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/precios': {
+      id: '/_marketing/precios'
+      path: '/precios'
+      fullPath: '/precios'
+      preLoaderRoute: typeof MarketingPreciosRouteImport
+      parentRoute: typeof MarketingRoute
     }
     '/certificate-upload/$token': {
       id: '/certificate-upload/$token'
@@ -1209,16 +1282,32 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface MarketingRouteChildren {
+  MarketingPreciosRoute: typeof MarketingPreciosRoute
+  MarketingIndexRoute: typeof MarketingIndexRoute
+}
+
+const MarketingRouteChildren: MarketingRouteChildren = {
+  MarketingPreciosRoute: MarketingPreciosRoute,
+  MarketingIndexRoute: MarketingIndexRoute,
+}
+
+const MarketingRouteWithChildren = MarketingRoute._addFileChildren(
+  MarketingRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
+  MarketingRoute: MarketingRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   OrganizationsRoute: OrganizationsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SetupRoute: SetupRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TwoFactorRoute: TwoFactorRoute,
   DotwellKnownJwksDotjsonRoute: DotwellKnownJwksDotjsonRoute,
   CertificateUploadTokenRoute: CertificateUploadTokenRoute,

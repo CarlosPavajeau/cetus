@@ -15,6 +15,8 @@ const schema = type({
   "CETUS_AUTH_EMAIL_FROM?": "string > 0",
   // Development and CI without Resend: account emails go to JSON files here, for the end-to-end tests.
   "CETUS_EMAIL_OUTBOX_DIR?": "string > 0",
+  // The landing's WhatsApp button, in international format without "+" (573001234567); without it, no button.
+  "CETUS_WHATSAPP_NUMBER?": /^\d{10,15}$/,
   // Read by instrument.server.mjs before this module loads; listed so a malformed one fails at startup.
   "SENTRY_DSN?": "string.url",
 });
