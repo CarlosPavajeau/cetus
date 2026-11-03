@@ -12,7 +12,13 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -43,6 +49,8 @@ public class FakeResend {
 
     private final Deque<Reply> replies = new ArrayDeque<>();
     private final List<Request> requests = new CopyOnWriteArrayList<>();
+    private final Map<String, String> segments = new ConcurrentHashMap<>();
+    private final Set<String> memberships = ConcurrentHashMap.newKeySet();
     private HttpServer server;
 
     @PostConstruct
@@ -50,6 +58,8 @@ public class FakeResend {
         server = HttpServer.create(new InetSocketAddress("localhost", port), 0);
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         server.createContext("/emails", this::handle);
+        server.createContext("/segments", this::segment);
+        server.createContext("/contacts", this::contact);
         server.start();
     }
 
@@ -69,6 +79,54 @@ public class FakeResend {
     public synchronized void reset() {
         replies.clear();
         requests.clear();
+        segments.clear();
+        memberships.clear();
+    }
+
+    /** "address/segment name" for every address added to a segment (an "Avísame" list). */
+    public Set<String> memberships() {
+        Map<String, String> names = new HashMap<>();
+        segments.forEach((name, id) -> names.put(id, name));
+        Set<String> named = new HashSet<>();
+        memberships.forEach(membership -> {
+            int slash = membership.lastIndexOf('/');
+            named.add(membership.substring(0, slash) + "/" + names.get(membership.substring(slash + 1)));
+        });
+        return named;
+    }
+
+    private void segment(HttpExchange exchange) throws IOException {
+        if (exchange.getRequestMethod().equals("POST")) {
+            String name = JSON.readTree(exchange.getRequestBody().readAllBytes())
+                    .get("name")
+                    .asText();
+            String id = segments.computeIfAbsent(name, ignored -> "seg-" + UUID.randomUUID());
+            json(exchange, 201, Map.of("object", "segment", "id", id, "name", name));
+            return;
+        }
+        List<Map<String, String>> data = segments.entrySet().stream()
+                .map(entry -> Map.of("id", entry.getValue(), "name", entry.getKey()))
+                .toList();
+        json(exchange, 200, Map.of("object", "list", "data", data));
+    }
+
+    /** Every address exists already; adding one to a segment is recorded. */
+    private void contact(HttpExchange exchange) throws IOException {
+        String[] parts = exchange.getRequestURI().getPath().substring(1).split("/");
+        if (parts.length == 4 && parts[2].equals("segments")) {
+            memberships.add(parts[1] + "/" + parts[3]);
+            json(exchange, 201, Map.of("id", parts[3]));
+            return;
+        }
+        json(exchange, 200, Map.of("object", "contact", "id", "contact-1"));
+    }
+
+    private static void json(HttpExchange exchange, int status, Object body) throws IOException {
+        byte[] bytes = JSON.writeValueAsBytes(body);
+        exchange.getResponseHeaders().set("Content-Type", "application/json");
+        exchange.sendResponseHeaders(status, bytes.length);
+        exchange.getResponseBody().write(bytes);
+        exchange.close();
     }
 
     private void handle(HttpExchange exchange) throws IOException {

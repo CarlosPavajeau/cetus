@@ -1384,6 +1384,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/public/landing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Landing */
+        get: operations["PublicLeadResource_landing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/public/leads/calculator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Calculator */
+        post: operations["PublicLeadResource_calculator"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/public/leads/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Integration */
+        post: operations["PublicLeadResource_integration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console/public/leads/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Partner */
+        post: operations["PublicLeadResource_partner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/subscription": {
         parameters: {
             query?: never;
@@ -2264,6 +2332,8 @@ export interface components {
             /** @description Invoiced plus debited minus credited */
             net: number;
         };
+        /** @enum {string} */
+        Answer: "YES" | "NO" | "UNKNOWN";
         ApiKeyDetail: {
             key: components["schemas"]["ApiKeyView"];
             /** Format: int64 */
@@ -2351,6 +2421,18 @@ export interface components {
         };
         BootstrapRequest: {
             name: string;
+        };
+        CalculatorAnswers: {
+            personType: components["schemas"]["PersonType"];
+            simpleRegime?: components["schemas"]["Answer"];
+            incomeOverCap?: components["schemas"]["Answer"];
+            severalEstablishments?: components["schemas"]["Answer"];
+            otherConditions?: components["schemas"]["Answer"];
+        };
+        CalculatorLeadRequest: {
+            email: string;
+            policyVersion: string;
+            answers: components["schemas"]["CalculatorAnswers"];
         };
         CancellationRequest: {
             description: string;
@@ -3206,6 +3288,13 @@ export interface components {
             startedAt: components["schemas"]["OffsetDateTime"];
             resolvedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
+        /** @enum {string} */
+        Integration: "WOOCOMMERCE" | "SHOPIFY" | "AUTOMATIONS" | "PAYMENTS";
+        IntegrationLeadRequest: {
+            email: string;
+            policyVersion: string;
+            integration: components["schemas"]["Integration"];
+        };
         /** @description La factura que corrige una nota. */
         InvoiceRef: {
             /** @description Identificador de la factura. */
@@ -3336,6 +3425,13 @@ export interface components {
         Kind2: "SUBSCRIPTION" | "PACKAGE" | "TOPUP";
         /** @enum {string} */
         Kind3: "REJECTION" | "NOTIFICATION";
+        LandingView: {
+            /** Format: int64 */
+            acceptedDocuments: number;
+            /** Format: int64 */
+            activeIssuers: number;
+            obligationCap: components["schemas"]["ObligationCapView"] | null;
+        };
         /** @description Una línea del documento: un producto o servicio. */
         Line: {
             /**
@@ -3450,6 +3546,12 @@ export interface components {
             /** @description Whether the range has its technical key; never the key itself */
             hasTechnicalKey: boolean;
         };
+        ObligationCapView: {
+            /** Format: int64 */
+            uvtValueCop: number;
+            /** Format: int32 */
+            uvt: number;
+        };
         /**
          * Format: date-time
          * @example 2022-03-10T12:15:50-04:00
@@ -3555,6 +3657,16 @@ export interface components {
              * @description In COP cents; 0 refuses every overage document but credit notes
              */
             overageLimitCents: number;
+        };
+        PartnerLeadRequest: {
+            email: string;
+            policyVersion: string;
+            name: string;
+            company?: string;
+            phone?: string;
+            /** Format: int32 */
+            companies: number;
+            message?: string;
         };
         /** @description Cómo se paga la factura. */
         Payment: {
@@ -9705,6 +9817,200 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PublicLeadResource_landing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandingView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PublicLeadResource_calculator: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalculatorLeadRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PublicLeadResource_integration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntegrationLeadRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    PublicLeadResource_partner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerLeadRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

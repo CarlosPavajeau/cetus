@@ -1,11 +1,9 @@
 package com.cantte.cetus.email;
 
 import com.resend.Resend;
-import com.resend.core.exception.ResendException;
 import com.resend.core.net.RequestOptions;
 import com.resend.services.emails.model.Attachment;
 import com.resend.services.emails.model.CreateEmailOptions;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Base64;
 
@@ -14,10 +12,6 @@ import java.util.Base64;
  * connection pool are shared by every send.
  */
 public final class ResendEmailSender implements EmailSender {
-
-    private static final int TOO_MANY_REQUESTS = 429;
-    /** Resend's answer to two concurrent requests with the same idempotency key. */
-    private static final int CONFLICT = 409;
 
     private final Resend resend;
 
@@ -49,30 +43,7 @@ public final class ResendEmailSender implements EmailSender {
         }
         RequestOptions options =
                 RequestOptions.builder().setIdempotencyKey(idempotencyKey).build();
-        try {
-            return resend.emails().send(email.build(), options).getId();
-        } catch (ResendException e) {
-            throw translate(e);
-        } catch (RuntimeException e) {
-            // The SDK wraps network errors and timeouts in a RuntimeException around the IOException.
-            if (e.getCause() instanceof IOException) {
-                throw new EmailTransientException(
-                        "Resend unreachable: " + e.getCause().getMessage(), e);
-            }
-            throw e;
-        }
-    }
-
-    private static EmailException translate(ResendException e) {
-        Integer status = e.getStatusCode();
-        String detail = "Resend " + (status == null ? "error" : status)
-                + (e.getErrorName() == null ? "" : " " + e.getErrorName()) + ": " + e.getMessage();
-        if (status == null || status >= 500 || status == CONFLICT) {
-            return new EmailTransientException(detail, e);
-        }
-        if (status == TOO_MANY_REQUESTS) {
-            return new EmailRateLimited(detail, e);
-        }
-        return new EmailRejectedException(detail, e);
+        return ResendErrors.call(
+                () -> resend.emails().send(email.build(), options).getId());
     }
 }

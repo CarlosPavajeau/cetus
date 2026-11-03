@@ -2,9 +2,11 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
+import com.cantte.cetus.email.ContactLists;
 import com.cantte.cetus.email.EmailRateLimited;
 import com.cantte.cetus.email.EmailRejectedException;
 import com.cantte.cetus.email.EmailSender;
+import com.cantte.cetus.email.ResendContactLists;
 import com.cantte.cetus.email.ResendEmailSender;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.opentelemetry.api.trace.Tracer;
@@ -28,6 +30,7 @@ public class EmailClients {
     private static final Logger LOG = Logger.getLogger(EmailClients.class);
 
     private final EmailSender client;
+    private final ContactLists contactLists;
     private final String from;
     private final String notificationsFrom;
     private final Optional<String> testRecipient;
@@ -45,12 +48,15 @@ public class EmailClients {
             @ConfigProperty(name = "cetus.email.rate-limit-delay") Duration rateLimitDelay,
             Tracer tracer,
             MeterRegistry meters) {
-        this.client = apiKey.filter(key -> !key.isBlank()).isPresent()
+        boolean configured = apiKey.filter(key -> !key.isBlank()).isPresent();
+        this.client = configured
                 ? instrumented(
                         new ResendEmailSender(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout),
                         tracer,
                         meters)
                 : null;
+        this.contactLists =
+                configured ? new ResendContactLists(apiKey.get().trim(), baseUrl, connectTimeout, readTimeout) : null;
         this.from = from.filter(f -> !f.isBlank()).orElse(null);
         this.notificationsFrom = notificationsFrom.filter(f -> !f.isBlank()).orElse(this.from);
         this.testRecipient = testRecipient.filter(recipient -> !recipient.isBlank());
@@ -99,6 +105,11 @@ public class EmailClients {
      */
     public Optional<EmailSender> notificationSender() {
         return Optional.ofNullable(notificationsFrom == null ? null : client);
+    }
+
+    /** The provider's lists, for writing to everyone on one later; empty when RESEND_API_KEY is missing. */
+    public Optional<ContactLists> contactLists() {
+        return Optional.ofNullable(contactLists);
     }
 
     /** CETUS_NOTIFICATIONS_FROM, or CETUS_EMAIL_FROM without it. */
