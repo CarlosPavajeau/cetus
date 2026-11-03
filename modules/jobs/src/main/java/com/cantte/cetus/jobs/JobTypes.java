@@ -20,6 +20,11 @@ public final class JobTypes {
     public static final String SEND_SUPPORT_TICKET = "SEND_SUPPORT_TICKET";
     /** Email an opinion shared from the console to the Cetus support mailbox. reference_id = feedback id. */
     public static final String SEND_FEEDBACK = "SEND_FEEDBACK";
+    /**
+     * Tell the Cetus team about an email left on a public page, answer the person when the form promises it, and
+     * subscribe them to the integration they asked about. reference_id = lead id.
+     */
+    public static final String SEND_LEAD = "SEND_LEAD";
 
     /** Act on an event received from a provider (Wompi, Resend). reference_id = inbound webhook event id. */
     public static final String PROCESS_WEBHOOK_EVENT = "PROCESS_WEBHOOK_EVENT";

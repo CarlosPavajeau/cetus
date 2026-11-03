@@ -90,6 +90,9 @@ public class DataRetention {
     @ConfigProperty(name = "cetus.retention.inbound-webhook-events")
     Duration inboundWebhookEvents;
 
+    @ConfigProperty(name = "cetus.retention.leads")
+    Duration leads;
+
     @ConfigProperty(name = "cetus.retention.batch-size")
     int batchSize;
 
@@ -135,6 +138,7 @@ public class DataRetention {
                         "inbound_webhook_events",
                         "status IN ('PROCESSED', 'IGNORED') AND received_at < :before",
                         now.minus(inboundWebhookEvents)));
+        deleted.put("leads", deleteInBatches("leads", "created_at < :before", now.minus(leads)));
         deleted.put("sandbox_documents", deleteSandboxDocuments(now.minus(sandboxDocuments)));
         deleted.put("support_attachments", deleteUnsentAttachments(now.minus(supportAttachments)));
         LOG.infof("Data retention deleted %s", deleted);

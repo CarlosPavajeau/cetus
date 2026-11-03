@@ -137,12 +137,13 @@ export function PartnersNote() {
   return (
     <p className="text-sm text-muted-foreground">
       ¿Eres contador o manejas muchas empresas? El plan Socios tiene condiciones a la medida.{" "}
-      <a
-        href={`mailto:${supportEmail}?subject=${encodeURIComponent("Plan Socios")}`}
+      <Link
+        to="/contadores"
+        hash="socios"
         className="font-medium text-foreground underline underline-offset-4"
       >
-        Escríbenos sobre el plan Socios
-      </a>
+        Conoce el plan Socios
+      </Link>
       .
     </p>
   );

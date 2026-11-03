@@ -4,11 +4,13 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 
 import { Sandbox } from "~/components/Sandbox";
+import { SignUpCta } from "~/components/SignUpCta";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
     Sandbox,
+    SignUpCta,
     Step,
     Steps,
     Tab,

@@ -1,4 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import {
+  ArrowRightIcon,
   BellRingIcon,
   FileCheck2Icon,
   FileMinusIcon,
@@ -18,6 +20,7 @@ import { docsUrl } from "~/lib/docs";
 
 import { CodeBlock } from "./CodeBlock";
 import { ConsoleCta } from "./ConsoleCta";
+import { linkButtonVariants } from "./linkButton";
 import { Section } from "./Section";
 import type { SnippetName } from "./snippets";
 import { WhatsAppButton } from "./WhatsAppButton";
@@ -169,7 +172,7 @@ const events = [
   { name: "document.delivered", text: "El correo con el PDF llegó a tu cliente." },
 ] as const;
 
-export function WebhooksSection() {
+export function WebhooksSection({ verifyHtml }: { verifyHtml: string }) {
   return (
     <Section
       eyebrow="Webhooks"
@@ -187,14 +190,22 @@ export function WebhooksSection() {
         </>
       }
     >
-      <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2">
-        {events.map((event) => (
-          <li key={event.name} className="flex flex-col gap-1 bg-background p-5">
-            <code className="font-mono text-sm">{event.name}</code>
-            <p className="text-md/6 text-pretty text-muted-foreground">{event.text}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <ul className="grid gap-px overflow-hidden rounded-xl border bg-border">
+          {events.map((event) => (
+            <li key={event.name} className="flex flex-col gap-1 bg-background p-5">
+              <code className="font-mono text-sm">{event.name}</code>
+              <p className="text-md/6 text-pretty text-muted-foreground">{event.text}</p>
+            </li>
+          ))}
+        </ul>
+        <CodeBlock
+          html={verifyHtml}
+          snippet="webhookVerify"
+          title="Verifica la firma · Node.js"
+          copyLabel="Copiar la verificación"
+        />
+      </div>
     </Section>
   );
 }
@@ -242,6 +253,26 @@ export function BusinessSection({
           loading="lazy"
           className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 lg:col-span-3 dark:outline-white/10"
         />
+      </div>
+    </Section>
+  );
+}
+
+export function CalculatorSection() {
+  return (
+    <Section
+      eyebrow="Calculadora"
+      title="¿Debes facturar electrónicamente?"
+      lead="Si eres persona natural, depende de tus ingresos y de cómo trabajas. Respóndelo en un minuto, sin registrarte."
+    >
+      <div>
+        <Link
+          to="/estoy-obligado-a-facturar"
+          className={linkButtonVariants({ variant: "outline", size: "lg" })}
+        >
+          Hacer el cálculo
+          <ArrowRightIcon data-icon="inline-end" />
+        </Link>
       </div>
     </Section>
   );

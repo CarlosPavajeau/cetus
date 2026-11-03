@@ -12,7 +12,7 @@ const year = new Date().getFullYear();
 export function MarketingFooter() {
   return (
     <footer className="border-t">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-5 md:px-6">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-6 md:px-6">
         <div className="flex flex-col gap-3 md:col-span-2">
           <Link to="/" className="flex items-center gap-2.5" aria-label="Cetus, inicio">
             <CetusMark />
@@ -26,6 +26,11 @@ export function MarketingFooter() {
           <li>
             <Link to="/precios" className="hover:text-foreground">
               Precios
+            </Link>
+          </li>
+          <li>
+            <Link to="/contadores" className="hover:text-foreground">
+              Para contadores
             </Link>
           </li>
           <li>
@@ -58,6 +63,23 @@ export function MarketingFooter() {
           <li>
             <a href={`${docsUrl}/openapi.public.json`} className="hover:text-foreground">
               OpenAPI
+            </a>
+          </li>
+        </FooterColumn>
+        <FooterColumn title="Recursos">
+          <li>
+            <Link to="/estoy-obligado-a-facturar" className="hover:text-foreground">
+              ¿Estoy obligado a facturar?
+            </Link>
+          </li>
+          <li>
+            <a href={`${docsUrl}/guias/como-habilitarse`} className="hover:text-foreground">
+              Cómo habilitarte ante la DIAN
+            </a>
+          </li>
+          <li>
+            <a href={`${docsUrl}/guias/errores-de-rechazo`} className="hover:text-foreground">
+              Errores de rechazo
             </a>
           </li>
         </FooterColumn>

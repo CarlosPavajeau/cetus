@@ -2,7 +2,12 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { getSession } from "~/features/session/server";
 
-import { getMarketingConfig, highlightSnippets, listPublicPlans } from "./server";
+import {
+  getLandingFigures,
+  getMarketingConfig,
+  highlightSnippets,
+  listPublicPlans,
+} from "./server";
 
 const marketingKey = ["marketing"] as const;
 
@@ -16,6 +21,12 @@ export const publicPlansQuery = queryOptions({
   queryKey: [...marketingKey, "plans"],
   queryFn: () => listPublicPlans(),
   staleTime: 5 * 60 * 1000,
+});
+
+export const landingFiguresQuery = queryOptions({
+  queryKey: [...marketingKey, "figures"],
+  queryFn: () => getLandingFigures(),
+  staleTime: 10 * 60 * 1000,
 });
 
 export const snippetsQuery = queryOptions({

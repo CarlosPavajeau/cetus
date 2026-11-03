@@ -4,9 +4,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FaqSection } from "~/features/marketing/Faq";
 import { FinalCta } from "~/features/marketing/FinalCta";
 import { Hero } from "~/features/marketing/Hero";
+import { IntegrationsSection } from "~/features/marketing/Integrations";
 import { type Audience, parseAudience } from "~/features/marketing/links";
 import { PartnersNote, PricingPromises, PricingTable } from "~/features/marketing/Pricing";
 import {
+  landingFiguresQuery,
   marketingConfigQuery,
   publicPlansQuery,
   snippetsQuery,
@@ -16,12 +18,14 @@ import { RequestDemo } from "~/features/marketing/RequestDemo";
 import { Section } from "~/features/marketing/Section";
 import {
   BusinessSection,
+  CalculatorSection,
   FeaturesSection,
   SecuritySection,
   StepsSection,
   WebhooksSection,
 } from "~/features/marketing/Sections";
 import { marketingCacheControl, marketingHead } from "~/features/marketing/seo";
+import { TrustBand } from "~/features/marketing/TrustBand";
 import { docsUrl } from "~/lib/docs";
 
 const screenshots = {
@@ -39,6 +43,7 @@ export const Route = createFileRoute("/_marketing/")({
     const [, offers] = await Promise.all([
       context.queryClient.query({ ...snippetsQuery, staleTime: "static" }),
       context.queryClient.query(publicPlansQuery).catch(() => undefined),
+      context.queryClient.query(landingFiguresQuery).catch(() => undefined),
     ]);
     return { pricesLoaded: offers !== undefined };
   },
@@ -87,10 +92,13 @@ function Landing() {
       >
         <RequestDemo webhookPayloadHtml={html.webhookPayload} />
       </Section>
+      <TrustBand />
       <FeaturesSection />
       <StepsSection html={html} />
-      <WebhooksSection />
+      <WebhooksSection verifyHtml={html.webhookVerify} />
+      <IntegrationsSection />
       <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
+      <CalculatorSection />
       <Section
         id="precios"
         eyebrow="Precios"

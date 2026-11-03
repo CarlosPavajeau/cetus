@@ -2,9 +2,11 @@
   "title": "Guías",
   "pages": [
     "ambientes",
+    "como-habilitarse",
     "configurar-ante-la-dian",
     "emitir-desde-la-consola",
     "ciclo-de-vida",
+    "errores-de-rechazo",
     "idempotencia",
     "notas-credito-y-debito",
     "entrega-por-correo",

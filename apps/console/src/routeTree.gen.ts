@@ -24,6 +24,8 @@ import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as DotwellKnownJwksDotjsonRouteImport } from './routes/[.]well-known/jwks[.]json'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
+import { Route as MarketingContadoresRouteImport } from './routes/_marketing/contadores'
+import { Route as MarketingEstoyObligadoAFacturarRouteImport } from './routes/_marketing/estoy-obligado-a-facturar'
 import { Route as MarketingPreciosRouteImport } from './routes/_marketing/precios'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
@@ -143,6 +145,17 @@ const MarketingIndexRoute = MarketingIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MarketingRoute,
 } as any)
+const MarketingContadoresRoute = MarketingContadoresRouteImport.update({
+  id: '/contadores',
+  path: '/contadores',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingEstoyObligadoAFacturarRoute =
+  MarketingEstoyObligadoAFacturarRouteImport.update({
+    id: '/estoy-obligado-a-facturar',
+    path: '/estoy-obligado-a-facturar',
+    getParentRoute: () => MarketingRoute,
+  } as any)
 const MarketingPreciosRoute = MarketingPreciosRouteImport.update({
   id: '/precios',
   path: '/precios',
@@ -397,6 +410,8 @@ export interface FileRoutesByFullPath {
   '/two-factor': typeof TwoFactorRoute
   '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/overview': typeof AppOverviewRoute
+  '/contadores': typeof MarketingContadoresRoute
+  '/estoy-obligado-a-facturar': typeof MarketingEstoyObligadoAFacturarRoute
   '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -457,6 +472,8 @@ export interface FileRoutesByTo {
   '/two-factor': typeof TwoFactorRoute
   '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/overview': typeof AppOverviewRoute
+  '/contadores': typeof MarketingContadoresRoute
+  '/estoy-obligado-a-facturar': typeof MarketingEstoyObligadoAFacturarRoute
   '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -520,6 +537,8 @@ export interface FileRoutesById {
   '/two-factor': typeof TwoFactorRoute
   '/.well-known/jwks.json': typeof DotwellKnownJwksDotjsonRoute
   '/_app/overview': typeof AppOverviewRoute
+  '/_marketing/contadores': typeof MarketingContadoresRoute
+  '/_marketing/estoy-obligado-a-facturar': typeof MarketingEstoyObligadoAFacturarRoute
   '/_marketing/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
@@ -583,6 +602,8 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/.well-known/jwks.json'
     | '/overview'
+    | '/contadores'
+    | '/estoy-obligado-a-facturar'
     | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -643,6 +664,8 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/.well-known/jwks.json'
     | '/overview'
+    | '/contadores'
+    | '/estoy-obligado-a-facturar'
     | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -705,6 +728,8 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/.well-known/jwks.json'
     | '/_app/overview'
+    | '/_marketing/contadores'
+    | '/_marketing/estoy-obligado-a-facturar'
     | '/_marketing/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
@@ -884,6 +909,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof MarketingIndexRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/contadores': {
+      id: '/_marketing/contadores'
+      path: '/contadores'
+      fullPath: '/contadores'
+      preLoaderRoute: typeof MarketingContadoresRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/estoy-obligado-a-facturar': {
+      id: '/_marketing/estoy-obligado-a-facturar'
+      path: '/estoy-obligado-a-facturar'
+      fullPath: '/estoy-obligado-a-facturar'
+      preLoaderRoute: typeof MarketingEstoyObligadoAFacturarRouteImport
       parentRoute: typeof MarketingRoute
     }
     '/_marketing/precios': {
@@ -1303,11 +1342,15 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface MarketingRouteChildren {
+  MarketingContadoresRoute: typeof MarketingContadoresRoute
+  MarketingEstoyObligadoAFacturarRoute: typeof MarketingEstoyObligadoAFacturarRoute
   MarketingPreciosRoute: typeof MarketingPreciosRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
 }
 
 const MarketingRouteChildren: MarketingRouteChildren = {
+  MarketingContadoresRoute: MarketingContadoresRoute,
+  MarketingEstoyObligadoAFacturarRoute: MarketingEstoyObligadoAFacturarRoute,
   MarketingPreciosRoute: MarketingPreciosRoute,
   MarketingIndexRoute: MarketingIndexRoute,
 }

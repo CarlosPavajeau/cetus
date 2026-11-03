@@ -164,6 +164,8 @@ export default defineRailway((ctx) => {
       // Documents stay locked (S3 Object Lock, compliance) for the prod default of 1826 days; set
       // CETUS_STORAGE_RETENTION_DAYS here only to change that period. It cannot be shortened afterwards.
       RESEND_API_KEY: preserve(),
+      // Full-access Resend key, only for the "Avísame" lists; the sending key above stays send-only.
+      RESEND_CONTACTS_API_KEY: preserve(),
       CETUS_EMAIL_FROM: "Facturas <facturas@cetus.cantte.com>",
       CETUS_EMAIL_TEST_RECIPIENT: preserve(),
       CETUS_OPS_ALERT_EMAIL: preserve(),

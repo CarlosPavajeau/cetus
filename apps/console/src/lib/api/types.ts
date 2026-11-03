@@ -305,3 +305,11 @@ export type Incident = Schemas["IncidentView"];
 export type IncidentImpact = Schemas["IncidentImpact"];
 
 export type IncidentRequest = Schemas["IncidentRequest"];
+
+export type LandingFigures = Schemas["LandingView"];
+
+export type ObligationCap = Schemas["ObligationCapView"];
+
+export type ObligationAnswer = Schemas["Answer"];
+
+export type LeadIntegration = Schemas["Integration"];

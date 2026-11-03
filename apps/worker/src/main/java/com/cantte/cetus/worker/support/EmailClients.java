@@ -2,9 +2,11 @@ package com.cantte.cetus.worker.support;
 
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.domain.model.Party;
+import com.cantte.cetus.email.ContactLists;
 import com.cantte.cetus.email.EmailRateLimited;
 import com.cantte.cetus.email.EmailRejectedException;
 import com.cantte.cetus.email.EmailSender;
+import com.cantte.cetus.email.ResendContactLists;
 import com.cantte.cetus.email.ResendEmailSender;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.opentelemetry.api.trace.Tracer;
@@ -28,6 +30,7 @@ public class EmailClients {
     private static final Logger LOG = Logger.getLogger(EmailClients.class);
 
     private final EmailSender client;
+    private final ContactLists contactLists;
     private final String from;
     private final String notificationsFrom;
     private final Optional<String> testRecipient;
@@ -36,6 +39,7 @@ public class EmailClients {
     /** {@code cetus.email.resend.base-url} only changes in tests, to point the SDK at a fake. */
     public EmailClients(
             @ConfigProperty(name = "cetus.email.resend.api-key") Optional<String> apiKey,
+            @ConfigProperty(name = "cetus.email.resend.contacts-api-key") Optional<String> contactsApiKey,
             @ConfigProperty(name = "cetus.email.resend.base-url") String baseUrl,
             @ConfigProperty(name = "cetus.email.connect-timeout") Duration connectTimeout,
             @ConfigProperty(name = "cetus.email.read-timeout") Duration readTimeout,
@@ -51,6 +55,10 @@ public class EmailClients {
                         tracer,
                         meters)
                 : null;
+        this.contactLists = contactsApiKey
+                .filter(key -> !key.isBlank())
+                .map(key -> new ResendContactLists(key.trim(), baseUrl, connectTimeout, readTimeout))
+                .orElse(null);
         this.from = from.filter(f -> !f.isBlank()).orElse(null);
         this.notificationsFrom = notificationsFrom.filter(f -> !f.isBlank()).orElse(this.from);
         this.testRecipient = testRecipient.filter(recipient -> !recipient.isBlank());
@@ -82,6 +90,9 @@ public class EmailClients {
         } else if (testRecipient.isEmpty()) {
             LOG.info("No CETUS_EMAIL_TEST_RECIPIENT: TEST documents are not emailed");
         }
+        if (contactLists == null) {
+            LOG.info("No RESEND_CONTACTS_API_KEY: \"Avísame\" leads are stored but not added to a list");
+        }
     }
 
     /** Sends documents and ops alerts from {@link #from()}; empty when RESEND_API_KEY or CETUS_EMAIL_FROM is missing. */
@@ -99,6 +110,14 @@ public class EmailClients {
      */
     public Optional<EmailSender> notificationSender() {
         return Optional.ofNullable(notificationsFrom == null ? null : client);
+    }
+
+    /**
+     * The provider's lists, for writing to everyone on one later. Their own key (RESEND_CONTACTS_API_KEY, full
+     * access), so the sending key stays send-only; empty without it.
+     */
+    public Optional<ContactLists> contactLists() {
+        return Optional.ofNullable(contactLists);
     }
 
     /** CETUS_NOTIFICATIONS_FROM, or CETUS_EMAIL_FROM without it. */
