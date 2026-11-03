@@ -20,7 +20,7 @@ export function Section({
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-section md:px-6">
         <div className="flex max-w-2xl flex-col gap-3">
           {eyebrow !== undefined && (
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
               {eyebrow}
             </p>
           )}

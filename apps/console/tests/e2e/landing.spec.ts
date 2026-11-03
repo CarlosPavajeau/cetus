@@ -34,10 +34,9 @@ test("the landing shows the catalog's prices and sends developers to the sign-up
       ),
     ),
   );
-  await expect(page.getByRole("link", { name: "Crear llave de sandbox" }).first()).toHaveAttribute(
-    "href",
-    "/sign-up?audience=dev",
-  );
+  await expect(
+    page.getByRole("link", { name: "Crear llave de simulación" }).first(),
+  ).toHaveAttribute("href", "/sign-up?audience=dev");
 });
 
 test("the business view offers the console instead of the API", async ({ page }) => {

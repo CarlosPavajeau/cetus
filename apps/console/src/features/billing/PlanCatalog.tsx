@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useId, type ReactNode } from "react";
+import { type ComponentProps, type ReactNode, useId } from "react";
 
 import { Badge } from "~/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -25,7 +25,7 @@ export const catalogPeriods: readonly CatalogPeriod[] = ["mensual", "anual"];
  * The plans as a price list, monthly subscriptions apart from annual packages and their top-ups. It reads no
  * account: `renderAction` decides what each plan offers the viewer, and `topupNote` why top-ups cannot be bought yet.
  * `featuredCode` marks the plan most viewers should pick; `emptyNote` replaces the pointer to Ayuda, which needs a
- * session.
+ * session. `headingLevel` is the level of the plans' headings, one below the heading of the section around them.
  */
 export function PlanCatalog({
   offers,
@@ -35,6 +35,7 @@ export function PlanCatalog({
   topupNote,
   featuredCode,
   emptyNote,
+  headingLevel = 2,
 }: {
   offers: PricedOffer[];
   period: CatalogPeriod;
@@ -43,6 +44,7 @@ export function PlanCatalog({
   topupNote?: string;
   featuredCode?: string;
   emptyNote?: ReactNode;
+  headingLevel?: HeadingLevel;
 }) {
   const sorted = offers.toSorted((a, b) => a.version.totalCents - b.version.totalCents);
   const subscriptions = sorted.filter((offer) => offer.kind === "SUBSCRIPTION");
@@ -75,6 +77,7 @@ export function PlanCatalog({
             renderAction={renderAction}
             featuredCode={featuredCode}
             emptyNote={emptyNote}
+            headingLevel={headingLevel}
           />
         </div>
       </TabsContent>
@@ -90,9 +93,15 @@ export function PlanCatalog({
             renderAction={renderAction}
             featuredCode={featuredCode}
             emptyNote={emptyNote}
+            headingLevel={headingLevel}
           />
           {topups.length > 0 && (
-            <TopupList offers={topups} renderAction={renderAction} note={topupNote} />
+            <TopupList
+              offers={topups}
+              renderAction={renderAction}
+              note={topupNote}
+              headingLevel={headingLevel}
+            />
           )}
         </div>
       </TabsContent>
@@ -117,11 +126,13 @@ function PlanColumns({
   renderAction,
   featuredCode,
   emptyNote,
+  headingLevel,
 }: {
   offers: PricedOffer[];
   renderAction: (offer: PricedOffer) => ReactNode;
   featuredCode: string | undefined;
   emptyNote: ReactNode | undefined;
+  headingLevel: HeadingLevel;
 }) {
   if (offers.length === 0) {
     return emptyNote ?? <EmptyNote />;
@@ -136,6 +147,7 @@ function PlanColumns({
           offer={offer}
           costMax={costMax}
           featured={offer.code === featuredCode}
+          headingLevel={headingLevel}
           footer={renderAction(offer)}
         />
       ))}
@@ -147,11 +159,13 @@ function PlanColumn({
   offer,
   costMax,
   featured,
+  headingLevel,
   footer,
 }: {
   offer: PricedOffer;
   costMax: number;
   featured: boolean;
+  headingLevel: HeadingLevel;
   footer: ReactNode;
 }) {
   const titleId = useId();
@@ -162,9 +176,9 @@ function PlanColumn({
     <article aria-labelledby={titleId} className="flex flex-col gap-5 p-5">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <h2 id={titleId} className="text-md font-medium">
+          <Heading level={headingLevel} id={titleId} className="text-md font-medium">
             {offer.name}
-          </h2>
+          </Heading>
           {featured && <Badge>Más popular</Badge>}
         </div>
         <p className="tabular-nums">
@@ -212,19 +226,21 @@ function TopupList({
   offers,
   renderAction,
   note,
+  headingLevel,
 }: {
   offers: PricedOffer[];
   renderAction: (offer: PricedOffer) => ReactNode;
   note: string | undefined;
+  headingLevel: HeadingLevel;
 }) {
   const titleId = useId();
 
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-3 pt-4">
       <div className="flex flex-col gap-1">
-        <h2 id={titleId} className="text-md font-medium">
+        <Heading level={headingLevel} id={titleId} className="text-md font-medium">
           Recargas
-        </h2>
+        </Heading>
         <p className="max-w-prose text-sm text-muted-foreground">
           Suman documentos a tu paquete anual. Cada recarga tiene su propia vigencia, contada desde
           la compra.
@@ -233,23 +249,36 @@ function TopupList({
       </div>
       <ul className="divide-y rounded-xl border bg-card">
         {offers.map((offer) => (
-          <TopupRow key={offer.id} offer={offer} footer={renderAction(offer)} />
+          <TopupRow
+            key={offer.id}
+            offer={offer}
+            footer={renderAction(offer)}
+            headingLevel={headingLevel}
+          />
         ))}
       </ul>
     </section>
   );
 }
 
-function TopupRow({ offer, footer }: { offer: PricedOffer; footer: ReactNode }) {
+function TopupRow({
+  offer,
+  footer,
+  headingLevel,
+}: {
+  offer: PricedOffer;
+  footer: ReactNode;
+  headingLevel: HeadingLevel;
+}) {
   const titleId = useId();
   const { version } = offer;
 
   return (
     <li aria-labelledby={titleId} className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
       <div className="flex min-w-48 flex-1 flex-col">
-        <h3 id={titleId} className="text-sm font-medium">
+        <Heading level={headingLevel === 2 ? 3 : 4} id={titleId} className="text-sm font-medium">
           {offer.name}
-        </h3>
+        </Heading>
         <p className="text-xs text-muted-foreground tabular-nums">
           {documentCostLabel(documentCostCents(version))}
           {offer.validityMonths !== null && ` · ${validityLabel(offer.validityMonths)}`}
@@ -259,4 +288,20 @@ function TopupRow({ offer, footer }: { offer: PricedOffer; footer: ReactNode }) 
       {footer}
     </li>
   );
+}
+
+type HeadingLevel = 2 | 3;
+
+function Heading({
+  level,
+  children,
+  ...props
+}: { level: 2 | 3 | 4; children: ReactNode } & Omit<ComponentProps<"h2">, "children">) {
+  if (level === 2) {
+    return <h2 {...props}>{children}</h2>;
+  }
+  if (level === 3) {
+    return <h3 {...props}>{children}</h3>;
+  }
+  return <h4 {...props}>{children}</h4>;
 }

@@ -97,7 +97,7 @@ function Landing() {
         title="Precios claros, sin hablar con ventas"
         lead="Empiezas gratis en simulación y en pruebas. Para emitir en producción eliges una suscripción mensual o un paquete anual."
       >
-        <PricingTable audience={audience} page="landing" />
+        <PricingTable audience={audience} page="landing" headingLevel={3} />
         <PartnersNote />
         <PricingPromises />
       </Section>

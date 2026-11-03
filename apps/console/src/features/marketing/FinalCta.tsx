@@ -1,10 +1,10 @@
 import { BookOpenIcon } from "lucide-react";
 
-import { buttonVariants } from "~/components/ui/button";
 import { docsUrl } from "~/lib/docs";
 
 import { AudienceToggle } from "./AudienceToggle";
 import { ConsoleCta } from "./ConsoleCta";
+import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { WhatsAppButton } from "./WhatsAppButton";
 
@@ -33,10 +33,10 @@ export function FinalCta({
         <div className="flex flex-wrap justify-center gap-3">
           {audience === "dev" ? (
             <>
-              <ConsoleCta audience="dev" section="final" label="Crear llave de sandbox" />
+              <ConsoleCta audience="dev" section="final" label="Crear llave de simulación" />
               <a
                 href={`${docsUrl}/inicio-rapido/desarrolladores`}
-                className={buttonVariants({ variant: "outline", size: "lg" })}
+                className={linkButtonVariants({ variant: "outline", size: "lg" })}
               >
                 <BookOpenIcon data-icon="inline-start" />
                 Ver documentación
@@ -44,7 +44,7 @@ export function FinalCta({
             </>
           ) : (
             <>
-              <ConsoleCta audience="negocio" section="final" label="Crear cuenta gratis" />
+              <ConsoleCta audience="negocio" section="final" label="Empezar gratis" />
               <WhatsAppButton number={whatsappNumber} section="final" />
             </>
           )}

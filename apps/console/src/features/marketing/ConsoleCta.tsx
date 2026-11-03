@@ -3,9 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { ArrowRightIcon } from "lucide-react";
 
-import { buttonVariants } from "~/components/ui/button";
-
 import { type CtaSection, track } from "./analytics";
+import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { visitorSessionQuery } from "./queries";
 
@@ -25,7 +24,7 @@ export function ConsoleCta({
 
   if (session) {
     return (
-      <Link to="/overview" className={buttonVariants({ size })}>
+      <Link to="/overview" className={linkButtonVariants({ size })}>
         Ir a la consola
         <ArrowRightIcon data-icon="inline-end" />
       </Link>
@@ -35,7 +34,7 @@ export function ConsoleCta({
     <Link
       to="/sign-up"
       search={audience && { audience }}
-      className={buttonVariants({ size })}
+      className={linkButtonVariants({ size })}
       onClick={() => track({ name: "cta_click", audience: audience ?? null, section })}
     >
       {label}
@@ -52,7 +51,7 @@ export function SignInLink() {
     return null;
   }
   return (
-    <Link to="/sign-in" className={cn(buttonVariants({ variant: "ghost" }), "max-sm:hidden")}>
+    <Link to="/sign-in" className={cn(linkButtonVariants({ variant: "ghost" }), "max-md:hidden")}>
       Iniciar sesión
     </Link>
   );

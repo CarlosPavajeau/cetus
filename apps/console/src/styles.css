@@ -26,7 +26,7 @@
   --text-md: 0.875rem;
   --text-md--line-height: 1.5;
   --text-display: clamp(2.5rem, 6vw, 4.5rem);
-  --text-display--line-height: 1.05;
+  --text-display--line-height: 1.1;
   --spacing-section: clamp(4rem, 10vw, 8rem);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -114,7 +114,7 @@
   --impersonation-hover: var(--color-amber-300);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -212,7 +212,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;

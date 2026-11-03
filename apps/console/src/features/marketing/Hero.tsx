@@ -1,12 +1,12 @@
 import { BookOpenIcon, CheckIcon } from "lucide-react";
 
 import { Badge } from "~/components/ui/badge";
-import { buttonVariants } from "~/components/ui/button";
 import { docsUrl } from "~/lib/docs";
 
 import { AudienceToggle } from "./AudienceToggle";
 import { CodeBlock } from "./CodeBlock";
 import { ConsoleCta } from "./ConsoleCta";
+import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { WhatsAppButton } from "./WhatsAppButton";
 
@@ -36,7 +36,7 @@ export function Hero({
         <h1 className="font-heading text-display font-semibold tracking-tight text-balance">
           Tu producto. Nuestra API. Conectados a la DIAN.
         </h1>
-        <p className="text-lg text-pretty text-muted-foreground">
+        <p className="mx-auto max-w-2xl text-lg text-pretty text-muted-foreground">
           Facturas, notas crédito y notas débito, generadas, firmadas y validadas por la DIAN con
           una sola llamada.
         </p>
@@ -55,10 +55,10 @@ export function Hero({
             />
           </div>
           <div className="flex flex-wrap justify-center gap-3">
-            <ConsoleCta audience="dev" section="hero" label="Crear llave de sandbox" />
+            <ConsoleCta audience="dev" section="hero" label="Crear llave de simulación" />
             <a
               href={`${docsUrl}/inicio-rapido/desarrolladores`}
-              className={buttonVariants({ variant: "outline", size: "lg" })}
+              className={linkButtonVariants({ variant: "outline", size: "lg" })}
             >
               <BookOpenIcon data-icon="inline-start" />
               Ver documentación
@@ -76,7 +76,7 @@ export function Hero({
             alt="Una factura aceptada en la consola de Cetus, con su CUFE, el emisor, el cliente y el detalle"
             width={1280}
             height={800}
-            className="w-full rounded-xl border shadow-sm"
+            className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
           />
         </div>
       )}
