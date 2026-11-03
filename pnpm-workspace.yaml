@@ -12,6 +12,16 @@ minimumReleaseAgeExclude:
   - fast-uri@3.1.9
   - yaml@1.10.3
   - js-yaml@4.3.2
+  - "auth@1.7.16"
+  - "better-auth@1.7.16"
+  - "@better-auth/core@1.7.16"
+  - "@better-auth/drizzle-adapter@1.7.16"
+  - "@better-auth/kysely-adapter@1.7.16"
+  - "@better-auth/memory-adapter@1.7.16"
+  - "@better-auth/mongo-adapter@1.7.16"
+  - "@better-auth/prisma-adapter@1.7.16"
+  - "@better-auth/telemetry@1.7.16"
+  - better-call@1.4.5
 # Install scripts run only for these packages (pnpm 10 blocks the rest).
 onlyBuiltDependencies:
   - esbuild
