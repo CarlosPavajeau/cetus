@@ -3,11 +3,11 @@ import { Link } from "@tanstack/react-router";
 import { CheckIcon } from "lucide-react";
 import { useState } from "react";
 
-import { buttonVariants } from "~/components/ui/button";
 import { type PricedOffer, priced } from "~/features/billing/labels";
 import { type CatalogPeriod, PlanCatalog } from "~/features/billing/PlanCatalog";
 import { supportEmail } from "~/lib/support";
 
+import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { publicPlansQuery } from "./queries";
 
@@ -22,7 +22,14 @@ const pricingPromises = [
 ] as const;
 
 /** The public price list, from the API's catalog; no price is written in the landing. */
-export function PricingTable({ audience }: { audience?: Audience }) {
+/** `headingLevel`: one below the heading of the section around the table. */
+export function PricingTable({
+  audience,
+  headingLevel,
+}: {
+  audience?: Audience;
+  headingLevel: 2 | 3;
+}) {
   const { data: offers, isError } = useQuery(publicPlansQuery);
   const [period, setPeriod] = useState<CatalogPeriod>("mensual");
 
@@ -46,6 +53,7 @@ export function PricingTable({ audience }: { audience?: Audience }) {
       period={period}
       onPeriodChange={setPeriod}
       featuredCode={featuredPlanCode}
+      headingLevel={headingLevel}
       topupNote="Se compran con un paquete anual vigente."
       emptyNote={
         <p className="text-sm text-muted-foreground">
@@ -69,7 +77,7 @@ function PlanAction({ offer, audience }: { offer: PricedOffer; audience?: Audien
     <Link
       to="/sign-up"
       search={audience && { audience }}
-      className={buttonVariants({
+      className={linkButtonVariants({
         variant: offer.code === featuredPlanCode ? "default" : "outline",
       })}
     >
@@ -81,12 +89,12 @@ function PlanAction({ offer, audience }: { offer: PricedOffer; audience?: Audien
 export function PartnersNote() {
   return (
     <p className="text-sm text-muted-foreground">
-      ¿Eres contador o manejas muchas empresas? El plan Socios tiene condiciones a la medida:{" "}
+      ¿Eres contador o manejas muchas empresas? El plan Socios tiene condiciones a la medida.{" "}
       <a
         href={`mailto:${supportEmail}?subject=${encodeURIComponent("Plan Socios")}`}
         className="font-medium text-foreground underline underline-offset-4"
       >
-        escríbenos
+        Escríbenos sobre el plan Socios
       </a>
       .
     </p>

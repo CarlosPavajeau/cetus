@@ -95,7 +95,7 @@ function Pricing() {
             suscripción mensual o un paquete anual.
           </p>
         </div>
-        <PricingTable />
+        <PricingTable headingLevel={2} />
         <PartnersNote />
         <PricingPromises />
       </section>

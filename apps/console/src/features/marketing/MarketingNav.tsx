@@ -7,6 +7,7 @@ import { statusPageUrl } from "~/features/status/links";
 import { docsUrl } from "~/lib/docs";
 
 import { ConsoleCta, SignInLink } from "./ConsoleCta";
+import { MobileMenu } from "./MobileMenu";
 
 export function MarketingNav() {
   return (
@@ -43,6 +44,7 @@ export function MarketingNav() {
         <div className="ml-auto flex items-center gap-2">
           <SignInLink />
           <ConsoleCta label="Crear cuenta" size="default" />
+          <MobileMenu />
         </div>
       </div>
     </header>
