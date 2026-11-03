@@ -19,7 +19,7 @@ import { docsUrl } from "~/lib/docs";
 import { CodeBlock } from "./CodeBlock";
 import { ConsoleCta } from "./ConsoleCta";
 import { Section } from "./Section";
-import { type SnippetName, snippets } from "./snippets";
+import type { SnippetName } from "./snippets";
 import { WhatsAppButton } from "./WhatsAppButton";
 
 type Feature = { icon: LucideIcon; title: string; text: string };
@@ -149,7 +149,7 @@ export function StepsSection({ html }: { html: Record<SnippetName, string> }) {
             <TabsContent key={each.value} value={each.value} className="min-w-0">
               <CodeBlock
                 html={html[each.snippet]}
-                code={snippets[each.snippet].code}
+                snippet={each.snippet}
                 title={`POST /v1/invoices · ${each.label}`}
                 copyLabel={`Copiar el ejemplo en ${each.label}`}
                 lineNumbers
@@ -230,8 +230,8 @@ export function BusinessSection({
             ))}
           </ul>
           <div className="flex flex-wrap gap-3">
-            <ConsoleCta audience="negocio" label="Empezar gratis" />
-            <WhatsAppButton number={whatsappNumber} />
+            <ConsoleCta audience="negocio" section="business" label="Empezar gratis" />
+            <WhatsAppButton number={whatsappNumber} section="business" />
           </div>
         </div>
         <img

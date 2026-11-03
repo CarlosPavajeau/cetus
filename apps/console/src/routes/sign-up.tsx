@@ -15,7 +15,9 @@ import { signUpSchema } from "~/features/auth/schema";
 import { createWorkspace } from "~/features/auth/workspace";
 import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
 import { LegalLink } from "~/features/legal/LegalLink";
+import { track } from "~/features/marketing/analytics";
 import { signUpSearch } from "~/features/marketing/links";
+import { useAnalytics } from "~/features/marketing/useAnalytics";
 import { authClient } from "~/lib/auth/client";
 
 /**
@@ -28,7 +30,8 @@ export const Route = createFileRoute("/sign-up")({
 });
 
 function SignUp() {
-  const { invitation } = Route.useSearch();
+  const { invitation, audience, ref } = Route.useSearch();
+  useAnalytics();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -65,6 +68,7 @@ function SignUp() {
       return;
     }
 
+    track({ name: "sign_up", audience: audience ?? null, ref: ref ?? null });
     // Sign-up does not ask for the company, so the workspace starts with the person's name.
     if (!(await createWorkspace(name))) {
       form.setError("root", {

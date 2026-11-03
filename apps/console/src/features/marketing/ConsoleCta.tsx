@@ -5,16 +5,19 @@ import { ArrowRightIcon } from "lucide-react";
 
 import { buttonVariants } from "~/components/ui/button";
 
+import { type CtaSection, track } from "./analytics";
 import type { Audience } from "./links";
 import { visitorSessionQuery } from "./queries";
 
 /** "Crear cuenta" for a visitor, "Ir a la consola" once the browser finds a session. */
 export function ConsoleCta({
   audience,
+  section,
   label,
   size = "lg",
 }: {
   audience?: Audience;
+  section: CtaSection;
   label: string;
   size?: "default" | "lg";
 }) {
@@ -29,7 +32,12 @@ export function ConsoleCta({
     );
   }
   return (
-    <Link to="/sign-up" search={audience && { audience }} className={buttonVariants({ size })}>
+    <Link
+      to="/sign-up"
+      search={audience && { audience }}
+      className={buttonVariants({ size })}
+      onClick={() => track({ name: "cta_click", audience: audience ?? null, section })}
+    >
       {label}
       <ArrowRightIcon data-icon="inline-end" />
     </Link>

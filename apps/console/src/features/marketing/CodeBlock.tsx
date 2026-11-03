@@ -1,15 +1,18 @@
 import { CopyButton } from "~/components/CopyButton";
 
-/** Code highlighted on the server (highlight.ts), with its plain text for the copy button. */
+import { track } from "./analytics";
+import { type SnippetName, snippets } from "./snippets";
+
+/** A snippet highlighted on the server (highlight.ts), with its plain text for the copy button. */
 export function CodeBlock({
   html,
-  code,
+  snippet,
   title,
   copyLabel,
   lineNumbers = false,
 }: {
   html: string;
-  code: string;
+  snippet: SnippetName;
   title: string;
   copyLabel: string;
   lineNumbers?: boolean;
@@ -18,7 +21,12 @@ export function CodeBlock({
     <figure className="min-w-0 overflow-hidden rounded-xl border bg-card text-left">
       <figcaption className="flex items-center justify-between gap-2 border-b py-1.5 pr-1.5 pl-4 text-xs text-muted-foreground">
         <span className="font-mono">{title}</span>
-        <CopyButton value={code} label={copyLabel} iconOnly />
+        <CopyButton
+          value={snippets[snippet].code}
+          label={copyLabel}
+          iconOnly
+          onCopy={() => track({ name: "copy_snippet", snippet })}
+        />
       </figcaption>
       <div
         data-line-numbers={lineNumbers || undefined}

@@ -27,6 +27,7 @@ import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as MarketingPreciosRouteImport } from './routes/_marketing/precios'
 import { Route as CertificateUploadTokenRouteImport } from './routes/certificate-upload.$token'
 import { Route as ContactVerificationTokenRouteImport } from './routes/contact-verification.$token'
+import { Route as IngestSplatRouteImport } from './routes/ingest.$'
 import { Route as InvitationsInvitationIdRouteImport } from './routes/invitations.$invitationId'
 import { Route as LegalAcceptRouteImport } from './routes/legal.accept'
 import { Route as LegalEncargoRouteImport } from './routes/legal.encargo'
@@ -158,6 +159,11 @@ const ContactVerificationTokenRoute =
     path: '/contact-verification/$token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const IngestSplatRoute = IngestSplatRouteImport.update({
+  id: '/ingest/$',
+  path: '/ingest/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvitationsInvitationIdRoute = InvitationsInvitationIdRouteImport.update({
   id: '/invitations/$invitationId',
   path: '/invitations/$invitationId',
@@ -394,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
   '/legal/accept': typeof LegalAcceptRoute
   '/legal/encargo': typeof LegalEncargoRoute
@@ -453,6 +460,7 @@ export interface FileRoutesByTo {
   '/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
   '/legal/accept': typeof LegalAcceptRoute
   '/legal/encargo': typeof LegalEncargoRoute
@@ -515,6 +523,7 @@ export interface FileRoutesById {
   '/_marketing/precios': typeof MarketingPreciosRoute
   '/certificate-upload/$token': typeof CertificateUploadTokenRoute
   '/contact-verification/$token': typeof ContactVerificationTokenRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/invitations/$invitationId': typeof InvitationsInvitationIdRoute
   '/legal/accept': typeof LegalAcceptRoute
   '/legal/encargo': typeof LegalEncargoRoute
@@ -577,6 +586,7 @@ export interface FileRouteTypes {
     | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
+    | '/ingest/$'
     | '/invitations/$invitationId'
     | '/legal/accept'
     | '/legal/encargo'
@@ -636,6 +646,7 @@ export interface FileRouteTypes {
     | '/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
+    | '/ingest/$'
     | '/invitations/$invitationId'
     | '/legal/accept'
     | '/legal/encargo'
@@ -697,6 +708,7 @@ export interface FileRouteTypes {
     | '/_marketing/precios'
     | '/certificate-upload/$token'
     | '/contact-verification/$token'
+    | '/ingest/$'
     | '/invitations/$invitationId'
     | '/legal/accept'
     | '/legal/encargo'
@@ -758,6 +770,7 @@ export interface RootRouteChildren {
   DotwellKnownJwksDotjsonRoute: typeof DotwellKnownJwksDotjsonRoute
   CertificateUploadTokenRoute: typeof CertificateUploadTokenRoute
   ContactVerificationTokenRoute: typeof ContactVerificationTokenRoute
+  IngestSplatRoute: typeof IngestSplatRoute
   InvitationsInvitationIdRoute: typeof InvitationsInvitationIdRoute
   LegalAcceptRoute: typeof LegalAcceptRoute
   LegalEncargoRoute: typeof LegalEncargoRoute
@@ -892,6 +905,13 @@ declare module '@tanstack/react-router' {
       path: '/contact-verification/$token'
       fullPath: '/contact-verification/$token'
       preLoaderRoute: typeof ContactVerificationTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ingest/$': {
+      id: '/ingest/$'
+      path: '/ingest/$'
+      fullPath: '/ingest/$'
+      preLoaderRoute: typeof IngestSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invitations/$invitationId': {
@@ -1312,6 +1332,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotwellKnownJwksDotjsonRoute: DotwellKnownJwksDotjsonRoute,
   CertificateUploadTokenRoute: CertificateUploadTokenRoute,
   ContactVerificationTokenRoute: ContactVerificationTokenRoute,
+  IngestSplatRoute: IngestSplatRoute,
   InvitationsInvitationIdRoute: InvitationsInvitationIdRoute,
   LegalAcceptRoute: LegalAcceptRoute,
   LegalEncargoRoute: LegalEncargoRoute,

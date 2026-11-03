@@ -8,7 +8,6 @@ import { AudienceToggle } from "./AudienceToggle";
 import { CodeBlock } from "./CodeBlock";
 import { ConsoleCta } from "./ConsoleCta";
 import type { Audience } from "./links";
-import { snippets } from "./snippets";
 import { WhatsAppButton } from "./WhatsAppButton";
 
 const trust = [
@@ -50,13 +49,13 @@ export function Hero({
           <div className="w-full">
             <CodeBlock
               html={heroCurlHtml}
-              code={snippets.heroCurl.code}
+              snippet="heroCurl"
               title="Terminal"
               copyLabel="Copiar el comando"
             />
           </div>
           <div className="flex flex-wrap justify-center gap-3">
-            <ConsoleCta audience="dev" label="Crear llave de sandbox" />
+            <ConsoleCta audience="dev" section="hero" label="Crear llave de sandbox" />
             <a
               href={`${docsUrl}/inicio-rapido/desarrolladores`}
               className={buttonVariants({ variant: "outline", size: "lg" })}
@@ -69,8 +68,8 @@ export function Hero({
       ) : (
         <div className="flex w-full max-w-4xl flex-col items-center gap-6">
           <div className="flex flex-wrap justify-center gap-3">
-            <ConsoleCta audience="negocio" label="Empezar gratis" />
-            <WhatsAppButton number={whatsappNumber} />
+            <ConsoleCta audience="negocio" section="hero" label="Empezar gratis" />
+            <WhatsAppButton number={whatsappNumber} section="hero" />
           </div>
           <img
             src={consoleScreenshotUrl}

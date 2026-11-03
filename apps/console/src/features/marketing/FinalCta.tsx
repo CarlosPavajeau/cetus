@@ -33,7 +33,7 @@ export function FinalCta({
         <div className="flex flex-wrap justify-center gap-3">
           {audience === "dev" ? (
             <>
-              <ConsoleCta audience="dev" label="Crear llave de sandbox" />
+              <ConsoleCta audience="dev" section="final" label="Crear llave de sandbox" />
               <a
                 href={`${docsUrl}/inicio-rapido/desarrolladores`}
                 className={buttonVariants({ variant: "outline", size: "lg" })}
@@ -44,8 +44,8 @@ export function FinalCta({
             </>
           ) : (
             <>
-              <ConsoleCta audience="negocio" label="Crear cuenta gratis" />
-              <WhatsAppButton number={whatsappNumber} />
+              <ConsoleCta audience="negocio" section="final" label="Crear cuenta gratis" />
+              <WhatsAppButton number={whatsappNumber} section="final" />
             </>
           )}
         </div>

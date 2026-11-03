@@ -152,6 +152,9 @@ export function PrivacyPolicy() {
         </li>
         <li>Cloudflare: red de entrega y protección del tráfico de la consola.</li>
         <li>Resend: envío de correos electrónicos, en Estados Unidos.</li>
+        <li>
+          PostHog: medición de visitas a las páginas públicas y al registro, en Estados Unidos.
+        </li>
       </ul>
       <p>
         Esto implica una transmisión internacional de datos a Estados Unidos, país que la
@@ -173,7 +176,14 @@ export function PrivacyPolicy() {
       <h2>10. Cookies</h2>
       <p>
         La consola usa solo cookies necesarias: la de la sesión y la que recuerda el ambiente
-        elegido. Cetus no usa cookies de publicidad ni de analítica de terceros.
+        elegido. Cetus no usa cookies de publicidad ni de analítica.
+      </p>
+      <p>
+        Para saber cómo se usan la página de inicio, la de precios y el registro, Cetus mide las
+        visitas y los clics con PostHog, sin cookies y sin guardar nada en el navegador: PostHog
+        recibe la página, el navegador y la dirección IP, que usa para estimar el país y la ciudad y
+        para agrupar las visitas del mismo día sin identificar a la persona. No recibe el nombre, el
+        correo ni otros datos del formulario. La consola, después de iniciar sesión, no se mide.
       </p>
 
       <h2>11. Conservación</h2>

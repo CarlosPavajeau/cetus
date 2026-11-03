@@ -9,6 +9,7 @@ import { type SnippetName, snippets } from "./snippets";
 /** What the marketing pages need from the server's environment; all of it is public. */
 export const getMarketingConfig = createServerFn({ method: "GET" }).handler(() => ({
   whatsappNumber: env.CETUS_WHATSAPP_NUMBER ?? null,
+  posthogKey: env.CETUS_POSTHOG_KEY ?? null,
 }));
 
 /** The listed plans and their prices today, for visitors without a session. */

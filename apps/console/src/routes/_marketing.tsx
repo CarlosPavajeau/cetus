@@ -4,6 +4,7 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { MarketingFooter } from "~/features/marketing/MarketingFooter";
 import { MarketingNav } from "~/features/marketing/MarketingNav";
 import { marketingConfigQuery } from "~/features/marketing/queries";
+import { useAnalytics } from "~/features/marketing/useAnalytics";
 import { WhatsAppFloat } from "~/features/marketing/WhatsAppButton";
 
 /** The public pages: their own nav and footer, none of the console's shell, open with or without a session. */
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_marketing")({
 
 function MarketingLayout() {
   const { data: config } = useSuspenseQuery(marketingConfigQuery);
+  useAnalytics();
 
   return (
     <div className="flex min-h-svh flex-col">

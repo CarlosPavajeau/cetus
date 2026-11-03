@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 
 import { CodeBlock } from "./CodeBlock";
-import { snippets } from "./snippets";
 
 type Line = { at: number; kind: "command" | "response" | "step" | "event"; text: string };
 
@@ -127,7 +126,7 @@ export function RequestDemo({ webhookPayloadHtml }: { webhookPayloadHtml: string
       <div className="min-w-0 lg:col-span-2">
         <CodeBlock
           html={webhookPayloadHtml}
-          code={snippets.webhookPayload.code}
+          snippet="webhookPayload"
           title="Webhook · invoice.accepted"
           copyLabel="Copiar el webhook"
         />
