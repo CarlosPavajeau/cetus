@@ -34,10 +34,10 @@ export function Hero({
     <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 pt-16 pb-section text-center md:px-6 md:pt-24">
       <Badge variant="muted">API de facturación electrónica · Hecha para Colombia</Badge>
       <div className="flex max-w-3xl flex-col gap-5">
-        <h1 className="font-heading text-display font-semibold tracking-tight text-balance">
+        <h1 className="font-heading text-display font-medium tracking-display text-balance">
           Tu producto. Nuestra API. Conectados a la DIAN.
         </h1>
-        <p className="mx-auto max-w-2xl text-lg text-pretty text-muted-foreground">
+        <p className="mx-auto max-w-2xl text-lg/8 text-pretty text-muted-foreground">
           Facturas, notas crédito y notas débito, generadas, firmadas y validadas por la DIAN con
           una sola llamada.
         </p>

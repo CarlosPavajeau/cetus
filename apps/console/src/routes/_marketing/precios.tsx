@@ -87,10 +87,10 @@ function Pricing() {
     <>
       <section className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-16 pb-section md:px-6 md:pt-24">
         <div className="flex max-w-2xl flex-col gap-4">
-          <h1 className="font-heading text-4xl font-semibold tracking-tight text-balance md:text-5xl">
+          <h1 className="font-heading text-5xl font-medium tracking-display text-balance md:text-6xl">
             Precios claros, sin hablar con ventas
           </h1>
-          <p className="text-lg text-pretty text-muted-foreground">
+          <p className="text-lg/8 text-pretty text-muted-foreground">
             Empiezas gratis en simulación y en pruebas. Para emitir en producción eliges una
             suscripción mensual o un paquete anual.
           </p>

@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist-mono";
 
 /*
  * Never scan build output. The Docker context has no .gitignore, so the SSR build would pick up classes
@@ -15,6 +16,9 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --tracking-display: -0.045em;
+  --tracking-heading: -0.04em;
   --text-3xs: 0.625rem;
   --text-3xs--line-height: 1.5;
   --text-2xs: 0.6875rem;
@@ -182,6 +186,11 @@
     linear-gradient(transparent, var(--sidebar) 70%) center bottom / 100% 2.5rem no-repeat local,
     linear-gradient(transparent, color-mix(in oklab, var(--sidebar-foreground) 12%, transparent))
       center bottom / 100% 1rem no-repeat scroll;
+}
+
+/* Inter's single-storey a, open digits and rounded quotes, for the marketing pages' lighter headings. */
+@utility font-marketing {
+  font-feature-settings: "cv11", "ss01", "ss03";
 }
 
 /* Shiki's output (features/marketing/highlight.ts) carries both themes as variables. */
