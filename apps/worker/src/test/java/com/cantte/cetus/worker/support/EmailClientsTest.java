@@ -50,6 +50,7 @@ class EmailClientsTest {
     void noticesGoFromTheirOwnSenderOrTheDocumentsOne() {
         EmailClients onlyNotices = new EmailClients(
                 Optional.of("re_key"),
+                Optional.empty(),
                 "https://api.resend.com",
                 Duration.ofSeconds(1),
                 Duration.ofSeconds(1),
@@ -93,10 +94,31 @@ class EmailClientsTest {
         assertThat(withMailbox.recipient(Environment.SANDBOX, CUSTOMER)).isEmpty();
     }
 
+    @Test
+    void listsNeedTheirOwnKey() {
+        assertThat(clients(Optional.of("re_key"), Optional.of("from@cetus.test"), Optional.empty())
+                        .contactLists())
+                .isEmpty();
+        EmailClients withListsKey = new EmailClients(
+                Optional.of("re_key"),
+                Optional.of("re_full_key"),
+                "https://api.resend.com",
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(1),
+                Optional.of("from@cetus.test"),
+                Optional.empty(),
+                Optional.empty(),
+                Duration.ofSeconds(2),
+                OpenTelemetry.noop().getTracer("test"),
+                new SimpleMeterRegistry());
+        assertThat(withListsKey.contactLists()).isPresent();
+    }
+
     private static EmailClients clients(
             Optional<String> apiKey, Optional<String> from, Optional<String> testRecipient) {
         return new EmailClients(
                 apiKey,
+                Optional.empty(),
                 "https://api.resend.com",
                 Duration.ofSeconds(1),
                 Duration.ofSeconds(1),

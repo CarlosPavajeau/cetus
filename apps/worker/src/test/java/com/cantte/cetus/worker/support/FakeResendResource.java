@@ -13,6 +13,7 @@ import java.util.Map;
 public class FakeResendResource implements QuarkusTestResourceLifecycleManager {
 
     public static final String API_KEY = "re_test_only_key";
+    public static final String CONTACTS_API_KEY = "re_test_only_contacts_key";
     public static final String FROM = "Facturas Cetus <facturas@cetus.test>";
     public static final String TEST_RECIPIENT = "buzon-pruebas@cetus.test";
 
@@ -23,6 +24,7 @@ public class FakeResendResource implements QuarkusTestResourceLifecycleManager {
                 "fake-resend.port", String.valueOf(port),
                 "cetus.email.resend.base-url", "http://localhost:" + port,
                 "cetus.email.resend.api-key", API_KEY,
+                "cetus.email.resend.contacts-api-key", CONTACTS_API_KEY,
                 "cetus.email.from", FROM,
                 "cetus.email.test-recipient", TEST_RECIPIENT);
     }

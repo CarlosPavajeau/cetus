@@ -51,6 +51,7 @@ public class FakeResend {
     private final List<Request> requests = new CopyOnWriteArrayList<>();
     private final Map<String, String> segments = new ConcurrentHashMap<>();
     private final Set<String> memberships = ConcurrentHashMap.newKeySet();
+    private final Set<String> listAuthorizations = ConcurrentHashMap.newKeySet();
     private HttpServer server;
 
     @PostConstruct
@@ -81,6 +82,12 @@ public class FakeResend {
         requests.clear();
         segments.clear();
         memberships.clear();
+        listAuthorizations.clear();
+    }
+
+    /** The Authorization headers of the segment and contact calls. */
+    public Set<String> listAuthorizations() {
+        return Set.copyOf(listAuthorizations);
     }
 
     /** "address/segment name" for every address added to a segment (an "Avísame" list). */
@@ -96,6 +103,7 @@ public class FakeResend {
     }
 
     private void segment(HttpExchange exchange) throws IOException {
+        listAuthorizations.add(exchange.getRequestHeaders().getFirst("Authorization"));
         if (exchange.getRequestMethod().equals("POST")) {
             String name = JSON.readTree(exchange.getRequestBody().readAllBytes())
                     .get("name")
@@ -112,6 +120,7 @@ public class FakeResend {
 
     /** Every address exists already; adding one to a segment is recorded. */
     private void contact(HttpExchange exchange) throws IOException {
+        listAuthorizations.add(exchange.getRequestHeaders().getFirst("Authorization"));
         String[] parts = exchange.getRequestURI().getPath().substring(1).split("/");
         if (parts.length == 4 && parts[2].equals("segments")) {
             memberships.add(parts[1] + "/" + parts[3]);

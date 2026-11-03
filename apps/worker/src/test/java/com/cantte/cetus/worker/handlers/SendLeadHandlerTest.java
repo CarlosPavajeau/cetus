@@ -107,6 +107,7 @@ class SendLeadHandlerTest {
         handler.handle(fixtures.pendingJob(JobTypes.SEND_LEAD, id));
 
         assertThat(resend.memberships()).containsExactly(email + "/Avísame · n8n, Make y Zapier");
+        assertThat(resend.listAuthorizations()).containsExactly("Bearer " + FakeResendResource.CONTACTS_API_KEY);
         assertThat(resend.requests())
                 .allSatisfy(request ->
                         assertThat(request.body().get("subject").asText()).isEqualTo("[Prospecto · Avísame] " + email));

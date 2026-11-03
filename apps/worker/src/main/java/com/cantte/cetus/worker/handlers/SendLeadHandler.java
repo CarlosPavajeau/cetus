@@ -110,7 +110,7 @@ public class SendLeadHandler implements JobHandler {
     private void subscribe(IntegrationLead lead) {
         Optional<ContactLists> lists = email.contactLists();
         if (lists.isEmpty()) {
-            LOG.warn("Email delivery is not configured; the address is not added to the integration's list");
+            LOG.warn("RESEND_CONTACTS_API_KEY is not configured; the address is not added to the integration's list");
             return;
         }
         lists.get().subscribe(lead.email(), LeadEmail.waitlist(lead.details().integration()));
