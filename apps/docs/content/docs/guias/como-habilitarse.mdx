@@ -1,0 +1,90 @@
+---
+title: Cómo habilitarte como facturador electrónico
+description: Qué es la habilitación ante la DIAN, qué necesitas y en qué orden se hace, de tu RUT a tu primera factura con validez fiscal.
+---
+
+La **habilitación** es el trámite con el que la DIAN te autoriza a expedir facturas electrónicas con un
+software. Le muestras que tu software (en este caso, Cetus) genera documentos válidos enviando un **set de
+pruebas** y, cuando lo aprueba, empiezas a facturar en producción.
+
+## ¿Estás obligado?
+
+Las personas jurídicas, las personas naturales responsables de IVA y quienes están en el régimen SIMPLE
+deben facturar electrónicamente. Si eres persona natural y no sabes si te aplica, responde la
+[calculadora «¿Estoy obligado a facturar?»](https://cetus.cantte.com/estoy-obligado-a-facturar): toma un minuto
+y no pide registro.
+
+Aunque no estés obligado, puedes habilitarte de forma voluntaria, por ejemplo si tus clientes te piden
+factura electrónica.
+
+## Qué necesitas
+
+- **RUT actualizado.** La DIAN compara cada factura con él: razón social, NIT, dirección y
+  responsabilidades tributarias.
+- **Usuario en el portal de la DIAN** del representante legal o de la persona natural, con acceso al
+  servicio de facturación electrónica.
+- **Certificado de firma digital.** Un archivo `.p12` o `.pfx` a nombre del emisor, de una entidad acreditada
+  por la ONAC, como Certicámara, GSE o Andes SCD. Con él se firma cada factura.
+- **Una cuenta en Cetus.** La simulación es gratis y no pide nada de lo anterior, así que puedes integrar o
+  practicar mientras reúnes el resto.
+
+<Sandbox>
+    En la simulación emites facturas de prueba sin RUT, sin certificado y sin habilitación. Sirve
+    para conocer la consola o terminar tu integración antes de hablar con la DIAN.
+</Sandbox>
+
+## Los pasos
+
+<Steps>
+<Step>
+
+### Registra el software en el portal de habilitación
+
+En el portal de habilitación de la DIAN eliges **Software propio**, le pones un nombre y un **PIN**. La DIAN
+te da un **Software ID** y un **TestSetId**, el identificador de tu set de pruebas.
+
+</Step>
+<Step>
+
+### Configura el emisor en Cetus
+
+En la consola, **Configurar emisor** te pide los datos del RUT, el Software ID, el PIN, el TestSetId, el
+certificado y la **clave técnica** del rango de pruebas. La guía
+[Configurar tu empresa ante la DIAN](/guias/configurar-ante-la-dian) lo explica pantalla por pantalla.
+
+</Step>
+<Step>
+
+### Envía el set de pruebas
+
+Emites en el ambiente **Pruebas** las facturas y notas que pide tu set. La DIAN las revisa y, cuando acepta
+las suficientes, da el set por aprobado. Si alguna se rechaza, corrige y emite otra: ver
+[Errores comunes de rechazo](/guias/errores-de-rechazo).
+
+</Step>
+<Step>
+
+### Solicita la resolución de numeración
+
+La **resolución de numeración** es la autorización de la DIAN para un rango de números de factura, con su
+prefijo y su vigencia. Se pide en el servicio de numeración de la DIAN (formulario 1302) y se asocia a tu
+software.
+
+</Step>
+<Step>
+
+### Pasa a producción
+
+En la consola creas el emisor de producción a partir del de pruebas y registras la resolución. Desde ese
+momento cada factura tiene validez fiscal. Ver
+[Pasa a producción](/guias/configurar-ante-la-dian#pasa-a-producción).
+
+</Step>
+</Steps>
+
+Si tu certificado todavía no llega, no tienes que esperar para empezar con Cetus.
+
+<SignUpCta title="Empieza mientras llega el certificado">
+    Crea tu cuenta y emite facturas de prueba en simulación. Cuando tengas el certificado, sigues en
+    la misma consola.
+</SignUpCta>

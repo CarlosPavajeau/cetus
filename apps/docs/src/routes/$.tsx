@@ -9,6 +9,7 @@ import { Suspense, use } from "react";
 import { useMDXComponents } from "~/components/mdx";
 import { SidebarFooter } from "~/components/SidebarFooter";
 import { baseOptions } from "~/lib/layout";
+import { docsSiteUrl } from "~/lib/site";
 import { docs, source } from "~/lib/source";
 
 export const Route = createFileRoute("/$")({
@@ -19,16 +20,31 @@ export const Route = createFileRoute("/$")({
     await docs.getPage(data.path)?.preload();
     return data;
   },
-  head: ({ loaderData }) => ({
-    meta: loaderData
-      ? [
-          { title: `${loaderData.title} · Cetus` },
-          ...(loaderData.description
-            ? [{ name: "description", content: loaderData.description }]
-            : []),
-        ]
-      : [],
-  }),
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return {};
+    }
+    const title = `${loaderData.title} · Cetus`;
+    const url = `${docsSiteUrl}${loaderData.url === "/" ? "" : loaderData.url}`;
+    const description = loaderData.description;
+    return {
+      meta: [
+        { title },
+        ...(description
+          ? [
+              { name: "description", content: description },
+              { property: "og:description", content: description },
+            ]
+          : []),
+        { property: "og:type", content: "article" },
+        { property: "og:locale", content: "es_CO" },
+        { property: "og:site_name", content: "Cetus" },
+        { property: "og:title", content: title },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
 });
 
 // Frozen at build time: on the static site, navigating fetches the result instead of calling a server.
@@ -42,6 +58,7 @@ const loadPage = createServerFn({ method: "GET" })
     }
     return {
       path: page.path,
+      url: page.url,
       title: page.data.title,
       description: page.data.description,
       pageTree: await source.serializePageTree(source.getPageTree()),

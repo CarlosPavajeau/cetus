@@ -1,0 +1,74 @@
+---
+title: Errores comunes de rechazo
+description: Por qué la DIAN rechaza una factura electrónica, cómo leer la regla que incumplió y qué corregir en cada caso frecuente.
+---
+
+Cada documento que envías pasa por las validaciones de la DIAN. Si incumple una regla, la DIAN lo
+**rechaza** y no tiene validez fiscal. Esta guía explica cómo saber por qué y qué hacer con los rechazos
+más frecuentes.
+
+## Rechazo o notificación
+
+La DIAN responde con una lista de reglas, cada una con su código. Hay dos tipos:
+
+- **Rechazo**: el documento queda `REJECTED`. Es definitivo: corrige y emite un documento **nuevo**, con otra
+  `Idempotency-Key`. El rechazado conserva su número, pero no se reenvía.
+- **Notificación**: la DIAN acepta el documento y te avisa de algo. No tienes que emitir de nuevo, pero
+  conviene corregirlo para los siguientes.
+
+## Dónde ver la regla
+
+- **En la consola**, el detalle del documento muestra cada regla con una explicación.
+- **En la API**, `dian.errors` trae el texto de la DIAN:
+
+    ```json
+    "errors": ["Regla: FAK26, Rechazo: Responsabilidad informada para receptor no valida según lista."]
+    ```
+
+- **Por webhook**, `invoice.rejected` (o el de la nota) llega con los mismos errores en `data.dian.errors`.
+  Ver [Webhooks](/guias/webhooks).
+
+## Los más frecuentes
+
+### Datos del emisor
+
+- [`FAJ43b`](/errores#faj43b) (notificación): la razón social no coincide con el RUT. Cópiala exactamente,
+  con tildes, puntos y la sigla de la sociedad.
+- [`DAJ39`](/errores#daj39) (notificación): el emisor no figura como responsable de IVA. Revisa su
+  responsabilidad de IVA en los datos tributarios.
+
+### Datos del adquiriente
+
+- [`FAK26`](/errores#fak26) (rechazo): una responsabilidad tributaria del cliente no está en la lista de la
+  DIAN. Si no las conoces, deja solo `R-99-PN`.
+- [`CAK55`](/errores#cak55) (notificación): falta el correo del cliente. La DIAN acepta, pero Cetus no puede
+  entregarle el documento.
+
+### Numeración
+
+- [`FAB10a`](/errores#fab10a) (rechazo): el prefijo no es el de la resolución. Compara el rango del emisor
+  con el que muestra el portal de la DIAN.
+- [`FAD06`](/errores#fad06) (rechazo): el CUFE, el código único que identifica la factura, no corresponde a
+  sus datos. Casi siempre es una clave técnica equivocada en el rango.
+
+### Notas crédito y débito
+
+- [`CBF04`](/errores#cbf04) y [`DBF04`](/errores#dbf04) (rechazo): la descripción de la corrección no es el
+  nombre del concepto de la DIAN. Cetus la escribe a partir de `concept`; si aparece, escríbenos.
+
+### Documento repetido
+
+- [`90`](/errores#90) (rechazo): la DIAN ya tenía un documento con el mismo CUFE. No lo emitas de nuevo:
+  consulta su estado y escríbenos para conciliarlo. Para no duplicar envíos, usa
+  [idempotencia](/guias/idempotencia).
+
+El catálogo completo, con los códigos de Cetus, está en [Errores](/errores).
+
+En la simulación eliges la respuesta de la DIAN con el número del adquiriente, así que puedes practicar un
+rechazo antes de que te pase: ver los
+[escenarios](/inicio-rapido/desarrolladores#practica-los-casos-difíciles).
+
+<SignUpCta title="Practica los rechazos en simulación">
+    Crea tu cuenta y prueba cada respuesta de la DIAN sin consumir documentos ni tocar tu
+    numeración.
+</SignUpCta>

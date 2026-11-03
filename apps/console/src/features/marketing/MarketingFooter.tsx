@@ -72,6 +72,16 @@ export function MarketingFooter() {
               ¿Estoy obligado a facturar?
             </Link>
           </li>
+          <li>
+            <a href={`${docsUrl}/guias/como-habilitarse`} className="hover:text-foreground">
+              Cómo habilitarte ante la DIAN
+            </a>
+          </li>
+          <li>
+            <a href={`${docsUrl}/guias/errores-de-rechazo`} className="hover:text-foreground">
+              Errores de rechazo
+            </a>
+          </li>
         </FooterColumn>
         <FooterColumn title="Empresa">
           <li>
