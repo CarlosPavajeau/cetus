@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { type } from "arktype";
 
 import { formatCents } from "~/features/billing/labels";
+import { acceptedDocumentsMin } from "~/features/marketing/figures";
 
 import { apiUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
@@ -141,4 +142,33 @@ test("accountants see the multi-issuer plans and can ask to be partners", async 
   await form.getByRole("button", { name: "Quiero ser socio" }).click();
 
   await expect(page.getByText(`Recibimos tus datos. Te escribiremos a ${email}.`)).toBeVisible();
+});
+
+test("avísame keeps the address for an upcoming integration", async ({ page }) => {
+  await fromFreshIp(page);
+  await open(page, "/");
+
+  await page.getByRole("button", { name: /Avísame.*Shopify/ }).click();
+  const popover = page.getByRole("dialog", { name: "Shopify" });
+  const email = `avisame-${crypto.randomUUID()}@ejemplo.com`;
+  await popover.getByLabel("Correo", { exact: true }).fill(email);
+  await popover.getByRole("checkbox", { name: /Autorizo a Cetus/ }).click();
+  await popover.getByRole("button", { name: "Avisarme" }).click();
+
+  await expect(popover.getByText(`Listo. Te avisaremos a ${email}.`)).toBeVisible();
+});
+
+test("the trust band waits for real production figures", async ({ page }) => {
+  const response = await fetch(`${apiUrl}/console/public/landing`);
+  expect(response.ok).toBe(true);
+  const figures = type({ acceptedDocuments: "number" }).assert(await response.json());
+
+  await open(page, "/");
+
+  await expect(
+    page.getByRole("heading", { name: "Tu sistema se entera al instante" }),
+  ).toBeVisible();
+  await expect(page.getByRole("region", { name: "Cetus en producción" })).toHaveCount(
+    figures.acceptedDocuments >= acceptedDocumentsMin ? 1 : 0,
+  );
 });

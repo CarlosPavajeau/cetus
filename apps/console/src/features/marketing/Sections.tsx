@@ -172,7 +172,7 @@ const events = [
   { name: "document.delivered", text: "El correo con el PDF llegó a tu cliente." },
 ] as const;
 
-export function WebhooksSection() {
+export function WebhooksSection({ verifyHtml }: { verifyHtml: string }) {
   return (
     <Section
       eyebrow="Webhooks"
@@ -190,14 +190,22 @@ export function WebhooksSection() {
         </>
       }
     >
-      <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2">
-        {events.map((event) => (
-          <li key={event.name} className="flex flex-col gap-1 bg-background p-5">
-            <code className="font-mono text-sm">{event.name}</code>
-            <p className="text-md/6 text-pretty text-muted-foreground">{event.text}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <ul className="grid gap-px overflow-hidden rounded-xl border bg-border">
+          {events.map((event) => (
+            <li key={event.name} className="flex flex-col gap-1 bg-background p-5">
+              <code className="font-mono text-sm">{event.name}</code>
+              <p className="text-md/6 text-pretty text-muted-foreground">{event.text}</p>
+            </li>
+          ))}
+        </ul>
+        <CodeBlock
+          html={verifyHtml}
+          snippet="webhookVerify"
+          title="Verifica la firma · Node.js"
+          copyLabel="Copiar la verificación"
+        />
+      </div>
     </Section>
   );
 }

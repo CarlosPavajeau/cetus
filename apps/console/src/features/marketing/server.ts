@@ -27,6 +27,7 @@ export const highlightSnippets = createServerFn({ method: "GET" }).handler(
     invoiceJs: await highlightSnippet("invoiceJs"),
     invoicePython: await highlightSnippet("invoicePython"),
     webhookPayload: await highlightSnippet("webhookPayload"),
+    webhookVerify: await highlightSnippet("webhookVerify"),
   }),
 );
 
@@ -63,6 +64,27 @@ export const sendCalculatorLead = createServerFn({ method: "POST" })
           email: data.email,
           policyVersion: legalDocuments.privacy.version,
           answers: data.answers,
+        },
+      }),
+    ),
+  );
+
+/** "Avísame": the address goes on the email provider's list for that integration. */
+export const sendIntegrationLead = createServerFn({ method: "POST" })
+  .validator(
+    type({
+      email: leadEmail,
+      website: leadTrap,
+      integration: "'WOOCOMMERCE' | 'SHOPIFY' | 'AUTOMATIONS' | 'PAYMENTS'",
+    }),
+  )
+  .handler(({ data }) =>
+    submitLead(data.website, () =>
+      publicApi.post("/console/public/leads/integrations", {
+        body: {
+          email: data.email,
+          policyVersion: legalDocuments.privacy.version,
+          integration: data.integration,
         },
       }),
     ),
