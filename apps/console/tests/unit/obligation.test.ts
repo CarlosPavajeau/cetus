@@ -66,8 +66,11 @@ describe("leadContactSchema", () => {
     );
   });
 
-  it("refuses an address the API would not take", () => {
-    const result = leadContactSchema({ email: "ana@empresa?.com", consent: true, website: "" });
-    expect(result instanceof type.errors && result.summary).toContain("Escribe un correo válido");
-  });
+  it.each(["ana@empresa?.com", "a%2F..%2Fsegments@empresa.com"])(
+    "refuses %s, which the API would not take",
+    (email) => {
+      const result = leadContactSchema({ email, consent: true, website: "" });
+      expect(result instanceof type.errors && result.summary).toContain("Escribe un correo válido");
+    },
+  );
 });

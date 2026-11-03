@@ -4,7 +4,7 @@ import { type } from "arktype";
  * The API's own pattern: stricter than an email check, since "Avísame" addresses go into the email provider's
  * URLs. Kept the same so the form says what is wrong instead of the API refusing it.
  */
-const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
+const emailPattern = /^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
 export const leadEmail = type("string.trim").to(
   type(emailPattern).configure({
