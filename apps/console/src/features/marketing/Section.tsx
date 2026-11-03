@@ -18,20 +18,20 @@ export function Section({
   return (
     <section id={id} aria-labelledby={titleId} className="scroll-mt-16 border-t">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-section md:px-6">
-        <div className="flex max-w-2xl flex-col gap-3">
+        <div className="flex max-w-2xl flex-col gap-4">
           {eyebrow !== undefined && (
-            <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+            <p className="font-mono text-xs/5 tracking-wider text-muted-foreground uppercase">
               {eyebrow}
             </p>
           )}
           <h2
             id={titleId}
-            className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl"
+            className="font-heading text-4xl font-medium tracking-heading text-balance md:text-5xl"
           >
             {title}
           </h2>
           {lead !== undefined && (
-            <p className="text-lg text-pretty text-muted-foreground">{lead}</p>
+            <p className="text-lg/8 text-pretty text-muted-foreground">{lead}</p>
           )}
         </div>
         {children}

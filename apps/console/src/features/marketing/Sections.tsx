@@ -78,8 +78,8 @@ export function FeaturesSection() {
         {features.map(({ icon: Icon, title, text }) => (
           <li key={title} className="flex flex-col gap-2 bg-background p-5">
             <Icon className="size-5 text-muted-foreground" />
-            <h3 className="text-md font-medium">{title}</h3>
-            <p className="text-sm text-muted-foreground">{text}</p>
+            <h3 className="text-base font-medium">{title}</h3>
+            <p className="text-md/6 text-pretty text-muted-foreground">{text}</p>
           </li>
         ))}
       </ul>
@@ -131,8 +131,8 @@ export function StepsSection({ html }: { html: Record<SnippetName, string> }) {
                 {index + 1}
               </span>
               <div className="flex flex-col gap-1">
-                <h3 className="text-md font-medium">{step.title}</h3>
-                <p className="text-sm text-muted-foreground">{step.text}</p>
+                <h3 className="text-base font-medium">{step.title}</h3>
+                <p className="text-md/6 text-pretty text-muted-foreground">{step.text}</p>
               </div>
             </li>
           ))}
@@ -191,7 +191,7 @@ export function WebhooksSection() {
         {events.map((event) => (
           <li key={event.name} className="flex flex-col gap-1 bg-background p-5">
             <code className="font-mono text-sm">{event.name}</code>
-            <p className="text-sm text-muted-foreground">{event.text}</p>
+            <p className="text-md/6 text-pretty text-muted-foreground">{event.text}</p>
           </li>
         ))}
       </ul>
@@ -287,8 +287,8 @@ export function SecuritySection() {
         {securityPoints.map(({ icon: Icon, title, text }) => (
           <li key={title} className="flex flex-col gap-2">
             <Icon className="size-5 text-muted-foreground" />
-            <h3 className="text-md font-medium">{title}</h3>
-            <p className="text-sm text-muted-foreground">{text}</p>
+            <h3 className="text-base font-medium">{title}</h3>
+            <p className="text-md/6 text-pretty text-muted-foreground">{text}</p>
           </li>
         ))}
       </ul>

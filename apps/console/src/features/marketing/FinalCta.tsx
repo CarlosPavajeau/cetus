@@ -22,11 +22,11 @@ export function FinalCta({
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-section text-center md:px-6">
         <h2
           id="final-cta"
-          className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl"
+          className="font-heading text-4xl font-medium tracking-heading text-balance md:text-5xl"
         >
           Tu primera factura aceptada, hoy.
         </h2>
-        <p className="text-lg text-pretty text-muted-foreground">
+        <p className="text-lg/8 text-pretty text-muted-foreground">
           Crea tu cuenta gratis y emite en simulación en minutos, sin certificado ni tarjeta.
         </p>
         <AudienceToggle audience={audience} onChange={onAudienceChange} />

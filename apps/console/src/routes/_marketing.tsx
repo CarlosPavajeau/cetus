@@ -19,7 +19,7 @@ function MarketingLayout() {
   useAnalytics();
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex min-h-svh flex-col font-marketing">
       <MarketingNav />
       <main className="flex-1">
         <Outlet />
