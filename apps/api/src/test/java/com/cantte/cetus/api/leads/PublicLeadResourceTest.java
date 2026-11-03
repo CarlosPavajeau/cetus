@@ -109,15 +109,16 @@ class PublicLeadResourceTest {
     }
 
     @Test
-    void anAddressGetsAFewOfEachFormADay() {
+    void anAddressAsksAboutEveryIntegrationButOnlyAFewTimesADay() {
         String email = email();
-        for (int i = 0; i < Leads.PER_EMAIL; i++) {
+        for (Integration integration : Integration.values()) {
             visitor(ip())
-                    .body(new IntegrationLeadRequest(email, POLICY, Integration.SHOPIFY))
+                    .body(new IntegrationLeadRequest(email, POLICY, integration))
                     .post("/console/public/leads/integrations")
                     .then()
                     .statusCode(204);
         }
+        assertThat(Leads.perEmail(Kind.INTEGRATION)).isEqualTo(Integration.values().length);
         visitor(ip())
                 .body(new IntegrationLeadRequest(email.toUpperCase(), POLICY, Integration.SHOPIFY))
                 .post("/console/public/leads/integrations")
@@ -130,6 +131,15 @@ class PublicLeadResourceTest {
                 .post("/console/public/leads/calculator")
                 .then()
                 .statusCode(204);
+    }
+
+    @Test
+    void anAddressWithAPercentSignIsRefused() {
+        visitor(ip())
+                .body(new IntegrationLeadRequest("a%2F..%2Fsegments@ejemplo.com", POLICY, Integration.SHOPIFY))
+                .post("/console/public/leads/integrations")
+                .then()
+                .statusCode(400);
     }
 
     @Test

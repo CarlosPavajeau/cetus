@@ -18,18 +18,18 @@ public final class LeadViews {
     /** A privacy policy version, as the console names them: its date. */
     static final String POLICY_VERSION = "\\d{4}-\\d{2}-\\d{2}";
 
-    static final int MAX_EMAIL = 254;
+    static final int EMAIL_MAX = 254;
 
     /**
      * Stricter than {@code @Email}: the address goes into the provider's URL paths for "Avísame" lists, so it only
-     * takes the characters real addresses use.
+     * takes the characters real addresses use, and never '%', which would let it encode a path of its own.
      */
-    static final String EMAIL = "[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}";
+    static final String EMAIL = "[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}";
 
     private LeadViews() {}
 
     public record CalculatorLeadRequest(
-            @NotBlank @Pattern(regexp = EMAIL) @Size(max = MAX_EMAIL)
+            @NotBlank @Pattern(regexp = EMAIL) @Size(max = EMAIL_MAX)
             String email,
 
             @NotBlank @Pattern(regexp = POLICY_VERSION) String policyVersion,
@@ -50,7 +50,7 @@ public final class LeadViews {
     }
 
     public record PartnerLeadRequest(
-            @NotBlank @Pattern(regexp = EMAIL) @Size(max = MAX_EMAIL)
+            @NotBlank @Pattern(regexp = EMAIL) @Size(max = EMAIL_MAX)
             String email,
 
             @NotBlank @Pattern(regexp = POLICY_VERSION) String policyVersion,
@@ -61,7 +61,7 @@ public final class LeadViews {
             @Size(max = 2_000) String message) {}
 
     public record IntegrationLeadRequest(
-            @NotBlank @Pattern(regexp = EMAIL) @Size(max = MAX_EMAIL)
+            @NotBlank @Pattern(regexp = EMAIL) @Size(max = EMAIL_MAX)
             String email,
 
             @NotBlank @Pattern(regexp = POLICY_VERSION) String policyVersion,

@@ -58,13 +58,12 @@ public class SendLeadHandler implements JobHandler {
         }
         Optional<EmailSender> sender = email.notificationSender();
         if (sender.isEmpty()) {
-            LOG.warn("Email delivery is not configured; the lead is only stored");
-            return;
+            LOG.warn("Email delivery is not configured; the lead is not emailed");
         }
         try {
-            tellTheTeam(sender.get(), lead);
+            sender.ifPresent(available -> tellTheTeam(available, lead));
             switch (lead) {
-                case CalculatorLead calculator -> sendResult(sender.get(), calculator);
+                case CalculatorLead calculator -> sender.ifPresent(available -> sendResult(available, calculator));
                 case IntegrationLead integration -> subscribe(integration);
                 case PartnerLead ignored -> {}
             }

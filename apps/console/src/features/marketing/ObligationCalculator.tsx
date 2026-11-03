@@ -195,9 +195,7 @@ function Result({ answers, verdict }: { answers: ObligationAnswers; verdict: Obl
         submitLabel="Enviarme el resultado"
         purpose="enviarme este resultado"
         kind="calculator"
-        onSubmit={(contact) =>
-          sendCalculatorLead({ data: { email: contact.email, website: contact.website, answers } })
-        }
+        onSubmit={(contact) => sendCalculatorLead({ data: { ...contact, answers } })}
         sent={(email) => `Te enviamos el resultado a ${email}.`}
       />
     </div>

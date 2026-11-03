@@ -12,7 +12,7 @@ import { type LeadKind, track } from "./analytics";
 import { ConsentField, LeadSent, TrapField, leadFailure } from "./LeadFields";
 import { type LeadResult, emptyLeadContact, leadContactSchema } from "./leads";
 
-export type LeadContact = { email: string; website: string };
+export type LeadContact = { email: string; website: string; consent: boolean };
 
 /** An email and the authorization to use it for one purpose, then a confirmation in place of the form. */
 export function LeadContactForm({
@@ -41,7 +41,7 @@ export function LeadContactForm({
 
   const submit = form.handleSubmit(async (contact) => {
     try {
-      const result = await onSubmit({ email: contact.email, website: contact.website });
+      const result = await onSubmit(contact);
       if (!result.ok) {
         form.setError("root", { message: result.message });
         return;

@@ -49,7 +49,7 @@ public class Leads {
         lockQuota("leads:ip:" + ip);
         checkNotTooMany(LeadEntity.countByIpSince(ip, now.minus(IP_WINDOW)), PER_IP);
         lockQuota("leads:email:" + address.toLowerCase(Locale.ROOT));
-        checkNotTooMany(LeadEntity.countByEmailSince(kind, address, now.minus(EMAIL_WINDOW)), PER_EMAIL);
+        checkNotTooMany(LeadEntity.countByEmailSince(kind, address, now.minus(EMAIL_WINDOW)), perEmail(kind));
 
         LeadEntity lead = new LeadEntity();
         lead.id = Ids.newId();
@@ -61,6 +61,11 @@ public class Leads {
         lead.persist();
         jobs.enqueue(JobTypes.SEND_LEAD, lead.id);
         return lead;
+    }
+
+    /** "Avísame" is one form per integration, so an address may ask about each of them in a day. */
+    static int perEmail(Kind kind) {
+        return kind == Kind.INTEGRATION ? Math.max(PER_EMAIL, LeadEntity.Integration.values().length) : PER_EMAIL;
     }
 
     /** IP first, then address, in every request, so two requests never wait on each other's locks. */

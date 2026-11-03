@@ -108,7 +108,7 @@ function Notify({ integration, name }: { integration: LeadIntegration; name: str
           kind="integration"
           onSubmit={(contact) =>
             sendIntegrationLead({
-              data: { email: contact.email, website: contact.website, integration },
+              data: { ...contact, integration },
             })
           }
           sent={(email) => `Listo. Te avisaremos a ${email}.`}

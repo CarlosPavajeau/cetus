@@ -6,7 +6,7 @@ import { CetusApiError, publicApi } from "~/lib/api/client";
 import { env } from "~/lib/env";
 
 import { highlight } from "./highlight";
-import { type LeadResult, leadEmail, leadTrap } from "./leads";
+import { type LeadResult, leadConsent, leadEmail, leadTrap } from "./leads";
 import { type SnippetName, snippets } from "./snippets";
 
 /** What the marketing pages need from the server's environment; all of it is public. */
@@ -45,6 +45,7 @@ const answer = type("'YES' | 'NO' | 'UNKNOWN'");
 const calculatorLeadInput = type({
   email: leadEmail,
   website: leadTrap,
+  consent: leadConsent,
   answers: type({ personType: "'LEGAL_ENTITY'" }).or({
     personType: "'NATURAL_PERSON'",
     simpleRegime: answer,
@@ -75,6 +76,7 @@ export const sendIntegrationLead = createServerFn({ method: "POST" })
     type({
       email: leadEmail,
       website: leadTrap,
+      consent: leadConsent,
       integration: "'WOOCOMMERCE' | 'SHOPIFY' | 'AUTOMATIONS' | 'PAYMENTS'",
     }),
   )
@@ -94,6 +96,7 @@ export const sendIntegrationLead = createServerFn({ method: "POST" })
 const partnerLeadInput = type({
   email: "string",
   website: leadTrap,
+  consent: leadConsent,
   name: "string",
   company: "string",
   phone: "string",
@@ -121,7 +124,8 @@ export const sendPartnerLead = createServerFn({ method: "POST" })
   );
 
 /**
- * A filled trap means a bot: it gets the same success as a person and nothing reaches the API. The API's quota is
+ * Every form checks the authorization here too, since `policyVersion` is the API's proof of it. A filled trap means
+ * a bot: it gets the same success as a person and nothing reaches the API. The API's quota is
  * the one answer a person can act on.
  */
 async function submitLead(trap: string, send: () => Promise<unknown>): Promise<LeadResult> {
@@ -140,7 +144,13 @@ async function submitLead(trap: string, send: () => Promise<unknown>): Promise<L
       };
     }
     if (error instanceof CetusApiError && error.status === 400) {
-      return { ok: false, message: "Revisa el correo: no parece una dirección válida." };
+      const emailRefused = error.errors?.some((each) => each.field.endsWith("email")) ?? false;
+      return {
+        ok: false,
+        message: emailRefused
+          ? "Revisa el correo: no parece una dirección válida."
+          : "Revisa los datos del formulario e inténtalo de nuevo.",
+      };
     }
     throw error;
   }
