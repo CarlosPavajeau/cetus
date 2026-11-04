@@ -27,7 +27,7 @@ public class LocalRateLimiter implements RateLimiter {
     @Override
     public Optional<Duration> acquire(String bucket, Limits limits) {
         var wait = new AtomicReference<Optional<Duration>>();
-        buckets.compute(bucket, (key, current) -> {
+        buckets.compute(bucket, (_, current) -> {
             long now = nanoClock.getAsLong();
             double tokens = current != null && current.limits().equals(limits) ? current.tokensAt(now) : limits.burst();
             if (tokens >= 1) {
@@ -44,7 +44,7 @@ public class LocalRateLimiter implements RateLimiter {
     @Scheduled(every = "1m")
     void cleanUp() {
         buckets.keySet()
-                .forEach(key -> buckets.computeIfPresent(key, (k, bucket) -> {
+                .forEach(key -> buckets.computeIfPresent(key, (_, bucket) -> {
                     long now = nanoClock.getAsLong();
                     return bucket.tokensAt(now) >= bucket.limits().burst() ? null : bucket;
                 }));
