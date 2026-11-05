@@ -146,18 +146,21 @@ function PlanColumns({
   if (offers.length === 0) {
     return emptyNote ?? <EmptyNote />;
   }
-  const costs = offers
+  const baseline = offers
     .filter((offer) => offer.kind === "SUBSCRIPTION")
-    .map((offer) => documentCostCents(offer.version));
-  const costMax = costs.length > 0 ? Math.max(...costs) : null;
+    .map((offer) => ({ name: offer.name, cents: documentCostCents(offer.version) }))
+    .reduce<CostBaseline | null>(
+      (dearest, each) => (dearest === null || each.cents > dearest.cents ? each : dearest),
+      null,
+    );
 
   return (
-    <div className="grid divide-y rounded-xl border bg-card lg:auto-cols-fr lg:grid-flow-col lg:divide-x lg:divide-y-0">
+    <div className="grid divide-y rounded-xl border bg-card lg:auto-cols-fr lg:grid-flow-col lg:grid-rows-[repeat(4,auto)] lg:divide-x lg:divide-y-0">
       {offers.map((offer) => (
         <PlanColumn
           key={offer.id}
           offer={offer}
-          costMax={costMax}
+          baseline={baseline}
           featured={offer.code === featuredCode}
           headingLevel={headingLevel}
           footer={renderAction(offer)}
@@ -167,15 +170,17 @@ function PlanColumns({
   );
 }
 
+type CostBaseline = { name: string; cents: number };
+
 function PlanColumn({
   offer,
-  costMax,
+  baseline,
   featured,
   headingLevel,
   footer,
 }: {
   offer: PricedOffer;
-  costMax: number | null;
+  baseline: CostBaseline | null;
   featured: boolean;
   headingLevel: HeadingLevel;
   footer: ReactNode;
@@ -185,7 +190,10 @@ function PlanColumn({
   const period = pricePeriodLabel(offer);
 
   return (
-    <article aria-labelledby={titleId} className="flex flex-col gap-5 p-5">
+    <article
+      aria-labelledby={titleId}
+      className="flex flex-col gap-5 p-5 lg:row-span-4 lg:grid lg:grid-rows-subgrid"
+    >
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <Heading level={headingLevel} id={titleId} className="text-md font-medium">
@@ -202,8 +210,8 @@ function PlanColumn({
         <p className="text-xs text-muted-foreground">{priceBreakdown(version)}</p>
       </div>
 
-      {offer.kind === "SUBSCRIPTION" && costMax !== null ? (
-        <DocumentCost cents={documentCostCents(version)} costMax={costMax} />
+      {offer.kind === "SUBSCRIPTION" && baseline !== null ? (
+        <SubscriptionCost cents={documentCostCents(version)} baseline={baseline} />
       ) : (
         <PackageCost offer={offer} />
       )}
@@ -223,17 +231,17 @@ function PlanColumn({
   );
 }
 
-/** The plan's unit cost, and a bar against the dearest plan of its group so the cheaper volume reads at a glance. */
-function DocumentCost({ cents, costMax }: { cents: number; costMax: number }) {
+/** The plan's unit cost, and what a document saves against the dearest plan of its group. */
+function SubscriptionCost({ cents, baseline }: { cents: number; baseline: CostBaseline }) {
+  const savingPercent = Math.floor((1 - cents / baseline.cents) * 100);
   return (
-    <div className="flex flex-col gap-1.5">
-      <div aria-hidden className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary"
-          style={{ width: `${Math.max((cents / costMax) * 100, 4)}%` }}
-        />
-      </div>
-      <p className="text-xs text-muted-foreground tabular-nums">{documentCostLabel(cents)}</p>
+    <div className="flex flex-col gap-0.5">
+      <p className="text-sm tabular-nums">{documentCostLabel(cents)}</p>
+      {savingPercent > 0 && (
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {savingPercent} % menos por documento que {baseline.name}
+        </p>
+      )}
     </div>
   );
 }
@@ -273,8 +281,8 @@ export function PlanCatalogSkeleton({ columns = 3 }: { columns?: number }) {
               <Skeleton className="h-3 w-28" />
             </div>
             <div className="flex flex-col gap-2">
-              <Skeleton className="h-1.5 w-full" />
-              <Skeleton className="h-3 w-40" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-48" />
             </div>
             <div className="flex flex-col gap-2.5">
               <Skeleton className="h-4 w-40" />
