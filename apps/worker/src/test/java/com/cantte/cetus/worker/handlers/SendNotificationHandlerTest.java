@@ -131,6 +131,34 @@ class SendNotificationHandlerTest {
     }
 
     @Test
+    void aCourtesyNoticeSaysItHasNoGraceMargin() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
+        UUID courtesy = request(
+                accountId, NotificationKind.COURTESY_GRANTED, Map.of("documents", "50", "expiresAt", "03/02/2027"));
+        UUID usage = request(
+                accountId,
+                NotificationKind.CREDITS_USAGE,
+                Map.of("percent", "80", "available", "10", "granted", "50", "graceMargin", "0"));
+
+        handler.handle(fixtures.notificationJob(courtesy));
+        handler.handle(fixtures.notificationJob(usage));
+
+        assertThat(resend.requests()).hasSize(2);
+        assertThat(resend.requests().getFirst().body().get("to").get(0).asText())
+                .isEqualTo("billing@cetus.test");
+        assertThat(resend.requests().getFirst().body().get("subject").asText())
+                .isEqualTo("[Cetus] Tienes 50 documentos de cortesía para empezar en producción");
+        assertThat(resend.requests().getFirst().body().get("text").asText())
+                .contains("Vencen el 03/02/2027")
+                .contains("No tienen margen de cortesía")
+                .contains("/billing");
+        assertThat(resend.requests().getLast().body().get("text").asText())
+                .contains("Cuando se acaben, solo podrás emitir notas crédito")
+                .doesNotContain("margen de cortesía");
+    }
+
+    @Test
     void aPlanUsageNoticeOfAPlanThatStopsIssuingSaysWhen() {
         UUID accountId = account();
         fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");

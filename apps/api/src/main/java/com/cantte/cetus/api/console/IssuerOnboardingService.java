@@ -2,6 +2,7 @@ package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.aws.SecretCipher;
+import com.cantte.cetus.credits.Courtesy;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.credits.CreditRefused;
 import com.cantte.cetus.credits.Entitlements;
@@ -13,10 +14,13 @@ import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.notifications.NotificationKind;
+import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.audit.RequestOrigin;
+import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity.VerificationStatus;
@@ -29,14 +33,19 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
+import java.text.NumberFormat;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -48,11 +57,21 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class IssuerOnboardingService {
 
+    private static final Locale COLOMBIA = Locale.forLanguageTag("es-CO");
+    private static final ZoneId BOGOTA = ZoneId.of("America/Bogota");
+    private static final DateTimeFormatter EXPIRY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     @Inject
     Entitlements entitlements;
 
     @Inject
     CreditLedger credits;
+
+    @Inject
+    Courtesy courtesy;
+
+    @Inject
+    Notifications notifications;
 
     @Inject
     SecretCipher cipher;
@@ -101,7 +120,7 @@ public class IssuerOnboardingService {
             requireSandboxIssuerSlot(accountId);
         }
         if (request.environment() == Environment.LIVE) {
-            requirePlanIssuerSlot(accountId);
+            requirePlanIssuerSlot(accountId, request.nit());
         }
         // Again under the slot's lock: a request for the same NIT may have committed while this one waited for it.
         requireNewNit(accountId, request);
@@ -160,12 +179,21 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * Production issuers need a product, and are as many as its lots include. Locked per account like the
+     * Production issuers need a product, and are as many as its lots include; an account that never had one may
+     * get the courtesy lot with its first. Locked per account like the
      * sandbox slots, so two requests cannot both take the last one. An account above its limit (a package that
      * expired) keeps its issuers and only cannot add more.
      */
-    private void requirePlanIssuerSlot(UUID accountId) {
-        Entitlements.Entitlement entitlement = entitlements.of(accountId, OffsetDateTime.now());
+    private void requirePlanIssuerSlot(UUID accountId, String nit) {
+        OffsetDateTime now = OffsetDateTime.now();
+        Entitlements.Entitlement entitlement = entitlements.of(accountId, now);
+        if (!entitlement.product()) {
+            Optional<CreditGrantEntity> lot = courtesy.claim(accountId, nit, now);
+            if (lot.isPresent()) {
+                notifyCourtesy(lot.get());
+                entitlement = entitlements.of(accountId, now);
+            }
+        }
         if (!entitlement.product()) {
             credits.refuse(
                     accountId,
@@ -186,6 +214,18 @@ public class IssuerOnboardingService {
                             CreditRefused.Reason.ISSUER_LIMIT_REACHED,
                             "The account's products include " + entitlement.issuersIncluded() + " production issuers"));
         }
+    }
+
+    private void notifyCourtesy(CreditGrantEntity lot) {
+        notifications.request(
+                lot.accountId,
+                NotificationKind.COURTESY_GRANTED,
+                "courtesy_granted:" + lot.id,
+                Map.of(
+                        "documents",
+                        NumberFormat.getIntegerInstance(COLOMBIA).format(lot.quantity),
+                        "expiresAt",
+                        lot.expiresAt.atZoneSameInstant(BOGOTA).format(EXPIRY)));
     }
 
     /**
@@ -434,7 +474,7 @@ public class IssuerOnboardingService {
         if (promoted) {
             throw new DomainException("issuer_already_promoted", "This NIT already has a production issuer");
         }
-        requirePlanIssuerSlot(test.accountId);
+        requirePlanIssuerSlot(test.accountId, test.nit);
 
         IssuerEntity live = new IssuerEntity();
         live.id = Ids.newId();

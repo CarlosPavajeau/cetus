@@ -71,7 +71,11 @@ public final class LeadViews {
     public record LandingView(
             long acceptedDocuments,
             long activeIssuers,
-            @Schema(nullable = true) ObligationCapView obligationCap) {}
+            @Schema(nullable = true) ObligationCapView obligationCap,
+            @Schema(nullable = true) CourtesyView courtesy) {}
+
+    /** The active promotion's courtesy lot for accounts that start in production, and the slots left. */
+    public record CourtesyView(int slots, int slotsRemaining, int documents, int validityDays) {}
 
     /** 3,500 UVT and the UVT's value this year, from configuration. */
     public record ObligationCapView(long uvtValueCop, int uvt) {}

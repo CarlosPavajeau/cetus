@@ -1,8 +1,10 @@
 package com.cantte.cetus.api.billing;
 
+import com.cantte.cetus.api.billing.BillingViews.AccountCourtesyView;
 import com.cantte.cetus.api.billing.BillingViews.AccountCreditsView;
 import com.cantte.cetus.api.billing.BillingViews.CreditLotView;
 import com.cantte.cetus.api.billing.BillingViews.CreditMovementView;
+import com.cantte.cetus.credits.Courtesy;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
@@ -32,9 +34,13 @@ public class AccountCredits {
     @Inject
     CreditLedger ledger;
 
+    @Inject
+    Courtesy courtesy;
+
     @Transactional(Transactional.TxType.MANDATORY)
     public AccountCreditsView of(UUID accountId) {
-        CreditLedger.Balance balance = ledger.balance(accountId, OffsetDateTime.now());
+        OffsetDateTime now = OffsetDateTime.now();
+        CreditLedger.Balance balance = ledger.balance(accountId, now);
         List<CreditGrantEntity> lots = CreditGrantEntity.listByAccount(accountId);
         Map<UUID, PlanEntity> plans = plansByVersion(lots.stream()
                 .map(lot -> lot.planVersionId)
@@ -55,6 +61,7 @@ public class AccountCredits {
                 balance.entitlement().issuersIncluded(),
                 IssuerEntity.count("accountId = ?1 and environment = ?2", accountId, Environment.LIVE),
                 BillingOrderEntity.findDebt(accountId).map(order -> order.id).orElse(null),
+                courtesy.of(accountId, now).map(AccountCourtesyView::from).orElse(null),
                 lots.stream()
                         .map(lot -> lot(lot, lot.planVersionId == null ? null : plans.get(lot.planVersionId)))
                         .toList(),
