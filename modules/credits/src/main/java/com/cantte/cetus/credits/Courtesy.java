@@ -53,8 +53,9 @@ public class Courtesy {
     }
 
     /**
-     * Empty when the account cannot get the courtesy lot, or bought another product since it got it: the lot still
-     * counts, it is only no longer worth telling apart.
+     * Empty when the account cannot get the courtesy lot, or has another product in force besides it: the lot still
+     * counts, it is only no longer worth telling apart. Once that product ends (it expires or is refunded), the lot
+     * shows again while it lasts.
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public Optional<State> of(UUID accountId, OffsetDateTime at) {
@@ -83,7 +84,8 @@ public class Courtesy {
      * @return the lot, or empty when there is no slot for them
      */
     @Transactional(Transactional.TxType.MANDATORY)
-    public Optional<CreditGrantEntity> claim(UUID accountId, String nit, OffsetDateTime now) {
+    public Optional<CreditGrantEntity> claim(UUID accountId, String nitRequested, OffsetDateTime now) {
+        String nit = nitRequested.replaceFirst("^0+(?=\\d)", "");
         // Most accounts without a product already had one: they never wait for the promotion's lock.
         if (!accountEligible(accountId)) {
             return Optional.empty();
@@ -117,11 +119,12 @@ public class Courtesy {
         return Optional.of(lot);
     }
 
-    /** An account that never had a product, a production issuer nor a courtesy. */
+    /** An account that never had a product, a production issuer nor a courtesy; an adjustment is no product. */
     private boolean accountEligible(UUID accountId) {
         Object hadSomething =
                 em.createNativeQuery("""
-                        SELECT EXISTS (SELECT 1 FROM billing.credit_grants WHERE account_id = :account)
+                        SELECT EXISTS (SELECT 1 FROM billing.credit_grants
+                                       WHERE account_id = :account AND plan_version_id IS NOT NULL)
                             OR EXISTS (SELECT 1 FROM billing.subscriptions WHERE account_id = :account)
                             OR EXISTS (SELECT 1 FROM billing.issuers WHERE account_id = :account AND environment = 'LIVE')
                             OR EXISTS (SELECT 1 FROM billing.promotion_claims WHERE account_id = :account)

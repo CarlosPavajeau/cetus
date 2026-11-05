@@ -4601,10 +4601,10 @@ export interface components {
         /**
          * @description La cuenta no tiene con qué emitir el documento en producción.
          *     `no_active_product`: no tiene una suscripción ni un paquete vigente. `insufficient_credits`: usó sus
-         *     créditos y su margen de gracia (el 10 % de su último paquete o recarga, mínimo 10 documentos); compra
-         *     una recarga para seguir emitiendo. `overage_limit_reached`: la suscripción llegó a su límite de excedente
-         *     del periodo; el dueño de la cuenta puede ampliarlo en la consola, o esperar al siguiente periodo. Las
-         *     notas crédito nunca reciben este error.
+         *     créditos y su margen de gracia (el 10 % de su último paquete o recarga, mínimo 10 documentos; los
+         *     documentos de cortesía no tienen margen); compra una recarga para seguir emitiendo.
+         *     `overage_limit_reached`: la suscripción llegó a su límite de excedente del periodo; el dueño de la cuenta
+         *     puede ampliarlo en la consola, o esperar al siguiente periodo. Las notas crédito nunca reciben este error.
          */
         CreditsRefused: {
             headers: {

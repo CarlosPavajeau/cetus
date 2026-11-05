@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.credits;
 
+import static com.cantte.cetus.api.support.Concurrency.race;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.issuerRequest;
 import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
@@ -11,7 +12,10 @@ import static org.hamcrest.Matchers.nullValue;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.Credits;
+import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.credits.Entitlements;
+import com.cantte.cetus.domain.Ids;
+import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
@@ -20,11 +24,13 @@ import com.cantte.cetus.persistence.entity.PromotionClaimEntity;
 import com.cantte.cetus.persistence.entity.PromotionEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.response.Response;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +43,9 @@ class CourtesyTest {
 
     @Inject
     Credits credits;
+
+    @Inject
+    CreditLedger ledger;
 
     @Test
     void theFirstProductionIssuerGetsTheCourtesyLot() {
@@ -166,6 +175,91 @@ class CourtesyTest {
                 .statusCode(402)
                 .body("code", equalTo("no_active_product"));
         assertThat(claims(lateId)).isZero();
+    }
+
+    @Test
+    void anAccountThatHadAProductGetsNoCourtesy() {
+        slotsRemaining(1);
+        ConsoleUser user = ConsoleUser.newOrganization();
+        UUID accountId = UUID.fromString(bootstrap(user, "Vencida SAS"));
+        credits.grant(accountId, "EMPRENDEDOR", 300, OffsetDateTime.now().minusMinutes(1));
+
+        user.request().get("/console/credits").then().statusCode(200).body("courtesy", nullValue());
+        user.request()
+                .body(issuerRequest(nit(), "LIVE"))
+                .post("/console/issuers")
+                .then()
+                .statusCode(402)
+                .body("code", equalTo("no_active_product"));
+        assertThat(claims(accountId)).isZero();
+    }
+
+    @Test
+    void anAdjustmentIsNoProduct() {
+        slotsRemaining(1);
+        ConsoleUser user = ConsoleUser.newOrganization();
+        UUID accountId = UUID.fromString(bootstrap(user, "Ajustada SAS"));
+        QuarkusTransaction.requiringNew()
+                .run(() -> ledger.grant(
+                                accountId,
+                                new CreditLedger.Source(CreditGrantEntity.SourceType.ADJUSTMENT, Ids.newId()),
+                                null,
+                                5,
+                                OffsetDateTime.now().plusMonths(1),
+                                Actor.system(),
+                                "Ajuste de las pruebas")
+                        .orElseThrow());
+
+        user.request().get("/console/credits").then().statusCode(200).body("courtesy.status", equalTo("OFFERED"));
+        user.request()
+                .body(issuerRequest(nit(), "LIVE"))
+                .post("/console/issuers")
+                .then()
+                .statusCode(200);
+        assertThat(claims(accountId)).isEqualTo(1);
+    }
+
+    @Test
+    void leadingZerosNameTheSameNit() {
+        slotsRemaining(2);
+        String nit = nit();
+        ConsoleUser first = ConsoleUser.newOrganization();
+        bootstrap(first, "Sin Ceros SAS");
+        first.request()
+                .body(issuerRequest(nit, "LIVE"))
+                .post("/console/issuers")
+                .then()
+                .statusCode(200);
+        ConsoleUser second = ConsoleUser.newOrganization();
+        UUID secondId = UUID.fromString(bootstrap(second, "Con Ceros SAS"));
+
+        second.request()
+                .body(issuerRequest("0" + nit, "LIVE"))
+                .post("/console/issuers")
+                .then()
+                .statusCode(402)
+                .body("code", equalTo("no_active_product"));
+        assertThat(claims(secondId)).isZero();
+    }
+
+    @Test
+    void accountsRacingForTheLastSlotGetItOnce() throws Exception {
+        slotsRemaining(1);
+        ConsoleUser first = ConsoleUser.newOrganization();
+        bootstrap(first, "Carrera Uno SAS");
+        ConsoleUser second = ConsoleUser.newOrganization();
+        bootstrap(second, "Carrera Dos SAS");
+        List<Callable<Response>> racers = List.of(
+                () -> first.request().body(issuerRequest(nit(), "LIVE")).post("/console/issuers"),
+                () -> second.request().body(issuerRequest(nit(), "LIVE")).post("/console/issuers"));
+
+        List<Response> responses = race(racers);
+
+        assertThat(responses).extracting(Response::statusCode).containsExactlyInAnyOrder(200, 402);
+        assertThat(responses)
+                .filteredOn(response -> response.statusCode() == 402)
+                .extracting(response -> response.jsonPath().getString("code"))
+                .containsOnly("no_active_product");
     }
 
     @Test

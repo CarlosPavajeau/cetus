@@ -105,7 +105,9 @@ function offersJsonLd(offers: { name: string; version: { totalCents: number } | 
 
 function Pricing() {
   const { data: config } = useQuery(marketingConfigQuery);
-  const { faq } = Route.useLoaderData();
+  // The same figures as the slots above the price list, so the answer follows them while the page stays open.
+  const { data: figures } = useQuery(landingFiguresQuery);
+  const faq = pricingFaq(figures?.courtesy ?? null);
 
   return (
     <>

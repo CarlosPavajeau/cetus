@@ -124,6 +124,7 @@ class SendNotificationHandlerTest {
                 .isEqualTo("[Cetus] Usaste el 80% de tus créditos");
         assertThat(resend.requests().getFirst().body().get("text").asText())
                 .contains("de los 300 créditos de sus paquetes y recargas vigentes: le quedan 60")
+                .contains("Cuando se acaben, podrás emitir unos documentos más dentro del margen de gracia")
                 .contains("/billing/products");
         assertThat(resend.requests().getLast().body().get("text").asText())
                 .contains("ya emitió 1 de los 30 documentos del margen de gracia")
