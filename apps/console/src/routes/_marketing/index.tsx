@@ -18,12 +18,11 @@ import { RequestDemo } from "~/features/marketing/RequestDemo";
 import { Section } from "~/features/marketing/Section";
 import {
   BusinessSection,
-  CalculatorSection,
   FeaturesSection,
   HabilitacionSection,
-  SecuritySection,
+  SecurityPoints,
   StepsSection,
-  WebhooksSection,
+  WebhookEvents,
 } from "~/features/marketing/Sections";
 import { marketingCacheControl, marketingHead } from "~/features/marketing/seo";
 import { TrustBand } from "~/features/marketing/TrustBand";
@@ -94,14 +93,13 @@ function Landing() {
             lead="Una llamada a la API. Cetus genera el XML, lo firma, lo envía a la DIAN y te avisa con un webhook cuando lo acepta."
           >
             <RequestDemo webhookPayloadHtml={html.webhookPayload} />
+            <WebhookEvents />
           </Section>
           <TrustBand />
           <FeaturesSection audience={audience} />
           <StepsSection html={html} />
-          <WebhooksSection verifyHtml={html.webhookVerify} />
           <IntegrationsSection audience={audience} />
           <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
-          <CalculatorSection />
         </>
       ) : (
         <>
@@ -111,7 +109,6 @@ function Landing() {
             afterHero
           />
           <HabilitacionSection />
-          <CalculatorSection />
           <TrustBand />
           <FeaturesSection audience={audience} />
           <IntegrationsSection audience={audience} />
@@ -125,9 +122,14 @@ function Landing() {
       >
         <PricingTable audience={audience} page="landing" headingLevel={3} />
         <PartnersNote />
-        <PricingPromises />
+        <div className="grid gap-10 border-t pt-10 lg:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <h3 className="text-base font-medium">Lo que pagas, y lo que no</h3>
+            <PricingPromises className="sm:grid-cols-1" />
+          </div>
+          <SecurityPoints />
+        </div>
       </Section>
-      <SecuritySection />
       <FaqSection items={landingFaq} />
       <FinalCta
         audience={audience}

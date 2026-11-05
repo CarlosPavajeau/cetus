@@ -1,6 +1,5 @@
 import { BookOpenIcon, CheckIcon } from "lucide-react";
 
-import { Badge } from "~/components/ui/badge";
 import { docsUrl } from "~/lib/docs";
 
 import { AudienceToggle } from "./AudienceToggle";
@@ -12,8 +11,7 @@ import { WhatsAppButton } from "./WhatsAppButton";
 
 const copy = {
   dev: {
-    badge: "API de facturación electrónica · Hecha para Colombia",
-    title: "Tu producto. Nuestra API. Conectados a la DIAN.",
+    title: ["Tu producto.", "Nuestra API.", "Conectados a la DIAN."],
     lead: "Facturas, notas crédito y notas débito, generadas, firmadas y validadas por la DIAN con una sola llamada.",
     trust: [
       "Simulación y habilitación sin costo",
@@ -22,8 +20,7 @@ const copy = {
     ],
   },
   negocio: {
-    badge: "Facturación electrónica · Hecha para Colombia",
-    title: "Factura ante la DIAN desde tu navegador.",
+    title: ["Factura ante la DIAN", "desde tu navegador."],
     lead: "Emite facturas, notas crédito y notas débito desde la consola. Cetus las firma, las envía a la DIAN y le llegan a tu cliente por correo con el PDF.",
     trust: [
       "Simulación y habilitación sin costo",
@@ -33,7 +30,7 @@ const copy = {
   },
 } as const satisfies Record<
   Audience,
-  { badge: string; title: string; lead: string; trust: readonly string[] }
+  { title: readonly string[]; lead: string; trust: readonly string[] }
 >;
 
 export function Hero({
@@ -49,14 +46,17 @@ export function Hero({
   whatsappNumber: string | null;
   consoleScreenshotUrl: string;
 }) {
-  const { badge, title, lead, trust } = copy[audience];
+  const { title, lead, trust } = copy[audience];
 
   return (
     <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 pt-16 pb-section text-center md:px-6 md:pt-24">
-      <Badge variant="muted">{badge}</Badge>
       <div className="flex max-w-3xl flex-col gap-5">
-        <h1 className="font-heading text-display font-medium tracking-display text-balance">
-          {title}
+        <h1 className="font-heading text-display font-medium tracking-display text-balance max-sm:text-[calc((100vw-2rem)/10.5)]">
+          {title.map((line) => (
+            <span key={line} className="block">
+              {line}
+            </span>
+          ))}
         </h1>
         <p className="mx-auto max-w-2xl text-lg/8 text-pretty text-muted-foreground">{lead}</p>
       </div>
@@ -73,7 +73,7 @@ export function Hero({
               copyLabel="Copiar el comando"
             />
           </div>
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
             <ConsoleCta audience="dev" section="hero" label="Crear llave de simulación" />
             <a
               href={`${docsUrl}/inicio-rapido/desarrolladores`}
@@ -86,7 +86,7 @@ export function Hero({
         </div>
       ) : (
         <div className="flex w-full max-w-4xl flex-col items-center gap-6">
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
             <ConsoleCta audience="negocio" section="hero" label="Empezar gratis" />
             <WhatsAppButton number={whatsappNumber} section="hero" />
           </div>

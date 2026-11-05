@@ -105,27 +105,6 @@ const webhookPayload = `{
   }
 }`;
 
-/** The docs' verification (snippets/webhooks/verify.js in the docs app), without its comment. */
-const webhookVerify = `import { createHmac, timingSafeEqual } from "node:crypto";
-
-export function verifyCetusWebhook(webhookId, timestamp, signature, rawBody, secret) {
-  const sentAt = Number(timestamp);
-  if (!Number.isInteger(sentAt) || Math.abs(Date.now() / 1000 - sentAt) > 300) {
-    return false;
-  }
-  const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
-  const expected = createHmac("sha256", key)
-    .update(\`\${webhookId}.\${timestamp}.\${rawBody}\`)
-    .digest();
-  return signature.split(" ").some((entry) => {
-    const [version, value] = entry.split(",");
-    const received = Buffer.from(value ?? "", "base64");
-    return (
-      version === "v1" && received.length === expected.length && timingSafeEqual(received, expected)
-    );
-  });
-}`;
-
 /** The code the landing shows, highlighted once on the server; the browser only gets the HTML. */
 export const snippets = {
   heroCurl: { lang: "bash", code: heroCurl },
@@ -133,7 +112,6 @@ export const snippets = {
   invoiceJs: { lang: "js", code: invoiceJs },
   invoicePython: { lang: "python", code: invoicePython },
   webhookPayload: { lang: "json", code: webhookPayload },
-  webhookVerify: { lang: "js", code: webhookVerify },
 } as const satisfies Record<string, Snippet>;
 
 export type SnippetName = keyof typeof snippets;

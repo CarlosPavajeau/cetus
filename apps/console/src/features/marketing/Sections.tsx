@@ -225,41 +225,29 @@ const events = [
   { name: "document.delivered", text: "El correo con el PDF llegó a tu cliente." },
 ] as const;
 
-export function WebhooksSection({ verifyHtml }: { verifyHtml: string }) {
+/** The events the demo's terminal ends with, under the band that shows them arriving. */
+export function WebhookEvents() {
   return (
-    <Section
-      eyebrow="Webhooks"
-      title="Tu sistema se entera al instante"
-      lead={
-        <>
-          Cada evento llega firmado según Standard Webhooks (HMAC-SHA256) y se reintenta con espera
-          creciente si tu servidor no responde.{" "}
-          <a
-            href={`${docsUrl}/guias/webhooks`}
-            className="font-medium text-foreground underline underline-offset-4"
-          >
-            Ver la guía de webhooks
-          </a>
-        </>
-      }
-    >
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <ul className="grid gap-px overflow-hidden rounded-xl border bg-border">
-          {events.map((event) => (
-            <li key={event.name} className="flex flex-col gap-1 bg-background p-5">
-              <code className="font-mono text-sm">{event.name}</code>
-              <p className="text-md/6 text-pretty text-muted-foreground">{event.text}</p>
-            </li>
-          ))}
-        </ul>
-        <CodeBlock
-          html={verifyHtml}
-          snippet="webhookVerify"
-          title="Verifica la firma · Node.js"
-          copyLabel="Copiar la verificación"
-        />
-      </div>
-    </Section>
+    <div className="flex flex-col gap-4">
+      <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
+        {events.map((event) => (
+          <li key={event.name} className="flex flex-col gap-1 bg-background p-5">
+            <code className="font-mono text-sm">{event.name}</code>
+            <p className="text-md/6 text-pretty text-muted-foreground">{event.text}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="max-w-prose text-md/6 text-pretty text-muted-foreground">
+        Cada evento llega firmado según Standard Webhooks (HMAC-SHA256) y se reintenta con espera
+        creciente si tu servidor no responde.{" "}
+        <a
+          href={`${docsUrl}/guias/webhooks`}
+          className="font-medium text-foreground underline underline-offset-4"
+        >
+          Ver la guía de webhooks
+        </a>
+      </p>
+    </div>
   );
 }
 
@@ -304,6 +292,13 @@ export function BusinessSection({
             <ConsoleCta audience="negocio" section="business" label="Empezar gratis" />
             <WhatsAppButton number={whatsappNumber} section="business" />
           </div>
+          <Link
+            to="/estoy-obligado-a-facturar"
+            className="flex items-center gap-1 self-start text-md font-medium underline underline-offset-4"
+          >
+            ¿Eres persona natural? Mira si debes facturar
+            <ArrowRightIcon className="size-4" />
+          </Link>
         </div>
         <img
           src={screenshotUrl}
@@ -452,26 +447,6 @@ function ConsoleScreenshot({ step }: { step: { image: string; alt: string } }) {
   );
 }
 
-export function CalculatorSection() {
-  return (
-    <Section
-      eyebrow="Calculadora"
-      title="¿Debes facturar electrónicamente?"
-      lead="Si eres persona natural, depende de tus ingresos y de cómo trabajas. Respóndelo en un minuto, sin registrarte."
-    >
-      <div>
-        <Link
-          to="/estoy-obligado-a-facturar"
-          className={linkButtonVariants({ variant: "outline", size: "lg" })}
-        >
-          Hacer el cálculo
-          <ArrowRightIcon data-icon="inline-end" />
-        </Link>
-      </div>
-    </Section>
-  );
-}
-
 const securityPoints = [
   {
     icon: ShieldCheckIcon,
@@ -483,40 +458,30 @@ const securityPoints = [
     title: "Llaves por ambiente",
     text: "Simulación, pruebas y producción tienen llaves distintas. Si una se expone, la revocas y creas otra.",
   },
-  {
-    icon: BellRingIcon,
-    title: "Webhooks firmados",
-    text: "Verifica que cada evento viene de Cetus con su firma HMAC y su marca de tiempo.",
-  },
 ] as const;
 
-export function SecuritySection() {
+/** What a buyer weighs next to the price: where the certificate that signs for them lives. */
+export function SecurityPoints() {
   return (
-    <Section
-      eyebrow="Seguridad"
-      title="Le puedes confiar tu certificado"
-      lead={
-        <>
-          Lo que firma por tu empresa se guarda como debe. Y si algo falla, lo ves en la{" "}
-          <a
-            href={statusPageUrl}
-            className="font-medium text-foreground underline underline-offset-4"
-          >
-            página de estado
-          </a>
-          .
-        </>
-      }
-    >
-      <ul className="grid gap-6 md:grid-cols-3">
+    <div className="flex flex-col gap-4">
+      <h3 className="text-base font-medium">Le puedes confiar tu certificado</h3>
+      <ul className="flex flex-col gap-4">
         {securityPoints.map(({ icon: Icon, title, text }) => (
-          <li key={title} className="flex flex-col gap-2">
-            <Icon className="size-5 text-muted-foreground" />
-            <h3 className="text-base font-medium">{title}</h3>
-            <p className="text-md/6 text-pretty text-muted-foreground">{text}</p>
+          <li key={title} className="flex gap-3 text-sm">
+            <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <span className="flex flex-col gap-0.5">
+              <span className="font-medium">{title}</span>
+              <span className="text-pretty text-muted-foreground">{text}</span>
+            </span>
           </li>
         ))}
       </ul>
-    </Section>
+      <a
+        href={statusPageUrl}
+        className="self-start text-sm font-medium underline underline-offset-4"
+      >
+        Ver la disponibilidad del servicio
+      </a>
+    </div>
   );
 }
