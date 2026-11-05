@@ -250,35 +250,35 @@ function PackageCost({ offer }: { offer: PricedOffer }) {
 /** The catalog's shape while its prices load, so the page below it does not jump when they arrive. */
 export function PlanCatalogSkeleton({ columns = 3 }: { columns?: number }) {
   return (
-    <div aria-busy className="flex flex-col gap-4" role="status">
+    <output aria-busy className="flex flex-col gap-4">
       <span className="sr-only">Cargando precios…</span>
-      <Skeleton className="h-8 w-40 motion-reduce:animate-none" />
+      <Skeleton className="h-8 w-40" />
       <div className="flex max-w-prose flex-col gap-2">
-        <Skeleton className="h-4 w-full motion-reduce:animate-none" />
-        <Skeleton className="h-4 w-2/3 motion-reduce:animate-none" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
       </div>
       <div className="grid divide-y rounded-xl border bg-card lg:auto-cols-fr lg:grid-flow-col lg:divide-x lg:divide-y-0">
         {Array.from({ length: columns }, (_, index) => (
           <div key={index} className="flex flex-col gap-5 p-5">
             <div className="flex flex-col gap-2">
-              <Skeleton className="h-5 w-24 motion-reduce:animate-none" />
-              <Skeleton className="h-9 w-36 motion-reduce:animate-none" />
-              <Skeleton className="h-3 w-28 motion-reduce:animate-none" />
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-9 w-36" />
+              <Skeleton className="h-3 w-28" />
             </div>
             <div className="flex flex-col gap-2">
-              <Skeleton className="h-1.5 w-full motion-reduce:animate-none" />
-              <Skeleton className="h-3 w-40 motion-reduce:animate-none" />
+              <Skeleton className="h-1.5 w-full" />
+              <Skeleton className="h-3 w-40" />
             </div>
             <div className="flex flex-col gap-2.5">
-              <Skeleton className="h-4 w-40 motion-reduce:animate-none" />
-              <Skeleton className="h-4 w-36 motion-reduce:animate-none" />
-              <Skeleton className="h-4 w-44 motion-reduce:animate-none" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-4 w-44" />
             </div>
-            <Skeleton className="mt-1 h-9 w-40 motion-reduce:animate-none" />
+            <Skeleton className="mt-1 h-9 w-40" />
           </div>
         ))}
       </div>
-    </div>
+    </output>
   );
 }
 

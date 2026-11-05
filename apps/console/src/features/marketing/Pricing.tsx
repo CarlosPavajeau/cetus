@@ -93,7 +93,7 @@ function PriceList({
     return (
       <div className="flex flex-col gap-6">
         <PlanCatalogSkeleton />
-        <Skeleton className="h-10 max-w-prose motion-reduce:animate-none" />
+        <Skeleton className="h-10 max-w-prose" />
       </div>
     );
   }

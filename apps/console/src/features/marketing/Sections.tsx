@@ -21,7 +21,6 @@ import { docsUrl } from "~/lib/docs";
 
 import { CodeBlock } from "./CodeBlock";
 import { ConsoleCta } from "./ConsoleCta";
-import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { Section } from "./Section";
 import type { SnippetName } from "./snippets";
@@ -157,7 +156,7 @@ const steps = [
     text: (
       <>
         Toda cuenta nueva trae una empresa de ejemplo lista para emitir. Crea una llave{" "}
-        <code className="font-mono text-[0.9em]">cetus_sandbox_</code> en la consola.
+        <code className="font-mono text-sm">cetus_sandbox_</code> en la consola.
       </>
     ),
   },
@@ -165,7 +164,7 @@ const steps = [
     title: "Emite tu primera factura",
     text: (
       <>
-        Envía el pedido a <code className="font-mono text-[0.9em]">POST /v1/invoices</code>. Cetus
+        Envía el pedido a <code className="font-mono text-sm">POST /v1/invoices</code>. Cetus
         responde 202 con la factura numerada y te avisa por webhook.
       </>
     ),

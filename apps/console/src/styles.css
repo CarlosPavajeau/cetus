@@ -29,7 +29,7 @@
   --text-sm--line-height: 1.5;
   --text-md: 0.875rem;
   --text-md--line-height: 1.5;
-  --text-display: clamp(2.5rem, 6vw, 4.5rem);
+  --text-display: clamp(1.75rem, 8vw, 3.75rem);
   --text-display--line-height: 1.1;
   --spacing-section: clamp(4rem, 10vw, 8rem);
   --color-sidebar-ring: var(--sidebar-ring);
