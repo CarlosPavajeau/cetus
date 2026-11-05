@@ -50,7 +50,7 @@ const messages: Record<string, string> = {
   no_active_product:
     "Tu cuenta no tiene una suscripción ni un paquete vigente para emitir en producción. Las notas crédito siempre se pueden emitir; para seguir facturando, contrata una suscripción o compra un paquete.",
   insufficient_credits:
-    "Usaste tus créditos y tu margen de cortesía. Las notas crédito siempre se pueden emitir; para seguir facturando, compra una recarga.",
+    "Usaste tus créditos y tu margen de gracia. Las notas crédito siempre se pueden emitir; para seguir facturando, compra una recarga.",
   sandbox_daily_limit:
     "Ya emitiste los documentos de simulación permitidos por hoy. Vuelve a intentarlo mañana.",
   organization_role_forbidden:

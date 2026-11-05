@@ -16,7 +16,7 @@ import { supportEmail } from "~/lib/support";
 import { track } from "./analytics";
 import { ConsoleCta } from "./ConsoleCta";
 import type { Audience } from "./links";
-import { publicPlansQuery } from "./queries";
+import { landingFiguresQuery, publicPlansQuery } from "./queries";
 
 /** The plan the landing points most visitors to. */
 export const featuredPlanCode = "CRECIMIENTO";
@@ -99,6 +99,7 @@ function PriceList({
   }
   return (
     <div className="flex flex-col gap-6">
+      <CourtesyNote />
       <PlanCatalog
         offers={offers.filter(priced)}
         period={period}
@@ -120,6 +121,31 @@ function PriceList({
       <p className="max-w-prose text-sm text-muted-foreground">
         Creas la cuenta gratis y emites en simulación desde el primer minuto. El plan lo contratas
         en la consola cuando vayas a emitir en producción.
+      </p>
+    </div>
+  );
+}
+
+/** The courtesy documents for the first accounts in production, while slots remain. */
+function CourtesyNote() {
+  const { data: figures } = useQuery(landingFiguresQuery);
+  const courtesy = figures?.courtesy;
+  if (!courtesy || courtesy.slotsRemaining === 0) {
+    return null;
+  }
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <p className="text-pretty">
+        <span className="font-medium">
+          {courtesy.documents} documentos de cortesía en producción
+        </span>{" "}
+        para las primeras {courtesy.slots} empresas. Llegan al pasar a producción tu primer emisor
+        habilitado y duran {courtesy.validityDays} días.
+      </p>
+      <p className="shrink-0 font-medium tabular-nums">
+        {courtesy.slotsRemaining === 1
+          ? `Queda 1 de ${courtesy.slots} cupos`
+          : `Quedan ${courtesy.slotsRemaining} de ${courtesy.slots} cupos`}
       </p>
     </div>
   );

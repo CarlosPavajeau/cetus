@@ -21,6 +21,8 @@ public enum NotificationKind {
     PLAN_USAGE(Set.of(Category.BILLING)),
     /** The account used 80 % or 95 % of the credits of its lots in force. */
     CREDITS_USAGE(Set.of(Category.BILLING)),
+    /** The account got the courtesy lot by promoting its first test issuer; it has no grace margin. */
+    COURTESY_GRANTED(Set.of(Category.BILLING)),
     /** The account ran out of credits and issues within its package's grace margin. */
     CREDITS_GRACE(Set.of(Category.BILLING)),
     /** The account has more production issuers than its products include, after a package expired. */

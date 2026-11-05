@@ -28,7 +28,8 @@ public class Entitlements {
      * @param productPackage whether a package lot is in force
      * @param subscription the subscription that is not canceled, if any
      * @param graceMargin documents a package account without a subscription may issue without credits: 10 % of
-     *     its last package or top-up lot, at least {@value #GRACE_MIN}; 0 otherwise
+     *     its last package or top-up lot whose plan gives a margin (not a courtesy), at least {@value #GRACE_MIN}; 0
+     *     otherwise
      */
     public record Entitlement(
             boolean productPackage, Optional<Subscribed> subscription, int issuersIncluded, int graceMargin) {
@@ -53,7 +54,7 @@ public class Entitlements {
     public Entitlement of(UUID accountId, OffsetDateTime at) {
         @SuppressWarnings("unchecked")
         List<Object[]> lots = em.createNativeQuery("""
-                        SELECT p.kind, v.issuers_included, g.quantity
+                        SELECT p.kind, v.issuers_included, g.quantity, p.grace_margin
                         FROM billing.credit_grants g
                         JOIN billing.plan_versions v ON v.id = g.plan_version_id
                         JOIN billing.plans p ON p.id = v.plan_id
@@ -90,8 +91,11 @@ public class Entitlements {
         if (packages.isEmpty()) {
             return Entitlement.NONE;
         }
-        int quantityLast = ((Number) lots.getFirst()[2]).intValue();
-        int grace = Math.max(GRACE_MIN, Math.ceilDiv(quantityLast * GRACE_PERCENT, 100));
+        int grace = lots.stream()
+                .filter(lot -> (Boolean) lot[3])
+                .findFirst()
+                .map(lot -> Math.max(GRACE_MIN, Math.ceilDiv(((Number) lot[2]).intValue() * GRACE_PERCENT, 100)))
+                .orElse(0);
         return new Entitlement(true, Optional.empty(), issuersPackage, grace);
     }
 }

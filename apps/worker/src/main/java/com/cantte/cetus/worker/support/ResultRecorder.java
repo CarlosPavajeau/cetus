@@ -264,7 +264,9 @@ public class ResultRecorder {
                         Map.of(
                                 "percent", percent.toString(),
                                 "available", Numbers.count(balance.available()),
-                                "granted", Numbers.count(balance.granted()))));
+                                "granted", Numbers.count(balance.granted()),
+                                "graceMargin",
+                                        Numbers.count(balance.entitlement().graceMargin()))));
     }
 
     private void overageNotice(UUID accountId, Entitlements.Subscribed subscription) {

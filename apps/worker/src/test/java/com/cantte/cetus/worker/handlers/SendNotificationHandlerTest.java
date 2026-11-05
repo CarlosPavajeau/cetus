@@ -124,10 +124,41 @@ class SendNotificationHandlerTest {
                 .isEqualTo("[Cetus] Usaste el 80% de tus créditos");
         assertThat(resend.requests().getFirst().body().get("text").asText())
                 .contains("de los 300 créditos de sus paquetes y recargas vigentes: le quedan 60")
+                .contains("Cuando se acaben, podrás emitir unos documentos más dentro del margen de gracia")
                 .contains("/billing/products");
         assertThat(resend.requests().getLast().body().get("text").asText())
-                .contains("ya emitió 1 de los 30 documentos del margen de cortesía")
+                .contains("ya emitió 1 de los 30 documentos del margen de gracia")
                 .contains("/billing/products");
+    }
+
+    @Test
+    void aCourtesyNoticeSaysItHasNoGraceMargin() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
+        UUID courtesy = request(
+                accountId,
+                NotificationKind.COURTESY_GRANTED,
+                Map.of("documents", "50", "expiresAt", "2027-02-03T15:30:00Z"));
+        UUID usage = request(
+                accountId,
+                NotificationKind.CREDITS_USAGE,
+                Map.of("percent", "80", "available", "10", "granted", "50", "graceMargin", "0"));
+
+        handler.handle(fixtures.notificationJob(courtesy));
+        handler.handle(fixtures.notificationJob(usage));
+
+        assertThat(resend.requests()).hasSize(2);
+        assertThat(resend.requests().getFirst().body().get("to").get(0).asText())
+                .isEqualTo("billing@cetus.test");
+        assertThat(resend.requests().getFirst().body().get("subject").asText())
+                .isEqualTo("[Cetus] Tienes 50 documentos de cortesía para empezar en producción");
+        assertThat(resend.requests().getFirst().body().get("text").asText())
+                .contains("Vencen el 03/02/2027 10:30")
+                .contains("No tienen margen de gracia")
+                .contains("/billing");
+        assertThat(resend.requests().getLast().body().get("text").asText())
+                .contains("Cuando se acaben, solo podrás emitir notas crédito")
+                .doesNotContain("margen de gracia");
     }
 
     @Test

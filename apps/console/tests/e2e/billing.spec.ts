@@ -25,7 +25,9 @@ test("a new account has no product and sees subscriptions and packages for sale"
 
   await page.getByRole("link", { name: "Facturación", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Facturación", level: 1 })).toBeVisible();
-  await expect(page.getByText("No tienes una suscripción ni un paquete vigente")).toBeVisible();
+  await expect(
+    page.getByText("Tu primer emisor en producción trae documentos de cortesía"),
+  ).toBeVisible();
   await expect(page.getByText("0 de 0 incluidos")).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Documentos facturables por mes" }).getByRole("row"),

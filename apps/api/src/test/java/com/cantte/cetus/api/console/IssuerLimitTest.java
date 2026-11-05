@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.console;
 
+import static com.cantte.cetus.api.support.Concurrency.race;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
 import static com.cantte.cetus.api.support.ConsoleFixtures.issuerRequest;
@@ -13,15 +14,9 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 /** The production issuers an account may have need a product, and are the most its package lots include. */
@@ -126,33 +121,5 @@ class IssuerLimitTest {
                 .filteredOn(response -> response.statusCode() == 422)
                 .extracting(response -> response.jsonPath().getString("code"))
                 .containsOnly("issuer_already_exists");
-    }
-
-    /** Runs the requests at once, on threads that see the test's classes as RestAssured needs. */
-    private static List<Response> race(List<Callable<Response>> racers) throws Exception {
-        ClassLoader classes = Thread.currentThread().getContextClassLoader();
-        CountDownLatch start = new CountDownLatch(1);
-        ExecutorService pool = Executors.newFixedThreadPool(racers.size(), task -> {
-            Thread thread = new Thread(task);
-            thread.setContextClassLoader(classes);
-            return thread;
-        });
-        try {
-            List<Future<Response>> futures = new ArrayList<>();
-            for (Callable<Response> racer : racers) {
-                futures.add(pool.submit(() -> {
-                    start.await();
-                    return racer.call();
-                }));
-            }
-            start.countDown();
-            List<Response> responses = new ArrayList<>();
-            for (Future<Response> future : futures) {
-                responses.add(future.get(30, TimeUnit.SECONDS));
-            }
-            return responses;
-        } finally {
-            pool.shutdownNow();
-        }
     }
 }

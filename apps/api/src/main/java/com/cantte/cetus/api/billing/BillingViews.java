@@ -1,5 +1,6 @@
 package com.cantte.cetus.api.billing;
 
+import com.cantte.cetus.credits.Courtesy;
 import com.cantte.cetus.domain.billing.Price;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.DocumentStatus;
@@ -555,10 +556,51 @@ public final class BillingViews {
                     description = "The pending debt that blocks new purchases until it is paid; null without one")
             UUID debtOrderId,
 
+            @Schema(
+                    nullable = true,
+                    description = "The courtesy lot in force, or the one promoting the first test issuer brings; null"
+                            + " otherwise")
+            AccountCourtesyView courtesy,
+
             @Schema(description = "Every lot, newest first") List<CreditLotView> lots,
 
             @Schema(description = "The latest, newest first")
             List<CreditMovementView> movements) {}
+
+    public enum CourtesyStatus {
+        /** Promoting the first test issuer brings the lot, while slots remain and its NIT never had one. */
+        OFFERED,
+        GRANTED
+    }
+
+    public record AccountCourtesyView(
+            CourtesyStatus status,
+            int documents,
+
+            @Schema(nullable = true, description = "Days the lot will last; null when granted")
+            Integer validityDays,
+
+            @Schema(nullable = true, description = "Credits left in the lot; null when offered")
+            Integer remaining,
+
+            @Schema(nullable = true, description = "null when offered")
+            OffsetDateTime expiresAt) {
+
+        static AccountCourtesyView from(Courtesy.State state) {
+            return switch (state) {
+                case Courtesy.Offered offered ->
+                    new AccountCourtesyView(
+                            CourtesyStatus.OFFERED, offered.documents(), offered.validityDays(), null, null);
+                case Courtesy.Granted granted ->
+                    new AccountCourtesyView(
+                            CourtesyStatus.GRANTED,
+                            granted.lot().quantity,
+                            null,
+                            granted.lot().remaining,
+                            granted.lot().expiresAt);
+            };
+        }
+    }
 
     @Schema(description = "The income of the paid orders in a calendar year (Colombia time), in cents of COP")
     public record RevenueView(

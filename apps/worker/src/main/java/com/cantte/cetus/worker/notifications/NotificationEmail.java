@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.notifications;
 
 import com.cantte.cetus.notifications.NotificationKind;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -180,20 +181,36 @@ public record NotificationEmail(String subject, String html, String text) {
                                 + " que incluya más emisores.",
                         "Ver los productos",
                         "/billing/products");
+            case COURTESY_GRANTED ->
+                new Body(
+                        "Tienes %s documentos de cortesía para empezar en producción"
+                                .formatted(Numbers.count(Long.parseLong(data.get("documents")))),
+                        "%s recibió %s documentos de cortesía al pasar a producción su primer emisor. Vencen el %s."
+                                .formatted(
+                                        account,
+                                        Numbers.count(Long.parseLong(data.get("documents"))),
+                                        Dates.bogota(OffsetDateTime.parse(data.get("expiresAt")))),
+                        "No tienen margen de gracia: cuando se acaben o venzan, solo podrás emitir notas crédito"
+                                + " hasta que contrates una suscripción o compres un paquete.",
+                        "Ver tus créditos",
+                        "/billing");
             case CREDITS_USAGE ->
                 new Body(
                         "Usaste el %s%% de tus créditos".formatted(data.get("percent")),
                         "%s usó el %s%% de los %s créditos de sus paquetes y recargas vigentes: le quedan %s."
                                 .formatted(account, data.get("percent"), data.get("granted"), data.get("available")),
-                        "Cuando se acaben, podrás emitir unos documentos más dentro del margen de cortesía de tu"
-                                + " paquete; después, solo notas crédito. Compra una recarga para seguir facturando sin"
-                                + " interrupciones.",
+                        "0".equals(data.get("graceMargin"))
+                                ? "Cuando se acaben, solo podrás emitir notas crédito. Contrata una suscripción o compra"
+                                        + " un paquete para seguir facturando sin interrupciones."
+                                : "Cuando se acaben, podrás emitir unos documentos más dentro del margen de gracia de"
+                                        + " tu paquete; después, solo notas crédito. Compra una recarga para seguir"
+                                        + " facturando sin interrupciones.",
                         "Comprar créditos",
                         "/billing/products");
             case CREDITS_GRACE ->
                 new Body(
-                        "Se acabaron tus créditos: estás usando el margen de cortesía",
-                        "%s no tiene créditos disponibles y ya emitió %s de los %s documentos del margen de cortesía."
+                        "Se acabaron tus créditos: estás usando el margen de gracia",
+                        "%s no tiene créditos disponibles y ya emitió %s de los %s documentos del margen de gracia."
                                 .formatted(account, data.get("graceUsed"), data.get("graceMargin")),
                         "Al agotar el margen, la emisión en producción se detiene; las notas crédito siempre se pueden"
                                 + " emitir. Los documentos del margen se descuentan del siguiente paquete o recarga que"

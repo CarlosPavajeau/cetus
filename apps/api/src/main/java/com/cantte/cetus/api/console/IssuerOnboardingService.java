@@ -2,6 +2,7 @@ package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.aws.DocumentStorage;
 import com.cantte.cetus.aws.SecretCipher;
+import com.cantte.cetus.credits.Courtesy;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.credits.CreditRefused;
 import com.cantte.cetus.credits.Entitlements;
@@ -13,10 +14,13 @@ import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.jobs.JobQueue;
 import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.notifications.NotificationKind;
+import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.audit.Actor;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.audit.RequestOrigin;
+import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.IssuerEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.NumberingRangeEntity.VerificationStatus;
@@ -53,6 +57,12 @@ public class IssuerOnboardingService {
 
     @Inject
     CreditLedger credits;
+
+    @Inject
+    Courtesy courtesy;
+
+    @Inject
+    Notifications notifications;
 
     @Inject
     SecretCipher cipher;
@@ -186,6 +196,26 @@ public class IssuerOnboardingService {
                             CreditRefused.Reason.ISSUER_LIMIT_REACHED,
                             "The account's products include " + entitlement.issuersIncluded() + " production issuers"));
         }
+    }
+
+    /**
+     * An account without a product gets the courtesy lot when it promotes its first test issuer: one that went
+     * through habilitación, with its DIAN software, certificate and range, which a made-up NIT does not have.
+     */
+    private void claimCourtesy(IssuerEntity test) {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (entitlements.of(test.accountId, now).product()) {
+            return;
+        }
+        courtesy.claim(test.accountId, test.nit, now).ifPresent(this::notifyCourtesy);
+    }
+
+    private void notifyCourtesy(CreditGrantEntity lot) {
+        notifications.request(
+                lot.accountId,
+                NotificationKind.COURTESY_GRANTED,
+                "courtesy_granted:" + lot.id,
+                Map.of("documents", String.valueOf(lot.quantity), "expiresAt", lot.expiresAt.toString()));
     }
 
     /**
@@ -434,6 +464,7 @@ public class IssuerOnboardingService {
         if (promoted) {
             throw new DomainException("issuer_already_promoted", "This NIT already has a production issuer");
         }
+        claimCourtesy(test);
         requirePlanIssuerSlot(test.accountId);
 
         IssuerEntity live = new IssuerEntity();

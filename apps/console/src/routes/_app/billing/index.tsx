@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/table";
 import { dateFormat, formatDateTime } from "~/features/api-keys/formats";
 import { BillingProfileDialog } from "~/features/billing/BillingProfileDialog";
+import { CourtesyAlert } from "~/features/billing/CourtesyAlert";
 import { CreditsSummary } from "~/features/billing/CreditsSummary";
 import { DebtAlert } from "~/features/billing/DebtAlert";
 import {
@@ -90,7 +91,8 @@ function Billing() {
       />
 
       {credits.debtOrderId !== null && <DebtAlert orderId={credits.debtOrderId} />}
-      {!credits.product && (
+      {credits.courtesy !== null && <CourtesyAlert courtesy={credits.courtesy} />}
+      {!credits.product && credits.courtesy === null && (
         <Alert>
           <AlertTitle>No tienes una suscripción ni un paquete vigente</AlertTitle>
           <AlertDescription>
@@ -103,7 +105,7 @@ function Billing() {
         <Alert variant="destructive">
           <AlertTitle>Se acabaron tus créditos</AlertTitle>
           <AlertDescription>
-            Estás usando el margen de cortesía: {formatCount(credits.graceUsed)} de{" "}
+            Estás usando el margen de gracia: {formatCount(credits.graceUsed)} de{" "}
             {formatCount(credits.graceMargin)} documentos. Al agotarlo, la emisión en producción se
             detiene. El siguiente paquete o recarga que compres los descuenta.
           </AlertDescription>
