@@ -151,12 +151,18 @@ export function pricePeriodLabel(offer: Pick<PlanOffer, "kind" | "validityMonths
   return offer.validityMonths === 12 ? "al año" : `por ${formatCount(offer.validityMonths)} meses`;
 }
 
-/** "Equivale a $9.917 al mes" for a package, null when it has no validity to spread its price over. */
-export function monthlyEquivalentLabel(offer: Pick<PricedOffer, "validityMonths" | "version">) {
+/** A package's price spread over its validity, null when it has no validity to spread it over. */
+export function monthlyEquivalentCents(offer: Pick<PricedOffer, "validityMonths" | "version">) {
   if (offer.validityMonths === null || offer.validityMonths <= 0) {
     return null;
   }
-  return `Equivale a ${formatCents(Math.round(offer.version.totalCents / offer.validityMonths))} al mes`;
+  return Math.round(offer.version.totalCents / offer.validityMonths);
+}
+
+/** "Equivale a $9.917 al mes". */
+export function monthlyEquivalentLabel(offer: Pick<PricedOffer, "validityMonths" | "version">) {
+  const cents = monthlyEquivalentCents(offer);
+  return cents === null ? null : `Equivale a ${formatCents(cents)} al mes`;
 }
 
 /** What each included document costs at the plan's price. */

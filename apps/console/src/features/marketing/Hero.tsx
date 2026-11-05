@@ -1,4 +1,5 @@
-import { BookOpenIcon, CheckIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRightIcon, BookOpenIcon, CheckIcon } from "lucide-react";
 
 import { docsUrl } from "~/lib/docs";
 
@@ -23,9 +24,9 @@ const copy = {
     title: ["Factura ante la DIAN", "desde tu navegador."],
     lead: "Emite facturas, notas crédito y notas débito desde la consola. Cetus las firma, las envía a la DIAN y le llegan a tu cliente por correo con el PDF.",
     trust: [
+      "Sin instalar nada",
       "Simulación y habilitación sin costo",
       "Certificado de firma cifrado con AWS KMS",
-      "Tu cliente recibe el PDF por correo",
     ],
   },
 } as const satisfies Record<
@@ -87,9 +88,16 @@ export function Hero({
       ) : (
         <div className="flex w-full max-w-4xl flex-col items-center gap-6">
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
-            <ConsoleCta audience="negocio" section="hero" label="Empezar gratis" />
+            <ConsoleCta audience="negocio" section="hero" label="Crear cuenta gratis" />
             <WhatsAppButton number={whatsappNumber} section="hero" />
           </div>
+          <Link
+            to="/estoy-obligado-a-facturar"
+            className="flex items-center gap-1 text-md font-medium underline underline-offset-4"
+          >
+            ¿Eres persona natural? Mira si debes facturar
+            <ArrowRightIcon className="size-4" />
+          </Link>
           <img
             src={consoleScreenshotUrl}
             alt="Una factura aceptada en la consola de Cetus, con su CUFE, el emisor, el cliente y el detalle"

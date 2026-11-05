@@ -1,8 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { FaqSection } from "~/features/marketing/Faq";
+import { FinalCta } from "~/features/marketing/FinalCta";
 import { PartnersNote, PricingPromises, PricingTable } from "~/features/marketing/Pricing";
-import { publicPlansQuery } from "~/features/marketing/queries";
+import { marketingConfigQuery, publicPlansQuery } from "~/features/marketing/queries";
 import { type FaqItem, faqJsonLd } from "~/features/marketing/questions";
 import { marketingCacheControl, marketingHead, siteUrl } from "~/features/marketing/seo";
 
@@ -83,6 +85,8 @@ function offersJsonLd(offers: { name: string; version: { totalCents: number } | 
 }
 
 function Pricing() {
+  const { data: config } = useQuery(marketingConfigQuery);
+
   return (
     <>
       <section className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-16 pb-section md:px-6 md:pt-24">
@@ -100,6 +104,7 @@ function Pricing() {
         <PricingPromises />
       </section>
       <FaqSection items={pricingFaq} />
+      <FinalCta audience="negocio" whatsappNumber={config?.whatsappNumber ?? null} />
     </>
   );
 }

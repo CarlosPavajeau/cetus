@@ -10,18 +10,15 @@ import {
   QrCodeIcon,
   ShieldCheckIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { statusPageUrl } from "~/features/status/links";
 import { docsUrl } from "~/lib/docs";
 
 import { CodeBlock } from "./CodeBlock";
-import { ConsoleCta } from "./ConsoleCta";
 import type { Audience } from "./links";
 import { Section } from "./Section";
 import type { SnippetName } from "./snippets";
-import { WhatsAppButton } from "./WhatsAppButton";
 
 type Feature = { icon: LucideIcon; title: string; text: string };
 
@@ -43,8 +40,8 @@ const devFeatures: readonly Feature[] = [
   },
   {
     icon: FlaskConicalIcon,
-    title: "Simulación idéntica a producción",
-    text: "Integra sin certificado ni habilitación: la simulación responde como la DIAN, sin validez fiscal.",
+    title: "Simulación con el flujo de producción",
+    text: "Integra sin certificado ni habilitación. La simulación numera, firma y responde como la DIAN, pero no le envía nada: sus documentos no tienen validez fiscal.",
   },
 ];
 
@@ -57,7 +54,7 @@ const businessFeatures: readonly Feature[] = [
   {
     icon: QrCodeIcon,
     title: "PDF con CUFE y QR",
-    text: "La factura en PDF, lista para descargar o enviar, junto al XML firmado que exige la DIAN.",
+    text: "La factura en PDF con el CUFE, el código único con el que la DIAN la identifica, junto al XML firmado.",
   },
   {
     icon: HashIcon,
@@ -66,8 +63,8 @@ const businessFeatures: readonly Feature[] = [
   },
   {
     icon: FlaskConicalIcon,
-    title: "Simulación idéntica a producción",
-    text: "Prueba sin certificado ni habilitación: la simulación responde como la DIAN, sin validez fiscal.",
+    title: "Simulación con el flujo de producción",
+    text: "Prueba sin certificado ni habilitación. La simulación responde como la DIAN, pero no le envía nada: esas facturas no tienen validez fiscal.",
   },
 ];
 
@@ -82,7 +79,13 @@ const featureCopy = {
   },
 } as const satisfies Record<Audience, { features: readonly Feature[]; lead: string }>;
 
-export function FeaturesSection({ audience }: { audience: Audience }) {
+export function FeaturesSection({
+  audience,
+  children,
+}: {
+  audience: Audience;
+  children?: ReactNode;
+}) {
   const { features, lead } = featureCopy[audience];
   return (
     <Section eyebrow="Cobertura" title="Todo lo que la DIAN exige, resuelto" lead={lead}>
@@ -95,6 +98,7 @@ export function FeaturesSection({ audience }: { audience: Audience }) {
           </li>
         ))}
       </ul>
+      {children}
     </Section>
   );
 }
@@ -224,25 +228,12 @@ const businessBenefits = [
   "Te guiamos en la habilitación ante la DIAN, paso a paso",
 ];
 
-/** `afterHero`: the band right below the business hero, which already says who it is for. */
-export function BusinessSection({
-  whatsappNumber,
-  screenshotUrl,
-  afterHero = false,
-}: {
-  whatsappNumber: string | null;
-  screenshotUrl: string;
-  afterHero?: boolean;
-}) {
+export function BusinessSection({ screenshotUrl }: { screenshotUrl: string }) {
   return (
     <Section
-      eyebrow={afterHero ? undefined : "Para negocios"}
+      eyebrow="Para negocios"
       title="Sin código, desde la consola"
-      lead={
-        afterHero
-          ? "Llenas el formulario de la factura y Cetus hace el resto. Son los mismos documentos que emite la API."
-          : "¿No tienes un equipo de desarrollo? Factura desde la consola de Cetus con los mismos documentos que emite la API."
-      }
+      lead="¿No tienes un equipo de desarrollo? Factura desde la consola de Cetus con los mismos documentos que emite la API."
     >
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-5">
         <div className="flex flex-col gap-6 lg:col-span-2">
@@ -254,10 +245,6 @@ export function BusinessSection({
               </li>
             ))}
           </ul>
-          <div className="flex flex-wrap gap-3">
-            <ConsoleCta audience="negocio" section="business" label="Empezar gratis" />
-            <WhatsAppButton number={whatsappNumber} section="business" />
-          </div>
           <Link
             to="/estoy-obligado-a-facturar"
             className="flex items-center gap-1 self-start text-md font-medium underline underline-offset-4"
@@ -317,9 +304,12 @@ const habilitacionSteps = [
   },
 ] as const;
 
+const habilitacionShowcase = habilitacionSteps[3];
+
 /** The business path from the sample company to production, each step beside the console screen it happens in. */
 export function HabilitacionSection() {
   const [step, setStep] = useState<string>(habilitacionSteps[0].value);
+  const tabsId = useId();
 
   return (
     <Section
@@ -337,14 +327,16 @@ export function HabilitacionSection() {
         </>
       }
     >
-      <ol className="flex flex-col gap-10 lg:hidden">
-        {habilitacionSteps.map((each, index) => (
-          <li key={each.value} className="flex flex-col gap-4">
-            <StepText number={index + 1} title={each.title} text={each.text} />
-            <ConsoleScreenshot step={each} />
-          </li>
-        ))}
-      </ol>
+      <div className="flex flex-col gap-8 lg:hidden">
+        <ol className="flex flex-col gap-6">
+          {habilitacionSteps.map((each, index) => (
+            <li key={each.value}>
+              <StepText number={index + 1} title={each.title} text={each.text} />
+            </li>
+          ))}
+        </ol>
+        <ConsoleScreenshot step={habilitacionShowcase} />
+      </div>
       <TabsPrimitive.Root
         value={step}
         onValueChange={(value) => setStep(String(value))}
@@ -359,9 +351,16 @@ export function HabilitacionSection() {
             <TabsPrimitive.Tab
               key={each.value}
               value={each.value}
+              aria-label={`${index + 1}. ${each.title}`}
+              aria-describedby={`${tabsId}-${each.value}`}
               className="group/step rounded-lg p-3 text-left transition-colors duration-150 ease-out outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 data-active:bg-muted"
             >
-              <StepText number={index + 1} title={each.title} text={each.text} />
+              <StepText
+                number={index + 1}
+                title={each.title}
+                text={each.text}
+                textId={`${tabsId}-${each.value}`}
+              />
             </TabsPrimitive.Tab>
           ))}
         </TabsPrimitive.List>
@@ -375,18 +374,21 @@ export function HabilitacionSection() {
           </TabsPrimitive.Panel>
         ))}
       </TabsPrimitive.Root>
-      <div>
-        <ConsoleCta
-          audience="negocio"
-          section="habilitacion"
-          label="Probar con la empresa de ejemplo"
-        />
-      </div>
     </Section>
   );
 }
 
-function StepText({ number, title, text }: { number: number; title: string; text: string }) {
+function StepText({
+  number,
+  title,
+  text,
+  textId,
+}: {
+  number: number;
+  title: string;
+  text: string;
+  textId?: string;
+}) {
   return (
     <span className="flex gap-4">
       <span className="flex size-7 shrink-0 items-center justify-center rounded-full border bg-background font-mono text-xs transition-colors duration-150 ease-out group-data-active/step:border-foreground group-data-active/step:bg-foreground group-data-active/step:text-background">
@@ -394,7 +396,10 @@ function StepText({ number, title, text }: { number: number; title: string; text
       </span>
       <span className="flex flex-col gap-1">
         <span className="text-base font-medium">{title}</span>
-        <span className="text-md/6 text-pretty text-muted-foreground group-data-active/step:text-foreground">
+        <span
+          id={textId}
+          className="text-md/6 text-pretty text-muted-foreground group-data-active/step:text-foreground"
+        >
           {text}
         </span>
       </span>
@@ -444,12 +449,6 @@ export function SecurityPoints() {
           </li>
         ))}
       </ul>
-      <a
-        href={statusPageUrl}
-        className="self-start text-sm font-medium underline underline-offset-4"
-      >
-        Ver la disponibilidad del servicio
-      </a>
     </div>
   );
 }

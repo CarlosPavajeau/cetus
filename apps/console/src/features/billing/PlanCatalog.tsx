@@ -4,6 +4,7 @@ import { type ComponentProps, type ReactNode, useId } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { formatCount } from "~/features/usage/labels";
 
 import {
   documentCostCents,
@@ -11,6 +12,7 @@ import {
   documentsLabel,
   formatCents,
   issuersLabel,
+  monthlyEquivalentCents,
   monthlyEquivalentLabel,
   overageLabel,
   priceBreakdown,
@@ -79,6 +81,7 @@ export function PlanCatalog({
           </p>
           <PlanColumns
             offers={subscriptions}
+            subscriptions={subscriptions}
             renderAction={renderAction}
             featuredCode={featuredCode}
             emptyNote={emptyNote}
@@ -97,8 +100,10 @@ export function PlanCatalog({
             Pagas una vez y usas los documentos durante la vigencia del paquete, compartidos entre
             todos tus emisores. Si se acaban, los amplías con una recarga.
           </p>
+          <PackageChoice packages={packages} />
           <PlanColumns
             offers={packages}
+            subscriptions={subscriptions}
             renderAction={renderAction}
             featuredCode={featuredCode}
             emptyNote={emptyNote}
@@ -132,12 +137,14 @@ function EmptyNote() {
 
 function PlanColumns({
   offers,
+  subscriptions,
   renderAction,
   featuredCode,
   emptyNote,
   headingLevel,
 }: {
   offers: PricedOffer[];
+  subscriptions: PricedOffer[];
   renderAction: (offer: PricedOffer) => ReactNode;
   featuredCode: string | undefined;
   emptyNote: ReactNode | undefined;
@@ -146,8 +153,7 @@ function PlanColumns({
   if (offers.length === 0) {
     return emptyNote ?? <EmptyNote />;
   }
-  const baseline = offers
-    .filter((offer) => offer.kind === "SUBSCRIPTION")
+  const baseline = subscriptions
     .map((offer) => ({ name: offer.name, cents: documentCostCents(offer.version) }))
     .reduce<CostBaseline | null>(
       (dearest, each) => (dearest === null || each.cents > dearest.cents ? each : dearest),
@@ -161,6 +167,7 @@ function PlanColumns({
           key={offer.id}
           offer={offer}
           baseline={baseline}
+          subscriptions={subscriptions}
           featured={offer.code === featuredCode}
           headingLevel={headingLevel}
           footer={renderAction(offer)}
@@ -175,12 +182,14 @@ type CostBaseline = { name: string; cents: number };
 function PlanColumn({
   offer,
   baseline,
+  subscriptions,
   featured,
   headingLevel,
   footer,
 }: {
   offer: PricedOffer;
   baseline: CostBaseline | null;
+  subscriptions: PricedOffer[];
   featured: boolean;
   headingLevel: HeadingLevel;
   footer: ReactNode;
@@ -213,7 +222,7 @@ function PlanColumn({
       {offer.kind === "SUBSCRIPTION" && baseline !== null ? (
         <SubscriptionCost cents={documentCostCents(version)} baseline={baseline} />
       ) : (
-        <PackageCost offer={offer} />
+        <PackageCost offer={offer} subscriptions={subscriptions} />
       )}
 
       <ul className="flex flex-col gap-1.5 text-sm">
@@ -247,18 +256,68 @@ function SubscriptionCost({ cents, baseline }: { cents: number; baseline: CostBa
 }
 
 /**
- * A package's unit cost falls with its size, so a bar would rank the smallest one last although it is the cheapest
- * way to start; its price per month compares it with the subscriptions instead.
+ * A package costs more per document than a subscription and is bought for its smaller yearly outlay, so it compares
+ * by the month against the cheapest subscription that holds as many issuers.
  */
-function PackageCost({ offer }: { offer: PricedOffer }) {
+function PackageCost({
+  offer,
+  subscriptions,
+}: {
+  offer: PricedOffer;
+  subscriptions: PricedOffer[];
+}) {
   const monthly = monthlyEquivalentLabel(offer);
+  const monthlyCents = monthlyEquivalentCents(offer);
+  const peer = subscriptions
+    .filter((each) => holdsIssuers(each.version.issuersIncluded, offer.version.issuersIncluded))
+    .reduce<PricedOffer | null>(
+      (cheapest, each) =>
+        cheapest === null || each.version.totalCents < cheapest.version.totalCents
+          ? each
+          : cheapest,
+      null,
+    );
+  const savingPercent =
+    peer === null || monthlyCents === null
+      ? 0
+      : Math.floor((1 - monthlyCents / peer.version.totalCents) * 100);
   return (
     <div className="flex flex-col gap-0.5">
       {monthly !== null && <p className="text-sm tabular-nums">{monthly}</p>}
-      <p className="text-xs text-muted-foreground tabular-nums">
-        {documentCostLabel(documentCostCents(offer.version))}
-      </p>
+      {peer !== null && savingPercent > 0 && (
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {savingPercent} % menos al mes que {peer.name}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** `null` issuers means no limit. */
+function holdsIssuers(available: number | null, needed: number | null) {
+  if (available === null) {
+    return true;
+  }
+  return needed !== null && available >= needed;
+}
+
+/** Picks a package by the documents of a year, read from the catalog. */
+function PackageChoice({ packages }: { packages: PricedOffer[] }) {
+  if (packages.length < 2) {
+    return null;
+  }
+  const options = packages.map((offer) => {
+    const issuers = offer.version.issuersIncluded;
+    const shared = issuers !== null && issuers > 1 ? ` entre ${formatCount(issuers)} emisores` : "";
+    return `${offer.name} (${documentsLabel(offer.version.documentsIncluded)}${shared})`;
+  });
+  const list = `${options.slice(0, -1).join(", ")} o ${options.at(-1) ?? ""}`;
+  return (
+    <p className="max-w-prose text-md text-pretty text-muted-foreground">
+      <span className="font-medium text-foreground">¿Cuál elijo?</span> Cuenta los documentos que
+      emites en un año y elige el paquete que los cubre: {list}. Si facturas todos los meses,
+      compara con la pestaña Mensual.
+    </p>
   );
 }
 

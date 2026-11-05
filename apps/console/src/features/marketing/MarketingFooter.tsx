@@ -117,9 +117,9 @@ export function MarketingFooter() {
 
 function FooterColumn({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium">{title}</h2>
+    <nav aria-label={title} className="flex flex-col gap-3">
+      <p className="text-sm font-medium">{title}</p>
       <ul className="flex flex-col gap-2 text-sm text-muted-foreground">{children}</ul>
-    </div>
+    </nav>
   );
 }

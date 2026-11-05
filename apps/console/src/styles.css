@@ -210,6 +210,19 @@
   color: #c24e00;
 }
 
+.code-block[data-wrap] .shiki {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A wrapped line continues two columns past its own indentation. */
+.code-block[data-wrap] .shiki .line {
+  display: inline-block;
+  width: 100%;
+  padding-left: calc(var(--indent, 0ch) + 2ch);
+  text-indent: calc(-1 * (var(--indent, 0ch) + 2ch));
+}
+
 .code-block[data-line-numbers] .shiki code {
   counter-reset: line;
 }

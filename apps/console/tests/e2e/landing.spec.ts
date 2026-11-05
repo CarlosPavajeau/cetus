@@ -50,12 +50,15 @@ test("the business view offers the console instead of the API", async ({ page })
   await page.getByRole("button", { name: "Para negocios" }).first().click();
 
   await expect(page).toHaveURL(/audience=negocio/);
-  await expect(page.getByRole("link", { name: "Empezar gratis" }).first()).toHaveAttribute(
-    "href",
-    "/sign-up?audience=negocio",
-  );
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "Crear cuenta gratis" }).first(),
+  ).toHaveAttribute("href", "/sign-up?audience=negocio");
   await expect(page.getByRole("heading", { level: 1, name: /desde tu navegador/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Sin código, desde la consola" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "De la empresa de ejemplo a tu primera factura real" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Shopify", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sin código, desde la consola" })).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "De tu pedido a la DIAN, sin tocar XML" }),
   ).toHaveCount(0);
@@ -160,7 +163,7 @@ test("avísame keeps the address for an upcoming integration", async ({ page }) 
   await fromFreshIp(page);
   await open(page, "/");
 
-  await page.getByRole("button", { name: /Avísame.*Shopify/ }).click();
+  await page.getByRole("button", { name: "Shopify", exact: true }).click();
   const popover = page.getByRole("dialog", { name: "Shopify" });
   const email = `avisame-${crypto.randomUUID()}@ejemplo.com`;
   await popover.getByLabel("Correo", { exact: true }).fill(email);

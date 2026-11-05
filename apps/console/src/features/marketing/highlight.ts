@@ -30,9 +30,18 @@ const shikiLang: Record<SnippetLang, string> = {
 /** HTML with both themes as CSS variables; styles.css picks one by the `.dark` class. */
 export async function highlight(code: string, lang: SnippetLang) {
   const core = await loadHighlighter();
+  const lines = code.split("\n");
   return core.codeToHtml(code, {
     lang: shikiLang[lang],
     themes: { light: "github-light", dark: "github-dark" },
     defaultColor: false,
+    transformers: [
+      {
+        line(node, number) {
+          const indent = lines[number - 1]?.search(/\S/) ?? 0;
+          node.properties.style = `--indent:${Math.max(indent, 0)}ch`;
+        },
+      },
+    ],
   });
 }

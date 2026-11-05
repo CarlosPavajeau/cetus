@@ -1,3 +1,5 @@
+import { cn } from "cn";
+import { CircleCheckIcon, CircleHelpIcon, FileCheck2Icon, type LucideIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 
 import { ChoiceField } from "~/components/ChoiceField";
@@ -68,6 +70,27 @@ const reasons: Record<NaturalPersonQuestion, { yes: string; unknown: string }> =
   },
 };
 
+type VerdictTone = { icon: LucideIcon; surface: string; iconTone: string };
+
+/** Obligated is the call to act, not an alarm; review is what still needs an answer. */
+const verdictTones: Record<ObligationVerdict, VerdictTone> = {
+  OBLIGATED: {
+    icon: FileCheck2Icon,
+    surface: "border-info/40 bg-info/10",
+    iconTone: "text-info-foreground",
+  },
+  NOT_OBLIGATED: {
+    icon: CircleCheckIcon,
+    surface: "border-success/40 bg-success/10",
+    iconTone: "text-success-foreground",
+  },
+  REVIEW: {
+    icon: CircleHelpIcon,
+    surface: "border-warning/50 bg-warning/10",
+    iconTone: "text-warning-foreground",
+  },
+};
+
 const verdicts: Record<ObligationVerdict, { title: string; text: string }> = {
   OBLIGATED: {
     title: "Debes facturar electrónicamente",
@@ -124,6 +147,11 @@ export function ObligationCalculator({ cap }: { cap: ObligationCap | null }) {
             <AnswerField
               key={question}
               label={questions[question](capText)}
+              hint={
+                question === "incomeOverCap" && cap === null
+                  ? "La UVT (unidad de valor tributario) es el valor en pesos con el que la DIAN fija sus topes; cambia cada año. Multiplica 3.500 por la UVT de este año, que la DIAN publica en dian.gov.co."
+                  : undefined
+              }
               value={natural[question] ?? null}
               onChange={(value) => {
                 const next = { ...natural, [question]: value };
@@ -168,12 +196,21 @@ function completeAnswers(
 
 function Result({ answers, verdict }: { answers: ObligationAnswers; verdict: ObligationVerdict }) {
   const details = resultDetails(answers, verdict);
+  const { icon: Icon, surface, iconTone } = verdictTones[verdict];
   return (
     <div className="flex flex-col gap-6 rounded-xl border p-6">
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-2xl font-medium tracking-heading text-balance">
-          {verdicts[verdict].title}
-        </h2>
+        <div
+          className={cn(
+            "-mx-6 -mt-6 mb-2 flex items-start gap-3 rounded-t-xl border-b p-6",
+            surface,
+          )}
+        >
+          <Icon className={cn("mt-1 size-6 shrink-0", iconTone)} />
+          <h2 className="font-heading text-2xl font-medium tracking-heading text-balance">
+            {verdicts[verdict].title}
+          </h2>
+        </div>
         <p className="text-md/6 text-pretty text-muted-foreground">{verdicts[verdict].text}</p>
         {details.length > 0 && (
           <ul className="flex list-disc flex-col gap-1 pl-5 text-md/6 text-pretty">
@@ -187,7 +224,13 @@ function Result({ answers, verdict }: { answers: ObligationAnswers; verdict: Obl
         </p>
       </div>
       <div>
-        <ConsoleCta audience="negocio" section="calculator" label="Empezar gratis" size="default" />
+        <ConsoleCta
+          audience="negocio"
+          section="calculator"
+          label="Crear cuenta gratis"
+          size="default"
+          variant={verdict === "NOT_OBLIGATED" ? "outline" : "default"}
+        />
       </div>
       <LeadContactForm
         key={JSON.stringify(answers)}
@@ -221,10 +264,12 @@ function resultDetails(answers: ObligationAnswers, verdict: ObligationVerdict): 
 
 function AnswerField({
   label,
+  hint,
   value,
   onChange,
 }: {
   label: string;
+  hint: string | undefined;
   value: ObligationAnswer | null;
   onChange: (value: ObligationAnswer) => void;
 }) {
@@ -234,8 +279,14 @@ function AnswerField({
       <p id={id} className="text-sm leading-snug font-medium text-pretty">
         {label}
       </p>
+      {hint !== undefined && (
+        <p id={`${id}-hint`} className="max-w-prose text-sm text-pretty text-muted-foreground">
+          {hint}
+        </p>
+      )}
       <RadioGroup
         aria-labelledby={id}
+        aria-describedby={hint === undefined ? undefined : `${id}-hint`}
         value={value}
         onValueChange={(next) => {
           const option = answerOptions.find((each) => each.value === next);

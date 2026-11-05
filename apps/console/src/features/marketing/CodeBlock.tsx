@@ -10,12 +10,14 @@ export function CodeBlock({
   title,
   copyLabel,
   lineNumbers = false,
+  wrap = false,
 }: {
   html: string;
   snippet: SnippetName;
   title: string;
   copyLabel: string;
   lineNumbers?: boolean;
+  wrap?: boolean;
 }) {
   return (
     <figure className="min-w-0 overflow-hidden rounded-xl border bg-card text-left">
@@ -30,6 +32,7 @@ export function CodeBlock({
       </figcaption>
       <div
         data-line-numbers={lineNumbers || undefined}
+        data-wrap={wrap || undefined}
         className="code-block overflow-x-auto p-4 font-mono text-xs/relaxed"
         dangerouslySetInnerHTML={{ __html: html }}
       />
