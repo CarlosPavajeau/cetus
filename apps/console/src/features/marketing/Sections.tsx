@@ -272,7 +272,7 @@ export function BusinessSection({
           width={1280}
           height={800}
           loading="lazy"
-          className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 lg:col-span-3 dark:outline-white/10"
+          className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 lg:col-span-3 dark:outline-white/10 dark:brightness-90"
         />
       </div>
     </Section>
@@ -410,7 +410,7 @@ function ConsoleScreenshot({ step }: { step: { image: string; alt: string } }) {
       width={1280}
       height={800}
       loading="lazy"
-      className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+      className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 dark:brightness-90"
     />
   );
 }

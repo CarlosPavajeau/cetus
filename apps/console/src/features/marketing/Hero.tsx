@@ -95,12 +95,12 @@ export function Hero({
             alt="Una factura aceptada en la consola de Cetus, con su CUFE, el emisor, el cliente y el detalle"
             width={1280}
             height={800}
-            className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+            className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 dark:brightness-90"
           />
         </div>
       )}
 
-      <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+      <ul className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-6">
         {trust.map((item) => (
           <li key={item} className="flex items-center gap-1.5">
             <CheckIcon className="size-4 text-muted-foreground" />

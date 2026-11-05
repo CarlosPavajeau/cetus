@@ -44,7 +44,7 @@ export function MarketingNav() {
           >
             Contadores
           </Link>
-          <a href={statusPageUrl} className="hover:text-foreground">
+          <a href={statusPageUrl} className="hover:text-foreground max-lg:hidden">
             Estado del servicio
           </a>
         </nav>

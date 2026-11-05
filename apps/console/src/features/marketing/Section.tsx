@@ -26,7 +26,7 @@ export function Section({
           )}
           <h2
             id={titleId}
-            className="font-heading text-4xl font-medium tracking-heading text-balance md:text-5xl"
+            className="font-heading text-3xl font-medium tracking-heading text-balance sm:text-4xl md:text-5xl"
           >
             {title}
           </h2>

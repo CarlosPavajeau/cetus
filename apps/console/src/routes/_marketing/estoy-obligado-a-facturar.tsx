@@ -67,7 +67,7 @@ function ObligationPage() {
     <>
       <section className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-16 pb-section md:px-6 md:pt-24">
         <div className="flex max-w-2xl flex-col gap-4">
-          <h1 className="font-heading text-5xl font-medium tracking-display text-balance md:text-6xl">
+          <h1 className="font-heading text-display font-medium tracking-display text-balance">
             ¿Estoy obligado a facturar electrónicamente?
           </h1>
           <p className="text-lg/8 text-pretty text-muted-foreground">

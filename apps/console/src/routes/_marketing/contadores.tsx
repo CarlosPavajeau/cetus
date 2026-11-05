@@ -90,7 +90,7 @@ function Partners() {
     <>
       <section className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-16 pb-section md:px-6 md:pt-24">
         <div className="flex max-w-2xl flex-col gap-4">
-          <h1 className="font-heading text-5xl font-medium tracking-display text-balance md:text-6xl">
+          <h1 className="font-heading text-display font-medium tracking-display text-balance">
             Las empresas de tus clientes, en una sola cuenta
           </h1>
           <p className="text-lg/8 text-pretty text-muted-foreground">
@@ -111,7 +111,7 @@ function Partners() {
           alt="La lista de emisores de una cuenta en la consola de Cetus: tres empresas en producción, una en habilitación y la empresa de ejemplo, cada una con su NIT"
           width={1280}
           height={640}
-          className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+          className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 dark:brightness-90"
         />
         <h2 className="sr-only">Lo que ganas con Cetus</h2>
         <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2">
@@ -192,9 +192,11 @@ function PlanCard({ offer }: { offer: PricedOffer }) {
     <li>
       <article aria-label={offer.name} className="flex h-full flex-col gap-3 rounded-xl border p-6">
         <h3 className="text-md font-medium">{offer.name}</h3>
-        <p className="font-heading text-3xl font-medium tracking-heading">
-          {formatCents(offer.version.totalCents)}
-          {period && <span className="text-md font-normal text-muted-foreground"> {period}</span>}
+        <p className="tabular-nums">
+          <span className="font-heading text-3xl tracking-tight">
+            {formatCents(offer.version.totalCents)}
+          </span>
+          {period && <span className="text-sm text-muted-foreground"> {period}</span>}
         </p>
         <ul className="flex flex-col gap-1 text-md/6 text-muted-foreground">
           <li>

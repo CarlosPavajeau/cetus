@@ -149,7 +149,7 @@ function PlanAction({ offer, audience }: { offer: PricedOffer; audience?: Audien
 
 export function PartnersNote() {
   return (
-    <p className="text-sm text-muted-foreground">
+    <p className="max-w-2xl text-sm text-pretty text-muted-foreground">
       ¿Eres contador? El paquete anual Contador reparte sus documentos entre las empresas de tus
       clientes. Si tu cartera no cabe en él, el plan Socios se ajusta por contrato.{" "}
       <Link
