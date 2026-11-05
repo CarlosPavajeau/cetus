@@ -179,7 +179,7 @@ function PlanColumn({
           <Heading level={headingLevel} id={titleId} className="text-md font-medium">
             {offer.name}
           </Heading>
-          {featured && <Badge>Más popular</Badge>}
+          {featured && <Badge>Recomendado</Badge>}
         </div>
         <p className="tabular-nums">
           <span className="font-heading text-3xl tracking-tight">

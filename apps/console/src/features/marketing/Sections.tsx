@@ -109,7 +109,7 @@ const steps = [
   },
   {
     title: "Configura tu empresa ante la DIAN",
-    text: "Registra tu emisor, sube tu certificado y envía el set de pruebas desde la consola, en unos 20 minutos.",
+    text: "Registra tu emisor, sube tu certificado y envía el set de pruebas desde la consola.",
   },
   {
     title: "Pasa a producción",
