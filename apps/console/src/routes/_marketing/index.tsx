@@ -95,10 +95,10 @@ function Landing() {
             <RequestDemo webhookPayloadHtml={html.webhookPayload} />
           </Section>
           <TrustBand />
-          <FeaturesSection />
+          <FeaturesSection audience={audience} />
           <StepsSection html={html} />
           <WebhooksSection verifyHtml={html.webhookVerify} />
-          <IntegrationsSection />
+          <IntegrationsSection audience={audience} />
           <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
           <CalculatorSection />
         </>
@@ -111,8 +111,8 @@ function Landing() {
           />
           <CalculatorSection />
           <TrustBand />
-          <FeaturesSection />
-          <IntegrationsSection />
+          <FeaturesSection audience={audience} />
+          <IntegrationsSection audience={audience} />
         </>
       )}
       <Section

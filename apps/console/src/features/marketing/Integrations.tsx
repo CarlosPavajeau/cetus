@@ -11,8 +11,10 @@ import {
 } from "~/components/ui/popover";
 import type { LeadIntegration } from "~/lib/api/types";
 import { docsUrl } from "~/lib/docs";
+import { cn } from "~/lib/utils";
 
 import { LeadContactForm } from "./LeadContactForm";
+import type { Audience } from "./links";
 import { Section } from "./Section";
 import { sendIntegrationLead } from "./server";
 
@@ -48,7 +50,23 @@ const upcoming = [
   { integration: "PAYMENTS", name: "Wompi y Bold", text: "Factura cada pago aprobado" },
 ] as const satisfies readonly { integration: LeadIntegration; name: string; text: string }[];
 
-export function IntegrationsSection() {
+const forBusinesses = new Set<LeadIntegration>(["WOOCOMMERCE", "SHOPIFY", "PAYMENTS"]);
+
+export function IntegrationsSection({ audience }: { audience: Audience }) {
+  if (audience === "negocio") {
+    return (
+      <Section
+        eyebrow="Próximamente"
+        title="Factura desde tu tienda y tus pagos"
+        lead="Pronto, cada pedido o pago aprobado se facturará solo, sin copiarlo a mano. Dinos cuál usas y te avisamos cuando su integración esté lista."
+      >
+        <UpcomingList
+          items={upcoming.filter((each) => forBusinesses.has(each.integration))}
+          className="sm:grid-cols-3"
+        />
+      </Section>
+    );
+  }
   return (
     <Section
       eyebrow="Integraciones"
@@ -70,20 +88,32 @@ export function IntegrationsSection() {
           <h3 className="font-mono text-xs/5 tracking-wider text-muted-foreground uppercase">
             Próximamente
           </h3>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {upcoming.map((each) => (
-              <li key={each.integration} className="flex flex-col gap-3 rounded-xl border p-5">
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium">{each.name}</span>
-                  <span className="text-md/6 text-pretty text-muted-foreground">{each.text}</span>
-                </div>
-                <Notify integration={each.integration} name={each.name} />
-              </li>
-            ))}
-          </ul>
+          <UpcomingList items={upcoming} className="sm:grid-cols-2 lg:grid-cols-4" />
         </div>
       </div>
     </Section>
+  );
+}
+
+function UpcomingList({
+  items,
+  className,
+}: {
+  items: readonly (typeof upcoming)[number][];
+  className: string;
+}) {
+  return (
+    <ul className={cn("grid gap-4", className)}>
+      {items.map((each) => (
+        <li key={each.integration} className="flex flex-col gap-3 rounded-xl border p-5">
+          <div className="flex flex-col gap-1">
+            <span className="font-medium">{each.name}</span>
+            <span className="text-md/6 text-pretty text-muted-foreground">{each.text}</span>
+          </div>
+          <Notify integration={each.integration} name={each.name} />
+        </li>
+      ))}
+    </ul>
   );
 }
 

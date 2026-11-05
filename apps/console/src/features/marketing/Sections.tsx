@@ -21,13 +21,14 @@ import { docsUrl } from "~/lib/docs";
 import { CodeBlock } from "./CodeBlock";
 import { ConsoleCta } from "./ConsoleCta";
 import { linkButtonVariants } from "./linkButton";
+import type { Audience } from "./links";
 import { Section } from "./Section";
 import type { SnippetName } from "./snippets";
 import { WhatsAppButton } from "./WhatsAppButton";
 
 type Feature = { icon: LucideIcon; title: string; text: string };
 
-const features: readonly Feature[] = [
+const devFeatures: readonly Feature[] = [
   {
     icon: FileCheck2Icon,
     title: "Factura electrónica de venta",
@@ -70,13 +71,64 @@ const features: readonly Feature[] = [
   },
 ];
 
-export function FeaturesSection() {
+const businessFeatures: readonly Feature[] = [
+  {
+    icon: FileCheck2Icon,
+    title: "Factura electrónica de venta",
+    text: "Llenas el cliente y los productos. Cetus calcula los totales, los impuestos y el CUFE.",
+  },
+  {
+    icon: FileMinusIcon,
+    title: "Notas crédito y débito",
+    text: "Corrige o ajusta una factura ya emitida. Las notas crédito se emiten siempre, aunque no tengas saldo.",
+  },
+  {
+    icon: ShieldCheckIcon,
+    title: "Firma digital",
+    text: "Firmamos cada documento con tu certificado digital, que se guarda cifrado y nunca en texto plano.",
+  },
+  {
+    icon: QrCodeIcon,
+    title: "PDF con CUFE y QR",
+    text: "La factura en PDF, lista para descargar o enviar, junto al XML firmado que exige la DIAN.",
+  },
+  {
+    icon: HashIcon,
+    title: "Numeración y resoluciones",
+    text: "Cetus numera cada documento con tu resolución vigente, sin huecos ni duplicados.",
+  },
+  {
+    icon: MailIcon,
+    title: "Entrega al cliente",
+    text: "Cuando la DIAN acepta el documento, le llega a tu cliente por correo con el PDF y el XML.",
+  },
+  {
+    icon: FlaskConicalIcon,
+    title: "Simulación idéntica a producción",
+    text: "Prueba sin certificado ni habilitación: la simulación responde como la DIAN, sin validez fiscal.",
+  },
+  {
+    icon: BellRingIcon,
+    title: "El estado de cada documento",
+    text: "Ves en la consola si la DIAN lo aceptó o lo rechazó, con el motivo, y si el correo le llegó a tu cliente.",
+  },
+];
+
+const featureCopy = {
+  dev: {
+    features: devFeatures,
+    lead: "Tú envías el pedido en JSON. Cetus lo convierte en un documento electrónico válido y se encarga del resto.",
+  },
+  negocio: {
+    features: businessFeatures,
+    lead: "Tú llenas la factura. Cetus la convierte en un documento electrónico válido y se encarga del resto.",
+  },
+} as const satisfies Record<Audience, { features: readonly Feature[]; lead: string }>;
+
+export function FeaturesSection({ audience }: { audience: Audience }) {
+  const { features, lead } = featureCopy[audience];
   return (
-    <Section
-      eyebrow="Cobertura"
-      title="Todo lo que la DIAN exige, resuelto"
-      lead="Tú envías el pedido en JSON. Cetus lo convierte en un documento electrónico válido y se encarga del resto."
-    >
+    <Section eyebrow="Cobertura" title="Todo lo que la DIAN exige, resuelto" lead={lead}>
       <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
         {features.map(({ icon: Icon, title, text }) => (
           <li key={title} className="flex flex-col gap-2 bg-background p-5">
@@ -212,7 +264,7 @@ export function WebhooksSection({ verifyHtml }: { verifyHtml: string }) {
 
 const businessBenefits = [
   "Emite facturas y notas desde el navegador, sin instalar nada",
-  "PDF con tu información, el CUFE y el código QR",
+  "PDF con tu información, el código QR y el CUFE: el código único con el que la DIAN identifica la factura",
   "Historial de documentos con búsqueda y descarga del XML",
   "Te guiamos en la habilitación ante la DIAN, paso a paso",
 ];
