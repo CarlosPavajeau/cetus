@@ -1607,7 +1607,7 @@
         }
       },
       "CreditsRefused": {
-        "description": "La cuenta no tiene con qué emitir el documento en producción.\n`no_active_product`: no tiene una suscripción ni un paquete vigente. `insufficient_credits`: usó sus\ncréditos y su margen de cortesía (el 10 % de su último paquete o recarga, mínimo 10 documentos); compra\nuna recarga para seguir emitiendo. `overage_limit_reached`: la suscripción llegó a su límite de excedente\ndel periodo; el dueño de la cuenta puede ampliarlo en la consola, o esperar al siguiente periodo. Las\nnotas crédito nunca reciben este error.\n",
+        "description": "La cuenta no tiene con qué emitir el documento en producción.\n`no_active_product`: no tiene una suscripción ni un paquete vigente. `insufficient_credits`: usó sus\ncréditos y su margen de gracia (el 10 % de su último paquete o recarga, mínimo 10 documentos); compra\nuna recarga para seguir emitiendo. `overage_limit_reached`: la suscripción llegó a su límite de excedente\ndel periodo; el dueño de la cuenta puede ampliarlo en la consola, o esperar al siguiente periodo. Las\nnotas crédito nunca reciben este error.\n",
         "headers": {
           "X-Request-Id": {
             "$ref": "#/components/headers/X-Request-Id"

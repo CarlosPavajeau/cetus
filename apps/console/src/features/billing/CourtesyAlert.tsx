@@ -45,7 +45,7 @@ export function CourtesyAlert({ courtesy: view }: { courtesy: AccountCourtesy })
     <Alert>
       <AlertTitle>Estás usando tus documentos de cortesía</AlertTitle>
       <AlertDescription>
-        {`Te quedan ${formatCount(courtesy.remaining)} de ${formatCount(courtesy.documents)} hasta el ${dateFormat.format(courtesy.expiresAt)}. No tienen margen de cortesía: cuando se acaben o venzan, solo podrás emitir notas crédito hasta que contrates una suscripción o compres un paquete.`}
+        {`Te quedan ${formatCount(courtesy.remaining)} de ${formatCount(courtesy.documents)} hasta el ${dateFormat.format(courtesy.expiresAt)}. No tienen margen de gracia: cuando se acaben o venzan, solo podrás emitir notas crédito hasta que contrates una suscripción o compres un paquete.`}
       </AlertDescription>
       <AlertAction>
         <Link to="/billing/products" className={buttonVariants({ variant: "outline" })}>

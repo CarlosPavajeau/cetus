@@ -126,7 +126,7 @@ class SendNotificationHandlerTest {
                 .contains("de los 300 créditos de sus paquetes y recargas vigentes: le quedan 60")
                 .contains("/billing/products");
         assertThat(resend.requests().getLast().body().get("text").asText())
-                .contains("ya emitió 1 de los 30 documentos del margen de cortesía")
+                .contains("ya emitió 1 de los 30 documentos del margen de gracia")
                 .contains("/billing/products");
     }
 
@@ -153,11 +153,11 @@ class SendNotificationHandlerTest {
                 .isEqualTo("[Cetus] Tienes 50 documentos de cortesía para empezar en producción");
         assertThat(resend.requests().getFirst().body().get("text").asText())
                 .contains("Vencen el 03/02/2027 10:30")
-                .contains("No tienen margen de cortesía")
+                .contains("No tienen margen de gracia")
                 .contains("/billing");
         assertThat(resend.requests().getLast().body().get("text").asText())
                 .contains("Cuando se acaben, solo podrás emitir notas crédito")
-                .doesNotContain("margen de cortesía");
+                .doesNotContain("margen de gracia");
     }
 
     @Test

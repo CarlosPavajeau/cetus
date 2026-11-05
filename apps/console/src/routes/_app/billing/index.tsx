@@ -105,7 +105,7 @@ function Billing() {
         <Alert variant="destructive">
           <AlertTitle>Se acabaron tus créditos</AlertTitle>
           <AlertDescription>
-            Estás usando el margen de cortesía: {formatCount(credits.graceUsed)} de{" "}
+            Estás usando el margen de gracia: {formatCount(credits.graceUsed)} de{" "}
             {formatCount(credits.graceMargin)} documentos. Al agotarlo, la emisión en producción se
             detiene. El siguiente paquete o recarga que compres los descuenta.
           </AlertDescription>

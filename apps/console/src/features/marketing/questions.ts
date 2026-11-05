@@ -25,7 +25,7 @@ export const landingFaq: readonly FaqItem[] = [
   {
     question: "¿Qué pasa si supero mi plan?",
     answer:
-      "Con una suscripción sigues emitiendo y cada documento adicional se cobra al precio de excedente de tu plan, hasta un límite que tú puedes ampliar. Con un paquete anual tienes un margen de cortesía y luego compras una recarga.",
+      "Con una suscripción sigues emitiendo y cada documento adicional se cobra al precio de excedente de tu plan, hasta un límite que tú puedes ampliar. Con un paquete anual tienes un margen de gracia y luego compras una recarga.",
   },
   {
     question: "¿Qué pasa con los documentos que no uso?",

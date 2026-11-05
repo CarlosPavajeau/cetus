@@ -190,7 +190,7 @@ public record NotificationEmail(String subject, String html, String text) {
                                         account,
                                         Numbers.count(Long.parseLong(data.get("documents"))),
                                         Dates.bogota(OffsetDateTime.parse(data.get("expiresAt")))),
-                        "No tienen margen de cortesía: cuando se acaben o venzan, solo podrás emitir notas crédito"
+                        "No tienen margen de gracia: cuando se acaben o venzan, solo podrás emitir notas crédito"
                                 + " hasta que contrates una suscripción o compres un paquete.",
                         "Ver tus créditos",
                         "/billing");
@@ -202,15 +202,15 @@ public record NotificationEmail(String subject, String html, String text) {
                         "0".equals(data.get("graceMargin"))
                                 ? "Cuando se acaben, solo podrás emitir notas crédito. Contrata una suscripción o compra"
                                         + " un paquete para seguir facturando sin interrupciones."
-                                : "Cuando se acaben, podrás emitir unos documentos más dentro del margen de cortesía de"
+                                : "Cuando se acaben, podrás emitir unos documentos más dentro del margen de gracia de"
                                         + " tu paquete; después, solo notas crédito. Compra una recarga para seguir"
                                         + " facturando sin interrupciones.",
                         "Comprar créditos",
                         "/billing/products");
             case CREDITS_GRACE ->
                 new Body(
-                        "Se acabaron tus créditos: estás usando el margen de cortesía",
-                        "%s no tiene créditos disponibles y ya emitió %s de los %s documentos del margen de cortesía."
+                        "Se acabaron tus créditos: estás usando el margen de gracia",
+                        "%s no tiene créditos disponibles y ya emitió %s de los %s documentos del margen de gracia."
                                 .formatted(account, data.get("graceUsed"), data.get("graceMargin")),
                         "Al agotar el margen, la emisión en producción se detiene; las notas crédito siempre se pueden"
                                 + " emitir. Los documentos del margen se descuentan del siguiente paquete o recarga que"

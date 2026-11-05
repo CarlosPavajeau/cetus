@@ -21,7 +21,7 @@ export function CreditsSummary({ credits }: { credits: AccountCredits }) {
         <Entry label="Créditos disponibles">
           <span className="text-sm font-medium tabular-nums">{formatCount(credits.available)}</span>
         </Entry>
-        <Entry label="Margen de cortesía usado">
+        <Entry label="Margen de gracia usado">
           {credits.productPackage && credits.subscription === null && credits.graceMargin > 0
             ? `${formatCount(credits.graceUsed)} de ${formatCount(credits.graceMargin)} documentos`
             : "No aplica"}
