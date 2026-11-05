@@ -9,11 +9,10 @@ import { docsUrl } from "~/lib/docs";
 import { CodeBlock } from "./CodeBlock";
 import type { SnippetName } from "./snippets";
 
-type Line = {
-  at: number;
-  kind: "command" | "response" | "step" | "rejection" | "rule" | "event";
-  text: string;
-};
+type Line =
+  | { at: number; kind: "command"; text: string; textShort: string }
+  | { at: number; kind: "response" | "step" | "rejection" | "event"; text: string }
+  | { at: number; kind: "rule"; code: string; text: string };
 
 type Outcome = "accepted" | "rejected";
 
@@ -23,6 +22,7 @@ const command: Line = {
   at: 0,
   kind: "command",
   text: "$ curl -X POST https://cetus-api.cantte.com/v1/invoices -d @factura.json",
+  textShort: "$ curl …/v1/invoices -d @factura.json",
 };
 
 const processing: readonly Line[] = [
@@ -68,12 +68,14 @@ const scripts: Record<
       {
         at: 3600,
         kind: "rule",
-        text: "  FAK26   Responsabilidad informada para receptor no valida según lista.",
+        code: "FAK26",
+        text: "Responsabilidad informada para receptor no valida según lista.",
       },
       {
         at: 3900,
         kind: "rule",
-        text: "  FAB10a  El prefijo de numeración no es igual al código de la sucursal…",
+        code: "FAB10a",
+        text: "El prefijo de numeración no es igual al código de la sucursal…",
       },
       {
         at: 4500,
@@ -111,7 +113,10 @@ export function RequestDemo({ payloadHtml }: { payloadHtml: Record<Outcome, stri
         }
       }}
     >
-      <TabsList aria-label="Respuesta de la DIAN">
+      <TabsList
+        aria-label="Respuesta de la DIAN"
+        className="pointer-coarse:group-data-horizontal/tabs:h-11"
+      >
         {outcomes.map((each) => (
           <TabsTrigger key={each} value={each}>
             {scripts[each].label}
@@ -209,24 +214,26 @@ function OutcomeDemo({ outcome, payloadHtml }: { outcome: Outcome; payloadHtml: 
             Repetir
           </Button>
         </div>
-        <ol className="flex flex-col gap-1.5 overflow-x-auto p-4 font-mono text-xs/relaxed">
+        <ol className="flex flex-col gap-1.5 p-4 font-mono text-xs/relaxed sm:overflow-x-auto">
           {lines.map((line, index) => (
             <li
               key={line.text}
               className={cn(
-                "whitespace-pre",
+                "pl-[2ch] wrap-break-word whitespace-pre-wrap sm:whitespace-pre",
+                line.kind !== "rule" && "-indent-[2ch]",
                 index < shown
                   ? cn("motion-safe:animate-in motion-safe:fade-in", lineTone[line.kind])
                   : "invisible",
               )}
             >
-              {line.text}
+              <LineText line={line} />
             </li>
           ))}
         </ol>
       </div>
       <div className="min-w-0 lg:col-span-2">
         <CodeBlock
+          wrap
           html={payloadHtml}
           snippet={snippet}
           title={`Webhook · ${event}`}
@@ -235,4 +242,25 @@ function OutcomeDemo({ outcome, payloadHtml }: { outcome: Outcome; payloadHtml: 
       </div>
     </div>
   );
+}
+
+function LineText({ line }: { line: Line }) {
+  switch (line.kind) {
+    case "command":
+      return (
+        <>
+          <span className="sm:hidden">{line.textShort}</span>
+          <span className="max-sm:hidden">{line.text}</span>
+        </>
+      );
+    case "rule":
+      return (
+        <>
+          <span className="block font-medium sm:inline-block sm:w-[8ch]">{line.code}</span>
+          <span>{line.text}</span>
+        </>
+      );
+    default:
+      return line.text;
+  }
 }

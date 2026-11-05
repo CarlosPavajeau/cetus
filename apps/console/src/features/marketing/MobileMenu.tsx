@@ -9,7 +9,7 @@ import { docsUrl } from "~/lib/docs";
 
 import { visitorSessionQuery } from "./queries";
 
-const itemClass = "rounded-md px-2 py-2 text-md hover:bg-muted";
+const itemClass = "flex min-h-11 items-center rounded-md px-2 text-md hover:bg-muted";
 
 /** The nav's links on phones, where the header only fits the logo and the call to action. */
 export function MobileMenu() {
@@ -18,7 +18,9 @@ export function MobileMenu() {
   return (
     <Popover>
       <PopoverTrigger
-        render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Menú" />}
+        render={
+          <Button variant="ghost" size="icon" className="size-11 md:hidden" aria-label="Menú" />
+        }
       >
         <MenuIcon />
       </PopoverTrigger>

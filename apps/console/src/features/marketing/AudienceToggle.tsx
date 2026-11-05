@@ -24,7 +24,7 @@ export function AudienceToggle({
           aria-pressed={audience === each}
           onClick={() => onChange(each)}
           className={cn(
-            "rounded-md px-3 py-1.5 text-sm font-medium text-foreground/65 transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none",
+            "rounded-md px-3 py-1.5 text-sm font-medium text-foreground/65 transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none pointer-coarse:min-h-11",
             audience === each && "bg-background text-foreground shadow-sm",
           )}
         >
