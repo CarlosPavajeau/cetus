@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/table";
 import { dateFormat, formatDateTime } from "~/features/api-keys/formats";
 import { BillingProfileDialog } from "~/features/billing/BillingProfileDialog";
+import { CourtesyAlert } from "~/features/billing/CourtesyAlert";
 import { CreditsSummary } from "~/features/billing/CreditsSummary";
 import { DebtAlert } from "~/features/billing/DebtAlert";
 import {
@@ -90,7 +91,8 @@ function Billing() {
       />
 
       {credits.debtOrderId !== null && <DebtAlert orderId={credits.debtOrderId} />}
-      {!credits.product && (
+      {credits.courtesy !== null && <CourtesyAlert courtesy={credits.courtesy} />}
+      {!credits.product && credits.courtesy === null && (
         <Alert>
           <AlertTitle>No tienes una suscripción ni un paquete vigente</AlertTitle>
           <AlertDescription>

@@ -121,6 +121,8 @@ export type Usage = Schemas["UsageView"];
 
 export type AccountCredits = Schemas["AccountCreditsView"];
 
+export type AccountCourtesy = Schemas["AccountCourtesyView"];
+
 export type CreditLot = AccountCredits["lots"][number];
 
 export type CreditMovement = AccountCredits["movements"][number];

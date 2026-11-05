@@ -2030,6 +2030,23 @@ export interface components {
             /** Format: uri */
             permalink: string;
         };
+        AccountCourtesyView: {
+            status: components["schemas"]["CourtesyStatus"];
+            /** Format: int32 */
+            documents: number;
+            /**
+             * Format: int32
+             * @description Days the lot will last; null when granted
+             */
+            validityDays: number | null;
+            /**
+             * Format: int32
+             * @description Credits left in the lot; null when offered
+             */
+            remaining: number | null;
+            /** @description null when offered */
+            expiresAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
         /** @description The account's credits: what is left, its lots and the latest movements */
         AccountCreditsView: {
             /** @description Whether a subscription or a package in force lets the account issue in production */
@@ -2070,6 +2087,8 @@ export interface components {
             issuersLive: number;
             /** @description The pending debt that blocks new purchases until it is paid; null without one */
             debtOrderId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+            /** @description The courtesy lot in force, or the one the first production issuer brings; null otherwise */
+            courtesy: ((components["schemas"]["AccountCourtesyView"] | null) | null) | components["schemas"]["AccountCourtesyView"] | null;
             /** @description Every lot, newest first */
             lots: components["schemas"]["CreditLotView"][];
             /** @description The latest, newest first */
@@ -2536,6 +2555,18 @@ export interface components {
             /** @description A new address waiting for its verification */
             pendingEmail: string | null;
             pendingRequestedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
+        /** @enum {string} */
+        CourtesyStatus: "OFFERED" | "GRANTED";
+        CourtesyView: {
+            /** Format: int32 */
+            slots: number;
+            /** Format: int32 */
+            slotsRemaining: number;
+            /** Format: int32 */
+            documents: number;
+            /** Format: int32 */
+            validityDays: number;
         };
         CreateApiKeyRequest: {
             name: string;
@@ -3431,6 +3462,7 @@ export interface components {
             /** Format: int64 */
             activeIssuers: number;
             obligationCap: components["schemas"]["ObligationCapView"] | null;
+            courtesy: components["schemas"]["CourtesyView"] | null;
         };
         /** @description Una línea del documento: un producto o servicio. */
         Line: {

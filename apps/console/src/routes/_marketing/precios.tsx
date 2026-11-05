@@ -4,7 +4,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { FaqSection } from "~/features/marketing/Faq";
 import { FinalCta } from "~/features/marketing/FinalCta";
 import { PartnersNote, PricingPromises, PricingTable } from "~/features/marketing/Pricing";
-import { marketingConfigQuery, publicPlansQuery } from "~/features/marketing/queries";
+import {
+  landingFiguresQuery,
+  marketingConfigQuery,
+  publicPlansQuery,
+} from "~/features/marketing/queries";
 import { type FaqItem, faqJsonLd } from "~/features/marketing/questions";
 import { marketingCacheControl, marketingHead, siteUrl } from "~/features/marketing/seo";
 
@@ -12,7 +16,7 @@ const pricingFaq: readonly FaqItem[] = [
   {
     question: "¿Puedo probar antes de pagar?",
     answer:
-      "Sí. La simulación y las pruebas de habilitación ante la DIAN son gratis y no vencen. Solo pagas cuando emites en producción.",
+      "Sí. La simulación y las pruebas de habilitación ante la DIAN son gratis y no vencen. Solo pagas cuando emites en producción, y mientras queden cupos, tu primer emisor en producción trae documentos de cortesía para empezar.",
   },
   {
     question: "¿Cuál es la diferencia entre una suscripción y un paquete anual?",
@@ -38,7 +42,10 @@ const pricingFaq: readonly FaqItem[] = [
 
 export const Route = createFileRoute("/_marketing/precios")({
   loader: async ({ context }) => {
-    const offers = await context.queryClient.query(publicPlansQuery).catch(() => undefined);
+    const [offers] = await Promise.all([
+      context.queryClient.query(publicPlansQuery).catch(() => undefined),
+      context.queryClient.query(landingFiguresQuery).catch(() => undefined),
+    ]);
     return { pricesLoaded: offers !== undefined, offerJsonLd: offers && offersJsonLd(offers) };
   },
   head: ({ loaderData }) => ({
