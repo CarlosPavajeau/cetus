@@ -38,6 +38,9 @@ playwright-report/
 # Local development logs (scripts/dev.sh)
 .logs/
 
+# Impeccable design critiques and state, local to each designer
+.impeccable/
+
 # Benchmark output (bench/README.md)
 bench/results/
 bench/.state.json
