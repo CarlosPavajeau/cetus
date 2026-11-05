@@ -194,6 +194,7 @@ function PlanCard({ offer }: { offer: PricedOffer }) {
             size="default"
             variant="outline"
             plan={offer.code}
+            signedIn={{ to: "/billing/products", label: "Ver en la consola" }}
           />
         </div>
       </article>

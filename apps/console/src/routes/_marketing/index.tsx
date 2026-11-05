@@ -104,7 +104,11 @@ function Landing() {
         </>
       ) : (
         <>
-          <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
+          <BusinessSection
+            whatsappNumber={whatsappNumber}
+            screenshotUrl={screenshots.form}
+            afterHero
+          />
           <CalculatorSection />
           <TrustBand />
           <FeaturesSection />

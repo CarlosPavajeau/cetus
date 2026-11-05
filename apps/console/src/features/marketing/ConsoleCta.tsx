@@ -8,7 +8,11 @@ import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { visitorSessionQuery } from "./queries";
 
-/** "Crear cuenta" for a visitor, "Ir a la consola" once the browser finds a session. */
+type SignedInLink = { to: "/overview" | "/billing/products"; label: string };
+
+const consoleLink: SignedInLink = { to: "/overview", label: "Ir a la consola" };
+
+/** "Crear cuenta" for a visitor, "Ir a la consola" (or `signedIn`) once the browser finds a session. */
 export function ConsoleCta({
   audience,
   section,
@@ -16,6 +20,7 @@ export function ConsoleCta({
   size = "lg",
   variant = "default",
   plan,
+  signedIn = consoleLink,
 }: {
   audience?: Audience;
   section: CtaSection;
@@ -23,13 +28,14 @@ export function ConsoleCta({
   size?: "default" | "lg";
   variant?: "default" | "outline";
   plan?: string;
+  signedIn?: SignedInLink;
 }) {
   const { data: session } = useQuery(visitorSessionQuery);
 
   if (session) {
     return (
-      <Link to="/overview" className={linkButtonVariants({ size, variant })}>
-        Ir a la consola
+      <Link to={signedIn.to} className={linkButtonVariants({ size, variant })}>
+        {signedIn.label}
         <ArrowRightIcon data-icon="inline-end" />
       </Link>
     );

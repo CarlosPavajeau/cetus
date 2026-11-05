@@ -217,18 +217,25 @@ const businessBenefits = [
   "Te guiamos en la habilitación ante la DIAN, paso a paso",
 ];
 
+/** `afterHero`: the band right below the business hero, which already says who it is for. */
 export function BusinessSection({
   whatsappNumber,
   screenshotUrl,
+  afterHero = false,
 }: {
   whatsappNumber: string | null;
   screenshotUrl: string;
+  afterHero?: boolean;
 }) {
   return (
     <Section
-      eyebrow="Para negocios"
+      eyebrow={afterHero ? undefined : "Para negocios"}
       title="Sin código, desde la consola"
-      lead="¿No tienes un equipo de desarrollo? Factura desde la consola de Cetus con los mismos documentos que emite la API."
+      lead={
+        afterHero
+          ? "Llenas el formulario de la factura y Cetus hace el resto. Son los mismos documentos que emite la API."
+          : "¿No tienes un equipo de desarrollo? Factura desde la consola de Cetus con los mismos documentos que emite la API."
+      }
     >
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-5">
         <div className="flex flex-col gap-6 lg:col-span-2">
