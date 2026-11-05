@@ -1,8 +1,8 @@
-import { MessageCircleIcon } from "lucide-react";
-
 import { type CtaSection, track } from "./analytics";
 import { linkButtonVariants } from "./linkButton";
 import { whatsappUrl } from "./links";
+
+const whatsappIconSrc = "/images/whatsapp-icon.svg";
 
 /** Renders nothing until CETUS_WHATSAPP_NUMBER is set. */
 export function WhatsAppButton({
@@ -25,7 +25,7 @@ export function WhatsAppButton({
       className={linkButtonVariants({ variant, size: "lg" })}
       onClick={() => track({ name: "whatsapp_click", section })}
     >
-      <MessageCircleIcon data-icon="inline-start" />
+      <img src={whatsappIconSrc} alt="" data-icon="inline-start" className="size-4" />
       Hablar por WhatsApp
     </a>
   );
@@ -43,9 +43,9 @@ export function WhatsAppFloat({ number }: { number: string | null }) {
       rel="noreferrer"
       aria-label="Hablar por WhatsApp"
       onClick={() => track({ name: "whatsapp_click", section: "float" })}
-      className="fixed right-4 bottom-4 z-40 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
+      className="fixed right-4 bottom-4 z-40 size-14 drop-shadow-lg transition-transform motion-safe:active:scale-96 md:hidden"
     >
-      <MessageCircleIcon className="size-6" />
+      <img src={whatsappIconSrc} alt="" className="size-full" />
     </a>
   );
 }
