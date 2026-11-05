@@ -71,6 +71,9 @@ export function PlanCatalog({
       <TabsContent value="mensual" className="mt-3">
         <div className="flex flex-col gap-4">
           <p className="max-w-prose text-md text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Para negocios que facturan todos los meses y prefieren pagar mes a mes.
+            </span>{" "}
             Pagas cada mes por adelantado. Si emites más documentos de los incluidos, sigues
             emitiendo y el excedente se cobra al cierre del mes.
           </p>
@@ -87,6 +90,10 @@ export function PlanCatalog({
       <TabsContent value="anual" className="mt-3">
         <div className="flex flex-col gap-4">
           <p className="max-w-prose text-md text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Para quien factura por temporadas o lleva varias empresas y prefiere un solo pago al
+              año.
+            </span>{" "}
             Pagas una vez y usas los documentos durante la vigencia del paquete, compartidos entre
             todos tus emisores. Si se acaban, los amplías con una recarga.
           </p>

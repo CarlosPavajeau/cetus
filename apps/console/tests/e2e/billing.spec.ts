@@ -33,7 +33,7 @@ test("a new account has no product and sees subscriptions and packages for sale"
 
   await page.getByRole("link", { name: "Ver planes" }).click();
   await expect(page.getByRole("heading", { name: "Inicial" })).toBeVisible();
-  await expect(page.getByText("Precio final, sin IVA").first()).toBeVisible();
+  await expect(page.getByText("Precio final. No cobramos IVA.").first()).toBeVisible();
   await expect(page.getByText(cop("$150 por documento adicional"))).toBeVisible();
   await expect(page.getByRole("heading", { name: "Negocio" })).toHaveCount(0);
 

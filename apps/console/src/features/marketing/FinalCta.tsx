@@ -21,10 +21,11 @@ export function FinalCta({
           id="final-cta"
           className="font-heading text-4xl font-medium tracking-heading text-balance md:text-5xl"
         >
-          Tu primera factura aceptada, hoy.
+          Tu primera factura de prueba, hoy.
         </h2>
         <p className="text-lg/8 text-pretty text-muted-foreground">
-          Crea tu cuenta gratis y emite en simulación en minutos, sin certificado ni tarjeta.
+          Crea tu cuenta gratis y emite en simulación en minutos, sin certificado ni tarjeta. Pasas
+          a producción cuando completes la habilitación ante la DIAN.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           {audience === "dev" ? (

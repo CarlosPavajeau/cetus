@@ -150,13 +150,14 @@ function PlanAction({ offer, audience }: { offer: PricedOffer; audience?: Audien
 export function PartnersNote() {
   return (
     <p className="text-sm text-muted-foreground">
-      ¿Eres contador o manejas muchas empresas? El plan Socios tiene condiciones a la medida.{" "}
+      ¿Eres contador? El paquete anual Contador reparte sus documentos entre las empresas de tus
+      clientes. Si tu cartera no cabe en él, el plan Socios se ajusta por contrato.{" "}
       <Link
         to="/contadores"
-        hash="socios"
+        hash="planes"
         className="font-medium text-foreground underline underline-offset-4"
       >
-        Conoce el plan Socios
+        Ver planes para contadores
       </Link>
       .
     </p>

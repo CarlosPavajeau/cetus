@@ -125,7 +125,7 @@ export function validityLabel(months: number) {
 /** The price as charged, and how it splits when it carries a tax. */
 export function priceBreakdown(version: PlanVersion) {
   return version.taxCents === 0
-    ? "Precio final, sin IVA"
+    ? "Precio final. No cobramos IVA."
     : `Base ${formatCents(version.baseCents)} + IVA ${formatCents(version.taxCents)}`;
 }
 

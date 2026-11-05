@@ -28,6 +28,11 @@ export const landingFaq: readonly FaqItem[] = [
       "Con una suscripción sigues emitiendo y cada documento adicional se cobra al precio de excedente de tu plan, hasta un límite que tú puedes ampliar. Con un paquete anual tienes un margen de cortesía y luego compras una recarga.",
   },
   {
+    question: "¿Qué pasa con los documentos que no uso?",
+    answer:
+      "En una suscripción, siguen vigentes hasta 60 días después de que termina el periodo, sin pasar de dos mensualidades de documentos acumulados. En un paquete anual, duran toda su vigencia.",
+  },
+  {
     question: "¿Qué documentos se cobran?",
     answer:
       "Solo las facturas, notas crédito y notas débito de producción que la DIAN acepta. La simulación, las pruebas de habilitación y los documentos rechazados no consumen nada. Las notas crédito se emiten siempre, aunque no tengas saldo.",

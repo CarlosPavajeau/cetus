@@ -125,6 +125,7 @@ function Partners() {
         </ul>
       </section>
       <Section
+        id="planes"
         eyebrow="Planes"
         title="Planes para varias empresas"
         lead="Precios del catálogo de hoy. Los documentos se comparten entre los emisores de la cuenta."
