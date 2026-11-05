@@ -185,7 +185,7 @@ public record NotificationEmail(String subject, String html, String text) {
                 new Body(
                         "Tienes %s documentos de cortesía para empezar en producción"
                                 .formatted(Numbers.count(Long.parseLong(data.get("documents")))),
-                        "%s recibió %s documentos de cortesía con su primer emisor en producción. Vencen el %s."
+                        "%s recibió %s documentos de cortesía al pasar a producción su primer emisor. Vencen el %s."
                                 .formatted(
                                         account,
                                         Numbers.count(Long.parseLong(data.get("documents"))),

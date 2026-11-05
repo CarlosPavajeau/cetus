@@ -2087,7 +2087,7 @@ export interface components {
             issuersLive: number;
             /** @description The pending debt that blocks new purchases until it is paid; null without one */
             debtOrderId: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
-            /** @description The courtesy lot in force, or the one the first production issuer brings; null otherwise */
+            /** @description The courtesy lot in force, or the one promoting the first test issuer brings; null otherwise */
             courtesy: ((components["schemas"]["AccountCourtesyView"] | null) | null) | components["schemas"]["AccountCourtesyView"] | null;
             /** @description Every lot, newest first */
             lots: components["schemas"]["CreditLotView"][];

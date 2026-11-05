@@ -17,8 +17,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The active promotion's courtesy lot: an account that never had a product gets it with its first production
- * issuer, while slots remain and the NIT never had one. Accounts already in production had their own lot (V37).
+ * The active promotion's courtesy lot: an account that never had a product gets it when it promotes its first test
+ * issuer to production, while slots remain and the NIT never had one. Accounts already in production had their own
+ * lot (V37).
  */
 @ApplicationScoped
 public class Courtesy {
@@ -28,7 +29,7 @@ public class Courtesy {
     /** What the public pages show of the active promotion. */
     public record Offer(int slots, int slotsRemaining, int documents, int validityDays) {}
 
-    /** The account's courtesy: the lot it was granted, or the one it would get with its first production issuer. */
+    /** The account's courtesy: the lot it was granted, or the one it would get by promoting its first test issuer. */
     public sealed interface State {}
 
     /** The account may still get the lot: it never had a product and slots remain. Its NIT is checked then. */

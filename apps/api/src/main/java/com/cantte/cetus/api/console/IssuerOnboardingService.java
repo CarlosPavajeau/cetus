@@ -41,7 +41,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -112,7 +111,7 @@ public class IssuerOnboardingService {
             requireSandboxIssuerSlot(accountId);
         }
         if (request.environment() == Environment.LIVE) {
-            requirePlanIssuerSlot(accountId, request.nit());
+            requirePlanIssuerSlot(accountId);
         }
         // Again under the slot's lock: a request for the same NIT may have committed while this one waited for it.
         requireNewNit(accountId, request);
@@ -171,21 +170,12 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * Production issuers need a product, and are as many as its lots include; an account that never had one may
-     * get the courtesy lot with its first. Locked per account like the
+     * Production issuers need a product, and are as many as its lots include. Locked per account like the
      * sandbox slots, so two requests cannot both take the last one. An account above its limit (a package that
      * expired) keeps its issuers and only cannot add more.
      */
-    private void requirePlanIssuerSlot(UUID accountId, String nit) {
-        OffsetDateTime now = OffsetDateTime.now();
-        Entitlements.Entitlement entitlement = entitlements.of(accountId, now);
-        if (!entitlement.product()) {
-            Optional<CreditGrantEntity> lot = courtesy.claim(accountId, nit, now);
-            if (lot.isPresent()) {
-                notifyCourtesy(lot.get());
-                entitlement = entitlements.of(accountId, now);
-            }
-        }
+    private void requirePlanIssuerSlot(UUID accountId) {
+        Entitlements.Entitlement entitlement = entitlements.of(accountId, OffsetDateTime.now());
         if (!entitlement.product()) {
             credits.refuse(
                     accountId,
@@ -206,6 +196,18 @@ public class IssuerOnboardingService {
                             CreditRefused.Reason.ISSUER_LIMIT_REACHED,
                             "The account's products include " + entitlement.issuersIncluded() + " production issuers"));
         }
+    }
+
+    /**
+     * An account without a product gets the courtesy lot when it promotes its first test issuer: one that went
+     * through habilitación, with its DIAN software, certificate and range, which a made-up NIT does not have.
+     */
+    private void claimCourtesy(IssuerEntity test) {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (entitlements.of(test.accountId, now).product()) {
+            return;
+        }
+        courtesy.claim(test.accountId, test.nit, now).ifPresent(this::notifyCourtesy);
     }
 
     private void notifyCourtesy(CreditGrantEntity lot) {
@@ -462,7 +464,8 @@ public class IssuerOnboardingService {
         if (promoted) {
             throw new DomainException("issuer_already_promoted", "This NIT already has a production issuer");
         }
-        requirePlanIssuerSlot(test.accountId, test.nit);
+        claimCourtesy(test);
+        requirePlanIssuerSlot(test.accountId);
 
         IssuerEntity live = new IssuerEntity();
         live.id = Ids.newId();

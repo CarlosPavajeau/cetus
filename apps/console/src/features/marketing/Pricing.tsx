@@ -139,8 +139,8 @@ function CourtesyNote() {
         <span className="font-medium">
           {courtesy.documents} documentos de cortesía en producción
         </span>{" "}
-        para las primeras {courtesy.slots} empresas. Llegan con tu primer emisor en producción y
-        duran {courtesy.validityDays} días.
+        para las primeras {courtesy.slots} empresas. Llegan al pasar a producción tu primer emisor
+        habilitado y duran {courtesy.validityDays} días.
       </p>
       <p className="shrink-0 font-medium tabular-nums">
         {courtesy.slotsRemaining === 1

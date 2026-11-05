@@ -558,7 +558,7 @@ public final class BillingViews {
 
             @Schema(
                     nullable = true,
-                    description = "The courtesy lot in force, or the one the first production issuer brings; null"
+                    description = "The courtesy lot in force, or the one promoting the first test issuer brings; null"
                             + " otherwise")
             AccountCourtesyView courtesy,
 
@@ -568,7 +568,7 @@ public final class BillingViews {
             List<CreditMovementView> movements) {}
 
     public enum CourtesyStatus {
-        /** The first production issuer brings the lot, while slots remain and its NIT never had one. */
+        /** Promoting the first test issuer brings the lot, while slots remain and its NIT never had one. */
         OFFERED,
         GRANTED
     }

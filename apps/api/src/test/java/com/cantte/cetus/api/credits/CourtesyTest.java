@@ -48,16 +48,12 @@ class CourtesyTest {
     CreditLedger ledger;
 
     @Test
-    void theFirstProductionIssuerGetsTheCourtesyLot() {
+    void promotingTheFirstTestIssuerGetsTheCourtesyLot() {
         slotsRemaining(1);
         ConsoleUser user = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(bootstrap(user, "Cortesía SAS"));
 
-        user.request()
-                .body(issuerRequest(nit(), "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(200);
+        goLive(user, nit());
 
         List<CreditGrantEntity> lots =
                 QuarkusTransaction.requiringNew().call(() -> CreditGrantEntity.listByAccount(accountId));
@@ -92,11 +88,7 @@ class CourtesyTest {
         slotsRemaining(1);
         ConsoleUser user = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(bootstrap(user, "Compradora SAS"));
-        user.request()
-                .body(issuerRequest(nit(), "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(200);
+        goLive(user, nit());
 
         credits.grant(accountId, "EMPRENDEDOR", 300, OffsetDateTime.now().plusMonths(12));
 
@@ -119,15 +111,18 @@ class CourtesyTest {
     }
 
     @Test
-    void promotingTheTestIssuerGetsTheCourtesyLot() {
+    void aProductionIssuerCreatedDirectlyGetsNoCourtesy() {
         slotsRemaining(1);
         ConsoleUser user = ConsoleUser.newOrganization();
-        UUID accountId = UUID.fromString(bootstrap(user, "Habilitada SAS"));
-        String testId = onboard(user, nit()).issuerId();
+        UUID accountId = UUID.fromString(bootstrap(user, "Directa SAS"));
 
-        user.request().post("/console/issuers/" + testId + "/promote").then().statusCode(200);
-
-        assertThat(claims(accountId)).isEqualTo(1);
+        user.request()
+                .body(issuerRequest(nit(), "LIVE"))
+                .post("/console/issuers")
+                .then()
+                .statusCode(402)
+                .body("code", equalTo("no_active_product"));
+        assertThat(claims(accountId)).isZero();
     }
 
     @Test
@@ -136,20 +131,11 @@ class CourtesyTest {
         String nit = nit();
         ConsoleUser first = ConsoleUser.newOrganization();
         bootstrap(first, "Primera SAS");
-        first.request()
-                .body(issuerRequest(nit, "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(200);
+        goLive(first, nit);
         ConsoleUser second = ConsoleUser.newOrganization();
         UUID secondId = UUID.fromString(bootstrap(second, "Segunda SAS"));
 
-        second.request()
-                .body(issuerRequest(nit, "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(402)
-                .body("code", equalTo("no_active_product"));
+        promote(second, nit).then().statusCode(402).body("code", equalTo("no_active_product"));
         assertThat(claims(secondId)).isZero();
     }
 
@@ -158,22 +144,13 @@ class CourtesyTest {
         slotsRemaining(1);
         ConsoleUser taker = ConsoleUser.newOrganization();
         bootstrap(taker, "Última SAS");
-        taker.request()
-                .body(issuerRequest(nit(), "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(200);
+        goLive(taker, nit());
         ConsoleUser late = ConsoleUser.newOrganization();
         UUID lateId = UUID.fromString(bootstrap(late, "Tardía SAS"));
 
         given().get("/console/public/landing").then().statusCode(200).body("courtesy.slotsRemaining", equalTo(0));
         late.request().get("/console/credits").then().statusCode(200).body("courtesy", nullValue());
-        late.request()
-                .body(issuerRequest(nit(), "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(402)
-                .body("code", equalTo("no_active_product"));
+        promote(late, nit()).then().statusCode(402).body("code", equalTo("no_active_product"));
         assertThat(claims(lateId)).isZero();
     }
 
@@ -185,12 +162,7 @@ class CourtesyTest {
         credits.grant(accountId, "EMPRENDEDOR", 300, OffsetDateTime.now().minusMinutes(1));
 
         user.request().get("/console/credits").then().statusCode(200).body("courtesy", nullValue());
-        user.request()
-                .body(issuerRequest(nit(), "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(402)
-                .body("code", equalTo("no_active_product"));
+        promote(user, nit()).then().statusCode(402).body("code", equalTo("no_active_product"));
         assertThat(claims(accountId)).isZero();
     }
 
@@ -211,11 +183,7 @@ class CourtesyTest {
                         .orElseThrow());
 
         user.request().get("/console/credits").then().statusCode(200).body("courtesy.status", equalTo("OFFERED"));
-        user.request()
-                .body(issuerRequest(nit(), "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(200);
+        goLive(user, nit());
         assertThat(claims(accountId)).isEqualTo(1);
     }
 
@@ -225,20 +193,11 @@ class CourtesyTest {
         String nit = nit();
         ConsoleUser first = ConsoleUser.newOrganization();
         bootstrap(first, "Sin Ceros SAS");
-        first.request()
-                .body(issuerRequest(nit, "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(200);
+        goLive(first, nit);
         ConsoleUser second = ConsoleUser.newOrganization();
         UUID secondId = UUID.fromString(bootstrap(second, "Con Ceros SAS"));
 
-        second.request()
-                .body(issuerRequest("0" + nit, "LIVE"))
-                .post("/console/issuers")
-                .then()
-                .statusCode(402)
-                .body("code", equalTo("no_active_product"));
+        promote(second, "0" + nit).then().statusCode(402).body("code", equalTo("no_active_product"));
         assertThat(claims(secondId)).isZero();
     }
 
@@ -249,9 +208,11 @@ class CourtesyTest {
         bootstrap(first, "Carrera Uno SAS");
         ConsoleUser second = ConsoleUser.newOrganization();
         bootstrap(second, "Carrera Dos SAS");
+        String firstTestId = onboard(first, nit()).issuerId();
+        String secondTestId = onboard(second, nit()).issuerId();
         List<Callable<Response>> racers = List.of(
-                () -> first.request().body(issuerRequest(nit(), "LIVE")).post("/console/issuers"),
-                () -> second.request().body(issuerRequest(nit(), "LIVE")).post("/console/issuers"));
+                () -> first.request().post("/console/issuers/" + firstTestId + "/promote"),
+                () -> second.request().post("/console/issuers/" + secondTestId + "/promote"));
 
         List<Response> responses = race(racers);
 
@@ -272,6 +233,16 @@ class CourtesyTest {
                 .body("courtesy.slotsRemaining", equalTo(7))
                 .body("courtesy.documents", equalTo(50))
                 .body("courtesy.validityDays", equalTo(90));
+    }
+
+    /** Promotes a new test issuer in habilitación of the NIT, as the console's "Pasar a producción" does. */
+    private static Response promote(ConsoleUser user, String nit) {
+        String testId = onboard(user, nit).issuerId();
+        return user.request().post("/console/issuers/" + testId + "/promote");
+    }
+
+    private static void goLive(ConsoleUser user, String nit) {
+        promote(user, nit).then().statusCode(200);
     }
 
     /** Sets the active promotion's slots so that exactly this many remain. */

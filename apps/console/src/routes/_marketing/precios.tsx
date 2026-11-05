@@ -18,7 +18,7 @@ import type { LandingFigures } from "~/lib/api/types";
 function pricingFaq(courtesy: LandingFigures["courtesy"]): readonly FaqItem[] {
   const courtesyNote =
     courtesy !== null && courtesy.slotsRemaining > 0
-      ? ` Además, tu primer emisor en producción trae ${formatCount(courtesy.documents)} documentos de cortesía por ${formatCount(courtesy.validityDays)} días, mientras queden cupos.`
+      ? ` Además, al pasar a producción tu primer emisor habilitado recibes ${formatCount(courtesy.documents)} documentos de cortesía por ${formatCount(courtesy.validityDays)} días, mientras queden cupos.`
       : "";
   return [
     {

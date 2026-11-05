@@ -28,7 +28,7 @@ function parseCourtesy(view: AccountCourtesy): Courtesy {
   };
 }
 
-/** The courtesy documents: the ones the first production issuer brings, or the ones the account got. */
+/** The courtesy documents: the ones promoting the first test issuer brings, or the ones the account got. */
 export function CourtesyAlert({ courtesy: view }: { courtesy: AccountCourtesy }) {
   const courtesy = parseCourtesy(view);
   if (courtesy.status === "OFFERED") {
@@ -36,7 +36,7 @@ export function CourtesyAlert({ courtesy: view }: { courtesy: AccountCourtesy })
       <Alert>
         <AlertTitle>Tu primer emisor en producción trae documentos de cortesía</AlertTitle>
         <AlertDescription>
-          {`Al pasar tu primer emisor a producción recibes ${formatCount(courtesy.documents)} documentos por ${formatCount(courtesy.validityDays)} días, mientras queden cupos y si tu empresa no los recibió antes. Después necesitarás una suscripción mensual o un paquete anual.`}
+          {`Al pasar a producción tu primer emisor habilitado recibes ${formatCount(courtesy.documents)} documentos por ${formatCount(courtesy.validityDays)} días, mientras queden cupos y si tu empresa no los recibió antes. Después necesitarás una suscripción mensual o un paquete anual.`}
         </AlertDescription>
       </Alert>
     );
