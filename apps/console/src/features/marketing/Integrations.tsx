@@ -1,4 +1,5 @@
 import { BellIcon } from "lucide-react";
+import type { ReactElement, ReactNode } from "react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -14,7 +15,6 @@ import { docsUrl } from "~/lib/docs";
 import { cn } from "~/lib/utils";
 
 import { LeadContactForm } from "./LeadContactForm";
-import type { Audience } from "./links";
 import { Section } from "./Section";
 import { sendIntegrationLead } from "./server";
 
@@ -41,21 +41,35 @@ const upcoming = [
 
 const forBusinesses = new Set<LeadIntegration>(["WOOCOMMERCE", "SHOPIFY", "PAYMENTS"]);
 
-export function IntegrationsSection({ audience }: { audience: Audience }) {
-  if (audience === "negocio") {
-    return (
-      <Section
-        eyebrow="Próximamente"
-        title="Factura desde tu tienda y tus pagos"
-        lead="Pronto, cada pedido o pago aprobado se facturará solo, sin copiarlo a mano. Dinos cuál usas y te avisamos cuando su integración esté lista."
-      >
-        <UpcomingList
-          items={upcoming.filter((each) => forBusinesses.has(each.integration))}
-          className="sm:grid-cols-3"
-        />
-      </Section>
-    );
-  }
+/** The integrations a business would use, as one line: each name opens its notify form. */
+export function UpcomingForBusinesses() {
+  const items = upcoming.filter((each) => forBusinesses.has(each.integration));
+  return (
+    <p className="text-md/6 text-pretty text-muted-foreground">
+      Próximamente, cada pedido o pago aprobado se facturará solo desde{" "}
+      {items.map((each, index) => (
+        <span key={each.integration}>
+          <Notify
+            integration={each.integration}
+            name={each.name}
+            trigger={
+              <button
+                type="button"
+                className="font-medium text-foreground underline underline-offset-4"
+              />
+            }
+          >
+            {each.name}
+          </Notify>
+          {index < items.length - 2 ? ", " : index === items.length - 2 ? " o " : ""}
+        </span>
+      ))}
+      . Elige el tuyo y te avisamos cuando esté listo.
+    </p>
+  );
+}
+
+export function IntegrationsSection() {
   return (
     <Section
       eyebrow="Integraciones"
@@ -99,23 +113,35 @@ function UpcomingList({
             <span className="font-medium">{each.name}</span>
             <span className="text-md/6 text-pretty text-muted-foreground">{each.text}</span>
           </div>
-          <Notify integration={each.integration} name={each.name} />
+          <Notify
+            integration={each.integration}
+            name={each.name}
+            trigger={<Button variant="outline" size="sm" className="mt-auto self-start" />}
+          >
+            <BellIcon data-icon="inline-start" />
+            Avísame
+            <span className="sr-only">: {each.name}</span>
+          </Notify>
         </li>
       ))}
     </ul>
   );
 }
 
-function Notify({ integration, name }: { integration: LeadIntegration; name: string }) {
+function Notify({
+  integration,
+  name,
+  trigger,
+  children,
+}: {
+  integration: LeadIntegration;
+  name: string;
+  trigger: ReactElement;
+  children: ReactNode;
+}) {
   return (
     <Popover>
-      <PopoverTrigger
-        render={<Button variant="outline" size="sm" className="mt-auto self-start" />}
-      >
-        <BellIcon data-icon="inline-start" />
-        Avísame
-        <span className="sr-only">: {name}</span>
-      </PopoverTrigger>
+      <PopoverTrigger render={trigger}>{children}</PopoverTrigger>
       <PopoverContent align="start" className="w-80">
         <PopoverHeader>
           <PopoverTitle>{name}</PopoverTitle>

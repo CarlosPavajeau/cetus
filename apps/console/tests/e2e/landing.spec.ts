@@ -55,7 +55,11 @@ test("the business view offers the console instead of the API", async ({ page })
     "/sign-up?audience=negocio",
   );
   await expect(page.getByRole("heading", { level: 1, name: /desde tu navegador/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Sin código, desde la consola" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "De la empresa de ejemplo a tu primera factura real" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Shopify", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sin código, desde la consola" })).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "De tu pedido a la DIAN, sin tocar XML" }),
   ).toHaveCount(0);

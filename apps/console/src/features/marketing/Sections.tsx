@@ -10,7 +10,7 @@ import {
   QrCodeIcon,
   ShieldCheckIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { statusPageUrl } from "~/features/status/links";
@@ -57,7 +57,7 @@ const businessFeatures: readonly Feature[] = [
   {
     icon: QrCodeIcon,
     title: "PDF con CUFE y QR",
-    text: "La factura en PDF, lista para descargar o enviar, junto al XML firmado que exige la DIAN.",
+    text: "La factura en PDF con el CUFE, el código único con el que la DIAN la identifica, junto al XML firmado.",
   },
   {
     icon: HashIcon,
@@ -82,7 +82,13 @@ const featureCopy = {
   },
 } as const satisfies Record<Audience, { features: readonly Feature[]; lead: string }>;
 
-export function FeaturesSection({ audience }: { audience: Audience }) {
+export function FeaturesSection({
+  audience,
+  children,
+}: {
+  audience: Audience;
+  children?: ReactNode;
+}) {
   const { features, lead } = featureCopy[audience];
   return (
     <Section eyebrow="Cobertura" title="Todo lo que la DIAN exige, resuelto" lead={lead}>
@@ -95,6 +101,7 @@ export function FeaturesSection({ audience }: { audience: Audience }) {
           </li>
         ))}
       </ul>
+      {children}
     </Section>
   );
 }
@@ -224,25 +231,18 @@ const businessBenefits = [
   "Te guiamos en la habilitación ante la DIAN, paso a paso",
 ];
 
-/** `afterHero`: the band right below the business hero, which already says who it is for. */
 export function BusinessSection({
   whatsappNumber,
   screenshotUrl,
-  afterHero = false,
 }: {
   whatsappNumber: string | null;
   screenshotUrl: string;
-  afterHero?: boolean;
 }) {
   return (
     <Section
-      eyebrow={afterHero ? undefined : "Para negocios"}
+      eyebrow="Para negocios"
       title="Sin código, desde la consola"
-      lead={
-        afterHero
-          ? "Llenas el formulario de la factura y Cetus hace el resto. Son los mismos documentos que emite la API."
-          : "¿No tienes un equipo de desarrollo? Factura desde la consola de Cetus con los mismos documentos que emite la API."
-      }
+      lead="¿No tienes un equipo de desarrollo? Factura desde la consola de Cetus con los mismos documentos que emite la API."
     >
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-5">
         <div className="flex flex-col gap-6 lg:col-span-2">
@@ -317,6 +317,8 @@ const habilitacionSteps = [
   },
 ] as const;
 
+const habilitacionShowcase = habilitacionSteps[3];
+
 /** The business path from the sample company to production, each step beside the console screen it happens in. */
 export function HabilitacionSection() {
   const [step, setStep] = useState<string>(habilitacionSteps[0].value);
@@ -337,14 +339,16 @@ export function HabilitacionSection() {
         </>
       }
     >
-      <ol className="flex flex-col gap-10 lg:hidden">
-        {habilitacionSteps.map((each, index) => (
-          <li key={each.value} className="flex flex-col gap-4">
-            <StepText number={index + 1} title={each.title} text={each.text} />
-            <ConsoleScreenshot step={each} />
-          </li>
-        ))}
-      </ol>
+      <div className="flex flex-col gap-8 lg:hidden">
+        <ol className="flex flex-col gap-6">
+          {habilitacionSteps.map((each, index) => (
+            <li key={each.value}>
+              <StepText number={index + 1} title={each.title} text={each.text} />
+            </li>
+          ))}
+        </ol>
+        <ConsoleScreenshot step={habilitacionShowcase} />
+      </div>
       <TabsPrimitive.Root
         value={step}
         onValueChange={(value) => setStep(String(value))}

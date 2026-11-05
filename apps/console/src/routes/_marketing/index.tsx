@@ -4,7 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FaqSection } from "~/features/marketing/Faq";
 import { FinalCta } from "~/features/marketing/FinalCta";
 import { Hero } from "~/features/marketing/Hero";
-import { IntegrationsSection } from "~/features/marketing/Integrations";
+import { IntegrationsSection, UpcomingForBusinesses } from "~/features/marketing/Integrations";
 import { type Audience, parseAudience } from "~/features/marketing/links";
 import { PartnersNote, PricingPromises, PricingTable } from "~/features/marketing/Pricing";
 import {
@@ -111,20 +111,16 @@ function Landing() {
           <TrustBand />
           <FeaturesSection audience={audience} />
           <StepsSection html={html} />
-          <IntegrationsSection audience={audience} />
+          <IntegrationsSection />
           <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
         </>
       ) : (
         <>
-          <BusinessSection
-            whatsappNumber={whatsappNumber}
-            screenshotUrl={screenshots.form}
-            afterHero
-          />
           <HabilitacionSection />
           <TrustBand />
-          <FeaturesSection audience={audience} />
-          <IntegrationsSection audience={audience} />
+          <FeaturesSection audience={audience}>
+            <UpcomingForBusinesses />
+          </FeaturesSection>
         </>
       )}
       <Section
