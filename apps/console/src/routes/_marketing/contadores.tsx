@@ -7,6 +7,7 @@ import {
   documentsLabel,
   formatCents,
   issuersLabel,
+  overageLabel,
   pricePeriodLabel,
   priced,
   validityLabel,
@@ -18,6 +19,8 @@ import { publicPlansQuery } from "~/features/marketing/queries";
 import { type FaqItem, faqJsonLd } from "~/features/marketing/questions";
 import { Section } from "~/features/marketing/Section";
 import { marketingCacheControl, marketingHead } from "~/features/marketing/seo";
+import type { PlanOffer } from "~/lib/api/types";
+import { docsUrl } from "~/lib/docs";
 
 /** The plans a firm with several clients compares: those that include three issuers or more. */
 const ISSUERS_MIN = 3;
@@ -103,6 +106,13 @@ function Partners() {
             </p>
           </div>
         </div>
+        <img
+          src={`${docsUrl}/images/consola/emisores-varios.png`}
+          alt="La lista de emisores de una cuenta en la consola de Cetus: tres empresas en producción, una en habilitación y la empresa de ejemplo, cada una con su NIT"
+          width={1280}
+          height={640}
+          className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+        />
         <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2">
           {benefits.map((benefit) => (
             <li key={benefit.title} className="flex flex-col gap-2 bg-background p-6">
@@ -120,6 +130,7 @@ function Partners() {
       >
         <MultiIssuerPlans />
       </Section>
+      <IssuerTiersSection />
       <Section
         id="socios"
         eyebrow="Plan Socios"
@@ -135,24 +146,32 @@ function Partners() {
   );
 }
 
-function MultiIssuerPlans() {
-  const { data: offers, isError } = useQuery(publicPlansQuery);
-  if (isError) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No pudimos cargar los precios. Míralos en{" "}
-        <Link to="/precios" className="underline underline-offset-3 hover:text-foreground">
-          la página de precios
-        </Link>
-        .
-      </p>
-    );
-  }
-  const plans = (offers ?? [])
+function multiIssuerPlans(offers: readonly PlanOffer[]) {
+  return offers
     .filter(priced)
     .filter(
       (offer) => offer.kind !== "TOPUP" && (offer.version.issuersIncluded ?? 0) >= ISSUERS_MIN,
     );
+}
+
+function PricesUnavailable() {
+  return (
+    <p className="text-sm text-muted-foreground">
+      No pudimos cargar los precios. Míralos en{" "}
+      <Link to="/precios" className="underline underline-offset-3 hover:text-foreground">
+        la página de precios
+      </Link>
+      .
+    </p>
+  );
+}
+
+function MultiIssuerPlans() {
+  const { data: offers, isError } = useQuery(publicPlansQuery);
+  if (isError) {
+    return <PricesUnavailable />;
+  }
+  const plans = multiIssuerPlans(offers ?? []);
   if (plans.length === 0) {
     return null;
   }
@@ -180,6 +199,10 @@ function PlanCard({ offer }: { offer: PricedOffer }) {
             {documentsLabel(offer.version.documentsIncluded)}
             {offer.kind === "SUBSCRIPTION" ? " cada mes" : " en total"}
           </li>
+          {offer.version.priceOverageCents !== null && (
+            <li>{overageLabel(offer.version.priceOverageCents)}</li>
+          )}
+          {offer.kind === "PACKAGE" && <li>Si se acaban, los amplías con una recarga</li>}
           {offer.version.issuersIncluded !== null &&
             offer.version.issuersIncluded !== undefined && (
               <li>{issuersLabel(offer.version.issuersIncluded)}</li>
@@ -199,5 +222,108 @@ function PlanCard({ offer }: { offer: PricedOffer }) {
         </div>
       </article>
     </li>
+  );
+}
+
+/** The plans that include the same number of production issuers: "hasta 3 clientes", "de 4 a 10". */
+type IssuerTier = { from: number; to: number; offers: readonly PricedOffer[] };
+
+function issuerTiers(plans: readonly PricedOffer[]): IssuerTier[] {
+  const sizes = [...new Set(plans.map((offer) => offer.version.issuersIncluded ?? 0))].toSorted(
+    (a, b) => a - b,
+  );
+  return sizes.map((size, index) => ({
+    from: (sizes[index - 1] ?? 0) + 1,
+    to: size,
+    offers: plans
+      .filter((offer) => offer.version.issuersIncluded === size)
+      .toSorted((a, b) => Number(b.kind === "SUBSCRIPTION") - Number(a.kind === "SUBSCRIPTION")),
+  }));
+}
+
+const orList = new Intl.ListFormat("es", { type: "disjunction" });
+
+function tierRange({ from, to }: IssuerTier) {
+  return from === 1 ? `Hasta ${to} clientes` : `De ${from} a ${to} clientes`;
+}
+
+function priceLabel(offer: PricedOffer) {
+  const period = pricePeriodLabel(offer);
+  return period
+    ? `${formatCents(offer.version.totalCents)} ${period}`
+    : formatCents(offer.version.totalCents);
+}
+
+function IssuerTiersSection() {
+  const { data: offers, isError } = useQuery(publicPlansQuery);
+  const tiers = issuerTiers(multiIssuerPlans(offers ?? []));
+  const [first, second] = tiers;
+  const last = tiers.at(-1);
+  if (isError || first === undefined || second === undefined || last === undefined) {
+    return null;
+  }
+  const next = first.to + 1;
+  const upgrades = second.offers.filter((offer) => offer.kind === "SUBSCRIPTION");
+  const packages = first.offers.filter((offer) => offer.kind === "PACKAGE");
+  return (
+    <Section
+      title={`¿Cuánto cuesta el cliente número ${next}?`}
+      lead="No pagas por cliente: pagas por el plan, que incluye un número de emisores en producción. Habilitar a un cliente en pruebas no cuesta nada."
+    >
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-5">
+        <dl className="grid gap-px overflow-hidden rounded-xl border bg-border lg:col-span-3">
+          {tiers.map((tier) => (
+            <div
+              key={tier.to}
+              className="grid gap-2 bg-background p-5 sm:grid-cols-[10rem_1fr] sm:gap-6"
+            >
+              <dt className="text-base font-medium">{tierRange(tier)}</dt>
+              <dd className="flex flex-col gap-1 text-md/6">
+                {tier.offers.map((offer) => (
+                  <span key={offer.id}>
+                    {offer.name}{" "}
+                    <span className="text-muted-foreground">· {priceLabel(offer)}</span>
+                  </span>
+                ))}
+              </dd>
+            </div>
+          ))}
+          <div className="grid gap-2 bg-background p-5 sm:grid-cols-[10rem_1fr] sm:gap-6">
+            <dt className="text-base font-medium">Más de {last.to} clientes</dt>
+            <dd className="text-md/6">
+              Socios <span className="text-muted-foreground">· por contrato</span>
+            </dd>
+          </div>
+        </dl>
+        <div className="flex flex-col gap-4 text-md/6 text-pretty lg:col-span-2">
+          <p>
+            El cliente número {next} no se cobra aparte. Con{" "}
+            {orList.format(first.offers.map((offer) => offer.name))} tienes {first.to} emisores en
+            producción; para el {next}.º cambias a{" "}
+            {orList.format(upgrades.map((offer) => `${offer.name} (${priceLabel(offer)})`))}, que
+            incluye hasta {second.to}. Mientras lo habilitas, ese cliente queda en pruebas, sin
+            costo.
+          </p>
+          {packages.length > 0 && (
+            <p className="text-muted-foreground">
+              Si tienes el paquete {orList.format(packages.map((offer) => offer.name))}, al cambiar
+              a una suscripción conservas los documentos del paquete hasta su vencimiento.
+            </p>
+          )}
+          <p className="text-muted-foreground">
+            El plan Socios tiene sentido cuando pasas de {last.to} empresas o cuando tu volumen pide
+            otro precio por documento: los emisores, los documentos y el precio se acuerdan por
+            contrato.{" "}
+            <Link
+              to="/contadores"
+              hash="socios"
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              Hablar del plan Socios
+            </Link>
+          </p>
+        </div>
+      </div>
+    </Section>
   );
 }
