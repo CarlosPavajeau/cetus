@@ -4,7 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FaqSection } from "~/features/marketing/Faq";
 import { FinalCta } from "~/features/marketing/FinalCta";
 import { Hero } from "~/features/marketing/Hero";
-import { IntegrationsSection, UpcomingForBusinesses } from "~/features/marketing/Integrations";
+import { IntegrationsSection, UpcomingIntegrations } from "~/features/marketing/Integrations";
 import { type Audience, parseAudience } from "~/features/marketing/links";
 import { PartnersNote, PricingPromises, PricingTable } from "~/features/marketing/Pricing";
 import {
@@ -119,7 +119,7 @@ function Landing() {
           <HabilitacionSection />
           <TrustBand />
           <FeaturesSection audience={audience}>
-            <UpcomingForBusinesses />
+            <UpcomingIntegrations audience="negocio" />
           </FeaturesSection>
         </>
       )}

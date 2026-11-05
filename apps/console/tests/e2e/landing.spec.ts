@@ -163,7 +163,7 @@ test("avísame keeps the address for an upcoming integration", async ({ page }) 
   await fromFreshIp(page);
   await open(page, "/");
 
-  await page.getByRole("button", { name: /Avísame.*Shopify/ }).click();
+  await page.getByRole("button", { name: "Shopify", exact: true }).click();
   const popover = page.getByRole("dialog", { name: "Shopify" });
   const email = `avisame-${crypto.randomUUID()}@ejemplo.com`;
   await popover.getByLabel("Correo", { exact: true }).fill(email);

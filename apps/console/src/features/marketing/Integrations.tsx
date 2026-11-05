@@ -1,7 +1,6 @@
-import { BellIcon } from "lucide-react";
-import type { ReactElement, ReactNode } from "react";
+import { cn } from "cn";
+import type { ComponentProps, ReactNode } from "react";
 
-import { Button } from "~/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -12,9 +11,9 @@ import {
 } from "~/components/ui/popover";
 import type { LeadIntegration } from "~/lib/api/types";
 import { docsUrl } from "~/lib/docs";
-import { cn } from "~/lib/utils";
 
 import { LeadContactForm } from "./LeadContactForm";
+import type { Audience } from "./links";
 import { Section } from "./Section";
 import { sendIntegrationLead } from "./server";
 
@@ -28,41 +27,36 @@ const available = [
   { name: "Referencia", text: "Cada endpoint, con ejemplos", href: `${docsUrl}/reference` },
 ] as const;
 
-const upcoming = [
-  { integration: "WOOCOMMERCE", name: "WooCommerce", text: "Factura cada pedido de tu tienda" },
-  { integration: "SHOPIFY", name: "Shopify", text: "Factura cada pedido de tu tienda" },
-  {
-    integration: "AUTOMATIONS",
-    name: "n8n, Make y Zapier",
-    text: "Factura desde tus automatizaciones",
+const upcoming = {
+  WOOCOMMERCE: "WooCommerce",
+  SHOPIFY: "Shopify",
+  PAYMENTS: "Wompi y Bold",
+  AUTOMATIONS: "n8n, Make y Zapier",
+} as const satisfies Record<LeadIntegration, string>;
+
+const upcomingCopy = {
+  dev: {
+    intro: "Próximamente, cada pedido, pago o automatización se facturará solo desde",
+    integrations: ["WOOCOMMERCE", "SHOPIFY", "PAYMENTS", "AUTOMATIONS"],
   },
-  { integration: "PAYMENTS", name: "Wompi y Bold", text: "Factura cada pago aprobado" },
-] as const satisfies readonly { integration: LeadIntegration; name: string; text: string }[];
+  negocio: {
+    intro: "Próximamente, cada pedido o pago aprobado se facturará solo desde",
+    integrations: ["WOOCOMMERCE", "SHOPIFY", "PAYMENTS"],
+  },
+} as const satisfies Record<Audience, { intro: string; integrations: readonly LeadIntegration[] }>;
 
-const forBusinesses = new Set<LeadIntegration>(["WOOCOMMERCE", "SHOPIFY", "PAYMENTS"]);
-
-/** The integrations a business would use, as one line: each name opens its notify form. */
-export function UpcomingForBusinesses() {
-  const items = upcoming.filter((each) => forBusinesses.has(each.integration));
+/** The upcoming integrations as one line: each name opens its notify form. */
+export function UpcomingIntegrations({ audience }: { audience: Audience }) {
+  const { intro, integrations } = upcomingCopy[audience];
   return (
-    <p className="text-md/6 text-pretty text-muted-foreground">
-      Próximamente, cada pedido o pago aprobado se facturará solo desde{" "}
-      {items.map((each, index) => (
-        <span key={each.integration}>
-          <Notify
-            integration={each.integration}
-            name={each.name}
-            trigger={
-              <button
-                type="button"
-                aria-label={each.name}
-                className="font-medium text-foreground underline underline-offset-4"
-              />
-            }
-          >
-            {each.name}
+    <p className="max-w-prose text-md/6 text-pretty text-muted-foreground">
+      {intro}{" "}
+      {integrations.map((integration, index) => (
+        <span key={integration}>
+          <Notify integration={integration} name={upcoming[integration]}>
+            {upcoming[integration]}
           </Notify>
-          {index < items.length - 2 ? ", " : index === items.length - 2 ? " o " : ""}
+          {index < integrations.length - 2 ? ", " : index === integrations.length - 2 ? " o " : ""}
         </span>
       ))}
       . Elige el tuyo y te avisamos cuando esté listo.
@@ -75,9 +69,9 @@ export function IntegrationsSection() {
     <Section
       eyebrow="Integraciones"
       title="Conéctalo con lo que ya usas"
-      lead="Hoy, con cualquier lenguaje que hable HTTP. Pronto, con tu tienda y tus automatizaciones: dinos cuál quieres y te avisamos cuando esté lista."
+      lead="Hoy, con cualquier lenguaje que hable HTTP."
     >
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-3">
           {available.map((each) => (
             <li key={each.name} className="bg-background">
@@ -88,61 +82,24 @@ export function IntegrationsSection() {
             </li>
           ))}
         </ul>
-        <div className="flex flex-col gap-4">
-          <h3 className="font-mono text-xs/5 tracking-wider text-muted-foreground uppercase">
-            Próximamente
-          </h3>
-          <UpcomingList items={upcoming} className="sm:grid-cols-2 lg:grid-cols-4" />
-        </div>
+        <UpcomingIntegrations audience="dev" />
       </div>
     </Section>
-  );
-}
-
-function UpcomingList({
-  items,
-  className,
-}: {
-  items: readonly (typeof upcoming)[number][];
-  className: string;
-}) {
-  return (
-    <ul className={cn("grid gap-4", className)}>
-      {items.map((each) => (
-        <li key={each.integration} className="flex flex-col gap-3 rounded-xl border p-5">
-          <div className="flex flex-col gap-1">
-            <span className="font-medium">{each.name}</span>
-            <span className="text-md/6 text-pretty text-muted-foreground">{each.text}</span>
-          </div>
-          <Notify
-            integration={each.integration}
-            name={each.name}
-            trigger={<Button variant="outline" size="sm" className="mt-auto self-start" />}
-          >
-            <BellIcon data-icon="inline-start" />
-            Avísame
-            <span className="sr-only">: {each.name}</span>
-          </Notify>
-        </li>
-      ))}
-    </ul>
   );
 }
 
 function Notify({
   integration,
   name,
-  trigger,
   children,
 }: {
   integration: LeadIntegration;
   name: string;
-  trigger: ReactElement;
   children: ReactNode;
 }) {
   return (
     <Popover>
-      <PopoverTrigger render={trigger}>{children}</PopoverTrigger>
+      <PopoverTrigger render={<TextButton aria-label={name} />}>{children}</PopoverTrigger>
       <PopoverContent align="start" className="w-80">
         <PopoverHeader>
           <PopoverTitle>{name}</PopoverTitle>
@@ -161,5 +118,16 @@ function Notify({
         />
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** A link-styled button inside running text. */
+function TextButton({ className, ...props }: ComponentProps<"button">) {
+  return (
+    <button
+      type="button"
+      className={cn("font-medium text-foreground underline underline-offset-4", className)}
+      {...props}
+    />
   );
 }
