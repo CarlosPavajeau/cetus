@@ -2,14 +2,11 @@ import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRightIcon,
-  BellRingIcon,
   FileCheck2Icon,
-  FileMinusIcon,
   FlaskConicalIcon,
   HashIcon,
   KeyRoundIcon,
   type LucideIcon,
-  MailIcon,
   QrCodeIcon,
   ShieldCheckIcon,
 } from "lucide-react";
@@ -35,16 +32,6 @@ const devFeatures: readonly Feature[] = [
     text: "UBL 2.1 con totales, impuestos y CUFE calculados por Cetus a partir de tus líneas.",
   },
   {
-    icon: FileMinusIcon,
-    title: "Notas crédito y débito",
-    text: "Corrige o ajusta una factura con su CUDE. Las notas crédito se emiten siempre, aunque no tengas saldo.",
-  },
-  {
-    icon: ShieldCheckIcon,
-    title: "Firma XAdES-EPES",
-    text: "Firmamos con tu certificado digital, que se guarda cifrado con AWS KMS y nunca en texto plano.",
-  },
-  {
     icon: QrCodeIcon,
     title: "PDF con CUFE y QR",
     text: "La representación gráfica, lista para descargar o enviar, junto al XML firmado y el AttachedDocument.",
@@ -55,19 +42,9 @@ const devFeatures: readonly Feature[] = [
     text: "Cetus numera cada documento con tu resolución vigente, sin huecos ni duplicados.",
   },
   {
-    icon: MailIcon,
-    title: "Entrega al cliente",
-    text: "Cuando la DIAN acepta el documento, le llega a tu cliente por correo con el PDF y el AttachedDocument.",
-  },
-  {
     icon: FlaskConicalIcon,
     title: "Simulación idéntica a producción",
     text: "Integra sin certificado ni habilitación: la simulación responde como la DIAN, sin validez fiscal.",
-  },
-  {
-    icon: BellRingIcon,
-    title: "Webhooks",
-    text: "Tu sistema se entera al instante de cada aceptación, rechazo o entrega; sin consultar el estado.",
   },
 ];
 
@@ -76,16 +53,6 @@ const businessFeatures: readonly Feature[] = [
     icon: FileCheck2Icon,
     title: "Factura electrónica de venta",
     text: "Llenas el cliente y los productos. Cetus calcula los totales, los impuestos y el CUFE.",
-  },
-  {
-    icon: FileMinusIcon,
-    title: "Notas crédito y débito",
-    text: "Corrige o ajusta una factura ya emitida. Las notas crédito se emiten siempre, aunque no tengas saldo.",
-  },
-  {
-    icon: ShieldCheckIcon,
-    title: "Firma digital",
-    text: "Firmamos cada documento con tu certificado digital, que se guarda cifrado y nunca en texto plano.",
   },
   {
     icon: QrCodeIcon,
@@ -98,19 +65,9 @@ const businessFeatures: readonly Feature[] = [
     text: "Cetus numera cada documento con tu resolución vigente, sin huecos ni duplicados.",
   },
   {
-    icon: MailIcon,
-    title: "Entrega al cliente",
-    text: "Cuando la DIAN acepta el documento, le llega a tu cliente por correo con el PDF y el XML.",
-  },
-  {
     icon: FlaskConicalIcon,
     title: "Simulación idéntica a producción",
     text: "Prueba sin certificado ni habilitación: la simulación responde como la DIAN, sin validez fiscal.",
-  },
-  {
-    icon: BellRingIcon,
-    title: "El estado de cada documento",
-    text: "Ves en la consola si la DIAN lo aceptó o lo rechazó, con el motivo, y si el correo le llegó a tu cliente.",
   },
 ];
 

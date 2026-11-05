@@ -20,17 +20,6 @@ import { sendIntegrationLead } from "./server";
 
 const available = [
   {
-    name: "cURL",
-    text: "Cualquier lenguaje que haga HTTP",
-    href: `${docsUrl}/inicio-rapido/desarrolladores`,
-  },
-  {
-    name: "JavaScript",
-    text: "Node.js con fetch",
-    href: `${docsUrl}/inicio-rapido/desarrolladores`,
-  },
-  { name: "Python", text: "Con requests", href: `${docsUrl}/inicio-rapido/desarrolladores` },
-  {
     name: "Postman",
     text: "La colección lista para importar",
     href: `${docsUrl}/cetus.postman_collection.json`,
@@ -74,7 +63,7 @@ export function IntegrationsSection({ audience }: { audience: Audience }) {
       lead="Hoy, con cualquier lenguaje que hable HTTP. Pronto, con tu tienda y tus automatizaciones: dinos cuál quieres y te avisamos cuando esté lista."
     >
       <div className="flex flex-col gap-8">
-        <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-3">
           {available.map((each) => (
             <li key={each.name} className="bg-background">
               <a href={each.href} className="flex h-full flex-col gap-1 p-5 hover:bg-muted/50">
