@@ -56,9 +56,9 @@ test("the business view offers the console instead of the API", async ({ page })
   );
   await expect(page.getByRole("heading", { level: 1, name: /desde tu navegador/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sin código, desde la consola" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Tu sistema se entera al instante" })).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole("heading", { name: "De tu pedido a la DIAN, sin tocar XML" }),
+  ).toHaveCount(0);
 });
 
 test("a signed-in visitor goes back to the console", async ({ page, organization }) => {
@@ -178,7 +178,7 @@ test("the trust band waits for real production figures", async ({ page }) => {
   await open(page, "/");
 
   await expect(
-    page.getByRole("heading", { name: "Tu sistema se entera al instante" }),
+    page.getByRole("heading", { name: "De tu pedido a la DIAN, sin tocar XML" }),
   ).toBeVisible();
   await expect(page.getByRole("region", { name: "Cetus en producción" })).toHaveCount(
     figures.acceptedDocuments >= acceptedDocumentsMin ? 1 : 0,
