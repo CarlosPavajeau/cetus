@@ -55,6 +55,7 @@ export function UpcomingForBusinesses() {
             trigger={
               <button
                 type="button"
+                aria-label={each.name}
                 className="font-medium text-foreground underline underline-offset-4"
               />
             }

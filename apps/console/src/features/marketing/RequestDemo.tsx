@@ -219,8 +219,8 @@ function OutcomeDemo({ outcome, payloadHtml }: { outcome: Outcome; payloadHtml: 
             <li
               key={line.text}
               className={cn(
-                "pl-[2ch] wrap-break-word whitespace-pre-wrap sm:whitespace-pre",
-                line.kind !== "rule" && "-indent-[2ch]",
+                "pl-3.5 wrap-break-word whitespace-pre-wrap sm:whitespace-pre",
+                line.kind !== "rule" && "-indent-3.5",
                 index < shown
                   ? cn("motion-safe:animate-in motion-safe:fade-in", lineTone[line.kind])
                   : "invisible",
