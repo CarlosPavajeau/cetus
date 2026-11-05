@@ -37,7 +37,14 @@ export function MarketingNav() {
           >
             Precios
           </Link>
-          <a href={statusPageUrl} className="hover:text-foreground">
+          <Link
+            to="/contadores"
+            className="hover:text-foreground"
+            activeProps={{ className: "text-foreground font-medium" }}
+          >
+            Contadores
+          </Link>
+          <a href={statusPageUrl} className="hover:text-foreground max-lg:hidden">
             Estado del servicio
           </a>
         </nav>

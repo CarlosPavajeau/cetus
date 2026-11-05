@@ -1,14 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { cn } from "cn";
 import { CheckIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { Skeleton } from "~/components/ui/skeleton";
 import { type PricedOffer, priced } from "~/features/billing/labels";
-import { type CatalogPeriod, PlanCatalog } from "~/features/billing/PlanCatalog";
+import {
+  type CatalogPeriod,
+  PlanCatalog,
+  PlanCatalogSkeleton,
+} from "~/features/billing/PlanCatalog";
 import { supportEmail } from "~/lib/support";
 
 import { track } from "./analytics";
-import { linkButtonVariants } from "./linkButton";
+import { ConsoleCta } from "./ConsoleCta";
 import type { Audience } from "./links";
 import { publicPlansQuery } from "./queries";
 
@@ -84,77 +90,86 @@ function PriceList({
     );
   }
   if (offers === undefined) {
-    return null;
+    return (
+      <div className="flex flex-col gap-6">
+        <PlanCatalogSkeleton />
+        <Skeleton className="h-10 max-w-prose" />
+      </div>
+    );
   }
   return (
-    <PlanCatalog
-      offers={offers.filter(priced)}
-      period={period}
-      onPeriodChange={setPeriod}
-      featuredCode={featuredPlanCode}
-      headingLevel={headingLevel}
-      topupNote="Se compran con un paquete anual vigente."
-      emptyNote={
-        <p className="text-sm text-muted-foreground">
-          No hay planes publicados por ahora. Escríbenos a{" "}
-          <a href={`mailto:${supportEmail}`} className="underline underline-offset-3">
-            {supportEmail}
-          </a>
-          .
-        </p>
-      }
-      renderAction={(offer) => <PlanAction offer={offer} audience={audience} />}
-    />
+    <div className="flex flex-col gap-6">
+      <PlanCatalog
+        offers={offers.filter(priced)}
+        period={period}
+        onPeriodChange={setPeriod}
+        featuredCode={featuredPlanCode}
+        headingLevel={headingLevel}
+        topupNote="Se compran con un paquete anual vigente."
+        emptyNote={
+          <p className="text-sm text-muted-foreground">
+            No hay planes publicados por ahora. Escríbenos a{" "}
+            <a href={`mailto:${supportEmail}`} className="underline underline-offset-3">
+              {supportEmail}
+            </a>
+            .
+          </p>
+        }
+        renderAction={(offer) => <PlanAction offer={offer} audience={audience} />}
+      />
+      <p className="max-w-prose text-sm text-muted-foreground">
+        Creas la cuenta gratis y emites en simulación desde el primer minuto. El plan lo contratas
+        en la consola cuando vayas a emitir en producción.
+      </p>
+    </div>
   );
 }
 
+/** A visitor creates the account first and buys from the console; a signed-in one goes straight to buy. */
 function PlanAction({ offer, audience }: { offer: PricedOffer; audience?: Audience }) {
   if (offer.kind === "TOPUP") {
     return null;
   }
   return (
-    <Link
-      to="/sign-up"
-      search={audience && { audience }}
-      onClick={() =>
-        track({
-          name: "cta_click",
-          audience: audience ?? null,
-          section: "pricing",
-          plan: offer.code,
-        })
-      }
-      className={linkButtonVariants({
-        variant: offer.code === featuredPlanCode ? "default" : "outline",
-      })}
-    >
-      Empezar gratis
-    </Link>
+    <ConsoleCta
+      audience={audience}
+      section="pricing"
+      label="Crear cuenta gratis"
+      size="default"
+      variant={offer.code === featuredPlanCode ? "default" : "outline"}
+      plan={offer.code}
+      signedIn={{
+        to: "/billing/products",
+        label: "Contratar en la consola",
+        periodo: offer.kind === "SUBSCRIPTION" ? "mensual" : "anual",
+      }}
+    />
   );
 }
 
 export function PartnersNote() {
   return (
-    <p className="text-sm text-muted-foreground">
-      ¿Eres contador o manejas muchas empresas? El plan Socios tiene condiciones a la medida.{" "}
+    <p className="max-w-2xl text-sm text-pretty text-muted-foreground">
+      ¿Eres contador? El paquete anual Contador reparte sus documentos entre las empresas de tus
+      clientes. Si tu cartera no cabe en él, el plan Socios se ajusta por contrato.{" "}
       <Link
         to="/contadores"
-        hash="socios"
+        hash="planes"
         className="font-medium text-foreground underline underline-offset-4"
       >
-        Conoce el plan Socios
+        Ver planes para contadores
       </Link>
       .
     </p>
   );
 }
 
-export function PricingPromises() {
+export function PricingPromises({ className }: { className?: string }) {
   return (
-    <ul className="grid gap-3 text-sm sm:grid-cols-2">
+    <ul className={cn("grid gap-3 text-sm sm:grid-cols-2", className)}>
       {pricingPromises.map((promise) => (
         <li key={promise} className="flex gap-2">
-          <CheckIcon className="mt-0.5 size-4 shrink-0 text-success-foreground" />
+          <CheckIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           {promise}
         </li>
       ))}

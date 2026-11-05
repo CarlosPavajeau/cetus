@@ -94,7 +94,7 @@ const webhookPayload = `{
   "id": "0199f6b0-7c11-7a52-9e3d-2b4c6d8e0f12",
   "type": "invoice.accepted",
   "createdAt": "2026-10-25T15:04:05.123Z",
-  "environment": "LIVE",
+  "environment": "SANDBOX",
   "data": {
     "documentType": "INVOICE",
     "number": "FE1024",
@@ -105,25 +105,27 @@ const webhookPayload = `{
   }
 }`;
 
-/** The docs' verification (snippets/webhooks/verify.js in the docs app), without its comment. */
-const webhookVerify = `import { createHmac, timingSafeEqual } from "node:crypto";
-
-export function verifyCetusWebhook(webhookId, timestamp, signature, rawBody, secret) {
-  const sentAt = Number(timestamp);
-  if (!Number.isInteger(sentAt) || Math.abs(Date.now() / 1000 - sentAt) > 300) {
-    return false;
+const webhookRejectedPayload = `{
+  "id": "0199f6b2-1d4e-7f80-a2c5-3e7f9a1b4c26",
+  "type": "invoice.rejected",
+  "createdAt": "2026-10-25T15:09:12.408Z",
+  "environment": "SANDBOX",
+  "data": {
+    "documentType": "INVOICE",
+    "number": "FE1025",
+    "status": "REJECTED",
+    "cufe": "9b41c2d7e0a35f18…",
+    "externalReference": "pedido-1002",
+    "dian": {
+      "statusCode": "99",
+      "statusMessage": "Validación contiene errores en campos mandatorios.",
+      "errors": [
+        "Regla: FAK26, Rechazo: Responsabilidad informada para receptor no valida según lista.",
+        "Regla: FAB10a, Rechazo: El prefijo de numeración no es igual al código de la sucursal correspondiente a este punto de facturación",
+        "Regla: FAJ43b, Notificación: Nombre informado No corresponde al registrado en el RUT con respecto al Nit suminstrado."
+      ]
+    }
   }
-  const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
-  const expected = createHmac("sha256", key)
-    .update(\`\${webhookId}.\${timestamp}.\${rawBody}\`)
-    .digest();
-  return signature.split(" ").some((entry) => {
-    const [version, value] = entry.split(",");
-    const received = Buffer.from(value ?? "", "base64");
-    return (
-      version === "v1" && received.length === expected.length && timingSafeEqual(received, expected)
-    );
-  });
 }`;
 
 /** The code the landing shows, highlighted once on the server; the browser only gets the HTML. */
@@ -133,7 +135,7 @@ export const snippets = {
   invoiceJs: { lang: "js", code: invoiceJs },
   invoicePython: { lang: "python", code: invoicePython },
   webhookPayload: { lang: "json", code: webhookPayload },
-  webhookVerify: { lang: "js", code: webhookVerify },
+  webhookRejectedPayload: { lang: "json", code: webhookRejectedPayload },
 } as const satisfies Record<string, Snippet>;
 
 export type SnippetName = keyof typeof snippets;

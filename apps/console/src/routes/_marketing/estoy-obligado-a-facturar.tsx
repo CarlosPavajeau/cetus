@@ -8,46 +8,50 @@ import { landingFiguresQuery } from "~/features/marketing/queries";
 import { type FaqItem, faqJsonLd } from "~/features/marketing/questions";
 import { Section } from "~/features/marketing/Section";
 import { marketingCacheControl, marketingHead } from "~/features/marketing/seo";
+import { formatCop } from "~/features/usage/labels";
+import type { ObligationCap } from "~/lib/api/types";
 import { docsUrl } from "~/lib/docs";
 
-const calculatorFaq: readonly FaqItem[] = [
-  {
-    question: "¿Quiénes están obligados a facturar electrónicamente?",
-    answer:
-      "Las personas jurídicas, las personas naturales responsables de IVA y quienes están en el régimen SIMPLE. Una persona natural no responsable de IVA no está obligada mientras cumpla todas las condiciones, como tener ingresos menores a 3.500 UVT y un solo establecimiento.",
-  },
-  {
-    question: "¿Qué es la UVT?",
-    answer:
-      "La Unidad de Valor Tributario es la medida con la que la DIAN fija topes y sanciones. Los topes en UVT se mantienen; su valor en pesos cambia cada año.",
-  },
-  {
-    question: "Si no estoy obligado, ¿puedo facturar electrónicamente?",
-    answer:
-      "Sí. Puedes hacerlo de forma voluntaria, por ejemplo si tus clientes te piden factura electrónica para soportar sus costos.",
-  },
-  {
-    question: "¿Qué necesito para empezar?",
-    answer:
-      "Tu RUT con la responsabilidad de facturador electrónico, un certificado de firma digital y una resolución de numeración de la DIAN. En Cetus empiezas gratis en simulación mientras reúnes lo demás.",
-  },
-];
+function calculatorFaq(cap: ObligationCap | null): readonly FaqItem[] {
+  return [
+    {
+      question: "¿Quiénes están obligados a facturar electrónicamente?",
+      answer: `Las personas jurídicas, las personas naturales responsables de IVA y quienes están en el régimen SIMPLE. Una persona natural no responsable de IVA no está obligada mientras cumpla todas las condiciones, como tener ingresos menores a ${capLabel(cap)} y un solo establecimiento.`,
+    },
+    {
+      question: "¿Qué es la UVT?",
+      answer: `La Unidad de Valor Tributario es la medida con la que la DIAN fija topes y sanciones. Los topes en UVT se mantienen; su valor en pesos cambia cada año.${cap ? ` Este año, una UVT vale ${formatCop(cap.uvtValueCop)}.` : ""}`,
+    },
+    {
+      question: "Si no estoy obligado, ¿puedo facturar electrónicamente?",
+      answer:
+        "Sí. Puedes hacerlo de forma voluntaria, por ejemplo si tus clientes te piden factura electrónica para soportar sus costos.",
+    },
+    {
+      question: "¿Qué necesito para empezar?",
+      answer:
+        "Tu RUT con la responsabilidad de facturador electrónico, un certificado de firma digital y una resolución de numeración de la DIAN. En Cetus empiezas gratis en simulación mientras reúnes lo demás.",
+    },
+  ];
+}
 
 const path = "/estoy-obligado-a-facturar";
 
 export const Route = createFileRoute("/_marketing/estoy-obligado-a-facturar")({
   loader: async ({ context }) => {
     const figures = await context.queryClient.query(landingFiguresQuery).catch(() => undefined);
-    return { figuresLoaded: figures !== undefined };
+    return { figuresLoaded: figures !== undefined, cap: figures?.obligationCap ?? null };
   },
-  head: () => ({
+  head: ({ loaderData }) => ({
     ...marketingHead({
       path,
       title: "¿Estoy obligado a facturar electrónicamente? · Cetus",
       description:
         "Responde cuatro preguntas y sabe si debes expedir factura electrónica ante la DIAN como persona natural o jurídica. Gratis y sin registrarte.",
     }),
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(calculatorFaq) }],
+    scripts: [
+      { type: "application/ld+json", children: faqJsonLd(calculatorFaq(loaderData?.cap ?? null)) },
+    ],
   }),
   headers: ({ loaderData }) =>
     loaderData?.figuresLoaded ? { "Cache-Control": marketingCacheControl } : undefined,
@@ -63,7 +67,7 @@ function ObligationPage() {
     <>
       <section className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-16 pb-section md:px-6 md:pt-24">
         <div className="flex max-w-2xl flex-col gap-4">
-          <h1 className="font-heading text-5xl font-medium tracking-display text-balance md:text-6xl">
+          <h1 className="font-heading text-display font-medium tracking-display text-balance">
             ¿Estoy obligado a facturar electrónicamente?
           </h1>
           <p className="text-lg/8 text-pretty text-muted-foreground">
@@ -77,7 +81,7 @@ function ObligationPage() {
         title="Cómo lo calculamos"
         lead="Aplicamos las reglas generales de la DIAN. Tu caso puede tener detalles que solo tu contador ve, así que tómalo como una guía."
       >
-        <ul className="grid max-w-3xl gap-4 text-md/7 text-pretty">
+        <ul className="grid max-w-prose gap-4 text-md/7 text-pretty">
           <li>
             <strong className="font-medium">Personas jurídicas:</strong> siempre deben facturar
             electrónicamente.
@@ -103,7 +107,7 @@ function ObligationPage() {
           </li>
         </ul>
       </Section>
-      <FaqSection items={calculatorFaq} />
+      <FaqSection items={calculatorFaq(cap)} />
     </>
   );
 }

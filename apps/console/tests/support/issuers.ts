@@ -21,11 +21,16 @@ export const testSoftware = {
 };
 
 /** Creates an issuer through the API, as step 1 of the assistant would. */
-export async function createIssuer(organization: TestOrganization, nit: string, legalName: string) {
+export async function createIssuer(
+  organization: TestOrganization,
+  nit: string,
+  legalName: string,
+  environment: "TEST" | "LIVE" = "TEST",
+) {
   const response = await organization.api("/console/issuers", {
     method: "POST",
     body: JSON.stringify({
-      environment: "TEST",
+      environment,
       nit,
       legalName,
       personType: "LEGAL_ENTITY",
@@ -55,9 +60,13 @@ export async function onboardIssuer(
   organization: TestOrganization,
   nit: string,
   legalName: string,
-  { testSet = true, rangeTo = 5000 }: { testSet?: boolean; rangeTo?: number } = {},
+  {
+    testSet = true,
+    rangeTo = 5000,
+    environment = "TEST",
+  }: { testSet?: boolean; rangeTo?: number; environment?: "TEST" | "LIVE" } = {},
 ) {
-  const id = await createIssuer(organization, nit, legalName);
+  const id = await createIssuer(organization, nit, legalName, environment);
   await organization.api(`/console/issuers/${id}/software`, {
     method: "PUT",
     body: JSON.stringify({

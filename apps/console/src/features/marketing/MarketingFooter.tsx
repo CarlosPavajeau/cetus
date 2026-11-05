@@ -12,8 +12,8 @@ const year = new Date().getFullYear();
 export function MarketingFooter() {
   return (
     <footer className="border-t">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-6 md:px-6">
-        <div className="flex flex-col gap-3 md:col-span-2">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-12 md:grid-cols-6 md:px-6">
+        <div className="col-span-2 flex flex-col gap-3">
           <Link to="/" className="flex items-center gap-2.5" aria-label="Cetus, inicio">
             <CetusMark />
             <span className="text-lg font-semibold">Cetus</span>

@@ -39,6 +39,9 @@ test("the landing shows the catalog's prices and sends developers to the sign-up
   await expect(
     page.getByRole("link", { name: "Crear llave de simulación" }).first(),
   ).toHaveAttribute("href", "/sign-up?audience=dev");
+  await expect(
+    page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Contadores" }),
+  ).toHaveAttribute("href", "/contadores");
 });
 
 test("the business view offers the console instead of the API", async ({ page }) => {
@@ -51,6 +54,11 @@ test("the business view offers the console instead of the API", async ({ page })
     "href",
     "/sign-up?audience=negocio",
   );
+  await expect(page.getByRole("heading", { level: 1, name: /desde tu navegador/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sin código, desde la consola" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "De tu pedido a la DIAN, sin tocar XML" }),
+  ).toHaveCount(0);
 });
 
 test("a signed-in visitor goes back to the console", async ({ page, organization }) => {
@@ -126,8 +134,12 @@ test("accountants see the multi-issuer plans and can ask to be partners", async 
   if (contador === undefined) {
     throw new Error("The catalog has no Contador package");
   }
-  await expect(page.getByRole("article", { name: "Contador" })).toContainText(
-    formatCents(contador.version.totalCents),
+  const card = page.getByRole("article", { name: "Contador" });
+  await expect(card).toContainText(formatCents(contador.version.totalCents));
+  await expect(card).toContainText("en total");
+  await expect(card.getByRole("link", { name: "Crear cuenta gratis" })).toHaveAttribute(
+    "href",
+    "/sign-up?audience=negocio",
   );
   const form = page.getByRole("form", { name: "Quiero ser socio" });
   const email = `socio-${crypto.randomUUID()}@ejemplo.com`;
@@ -166,7 +178,7 @@ test("the trust band waits for real production figures", async ({ page }) => {
   await open(page, "/");
 
   await expect(
-    page.getByRole("heading", { name: "Tu sistema se entera al instante" }),
+    page.getByRole("heading", { name: "De tu pedido a la DIAN, sin tocar XML" }),
   ).toBeVisible();
   await expect(page.getByRole("region", { name: "Cetus en producción" })).toHaveCount(
     figures.acceptedDocuments >= acceptedDocumentsMin ? 1 : 0,

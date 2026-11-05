@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { type ComponentProps, type ReactNode, useId } from "react";
 
 import { Badge } from "~/components/ui/badge";
+import { Skeleton } from "~/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 import {
@@ -10,6 +11,7 @@ import {
   documentsLabel,
   formatCents,
   issuersLabel,
+  monthlyEquivalentLabel,
   overageLabel,
   priceBreakdown,
   pricePeriodLabel,
@@ -69,6 +71,9 @@ export function PlanCatalog({
       <TabsContent value="mensual" className="mt-3">
         <div className="flex flex-col gap-4">
           <p className="max-w-prose text-md text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Para negocios que facturan todos los meses y prefieren pagar mes a mes.
+            </span>{" "}
             Pagas cada mes por adelantado. Si emites más documentos de los incluidos, sigues
             emitiendo y el excedente se cobra al cierre del mes.
           </p>
@@ -85,6 +90,10 @@ export function PlanCatalog({
       <TabsContent value="anual" className="mt-3">
         <div className="flex flex-col gap-4">
           <p className="max-w-prose text-md text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Para quien factura por temporadas o lleva varias empresas y prefiere un solo pago al
+              año.
+            </span>{" "}
             Pagas una vez y usas los documentos durante la vigencia del paquete, compartidos entre
             todos tus emisores. Si se acaban, los amplías con una recarga.
           </p>
@@ -137,15 +146,21 @@ function PlanColumns({
   if (offers.length === 0) {
     return emptyNote ?? <EmptyNote />;
   }
-  const costMax = Math.max(...offers.map((offer) => documentCostCents(offer.version)));
+  const baseline = offers
+    .filter((offer) => offer.kind === "SUBSCRIPTION")
+    .map((offer) => ({ name: offer.name, cents: documentCostCents(offer.version) }))
+    .reduce<CostBaseline | null>(
+      (dearest, each) => (dearest === null || each.cents > dearest.cents ? each : dearest),
+      null,
+    );
 
   return (
-    <div className="grid divide-y rounded-xl border bg-card lg:auto-cols-fr lg:grid-flow-col lg:divide-x lg:divide-y-0">
+    <div className="grid divide-y rounded-xl border bg-card lg:auto-cols-fr lg:grid-flow-col lg:grid-rows-[repeat(4,auto)] lg:divide-x lg:divide-y-0">
       {offers.map((offer) => (
         <PlanColumn
           key={offer.id}
           offer={offer}
-          costMax={costMax}
+          baseline={baseline}
           featured={offer.code === featuredCode}
           headingLevel={headingLevel}
           footer={renderAction(offer)}
@@ -155,15 +170,17 @@ function PlanColumns({
   );
 }
 
+type CostBaseline = { name: string; cents: number };
+
 function PlanColumn({
   offer,
-  costMax,
+  baseline,
   featured,
   headingLevel,
   footer,
 }: {
   offer: PricedOffer;
-  costMax: number;
+  baseline: CostBaseline | null;
   featured: boolean;
   headingLevel: HeadingLevel;
   footer: ReactNode;
@@ -173,13 +190,16 @@ function PlanColumn({
   const period = pricePeriodLabel(offer);
 
   return (
-    <article aria-labelledby={titleId} className="flex flex-col gap-5 p-5">
+    <article
+      aria-labelledby={titleId}
+      className="flex flex-col gap-5 p-5 lg:row-span-4 lg:grid lg:grid-rows-subgrid"
+    >
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <Heading level={headingLevel} id={titleId} className="text-md font-medium">
             {offer.name}
           </Heading>
-          {featured && <Badge>Más popular</Badge>}
+          {featured && <Badge>Recomendado</Badge>}
         </div>
         <p className="tabular-nums">
           <span className="font-heading text-3xl tracking-tight">
@@ -190,7 +210,11 @@ function PlanColumn({
         <p className="text-xs text-muted-foreground">{priceBreakdown(version)}</p>
       </div>
 
-      <DocumentCost cents={documentCostCents(version)} costMax={costMax} />
+      {offer.kind === "SUBSCRIPTION" && baseline !== null ? (
+        <SubscriptionCost cents={documentCostCents(version)} baseline={baseline} />
+      ) : (
+        <PackageCost offer={offer} />
+      )}
 
       <ul className="flex flex-col gap-1.5 text-sm">
         <li>
@@ -207,18 +231,69 @@ function PlanColumn({
   );
 }
 
-/** The plan's unit cost, and a bar against the dearest plan of its group so the cheaper volume reads at a glance. */
-function DocumentCost({ cents, costMax }: { cents: number; costMax: number }) {
+/** The plan's unit cost, and what a document saves against the dearest plan of its group. */
+function SubscriptionCost({ cents, baseline }: { cents: number; baseline: CostBaseline }) {
+  const savingPercent = Math.floor((1 - cents / baseline.cents) * 100);
   return (
-    <div className="flex flex-col gap-1.5">
-      <div aria-hidden className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary"
-          style={{ width: `${Math.max((cents / costMax) * 100, 4)}%` }}
-        />
-      </div>
-      <p className="text-xs text-muted-foreground tabular-nums">{documentCostLabel(cents)}</p>
+    <div className="flex flex-col gap-0.5">
+      <p className="text-sm tabular-nums">{documentCostLabel(cents)}</p>
+      {savingPercent > 0 && (
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {savingPercent} % menos por documento que {baseline.name}
+        </p>
+      )}
     </div>
+  );
+}
+
+/**
+ * A package's unit cost falls with its size, so a bar would rank the smallest one last although it is the cheapest
+ * way to start; its price per month compares it with the subscriptions instead.
+ */
+function PackageCost({ offer }: { offer: PricedOffer }) {
+  const monthly = monthlyEquivalentLabel(offer);
+  return (
+    <div className="flex flex-col gap-0.5">
+      {monthly !== null && <p className="text-sm tabular-nums">{monthly}</p>}
+      <p className="text-xs text-muted-foreground tabular-nums">
+        {documentCostLabel(documentCostCents(offer.version))}
+      </p>
+    </div>
+  );
+}
+
+/** The catalog's shape while its prices load, so the page below it does not jump when they arrive. */
+export function PlanCatalogSkeleton({ columns = 3 }: { columns?: number }) {
+  return (
+    <output aria-busy className="flex flex-col gap-4">
+      <span className="sr-only">Cargando precios…</span>
+      <Skeleton className="h-8 w-40" />
+      <div className="flex max-w-prose flex-col gap-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
+      <div className="grid divide-y rounded-xl border bg-card lg:auto-cols-fr lg:grid-flow-col lg:divide-x lg:divide-y-0">
+        {Array.from({ length: columns }, (_, index) => (
+          <div key={index} className="flex flex-col gap-5 p-5">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-9 w-36" />
+              <Skeleton className="h-3 w-28" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-4 w-44" />
+            </div>
+            <Skeleton className="mt-1 h-9 w-40" />
+          </div>
+        ))}
+      </div>
+    </output>
   );
 }
 

@@ -29,7 +29,7 @@
   --text-sm--line-height: 1.5;
   --text-md: 0.875rem;
   --text-md--line-height: 1.5;
-  --text-display: clamp(2.5rem, 6vw, 4.5rem);
+  --text-display: clamp(1.75rem, 9vw, 3.75rem);
   --text-display--line-height: 1.1;
   --spacing-section: clamp(4rem, 10vw, 8rem);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -203,6 +203,11 @@
 .dark .code-block .shiki,
 .dark .code-block .shiki span {
   color: var(--shiki-dark);
+}
+
+/* github-light's orange (#e36209) reads at 3.5:1 on white. */
+.code-block .shiki span[style*="--shiki-light:#e36209" i] {
+  color: #c24e00;
 }
 
 .code-block[data-line-numbers] .shiki code {

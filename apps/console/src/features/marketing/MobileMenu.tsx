@@ -30,6 +30,9 @@ export function MobileMenu() {
           <Link to="/precios" className={itemClass}>
             Precios
           </Link>
+          <Link to="/contadores" className={itemClass}>
+            Contadores
+          </Link>
           <a href={statusPageUrl} className={itemClass}>
             Estado del servicio
           </a>

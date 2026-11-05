@@ -3,38 +3,93 @@ import { RotateCcwIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { docsUrl } from "~/lib/docs";
 
 import { CodeBlock } from "./CodeBlock";
+import type { SnippetName } from "./snippets";
 
-type Line = { at: number; kind: "command" | "response" | "step" | "event"; text: string };
+type Line = {
+  at: number;
+  kind: "command" | "response" | "step" | "rejection" | "rule" | "event";
+  text: string;
+};
 
-const lines: readonly Line[] = [
-  {
-    at: 0,
-    kind: "command",
-    text: "$ curl -X POST https://cetus-api.cantte.com/v1/invoices -d @factura.json",
-  },
-  { at: 700, kind: "response", text: "← 202 Accepted · FE1024 · RECEIVED" },
+type Outcome = "accepted" | "rejected";
+
+const outcomes: readonly Outcome[] = ["accepted", "rejected"];
+
+const command: Line = {
+  at: 0,
+  kind: "command",
+  text: "$ curl -X POST https://cetus-api.cantte.com/v1/invoices -d @factura.json",
+};
+
+const processing: readonly Line[] = [
   { at: 1300, kind: "step", text: "✓ XML UBL 2.1 generado, con totales e impuestos calculados" },
   { at: 1900, kind: "step", text: "✓ Firmado con XAdES-EPES y tu certificado" },
   { at: 2500, kind: "step", text: "✓ Enviado a la DIAN" },
-  { at: 3300, kind: "step", text: "✓ Aceptado por la DIAN · CUFE 6ed9a8e5…4c057918" },
-  {
-    at: 3900,
-    kind: "event",
-    text: "→ webhook invoice.accepted a https://tu-app.com/webhooks · 200",
-  },
-  {
-    at: 4500,
-    kind: "event",
-    text: "→ PDF y AttachedDocument enviados al correo del cliente · document.delivered",
-  },
 ];
+
+const scripts: Record<
+  Outcome,
+  { label: string; lines: readonly Line[]; event: string; snippet: SnippetName }
+> = {
+  accepted: {
+    label: "Aceptada",
+    event: "invoice.accepted",
+    snippet: "webhookPayload",
+    lines: [
+      command,
+      { at: 700, kind: "response", text: "← 202 Accepted · FE1024 · RECEIVED" },
+      ...processing,
+      { at: 3300, kind: "step", text: "✓ Aceptado por la DIAN · CUFE 6ed9a8e5…4c057918" },
+      {
+        at: 3900,
+        kind: "event",
+        text: "→ webhook invoice.accepted a https://tu-app.com/webhooks · 200",
+      },
+      {
+        at: 4500,
+        kind: "event",
+        text: "→ PDF y AttachedDocument enviados al correo del cliente · document.delivered",
+      },
+    ],
+  },
+  rejected: {
+    label: "Rechazada",
+    event: "invoice.rejected",
+    snippet: "webhookRejectedPayload",
+    lines: [
+      command,
+      { at: 700, kind: "response", text: "← 202 Accepted · FE1025 · RECEIVED" },
+      ...processing,
+      { at: 3300, kind: "rejection", text: "✗ Rechazado por la DIAN · 99" },
+      {
+        at: 3600,
+        kind: "rule",
+        text: "  FAK26   Responsabilidad informada para receptor no valida según lista.",
+      },
+      {
+        at: 3900,
+        kind: "rule",
+        text: "  FAB10a  El prefijo de numeración no es igual al código de la sucursal…",
+      },
+      {
+        at: 4500,
+        kind: "event",
+        text: "→ webhook invoice.rejected a https://tu-app.com/webhooks · 200",
+      },
+    ],
+  },
+};
 
 const lineTone: Record<Line["kind"], string> = {
   command: "text-foreground",
   response: "text-info-foreground",
   step: "text-success-foreground",
+  rejection: "font-medium text-destructive-foreground",
+  rule: "text-foreground",
   event: "text-muted-foreground",
 };
 
@@ -42,8 +97,55 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** Plays once when it scrolls into view; rendered complete on the server and without JavaScript. */
-export function RequestDemo({ webhookPayloadHtml }: { webhookPayloadHtml: string }) {
+/** Both answers the DIAN can give the same request; each plays once when it comes into view. */
+export function RequestDemo({ payloadHtml }: { payloadHtml: Record<Outcome, string> }) {
+  const [outcome, setOutcome] = useState<Outcome>("accepted");
+
+  return (
+    <Tabs
+      value={outcome}
+      onValueChange={(value) => {
+        const next = outcomes.find((each) => each === value);
+        if (next) {
+          setOutcome(next);
+        }
+      }}
+    >
+      <TabsList aria-label="Respuesta de la DIAN">
+        {outcomes.map((each) => (
+          <TabsTrigger key={each} value={each}>
+            {scripts[each].label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {outcomes.map((each) => (
+        <TabsContent key={each} value={each} className="mt-2">
+          <div className="flex flex-col gap-3">
+            <OutcomeDemo outcome={each} payloadHtml={payloadHtml[each]} />
+            {each === "rejected" && (
+              <p className="max-w-prose text-md/6 text-pretty text-muted-foreground">
+                Cetus no esconde el rechazo: te da la regla de la DIAN y su motivo para que corrijas
+                y emitas de nuevo. En simulación, el adquiriente{" "}
+                <code className="font-mono text-sm text-foreground">1000000002</code> recibe esta
+                respuesta.{" "}
+                <a
+                  href={`${docsUrl}/inicio-rapido/desarrolladores#practica-los-casos-difíciles`}
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Ver los casos de prueba
+                </a>
+              </p>
+            )}
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
+  );
+}
+
+/** Rendered complete on the server and without JavaScript. */
+function OutcomeDemo({ outcome, payloadHtml }: { outcome: Outcome; payloadHtml: string }) {
+  const { lines, event, snippet } = scripts[outcome];
   const [shown, setShown] = useState(lines.length);
   const [run, setRun] = useState(0);
   const terminal = useRef<HTMLDivElement>(null);
@@ -71,7 +173,7 @@ export function RequestDemo({ webhookPayloadHtml }: { webhookPayloadHtml: string
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [run]);
+  }, [run, lines]);
 
   useEffect(() => {
     const element = terminal.current;
@@ -125,9 +227,9 @@ export function RequestDemo({ webhookPayloadHtml }: { webhookPayloadHtml: string
       </div>
       <div className="min-w-0 lg:col-span-2">
         <CodeBlock
-          html={webhookPayloadHtml}
-          snippet="webhookPayload"
-          title="Webhook · invoice.accepted"
+          html={payloadHtml}
+          snippet={snippet}
+          title={`Webhook · ${event}`}
           copyLabel="Copiar el webhook"
         />
       </div>

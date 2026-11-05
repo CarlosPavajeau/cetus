@@ -125,7 +125,7 @@ export function validityLabel(months: number) {
 /** The price as charged, and how it splits when it carries a tax. */
 export function priceBreakdown(version: PlanVersion) {
   return version.taxCents === 0
-    ? "Precio final, sin IVA"
+    ? "Precio final. No cobramos IVA."
     : `Base ${formatCents(version.baseCents)} + IVA ${formatCents(version.taxCents)}`;
 }
 
@@ -149,6 +149,14 @@ export function pricePeriodLabel(offer: Pick<PlanOffer, "kind" | "validityMonths
     return null;
   }
   return offer.validityMonths === 12 ? "al año" : `por ${formatCount(offer.validityMonths)} meses`;
+}
+
+/** "Equivale a $9.917 al mes" for a package, null when it has no validity to spread its price over. */
+export function monthlyEquivalentLabel(offer: Pick<PricedOffer, "validityMonths" | "version">) {
+  if (offer.validityMonths === null || offer.validityMonths <= 0) {
+    return null;
+  }
+  return `Equivale a ${formatCents(Math.round(offer.version.totalCents / offer.validityMonths))} al mes`;
 }
 
 /** What each included document costs at the plan's price. */

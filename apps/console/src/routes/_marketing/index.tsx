@@ -18,11 +18,11 @@ import { RequestDemo } from "~/features/marketing/RequestDemo";
 import { Section } from "~/features/marketing/Section";
 import {
   BusinessSection,
-  CalculatorSection,
   FeaturesSection,
-  SecuritySection,
+  HabilitacionSection,
+  SecurityPoints,
   StepsSection,
-  WebhooksSection,
+  WebhookEvents,
 } from "~/features/marketing/Sections";
 import { marketingCacheControl, marketingHead } from "~/features/marketing/seo";
 import { TrustBand } from "~/features/marketing/TrustBand";
@@ -32,6 +32,19 @@ const screenshots = {
   accepted: `${docsUrl}/images/consola/factura-aceptada.png`,
   form: `${docsUrl}/images/consola/factura-precargada.png`,
 };
+
+const landingHead = {
+  dev: {
+    title: "Cetus · API de facturación electrónica para Colombia",
+    description:
+      "Facturas, notas crédito y notas débito generadas, firmadas y validadas por la DIAN con una sola llamada. Empieza gratis en simulación.",
+  },
+  negocio: {
+    title: "Cetus · Facturación electrónica DIAN desde tu navegador",
+    description:
+      "Emite facturas, notas crédito y notas débito desde la consola. Cetus las firma, las envía a la DIAN y le llegan a tu cliente por correo con el PDF. Empieza gratis en simulación.",
+  },
+} as const satisfies Record<Audience, { title: string; description: string }>;
 
 /** `audience`: the view a link opens with, e.g. an ad for businesses. */
 export const Route = createFileRoute("/_marketing/")({
@@ -47,13 +60,8 @@ export const Route = createFileRoute("/_marketing/")({
     ]);
     return { pricesLoaded: offers !== undefined };
   },
-  head: () => ({
-    ...marketingHead({
-      path: "/",
-      title: "Cetus · API de facturación electrónica para Colombia",
-      description:
-        "Facturas, notas crédito y notas débito generadas, firmadas y validadas por la DIAN con una sola llamada. Empieza gratis en simulación.",
-    }),
+  head: ({ match }) => ({
+    ...marketingHead({ path: "/", ...landingHead[match.search.audience ?? "dev"] }),
     scripts: [{ type: "application/ld+json", children: faqJsonLd(landingFaq) }],
   }),
   headers: ({ loaderData }) =>
@@ -85,20 +93,40 @@ function Landing() {
         whatsappNumber={whatsappNumber}
         consoleScreenshotUrl={screenshots.accepted}
       />
-      <Section
-        eyebrow="De la petición al CUFE"
-        title="Validada por la DIAN en segundos"
-        lead="Una llamada a la API. Cetus genera el XML, lo firma, lo envía a la DIAN y te avisa con un webhook cuando lo acepta."
-      >
-        <RequestDemo webhookPayloadHtml={html.webhookPayload} />
-      </Section>
-      <TrustBand />
-      <FeaturesSection />
-      <StepsSection html={html} />
-      <WebhooksSection verifyHtml={html.webhookVerify} />
-      <IntegrationsSection />
-      <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
-      <CalculatorSection />
+      {audience === "dev" ? (
+        <>
+          <Section
+            eyebrow="De la petición al CUFE"
+            title="De tu pedido a la DIAN, sin tocar XML"
+            lead="Una llamada a la API. Cetus genera el XML, lo firma, lo envía a la DIAN y te avisa con un webhook si lo acepta o lo rechaza."
+          >
+            <RequestDemo
+              payloadHtml={{
+                accepted: html.webhookPayload,
+                rejected: html.webhookRejectedPayload,
+              }}
+            />
+            <WebhookEvents />
+          </Section>
+          <TrustBand />
+          <FeaturesSection audience={audience} />
+          <StepsSection html={html} />
+          <IntegrationsSection audience={audience} />
+          <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
+        </>
+      ) : (
+        <>
+          <BusinessSection
+            whatsappNumber={whatsappNumber}
+            screenshotUrl={screenshots.form}
+            afterHero
+          />
+          <HabilitacionSection />
+          <TrustBand />
+          <FeaturesSection audience={audience} />
+          <IntegrationsSection audience={audience} />
+        </>
+      )}
       <Section
         id="precios"
         eyebrow="Precios"
@@ -107,15 +135,16 @@ function Landing() {
       >
         <PricingTable audience={audience} page="landing" headingLevel={3} />
         <PartnersNote />
-        <PricingPromises />
+        <div className="grid gap-10 border-t pt-10 lg:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <h3 className="text-base font-medium">Lo que pagas, y lo que no</h3>
+            <PricingPromises className="sm:grid-cols-1" />
+          </div>
+          <SecurityPoints />
+        </div>
       </Section>
-      <SecuritySection />
       <FaqSection items={landingFaq} />
-      <FinalCta
-        audience={audience}
-        onAudienceChange={changeAudience}
-        whatsappNumber={whatsappNumber}
-      />
+      <FinalCta audience={audience} whatsappNumber={whatsappNumber} />
     </>
   );
 }
