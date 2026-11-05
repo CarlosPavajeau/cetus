@@ -213,11 +213,15 @@ function PlanCard({ offer }: { offer: PricedOffer }) {
           <ConsoleCta
             audience="negocio"
             section="partners"
-            label="Empezar gratis"
+            label="Crear cuenta gratis"
             size="default"
             variant="outline"
             plan={offer.code}
-            signedIn={{ to: "/billing/products", label: "Ver en la consola" }}
+            signedIn={{
+              to: "/billing/products",
+              label: "Contratar en la consola",
+              periodo: offer.kind === "SUBSCRIPTION" ? "mensual" : "anual",
+            }}
           />
         </div>
       </article>

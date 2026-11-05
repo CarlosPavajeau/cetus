@@ -137,7 +137,7 @@ test("accountants see the multi-issuer plans and can ask to be partners", async 
   const card = page.getByRole("article", { name: "Contador" });
   await expect(card).toContainText(formatCents(contador.version.totalCents));
   await expect(card).toContainText("en total");
-  await expect(card.getByRole("link", { name: "Empezar gratis" })).toHaveAttribute(
+  await expect(card.getByRole("link", { name: "Crear cuenta gratis" })).toHaveAttribute(
     "href",
     "/sign-up?audience=negocio",
   );

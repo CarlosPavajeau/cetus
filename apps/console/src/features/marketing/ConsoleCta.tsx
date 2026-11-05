@@ -3,12 +3,16 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { ArrowRightIcon } from "lucide-react";
 
+import type { CatalogPeriod } from "~/features/billing/PlanCatalog";
+
 import { type CtaSection, track } from "./analytics";
 import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { visitorSessionQuery } from "./queries";
 
-type SignedInLink = { to: "/overview" | "/billing/products"; label: string };
+type SignedInLink =
+  | { to: "/overview"; label: string }
+  | { to: "/billing/products"; label: string; periodo?: CatalogPeriod };
 
 const consoleLink: SignedInLink = { to: "/overview", label: "Ir a la consola" };
 
@@ -33,10 +37,24 @@ export function ConsoleCta({
   const { data: session } = useQuery(visitorSessionQuery);
 
   if (session) {
-    return (
-      <Link to={signedIn.to} className={linkButtonVariants({ size, variant })}>
+    const className = linkButtonVariants({ size, variant });
+    const content = (
+      <>
         {signedIn.label}
         <ArrowRightIcon data-icon="inline-end" />
+      </>
+    );
+    return signedIn.to === "/billing/products" ? (
+      <Link
+        to="/billing/products"
+        search={signedIn.periodo ? { periodo: signedIn.periodo } : {}}
+        className={className}
+      >
+        {content}
+      </Link>
+    ) : (
+      <Link to="/overview" className={className}>
+        {content}
       </Link>
     );
   }
