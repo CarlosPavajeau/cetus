@@ -27,6 +27,7 @@ export const highlightSnippets = createServerFn({ method: "GET" }).handler(
     invoiceJs: await highlightSnippet("invoiceJs"),
     invoicePython: await highlightSnippet("invoicePython"),
     webhookPayload: await highlightSnippet("webhookPayload"),
+    webhookRejectedPayload: await highlightSnippet("webhookRejectedPayload"),
   }),
 );
 

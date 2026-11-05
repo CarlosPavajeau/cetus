@@ -98,9 +98,14 @@ function Landing() {
           <Section
             eyebrow="De la petición al CUFE"
             title="De tu pedido a la DIAN, sin tocar XML"
-            lead="Una llamada a la API. Cetus genera el XML, lo firma, lo envía a la DIAN y te avisa con un webhook cuando lo acepta."
+            lead="Una llamada a la API. Cetus genera el XML, lo firma, lo envía a la DIAN y te avisa con un webhook si lo acepta o lo rechaza."
           >
-            <RequestDemo webhookPayloadHtml={html.webhookPayload} />
+            <RequestDemo
+              payloadHtml={{
+                accepted: html.webhookPayload,
+                rejected: html.webhookRejectedPayload,
+              }}
+            />
             <WebhookEvents />
           </Section>
           <TrustBand />

@@ -105,6 +105,29 @@ const webhookPayload = `{
   }
 }`;
 
+const webhookRejectedPayload = `{
+  "id": "0199f6b2-1d4e-7f80-a2c5-3e7f9a1b4c26",
+  "type": "invoice.rejected",
+  "createdAt": "2026-10-25T15:09:12.408Z",
+  "environment": "SANDBOX",
+  "data": {
+    "documentType": "INVOICE",
+    "number": "FE1025",
+    "status": "REJECTED",
+    "cufe": "9b41c2d7e0a35f18…",
+    "externalReference": "pedido-1002",
+    "dian": {
+      "statusCode": "99",
+      "statusMessage": "Validación contiene errores en campos mandatorios.",
+      "errors": [
+        "Regla: FAK26, Rechazo: Responsabilidad informada para receptor no valida según lista.",
+        "Regla: FAB10a, Rechazo: El prefijo de numeración no es igual al código de la sucursal correspondiente a este punto de facturación",
+        "Regla: FAJ43b, Notificación: Nombre informado No corresponde al registrado en el RUT con respecto al Nit suminstrado."
+      ]
+    }
+  }
+}`;
+
 /** The code the landing shows, highlighted once on the server; the browser only gets the HTML. */
 export const snippets = {
   heroCurl: { lang: "bash", code: heroCurl },
@@ -112,6 +135,7 @@ export const snippets = {
   invoiceJs: { lang: "js", code: invoiceJs },
   invoicePython: { lang: "python", code: invoicePython },
   webhookPayload: { lang: "json", code: webhookPayload },
+  webhookRejectedPayload: { lang: "json", code: webhookRejectedPayload },
 } as const satisfies Record<string, Snippet>;
 
 export type SnippetName = keyof typeof snippets;
