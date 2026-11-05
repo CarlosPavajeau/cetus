@@ -10,18 +10,15 @@ import {
   QrCodeIcon,
   ShieldCheckIcon,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { statusPageUrl } from "~/features/status/links";
 import { docsUrl } from "~/lib/docs";
 
 import { CodeBlock } from "./CodeBlock";
-import { ConsoleCta } from "./ConsoleCta";
 import type { Audience } from "./links";
 import { Section } from "./Section";
 import type { SnippetName } from "./snippets";
-import { WhatsAppButton } from "./WhatsAppButton";
 
 type Feature = { icon: LucideIcon; title: string; text: string };
 
@@ -231,13 +228,7 @@ const businessBenefits = [
   "Te guiamos en la habilitación ante la DIAN, paso a paso",
 ];
 
-export function BusinessSection({
-  whatsappNumber,
-  screenshotUrl,
-}: {
-  whatsappNumber: string | null;
-  screenshotUrl: string;
-}) {
+export function BusinessSection({ screenshotUrl }: { screenshotUrl: string }) {
   return (
     <Section
       eyebrow="Para negocios"
@@ -254,10 +245,6 @@ export function BusinessSection({
               </li>
             ))}
           </ul>
-          <div className="flex flex-wrap gap-3">
-            <ConsoleCta audience="negocio" section="business" label="Empezar gratis" />
-            <WhatsAppButton number={whatsappNumber} section="business" />
-          </div>
           <Link
             to="/estoy-obligado-a-facturar"
             className="flex items-center gap-1 self-start text-md font-medium underline underline-offset-4"
@@ -322,6 +309,7 @@ const habilitacionShowcase = habilitacionSteps[3];
 /** The business path from the sample company to production, each step beside the console screen it happens in. */
 export function HabilitacionSection() {
   const [step, setStep] = useState<string>(habilitacionSteps[0].value);
+  const tabsId = useId();
 
   return (
     <Section
@@ -363,9 +351,16 @@ export function HabilitacionSection() {
             <TabsPrimitive.Tab
               key={each.value}
               value={each.value}
+              aria-label={`${index + 1}. ${each.title}`}
+              aria-describedby={`${tabsId}-${each.value}`}
               className="group/step rounded-lg p-3 text-left transition-colors duration-150 ease-out outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 data-active:bg-muted"
             >
-              <StepText number={index + 1} title={each.title} text={each.text} />
+              <StepText
+                number={index + 1}
+                title={each.title}
+                text={each.text}
+                textId={`${tabsId}-${each.value}`}
+              />
             </TabsPrimitive.Tab>
           ))}
         </TabsPrimitive.List>
@@ -379,18 +374,21 @@ export function HabilitacionSection() {
           </TabsPrimitive.Panel>
         ))}
       </TabsPrimitive.Root>
-      <div>
-        <ConsoleCta
-          audience="negocio"
-          section="habilitacion"
-          label="Probar con la empresa de ejemplo"
-        />
-      </div>
     </Section>
   );
 }
 
-function StepText({ number, title, text }: { number: number; title: string; text: string }) {
+function StepText({
+  number,
+  title,
+  text,
+  textId,
+}: {
+  number: number;
+  title: string;
+  text: string;
+  textId?: string;
+}) {
   return (
     <span className="flex gap-4">
       <span className="flex size-7 shrink-0 items-center justify-center rounded-full border bg-background font-mono text-xs transition-colors duration-150 ease-out group-data-active/step:border-foreground group-data-active/step:bg-foreground group-data-active/step:text-background">
@@ -398,7 +396,10 @@ function StepText({ number, title, text }: { number: number; title: string; text
       </span>
       <span className="flex flex-col gap-1">
         <span className="text-base font-medium">{title}</span>
-        <span className="text-md/6 text-pretty text-muted-foreground group-data-active/step:text-foreground">
+        <span
+          id={textId}
+          className="text-md/6 text-pretty text-muted-foreground group-data-active/step:text-foreground"
+        >
           {text}
         </span>
       </span>
@@ -448,12 +449,6 @@ export function SecurityPoints() {
           </li>
         ))}
       </ul>
-      <a
-        href={statusPageUrl}
-        className="self-start text-sm font-medium underline underline-offset-4"
-      >
-        Ver la disponibilidad del servicio
-      </a>
     </div>
   );
 }

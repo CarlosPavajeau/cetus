@@ -41,7 +41,7 @@ export function FinalCta({
             </>
           ) : (
             <>
-              <ConsoleCta audience="negocio" section="final" label="Empezar gratis" />
+              <ConsoleCta audience="negocio" section="final" label="Crear cuenta gratis" />
               <WhatsAppButton number={whatsappNumber} section="final" />
             </>
           )}

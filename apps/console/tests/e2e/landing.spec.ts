@@ -50,10 +50,9 @@ test("the business view offers the console instead of the API", async ({ page })
   await page.getByRole("button", { name: "Para negocios" }).first().click();
 
   await expect(page).toHaveURL(/audience=negocio/);
-  await expect(page.getByRole("link", { name: "Empezar gratis" }).first()).toHaveAttribute(
-    "href",
-    "/sign-up?audience=negocio",
-  );
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "Crear cuenta gratis" }).first(),
+  ).toHaveAttribute("href", "/sign-up?audience=negocio");
   await expect(page.getByRole("heading", { level: 1, name: /desde tu navegador/ })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "De la empresa de ejemplo a tu primera factura real" }),

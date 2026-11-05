@@ -4,6 +4,7 @@ import { type ComponentProps, type ReactNode, useId } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { formatCount } from "~/features/usage/labels";
 
 import {
   documentCostCents,
@@ -99,6 +100,7 @@ export function PlanCatalog({
             Pagas una vez y usas los documentos durante la vigencia del paquete, compartidos entre
             todos tus emisores. Si se acaban, los amplías con una recarga.
           </p>
+          <PackageChoice packages={packages} />
           <PlanColumns
             offers={packages}
             subscriptions={subscriptions}
@@ -297,6 +299,26 @@ function holdsIssuers(available: number | null, needed: number | null) {
     return true;
   }
   return needed !== null && available >= needed;
+}
+
+/** Picks a package by the documents of a year, read from the catalog. */
+function PackageChoice({ packages }: { packages: PricedOffer[] }) {
+  if (packages.length < 2) {
+    return null;
+  }
+  const options = packages.map((offer) => {
+    const issuers = offer.version.issuersIncluded;
+    const shared = issuers !== null && issuers > 1 ? ` entre ${formatCount(issuers)} emisores` : "";
+    return `${offer.name} (${documentsLabel(offer.version.documentsIncluded)}${shared})`;
+  });
+  const list = `${options.slice(0, -1).join(", ")} o ${options.at(-1) ?? ""}`;
+  return (
+    <p className="max-w-prose text-md text-pretty text-muted-foreground">
+      <span className="font-medium text-foreground">¿Cuál elijo?</span> Cuenta los documentos que
+      emites en un año y elige el paquete que los cubre: {list}. Si facturas todos los meses,
+      compara con la pestaña Mensual.
+    </p>
+  );
 }
 
 /** The catalog's shape while its prices load, so the page below it does not jump when they arrive. */

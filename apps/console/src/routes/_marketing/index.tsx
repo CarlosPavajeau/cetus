@@ -112,7 +112,7 @@ function Landing() {
           <FeaturesSection audience={audience} />
           <StepsSection html={html} />
           <IntegrationsSection />
-          <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
+          <BusinessSection screenshotUrl={screenshots.form} />
         </>
       ) : (
         <>

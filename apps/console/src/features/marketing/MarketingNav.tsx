@@ -50,7 +50,7 @@ export function MarketingNav() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <SignInLink />
-          <ConsoleCta section="nav" label="Crear cuenta" size="default" />
+          <ConsoleCta section="nav" label="Crear cuenta gratis" size="default" />
           <MobileMenu />
         </div>
       </div>

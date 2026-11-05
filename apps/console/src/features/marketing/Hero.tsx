@@ -88,7 +88,7 @@ export function Hero({
       ) : (
         <div className="flex w-full max-w-4xl flex-col items-center gap-6">
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
-            <ConsoleCta audience="negocio" section="hero" label="Empezar gratis" />
+            <ConsoleCta audience="negocio" section="hero" label="Crear cuenta gratis" />
             <WhatsAppButton number={whatsappNumber} section="hero" />
           </div>
           <Link

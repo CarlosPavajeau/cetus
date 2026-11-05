@@ -227,7 +227,7 @@ function Result({ answers, verdict }: { answers: ObligationAnswers; verdict: Obl
         <ConsoleCta
           audience="negocio"
           section="calculator"
-          label="Empezar gratis"
+          label="Crear cuenta gratis"
           size="default"
           variant={verdict === "NOT_OBLIGATED" ? "outline" : "default"}
         />
