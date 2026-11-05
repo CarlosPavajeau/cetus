@@ -11,42 +11,54 @@ import {
 } from "~/features/marketing/queries";
 import { type FaqItem, faqJsonLd } from "~/features/marketing/questions";
 import { marketingCacheControl, marketingHead, siteUrl } from "~/features/marketing/seo";
+import { formatCount } from "~/features/usage/labels";
+import type { LandingFigures } from "~/lib/api/types";
 
-const pricingFaq: readonly FaqItem[] = [
-  {
-    question: "¿Puedo probar antes de pagar?",
-    answer:
-      "Sí. La simulación y las pruebas de habilitación ante la DIAN son gratis y no vencen. Solo pagas cuando emites en producción, y mientras queden cupos, tu primer emisor en producción trae documentos de cortesía para empezar.",
-  },
-  {
-    question: "¿Cuál es la diferencia entre una suscripción y un paquete anual?",
-    answer:
-      "La suscripción se paga cada mes, trae documentos para ese mes y, si se acaban, sigues emitiendo con excedente. El paquete anual se paga una vez, sus documentos duran 12 meses y se amplía con recargas.",
-  },
-  {
-    question: "¿Qué pasa con los documentos que no uso en el mes?",
-    answer:
-      "Siguen vigentes hasta 60 días después de que termina el periodo, sin pasar de dos mensualidades de documentos acumulados.",
-  },
-  {
-    question: "¿Puedo cambiar de plan?",
-    answer:
-      "Sí, desde la consola. El cambio y la cancelación aplican desde el siguiente periodo, sin prorrateo.",
-  },
-  {
-    question: "¿Cómo pago?",
-    answer:
-      "En la consola, con Wompi. Puedes guardar una tarjeta para que cada renovación se cobre sola. Cada compra se factura electrónicamente con Cetus.",
-  },
-];
+/** The courtesy is mentioned only while it has slots, so neither the page nor its JSON-LD promise one that is gone. */
+function pricingFaq(courtesy: LandingFigures["courtesy"]): readonly FaqItem[] {
+  const courtesyNote =
+    courtesy !== null && courtesy.slotsRemaining > 0
+      ? ` Además, tu primer emisor en producción trae ${formatCount(courtesy.documents)} documentos de cortesía por ${formatCount(courtesy.validityDays)} días, mientras queden cupos.`
+      : "";
+  return [
+    {
+      question: "¿Puedo probar antes de pagar?",
+      answer: `Sí. La simulación y las pruebas de habilitación ante la DIAN son gratis y no vencen. Solo pagas cuando emites en producción.${courtesyNote}`,
+    },
+    {
+      question: "¿Cuál es la diferencia entre una suscripción y un paquete anual?",
+      answer:
+        "La suscripción se paga cada mes, trae documentos para ese mes y, si se acaban, sigues emitiendo con excedente. El paquete anual se paga una vez, sus documentos duran 12 meses y se amplía con recargas.",
+    },
+    {
+      question: "¿Qué pasa con los documentos que no uso en el mes?",
+      answer:
+        "Siguen vigentes hasta 60 días después de que termina el periodo, sin pasar de dos mensualidades de documentos acumulados.",
+    },
+    {
+      question: "¿Puedo cambiar de plan?",
+      answer:
+        "Sí, desde la consola. El cambio y la cancelación aplican desde el siguiente periodo, sin prorrateo.",
+    },
+    {
+      question: "¿Cómo pago?",
+      answer:
+        "En la consola, con Wompi. Puedes guardar una tarjeta para que cada renovación se cobre sola. Cada compra se factura electrónicamente con Cetus.",
+    },
+  ];
+}
 
 export const Route = createFileRoute("/_marketing/precios")({
   loader: async ({ context }) => {
-    const [offers] = await Promise.all([
+    const [offers, figures] = await Promise.all([
       context.queryClient.query(publicPlansQuery).catch(() => undefined),
       context.queryClient.query(landingFiguresQuery).catch(() => undefined),
     ]);
-    return { pricesLoaded: offers !== undefined, offerJsonLd: offers && offersJsonLd(offers) };
+    return {
+      pricesLoaded: offers !== undefined,
+      offerJsonLd: offers && offersJsonLd(offers),
+      faq: pricingFaq(figures?.courtesy ?? null),
+    };
   },
   head: ({ loaderData }) => ({
     ...marketingHead({
@@ -56,7 +68,7 @@ export const Route = createFileRoute("/_marketing/precios")({
         "Suscripciones mensuales desde 200 documentos y paquetes anuales para facturar electrónicamente con la DIAN. Simulación y habilitación gratis.",
     }),
     scripts: [
-      { type: "application/ld+json", children: faqJsonLd(pricingFaq) },
+      { type: "application/ld+json", children: faqJsonLd(loaderData?.faq ?? pricingFaq(null)) },
       ...(loaderData?.offerJsonLd
         ? [{ type: "application/ld+json", children: loaderData.offerJsonLd }]
         : []),
@@ -93,6 +105,7 @@ function offersJsonLd(offers: { name: string; version: { totalCents: number } | 
 
 function Pricing() {
   const { data: config } = useQuery(marketingConfigQuery);
+  const { faq } = Route.useLoaderData();
 
   return (
     <>
@@ -110,7 +123,7 @@ function Pricing() {
         <PartnersNote />
         <PricingPromises />
       </section>
-      <FaqSection items={pricingFaq} />
+      <FaqSection items={faq} />
       <FinalCta audience="negocio" whatsappNumber={config?.whatsappNumber ?? null} />
     </>
   );
