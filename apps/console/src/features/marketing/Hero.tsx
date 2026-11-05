@@ -10,11 +10,31 @@ import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
 import { WhatsAppButton } from "./WhatsAppButton";
 
-const trust = [
-  "Simulación y habilitación sin costo",
-  "Certificado de firma cifrado con AWS KMS",
-  "Webhooks firmados en tiempo real",
-];
+const copy = {
+  dev: {
+    badge: "API de facturación electrónica · Hecha para Colombia",
+    title: "Tu producto. Nuestra API. Conectados a la DIAN.",
+    lead: "Facturas, notas crédito y notas débito, generadas, firmadas y validadas por la DIAN con una sola llamada.",
+    trust: [
+      "Simulación y habilitación sin costo",
+      "Certificado de firma cifrado con AWS KMS",
+      "Webhooks firmados en tiempo real",
+    ],
+  },
+  negocio: {
+    badge: "Facturación electrónica · Hecha para Colombia",
+    title: "Factura ante la DIAN desde tu navegador.",
+    lead: "Emite facturas, notas crédito y notas débito desde la consola. Cetus las firma, las envía a la DIAN y le llegan a tu cliente por correo con el PDF.",
+    trust: [
+      "Simulación y habilitación sin costo",
+      "Certificado de firma cifrado con AWS KMS",
+      "Tu cliente recibe el PDF por correo",
+    ],
+  },
+} as const satisfies Record<
+  Audience,
+  { badge: string; title: string; lead: string; trust: readonly string[] }
+>;
 
 export function Hero({
   audience,
@@ -29,17 +49,16 @@ export function Hero({
   whatsappNumber: string | null;
   consoleScreenshotUrl: string;
 }) {
+  const { badge, title, lead, trust } = copy[audience];
+
   return (
     <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 pt-16 pb-section text-center md:px-6 md:pt-24">
-      <Badge variant="muted">API de facturación electrónica · Hecha para Colombia</Badge>
+      <Badge variant="muted">{badge}</Badge>
       <div className="flex max-w-3xl flex-col gap-5">
         <h1 className="font-heading text-display font-medium tracking-display text-balance">
-          Tu producto. Nuestra API. Conectados a la DIAN.
+          {title}
         </h1>
-        <p className="mx-auto max-w-2xl text-lg/8 text-pretty text-muted-foreground">
-          Facturas, notas crédito y notas débito, generadas, firmadas y validadas por la DIAN con
-          una sola llamada.
-        </p>
+        <p className="mx-auto max-w-2xl text-lg/8 text-pretty text-muted-foreground">{lead}</p>
       </div>
 
       <AudienceToggle audience={audience} onChange={onAudienceChange} />

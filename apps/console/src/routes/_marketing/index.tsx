@@ -85,20 +85,32 @@ function Landing() {
         whatsappNumber={whatsappNumber}
         consoleScreenshotUrl={screenshots.accepted}
       />
-      <Section
-        eyebrow="De la petición al CUFE"
-        title="De tu pedido a la DIAN, sin tocar XML"
-        lead="Una llamada a la API. Cetus genera el XML, lo firma, lo envía a la DIAN y te avisa con un webhook cuando lo acepta."
-      >
-        <RequestDemo webhookPayloadHtml={html.webhookPayload} />
-      </Section>
-      <TrustBand />
-      <FeaturesSection />
-      <StepsSection html={html} />
-      <WebhooksSection verifyHtml={html.webhookVerify} />
-      <IntegrationsSection />
-      <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
-      <CalculatorSection />
+      {audience === "dev" ? (
+        <>
+          <Section
+            eyebrow="De la petición al CUFE"
+            title="De tu pedido a la DIAN, sin tocar XML"
+            lead="Una llamada a la API. Cetus genera el XML, lo firma, lo envía a la DIAN y te avisa con un webhook cuando lo acepta."
+          >
+            <RequestDemo webhookPayloadHtml={html.webhookPayload} />
+          </Section>
+          <TrustBand />
+          <FeaturesSection />
+          <StepsSection html={html} />
+          <WebhooksSection verifyHtml={html.webhookVerify} />
+          <IntegrationsSection />
+          <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
+          <CalculatorSection />
+        </>
+      ) : (
+        <>
+          <BusinessSection whatsappNumber={whatsappNumber} screenshotUrl={screenshots.form} />
+          <CalculatorSection />
+          <TrustBand />
+          <FeaturesSection />
+          <IntegrationsSection />
+        </>
+      )}
       <Section
         id="precios"
         eyebrow="Precios"

@@ -39,6 +39,9 @@ test("the landing shows the catalog's prices and sends developers to the sign-up
   await expect(
     page.getByRole("link", { name: "Crear llave de simulación" }).first(),
   ).toHaveAttribute("href", "/sign-up?audience=dev");
+  await expect(
+    page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Contadores" }),
+  ).toHaveAttribute("href", "/contadores");
 });
 
 test("the business view offers the console instead of the API", async ({ page }) => {
@@ -50,6 +53,11 @@ test("the business view offers the console instead of the API", async ({ page })
   await expect(page.getByRole("link", { name: "Empezar gratis" }).first()).toHaveAttribute(
     "href",
     "/sign-up?audience=negocio",
+  );
+  await expect(page.getByRole("heading", { level: 1, name: /desde tu navegador/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sin código, desde la consola" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tu sistema se entera al instante" })).toHaveCount(
+    0,
   );
 });
 
