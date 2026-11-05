@@ -20,6 +20,7 @@ import {
   BusinessSection,
   CalculatorSection,
   FeaturesSection,
+  HabilitacionSection,
   SecuritySection,
   StepsSection,
   WebhooksSection,
@@ -109,6 +110,7 @@ function Landing() {
             screenshotUrl={screenshots.form}
             afterHero
           />
+          <HabilitacionSection />
           <CalculatorSection />
           <TrustBand />
           <FeaturesSection audience={audience} />

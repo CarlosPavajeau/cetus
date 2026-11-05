@@ -8,6 +8,7 @@ export type CtaSection =
   | "nav"
   | "hero"
   | "business"
+  | "habilitacion"
   | "pricing"
   | "final"
   | "calculator"

@@ -1,3 +1,4 @@
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRightIcon,
@@ -314,6 +315,140 @@ export function BusinessSection({
         />
       </div>
     </Section>
+  );
+}
+
+const habilitacionSteps = [
+  {
+    value: "ejemplo",
+    title: "Prueba con la empresa de ejemplo",
+    text: "Tu cuenta trae una empresa lista para facturar en simulación. Emites tu primera factura el mismo día, sin RUT ni certificado.",
+    image: "resumen-simulacion",
+    alt: "El resumen de una cuenta nueva en la consola de Cetus, con la empresa de ejemplo lista para emitir una factura simulada",
+  },
+  {
+    value: "rut",
+    title: "Registra tu empresa con el RUT",
+    text: "Razón social, NIT, responsabilidades y dirección, tal como aparecen en el RUT. La consola calcula el dígito de verificación para que lo compares.",
+    image: "habilitacion-rut",
+    alt: "El primer paso de la configuración del emisor: el tipo de persona, el NIT y la razón social, con la ayuda para encontrarlos en el RUT",
+  },
+  {
+    value: "certificado",
+    title: "Sube el certificado y la numeración de pruebas",
+    text: "Registras a Cetus como tu software en el portal de la DIAN. Después subes tu certificado de firma y copias la clave técnica del rango de pruebas.",
+    image: "habilitacion-numeracion",
+    alt: "El último paso de la configuración: la clave técnica y la resolución del rango de pruebas, con los datos, el software y el certificado ya completos",
+  },
+  {
+    value: "set",
+    title: "Envía el set de pruebas",
+    text: "Emites en pruebas las facturas que pide la DIAN. La consola cuenta cuántas aceptó para que lo compares con el portal.",
+    image: "habilitacion-set-de-pruebas",
+    alt: "La página del emisor en habilitación, con el avance del set de pruebas: tres facturas aceptadas por la DIAN",
+  },
+  {
+    value: "produccion",
+    title: "Pasa a producción",
+    text: "Con la habilitación aprobada, pides tu resolución de numeración y eliges un plan. El emisor de producción conserva el software y el certificado.",
+    image: "habilitacion-produccion",
+    alt: "La confirmación para crear el emisor de producción con los mismos datos, el mismo software y una copia del certificado",
+  },
+] as const;
+
+/** The business path from the sample company to production, each step beside the console screen it happens in. */
+export function HabilitacionSection() {
+  const [step, setStep] = useState<string>(habilitacionSteps[0].value);
+
+  return (
+    <Section
+      title="De la empresa de ejemplo a tu primera factura real"
+      lead={
+        <>
+          Facturas en simulación desde el primer día y te habilitas ante la DIAN cuando tengas tus
+          documentos.{" "}
+          <a
+            href={`${docsUrl}/guias/como-habilitarse`}
+            className="font-medium text-foreground underline underline-offset-4"
+          >
+            Leer la guía de habilitación
+          </a>
+        </>
+      }
+    >
+      <ol className="flex flex-col gap-10 lg:hidden">
+        {habilitacionSteps.map((each, index) => (
+          <li key={each.value} className="flex flex-col gap-4">
+            <StepText number={index + 1} title={each.title} text={each.text} />
+            <ConsoleScreenshot step={each} />
+          </li>
+        ))}
+      </ol>
+      <TabsPrimitive.Root
+        value={step}
+        onValueChange={(value) => setStep(String(value))}
+        orientation="vertical"
+        className="hidden items-start gap-10 lg:grid lg:grid-cols-5"
+      >
+        <TabsPrimitive.List
+          aria-label="Pasos de la habilitación"
+          className="flex flex-col gap-1 lg:col-span-2"
+        >
+          {habilitacionSteps.map((each, index) => (
+            <TabsPrimitive.Tab
+              key={each.value}
+              value={each.value}
+              className="group/step rounded-lg p-3 text-left transition-colors duration-150 ease-out outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 data-active:bg-muted"
+            >
+              <StepText number={index + 1} title={each.title} text={each.text} />
+            </TabsPrimitive.Tab>
+          ))}
+        </TabsPrimitive.List>
+        {habilitacionSteps.map((each) => (
+          <TabsPrimitive.Panel
+            key={each.value}
+            value={each.value}
+            className="sticky top-24 col-span-3 outline-none"
+          >
+            <ConsoleScreenshot step={each} />
+          </TabsPrimitive.Panel>
+        ))}
+      </TabsPrimitive.Root>
+      <div>
+        <ConsoleCta
+          audience="negocio"
+          section="habilitacion"
+          label="Probar con la empresa de ejemplo"
+        />
+      </div>
+    </Section>
+  );
+}
+
+function StepText({ number, title, text }: { number: number; title: string; text: string }) {
+  return (
+    <span className="flex gap-4">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full border bg-background font-mono text-xs transition-colors duration-150 ease-out group-data-active/step:border-foreground group-data-active/step:bg-foreground group-data-active/step:text-background">
+        {number}
+      </span>
+      <span className="flex flex-col gap-1">
+        <span className="text-base font-medium">{title}</span>
+        <span className="text-md/6 text-pretty text-muted-foreground">{text}</span>
+      </span>
+    </span>
+  );
+}
+
+function ConsoleScreenshot({ step }: { step: { image: string; alt: string } }) {
+  return (
+    <img
+      src={`${docsUrl}/images/consola/${step.image}.png`}
+      alt={step.alt}
+      width={1280}
+      height={800}
+      loading="lazy"
+      className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+    />
   );
 }
 
