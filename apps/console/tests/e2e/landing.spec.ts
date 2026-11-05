@@ -134,8 +134,12 @@ test("accountants see the multi-issuer plans and can ask to be partners", async 
   if (contador === undefined) {
     throw new Error("The catalog has no Contador package");
   }
-  await expect(page.getByRole("article", { name: "Contador" })).toContainText(
-    formatCents(contador.version.totalCents),
+  const card = page.getByRole("article", { name: "Contador" });
+  await expect(card).toContainText(formatCents(contador.version.totalCents));
+  await expect(card).toContainText("en total");
+  await expect(card.getByRole("link", { name: "Empezar gratis" })).toHaveAttribute(
+    "href",
+    "/sign-up?audience=negocio",
   );
   const form = page.getByRole("form", { name: "Quiero ser socio" });
   const email = `socio-${crypto.randomUUID()}@ejemplo.com`;

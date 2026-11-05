@@ -14,17 +14,21 @@ export function ConsoleCta({
   section,
   label,
   size = "lg",
+  variant = "default",
+  plan,
 }: {
   audience?: Audience;
   section: CtaSection;
   label: string;
   size?: "default" | "lg";
+  variant?: "default" | "outline";
+  plan?: string;
 }) {
   const { data: session } = useQuery(visitorSessionQuery);
 
   if (session) {
     return (
-      <Link to="/overview" className={linkButtonVariants({ size })}>
+      <Link to="/overview" className={linkButtonVariants({ size, variant })}>
         Ir a la consola
         <ArrowRightIcon data-icon="inline-end" />
       </Link>
@@ -34,8 +38,8 @@ export function ConsoleCta({
     <Link
       to="/sign-up"
       search={audience && { audience }}
-      className={linkButtonVariants({ size })}
-      onClick={() => track({ name: "cta_click", audience: audience ?? null, section })}
+      className={linkButtonVariants({ size, variant })}
+      onClick={() => track({ name: "cta_click", audience: audience ?? null, section, plan })}
     >
       {label}
       <ArrowRightIcon data-icon="inline-end" />

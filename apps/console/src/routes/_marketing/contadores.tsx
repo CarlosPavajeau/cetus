@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { Building2Icon, FileStackIcon, LinkIcon, UsersIcon } from "lucide-react";
 
 import {
@@ -9,7 +9,9 @@ import {
   issuersLabel,
   pricePeriodLabel,
   priced,
+  validityLabel,
 } from "~/features/billing/labels";
+import { ConsoleCta } from "~/features/marketing/ConsoleCta";
 import { FaqSection } from "~/features/marketing/Faq";
 import { PartnerForm } from "~/features/marketing/PartnerForm";
 import { publicPlansQuery } from "~/features/marketing/queries";
@@ -92,6 +94,14 @@ function Partners() {
             Cada cliente es un emisor con su NIT, su certificado y su numeración. Tú los habilitas
             ante la DIAN y facturas por ellos desde la misma consola.
           </p>
+          <div className="flex flex-col gap-3 pt-2">
+            <div>
+              <ConsoleCta audience="negocio" section="partners" label="Crear cuenta gratis" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Empiezas en simulación con una empresa de ejemplo, sin certificado ni tarjeta.
+            </p>
+          </div>
         </div>
         <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2">
           {benefits.map((benefit) => (
@@ -114,7 +124,7 @@ function Partners() {
         id="socios"
         eyebrow="Plan Socios"
         title="¿Manejas muchas empresas?"
-        lead="El plan Socios ajusta los documentos y los emisores a tu cartera, con condiciones a tu medida. Cuéntanos de tu firma y te escribimos."
+        lead="Si tu cartera pasa de los emisores de estos planes, el plan Socios ajusta los documentos y los emisores a tu medida, por contrato. Cuéntanos de tu firma y te escribimos."
       >
         <div className="max-w-2xl">
           <PartnerForm />
@@ -130,7 +140,11 @@ function MultiIssuerPlans() {
   if (isError) {
     return (
       <p className="text-sm text-muted-foreground">
-        No pudimos cargar los precios. Míralos en la página de precios.
+        No pudimos cargar los precios. Míralos en{" "}
+        <Link to="/precios" className="underline underline-offset-3 hover:text-foreground">
+          la página de precios
+        </Link>
+        .
       </p>
     );
   }
@@ -162,12 +176,26 @@ function PlanCard({ offer }: { offer: PricedOffer }) {
           {period && <span className="text-md font-normal text-muted-foreground"> {period}</span>}
         </p>
         <ul className="flex flex-col gap-1 text-md/6 text-muted-foreground">
-          <li>{documentsLabel(offer.version.documentsIncluded)}</li>
+          <li>
+            {documentsLabel(offer.version.documentsIncluded)}
+            {offer.kind === "SUBSCRIPTION" ? " cada mes" : " en total"}
+          </li>
           {offer.version.issuersIncluded !== null &&
             offer.version.issuersIncluded !== undefined && (
               <li>{issuersLabel(offer.version.issuersIncluded)}</li>
             )}
+          {offer.validityMonths !== null && <li>{validityLabel(offer.validityMonths)}</li>}
         </ul>
+        <div className="mt-auto pt-3">
+          <ConsoleCta
+            audience="negocio"
+            section="partners"
+            label="Empezar gratis"
+            size="default"
+            variant="outline"
+            plan={offer.code}
+          />
+        </div>
       </article>
     </li>
   );

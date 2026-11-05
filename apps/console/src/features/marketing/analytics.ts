@@ -4,7 +4,14 @@ import type { Audience } from "./links";
 import type { ObligationVerdict } from "./obligation";
 import type { SnippetName } from "./snippets";
 
-export type CtaSection = "nav" | "hero" | "business" | "pricing" | "final" | "calculator";
+export type CtaSection =
+  | "nav"
+  | "hero"
+  | "business"
+  | "pricing"
+  | "final"
+  | "calculator"
+  | "partners";
 
 export type LeadKind = "calculator" | "partner" | "integration";
 
