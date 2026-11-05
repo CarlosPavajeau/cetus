@@ -103,7 +103,7 @@ export function Hero({
       <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
         {trust.map((item) => (
           <li key={item} className="flex items-center gap-1.5">
-            <CheckIcon className="size-4 text-success-foreground" />
+            <CheckIcon className="size-4 text-muted-foreground" />
             {item}
           </li>
         ))}

@@ -283,7 +283,7 @@ export function BusinessSection({
           <ul className="flex flex-col gap-3 text-md">
             {businessBenefits.map((benefit) => (
               <li key={benefit} className="flex gap-2">
-                <FileCheck2Icon className="mt-0.5 size-4 shrink-0 text-success-foreground" />
+                <FileCheck2Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 {benefit}
               </li>
             ))}

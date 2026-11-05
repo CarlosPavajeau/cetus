@@ -168,7 +168,7 @@ export function PricingPromises({ className }: { className?: string }) {
     <ul className={cn("grid gap-3 text-sm sm:grid-cols-2", className)}>
       {pricingPromises.map((promise) => (
         <li key={promise} className="flex gap-2">
-          <CheckIcon className="mt-0.5 size-4 shrink-0 text-success-foreground" />
+          <CheckIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           {promise}
         </li>
       ))}
