@@ -43,8 +43,8 @@ const devFeatures: readonly Feature[] = [
   },
   {
     icon: FlaskConicalIcon,
-    title: "Simulación idéntica a producción",
-    text: "Integra sin certificado ni habilitación: la simulación responde como la DIAN, sin validez fiscal.",
+    title: "Simulación con el flujo de producción",
+    text: "Integra sin certificado ni habilitación. La simulación numera, firma y responde como la DIAN, pero no le envía nada: sus documentos no tienen validez fiscal.",
   },
 ];
 
@@ -66,8 +66,8 @@ const businessFeatures: readonly Feature[] = [
   },
   {
     icon: FlaskConicalIcon,
-    title: "Simulación idéntica a producción",
-    text: "Prueba sin certificado ni habilitación: la simulación responde como la DIAN, sin validez fiscal.",
+    title: "Simulación con el flujo de producción",
+    text: "Prueba sin certificado ni habilitación. La simulación responde como la DIAN, pero no le envía nada: esas facturas no tienen validez fiscal.",
   },
 ];
 
