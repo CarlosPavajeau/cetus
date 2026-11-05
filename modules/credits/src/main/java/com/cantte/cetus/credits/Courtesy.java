@@ -84,6 +84,10 @@ public class Courtesy {
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public Optional<CreditGrantEntity> claim(UUID accountId, String nit, OffsetDateTime now) {
+        // Most accounts without a product already had one: they never wait for the promotion's lock.
+        if (!accountEligible(accountId)) {
+            return Optional.empty();
+        }
         Optional<PromotionEntity> active = PromotionEntity.lockActive();
         if (active.isEmpty()) {
             return Optional.empty();

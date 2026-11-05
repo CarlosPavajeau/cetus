@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.notifications;
 
 import com.cantte.cetus.notifications.NotificationKind;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -182,9 +183,13 @@ public record NotificationEmail(String subject, String html, String text) {
                         "/billing/products");
             case COURTESY_GRANTED ->
                 new Body(
-                        "Tienes %s documentos de cortesía para empezar en producción".formatted(data.get("documents")),
+                        "Tienes %s documentos de cortesía para empezar en producción"
+                                .formatted(Numbers.count(Long.parseLong(data.get("documents")))),
                         "%s recibió %s documentos de cortesía con su primer emisor en producción. Vencen el %s."
-                                .formatted(account, data.get("documents"), data.get("expiresAt")),
+                                .formatted(
+                                        account,
+                                        Numbers.count(Long.parseLong(data.get("documents"))),
+                                        Dates.bogota(OffsetDateTime.parse(data.get("expiresAt")))),
                         "No tienen margen de cortesía: cuando se acaben o venzan, solo podrás emitir notas crédito"
                                 + " hasta que contrates una suscripción o compres un paquete.",
                         "Ver tus créditos",

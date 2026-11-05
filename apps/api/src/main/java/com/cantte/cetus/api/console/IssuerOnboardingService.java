@@ -33,16 +33,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
-import java.text.NumberFormat;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,10 +52,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @ApplicationScoped
 public class IssuerOnboardingService {
-
-    private static final Locale COLOMBIA = Locale.forLanguageTag("es-CO");
-    private static final ZoneId BOGOTA = ZoneId.of("America/Bogota");
-    private static final DateTimeFormatter EXPIRY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     @Inject
     Entitlements entitlements;
@@ -221,11 +213,7 @@ public class IssuerOnboardingService {
                 lot.accountId,
                 NotificationKind.COURTESY_GRANTED,
                 "courtesy_granted:" + lot.id,
-                Map.of(
-                        "documents",
-                        NumberFormat.getIntegerInstance(COLOMBIA).format(lot.quantity),
-                        "expiresAt",
-                        lot.expiresAt.atZoneSameInstant(BOGOTA).format(EXPIRY)));
+                Map.of("documents", String.valueOf(lot.quantity), "expiresAt", lot.expiresAt.toString()));
     }
 
     /**

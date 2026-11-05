@@ -135,7 +135,9 @@ class SendNotificationHandlerTest {
         UUID accountId = account();
         fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
         UUID courtesy = request(
-                accountId, NotificationKind.COURTESY_GRANTED, Map.of("documents", "50", "expiresAt", "03/02/2027"));
+                accountId,
+                NotificationKind.COURTESY_GRANTED,
+                Map.of("documents", "50", "expiresAt", "2027-02-03T15:30:00Z"));
         UUID usage = request(
                 accountId,
                 NotificationKind.CREDITS_USAGE,
@@ -150,7 +152,7 @@ class SendNotificationHandlerTest {
         assertThat(resend.requests().getFirst().body().get("subject").asText())
                 .isEqualTo("[Cetus] Tienes 50 documentos de cortesía para empezar en producción");
         assertThat(resend.requests().getFirst().body().get("text").asText())
-                .contains("Vencen el 03/02/2027")
+                .contains("Vencen el 03/02/2027 10:30")
                 .contains("No tienen margen de cortesía")
                 .contains("/billing");
         assertThat(resend.requests().getLast().body().get("text").asText())
