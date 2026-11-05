@@ -205,6 +205,11 @@
   color: var(--shiki-dark);
 }
 
+/* github-light's orange (#e36209) reads at 3.5:1 on white. */
+.code-block .shiki span[style*="--shiki-light:#e36209" i] {
+  color: #c24e00;
+}
+
 .code-block[data-line-numbers] .shiki code {
   counter-reset: line;
 }

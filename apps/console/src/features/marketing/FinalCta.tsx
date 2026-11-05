@@ -2,7 +2,6 @@ import { BookOpenIcon } from "lucide-react";
 
 import { docsUrl } from "~/lib/docs";
 
-import { AudienceToggle } from "./AudienceToggle";
 import { ConsoleCta } from "./ConsoleCta";
 import { linkButtonVariants } from "./linkButton";
 import type { Audience } from "./links";
@@ -10,11 +9,9 @@ import { WhatsAppButton } from "./WhatsAppButton";
 
 export function FinalCta({
   audience,
-  onAudienceChange,
   whatsappNumber,
 }: {
   audience: Audience;
-  onAudienceChange: (audience: Audience) => void;
   whatsappNumber: string | null;
 }) {
   return (
@@ -29,7 +26,6 @@ export function FinalCta({
         <p className="text-lg/8 text-pretty text-muted-foreground">
           Crea tu cuenta gratis y emite en simulación en minutos, sin certificado ni tarjeta.
         </p>
-        <AudienceToggle audience={audience} onChange={onAudienceChange} />
         <div className="flex flex-wrap justify-center gap-3">
           {audience === "dev" ? (
             <>

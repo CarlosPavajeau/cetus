@@ -113,11 +113,12 @@ function Partners() {
           height={640}
           className="w-full rounded-xl shadow-sm outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
         />
+        <h2 className="sr-only">Lo que ganas con Cetus</h2>
         <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2">
           {benefits.map((benefit) => (
             <li key={benefit.title} className="flex flex-col gap-2 bg-background p-6">
               <benefit.icon className="size-5 text-muted-foreground" />
-              <h2 className="text-md font-medium">{benefit.title}</h2>
+              <h3 className="text-md font-medium">{benefit.title}</h3>
               <p className="text-md/6 text-pretty text-muted-foreground">{benefit.text}</p>
             </li>
           ))}

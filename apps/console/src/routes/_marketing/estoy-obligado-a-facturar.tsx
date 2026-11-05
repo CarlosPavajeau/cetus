@@ -81,7 +81,7 @@ function ObligationPage() {
         title="Cómo lo calculamos"
         lead="Aplicamos las reglas generales de la DIAN. Tu caso puede tener detalles que solo tu contador ve, así que tómalo como una guía."
       >
-        <ul className="grid max-w-3xl gap-4 text-md/7 text-pretty">
+        <ul className="grid max-w-prose gap-4 text-md/7 text-pretty">
           <li>
             <strong className="font-medium">Personas jurídicas:</strong> siempre deben facturar
             electrónicamente.

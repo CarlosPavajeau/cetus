@@ -94,7 +94,7 @@ const webhookPayload = `{
   "id": "0199f6b0-7c11-7a52-9e3d-2b4c6d8e0f12",
   "type": "invoice.accepted",
   "createdAt": "2026-10-25T15:04:05.123Z",
-  "environment": "LIVE",
+  "environment": "SANDBOX",
   "data": {
     "documentType": "INVOICE",
     "number": "FE1024",

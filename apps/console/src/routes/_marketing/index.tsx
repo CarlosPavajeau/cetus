@@ -131,11 +131,7 @@ function Landing() {
         </div>
       </Section>
       <FaqSection items={landingFaq} />
-      <FinalCta
-        audience={audience}
-        onAudienceChange={changeAudience}
-        whatsappNumber={whatsappNumber}
-      />
+      <FinalCta audience={audience} whatsappNumber={whatsappNumber} />
     </>
   );
 }
