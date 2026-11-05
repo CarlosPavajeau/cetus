@@ -51,7 +51,7 @@ export function Hero({
   return (
     <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 pt-16 pb-section text-center md:px-6 md:pt-24">
       <div className="flex max-w-3xl flex-col gap-5">
-        <h1 className="font-heading text-display font-medium tracking-display text-balance max-sm:text-[calc((100vw-2rem)/10.5)]">
+        <h1 className="font-heading text-[clamp(1.75rem,8vw,3.75rem)] leading-[1.1] font-medium tracking-display text-balance">
           {title.map((line) => (
             <span key={line} className="block">
               {line}

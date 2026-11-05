@@ -33,6 +33,19 @@ const screenshots = {
   form: `${docsUrl}/images/consola/factura-precargada.png`,
 };
 
+const landingHead = {
+  dev: {
+    title: "Cetus · API de facturación electrónica para Colombia",
+    description:
+      "Facturas, notas crédito y notas débito generadas, firmadas y validadas por la DIAN con una sola llamada. Empieza gratis en simulación.",
+  },
+  negocio: {
+    title: "Cetus · Facturación electrónica DIAN desde tu navegador",
+    description:
+      "Emite facturas, notas crédito y notas débito desde la consola. Cetus las firma, las envía a la DIAN y le llegan a tu cliente por correo con el PDF. Empieza gratis en simulación.",
+  },
+} as const satisfies Record<Audience, { title: string; description: string }>;
+
 /** `audience`: the view a link opens with, e.g. an ad for businesses. */
 export const Route = createFileRoute("/_marketing/")({
   validateSearch: (search: Record<string, unknown>): { audience?: Audience } => {
@@ -47,13 +60,8 @@ export const Route = createFileRoute("/_marketing/")({
     ]);
     return { pricesLoaded: offers !== undefined };
   },
-  head: () => ({
-    ...marketingHead({
-      path: "/",
-      title: "Cetus · API de facturación electrónica para Colombia",
-      description:
-        "Facturas, notas crédito y notas débito generadas, firmadas y validadas por la DIAN con una sola llamada. Empieza gratis en simulación.",
-    }),
+  head: ({ match }) => ({
+    ...marketingHead({ path: "/", ...landingHead[match.search.audience ?? "dev"] }),
     scripts: [{ type: "application/ld+json", children: faqJsonLd(landingFaq) }],
   }),
   headers: ({ loaderData }) =>

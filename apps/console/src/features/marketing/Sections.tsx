@@ -154,11 +154,21 @@ const codeTabs: readonly CodeTab[] = [
 const steps = [
   {
     title: "Crea tu cuenta y tu llave de simulación",
-    text: "Toda cuenta nueva trae una empresa de ejemplo lista para emitir. Crea una llave cetus_sandbox_ en la consola.",
+    text: (
+      <>
+        Toda cuenta nueva trae una empresa de ejemplo lista para emitir. Crea una llave{" "}
+        <code className="font-mono text-[0.9em]">cetus_sandbox_</code> en la consola.
+      </>
+    ),
   },
   {
     title: "Emite tu primera factura",
-    text: "Envía el pedido a POST /v1/invoices. Cetus responde 202 con la factura numerada y te avisa por webhook.",
+    text: (
+      <>
+        Envía el pedido a <code className="font-mono text-[0.9em]">POST /v1/invoices</code>. Cetus
+        responde 202 con la factura numerada y te avisa por webhook.
+      </>
+    ),
   },
   {
     title: "Configura tu empresa ante la DIAN",
@@ -428,7 +438,9 @@ function StepText({ number, title, text }: { number: number; title: string; text
       </span>
       <span className="flex flex-col gap-1">
         <span className="text-base font-medium">{title}</span>
-        <span className="text-md/6 text-pretty text-muted-foreground">{text}</span>
+        <span className="text-md/6 text-pretty text-muted-foreground group-data-active/step:text-foreground">
+          {text}
+        </span>
       </span>
     </span>
   );
