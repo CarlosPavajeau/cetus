@@ -25,3 +25,8 @@ export const documentTypeLabel: Record<
 export function issuerName(issuer: Pick<Issuer, "legalName" | "tradeName">) {
   return issuer.tradeName ?? issuer.legalName;
 }
+
+/** The issuer's NIT with its check digit, as the RUT shows it. */
+export function issuerNit(issuer: Pick<Issuer, "nit" | "checkDigit">) {
+  return `NIT ${issuer.nit}-${issuer.checkDigit}`;
+}

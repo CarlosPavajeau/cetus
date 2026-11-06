@@ -13,8 +13,9 @@ import {
 } from "~/components/ui/card";
 import { Progress, ProgressLabel, ProgressValue } from "~/components/ui/progress";
 import { documentTypeLabel } from "~/features/documents/labels";
+import { issuerName, issuerNit } from "~/features/issuers/labels";
 import { formatCount } from "~/features/usage/labels";
-import type { IssuerAlerts as Alerts, RangeAlert } from "~/lib/api/types";
+import type { IssuerAlerts as Alerts, Issuer, RangeAlert } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 import { formatDayLong, formatInstantLong } from "./labels";
@@ -26,41 +27,104 @@ type Warning = {
   /** Already stops issuing, not only about to. */
   blocking: boolean;
   text: string;
-  action: string;
 };
 
-/** What stops issuing soon: expiring certificates, and ranges running out or whose resolution ends. */
-export function IssuerWarnings({ alerts }: { alerts: Alerts }) {
-  const warnings = warningsOf(alerts);
-  if (warnings.length === 0) {
-    return null;
-  }
+/** One issuer's warnings, under its name and NIT, since an accountant tells their clients apart by NIT. */
+type Group = {
+  issuerId: string;
+  name: string;
+  nit: string | null;
+  blocking: boolean;
+  warnings: Warning[];
+};
 
-  const blocking = warnings.some((warning) => warning.blocking);
+/**
+ * What stops issuing soon, by issuer: expiring certificates, and ranges running out or whose resolution ends. The
+ * issuers that already stopped get their own red alert, so they do not turn the others' amber warnings red.
+ */
+export function IssuerWarnings({ alerts, issuers }: { alerts: Alerts; issuers: Issuer[] }) {
+  const groups = groupsOf(alerts, issuers);
+  const blocking = groups.filter((group) => group.blocking);
+  const pending = groups.filter((group) => !group.blocking);
+
   return (
-    <Alert variant={blocking ? "destructive" : "warning"}>
-      {!blocking && <TriangleAlertIcon aria-hidden="true" />}
-      <AlertTitle>
-        <h2>Renueva a tiempo para no detener tu facturación</h2>
-      </AlertTitle>
-      <AlertDescription>
-        <ul className="flex flex-col gap-1">
-          {warnings.map((warning) => (
-            <li key={warning.key}>
-              {warning.text}{" "}
-              <Link
-                to="/issuers/$issuerId"
-                params={{ issuerId: warning.issuerId }}
-                aria-label={`${warning.action} de ${warning.issuerName}`}
-              >
-                {warning.action}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </AlertDescription>
-    </Alert>
+    <>
+      {blocking.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTitle>
+            <h2>Renueva para volver a facturar</h2>
+          </AlertTitle>
+          <AlertDescription>
+            <WarningGroups groups={blocking} />
+          </AlertDescription>
+        </Alert>
+      )}
+      {pending.length > 0 && (
+        <Alert variant="warning">
+          <TriangleAlertIcon aria-hidden="true" />
+          <AlertTitle>
+            <h2>Renueva a tiempo para no detener tu facturación</h2>
+          </AlertTitle>
+          <AlertDescription>
+            <WarningGroups groups={pending} />
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
   );
+}
+
+function WarningGroups({ groups }: { groups: Group[] }) {
+  return (
+    <ul className="mt-1.5 flex flex-col gap-3">
+      {groups.map((group) => (
+        <li key={group.issuerId} className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <h3 className="font-medium">{group.name}</h3>
+            {group.nit !== null && (
+              <span className="font-mono text-2xs opacity-80">{group.nit}</span>
+            )}
+            <Link
+              to="/issuers/$issuerId"
+              params={{ issuerId: group.issuerId }}
+              aria-label={`Ver emisor ${group.name}`}
+              className="text-xs"
+            >
+              Ver emisor
+            </Link>
+          </div>
+          <ul className="flex list-disc flex-col gap-0.5 pl-4">
+            {group.warnings.map((warning) => (
+              <li key={warning.key}>{warning.text}</li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function groupsOf(alerts: Alerts, issuers: Issuer[]): Group[] {
+  const groups = new Map<string, Group>();
+  // Blocking warnings first puts them first within their issuer.
+  const warnings = warningsOf(alerts).toSorted((a, b) => Number(b.blocking) - Number(a.blocking));
+  for (const warning of warnings) {
+    const group = groups.get(warning.issuerId);
+    if (group === undefined) {
+      const issuer = issuers.find((each) => each.id === warning.issuerId);
+      groups.set(warning.issuerId, {
+        issuerId: warning.issuerId,
+        name: issuer === undefined ? warning.issuerName : issuerName(issuer),
+        nit: issuer === undefined ? null : issuerNit(issuer),
+        blocking: warning.blocking,
+        warnings: [warning],
+      });
+    } else {
+      group.blocking ||= warning.blocking;
+      group.warnings.push(warning);
+    }
+  }
+  return [...groups.values()];
 }
 
 function warningsOf(alerts: Alerts): Warning[] {
@@ -73,13 +137,12 @@ function warningsOf(alerts: Alerts): Warning[] {
       issuerName: certificate.issuerName,
       blocking: expired,
       text: expired
-        ? `El certificado de ${certificate.issuerName} venció el ${when}.`
-        : `El certificado de ${certificate.issuerName} vence el ${when} (${daysText(certificate.daysLeft)}).`,
-      action: "Cargar un certificado nuevo",
+        ? `El certificado de firma venció el ${when}: carga uno nuevo.`
+        : `El certificado de firma vence el ${when} (${daysText(certificate.daysLeft)}): carga uno nuevo.`,
     };
   });
   const ranges = alerts.ranges.flatMap((range) => {
-    const name = `${rangeName(range)} de ${range.issuerName}`;
+    const name = rangeName(range);
     const running: Warning[] = range.runningOut
       ? [
           {
@@ -88,7 +151,6 @@ function warningsOf(alerts: Alerts): Warning[] {
             issuerName: range.issuerName,
             blocking: range.used >= range.total,
             text: `${remainingText(range.total - range.used)} en ${name}: solicita una nueva resolución a la DIAN.`,
-            action: "Ver emisor",
           },
         ]
       : [];
@@ -104,7 +166,6 @@ function warningsOf(alerts: Alerts): Warning[] {
                 range.daysLeft < 0
                   ? `La resolución de ${name} venció el ${formatDayLong(range.validTo)}.`
                   : `La resolución de ${name} vence el ${formatDayLong(range.validTo)} (${daysText(range.daysLeft)}).`,
-              action: "Ver emisor",
             },
           ]
         : [];
@@ -146,7 +207,7 @@ export function NumberingUsage({ ranges }: { ranges: RangeAlert[] }) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <ul className="flex flex-col gap-4">
+        <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map((range) => (
             <RangeUsage key={range.id} range={range} issuerShown={issuer === undefined} />
           ))}

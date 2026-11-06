@@ -21,7 +21,8 @@ import { RuleRanking } from "./RuleRanking";
 /**
  * How the period's documents went in the active environment, and what the DIAN asked to fix. With several
  * issuers and none picked, {@code breakdown} shows each one's amount instead of a sum, since adding up different
- * companies' amounts tells an accountant nothing.
+ * companies' amounts tells an accountant nothing; otherwise {@code numbering} shows how much of the issuer's ranges
+ * is used, since the breakdown already carries each issuer's.
  */
 export function Activity({
   metrics,
@@ -31,6 +32,7 @@ export function Activity({
   issuerId,
   onIssuerChange,
   breakdown,
+  numbering,
 }: {
   metrics: Metrics;
   period: Period;
@@ -39,6 +41,7 @@ export function Activity({
   issuerId: string | undefined;
   onIssuerChange: (issuerId: string | undefined) => void;
   breakdown: ReactNode;
+  numbering: ReactNode;
 }) {
   return (
     <section aria-labelledby="activity-title" className="flex flex-col gap-4">
@@ -73,6 +76,7 @@ export function Activity({
             </EmptyHeader>
           </Empty>
           {breakdown}
+          {numbering}
         </>
       ) : (
         <div className="flex flex-col gap-6">
@@ -81,6 +85,7 @@ export function Activity({
             <OutcomeLinks metrics={metrics} issuerId={issuerId} />
           </div>
           {breakdown}
+          {numbering}
           <DailyChart metrics={metrics} />
           <RuleRanking rules={metrics.rules} />
         </div>

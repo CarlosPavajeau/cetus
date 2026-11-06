@@ -11,7 +11,6 @@ import {
 import type { ReactNode } from "react";
 
 import { PageHeader } from "~/components/PageHeader";
-import { Alert, AlertAction, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { buttonVariants } from "~/components/ui/button";
 import {
   Empty,
@@ -65,7 +64,7 @@ export const Route = createFileRoute("/_app/overview")({
       queryClient.query({ ...metricsQuery(environment, range, issuerId), staleTime: "static" }),
       breakdown &&
         queryClient.query({ ...issuerMetricsQuery(environment, range), staleTime: "static" }),
-      queryClient.query({ ...alertsQuery(environment), staleTime: "static" }),
+      queryClient.query({ ...alertsQuery(environment, issuerId), staleTime: "static" }),
     ]);
   },
   component: Overview,
@@ -87,7 +86,7 @@ function Overview() {
   } = issuerFilter(issuers, environment, search.issuer);
   const range = periodRange(period, todayInColombia());
   const { data: metrics } = useSuspenseQuery(metricsQuery(environment, range, issuerId));
-  const { data: alerts } = useSuspenseQuery(alertsQuery(environment));
+  const { data: alerts } = useSuspenseQuery(alertsQuery(environment, issuerId));
   const navigate = useNavigate({ from: Route.fullPath });
   const { manage } = useMemberPermissions();
   // A new organization only has the sandbox sample, which needs no setup.
@@ -158,10 +157,13 @@ function Overview() {
         </Empty>
       )}
 
-      <IssuerWarnings alerts={alerts} />
+      <IssuerWarnings alerts={alerts} issuers={issuerOptions} />
 
       {stepping && (
-        <div className="flex flex-col gap-2">
+        <section
+          aria-label="Pasos pendientes"
+          className="flex flex-col divide-y rounded-lg border bg-card"
+        >
           {steps.configure && (
             <Step
               icon={<FileCheckIcon aria-hidden="true" />}
@@ -191,7 +193,7 @@ function Overview() {
             </Step>
           ))}
           {resumeHidden > 0 && (
-            <p className="px-1 text-xs text-muted-foreground">
+            <p className="px-3 py-2 text-xs text-muted-foreground">
               {resumeHidden === 1
                 ? "Y 1 emisor más en configuración. "
                 : `Y ${resumeHidden} emisores más en configuración. `}
@@ -227,7 +229,7 @@ function Overview() {
               </Link>
             </Step>
           )}
-        </div>
+        </section>
       )}
 
       {!sandboxFirst && (
@@ -251,13 +253,12 @@ function Overview() {
               />
             ) : null
           }
+          numbering={
+            !breakdown && alerts.ranges.length > 0 ? (
+              <NumberingUsage ranges={alerts.ranges} />
+            ) : null
+          }
         />
-      )}
-
-      {alerts.ranges.length > 0 && (
-        <div className="grid items-start gap-4 lg:grid-cols-2">
-          <NumberingUsage ranges={alerts.ranges} />
-        </div>
       )}
     </>
   );
@@ -277,7 +278,7 @@ function issuerFilter(issuers: Issuer[], environment: Environment, asked: string
   return { options, issuerId, breakdown: issuerId === undefined && options.length > 1 };
 }
 
-/** One pending step: what is missing and the action that resolves it. */
+/** One pending step: what is missing and the action that resolves it, a row of the steps' list. */
 function Step({
   icon,
   title,
@@ -290,15 +291,15 @@ function Step({
   children: ReactNode;
 }) {
   return (
-    <Alert role="note">
-      {icon}
-      <AlertTitle>
-        <h2>{title}</h2>
-      </AlertTitle>
-      <AlertDescription>{description}</AlertDescription>
-      <AlertAction>
-        <div className="flex flex-wrap items-center gap-2">{children}</div>
-      </AlertAction>
-    </Alert>
+    <div className="flex flex-col gap-3 px-3 py-2.5 sm:flex-row sm:items-center sm:gap-4">
+      <div className="flex min-w-0 flex-1 gap-2.5 [&>svg]:mt-0.5 [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+        {icon}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 className="text-sm font-medium">{title}</h2>
+          <p className="text-xs text-pretty text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 pl-6.5 sm:pl-0">{children}</div>
+    </div>
   );
 }

@@ -27,9 +27,9 @@ export const getIssuerMetrics = createServerFn({ method: "GET" })
     api.get("/console/metrics/issuers", { params: { query: data } }),
   );
 
-/** The certificates about to expire and the numbering ranges of an environment's issuers. */
+/** The certificates about to expire and the numbering ranges of an environment's issuers, or of one. */
 export const getAlerts = createServerFn({ method: "GET" })
-  .validator(type({ environment }))
+  .validator(type({ environment, "issuerId?": "string.uuid" }))
   .handler(({ data }): Promise<IssuerAlerts> =>
     api.get("/console/alerts", { params: { query: data } }),
   );

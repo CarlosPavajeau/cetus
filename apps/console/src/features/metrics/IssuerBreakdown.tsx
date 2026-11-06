@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { issuerName } from "~/features/issuers/labels";
+import { issuerName, issuerNit } from "~/features/issuers/labels";
 import { formatCount } from "~/features/usage/labels";
 import type {
   CertificateAlert,
@@ -109,7 +109,9 @@ export function IssuerBreakdown({
               <TableRow key={row.issuer.id} className="relative">
                 <TableCell className="py-2.5 pl-3">
                   <IssuerLink issuer={row.issuer} />
-                  <p className="font-mono text-2xs text-muted-foreground">{nitOf(row.issuer)}</p>
+                  <p className="font-mono text-2xs text-muted-foreground">
+                    {issuerNit(row.issuer)}
+                  </p>
                 </TableCell>
                 <FigureCell figure={row.documents} className="text-right" />
                 <TableCell
@@ -302,8 +304,4 @@ function certificateOf(certificate: IssuerMetrics["certificate"], expiring: bool
   return expiring
     ? figureOf(`Vence el ${date}`, daysText(certificate.daysLeft), "warning")
     : figureOf(`Vence el ${date}`);
-}
-
-function nitOf(issuer: Issuer) {
-  return `NIT ${issuer.nit}-${issuer.checkDigit}`;
 }

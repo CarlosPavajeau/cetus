@@ -6926,6 +6926,7 @@ export interface operations {
         parameters: {
             query: {
                 environment: components["schemas"]["Environment"];
+                issuerId?: components["schemas"]["UUID"];
             };
             header?: never;
             path?: never;

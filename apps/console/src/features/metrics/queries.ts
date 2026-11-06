@@ -19,9 +19,9 @@ export function issuerMetricsQuery(environment: Environment, range: DateRange) {
   });
 }
 
-export function alertsQuery(environment: Environment) {
+export function alertsQuery(environment: Environment, issuerId?: string) {
   return queryOptions({
-    queryKey: ["alerts", environment],
-    queryFn: () => getAlerts({ data: { environment } }),
+    queryKey: ["alerts", environment, issuerId ?? null],
+    queryFn: () => getAlerts({ data: { environment, ...(issuerId && { issuerId }) } }),
   });
 }
