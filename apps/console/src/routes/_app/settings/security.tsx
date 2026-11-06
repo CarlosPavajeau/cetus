@@ -1,7 +1,13 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { createFileRoute, useBlocker, useNavigate, useRouter } from "@tanstack/react-router";
 import { cn } from "cn";
-import { DownloadIcon, RefreshCwIcon, ShieldCheckIcon, SmartphoneIcon } from "lucide-react";
+import {
+  DownloadIcon,
+  QrCodeIcon,
+  RefreshCwIcon,
+  ShieldCheckIcon,
+  SmartphoneIcon,
+} from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Controller, useForm } from "react-hook-form";
@@ -61,9 +67,12 @@ type Enrollment = { totpURI: string; backupCodes: string[] };
 type IssuedCodes = { codes: string[]; origin: "enrollment" | "regeneration" };
 
 /** What leaving the page now would throw away. */
-type Unsaved = "enrollment" | "codes";
+type Unsaved = "enrollment" | "replacement" | "codes";
 
-type Confirming = "regenerate" | "disable";
+type Confirming = "replace" | "regenerate" | "disable";
+
+/** The part of the page that takes focus after a step gave the view back to it. */
+type Returning = "enable" | "app" | "codes";
 
 function Security() {
   const { session } = Route.useRouteContext();
@@ -72,11 +81,19 @@ function Security() {
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [issued, setIssued] = useState<IssuedCodes | null>(null);
   const [turnedOff, setTurnedOff] = useState(false);
+  const [replacement, setReplacement] = useState<string | null>(null);
+  const [replaced, setReplaced] = useState(false);
   const [confirming, setConfirming] = useState<Confirming | null>(null);
-  const [viewSwapped, setViewSwapped] = useState(false);
+  const [returning, setReturning] = useState<Returning | null>(null);
   const leaving = useRef(false);
   const enabled = session.user.twoFactorEnabled;
-  const unsaved: Unsaved | null = issued ? "codes" : enrollment ? "enrollment" : null;
+  const unsaved: Unsaved | null = issued
+    ? "codes"
+    : enrollment
+      ? "enrollment"
+      : replacement
+        ? "replacement"
+        : null;
   const blocker = useBlocker({
     shouldBlockFn: () => !leaving.current,
     enableBeforeUnload: () => !leaving.current,
@@ -124,7 +141,7 @@ function Security() {
           email={session.user.email}
           required={required === true}
           onDone={() => {
-            setViewSwapped(true);
+            setReturning("codes");
             if (required && issued.origin === "enrollment") {
               leaving.current = true;
               void navigate({ href: redirect ?? "/admin/organizations" });
@@ -135,9 +152,9 @@ function Security() {
         />
       ) : enrollment ? (
         <VerifyEnrollment
-          enrollment={enrollment}
+          totpURI={enrollment.totpURI}
           onCancel={() => {
-            setViewSwapped(true);
+            setReturning("enable");
             setEnrollment(null);
           }}
           onVerified={() => {
@@ -145,17 +162,48 @@ function Security() {
             setEnrollment(null);
           }}
         />
+      ) : replacement ? (
+        <VerifyEnrollment
+          totpURI={replacement}
+          replacing
+          onCancel={() => {
+            setReturning("app");
+            setReplacement(null);
+          }}
+          onVerified={() => {
+            setReturning(null);
+            setReplaced(true);
+            setReplacement(null);
+          }}
+        />
       ) : enabled ? (
         <div className="flex max-w-xl flex-col gap-10">
-          <TwoFactorStatus
-            focusTitle={viewSwapped}
-            confirming={confirming === "regenerate"}
-            onConfirmingChange={(open) => setConfirming(open ? "regenerate" : null)}
-            onRegenerated={(codes) => {
-              setConfirming(null);
-              setIssued({ codes, origin: "regeneration" });
-            }}
-          />
+          <div className="flex flex-col gap-6">
+            {replaced && (
+              <Notice title="Cambiaste tu aplicación de autenticación">
+                Los códigos de la anterior ya no sirven. Tus códigos de respaldo siguen funcionando.
+              </Notice>
+            )}
+            <AuthenticatorApp
+              focusTitle={returning === "app"}
+              confirming={confirming === "replace"}
+              onConfirmingChange={(open) => setConfirming(open ? "replace" : null)}
+              onStarted={(totpURI) => {
+                setConfirming(null);
+                setReplaced(false);
+                setReplacement(totpURI);
+              }}
+            />
+            <TwoFactorStatus
+              focusTitle={returning === "codes"}
+              confirming={confirming === "regenerate"}
+              onConfirmingChange={(open) => setConfirming(open ? "regenerate" : null)}
+              onRegenerated={(codes) => {
+                setConfirming(null);
+                setIssued({ codes, origin: "regeneration" });
+              }}
+            />
+          </div>
           <DisableTwoFactor
             confirming={confirming === "disable"}
             onConfirmingChange={(open) => setConfirming(open ? "disable" : null)}
@@ -167,9 +215,14 @@ function Security() {
         </div>
       ) : (
         <>
-          {turnedOff && <TurnedOffNotice />}
+          {turnedOff && (
+            <Notice title="Verificación en dos pasos desactivada">
+              Tu cuenta ya no pide un código al iniciar sesión. Puedes volver a activarla aquí
+              mismo.
+            </Notice>
+          )}
           <EnableTwoFactor
-            focusTitle={viewSwapped && !turnedOff}
+            focusTitle={returning === "enable" && !turnedOff}
             onEnrolled={(started) => {
               setTurnedOff(false);
               setEnrollment(started);
@@ -219,6 +272,14 @@ function LeaveWarning({
               sin acceso a la cuenta.
             </AlertDialogDescription>
           </AlertDialogHeader>
+        ) : unsaved === "replacement" ? (
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Salir sin terminar el cambio de aplicación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tu aplicación actual sigue activa. Si ya escaneaste el código nuevo, borra esa entrada
+              de la otra aplicación: no servirá.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
         ) : (
           <AlertDialogHeader>
             <AlertDialogTitle>¿Salir sin terminar la activación?</AlertDialogTitle>
@@ -230,7 +291,13 @@ function LeaveWarning({
         )}
         <AlertDialogFooter>
           <AlertDialogCancel>
-            {unsaved === "codes" ? "Volver a los códigos" : "Seguir con la activación"}
+            {
+              {
+                codes: "Volver a los códigos",
+                enrollment: "Seguir con la activación",
+                replacement: "Seguir con el cambio",
+              }[unsaved]
+            }
           </AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={onLeave}>
             Salir
@@ -241,18 +308,26 @@ function LeaveWarning({
   );
 }
 
-function TurnedOffNotice() {
+/** The outcome of a step that just ended, focused so it is read before the rest of the page. */
+function Notice({ title, children }: { title: string; children: ReactNode }) {
   const titleRef = useFocusOnMount<HTMLDivElement>(true);
   return (
     <Alert role="note" className="max-w-xl">
       <AlertTitle ref={titleRef} tabIndex={-1}>
-        Verificación en dos pasos desactivada
+        {title}
       </AlertTitle>
-      <AlertDescription>
-        Tu cuenta ya no pide un código al iniciar sesión. Puedes volver a activarla aquí mismo.
-      </AlertDescription>
+      <AlertDescription>{children}</AlertDescription>
     </Alert>
   );
+}
+
+function codeErrorMessage(error: AuthError): string {
+  if (error.status === 429) {
+    return tooManyAttemptsMessage;
+  }
+  return error.code === "REPLACEMENT_EXPIRED"
+    ? "Pasaron más de 10 minutos y el cambio venció. Cancela y vuelve a empezar."
+    : "El código no es válido. Revísalo e intenta de nuevo.";
 }
 
 function passwordErrorMessage(error: AuthError, fallback: string): string {
@@ -336,18 +411,24 @@ function EnableTwoFactor({
   );
 }
 
+/** Links an authenticator app: the first one when enrolling, or a new one in place of the active one. */
 function VerifyEnrollment({
-  enrollment,
+  totpURI,
+  replacing = false,
   onVerified,
   onCancel,
 }: {
-  enrollment: Enrollment;
+  totpURI: string;
+  replacing?: boolean;
   onVerified: () => void;
   onCancel: () => void;
 }) {
   const router = useRouter();
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const secret = new URL(enrollment.totpURI).searchParams.get("secret") ?? "";
+  // A touch screen is usually the phone that holds the authenticator, so it cannot scan its own screen.
+  const [pointerFine] = useState(() => window.matchMedia("(pointer: fine)").matches);
+  const [qrShown, setQrShown] = useState(pointerFine);
+  const secret = new URL(totpURI).searchParams.get("secret") ?? "";
   const form = useForm({
     resolver: arktypeResolver(verifyTotpSchema),
     defaultValues: { code: "" },
@@ -355,77 +436,102 @@ function VerifyEnrollment({
   const { errors, isSubmitting } = form.formState;
 
   useEffect(() => {
-    // On a touch screen the keyboard would cover the QR code and the link to the app.
-    if (window.matchMedia("(pointer: fine)").matches) {
+    // On a touch screen the keyboard would cover the link to the app.
+    if (pointerFine) {
       form.setFocus("code");
     } else {
       titleRef.current?.focus();
     }
-  }, [form]);
+  }, [form, pointerFine]);
 
   const onSubmit = form.handleSubmit(async ({ code }) => {
-    const { error } = await authClient.twoFactor.verifyTotp({ code });
+    const { error } = replacing
+      ? await authClient.twoFactor.replaceTotp.confirm({ code })
+      : await authClient.twoFactor.verifyTotp({ code });
     if (error) {
       form.setValue("code", "");
       form.setFocus("code");
-      form.setError("root", {
-        message:
-          error.status === 429
-            ? tooManyAttemptsMessage
-            : "El código no es válido. Revísalo e intenta de nuevo.",
-      });
+      form.setError("root", { message: codeErrorMessage(error) });
       return;
     }
     onVerified();
-    // The session now has 2FA: reload the guards' view of it.
-    await router.invalidate();
+    if (!replacing) {
+      // The session now has 2FA: reload the guards' view of it.
+      await router.invalidate();
+    }
   });
+
+  const qrCode = qrShown && (
+    <figure id="enrollment-qr" className="flex w-fit flex-col gap-2">
+      {/* Rendered here: the URI holds the shared secret and must not go to a QR service. */}
+      <div className="w-fit rounded-lg border bg-white p-4">
+        <QRCode value={totpURI} size={176} title="Código QR de la verificación" />
+      </div>
+      <figcaption className="max-w-56 text-xs text-muted-foreground">
+        Escanéalo con Google Authenticator, 1Password, Authy u otra aplicación de autenticación.
+      </figcaption>
+    </figure>
+  );
 
   return (
     <Card className="max-w-xl">
       <CardHeader>
         <CardTitle ref={titleRef} tabIndex={-1}>
-          Conecta tu aplicación de autenticación
+          {replacing ? "Conecta tu nueva aplicación" : "Conecta tu aplicación de autenticación"}
         </CardTitle>
         <CardDescription>
-          Si sales de esta página antes de terminar, la configuración empieza de nuevo y tendrás que
-          reemplazar la entrada de Cetus en tu aplicación.
+          {replacing
+            ? "Tu aplicación actual sigue funcionando hasta que confirmes un código de la nueva."
+            : "Si sales de esta página antes de terminar, la configuración empieza de nuevo y tendrás que reemplazar la entrada de Cetus en tu aplicación."}
         </CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit} noValidate>
         <CardContent>
           <ol className="flex flex-col gap-8">
-            <EnrollmentStep number={1} title="Agrega tu cuenta a la aplicación">
-              <a
-                href={enrollment.totpURI}
-                className={cn(buttonVariants({ variant: "outline" }), "w-fit md:hidden")}
-              >
-                <SmartphoneIcon data-icon="inline-start" />
-                Abrir en la aplicación de autenticación
-              </a>
-              <figure className="flex w-fit flex-col gap-2">
-                {/* Rendered here: the URI holds the shared secret and must not go to a QR service. */}
-                <div className="w-fit rounded-lg border bg-white p-4">
-                  <QRCode
-                    value={enrollment.totpURI}
-                    size={176}
-                    title="Código QR de la verificación"
-                  />
-                </div>
-                <figcaption className="max-w-56 text-xs text-muted-foreground">
-                  Escanéalo con Google Authenticator, 1Password, Authy u otra aplicación de
-                  autenticación.
-                </figcaption>
-              </figure>
+            <EnrollmentStep
+              number={1}
+              title={
+                replacing
+                  ? "Agrega tu cuenta a la nueva aplicación"
+                  : "Agrega tu cuenta a la aplicación"
+              }
+            >
+              {!pointerFine && (
+                <a
+                  href={totpURI}
+                  className={cn(buttonVariants({ variant: "outline", size: "xl" }), "w-full")}
+                >
+                  <SmartphoneIcon data-icon="inline-start" />
+                  Abrir en la aplicación de autenticación
+                </a>
+              )}
+              {pointerFine && qrCode}
               <div className="flex flex-col gap-1.5">
                 <p className="text-xs text-muted-foreground">
-                  ¿No puedes escanearlo? Escribe esta clave en la aplicación:
+                  {pointerFine
+                    ? "¿No puedes escanearlo? Escribe esta clave en la aplicación:"
+                    : "¿No se abre? Escribe esta clave en la aplicación:"}
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="font-mono text-xs">{secret.match(/.{1,4}/g)?.join(" ")}</code>
                   <CopyButton value={secret} label="Copiar clave" iconOnly />
                 </div>
               </div>
+              {!pointerFine && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xl"
+                  className="-ml-2 w-fit"
+                  aria-expanded={qrShown}
+                  aria-controls="enrollment-qr"
+                  onClick={() => setQrShown((shown) => !shown)}
+                >
+                  <QrCodeIcon data-icon="inline-start" />
+                  {qrShown ? "Ocultar el código QR" : "Escanear desde otro dispositivo"}
+                </Button>
+              )}
+              {!pointerFine && qrCode}
             </EnrollmentStep>
             <EnrollmentStep number={2} title="Escribe el código que te muestra">
               <FieldGroup>
@@ -469,7 +575,11 @@ function VerifyEnrollment({
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Spinner data-icon="inline-start" />}
-              {isSubmitting ? "Verificando…" : "Verificar y activar"}
+              {isSubmitting
+                ? "Verificando…"
+                : replacing
+                  ? "Verificar y cambiar"
+                  : "Verificar y activar"}
             </Button>
             <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
               Cancelar
@@ -575,6 +685,70 @@ function BackupCodes({
             : "Ya guardé mis códigos"}
         </Button>
       </CardFooter>
+    </Card>
+  );
+}
+
+function AuthenticatorApp({
+  focusTitle,
+  confirming,
+  onConfirmingChange,
+  onStarted,
+}: {
+  focusTitle: boolean;
+  confirming: boolean;
+  onConfirmingChange: (open: boolean) => void;
+  onStarted: (totpURI: string) => void;
+}) {
+  const titleRef = useFocusOnMount<HTMLHeadingElement>(focusTitle);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle ref={titleRef} tabIndex={-1}>
+          Aplicación de autenticación
+        </CardTitle>
+        <CardDescription>
+          Te da el código que pedimos al iniciar sesión. Si cambias de teléfono o de aplicación,
+          conecta la nueva aquí: la actual sigue funcionando hasta que la nueva quede lista.
+        </CardDescription>
+      </CardHeader>
+      {confirming ? (
+        <CardContent>
+          <PasswordConfirm
+            id="replace-app-password"
+            submitLabel="Continuar"
+            onConfirm={async (password) => {
+              const { data, error } = await authClient.twoFactor.replaceTotp.start({ password });
+              if (error) {
+                return passwordErrorMessage(
+                  error,
+                  "No pudimos empezar el cambio de aplicación. Intenta de nuevo.",
+                );
+              }
+              onStarted(data.totpURI);
+              return null;
+            }}
+            onCancel={() => {
+              flushSync(() => onConfirmingChange(false));
+              triggerRef.current?.focus();
+            }}
+          />
+        </CardContent>
+      ) : (
+        <CardFooter className="mt-2">
+          <Button
+            ref={triggerRef}
+            type="button"
+            variant="outline"
+            onClick={() => onConfirmingChange(true)}
+          >
+            <SmartphoneIcon data-icon="inline-start" />
+            Cambiar de aplicación
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }

@@ -1,5 +1,7 @@
+import { devices } from "@playwright/test";
 import { type } from "arktype";
 
+import { latestEmailTo } from "../support/outbox";
 import { createPlatformStaff, totp } from "../support/platform-staff";
 import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
@@ -39,6 +41,37 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
 
   await page.getByLabel("Código de verificación").fill(totp(secret));
   await page.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
+});
+
+test.describe("on a touch screen", () => {
+  const { defaultBrowserType: _, ...pixel } = devices["Pixel 7"];
+  test.use(pixel);
+
+  test("2FA setup opens the authenticator first and shows the QR only on request", async ({
+    page,
+    organization,
+  }) => {
+    await open(page, "/settings/security");
+    await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+    await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
+
+    await expect(
+      page.getByRole("link", { name: "Abrir en la aplicación de autenticación" }),
+    ).toHaveAttribute("href", /^otpauth:\/\//);
+    await expect(page.getByRole("img", { name: "Código QR de la verificación" })).toHaveCount(0);
+    const showQr = page.getByRole("button", { name: "Escanear desde otro dispositivo" });
+    await expect(showQr).toHaveAttribute("aria-expanded", "false");
+    await showQr.click();
+    await expect(page.getByRole("img", { name: "Código QR de la verificación" })).toBeVisible();
+    await page.getByRole("button", { name: "Ocultar el código QR" }).click();
+    await expect(page.getByRole("img", { name: "Código QR de la verificación" })).toHaveCount(0);
+
+    const secret = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
+    await page.getByLabel("Código de verificación").fill(totp(secret));
+    await expect(
+      page.getByRole("heading", { name: "Verificación en dos pasos activada" }),
+    ).toBeFocused();
+  });
 });
 
 test("with 2FA on, backup codes are replaced and 2FA is turned off, each behind the password", async ({
@@ -117,6 +150,76 @@ test("leaving with the backup codes on screen asks first, and staff go back to t
 
   await page.getByRole("button", { name: "Ya los guardé, ir a la administración" }).click();
   await page.waitForURL("**/admin/audit-log");
+});
+
+test("a new authenticator app replaces the old one only once its code is right, backup codes kept", async ({
+  page,
+  browser,
+  organization,
+}) => {
+  await open(page, "/settings/security");
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
+  const secretOld = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
+  await page.getByLabel("Código de verificación").fill(totp(secretOld));
+  const backupCodeItems = page
+    .getByRole("list", { name: "Códigos de respaldo" })
+    .getByRole("listitem");
+  await expect(backupCodeItems).not.toHaveCount(0);
+  const [backupCode = ""] = await backupCodeItems.allTextContents();
+  await page.getByRole("button", { name: "Ya guardé mis códigos" }).click();
+  await page.getByRole("button", { name: "Cambiar de aplicación" }).click();
+  await expect(page.getByRole("textbox", { name: "Contraseña" })).toBeFocused();
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByRole("heading", { name: "Conecta tu nueva aplicación" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Resumen" }).click();
+  const warning = page.getByRole("alertdialog", {
+    name: "¿Salir sin terminar el cambio de aplicación?",
+  });
+  await expect(warning).toBeVisible();
+  await warning.getByRole("button", { name: "Seguir con el cambio" }).click();
+
+  const secretNew = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
+  expect(secretNew).not.toBe(secretOld);
+  await page.getByLabel("Código de verificación").fill(totp(secretOld));
+  await expect(page.getByText("El código no es válido")).toBeVisible();
+  await page.getByLabel("Código de verificación").fill(totp(secretNew));
+  await expect(page.getByText("Cambiaste tu aplicación de autenticación")).toBeFocused();
+  await expect(page.getByText("Verificación activa")).toBeVisible();
+
+  const notice = await latestEmailTo(organization.email);
+  expect(notice.subject).toBe("Cambiaste la aplicación de autenticación de Cetus");
+  expect(notice.text).toContain("tus códigos de respaldo siguen funcionando");
+
+  async function signIn() {
+    const visitor = await browser.newContext();
+    const visitorPage = await visitor.newPage();
+    await open(visitorPage, "/sign-in");
+    await visitorPage.getByLabel("Correo electrónico").fill(organization.email);
+    await visitorPage.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+    await visitorPage.getByRole("button", { name: "Iniciar sesión" }).click();
+    await visitorPage.waitForURL("**/two-factor");
+    return { visitor, visitorPage };
+  }
+
+  const withApp = await signIn();
+  await withApp.visitorPage.getByLabel("Código de verificación").fill(totp(secretOld));
+  await expect(withApp.visitorPage.getByText("El código no es válido")).toBeVisible();
+  await withApp.visitorPage.getByLabel("Código de verificación").fill(totp(secretNew));
+  await withApp.visitorPage.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
+  await withApp.visitor.close();
+
+  const withBackupCode = await signIn();
+  await withBackupCode.visitorPage
+    .getByRole("button", { name: "Usar un código de respaldo" })
+    .click();
+  await expect(withBackupCode.visitorPage.getByLabel("Código de respaldo")).toBeFocused();
+  await withBackupCode.visitorPage.keyboard.type(backupCode);
+  await withBackupCode.visitorPage.getByRole("button", { name: "Verificar y continuar" }).click();
+  await withBackupCode.visitorPage.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
+  await withBackupCode.visitor.close();
 });
 
 test("a backup code typed as shown, dash included, signs in", async ({ browser, organization }) => {
