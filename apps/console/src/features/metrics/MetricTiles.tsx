@@ -1,35 +1,68 @@
 import { Link } from "@tanstack/react-router";
 
+import { Badge } from "~/components/ui/badge";
 import { formatCount } from "~/features/usage/labels";
 import type { DocumentStatus, Metrics } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 import { formatAmount, formatDuration, formatPercent } from "./labels";
 
-function Tile({ label, value, detail }: { label: string; value: string; detail: string }) {
+function Tile({
+  label,
+  value,
+  detail,
+  note,
+  simulated,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  note?: string;
+  simulated: boolean;
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-1 rounded-lg border p-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dt className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        {label}
+        {simulated && <Badge variant="muted">Simulado</Badge>}
+      </dt>
       <dd className="text-lg font-medium tabular-nums">{value}</dd>
       <dd className="text-xs text-pretty text-muted-foreground">{detail}</dd>
+      {note && <dd className="text-xs text-pretty text-muted-foreground">{note}</dd>}
     </div>
   );
 }
 
+/** Below this many answered documents, one rejection moves the rate by five points or more. */
+const sampleAnsweredMin = 20;
+
+const columnsByCount: Record<number, string> = {
+  2: "lg:grid-cols-2",
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+};
+
 /**
  * The period's documents, how many the DIAN accepted, what they add up to and how long the DIAN took. Without
- * {@code amountShown} the amount is left out, since several issuers' amounts add up to nothing useful.
+ * {@code amountShown} the amount is left out, since several issuers' amounts add up to nothing useful. In sandbox
+ * the simulator answers at once, so its response time would say nothing about the DIAN and is left out.
  */
 export function MetricTiles({ metrics, amountShown }: { metrics: Metrics; amountShown: boolean }) {
   const { totals, acceptanceRate, amounts, validation } = metrics;
   const [amount, ...others] = amounts;
+  const simulated = metrics.environment === "SANDBOX";
+  const answered = totals.accepted + totals.rejected;
 
   return (
     <dl
-      className={cn("grid gap-3 sm:grid-cols-2", amountShown ? "lg:grid-cols-4" : "lg:grid-cols-3")}
+      className={cn(
+        "grid gap-3 sm:grid-cols-2",
+        columnsByCount[2 + Number(amountShown) + Number(!simulated)],
+      )}
     >
       <Tile
         label="Documentos"
+        simulated={simulated}
         value={formatCount(totals.total)}
         detail={
           totals.inProgress > 0 ? `${formatCount(totals.inProgress)} en curso` : "Ninguno en curso"
@@ -38,11 +71,22 @@ export function MetricTiles({ metrics, amountShown }: { metrics: Metrics; amount
       <Tile
         label="Tasa de aceptación"
         value={acceptanceRate === null ? "—" : formatPercent(acceptanceRate)}
-        detail={`Aceptados: ${formatCount(totals.accepted)} de ${formatCount(totals.accepted + totals.rejected)} con respuesta`}
+        simulated={simulated}
+        detail={
+          simulated
+            ? `El simulador aceptó ${formatCount(totals.accepted)} de ${formatCount(answered)} con respuesta`
+            : `Aceptados: ${formatCount(totals.accepted)} de ${formatCount(answered)} con respuesta`
+        }
+        note={
+          answered > 0 && answered < sampleAnsweredMin
+            ? "Muestra pequeña: un solo documento mueve mucho el porcentaje."
+            : undefined
+        }
       />
       {amountShown && (
         <Tile
           label="Monto facturado"
+          simulated={simulated}
           value={amount ? formatAmount(amount.net, amount.currency) : formatAmount(0, "COP")}
           detail={
             others.length > 0
@@ -51,15 +95,20 @@ export function MetricTiles({ metrics, amountShown }: { metrics: Metrics; amount
           }
         />
       )}
-      <Tile
-        label="Tiempo hasta la validación"
-        value={validation.secondsAverage === null ? "—" : formatDuration(validation.secondsAverage)}
-        detail={
-          validation.secondsP95 === null
-            ? "Sin respuestas de la DIAN"
-            : `Promedio. 95 de cada 100 tardaron ${validation.secondsP95 < 1 ? "" : "hasta "}${formatDuration(validation.secondsP95)}`
-        }
-      />
+      {!simulated && (
+        <Tile
+          label="Tiempo hasta la validación"
+          simulated={false}
+          value={
+            validation.secondsAverage === null ? "—" : formatDuration(validation.secondsAverage)
+          }
+          detail={
+            validation.secondsP95 === null
+              ? "Sin respuestas de la DIAN"
+              : `Promedio. 95 de cada 100 tardaron ${validation.secondsP95 < 1 ? "" : "hasta "}${formatDuration(validation.secondsP95)}`
+          }
+        />
+      )}
     </dl>
   );
 }
