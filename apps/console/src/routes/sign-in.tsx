@@ -63,6 +63,7 @@ function SignIn() {
 
   return (
     <AuthLayout
+      noteSandbox
       title="Iniciar sesión"
       lead="Vuelve a tu espacio de trabajo para gestionar tus emisores, llaves y documentos."
     >

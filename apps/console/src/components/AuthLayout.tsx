@@ -20,6 +20,7 @@ export function AuthLayout({
   title,
   lead,
   headline = headlineDefault,
+  noteSandbox = false,
   children,
 }: {
   /** Shown in a tile above the eyebrow. */
@@ -29,6 +30,8 @@ export function AuthLayout({
   lead: string;
   /** Lines of the big message in the product panel. */
   headline?: readonly string[];
+  /** Repeats the panel's sandbox promise in the form column, where phones and screen readers get it. */
+  noteSandbox?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -69,6 +72,17 @@ export function AuthLayout({
               </div>
             </div>
             {children}
+            {noteSandbox && (
+              <p className="flex items-baseline gap-2 border-t pt-5 text-xs/[1.6] text-muted-foreground lg:sr-only">
+                <span className="size-1.5 shrink-0 translate-y-[-0.1em] rounded-xs bg-primary" />
+                <span>
+                  <span className="font-medium text-foreground">
+                    Primero simulación. Después, producción,
+                  </span>{" "}
+                  con tu empresa habilitada ante la DIAN.
+                </span>
+              </p>
+            )}
           </div>
           <div className="min-h-4 flex-1" />
         </main>

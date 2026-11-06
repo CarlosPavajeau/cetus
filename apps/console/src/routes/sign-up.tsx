@@ -90,6 +90,7 @@ function SignUp() {
 
   return (
     <AuthLayout
+      noteSandbox
       title="Crear cuenta"
       eyebrow="EMPIEZA A INTEGRAR"
       lead="Tu cuenta trae una empresa de ejemplo para emitir en simulación desde el primer minuto, sin certificado ni tarjeta."
