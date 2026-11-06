@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 import { Badge } from "~/components/ui/badge";
 import { formatCount } from "~/features/usage/labels";
@@ -16,7 +17,7 @@ function Tile({
 }: {
   label: string;
   value: string;
-  detail: string;
+  detail: ReactNode;
   note?: string;
   simulated: boolean;
 }) {
@@ -26,7 +27,7 @@ function Tile({
         {label}
         {simulated && <Badge variant="muted">Simulado</Badge>}
       </dt>
-      <dd className="text-lg font-medium tabular-nums">{value}</dd>
+      <dd className="font-mono text-2xl font-medium tracking-tight tabular-nums">{value}</dd>
       <dd className="text-xs text-pretty text-muted-foreground">{detail}</dd>
       {note && <dd className="text-xs text-pretty text-muted-foreground">{note}</dd>}
     </div>
@@ -47,7 +48,15 @@ const columnsByCount: Record<number, string> = {
  * {@code amountShown} the amount is left out, since several issuers' amounts add up to nothing useful. In sandbox
  * the simulator answers at once, so its response time would say nothing about the DIAN and is left out.
  */
-export function MetricTiles({ metrics, amountShown }: { metrics: Metrics; amountShown: boolean }) {
+export function MetricTiles({
+  metrics,
+  amountShown,
+  issuerId,
+}: {
+  metrics: Metrics;
+  amountShown: boolean;
+  issuerId?: string;
+}) {
   const { totals, acceptanceRate, amounts, validation } = metrics;
   const [amount, ...others] = amounts;
   const simulated = metrics.environment === "SANDBOX";
@@ -72,11 +81,7 @@ export function MetricTiles({ metrics, amountShown }: { metrics: Metrics; amount
         label="Tasa de aceptación"
         value={acceptanceRate === null ? "—" : formatPercent(acceptanceRate)}
         simulated={simulated}
-        detail={
-          simulated
-            ? `El simulador aceptó ${formatCount(totals.accepted)} de ${formatCount(answered)} con respuesta`
-            : `Aceptados: ${formatCount(totals.accepted)} de ${formatCount(answered)} con respuesta`
-        }
+        detail={<OutcomeLinks metrics={metrics} issuerId={issuerId} />}
         note={
           answered > 0 && answered < sampleAnsweredMin
             ? "Muestra pequeña: un solo documento mueve mucho el porcentaje."
@@ -123,24 +128,34 @@ const outcomes: {
   { status: "FAILED", label: "Fallidos", key: "failed" },
 ];
 
-/** Each final outcome of the period, linked to the documents behind it. */
-export function OutcomeLinks({ metrics, issuerId }: { metrics: Metrics; issuerId?: string }) {
+/** Each final outcome of the period, linked to the documents behind it. Rejections are the ones to fix. */
+function OutcomeLinks({ metrics, issuerId }: { metrics: Metrics; issuerId?: string }) {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-      {outcomes.map((outcome) => (
-        <li key={outcome.status}>
-          <Link
-            to="/documents"
-            search={{ status: outcome.status, issuerId, from: metrics.from, to: metrics.to }}
-            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
-          >
-            {outcome.label}:{" "}
-            <span className="font-medium text-foreground tabular-nums">
-              {formatCount(metrics.totals[outcome.key])}
-            </span>
-          </Link>
-        </li>
-      ))}
+    <ul className="flex flex-wrap gap-x-3 gap-y-0.5">
+      {outcomes.map((outcome) => {
+        const count = metrics.totals[outcome.key];
+        return (
+          <li key={outcome.status}>
+            <Link
+              to="/documents"
+              search={{ status: outcome.status, issuerId, from: metrics.from, to: metrics.to }}
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              {outcome.label}{" "}
+              <span
+                className={cn(
+                  "font-mono font-medium tabular-nums",
+                  outcome.key === "rejected" && count > 0
+                    ? "text-destructive-foreground"
+                    : "text-foreground",
+                )}
+              >
+                {formatCount(count)}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }

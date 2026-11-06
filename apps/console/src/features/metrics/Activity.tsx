@@ -13,7 +13,7 @@ import type { Issuer, Metrics } from "~/lib/api/types";
 
 import { DailyChart } from "./DailyChart";
 import { IssuerSelect } from "./IssuerSelect";
-import { MetricTiles, OutcomeLinks } from "./MetricTiles";
+import { MetricTiles } from "./MetricTiles";
 import type { Period } from "./periods";
 import { PeriodSelect } from "./PeriodSelect";
 import { RuleRanking } from "./RuleRanking";
@@ -80,10 +80,7 @@ export function Activity({
         </>
       ) : (
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-3">
-            <MetricTiles metrics={metrics} amountShown={breakdown === null} />
-            <OutcomeLinks metrics={metrics} issuerId={issuerId} />
-          </div>
+          <MetricTiles metrics={metrics} amountShown={breakdown === null} issuerId={issuerId} />
           {breakdown}
           {numbering}
           <DailyChart metrics={metrics} />
