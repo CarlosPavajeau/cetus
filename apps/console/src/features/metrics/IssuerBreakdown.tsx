@@ -143,6 +143,9 @@ export function IssuerBreakdown({
                 {row.amount.value}
               </span>
             </div>
+            <p className="-mt-1 font-mono text-2xs text-muted-foreground">
+              {issuerNit(row.issuer)}
+            </p>
             <p className="text-2xs text-muted-foreground tabular-nums">
               {row.total === 1 ? "1 documento" : `${row.documents.value} documentos`}
               {" · "}
