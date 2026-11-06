@@ -48,14 +48,12 @@ public class ConsoleMetrics {
     static final int RANGE_SHARE_PERCENT = 80;
     static final int RESOLUTION_DAYS = 30;
 
-    private static final String PERIOD = """
-            d.account_id = :account AND d.environment = :environment AND d.issue_date BETWEEN :from AND :to""";
-
     @Inject
     EntityManager em;
 
-    public MetricsView metrics(UUID accountId, Environment environment, LocalDate from, LocalDate to) {
-        Scope scope = new Scope(accountId, environment, from, to);
+    /** {@code issuerId} narrows the documents to one issuer; null reads all of the account's. */
+    public MetricsView metrics(UUID accountId, Environment environment, UUID issuerId, LocalDate from, LocalDate to) {
+        Scope scope = new Scope(accountId, environment, issuerId, from, to);
         Map<LocalDate, Map<DocumentStatus, Long>> byDay = byDay(scope);
         List<DayView> days = from.datesUntil(to.plusDays(1))
                 .map(date -> new DayView(date, counts(byDay.getOrDefault(date, Map.of()))))
@@ -72,7 +70,7 @@ public class ConsoleMetrics {
     private Map<LocalDate, Map<DocumentStatus, Long>> byDay(Scope scope) {
         Map<LocalDate, Map<DocumentStatus, Long>> days = new TreeMap<>();
         rows(
-                        "SELECT d.issue_date, d.status, count(*) FROM billing.documents d WHERE " + PERIOD
+                        "SELECT d.issue_date, d.status, count(*) FROM billing.documents d WHERE " + scope.period()
                                 + " GROUP BY d.issue_date, d.status",
                         scope)
                 .forEach(row -> days.computeIfAbsent(toLocalDate(row[0]), date -> new EnumMap<>(DocumentStatus.class))
@@ -110,7 +108,7 @@ public class ConsoleMetrics {
         Map<String, Map<DocumentType, BigDecimal>> byCurrency = new TreeMap<>();
         rows(
                         "SELECT d.currency, d.document_type, sum(d.payable_amount) FROM billing.documents d WHERE "
-                                + PERIOD + " AND d.status = 'ACCEPTED' GROUP BY d.currency, d.document_type",
+                                + scope.period() + " AND d.status = 'ACCEPTED' GROUP BY d.currency, d.document_type",
                         scope)
                 .forEach(row -> byCurrency
                         .computeIfAbsent(row[0].toString().strip(), currency -> new EnumMap<>(DocumentType.class))
@@ -137,7 +135,7 @@ public class ConsoleMetrics {
                         FROM (SELECT extract(epoch FROM d.validated_at - d.created_at) AS seconds
                               FROM billing.documents d
                               WHERE %s AND d.status IN ('ACCEPTED', 'REJECTED') AND d.validated_at IS NOT NULL) v
-                        """.formatted(PERIOD), scope).findFirst().orElseThrow();
+                        """.formatted(scope.period()), scope).findFirst().orElseThrow();
         return new ValidationTimeView(count(row[0]), seconds(row[1]), seconds(row[2]));
     }
 
@@ -155,7 +153,7 @@ public class ConsoleMetrics {
                         ) ranked
                         WHERE position <= :rules
                         ORDER BY kind, documents DESC, rule
-                        """.formatted(PERIOD), scope, Map.of("rules", RULES_PER_KIND))
+                        """.formatted(scope.period()), scope, Map.of("rules", RULES_PER_KIND))
                 .map(row -> new RuleView(
                         (String) row[0],
                         DianRule.Kind.valueOf((String) row[1]),
@@ -223,8 +221,15 @@ public class ConsoleMetrics {
         return new AlertsView(certificates, ranges);
     }
 
-    /** The documents of an account's environment issued between two days, both included. */
-    private record Scope(UUID accountId, Environment environment, LocalDate from, LocalDate to) {}
+    /** The documents of an account's environment, of one issuer or all, issued between two days, both included. */
+    private record Scope(UUID accountId, Environment environment, UUID issuerId, LocalDate from, LocalDate to) {
+
+        String period() {
+            String period =
+                    "d.account_id = :account AND d.environment = :environment AND d.issue_date BETWEEN :from AND :to";
+            return issuerId == null ? period : period + " AND d.issuer_id = :issuer";
+        }
+    }
 
     private Stream<Object[]> rows(String sql, Scope scope) {
         return rows(sql, scope, Map.of());
@@ -236,6 +241,9 @@ public class ConsoleMetrics {
         all.put("environment", scope.environment().name());
         all.put("from", scope.from());
         all.put("to", scope.to());
+        if (scope.issuerId() != null) {
+            all.put("issuer", scope.issuerId());
+        }
         return query(sql, all);
     }
 

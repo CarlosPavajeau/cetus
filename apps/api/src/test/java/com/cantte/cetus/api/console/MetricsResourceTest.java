@@ -22,6 +22,7 @@ import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.specification.RequestSpecification;
 import jakarta.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -109,6 +110,26 @@ class MetricsResourceTest {
         assertThat(metrics(customer, Environment.LIVE, today, today).totals().total())
                 .isEqualTo(1);
         assertThat(metrics(other, Environment.TEST, today, today).totals().total())
+                .isZero();
+    }
+
+    @Test
+    void narrowsToTheIssuerAskedWithinTheAccount() {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        Issuer issuer = IssuedDocuments.issuer(customer, "Emisora SAS");
+        LocalDate today = LocalDate.now(DianTime.ZONE);
+        IssuedDocuments.invoice(issuer);
+        IssuedDocuments.invoice(issuer);
+        Issuer foreign = IssuedDocuments.issuer(ConsoleUser.newOrganization(), "Ajena SAS");
+        IssuedDocuments.invoice(foreign);
+
+        assertThat(metrics(customer, Environment.TEST, issuer.id(), today, today)
+                        .totals()
+                        .total())
+                .isEqualTo(2);
+        assertThat(metrics(customer, Environment.TEST, foreign.id(), today, today)
+                        .totals()
+                        .total())
                 .isZero();
     }
 
@@ -232,8 +253,17 @@ class MetricsResourceTest {
     }
 
     private static MetricsView metrics(ConsoleUser user, Environment environment, LocalDate from, LocalDate to) {
-        return user.request()
-                .queryParam("environment", environment.name())
+        return metrics(user.request(), environment, from, to);
+    }
+
+    private static MetricsView metrics(
+            ConsoleUser user, Environment environment, String issuerId, LocalDate from, LocalDate to) {
+        return metrics(user.request().queryParam("issuerId", issuerId), environment, from, to);
+    }
+
+    private static MetricsView metrics(
+            RequestSpecification request, Environment environment, LocalDate from, LocalDate to) {
+        return request.queryParam("environment", environment.name())
                 .queryParam("from", from.toString())
                 .queryParam("to", to.toString())
                 .get("/console/metrics")

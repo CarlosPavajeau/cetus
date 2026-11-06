@@ -15,6 +15,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -35,7 +36,7 @@ public class MetricsResource {
     @Inject
     ConsoleMetrics metrics;
 
-    /** {@code from} and {@code to} bound the issue date, both included. */
+    /** {@code from} and {@code to} bound the issue date, both included; {@code issuerId} narrows to one issuer. */
     @GET
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
@@ -48,12 +49,13 @@ public class MetricsResource {
                             schema = @Schema(implementation = ProblemDetail.class)))
     public MetricsView get(
             @QueryParam("environment") @NotNull Environment environment,
+            @QueryParam("issuerId") UUID issuerId,
             @QueryParam("from") @NotNull LocalDate from,
             @QueryParam("to") @NotNull LocalDate to) {
         if (to.isBefore(from) || ChronoUnit.DAYS.between(from, to) >= ConsoleMetrics.PERIOD_DAYS_MAX) {
             throw new InvalidPeriod();
         }
-        return metrics.metrics(context.accountId(), environment, from, to);
+        return metrics.metrics(context.accountId(), environment, issuerId, from, to);
     }
 
     public static class InvalidPeriod extends WebApplicationException {
