@@ -57,8 +57,9 @@ test("a biller is invited by link, issues in production and is removed", async (
   const visitor = await browser.newContext();
   const invited = await visitor.newPage();
   await open(invited, url);
-  await expect(invited.getByRole("heading", { name: "Te invitaron a Cetus" })).toBeVisible();
+  await expect(invited.getByRole("heading", { name: "Te invitaron a Pruebas SAS" })).toBeVisible();
   await invited.getByRole("link", { name: "Crear cuenta" }).click();
+  await expect(invited.getByText("Crea tu cuenta para unirte a Pruebas SAS.")).toBeVisible();
   await invited.getByLabel("Nombre completo").fill("Persona Facturadora");
   await invited.getByLabel("Correo electrónico").fill(email);
   await invited.getByLabel("Contraseña", { exact: true }).fill("clave-facturadora-segura");
@@ -165,6 +166,7 @@ test("someone with 2FA comes back to the invitation after the second step", asyn
   const page = await visitor.newPage();
   await open(page, `/invitations/${invitation.id}`);
   await page.getByRole("link", { name: "Ya tengo cuenta" }).click();
+  await expect(page.getByText("Pruebas SAS te espera. Inicia sesión para unirte.")).toBeVisible();
   await page.getByLabel("Correo electrónico").fill(invited.email);
   await page.getByRole("textbox", { name: "Contraseña" }).fill(invited.password);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();

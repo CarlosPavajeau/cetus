@@ -8,13 +8,14 @@ import { Controller, useForm } from "react-hook-form";
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { signInErrorMessage } from "~/features/auth/errors";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signInSchema } from "~/features/auth/schema";
 import { invitationSearch, startSession } from "~/features/auth/session-start";
+import { getInvitedOrganization } from "~/features/members/server";
 import { authClient } from "~/lib/auth/client";
 
 /**
@@ -26,11 +27,15 @@ export const Route = createFileRoute("/sign-in")({
     ...invitationSearch(search),
     ...(search.reset === true || search.reset === "true" ? { reset: true as const } : {}),
   }),
+  loaderDeps: ({ search }) => ({ invitation: search.invitation }),
+  loader: ({ deps }) =>
+    deps.invitation ? getInvitedOrganization({ data: { id: deps.invitation } }) : null,
   component: SignIn,
 });
 
 function SignIn() {
   const { invitation, reset } = Route.useSearch();
+  const organizationName = Route.useLoaderData();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -63,9 +68,17 @@ function SignIn() {
 
   return (
     <AuthLayout
-      noteSandbox
       title="Iniciar sesión"
-      lead="Vuelve a tu espacio de trabajo para gestionar tus emisores, llaves y documentos."
+      {...(invitation
+        ? {
+            lead: organizationName
+              ? `${organizationName} te espera. Inicia sesión para unirte.`
+              : "Inicia sesión para ver tu invitación.",
+          }
+        : {
+            noteSandbox: true,
+            lead: "Vuelve a tu espacio de trabajo para gestionar tus emisores, llaves y documentos.",
+          })}
     >
       <form onSubmit={onSubmit} noValidate>
         <FieldGroup>
@@ -91,7 +104,11 @@ function SignIn() {
                   size="lg"
                   aria-invalid={fieldState.invalid}
                 />
-                <FieldError errors={[fieldState.error]} />
+                {invitation && !fieldState.invalid ? (
+                  <FieldDescription>Usa el correo al que llegó la invitación.</FieldDescription>
+                ) : (
+                  <FieldError errors={[fieldState.error]} />
+                )}
               </Field>
             )}
           />

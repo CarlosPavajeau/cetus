@@ -62,8 +62,12 @@ function InvitationPage() {
   if (invitation.status === "signed-out") {
     return (
       <AuthLayout
-        title="Te invitaron a Cetus"
-        lead="Entra con el correo al que llegó la invitación, o crea tu cuenta con él, para unirte a la organización."
+        title={
+          invitation.organizationName
+            ? `Te invitaron a ${invitation.organizationName}`
+            : "Te invitaron a Cetus"
+        }
+        lead="Entra con el correo al que llegó la invitación, o crea tu cuenta con él, para unirte."
       >
         <div className="flex flex-col gap-3">
           <Link
