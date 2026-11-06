@@ -13,7 +13,7 @@ export function PageHeader({
   count?: number;
   /** Shown next to the title, e.g. the state of the resource. */
   status?: ReactNode;
-  lead: ReactNode;
+  lead?: ReactNode;
   action?: ReactNode;
 }) {
   return (
@@ -27,7 +27,7 @@ export function PageHeader({
             {status}
           </div>
         </div>
-        <p className="max-w-2xl text-sm text-muted-foreground leading-6">{lead}</p>
+        {lead && <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{lead}</p>}
       </div>
       {action}
     </header>

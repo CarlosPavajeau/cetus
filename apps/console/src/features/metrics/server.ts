@@ -6,9 +6,16 @@ import type { IssuerAlerts, Metrics } from "~/lib/api/types";
 
 const environment = "'SANDBOX' | 'TEST' | 'LIVE'";
 
-/** An environment's documents issued between two days in Colombia, both included. */
+/** An environment's documents, of one issuer or all, issued between two days in Colombia, both included. */
 export const getMetrics = createServerFn({ method: "GET" })
-  .validator(type({ environment, from: "string.date.iso", to: "string.date.iso" }))
+  .validator(
+    type({
+      environment,
+      "issuerId?": "string.uuid",
+      from: "string.date.iso",
+      to: "string.date.iso",
+    }),
+  )
   .handler(({ data }): Promise<Metrics> =>
     api.get("/console/metrics", { params: { query: data } }),
   );

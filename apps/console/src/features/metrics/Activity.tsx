@@ -1,14 +1,6 @@
 import { ChartColumnIcon } from "lucide-react";
 
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -16,58 +8,73 @@ import {
   EmptyTitle,
 } from "~/components/ui/empty";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
-import type { Metrics } from "~/lib/api/types";
+import type { Issuer, Metrics } from "~/lib/api/types";
 
 import { DailyChart } from "./DailyChart";
+import { IssuerSelect } from "./IssuerSelect";
 import { MetricTiles, OutcomeLinks } from "./MetricTiles";
 import type { Period } from "./periods";
 import { PeriodSelect } from "./PeriodSelect";
 import { RuleRanking } from "./RuleRanking";
 
-/** How the period's documents went in the active environment, and what the DIAN asked to fix. */
+/**
+ * How the period's documents went in the active environment, and what the DIAN asked to fix. With several
+ * issuers it narrows to one, since adding up different companies' amounts tells an accountant nothing.
+ */
 export function Activity({
   metrics,
   period,
   onPeriodChange,
+  issuers,
+  issuerId,
+  onIssuerChange,
 }: {
   metrics: Metrics;
   period: Period;
   onPeriodChange: (period: Period) => void;
+  issuers: Issuer[];
+  issuerId: string | undefined;
+  onIssuerChange: (issuerId: string | undefined) => void;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Documentos emitidos</CardTitle>
-        <CardDescription>
-          {`Documentos de ${environmentLabel[metrics.environment].toLowerCase()} por fecha de emisión.`}
-        </CardDescription>
-        <CardAction>
+    <section aria-labelledby="activity-title" className="flex flex-col gap-4">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 id="activity-title" className="text-base font-medium">
+            Documentos emitidos
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {`Documentos de ${environmentLabel[metrics.environment].toLowerCase()} por fecha de emisión.`}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {issuers.length > 1 && (
+            <IssuerSelect issuers={issuers} value={issuerId} onChange={onIssuerChange} />
+          )}
           <PeriodSelect value={period} onChange={onPeriodChange} />
-        </CardAction>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        {metrics.totals.total === 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ChartColumnIcon />
-              </EmptyMedia>
-              <EmptyTitle>Sin documentos en este periodo</EmptyTitle>
-              <EmptyDescription>
-                Cuando emitas documentos en este ambiente, aquí verás cuántos aceptó la DIAN, el
-                monto facturado y las reglas que más los rechazan.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <MetricTiles metrics={metrics} />
-            <OutcomeLinks metrics={metrics} />
-            <DailyChart metrics={metrics} />
-            <RuleRanking rules={metrics.rules} />
-          </>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </header>
+      {metrics.totals.total === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ChartColumnIcon />
+            </EmptyMedia>
+            <EmptyTitle>Sin documentos en este periodo</EmptyTitle>
+            <EmptyDescription>
+              Cuando emitas documentos en este ambiente, aquí verás cuántos aceptó la DIAN, el monto
+              facturado y las reglas que más los rechazan.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <div className="flex flex-col gap-6">
+          <MetricTiles metrics={metrics} />
+          <OutcomeLinks metrics={metrics} issuerId={issuerId} />
+          <DailyChart metrics={metrics} />
+          <RuleRanking rules={metrics.rules} />
+        </div>
+      )}
+    </section>
   );
 }

@@ -9083,6 +9083,7 @@ export interface operations {
             query: {
                 environment: components["schemas"]["Environment"];
                 from: components["schemas"]["LocalDate"];
+                issuerId?: components["schemas"]["UUID"];
                 to: components["schemas"]["LocalDate"];
             };
             header?: never;

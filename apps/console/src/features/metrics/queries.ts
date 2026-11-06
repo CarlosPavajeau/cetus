@@ -5,10 +5,10 @@ import type { Environment } from "~/lib/api/types";
 import type { DateRange } from "./periods";
 import { getAlerts, getMetrics } from "./server";
 
-export function metricsQuery(environment: Environment, range: DateRange) {
+export function metricsQuery(environment: Environment, range: DateRange, issuerId?: string) {
   return queryOptions({
-    queryKey: ["metrics", environment, range.from, range.to],
-    queryFn: () => getMetrics({ data: { environment, ...range } }),
+    queryKey: ["metrics", environment, issuerId ?? null, range.from, range.to],
+    queryFn: () => getMetrics({ data: { environment, ...(issuerId && { issuerId }), ...range } }),
   });
 }
 

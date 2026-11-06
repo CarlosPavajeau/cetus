@@ -8,9 +8,9 @@ import { formatAmount, formatDuration, formatPercent } from "./labels";
 function Tile({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-1 rounded-lg border p-3">
-      <dt className="text-2xs text-muted-foreground">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="text-lg font-medium tabular-nums">{value}</dd>
-      <dd className="text-2xs text-muted-foreground">{detail}</dd>
+      <dd className="text-xs text-pretty text-muted-foreground">{detail}</dd>
     </div>
   );
 }
@@ -49,7 +49,7 @@ export function MetricTiles({ metrics }: { metrics: Metrics }) {
         detail={
           validation.secondsP95 === null
             ? "Sin respuestas de la DIAN"
-            : `Promedio. El ${formatPercent(0.95)} tardó ${validation.secondsP95 < 1 ? "" : "hasta "}${formatDuration(validation.secondsP95)}`
+            : `Promedio. 95 de cada 100 tardaron ${validation.secondsP95 < 1 ? "" : "hasta "}${formatDuration(validation.secondsP95)}`
         }
       />
     </dl>
@@ -67,14 +67,14 @@ const outcomes: {
 ];
 
 /** Each final outcome of the period, linked to the documents behind it. */
-export function OutcomeLinks({ metrics }: { metrics: Metrics }) {
+export function OutcomeLinks({ metrics, issuerId }: { metrics: Metrics; issuerId?: string }) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
       {outcomes.map((outcome) => (
         <li key={outcome.status}>
           <Link
             to="/documents"
-            search={{ status: outcome.status, from: metrics.from, to: metrics.to }}
+            search={{ status: outcome.status, issuerId, from: metrics.from, to: metrics.to }}
             className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             {outcome.label}:{" "}
