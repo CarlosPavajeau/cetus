@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { TriangleAlertIcon } from "lucide-react";
+import { useId } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Card,
   CardAction,
@@ -12,8 +14,9 @@ import {
 } from "~/components/ui/card";
 import { Progress, ProgressLabel, ProgressValue } from "~/components/ui/progress";
 import { documentTypeLabel } from "~/features/documents/labels";
+import { issuerName, issuerNit } from "~/features/issuers/labels";
 import { formatCount } from "~/features/usage/labels";
-import type { IssuerAlerts as Alerts, RangeAlert } from "~/lib/api/types";
+import type { IssuerAlerts as Alerts, Issuer, RangeAlert } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 import { formatDayLong, formatInstantLong } from "./labels";
@@ -21,37 +24,116 @@ import { formatDayLong, formatInstantLong } from "./labels";
 type Warning = {
   key: string;
   issuerId: string;
+  issuerName: string;
   /** Already stops issuing, not only about to. */
   blocking: boolean;
   text: string;
-  action: string;
 };
 
-/** What stops issuing soon: expiring certificates, and ranges running out or whose resolution ends. */
-export function IssuerWarnings({ alerts }: { alerts: Alerts }) {
-  const warnings = warningsOf(alerts);
-  if (warnings.length === 0) {
-    return null;
-  }
+/** One issuer's warnings, under its name and NIT, since an accountant tells their clients apart by NIT. */
+type Group = {
+  issuerId: string;
+  name: string;
+  nit: string | null;
+  blocking: boolean;
+  warnings: Warning[];
+};
+
+/**
+ * What stops issuing soon, by issuer: expiring certificates, and ranges running out or whose resolution ends. The
+ * issuers that already stopped get their own red alert, so they do not turn the others' amber warnings red. They are
+ * sections, not alerts: they come with the page and render again on every filter change, so an alert role would read
+ * them out each time.
+ */
+export function IssuerWarnings({ alerts, issuers }: { alerts: Alerts; issuers: Issuer[] }) {
+  const blockingId = useId();
+  const pendingId = useId();
+  const groups = groupsOf(alerts, issuers);
+  const blocking = groups.filter((group) => group.blocking);
+  const pending = groups.filter((group) => !group.blocking);
 
   return (
-    <Alert variant={warnings.some((warning) => warning.blocking) ? "destructive" : "default"}>
-      <TriangleAlertIcon />
-      <AlertTitle>Renueva a tiempo para no detener tu facturación</AlertTitle>
-      <AlertDescription>
-        <ul className="flex flex-col gap-1">
-          {warnings.map((warning) => (
-            <li key={warning.key}>
-              {warning.text}{" "}
-              <Link to="/issuers/$issuerId" params={{ issuerId: warning.issuerId }}>
-                {warning.action}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </AlertDescription>
-    </Alert>
+    <>
+      {blocking.length > 0 && (
+        <section aria-labelledby={blockingId}>
+          <Alert variant="destructive" live={false}>
+            <AlertTitle>
+              <h2 id={blockingId}>Renueva para volver a facturar</h2>
+            </AlertTitle>
+            <AlertDescription>
+              <WarningGroups groups={blocking} />
+            </AlertDescription>
+          </Alert>
+        </section>
+      )}
+      {pending.length > 0 && (
+        <section aria-labelledby={pendingId}>
+          <Alert variant="warning">
+            <TriangleAlertIcon aria-hidden="true" />
+            <AlertTitle>
+              <h2 id={pendingId}>Renueva a tiempo para no detener tu facturación</h2>
+            </AlertTitle>
+            <AlertDescription>
+              <WarningGroups groups={pending} />
+            </AlertDescription>
+          </Alert>
+        </section>
+      )}
+    </>
   );
+}
+
+function WarningGroups({ groups }: { groups: Group[] }) {
+  return (
+    <ul className="mt-1.5 flex flex-col gap-3">
+      {groups.map((group) => (
+        <li key={group.issuerId} className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <h3 className="font-medium">{group.name}</h3>
+            {group.nit !== null && (
+              <span className="font-mono text-2xs opacity-80">{group.nit}</span>
+            )}
+            <Link
+              to="/issuers/$issuerId"
+              params={{ issuerId: group.issuerId }}
+              aria-label={`Ver emisor ${group.name}`}
+              className="text-xs"
+            >
+              Ver emisor
+            </Link>
+          </div>
+          <ul className="flex list-disc flex-col gap-0.5 pl-4">
+            {group.warnings.map((warning) => (
+              <li key={warning.key}>{warning.text}</li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function groupsOf(alerts: Alerts, issuers: Issuer[]): Group[] {
+  const groups = new Map<string, Group>();
+  // Blocking warnings first puts them first within their issuer.
+  const warnings = warningsOf(alerts).toSorted((a, b) => Number(b.blocking) - Number(a.blocking));
+  for (const warning of warnings) {
+    const group = groups.get(warning.issuerId);
+    if (group === undefined) {
+      const issuer = issuers.find((each) => each.id === warning.issuerId);
+      groups.set(warning.issuerId, {
+        issuerId: warning.issuerId,
+        name: issuer === undefined ? warning.issuerName : issuerName(issuer),
+        nit: issuer === undefined ? null : issuerNit(issuer),
+        blocking: warning.blocking,
+        warnings: [warning],
+      });
+    } else {
+      group.blocking ||= warning.blocking;
+      group.warnings.push(warning);
+    }
+  }
+  return [...groups.values()];
 }
 
 function warningsOf(alerts: Alerts): Warning[] {
@@ -61,23 +143,23 @@ function warningsOf(alerts: Alerts): Warning[] {
     return {
       key: `certificate-${certificate.issuerId}`,
       issuerId: certificate.issuerId,
+      issuerName: certificate.issuerName,
       blocking: expired,
       text: expired
-        ? `El certificado de ${certificate.issuerName} venció el ${when}.`
-        : `El certificado de ${certificate.issuerName} vence el ${when} (${daysText(certificate.daysLeft)}).`,
-      action: "Cargar un certificado nuevo",
+        ? `El certificado de firma venció el ${when}: carga uno nuevo.`
+        : `El certificado de firma vence el ${when} (${daysText(certificate.daysLeft)}): carga uno nuevo.`,
     };
   });
   const ranges = alerts.ranges.flatMap((range) => {
-    const name = `${rangeName(range)} de ${range.issuerName}`;
+    const name = rangeName(range);
     const running: Warning[] = range.runningOut
       ? [
           {
             key: `range-${range.id}-numbers`,
             issuerId: range.issuerId,
+            issuerName: range.issuerName,
             blocking: range.used >= range.total,
             text: `${remainingText(range.total - range.used)} en ${name}: solicita una nueva resolución a la DIAN.`,
-            action: "Ver emisor",
           },
         ]
       : [];
@@ -87,12 +169,12 @@ function warningsOf(alerts: Alerts): Warning[] {
             {
               key: `range-${range.id}-resolution`,
               issuerId: range.issuerId,
+              issuerName: range.issuerName,
               blocking: range.daysLeft < 0,
               text:
                 range.daysLeft < 0
                   ? `La resolución de ${name} venció el ${formatDayLong(range.validTo)}.`
                   : `La resolución de ${name} vence el ${formatDayLong(range.validTo)} (${daysText(range.daysLeft)}).`,
-              action: "Ver emisor",
             },
           ]
         : [];
@@ -106,13 +188,12 @@ export function NumberingUsage({ ranges }: { ranges: RangeAlert[] }) {
   const sorted = ranges.toSorted((a, b) => Number(needsAttention(b)) - Number(needsAttention(a)));
   const [first] = ranges;
   const issuer = ranges.every((range) => range.issuerId === first?.issuerId) ? first : undefined;
-  const linkClass =
-    "text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline";
+  const linkClass = cn(buttonVariants({ variant: "outline", size: "sm" }));
 
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>Numeración</CardTitle>
+        <CardTitle level={3}>Numeración</CardTitle>
         <CardDescription>
           {issuer === undefined
             ? "Números usados de cada rango activo."
@@ -135,7 +216,7 @@ export function NumberingUsage({ ranges }: { ranges: RangeAlert[] }) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <ul className="flex flex-col gap-4">
+        <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map((range) => (
             <RangeUsage key={range.id} range={range} issuerShown={issuer === undefined} />
           ))}
@@ -146,7 +227,7 @@ export function NumberingUsage({ ranges }: { ranges: RangeAlert[] }) {
 }
 
 function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: boolean }) {
-  const attention = needsAttention(range);
+  const tone = rangeTone(range);
   const details = [
     range.runningOut ? `${remainingText(range.total - range.used)}.` : null,
     resolutionText(range),
@@ -154,11 +235,7 @@ function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: bo
 
   return (
     <li className="flex flex-col gap-1">
-      <Progress
-        value={range.used}
-        max={range.total}
-        variant={attention ? "destructive" : "default"}
-      >
+      <Progress value={range.used} max={range.total} variant={tone}>
         <ProgressLabel>
           {rangeName(range)}
           {issuerShown && (
@@ -182,7 +259,8 @@ function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: bo
         <p
           className={cn(
             "text-2xs text-muted-foreground",
-            attention && "font-medium text-destructive-foreground",
+            tone === "warning" && "font-medium text-warning-foreground",
+            tone === "destructive" && "font-medium text-destructive-foreground",
           )}
         >
           {details.join(" ")}
@@ -196,8 +274,20 @@ function needsAttention(range: RangeAlert) {
   return range.runningOut || range.expiring;
 }
 
-function rangeName(range: RangeAlert) {
-  return `${documentTypeLabel[range.documentType]} ${range.prefix ?? ""}`.trim();
+/** Red only once the range already stops issuing; amber while there is still time to act. */
+export function rangeTone(range: RangeAlert): "default" | "warning" | "destructive" {
+  if (range.used >= range.total || (range.daysLeft !== null && range.daysLeft < 0)) {
+    return "destructive";
+  }
+  return needsAttention(range) ? "warning" : "default";
+}
+
+/** Without a prefix, an issuer's ranges of one document type differ only in their numbers. */
+export function rangeName(range: RangeAlert) {
+  const type = documentTypeLabel[range.documentType];
+  return range.prefix === null
+    ? `${type} ${formatCount(range.numberFrom)}–${formatCount(range.numberTo)}`
+    : `${type} ${range.prefix}`;
 }
 
 function resolutionText(range: RangeAlert) {
@@ -221,7 +311,7 @@ function remainingText(numbers: number) {
     : `Quedan ${formatCount(left)} números`;
 }
 
-function daysText(days: number) {
+export function daysText(days: number) {
   if (days === 0) {
     return "hoy";
   }

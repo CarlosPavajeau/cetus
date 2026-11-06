@@ -21,7 +21,7 @@ test("a new account has no product and sees subscriptions and packages for sale"
   organization: _owner,
 }) => {
   await open(page, "/overview");
-  await expect(page.getByText(/^Sin producto vigente · cuenta/)).toBeVisible();
+  await expect(page.getByText("Sin producto vigente", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "Facturación", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Facturación", level: 1 })).toBeVisible();

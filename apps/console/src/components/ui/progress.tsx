@@ -7,6 +7,7 @@ const progressIndicatorVariants = cva("h-full transition-all", {
     variant: {
       default: "bg-primary",
       destructive: "bg-destructive",
+      warning: "bg-warning",
     },
   },
   defaultVariants: {

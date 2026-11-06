@@ -5,6 +5,12 @@ const dayMonth = new Intl.DateTimeFormat("es-CO", {
   timeZone: "UTC",
 });
 const dayMonthYear = new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeZone: "UTC" });
+const instantShort = new Intl.DateTimeFormat("es-CO", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "America/Bogota",
+});
 const instantLong = new Intl.DateTimeFormat("es-CO", {
   dateStyle: "long",
   timeZone: "America/Bogota",
@@ -49,6 +55,11 @@ export function formatDay(day: string) {
 /** "26 de octubre de 2026" for a YYYY-MM-DD day. */
 export function formatDayLong(day: string) {
   return dayMonthYear.format(new Date(`${day}T00:00:00Z`));
+}
+
+/** "26 oct 2026" for an instant, on its calendar day in Colombia. */
+export function formatInstantShort(instant: string) {
+  return instantShort.format(new Date(instant)).replace(".", "").replaceAll(" de ", " ");
 }
 
 /** "26 de octubre de 2026" for an instant, on its calendar day in Colombia. */

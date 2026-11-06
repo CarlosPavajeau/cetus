@@ -70,6 +70,22 @@ public final class MetricsViews {
             @Schema(description = "The most frequent rules of each kind, most frequent first")
             List<RuleView> rules) {}
 
+    @Schema(description = "An issuer's active signing certificate")
+    public record CertificateExpiryView(
+            OffsetDateTime validTo,
+
+            @Schema(description = "Days left in Colombia; negative once it expired")
+            long daysLeft) {}
+
+    @Schema(description = "An issuer's documents issued in a period, and its active signing certificate")
+    public record IssuerMetricsView(
+            UUID issuerId,
+            StatusCountsView totals,
+            List<AmountView> amounts,
+
+            @Schema(nullable = true, description = "None in the sandbox, which signs with Cetus' certificate")
+            CertificateExpiryView certificate) {}
+
     @Schema(description = "An issuer's signing certificate that expires soon or has expired")
     public record CertificateAlertView(
             UUID issuerId,
@@ -87,6 +103,12 @@ public final class MetricsViews {
             DocumentType documentType,
 
             @Schema(nullable = true) String prefix,
+
+            @Schema(description = "First number of the range")
+            long numberFrom,
+
+            @Schema(description = "Last number of the range")
+            long numberTo,
 
             long used,
             long total,

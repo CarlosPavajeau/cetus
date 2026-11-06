@@ -11,6 +11,8 @@ const alertVariants = cva(
         default: "bg-card text-card-foreground",
         destructive:
           "border-destructive/20 bg-destructive/10 text-destructive-foreground *:data-[slot=alert-description]:text-sm *:data-[slot=alert-description]:text-destructive-foreground dark:border-destructive/30 dark:bg-destructive/20",
+        warning:
+          "border-warning/25 bg-warning/10 text-warning-foreground *:data-[slot=alert-description]:text-sm *:data-[slot=alert-description]:text-warning-foreground dark:border-warning/30 dark:bg-warning/15",
       },
       size: {
         default: "",
@@ -28,13 +30,14 @@ function Alert({
   className,
   variant,
   size,
+  live = variant === "destructive",
   children,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
+}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants> & { live?: boolean }) {
   return (
     <div
       data-slot="alert"
-      role="alert"
+      role={live ? "alert" : undefined}
       className={cn(alertVariants({ variant, size }), className)}
       {...props}
     >

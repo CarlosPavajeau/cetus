@@ -6,9 +6,11 @@ import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.metrics.MetricsViews.AlertsView;
 import com.cantte.cetus.api.metrics.MetricsViews.AmountView;
+import com.cantte.cetus.api.metrics.MetricsViews.IssuerMetricsView;
 import com.cantte.cetus.api.metrics.MetricsViews.MetricsView;
 import com.cantte.cetus.api.metrics.MetricsViews.RangeAlertView;
 import com.cantte.cetus.api.metrics.MetricsViews.StatusCountsView;
+import com.cantte.cetus.api.support.ConsoleFixtures;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.api.support.IssuedDocuments.Issuer;
@@ -22,6 +24,8 @@ import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.common.mapper.TypeRef;
+import io.restassured.specification.RequestSpecification;
 import jakarta.inject.Inject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -110,6 +114,64 @@ class MetricsResourceTest {
                 .isEqualTo(1);
         assertThat(metrics(other, Environment.TEST, today, today).totals().total())
                 .isZero();
+    }
+
+    @Test
+    void narrowsToTheIssuerAskedWithinTheAccount() {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        Issuer issuer = IssuedDocuments.issuer(customer, "Emisora SAS");
+        LocalDate today = LocalDate.now(DianTime.ZONE);
+        IssuedDocuments.invoice(issuer);
+        IssuedDocuments.invoice(issuer);
+        Issuer foreign = IssuedDocuments.issuer(ConsoleUser.newOrganization(), "Ajena SAS");
+        IssuedDocuments.invoice(foreign);
+
+        assertThat(metrics(customer, Environment.TEST, issuer.id(), today, today)
+                        .totals()
+                        .total())
+                .isEqualTo(2);
+        assertThat(metrics(customer, Environment.TEST, foreign.id(), today, today)
+                        .totals()
+                        .total())
+                .isZero();
+    }
+
+    @Test
+    void splitsThePeriodByIssuerWithItsCertificate() {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        Issuer first = IssuedDocuments.issuer(customer, "Primera SAS");
+        String second = ConsoleFixtures.onboard(customer, "800197268").issuerId();
+        LocalDate today = LocalDate.now(DianTime.ZONE);
+        UUID accepted = IssuedDocuments.invoice(first);
+        UUID rejected = IssuedDocuments.invoice(first);
+        verdict(accepted, DocumentStatus.ACCEPTED, 10);
+        verdict(rejected, DocumentStatus.REJECTED, 10);
+        IssuedDocuments.invoice(IssuedDocuments.issuer(ConsoleUser.newOrganization(), "Ajena SAS"));
+        QuarkusTransaction.requiringNew()
+                .run(() -> SigningCertificateEntity.findActive(UUID.fromString(second))
+                                .orElseThrow()
+                                .validTo =
+                        OffsetDateTime.now().minusDays(3));
+
+        List<IssuerMetricsView> issuers = byIssuer(customer, Environment.TEST, today, today);
+
+        assertThat(issuers)
+                .extracting(issuer -> issuer.issuerId().toString())
+                .containsExactlyInAnyOrder(first.id(), second);
+        IssuerMetricsView busy = find(issuers, first.id());
+        assertThat(busy.totals()).isEqualTo(new StatusCountsView(1, 1, 0, 0, 2));
+        assertThat(busy.amounts()).singleElement().satisfies(amount -> {
+            assertThat(amount.currency()).isEqualTo("COP");
+            assertThat(amount.net()).isPositive();
+        });
+        assertThat(busy.certificate()).isNotNull();
+        assertThat(busy.certificate().daysLeft()).isPositive();
+        IssuerMetricsView idle = find(issuers, second);
+        assertThat(idle.totals()).isEqualTo(new StatusCountsView(0, 0, 0, 0, 0));
+        assertThat(idle.amounts()).isEmpty();
+        assertThat(idle.certificate()).isNotNull();
+        assertThat(idle.certificate().daysLeft()).isBetween(-4L, -3L);
+        assertThat(byIssuer(customer, Environment.LIVE, today, today)).isEmpty();
     }
 
     @Test
@@ -211,6 +273,22 @@ class MetricsResourceTest {
     }
 
     @Test
+    void alertsNarrowToTheIssuerAskedWithinTheAccount() {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        Issuer first = IssuedDocuments.issuer(customer, "Primera SAS");
+        String second = ConsoleFixtures.onboard(customer, "800197268").issuerId();
+        Issuer foreign = IssuedDocuments.issuer(ConsoleUser.newOrganization(), "Ajena SAS");
+
+        assertThat(alerts(customer, null).ranges())
+                .extracting(range -> range.issuerId().toString())
+                .containsExactlyInAnyOrder(first.id(), second);
+        assertThat(alerts(customer, second).ranges())
+                .extracting(range -> range.issuerId().toString())
+                .containsExactly(second);
+        assertThat(alerts(customer, foreign.id())).isEqualTo(new AlertsView(List.of(), List.of()));
+    }
+
+    @Test
     void aRangeWithRoomAndALongResolutionIsNoWarning() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         IssuedDocuments.issuer(customer, "Tranquila SAS");
@@ -226,14 +304,32 @@ class MetricsResourceTest {
         assertThat(alerts.ranges()).singleElement().satisfies(range -> {
             assertThat(range.used()).isZero();
             assertThat(range.total()).isEqualTo(5_000_001);
+            assertThat(range.numberTo() - range.numberFrom() + 1).isEqualTo(range.total());
             assertThat(range.runningOut()).isFalse();
             assertThat(range.expiring()).isFalse();
         });
     }
 
+    private static AlertsView alerts(ConsoleUser user, String issuerId) {
+        RequestSpecification request = user.request().queryParam("environment", "TEST");
+        if (issuerId != null) {
+            request.queryParam("issuerId", issuerId);
+        }
+        return request.get("/console/alerts").then().statusCode(200).extract().as(AlertsView.class);
+    }
+
     private static MetricsView metrics(ConsoleUser user, Environment environment, LocalDate from, LocalDate to) {
-        return user.request()
-                .queryParam("environment", environment.name())
+        return metrics(user.request(), environment, from, to);
+    }
+
+    private static MetricsView metrics(
+            ConsoleUser user, Environment environment, String issuerId, LocalDate from, LocalDate to) {
+        return metrics(user.request().queryParam("issuerId", issuerId), environment, from, to);
+    }
+
+    private static MetricsView metrics(
+            RequestSpecification request, Environment environment, LocalDate from, LocalDate to) {
+        return request.queryParam("environment", environment.name())
                 .queryParam("from", from.toString())
                 .queryParam("to", to.toString())
                 .get("/console/metrics")
@@ -241,6 +337,26 @@ class MetricsResourceTest {
                 .statusCode(200)
                 .extract()
                 .as(MetricsView.class);
+    }
+
+    private static List<IssuerMetricsView> byIssuer(
+            ConsoleUser user, Environment environment, LocalDate from, LocalDate to) {
+        return user.request()
+                .queryParam("environment", environment.name())
+                .queryParam("from", from.toString())
+                .queryParam("to", to.toString())
+                .get("/console/metrics/issuers")
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(new TypeRef<>() {});
+    }
+
+    private static IssuerMetricsView find(List<IssuerMetricsView> issuers, String issuerId) {
+        return issuers.stream()
+                .filter(issuer -> issuer.issuerId().toString().equals(issuerId))
+                .findFirst()
+                .orElseThrow();
     }
 
     private static void verdict(UUID documentId, DocumentStatus status, int seconds) {

@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, type BarShapeProps, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
   type ChartConfig,
@@ -27,9 +27,32 @@ function stackOrder(item: { dataKey?: unknown }) {
   return series.findIndex((key) => key === item.dataKey);
 }
 
-/** The period's documents per issue day, stacked by outcome. */
+/** State color reaches a surface as a tint; the solid hue only rules the top of each entry. */
+function EntryBar({ x, y, width, height, fill }: BarShapeProps) {
+  if (x === undefined || y === undefined || width === undefined || height === undefined) {
+    return <g />;
+  }
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} fill={fill} fillOpacity={0.24} />
+      <rect x={x} y={y} width={width} height={Math.min(2, height)} fill={fill} />
+    </g>
+  );
+}
+
+/** The period's documents per issue day, stacked by outcome. One day alone makes a single bar, said in a line. */
 export function DailyChart({ metrics }: { metrics: Metrics }) {
   const data = metrics.days.map((day) => ({ date: day.date, ...day.documents }));
+  const daysIssued = metrics.days.filter((day) => day.documents.total > 0);
+  const [dayOnly] = daysIssued;
+
+  if (daysIssued.length === 1 && dayOnly !== undefined) {
+    return (
+      <p className="text-sm text-pretty text-muted-foreground">
+        {`Todos los documentos del periodo son del ${formatDayLong(dayOnly.date)}. La gráfica por día aparece desde el segundo día con documentos.`}
+      </p>
+    );
+  }
 
   return (
     <figure className="flex flex-col gap-2">
@@ -64,7 +87,13 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
           />
           <ChartLegend itemSorter={stackOrder} content={<ChartLegendContent />} />
           {series.map((key) => (
-            <Bar key={key} dataKey={key} stackId="documents" fill={`var(--color-${key})`} />
+            <Bar
+              key={key}
+              dataKey={key}
+              stackId="documents"
+              fill={`var(--color-${key})`}
+              shape={EntryBar}
+            />
           ))}
         </BarChart>
       </ChartContainer>
