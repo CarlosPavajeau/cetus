@@ -1,4 +1,5 @@
 import { ChartColumnIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import {
   Empty,
@@ -19,7 +20,8 @@ import { RuleRanking } from "./RuleRanking";
 
 /**
  * How the period's documents went in the active environment, and what the DIAN asked to fix. With several
- * issuers it narrows to one, since adding up different companies' amounts tells an accountant nothing.
+ * issuers and none picked, {@code breakdown} shows each one's amount instead of a sum, since adding up different
+ * companies' amounts tells an accountant nothing.
  */
 export function Activity({
   metrics,
@@ -28,6 +30,7 @@ export function Activity({
   issuers,
   issuerId,
   onIssuerChange,
+  breakdown,
 }: {
   metrics: Metrics;
   period: Period;
@@ -35,6 +38,7 @@ export function Activity({
   issuers: Issuer[];
   issuerId: string | undefined;
   onIssuerChange: (issuerId: string | undefined) => void;
+  breakdown: ReactNode;
 }) {
   return (
     <section aria-labelledby="activity-title" className="flex flex-col gap-4">
@@ -55,22 +59,28 @@ export function Activity({
         </div>
       </header>
       {metrics.totals.total === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <ChartColumnIcon />
-            </EmptyMedia>
-            <EmptyTitle>Sin documentos en este periodo</EmptyTitle>
-            <EmptyDescription>
-              Cuando emitas documentos en este ambiente, aquí verás cuántos aceptó la DIAN, el monto
-              facturado y las reglas que más los rechazan.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ChartColumnIcon />
+              </EmptyMedia>
+              <EmptyTitle>Sin documentos en este periodo</EmptyTitle>
+              <EmptyDescription>
+                Cuando emitas documentos en este ambiente, aquí verás cuántos aceptó la DIAN, el
+                monto facturado y las reglas que más los rechazan.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+          {breakdown}
+        </>
       ) : (
         <div className="flex flex-col gap-6">
-          <MetricTiles metrics={metrics} />
-          <OutcomeLinks metrics={metrics} issuerId={issuerId} />
+          <div className="flex flex-col gap-3">
+            <MetricTiles metrics={metrics} amountShown={breakdown === null} />
+            <OutcomeLinks metrics={metrics} issuerId={issuerId} />
+          </div>
+          {breakdown}
           <DailyChart metrics={metrics} />
           <RuleRanking rules={metrics.rules} />
         </div>

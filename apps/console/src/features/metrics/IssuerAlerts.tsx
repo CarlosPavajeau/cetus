@@ -205,14 +205,14 @@ function needsAttention(range: RangeAlert) {
 }
 
 /** Red only once the range already stops issuing; amber while there is still time to act. */
-function rangeTone(range: RangeAlert): "default" | "warning" | "destructive" {
+export function rangeTone(range: RangeAlert): "default" | "warning" | "destructive" {
   if (range.used >= range.total || (range.daysLeft !== null && range.daysLeft < 0)) {
     return "destructive";
   }
   return needsAttention(range) ? "warning" : "default";
 }
 
-function rangeName(range: RangeAlert) {
+export function rangeName(range: RangeAlert) {
   return `${documentTypeLabel[range.documentType]} ${range.prefix ?? ""}`.trim();
 }
 
@@ -237,7 +237,7 @@ function remainingText(numbers: number) {
     : `Quedan ${formatCount(left)} números`;
 }
 
-function daysText(days: number) {
+export function daysText(days: number) {
   if (days === 0) {
     return "hoy";
   }

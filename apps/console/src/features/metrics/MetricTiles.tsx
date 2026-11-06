@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 import { formatCount } from "~/features/usage/labels";
 import type { DocumentStatus, Metrics } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
 import { formatAmount, formatDuration, formatPercent } from "./labels";
 
@@ -15,13 +16,18 @@ function Tile({ label, value, detail }: { label: string; value: string; detail: 
   );
 }
 
-/** The period's documents, how many the DIAN accepted, what they add up to and how long the DIAN took. */
-export function MetricTiles({ metrics }: { metrics: Metrics }) {
+/**
+ * The period's documents, how many the DIAN accepted, what they add up to and how long the DIAN took. Without
+ * {@code amountShown} the amount is left out, since several issuers' amounts add up to nothing useful.
+ */
+export function MetricTiles({ metrics, amountShown }: { metrics: Metrics; amountShown: boolean }) {
   const { totals, acceptanceRate, amounts, validation } = metrics;
   const [amount, ...others] = amounts;
 
   return (
-    <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <dl
+      className={cn("grid gap-3 sm:grid-cols-2", amountShown ? "lg:grid-cols-4" : "lg:grid-cols-3")}
+    >
       <Tile
         label="Documentos"
         value={formatCount(totals.total)}
@@ -34,15 +40,17 @@ export function MetricTiles({ metrics }: { metrics: Metrics }) {
         value={acceptanceRate === null ? "—" : formatPercent(acceptanceRate)}
         detail={`Aceptados: ${formatCount(totals.accepted)} de ${formatCount(totals.accepted + totals.rejected)} con respuesta`}
       />
-      <Tile
-        label="Monto facturado"
-        value={amount ? formatAmount(amount.net, amount.currency) : formatAmount(0, "COP")}
-        detail={
-          others.length > 0
-            ? `Y ${others.map((each) => formatAmount(each.net, each.currency)).join(", ")}`
-            : "Facturas y notas débito, menos notas crédito"
-        }
-      />
+      {amountShown && (
+        <Tile
+          label="Monto facturado"
+          value={amount ? formatAmount(amount.net, amount.currency) : formatAmount(0, "COP")}
+          detail={
+            others.length > 0
+              ? `Y ${others.map((each) => formatAmount(each.net, each.currency)).join(", ")}`
+              : "Facturas y notas débito, menos notas crédito"
+          }
+        />
+      )}
       <Tile
         label="Tiempo hasta la validación"
         value={validation.secondsAverage === null ? "—" : formatDuration(validation.secondsAverage)}

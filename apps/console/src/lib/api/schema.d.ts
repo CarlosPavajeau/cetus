@@ -1208,6 +1208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/console/metrics/issuers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** By Issuer */
+        get: operations["MetricsResource_byIssuer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/console/orders": {
         parameters: {
             query?: never;
@@ -2485,6 +2502,15 @@ export interface components {
              */
             daysLeft: number;
         };
+        /** @description An issuer's active signing certificate */
+        CertificateExpiryView: {
+            validTo: components["schemas"]["OffsetDateTime"];
+            /**
+             * Format: int64
+             * @description Days left in Colombia; negative once it expired
+             */
+            daysLeft: number;
+        };
         CertificateRequest: {
             pkcs12Base64: string;
             password: string;
@@ -3428,6 +3454,14 @@ export interface components {
             certificate: components["schemas"]["CertificateView"] | null;
             ranges: components["schemas"]["NumberingRangeView"][];
             testSet: components["schemas"]["TestSetProgressView"] | null;
+        };
+        /** @description An issuer's documents issued in a period, and its active signing certificate */
+        IssuerMetricsView: {
+            issuerId: components["schemas"]["UUID"];
+            totals: components["schemas"]["StatusCountsView"];
+            amounts: components["schemas"]["AmountView"][];
+            /** @description None in the sandbox, which signs with Cetus' certificate */
+            certificate: ((components["schemas"]["CertificateExpiryView"] | null) | null) | components["schemas"]["CertificateExpiryView"] | null;
         };
         /**
          * @description Estado de configuración del emisor ante la DIAN.
@@ -9099,6 +9133,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetricsView"];
+                };
+            };
+            /** @description Invalid period */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    MetricsResource_byIssuer: {
+        parameters: {
+            query: {
+                environment: components["schemas"]["Environment"];
+                from: components["schemas"]["LocalDate"];
+                to: components["schemas"]["LocalDate"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerMetricsView"][];
                 };
             };
             /** @description Invalid period */

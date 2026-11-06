@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { type } from "arktype";
 
 import { api } from "~/lib/api/client";
-import type { IssuerAlerts, Metrics } from "~/lib/api/types";
+import type { IssuerAlerts, IssuerMetrics, Metrics } from "~/lib/api/types";
 
 const environment = "'SANDBOX' | 'TEST' | 'LIVE'";
 
@@ -18,6 +18,13 @@ export const getMetrics = createServerFn({ method: "GET" })
   )
   .handler(({ data }): Promise<Metrics> =>
     api.get("/console/metrics", { params: { query: data } }),
+  );
+
+/** Each issuer's documents of the period apart, and its active certificate. */
+export const getIssuerMetrics = createServerFn({ method: "GET" })
+  .validator(type({ environment, from: "string.date.iso", to: "string.date.iso" }))
+  .handler(({ data }): Promise<IssuerMetrics[]> =>
+    api.get("/console/metrics/issuers", { params: { query: data } }),
   );
 
 /** The certificates about to expire and the numbering ranges of an environment's issuers. */

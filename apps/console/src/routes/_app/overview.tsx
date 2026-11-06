@@ -28,6 +28,7 @@ import { issuerName } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 import { Activity } from "~/features/metrics/Activity";
 import { IssuerWarnings, NumberingUsage } from "~/features/metrics/IssuerAlerts";
+import { IssuerBreakdown } from "~/features/metrics/IssuerBreakdown";
 import {
   type Period,
   periodDefault,
@@ -35,7 +36,7 @@ import {
   periods,
   todayInColombia,
 } from "~/features/metrics/periods";
-import { alertsQuery, metricsQuery } from "~/features/metrics/queries";
+import { alertsQuery, issuerMetricsQuery, metricsQuery } from "~/features/metrics/queries";
 import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 import type { Environment, Issuer } from "~/lib/api/types";
 import { docsUrl } from "~/lib/docs";
@@ -53,17 +54,17 @@ export const Route = createFileRoute("/_app/overview")({
       queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" }),
       queryClient.query({ ...issuersQuery, staleTime: "static" }),
     ]);
-    const { issuerId } = issuerFilter(issuers, environment, deps.issuer);
+    const { issuerId, breakdown } = issuerFilter(issuers, environment, deps.issuer);
+    const range = periodRange(deps.period, todayInColombia());
     await Promise.all([
       queryClient.query({ ...apiKeysQuery, staleTime: "static" }),
       queryClient.infiniteQuery({
         ...documentsQuery({ environment: "SANDBOX" }),
         staleTime: "static",
       }),
-      queryClient.query({
-        ...metricsQuery(environment, periodRange(deps.period, todayInColombia()), issuerId),
-        staleTime: "static",
-      }),
+      queryClient.query({ ...metricsQuery(environment, range, issuerId), staleTime: "static" }),
+      breakdown &&
+        queryClient.query({ ...issuerMetricsQuery(environment, range), staleTime: "static" }),
       queryClient.query({ ...alertsQuery(environment), staleTime: "static" }),
     ]);
   },
@@ -79,10 +80,13 @@ function Overview() {
   const environment = useActiveEnvironment();
   const search = Route.useSearch();
   const period = search.period ?? periodDefault;
-  const { options: issuerOptions, issuerId } = issuerFilter(issuers, environment, search.issuer);
-  const { data: metrics } = useSuspenseQuery(
-    metricsQuery(environment, periodRange(period, todayInColombia()), issuerId),
-  );
+  const {
+    options: issuerOptions,
+    issuerId,
+    breakdown,
+  } = issuerFilter(issuers, environment, search.issuer);
+  const range = periodRange(period, todayInColombia());
+  const { data: metrics } = useSuspenseQuery(metricsQuery(environment, range, issuerId));
   const { data: alerts } = useSuspenseQuery(alertsQuery(environment));
   const navigate = useNavigate({ from: Route.fullPath });
   const { manage } = useMemberPermissions();
@@ -236,6 +240,17 @@ function Overview() {
           issuers={issuerOptions}
           issuerId={issuerId}
           onIssuerChange={(next) => changeSearch({ issuer: next })}
+          breakdown={
+            breakdown ? (
+              <IssuerBreakdown
+                environment={environment}
+                range={range}
+                issuers={issuerOptions}
+                certificates={alerts.certificates}
+                ranges={alerts.ranges}
+              />
+            ) : null
+          }
         />
       )}
 
@@ -250,12 +265,16 @@ function Overview() {
 
 const resumeShownMax = 3;
 
-/** The active environment's issuers to narrow the metrics by, and the one asked for if it is among them. */
+/**
+ * The active environment's issuers to narrow the metrics by, the one asked for if it is among them, and whether
+ * the overview breaks the period down by issuer: with several and none picked.
+ */
 function issuerFilter(issuers: Issuer[], environment: Environment, asked: string | undefined) {
   const options = issuers.filter(
     (issuer) => issuer.environment === environment && issuer.status !== "DISABLED",
   );
-  return { options, issuerId: options.find((issuer) => issuer.id === asked)?.id };
+  const issuerId = options.find((issuer) => issuer.id === asked)?.id;
+  return { options, issuerId, breakdown: issuerId === undefined && options.length > 1 };
 }
 
 /** One pending step: what is missing and the action that resolves it. */

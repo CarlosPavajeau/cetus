@@ -290,6 +290,8 @@ export type MetricsRule = Schemas["RuleView"];
 
 export type DianRuleKind = MetricsRule["kind"];
 
+export type IssuerMetrics = Schemas["IssuerMetricsView"];
+
 export type IssuerAlerts = Schemas["AlertsView"];
 
 export type CertificateAlert = Schemas["CertificateAlertView"];
