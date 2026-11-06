@@ -136,10 +136,12 @@ export function AuthLayout({
               <Separator />
               <div className="flex items-center justify-between gap-4 text-xs">
                 <div className="flex flex-col gap-1">
-                  <p className="font-medium">Primero pruebas. Después, producción.</p>
-                  <p className="text-muted-foreground">La misma integración. Una nueva llave.</p>
+                  <p className="font-medium">Primero simulación. Después, producción.</p>
+                  <p className="text-muted-foreground">
+                    La misma integración, con tu empresa habilitada ante la DIAN.
+                  </p>
                 </div>
-                <Badge variant="muted">Sandbox</Badge>
+                <Badge variant="muted">Simulación</Badge>
               </div>
             </div>
           </div>

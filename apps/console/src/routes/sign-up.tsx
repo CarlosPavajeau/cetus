@@ -87,8 +87,8 @@ function SignUp() {
     <AuthLayout
       title="Crear cuenta"
       eyebrow="EMPIEZA A INTEGRAR"
-      lead="Empieza en ambiente de pruebas; pasar a producción es un cambio de llave."
-      headline={["De pruebas a producción.", "Un cambio de llave."]}
+      lead="Tu cuenta trae una empresa de ejemplo para emitir en simulación desde el primer minuto, sin certificado ni tarjeta."
+      headline={["Una empresa de ejemplo,", "lista para tu primera factura."]}
     >
       <form onSubmit={onSubmit} noValidate>
         <FieldGroup className="gap-4.5">
