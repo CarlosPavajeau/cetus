@@ -17,6 +17,7 @@ import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documen
 import { db } from "../db";
 import { emailSender } from "../email";
 import { env } from "../env";
+import { backupCodeCount } from "./backup-code-count";
 import {
   ac,
   impersonationSeconds,
@@ -29,6 +30,8 @@ import {
 } from "./permissions";
 import { replaceTotp } from "./replace-totp";
 import * as schema from "./schema";
+
+const backupCodeTotal = 10;
 
 const sessionFields = type({
   "activeOrganizationId?": "string | null",
@@ -239,7 +242,8 @@ export const auth = betterAuth({
       bannedUserMessage:
         "Tu acceso a Cetus está bloqueado. Si crees que es un error, escríbenos a soporte.",
     }),
-    twoFactor({ issuer: "Cetus" }),
+    twoFactor({ issuer: "Cetus", backupCodeOptions: { amount: backupCodeTotal } }),
+    backupCodeCount({ total: backupCodeTotal }),
     replaceTotp({
       issuer: "Cetus",
       onReplaced: (user) => {

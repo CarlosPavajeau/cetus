@@ -90,6 +90,9 @@ test("with 2FA on, backup codes are replaced and 2FA is turned off, each behind 
   await expect(backupCodes).not.toHaveCount(0);
   const enrolled = await backupCodes.allTextContents();
   await page.getByRole("button", { name: "Ya guardé mis códigos" }).click();
+  await expect(
+    page.getByText(`Te quedan ${enrolled.length} de ${enrolled.length} códigos`),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Generar nuevos códigos de respaldo" }).click();
   await expect(page.getByRole("textbox", { name: "Contraseña" })).toBeFocused();
@@ -220,6 +223,9 @@ test("a new authenticator app replaces the old one only once its code is right, 
   await withBackupCode.visitorPage.getByRole("button", { name: "Verificar y continuar" }).click();
   await withBackupCode.visitorPage.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
   await withBackupCode.visitor.close();
+
+  await page.reload();
+  await expect(page.getByText("Te quedan 9 de 10 códigos")).toBeVisible();
 });
 
 test("a backup code typed as shown, dash included, signs in", async ({ browser, organization }) => {

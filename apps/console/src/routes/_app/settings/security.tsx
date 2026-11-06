@@ -1,4 +1,5 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useBlocker, useNavigate, useRouter } from "@tanstack/react-router";
 import { cn } from "cn";
 import {
@@ -37,6 +38,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
+import { Skeleton } from "~/components/ui/skeleton";
 import { Spinner } from "~/components/ui/spinner";
 import { TotpCodeInput } from "~/features/auth/CodeInput";
 import { type AuthError, tooManyAttemptsMessage } from "~/features/auth/errors";
@@ -482,7 +484,7 @@ function VerifyEnrollment({
         <CardDescription>
           {replacing
             ? "Tu aplicación actual sigue funcionando hasta que confirmes un código de la nueva."
-            : "Si sales de esta página antes de terminar, la configuración empieza de nuevo y tendrás que reemplazar la entrada de Cetus en tu aplicación."}
+            : "Agrega Cetus a tu aplicación y confirma con el código que te muestra. Al terminar te damos tus códigos de respaldo."}
         </CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit} noValidate>
@@ -656,12 +658,12 @@ function BackupCodes({
         </CardTitle>
         <CardDescription>
           {origin === "regeneration" && "Los códigos anteriores ya no funcionan. "}
-          Antes de seguir, guarda estos códigos de respaldo en tu gestor de contraseñas o en un
-          lugar seguro. Cada uno sirve una sola vez para entrar si pierdes acceso a tu aplicación de
-          autenticación. No los volverás a ver.
+          Guárdalos en tu gestor de contraseñas o en un lugar seguro. Cada uno sirve una sola vez
+          para entrar si pierdes acceso a tu aplicación de autenticación.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        <p className="text-sm font-medium">No los volverás a ver.</p>
         <ul
           aria-label="Códigos de respaldo"
           className="grid grid-cols-[repeat(2,max-content)] gap-x-10 gap-y-1.5 rounded-lg border bg-muted/40 p-4 font-mono text-xs tabular-nums"
@@ -753,6 +755,57 @@ function AuthenticatorApp({
   );
 }
 
+const backupCodeCountQuery = queryOptions({
+  queryKey: ["two-factor", "backup-codes", "count"],
+  queryFn: async () => {
+    const { data, error } = await authClient.twoFactor.backupCodes.count();
+    if (error) {
+      throw new Error(error.message ?? "Could not count the backup codes");
+    }
+    return data;
+  },
+});
+
+function BackupCodesLeft() {
+  const { data, isPending, isError } = useQuery(backupCodeCountQuery);
+  if (isPending) {
+    return <Skeleton className="h-5 w-56" />;
+  }
+  if (isError) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No pudimos contar tus códigos. Recarga la página para intentarlo de nuevo.
+      </p>
+    );
+  }
+  const { remaining, total } = data;
+  if (remaining === 0) {
+    return (
+      <div className="flex flex-col items-start gap-1.5">
+        <StatusBadge status="error">Ya usaste todos tus códigos</StatusBadge>
+        <p className="text-sm text-muted-foreground">
+          Genera nuevos: sin ellos, si pierdes tu aplicación te quedas sin acceso.
+        </p>
+      </div>
+    );
+  }
+  const left = (
+    <>
+      Te {remaining === 1 ? "queda" : "quedan"} <span className="tabular-nums">{remaining}</span> de{" "}
+      <span className="tabular-nums">{total}</span> códigos
+    </>
+  );
+  if (remaining <= 3) {
+    return (
+      <div className="flex flex-col items-start gap-1.5">
+        <StatusBadge status="warning">{left}</StatusBadge>
+        <p className="text-sm text-muted-foreground">Genera nuevos antes de que se acaben.</p>
+      </div>
+    );
+  }
+  return <p className="text-sm font-medium">{left}.</p>;
+}
+
 function TwoFactorStatus({
   focusTitle,
   confirming,
@@ -766,6 +819,7 @@ function TwoFactorStatus({
 }) {
   const titleRef = useFocusOnMount<HTMLHeadingElement>(focusTitle);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const queryClient = useQueryClient();
 
   return (
     <Card>
@@ -774,8 +828,8 @@ function TwoFactorStatus({
           Códigos de respaldo
         </CardTitle>
         <CardDescription>
-          Si pierdes acceso a tu aplicación de autenticación, entras con uno de tus códigos de
-          respaldo. Genera nuevos si ya usaste varios o no sabes dónde quedaron.
+          Si pierdes acceso a tu aplicación de autenticación, entras con uno de estos códigos. Cada
+          uno sirve una sola vez.
         </CardDescription>
       </CardHeader>
       {confirming ? (
@@ -795,6 +849,7 @@ function TwoFactorStatus({
                   "No pudimos generar los códigos. Intenta de nuevo.",
                 );
               }
+              await queryClient.resetQueries({ queryKey: backupCodeCountQuery.queryKey });
               onRegenerated(data.backupCodes);
               return null;
             }}
@@ -806,7 +861,8 @@ function TwoFactorStatus({
         </CardContent>
       ) : (
         <>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
+            <BackupCodesLeft />
             <p className="text-xs text-muted-foreground">
               ¿Perdiste la aplicación y los códigos? Escríbenos a{" "}
               <a
