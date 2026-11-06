@@ -12,12 +12,16 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
   await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
 
   await expect(page.getByRole("img", { name: "Código QR de la verificación" })).toBeVisible();
-  const secret = (await page.locator("code").first().textContent()) ?? "";
+  await expect(page.getByLabel("Código de verificación")).toBeFocused();
+  const secret = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
   await page.getByLabel("Código de verificación").fill(totp(secret));
-  await page.getByRole("button", { name: "Verificar y activar" }).click();
 
-  await expect(page.getByText("Guarda tus códigos de respaldo")).toBeVisible();
-  await expect(page.getByText("2FA activa")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Verificación en dos pasos activada" }),
+  ).toBeFocused();
+  await expect(page.getByText("Verificación activa")).toBeVisible();
+  await page.getByRole("button", { name: "Ya guardé mis códigos" }).click();
+  await expect(page.getByText("Activa · aplicación de autenticación")).toBeVisible();
 
   await page.getByRole("button", { name: "Cerrar sesión" }).click();
   await page.waitForURL("**/sign-in");
@@ -32,6 +36,51 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
 
   await page.getByLabel("Código de verificación").fill(totp(secret));
   await page.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
+});
+
+test("with 2FA on, backup codes are replaced and 2FA is turned off, each behind the password", async ({
+  page,
+  organization,
+}) => {
+  await open(page, "/settings/security");
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
+  await page.getByRole("button", { name: "Cancelar" }).click();
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
+  const secret = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
+  await page.getByLabel("Código de verificación").fill(totp(secret));
+  const backupCodes = page.getByRole("list", { name: "Códigos de respaldo" }).getByRole("listitem");
+  await expect(backupCodes).not.toHaveCount(0);
+  const enrolled = await backupCodes.allTextContents();
+  await page.getByRole("button", { name: "Ya guardé mis códigos" }).click();
+
+  await page.getByRole("button", { name: "Generar nuevos códigos de respaldo" }).click();
+  await expect(page.getByRole("textbox", { name: "Contraseña" })).toBeFocused();
+  await page.getByRole("button", { name: "Cancelar" }).click();
+  await expect(
+    page.getByRole("button", { name: "Generar nuevos códigos de respaldo" }),
+  ).toBeFocused();
+
+  await page.getByRole("button", { name: "Generar nuevos códigos de respaldo" }).click();
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Generar códigos", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Nuevos códigos de respaldo" })).toBeFocused();
+  const regenerated = await backupCodes.allTextContents();
+  expect(regenerated).toHaveLength(enrolled.length);
+  expect(regenerated).not.toContain(enrolled[0]);
+  await page.getByRole("button", { name: "Ya guardé mis códigos" }).click();
+
+  await page.getByRole("button", { name: "Desactivar verificación" }).click();
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(`${organization.password}x`);
+  await page.getByRole("button", { name: "Desactivar verificación" }).click();
+  await expect(page.getByText("La contraseña no coincide.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Desactivar verificación" }).click();
+  await expect(page.getByText("Verificación en dos pasos desactivada")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Activar verificación en dos pasos" }),
+  ).toBeVisible();
 });
 
 test("a backup code typed as shown, dash included, signs in", async ({ browser, organization }) => {
