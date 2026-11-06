@@ -1,3 +1,5 @@
+import { supportEmail } from "~/lib/support";
+
 /** The part of a Better Auth client error the forms read. */
 export type AuthError = { status: number; code?: string; message?: string };
 
@@ -14,7 +16,7 @@ export function signInErrorMessage(error: AuthError): string {
     case "BANNED_USER":
       return error.message ?? "Tu acceso a Cetus está bloqueado.";
     default:
-      return "No pudimos iniciar sesión. Inténtalo de nuevo en unos minutos; si sigue fallando, escríbenos a contact@cantte.com.";
+      return `No pudimos iniciar sesión. Inténtalo de nuevo en unos minutos; si sigue fallando, escríbenos a ${supportEmail}.`;
   }
 }
 

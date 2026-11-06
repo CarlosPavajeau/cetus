@@ -23,7 +23,6 @@ export const Route = createFileRoute("/reset-password")({
     ...(typeof search.token === "string" && search.token ? { token: search.token } : {}),
     ...(typeof search.error === "string" && search.error ? { error: search.error } : {}),
   }),
-  // The token is in the URL: it must not leak to other sites through the Referer header.
   loaderDeps: ({ search }) => ({ token: search.token, error: search.error }),
   loader: async ({ deps: { token, error } }): Promise<"missing" | "invalid" | "valid"> => {
     if (!token && !error) {
@@ -31,6 +30,7 @@ export const Route = createFileRoute("/reset-password")({
     }
     return token && !error && (await isResetTokenValid({ data: { token } })) ? "valid" : "invalid";
   },
+  // The token is in the URL: it must not leak to other sites through the Referer header.
   head: () => ({ meta: [{ name: "referrer", content: "no-referrer" }] }),
   component: ResetPassword,
 });
