@@ -57,6 +57,16 @@ test("the settings pages sit under the organization group", async ({ page, organ
   await expect(page.getByRole("button", { name: /Pruebas SAS/ })).toBeVisible();
 });
 
+test("security sits under the person's account, named once in the breadcrumb", async ({
+  page,
+  organization: _,
+}) => {
+  await open(page, "/settings/security");
+  const breadcrumb = page.getByRole("navigation", { name: "breadcrumb" });
+  await expect(breadcrumb).toHaveText(/^Tu cuenta\s*\/\s*Seguridad$/);
+  await expect(page.getByText("Aplica en todas tus organizaciones.")).toBeVisible();
+});
+
 test("the theme switch keeps the dark theme after a reload", async ({ page, organization: _ }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await open(page, "/overview");

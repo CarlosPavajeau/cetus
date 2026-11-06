@@ -255,7 +255,8 @@ Precise at rest, tactile when pressed.
   variants at the same heights.
 - **Primary:** Ledger Ink fill with off-white text, 13px medium; hover softens the ink to 80%.
 - **Outline / Secondary / Ghost:** paper with a rule border, a wash fill, or nothing; all hover to wash.
-- **Destructive:** Seal Red at 10% with red text; never a solid red fill.
+- **Destructive:** Seal Red at 10% (15% in dark) with the deeper red text (destructive-text), stepping
+  up 5% on hover so text stays at 4.5:1 or more; never a solid red fill.
 - **Hover / Focus:** 150ms ease-out color transitions; focus shows a 3px pencil ring; pressing scales to 0.96
   (motion-safe); disabled drops to 50% opacity.
 

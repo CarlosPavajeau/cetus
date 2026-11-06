@@ -13,13 +13,7 @@ import { LegalLink } from "~/features/legal/LegalLink";
 import { acceptLegal } from "~/features/legal/server";
 import { getSession } from "~/features/session/server";
 import { authClient } from "~/lib/auth/client";
-
-/** Only a path of the console itself: anything else could send the person to another site. */
-function internalPath(value: unknown): string {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : "/overview";
-}
+import { internalPath } from "~/lib/utils";
 
 /**
  * Where the console sends someone who has not accepted the current version of a legal document. `redirect`:
@@ -27,7 +21,7 @@ function internalPath(value: unknown): string {
  */
 export const Route = createFileRoute("/legal/accept")({
   validateSearch: (search: Record<string, unknown>): { redirect: string } => ({
-    redirect: internalPath(search.redirect),
+    redirect: internalPath(search.redirect) ?? "/overview",
   }),
   beforeLoad: async ({ search }) => {
     const session = await getSession();

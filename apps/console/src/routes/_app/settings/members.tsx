@@ -56,7 +56,6 @@ import { type AssignableMemberRole, assignableMemberRoles } from "~/lib/auth/per
 export const Route = createFileRoute("/_app/settings/members")({
   loader: async ({ context: { queryClient } }) => {
     await queryClient.query({ ...membersQuery, staleTime: "static" });
-    return { crumb: "Miembros" };
   },
   component: Members,
 });

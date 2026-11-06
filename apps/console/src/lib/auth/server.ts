@@ -9,6 +9,7 @@ import { and, eq } from "drizzle-orm";
 
 import { passwordChangedMessage } from "~/emails/PasswordChangedEmail";
 import { passwordResetMessage } from "~/emails/PasswordResetEmail";
+import { twoFactorChangedMessage } from "~/emails/TwoFactorChangedEmail";
 import { verificationMessage } from "~/emails/VerificationEmail";
 import { consentOrigin, recordConsents } from "~/features/legal/consents";
 import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
@@ -16,6 +17,7 @@ import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documen
 import { db } from "../db";
 import { emailSender } from "../email";
 import { env } from "../env";
+import { backupCodeCount } from "./backup-code-count";
 import {
   ac,
   impersonationSeconds,
@@ -26,7 +28,10 @@ import {
   roleList,
   roles,
 } from "./permissions";
+import { replaceTotp } from "./replace-totp";
 import * as schema from "./schema";
+
+const backupCodeTotal = 10;
 
 const sessionFields = type({
   "activeOrganizationId?": "string | null",
@@ -59,6 +64,8 @@ const forbiddenWhileImpersonating = new Set([
   "/two-factor/enable",
   "/two-factor/disable",
   "/two-factor/generate-backup-codes",
+  "/two-factor/replace-totp/start",
+  "/two-factor/replace-totp/confirm",
   "/organization/update",
   "/organization/delete",
   "/organization/leave",
@@ -88,6 +95,7 @@ export const auth = betterAuth({
   rateLimit: {
     customRules: {
       "/request-password-reset": { window: 10 * 60, max: 3 },
+      "/two-factor/replace-totp/confirm": { window: 10 * 60, max: 10 },
     },
   },
   emailAndPassword: {
@@ -234,7 +242,18 @@ export const auth = betterAuth({
       bannedUserMessage:
         "Tu acceso a Cetus está bloqueado. Si crees que es un error, escríbenos a soporte.",
     }),
-    twoFactor({ issuer: "Cetus" }),
+    twoFactor({ issuer: "Cetus", backupCodeOptions: { amount: backupCodeTotal } }),
+    backupCodeCount({ total: backupCodeTotal }),
+    replaceTotp({
+      issuer: "Cetus",
+      onReplaced: (user) => {
+        void emailSender
+          .send(twoFactorChangedMessage({ to: user.email, name: user.name, changedAt: new Date() }))
+          .catch((error: unknown) =>
+            console.error("Could not send a two-factor changed email", error),
+          );
+      },
+    }),
     jwt({
       jwks: {
         keyPairConfig: { alg: "RS256", modulusLength: 2048 },
