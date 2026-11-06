@@ -125,7 +125,6 @@ function EndpointHealth({ endpoint }: { endpoint: WebhookEndpoint }) {
     const since = endpoint.disabledAt ? ` el ${formatDateTime(new Date(endpoint.disabledAt))}` : "";
     return endpoint.disabledReason === "AUTOMATIC" ? (
       <Alert variant="destructive">
-        <CircleAlertIcon />
         <AlertTitle>Cetus lo desactivó{since} porque llevaba días fallando</AlertTitle>
         <AlertDescription>
           Ningún envío recibió una respuesta 2xx en ese tiempo. Revisa el último error en el
