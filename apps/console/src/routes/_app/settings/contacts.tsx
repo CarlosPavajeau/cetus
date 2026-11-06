@@ -12,7 +12,6 @@ import { useMemberPermissions } from "~/features/session/useMemberPermissions";
 export const Route = createFileRoute("/_app/settings/contacts")({
   loader: async ({ context: { queryClient } }) => {
     await queryClient.query({ ...contactsQuery, staleTime: "static" });
-    return { crumb: "Contactos" };
   },
   component: Contacts,
 });

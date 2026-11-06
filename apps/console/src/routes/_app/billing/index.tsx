@@ -61,7 +61,6 @@ export const Route = createFileRoute("/_app/billing/")({
       queryClient.query({ ...usageQuery, staleTime: "static" }),
       queryClient.query({ ...paymentMethodQuery, staleTime: "static" }),
     ]);
-    return { crumb: "Facturación" };
   },
   component: Billing,
 });

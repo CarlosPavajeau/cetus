@@ -126,8 +126,12 @@ const navigation = [
       { to: "/settings/members", label: "Miembros", icon: UsersIcon },
       { to: "/settings/contacts", label: "Contactos", icon: MailIcon },
       { to: "/billing", label: "Facturación", icon: GaugeIcon },
-      { to: "/settings/security", label: "Seguridad", icon: ShieldIcon },
     ],
+  },
+  {
+    label: "Tu cuenta",
+    breadcrumb: true,
+    items: [{ to: "/settings/security", label: "Seguridad", icon: ShieldIcon }],
   },
 ] as const satisfies readonly {
   label: string;
