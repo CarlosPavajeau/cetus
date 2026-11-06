@@ -282,8 +282,12 @@ export function rangeTone(range: RangeAlert): "default" | "warning" | "destructi
   return needsAttention(range) ? "warning" : "default";
 }
 
+/** Without a prefix, an issuer's ranges of one document type differ only in their numbers. */
 export function rangeName(range: RangeAlert) {
-  return `${documentTypeLabel[range.documentType]} ${range.prefix ?? ""}`.trim();
+  const type = documentTypeLabel[range.documentType];
+  return range.prefix === null
+    ? `${type} ${formatCount(range.numberFrom)}–${formatCount(range.numberTo)}`
+    : `${type} ${range.prefix}`;
 }
 
 function resolutionText(range: RangeAlert) {

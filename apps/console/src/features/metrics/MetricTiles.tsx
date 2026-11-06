@@ -8,6 +8,7 @@ import { cn } from "~/lib/utils";
 
 import { formatAmount, formatDuration, formatPercent } from "./labels";
 
+/** A card from sm up; on phones a ledger row, label left and value right, so the tiles leave room for the chart. */
 function Tile({
   label,
   value,
@@ -22,14 +23,16 @@ function Tile({
   simulated: boolean;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 rounded-lg border p-3">
-      <dt className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+    <div className="grid min-w-0 grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-1 rounded-lg border px-3 py-2.5 sm:flex sm:flex-col sm:py-3">
+      <dt className="flex items-center gap-2 text-xs text-muted-foreground sm:justify-between">
         {label}
         {simulated && <Badge variant="muted">Simulado</Badge>}
       </dt>
-      <dd className="font-mono text-2xl font-medium tracking-tight tabular-nums">{value}</dd>
-      <dd className="text-xs text-pretty text-muted-foreground">{detail}</dd>
-      {note && <dd className="text-xs text-pretty text-muted-foreground">{note}</dd>}
+      <dd className="font-mono text-xl font-medium tracking-tight tabular-nums sm:text-2xl">
+        {value}
+      </dd>
+      <dd className="col-span-2 text-xs text-pretty text-muted-foreground">{detail}</dd>
+      {note && <dd className="col-span-2 text-xs text-pretty text-muted-foreground">{note}</dd>}
     </div>
   );
 }
@@ -65,7 +68,7 @@ export function MetricTiles({
   return (
     <dl
       className={cn(
-        "grid gap-3 sm:grid-cols-2",
+        "grid gap-2 sm:grid-cols-2 sm:gap-3",
         columnsByCount[2 + Number(amountShown) + Number(!simulated)],
       )}
     >

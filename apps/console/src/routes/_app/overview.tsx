@@ -2,6 +2,7 @@ import { useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-quer
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowUpRightIcon,
+  CircleDashedIcon,
   CodeXmlIcon,
   FileCheckIcon,
   FileTextIcon,
@@ -173,7 +174,13 @@ function Overview() {
             <Step
               icon={<FileCheckIcon aria-hidden="true" />}
               title="Factura con validez fiscal"
-              description="Configura tu NIT, el software registrado en la DIAN, el certificado de firma y la resolución de numeración. El asistente te guía."
+              description="El asistente te guía por lo que pide la DIAN:"
+              checklist={[
+                "NIT",
+                "Software registrado",
+                "Certificado de firma",
+                "Resolución de numeración",
+              ]}
             >
               <Link to="/setup" className={stepAction("configure")}>
                 Configurar emisor
@@ -289,11 +296,13 @@ function Step({
   icon,
   title,
   description,
+  checklist,
   children,
 }: {
   icon: ReactNode;
   title: string;
   description: ReactNode;
+  checklist?: string[];
   children: ReactNode;
 }) {
   return (
@@ -303,6 +312,16 @@ function Step({
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="text-sm font-medium">{title}</h2>
           <p className="text-xs text-pretty text-muted-foreground">{description}</p>
+          {checklist && (
+            <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {checklist.map((item) => (
+                <li key={item} className="flex items-center gap-1">
+                  <CircleDashedIcon aria-hidden="true" className="size-3 text-muted-foreground" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2 pl-6.5 sm:pl-0">{children}</div>

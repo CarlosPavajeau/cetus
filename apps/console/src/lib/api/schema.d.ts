@@ -4010,6 +4010,16 @@ export interface components {
             issuerName: string;
             documentType: components["schemas"]["DocumentType"];
             prefix: string | null;
+            /**
+             * Format: int64
+             * @description First number of the range
+             */
+            numberFrom: number;
+            /**
+             * Format: int64
+             * @description Last number of the range
+             */
+            numberTo: number;
             /** Format: int64 */
             used: number;
             /** Format: int64 */
