@@ -121,7 +121,7 @@ function Security() {
         }
       />
       {required && !enabled && (
-        <Alert role="note">
+        <Alert role="note" className="max-w-xl">
           <AlertTitle>Activa la verificación en dos pasos para continuar</AlertTitle>
           <AlertDescription>
             La administración de Cetus solo está disponible para cuentas con verificación en dos
@@ -131,7 +131,7 @@ function Security() {
         </Alert>
       )}
       {session.impersonatedBy ? (
-        <Alert role="note">
+        <Alert role="note" className="max-w-xl">
           <AlertTitle>No disponible durante la sesión de soporte</AlertTitle>
           <AlertDescription>
             La verificación en dos pasos solo la cambia la persona dueña de la cuenta.
@@ -202,6 +202,7 @@ function Security() {
               onConfirmingChange={(open) => setConfirming(open ? "regenerate" : null)}
               onRegenerated={(codes) => {
                 setConfirming(null);
+                setReplaced(false);
                 setIssued({ codes, origin: "regeneration" });
               }}
             />
@@ -209,8 +210,10 @@ function Security() {
           <DisableTwoFactor
             confirming={confirming === "disable"}
             onConfirmingChange={(open) => setConfirming(open ? "disable" : null)}
+            staff={session.user.platformRole !== null}
             onDisabled={() => {
               setConfirming(null);
+              setReplaced(false);
               setTurnedOff(true);
             }}
           />
@@ -278,8 +281,8 @@ function LeaveWarning({
           <AlertDialogHeader>
             <AlertDialogTitle>¿Salir sin terminar el cambio de aplicación?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tu aplicación actual sigue activa. Si ya escaneaste el código nuevo, borra esa entrada
-              de la otra aplicación: no servirá.
+              Tu aplicación actual sigue activa. Si ya escaneaste el código nuevo, borra la entrada
+              que agregaste: no servirá.
             </AlertDialogDescription>
           </AlertDialogHeader>
         ) : (
@@ -430,7 +433,10 @@ function VerifyEnrollment({
   // A touch screen is usually the phone that holds the authenticator, so it cannot scan its own screen.
   const [pointerFine] = useState(() => window.matchMedia("(pointer: fine)").matches);
   const [qrShown, setQrShown] = useState(pointerFine);
-  const secret = new URL(totpURI).searchParams.get("secret") ?? "";
+  const secret = new URL(totpURI).searchParams.get("secret");
+  if (!secret) {
+    throw new Error("The TOTP URI has no secret");
+  }
   const form = useForm({
     resolver: arktypeResolver(verifyTotpSchema),
     defaultValues: { code: "" },
@@ -893,10 +899,12 @@ function TwoFactorStatus({
 
 function DisableTwoFactor({
   confirming,
+  staff,
   onConfirmingChange,
   onDisabled,
 }: {
   confirming: boolean;
+  staff: boolean;
   onConfirmingChange: (open: boolean) => void;
   onDisabled: () => void;
 }) {
@@ -910,8 +918,8 @@ function DisableTwoFactor({
           Desactivar la verificación en dos pasos
         </h2>
         <p className="max-w-prose text-sm text-muted-foreground">
-          Tu cuenta quedará protegida solo por la contraseña. Si eres parte del equipo de Cetus,
-          perderás el acceso a la administración.
+          Tu cuenta quedará protegida solo por la contraseña.
+          {staff && " También perderás el acceso a la administración de Cetus."}
         </p>
       </div>
       {confirming ? (
