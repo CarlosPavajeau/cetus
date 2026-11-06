@@ -61,6 +61,10 @@ export const Route = createFileRoute("/_app/overview")({
         ...documentsQuery({ environment: "SANDBOX" }),
         staleTime: "static",
       }),
+      queryClient.infiniteQuery({
+        ...documentsQuery({ environment, issuerId }),
+        staleTime: "static",
+      }),
       queryClient.query({ ...metricsQuery(environment, range, issuerId), staleTime: "static" }),
       breakdown &&
         queryClient.query({ ...issuerMetricsQuery(environment, range), staleTime: "static" }),
@@ -86,6 +90,7 @@ function Overview() {
   } = issuerFilter(issuers, environment, search.issuer);
   const range = periodRange(period, todayInColombia());
   const { data: metrics } = useSuspenseQuery(metricsQuery(environment, range, issuerId));
+  const { data: documents } = useSuspenseInfiniteQuery(documentsQuery({ environment, issuerId }));
   const { data: alerts } = useSuspenseQuery(alertsQuery(environment, issuerId));
   const navigate = useNavigate({ from: Route.fullPath });
   const { manage } = useMemberPermissions();
@@ -242,6 +247,7 @@ function Overview() {
           issuers={issuerOptions}
           issuerId={issuerId}
           onIssuerChange={(next) => changeSearch({ issuer: next })}
+          issued={documents.pages.some((page) => page.items.length > 0)}
           breakdown={
             breakdown ? (
               <IssuerBreakdown

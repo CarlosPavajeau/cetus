@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { TriangleAlertIcon } from "lucide-react";
+import { useId } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { buttonVariants } from "~/components/ui/button";
@@ -40,9 +41,13 @@ type Group = {
 
 /**
  * What stops issuing soon, by issuer: expiring certificates, and ranges running out or whose resolution ends. The
- * issuers that already stopped get their own red alert, so they do not turn the others' amber warnings red.
+ * issuers that already stopped get their own red alert, so they do not turn the others' amber warnings red. They are
+ * sections, not alerts: they come with the page and render again on every filter change, so an alert role would read
+ * them out each time.
  */
 export function IssuerWarnings({ alerts, issuers }: { alerts: Alerts; issuers: Issuer[] }) {
+  const blockingId = useId();
+  const pendingId = useId();
   const groups = groupsOf(alerts, issuers);
   const blocking = groups.filter((group) => group.blocking);
   const pending = groups.filter((group) => !group.blocking);
@@ -50,25 +55,29 @@ export function IssuerWarnings({ alerts, issuers }: { alerts: Alerts; issuers: I
   return (
     <>
       {blocking.length > 0 && (
-        <Alert variant="destructive">
-          <AlertTitle>
-            <h2>Renueva para volver a facturar</h2>
-          </AlertTitle>
-          <AlertDescription>
-            <WarningGroups groups={blocking} />
-          </AlertDescription>
-        </Alert>
+        <section aria-labelledby={blockingId}>
+          <Alert variant="destructive" live={false}>
+            <AlertTitle>
+              <h2 id={blockingId}>Renueva para volver a facturar</h2>
+            </AlertTitle>
+            <AlertDescription>
+              <WarningGroups groups={blocking} />
+            </AlertDescription>
+          </Alert>
+        </section>
       )}
       {pending.length > 0 && (
-        <Alert variant="warning">
-          <TriangleAlertIcon aria-hidden="true" />
-          <AlertTitle>
-            <h2>Renueva a tiempo para no detener tu facturación</h2>
-          </AlertTitle>
-          <AlertDescription>
-            <WarningGroups groups={pending} />
-          </AlertDescription>
-        </Alert>
+        <section aria-labelledby={pendingId}>
+          <Alert variant="warning">
+            <TriangleAlertIcon aria-hidden="true" />
+            <AlertTitle>
+              <h2 id={pendingId}>Renueva a tiempo para no detener tu facturación</h2>
+            </AlertTitle>
+            <AlertDescription>
+              <WarningGroups groups={pending} />
+            </AlertDescription>
+          </Alert>
+        </section>
       )}
     </>
   );
@@ -184,7 +193,7 @@ export function NumberingUsage({ ranges }: { ranges: RangeAlert[] }) {
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>Numeración</CardTitle>
+        <CardTitle level={3}>Numeración</CardTitle>
         <CardDescription>
           {issuer === undefined
             ? "Números usados de cada rango activo."

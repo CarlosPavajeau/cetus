@@ -32,9 +32,15 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, children, ...props }: React.ComponentProps<"h2">) {
+function CardTitle({
+  className,
+  children,
+  level = 2,
+  ...props
+}: React.ComponentProps<"h2"> & { level?: 2 | 3 }) {
+  const Heading = level === 3 ? "h3" : "h2";
   return (
-    <h2
+    <Heading
       data-slot="card-title"
       className={cn(
         "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
@@ -43,7 +49,7 @@ function CardTitle({ className, children, ...props }: React.ComponentProps<"h2">
       {...props}
     >
       {children}
-    </h2>
+    </Heading>
   );
 }
 

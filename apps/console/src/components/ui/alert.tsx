@@ -30,13 +30,14 @@ function Alert({
   className,
   variant,
   size,
+  live = variant === "destructive",
   children,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
+}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants> & { live?: boolean }) {
   return (
     <div
       data-slot="alert"
-      role="alert"
+      role={live ? "alert" : undefined}
       className={cn(alertVariants({ variant, size }), className)}
       {...props}
     >
