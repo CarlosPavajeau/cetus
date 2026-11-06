@@ -24,3 +24,10 @@ export function crumbOf(loaderData: unknown): string | undefined {
 export function unknownValue(value: never): string {
   return String(value);
 }
+
+/** Only a path of the console itself: anything else could send the person to another site. */
+export function internalPath(value: unknown): string | undefined {
+  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
+    ? value
+    : undefined;
+}

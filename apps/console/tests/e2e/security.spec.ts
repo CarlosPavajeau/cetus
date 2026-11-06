@@ -1,6 +1,7 @@
 import { type } from "arktype";
 
-import { totp } from "../support/platform-staff";
+import { createPlatformStaff, totp } from "../support/platform-staff";
+import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 test("2FA is enabled from the security page and then asked at sign-in", async ({
@@ -21,7 +22,9 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
   ).toBeFocused();
   await expect(page.getByText("Verificación activa")).toBeVisible();
   await page.getByRole("button", { name: "Ya guardé mis códigos" }).click();
-  await expect(page.getByText("Activa · aplicación de autenticación")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Códigos de respaldo", exact: true }),
+  ).toBeFocused();
 
   await page.getByRole("button", { name: "Cerrar sesión" }).click();
   await page.waitForURL("**/sign-in");
@@ -63,6 +66,9 @@ test("with 2FA on, backup codes are replaced and 2FA is turned off, each behind 
   ).toBeFocused();
 
   await page.getByRole("button", { name: "Generar nuevos códigos de respaldo" }).click();
+  await page.getByRole("button", { name: "Desactivar verificación" }).click();
+  await expect(page.getByRole("textbox", { name: "Contraseña" })).toHaveCount(1);
+  await page.getByRole("button", { name: "Generar nuevos códigos de respaldo" }).click();
   await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
   await page.getByRole("button", { name: "Generar códigos", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Nuevos códigos de respaldo" })).toBeFocused();
@@ -77,10 +83,40 @@ test("with 2FA on, backup codes are replaced and 2FA is turned off, each behind 
   await expect(page.getByText("La contraseña no coincide.")).toBeVisible();
   await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
   await page.getByRole("button", { name: "Desactivar verificación" }).click();
-  await expect(page.getByText("Verificación en dos pasos desactivada")).toBeVisible();
+  await expect(page.getByText("Verificación en dos pasos desactivada")).toBeFocused();
   await expect(
     page.getByRole("button", { name: "Activar verificación en dos pasos" }),
   ).toBeVisible();
+});
+
+test("leaving with the backup codes on screen asks first, and staff go back to the page they asked for", async ({
+  page,
+  context,
+}) => {
+  const staff = await createPlatformStaff("admin", { twoFactor: false });
+  await context.clearCookies();
+  await context.addCookies(consoleCookies(staff.cookies));
+  await open(page, "/admin/audit-log");
+  await expect(page).toHaveURL(/\/settings\/security\?required=true/);
+
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(staff.password);
+  await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
+  const secret = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
+  await page.getByLabel("Código de verificación").fill(totp(secret));
+  await expect(
+    page.getByRole("heading", { name: "Verificación en dos pasos activada" }),
+  ).toBeFocused();
+
+  await page.getByRole("link", { name: "Resumen" }).click();
+  const warning = page.getByRole("alertdialog", {
+    name: "¿Salir sin guardar tus códigos de respaldo?",
+  });
+  await expect(warning).toBeVisible();
+  await warning.getByRole("button", { name: "Volver a los códigos" }).click();
+  await expect(page.getByRole("list", { name: "Códigos de respaldo" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Ya los guardé, ir a la administración" }).click();
+  await page.waitForURL("**/admin/audit-log");
 });
 
 test("a backup code typed as shown, dash included, signs in", async ({ browser, organization }) => {

@@ -54,7 +54,10 @@ export async function requirePlatformStaff(match: { location: ParsedLocation }) 
     throw redirect({ to: "/overview" });
   }
   if (!session.user.twoFactorEnabled) {
-    throw redirect({ to: "/settings/security", search: { required: true } });
+    throw redirect({
+      to: "/settings/security",
+      search: { required: true, redirect: match.location.href },
+    });
   }
   return { session, platformRole: session.user.platformRole };
 }
