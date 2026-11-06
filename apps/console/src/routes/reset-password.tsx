@@ -47,7 +47,7 @@ function ResetPassword() {
         lead="Para cambiar la contraseña, abre el enlace que te enviamos por correo."
       >
         <FieldGroup>
-          <Alert>
+          <Alert role="note">
             <AlertDescription>
               Si no lo encuentras, revisa la carpeta de spam o pide uno nuevo.
             </AlertDescription>

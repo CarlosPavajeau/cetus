@@ -1,4 +1,5 @@
 import { type } from "arktype";
+import { Pool } from "pg";
 
 import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
 
@@ -137,4 +138,16 @@ export async function inviteMember(
 
 export async function setMemberRole(owner: TestOrganization, memberId: string, role: string) {
   await owner.auth("/organization/update-member-role", { memberId, role });
+}
+
+/** Forgets where the person last worked, as for someone who has not switched since the column existed. */
+export async function forgetLastOrganization(email: string) {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    await pool.query(`UPDATE auth."user" SET last_active_organization_id = NULL WHERE email = $1`, [
+      email,
+    ]);
+  } finally {
+    await pool.end();
+  }
 }

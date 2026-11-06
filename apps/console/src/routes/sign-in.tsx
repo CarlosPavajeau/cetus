@@ -1,7 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2Icon } from "lucide-react";
+import { CheckCircle2Icon, TimerOffIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -21,11 +21,15 @@ import { authClient } from "~/lib/auth/client";
 /**
  * `invitation`: the invitation the person came to accept; after signing in they go back to it.
  * `reset`: the person just chose a new password.
+ * `expired`: the person reached /two-factor without a pending sign-in (it timed out, or was already used).
  */
 export const Route = createFileRoute("/sign-in")({
-  validateSearch: (search: Record<string, unknown>): { invitation?: string; reset?: true } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { invitation?: string; reset?: true; expired?: true } => ({
     ...invitationSearch(search),
     ...(search.reset === true || search.reset === "true" ? { reset: true as const } : {}),
+    ...(search.expired === true || search.expired === "true" ? { expired: true as const } : {}),
   }),
   loaderDeps: ({ search }) => ({ invitation: search.invitation }),
   loader: ({ deps }) =>
@@ -34,7 +38,7 @@ export const Route = createFileRoute("/sign-in")({
 });
 
 function SignIn() {
-  const { invitation, reset } = Route.useSearch();
+  const { invitation, reset, expired } = Route.useSearch();
   const organizationName = Route.useLoaderData();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -60,7 +64,7 @@ function SignIn() {
       return;
     }
 
-    await startSession(queryClient);
+    startSession(queryClient);
     await (invitation
       ? navigate({ to: "/invitations/$invitationId", params: { invitationId: invitation } })
       : navigate({ to: "/overview" }));
@@ -87,6 +91,15 @@ function SignIn() {
               <CheckCircle2Icon />
               <AlertTitle>Contraseña cambiada</AlertTitle>
               <AlertDescription>Inicia sesión con la nueva.</AlertDescription>
+            </Alert>
+          )}
+          {expired && !reset && (
+            <Alert>
+              <TimerOffIcon />
+              <AlertTitle>La verificación venció</AlertTitle>
+              <AlertDescription>
+                El paso del código dura unos minutos. Inicia sesión de nuevo para continuar.
+              </AlertDescription>
             </Alert>
           )}
           <Controller

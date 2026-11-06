@@ -41,7 +41,10 @@ export const Route = createFileRoute("/two-factor")({
   validateSearch: invitationSearch,
   beforeLoad: async ({ search }) => {
     if (!(await hasPendingTwoFactor())) {
-      throw redirect({ to: "/sign-in", search: { invitation: search.invitation } });
+      throw redirect({
+        to: "/sign-in",
+        search: { invitation: search.invitation, expired: true },
+      });
     }
   },
   component: TwoFactor,
@@ -157,7 +160,7 @@ function CodeForm({ backup, onExpired }: { backup: boolean; onExpired: () => voi
       });
       return;
     }
-    await startSession(queryClient);
+    startSession(queryClient);
     await (invitation
       ? navigate({ to: "/invitations/$invitationId", params: { invitationId: invitation } })
       : navigate({ to: "/overview" }));

@@ -66,6 +66,7 @@ test("the second step without a pending sign-in sends the person back, invitatio
   const page = await visitor.newPage();
   const invitation = crypto.randomUUID();
   await open(page, `/two-factor?invitation=${invitation}`);
-  await page.waitForURL(`**/sign-in?invitation=${invitation}`);
+  await page.waitForURL(`**/sign-in?invitation=${invitation}&expired=true`);
+  await expect(page.getByText("La verificación venció")).toBeVisible();
   await visitor.close();
 });

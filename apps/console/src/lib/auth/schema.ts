@@ -20,6 +20,10 @@ export const user = authSchema.table("user", {
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  lastActiveOrganizationId: text("last_active_organization_id").references(
+    () => organization.id,
+    { onDelete: "set null" },
+  ),
 });
 
 export const session = authSchema.table(

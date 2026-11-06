@@ -16,8 +16,9 @@ import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
 
 /**
- * Where someone signed in without an organization lands: just signed up from an invitation, or removed from
- * the only one they had. They join one they were invited to, or create their own.
+ * Where someone signed in without an active organization lands: just signed up from an invitation, removed
+ * from the one they worked in, or starting a session with several and no last one to return to. They enter
+ * one of theirs, join one they were invited to, or create their own.
  */
 export const Route = createFileRoute("/organizations")({
   beforeLoad: async ({ location }) => {
@@ -52,7 +53,11 @@ function Organizations() {
   return (
     <AuthLayout
       title="Elige dónde trabajar"
-      lead="Tu usuario todavía no está en ninguna organización. Únete a la que te invitó o crea la tuya."
+      lead={
+        organizations.length > 0
+          ? "Entra a una de tus organizaciones. Después puedes cambiar de una a otra desde el menú."
+          : "Tu usuario todavía no está en ninguna organización. Únete a la que te invitó o crea la tuya."
+      }
     >
       <div className="flex flex-col gap-6">
         {organizations.length > 0 && (
@@ -67,13 +72,21 @@ function Organizations() {
                 <Button
                   size="sm"
                   disabled={enter.isPending}
+                  aria-label={`Entrar a ${organization.name}`}
                   onClick={() => enter.mutate(organization.id)}
                 >
+                  {enter.isPending && enter.variables === organization.id && (
+                    <Spinner data-icon="inline-start" />
+                  )}
                   Entrar
                 </Button>
               </div>
             ))}
-            {enter.error && <p className="text-xs text-destructive">{enter.error.message}</p>}
+            {enter.error && (
+              <p role="alert" className="text-xs text-destructive">
+                {enter.error.message}
+              </p>
+            )}
           </section>
         )}
         {invitations.status === "unverified" ? (
