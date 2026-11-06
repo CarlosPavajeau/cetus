@@ -124,7 +124,7 @@ export function Activity({
           {breakdown}
           {numbering}
           <DailyChart metrics={metrics} />
-          <RuleRanking rules={metrics.rules} />
+          <RuleRanking rules={metrics.rules} simulated={metrics.environment === "SANDBOX"} />
         </div>
       )}
     </section>

@@ -60,12 +60,14 @@ export function IssuerBreakdown({
   issuers,
   certificates,
   ranges,
+  manage,
 }: {
   environment: Environment;
   range: DateRange;
   issuers: Issuer[];
   certificates: CertificateAlert[];
   ranges: RangeAlert[];
+  manage: boolean;
 }) {
   const { data: metrics } = useSuspenseQuery(issuerMetricsQuery(environment, range));
   const sandbox = environment === "SANDBOX";
@@ -74,7 +76,7 @@ export function IssuerBreakdown({
       const issuerMetrics = metrics.find((each) => each.issuerId === issuer.id);
       return issuerMetrics === undefined
         ? []
-        : [rowOf(issuer, issuerMetrics, certificates, ranges, sandbox)];
+        : [rowOf(issuer, issuerMetrics, certificates, ranges, sandbox, manage)];
     })
     .toSorted(
       (a, b) =>
@@ -109,7 +111,7 @@ export function IssuerBreakdown({
               <TableRow key={row.issuer.id} className="relative">
                 <TableCell className="py-2.5 pl-3">
                   <IssuerLink issuer={row.issuer} />
-                  <p className="font-mono text-2xs text-muted-foreground">
+                  <p className="relative w-fit font-mono text-2xs text-muted-foreground">
                     {issuerNit(row.issuer)}
                   </p>
                 </TableCell>
@@ -170,13 +172,17 @@ export function IssuerBreakdown({
   );
 }
 
-/** The issuer's name, stretched over its whole row so the row narrows the overview to it. */
+/**
+ * The issuer's name, stretched over its whole row so the row narrows the overview to it. Its accessible name says
+ * so, since the warnings' issuer links open the issuer instead.
+ */
 function IssuerLink({ issuer }: { issuer: Issuer }) {
   return (
     <Link
       to="/overview"
       search={(previous) => ({ ...previous, issuer: issuer.id })}
       resetScroll={false}
+      aria-label={`Ver el resumen de ${issuerName(issuer)}`}
       className="font-medium outline-none after:absolute after:inset-0 after:rounded-[inherit] hover:underline hover:underline-offset-4 focus-visible:after:ring-3 focus-visible:after:ring-ring/50 focus-visible:after:ring-inset"
     >
       {issuerName(issuer)}
@@ -216,6 +222,7 @@ function rowOf(
   certificates: CertificateAlert[],
   ranges: RangeAlert[],
   sandbox: boolean,
+  manage: boolean,
 ): Row {
   const numbering = sandbox
     ? figureOf("—")
@@ -225,6 +232,7 @@ function rowOf(
     : certificateOf(
         metrics.certificate,
         certificates.some((alert) => alert.issuerId === issuer.id),
+        manage,
       );
   const tone = [numbering.tone, certificate.tone].reduce((worst, each) =>
     toneRank[each] > toneRank[worst] ? each : worst,
@@ -293,13 +301,23 @@ function numberingOf(ranges: RangeAlert[]): Figure {
 }
 
 /** Amber while the alerts count it as expiring soon, red once it expired. */
-function certificateOf(certificate: IssuerMetrics["certificate"], expiring: boolean): Figure {
+function certificateOf(
+  certificate: IssuerMetrics["certificate"],
+  expiring: boolean,
+  manage: boolean,
+): Figure {
   if (certificate === null) {
     return emptyOf("Sin certificado");
   }
   const date = formatInstantShort(certificate.validTo);
   if (certificate.daysLeft < 0) {
-    return figureOf(`Venció el ${date}`, "Carga uno nuevo para seguir emitiendo", "destructive");
+    return figureOf(
+      `Venció el ${date}`,
+      manage
+        ? "Carga uno nuevo para seguir emitiendo"
+        : "Un administrador debe cargar uno nuevo para seguir emitiendo",
+      "destructive",
+    );
   }
   return expiring
     ? figureOf(`Vence el ${date}`, daysText(certificate.daysLeft), "warning")

@@ -163,7 +163,12 @@ function Overview() {
         </Empty>
       )}
 
-      <IssuerWarnings alerts={alerts} issuers={issuerOptions} />
+      <IssuerWarnings
+        alerts={alerts}
+        issuers={issuerOptions}
+        manage={manage}
+        summarized={breakdown && !sandboxFirst}
+      />
 
       {stepping && (
         <section
@@ -263,6 +268,7 @@ function Overview() {
                 issuers={issuerOptions}
                 certificates={alerts.certificates}
                 ranges={alerts.ranges}
+                manage={manage}
               />
             ) : null
           }

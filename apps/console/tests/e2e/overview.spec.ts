@@ -23,7 +23,7 @@ test("the overview shows how the period's documents went and the DIAN's rules", 
   await open(page, "/overview");
 
   await expect(page.getByRole("heading", { name: "Documentos emitidos" })).toBeVisible();
-  await expect(page.getByText(/^50\s?%$/)).toBeVisible();
+  await expect(page.getByText(/^1 de 2$/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Aceptados 1" })).toBeVisible();
   await expect(
     page.getByText(/^Todos los documentos del periodo son del .+\. La gráfica por día aparece/),

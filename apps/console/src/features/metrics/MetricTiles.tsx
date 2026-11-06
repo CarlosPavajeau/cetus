@@ -17,7 +17,7 @@ function Tile({
   simulated,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   detail: ReactNode;
   note?: string;
   simulated: boolean;
@@ -64,6 +64,7 @@ export function MetricTiles({
   const [amount, ...others] = amounts;
   const simulated = metrics.environment === "SANDBOX";
   const answered = totals.accepted + totals.rejected;
+  const sampleSmall = answered > 0 && answered < sampleAnsweredMin;
 
   return (
     <dl
@@ -82,12 +83,26 @@ export function MetricTiles({
       />
       <Tile
         label="Tasa de aceptación"
-        value={acceptanceRate === null ? "—" : formatPercent(acceptanceRate)}
+        value={
+          sampleSmall ? (
+            <>
+              {formatCount(totals.accepted)}
+              <span className="mx-0.5 font-sans text-sm font-normal whitespace-pre text-muted-foreground">
+                {" de "}
+              </span>
+              {formatCount(answered)}
+            </>
+          ) : acceptanceRate === null ? (
+            "—"
+          ) : (
+            formatPercent(acceptanceRate)
+          )
+        }
         simulated={simulated}
         detail={<OutcomeLinks metrics={metrics} issuerId={issuerId} />}
         note={
-          answered > 0 && answered < sampleAnsweredMin
-            ? "Muestra pequeña: un solo documento mueve mucho el porcentaje."
+          sampleSmall
+            ? `El porcentaje aparece desde ${sampleAnsweredMin} documentos respondidos; antes, uno solo lo mueve mucho.`
             : undefined
         }
       />
