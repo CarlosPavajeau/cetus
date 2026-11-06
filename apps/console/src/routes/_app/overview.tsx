@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { buttonVariants } from "~/components/ui/button";
 import {
@@ -137,6 +138,7 @@ function Overview() {
     <>
       <PageHeader
         title="Resumen"
+        status={<EnvironmentBadge environment={environment} />}
         action={
           !sandboxFirst &&
           (ready || issuerOptions.length === 0) && (
