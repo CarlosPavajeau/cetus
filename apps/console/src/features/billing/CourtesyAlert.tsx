@@ -5,6 +5,7 @@ import { buttonVariants } from "~/components/ui/button";
 import { dateFormat } from "~/features/api-keys/formats";
 import { formatCount } from "~/features/usage/labels";
 import type { AccountCourtesy } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
 type Courtesy =
   | { status: "OFFERED"; documents: number; validityDays: number }
@@ -48,7 +49,7 @@ export function CourtesyAlert({ courtesy: view }: { courtesy: AccountCourtesy })
         {`Te quedan ${formatCount(courtesy.remaining)} de ${formatCount(courtesy.documents)} hasta el ${dateFormat.format(courtesy.expiresAt)}. No tienen margen de gracia: cuando se acaben o venzan, solo podrás emitir notas crédito hasta que contrates una suscripción o compres un paquete.`}
       </AlertDescription>
       <AlertAction>
-        <Link to="/billing/products" className={buttonVariants({ variant: "outline" })}>
+        <Link to="/billing/products" className={cn(buttonVariants({ variant: "outline" }))}>
           Ver productos
         </Link>
       </AlertAction>

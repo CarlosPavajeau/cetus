@@ -20,6 +20,7 @@ export function AuthLayout({
   title,
   lead,
   headline = headlineDefault,
+  noteSandbox = false,
   children,
 }: {
   /** Shown in a tile above the eyebrow. */
@@ -29,6 +30,8 @@ export function AuthLayout({
   lead: string;
   /** Lines of the big message in the product panel. */
   headline?: readonly string[];
+  /** Repeats the panel's sandbox promise in the form column, where phones and screen readers get it. */
+  noteSandbox?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -63,12 +66,23 @@ export function AuthLayout({
                 </span>
               )}
               <div className="flex flex-col gap-3">
-                <p className="text-xs font-medium text-muted-foreground">{eyebrow}</p>
-                <h1 className="text-3xl/[1.2] font-semibold">{title}</h1>
+                <p className="font-mono text-xs tracking-wider text-muted-foreground">{eyebrow}</p>
+                <h1 className="text-3xl/[1.2] font-normal tracking-tight">{title}</h1>
                 <p className="text-md/[1.6] text-muted-foreground">{lead}</p>
               </div>
             </div>
             {children}
+            {noteSandbox && (
+              <p className="flex items-baseline gap-2 border-t pt-5 text-xs/[1.6] text-muted-foreground lg:sr-only">
+                <span className="size-1.5 shrink-0 translate-y-[-0.1em] rounded-xs bg-primary" />
+                <span>
+                  <span className="font-medium text-foreground">
+                    Primero simulación. Después, producción,
+                  </span>{" "}
+                  con tu empresa habilitada ante la DIAN.
+                </span>
+              </p>
+            )}
           </div>
           <div className="min-h-4 flex-1" />
         </main>
@@ -89,7 +103,7 @@ export function AuthLayout({
         </footer>
       </div>
       <aside className="hidden p-6 lg:flex" aria-hidden="true">
-        <div className="flex flex-1 flex-col rounded-2xl bg-secondary p-12 [@media(max-height:50rem)]:p-8">
+        <div className="flex flex-1 flex-col rounded-2xl bg-secondary p-12 [--muted-foreground:oklch(0.53_0_0)] dark:[--muted-foreground:oklch(0.708_0_0)] [@media(max-height:50rem)]:p-8">
           <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <span className="size-1.5 rounded-xs bg-primary" />
             API DE FACTURACIÓN ELECTRÓNICA
@@ -136,10 +150,12 @@ export function AuthLayout({
               <Separator />
               <div className="flex items-center justify-between gap-4 text-xs">
                 <div className="flex flex-col gap-1">
-                  <p className="font-medium">Primero pruebas. Después, producción.</p>
-                  <p className="text-muted-foreground">La misma integración. Una nueva llave.</p>
+                  <p className="font-medium">Primero simulación. Después, producción.</p>
+                  <p className="text-balance text-muted-foreground">
+                    La misma integración, con tu empresa habilitada ante la DIAN.
+                  </p>
                 </div>
-                <Badge variant="muted">Sandbox</Badge>
+                <Badge variant="muted">Simulación</Badge>
               </div>
             </div>
           </div>

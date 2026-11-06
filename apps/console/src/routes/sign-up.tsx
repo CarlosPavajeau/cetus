@@ -1,6 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
@@ -10,6 +11,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { signUpError } from "~/features/auth/errors";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
 import { createWorkspace } from "~/features/auth/workspace";
@@ -18,6 +20,7 @@ import { LegalLink } from "~/features/legal/LegalLink";
 import { track } from "~/features/marketing/analytics";
 import { signUpSearch } from "~/features/marketing/links";
 import { useAnalytics } from "~/features/marketing/useAnalytics";
+import { getInvitedOrganization } from "~/features/members/server";
 import { authClient } from "~/lib/auth/client";
 
 /**
@@ -26,11 +29,15 @@ import { authClient } from "~/lib/auth/client";
  */
 export const Route = createFileRoute("/sign-up")({
   validateSearch: signUpSearch,
+  loaderDeps: ({ search }) => ({ invitation: search.invitation }),
+  loader: ({ deps }) =>
+    deps.invitation ? getInvitedOrganization({ data: { id: deps.invitation } }) : null,
   component: SignUp,
 });
 
 function SignUp() {
   const { invitation, audience, ref } = Route.useSearch();
+  const organizationName = Route.useLoaderData();
   useAnalytics();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -38,17 +45,20 @@ function SignUp() {
     resolver: arktypeResolver(signUpSchema),
     defaultValues: { name: "", email: "", password: "", confirmPassword: "", acceptedLegal: false },
   });
+
+  useEffect(() => {
+    form.setFocus("name");
+  }, [form]);
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ name, email, password }) => {
-    const { error: signUpError } = await authClient.signUp.email(
+    const { error: failure } = await authClient.signUp.email(
       { name, email, password },
       { headers: { [legalAcceptanceHeader]: legalAcceptance } },
     );
-    if (signUpError) {
-      form.setError("root", {
-        message: signUpError.message ?? "No pudimos crear la cuenta. Revisa los datos.",
-      });
+    if (failure) {
+      const { field, message } = signUpError(failure);
+      form.setError(field, { message }, { shouldFocus: field !== "root" });
       return;
     }
 
@@ -86,9 +96,14 @@ function SignUp() {
   return (
     <AuthLayout
       title="Crear cuenta"
-      eyebrow="EMPIEZA A INTEGRAR"
-      lead="Empieza en ambiente de pruebas; pasar a producción es un cambio de llave."
-      headline={["De pruebas a producción.", "Un cambio de llave."]}
+      {...(invitation
+        ? { lead: `Crea tu cuenta para unirte a ${organizationName ?? "tu equipo"}.` }
+        : {
+            noteSandbox: true,
+            eyebrow: "EMPIEZA A INTEGRAR",
+            lead: "Tu cuenta trae una empresa de ejemplo para emitir en simulación desde el primer minuto, sin certificado ni tarjeta.",
+            headline: ["Una empresa de ejemplo,", "lista para tu primera factura."],
+          })}
     >
       <form onSubmit={onSubmit} noValidate>
         <FieldGroup className="gap-4.5">
@@ -125,7 +140,11 @@ function SignUp() {
                   size="lg"
                   aria-invalid={fieldState.invalid}
                 />
-                <FieldError errors={[fieldState.error]} />
+                {invitation && !fieldState.invalid ? (
+                  <FieldDescription>Usa el correo al que llegó la invitación.</FieldDescription>
+                ) : (
+                  <FieldError errors={[fieldState.error]} />
+                )}
               </Field>
             )}
           />
@@ -178,7 +197,6 @@ function SignUp() {
                   onCheckedChange={(checked) => field.onChange(checked)}
                   onBlur={field.onBlur}
                   aria-invalid={fieldState.invalid}
-                  aria-describedby="sign-up-legal-error"
                 />
                 <div className="flex flex-col gap-1.5">
                   <FieldLabel htmlFor="sign-up-legal" className="block font-normal">
@@ -186,7 +204,7 @@ function SignUp() {
                     autorizo el tratamiento de mis datos según la{" "}
                     <LegalLink document="privacy">política de datos</LegalLink>.
                   </FieldLabel>
-                  <FieldError id="sign-up-legal-error" errors={[fieldState.error]} />
+                  <FieldError errors={[fieldState.error]} />
                 </div>
               </Field>
             )}
@@ -196,7 +214,7 @@ function SignUp() {
               <AlertDescription>{errors.root.message}</AlertDescription>
             </Alert>
           )}
-          <Button type="submit" size="lg" className="h-11" disabled={isSubmitting}>
+          <Button type="submit" size="xl" disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}
             {isSubmitting ? "Creando cuenta…" : "Crear cuenta"}
           </Button>

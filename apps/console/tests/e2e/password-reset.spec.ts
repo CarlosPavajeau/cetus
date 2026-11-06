@@ -63,5 +63,16 @@ test("an address without an account gets the same answer and no email", async ({
   await page.getByLabel("Correo electrónico").fill(address);
   await page.getByRole("button", { name: "Enviar enlace" }).click();
   await expect(page.getByText(`Si hay una cuenta con ${address}`)).toBeVisible();
+  await page.getByRole("button", { name: "Usar otro correo" }).click();
+  await expect(page.getByLabel("Correo electrónico")).toHaveValue(address);
   await expect(latestEmailTo(address, 4)).rejects.toThrow(`No email to ${address}`);
+});
+
+test("the reset page tells a missing link from a dead one", async ({ page }) => {
+  await open(page, "/reset-password");
+  await expect(page.getByRole("heading", { name: "Abre el enlace del correo" })).toBeVisible();
+
+  await open(page, `/reset-password?token=${crypto.randomUUID().replaceAll("-", "")}`);
+  await expect(page.getByRole("heading", { name: "Enlace no válido" })).toBeVisible();
+  await expect(page.getByLabel("Contraseña nueva")).toHaveCount(0);
 });

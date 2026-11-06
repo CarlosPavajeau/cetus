@@ -93,7 +93,6 @@ function AcceptLegal() {
               setMissing(false);
             }}
             aria-invalid={missing}
-            aria-describedby="legal-accept-error"
           />
           <div className="flex flex-col gap-1.5">
             <FieldLabel htmlFor="legal-accept" className="block font-normal">
@@ -102,7 +101,6 @@ function AcceptLegal() {
               <LegalLink document="privacy">política de datos</LegalLink>.
             </FieldLabel>
             <FieldError
-              id="legal-accept-error"
               errors={[
                 missing
                   ? { message: "Acepta los términos y la política de datos para continuar." }
@@ -116,7 +114,7 @@ function AcceptLegal() {
             <AlertDescription>{accept.error.message}</AlertDescription>
           </Alert>
         )}
-        <Button type="submit" size="lg" className="h-11" disabled={accept.isPending}>
+        <Button type="submit" size="xl" disabled={accept.isPending}>
           {accept.isPending && <Spinner data-icon="inline-start" />}
           Aceptar y continuar
         </Button>

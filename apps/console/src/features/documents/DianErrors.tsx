@@ -1,4 +1,4 @@
-import { CircleAlertIcon, InfoIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import type { DocumentDetail } from "~/lib/api/types";
@@ -51,7 +51,6 @@ export function DianErrors({ document }: { document: DocumentDetail }) {
     <>
       {document.status === "FAILED" && (
         <Alert variant="destructive">
-          <CircleAlertIcon />
           <AlertTitle>No se pudo enviar a la DIAN</AlertTitle>
           <AlertDescription>
             <p>
@@ -67,7 +66,6 @@ export function DianErrors({ document }: { document: DocumentDetail }) {
       )}
       {(rejections.length > 0 || (document.status === "REJECTED" && errors.length === 0)) && (
         <Alert variant="destructive">
-          <CircleAlertIcon />
           <AlertTitle>Motivos del rechazo</AlertTitle>
           <AlertDescription>
             {rejections.length > 0 ? (

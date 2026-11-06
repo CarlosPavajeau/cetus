@@ -77,3 +77,19 @@ test("a new version asks to accept it before going on to the page", async ({
   await expect(page).toHaveURL(/\/documents$/);
   expect(await consentsOf(organization.email)).toEqual(currentConsents);
 });
+
+test("signing up with a registered address points to the sign-in", async ({
+  page,
+  organization,
+}) => {
+  const id = crypto.randomUUID().slice(0, 8);
+  await page.context().clearCookies();
+  await open(page, "/sign-up");
+  await page.getByLabel("Nombre completo").fill("Persona de pruebas");
+  await page.getByLabel("Correo electrónico").fill(organization.email);
+  await page.getByLabel("Contraseña", { exact: true }).fill(`clave-${id}-segura`);
+  await page.getByLabel("Confirmar contraseña").fill(`clave-${id}-segura`);
+  await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await page.getByRole("button", { name: "Crear cuenta" }).click();
+  await expect(page.getByText("Ya hay una cuenta con este correo.")).toBeVisible();
+});

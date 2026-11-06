@@ -28,10 +28,15 @@ import {
 } from "./permissions";
 import * as schema from "./schema";
 
+const sessionFields = type({
+  "activeOrganizationId?": "string | null",
+  "impersonatedBy?": "string | null",
+});
+
 // definePayload types the plugins' fields (admin, two-factor, organization) as any.
 const tokenSubject = type({
   user: { "role?": "string | null", "twoFactorEnabled?": "boolean | null" },
-  session: { "activeOrganizationId?": "string | null", "impersonatedBy?": "string | null" },
+  session: sessionFields,
 });
 
 const adminReads = new Set([
@@ -136,6 +141,35 @@ export const auth = betterAuth({
         },
       },
     },
+    session: {
+      create: {
+        // Someone with several organizations and no usable last one picks it in /organizations.
+        before: async (session) => ({
+          data: { ...session, activeOrganizationId: await initialOrganizationId(session.userId) },
+        }),
+      },
+      update: {
+        // Only changes of organization: refreshing an older session elsewhere must not overwrite the choice.
+        before: async (data, ctx) => {
+          const { activeOrganizationId } = sessionFields.assert(data);
+          const current = ctx?.context.session;
+          if (
+            !activeOrganizationId ||
+            !current ||
+            sessionFields.assert(current.session).impersonatedBy
+          ) {
+            return;
+          }
+          await db
+            .update(schema.user)
+            .set({ lastActiveOrganizationId: activeOrganizationId })
+            .where(eq(schema.user.id, current.user.id))
+            .catch((error: unknown) =>
+              console.error("Could not remember the last active organization", error),
+            );
+        },
+      },
+    },
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
@@ -232,6 +266,28 @@ export const auth = betterAuth({
 });
 
 export type Session = typeof auth.$Infer.Session;
+
+/**
+ * Where a new session starts: the organization the person last worked in, if they still belong to it, or
+ * their only one.
+ */
+async function initialOrganizationId(userId: string): Promise<string | null> {
+  const [memberships, [person]] = await Promise.all([
+    db
+      .select({ organizationId: schema.member.organizationId })
+      .from(schema.member)
+      .where(eq(schema.member.userId, userId)),
+    db
+      .select({ lastActiveOrganizationId: schema.user.lastActiveOrganizationId })
+      .from(schema.user)
+      .where(eq(schema.user.id, userId)),
+  ]);
+  const last = person?.lastActiveOrganizationId;
+  if (last && memberships.some((membership) => membership.organizationId === last)) {
+    return last;
+  }
+  return memberships.length === 1 ? (memberships[0]?.organizationId ?? null) : null;
+}
 
 /** The member's roles in the organization (owner, admin, member), or none outside it. */
 export async function memberRoles(userId: string, organizationId: string): Promise<string[]> {

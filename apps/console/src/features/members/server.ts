@@ -2,14 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { type } from "arktype";
 import { APIError } from "better-auth/api";
-import { and, eq, lte } from "drizzle-orm";
+import { and, eq, gt, lte } from "drizzle-orm";
 
 import {
   assignableMemberRoles,
   invitationSeconds,
   memberPermissions,
 } from "~/lib/auth/permissions";
-import { invitation as invitationTable } from "~/lib/auth/schema";
+import {
+  invitation as invitationTable,
+  organization as organizationTable,
+} from "~/lib/auth/schema";
 import { auth, memberRoles } from "~/lib/auth/server";
 import { db } from "~/lib/db";
 import { emailSender } from "~/lib/email";
@@ -280,8 +283,11 @@ export const removeMember = createServerFn({ method: "POST" })
   );
 
 export type InvitationDetails =
-  | { status: "signed-out" }
+  /** Without a session only the organization's name shows, and none once the invitation is closed. */
+  | { status: "signed-out"; organizationName: string | null }
   | { status: "invalid"; message: string }
+  /** The session belongs to an address other than the invited one. */
+  | { status: "other-recipient"; email: string }
   /** The invitation is for this person, who has yet to prove the address is theirs. */
   | { status: "unverified"; email: string }
   | {
@@ -299,7 +305,7 @@ export const getInvitationDetails = createServerFn({ method: "GET" })
     const headers = getRequestHeaders();
     const session = await auth.api.getSession({ headers });
     if (!session) {
-      return { status: "signed-out" };
+      return { status: "signed-out", organizationName: await invitedOrganizationName(data.id) };
     }
     try {
       const invitation = await auth.api.getInvitation({ headers, query: { id: data.id } });
@@ -322,11 +328,7 @@ export const getInvitationDetails = createServerFn({ method: "GET" })
         error instanceof APIError &&
         error.body?.code === "YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION"
       ) {
-        return {
-          status: "invalid",
-          message:
-            "Esta invitación es para otro correo. Cierra sesión y entra, o crea tu cuenta, con el correo invitado.",
-        };
+        return { status: "other-recipient", email: session.user.email };
       }
       return {
         status: "invalid",
@@ -337,6 +339,30 @@ export const getInvitationDetails = createServerFn({ method: "GET" })
       };
     }
   });
+
+/**
+ * The organization an open invitation is for, so the sign-in and the sign-up can name it before there is a
+ * session. Only its name: the inviter and the invited address stay behind the address's own session.
+ */
+export const getInvitedOrganization = createServerFn({ method: "GET" })
+  .validator(type({ id: "string > 0" }))
+  .handler(({ data }) => invitedOrganizationName(data.id));
+
+async function invitedOrganizationName(invitationId: string): Promise<string | null> {
+  const [found] = await db
+    .select({ name: organizationTable.name })
+    .from(invitationTable)
+    .innerJoin(organizationTable, eq(organizationTable.id, invitationTable.organizationId))
+    .where(
+      and(
+        eq(invitationTable.id, invitationId),
+        eq(invitationTable.status, "pending"),
+        gt(invitationTable.expiresAt, new Date()),
+      ),
+    )
+    .limit(1);
+  return found?.name ?? null;
+}
 
 export type Workplaces = {
   /** The organizations the person already belongs to, other than an active one they left. */

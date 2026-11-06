@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { buttonVariants } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 
 /** The account owes what it used and did not pay; purchases wait until every debt is paid. */
 export function DebtAlert({ orderId }: { orderId: string }) {
@@ -17,7 +18,7 @@ export function DebtAlert({ orderId }: { orderId: string }) {
         <Link
           to="/billing/orders/$orderId"
           params={{ orderId }}
-          className={buttonVariants({ variant: "outline" })}
+          className={cn(buttonVariants({ variant: "outline" }))}
         >
           Pagar el más antiguo
         </Link>

@@ -23,7 +23,7 @@ export function PasswordInput(props: Omit<ComponentProps<"input">, "type" | "siz
       <InputGroupAddon align="inline-end">
         <InputGroupButton
           size="icon-xs"
-          aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+          aria-label="Mostrar contraseña"
           aria-controls={props.id}
           aria-pressed={visible}
           onClick={() => setVisible((v) => !v)}

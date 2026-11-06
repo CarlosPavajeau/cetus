@@ -250,7 +250,8 @@ and avatars. No sharp corners and no large, soft blobs.
 
 Precise at rest, tactile when pressed.
 
-- **Shape:** gently rounded (6px); 36px tall by default, 28px / 32px / 40px for xs / sm / lg, square icon
+- **Shape:** gently rounded (6px); 36px tall by default, 28px / 32px / 40px / 44px for xs / sm / lg / xl (xl
+  matches the large input on the auth screens), square icon
   variants at the same heights.
 - **Primary:** Ledger Ink fill with off-white text, 13px medium; hover softens the ink to 80%.
 - **Outline / Secondary / Ghost:** paper with a rule border, a wash fill, or nothing; all hover to wash.
