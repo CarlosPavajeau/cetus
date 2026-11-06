@@ -6,7 +6,9 @@ import static com.cantte.cetus.persistence.NativeColumns.toOffsetDateTime;
 import com.cantte.cetus.api.metrics.MetricsViews.AlertsView;
 import com.cantte.cetus.api.metrics.MetricsViews.AmountView;
 import com.cantte.cetus.api.metrics.MetricsViews.CertificateAlertView;
+import com.cantte.cetus.api.metrics.MetricsViews.CertificateExpiryView;
 import com.cantte.cetus.api.metrics.MetricsViews.DayView;
+import com.cantte.cetus.api.metrics.MetricsViews.IssuerMetricsView;
 import com.cantte.cetus.api.metrics.MetricsViews.MetricsView;
 import com.cantte.cetus.api.metrics.MetricsViews.RangeAlertView;
 import com.cantte.cetus.api.metrics.MetricsViews.RuleView;
@@ -24,6 +26,7 @@ import jakarta.persistence.Query;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -113,6 +116,10 @@ public class ConsoleMetrics {
                 .forEach(row -> byCurrency
                         .computeIfAbsent(row[0].toString().strip(), currency -> new EnumMap<>(DocumentType.class))
                         .put(DocumentType.valueOf((String) row[1]), (BigDecimal) row[2]));
+        return amounts(byCurrency);
+    }
+
+    private static List<AmountView> amounts(Map<String, Map<DocumentType, BigDecimal>> byCurrency) {
         return byCurrency.entrySet().stream()
                 .map(entry -> {
                     Map<DocumentType, BigDecimal> sums = entry.getValue();
@@ -161,6 +168,58 @@ public class ConsoleMetrics {
                         (String) row[3],
                         toOffsetDateTime(row[4])))
                 .toList();
+    }
+
+    /** Every issuer of the environment that is not disabled, with or without documents in the period. */
+    public List<IssuerMetricsView> byIssuer(UUID accountId, Environment environment, LocalDate from, LocalDate to) {
+        Scope scope = new Scope(accountId, environment, null, from, to);
+        Map<UUID, Map<DocumentStatus, Long>> statuses = new HashMap<>();
+        rows(
+                        "SELECT d.issuer_id, d.status, count(*) FROM billing.documents d WHERE " + scope.period()
+                                + " GROUP BY d.issuer_id, d.status",
+                        scope)
+                .forEach(row -> statuses.computeIfAbsent((UUID) row[0], issuer -> new EnumMap<>(DocumentStatus.class))
+                        .put(DocumentStatus.valueOf((String) row[1]), count(row[2])));
+        Map<UUID, Map<String, Map<DocumentType, BigDecimal>>> sums = new HashMap<>();
+        rows(
+                        "SELECT d.issuer_id, d.currency, d.document_type, sum(d.payable_amount) FROM billing.documents d"
+                                + " WHERE " + scope.period() + " AND d.status = 'ACCEPTED'"
+                                + " GROUP BY d.issuer_id, d.currency, d.document_type",
+                        scope)
+                .forEach(row -> sums.computeIfAbsent((UUID) row[0], issuer -> new TreeMap<>())
+                        .computeIfAbsent(row[1].toString().strip(), currency -> new EnumMap<>(DocumentType.class))
+                        .put(DocumentType.valueOf((String) row[2]), (BigDecimal) row[3]));
+        Map<UUID, CertificateExpiryView> certificates =
+                environment == Environment.SANDBOX ? Map.of() : certificates(accountId, environment);
+        return query("""
+                        SELECT i.id FROM billing.issuers i
+                        WHERE i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'
+                        ORDER BY i.legal_name
+                        """, Map.of("account", accountId, "environment", environment.name()))
+                .map(row -> (UUID) row[0])
+                .map(issuerId -> new IssuerMetricsView(
+                        issuerId,
+                        counts(statuses.getOrDefault(issuerId, Map.of())),
+                        amounts(sums.getOrDefault(issuerId, Map.of())),
+                        certificates.get(issuerId)))
+                .toList();
+    }
+
+    private Map<UUID, CertificateExpiryView> certificates(UUID accountId, Environment environment) {
+        LocalDate today = LocalDate.now(DianTime.ZONE);
+        Map<UUID, CertificateExpiryView> certificates = new HashMap<>();
+        query("""
+                        SELECT c.issuer_id, c.valid_to, (c.valid_to AT TIME ZONE 'America/Bogota')::date
+                        FROM billing.signing_certificates c
+                        JOIN billing.issuers i ON i.id = c.issuer_id
+                        WHERE i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'
+                          AND c.active
+                        """, Map.of("account", accountId, "environment", environment.name()))
+                .forEach(row -> certificates.put(
+                        (UUID) row[0],
+                        new CertificateExpiryView(
+                                toOffsetDateTime(row[1]), toLocalDate(row[2]).toEpochDay() - today.toEpochDay())));
+        return certificates;
     }
 
     /** Nothing for the sandbox: its issuers sign with Cetus' certificate and number up to 999 999 999. */

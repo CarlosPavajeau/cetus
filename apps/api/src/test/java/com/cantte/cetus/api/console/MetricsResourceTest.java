@@ -6,9 +6,11 @@ import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.metrics.MetricsViews.AlertsView;
 import com.cantte.cetus.api.metrics.MetricsViews.AmountView;
+import com.cantte.cetus.api.metrics.MetricsViews.IssuerMetricsView;
 import com.cantte.cetus.api.metrics.MetricsViews.MetricsView;
 import com.cantte.cetus.api.metrics.MetricsViews.RangeAlertView;
 import com.cantte.cetus.api.metrics.MetricsViews.StatusCountsView;
+import com.cantte.cetus.api.support.ConsoleFixtures;
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.api.support.IssuedDocuments.Issuer;
@@ -22,6 +24,7 @@ import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.persistence.entity.SigningCertificateEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.specification.RequestSpecification;
 import jakarta.inject.Inject;
 import java.math.BigDecimal;
@@ -131,6 +134,44 @@ class MetricsResourceTest {
                         .totals()
                         .total())
                 .isZero();
+    }
+
+    @Test
+    void splitsThePeriodByIssuerWithItsCertificate() {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        Issuer first = IssuedDocuments.issuer(customer, "Primera SAS");
+        String second = ConsoleFixtures.onboard(customer, "800197268").issuerId();
+        LocalDate today = LocalDate.now(DianTime.ZONE);
+        UUID accepted = IssuedDocuments.invoice(first);
+        UUID rejected = IssuedDocuments.invoice(first);
+        verdict(accepted, DocumentStatus.ACCEPTED, 10);
+        verdict(rejected, DocumentStatus.REJECTED, 10);
+        IssuedDocuments.invoice(IssuedDocuments.issuer(ConsoleUser.newOrganization(), "Ajena SAS"));
+        QuarkusTransaction.requiringNew()
+                .run(() -> SigningCertificateEntity.findActive(UUID.fromString(second))
+                                .orElseThrow()
+                                .validTo =
+                        OffsetDateTime.now().minusDays(3));
+
+        List<IssuerMetricsView> issuers = byIssuer(customer, Environment.TEST, today, today);
+
+        assertThat(issuers)
+                .extracting(issuer -> issuer.issuerId().toString())
+                .containsExactlyInAnyOrder(first.id(), second);
+        IssuerMetricsView busy = find(issuers, first.id());
+        assertThat(busy.totals()).isEqualTo(new StatusCountsView(1, 1, 0, 0, 2));
+        assertThat(busy.amounts()).singleElement().satisfies(amount -> {
+            assertThat(amount.currency()).isEqualTo("COP");
+            assertThat(amount.net()).isPositive();
+        });
+        assertThat(busy.certificate()).isNotNull();
+        assertThat(busy.certificate().daysLeft()).isPositive();
+        IssuerMetricsView idle = find(issuers, second);
+        assertThat(idle.totals()).isEqualTo(new StatusCountsView(0, 0, 0, 0, 0));
+        assertThat(idle.amounts()).isEmpty();
+        assertThat(idle.certificate()).isNotNull();
+        assertThat(idle.certificate().daysLeft()).isBetween(-4L, -3L);
+        assertThat(byIssuer(customer, Environment.LIVE, today, today)).isEmpty();
     }
 
     @Test
@@ -271,6 +312,26 @@ class MetricsResourceTest {
                 .statusCode(200)
                 .extract()
                 .as(MetricsView.class);
+    }
+
+    private static List<IssuerMetricsView> byIssuer(
+            ConsoleUser user, Environment environment, LocalDate from, LocalDate to) {
+        return user.request()
+                .queryParam("environment", environment.name())
+                .queryParam("from", from.toString())
+                .queryParam("to", to.toString())
+                .get("/console/metrics/issuers")
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(new TypeRef<>() {});
+    }
+
+    private static IssuerMetricsView find(List<IssuerMetricsView> issuers, String issuerId) {
+        return issuers.stream()
+                .filter(issuer -> issuer.issuerId().toString().equals(issuerId))
+                .findFirst()
+                .orElseThrow();
     }
 
     private static void verdict(UUID documentId, DocumentStatus status, int seconds) {
