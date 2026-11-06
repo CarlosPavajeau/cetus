@@ -255,7 +255,8 @@ public class ConsoleMetrics {
                 .toList();
         List<RangeAlertView> ranges = query("""
                         SELECT r.id, i.id, i.legal_name, r.document_type, r.prefix,
-                               r.next_number - r.range_from, r.range_to - r.range_from + 1, r.valid_to
+                               r.next_number - r.range_from, r.range_to - r.range_from + 1, r.valid_to,
+                               r.range_from, r.range_to
                         FROM billing.numbering_ranges r
                         JOIN billing.issuers i ON i.id = r.issuer_id
                         WHERE %s
@@ -275,6 +276,8 @@ public class ConsoleMetrics {
                             (String) row[2],
                             DocumentType.valueOf((String) row[3]),
                             (String) row[4],
+                            count(row[8]),
+                            count(row[9]),
                             used,
                             total,
                             validTo,

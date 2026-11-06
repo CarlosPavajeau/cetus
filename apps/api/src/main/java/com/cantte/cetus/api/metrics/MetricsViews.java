@@ -104,6 +104,12 @@ public final class MetricsViews {
 
             @Schema(nullable = true) String prefix,
 
+            @Schema(description = "First number of the range")
+            long numberFrom,
+
+            @Schema(description = "Last number of the range")
+            long numberTo,
+
             long used,
             long total,
 

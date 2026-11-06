@@ -304,6 +304,7 @@ class MetricsResourceTest {
         assertThat(alerts.ranges()).singleElement().satisfies(range -> {
             assertThat(range.used()).isZero();
             assertThat(range.total()).isEqualTo(5_000_001);
+            assertThat(range.numberTo() - range.numberFrom() + 1).isEqualTo(range.total());
             assertThat(range.runningOut()).isFalse();
             assertThat(range.expiring()).isFalse();
         });
