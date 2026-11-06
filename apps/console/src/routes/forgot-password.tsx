@@ -1,7 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { MailCheckIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
@@ -23,6 +23,10 @@ function ForgotPassword() {
     resolver: arktypeResolver(forgotPasswordSchema),
     defaultValues: { email: "" },
   });
+
+  useEffect(() => {
+    form.setFocus("email");
+  }, [form]);
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ email }) => {

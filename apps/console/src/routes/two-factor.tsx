@@ -8,7 +8,7 @@ import {
   SmartphoneIcon,
   TimerOffIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
@@ -134,6 +134,10 @@ function CodeForm({ backup, onExpired }: { backup: boolean; onExpired: () => voi
   });
   const { errors, isSubmitting } = form.formState;
 
+  useEffect(() => {
+    form.setFocus("code");
+  }, [form]);
+
   const onSubmit = form.handleSubmit(async ({ code, trustDevice }) => {
     const { error } = backup
       ? await authClient.twoFactor.verifyBackupCode({ code, trustDevice })
@@ -165,45 +169,41 @@ function CodeForm({ backup, onExpired }: { backup: boolean; onExpired: () => voi
         <Controller
           name="code"
           control={form.control}
-          render={({ field, fieldState }) => {
-            const describedBy = fieldState.error
-              ? "two-factor-code-error"
-              : backup
-                ? undefined
-                : "two-factor-code-description";
-            return (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="two-factor-code">
-                  {backup ? "Código de respaldo" : "Código de verificación"}
-                </FieldLabel>
-                {backup ? (
-                  <BackupCodeInput
-                    {...field}
-                    id="two-factor-code"
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={describedBy}
-                  />
-                ) : (
-                  <TotpCodeInput
-                    {...field}
-                    id="two-factor-code"
-                    boxed
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={describedBy}
-                  />
-                )}
-                {fieldState.error ? (
-                  <FieldError id="two-factor-code-error" errors={[fieldState.error]} />
-                ) : (
-                  !backup && (
-                    <FieldDescription id="two-factor-code-description">
-                      El código cambia periódicamente. Usa el más reciente.
-                    </FieldDescription>
-                  )
-                )}
-              </Field>
-            );
-          }}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="two-factor-code">
+                {backup ? "Código de respaldo" : "Código de verificación"}
+              </FieldLabel>
+              {backup ? (
+                <BackupCodeInput
+                  {...field}
+                  id="two-factor-code"
+                  aria-invalid={fieldState.invalid}
+                />
+              ) : (
+                <TotpCodeInput
+                  {...field}
+                  id="two-factor-code"
+                  boxed
+                  aria-invalid={fieldState.invalid}
+                  onComplete={() => {
+                    if (!form.formState.isSubmitting) {
+                      void onSubmit();
+                    }
+                  }}
+                />
+              )}
+              {fieldState.error ? (
+                <FieldError errors={[fieldState.error]} />
+              ) : (
+                <FieldDescription>
+                  {backup
+                    ? "10 letras y números, en dos grupos de cinco. El guion se pone solo."
+                    : "El código cambia periódicamente. Usa el más reciente."}
+                </FieldDescription>
+              )}
+            </Field>
+          )}
         />
         <Controller
           name="trustDevice"
@@ -215,13 +215,12 @@ function CodeForm({ backup, onExpired }: { backup: boolean; onExpired: () => voi
                 checked={field.value}
                 onCheckedChange={(checked) => field.onChange(checked)}
                 onBlur={field.onBlur}
-                aria-describedby="two-factor-trust-description"
               />
               <FieldContent>
                 <FieldLabel htmlFor="two-factor-trust">
                   Confiar en este dispositivo durante 30{"\u00A0"}días
                 </FieldLabel>
-                <FieldDescription id="two-factor-trust-description">
+                <FieldDescription>
                   Solo si es un dispositivo personal. No lo actives en equipos públicos o
                   compartidos.
                 </FieldDescription>

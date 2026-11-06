@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
-import { useMemo } from "react";
+import { createContext, useContext, useEffect, useId, useMemo, useState } from "react";
 
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
@@ -72,21 +72,71 @@ const fieldVariants = cva("group/field flex w-full gap-2 data-[invalid=true]:tex
   },
 });
 
+type FieldDescriptions = {
+  idDescription: string | undefined;
+  idError: string | undefined;
+  setIdDescription: (id: string | undefined) => void;
+  setIdError: (id: string | undefined) => void;
+};
+
+const FieldDescriptionsContext = createContext<FieldDescriptions | null>(null);
+
+/**
+ * The ids of the hint and the error rendered inside the enclosing `Field`, for its control's
+ * `aria-describedby`. A `describedBy` passed by the caller wins.
+ */
+function useFieldDescribedBy(describedBy: string | undefined) {
+  const field = useContext(FieldDescriptionsContext);
+  if (describedBy !== undefined || !field) {
+    return describedBy;
+  }
+  const ids = [field.idDescription, field.idError].filter((id) => id !== undefined);
+  return ids.length > 0 ? ids.join(" ") : undefined;
+}
+
+function useFieldDescriptionId(
+  id: string | undefined,
+  slot: "description" | "error",
+  rendered: boolean,
+) {
+  const field = useContext(FieldDescriptionsContext);
+  const idGenerated = useId();
+  const idResolved = id ?? `${idGenerated}-${slot}`;
+  const register = field && (slot === "description" ? field.setIdDescription : field.setIdError);
+
+  useEffect(() => {
+    const registered = rendered ? register : null;
+    registered?.(idResolved);
+    return () => registered?.(undefined);
+  }, [register, rendered, idResolved]);
+
+  return idResolved;
+}
+
 function Field({
   className,
   orientation = "vertical",
   size = "default",
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
+  const [idDescription, setIdDescription] = useState<string | undefined>();
+  const [idError, setIdError] = useState<string | undefined>();
+  const descriptions = useMemo(
+    () => ({ idDescription, idError, setIdDescription, setIdError }),
+    [idDescription, idError],
+  );
+
   return (
-    <div
-      role="group"
-      data-slot="field"
-      data-orientation={orientation}
-      data-size={size}
-      className={cn(fieldVariants({ orientation, size }), className)}
-      {...props}
-    />
+    <FieldDescriptionsContext.Provider value={descriptions}>
+      <div
+        role="group"
+        data-slot="field"
+        data-orientation={orientation}
+        data-size={size}
+        className={cn(fieldVariants({ orientation, size }), className)}
+        {...props}
+      />
+    </FieldDescriptionsContext.Provider>
   );
 }
 
@@ -135,11 +185,15 @@ function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
 
 function FieldDescription({
   className,
+  id,
   size = "default",
   ...props
 }: React.ComponentProps<"p"> & { size?: FieldSize }) {
+  const idResolved = useFieldDescriptionId(id, "description", true);
+
   return (
     <p
+      id={idResolved}
       data-slot="field-description"
       data-size={size}
       className={cn(
@@ -187,6 +241,7 @@ function FieldSeparator({
 function FieldError({
   className,
   children,
+  id,
   errors,
   size = "default",
   ...props
@@ -215,6 +270,7 @@ function FieldError({
       </ul>
     );
   }, [children, errors]);
+  const idResolved = useFieldDescriptionId(id, "error", Boolean(content));
 
   if (!content) {
     return null;
@@ -222,7 +278,7 @@ function FieldError({
 
   return (
     <div
-      role="alert"
+      id={idResolved}
       data-slot="field-error"
       data-size={size}
       className={cn(
@@ -248,4 +304,5 @@ export {
   FieldSet,
   FieldContent,
   FieldTitle,
+  useFieldDescribedBy,
 };

@@ -3,9 +3,12 @@ import { OTPInput, OTPInputContext } from "input-otp";
 import { MinusIcon } from "lucide-react";
 import * as React from "react";
 
+import { useFieldDescribedBy } from "~/components/ui/field";
+
 function InputOTP({
   className,
   containerClassName,
+  "aria-describedby": describedBy,
   ...props
 }: React.ComponentProps<typeof OTPInput> & {
   containerClassName?: string;
@@ -16,6 +19,7 @@ function InputOTP({
       containerClassName={cn("flex items-center has-disabled:opacity-50", containerClassName)}
       spellCheck={false}
       className={cn("disabled:cursor-not-allowed", className)}
+      aria-describedby={useFieldDescribedBy(describedBy)}
       {...props}
     />
   );

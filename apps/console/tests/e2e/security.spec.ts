@@ -26,12 +26,11 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
   await page.waitForURL("**/two-factor");
-  await page.getByLabel("Código de verificación").fill("000000");
-  await page.getByRole("button", { name: "Verificar y continuar" }).click();
+  await expect(page.getByLabel("Código de verificación")).toBeFocused();
+  await page.keyboard.type("000000");
   await expect(page.getByText("El código no es válido")).toBeVisible();
 
   await page.getByLabel("Código de verificación").fill(totp(secret));
-  await page.getByRole("button", { name: "Verificar y continuar" }).click();
   await page.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
 });
 
@@ -53,7 +52,8 @@ test("a backup code typed as shown, dash included, signs in", async ({ browser, 
   await page.waitForURL("**/two-factor");
 
   await page.getByRole("button", { name: "Usar un código de respaldo" }).click();
-  await page.getByLabel("Código de respaldo").pressSequentially(backupCode ?? "");
+  await expect(page.getByLabel("Código de respaldo")).toBeFocused();
+  await page.keyboard.type(backupCode ?? "");
   await page.getByRole("button", { name: "Verificar y continuar" }).click();
   await page.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
   await visitor.close();

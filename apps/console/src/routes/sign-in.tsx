@@ -2,6 +2,7 @@ import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2Icon } from "lucide-react";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
@@ -36,6 +37,10 @@ function SignIn() {
     resolver: arktypeResolver(signInSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  useEffect(() => {
+    form.setFocus("email");
+  }, [form]);
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {

@@ -1,6 +1,7 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
@@ -39,6 +40,10 @@ function SignUp() {
     resolver: arktypeResolver(signUpSchema),
     defaultValues: { name: "", email: "", password: "", confirmPassword: "", acceptedLegal: false },
   });
+
+  useEffect(() => {
+    form.setFocus("name");
+  }, [form]);
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ name, email, password }) => {
@@ -178,7 +183,6 @@ function SignUp() {
                   onCheckedChange={(checked) => field.onChange(checked)}
                   onBlur={field.onBlur}
                   aria-invalid={fieldState.invalid}
-                  aria-describedby="sign-up-legal-error"
                 />
                 <div className="flex flex-col gap-1.5">
                   <FieldLabel htmlFor="sign-up-legal" className="block font-normal">
@@ -186,7 +190,7 @@ function SignUp() {
                     autorizo el tratamiento de mis datos según la{" "}
                     <LegalLink document="privacy">política de datos</LegalLink>.
                   </FieldLabel>
-                  <FieldError id="sign-up-legal-error" errors={[fieldState.error]} />
+                  <FieldError errors={[fieldState.error]} />
                 </div>
               </Field>
             )}

@@ -199,9 +199,8 @@ export function NewTicketDialog({
                       rows={5}
                       className="min-h-28"
                       aria-invalid={fieldState.invalid}
-                      aria-describedby="ticket-message-hint"
                     />
-                    <FieldDescription id="ticket-message-hint">
+                    <FieldDescription>
                       Qué intentabas hacer, qué pasó y, si lo hay, el mensaje de error.
                     </FieldDescription>
                     <FieldError errors={[fieldState.error]} />

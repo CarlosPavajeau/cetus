@@ -1,6 +1,6 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
@@ -95,6 +95,10 @@ function NewPasswordForm({ token, onExpired }: { token: string; onExpired: () =>
     resolver: arktypeResolver(resetPasswordSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
+
+  useEffect(() => {
+    form.setFocus("password");
+  }, [form]);
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ password }) => {
