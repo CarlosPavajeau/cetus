@@ -278,7 +278,7 @@ function Step({
       </AlertTitle>
       <AlertDescription>{description}</AlertDescription>
       <AlertAction>
-        <div className="flex items-center gap-2">{children}</div>
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
       </AlertAction>
     </Alert>
   );
