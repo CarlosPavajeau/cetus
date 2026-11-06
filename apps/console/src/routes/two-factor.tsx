@@ -1,13 +1,19 @@
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, KeyRoundIcon, ShieldCheckIcon, SmartphoneIcon } from "lucide-react";
+import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import {
+  ArrowLeftIcon,
+  KeyRoundIcon,
+  ShieldCheckIcon,
+  SmartphoneIcon,
+  TimerOffIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
   Field,
@@ -19,9 +25,12 @@ import {
 } from "~/components/ui/field";
 import { Spinner } from "~/components/ui/spinner";
 import { BackupCodeInput, TotpCodeInput } from "~/features/auth/CodeInput";
+import { tooManyAttemptsMessage } from "~/features/auth/errors";
 import { backupCodeSchema, totpCodeSchema } from "~/features/auth/schema";
+import { hasPendingTwoFactor } from "~/features/auth/server";
 import { invitationSearch, startSession } from "~/features/auth/session-start";
 import { authClient } from "~/lib/auth/client";
+import { cn } from "~/lib/utils";
 
 /**
  * Second step of the sign-in for accounts with 2FA. Better Auth keeps the pending sign-in in a
@@ -30,11 +39,37 @@ import { authClient } from "~/lib/auth/client";
  */
 export const Route = createFileRoute("/two-factor")({
   validateSearch: invitationSearch,
+  beforeLoad: async ({ search }) => {
+    if (!(await hasPendingTwoFactor())) {
+      throw redirect({ to: "/sign-in", search: { invitation: search.invitation } });
+    }
+  },
   component: TwoFactor,
 });
 
 function TwoFactor() {
+  const { invitation } = Route.useSearch();
   const [useBackupCode, setUseBackupCode] = useState(false);
+  const [expired, setExpired] = useState(false);
+
+  if (expired) {
+    return (
+      <AuthLayout
+        icon={<TimerOffIcon strokeWidth={1.75} />}
+        eyebrow="SEGURIDAD DE LA CUENTA"
+        title="La verificación venció"
+        lead="El paso del código dura unos minutos. Inicia sesión de nuevo para continuar."
+      >
+        <Link
+          to="/sign-in"
+          search={{ invitation }}
+          className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
+        >
+          Iniciar sesión de nuevo
+        </Link>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
@@ -48,7 +83,11 @@ function TwoFactor() {
       }
     >
       {/* Remount on switch so each form keeps its own resolver and values. */}
-      <CodeForm key={String(useBackupCode)} backup={useBackupCode} />
+      <CodeForm
+        key={String(useBackupCode)}
+        backup={useBackupCode}
+        onExpired={() => setExpired(true)}
+      />
       <div className="flex flex-col items-center gap-5 text-center">
         <div className="flex flex-col items-center gap-2">
           <p className="text-sm text-muted-foreground">
@@ -74,6 +113,7 @@ function TwoFactor() {
         </div>
         <Link
           to="/sign-in"
+          search={{ invitation }}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeftIcon className="size-3.5" />
@@ -84,7 +124,7 @@ function TwoFactor() {
   );
 }
 
-function CodeForm({ backup }: { backup: boolean }) {
+function CodeForm({ backup, onExpired }: { backup: boolean; onExpired: () => void }) {
   const { invitation } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -98,16 +138,18 @@ function CodeForm({ backup }: { backup: boolean }) {
     const { error } = backup
       ? await authClient.twoFactor.verifyBackupCode({ code, trustDevice })
       : await authClient.twoFactor.verifyTotp({ code, trustDevice });
+    if (error?.code === "INVALID_TWO_FACTOR_COOKIE") {
+      onExpired();
+      return;
+    }
     if (error) {
       form.setValue("code", "");
       form.setFocus("code");
       form.setError("root", {
         message:
           error.status === 429
-            ? "Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo."
-            : error.code === "INVALID_TWO_FACTOR_COOKIE"
-              ? "La verificación expiró. Vuelve a iniciar sesión."
-              : "El código no es válido. Revísalo e intenta de nuevo.",
+            ? tooManyAttemptsMessage
+            : "El código no es válido. Revísalo e intenta de nuevo.",
       });
       return;
     }

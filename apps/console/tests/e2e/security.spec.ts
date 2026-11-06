@@ -58,3 +58,14 @@ test("a backup code typed as shown, dash included, signs in", async ({ browser, 
   await page.waitForURL((url) => !/sign-in|two-factor/.test(url.pathname));
   await visitor.close();
 });
+
+test("the second step without a pending sign-in sends the person back, invitation kept", async ({
+  browser,
+}) => {
+  const visitor = await browser.newContext();
+  const page = await visitor.newPage();
+  const invitation = crypto.randomUUID();
+  await open(page, `/two-factor?invitation=${invitation}`);
+  await page.waitForURL(`**/sign-in?invitation=${invitation}`);
+  await visitor.close();
+});

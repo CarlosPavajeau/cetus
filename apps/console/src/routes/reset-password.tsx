@@ -10,6 +10,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/c
 import { Spinner } from "~/components/ui/spinner";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { resetPasswordSchema } from "~/features/auth/schema";
+import { isResetTokenValid } from "~/features/auth/server";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
 
@@ -23,15 +24,46 @@ export const Route = createFileRoute("/reset-password")({
     ...(typeof search.error === "string" && search.error ? { error: search.error } : {}),
   }),
   // The token is in the URL: it must not leak to other sites through the Referer header.
+  loaderDeps: ({ search }) => ({ token: search.token, error: search.error }),
+  loader: async ({ deps: { token, error } }): Promise<"missing" | "invalid" | "valid"> => {
+    if (!token && !error) {
+      return "missing";
+    }
+    return token && !error && (await isResetTokenValid({ data: { token } })) ? "valid" : "invalid";
+  },
   head: () => ({ meta: [{ name: "referrer", content: "no-referrer" }] }),
   component: ResetPassword,
 });
 
 function ResetPassword() {
-  const { token, error } = Route.useSearch();
+  const { token } = Route.useSearch();
+  const link = Route.useLoaderData();
   const [expired, setExpired] = useState(false);
 
-  if (!token || error || expired) {
+  if (link === "missing") {
+    return (
+      <AuthLayout
+        title="Abre el enlace del correo"
+        lead="Para cambiar la contraseña, abre el enlace que te enviamos por correo."
+      >
+        <FieldGroup>
+          <Alert>
+            <AlertDescription>
+              Si no lo encuentras, revisa la carpeta de spam o pide uno nuevo.
+            </AlertDescription>
+          </Alert>
+          <Link
+            to="/forgot-password"
+            className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
+          >
+            Pedir un enlace
+          </Link>
+        </FieldGroup>
+      </AuthLayout>
+    );
+  }
+
+  if (link === "invalid" || !token || expired) {
     return (
       <AuthLayout
         title="Enlace no válido"

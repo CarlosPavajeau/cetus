@@ -10,6 +10,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { signUpError } from "~/features/auth/errors";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
 import { createWorkspace } from "~/features/auth/workspace";
@@ -41,14 +42,13 @@ function SignUp() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ name, email, password }) => {
-    const { error: signUpError } = await authClient.signUp.email(
+    const { error: failure } = await authClient.signUp.email(
       { name, email, password },
       { headers: { [legalAcceptanceHeader]: legalAcceptance } },
     );
-    if (signUpError) {
-      form.setError("root", {
-        message: signUpError.message ?? "No pudimos crear la cuenta. Revisa los datos.",
-      });
+    if (failure) {
+      const { field, message } = signUpError(failure);
+      form.setError(field, { message }, { shouldFocus: field !== "root" });
       return;
     }
 

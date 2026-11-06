@@ -10,6 +10,7 @@ import { Button } from "~/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { signInErrorMessage } from "~/features/auth/errors";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signInSchema } from "~/features/auth/schema";
 import { invitationSearch, startSession } from "~/features/auth/session-start";
@@ -40,12 +41,7 @@ function SignIn() {
   const onSubmit = form.handleSubmit(async (values) => {
     const { data, error: signInError } = await authClient.signIn.email(values);
     if (signInError) {
-      form.setError("root", {
-        message:
-          signInError.code === "BANNED_USER"
-            ? (signInError.message ?? "Tu acceso a Cetus está bloqueado.")
-            : "El correo o la contraseña no coinciden. Revísalos e intenta de nuevo.",
-      });
+      form.setError("root", { message: signInErrorMessage(signInError) });
       return;
     }
     // The password was right but the account has 2FA: the session starts after the code.
