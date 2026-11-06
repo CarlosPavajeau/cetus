@@ -12,6 +12,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -32,10 +33,12 @@ public class AlertsResource {
     @Inject
     ConsoleMetrics metrics;
 
+    /** {@code issuerId} narrows to one issuer. */
     @GET
     @Transactional
     @APIResponse(responseCode = "200", description = "OK")
-    public AlertsView get(@QueryParam("environment") @NotNull Environment environment) {
-        return metrics.alerts(context.accountId(), environment);
+    public AlertsView get(
+            @QueryParam("environment") @NotNull Environment environment, @QueryParam("issuerId") UUID issuerId) {
+        return metrics.alerts(context.accountId(), environment, issuerId);
     }
 }

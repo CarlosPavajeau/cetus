@@ -273,6 +273,22 @@ class MetricsResourceTest {
     }
 
     @Test
+    void alertsNarrowToTheIssuerAskedWithinTheAccount() {
+        ConsoleUser customer = ConsoleUser.newOrganization();
+        Issuer first = IssuedDocuments.issuer(customer, "Primera SAS");
+        String second = ConsoleFixtures.onboard(customer, "800197268").issuerId();
+        Issuer foreign = IssuedDocuments.issuer(ConsoleUser.newOrganization(), "Ajena SAS");
+
+        assertThat(alerts(customer, null).ranges())
+                .extracting(range -> range.issuerId().toString())
+                .containsExactlyInAnyOrder(first.id(), second);
+        assertThat(alerts(customer, second).ranges())
+                .extracting(range -> range.issuerId().toString())
+                .containsExactly(second);
+        assertThat(alerts(customer, foreign.id())).isEqualTo(new AlertsView(List.of(), List.of()));
+    }
+
+    @Test
     void aRangeWithRoomAndALongResolutionIsNoWarning() {
         ConsoleUser customer = ConsoleUser.newOrganization();
         IssuedDocuments.issuer(customer, "Tranquila SAS");
@@ -291,6 +307,14 @@ class MetricsResourceTest {
             assertThat(range.runningOut()).isFalse();
             assertThat(range.expiring()).isFalse();
         });
+    }
+
+    private static AlertsView alerts(ConsoleUser user, String issuerId) {
+        RequestSpecification request = user.request().queryParam("environment", "TEST");
+        if (issuerId != null) {
+            request.queryParam("issuerId", issuerId);
+        }
+        return request.get("/console/alerts").then().statusCode(200).extract().as(AlertsView.class);
     }
 
     private static MetricsView metrics(ConsoleUser user, Environment environment, LocalDate from, LocalDate to) {

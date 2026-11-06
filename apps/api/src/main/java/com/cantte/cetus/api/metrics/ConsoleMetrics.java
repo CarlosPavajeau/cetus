@@ -222,25 +222,31 @@ public class ConsoleMetrics {
         return certificates;
     }
 
-    /** Nothing for the sandbox: its issuers sign with Cetus' certificate and number up to 999 999 999. */
-    public AlertsView alerts(UUID accountId, Environment environment) {
+    /**
+     * Nothing for the sandbox: its issuers sign with Cetus' certificate and number up to 999 999 999. {@code issuerId}
+     * narrows to one issuer; null reads all of the account's.
+     */
+    public AlertsView alerts(UUID accountId, Environment environment, UUID issuerId) {
         if (environment == Environment.SANDBOX) {
             return new AlertsView(List.of(), List.of());
         }
         LocalDate today = LocalDate.now(DianTime.ZONE);
-        List<CertificateAlertView> certificates = query(
-                        """
+        String issuers = "i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'"
+                + (issuerId == null ? "" : " AND i.id = :issuer");
+        Map<String, Object> parameters = new HashMap<>(Map.of("account", accountId, "environment", environment.name()));
+        if (issuerId != null) {
+            parameters.put("issuer", issuerId);
+        }
+        Map<String, Object> certificateParameters = new HashMap<>(parameters);
+        certificateParameters.put("until", today.plusDays(CERTIFICATE_DAYS));
+        List<CertificateAlertView> certificates = query("""
                         SELECT i.id, i.legal_name, c.valid_to, (c.valid_to AT TIME ZONE 'America/Bogota')::date
                         FROM billing.signing_certificates c
                         JOIN billing.issuers i ON i.id = c.issuer_id
-                        WHERE i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'
+                        WHERE %s
                           AND c.active AND (c.valid_to AT TIME ZONE 'America/Bogota')::date <= :until
                         ORDER BY c.valid_to, i.legal_name
-                        """,
-                        Map.of(
-                                "account", accountId,
-                                "environment", environment.name(),
-                                "until", today.plusDays(CERTIFICATE_DAYS)))
+                        """.formatted(issuers), certificateParameters)
                 .map(row -> new CertificateAlertView(
                         (UUID) row[0],
                         (String) row[1],
@@ -252,10 +258,10 @@ public class ConsoleMetrics {
                                r.next_number - r.range_from, r.range_to - r.range_from + 1, r.valid_to
                         FROM billing.numbering_ranges r
                         JOIN billing.issuers i ON i.id = r.issuer_id
-                        WHERE i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'
+                        WHERE %s
                           AND r.status = 'ACTIVE'
                         ORDER BY i.legal_name, r.document_type, r.prefix
-                        """, Map.of("account", accountId, "environment", environment.name()))
+                        """.formatted(issuers), parameters)
                 .map(row -> {
                     long used = count(row[5]);
                     long total = count(row[6]);
