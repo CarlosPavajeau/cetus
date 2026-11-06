@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { TriangleAlertIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { buttonVariants } from "~/components/ui/button";
 import {
   Card,
   CardAction,
@@ -21,6 +22,7 @@ import { formatDayLong, formatInstantLong } from "./labels";
 type Warning = {
   key: string;
   issuerId: string;
+  issuerName: string;
   /** Already stops issuing, not only about to. */
   blocking: boolean;
   text: string;
@@ -34,16 +36,23 @@ export function IssuerWarnings({ alerts }: { alerts: Alerts }) {
     return null;
   }
 
+  const blocking = warnings.some((warning) => warning.blocking);
   return (
-    <Alert variant={warnings.some((warning) => warning.blocking) ? "destructive" : "default"}>
-      <TriangleAlertIcon />
-      <AlertTitle>Renueva a tiempo para no detener tu facturación</AlertTitle>
+    <Alert variant={blocking ? "destructive" : "warning"}>
+      {!blocking && <TriangleAlertIcon aria-hidden="true" />}
+      <AlertTitle>
+        <h2>Renueva a tiempo para no detener tu facturación</h2>
+      </AlertTitle>
       <AlertDescription>
         <ul className="flex flex-col gap-1">
           {warnings.map((warning) => (
             <li key={warning.key}>
               {warning.text}{" "}
-              <Link to="/issuers/$issuerId" params={{ issuerId: warning.issuerId }}>
+              <Link
+                to="/issuers/$issuerId"
+                params={{ issuerId: warning.issuerId }}
+                aria-label={`${warning.action} de ${warning.issuerName}`}
+              >
                 {warning.action}
               </Link>
             </li>
@@ -61,6 +70,7 @@ function warningsOf(alerts: Alerts): Warning[] {
     return {
       key: `certificate-${certificate.issuerId}`,
       issuerId: certificate.issuerId,
+      issuerName: certificate.issuerName,
       blocking: expired,
       text: expired
         ? `El certificado de ${certificate.issuerName} venció el ${when}.`
@@ -75,6 +85,7 @@ function warningsOf(alerts: Alerts): Warning[] {
           {
             key: `range-${range.id}-numbers`,
             issuerId: range.issuerId,
+            issuerName: range.issuerName,
             blocking: range.used >= range.total,
             text: `${remainingText(range.total - range.used)} en ${name}: solicita una nueva resolución a la DIAN.`,
             action: "Ver emisor",
@@ -87,6 +98,7 @@ function warningsOf(alerts: Alerts): Warning[] {
             {
               key: `range-${range.id}-resolution`,
               issuerId: range.issuerId,
+              issuerName: range.issuerName,
               blocking: range.daysLeft < 0,
               text:
                 range.daysLeft < 0
@@ -106,8 +118,7 @@ export function NumberingUsage({ ranges }: { ranges: RangeAlert[] }) {
   const sorted = ranges.toSorted((a, b) => Number(needsAttention(b)) - Number(needsAttention(a)));
   const [first] = ranges;
   const issuer = ranges.every((range) => range.issuerId === first?.issuerId) ? first : undefined;
-  const linkClass =
-    "text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline";
+  const linkClass = cn(buttonVariants({ variant: "outline", size: "sm" }));
 
   return (
     <Card size="sm">
@@ -146,7 +157,7 @@ export function NumberingUsage({ ranges }: { ranges: RangeAlert[] }) {
 }
 
 function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: boolean }) {
-  const attention = needsAttention(range);
+  const tone = rangeTone(range);
   const details = [
     range.runningOut ? `${remainingText(range.total - range.used)}.` : null,
     resolutionText(range),
@@ -154,11 +165,7 @@ function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: bo
 
   return (
     <li className="flex flex-col gap-1">
-      <Progress
-        value={range.used}
-        max={range.total}
-        variant={attention ? "destructive" : "default"}
-      >
+      <Progress value={range.used} max={range.total} variant={tone}>
         <ProgressLabel>
           {rangeName(range)}
           {issuerShown && (
@@ -182,7 +189,8 @@ function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: bo
         <p
           className={cn(
             "text-2xs text-muted-foreground",
-            attention && "font-medium text-destructive-foreground",
+            tone === "warning" && "font-medium text-warning-foreground",
+            tone === "destructive" && "font-medium text-destructive-foreground",
           )}
         >
           {details.join(" ")}
@@ -194,6 +202,14 @@ function RangeUsage({ range, issuerShown }: { range: RangeAlert; issuerShown: bo
 
 function needsAttention(range: RangeAlert) {
   return range.runningOut || range.expiring;
+}
+
+/** Red only once the range already stops issuing; amber while there is still time to act. */
+function rangeTone(range: RangeAlert): "default" | "warning" | "destructive" {
+  if (range.used >= range.total || (range.daysLeft !== null && range.daysLeft < 0)) {
+    return "destructive";
+  }
+  return needsAttention(range) ? "warning" : "default";
 }
 
 function rangeName(range: RangeAlert) {
