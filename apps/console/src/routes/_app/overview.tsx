@@ -24,6 +24,7 @@ import {
 import { apiKeysQuery } from "~/features/api-keys/queries";
 import { documentsQuery } from "~/features/documents/queries";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
+import { canIssue } from "~/features/issuers/issuing";
 import { issuerName } from "~/features/issuers/labels";
 import { issuersQuery } from "~/features/issuers/queries";
 import { Activity } from "~/features/metrics/Activity";
@@ -93,6 +94,14 @@ function Overview() {
   const { data: metrics } = useSuspenseQuery(metricsQuery(environment, range, issuerId));
   const { data: documents } = useSuspenseInfiniteQuery(documentsQuery({ environment, issuerId }));
   const { data: alerts } = useSuspenseQuery(alertsQuery(environment, issuerId));
+  const ready = issuerOptions.some((issuer) => canIssue(issuer, environment));
+  // What keeps the metrics empty: the picked issuer, or every issuer of the environment, still short of issuing.
+  const waiting =
+    issuerId === undefined
+      ? ready
+        ? []
+        : issuerOptions
+      : issuerOptions.filter((issuer) => issuer.id === issuerId && !canIssue(issuer, environment));
   const navigate = useNavigate({ from: Route.fullPath });
   const { manage } = useMemberPermissions();
   // A new organization only has the sandbox sample, which needs no setup.
@@ -129,7 +138,8 @@ function Overview() {
       <PageHeader
         title="Resumen"
         action={
-          !sandboxFirst && (
+          !sandboxFirst &&
+          (ready || issuerOptions.length === 0) && (
             <Link
               to="/documents/new"
               className={cn(
@@ -260,6 +270,8 @@ function Overview() {
           issuerId={issuerId}
           onIssuerChange={(next) => changeSearch({ issuer: next })}
           issued={documents.pages.some((page) => page.items.length > 0)}
+          waiting={waiting}
+          manage={manage}
           breakdown={
             breakdown ? (
               <IssuerBreakdown

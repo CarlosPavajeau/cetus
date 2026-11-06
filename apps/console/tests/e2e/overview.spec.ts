@@ -68,3 +68,23 @@ test("an issuer left halfway is resumed from the overview", async ({ page, organ
   await page.getByRole("link", { name: "Continuar configuración" }).click();
   await expect(page).toHaveURL(new RegExp(`/setup\\?issuerId=${issuerId}`));
 });
+
+test("an environment whose only issuer is in habilitación points to finishing it", async ({
+  page,
+  organization,
+}) => {
+  const issuerId = await createIssuer(organization, uniqueNit(), "En Camino SAS");
+
+  await open(page, "/overview");
+  await page.getByRole("combobox", { name: "Ambiente" }).click();
+  await page.getByRole("option", { name: "Pruebas" }).click();
+
+  const activity = page.getByRole("region", { name: "Documentos emitidos" });
+  await expect(
+    activity.getByText("Termina la habilitación de En Camino SAS para emitir en pruebas"),
+  ).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Periodo" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Emitir factura" })).toHaveCount(0);
+  await activity.getByRole("link", { name: "Continuar habilitación" }).click();
+  await expect(page).toHaveURL(new RegExp(`/setup\\?issuerId=${issuerId}`));
+});

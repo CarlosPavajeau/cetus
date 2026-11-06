@@ -12,7 +12,9 @@ import {
   EmptyTitle,
 } from "~/components/ui/empty";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
+import { issuerName } from "~/features/issuers/labels";
 import type { Issuer, Metrics } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
 import { DailyChart } from "./DailyChart";
 import { IssuerSelect } from "./IssuerSelect";
@@ -27,7 +29,8 @@ import { RuleRanking } from "./RuleRanking";
  * issuers and none picked, {@code breakdown} shows each one's amount instead of a sum, since adding up different
  * companies' amounts tells an accountant nothing; otherwise {@code numbering} shows how much of the issuer's ranges
  * is used, since the breakdown already carries each issuer's. {@code issued} says whether the environment has any
- * documents at all, so an empty period points to another period instead of to issuing a first one.
+ * documents at all, so an empty period points to another period instead of to issuing a first one. Without any,
+ * {@code waiting} names the issuers that cannot issue yet, so the empty state points to finishing their habilitación.
  */
 export function Activity({
   metrics,
@@ -39,6 +42,8 @@ export function Activity({
   breakdown,
   numbering,
   issued,
+  waiting,
+  manage,
 }: {
   metrics: Metrics;
   period: Period;
@@ -49,6 +54,8 @@ export function Activity({
   breakdown: ReactNode;
   numbering: ReactNode;
   issued: boolean;
+  waiting: Issuer[];
+  manage: boolean;
 }) {
   return (
     <section aria-labelledby="activity-title" className="flex flex-col gap-4">
@@ -65,7 +72,7 @@ export function Activity({
           {issuers.length > 1 && (
             <IssuerSelect issuers={issuers} value={issuerId} onChange={onIssuerChange} />
           )}
-          <PeriodSelect value={period} onChange={onPeriodChange} />
+          {issued && <PeriodSelect value={period} onChange={onPeriodChange} />}
         </div>
       </header>
       {metrics.totals.total === 0 ? (
@@ -90,7 +97,7 @@ export function Activity({
                   <Link
                     to="/documents"
                     search={{ issuerId }}
-                    className={buttonVariants({ variant: "outline" })}
+                    className={cn(buttonVariants({ variant: "outline" }))}
                   >
                     Ver todos los documentos
                   </Link>
@@ -101,6 +108,12 @@ export function Activity({
                 )}
               </EmptyContent>
             </Empty>
+          ) : waiting.length > 0 ? (
+            <Habilitation
+              issuers={waiting}
+              environment={environmentLabel[metrics.environment].toLowerCase()}
+              manage={manage}
+            />
           ) : (
             <Empty>
               <EmptyHeader>
@@ -128,5 +141,64 @@ export function Activity({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Why an environment with no documents has nothing to show yet: its issuers are still in habilitación. One issuer
+ * leads to where it continues (the assistant while it is being set up, its page during the test set); several, to
+ * the issuers' list. Only managers can open the assistant, so members go to the issuer's page instead.
+ */
+function Habilitation({
+  issuers,
+  environment,
+  manage,
+}: {
+  issuers: Issuer[];
+  environment: string;
+  manage: boolean;
+}) {
+  const single = issuers.length === 1 ? issuers[0] : undefined;
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <ChartColumnIcon />
+        </EmptyMedia>
+        <EmptyTitle>
+          {single
+            ? `Termina la habilitación de ${issuerName(single)} para emitir en ${environment}`
+            : `Termina la habilitación de tus emisores para emitir en ${environment}`}
+        </EmptyTitle>
+        <EmptyDescription>
+          {manage
+            ? `Cuando la DIAN ${single ? "lo" : "los"} habilite, aquí verás cuántos documentos aceptó, el monto facturado y las reglas que más los rechazan.`
+            : "Un administrador de tu organización debe terminarla. Después, aquí verás cuántos documentos aceptó la DIAN y el monto facturado."}
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        {single === undefined ? (
+          <Link to="/issuers" className={cn(buttonVariants({ variant: "outline" }))}>
+            Ver emisores
+          </Link>
+        ) : manage && single.status === "ONBOARDING" ? (
+          <Link
+            to="/setup"
+            search={{ issuerId: single.id }}
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            Continuar habilitación
+          </Link>
+        ) : (
+          <Link
+            to="/issuers/$issuerId"
+            params={{ issuerId: single.id }}
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            {manage ? "Continuar habilitación" : "Ver emisor"}
+          </Link>
+        )}
+      </EmptyContent>
+    </Empty>
   );
 }

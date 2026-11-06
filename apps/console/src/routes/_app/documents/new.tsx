@@ -17,8 +17,9 @@ import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
 import { InvoiceForm } from "~/features/issuance/InvoiceForm";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
+import { canIssue } from "~/features/issuers/issuing";
 import { issuersQuery } from "~/features/issuers/queries";
-import type { Environment, Issuer } from "~/lib/api/types";
+import type { Environment } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/documents/new")({
@@ -32,14 +33,6 @@ export const Route = createFileRoute("/_app/documents/new")({
   },
   component: NewInvoice,
 });
-
-/** What the API lets issue: an enabled issuer, or one in habilitación with the TEST environment. */
-function canIssue(issuer: Issuer, environment: Environment) {
-  return (
-    issuer.environment === environment &&
-    (issuer.status === "ENABLED" || (environment === "TEST" && issuer.status === "TESTING"))
-  );
-}
 
 const leads: Record<Environment, string> = {
   SANDBOX:
