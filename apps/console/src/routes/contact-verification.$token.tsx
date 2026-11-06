@@ -66,8 +66,7 @@ function ContactVerification() {
           </Alert>
         )}
         <Button
-          size="lg"
-          className="h-11"
+          size="xl"
           disabled={confirm.isPending}
           onClick={() => confirm.mutate({ data: { token } })}
         >

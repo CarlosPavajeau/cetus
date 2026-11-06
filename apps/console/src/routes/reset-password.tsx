@@ -52,10 +52,7 @@ function ResetPassword() {
               Si no lo encuentras, revisa la carpeta de spam o pide uno nuevo.
             </AlertDescription>
           </Alert>
-          <Link
-            to="/forgot-password"
-            className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
-          >
+          <Link to="/forgot-password" className={cn(buttonVariants({ size: "xl" }))}>
             Pedir un enlace
           </Link>
         </FieldGroup>
@@ -75,10 +72,7 @@ function ResetPassword() {
               El enlace venció o ya se usó. Pide otro y úsalo dentro de la hora siguiente.
             </AlertDescription>
           </Alert>
-          <Link
-            to="/forgot-password"
-            className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
-          >
+          <Link to="/forgot-password" className={cn(buttonVariants({ size: "xl" }))}>
             Pedir otro enlace
           </Link>
         </FieldGroup>
@@ -168,7 +162,7 @@ function NewPasswordForm({ token, onExpired }: { token: string; onExpired: () =>
               <AlertDescription>{errors.root.message}</AlertDescription>
             </Alert>
           )}
-          <Button type="submit" size="lg" className="h-11" disabled={isSubmitting}>
+          <Button type="submit" size="xl" disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}
             {isSubmitting ? "Guardando…" : "Cambiar contraseña"}
           </Button>

@@ -63,6 +63,8 @@ test("an address without an account gets the same answer and no email", async ({
   await page.getByLabel("Correo electrónico").fill(address);
   await page.getByRole("button", { name: "Enviar enlace" }).click();
   await expect(page.getByText(`Si hay una cuenta con ${address}`)).toBeVisible();
+  await page.getByRole("button", { name: "Usar otro correo" }).click();
+  await expect(page.getByLabel("Correo electrónico")).toHaveValue(address);
   await expect(latestEmailTo(address, 4)).rejects.toThrow(`No email to ${address}`);
 });
 

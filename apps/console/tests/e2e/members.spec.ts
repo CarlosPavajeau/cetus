@@ -110,7 +110,7 @@ test("a biller is invited by link, issues in production and is removed", async (
   await visitor.close();
 });
 
-test("an invitation only opens for its address", async ({ page, browser, organization: owner }) => {
+test("an invitation only opens for its address", async ({ page, organization: owner }) => {
   const invitation = createdInvitation.assert(
     await owner.auth("/organization/invite-member", {
       email: `e2e-otro-${crypto.randomUUID().slice(0, 8)}@cetus.test`,
@@ -122,12 +122,8 @@ test("an invitation only opens for its address", async ({ page, browser, organiz
   await open(page, `/invitations/${invitation.id}`);
   await expect(page.getByRole("heading", { name: "Invitación no válida" })).toBeVisible();
   await expect(page.getByText("Esta invitación es para otro correo")).toBeVisible();
-
-  const visitor = await browser.newContext();
-  const anonymous = await visitor.newPage();
-  await open(anonymous, `/invitations/${invitation.id}`);
-  await expect(anonymous.getByRole("link", { name: "Ya tengo cuenta" })).toBeVisible();
-  await visitor.close();
+  await page.getByRole("button", { name: "Cerrar sesión y usar el correo invitado" }).click();
+  await expect(page.getByRole("link", { name: "Ya tengo cuenta" })).toBeVisible();
 });
 
 test("the members page renders on the server with a pending invitation", async ({

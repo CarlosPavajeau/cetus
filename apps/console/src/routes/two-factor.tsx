@@ -63,11 +63,7 @@ function TwoFactor() {
         title="La verificación venció"
         lead="El paso del código dura unos minutos. Inicia sesión de nuevo para continuar."
       >
-        <Link
-          to="/sign-in"
-          search={{ invitation }}
-          className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
-        >
+        <Link to="/sign-in" search={{ invitation }} className={cn(buttonVariants({ size: "xl" }))}>
           Iniciar sesión de nuevo
         </Link>
       </AuthLayout>
@@ -236,7 +232,7 @@ function CodeForm({ backup, onExpired }: { backup: boolean; onExpired: () => voi
             <AlertDescription>{errors.root.message}</AlertDescription>
           </Alert>
         )}
-        <Button type="submit" size="lg" className="h-11" disabled={isSubmitting}>
+        <Button type="submit" size="xl" disabled={isSubmitting}>
           {isSubmitting && <Spinner data-icon="inline-start" />}
           {isSubmitting ? "Verificando…" : "Verificar y continuar"}
         </Button>

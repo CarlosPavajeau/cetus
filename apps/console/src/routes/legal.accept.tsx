@@ -114,7 +114,7 @@ function AcceptLegal() {
             <AlertDescription>{accept.error.message}</AlertDescription>
           </Alert>
         )}
-        <Button type="submit" size="lg" className="h-11" disabled={accept.isPending}>
+        <Button type="submit" size="xl" disabled={accept.isPending}>
           {accept.isPending && <Spinner data-icon="inline-start" />}
           Aceptar y continuar
         </Button>

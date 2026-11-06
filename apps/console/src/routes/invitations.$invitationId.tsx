@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 
 import { AuthLayout } from "~/components/AuthLayout";
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -73,14 +73,14 @@ function InvitationPage() {
           <Link
             to="/sign-up"
             search={{ invitation: invitationId }}
-            className={cn(buttonVariants({ size: "lg", className: "h-11" }))}
+            className={cn(buttonVariants({ size: "xl" }))}
           >
             Crear cuenta
           </Link>
           <Link
             to="/sign-in"
             search={{ invitation: invitationId }}
-            className={cn(buttonVariants({ variant: "outline", size: "lg", className: "h-11" }))}
+            className={cn(buttonVariants({ variant: "outline", size: "xl" }))}
           >
             Ya tengo cuenta
           </Link>
@@ -96,12 +96,19 @@ function InvitationPage() {
           <Alert>
             <AlertDescription>{invitation.message}</AlertDescription>
           </Alert>
-          <Link to="/overview" className={cn(buttonVariants({ variant: "outline" }))}>
+          <Link
+            to="/organizations"
+            className={cn(buttonVariants({ variant: "outline", size: "xl" }))}
+          >
             Ir a la consola
           </Link>
         </div>
       </AuthLayout>
     );
+  }
+
+  if (invitation.status === "other-recipient") {
+    return <OtherRecipient email={invitation.email} />;
   }
 
   if (invitation.status === "unverified") {
@@ -120,15 +127,53 @@ function InvitationPage() {
             <AlertDescription>{accept.error.message}</AlertDescription>
           </Alert>
         )}
-        <Button
-          size="lg"
-          className="h-11"
-          disabled={accept.isPending}
-          onClick={() => accept.mutate()}
-        >
+        <Button size="xl" disabled={accept.isPending} onClick={() => accept.mutate()}>
           {accept.isPending && <Spinner data-icon="inline-start" />}
           Unirme
         </Button>
+      </div>
+    </AuthLayout>
+  );
+}
+
+/** Signing out brings the invitation back without a session, where the invited address can enter. */
+function OtherRecipient({ email }: { email: string }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const signOut = useMutation({
+    mutationFn: async () => {
+      const { error } = await authClient.signOut();
+      if (error) {
+        throw new Error("No pudimos cerrar la sesión. Inténtalo de nuevo en un momento.");
+      }
+    },
+    onSuccess: async () => {
+      queryClient.clear();
+      await router.invalidate();
+    },
+  });
+
+  return (
+    <AuthLayout
+      title="Invitación no válida"
+      lead={`Esta invitación es para otro correo y entraste como ${email}.`}
+    >
+      <div className="flex flex-col gap-4">
+        {signOut.error && (
+          <Alert variant="destructive">
+            <AlertDescription>{signOut.error.message}</AlertDescription>
+          </Alert>
+        )}
+        <Button size="xl" disabled={signOut.isPending} onClick={() => signOut.mutate()}>
+          {signOut.isPending && <Spinner data-icon="inline-start" />}
+          Cerrar sesión y usar el correo invitado
+        </Button>
+        <Link
+          to="/organizations"
+          className={cn(buttonVariants({ variant: "outline", size: "xl" }))}
+        >
+          Seguir como {email}
+        </Link>
       </div>
     </AuthLayout>
   );
@@ -174,9 +219,8 @@ function ConfirmAddress({ invitationId, email }: { invitationId: string; email: 
           </Alert>
         )}
         <Button
-          size="lg"
+          size="xl"
           variant={send.isSuccess || sent ? "outline" : "default"}
-          className="h-11"
           disabled={send.isPending}
           onClick={() => send.mutate()}
         >

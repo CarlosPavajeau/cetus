@@ -205,13 +205,7 @@ function CreateWorkspace({ defaultName }: { defaultName: string }) {
           <AlertDescription>{create.error.message}</AlertDescription>
         </Alert>
       )}
-      <Button
-        type="submit"
-        size="lg"
-        variant="outline"
-        className="h-11"
-        disabled={create.isPending || !name.trim()}
-      >
+      <Button type="submit" size="xl" variant="outline" disabled={create.isPending || !name.trim()}>
         {create.isPending && <Spinner data-icon="inline-start" />}
         Crear mi organización
       </Button>

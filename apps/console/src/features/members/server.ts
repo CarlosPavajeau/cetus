@@ -286,6 +286,8 @@ export type InvitationDetails =
   /** Without a session only the organization's name shows, and none once the invitation is closed. */
   | { status: "signed-out"; organizationName: string | null }
   | { status: "invalid"; message: string }
+  /** The session belongs to an address other than the invited one. */
+  | { status: "other-recipient"; email: string }
   /** The invitation is for this person, who has yet to prove the address is theirs. */
   | { status: "unverified"; email: string }
   | {
@@ -326,11 +328,7 @@ export const getInvitationDetails = createServerFn({ method: "GET" })
         error instanceof APIError &&
         error.body?.code === "YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION"
       ) {
-        return {
-          status: "invalid",
-          message:
-            "Esta invitación es para otro correo. Cierra sesión y entra, o crea tu cuenta, con el correo invitado.",
-        };
+        return { status: "other-recipient", email: session.user.email };
       }
       return {
         status: "invalid",

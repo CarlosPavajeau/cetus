@@ -214,7 +214,7 @@ function SignUp() {
               <AlertDescription>{errors.root.message}</AlertDescription>
             </Alert>
           )}
-          <Button type="submit" size="lg" className="h-11" disabled={isSubmitting}>
+          <Button type="submit" size="xl" disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}
             {isSubmitting ? "Creando cuenta…" : "Crear cuenta"}
           </Button>
