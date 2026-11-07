@@ -49,7 +49,10 @@ export function formatAmount(amount: number, currency: string) {
 
 /** "26 oct" for a YYYY-MM-DD day, read as the calendar day it already is. */
 export function formatDay(day: string) {
-  return dayMonth.format(new Date(`${day}T00:00:00Z`)).replace(".", "");
+  return dayMonth
+    .format(new Date(`${day}T00:00:00Z`))
+    .replace(".", "")
+    .replace(" de ", " ");
 }
 
 /** "26 de octubre de 2026" for a YYYY-MM-DD day. */

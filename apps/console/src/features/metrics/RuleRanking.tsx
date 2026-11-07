@@ -35,23 +35,29 @@ export function RuleRanking({ rules, simulated }: { rules: MetricsRule[]; simula
       <h3 id="rule-ranking" className="text-sm font-medium">
         Reglas de la DIAN más frecuentes
       </h3>
-      <Tabs defaultValue="REJECTION">
-        <TabsList>
+      {rules.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {`${answerer} no rechazó documentos ni dejó notificaciones en este periodo.`}
+        </p>
+      ) : (
+        <Tabs defaultValue="REJECTION">
+          <TabsList>
+            {kinds.map((each) => (
+              <TabsTrigger key={each.kind} value={each.kind}>
+                {each.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
           {kinds.map((each) => (
-            <TabsTrigger key={each.kind} value={each.kind}>
-              {each.label}
-            </TabsTrigger>
+            <TabsContent key={each.kind} value={each.kind}>
+              <RuleTable
+                rules={rules.filter((rule) => rule.kind === each.kind)}
+                empty={each.empty(answerer)}
+              />
+            </TabsContent>
           ))}
-        </TabsList>
-        {kinds.map((each) => (
-          <TabsContent key={each.kind} value={each.kind}>
-            <RuleTable
-              rules={rules.filter((rule) => rule.kind === each.kind)}
-              empty={each.empty(answerer)}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
+        </Tabs>
+      )}
     </section>
   );
 }
