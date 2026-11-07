@@ -14,7 +14,7 @@ import {
 } from "~/components/ui/empty";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { issuerName } from "~/features/issuers/labels";
-import type { Issuer, Metrics } from "~/lib/api/types";
+import type { Environment, Issuer, Metrics } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
 
 import { DailyChart } from "./DailyChart";
@@ -31,7 +31,9 @@ import { RuleRanking } from "./RuleRanking";
  * companies' amounts tells an accountant nothing; otherwise {@code numbering} shows how much of the issuer's ranges
  * is used, since the breakdown already carries each issuer's. {@code issued} says whether the environment has any
  * documents at all, so an empty period points to another period instead of to issuing a first one. Without any,
- * {@code waiting} names the issuers that cannot issue yet, so the empty state points to finishing their habilitación.
+ * {@code waiting} names the issuers that cannot issue yet, so the empty state points to finishing their habilitación,
+ * and an environment with no issuers explains how one gets there, through {@code promotable}'s test issuers in
+ * producción. With {@code leads}, the empty state's action is the page's main one.
  */
 export function Activity({
   metrics,
@@ -44,6 +46,8 @@ export function Activity({
   numbering,
   issued,
   waiting,
+  promotable,
+  leads,
   manage,
 }: {
   metrics: Metrics;
@@ -56,6 +60,8 @@ export function Activity({
   numbering: ReactNode;
   issued: boolean;
   waiting: Issuer[];
+  promotable: Issuer[];
+  leads: boolean;
   manage: boolean;
 }) {
   return (
@@ -69,7 +75,9 @@ export function Activity({
             {metrics.environment === "SANDBOX" && <Badge variant="muted">Simulado</Badge>}
           </div>
           <p className="text-sm text-muted-foreground">
-            {`Documentos de ${environmentLabel[metrics.environment].toLowerCase()} por fecha de emisión.`}
+            {issued
+              ? `Documentos de ${environmentLabel[metrics.environment].toLowerCase()} emitidos del ${formatDay(metrics.from)} al ${formatDay(metrics.to)}.`
+              : `Documentos de ${environmentLabel[metrics.environment].toLowerCase()} por fecha de emisión.`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -115,7 +123,15 @@ export function Activity({
           ) : waiting.length > 0 ? (
             <Habilitation
               issuers={waiting}
-              environment={environmentLabel[metrics.environment].toLowerCase()}
+              environment={metrics.environment}
+              leads={leads}
+              manage={manage}
+            />
+          ) : issuers.length === 0 && metrics.environment !== "SANDBOX" ? (
+            <NoIssuers
+              environment={metrics.environment}
+              promotable={promotable}
+              leads={leads}
               manage={manage}
             />
           ) : (
@@ -149,20 +165,27 @@ export function Activity({
 }
 
 /**
- * Why an environment with no documents has nothing to show yet: its issuers are still in habilitación. One issuer
- * leads to where it continues (the assistant while it is being set up, its page during the test set); several, to
- * the issuers' list. Only managers can open the assistant, so members go to the issuer's page instead.
+ * Why an environment with no documents has nothing to show yet: its issuers are still in habilitación, or in
+ * producción, still being set up. One issuer leads to where it continues (the assistant while its configuration is
+ * pending, its page during the test set); several, to the issuers' list. Only managers can open the assistant, so members go
+ * to the issuer's page instead.
  */
 function Habilitation({
   issuers,
   environment,
+  leads,
   manage,
 }: {
   issuers: Issuer[];
-  environment: string;
+  environment: Environment;
+  leads: boolean;
   manage: boolean;
 }) {
   const single = issuers.length === 1 ? issuers[0] : undefined;
+  const live = environment === "LIVE";
+  const step = live ? "Termina de configurar" : "Termina la habilitación de";
+  const where = live ? "producción" : "pruebas";
+  const className = cn(buttonVariants({ variant: leads ? "default" : "outline" }));
   return (
     <Empty>
       <EmptyHeader>
@@ -171,38 +194,106 @@ function Habilitation({
         </EmptyMedia>
         <EmptyTitle>
           {single
-            ? `Termina la habilitación de ${issuerName(single)} para emitir en ${environment}`
-            : `Termina la habilitación de tus emisores para emitir en ${environment}`}
+            ? `${step} ${issuerName(single)} para emitir en ${where}`
+            : `${step} tus emisores para emitir en ${where}`}
         </EmptyTitle>
         <EmptyDescription>
-          {manage
-            ? `Cuando la DIAN ${single ? "lo" : "los"} habilite, aquí verás cuántos documentos aceptó, el monto facturado y las reglas que más los rechazan.`
-            : "Un administrador de tu organización debe terminarla. Después, aquí verás cuántos documentos aceptó la DIAN y el monto facturado."}
+          {!manage
+            ? "Un administrador de tu organización debe terminarla. Después, aquí verás cuántos documentos aceptó la DIAN y el monto facturado."
+            : live
+              ? "Cuando termines, aquí verás cuántos documentos aceptó la DIAN, el monto facturado y las reglas que más los rechazan."
+              : `Cuando la DIAN ${single ? "lo" : "los"} habilite, aquí verás cuántos documentos aceptó, el monto facturado y las reglas que más los rechazan.`}
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         {single === undefined ? (
-          <Link to="/issuers" className={cn(buttonVariants({ variant: "outline" }))}>
+          <Link to="/issuers" className={className}>
             Ver emisores
           </Link>
         ) : manage && single.status === "ONBOARDING" ? (
-          <Link
-            to="/setup"
-            search={{ issuerId: single.id }}
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            Continuar habilitación
+          <Link to="/setup" search={{ issuerId: single.id }} className={className}>
+            Continuar configuración
           </Link>
         ) : (
-          <Link
-            to="/issuers/$issuerId"
-            params={{ issuerId: single.id }}
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
+          <Link to="/issuers/$issuerId" params={{ issuerId: single.id }} className={className}>
             {manage ? "Continuar habilitación" : "Ver emisor"}
           </Link>
         )}
       </EmptyContent>
+    </Empty>
+  );
+}
+
+/**
+ * Pruebas or producción without an issuer of their own. Pruebas fills once an issuer starts habilitación, which the
+ * steps already offer. Producción takes a test issuer the DIAN approved, moved there from its page, plus a plan or
+ * package: issuing there needs one.
+ */
+function NoIssuers({
+  environment,
+  promotable,
+  leads,
+  manage,
+}: {
+  environment: "TEST" | "LIVE";
+  promotable: Issuer[];
+  leads: boolean;
+  manage: boolean;
+}) {
+  const single = promotable.length === 1 ? promotable[0] : undefined;
+  const className = cn(buttonVariants({ variant: leads ? "default" : "outline" }));
+  if (environment === "TEST") {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <ChartColumnIcon />
+          </EmptyMedia>
+          <EmptyTitle>Aún no tienes emisores en pruebas</EmptyTitle>
+          <EmptyDescription>
+            {manage
+              ? "En pruebas haces la habilitación con la DIAN: tu software, tu certificado y el set de pruebas. Cuando la empieces, aquí verás cuántos documentos aceptó la DIAN y las reglas que más los rechazan."
+              : "En pruebas se hace la habilitación con la DIAN. Un administrador de tu organización debe empezarla."}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <ChartColumnIcon />
+        </EmptyMedia>
+        <EmptyTitle>Aún no tienes emisores en producción</EmptyTitle>
+        <EmptyDescription>
+          {!manage
+            ? "Un administrador de tu organización debe pasar un emisor de pruebas a producción cuando la DIAN apruebe su habilitación."
+            : promotable.length > 0
+              ? "Cuando la DIAN apruebe el set de pruebas, pasa el emisor a producción desde su página: solo te faltará la resolución de numeración de producción. Emitir en producción requiere un plan o un paquete activo."
+              : "Primero habilita un emisor en pruebas con la DIAN. Después lo pasas a producción y solo te faltará la resolución de numeración de producción. Emitir en producción requiere un plan o un paquete activo."}
+        </EmptyDescription>
+      </EmptyHeader>
+      {manage && (
+        <EmptyContent>
+          <div className="flex flex-wrap justify-center gap-2">
+            {single ? (
+              <Link to="/issuers/$issuerId" params={{ issuerId: single.id }} className={className}>
+                Ver emisor de pruebas
+              </Link>
+            ) : (
+              promotable.length > 1 && (
+                <Link to="/issuers" className={className}>
+                  Ver emisores
+                </Link>
+              )
+            )}
+            <Link to="/billing" className={cn(buttonVariants({ variant: "ghost" }))}>
+              Ver planes
+            </Link>
+          </div>
+        </EmptyContent>
+      )}
     </Empty>
   );
 }
