@@ -33,7 +33,7 @@ export function RuleRanking({ rules, simulated }: { rules: MetricsRule[]; simula
   return (
     <section aria-labelledby="rule-ranking" className="flex flex-col gap-2">
       <h3 id="rule-ranking" className="text-sm font-medium">
-        Reglas de la DIAN más frecuentes
+        {simulated ? "Reglas más frecuentes" : "Reglas de la DIAN más frecuentes"}
       </h3>
       {rules.length === 0 ? (
         <p className="text-xs text-muted-foreground">
@@ -84,7 +84,7 @@ function RuleTable({ rules, empty }: { rules: MetricsRule[]; empty: string }) {
               <TableCell className="max-w-md whitespace-normal">
                 <p>{explanation?.title ?? rule.message}</p>
                 {explanation && (
-                  <p className="text-2xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {explanation.action}{" "}
                     <a
                       href={dianRuleDocsUrl(rule.rule)}

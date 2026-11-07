@@ -90,7 +90,7 @@ export function MetricTiles({
           )
         }
         detail={<OutcomeLinks metrics={metrics} issuerId={issuerId} />}
-        note={sampleSmall ? `Porcentaje desde ${sampleAnsweredMin} respuestas` : undefined}
+        note={sampleSmall ? `El porcentaje aparece con ${sampleAnsweredMin} respuestas` : undefined}
       />
       {amountShown && (
         <Tile

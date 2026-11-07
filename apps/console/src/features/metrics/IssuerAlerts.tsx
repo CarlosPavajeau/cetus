@@ -64,7 +64,7 @@ export function IssuerWarnings({
   const pending = groups.filter((group) => !group.blocking);
 
   if (summarized && groups.length > 0) {
-    return <WarningSummary blocking={blocking.length} pending={pending.length} />;
+    return <WarningSummary blocking={blocking} pending={pending} />;
   }
 
   return (
@@ -98,25 +98,25 @@ export function IssuerWarnings({
   );
 }
 
-function WarningSummary({ blocking, pending }: { blocking: number; pending: number }) {
+function WarningSummary({ blocking, pending }: { blocking: Group[]; pending: Group[] }) {
   const titleId = useId();
   const title =
-    blocking === 0
-      ? `${issuersText(pending, "")} ${pending === 1 ? "necesita" : "necesitan"} atención pronto`
-      : `${issuersText(blocking, "")} ya no ${blocking === 1 ? "puede" : "pueden"} facturar`;
+    blocking.length === 0
+      ? `${namesText(pending)} ${pending.length === 1 ? "necesita" : "necesitan"} atención pronto`
+      : `${namesText(blocking)} ya no ${blocking.length === 1 ? "puede" : "pueden"} facturar`;
 
   return (
     <section aria-labelledby={titleId}>
-      <Alert variant={blocking > 0 ? "destructive" : "warning"} live={false}>
-        {blocking === 0 && <TriangleAlertIcon aria-hidden="true" />}
+      <Alert variant={blocking.length > 0 ? "destructive" : "warning"} live={false}>
+        {blocking.length === 0 && <TriangleAlertIcon aria-hidden="true" />}
         <AlertTitle>
           <h2 id={titleId}>{title}</h2>
         </AlertTitle>
         <AlertDescription>
           <p>
-            {blocking > 0 &&
-              pending > 0 &&
-              `Y ${issuersText(pending, " más")} ${pending === 1 ? "necesita" : "necesitan"} atención pronto. `}
+            {blocking.length > 0 &&
+              pending.length > 0 &&
+              `Y ${issuersText(pending.length, " más")} ${pending.length === 1 ? "necesita" : "necesitan"} atención pronto. `}
             Su certificado y su numeración están en la tabla por emisor.{" "}
             <a href="#issuer-breakdown">Ver por emisor</a>
           </p>
@@ -133,9 +133,7 @@ function WarningGroups({ groups }: { groups: Group[] }) {
         <li key={group.issuerId} className="flex flex-col gap-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
             <h3 className="font-medium">{group.name}</h3>
-            {group.nit !== null && (
-              <span className="font-mono text-2xs opacity-80">{group.nit}</span>
-            )}
+            {group.nit !== null && <span className="font-mono text-xs">{group.nit}</span>}
             <Link
               to="/issuers/$issuerId"
               params={{ issuerId: group.issuerId }}
@@ -352,6 +350,16 @@ function resolutionText(range: RangeAlert) {
 }
 
 const plural = new Intl.PluralRules("es-CO");
+
+/** The issuers by name while a sentence can hold them, by count past that. */
+function namesText(groups: Group[]) {
+  return groups.length <= namesShownMax
+    ? names.format(groups.map((group) => group.name))
+    : issuersText(groups.length, "");
+}
+
+const namesShownMax = 3;
+const names = new Intl.ListFormat("es-CO", { type: "conjunction" });
 
 function issuersText(count: number, suffix: string) {
   return plural.select(count) === "one"
