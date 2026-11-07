@@ -11,36 +11,53 @@ import { dianRuleDocsUrl, explanations } from "~/features/documents/dian-errors"
 import { formatCount } from "~/features/usage/labels";
 import type { DianRuleKind, MetricsRule } from "~/lib/api/types";
 
-const kinds: { kind: DianRuleKind; label: string; empty: string }[] = [
-  { kind: "REJECTION", label: "Rechazos", empty: "La DIAN no rechazó documentos en este periodo." },
+const kinds: { kind: DianRuleKind; label: string; empty: (answerer: string) => string }[] = [
+  {
+    kind: "REJECTION",
+    label: "Rechazos",
+    empty: (answerer) => `${answerer} no rechazó documentos en este periodo.`,
+  },
   {
     kind: "NOTIFICATION",
     label: "Notificaciones",
-    empty: "La DIAN no dejó notificaciones en este periodo.",
+    empty: (answerer) => `${answerer} no dejó notificaciones en este periodo.`,
   },
 ];
 
-/** The DIAN rules reported most often in the period, rejections apart from notifications. */
-export function RuleRanking({ rules }: { rules: MetricsRule[] }) {
+/**
+ * The DIAN rules reported most often in the period, rejections apart from notifications. In sandbox the simulator
+ * applies them, not the DIAN.
+ */
+export function RuleRanking({ rules, simulated }: { rules: MetricsRule[]; simulated: boolean }) {
+  const answerer = simulated ? "El simulador" : "La DIAN";
   return (
     <section aria-labelledby="rule-ranking" className="flex flex-col gap-2">
       <h3 id="rule-ranking" className="text-sm font-medium">
         Reglas de la DIAN más frecuentes
       </h3>
-      <Tabs defaultValue="REJECTION">
-        <TabsList>
+      {rules.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {`${answerer} no rechazó documentos ni dejó notificaciones en este periodo.`}
+        </p>
+      ) : (
+        <Tabs defaultValue="REJECTION">
+          <TabsList>
+            {kinds.map((each) => (
+              <TabsTrigger key={each.kind} value={each.kind}>
+                {each.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
           {kinds.map((each) => (
-            <TabsTrigger key={each.kind} value={each.kind}>
-              {each.label}
-            </TabsTrigger>
+            <TabsContent key={each.kind} value={each.kind}>
+              <RuleTable
+                rules={rules.filter((rule) => rule.kind === each.kind)}
+                empty={each.empty(answerer)}
+              />
+            </TabsContent>
           ))}
-        </TabsList>
-        {kinds.map((each) => (
-          <TabsContent key={each.kind} value={each.kind}>
-            <RuleTable rules={rules.filter((rule) => rule.kind === each.kind)} empty={each.empty} />
-          </TabsContent>
-        ))}
-      </Tabs>
+        </Tabs>
+      )}
     </section>
   );
 }

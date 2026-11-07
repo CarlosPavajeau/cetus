@@ -43,14 +43,29 @@ type Group = {
  * What stops issuing soon, by issuer: expiring certificates, and ranges running out or whose resolution ends. The
  * issuers that already stopped get their own red alert, so they do not turn the others' amber warnings red. They are
  * sections, not alerts: they come with the page and render again on every filter change, so an alert role would read
- * them out each time.
+ * them out each time. With {@code summarized}, the issuer breakdown already lists each one's certificate and
+ * numbering, so the warnings only count the issuers and point to it.
  */
-export function IssuerWarnings({ alerts, issuers }: { alerts: Alerts; issuers: Issuer[] }) {
+export function IssuerWarnings({
+  alerts,
+  issuers,
+  manage,
+  summarized,
+}: {
+  alerts: Alerts;
+  issuers: Issuer[];
+  manage: boolean;
+  summarized: boolean;
+}) {
   const blockingId = useId();
   const pendingId = useId();
-  const groups = groupsOf(alerts, issuers);
+  const groups = groupsOf(alerts, issuers, manage);
   const blocking = groups.filter((group) => group.blocking);
   const pending = groups.filter((group) => !group.blocking);
+
+  if (summarized && groups.length > 0) {
+    return <WarningSummary blocking={blocking.length} pending={pending.length} />;
+  }
 
   return (
     <>
@@ -80,6 +95,34 @@ export function IssuerWarnings({ alerts, issuers }: { alerts: Alerts; issuers: I
         </section>
       )}
     </>
+  );
+}
+
+function WarningSummary({ blocking, pending }: { blocking: number; pending: number }) {
+  const titleId = useId();
+  const title =
+    blocking === 0
+      ? `${issuersText(pending, "")} ${pending === 1 ? "necesita" : "necesitan"} atención pronto`
+      : `${issuersText(blocking, "")} ya no ${blocking === 1 ? "puede" : "pueden"} facturar`;
+
+  return (
+    <section aria-labelledby={titleId}>
+      <Alert variant={blocking > 0 ? "destructive" : "warning"} live={false}>
+        {blocking === 0 && <TriangleAlertIcon aria-hidden="true" />}
+        <AlertTitle>
+          <h2 id={titleId}>{title}</h2>
+        </AlertTitle>
+        <AlertDescription>
+          <p>
+            {blocking > 0 &&
+              pending > 0 &&
+              `Y ${issuersText(pending, " más")} ${pending === 1 ? "necesita" : "necesitan"} atención pronto. `}
+            Su certificado y su numeración están en la tabla por emisor.{" "}
+            <a href="#issuer-breakdown">Ver por emisor</a>
+          </p>
+        </AlertDescription>
+      </Alert>
+    </section>
   );
 }
 
@@ -113,10 +156,12 @@ function WarningGroups({ groups }: { groups: Group[] }) {
   );
 }
 
-function groupsOf(alerts: Alerts, issuers: Issuer[]): Group[] {
+function groupsOf(alerts: Alerts, issuers: Issuer[], manage: boolean): Group[] {
   const groups = new Map<string, Group>();
   // Blocking warnings first puts them first within their issuer.
-  const warnings = warningsOf(alerts).toSorted((a, b) => Number(b.blocking) - Number(a.blocking));
+  const warnings = warningsOf(alerts, manage).toSorted(
+    (a, b) => Number(b.blocking) - Number(a.blocking),
+  );
   for (const warning of warnings) {
     const group = groups.get(warning.issuerId);
     if (group === undefined) {
@@ -136,7 +181,11 @@ function groupsOf(alerts: Alerts, issuers: Issuer[]): Group[] {
   return [...groups.values()];
 }
 
-function warningsOf(alerts: Alerts): Warning[] {
+function warningsOf(alerts: Alerts, manage: boolean): Warning[] {
+  const upload = manage ? "carga uno nuevo" : "pide a un administrador que cargue uno nuevo";
+  const request = manage
+    ? "solicita una nueva resolución a la DIAN"
+    : "pide a un administrador que solicite una nueva resolución a la DIAN";
   const certificates = alerts.certificates.map((certificate) => {
     const when = formatInstantLong(certificate.validTo);
     const expired = certificate.daysLeft < 0;
@@ -146,8 +195,8 @@ function warningsOf(alerts: Alerts): Warning[] {
       issuerName: certificate.issuerName,
       blocking: expired,
       text: expired
-        ? `El certificado de firma venció el ${when}: carga uno nuevo.`
-        : `El certificado de firma vence el ${when} (${daysText(certificate.daysLeft)}): carga uno nuevo.`,
+        ? `El certificado de firma venció el ${when}: ${upload}.`
+        : `El certificado de firma vence el ${when} (${daysText(certificate.daysLeft)}): ${upload}.`,
     };
   });
   const ranges = alerts.ranges.flatMap((range) => {
@@ -159,7 +208,7 @@ function warningsOf(alerts: Alerts): Warning[] {
             issuerId: range.issuerId,
             issuerName: range.issuerName,
             blocking: range.used >= range.total,
-            text: `${remainingText(range.total - range.used)} en ${name}: solicita una nueva resolución a la DIAN.`,
+            text: `${remainingText(range.total - range.used)} en ${name}: ${request}.`,
           },
         ]
       : [];
@@ -303,6 +352,12 @@ function resolutionText(range: RangeAlert) {
 }
 
 const plural = new Intl.PluralRules("es-CO");
+
+function issuersText(count: number, suffix: string) {
+  return plural.select(count) === "one"
+    ? `${formatCount(count)} emisor${suffix}`
+    : `${formatCount(count)} emisores${suffix}`;
+}
 
 function remainingText(numbers: number) {
   const left = Math.max(0, numbers);

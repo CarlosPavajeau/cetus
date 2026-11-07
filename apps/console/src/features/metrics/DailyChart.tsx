@@ -40,19 +40,66 @@ function EntryBar({ x, y, width, height, fill }: BarShapeProps) {
   );
 }
 
-/** The period's documents per issue day, stacked by outcome. One day alone makes a single bar, said in a line. */
-export function DailyChart({ metrics }: { metrics: Metrics }) {
-  const data = metrics.days.map((day) => ({ date: day.date, ...day.documents }));
-  const daysIssued = metrics.days.filter((day) => day.documents.total > 0);
-  const [dayOnly] = daysIssued;
+const outcomeText = {
+  accepted: { one: "aceptado", many: "aceptados", className: "" },
+  rejected: {
+    one: "rechazado",
+    many: "rechazados",
+    className: "font-medium text-destructive-foreground",
+  },
+  failed: { one: "fallido", many: "fallidos", className: "font-medium text-warning-foreground" },
+  inProgress: { one: "en curso", many: "en curso", className: "" },
+} satisfies Record<(typeof series)[number], { one: string; many: string; className: string }>;
 
-  if (daysIssued.length === 1 && dayOnly !== undefined) {
+/** Below this many issue days a few bars would fill the card without saying more than their counts. */
+const chartDaysMin = 6;
+
+/** The period's documents per issue day, stacked by outcome; a handful of days reads as a ruled list instead. */
+export function DailyChart({ metrics }: { metrics: Metrics }) {
+  const daysIssued = metrics.days.filter((day) => day.documents.total > 0);
+
+  if (daysIssued.length < chartDaysMin) {
     return (
-      <p className="text-sm text-pretty text-muted-foreground">
-        {`Todos los documentos del periodo son del ${formatDayLong(dayOnly.date)}. La gráfica por día aparece desde el segundo día con documentos.`}
-      </p>
+      <section aria-labelledby="daily-documents" className="flex flex-col gap-2">
+        <h3 id="daily-documents" className="text-sm font-medium">
+          Documentos por día
+        </h3>
+        <ul className="flex flex-col divide-y border-y">
+          {daysIssued.map((day) => (
+            <li key={day.date} className="flex items-baseline justify-between gap-3 py-2">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                <time dateTime={day.date} className="w-14 shrink-0 text-sm">
+                  {formatDay(day.date)}
+                </time>
+                <p className="text-2xs text-muted-foreground tabular-nums">
+                  {series
+                    .filter((key) => day.documents[key] > 0)
+                    .map((key, index) => {
+                      const count = day.documents[key];
+                      const text = outcomeText[key];
+                      return (
+                        <span key={key}>
+                          {index > 0 && " · "}
+                          <span className={text.className}>
+                            {`${formatCount(count)} ${count === 1 ? text.one : text.many}`}
+                          </span>
+                        </span>
+                      );
+                    })}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm tabular-nums">
+                {formatCount(day.documents.total)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
     );
   }
+
+  const data = metrics.days.map((day) => ({ date: day.date, ...day.documents }));
+  const seriesShown = series.filter((key) => daysIssued.some((day) => day.documents[key] > 0));
 
   return (
     <figure className="flex flex-col gap-2">
@@ -86,7 +133,7 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
             }
           />
           <ChartLegend itemSorter={stackOrder} content={<ChartLegendContent />} />
-          {series.map((key) => (
+          {seriesShown.map((key) => (
             <Bar
               key={key}
               dataKey={key}
@@ -98,15 +145,13 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
         </BarChart>
       </ChartContainer>
       <ul className="sr-only">
-        {metrics.days
-          .filter((day) => day.documents.total > 0)
-          .map((day) => (
-            <li key={day.date}>
-              {`${formatDayLong(day.date)}: ${series
-                .map((key) => `${config[key].label} ${formatCount(day.documents[key])}`)
-                .join(", ")}`}
-            </li>
-          ))}
+        {daysIssued.map((day) => (
+          <li key={day.date}>
+            {`${formatDayLong(day.date)}: ${seriesShown
+              .map((key) => `${config[key].label} ${formatCount(day.documents[key])}`)
+              .join(", ")}`}
+          </li>
+        ))}
       </ul>
     </figure>
   );
