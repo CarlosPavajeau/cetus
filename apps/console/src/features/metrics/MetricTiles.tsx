@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-import { Badge } from "~/components/ui/badge";
 import { formatCount } from "~/features/usage/labels";
 import type { DocumentStatus, Metrics } from "~/lib/api/types";
 import { cn } from "~/lib/utils";
@@ -14,23 +13,16 @@ function Tile({
   value,
   detail,
   note,
-  simulated,
 }: {
   label: string;
   value: ReactNode;
   detail: ReactNode;
   note?: string;
-  simulated: boolean;
 }) {
   return (
     <div className="grid min-w-0 grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-1 rounded-lg border px-3 py-2.5 sm:flex sm:flex-col sm:py-3">
-      <dt className="flex items-center gap-2 text-xs text-muted-foreground sm:justify-between">
-        {label}
-        {simulated && <Badge variant="muted">Simulado</Badge>}
-      </dt>
-      <dd className="font-mono text-xl font-medium tracking-tight tabular-nums sm:text-2xl">
-        {value}
-      </dd>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-xl font-medium tracking-tight tabular-nums sm:text-2xl">{value}</dd>
       <dd className="col-span-2 text-xs text-pretty text-muted-foreground">{detail}</dd>
       {note && <dd className="col-span-2 text-xs text-pretty text-muted-foreground">{note}</dd>}
     </div>
@@ -75,7 +67,6 @@ export function MetricTiles({
     >
       <Tile
         label="Documentos"
-        simulated={simulated}
         value={formatCount(totals.total)}
         detail={
           totals.inProgress > 0 ? `${formatCount(totals.inProgress)} en curso` : "Ninguno en curso"
@@ -87,7 +78,7 @@ export function MetricTiles({
           sampleSmall ? (
             <>
               {formatCount(totals.accepted)}
-              <span className="mx-0.5 font-sans text-sm font-normal whitespace-pre text-muted-foreground">
+              <span className="mx-0.5 text-sm font-normal whitespace-pre text-muted-foreground">
                 {" de "}
               </span>
               {formatCount(answered)}
@@ -98,18 +89,12 @@ export function MetricTiles({
             formatPercent(acceptanceRate)
           )
         }
-        simulated={simulated}
         detail={<OutcomeLinks metrics={metrics} issuerId={issuerId} />}
-        note={
-          sampleSmall
-            ? `El porcentaje aparece desde ${sampleAnsweredMin} documentos respondidos; antes, uno solo lo mueve mucho.`
-            : undefined
-        }
+        note={sampleSmall ? `Porcentaje desde ${sampleAnsweredMin} respuestas` : undefined}
       />
       {amountShown && (
         <Tile
           label="Monto facturado"
-          simulated={simulated}
           value={amount ? formatAmount(amount.net, amount.currency) : formatAmount(0, "COP")}
           detail={
             others.length > 0
@@ -121,7 +106,6 @@ export function MetricTiles({
       {!simulated && (
         <Tile
           label="Tiempo hasta la validación"
-          simulated={false}
           value={
             validation.secondsAverage === null ? "—" : formatDuration(validation.secondsAverage)
           }
@@ -162,10 +146,12 @@ function OutcomeLinks({ metrics, issuerId }: { metrics: Metrics; issuerId?: stri
               {outcome.label}{" "}
               <span
                 className={cn(
-                  "font-mono font-medium tabular-nums",
-                  outcome.key === "rejected" && count > 0
-                    ? "text-destructive-foreground"
-                    : "text-foreground",
+                  "tabular-nums",
+                  count === 0
+                    ? "text-muted-foreground"
+                    : outcome.key === "rejected"
+                      ? "font-medium text-destructive-foreground"
+                      : "font-medium text-foreground",
                 )}
               >
                 {formatCount(count)}

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ChartColumnIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Empty,
@@ -61,9 +62,12 @@ export function Activity({
     <section aria-labelledby="activity-title" className="flex flex-col gap-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h2 id="activity-title" className="text-base font-medium">
-            Documentos emitidos
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 id="activity-title" className="text-base font-medium">
+              Documentos emitidos
+            </h2>
+            {metrics.environment === "SANDBOX" && <Badge variant="muted">Simulado</Badge>}
+          </div>
           <p className="text-sm text-muted-foreground">
             {`Documentos de ${environmentLabel[metrics.environment].toLowerCase()} por fecha de emisión.`}
           </p>
