@@ -27,9 +27,9 @@ test("the overview shows how the period's documents went and the DIAN's rules", 
   await expect(page.getByRole("heading", { name: "Documentos emitidos" })).toBeVisible();
   await expect(page.getByText(/^1 de 2$/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Aceptados 1" })).toBeVisible();
-  await expect(
-    page.getByText(/^Todos los documentos del periodo son del .+\. La gráfica por día aparece/),
-  ).toBeVisible();
+  const days = page.getByRole("region", { name: "Documentos por día" }).getByRole("listitem");
+  await expect(days).toHaveCount(1);
+  await expect(days).toContainText("1 aceptado · 1 rechazado");
   // With a key, the account no longer needs the invitation to integrate.
   await expect(page.getByRole("heading", { name: "Integra tu sistema" })).toHaveCount(0);
   await expect(page.getByRole("cell", { name: "FAK26" })).toBeVisible();
