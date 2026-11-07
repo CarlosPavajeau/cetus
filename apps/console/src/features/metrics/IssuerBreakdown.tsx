@@ -115,7 +115,7 @@ export function IssuerBreakdown({
               <TableRow key={row.issuer.id} className="relative">
                 <TableCell className="py-2.5 pl-3">
                   <IssuerLink issuer={row.issuer} />
-                  <p className="relative w-fit font-mono text-2xs text-muted-foreground">
+                  <p className="relative w-fit font-mono text-xs text-muted-foreground">
                     {issuerNit(row.issuer)}
                   </p>
                 </TableCell>
@@ -147,9 +147,7 @@ export function IssuerBreakdown({
                 {row.amount.value}
               </span>
             </div>
-            <p className="-mt-1 font-mono text-2xs text-muted-foreground">
-              {issuerNit(row.issuer)}
-            </p>
+            <p className="-mt-1 font-mono text-xs text-muted-foreground">{issuerNit(row.issuer)}</p>
             <p className="text-2xs text-muted-foreground tabular-nums">
               {row.total === 1 ? "1 documento" : `${row.documents.value} documentos`}
               {" · "}

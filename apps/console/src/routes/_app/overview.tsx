@@ -107,13 +107,23 @@ function Overview() {
   const { manage } = useMemberPermissions();
   // A new organization only has the sandbox sample, which needs no setup.
   const fiscal = issuers.some((issuer) => issuer.environment !== "SANDBOX");
-  const settingUp = issuers.filter(
-    (issuer) => issuer.environment !== "SANDBOX" && issuer.status === "ONBOARDING",
-  );
   const integrated = keys.some((key) => key.revokedAt === null);
   const tried = sandboxDocuments.pages.some((page) => page.items.length > 0);
-
+  const issued = documents.pages.some((page) => page.items.length > 0);
   const sandboxFirst = environment === "SANDBOX" && !tried;
+  // The empty activity already names these and leads to them, so a step of their own would ask twice.
+  const habilitating = sandboxFirst || issued ? [] : waiting;
+  const settingUp = issuers.filter(
+    (issuer) =>
+      issuer.environment !== "SANDBOX" &&
+      issuer.status === "ONBOARDING" &&
+      !habilitating.some((each) => each.id === issuer.id),
+  );
+  const promotable =
+    environment === "LIVE" && issuerOptions.length === 0 && manage
+      ? issuers.filter((issuer) => issuer.environment === "TEST" && issuer.status === "TESTING")
+      : [];
+
   const steps = {
     configure: !fiscal && manage,
     resume: manage ? settingUp.slice(0, resumeShownMax) : [],
@@ -123,12 +133,15 @@ function Overview() {
   const pending =
     Number(steps.configure) + steps.resume.length + resumeHidden + Number(steps.integrate);
   const stepping = pending > 0;
-  // The first pending step is the page's main action, unless the sandbox sample still waits for one.
-  const leading = sandboxFirst
-    ? undefined
-    : steps.configure
-      ? "configure"
-      : (steps.resume[0]?.id ?? (steps.integrate ? "integrate" : undefined));
+  // The first pending step is the page's main action. In sandbox, issuing is: the steps belong to other environments.
+  const leading =
+    environment === "SANDBOX"
+      ? undefined
+      : steps.configure
+        ? "configure"
+        : habilitating.length > 0 || promotable.length > 0
+          ? "activity"
+          : (steps.resume[0]?.id ?? (steps.integrate ? "integrate" : undefined));
   const stepAction = (step: string) =>
     cn(buttonVariants({ variant: step === leading ? "default" : "outline", size: "sm" }));
   const changeSearch = (next: { period?: Period; issuer?: string }) =>
@@ -141,7 +154,7 @@ function Overview() {
         status={<EnvironmentBadge environment={environment} />}
         action={
           !sandboxFirst &&
-          (ready || issuerOptions.length === 0) && (
+          ready && (
             <Link
               to="/documents/new"
               className={cn(
@@ -209,7 +222,8 @@ function Overview() {
               key={issuer.id}
               icon={<ListChecksIcon aria-hidden="true" />}
               title={`Termina de configurar ${issuerName(issuer)}`}
-              description="Sigue en habilitación. Retoma el asistente donde lo dejaste."
+              status={<EnvironmentBadge environment={issuer.environment} />}
+              description="Retoma el asistente donde lo dejaste."
             >
               <Link
                 to="/setup"
@@ -271,8 +285,10 @@ function Overview() {
           issuers={issuerOptions}
           issuerId={issuerId}
           onIssuerChange={(next) => changeSearch({ issuer: next })}
-          issued={documents.pages.some((page) => page.items.length > 0)}
+          issued={issued}
           waiting={waiting}
+          promotable={promotable}
+          leads={leading === "activity"}
           manage={manage}
           breakdown={
             breakdown ? (
@@ -315,12 +331,14 @@ function issuerFilter(issuers: Issuer[], environment: Environment, asked: string
 function Step({
   icon,
   title,
+  status,
   description,
   checklist,
   children,
 }: {
   icon: ReactNode;
   title: string;
+  status?: ReactNode;
   description: ReactNode;
   checklist?: string[];
   children: ReactNode;
@@ -330,7 +348,10 @@ function Step({
       <div className="flex min-w-0 flex-1 gap-2.5 [&>svg]:mt-0.5 [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
         {icon}
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 className="text-sm font-medium">{title}</h2>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h2 className="text-sm font-medium">{title}</h2>
+            {status}
+          </div>
           <p className="text-xs text-pretty text-muted-foreground">{description}</p>
           {checklist && (
             <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">

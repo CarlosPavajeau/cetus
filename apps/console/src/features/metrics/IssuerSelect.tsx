@@ -112,7 +112,7 @@ function IssuerOption({ issuer }: { issuer: Issuer }) {
   return (
     <span className="flex min-w-0 flex-col">
       <span className="whitespace-normal">{issuerName(issuer)}</span>
-      <span className="font-mono text-2xs text-muted-foreground">{issuerNit(issuer)}</span>
+      <span className="font-mono text-xs text-muted-foreground">{issuerNit(issuer)}</span>
     </span>
   );
 }

@@ -71,7 +71,7 @@ export function DailyChart({ metrics }: { metrics: Metrics }) {
                 <time dateTime={day.date} className="w-14 shrink-0 text-sm">
                   {formatDay(day.date)}
                 </time>
-                <p className="text-2xs text-muted-foreground tabular-nums">
+                <p className="text-xs text-muted-foreground tabular-nums">
                   {series
                     .filter((key) => day.documents[key] > 0)
                     .map((key, index) => {

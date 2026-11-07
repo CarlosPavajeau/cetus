@@ -87,8 +87,28 @@ test("an environment whose only issuer is in habilitación points to finishing i
   ).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Periodo" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Emitir factura" })).toHaveCount(0);
-  await activity.getByRole("link", { name: "Continuar habilitación" }).click();
+  // The empty activity carries the step, so the steps' list does not ask for it again.
+  await expect(page.getByRole("link", { name: /Continuar configuración/ })).toHaveCount(1);
+  await activity.getByRole("link", { name: "Continuar configuración" }).click();
   await expect(page).toHaveURL(new RegExp(`/setup\\?issuerId=${issuerId}`));
+});
+
+test("production without issuers explains how a test issuer gets there", async ({
+  page,
+  organization,
+}) => {
+  const issuerId = await onboardIssuer(organization, uniqueNit(), "Por Subir SAS");
+
+  await open(page, "/overview");
+  await page.getByRole("combobox", { name: "Ambiente" }).click();
+  await page.getByRole("option", { name: "Producción" }).click();
+
+  const activity = page.getByRole("region", { name: "Documentos emitidos" });
+  await expect(activity.getByText("Aún no tienes emisores en producción")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Emitir factura" })).toHaveCount(0);
+  await expect(activity.getByRole("link", { name: "Ver planes" })).toBeVisible();
+  await activity.getByRole("link", { name: "Ver emisor de pruebas" }).click();
+  await expect(page).toHaveURL(new RegExp(`/issuers/${issuerId}`));
 });
 
 test("with many issuers, the overview finds one by its NIT", async ({ page, organization }) => {
