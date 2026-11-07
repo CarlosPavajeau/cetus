@@ -87,7 +87,11 @@ export function IssuerBreakdown({
 
   return (
     <section aria-labelledby="issuer-breakdown" className="flex flex-col gap-2">
-      <h3 id="issuer-breakdown" className="text-sm font-medium">
+      <h3
+        id="issuer-breakdown"
+        tabIndex={-1}
+        className="-mx-1 w-fit scroll-mt-4 rounded-sm px-1 text-sm font-medium outline-none focus:ring-3 focus:ring-ring/50"
+      >
         Por emisor
       </h3>
       <div className="hidden rounded-lg border sm:block">
