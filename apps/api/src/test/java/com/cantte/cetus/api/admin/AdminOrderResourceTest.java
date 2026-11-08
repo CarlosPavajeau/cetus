@@ -222,6 +222,54 @@ class AdminOrderResourceTest {
     }
 
     @Test
+    void aReturnedDuplicateLeavesTheOrderRefundableFromItsOwnPayment() {
+        Customer customer = customer("Pago Doble SAS");
+        UUID orderId = paidOrder(customer.accountId(), false);
+        String paying = payment(orderId, TOTAL_CENTS, OffsetDateTime.now().minusMinutes(5));
+        String duplicate = payment(orderId, TOTAL_CENTS, OffsetDateTime.now().minusMinutes(10));
+        returned(orderId, duplicate, PaymentReversalEntity.Status.APPROVED);
+
+        JsonPath order = SUPPORT.request()
+                .get(path(customer.accountId(), ""))
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+
+        assertThat(order.getString("[0].transactionId")).isEqualTo(paying);
+        assertThat(order.getLong("[0].reversedCents")).isZero();
+        assertThat(order.getLong("[0].refundableCents")).isEqualTo(TOTAL_CENTS);
+    }
+
+    @Test
+    void aReturnWompiRefusedIsRegisteredOnceGivenBackElsewhere() {
+        Customer customer = customer("Devuelto Por Fuera SAS");
+        UUID orderId = paidOrder(customer.accountId(), true);
+        String duplicate = payment(orderId, TOTAL_CENTS, OffsetDateTime.now());
+        UUID reversalId = returned(orderId, duplicate, PaymentReversalEntity.Status.FAILED);
+        String resolution = path(customer.accountId(), "/" + orderId + "/reversals/" + reversalId + "/resolution");
+
+        ADMIN.request()
+                .body(Map.of("approved", false, "reason", "Sigue sin devolverse"))
+                .post(resolution)
+                .then()
+                .statusCode(422)
+                .body("code", equalTo("reversal_not_unresolved"));
+        JsonPath resolved = ADMIN.request()
+                .body(Map.of("approved", true, "reason", "Transferido al cliente"))
+                .post(resolution)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
+
+        assertThat(resolved.getString("reversals[0].kind")).isEqualTo("RETURN");
+        assertThat(resolved.getString("reversals[0].status")).isEqualTo("REQUESTED");
+        assertThat(resolved.getString("reversals[0].mode")).isEqualTo("EXTERNAL");
+        assertThat(jobs(JobTypes.APPLY_REVERSAL, reversalId)).hasSize(1);
+    }
+
+    @Test
     void theMonthsReconciliationShowsWhatDoesNotAddUp() {
         Customer customer = customer("Conciliada SAS");
         OffsetDateTime inMonth = OffsetDateTime.parse("2097-05-10T12:00:00-05:00");
@@ -372,6 +420,26 @@ class AdminOrderResourceTest {
                     Actor.system(),
                     "Pedido por el cliente");
             reversal.status = PaymentReversalEntity.Status.SUBMITTED;
+            return reversal.id;
+        });
+    }
+
+    /** The return through Wompi of a payment the order could not take, left in the status. */
+    private static UUID returned(UUID orderId, String transactionId, PaymentReversalEntity.Status status) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            BillingOrderEntity order = BillingOrderEntity.findById(orderId);
+            PaymentReversalEntity reversal = PaymentReversalEntity.request(
+                    order,
+                    PaymentReversalEntity.Kind.RETURN,
+                    PaymentReversalEntity.Mode.WOMPI,
+                    TOTAL_CENTS,
+                    transactionId,
+                    Actor.system(),
+                    "El cliente pagó dos veces");
+            reversal.status = status;
+            if (status == PaymentReversalEntity.Status.APPROVED) {
+                reversal.approvedAt = OffsetDateTime.now();
+            }
             return reversal.id;
         });
     }

@@ -95,22 +95,25 @@ public class Subscriptions {
                     PlanVersionEntity version = PlanVersionEntity.findById(item.planVersionId);
                     PlanEntity plan = PlanEntity.findById(version.planId);
                     if (plan.kind == PlanEntity.Kind.SUBSCRIPTION) {
-                        start(order, version, plan);
+                        start(order, paid.transactionId(), version, plan);
                     }
                 }
             }
             case RENEWAL ->
-                SubscriptionPeriodEntity.findByOpeningOrder(order.id).ifPresent(period -> renew(order, period));
+                SubscriptionPeriodEntity.findByOpeningOrder(order.id)
+                        .ifPresent(period -> renew(order, paid.transactionId(), period));
             case MANUAL, DEBT -> {}
         }
     }
 
-    private void start(BillingOrderEntity order, PlanVersionEntity version, PlanEntity plan) {
+    private void start(BillingOrderEntity order, String transactionId, PlanVersionEntity version, PlanEntity plan) {
         // Two subscriptions paid at once: the second waits here and finds the first instead of failing the payment.
         ledger.lock(order.accountId);
         if (SubscriptionEntity.lockCurrent(order.accountId).isPresent()) {
             reversals.refundUndelivered(
-                    order, "La cuenta ya tenía una suscripción al pagarse la orden de %s".formatted(plan.name));
+                    order,
+                    transactionId,
+                    "La cuenta ya tenía una suscripción al pagarse la orden de %s".formatted(plan.name));
             return;
         }
         SubscriptionEntity subscription = new SubscriptionEntity();
@@ -134,14 +137,16 @@ public class Subscriptions {
                 Map.of("plan", plan.code, "version", version.version, "reference", order.reference));
     }
 
-    private void renew(BillingOrderEntity order, SubscriptionPeriodEntity period) {
+    private void renew(BillingOrderEntity order, String transactionId, SubscriptionPeriodEntity period) {
         ledger.lock(order.accountId);
         SubscriptionEntity subscription =
                 SubscriptionEntity.lock(period.subscriptionId).orElseThrow();
         SubscriptionPeriodEntity.getEntityManager().refresh(period, LockModeType.PESSIMISTIC_WRITE);
         if (subscription.status == SubscriptionEntity.Status.CANCELED) {
             reversals.refundUndelivered(
-                    order, "Se pagó la renovación de una suscripción ya cancelada; el periodo no se otorgó");
+                    order,
+                    transactionId,
+                    "Se pagó la renovación de una suscripción ya cancelada; el periodo no se otorgó");
             return;
         }
         if (period.grantId != null) {

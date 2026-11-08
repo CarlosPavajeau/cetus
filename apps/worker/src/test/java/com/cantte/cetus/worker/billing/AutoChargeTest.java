@@ -272,11 +272,39 @@ class AutoChargeTest {
     }
 
     @Test
-    void anAttemptLeavesTheCardAloneWhileTheOrdersCheckoutIsPaying() {
+    void anAttemptWaitsWhileTheOrdersCheckoutIsPendingAndChargesTheCardIfItDoesNotPay() {
         UUID accountId = subscribed();
         fixtures.card(accountId, sourceId());
         BillingOrderEntity renewal = close(accountId);
-        wompi.put(Transaction.of("12239580-" + renewal.id, renewal.reference, "PENDING", renewal.totalCents));
+        String checkout = "12239580-" + renewal.id;
+        wompi.put(Transaction.of(checkout, renewal.reference, "PENDING", renewal.totalCents));
+        JobEntity job = jobOf(chargesOf(renewal.id).getFirst().id);
+
+        assertThatThrownBy(() -> charges.handle(job)).isInstanceOf(RetryLater.class);
+
+        assertThat(wompi.charges()).isEmpty();
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.SCHEDULED);
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PENDING);
+
+        wompi.put(Transaction.of(checkout, renewal.reference, "DECLINED", renewal.totalCents));
+        charges.handle(job);
+
+        assertThat(wompi.charges())
+                .singleElement()
+                .satisfies(charge -> assertThat(charge.reference()).isEqualTo(renewal.reference + "-1"));
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.SUBMITTED);
+    }
+
+    @Test
+    void anAttemptLeavesTheCardAloneOnceTheOrdersCheckoutPaidIt() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        wompi.put(Transaction.of("12239581-" + renewal.id, renewal.reference, "APPROVED", renewal.totalCents));
 
         charges.handle(jobOf(chargesOf(renewal.id).getFirst().id));
 
@@ -284,7 +312,7 @@ class AutoChargeTest {
         assertThat(chargesOf(renewal.id))
                 .extracting(charge -> charge.status)
                 .containsExactly(PaymentChargeEntity.Status.CANCELED);
-        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PENDING);
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
     }
 
     @Test

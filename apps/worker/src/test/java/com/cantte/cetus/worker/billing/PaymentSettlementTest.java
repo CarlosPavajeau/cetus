@@ -214,6 +214,11 @@ class PaymentSettlementTest {
         assertThat(paid.status).isEqualTo(BillingOrderEntity.Status.PAID);
         assertThat(paid.reviewReason).isNull();
         assertThat(paidAudits(order.id)).isEqualTo(1);
+        // Wompi keeps the returned payment APPROVED: the one that paid is still not a duplicate when replayed.
+        assertThat(settlement.apply(transaction(first, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.ALREADY_PAID);
+        assertThat(QuarkusTransaction.requiringNew().call(() -> PaymentReversalEntity.findReturn(first)))
+                .isEmpty();
         assertThat(noticesOf(order.accountId)).singleElement().satisfies(notice -> {
             assertThat(notice.kind).isEqualTo(NotificationKind.PAYMENT_RETURNED.name());
             assertThat(notice.data).containsEntry("orderStatus", "PAID");

@@ -145,6 +145,40 @@ class ReversalsTest {
     }
 
     @Test
+    void anApprovedReturnLeavesTheOrderAndItsCreditsAlone() {
+        UUID accountId = account();
+        BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");
+        accept(accountId, 2);
+        CreditGrantEntity before = lotsOf(accountId).getFirst();
+        Instant now = Instant.now();
+        PaymentTransaction duplicate = new PaymentTransaction(
+                "12239582-" + order.id,
+                order.reference,
+                PaymentStatus.APPROVED,
+                order.totalCents,
+                "COP",
+                "CARD",
+                Optional.empty(),
+                now,
+                Optional.of(now),
+                "{}");
+
+        assertThat(settlement.apply(duplicate)).isEqualTo(Outcome.RETURNED);
+        UUID returned = QuarkusTransaction.requiringNew()
+                .call(() -> PaymentReversalEntity.findReturn(duplicate.id()).orElseThrow().id);
+        refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, returned));
+
+        assertThat(reversalOf(returned).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
+        assertThat(reversalOf(returned).creditsRevoked).isNull();
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+        CreditGrantEntity after = lotsOf(accountId).getFirst();
+        assertThat(after.status).isEqualTo(CreditGrantEntity.Status.ACTIVE);
+        assertThat(after.remaining).isEqualTo(before.remaining);
+        assertThat(notices(accountId, NotificationKind.PAYMENT_RETURNED)).hasSize(1);
+        assertThat(notices(accountId, NotificationKind.ORDER_REFUNDED)).isEmpty();
+    }
+
+    @Test
     void aVoidOfASecondPaymentWaitsForAPersonWhileTheFirstStillPays() {
         UUID accountId = account();
         BillingOrderEntity order = paid(accountId, "EMPRENDEDOR");

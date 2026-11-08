@@ -327,13 +327,12 @@ public record NotificationEmail(String subject, String html, String text) {
             case PAYMENT_RETURNED ->
                 new Body(
                         "Devolvimos un pago de %s de tu orden %s".formatted(data.get("amount"), data.get("reference")),
-                        "Recibimos un pago de %s para la orden %s de %s, que %s. Lo devolvimos al medio con el que se"
-                                        .formatted(
-                                                data.get("amount"),
-                                                data.get("reference"),
-                                                account,
-                                                orderReturnedBecause(data.get("orderStatus")))
-                                + " hizo.",
+                        "Recibimos un pago de %s para la orden %s de %s, que %s, así que te lo devolvimos."
+                                .formatted(
+                                        data.get("amount"),
+                                        data.get("reference"),
+                                        account,
+                                        orderReturnedBecause(data.get("orderStatus"))),
                         "La orden y tus documentos no cambian. Según tu banco, el dinero puede tardar unos días en"
                                 + " verse.",
                         "Ver la orden",

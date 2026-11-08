@@ -43,6 +43,8 @@ public class ChargeOrderHandler implements JobHandler {
     private static final Duration UNCONFIGURED_DELAY = Duration.ofMinutes(30);
     /** While Wompi does not answer, or answers what cannot be read. */
     private static final Duration UNANSWERED_DELAY = Duration.ofMinutes(10);
+    /** While a payment of the order's checkout is pending: the card is charged only if it does not go through. */
+    private static final Duration CHECKOUT_PENDING_DELAY = Duration.ofMinutes(15);
 
     @Inject
     PaymentClients payments;
@@ -75,16 +77,20 @@ public class ChargeOrderHandler implements JobHandler {
             settlement.apply(made.get());
             return;
         }
-        // A person may be paying the order through its checkout at the same time: those payments are settled first,
-        // and one approved or still pending leaves the card alone.
+        // A person may be paying the order through its checkout at the same time: those payments are settled first;
+        // one approved leaves the card alone, and one pending makes the card wait for how it ends.
         List<PaymentTransaction> checkout =
                 transactions(gateway, submitted.get().order());
         checkout.forEach(settlement::apply);
-        boolean checkoutPaying = checkout.stream()
-                .anyMatch(transaction -> transaction.status() == PaymentStatus.APPROVED
-                        || transaction.status() == PaymentStatus.PENDING);
+        boolean checkoutPaid =
+                checkout.stream().anyMatch(transaction -> transaction.status() == PaymentStatus.APPROVED);
+        if (!checkoutPaid
+                && checkout.stream().anyMatch(transaction -> transaction.status() == PaymentStatus.PENDING)
+                && QuarkusTransaction.requiringNew().call(() -> reschedule(job.referenceId))) {
+            throw new RetryLater(CHECKOUT_PENDING_DELAY, "A payment of the order's checkout is pending");
+        }
         Optional<ChargeRequest> request =
-                QuarkusTransaction.requiringNew().call(() -> request(job.referenceId, checkoutPaying));
+                QuarkusTransaction.requiringNew().call(() -> request(job.referenceId, checkoutPaid));
         if (request.isEmpty()) {
             return;
         }
@@ -146,10 +152,29 @@ public class ChargeOrderHandler implements JobHandler {
     }
 
     /**
-     * What to charge, with the account's active card, while the order can still be paid and its checkout is not
-     * paying it; otherwise the attempt is canceled. Wompi has no transaction for it.
+     * Puts a submitted attempt back to SCHEDULED, since Wompi has no transaction for it, while its order can still be
+     * paid.
+     *
+     * @return whether it waits to be tried again
      */
-    private static Optional<ChargeRequest> request(UUID chargeId, boolean checkoutPaying) {
+    private static boolean reschedule(UUID chargeId) {
+        UUID orderId = PaymentChargeEntity.<PaymentChargeEntity>findByIdOptional(chargeId)
+                .orElseThrow()
+                .orderId;
+        BillingOrderEntity order = BillingOrderEntity.lock(orderId).orElseThrow();
+        PaymentChargeEntity charge = PaymentChargeEntity.lock(chargeId).orElseThrow();
+        if (charge.status != PaymentChargeEntity.Status.SUBMITTED || !order.isPayable(OffsetDateTime.now())) {
+            return false;
+        }
+        charge.status = PaymentChargeEntity.Status.SCHEDULED;
+        return true;
+    }
+
+    /**
+     * What to charge, with the account's active card, while the order can still be paid and its checkout did not
+     * pay it; otherwise the attempt is canceled. Wompi has no transaction for it.
+     */
+    private static Optional<ChargeRequest> request(UUID chargeId, boolean checkoutPaid) {
         UUID orderId = PaymentChargeEntity.<PaymentChargeEntity>findByIdOptional(chargeId)
                 .orElseThrow()
                 .orderId;
@@ -160,7 +185,7 @@ public class ChargeOrderHandler implements JobHandler {
         }
         Optional<PaymentMethodEntity> card = PaymentMethodEntity.findActive(order.accountId);
         boolean payable = order.isPayable(OffsetDateTime.now());
-        if (!payable || card.isEmpty() || checkoutPaying) {
+        if (!payable || card.isEmpty() || checkoutPaid) {
             charge.status = PaymentChargeEntity.Status.CANCELED;
             return Optional.empty();
         }

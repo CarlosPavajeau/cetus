@@ -13,7 +13,6 @@ import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
-import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionPeriodEntity;
 import com.cantte.cetus.worker.notifications.Numbers;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -137,20 +136,14 @@ public class Reversals {
      * Refunds, through Wompi, the whole of an order just paid for something the account can no longer get, such as
      * the renewal of a subscription that already ended.
      *
-     * @param order locked, PAID by one approved transaction
+     * @param order locked, PAID
+     * @param transactionId the approved transaction that paid it
      */
     @Transactional(Transactional.TxType.MANDATORY)
-    public PaymentReversalEntity refundUndelivered(BillingOrderEntity order, String reason) {
+    public PaymentReversalEntity refundUndelivered(BillingOrderEntity order, String transactionId, String reason) {
         if (order.status != BillingOrderEntity.Status.PAID) {
             throw new IllegalStateException("Order " + order.id + " is " + order.status + ", not PAID");
         }
-        String transactionId = PaymentTransactionEntity.listByOrder(order.id).stream()
-                .filter(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED)
-                .map(payment -> payment.providerTransactionId)
-                .reduce((first, other) -> {
-                    throw new IllegalStateException("Order " + order.id + " has more than one approved payment");
-                })
-                .orElseThrow(() -> new IllegalStateException("Paid order " + order.id + " has no approved payment"));
         PaymentReversalEntity reversal = PaymentReversalEntity.request(
                 order,
                 PaymentReversalEntity.Kind.REFUND,

@@ -8,6 +8,7 @@ import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -47,7 +48,7 @@ public class PaymentSettlement {
     }
 
     /** Fired inside the transaction that pays the order; phase 3 grants the order's credits on it. */
-    public record OrderPaid(UUID orderId, UUID accountId) {}
+    public record OrderPaid(UUID orderId, UUID accountId, String transactionId) {}
 
     /**
      * Fired with the order locked for each transaction of a charge to a saved card, with the status kept for it,
@@ -118,10 +119,13 @@ public class PaymentSettlement {
         // either, and an approval of any other is a new payment.
         if (order.status == BillingOrderEntity.Status.PAID || order.status == BillingOrderEntity.Status.REFUNDED) {
             boolean refunded = order.status == BillingOrderEntity.Status.REFUNDED;
+            // Wompi keeps a returned payment APPROVED too: it never paid the order.
             boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
                     .anyMatch(other -> !other.id.equals(payment.id)
                             && (other.status == PaymentTransactionEntity.Status.APPROVED
-                                    || refunded && other.status == PaymentTransactionEntity.Status.VOIDED));
+                                    || refunded && other.status == PaymentTransactionEntity.Status.VOIDED)
+                            && PaymentReversalEntity.findReturn(other.providerTransactionId)
+                                    .isEmpty());
             if (!paidByAnother) {
                 return Outcome.ALREADY_PAID;
             }
@@ -167,7 +171,7 @@ public class PaymentSettlement {
                         "transactionId", payment.providerTransactionId,
                         "paymentMethodType", payment.paymentMethodType,
                         "totalCents", order.totalCents));
-        orderPaid.fire(new OrderPaid(order.id, order.accountId));
+        orderPaid.fire(new OrderPaid(order.id, order.accountId, payment.providerTransactionId));
         return Outcome.PAID;
     }
 

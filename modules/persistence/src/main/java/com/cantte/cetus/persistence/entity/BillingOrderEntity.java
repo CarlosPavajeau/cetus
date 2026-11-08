@@ -215,7 +215,8 @@ public class BillingOrderEntity extends PanacheEntityBase {
                                 SELECT (SELECT coalesce(sum(total_cents), 0) FROM billing.billing_orders
                                         WHERE status IN ('PAID', 'REFUNDED') AND paid_at >= :from AND paid_at < :to)
                                      - (SELECT coalesce(sum(amount_cents), 0) FROM billing.payment_reversals
-                                        WHERE status = 'APPROVED' AND approved_at >= :from AND approved_at < :to)
+                                        WHERE status = 'APPROVED' AND kind <> 'RETURN'
+                                          AND approved_at >= :from AND approved_at < :to)
                                 """)
                         .setParameter("from", from)
                         .setParameter("to", to)
