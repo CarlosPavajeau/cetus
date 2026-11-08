@@ -41,6 +41,7 @@ export const actionLabel: Record<AuditAction, string> = {
   CREDITS_GRANTED: "Créditos otorgados",
   CREDITS_ADJUSTED: "Créditos ajustados",
   DOCUMENT_CREDIT_RELEASED: "Crédito de documento liberado",
+  DOCUMENT_LATE_VERDICT: "Veredicto de la DIAN tras la falla",
   SUBSCRIPTION_STARTED: "Suscripción iniciada",
   SUBSCRIPTION_OVERAGE_LIMIT_CHANGED: "Límite de excedente cambiado",
   SUBSCRIPTION_PLAN_SCHEDULED: "Cambio de plan programado",

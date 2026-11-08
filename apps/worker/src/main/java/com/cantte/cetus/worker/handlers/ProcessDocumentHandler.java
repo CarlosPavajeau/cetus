@@ -291,7 +291,7 @@ public class ProcessDocumentHandler implements JobHandler {
                 "dian-fault-" + System.currentTimeMillis() + ".xml",
                 e.rawXml().getBytes(StandardCharsets.UTF_8),
                 "application/xml");
-        recorder.failed(ctx.documentId(), "DIAN fault: " + e.getMessage());
+        recorder.attemptFailed(ctx.documentId(), "DIAN fault: " + e.getMessage());
     }
 
     private static ErrorKind transportErrorKind(DianTransportException e) {

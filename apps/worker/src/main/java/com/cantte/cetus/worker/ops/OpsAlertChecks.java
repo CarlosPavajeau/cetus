@@ -74,8 +74,8 @@ public class OpsAlertChecks {
     }
 
     /**
-     * Documents that should have reached the DIAN by now: received or processing (the worker is down or
-     * slow), or failing and still being retried.
+     * Documents that should have reached the DIAN by now: received, or processing (the worker is down or slow, or
+     * the DIAN keeps failing and the job retries).
      */
     List<OpsAlert> stuckDocuments() {
         return rows("""
@@ -83,7 +83,7 @@ public class OpsAlertChecks {
                        to_char(d.updated_at AT TIME ZONE 'America/Bogota', 'YYYY-MM-DD HH24:MI'),
                        coalesce(d.dian_status_message, '')
                 FROM billing.documents d
-                WHERE d.status IN ('RECEIVED', 'PROCESSING', 'FAILED') AND d.updated_at < :since
+                WHERE d.status IN ('RECEIVED', 'PROCESSING') AND d.updated_at < :since
                   AND EXISTS (SELECT 1 FROM billing.jobs j WHERE j.reference_id = d.id
                               AND j.job_type = 'PROCESS_DOCUMENT' AND j.status IN ('PENDING', 'RUNNING'))
                 ORDER BY d.updated_at
@@ -95,6 +95,24 @@ public class OpsAlertChecks {
                         "%s %s %s (%s) sigue en %s desde %s %s"
                                 .formatted(r[1], r[2], r[3], r[0], r[4], r[5], shorten(r[6]))
                                 .trim()))
+                .toList();
+    }
+
+    /** Documents the DIAN accepted or rejected after Cetus gave up on them, in the last week. */
+    List<OpsAlert> lateVerdicts() {
+        return rows("""
+                SELECT d.id::text, d.environment, d.document_type, d.prefix || d.number, d.status
+                FROM billing.audit_log a
+                JOIN billing.documents d ON d.id = a.resource_id
+                WHERE a.action = 'DOCUMENT_LATE_VERDICT' AND a.created_at > :since
+                ORDER BY a.created_at
+                """, Map.of("since", OffsetDateTime.now().minus(DEAD_JOB_WINDOW))).stream()
+                .map(r -> OpsAlert.of(
+                        Category.DOCUMENT_LATE_VERDICT,
+                        r[0],
+                        false,
+                        "%s %s %s (%s) quedó %s después de darse por fallido: revisa su crédito y avisa al cliente"
+                                .formatted(r[1], r[2], r[3], r[0], r[4])))
                 .toList();
     }
 

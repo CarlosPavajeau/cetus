@@ -148,6 +148,8 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
       return `${text(data.quantity)} documentos · Motivo: ${text(data.reason)}`;
     case "DOCUMENT_CREDIT_RELEASED":
       return `Motivo: ${text(data.reason)}`;
+    case "DOCUMENT_LATE_VERDICT":
+      return data.status === "ACCEPTED" ? "La DIAN lo aceptó" : "La DIAN lo rechazó";
     case "SUBSCRIPTION_STARTED":
       return `${text(data.plan)} · ${text(data.reference)}`;
     case "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED":

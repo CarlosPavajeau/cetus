@@ -49,7 +49,8 @@ public class OpsAlerts {
                 Category.PAYMENT_REVIEW,
                 Category.BILLING_INVOICE_MISSING,
                 Category.REFUND_UNRESOLVED,
-                Category.BILLING_CREDIT_NOTE_MISSING)),
+                Category.BILLING_CREDIT_NOTE_MISSING,
+                Category.DOCUMENT_LATE_VERDICT)),
         DAILY(EnumSet.of(
                 Category.CERTIFICATE_EXPIRING,
                 Category.RANGE_RUNNING_OUT,
@@ -146,6 +147,7 @@ public class OpsAlerts {
             case BILLING_INVOICE_MISSING -> checks.billingInvoicesMissing();
             case REFUND_UNRESOLVED -> checks.refundsUnresolved();
             case BILLING_CREDIT_NOTE_MISSING -> checks.billingCreditNotesMissing();
+            case DOCUMENT_LATE_VERDICT -> checks.lateVerdicts();
         };
     }
 

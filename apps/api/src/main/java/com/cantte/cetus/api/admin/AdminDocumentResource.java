@@ -7,11 +7,9 @@ import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.Environment;
-import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import com.cantte.cetus.persistence.entity.JobEntity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -84,10 +82,7 @@ public class AdminDocumentResource {
         if (doc == null || doc.environment != Environment.LIVE) {
             throw new NotFoundException("Document not found");
         }
-        boolean dead = JobEntity.count(
-                        "jobType = ?1 and referenceId = ?2 and status = 'DEAD'", JobTypes.PROCESS_DOCUMENT, doc.id)
-                > 0;
-        if (doc.status != DocumentStatus.FAILED || !dead) {
+        if (doc.status != DocumentStatus.FAILED) {
             throw new DomainException(
                     "document_not_dead", "Only a document whose processing died can be resolved as not issued");
         }

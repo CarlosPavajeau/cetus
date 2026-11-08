@@ -16,6 +16,7 @@ import com.cantte.cetus.persistence.entity.DianSubmissionEntity.ErrorKind;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity;
 import com.cantte.cetus.persistence.entity.DocumentArtifactEntity.Kind;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
+import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
 import com.cantte.cetus.signing.XmlSupport;
 import com.cantte.cetus.worker.runner.GiveUp;
@@ -253,7 +254,9 @@ class ProcessDocumentHandlerTest {
         assertThat(submissions(id))
                 .singleElement()
                 .satisfies(s -> assertThat(s.errorKind).isEqualTo(ErrorKind.FAULT));
-        assertThat(document(id).status).isEqualTo(DocumentStatus.FAILED);
+        DocumentEntity retried = document(id);
+        assertThat(retried.status).isEqualTo(DocumentStatus.PROCESSING);
+        assertThat(retried.dianStatusMessage).startsWith("DIAN fault:");
         assertThat(artifacts(id)).contains(Kind.DIAN_RESPONSE);
 
         process(id);
@@ -267,13 +270,22 @@ class ProcessDocumentHandlerTest {
         dian.reply(SEND, Reply.fault("fault-client.xml"));
         UUID id = fixtures.invoice();
 
-        GiveUp giveUp = catchThrowableOfType(GiveUp.class, () -> process(id));
+        JobEntity job = fixtures.job(id, 1);
+
+        GiveUp giveUp = catchThrowableOfType(GiveUp.class, () -> handler.handle(job));
 
         assertThat(giveUp).hasMessageContaining("s:Sender");
         assertThat(submissions(id))
                 .singleElement()
                 .satisfies(s -> assertThat(s.errorKind).isNull());
+        assertThat(document(id).status).isEqualTo(DocumentStatus.PROCESSING);
+
+        handler.onDead(job, giveUp.getMessage());
+
         assertThat(document(id).status).isEqualTo(DocumentStatus.FAILED);
+        handler.handle(fixtures.job(id, 2));
+        assertThat(document(id).status).isEqualTo(DocumentStatus.FAILED);
+        assertThat(dian.operations()).containsExactly(SEND);
     }
 
     @Test

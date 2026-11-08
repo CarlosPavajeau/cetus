@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.cantte.cetus.credits.CreditLedger;
 import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.audit.Actor;
+import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.entity.CreditGrantEntity;
 import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.CreditReservationEntity;
@@ -140,6 +142,38 @@ class VerdictCreditsTest {
         assertThat(movementsOf(second))
                 .filteredOn(movement -> movement.type == CreditMovementEntity.Type.CONFIRM)
                 .hasSize(1);
+    }
+
+    @Test
+    void aVerdictAfterCetusGaveUpIsRecordedAndChargedOnce() {
+        UUID invoice = live(fixtures.invoice());
+        UUID accountId = accountOf(invoice);
+        CreditGrantEntity lot = grant(accountId, 2, OffsetDateTime.now().plusMonths(1));
+        reserve(accountId, invoice);
+        recorder.gaveUp(invoice, "La DIAN no responde");
+        release(invoice);
+
+        recorder.completed(invoice, ACCEPTED);
+        recorder.completed(invoice, ACCEPTED);
+
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() -> DocumentEntity.<DocumentEntity>findById(invoice).status))
+                .isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(lotOf(lot.id).remaining).isEqualTo(1);
+        assertThat(movementsOf(invoice))
+                .filteredOn(movement -> movement.type == CreditMovementEntity.Type.CONFIRM)
+                .hasSize(1);
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() -> ((Number) DocumentEntity.getEntityManager()
+                                        .createNativeQuery("""
+                                                SELECT count(*) FROM billing.audit_log
+                                                WHERE resource_id = :id AND action = :action
+                                                """)
+                                        .setParameter("id", invoice)
+                                        .setParameter("action", AuditAction.DOCUMENT_LATE_VERDICT.name())
+                                        .getSingleResult())
+                                .longValue()))
+                .isEqualTo(1);
     }
 
     @Test

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.cantte.cetus.credits.CreditLedger;
+import com.cantte.cetus.dian.DianResponse;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.email.EmailException;
 import com.cantte.cetus.persistence.audit.Actor;
@@ -17,6 +18,7 @@ import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.FakeResend;
 import com.cantte.cetus.worker.support.FakeResend.Reply;
 import com.cantte.cetus.worker.support.FakeResendResource;
+import com.cantte.cetus.worker.support.ResultRecorder;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -56,6 +58,9 @@ class OpsAlertsTest {
 
     @Inject
     CreditLedger ledger;
+
+    @Inject
+    ResultRecorder recorder;
 
     @BeforeEach
     void reset() {
@@ -104,6 +109,19 @@ class OpsAlertsTest {
         sql("UPDATE billing.jobs SET status = 'DONE' WHERE id = ?1", job.id);
         alerts.run(Run.FREQUENT);
         assertThat(known(key)).isFalse();
+    }
+
+    @Test
+    void aVerdictAfterCetusGaveUpIsReportedOnce() {
+        UUID documentId = fixtures.invoice();
+        recorder.gaveUp(documentId, "La DIAN no responde");
+        recorder.completed(
+                documentId,
+                new DianResponse(true, "00", "Procesado Correctamente.", null, List.of(), null, null, null));
+        String key = "document_late_verdict:" + documentId;
+
+        assertThat(keys(alerts.run(Run.FREQUENT))).contains(key);
+        assertThat(keys(alerts.run(Run.FREQUENT))).doesNotContain(key);
     }
 
     @Test

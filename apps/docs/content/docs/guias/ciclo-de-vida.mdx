@@ -9,17 +9,17 @@ procesa en segundo plano hasta la respuesta de la DIAN.
 ```
 RECEIVED → PROCESSING → SUBMITTED → ACCEPTED
                                   ↘ REJECTED
-           (falla) → FAILED → PROCESSING (reintento)
+           ↘ FAILED (sin más reintentos)
 ```
 
 | Estado       | Qué significa                                        | Qué hacer                                              |
 | ------------ | ---------------------------------------------------- | ------------------------------------------------------ |
 | `RECEIVED`   | Cetus lo validó, le asignó número y lo puso en cola. | Esperar.                                               |
-| `PROCESSING` | Cetus lo está generando, firmando o enviando.        | Esperar.                                               |
+| `PROCESSING` | Cetus lo está generando, firmando o enviando.        | Esperar. Si un intento falla, Cetus reintenta solo.    |
 | `SUBMITTED`  | Enviado; Cetus espera la respuesta de la DIAN.       | Esperar.                                               |
 | `ACCEPTED`   | La DIAN lo aceptó. **Es definitivo.**                | Listo: ya puedes descargar el PDF y el XML.            |
 | `REJECTED`   | La DIAN lo rechazó. **Es definitivo.**               | Lee `dian.errors`, corrige y emite un documento nuevo. |
-| `FAILED`     | Un intento falló por una causa técnica.              | Si Cetus aún reintenta, vuelve a `PROCESSING` solo.    |
+| `FAILED`     | Cetus dejó de intentarlo por una causa técnica.      | Escribir a soporte con el `X-Request-Id`.              |
 
 ## Cómo enterarte del resultado
 
@@ -45,9 +45,10 @@ avisa de algo, pero acepta el documento.
 
 ## Fallas
 
-Si la DIAN no responde o responde con un error temporal, Cetus reintenta solo y el documento vuelve a
-`PROCESSING`. Si después de varios intentos no lo logra, el documento queda `FAILED` y llega el webhook
-`invoice.failed` (o el de su tipo). Cada respuesta trae el encabezado `X-Request-Id`: inclúyelo si escribes a
+Si la DIAN no responde o responde con un error temporal, Cetus reintenta solo y el documento sigue en
+`PROCESSING`, con el motivo del último intento en `dian.statusMessage`. Si después de varios intentos no lo logra,
+el documento queda `FAILED` y llega el webhook `invoice.failed` (o el de su tipo). Si la DIAN responde después
+(por ejemplo, a un envío cuya respuesta se perdió), el documento pasa a `ACCEPTED` o `REJECTED` y llega ese webhook. Cada respuesta trae el encabezado `X-Request-Id`: inclúyelo si escribes a
 soporte.
 
 ## Después de aceptado
