@@ -70,10 +70,6 @@ public class WebhookDeliveryEntity extends PanacheEntityBase {
         updatedAt = OffsetDateTime.now();
     }
 
-    public static Optional<WebhookDeliveryEntity> findForEndpoint(UUID endpointId, UUID id) {
-        return find("id = ?1 and endpointId = ?2", id, endpointId).firstResultOptional();
-    }
-
     public static Optional<WebhookDeliveryEntity> findForEndpointForUpdate(UUID endpointId, UUID id) {
         return find("id = ?1 and endpointId = ?2", id, endpointId)
                 .withLock(LockModeType.PESSIMISTIC_WRITE)

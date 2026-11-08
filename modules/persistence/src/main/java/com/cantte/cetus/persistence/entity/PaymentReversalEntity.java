@@ -183,12 +183,6 @@ public class PaymentReversalEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
-    /** The chargeback of the transaction, if it was applied already. */
-    public static Optional<PaymentReversalEntity> findChargeback(String providerTransactionId) {
-        return find("kind = ?1 and providerTransactionId = ?2", Kind.CHARGEBACK, providerTransactionId)
-                .firstResultOptional();
-    }
-
     /** The return of the transaction, if it was given back already. */
     public static Optional<PaymentReversalEntity> findReturn(String providerTransactionId) {
         return find("kind = ?1 and providerTransactionId = ?2", Kind.RETURN, providerTransactionId)
