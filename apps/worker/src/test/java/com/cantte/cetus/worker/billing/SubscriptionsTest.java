@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
@@ -370,6 +371,56 @@ class SubscriptionsTest {
                 .filteredOn(order -> order.reviewReason != null)
                 .singleElement()
                 .satisfies(order -> assertThat(order.reviewReason).contains("ya tenía una suscripción"));
+    }
+
+    @Test
+    void aRenewalPaidWhileItsPeriodClosesStaysPaidAndRenews() throws Exception {
+        UUID accountId = subscribed("INICIAL");
+        SubscriptionEntity subscription = subscriptionOf(accountId);
+        QuarkusTransaction.requiringNew().run(() -> {
+            int left = CreditGrantEntity.listByAccount(accountId).getFirst().remaining;
+            ledger.adjust(
+                    accountId,
+                    -left,
+                    null,
+                    new Actor(Actor.ActorType.PLATFORM, UUID.randomUUID().toString()),
+                    "Sin créditos",
+                    OffsetDateTime.now());
+        });
+        accepted(accountId, 2);
+        SubscriptionPeriodEntity first = openPeriod(subscription.id);
+        close(first.id, first.endsAt.plusMinutes(1));
+        BillingOrderEntity renewal = renewalsOf(accountId).getFirst();
+        SubscriptionPeriodEntity second = openPeriod(subscription.id);
+        CountDownLatch locked = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+
+        // The payment holds the renewal, as PaymentSettlement does, while the upkeep closes its period.
+        CompletableFuture<Outcome> payment = CompletableFuture.supplyAsync(() -> QuarkusTransaction.requiringNew()
+                .call(() -> {
+                    BillingOrderEntity.lock(renewal.id).orElseThrow();
+                    locked.countDown();
+                    release.await(10, TimeUnit.SECONDS);
+                    return settlement.apply(approved(renewal));
+                }));
+        assertThat(locked.await(10, TimeUnit.SECONDS)).isTrue();
+        CompletableFuture<Boolean> closing =
+                CompletableFuture.supplyAsync(() -> close(second.id, second.endsAt.plusMinutes(1)));
+        Thread.sleep(300);
+        assertThat(closing).isNotDone();
+        release.countDown();
+
+        assertThat(payment.get(30, TimeUnit.SECONDS)).isEqualTo(Outcome.PAID);
+        assertThat(closing.get(30, TimeUnit.SECONDS)).isTrue();
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() -> BillingOrderEntity.<BillingOrderEntity>findById(renewal.id).status))
+                .isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(subscriptionOf(accountId).status).isEqualTo(SubscriptionEntity.Status.PAST_DUE);
+        assertThat(renewalsOf(accountId)).hasSize(2);
+        assertThat(QuarkusTransaction.requiringNew()
+                        .call(() -> BillingOrderEntity.count(
+                                "accountId = ?1 and kind = ?2", accountId, BillingOrderEntity.Kind.DEBT)))
+                .isZero();
     }
 
     /** An account with a billing profile whose order of the plan was just paid. */

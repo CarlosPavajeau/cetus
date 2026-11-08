@@ -330,7 +330,7 @@ public class AdminOrderResource {
         if (order.kind != BillingOrderEntity.Kind.DEBT || order.status != BillingOrderEntity.Status.PENDING) {
             throw new DomainException("order_not_debt", "Only a pending debt can be forgiven");
         }
-        order.status = BillingOrderEntity.Status.CANCELED;
+        order.cancel(BillingOrderEntity.Status.PENDING);
         String reason = request.reason().strip();
         auditLog.record(
                 order.accountId,

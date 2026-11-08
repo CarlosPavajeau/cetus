@@ -11,6 +11,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -88,6 +89,30 @@ public class SubscriptionPeriodEntity extends PanacheEntityBase {
                 .createQuery("SELECT p.subscriptionId FROM SubscriptionPeriodEntity p WHERE p.id = :id", UUID.class)
                 .setParameter("id", periodId)
                 .getSingleResult();
+    }
+
+    /** The order that opened the period, read without loading nor locking the period, to take its locks in order. */
+    public static Optional<UUID> openingOrderOf(UUID periodId) {
+        return getEntityManager()
+                .createQuery("SELECT p.openingOrderId FROM SubscriptionPeriodEntity p WHERE p.id = :id", UUID.class)
+                .setParameter("id", periodId)
+                .getResultStream()
+                .filter(Objects::nonNull)
+                .findFirst();
+    }
+
+    /** The order that opened the subscription's open period, read without loading nor locking anything. */
+    public static Optional<UUID> openingOrderOfOpen(UUID subscriptionId) {
+        return getEntityManager()
+                .createQuery(
+                        "SELECT p.openingOrderId FROM SubscriptionPeriodEntity p"
+                                + " WHERE p.subscriptionId = :subscription AND p.status = :status",
+                        UUID.class)
+                .setParameter("subscription", subscriptionId)
+                .setParameter("status", Status.OPEN)
+                .getResultStream()
+                .filter(Objects::nonNull)
+                .findFirst();
     }
 
     /** The account the period bills, read without loading nor locking anything, to take its locks in order. */

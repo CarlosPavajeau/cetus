@@ -633,6 +633,10 @@ public class CreditLedger {
     /**
      * Holds the account's credits lock until the transaction ends. Whoever changes what the account's credits depend
      * on, such as starting its subscription, takes it first so two such changes never run at once.
+     *
+     * <p>Every path takes its locks in one order, so two of them never wait on each other: billing order, payment
+     * reversal, this lock, subscription, subscription period. A path that needs an order locks it before this, even
+     * when it only learns which order from a row it reads unlocked first.
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void lock(UUID accountId) {
