@@ -3194,7 +3194,7 @@ export interface components {
          *     - `SUBMITTED`: Enviado; Cetus espera la respuesta de la DIAN.
          *     - `ACCEPTED`: La DIAN lo aceptó. Es definitivo.
          *     - `REJECTED`: La DIAN lo rechazó. Es definitivo: `dian.errors` dice por qué; corrige y emite un documento nuevo.
-         *     - `FAILED`: Un intento falló. Si Cetus todavía reintenta, vuelve a `PROCESSING`; el webhook `*.failed` avisa cuando ya no hay más reintentos.
+         *     - `FAILED`: Cetus dejó de intentarlo y llegó el webhook `*.failed`. Mientras reintenta, el documento sigue en `PROCESSING`. Si la DIAN responde después, pasa a `ACCEPTED` o `REJECTED` y llega su webhook.
          * @enum {string}
          */
         DocumentStatus: "RECEIVED" | "PROCESSING" | "SUBMITTED" | "ACCEPTED" | "REJECTED" | "FAILED";
@@ -3485,7 +3485,7 @@ export interface components {
         /** @enum {string} */
         Kind: "PURCHASE" | "RENEWAL" | "MANUAL" | "DEBT";
         /** @enum {string} */
-        Kind1: "REFUND" | "CHARGEBACK";
+        Kind1: "REFUND" | "CHARGEBACK" | "RETURN";
         /** @enum {string} */
         Kind2: "SUBSCRIPTION" | "PACKAGE" | "TOPUP";
         /** @enum {string} */

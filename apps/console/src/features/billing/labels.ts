@@ -57,6 +57,7 @@ export const orderStatusLabel: Record<OrderStatus, string> = {
 export const reversalKindLabel: Record<OrderReversal["kind"], string> = {
   REFUND: "Reembolso",
   CHARGEBACK: "Contracargo",
+  RETURN: "Devolución de un pago que la orden no tomó",
 };
 
 /** "VISA ••4242". */

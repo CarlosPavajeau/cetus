@@ -176,7 +176,10 @@ class ReversalsTest {
         assertThat(settlement.apply(voided)).isEqualTo(Outcome.REVIEW);
 
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
-        assertThat(reversalsOf(order.id)).isEmpty();
+        // Only the return of the second payment, asked when it was approved; no chargeback.
+        assertThat(reversalsOf(order.id))
+                .extracting(reversal -> reversal.kind)
+                .containsExactly(PaymentReversalEntity.Kind.RETURN);
         assertThat(lotsOf(accountId).getFirst().status).isEqualTo(CreditGrantEntity.Status.ACTIVE);
     }
 
@@ -228,9 +231,10 @@ class ReversalsTest {
                 Optional.of(now),
                 "{}");
 
-        assertThat(settlement.apply(another)).isEqualTo(Outcome.REVIEW);
+        assertThat(settlement.apply(another)).isEqualTo(Outcome.RETURNED);
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
-        assertThat(orderOf(order.id).reviewReason).contains(another.id());
+        assertThat(QuarkusTransaction.requiringNew().call(() -> PaymentReversalEntity.findReturn(another.id())))
+                .hasValueSatisfying(returned -> assertThat(returned.amountCents).isEqualTo(order.totalCents));
     }
 
     @Test

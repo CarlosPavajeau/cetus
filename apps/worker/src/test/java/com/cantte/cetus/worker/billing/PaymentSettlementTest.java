@@ -10,10 +10,12 @@ import com.cantte.cetus.payments.PaymentTransientException;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.InboundWebhookEventEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
 import com.cantte.cetus.worker.handlers.CheckPaymentHandler;
 import com.cantte.cetus.worker.handlers.ProcessWebhookEventHandler;
+import com.cantte.cetus.worker.handlers.RefundOrderHandler;
 import com.cantte.cetus.worker.ops.OpsAlerts;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.support.FakeResend;
@@ -71,6 +73,9 @@ class PaymentSettlementTest {
 
     @Inject
     CheckPaymentHandler checks;
+
+    @Inject
+    RefundOrderHandler refunds;
 
     @Inject
     PaymentReconciliation reconciliation;
@@ -178,7 +183,7 @@ class PaymentSettlementTest {
     }
 
     @Test
-    void aSecondApprovedChargeWaitsForAPerson() {
+    void aSecondApprovedPaymentIsGivenBackOnce() {
         BillingOrderEntity order =
                 fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
         String first = newTransactionId();
@@ -191,12 +196,43 @@ class PaymentSettlementTest {
         assertThat(orderOf(order.id).reviewReason).isNull();
 
         assertThat(settlement.apply(transaction(second, order.reference, PaymentStatus.APPROVED, 2_490_000)))
-                .isEqualTo(Outcome.REVIEW);
+                .isEqualTo(Outcome.RETURNED);
+        assertThat(settlement.apply(transaction(second, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.RETURNED);
 
-        BillingOrderEntity reviewed = orderOf(order.id);
-        assertThat(reviewed.status).isEqualTo(BillingOrderEntity.Status.PAID);
-        assertThat(reviewed.reviewReason).contains(second).contains("pagó dos veces");
+        PaymentReversalEntity returned = returnOf(second);
+        assertThat(returned.amountCents).isEqualTo(2_490_000);
+        assertThat(returned.reason).contains("pagó dos veces");
+        refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, returned.id));
+        assertThat(wompi.refunds())
+                .singleElement()
+                .satisfies(asked -> assertThat(asked.transactionId()).isEqualTo(second));
+        assertThat(returnOf(second).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
+        BillingOrderEntity paid = orderOf(order.id);
+        assertThat(paid.status).isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(paid.reviewReason).isNull();
         assertThat(paidAudits(order.id)).isEqualTo(1);
+    }
+
+    @Test
+    void anApprovalOfACanceledOrderIsGivenBack() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        QuarkusTransaction.requiringNew()
+                .run(() -> BillingOrderEntity.lock(order.id).orElseThrow().cancel(BillingOrderEntity.Status.PENDING));
+        String id = newTransactionId();
+
+        assertThat(settlement.apply(transaction(id, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.RETURNED);
+
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.CANCELED);
+        assertThat(returnOf(id).status).isEqualTo(PaymentReversalEntity.Status.REQUESTED);
+        assertThat(paidAudits(order.id)).isZero();
+    }
+
+    private static PaymentReversalEntity returnOf(String transactionId) {
+        return QuarkusTransaction.requiringNew()
+                .call(() -> PaymentReversalEntity.findReturn(transactionId).orElseThrow());
     }
 
     @Test

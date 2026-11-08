@@ -77,6 +77,12 @@ public class AutoCharge {
         if (charge.providerTransactionId == null) {
             charge.providerTransactionId = settled.transactionId();
         }
+        if (charge.status == PaymentChargeEntity.Status.CANCELED && settled.status() == PaymentStatus.APPROVED) {
+            // The one way out of CANCELED: the reconciliation abandoned an attempt Wompi had made after all.
+            LOG.warnf("Charge %s was abandoned, yet Wompi approved it", charge.id);
+            charge.status = PaymentChargeEntity.Status.APPROVED;
+            return;
+        }
         if (charge.status != PaymentChargeEntity.Status.SUBMITTED) {
             return;
         }

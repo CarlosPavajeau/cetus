@@ -1,6 +1,8 @@
 package com.cantte.cetus.worker.billing;
 
 import com.cantte.cetus.credits.CreditLedger;
+import com.cantte.cetus.jobs.JobQueue;
+import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.audit.Actor;
@@ -11,6 +13,7 @@ import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
+import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionPeriodEntity;
 import com.cantte.cetus.worker.notifications.Numbers;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -52,6 +55,9 @@ public class Reversals {
 
     @Inject
     Event<ReversalApproved> approved;
+
+    @Inject
+    JobQueue jobs;
 
     /**
      * Approves a reversal a person registered (a refund made elsewhere, a chargeback, or a Wompi refund left
@@ -102,7 +108,64 @@ public class Reversals {
     }
 
     /**
-     * Approves the reversal and applies it to its order.
+     * Gives back, through Wompi, a payment Wompi approved for an order that could not take it: the order was
+     * canceled, or another payment already paid it. The order and its credits stay as they are.
+     *
+     * @param order locked
+     * @return the return; empty when the transaction was given back already
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public Optional<PaymentReversalEntity> giveBack(
+            BillingOrderEntity order, String transactionId, long amountCents, String reason) {
+        if (PaymentReversalEntity.findReturn(transactionId).isPresent()) {
+            return Optional.empty();
+        }
+        PaymentReversalEntity reversal = PaymentReversalEntity.request(
+                order,
+                PaymentReversalEntity.Kind.RETURN,
+                PaymentReversalEntity.Mode.WOMPI,
+                amountCents,
+                transactionId,
+                Actor.system(),
+                reason);
+        jobs.enqueue(JobTypes.REFUND_ORDER, reversal.id);
+        LOG.warnf("Order %s could not take transaction %s; returning it (%s)", order.id, transactionId, reason);
+        return Optional.of(reversal);
+    }
+
+    /**
+     * Refunds, through Wompi, the whole of an order just paid for something the account can no longer get, such as
+     * the renewal of a subscription that already ended.
+     *
+     * @param order locked, PAID by one approved transaction
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public PaymentReversalEntity refundUndelivered(BillingOrderEntity order, String reason) {
+        if (order.status != BillingOrderEntity.Status.PAID) {
+            throw new IllegalStateException("Order " + order.id + " is " + order.status + ", not PAID");
+        }
+        String transactionId = PaymentTransactionEntity.listByOrder(order.id).stream()
+                .filter(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED)
+                .map(payment -> payment.providerTransactionId)
+                .reduce((first, other) -> {
+                    throw new IllegalStateException("Order " + order.id + " has more than one approved payment");
+                })
+                .orElseThrow(() -> new IllegalStateException("Paid order " + order.id + " has no approved payment"));
+        PaymentReversalEntity reversal = PaymentReversalEntity.request(
+                order,
+                PaymentReversalEntity.Kind.REFUND,
+                PaymentReversalEntity.Mode.WOMPI,
+                order.totalCents,
+                transactionId,
+                Actor.system(),
+                reason);
+        jobs.enqueue(JobTypes.REFUND_ORDER, reversal.id);
+        LOG.warnf("Order %s was paid for nothing; refunding it (%s)", order.id, reason);
+        return reversal;
+    }
+
+    /**
+     * Approves the reversal and applies it to its order; a return is only marked approved.
      *
      * @param order locked, with the reversal
      */
@@ -114,6 +177,11 @@ public class Reversals {
         reversal.status = PaymentReversalEntity.Status.APPROVED;
         reversal.approvedAt = now;
         Actor actor = new Actor(Actor.ActorType.valueOf(reversal.actorType), reversal.actorId);
+        if (reversal.kind == PaymentReversalEntity.Kind.RETURN) {
+            record(order, reversal, actor);
+            LOG.infof("Return %s of order %s approved: %d cents back", reversal.id, order.id, reversal.amountCents);
+            return;
+        }
         String why = (reversal.kind == PaymentReversalEntity.Kind.REFUND ? "Reembolso " : "Contracargo ")
                 + reversal.reference;
 
@@ -187,10 +255,17 @@ public class Reversals {
 
     private void record(BillingOrderEntity order, PaymentReversalEntity reversal, Actor actor) {
         Map<String, Object> data = new HashMap<>(Map.of(
-                "reference", reversal.reference,
-                "amountCents", reversal.amountCents,
-                "creditsRevoked", reversal.creditsRevoked,
-                "status", order.status.name()));
+                "reference",
+                reversal.reference,
+                "amountCents",
+                reversal.amountCents,
+                "status",
+                order.status.name(),
+                "kind",
+                reversal.kind.name()));
+        if (reversal.creditsRevoked != null) {
+            data.put("creditsRevoked", reversal.creditsRevoked);
+        }
         if (reversal.debtCents != null) {
             data.put("debtCents", reversal.debtCents);
         }
@@ -198,13 +273,13 @@ public class Reversals {
                 order.accountId,
                 actor,
                 null,
-                reversal.kind == PaymentReversalEntity.Kind.REFUND
-                        ? AuditAction.BILLING_ORDER_REFUNDED
-                        : AuditAction.BILLING_ORDER_CHARGEBACK,
+                reversal.kind == PaymentReversalEntity.Kind.CHARGEBACK
+                        ? AuditAction.BILLING_ORDER_CHARGEBACK
+                        : AuditAction.BILLING_ORDER_REFUNDED,
                 "billing_order",
                 order.id,
                 data);
-        if (reversal.kind == PaymentReversalEntity.Kind.REFUND) {
+        if (reversal.kind != PaymentReversalEntity.Kind.CHARGEBACK) {
             notifications.request(
                     order.accountId,
                     NotificationKind.ORDER_REFUNDED,

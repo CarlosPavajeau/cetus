@@ -4,6 +4,7 @@ import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.payments.ChargeRequest;
 import com.cantte.cetus.payments.PaymentGateway;
 import com.cantte.cetus.payments.PaymentRejectedException;
+import com.cantte.cetus.payments.PaymentStatus;
 import com.cantte.cetus.payments.PaymentTransaction;
 import com.cantte.cetus.payments.PaymentTransientException;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
@@ -64,16 +65,26 @@ public class ChargeOrderHandler implements JobHandler {
     public void handle(JobEntity job) {
         PaymentGateway gateway =
                 payments.gateway().orElseThrow(() -> new RetryLater(UNCONFIGURED_DELAY, "Payments are not configured"));
-        Optional<String> reference = QuarkusTransaction.requiringNew().call(() -> submit(job.referenceId));
-        if (reference.isEmpty()) {
+        Optional<Submitted> submitted = QuarkusTransaction.requiringNew().call(() -> submit(job.referenceId));
+        if (submitted.isEmpty()) {
             return;
         }
-        Optional<PaymentTransaction> made = made(gateway, reference.get());
+        Optional<PaymentTransaction> made =
+                transactions(gateway, submitted.get().charge()).stream().findFirst();
         if (made.isPresent()) {
             settlement.apply(made.get());
             return;
         }
-        Optional<ChargeRequest> request = QuarkusTransaction.requiringNew().call(() -> request(job.referenceId));
+        // A person may be paying the order through its checkout at the same time: those payments are settled first,
+        // and one approved or still pending leaves the card alone.
+        List<PaymentTransaction> checkout =
+                transactions(gateway, submitted.get().order());
+        checkout.forEach(settlement::apply);
+        boolean checkoutPaying = checkout.stream()
+                .anyMatch(transaction -> transaction.status() == PaymentStatus.APPROVED
+                        || transaction.status() == PaymentStatus.PENDING);
+        Optional<ChargeRequest> request =
+                QuarkusTransaction.requiringNew().call(() -> request(job.referenceId, checkoutPaying));
         if (request.isEmpty()) {
             return;
         }
@@ -85,7 +96,7 @@ public class ChargeOrderHandler implements JobHandler {
             throw new RetryLater(UNANSWERED_DELAY, "Wompi did not answer the charge: " + e.getMessage());
         } catch (PaymentRejectedException e) {
             // A refusal is only final when Wompi has no transaction for the reference; otherwise its answer was lost.
-            made = made(gateway, reference.get());
+            made = transactions(gateway, submitted.get().charge()).stream().findFirst();
             if (made.isEmpty()) {
                 LOG.infof("Wompi refused charge %s: %s", job.referenceId, e.getMessage());
                 autoCharge.refused(job.referenceId, OffsetDateTime.now());
@@ -105,24 +116,25 @@ public class ChargeOrderHandler implements JobHandler {
         LOG.warnf("Charge %s left unanswered for the reconciliation: %s", job.referenceId, reason);
     }
 
-    /** The attempt's transaction, if Wompi made one; waits while Wompi cannot say. */
-    private static Optional<PaymentTransaction> made(PaymentGateway gateway, String reference) {
-        List<PaymentTransaction> transactions;
+    /** What Wompi made for the reference; waits while Wompi cannot say. */
+    private static List<PaymentTransaction> transactions(PaymentGateway gateway, String reference) {
         try {
-            transactions = gateway.transactions(reference);
+            return gateway.transactions(reference);
         } catch (PaymentTransientException | PaymentRejectedException e) {
             throw new RetryLater(UNANSWERED_DELAY, "Wompi could not say whether it charged: " + e.getMessage());
         }
-        return transactions.stream().findFirst();
     }
 
-    /** Marks the attempt SUBMITTED and returns its reference, unless it was answered or is no longer due. */
-    private static Optional<String> submit(UUID chargeId) {
+    /** The references of a submitted attempt: its own, and its order's, which the order's checkout pays with. */
+    private record Submitted(String charge, String order) {}
+
+    /** Marks the attempt SUBMITTED and returns its references, unless it was answered or is no longer due. */
+    private static Optional<Submitted> submit(UUID chargeId) {
         Optional<PaymentChargeEntity> found = PaymentChargeEntity.findByIdOptional(chargeId);
         if (found.isEmpty()) {
             return Optional.empty();
         }
-        BillingOrderEntity.lock(found.get().orderId).orElseThrow();
+        BillingOrderEntity order = BillingOrderEntity.lock(found.get().orderId).orElseThrow();
         PaymentChargeEntity charge = PaymentChargeEntity.lock(chargeId).orElseThrow();
         boolean unanswered =
                 charge.status == PaymentChargeEntity.Status.SUBMITTED && charge.providerTransactionId == null;
@@ -130,14 +142,14 @@ public class ChargeOrderHandler implements JobHandler {
             return Optional.empty();
         }
         charge.status = PaymentChargeEntity.Status.SUBMITTED;
-        return Optional.of(charge.reference);
+        return Optional.of(new Submitted(charge.reference, order.reference));
     }
 
     /**
-     * What to charge, with the account's active card, while the order can still be paid; otherwise the attempt is
-     * canceled. Wompi has no transaction for it.
+     * What to charge, with the account's active card, while the order can still be paid and its checkout is not
+     * paying it; otherwise the attempt is canceled. Wompi has no transaction for it.
      */
-    private static Optional<ChargeRequest> request(UUID chargeId) {
+    private static Optional<ChargeRequest> request(UUID chargeId, boolean checkoutPaying) {
         UUID orderId = PaymentChargeEntity.<PaymentChargeEntity>findByIdOptional(chargeId)
                 .orElseThrow()
                 .orderId;
@@ -148,7 +160,7 @@ public class ChargeOrderHandler implements JobHandler {
         }
         Optional<PaymentMethodEntity> card = PaymentMethodEntity.findActive(order.accountId);
         boolean payable = order.isPayable(OffsetDateTime.now());
-        if (!payable || card.isEmpty()) {
+        if (!payable || card.isEmpty() || checkoutPaying) {
             charge.status = PaymentChargeEntity.Status.CANCELED;
             return Optional.empty();
         }

@@ -249,6 +249,45 @@ class AutoChargeTest {
     }
 
     @Test
+    void anAbandonedAttemptWompiApprovesLaterPaysTheOrder() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        JobEntity job = jobOf(chargesOf(renewal.id).getFirst().id);
+        wompi.down(true);
+        assertThatThrownBy(() -> charges.handle(job)).isInstanceOf(RetryLater.class);
+        wompi.down(false);
+        QuarkusTransaction.requiringNew().run(() -> JobEntity.<JobEntity>findById(job.id).status = "DEAD");
+        checks.handle(fixtures.pendingJob(JobTypes.CHECK_PAYMENT, renewal.id));
+        PaymentChargeEntity abandoned = chargesOf(renewal.id).getFirst();
+        assertThat(abandoned.status).isEqualTo(PaymentChargeEntity.Status.CANCELED);
+
+        wompi.put(Transaction.of("12239579-" + abandoned.id, abandoned.reference, "APPROVED", renewal.totalCents));
+        checks.handle(fixtures.pendingJob(JobTypes.CHECK_PAYMENT, renewal.id));
+
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.APPROVED);
+    }
+
+    @Test
+    void anAttemptLeavesTheCardAloneWhileTheOrdersCheckoutIsPaying() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        wompi.put(Transaction.of("12239580-" + renewal.id, renewal.reference, "PENDING", renewal.totalCents));
+
+        charges.handle(jobOf(chargesOf(renewal.id).getFirst().id));
+
+        assertThat(wompi.charges()).isEmpty();
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.CANCELED);
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PENDING);
+    }
+
+    @Test
     void aChargeWompiRefusesFailsAndIsTriedAgain() {
         UUID accountId = subscribed();
         fixtures.card(accountId, sourceId());

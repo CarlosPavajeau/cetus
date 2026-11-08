@@ -60,6 +60,9 @@ public class Subscriptions {
     @Inject
     AutoCharge autoCharge;
 
+    @Inject
+    Reversals reversals;
+
     /** How long a renewal waits to be paid before the subscription is canceled. */
     @ConfigProperty(name = "cetus.billing.subscription-grace")
     Duration grace;
@@ -106,7 +109,7 @@ public class Subscriptions {
         // Two subscriptions paid at once: the second waits here and finds the first instead of failing the payment.
         ledger.lock(order.accountId);
         if (SubscriptionEntity.lockCurrent(order.accountId).isPresent()) {
-            PaymentSettlement.review(
+            reversals.refundUndelivered(
                     order, "La cuenta ya tenía una suscripción al pagarse la orden de %s".formatted(plan.name));
             return;
         }
@@ -137,7 +140,7 @@ public class Subscriptions {
                 SubscriptionEntity.lock(period.subscriptionId).orElseThrow();
         SubscriptionPeriodEntity.getEntityManager().refresh(period, LockModeType.PESSIMISTIC_WRITE);
         if (subscription.status == SubscriptionEntity.Status.CANCELED) {
-            PaymentSettlement.review(
+            reversals.refundUndelivered(
                     order, "Se pagó la renovación de una suscripción ya cancelada; el periodo no se otorgó");
             return;
         }

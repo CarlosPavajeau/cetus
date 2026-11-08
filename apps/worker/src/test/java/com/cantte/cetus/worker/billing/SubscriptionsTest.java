@@ -17,6 +17,7 @@ import com.cantte.cetus.persistence.entity.CreditMovementEntity;
 import com.cantte.cetus.persistence.entity.CreditReservationEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
@@ -203,11 +204,13 @@ class SubscriptionsTest {
         assertThat(notices(accountId, NotificationKind.ACCOUNT_DEBT)).hasSize(1);
         assertThat(renewal.status).isEqualTo(BillingOrderEntity.Status.CANCELED);
 
-        assertThat(settlement.apply(approved(renewal))).isEqualTo(Outcome.REVIEW);
+        assertThat(settlement.apply(approved(renewal))).isEqualTo(Outcome.RETURNED);
         BillingOrderEntity late = QuarkusTransaction.requiringNew()
                 .call(() -> BillingOrderEntity.<BillingOrderEntity>findById(renewal.id));
         assertThat(late.status).isEqualTo(BillingOrderEntity.Status.CANCELED);
-        assertThat(late.reviewReason).contains("CANCELED");
+        assertThat(reversalsOf(renewal.id))
+                .singleElement()
+                .satisfies(returned -> assertThat(returned.kind).isEqualTo(PaymentReversalEntity.Kind.RETURN));
     }
 
     @Test
@@ -337,21 +340,24 @@ class SubscriptionsTest {
     }
 
     @Test
-    void aSecondSubscriptionPaidForTheSameAccountIsLeftForReview() {
+    void aSecondSubscriptionPaidForTheSameAccountIsRefunded() {
         UUID accountId = subscribed("INICIAL");
         BillingOrderEntity another = fixtures.planOrder(accountId, "ESCALA");
 
         assertThat(settlement.apply(approved(another))).isEqualTo(Outcome.PAID);
 
-        assertThat(QuarkusTransaction.requiringNew()
-                        .call(() -> BillingOrderEntity.<BillingOrderEntity>findById(another.id).reviewReason))
-                .contains("ya tenía una suscripción");
+        assertThat(reversalsOf(another.id)).singleElement().satisfies(refund -> {
+            assertThat(refund.kind).isEqualTo(PaymentReversalEntity.Kind.REFUND);
+            assertThat(refund.mode).isEqualTo(PaymentReversalEntity.Mode.WOMPI);
+            assertThat(refund.amountCents).isEqualTo(another.totalCents);
+            assertThat(refund.reason).contains("ya tenía una suscripción");
+        });
         assertThat(subscriptionOf(accountId).planVersionId)
                 .isEqualTo(QuarkusTransaction.requiringNew().call(() -> currentVersion("INICIAL").id));
     }
 
     @Test
-    void twoSubscriptionsPaidAtOnceStartOneAndLeaveTheOtherForReview() throws Exception {
+    void twoSubscriptionsPaidAtOnceStartOneAndRefundTheOther() throws Exception {
         UUID accountId = QuarkusTransaction.requiringNew()
                 .call(() -> DocumentEntity.<DocumentEntity>findById(fixtures.invoice()).accountId);
         fixtures.billingProfile(accountId);
@@ -365,12 +371,11 @@ class SubscriptionsTest {
                 .containsOnly(Outcome.PAID);
         assertThat(QuarkusTransaction.requiringNew().call(() -> SubscriptionEntity.count("accountId", accountId)))
                 .isEqualTo(1);
-        assertThat(QuarkusTransaction.requiringNew()
-                        .call(() ->
-                                BillingOrderEntity.<BillingOrderEntity>list("id in ?1", List.of(first.id, second.id))))
-                .filteredOn(order -> order.reviewReason != null)
+        assertThat(List.of(first.id, second.id))
+                .filteredOn(order -> !reversalsOf(order).isEmpty())
                 .singleElement()
-                .satisfies(order -> assertThat(order.reviewReason).contains("ya tenía una suscripción"));
+                .satisfies(order ->
+                        assertThat(reversalsOf(order).getFirst().reason).contains("ya tenía una suscripción"));
     }
 
     @Test
@@ -512,6 +517,10 @@ class SubscriptionsTest {
                         "accountId = ?1 and kind = ?2 order by createdAt, id",
                         accountId,
                         BillingOrderEntity.Kind.RENEWAL));
+    }
+
+    private static List<PaymentReversalEntity> reversalsOf(UUID orderId) {
+        return QuarkusTransaction.requiringNew().call(() -> PaymentReversalEntity.listByOrder(orderId));
     }
 
     private static List<BillingOrderItemEntity> itemsOf(UUID orderId) {

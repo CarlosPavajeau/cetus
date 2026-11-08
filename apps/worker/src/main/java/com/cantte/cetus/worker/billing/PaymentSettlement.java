@@ -40,6 +40,8 @@ public class PaymentSettlement {
         RECORDED,
         /** The payment of a paid order was voided with no refund to explain it: applied as a chargeback. */
         CHARGED_BACK,
+        /** An approved payment the order could not take (canceled, or paid by another): given back through Wompi. */
+        RETURNED,
         /** No order has the reference: another merchant integration or a test payment. */
         UNKNOWN_ORDER
     }
@@ -123,14 +125,21 @@ public class PaymentSettlement {
             if (!paidByAnother) {
                 return Outcome.ALREADY_PAID;
             }
-            review(
+            return giveBack(
                     order,
+                    payment,
                     refunded
-                            ? "Wompi aprobó la transacción %s de una orden ya devuelta: un pago nuevo sin créditos"
+                            ? "Wompi aprobó la transacción %s de una orden ya devuelta"
                                     .formatted(payment.providerTransactionId)
                             : "Wompi aprobó la transacción %s de una orden que otra ya pagó: el cliente pagó dos veces"
                                     .formatted(payment.providerTransactionId));
-            return Outcome.REVIEW;
+        }
+        if (order.status != BillingOrderEntity.Status.PENDING && order.status != BillingOrderEntity.Status.EXPIRED) {
+            return giveBack(
+                    order,
+                    payment,
+                    "Wompi aprobó la transacción %s de una orden %s"
+                            .formatted(payment.providerTransactionId, order.status));
         }
         if (payment.amountCents != order.totalCents || !payment.currency.equals(order.currency)) {
             review(
@@ -142,13 +151,6 @@ public class PaymentSettlement {
                                     payment.currency,
                                     order.totalCents,
                                     order.currency));
-            return Outcome.REVIEW;
-        }
-        if (order.status != BillingOrderEntity.Status.PENDING && order.status != BillingOrderEntity.Status.EXPIRED) {
-            review(
-                    order,
-                    "Wompi aprobó la transacción %s de una orden %s"
-                            .formatted(payment.providerTransactionId, order.status));
             return Outcome.REVIEW;
         }
         order.status = BillingOrderEntity.Status.PAID;
@@ -167,6 +169,12 @@ public class PaymentSettlement {
                         "totalCents", order.totalCents));
         orderPaid.fire(new OrderPaid(order.id, order.accountId));
         return Outcome.PAID;
+    }
+
+    /** Gives the payment back through Wompi; one already given back is left as it is. */
+    private Outcome giveBack(BillingOrderEntity order, PaymentTransactionEntity payment, String reason) {
+        reversals.giveBack(order, payment.providerTransactionId, payment.amountCents, reason);
+        return Outcome.RETURNED;
     }
 
     /** The first reason stays: a later one is logged, and the person reviewing sees every transaction. */

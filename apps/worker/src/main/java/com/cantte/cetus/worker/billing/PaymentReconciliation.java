@@ -67,7 +67,10 @@ public class PaymentReconciliation {
         List<UUID> orders = em.createNativeQuery("""
                         SELECT o.id FROM billing.billing_orders o
                         WHERE ((o.status = 'PENDING' AND o.kind <> 'DEBT' AND o.created_at < :createdBefore)
-                               OR (o.status = 'EXPIRED' AND o.expires_at > :expiredAfter))
+                               OR (o.status = 'EXPIRED' AND o.expires_at > :expiredAfter)
+                               OR (o.status = 'CANCELED' AND o.updated_at > :expiredAfter
+                                   AND EXISTS (SELECT 1 FROM billing.payment_transactions t
+                                               WHERE t.order_id = o.id AND t.status = 'PENDING')))
                           AND NOT EXISTS (SELECT 1 FROM billing.jobs j
                                           WHERE j.reference_id = o.id AND j.job_type = :type
                                             AND j.status IN ('PENDING', 'RUNNING'))

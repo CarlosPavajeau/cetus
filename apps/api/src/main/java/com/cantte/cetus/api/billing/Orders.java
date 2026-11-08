@@ -233,7 +233,10 @@ public class Orders {
                 .toList();
     }
 
-    /** The checkout only while the order can still be paid; signing again gives the same parameters. */
+    /**
+     * The checkout only while the order can still be paid and no charge to the card waits for Wompi's answer, so the
+     * order is not paid twice; signing again gives the same parameters.
+     */
     private OrderView view(
             BillingOrderEntity order,
             List<BillingOrderItemEntity> items,
@@ -245,6 +248,7 @@ public class Orders {
         OffsetDateTime checkoutExpiresAt = order.expiresAt == null ? now.plus(orderTtl) : order.expiresAt;
         Optional<CheckoutView> checkout = payments.gateway()
                 .filter(g -> order.isPayable(now))
+                .filter(g -> charge == null || charge.status() != PaymentChargeEntity.Status.SUBMITTED)
                 .map(g -> CheckoutView.from(g.checkout(new CheckoutRequest(
                         order.reference,
                         order.totalCents,
