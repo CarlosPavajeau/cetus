@@ -119,11 +119,13 @@ public class PaymentSettlement {
         // either, and an approval of any other is a new payment.
         if (order.status == BillingOrderEntity.Status.PAID || order.status == BillingOrderEntity.Status.REFUNDED) {
             boolean refunded = order.status == BillingOrderEntity.Status.REFUNDED;
-            // Wompi keeps a returned payment APPROVED too: it never paid the order.
+            // Only one of the order's amount can have paid it, and Wompi keeps a returned payment APPROVED too.
             boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
                     .anyMatch(other -> !other.id.equals(payment.id)
                             && (other.status == PaymentTransactionEntity.Status.APPROVED
                                     || refunded && other.status == PaymentTransactionEntity.Status.VOIDED)
+                            && other.amountCents == order.totalCents
+                            && other.currency.equals(order.currency)
                             && PaymentReversalEntity.findReturn(other.providerTransactionId)
                                     .isEmpty());
             if (!paidByAnother) {

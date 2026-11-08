@@ -185,6 +185,25 @@ class PaymentSettlementTest {
     }
 
     @Test
+    void thePaymentThatPaidIsNotGivenBackForAnEarlierOneOfAnotherAmount() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        String underpaid = newTransactionId();
+        String paying = newTransactionId();
+
+        assertThat(settlement.apply(transaction(underpaid, order.reference, PaymentStatus.APPROVED, 100)))
+                .isEqualTo(Outcome.REVIEW);
+        assertThat(settlement.apply(transaction(paying, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.PAID);
+        assertThat(settlement.apply(transaction(paying, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.ALREADY_PAID);
+
+        assertThat(QuarkusTransaction.requiringNew().call(() -> PaymentReversalEntity.findReturn(paying)))
+                .isEmpty();
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+    }
+
+    @Test
     void aSecondApprovedPaymentIsGivenBackOnce() {
         BillingOrderEntity order =
                 fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
