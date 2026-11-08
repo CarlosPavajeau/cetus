@@ -9,13 +9,17 @@ import com.cantte.cetus.webhooks.WebhookPublisher;
 import com.cantte.cetus.webhooks.WebhookPublisher.DeliveryInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.jboss.logging.Logger;
 
 /** Short transactions that track the delivery of a document to its customer. */
 @ApplicationScoped
 public class DeliveryRecorder {
+
+    private static final Logger LOG = Logger.getLogger(DeliveryRecorder.class);
 
     @Inject
     WebhookPublisher webhooks;
@@ -55,13 +59,33 @@ public class DeliveryRecorder {
         publishFailure(delivery);
     }
 
+    /**
+     * Records that the provider took the email. Only a pending delivery moves: one another run already resolved
+     * keeps its status, but still gets the message id, so the provider's events about the email find it.
+     *
+     * @return whether the delivery moved to SENT
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void sent(UUID deliveryId, String providerMessageId) {
-        DocumentDeliveryEntity delivery = DocumentDeliveryEntity.findById(deliveryId);
-        delivery.status = Status.SENT;
-        delivery.providerMessageId = providerMessageId;
-        delivery.sentAt = OffsetDateTime.now();
-        delivery.error = null;
+    public boolean sent(UUID deliveryId, String providerMessageId) {
+        OffsetDateTime now = OffsetDateTime.now();
+        boolean moved = DocumentDeliveryEntity.update(
+                        "status = ?1, providerMessageId = ?2, sentAt = ?3, updatedAt = ?3, error = null"
+                                + " where id = ?4 and status = ?5",
+                        Status.SENT,
+                        providerMessageId,
+                        now,
+                        deliveryId,
+                        Status.PENDING)
+                > 0;
+        if (!moved) {
+            DocumentDeliveryEntity.update(
+                    "providerMessageId = ?1, updatedAt = ?2 where id = ?3 and providerMessageId is null",
+                    providerMessageId,
+                    now,
+                    deliveryId);
+            LOG.warnf("Delivery %s was already resolved when its email %s went out", deliveryId, providerMessageId);
+        }
+        return moved;
     }
 
     /** Records the error of a failed attempt; the delivery stays pending for the next one. */
@@ -97,8 +121,9 @@ public class DeliveryRecorder {
         resolve(deliveryId, Status.SKIPPED, reason);
     }
 
+    /** Locked, so a run marking it sent at the same time is not overwritten. */
     private void resolve(UUID deliveryId, Status status, String error) {
-        DocumentDeliveryEntity delivery = DocumentDeliveryEntity.findById(deliveryId);
+        DocumentDeliveryEntity delivery = DocumentDeliveryEntity.findById(deliveryId, LockModeType.PESSIMISTIC_WRITE);
         if (delivery.status != Status.PENDING) {
             return;
         }
@@ -119,13 +144,16 @@ public class DeliveryRecorder {
         return DocumentDeliveryEntity.count("documentId = ?1 and status <> ?2", documentId, Status.PENDING) > 0;
     }
 
+    /** Two runs at once end up on the same row: the index allows one pending delivery per document. */
     private static DocumentDeliveryEntity pendingOrNew(UUID documentId) {
-        return DocumentDeliveryEntity.findPending(documentId).orElseGet(() -> {
-            DocumentDeliveryEntity created = new DocumentDeliveryEntity();
-            created.id = Ids.newId();
-            created.documentId = documentId;
-            created.persist();
-            return created;
-        });
+        DocumentDeliveryEntity.getEntityManager()
+                .createNativeQuery("""
+                        INSERT INTO billing.document_deliveries (id, document_id) VALUES (:id, :document)
+                        ON CONFLICT (document_id) WHERE status = 'PENDING' DO NOTHING
+                        """)
+                .setParameter("id", Ids.newId())
+                .setParameter("document", documentId)
+                .executeUpdate();
+        return DocumentDeliveryEntity.lockPending(documentId).orElseThrow();
     }
 }

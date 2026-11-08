@@ -395,6 +395,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/inbound-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Failed */
+        get: operations["AdminInboundEventResource_failed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbound-events/{id}/requeue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Requeue */
+        post: operations["AdminInboundEventResource_requeue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/incidents": {
         parameters: {
             query?: never;
@@ -2406,7 +2440,7 @@ export interface components {
             size: number;
         };
         /** @enum {string} */
-        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "DOCUMENT_LATE_VERDICT" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED" | "BILLING_ORDER_REFUND_REQUESTED" | "BILLING_ORDER_REFUND_RESOLVED" | "BILLING_ORDER_REFUNDED" | "BILLING_ORDER_CHARGEBACK" | "BILLING_ORDER_DEBT_WAIVED" | "STATUS_INCIDENT_OPENED" | "STATUS_INCIDENT_UPDATED" | "STATUS_INCIDENT_RESOLVED";
+        AuditAction: "ACCOUNT_CREATED" | "API_KEY_CREATED" | "API_KEY_REVOKED" | "ISSUER_CREATED" | "ISSUER_UPDATED" | "SOFTWARE_CREDENTIALS_SET" | "CERTIFICATE_UPLOADED" | "NUMBERING_RANGE_ADDED" | "TECHNICAL_KEY_REQUESTED_FROM_DIAN" | "ISSUER_STATUS_CHANGED" | "ISSUER_PROMOTED" | "WEBHOOK_ENDPOINT_CREATED" | "WEBHOOK_ENDPOINT_DISABLED" | "WEBHOOK_ENDPOINT_ENABLED" | "WEBHOOK_DELIVERY_RETRIED" | "INVOICE_ISSUED" | "CREDIT_NOTE_ISSUED" | "DEBIT_NOTE_ISSUED" | "DOCUMENT_RESENT" | "ACCOUNT_SUSPENDED" | "ACCOUNT_REACTIVATED" | "ACCOUNT_PLAN_CHANGED" | "USER_BANNED" | "USER_UNBANNED" | "IMPERSONATION_STARTED" | "IMPERSONATION_ENDED" | "CERTIFICATE_UPLOAD_LINK_CREATED" | "CONTACT_CHANGE_REQUESTED" | "CONTACT_CHANGE_CANCELED" | "CONTACT_VERIFIED" | "SUPPORT_TICKET_CREATED" | "SUPPORT_TICKET_STATUS_CHANGED" | "PLAN_CREATED" | "PLAN_VERSION_ADDED" | "BILLING_PROFILE_UPDATED" | "BILLING_ORDER_CREATED" | "BILLING_ORDER_PAID" | "CREDITS_GRANTED" | "CREDITS_ADJUSTED" | "DOCUMENT_CREDIT_RELEASED" | "DOCUMENT_LATE_VERDICT" | "SUBSCRIPTION_STARTED" | "SUBSCRIPTION_OVERAGE_LIMIT_CHANGED" | "SUBSCRIPTION_PLAN_SCHEDULED" | "SUBSCRIPTION_CANCEL_SCHEDULED" | "SUBSCRIPTION_CANCEL_UNDONE" | "SUBSCRIPTION_CANCELED" | "PAYMENT_METHOD_SAVED" | "PAYMENT_METHOD_REMOVED" | "BILLING_ORDER_CHARGE_REQUESTED" | "BILLING_ORDER_REFUND_REQUESTED" | "BILLING_ORDER_REFUND_RESOLVED" | "BILLING_ORDER_REFUNDED" | "BILLING_ORDER_CHARGEBACK" | "BILLING_ORDER_DEBT_WAIVED" | "STATUS_INCIDENT_OPENED" | "STATUS_INCIDENT_UPDATED" | "STATUS_INCIDENT_RESOLVED" | "INBOUND_EVENT_REQUEUED";
         AuditEntry: {
             /** Format: int64 */
             id: number;
@@ -3328,6 +3362,17 @@ export interface components {
             reason: string;
             expiresAt: components["schemas"]["OffsetDateTime"];
         };
+        InboundEventView: {
+            id: components["schemas"]["UUID"];
+            provider: components["schemas"]["Provider"];
+            eventType: string;
+            status: components["schemas"]["Status6"];
+            /** Format: int32 */
+            attempts: number;
+            error: string | null;
+            receivedAt: components["schemas"]["OffsetDateTime"];
+            processedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+        };
         /** @enum {string} */
         IncidentImpact: "DEGRADED" | "OUTAGE";
         IncidentRequest: {
@@ -3607,6 +3652,8 @@ export interface components {
             /** @description GetNumberingRange outcome; invoice ranges only */
             verificationStatus: ((string | components["schemas"]["VerificationStatus"] | null) | null) | components["schemas"]["VerificationStatus"] | null;
             verifiedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            /** @description When the verification being waited for, or the last one, was asked */
+            verificationRequestedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description What differs from the DIAN, or why it could not be checked */
             verificationError: string | null;
             /** @description Whether the range has its technical key; never the key itself */
@@ -3975,6 +4022,8 @@ export interface components {
             /** @description Cuándo cambió por última vez. */
             updatedAt: components["schemas"]["OffsetDateTime"];
         };
+        /** @enum {string} */
+        Provider: "WOMPI" | "RESEND";
         /** @description Un emisor de la cuenta en el ambiente de la llave. */
         PublicIssuerView: {
             /** @description Identificador del emisor; es el `issuerId` de los documentos. */
@@ -4216,9 +4265,11 @@ export interface components {
         /** @enum {string} */
         Status5: "PENDING" | "APPROVED" | "DECLINED" | "VOIDED" | "ERROR";
         /** @enum {string} */
-        Status6: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        Status6: "RECEIVED" | "PROCESSED" | "FAILED" | "IGNORED";
         /** @enum {string} */
-        Status7: "ACTIVE" | "DISABLED";
+        Status7: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+        /** @enum {string} */
+        Status8: "ACTIVE" | "DISABLED";
         StatusChangeRequest: {
             reason: string;
         };
@@ -4462,7 +4513,7 @@ export interface components {
             eventId: components["schemas"]["UUID"];
             eventType: string;
             documentId: components["schemas"]["UUID"];
-            status: components["schemas"]["Status6"];
+            status: components["schemas"]["Status7"];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
@@ -4481,7 +4532,7 @@ export interface components {
             environment: components["schemas"]["Environment"];
             /** @description Empty means all event types */
             eventTypes: string[];
-            status: components["schemas"]["Status7"];
+            status: components["schemas"]["Status8"];
             disabledAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description AUTOMATIC when Cetus disabled it after failing for days */
             disabledReason: ((string | components["schemas"]["DisabledReason"] | null) | null) | components["schemas"]["DisabledReason"] | null;
@@ -6167,6 +6218,98 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminInboundEventResource_failed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboundEventView"][];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    AdminInboundEventResource_requeue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboundEventView"];
+                };
+            };
+            /** @description Not Authorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -134,7 +134,10 @@ public class ProcessDocumentHandler implements JobHandler {
         boolean testSet = ctx.environment() == Environment.TEST && ctx.testSetId() != null;
 
         jobContext.ensureOwned();
-        if (!testSet && ctx.lastSendUnanswered() && ctx.existingCufe() != null && alreadyRegistered(ctx, dian, keys)) {
+        if (!testSet
+                && ctx.lastSendUnanswered()
+                && ctx.existingCufe() != null
+                && registered(ctx, dian, keys, ctx.existingCufe())) {
             return;
         }
 
@@ -157,7 +160,7 @@ public class ProcessDocumentHandler implements JobHandler {
         if (testSet) {
             sendTestSet(ctx, dian, keys, zipName, zip);
         } else {
-            sendSync(ctx, dian, keys, zipName, zip);
+            sendSync(ctx, dian, keys, zipName, zip, built.uniqueCode());
         }
     }
 
@@ -186,7 +189,8 @@ public class ProcessDocumentHandler implements JobHandler {
         return XmlSupport.serialize(document);
     }
 
-    private void sendSync(ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String zipName, byte[] zip) {
+    private void sendSync(
+            ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String zipName, byte[] zip, String cufe) {
         long start = System.currentTimeMillis();
         DianResponse response;
         try {
@@ -211,6 +215,14 @@ public class ProcessDocumentHandler implements JobHandler {
                 response,
                 response.errors(),
                 System.currentTimeMillis() - start);
+        if (response.processedBefore()) {
+            // An earlier send, by a run that lost the job while waiting for the DIAN, registered the document: the
+            // verdict is that send's, not this refusal.
+            if (registered(ctx, dian, keys, cufe)) {
+                return;
+            }
+            throw new IllegalStateException("The DIAN processed the document before but GetStatus has no verdict yet");
+        }
         storeResponse(ctx, response);
         recorder.completed(ctx.documentId(), response);
         LOG.infof(
@@ -250,9 +262,10 @@ public class ProcessDocumentHandler implements JobHandler {
         recorder.submitted(ctx.documentId(), upload.zipKey());
     }
 
-    private boolean alreadyRegistered(ProcessingContext ctx, DianGateway dian, KeyMaterial keys) {
-        DianResponse status = dian.getStatus(ctx.existingCufe(), keys);
-        recorder.submission(ctx.documentId(), "GetStatus", ctx.existingCufe(), false, status, status.errors(), 0);
+    /** Records the DIAN's verdict on the document with this CUFE, if it has an accepted one. */
+    private boolean registered(ProcessingContext ctx, DianGateway dian, KeyMaterial keys, String cufe) {
+        DianResponse status = dian.getStatus(cufe, keys);
+        recorder.submission(ctx.documentId(), "GetStatus", cufe, false, status, status.errors(), 0);
         if (status.valid()) {
             storeResponse(ctx, status);
             recorder.completed(ctx.documentId(), status);

@@ -7,6 +7,7 @@ import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity.Status;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -102,13 +103,21 @@ public class NotificationRecorder {
         return Optional.of(new VerificationLink(token, holder.pendingTokenHash, email));
     }
 
+    /**
+     * Only a pending notice moves: one another run already resolved keeps its status.
+     *
+     * @return whether the notice moved to SENT
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void sent(UUID id, List<String> recipients) {
-        NotificationEntity notification = NotificationEntity.findById(id);
-        notification.status = Status.SENT;
-        notification.recipients = recipients.toArray(String[]::new);
-        notification.error = null;
-        notification.sentAt = OffsetDateTime.now();
+    public boolean sent(UUID id, List<String> recipients) {
+        return NotificationEntity.update(
+                        "status = ?1, recipients = ?2, error = null, sentAt = ?3 where id = ?4 and status = ?5",
+                        Status.SENT,
+                        recipients.toArray(String[]::new),
+                        OffsetDateTime.now(),
+                        id,
+                        Status.PENDING)
+                > 0;
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -122,8 +131,9 @@ public class NotificationRecorder {
         resolve(id, Status.FAILED, reason);
     }
 
+    /** Locked, so a run marking it sent at the same time is not overwritten. */
     private static void resolve(UUID id, Status status, String reason) {
-        NotificationEntity notification = NotificationEntity.findById(id);
+        NotificationEntity notification = NotificationEntity.findById(id, LockModeType.PESSIMISTIC_WRITE);
         if (notification != null && notification.status == Status.PENDING) {
             notification.status = status;
             notification.error = reason;

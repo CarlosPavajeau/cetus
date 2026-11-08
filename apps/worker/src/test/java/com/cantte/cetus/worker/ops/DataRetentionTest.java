@@ -73,6 +73,7 @@ class DataRetentionTest {
         UUID oldProcessed = inboundEvent("PROCESSED", now.minusDays(31));
         UUID oldIgnored = inboundEvent("IGNORED", now.minusDays(31));
         UUID oldFailed = inboundEvent("FAILED", now.minusDays(31));
+        UUID veryOldFailed = inboundEvent("FAILED", now.minusDays(61));
         UUID recentProcessed = inboundEvent("PROCESSED", now.minusDays(29));
 
         retention.run();
@@ -82,7 +83,10 @@ class DataRetentionTest {
         assertThat(idempotencyKeys(account)).containsExactly("valid");
         assertThat(existing("jobs", List.of(oldDone, recentDone, oldDead, oldPending)))
                 .containsExactlyInAnyOrder(recentDone, oldDead, oldPending);
-        assertThat(existing("inbound_webhook_events", List.of(oldProcessed, oldIgnored, oldFailed, recentProcessed)))
+        // A failed event stays twice as long, for a person to look at and queue again.
+        assertThat(existing(
+                        "inbound_webhook_events",
+                        List.of(oldProcessed, oldIgnored, oldFailed, veryOldFailed, recentProcessed)))
                 .containsExactlyInAnyOrder(oldFailed, recentProcessed);
     }
 

@@ -246,7 +246,7 @@ function DeliveryRow({
         </span>
       </TableCell>
       <TableCell className="pr-4">
-        {manage && delivery.status !== "PENDING" && (
+        {manage && (delivery.status === "FAILED" || delivery.status === "CANCELED") && (
           <RetryDelivery endpoint={endpoint} delivery={delivery} />
         )}
       </TableCell>

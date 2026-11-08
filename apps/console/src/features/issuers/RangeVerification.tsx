@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip
 import type { IssuerDetail, NumberingRange } from "~/lib/api/types";
 
 import { requestDianTechnicalKey, verifyRange } from "./server";
+import { pendingVerification } from "./verification";
 
 type Status = NonNullable<NumberingRange["verificationStatus"]>;
 
@@ -69,24 +70,36 @@ export function RangeVerification({
     return <span className="text-muted-foreground">No aplica</span>;
   }
   const status = range.verificationStatus;
+  const pending = pendingVerification(range);
+  const unanswered = pending === "unanswered" || pending === "askAgain";
   const failed = status === "MISMATCH" || status === "ERROR";
-  const badge = (
+  const badge = unanswered ? (
+    <StatusBadge status="warning">Sin respuesta</StatusBadge>
+  ) : (
     <StatusBadge status={status ? badgeStatus[status] : "idle"}>
       {status ? label[status] : "Sin consultar"}
     </StatusBadge>
   );
+  const hint = unanswered
+    ? pending === "askAgain"
+      ? "La DIAN no respondió. Puedes consultarla de nuevo."
+      : "La DIAN no ha respondido. Si no responde, podrás consultarla de nuevo en unos minutos."
+    : failed
+      ? range.verificationError
+      : null;
+  const canAskAgain = status !== "PENDING" ? status !== "VERIFIED" : pending === "askAgain";
 
   return (
     <div className="flex items-center gap-1">
-      {failed && range.verificationError ? (
+      {hint ? (
         <Tooltip>
           <TooltipTrigger render={<span className="w-fit cursor-help" />}>{badge}</TooltipTrigger>
-          <TooltipContent className="max-w-72">{range.verificationError}</TooltipContent>
+          <TooltipContent className="max-w-72">{hint}</TooltipContent>
         </Tooltip>
       ) : (
         badge
       )}
-      {!readOnly && status !== "PENDING" && status !== "VERIFIED" && (
+      {!readOnly && canAskAgain && (
         <Button
           variant="ghost"
           size="icon-xs"

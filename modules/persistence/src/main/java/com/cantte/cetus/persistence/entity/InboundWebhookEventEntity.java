@@ -53,6 +53,9 @@ public class InboundWebhookEventEntity extends PanacheEntityBase {
 
     public int attempts;
 
+    /** Bumped when the event is queued again, so a run of an earlier generation never resolves it. */
+    public int generation;
+
     public String error;
 
     @Column(name = "received_at", insertable = false, updatable = false)

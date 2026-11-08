@@ -67,6 +67,10 @@ public class PaymentTransactionEntity extends PanacheEntityBase {
     @Column(name = "finalized_at")
     public OffsetDateTime finalizedAt;
 
+    /** A void whose chargeback waits for a live refund of the order to end. */
+    @Column(name = "chargeback_waiting")
+    public boolean chargebackWaiting;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     public OffsetDateTime createdAt;
 

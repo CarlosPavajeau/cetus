@@ -19,14 +19,19 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * What every request reads before it does anything: its API key, and its account's status and request
- * limits, found by ID or by organization. Changes reach this replica once committed; other replicas see them
- * within {@link #TTL} until a shared store backs these caches. Loads run in their own transaction, so a
- * caller's uncommitted change is never cached.
+ * limits, found by ID or by organization. A revoked key or an account's new status reaches every replica once
+ * committed: this one at once, the others through a NOTIFY on {@value #CHANNEL} ({@link AccessListener}). Other
+ * changes, such as a subscription the worker started, show within {@link #TTL}. Loads run in their own
+ * transaction, so a caller's uncommitted change is never cached.
  */
 @ApplicationScoped
 public class AccessCache {
 
     private static final Duration TTL = Duration.ofSeconds(30);
+
+    static final String CHANNEL = "billing_access";
+    private static final String API_KEY = "api-key:";
+    private static final String ACCOUNT = "account:";
 
     /** lastUsedAt is shown to the minute: refreshing it more often would write the key row on every request. */
     private static final Duration LAST_USED_PRECISION = Duration.ofMinutes(1);
@@ -115,15 +120,38 @@ public class AccessCache {
         });
     }
 
-    /** Call these in the transaction that makes the change: the invalidation waits for its commit. */
+    /** Call these in the transaction that makes the change: the invalidations wait for its commit. */
     public void revoked(ApiKeyEntity key) {
-        afterCommit.run(() -> apiKeys.invalidate(key.keyHash));
+        String payload = API_KEY + key.keyHash;
+        notifyReplicas(payload);
+        afterCommit.run(() -> invalidate(payload));
     }
 
     public void changed(AccountEntity account) {
-        afterCommit.run(() -> {
-            accounts.invalidate(account.id.toString());
-            organizations.invalidate(account.organizationId);
-        });
+        String payload = ACCOUNT + account.id + ":" + account.organizationId;
+        notifyReplicas(payload);
+        afterCommit.run(() -> invalidate(payload));
+    }
+
+    /** Drops what a notification names from this replica's caches; anything else is ignored. */
+    void invalidate(String payload) {
+        if (payload.startsWith(API_KEY)) {
+            apiKeys.invalidate(payload.substring(API_KEY.length()));
+        } else if (payload.startsWith(ACCOUNT)) {
+            String[] ids = payload.substring(ACCOUNT.length()).split(":", 2);
+            accounts.invalidate(ids[0]);
+            if (ids.length == 2) {
+                organizations.invalidate(ids[1]);
+            }
+        }
+    }
+
+    /** Sent on commit, and only then, as Postgres does with NOTIFY. */
+    private static void notifyReplicas(String payload) {
+        AccountEntity.getEntityManager()
+                .createNativeQuery("SELECT pg_notify(:channel, :payload)")
+                .setParameter("channel", CHANNEL)
+                .setParameter("payload", payload)
+                .getSingleResult();
     }
 }

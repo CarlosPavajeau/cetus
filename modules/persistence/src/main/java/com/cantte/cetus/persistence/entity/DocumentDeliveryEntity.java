@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
@@ -92,7 +93,16 @@ public class DocumentDeliveryEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
-    public static Optional<DocumentDeliveryEntity> findByProviderMessageId(String providerMessageId) {
-        return find("providerMessageId", providerMessageId).firstResultOptional();
+    /** The pending delivery, locked; there is at most one per document. */
+    public static Optional<DocumentDeliveryEntity> lockPending(UUID documentId) {
+        return find("documentId = ?1 and status = ?2", documentId, Status.PENDING)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
+    }
+
+    public static Optional<DocumentDeliveryEntity> lockByProviderMessageId(String providerMessageId) {
+        return find("providerMessageId", providerMessageId)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
     }
 }

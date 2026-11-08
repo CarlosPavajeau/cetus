@@ -162,7 +162,9 @@ public class WebhookEndpointResource {
     @Transactional
     @APIResponse(responseCode = "204", description = "No Content")
     public void disable(@PathParam("id") UUID id) {
-        WebhookEndpointEntity endpoint = find(context.accountId(), id);
+        // Locked like an enabling, so the two never interleave.
+        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findForAccountForUpdate(context.accountId(), id)
+                .orElseThrow(() -> new NotFoundException("Webhook endpoint not found"));
         if (endpoint.status == WebhookEndpointEntity.Status.ACTIVE) {
             endpoint.status = WebhookEndpointEntity.Status.DISABLED;
             endpoint.disabledAt = OffsetDateTime.now();
@@ -224,7 +226,10 @@ public class WebhookEndpointResource {
         return new WebhookDeliveryPage(items, next);
     }
 
-    /** Sends the event again, with the same id and body; a delivery already waiting for its job is left alone. */
+    /**
+     * Sends the event again, with the same id and body: only a delivery that failed or was canceled, and no job is
+     * sending. The delivery is locked while its jobs are counted, so two retries at once queue one.
+     */
     @POST
     @Path("/{id}/deliveries/{deliveryId}/retry")
     @Transactional
@@ -234,8 +239,15 @@ public class WebhookEndpointResource {
         if (endpoint.status != WebhookEndpointEntity.Status.ACTIVE) {
             throw new DomainException("endpoint_disabled", "The endpoint is disabled");
         }
-        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findForEndpoint(endpoint.id, deliveryId)
+        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findForEndpointForUpdate(endpoint.id, deliveryId)
                 .orElseThrow(() -> new NotFoundException("Webhook delivery not found"));
+        switch (delivery.status) {
+            case PENDING ->
+                throw new DomainException("delivery_in_progress", "The delivery is already waiting to be sent");
+            case SUCCEEDED ->
+                throw new DomainException("delivery_succeeded", "The endpoint already received the event");
+            case FAILED, CANCELED -> {}
+        }
         long queued = JobEntity.count(
                 "jobType = ?1 and referenceId = ?2 and status in ('PENDING', 'RUNNING')",
                 JobTypes.DELIVER_WEBHOOK,

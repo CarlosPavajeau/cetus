@@ -248,11 +248,19 @@ class WebhookEndpointResourceTest {
         String retry = "/console/webhook-endpoints/" + id + "/deliveries/" + deliveryId + "/retry";
         user.request().post(retry).then().statusCode(422).body("code", equalTo("delivery_in_progress"));
 
+        // Only a delivery that failed or was canceled is sent again.
+        QuarkusTransaction.requiringNew().run(() -> {
+            JobEntity.update(
+                    "status = 'DONE' where jobType = ?1 and referenceId = ?2",
+                    JobTypes.DELIVER_WEBHOOK,
+                    UUID.fromString(deliveryId));
+            WebhookDeliveryEntity.update(
+                    "status = ?1 where id = ?2", WebhookDeliveryEntity.Status.SUCCEEDED, UUID.fromString(deliveryId));
+        });
+        user.request().post(retry).then().statusCode(422).body("code", equalTo("delivery_succeeded"));
         QuarkusTransaction.requiringNew()
-                .run(() -> JobEntity.update(
-                        "status = 'DONE' where jobType = ?1 and referenceId = ?2",
-                        JobTypes.DELIVER_WEBHOOK,
-                        UUID.fromString(deliveryId)));
+                .run(() -> WebhookDeliveryEntity.update(
+                        "status = ?1 where id = ?2", WebhookDeliveryEntity.Status.FAILED, UUID.fromString(deliveryId)));
         user.request().post(retry).then().statusCode(200).body("status", equalTo("PENDING"));
         assertThat(QuarkusTransaction.requiringNew()
                         .call(() -> JobEntity.count(

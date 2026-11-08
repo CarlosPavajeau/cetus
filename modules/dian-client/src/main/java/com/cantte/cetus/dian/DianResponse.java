@@ -20,8 +20,20 @@ public record DianResponse(
         String documentKey,
         String rawXml) {
 
+    private static final Pattern PROCESSED_BEFORE = Pattern.compile("^\\s*Regla:\\s*90\\b");
+
     private static final Pattern TEST_SET_ACCEPTED =
             Pattern.compile("set de prueba con identificador .* se encuentra aceptado", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Whether the DIAN refused this send because it already has the document from an earlier one (rule 90,
+     * "Documento procesado anteriormente"): its verdict is that earlier send's, which GetStatus gives.
+     */
+    public boolean processedBefore() {
+        return !valid
+                && errors != null
+                && errors.stream().anyMatch(e -> PROCESSED_BEFORE.matcher(e).find());
+    }
 
     /**
      * Whether the DIAN refused the document because its test set was already accepted, as in

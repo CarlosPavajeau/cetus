@@ -23,6 +23,11 @@ public class CreditReservationEntity extends PanacheEntityBase {
         GRACE
     }
 
+    /**
+     * RESERVED until the DIAN's verdict: CONFIRMED when it accepts the document, RELEASED when it was not issued.
+     * RELEASED goes on to CONFIRMED only when the DIAN accepts, late, a document Cetus had given up on (see
+     * CreditLedger.confirm): the DIAN's verdict is what counts, so the credit is charged again.
+     */
     public enum Status {
         RESERVED,
         CONFIRMED,

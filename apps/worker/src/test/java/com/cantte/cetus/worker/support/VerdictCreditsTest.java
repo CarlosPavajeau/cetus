@@ -109,6 +109,47 @@ class VerdictCreditsTest {
     }
 
     @Test
+    void aCreditGivenBackToALotPastItsDateDoesNotMakeItActiveAgain() {
+        UUID invoice = live(fixtures.invoice());
+        UUID accountId = accountOf(invoice);
+        CreditGrantEntity lot = grant(accountId, 1, OffsetDateTime.now().plusMonths(1));
+        reserve(accountId, invoice);
+        // Past its date, before the daily expiry reached it.
+        QuarkusTransaction.requiringNew()
+                .run(() -> CreditGrantEntity.<CreditGrantEntity>findById(lot.id).expiresAt =
+                        OffsetDateTime.now().minusSeconds(1));
+
+        recorder.completed(invoice, REJECTED);
+
+        CreditGrantEntity after = lotOf(lot.id);
+        assertThat(after.status).isEqualTo(CreditGrantEntity.Status.EXHAUSTED);
+        assertThat(after.remaining).isZero();
+        assertThat(movementsOf(invoice))
+                .extracting(m -> m.type)
+                .containsExactlyInAnyOrder(
+                        CreditMovementEntity.Type.RESERVE,
+                        CreditMovementEntity.Type.RELEASE,
+                        CreditMovementEntity.Type.EXPIRE);
+        assertThat(sumOfMovements(lot.id)).isZero();
+    }
+
+    @Test
+    void anExpiredLotStaysExpiredWhenItsPaymentGoesBack() {
+        UUID accountId = accountOf(fixtures.invoice());
+        CreditGrantEntity lot = grant(accountId, 3, OffsetDateTime.now().plusMonths(1));
+        QuarkusTransaction.requiringNew().run(() -> {
+            CreditGrantEntity.<CreditGrantEntity>findById(lot.id).expiresAt =
+                    OffsetDateTime.now().minusSeconds(1);
+            ledger.expire(accountId, OffsetDateTime.now());
+        });
+
+        int revoked = QuarkusTransaction.requiringNew().call(() -> ledger.revoke(lot.id, Actor.system(), "Reembolso"));
+
+        assertThat(revoked).isZero();
+        assertThat(lotOf(lot.id).status).isEqualTo(CreditGrantEntity.Status.EXPIRED);
+    }
+
+    @Test
     void aDocumentWhoseJobDiesKeepsItsReservation() {
         UUID invoice = live(fixtures.invoice());
         UUID accountId = accountOf(invoice);

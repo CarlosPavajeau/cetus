@@ -313,6 +313,34 @@ class ProcessDocumentHandlerTest {
     }
 
     @Test
+    void aSendTheDianProcessedBeforeTakesTheVerdictOfTheEarlierOne() {
+        // Another run sent it and lost the job while waiting: the DIAN refuses this send with rule 90.
+        dian.reply(SEND, Reply.fixture("send-bill-sync-processed-before.xml"));
+        dian.reply(STATUS, Reply.fixture("get-status-accepted.xml"));
+        UUID id = fixtures.invoice();
+
+        process(id);
+
+        DocumentEntity doc = document(id);
+        assertThat(doc.status).isEqualTo(DocumentStatus.ACCEPTED);
+        assertThat(artifacts(id)).contains(Kind.APPLICATION_RESPONSE);
+        assertThat(dian.operations()).containsExactly(SEND, STATUS);
+        assertThat(dian.calls().get(1).body()).contains("<wcf:trackId>" + doc.cufe + "</wcf:trackId>");
+    }
+
+    @Test
+    void aSendTheDianProcessedBeforeWithNoVerdictYetIsRetried() {
+        dian.reply(SEND, Reply.fixture("send-bill-sync-processed-before.xml"));
+        dian.reply(STATUS, Reply.fixture("get-status-not-found.xml"));
+        UUID id = fixtures.invoice();
+
+        assertThat(catchThrowable(() -> process(id))).isInstanceOf(IllegalStateException.class);
+
+        assertThat(document(id).status).isEqualTo(DocumentStatus.PROCESSING);
+        assertThat(dian.operations()).containsExactly(SEND, STATUS);
+    }
+
+    @Test
     void afterATimeoutAnUnknownDocumentIsSentAgain() {
         dian.reply(SEND, Reply.late("send-bill-sync-accepted.xml"), Reply.fixture("send-bill-sync-accepted.xml"));
         dian.reply(STATUS, Reply.fixture("get-status-not-found.xml"));

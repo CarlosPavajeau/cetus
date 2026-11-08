@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
@@ -69,8 +70,10 @@ public class WebhookDeliveryEntity extends PanacheEntityBase {
         updatedAt = OffsetDateTime.now();
     }
 
-    public static Optional<WebhookDeliveryEntity> findForEndpoint(UUID endpointId, UUID id) {
-        return find("id = ?1 and endpointId = ?2", id, endpointId).firstResultOptional();
+    public static Optional<WebhookDeliveryEntity> findForEndpointForUpdate(UUID endpointId, UUID id) {
+        return find("id = ?1 and endpointId = ?2", id, endpointId)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
     }
 
     /** Newest first; ids are UUID v7, so {@code beforeId} (exclusive) works as a cursor. */

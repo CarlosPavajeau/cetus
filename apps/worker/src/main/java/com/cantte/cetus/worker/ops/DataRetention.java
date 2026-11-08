@@ -34,8 +34,8 @@ import org.jboss.logging.Logger;
  *     <li>support attachments older than {@code cetus.retention.support-attachments} that no ticket took: the
  *     person uploaded them and never sent the ticket.</li>
  *     <li>provider events (Resend, Wompi) processed or ignored more than
- *     {@code cetus.retention.inbound-webhook-events} ago. Failed ones stay for a person to look at; a payment keeps
- *     its transaction in payment_transactions.</li>
+ *     {@code cetus.retention.inbound-webhook-events} ago, and failed ones twice that long ago: they stay a while
+ *     for a person to look at and queue again. A payment keeps its transaction in payment_transactions.</li>
  * </ul>
  * In batches of {@code cetus.retention.batch-size}, each in its own short transaction, so a large backlog
  * never holds locks or writes a huge transaction. Two replicas running it at once only share the work.
@@ -138,6 +138,13 @@ public class DataRetention {
                         "inbound_webhook_events",
                         "status IN ('PROCESSED', 'IGNORED') AND received_at < :before",
                         now.minus(inboundWebhookEvents)));
+        deleted.merge(
+                "inbound_webhook_events",
+                deleteInBatches(
+                        "inbound_webhook_events",
+                        "status = 'FAILED' AND received_at < :before",
+                        now.minus(inboundWebhookEvents.multipliedBy(2))),
+                Long::sum);
         deleted.put("leads", deleteInBatches("leads", "created_at < :before", now.minus(leads)));
         deleted.put("sandbox_documents", deleteSandboxDocuments(now.minus(sandboxDocuments)));
         deleted.put("support_attachments", deleteUnsentAttachments(now.minus(supportAttachments)));

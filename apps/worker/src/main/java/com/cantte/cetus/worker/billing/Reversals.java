@@ -13,6 +13,7 @@ import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.BillingOrderItemEntity;
 import com.cantte.cetus.persistence.entity.BillingProfileEntity;
 import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
+import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionPeriodEntity;
 import com.cantte.cetus.worker.notifications.Numbers;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,6 +23,7 @@ import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,7 +62,8 @@ public class Reversals {
 
     /**
      * Approves a reversal a person registered (a refund made elsewhere, a chargeback, or a Wompi refund left
-     * unanswered that a person found approved in Wompi's dashboard) and applies it.
+     * unanswered that a person found approved in Wompi's dashboard) and applies it. For one a person found failed,
+     * applies the chargebacks that waited for it.
      *
      * @return whether it was applied now
      */
@@ -70,6 +73,10 @@ public class Reversals {
                 .orElseThrow(() -> new IllegalArgumentException("No reversal " + reversalId));
         BillingOrderEntity order = BillingOrderEntity.lock(found.orderId).orElseThrow();
         PaymentReversalEntity reversal = PaymentReversalEntity.lock(reversalId).orElseThrow();
+        if (reversal.status == PaymentReversalEntity.Status.FAILED) {
+            chargeBackWaiting(order);
+            return false;
+        }
         if (reversal.status != PaymentReversalEntity.Status.REQUESTED
                 || reversal.mode != PaymentReversalEntity.Mode.EXTERNAL) {
             return false;
@@ -83,7 +90,8 @@ public class Reversals {
      * back. Registered and applied as a chargeback of what had not gone back yet.
      *
      * @param order locked
-     * @return the chargeback; empty when the order's money already went back, or a refund of it is on its way
+     * @return the chargeback; empty when the order's money already went back, or a refund of it is on its way: the
+     *     caller then marks the void as waiting, and {@link #chargeBackWaiting} applies it once that refund ends
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public Optional<PaymentReversalEntity> chargeBack(BillingOrderEntity order, String transactionId) {
@@ -104,6 +112,36 @@ public class Reversals {
                 "Wompi anuló la transacción %s de la orden pagada".formatted(transactionId));
         approve(order, reversal, OffsetDateTime.now());
         return Optional.of(reversal);
+    }
+
+    /**
+     * Applies the chargeback that arrived while another reversal of the order was live: the void PaymentSettlement
+     * marked as waiting, unless another approved payment still pays the order (that one went to review when it
+     * arrived). One chargeback takes back all that is left, so there is never a second.
+     *
+     * @param order locked
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public void chargeBackWaiting(BillingOrderEntity order) {
+        if (order.status != BillingOrderEntity.Status.PAID
+                || PaymentReversalEntity.findLive(order.id).isPresent()) {
+            return;
+        }
+        List<PaymentTransactionEntity> payments = PaymentTransactionEntity.listByOrder(order.id);
+        if (payments.stream().anyMatch(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED)) {
+            return;
+        }
+        payments.stream()
+                .filter(payment ->
+                        payment.chargebackWaiting && payment.status == PaymentTransactionEntity.Status.VOIDED)
+                .findFirst()
+                .ifPresent(voided -> {
+                    LOG.infof(
+                            "Order %s: applying the chargeback of transaction %s that waited for a reversal",
+                            order.id, voided.providerTransactionId);
+                    voided.chargebackWaiting = false;
+                    chargeBack(order, voided.providerTransactionId);
+                });
     }
 
     /**
@@ -158,14 +196,16 @@ public class Reversals {
     }
 
     /**
-     * Approves the reversal and applies it to its order; a return is only marked approved.
+     * Approves the reversal and applies it to its order; a return is only marked approved. Then applies the
+     * chargebacks that waited for it.
      *
      * @param order locked, with the reversal
+     * @throws IllegalStateException if the reversal is no longer live: its effects were applied, or it failed
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void approve(BillingOrderEntity order, PaymentReversalEntity reversal, OffsetDateTime now) {
-        if (reversal.status == PaymentReversalEntity.Status.APPROVED) {
-            return;
+        if (!reversal.status.isLive()) {
+            throw new IllegalStateException("Reversal " + reversal.id + " is " + reversal.status + ", not live");
         }
         reversal.status = PaymentReversalEntity.Status.APPROVED;
         reversal.approvedAt = now;
@@ -214,6 +254,9 @@ public class Reversals {
                 "Reversal %s of order %s approved: %d cents back, %d credits revoked",
                 reversal.id, order.id, reversal.amountCents, revoked);
         approved.fire(new ReversalApproved(reversal.id, order.id));
+        if (reversal.kind != PaymentReversalEntity.Kind.CHARGEBACK) {
+            chargeBackWaiting(order);
+        }
     }
 
     private BillingOrderEntity debt(BillingOrderEntity order, PaymentReversalEntity reversal) {

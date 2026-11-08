@@ -158,6 +158,8 @@ public class RefundOrderHandler implements JobHandler {
         if (refund.status().isFailed()) {
             reversal.status = PaymentReversalEntity.Status.FAILED;
             LOG.infof("Refund %s of order %s failed (%s)", reversal.id, order.id, refund.status());
+            PaymentReversalEntity.flush();
+            reversals.chargeBackWaiting(order);
             return Optional.empty();
         }
         if (reversal.providerRefundId == null) {

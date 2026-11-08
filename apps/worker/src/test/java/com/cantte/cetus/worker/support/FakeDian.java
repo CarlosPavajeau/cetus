@@ -77,6 +77,7 @@ public class FakeDian {
 
     private final Map<String, Deque<Reply>> replies = new ConcurrentHashMap<>();
     private final List<Call> calls = new CopyOnWriteArrayList<>();
+    private final Map<String, Runnable> hooks = new ConcurrentHashMap<>();
     private HttpServer server;
 
     @PostConstruct
@@ -97,6 +98,11 @@ public class FakeDian {
         replies.computeIfAbsent(operation, op -> new ArrayDeque<>()).addAll(List.of(queued));
     }
 
+    /** Runs {@code hook} on each call of the operation, before it is answered: something that happens meanwhile. */
+    public void onCall(String operation, Runnable hook) {
+        hooks.put(operation, hook);
+    }
+
     public List<Call> calls() {
         return List.copyOf(calls);
     }
@@ -108,6 +114,7 @@ public class FakeDian {
     public void reset() {
         replies.clear();
         calls.clear();
+        hooks.clear();
     }
 
     private void handle(HttpExchange exchange) throws IOException {
@@ -116,6 +123,10 @@ public class FakeDian {
                 ACTION.matcher(String.valueOf(exchange.getRequestHeaders().getFirst("Content-Type")));
         String operation = action.find() ? action.group(1) : "unknown";
         calls.add(new Call(operation, body));
+        Runnable hook = hooks.get(operation);
+        if (hook != null) {
+            hook.run();
+        }
 
         Deque<Reply> queue = replies.get(operation);
         Reply reply;

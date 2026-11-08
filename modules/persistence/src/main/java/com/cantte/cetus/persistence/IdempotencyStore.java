@@ -12,7 +12,8 @@ import java.util.UUID;
  * Idempotency keys. {@link #begin} must run in the same transaction that creates the resource:
  * if that transaction rolls back, the key disappears with it and the client can retry.
  * A concurrent request with the same key blocks on the insert until the first one finishes. Keys are
- * scoped to an environment, so a key reused in production never replays a simulated or test document.
+ * scoped to an environment, so a key reused in production never replays a simulated or test document. An expired
+ * key is a new one, even before the daily retention deletes it.
  */
 @ApplicationScoped
 public class IdempotencyStore {
@@ -24,7 +25,10 @@ public class IdempotencyStore {
         int inserted = em.createNativeQuery("""
                         INSERT INTO billing.idempotency_keys (account_id, environment, idem_key, request_hash, status)
                         VALUES (:account, :environment, :key, :hash, 'IN_PROGRESS')
-                        ON CONFLICT (account_id, environment, idem_key) DO NOTHING
+                        ON CONFLICT (account_id, environment, idem_key) DO UPDATE
+                        SET request_hash = EXCLUDED.request_hash, status = 'IN_PROGRESS', response_status = NULL,
+                            response_body = NULL, created_at = now(), expires_at = now() + INTERVAL '24 hours'
+                        WHERE idempotency_keys.expires_at <= now()
                         """)
                 .setParameter("account", accountId)
                 .setParameter("environment", environment.name())

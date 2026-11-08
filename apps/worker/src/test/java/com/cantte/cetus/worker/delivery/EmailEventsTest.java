@@ -9,8 +9,10 @@ import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity.Status;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.InboundWebhookEventEntity;
+import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.WebhookEventEntity;
 import com.cantte.cetus.worker.handlers.ProcessWebhookEventHandler;
+import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.FakeDianResource;
 import com.cantte.cetus.worker.support.WorkerFixtures;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,6 +23,8 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -135,12 +139,43 @@ class EmailEventsTest {
     }
 
     @Test
-    void anEventOfAnUnknownEmailIsIgnored() throws Exception {
+    void anEventOfAnEmailNoDeliveryHasYetWaitsForItAWhile() throws Exception {
+        String emailId = "email-" + UUID.randomUUID();
+        UUID event = receive("email.delivered", emailId, null);
+
+        assertThat(catchThrowable(() -> process(event))).isInstanceOf(RetryLater.class);
+        assertThat(eventOf(event).status).isEqualTo(InboundWebhookEventEntity.Status.RECEIVED);
+
+        UUID deliveryId = fixtures.sentDelivery(fixtures.invoice(), emailId);
+        process(event);
+
+        assertThat(deliveryOf(deliveryId).status).isEqualTo(Status.DELIVERED);
+        assertThat(eventOf(event).status).isEqualTo(InboundWebhookEventEntity.Status.PROCESSED);
+    }
+
+    @Test
+    void anEventOfAnUnknownEmailIsIgnoredOnceItWaitedLongEnough() throws Exception {
         UUID event = receive("email.delivered", "email-" + UUID.randomUUID(), null);
+        receivedAgo(event, ProcessWebhookEventHandler.UNMATCHED_WAIT.plusSeconds(1));
 
         process(event);
 
         assertThat(eventOf(event).status).isEqualTo(InboundWebhookEventEntity.Status.IGNORED);
+    }
+
+    @Test
+    void anEventAnotherRunProcessedIsNotMarkedFailed() throws Exception {
+        String emailId = "email-" + UUID.randomUUID();
+        fixtures.sentDelivery(fixtures.invoice(), emailId);
+        UUID event = receive("email.delivered", emailId, null);
+        JobEntity job = fixtures.pendingJob(JobTypes.PROCESS_WEBHOOK_EVENT, event);
+
+        handler.handle(job);
+        handler.onDead(job, "A stale run gave up");
+
+        InboundWebhookEventEntity processed = eventOf(event);
+        assertThat(processed.status).isEqualTo(InboundWebhookEventEntity.Status.PROCESSED);
+        assertThat(processed.error).isNull();
     }
 
     /** Stores the event as the API does, with a fresh svix-id. */
@@ -155,6 +190,15 @@ class EmailEventsTest {
 
     private void process(UUID eventId) throws Exception {
         handler.handle(fixtures.pendingJob(JobTypes.PROCESS_WEBHOOK_EVENT, eventId));
+    }
+
+    private void receivedAgo(UUID eventId, Duration ago) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> em.createNativeQuery(
+                                "UPDATE billing.inbound_webhook_events SET received_at = :at WHERE id = :id")
+                        .setParameter("at", OffsetDateTime.now().minus(ago))
+                        .setParameter("id", eventId)
+                        .executeUpdate());
     }
 
     private void sql(String statement) {

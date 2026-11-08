@@ -18,6 +18,7 @@ import com.cantte.cetus.worker.support.PaymentClients;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -35,7 +36,21 @@ public class ProcessWebhookEventHandler implements JobHandler {
     /** How long events wait for the Wompi keys to be set. */
     private static final Duration UNCONFIGURED_DELAY = Duration.ofMinutes(30);
 
-    record Received(UUID id, InboundWebhookEventEntity.Provider provider, String type, String payload) {}
+    /**
+     * How long an event of an email no delivery has yet keeps trying: Resend can report it before the worker
+     * records the message id it got back.
+     */
+    public static final Duration UNMATCHED_WAIT = Duration.ofMinutes(2);
+
+    private static final Duration UNMATCHED_DELAY = Duration.ofSeconds(20);
+
+    record Received(
+            UUID id,
+            InboundWebhookEventEntity.Provider provider,
+            String type,
+            String payload,
+            OffsetDateTime receivedAt,
+            int generation) {}
 
     private record Result(Status status, String note) {}
 
@@ -61,17 +76,28 @@ public class ProcessWebhookEventHandler implements JobHandler {
         }
         Result result = switch (received.get().provider()) {
             case WOMPI -> wompi(received.get());
-            case RESEND ->
-                emails.apply(received.get().payload())
-                        ? new Result(Status.PROCESSED, null)
-                        : new Result(Status.IGNORED, "No delivery sent the email");
+            case RESEND -> resend(received.get());
         };
-        finish(job.referenceId, result.status(), result.note());
+        // Only this generation's: an admin may have queued the event again since, after this run lost its job.
+        finish(job.referenceId, received.get().generation(), result.status(), result.note());
     }
 
     @Override
     public void onDead(JobEntity job, String reason) {
-        finish(job.referenceId, Status.FAILED, reason);
+        failed(job.referenceId, reason);
+    }
+
+    private Result resend(Received event) throws IOException {
+        return switch (emails.apply(event.payload())) {
+            case APPLIED -> new Result(Status.PROCESSED, null);
+            case UNTRACKED -> new Result(Status.IGNORED, "Not about a delivery");
+            case NO_DELIVERY -> {
+                if (event.receivedAt().plus(UNMATCHED_WAIT).isAfter(OffsetDateTime.now())) {
+                    throw new RetryLater(UNMATCHED_DELAY, "No delivery has the email yet");
+                }
+                yield new Result(Status.IGNORED, "No delivery sent the email");
+            }
+        };
     }
 
     /**
@@ -102,26 +128,45 @@ public class ProcessWebhookEventHandler implements JobHandler {
         };
     }
 
-    /** The event, unless it was already processed; counts the attempt. */
-    private static Optional<Received> start(UUID eventId) {
+    /** The event, unless it was already processed; counts the attempt on the locked row. */
+    static Optional<Received> start(UUID eventId) {
         return QuarkusTransaction.requiringNew().call(() -> {
-            InboundWebhookEventEntity event = InboundWebhookEventEntity.findById(eventId);
+            InboundWebhookEventEntity event =
+                    InboundWebhookEventEntity.findById(eventId, LockModeType.PESSIMISTIC_WRITE);
             if (event == null || event.status != Status.RECEIVED) {
                 return Optional.empty();
             }
             event.attempts++;
-            return Optional.of(new Received(event.id, event.provider, event.eventType, event.payload));
+            return Optional.of(new Received(
+                    event.id, event.provider, event.eventType, event.payload, event.receivedAt, event.generation));
         });
     }
 
-    private static void finish(UUID eventId, Status status, String note) {
-        QuarkusTransaction.requiringNew().run(() -> {
-            InboundWebhookEventEntity event = InboundWebhookEventEntity.findById(eventId);
-            if (event != null) {
-                event.status = status;
-                event.error = note;
-                event.processedAt = OffsetDateTime.now();
-            }
-        });
+    /**
+     * Resolves the event the run started, if it is still waiting in the same generation: one another run already
+     * processed keeps its outcome, and one an admin queued again since is left to its new job.
+     */
+    static void finish(UUID eventId, int generation, Status status, String note) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> InboundWebhookEventEntity.update(
+                        "status = ?1, error = ?2, processedAt = ?3 where id = ?4 and status = ?5 and generation = ?6",
+                        status,
+                        note,
+                        OffsetDateTime.now(),
+                        eventId,
+                        Status.RECEIVED,
+                        generation));
+    }
+
+    /** Called only by the run that holds the job, so it needs no attempt to tell it apart. */
+    private static void failed(UUID eventId, String reason) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> InboundWebhookEventEntity.update(
+                        "status = ?1, error = ?2, processedAt = ?3 where id = ?4 and status = ?5",
+                        Status.FAILED,
+                        reason,
+                        OffsetDateTime.now(),
+                        eventId,
+                        Status.RECEIVED));
     }
 }

@@ -7,6 +7,8 @@ import static org.hamcrest.Matchers.equalTo;
 
 import com.cantte.cetus.api.support.ConsoleFixtures;
 import com.cantte.cetus.api.support.ConsoleUser;
+import io.quarkus.hibernate.orm.panache.Panache;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
@@ -103,6 +105,43 @@ class InvoiceResourceTest {
 
         assertThat(inLive.getString("id")).isNotEqualTo(inTest.getString("id"));
         assertThat(inLive.getString("environment")).isEqualTo("LIVE");
+    }
+
+    @Test
+    void anExpiredIdempotencyKeyStartsAnotherRequest() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        ConsoleFixtures.bootstrap(user, "Expired keys SAS");
+        String issuerId = ConsoleFixtures.onboard(user).issuerId();
+        String apiKey = testKey(user);
+        String idempotencyKey = "order-" + UUID.randomUUID();
+        String first = api(apiKey)
+                .header("Idempotency-Key", idempotencyKey)
+                .body(invoice(issuerId))
+                .post("/v1/invoices")
+                .then()
+                .statusCode(202)
+                .extract()
+                .path("id");
+        // Past its 24 hours, before the daily retention deletes it.
+        QuarkusTransaction.requiringNew()
+                .run(() -> Panache.getEntityManager()
+                        .createNativeQuery(
+                                "UPDATE billing.idempotency_keys SET expires_at = now() - INTERVAL '1 second'"
+                                        + " WHERE idem_key = :key")
+                        .setParameter("key", idempotencyKey)
+                        .executeUpdate());
+
+        String second = api(apiKey)
+                .header("Idempotency-Key", idempotencyKey)
+                .body(invoice(issuerId))
+                .post("/v1/invoices")
+                .then()
+                .statusCode(202)
+                .header("Idempotent-Replayed", (String) null)
+                .extract()
+                .path("id");
+
+        assertThat(second).isNotEqualTo(first);
     }
 
     @Test
