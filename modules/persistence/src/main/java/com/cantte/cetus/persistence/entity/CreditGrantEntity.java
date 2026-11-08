@@ -60,6 +60,10 @@ public class CreditGrantEntity extends PanacheEntityBase {
     @Enumerated(EnumType.STRING)
     public Status status;
 
+    /** When the subscription's carry-over cap expired part of it; null while it never did. */
+    @Column(name = "capped_at")
+    public OffsetDateTime cappedAt;
+
     @Column(name = "created_at", updatable = false)
     public OffsetDateTime createdAt = OffsetDateTime.now();
 

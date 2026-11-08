@@ -73,9 +73,19 @@ public class SupportTicketEntity extends PanacheEntityBase {
     @Column(name = "updated_at")
     public OffsetDateTime updatedAt = OffsetDateTime.now();
 
+    /** When it was last resolved; null while it is open or in progress. */
+    @Column(name = "resolved_at")
+    public OffsetDateTime resolvedAt;
+
     @PreUpdate
     void touch() {
         updatedAt = OffsetDateTime.now();
+    }
+
+    /** Moves it to the status; resolving stamps when, and reopening clears it. */
+    public void moveTo(Status target) {
+        status = target;
+        resolvedAt = target == Status.RESOLVED ? OffsetDateTime.now() : null;
     }
 
     public static long nextNumber() {

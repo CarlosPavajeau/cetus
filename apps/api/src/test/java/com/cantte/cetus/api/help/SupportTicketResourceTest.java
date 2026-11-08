@@ -5,6 +5,8 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 import com.cantte.cetus.api.admin.PlatformRoles;
@@ -250,15 +252,22 @@ class SupportTicketResourceTest {
                 .put("/admin/support-tickets/" + ticketId + "/status")
                 .then()
                 .statusCode(200)
-                .body("status", equalTo("RESOLVED"));
+                .body("status", equalTo("RESOLVED"))
+                .body("resolvedAt", notNullValue());
         owner.request().get("/console/support-tickets").then().body("items[0].status", equalTo("RESOLVED"));
+        SUPPORT.request()
+                .body(new ChangeTicketStatusRequest(Status.IN_PROGRESS))
+                .put("/admin/support-tickets/" + ticketId + "/status")
+                .then()
+                .statusCode(200)
+                .body("resolvedAt", nullValue());
         owner.request()
                 .get("/console/audit-log?action=SUPPORT_TICKET_STATUS_CHANGED")
                 .then()
-                .body("items", hasSize(1))
-                .body("items[0].actorType", equalTo("PLATFORM"))
-                .body("items[0].data.status", equalTo("RESOLVED"))
-                .body("items[0].data.statusPrevious", equalTo("OPEN"));
+                .body("items", hasSize(2))
+                .body("items[1].actorType", equalTo("PLATFORM"))
+                .body("items[1].data.status", equalTo("RESOLVED"))
+                .body("items[1].data.statusPrevious", equalTo("OPEN"));
     }
 
     private static CreateTicketRequest request(List<UUID> attachmentIds) {

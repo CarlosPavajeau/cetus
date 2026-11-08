@@ -13,6 +13,7 @@ import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.audit.RequestOrigin;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.CreditGrantEntity;
+import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import com.cantte.cetus.persistence.entity.SubscriptionEntity;
@@ -159,6 +160,11 @@ public class AccountSubscription {
                 subscription.startedAt,
                 subscription.pastDueAt,
                 unpaid ? opening.expiresAt : null,
+                unpaid
+                        ? PaymentChargeEntity.findLive(opening.id)
+                                .map(charge -> charge.runAt)
+                                .orElse(null)
+                        : null,
                 new SubscriptionPeriodView(
                         period.number,
                         period.startsAt,

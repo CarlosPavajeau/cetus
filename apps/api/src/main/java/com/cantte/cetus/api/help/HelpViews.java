@@ -75,7 +75,8 @@ public final class HelpViews {
             @Schema(nullable = true) UUID issuerId,
             List<AttachmentView> attachments,
             OffsetDateTime createdAt,
-            OffsetDateTime updatedAt) {
+            OffsetDateTime updatedAt,
+            @Schema(nullable = true) OffsetDateTime resolvedAt) {
         static SupportTicketView from(SupportTicketEntity ticket, List<SupportAttachmentEntity> attachments) {
             return new SupportTicketView(
                     ticket.id,
@@ -87,7 +88,8 @@ public final class HelpViews {
                     ticket.issuerId,
                     attachments.stream().map(AttachmentView::from).toList(),
                     ticket.createdAt,
-                    ticket.updatedAt);
+                    ticket.updatedAt,
+                    ticket.resolvedAt);
         }
     }
 
@@ -162,7 +164,8 @@ public final class HelpViews {
             SupportSnapshot context,
             List<AdminAttachmentView> attachments,
             OffsetDateTime createdAt,
-            OffsetDateTime updatedAt) {}
+            OffsetDateTime updatedAt,
+            @Schema(nullable = true) OffsetDateTime resolvedAt) {}
 
     public record FeedbackView(
             UUID id,

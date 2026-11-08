@@ -683,6 +683,12 @@ public final class BillingViews {
             @Schema(nullable = true, description = "When an unpaid renewal cancels the subscription")
             OffsetDateTime payBy,
 
+            @Schema(
+                    nullable = true,
+                    description = "When the saved card is charged for the unpaid renewal, by the attempt that waits to"
+                            + " run or for Wompi's answer; null without one")
+            OffsetDateTime chargeAt,
+
             SubscriptionPeriodView period) {}
 
     public record OverageLimitRequest(

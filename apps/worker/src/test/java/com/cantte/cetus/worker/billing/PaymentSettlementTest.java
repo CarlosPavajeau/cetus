@@ -67,6 +67,8 @@ class PaymentSettlementTest {
 
     record Event(String event, EventData data, String environment, Signature signature, long timestamp) {}
 
+    record Raw(String note) {}
+
     @Inject
     PaymentSettlement settlement;
 
@@ -164,6 +166,33 @@ class PaymentSettlementTest {
         assertThat(transactionOf(transactionId).status).isEqualTo(PaymentTransactionEntity.Status.VOIDED);
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
         assertThat(orderOf(order.id).reviewReason).isNull();
+    }
+
+    @Test
+    void theSameStatusAgainKeepsWhatWasStoredFirst() throws Exception {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        String transactionId = newTransactionId();
+        settlement.apply(transaction(transactionId, order.reference, PaymentStatus.APPROVED, 2_490_000));
+        PaymentTransactionEntity first = transactionOf(transactionId);
+
+        Instant later = Instant.now().plus(Duration.ofHours(1));
+        settlement.apply(new PaymentTransaction(
+                transactionId,
+                order.reference,
+                PaymentStatus.APPROVED,
+                2_490_000,
+                "COP",
+                "NEQUI",
+                Optional.of("Otra vez"),
+                later,
+                Optional.of(later),
+                json.writeValueAsString(new Raw("again"))));
+
+        PaymentTransactionEntity again = transactionOf(transactionId);
+        assertThat(again.finalizedAt).isEqualTo(first.finalizedAt);
+        assertThat(again.paymentMethodType).isEqualTo("CARD");
+        assertThat(again.raw).isEqualTo(first.raw);
     }
 
     @Test
