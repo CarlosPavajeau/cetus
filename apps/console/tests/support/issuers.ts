@@ -2,10 +2,9 @@ import { readFile } from "node:fs/promises";
 
 import { type } from "arktype";
 import { config } from "dotenv";
-import { Pool } from "pg";
 
 import type { TestOrganization } from "./organization";
-import { apiUrl, testCertificate } from "./stack";
+import { apiUrl, billingPool, testCertificate } from "./stack";
 
 /**
  * A NIT no other test uses. The CUFE depends on the NIT, the number and the issue time, and is unique
@@ -26,7 +25,7 @@ config({ quiet: true });
 
 /** Records that the DIAN accepted the issuer's test set, as the worker does when the DIAN reports it. */
 export async function acceptTestSet(issuerId: string) {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = billingPool();
   try {
     await pool.query(
       `UPDATE billing.issuer_software_credentials SET test_set_accepted_at = now()

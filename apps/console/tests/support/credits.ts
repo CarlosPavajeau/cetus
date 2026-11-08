@@ -1,9 +1,9 @@
 import { type } from "arktype";
 import { config } from "dotenv";
-import { Pool } from "pg";
 
 import type { TestOrganization } from "./organization";
 import { createPlatformStaff } from "./platform-staff";
+import { billingPool } from "./stack";
 
 config({ quiet: true });
 
@@ -44,18 +44,13 @@ export async function grantPackage(organization: TestOrganization) {
 /**
  * Starts a subscription of the organization's account to the plan's current public version, as the worker does
  * once its first order is paid: an active subscription, its first period from now and the period's lot. No
- * endpoint starts one without a payment, so this writes straight to the "billing" schema the local stack uses,
- * as the API's own Postgres user: the console's only reaches "auth".
+ * endpoint starts one without a payment, so this writes straight to the "billing" schema.
  */
 export async function subscribe(organization: TestOrganization, planCode: string) {
   const account = type({ id: "string" }).assert(
     await (await organization.api("/console/account")).json(),
   );
-  const connectionString = process.env.CETUS_TEST_BILLING_DATABASE_URL;
-  if (!connectionString) {
-    throw new Error("Set CETUS_TEST_BILLING_DATABASE_URL in apps/console/.env (see .env.example)");
-  }
-  const pool = new Pool({ connectionString });
+  const pool = billingPool();
   try {
     // The ids come first: a statement's own CTEs never see each other's rows, so the period is inserted with
     // its lot's id instead of being updated afterwards.

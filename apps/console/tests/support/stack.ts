@@ -1,6 +1,11 @@
 // The tests run against the local stack (`mise run dev-mock`): console, API, worker and DIAN mock, with
 // the real Postgres and LocalStack. Nothing is mocked; every test creates its own organization.
 
+import { config } from "dotenv";
+import { Pool } from "pg";
+
+config({ quiet: true });
+
 export const consoleUrl = process.env.CONSOLE_URL ?? "http://localhost:3000";
 export const apiUrl = process.env.CETUS_API_URL ?? "http://localhost:8080";
 
@@ -35,4 +40,16 @@ export async function assertStackIsUp() {
 /** Session cookies for the console, so a browser context signs in without the form. */
 export function consoleCookies(cookies: readonly { name: string; value: string }[]) {
   return cookies.map((cookie) => ({ name: cookie.name, value: cookie.value, url: consoleUrl }));
+}
+
+/**
+ * A pool on the "billing" schema, as the API's own Postgres user: the console's only reaches "auth". For state no
+ * endpoint writes, such as what the worker records from the DIAN or a payment.
+ */
+export function billingPool() {
+  const connectionString = process.env.CETUS_TEST_BILLING_DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("Set CETUS_TEST_BILLING_DATABASE_URL in apps/console/.env (see .env.example)");
+  }
+  return new Pool({ connectionString });
 }
