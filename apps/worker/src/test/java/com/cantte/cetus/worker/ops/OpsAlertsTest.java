@@ -112,6 +112,18 @@ class OpsAlertsTest {
     }
 
     @Test
+    void aDocumentLeftProcessingByADeadJobIsStuck() {
+        UUID documentId = fixtures.invoice();
+        JobEntity job = fixtures.job(documentId, 1);
+        sql(
+                "UPDATE billing.documents SET status = 'PROCESSING', updated_at = now() - interval '20 minutes' WHERE id = ?1",
+                documentId);
+        sql("UPDATE billing.jobs SET status = 'DEAD' WHERE id = ?1", job.id);
+
+        assertThat(keys(alerts.run(Run.FREQUENT))).contains("document_stuck:" + documentId);
+    }
+
+    @Test
     void aVerdictAfterCetusGaveUpIsReportedOnce() {
         UUID documentId = fixtures.invoice();
         recorder.gaveUp(documentId, "La DIAN no responde");

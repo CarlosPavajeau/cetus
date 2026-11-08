@@ -74,8 +74,8 @@ public class OpsAlertChecks {
     }
 
     /**
-     * Documents that should have reached the DIAN by now: received, or processing (the worker is down or slow, or
-     * the DIAN keeps failing and the job retries).
+     * Documents that should have reached the DIAN by now: received, or processing (the worker is down or slow, the
+     * DIAN keeps failing and the job retries, or the worker stopped between giving up and marking it failed).
      */
     List<OpsAlert> stuckDocuments() {
         return rows("""
@@ -85,7 +85,7 @@ public class OpsAlertChecks {
                 FROM billing.documents d
                 WHERE d.status IN ('RECEIVED', 'PROCESSING') AND d.updated_at < :since
                   AND EXISTS (SELECT 1 FROM billing.jobs j WHERE j.reference_id = d.id
-                              AND j.job_type = 'PROCESS_DOCUMENT' AND j.status IN ('PENDING', 'RUNNING'))
+                              AND j.job_type = 'PROCESS_DOCUMENT' AND j.status IN ('PENDING', 'RUNNING', 'DEAD'))
                 ORDER BY d.updated_at
                 """, Map.of("since", OffsetDateTime.now().minus(stuckAfter))).stream()
                 .map(r -> OpsAlert.of(
@@ -111,8 +111,14 @@ public class OpsAlertChecks {
                         Category.DOCUMENT_LATE_VERDICT,
                         r[0],
                         false,
-                        "%s %s %s (%s) quedó %s después de darse por fallido: revisa su crédito y avisa al cliente"
-                                .formatted(r[1], r[2], r[3], r[0], r[4])))
+                        "%s %s %s (%s) quedó %s después de darse por fallido: %savisa al cliente"
+                                .formatted(
+                                        r[1],
+                                        r[2],
+                                        r[3],
+                                        r[0],
+                                        r[4],
+                                        "LIVE".equals(r[1]) ? "revisa su crédito y " : "")))
                 .toList();
     }
 

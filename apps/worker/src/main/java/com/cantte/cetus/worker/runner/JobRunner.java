@@ -107,6 +107,7 @@ public class JobRunner {
 
     private ExecutorService executor;
     private ScheduledExecutorService heartbeats;
+    private ExecutorService beats;
     /** How long each type may keep asking to run later, from its creation, before it gives up. */
     private final Map<String, Duration> deadlines = new HashMap<>();
 
@@ -120,6 +121,8 @@ public class JobRunner {
                 Thread.ofVirtual().name("job-", 0).factory());
         heartbeats = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform().name("job-heartbeat").daemon().factory());
+        beats = Executors.newThreadPerTaskExecutor(
+                Thread.ofVirtual().name("job-beat-", 0).factory());
         handlers = handlerInstances.stream().collect(Collectors.toMap(JobHandler::type, Function.identity()));
         Map<String, Integer> limits = new TreeMap<>();
         for (String type : handlers.keySet()) {
@@ -268,8 +271,23 @@ public class JobRunner {
         }
         AtomicBoolean lost = new AtomicBoolean();
         long period = Math.max(1, lease.toMillis() / 3);
-        ScheduledFuture<?> heartbeat =
-                heartbeats.scheduleAtFixedRate(() -> beat(job, lease, lost), period, period, TimeUnit.MILLISECONDS);
+        // The scheduler only hands each beat to its own thread, so one slow renewal does not hold back the others.
+        AtomicBoolean beating = new AtomicBoolean();
+        ScheduledFuture<?> heartbeat = heartbeats.scheduleAtFixedRate(
+                () -> {
+                    if (beating.compareAndSet(false, true)) {
+                        beats.execute(() -> {
+                            try {
+                                beat(job, lease, lost);
+                            } finally {
+                                beating.set(false);
+                            }
+                        });
+                    }
+                },
+                period,
+                period,
+                TimeUnit.MILLISECONDS);
         try {
             ScopedValue.where(JobContext.LOST, lost).call(() -> {
                 handler.handle(job);
@@ -380,5 +398,6 @@ public class JobRunner {
                     concurrency - slots.availablePermits());
         }
         heartbeats.shutdown();
+        beats.shutdown();
     }
 }
