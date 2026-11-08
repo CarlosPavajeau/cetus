@@ -74,7 +74,7 @@ class CreditsObservationTest {
     }
 
     @Test
-    void aWaivedOverageDocumentReleasedAndAcceptedLaterIsNeverBilled() {
+    void aWaivedOverageDocumentReleasedAndAcceptedLaterIsBilledWithThePeriod() {
         ConsoleUser user = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(ConsoleFixtures.bootstrap(user, "Observada Suscrita SAS"));
         String issuerId = ConsoleFixtures.completeSetup(user, ConsoleFixtures.createIssuer(user, "900123456", "LIVE"))
@@ -100,9 +100,11 @@ class CreditsObservationTest {
                 .call(() -> CreditReservationEntity.listByDocument(id).getFirst());
         assertThat(reservation.kind).isEqualTo(CreditReservationEntity.Kind.OVERAGE);
         assertThat(reservation.status).isEqualTo(CreditReservationEntity.Status.CONFIRMED);
-        assertThat(reservation.settled).isTrue();
+        // The DIAN accepted it after the release, under the period's terms: the waiver of its first reservation is
+        // gone.
+        assertThat(reservation.settled).isFalse();
         assertThat(QuarkusTransaction.requiringNew().call(() -> ledger.billOverage(accountId, subscription.periodId())))
-                .isZero();
+                .isEqualTo(1);
     }
 
     private static String invoice(String key, String issuerId) {

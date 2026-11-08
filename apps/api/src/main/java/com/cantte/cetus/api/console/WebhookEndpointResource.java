@@ -227,8 +227,8 @@ public class WebhookEndpointResource {
     }
 
     /**
-     * Sends the event again, with the same id and body, unless a job is already sending it. The delivery is locked
-     * while its jobs are counted, so two retries at once queue one.
+     * Sends the event again, with the same id and body: only a delivery that failed or was canceled, and no job is
+     * sending. The delivery is locked while its jobs are counted, so two retries at once queue one.
      */
     @POST
     @Path("/{id}/deliveries/{deliveryId}/retry")
@@ -241,6 +241,13 @@ public class WebhookEndpointResource {
         }
         WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findForEndpointForUpdate(endpoint.id, deliveryId)
                 .orElseThrow(() -> new NotFoundException("Webhook delivery not found"));
+        switch (delivery.status) {
+            case PENDING ->
+                throw new DomainException("delivery_in_progress", "The delivery is already waiting to be sent");
+            case SUCCEEDED ->
+                throw new DomainException("delivery_succeeded", "The endpoint already received the event");
+            case FAILED, CANCELED -> {}
+        }
         long queued = JobEntity.count(
                 "jobType = ?1 and referenceId = ?2 and status in ('PENDING', 'RUNNING')",
                 JobTypes.DELIVER_WEBHOOK,

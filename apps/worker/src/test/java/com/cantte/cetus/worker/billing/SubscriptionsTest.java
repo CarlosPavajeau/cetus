@@ -428,6 +428,33 @@ class SubscriptionsTest {
                 .isZero();
     }
 
+    @Test
+    void aWaivedDocumentAcceptedAfterItsReleaseIsBilledAsOverage() {
+        UUID accountId = subscribed("INICIAL");
+        QuarkusTransaction.requiringNew()
+                .run(() -> CreditGrantEntity.update(
+                        "remaining = 0, status = ?1 where accountId = ?2",
+                        CreditGrantEntity.Status.EXHAUSTED,
+                        accountId));
+        UUID document = fixtures.invoiceFor(accountId);
+        QuarkusTransaction.requiringNew().run(() -> {
+            CreditReservationEntity waived =
+                    ledger.reserve(accountId, document, DocumentType.INVOICE, OffsetDateTime.now());
+            // What a refusal does while the account's credits are only observed.
+            waived.settled = true;
+        });
+        QuarkusTransaction.requiringNew()
+                .run(() -> ledger.release(document, Actor.system(), "Resuelto como no emitido"));
+
+        QuarkusTransaction.requiringNew().run(() -> ledger.confirm(document, OffsetDateTime.now()));
+
+        CreditReservationEntity charged = reservationsOf(List.of(document)).getFirst();
+        assertThat(charged.status).isEqualTo(CreditReservationEntity.Status.CONFIRMED);
+        assertThat(charged.kind).isEqualTo(CreditReservationEntity.Kind.OVERAGE);
+        assertThat(charged.settled).isFalse();
+        assertThat(charged.subscriptionPeriodId).isEqualTo(openPeriod(subscriptionOf(accountId).id).id);
+    }
+
     /** An account with a billing profile whose order of the plan was just paid. */
     private UUID subscribed(String planCode) {
         UUID accountId = QuarkusTransaction.requiringNew()

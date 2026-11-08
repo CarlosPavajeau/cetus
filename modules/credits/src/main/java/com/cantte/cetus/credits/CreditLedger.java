@@ -188,8 +188,8 @@ public class CreditLedger {
 
     /**
      * Takes the released reservation's credit again: from the lot that expires first, else as overage of the open
-     * period or as grace. A reservation is only released while RESERVED, when the one thing that settles it is
-     * being waived while observing: without a lot it stays waived, neither billed nor paid by a later lot.
+     * period or as grace. As overage it is billed with the period even if it was waived while observing when first
+     * reserved: the DIAN accepted it now, under the account's current terms. As grace a waived one stays waived.
      */
     private void recharge(CreditReservationEntity reservation, OffsetDateTime now) {
         List<CreditGrantEntity> lots = CreditGrantEntity.lockAvailable(reservation.accountId, now);
@@ -199,6 +199,9 @@ public class CreditLedger {
             reservation.kind = subscription.isPresent()
                     ? CreditReservationEntity.Kind.OVERAGE
                     : CreditReservationEntity.Kind.GRACE;
+            if (reservation.kind == CreditReservationEntity.Kind.OVERAGE) {
+                reservation.settled = false;
+            }
             reservation.subscriptionPeriodId =
                     subscription.map(Entitlements.Subscribed::periodId).orElse(null);
             reservation.grantId = null;
