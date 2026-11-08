@@ -22,6 +22,7 @@ import com.cantte.cetus.worker.builders.BuiltDocument;
 import com.cantte.cetus.worker.builders.DocumentBuilder;
 import com.cantte.cetus.worker.builders.DocumentSecrets;
 import com.cantte.cetus.worker.runner.GiveUp;
+import com.cantte.cetus.worker.runner.JobContext;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.support.ArtifactStore;
 import com.cantte.cetus.worker.support.ContextLoader;
@@ -96,6 +97,9 @@ public class ProcessDocumentHandler implements JobHandler {
     @Inject
     Tracer tracer;
 
+    @Inject
+    JobContext jobContext;
+
     private Map<DocumentType, DocumentBuilder> builders;
 
     @PostConstruct
@@ -129,6 +133,7 @@ public class ProcessDocumentHandler implements JobHandler {
         DianGateway dian = dianClients.forEnvironment(ctx.environment());
         boolean testSet = ctx.environment() == Environment.TEST && ctx.testSetId() != null;
 
+        jobContext.ensureOwned();
         if (!testSet && ctx.lastSendUnanswered() && ctx.existingCufe() != null && alreadyRegistered(ctx, dian, keys)) {
             return;
         }
@@ -137,6 +142,7 @@ public class ProcessDocumentHandler implements JobHandler {
         recorder.cufe(ctx.documentId(), built.uniqueCode());
 
         byte[] signedXml = Spans.traced(tracer, "document.sign", () -> sign(built.unsigned(), keys));
+        jobContext.ensureOwned();
         long sequence = fileSequence.next(ctx.issuerId(), ctx.issueDate().getYear());
         String nit = ctx.supplier().identificationNumber();
         String xmlName = DianFileNames.xml(

@@ -7,8 +7,9 @@ public interface JobHandler {
     String type();
 
     /**
-     * Throw {@link RetryLater} to re-run without counting a failure, {@link GiveUp} to mark the job dead
-     * right away; any other exception retries with backoff.
+     * Throw {@link RetryLater} to re-run without counting a failure (until the type's {@code
+     * cetus.jobs.deadline.<TYPE>}, if any), {@link GiveUp} to mark the job dead right away; any other exception
+     * retries with backoff. Call {@link JobContext#ensureOwned} before a call with effects outside Cetus.
      */
     void handle(JobEntity job) throws Exception;
 

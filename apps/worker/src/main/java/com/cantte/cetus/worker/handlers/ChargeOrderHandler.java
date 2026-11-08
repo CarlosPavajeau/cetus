@@ -12,6 +12,7 @@ import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
 import com.cantte.cetus.persistence.entity.PaymentMethodEntity;
 import com.cantte.cetus.worker.billing.AutoCharge;
 import com.cantte.cetus.worker.billing.PaymentSettlement;
+import com.cantte.cetus.worker.runner.JobContext;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.PaymentClients;
@@ -51,6 +52,9 @@ public class ChargeOrderHandler implements JobHandler {
     @Inject
     AutoCharge autoCharge;
 
+    @Inject
+    JobContext jobContext;
+
     @Override
     public String type() {
         return JobTypes.CHARGE_ORDER;
@@ -74,6 +78,7 @@ public class ChargeOrderHandler implements JobHandler {
             return;
         }
         PaymentTransaction transaction;
+        jobContext.ensureOwned();
         try {
             transaction = gateway.charge(request.get());
         } catch (PaymentTransientException e) {

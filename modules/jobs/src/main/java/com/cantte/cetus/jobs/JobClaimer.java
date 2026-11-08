@@ -9,7 +9,6 @@ import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -17,6 +16,9 @@ import java.util.stream.IntStream;
  * Claims ready jobs with FOR UPDATE SKIP LOCKED, so several workers never take the same job.
  * A RUNNING job whose lock expired (worker crashed) becomes claimable again. Locks taken on rows beyond
  * the total are released when the claim's transaction ends.
+ *
+ * <p>Every claim stamps a new {@code claim_id}, and every later write requires it: a run that lost its lease
+ * cannot finish, retry or revive a job another run now holds.
  */
 @ApplicationScoped
 public class JobClaimer {
@@ -43,7 +45,7 @@ public class JobClaimer {
         Query query = em.createNativeQuery("""
                         UPDATE billing.jobs
                         SET status = 'RUNNING', attempts = attempts + 1, locked_by = :worker,
-                            locked_until = now() + make_interval(secs => :lease), updated_at = now()
+                            claim_id = gen_random_uuid(), locked_until = now() + make_interval(secs => :lease), updated_at = now()
                         WHERE id IN (
                             SELECT ready.id
                             FROM (VALUES %s) AS limits(job_type, max_jobs)
@@ -69,62 +71,107 @@ public class JobClaimer {
         return query.getResultList();
     }
 
+    /** What became of a failed run. */
+    public enum Failure {
+        /** Pending again, after a backoff. */
+        RETRY,
+        /** Out of attempts. */
+        DEAD,
+        /** The run no longer held the job: its lease expired and another worker claimed it. Nothing changed. */
+        LOST
+    }
+
+    /** @return false if the run no longer held the job, and nothing changed */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void done(UUID jobId) {
-        em.createNativeQuery(
-                        "UPDATE billing.jobs SET status = 'DONE', locked_until = NULL, updated_at = now() WHERE id = :id")
-                .setParameter("id", jobId)
-                .executeUpdate();
+    public boolean done(JobEntity job) {
+        return em.createNativeQuery("""
+                        UPDATE billing.jobs SET status = 'DONE', locked_until = NULL, updated_at = now()
+                        WHERE id = :id AND status = 'RUNNING' AND claim_id = :claim
+                        """)
+                        .setParameter("id", job.id)
+                        .setParameter("claim", job.claimId)
+                        .executeUpdate()
+                > 0;
+    }
+
+    /** Schedules a retry with exponential backoff, or marks the job DEAD once the row's attempts run out. */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @SuppressWarnings("unchecked")
+    public Failure fail(JobEntity job, String error) {
+        List<String> status = em.createNativeQuery("""
+                        UPDATE billing.jobs
+                        SET status = CASE WHEN attempts >= max_attempts THEN 'DEAD' ELSE 'PENDING' END,
+                            last_error = :error, locked_until = NULL,
+                            run_at = now() + make_interval(secs => least(3600, power(2, attempts) * 5)),
+                            updated_at = now()
+                        WHERE id = :id AND status = 'RUNNING' AND claim_id = :claim
+                        RETURNING status
+                        """)
+                .setParameter("error", truncate(error))
+                .setParameter("id", job.id)
+                .setParameter("claim", job.claimId)
+                .getResultList();
+        if (status.isEmpty()) {
+            return Failure.LOST;
+        }
+        return "DEAD".equals(status.getFirst()) ? Failure.DEAD : Failure.RETRY;
     }
 
     /**
-     * Schedules a retry with exponential backoff, or marks the job DEAD after max attempts.
+     * Marks the job DEAD without further attempts: retrying cannot fix the error.
      *
-     * @return true if the job is now DEAD
+     * @return false if the run no longer held the job, and nothing changed
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public boolean fail(JobEntity job, String error) {
-        boolean dead = job.attempts >= job.maxAttempts;
-        long backoffSeconds = Math.min(3600, (long) Math.pow(2, job.attempts) * 5);
-        em.createNativeQuery("""
-                        UPDATE billing.jobs
-                        SET status = :status, last_error = :error, locked_until = NULL,
-                            run_at = now() + make_interval(secs => :backoff), updated_at = now()
-                        WHERE id = :id
-                        """)
-                .setParameter("status", dead ? "DEAD" : "PENDING")
-                .setParameter("error", truncate(error))
-                .setParameter("backoff", (double) backoffSeconds)
-                .setParameter("id", job.id)
-                .executeUpdate();
-        return dead;
-    }
-
-    /** Marks the job DEAD without further attempts: retrying cannot fix the error. */
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void kill(UUID jobId, String error) {
-        em.createNativeQuery("""
+    public boolean kill(JobEntity job, String error) {
+        return em.createNativeQuery("""
                         UPDATE billing.jobs
                         SET status = 'DEAD', last_error = :error, locked_until = NULL, updated_at = now()
-                        WHERE id = :id
+                        WHERE id = :id AND status = 'RUNNING' AND claim_id = :claim
                         """)
-                .setParameter("error", truncate(error))
-                .setParameter("id", jobId)
-                .executeUpdate();
+                        .setParameter("error", truncate(error))
+                        .setParameter("id", job.id)
+                        .setParameter("claim", job.claimId)
+                        .executeUpdate()
+                > 0;
     }
 
-    /** Re-runs the job later without counting it as a failure (e.g. DIAN still processing). */
+    /**
+     * Re-runs the job later without counting it as a failure (e.g. DIAN still processing).
+     *
+     * @return false if the run no longer held the job, and nothing changed
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void reschedule(UUID jobId, Duration delay) {
-        em.createNativeQuery("""
+    public boolean reschedule(JobEntity job, Duration delay) {
+        return em.createNativeQuery("""
                         UPDATE billing.jobs
                         SET status = 'PENDING', attempts = attempts - 1, locked_until = NULL,
                             run_at = now() + make_interval(secs => :delay), updated_at = now()
-                        WHERE id = :id
+                        WHERE id = :id AND status = 'RUNNING' AND claim_id = :claim
                         """)
-                .setParameter("delay", (double) delay.toSeconds())
-                .setParameter("id", jobId)
-                .executeUpdate();
+                        .setParameter("delay", (double) delay.toSeconds())
+                        .setParameter("id", job.id)
+                        .setParameter("claim", job.claimId)
+                        .executeUpdate()
+                > 0;
+    }
+
+    /**
+     * Pushes the lease of a running job forward, so a run slower than the lease is not claimed again.
+     *
+     * @return false if the run no longer held the job
+     */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public boolean extend(JobEntity job, Duration lease) {
+        return em.createNativeQuery("""
+                        UPDATE billing.jobs SET locked_until = now() + make_interval(secs => :lease)
+                        WHERE id = :id AND status = 'RUNNING' AND claim_id = :claim
+                        """)
+                        .setParameter("lease", (double) lease.toSeconds())
+                        .setParameter("id", job.id)
+                        .setParameter("claim", job.claimId)
+                        .executeUpdate()
+                > 0;
     }
 
     private static String truncate(String error) {

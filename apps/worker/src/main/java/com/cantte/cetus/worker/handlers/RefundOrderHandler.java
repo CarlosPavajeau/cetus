@@ -10,6 +10,7 @@ import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.worker.billing.Reversals;
+import com.cantte.cetus.worker.runner.JobContext;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.runner.RetryLater;
 import com.cantte.cetus.worker.support.PaymentClients;
@@ -49,6 +50,9 @@ public class RefundOrderHandler implements JobHandler {
     @Inject
     Reversals reversals;
 
+    @Inject
+    JobContext jobContext;
+
     /** What the run does with the refund. */
     private sealed interface Step {}
 
@@ -67,6 +71,7 @@ public class RefundOrderHandler implements JobHandler {
     public void handle(JobEntity job) {
         PaymentGateway gateway =
                 payments.gateway().orElseThrow(() -> new RetryLater(UNCONFIGURED_DELAY, "Payments are not configured"));
+        jobContext.ensureOwned();
         Step step = QuarkusTransaction.requiringNew().call(() -> claim(job.referenceId));
         Refund refund;
         switch (step) {

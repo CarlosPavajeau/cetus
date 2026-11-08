@@ -21,6 +21,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,7 +66,7 @@ public class JobRunner {
 
     private static final Logger LOG = Logger.getLogger(JobRunner.class);
     private static final Duration SHUTDOWN_GRACE = Duration.ofSeconds(30);
-    private static final List<String> OUTCOMES = List.of("done", "retry", "dead");
+    private static final List<String> OUTCOMES = List.of("done", "retry", "dead", "stale");
     private static final Duration[] DURATION_BUCKETS = {
         Duration.ofMillis(100),
         Duration.ofMillis(500),
@@ -103,6 +106,10 @@ public class JobRunner {
     private final Map<String, Semaphore> typeSlots = new HashMap<>();
 
     private ExecutorService executor;
+    private ScheduledExecutorService heartbeats;
+    /** How long each type may keep asking to run later, from its creation, before it gives up. */
+    private final Map<String, Duration> deadlines = new HashMap<>();
+
     private volatile boolean stopping;
     private Map<String, JobHandler> handlers;
 
@@ -111,6 +118,8 @@ public class JobRunner {
         slots = new Semaphore(concurrency);
         executor = Executors.newThreadPerTaskExecutor(
                 Thread.ofVirtual().name("job-", 0).factory());
+        heartbeats = Executors.newSingleThreadScheduledExecutor(
+                Thread.ofPlatform().name("job-heartbeat").daemon().factory());
         handlers = handlerInstances.stream().collect(Collectors.toMap(JobHandler::type, Function.identity()));
         Map<String, Integer> limits = new TreeMap<>();
         for (String type : handlers.keySet()) {
@@ -119,10 +128,13 @@ public class JobRunner {
                     config.getOptionalValue("cetus.jobs.limit." + type, Integer.class)
                             .orElse(concurrency));
             limits.put(type, limit);
+            config.getOptionalValue("cetus.jobs.deadline." + type, Duration.class)
+                    .ifPresent(deadline -> deadlines.put(type, deadline));
             typeSlots.put(type, new Semaphore(limit));
             // From zero: a counter whose first sample is already 1 shows no increase, and the first dead job
             // would raise no alert. The OpenTelemetry bridge exports a counter only once something is added.
             OUTCOMES.forEach(outcome -> completed(type, outcome).increment(0));
+            expired(type).increment(0);
         }
         LOG.infof("Running up to %d jobs at once; per type: %s", concurrency, limits);
     }
@@ -223,42 +235,109 @@ public class JobRunner {
     }
 
     void run(JobEntity job) {
+        run(job, lease);
+    }
+
+    /** Runs the job, extending its lease every third of {@code lease} while the handler works. */
+    void run(JobEntity job, Duration lease) {
         long start = System.nanoTime();
         String outcome = "dead";
+        try {
+            outcome = attempt(job, lease);
+        } finally {
+            record(job, outcome, start);
+        }
+    }
+
+    private String attempt(JobEntity job, Duration lease) {
         JobHandler handler = handlers.get(job.jobType);
         if (handler == null) {
-            boolean dead = claimer.fail(job, "No handler for job type " + job.jobType);
             Span.current().setStatus(StatusCode.ERROR, "No handler");
-            record(job, dead ? "dead" : "retry", start);
-            return;
+            return switch (claimer.fail(job, "No handler for job type " + job.jobType)) {
+                case RETRY -> "retry";
+                case DEAD -> "dead";
+                case LOST -> stale(job);
+            };
         }
+        if (job.attempts > job.maxAttempts) {
+            // Only an expired lease is claimed past the last attempt: the job keeps taking its worker down.
+            LOG.errorf(
+                    "Job %s (%s) claimed again with no attempts left (%d of %d)",
+                    job.id, job.jobType, job.attempts, job.maxAttempts);
+            return giveUp(handler, job, "Claimed again after its last attempt's lease expired");
+        }
+        AtomicBoolean lost = new AtomicBoolean();
+        long period = Math.max(1, lease.toMillis() / 3);
+        ScheduledFuture<?> heartbeat =
+                heartbeats.scheduleAtFixedRate(() -> beat(job, lease, lost), period, period, TimeUnit.MILLISECONDS);
         try {
-            handler.handle(job);
-            claimer.done(job.id);
-            outcome = "done";
+            ScopedValue.where(JobContext.LOST, lost).call(() -> {
+                handler.handle(job);
+                return null;
+            });
+            return claimer.done(job) ? "done" : stale(job);
+        } catch (JobLost e) {
+            return stale(job);
         } catch (RetryLater retry) {
-            claimer.reschedule(job.id, retry.delay());
-            outcome = "retry";
+            Duration deadline = deadlines.get(job.jobType);
+            if (deadline != null && job.createdAt.plus(deadline).isBefore(OffsetDateTime.now())) {
+                LOG.errorf("Job %s (%s) still waiting after %s, giving up", job.id, job.jobType, deadline);
+                expired(job.jobType).increment();
+                return giveUp(handler, job, "Still waiting after " + deadline + ": " + retry.getMessage());
+            }
+            return claimer.reschedule(job, retry.delay()) ? "retry" : stale(job);
         } catch (GiveUp giveUp) {
             LOG.errorf(
                     "Job %s (%s) failed permanently on attempt %d, not retrying: %s",
                     job.id, job.jobType, job.attempts, giveUp.getMessage());
-            claimer.kill(job.id, giveUp.getMessage());
-            Span.current().setStatus(StatusCode.ERROR, "Gave up");
-            handler.onDead(job, giveUp.getMessage());
+            return giveUp(handler, job, giveUp.getMessage());
         } catch (Exception e) {
             LOG.warnf(e, "Job %s (%s) failed on attempt %d", job.id, job.jobType, job.attempts);
             String error = e.getClass().getSimpleName() + ": " + e.getMessage();
             // Only the type: messages can carry customer data, and the log above already has them.
             Span.current().setStatus(StatusCode.ERROR, e.getClass().getSimpleName());
-            if (claimer.fail(job, error)) {
-                LOG.errorf("Job %s (%s) is dead after %d attempts", job.id, job.jobType, job.attempts);
-                handler.onDead(job, error);
-            } else {
-                outcome = "retry";
-            }
+            return switch (claimer.fail(job, error)) {
+                case RETRY -> "retry";
+                case DEAD -> {
+                    LOG.errorf("Job %s (%s) is dead after %d attempts", job.id, job.jobType, job.attempts);
+                    handler.onDead(job, error);
+                    yield "dead";
+                }
+                case LOST -> stale(job);
+            };
         } finally {
-            record(job, outcome, start);
+            heartbeat.cancel(false);
+        }
+    }
+
+    private String giveUp(JobHandler handler, JobEntity job, String reason) {
+        if (!claimer.kill(job, reason)) {
+            return stale(job);
+        }
+        Span.current().setStatus(StatusCode.ERROR, "Gave up");
+        handler.onDead(job, reason);
+        return "dead";
+    }
+
+    /** The run lost its job to another one, which records the outcome: this one writes nothing. */
+    private static String stale(JobEntity job) {
+        LOG.warnf(
+                "Job %s (%s) was claimed again while attempt %d ran; its outcome is left to the new run",
+                job.id, job.jobType, job.attempts);
+        return "stale";
+    }
+
+    private void beat(JobEntity job, Duration lease, AtomicBoolean lost) {
+        if (lost.get()) {
+            return;
+        }
+        try {
+            if (!claimer.extend(job, lease)) {
+                lost.set(true);
+            }
+        } catch (RuntimeException e) {
+            // The lease still runs; the next beat tries again.
+            LOG.warnf(e, "Could not extend the lease of job %s (%s)", job.id, job.jobType);
         }
     }
 
@@ -278,6 +357,11 @@ public class JobRunner {
                 .register(meters);
     }
 
+    /** Jobs that gave up because they kept asking to run later past their type's deadline. */
+    private Counter expired(String type) {
+        return Counter.builder("cetus.jobs.expired").tag("job.type", type).register(meters);
+    }
+
     /** No job running in this worker. */
     boolean idle() {
         return slots.availablePermits() == concurrency;
@@ -295,5 +379,6 @@ public class JobRunner {
                     "%d jobs still running at shutdown; they will be retried when their lease expires",
                     concurrency - slots.availablePermits());
         }
+        heartbeats.shutdown();
     }
 }
