@@ -282,6 +282,22 @@ class PaymentSettlementTest {
     }
 
     @Test
+    void anApprovalOfACanceledOrderWhoseEventsWereLostIsFoundAndGivenBack() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        QuarkusTransaction.requiringNew()
+                .run(() -> BillingOrderEntity.lock(order.id).orElseThrow().cancel(BillingOrderEntity.Status.PENDING));
+        String transactionId = newTransactionId();
+        wompi.put(Transaction.of(transactionId, order.reference, "APPROVED", 2_490_000));
+
+        assertThat(reconciliation.run()).contains(order.id);
+        checks.handle(checkJobOf(order.id));
+
+        assertThat(returnOf(transactionId).status).isEqualTo(PaymentReversalEntity.Status.REQUESTED);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.CANCELED);
+    }
+
+    @Test
     void anApprovalAfterTheOrderExpiredStillPaysIt() {
         BillingOrderEntity order =
                 fixtures.order(2_490_000, OffsetDateTime.now().minusMinutes(5));
