@@ -158,7 +158,7 @@ class VerifyNumberingRangeHandlerTest {
     }
 
     @Test
-    void aDeadJobLeavesARequestWithAJobOfItsOwnWaiting() {
+    void aDeadJobLeavesARequestWithANewerJobWaiting() {
         UUID rangeId = range(r -> {});
         JobEntity dead = job(rangeId);
         fixtures.pendingJob(JobTypes.VERIFY_NUMBERING_RANGE, rangeId);
@@ -169,8 +169,22 @@ class VerifyNumberingRangeHandlerTest {
     }
 
     @Test
+    void aDeadJobAnswersTheRequestWhenOnlyAnOlderJobRemains() {
+        UUID rangeId = range(r -> {});
+        // Still running for an earlier request: whatever it learns is discarded.
+        fixtures.pendingJob(JobTypes.VERIFY_NUMBERING_RANGE, rangeId);
+        JobEntity dead = job(rangeId);
+        dead.createdAt = OffsetDateTime.now().plusSeconds(1);
+
+        handler.onDead(dead, "La DIAN no respondió");
+
+        assertThat(load(rangeId).verificationStatus).isEqualTo(VerificationStatus.ERROR);
+    }
+
+    @Test
     void anErrorKeepsWhenTheRangeWasLastVerified() {
-        OffsetDateTime verified = OffsetDateTime.now().minusDays(3);
+        // At the database's precision, so the stored value is exactly this one.
+        OffsetDateTime verified = OffsetDateTime.now().minusDays(3).truncatedTo(ChronoUnit.MICROS);
         UUID rangeId = range(r -> r.verifiedAt = verified);
         dian.reply(OPERATION, Reply.fault("fault-client.xml"));
         JobEntity job = job(rangeId);
@@ -180,8 +194,7 @@ class VerifyNumberingRangeHandlerTest {
 
         NumberingRangeEntity range = load(rangeId);
         assertThat(range.verificationStatus).isEqualTo(VerificationStatus.ERROR);
-        assertThat(range.verifiedAt.toInstant())
-                .isEqualTo(verified.truncatedTo(ChronoUnit.MICROS).toInstant());
+        assertThat(range.verifiedAt).isAtSameInstantAs(verified);
     }
 
     /** A copy of the seeded invoice range, changed by {@code change}, so tests do not share a range. */
@@ -219,6 +232,7 @@ class VerifyNumberingRangeHandlerTest {
         job.referenceId = rangeId;
         job.attempts = 1;
         job.runAt = OffsetDateTime.now();
+        job.createdAt = OffsetDateTime.now().minusMinutes(1);
         return job;
     }
 

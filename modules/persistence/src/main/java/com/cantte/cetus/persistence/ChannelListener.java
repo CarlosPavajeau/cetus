@@ -26,6 +26,9 @@ public final class ChannelListener {
 
     private static final Duration MAX_BACKOFF = Duration.ofMinutes(1);
 
+    /** Longer than the wait for notifications, so a quiet channel never trips it. */
+    private static final Duration SOCKET_TIMEOUT = Duration.ofSeconds(30);
+
     /**
      * @param onConnect runs each time it starts listening, for whatever was missed while it was not
      * @param onNotification gets each payload
@@ -120,6 +123,9 @@ public final class ChannelListener {
             properties.setProperty("password", settings.password());
         }
         properties.setProperty("ApplicationName", settings.applicationName());
+        // A half-open connection would block the liveness probe forever; this makes it fail so the loop reconnects.
+        properties.setProperty("socketTimeout", String.valueOf(SOCKET_TIMEOUT.toSeconds()));
+        properties.setProperty("tcpKeepAlive", "true");
         Connection opened = new Driver().connect(settings.url(), properties);
         if (opened == null) {
             throw new SQLException(

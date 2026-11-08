@@ -231,7 +231,6 @@ public class CreditLedger {
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void release(UUID documentId, Actor actor, String reason) {
-        OffsetDateTime now = OffsetDateTime.now();
         for (CreditReservationEntity reservation : reserved(documentId)) {
             reservation.status = CreditReservationEntity.Status.RELEASED;
             if (reservation.grantId == null) {
@@ -256,9 +255,10 @@ public class CreditLedger {
                     reservation.quantity,
                     actor,
                     reason);
+            // Read once the lot is locked: waiting for the lock may have taken it past its date.
             boolean usable =
                     (lot.status == CreditGrantEntity.Status.ACTIVE || lot.status == CreditGrantEntity.Status.EXHAUSTED)
-                            && lot.expiresAt.isAfter(now);
+                            && lot.expiresAt.isAfter(OffsetDateTime.now());
             if (usable) {
                 lot.remaining += reservation.quantity;
                 lot.status = CreditGrantEntity.Status.ACTIVE;

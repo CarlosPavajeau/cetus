@@ -31,16 +31,14 @@ class AccessInvalidationTest {
         // What AdminAccountResource does on another replica: the change and its notification, in one transaction.
         QuarkusTransaction.requiringNew().run(() -> {
             AccountEntity.update("status = ?1 where id = ?2", AccountEntity.Status.SUSPENDED, accountId);
-            AccountEntity.getEntityManager()
-                    .createNativeQuery("SELECT pg_notify(:channel, :payload)")
-                    .setParameter("channel", AccessCache.CHANNEL)
-                    .setParameter("payload", "account:" + accountId + ":" + user.organizationId())
-                    .getSingleResult();
+            notifyChanged(accountId, user);
         });
 
+        // The listener may still be connecting when the test starts: notify again until it hears one.
         Instant deadline = Instant.now().plus(Duration.ofSeconds(10));
         while (status(user) != AccountEntity.Status.SUSPENDED && Instant.now().isBefore(deadline)) {
-            Thread.sleep(50);
+            Thread.sleep(200);
+            QuarkusTransaction.requiringNew().run(() -> notifyChanged(accountId, user));
         }
         assertThat(status(user)).isEqualTo(AccountEntity.Status.SUSPENDED);
     }
@@ -55,6 +53,14 @@ class AccessInvalidationTest {
                 .then()
                 .statusCode(403)
                 .body("code", equalTo("account_not_found"));
+    }
+
+    private static void notifyChanged(UUID accountId, ConsoleUser user) {
+        AccountEntity.getEntityManager()
+                .createNativeQuery("SELECT pg_notify(:channel, :payload)")
+                .setParameter("channel", AccessCache.CHANNEL)
+                .setParameter("payload", "account:" + accountId + ":" + user.organizationId())
+                .getSingleResult();
     }
 
     private AccountEntity.Status status(ConsoleUser user) {

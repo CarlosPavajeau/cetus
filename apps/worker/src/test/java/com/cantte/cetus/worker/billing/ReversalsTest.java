@@ -430,6 +430,38 @@ class ReversalsTest {
     }
 
     @Test
+    void theChargebackThatWaitedIsOfThePaymentThatPaidTheOrder() {
+        UUID accountId = account();
+        BillingOrderEntity order = fixtures.planOrder(accountId, "EMPRENDEDOR");
+        // An earlier attempt, voided before the order was paid.
+        PaymentTransaction attempt = transaction(order, PaymentStatus.VOIDED);
+        PaymentTransaction earlier = new PaymentTransaction(
+                "earlier-" + order.id,
+                attempt.reference(),
+                attempt.status(),
+                attempt.amountCents(),
+                attempt.currency(),
+                attempt.paymentMethodType(),
+                attempt.statusMessage(),
+                attempt.createdAt().minusSeconds(60),
+                attempt.finalizedAt(),
+                attempt.raw());
+        assertThat(settlement.apply(earlier)).isEqualTo(Outcome.RECORDED);
+        assertThat(settlement.apply(transaction(order, PaymentStatus.APPROVED))).isEqualTo(Outcome.PAID);
+        UUID refund = request(order.id, 500_000);
+        settlement.apply(transaction(order, PaymentStatus.VOIDED));
+
+        wompi.refunding("DECLINED");
+        refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, refund));
+
+        assertThat(reversalsOf(order.id))
+                .filteredOn(r -> r.kind == PaymentReversalEntity.Kind.CHARGEBACK)
+                .singleElement()
+                .satisfies(chargeback ->
+                        assertThat(chargeback.providerTransactionId).isEqualTo(transactionIdOf(order)));
+    }
+
+    @Test
     void aChargebackDuringARefundAPersonFoundFailedIsAppliedByItsJob() {
         BillingOrderEntity order = paid(account(), "EMPRENDEDOR");
         UUID refund = request(order.id, 500_000);

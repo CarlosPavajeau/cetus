@@ -115,33 +115,34 @@ public class Reversals {
     }
 
     /**
-     * Applies the chargebacks that arrived while another reversal of the order was live: each voided transaction of
-     * the paid order with no chargeback of its own, unless another approved payment still pays the order (that one
-     * went to review when it arrived).
+     * Applies the chargeback that arrived while another reversal of the order was live: the latest voided transaction
+     * of the paid order with no chargeback of its own, unless another approved payment still pays the order (that one
+     * went to review when it arrived). The latest is the one that paid it; an attempt voided before the order was
+     * paid is older. One chargeback takes back all that is left, so there is never a second.
      *
      * @param order locked
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void chargeBackWaiting(BillingOrderEntity order) {
-        List<PaymentTransactionEntity> payments = PaymentTransactionEntity.listByOrder(order.id);
-        for (PaymentTransactionEntity voided : payments) {
-            if (order.status != BillingOrderEntity.Status.PAID
-                    || PaymentReversalEntity.findLive(order.id).isPresent()) {
-                return;
-            }
-            boolean waiting = voided.status == PaymentTransactionEntity.Status.VOIDED
-                    && PaymentReversalEntity.findChargeback(voided.providerTransactionId)
-                            .isEmpty()
-                    && payments.stream()
-                            .noneMatch(other -> other.status == PaymentTransactionEntity.Status.APPROVED
-                                    && !other.id.equals(voided.id));
-            if (waiting) {
-                LOG.infof(
-                        "Order %s: applying the chargeback of transaction %s that waited for a reversal",
-                        order.id, voided.providerTransactionId);
-                chargeBack(order, voided.providerTransactionId);
-            }
+        if (order.status != BillingOrderEntity.Status.PAID
+                || PaymentReversalEntity.findLive(order.id).isPresent()) {
+            return;
         }
+        List<PaymentTransactionEntity> payments = PaymentTransactionEntity.listByOrder(order.id);
+        if (payments.stream().anyMatch(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED)) {
+            return;
+        }
+        payments.stream()
+                .filter(payment -> payment.status == PaymentTransactionEntity.Status.VOIDED)
+                .reduce((earlier, later) -> later)
+                .filter(voided -> PaymentReversalEntity.findChargeback(voided.providerTransactionId)
+                        .isEmpty())
+                .ifPresent(voided -> {
+                    LOG.infof(
+                            "Order %s: applying the chargeback of transaction %s that waited for a reversal",
+                            order.id, voided.providerTransactionId);
+                    chargeBack(order, voided.providerTransactionId);
+                });
     }
 
     /**

@@ -61,7 +61,7 @@ public class DeliveryRecorder {
 
     /**
      * Records that the provider took the email. Only a pending delivery moves: one another run already resolved
-     * keeps its status, and the provider's events find it by the message id all the same.
+     * keeps its status, but still gets the message id, so the provider's events about the email find it.
      *
      * @return whether the delivery moved to SENT
      */
@@ -78,6 +78,11 @@ public class DeliveryRecorder {
                         Status.PENDING)
                 > 0;
         if (!moved) {
+            DocumentDeliveryEntity.update(
+                    "providerMessageId = ?1, updatedAt = ?2 where id = ?3 and providerMessageId is null",
+                    providerMessageId,
+                    now,
+                    deliveryId);
             LOG.warnf("Delivery %s was already resolved when its email %s went out", deliveryId, providerMessageId);
         }
         return moved;

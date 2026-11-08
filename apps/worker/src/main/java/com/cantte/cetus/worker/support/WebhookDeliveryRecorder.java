@@ -148,10 +148,14 @@ public class WebhookDeliveryRecorder {
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public boolean canceled(UUID deliveryId) {
-        // The delivery before the endpoint, as succeeded() takes them.
+        // The endpoint before the delivery, as an enabling that queues the missed deliveries again takes them. Only
+        // the endpoint's id is read first, so the delivery's status comes from the locked read.
+        UUID endpointId = WebhookDeliveryEntity.getEntityManager()
+                .createQuery("SELECT d.endpointId FROM WebhookDeliveryEntity d WHERE d.id = :id", UUID.class)
+                .setParameter("id", deliveryId)
+                .getSingleResult();
+        WebhookEndpointEntity endpoint = WebhookEndpointEntity.findById(endpointId, LockModeType.PESSIMISTIC_READ);
         WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId, LockModeType.PESSIMISTIC_WRITE);
-        WebhookEndpointEntity endpoint =
-                WebhookEndpointEntity.findById(delivery.endpointId, LockModeType.PESSIMISTIC_READ);
         if (endpoint.status != WebhookEndpointEntity.Status.DISABLED) {
             return false;
         }

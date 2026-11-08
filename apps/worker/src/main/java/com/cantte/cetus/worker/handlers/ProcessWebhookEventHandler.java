@@ -49,7 +49,8 @@ public class ProcessWebhookEventHandler implements JobHandler {
             InboundWebhookEventEntity.Provider provider,
             String type,
             String payload,
-            OffsetDateTime receivedAt) {}
+            OffsetDateTime receivedAt,
+            int attempt) {}
 
     private record Result(Status status, String note) {}
 
@@ -77,12 +78,13 @@ public class ProcessWebhookEventHandler implements JobHandler {
             case WOMPI -> wompi(received.get());
             case RESEND -> resend(received.get());
         };
-        finish(job.referenceId, result.status(), result.note());
+        // Only this attempt's: an admin may have queued the event again since, after this run lost its job.
+        finish(job.referenceId, received.get().attempt(), result.status(), result.note());
     }
 
     @Override
     public void onDead(JobEntity job, String reason) {
-        finish(job.referenceId, Status.FAILED, reason);
+        failed(job.referenceId, reason);
     }
 
     private Result resend(Received event) throws IOException {
@@ -135,18 +137,34 @@ public class ProcessWebhookEventHandler implements JobHandler {
                 return Optional.empty();
             }
             event.attempts++;
-            return Optional.of(
-                    new Received(event.id, event.provider, event.eventType, event.payload, event.receivedAt));
+            return Optional.of(new Received(
+                    event.id, event.provider, event.eventType, event.payload, event.receivedAt, event.attempts));
         });
     }
 
-    /** Only a received event is resolved: one another run already processed keeps its outcome. */
-    private static void finish(UUID eventId, Status status, String note) {
+    /**
+     * Resolves the event the attempt started, if it is still waiting: one another run already processed keeps its
+     * outcome, and one queued again since (which counts a new attempt) is left to its new job.
+     */
+    private static void finish(UUID eventId, int attempt, Status status, String note) {
+        QuarkusTransaction.requiringNew()
+                .run(() -> InboundWebhookEventEntity.update(
+                        "status = ?1, error = ?2, processedAt = ?3 where id = ?4 and status = ?5 and attempts = ?6",
+                        status,
+                        note,
+                        OffsetDateTime.now(),
+                        eventId,
+                        Status.RECEIVED,
+                        attempt));
+    }
+
+    /** Called only by the run that holds the job, so it needs no attempt to tell it apart. */
+    private static void failed(UUID eventId, String reason) {
         QuarkusTransaction.requiringNew()
                 .run(() -> InboundWebhookEventEntity.update(
                         "status = ?1, error = ?2, processedAt = ?3 where id = ?4 and status = ?5",
-                        status,
-                        note,
+                        Status.FAILED,
+                        reason,
                         OffsetDateTime.now(),
                         eventId,
                         Status.RECEIVED));

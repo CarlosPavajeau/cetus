@@ -106,7 +106,10 @@ public class VerifyNumberingRangeHandler implements JobHandler {
         }
     }
 
-    /** Answers the request still waiting, unless a newer one has a job of its own on the way. */
+    /**
+     * Answers the request still waiting, unless a job queued after this one is on the way: that one reads the current
+     * request. An older job still running answers an older request, so its result would be discarded.
+     */
     @Override
     public void onDead(JobEntity job, String reason) {
         QuarkusTransaction.requiringNew().run(() -> {
@@ -115,10 +118,12 @@ public class VerifyNumberingRangeHandler implements JobHandler {
                 return;
             }
             long newer = JobEntity.count(
-                    "jobType = ?1 and referenceId = ?2 and id <> ?3 and status in ('PENDING', 'RUNNING')",
+                    "jobType = ?1 and referenceId = ?2 and id <> ?3 and createdAt > ?4"
+                            + " and status in ('PENDING', 'RUNNING')",
                     JobTypes.VERIFY_NUMBERING_RANGE,
                     job.referenceId,
-                    job.id);
+                    job.id,
+                    job.createdAt);
             if (newer == 0) {
                 range.verificationStatus = VerificationStatus.ERROR;
                 range.verificationError = "No se pudo consultar a la DIAN: " + reason;

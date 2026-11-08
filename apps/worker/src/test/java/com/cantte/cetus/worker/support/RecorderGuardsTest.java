@@ -66,17 +66,19 @@ class RecorderGuardsTest {
     }
 
     @Test
-    void aDeliveryAlreadyResolvedIsNotMarkedSent() {
+    void aDeliveryAlreadyResolvedIsNotMarkedSentButKeepsTheEmailsId() {
         UUID documentId = fixtures.invoice();
         UUID deliveryId = deliveries.attempt(documentId, "cliente@example.com");
         deliveries.deliveryFailed(deliveryId, "Gave up");
+        String emailId = "email-" + UUID.randomUUID();
 
-        boolean moved = deliveries.sent(deliveryId, "email-" + UUID.randomUUID());
+        boolean moved = deliveries.sent(deliveryId, emailId);
 
         assertThat(moved).isFalse();
         DocumentDeliveryEntity delivery = documentDelivery(deliveryId);
         assertThat(delivery.status).isEqualTo(DocumentDeliveryEntity.Status.FAILED);
-        assertThat(delivery.providerMessageId).isNull();
+        // The provider's events about the email still find the delivery.
+        assertThat(delivery.providerMessageId).isEqualTo(emailId);
     }
 
     @Test
