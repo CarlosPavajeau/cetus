@@ -208,7 +208,8 @@ public class VerifyNumberingRangeHandler implements JobHandler {
 
     /**
      * Answers the request the job read, if the range still waits for it: a newer request, or one another run
-     * already answered, is left alone.
+     * already answered, is left alone. An ERROR is no answer: a dead job leaves it when no newer one is on the way,
+     * and an older job that read the same request may still bring the DIAN's.
      */
     private static void record(
             UUID rangeId,
@@ -219,7 +220,8 @@ public class VerifyNumberingRangeHandler implements JobHandler {
         QuarkusTransaction.requiringNew().run(() -> {
             NumberingRangeEntity range = NumberingRangeEntity.findById(rangeId, LockModeType.PESSIMISTIC_WRITE);
             if (range == null
-                    || range.verificationStatus != VerificationStatus.PENDING
+                    || (range.verificationStatus != VerificationStatus.PENDING
+                            && range.verificationStatus != VerificationStatus.ERROR)
                     || !sameInstant(range.verificationRequestedAt, requestedAt)) {
                 LOG.warnf("Numbering range %s no longer waits for this verification; %s not recorded", rangeId, status);
                 return;

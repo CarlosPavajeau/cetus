@@ -91,7 +91,7 @@ public class Reversals {
      *
      * @param order locked
      * @return the chargeback; empty when the order's money already went back, or a refund of it is on its way: the
-     *     voided transaction then waits, and {@link #chargeBackWaiting} applies it once that refund ends
+     *     caller then marks the void as waiting, and {@link #chargeBackWaiting} applies it once that refund ends
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public Optional<PaymentReversalEntity> chargeBack(BillingOrderEntity order, String transactionId) {
@@ -115,10 +115,9 @@ public class Reversals {
     }
 
     /**
-     * Applies the chargeback that arrived while another reversal of the order was live: the latest voided transaction
-     * of the paid order with no chargeback of its own, unless another approved payment still pays the order (that one
-     * went to review when it arrived). The latest is the one that paid it; an attempt voided before the order was
-     * paid is older. One chargeback takes back all that is left, so there is never a second.
+     * Applies the chargeback that arrived while another reversal of the order was live: the void PaymentSettlement
+     * marked as waiting, unless another approved payment still pays the order (that one went to review when it
+     * arrived). One chargeback takes back all that is left, so there is never a second.
      *
      * @param order locked
      */
@@ -133,14 +132,14 @@ public class Reversals {
             return;
         }
         payments.stream()
-                .filter(payment -> payment.status == PaymentTransactionEntity.Status.VOIDED)
-                .reduce((earlier, later) -> later)
-                .filter(voided -> PaymentReversalEntity.findChargeback(voided.providerTransactionId)
-                        .isEmpty())
+                .filter(payment ->
+                        payment.chargebackWaiting && payment.status == PaymentTransactionEntity.Status.VOIDED)
+                .findFirst()
                 .ifPresent(voided -> {
                     LOG.infof(
                             "Order %s: applying the chargeback of transaction %s that waited for a reversal",
                             order.id, voided.providerTransactionId);
+                    voided.chargebackWaiting = false;
                     chargeBack(order, voided.providerTransactionId);
                 });
     }

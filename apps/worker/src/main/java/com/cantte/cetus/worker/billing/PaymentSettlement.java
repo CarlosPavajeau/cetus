@@ -106,9 +106,13 @@ public class PaymentSettlement {
                                     .formatted(stored.providerTransactionId));
                     yield Outcome.REVIEW;
                 }
-                yield reversals.chargeBack(order, stored.providerTransactionId).isPresent()
-                        ? Outcome.CHARGED_BACK
-                        : Outcome.RECORDED;
+                if (reversals.chargeBack(order, stored.providerTransactionId).isPresent()) {
+                    yield Outcome.CHARGED_BACK;
+                }
+                // A refund on its way: this void waits for it to end (Reversals.chargeBackWaiting).
+                stored.chargebackWaiting =
+                        PaymentReversalEntity.findLive(order.id).isPresent();
+                yield Outcome.RECORDED;
             }
             case PENDING, DECLINED, ERROR -> Outcome.RECORDED;
         };

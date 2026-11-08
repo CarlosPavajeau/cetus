@@ -46,6 +46,7 @@ class AdminInboundEventResourceTest {
                 QuarkusTransaction.requiringNew().call(() -> InboundWebhookEventEntity.findById(id));
         assertThat(event.error).isNull();
         assertThat(event.processedAt).isNull();
+        assertThat(event.generation).isEqualTo(1);
         assertThat(QuarkusTransaction.requiringNew()
                         .call(() -> JobEntity.count(
                                 "jobType = ?1 and referenceId = ?2", JobTypes.PROCESS_WEBHOOK_EVENT, id)))

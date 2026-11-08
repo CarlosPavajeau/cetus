@@ -182,6 +182,22 @@ class VerifyNumberingRangeHandlerTest {
     }
 
     @Test
+    void anOlderJobStillAnswersTheRequestAfterANewerOneDied() {
+        UUID rangeId = range(r -> {});
+        dian.reply(OPERATION, Reply.fixture("get-numbering-range.xml"));
+        JobEntity newer = job(rangeId);
+        newer.createdAt = OffsetDateTime.now().plusSeconds(1);
+        // While this job waits for the DIAN, a job queued after it dies and leaves the range in ERROR.
+        dian.onCall(OPERATION, () -> handler.onDead(newer, "La DIAN no respondió"));
+
+        handler.handle(job(rangeId));
+
+        NumberingRangeEntity range = load(rangeId);
+        assertThat(range.verificationStatus).isEqualTo(VerificationStatus.VERIFIED);
+        assertThat(range.verificationError).isNull();
+    }
+
+    @Test
     void anErrorKeepsWhenTheRangeWasLastVerified() {
         // At the database's precision, so the stored value is exactly this one.
         OffsetDateTime verified = OffsetDateTime.now().minusDays(3).truncatedTo(ChronoUnit.MICROS);

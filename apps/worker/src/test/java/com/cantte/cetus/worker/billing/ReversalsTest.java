@@ -433,23 +433,14 @@ class ReversalsTest {
     void theChargebackThatWaitedIsOfThePaymentThatPaidTheOrder() {
         UUID accountId = account();
         BillingOrderEntity order = fixtures.planOrder(accountId, "EMPRENDEDOR");
-        // An earlier attempt, voided before the order was paid.
-        PaymentTransaction attempt = transaction(order, PaymentStatus.VOIDED);
-        PaymentTransaction earlier = new PaymentTransaction(
-                "earlier-" + order.id,
-                attempt.reference(),
-                attempt.status(),
-                attempt.amountCents(),
-                attempt.currency(),
-                attempt.paymentMethodType(),
-                attempt.statusMessage(),
-                attempt.createdAt().minusSeconds(60),
-                attempt.finalizedAt(),
-                attempt.raw());
-        assertThat(settlement.apply(earlier)).isEqualTo(Outcome.RECORDED);
+        // An attempt voided before the order was paid, and another created after it, voided while it still paid.
+        assertThat(settlement.apply(transaction(order, "earlier-" + order.id, PaymentStatus.VOIDED, -60)))
+                .isEqualTo(Outcome.RECORDED);
         assertThat(settlement.apply(transaction(order, PaymentStatus.APPROVED))).isEqualTo(Outcome.PAID);
+        assertThat(settlement.apply(transaction(order, "later-" + order.id, PaymentStatus.VOIDED, 60)))
+                .isEqualTo(Outcome.REVIEW);
         UUID refund = request(order.id, 500_000);
-        settlement.apply(transaction(order, PaymentStatus.VOIDED));
+        assertThat(settlement.apply(transaction(order, PaymentStatus.VOIDED))).isEqualTo(Outcome.RECORDED);
 
         wompi.refunding("DECLINED");
         refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, refund));
@@ -555,6 +546,24 @@ class ReversalsTest {
 
     private static String transactionIdOf(BillingOrderEntity order) {
         return "12239576-" + order.id;
+    }
+
+    /** Another transaction of the order, created {@code seconds} after now. */
+    private static PaymentTransaction transaction(
+            BillingOrderEntity order, String id, PaymentStatus status, int seconds) {
+        PaymentTransaction base = transaction(order, status);
+        Instant at = base.createdAt().plusSeconds(seconds);
+        return new PaymentTransaction(
+                id,
+                base.reference(),
+                status,
+                base.amountCents(),
+                base.currency(),
+                base.paymentMethodType(),
+                base.statusMessage(),
+                at,
+                Optional.of(at),
+                base.raw());
     }
 
     private static PaymentTransaction transaction(BillingOrderEntity order, PaymentStatus status) {

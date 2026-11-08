@@ -123,6 +123,8 @@ public class AdminInboundEventResource {
         event.status = Status.RECEIVED;
         event.error = null;
         event.processedAt = null;
+        // A run of the earlier generation, still going after its job was given up, cannot resolve it any more.
+        event.generation++;
         jobs.enqueue(JobTypes.PROCESS_WEBHOOK_EVENT, event.id);
         auditLog.record(
                 null,
