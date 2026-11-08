@@ -47,7 +47,8 @@ type Action =
   | { kind: "refund"; order: AdminOrder }
   | { kind: "chargeback"; order: AdminOrder }
   | { kind: "waive"; order: AdminOrder }
-  | { kind: "resolve"; order: AdminOrder; reversal: AdminReversal };
+  | { kind: "resolve"; order: AdminOrder; reversal: AdminReversal }
+  | { kind: "returned"; order: AdminOrder; reversal: AdminReversal };
 
 const orderKindLabel: Record<AdminOrder["kind"], string> = {
   PURCHASE: "Compra",
@@ -87,9 +88,14 @@ export function AdminOrders({ accountId, isAdmin }: { accountId: string; isAdmin
         <TableBody>
           {orders.map((order) => {
             const live = order.reversals.find(
-              (reversal) => reversal.status === "REQUESTED" || reversal.status === "SUBMITTED",
+              (reversal) =>
+                reversal.kind !== "RETURN" &&
+                (reversal.status === "REQUESTED" || reversal.status === "SUBMITTED"),
             );
             const unanswered = order.reversals.find((reversal) => reversal.status === "SUBMITTED");
+            const refusedReturn = order.reversals.find(
+              (reversal) => reversal.kind === "RETURN" && reversal.status === "FAILED",
+            );
             const reversible = order.status === "PAID" && order.refundableCents > 0 && !live;
             const debt = order.kind === "DEBT" && order.status === "PENDING";
             return (
@@ -139,7 +145,7 @@ export function AdminOrders({ accountId, isAdmin }: { accountId: string; isAdmin
                 </TableCell>
                 {isAdmin && (
                   <TableCell className="align-top">
-                    {(reversible || debt || unanswered) && (
+                    {(reversible || debt || unanswered || refusedReturn) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={<Button variant="ghost" size="icon" aria-label="Acciones" />}
@@ -173,6 +179,15 @@ export function AdminOrders({ accountId, isAdmin }: { accountId: string; isAdmin
                               }
                             >
                               Resolver el reembolso
+                            </DropdownMenuItem>
+                          )}
+                          {refusedReturn && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setAction({ kind: "returned", order, reversal: refusedReturn })
+                              }
+                            >
+                              Registrar la devolución
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -223,6 +238,11 @@ const copy = {
     lead: "Wompi nunca respondió este reembolso. Revisa su panel y registra lo que muestra.",
     submit: "Guardar",
   },
+  returned: {
+    title: "Registrar la devolución",
+    lead: "Wompi no pudo devolver este pago, que la orden no podía recibir. Regístralo cuando lo hayas devuelto por otro medio; la orden y sus créditos no cambian.",
+    submit: "Registrar",
+  },
 } as const;
 
 function OrderActionDialog({
@@ -269,6 +289,10 @@ function OrderActionDialog({
           return chargeBackOrder({ data: { ...ids, reason: values.reason } });
         case "waive":
           return waiveDebt({ data: { ...ids, reason: values.reason } });
+        case "returned":
+          return resolveRefund({
+            data: { ...ids, reversalId: action.reversal.id, approved: true, reason: values.reason },
+          });
         default:
           return resolveRefund({
             data: {

@@ -4,16 +4,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.payments.PaymentStatus;
 import com.cantte.cetus.payments.PaymentTransaction;
 import com.cantte.cetus.payments.PaymentTransientException;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.InboundWebhookEventEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.NotificationEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
 import com.cantte.cetus.worker.handlers.CheckPaymentHandler;
 import com.cantte.cetus.worker.handlers.ProcessWebhookEventHandler;
+import com.cantte.cetus.worker.handlers.RefundOrderHandler;
 import com.cantte.cetus.worker.ops.OpsAlerts;
 import com.cantte.cetus.worker.runner.GiveUp;
 import com.cantte.cetus.worker.support.FakeResend;
@@ -71,6 +75,9 @@ class PaymentSettlementTest {
 
     @Inject
     CheckPaymentHandler checks;
+
+    @Inject
+    RefundOrderHandler refunds;
 
     @Inject
     PaymentReconciliation reconciliation;
@@ -178,7 +185,26 @@ class PaymentSettlementTest {
     }
 
     @Test
-    void aSecondApprovedChargeWaitsForAPerson() {
+    void thePaymentThatPaidIsNotGivenBackForAnEarlierOneOfAnotherAmount() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        String underpaid = newTransactionId();
+        String paying = newTransactionId();
+
+        assertThat(settlement.apply(transaction(underpaid, order.reference, PaymentStatus.APPROVED, 100)))
+                .isEqualTo(Outcome.REVIEW);
+        assertThat(settlement.apply(transaction(paying, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.PAID);
+        assertThat(settlement.apply(transaction(paying, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.ALREADY_PAID);
+
+        assertThat(QuarkusTransaction.requiringNew().call(() -> PaymentReversalEntity.findReturn(paying)))
+                .isEmpty();
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+    }
+
+    @Test
+    void aSecondApprovedPaymentIsGivenBackOnce() {
         BillingOrderEntity order =
                 fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
         String first = newTransactionId();
@@ -191,12 +217,57 @@ class PaymentSettlementTest {
         assertThat(orderOf(order.id).reviewReason).isNull();
 
         assertThat(settlement.apply(transaction(second, order.reference, PaymentStatus.APPROVED, 2_490_000)))
-                .isEqualTo(Outcome.REVIEW);
+                .isEqualTo(Outcome.RETURNED);
+        assertThat(settlement.apply(transaction(second, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.RETURNED);
 
-        BillingOrderEntity reviewed = orderOf(order.id);
-        assertThat(reviewed.status).isEqualTo(BillingOrderEntity.Status.PAID);
-        assertThat(reviewed.reviewReason).contains(second).contains("pagó dos veces");
+        PaymentReversalEntity returned = returnOf(second);
+        assertThat(returned.amountCents).isEqualTo(2_490_000);
+        assertThat(returned.reason).contains("pagó dos veces");
+        refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, returned.id));
+        assertThat(wompi.refunds())
+                .singleElement()
+                .satisfies(asked -> assertThat(asked.transactionId()).isEqualTo(second));
+        assertThat(returnOf(second).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
+        BillingOrderEntity paid = orderOf(order.id);
+        assertThat(paid.status).isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(paid.reviewReason).isNull();
         assertThat(paidAudits(order.id)).isEqualTo(1);
+        // Wompi keeps the returned payment APPROVED: the one that paid is still not a duplicate when replayed.
+        assertThat(settlement.apply(transaction(first, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.ALREADY_PAID);
+        assertThat(QuarkusTransaction.requiringNew().call(() -> PaymentReversalEntity.findReturn(first)))
+                .isEmpty();
+        assertThat(noticesOf(order.accountId)).singleElement().satisfies(notice -> {
+            assertThat(notice.kind).isEqualTo(NotificationKind.PAYMENT_RETURNED.name());
+            assertThat(notice.data).containsEntry("orderStatus", "PAID");
+        });
+    }
+
+    @Test
+    void anApprovalOfACanceledOrderIsGivenBack() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        QuarkusTransaction.requiringNew()
+                .run(() -> BillingOrderEntity.lock(order.id).orElseThrow().cancel(BillingOrderEntity.Status.PENDING));
+        String id = newTransactionId();
+
+        assertThat(settlement.apply(transaction(id, order.reference, PaymentStatus.APPROVED, 2_490_000)))
+                .isEqualTo(Outcome.RETURNED);
+
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.CANCELED);
+        assertThat(returnOf(id).status).isEqualTo(PaymentReversalEntity.Status.REQUESTED);
+        assertThat(paidAudits(order.id)).isZero();
+    }
+
+    private static List<NotificationEntity> noticesOf(UUID accountId) {
+        return QuarkusTransaction.requiringNew()
+                .call(() -> NotificationEntity.<NotificationEntity>list("accountId", accountId));
+    }
+
+    private static PaymentReversalEntity returnOf(String transactionId) {
+        return QuarkusTransaction.requiringNew()
+                .call(() -> PaymentReversalEntity.findReturn(transactionId).orElseThrow());
     }
 
     @Test
@@ -227,6 +298,22 @@ class PaymentSettlementTest {
 
         assertThat(transactionOf(transactionId).status).isEqualTo(PaymentTransactionEntity.Status.VOIDED);
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
+    }
+
+    @Test
+    void anApprovalOfACanceledOrderWhoseEventsWereLostIsFoundAndGivenBack() {
+        BillingOrderEntity order =
+                fixtures.order(2_490_000, OffsetDateTime.now().plusHours(1));
+        QuarkusTransaction.requiringNew()
+                .run(() -> BillingOrderEntity.lock(order.id).orElseThrow().cancel(BillingOrderEntity.Status.PENDING));
+        String transactionId = newTransactionId();
+        wompi.put(Transaction.of(transactionId, order.reference, "APPROVED", 2_490_000));
+
+        assertThat(reconciliation.run()).contains(order.id);
+        checks.handle(checkJobOf(order.id));
+
+        assertThat(returnOf(transactionId).status).isEqualTo(PaymentReversalEntity.Status.REQUESTED);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.CANCELED);
     }
 
     @Test

@@ -1,10 +1,9 @@
 package com.cantte.cetus.api.console;
 
-import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
 import com.cantte.cetus.persistence.entity.DocumentDeliveryEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.WebhookEventEntity;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -84,10 +83,10 @@ public final class DocumentTimeline {
                     null));
         }
 
-        JobEntity.<JobEntity>list(
-                        "jobType = ?1 and referenceId = ?2 and status = 'DEAD'", JobTypes.PROCESS_DOCUMENT, doc.id)
-                .forEach(job -> events.add(new DocumentEvent(
-                        job.updatedAt, DocumentEventKind.PROCESSING_FAILED, null, null, null, job.lastError, null)));
+        if (doc.status == DocumentStatus.FAILED) {
+            events.add(new DocumentEvent(
+                    doc.updatedAt, DocumentEventKind.PROCESSING_FAILED, null, null, null, doc.dianStatusMessage, null));
+        }
 
         for (DocumentDeliveryEntity delivery : DocumentDeliveryEntity.listByDocument(doc.id)) {
             if (delivery.sentAt != null) {

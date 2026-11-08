@@ -8,6 +8,7 @@ import com.cantte.cetus.persistence.audit.AuditAction;
 import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.PaymentChargeEntity;
+import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -40,12 +41,14 @@ public class PaymentSettlement {
         RECORDED,
         /** The payment of a paid order was voided with no refund to explain it: applied as a chargeback. */
         CHARGED_BACK,
+        /** An approved payment the order could not take (canceled, or paid by another): given back through Wompi. */
+        RETURNED,
         /** No order has the reference: another merchant integration or a test payment. */
         UNKNOWN_ORDER
     }
 
     /** Fired inside the transaction that pays the order; phase 3 grants the order's credits on it. */
-    public record OrderPaid(UUID orderId, UUID accountId) {}
+    public record OrderPaid(UUID orderId, UUID accountId, String transactionId) {}
 
     /**
      * Fired with the order locked for each transaction of a charge to a saved card, with the status kept for it,
@@ -116,21 +119,33 @@ public class PaymentSettlement {
         // either, and an approval of any other is a new payment.
         if (order.status == BillingOrderEntity.Status.PAID || order.status == BillingOrderEntity.Status.REFUNDED) {
             boolean refunded = order.status == BillingOrderEntity.Status.REFUNDED;
+            // Only one of the order's amount can have paid it, and Wompi keeps a returned payment APPROVED too.
             boolean paidByAnother = PaymentTransactionEntity.listByOrder(order.id).stream()
                     .anyMatch(other -> !other.id.equals(payment.id)
                             && (other.status == PaymentTransactionEntity.Status.APPROVED
-                                    || refunded && other.status == PaymentTransactionEntity.Status.VOIDED));
+                                    || refunded && other.status == PaymentTransactionEntity.Status.VOIDED)
+                            && other.amountCents == order.totalCents
+                            && other.currency.equals(order.currency)
+                            && PaymentReversalEntity.findReturn(other.providerTransactionId)
+                                    .isEmpty());
             if (!paidByAnother) {
                 return Outcome.ALREADY_PAID;
             }
-            review(
+            return giveBack(
                     order,
+                    payment,
                     refunded
-                            ? "Wompi aprobó la transacción %s de una orden ya devuelta: un pago nuevo sin créditos"
+                            ? "Wompi aprobó la transacción %s de una orden ya devuelta"
                                     .formatted(payment.providerTransactionId)
                             : "Wompi aprobó la transacción %s de una orden que otra ya pagó: el cliente pagó dos veces"
                                     .formatted(payment.providerTransactionId));
-            return Outcome.REVIEW;
+        }
+        if (order.status != BillingOrderEntity.Status.PENDING && order.status != BillingOrderEntity.Status.EXPIRED) {
+            return giveBack(
+                    order,
+                    payment,
+                    "Wompi aprobó la transacción %s de una orden %s"
+                            .formatted(payment.providerTransactionId, order.status));
         }
         if (payment.amountCents != order.totalCents || !payment.currency.equals(order.currency)) {
             review(
@@ -142,13 +157,6 @@ public class PaymentSettlement {
                                     payment.currency,
                                     order.totalCents,
                                     order.currency));
-            return Outcome.REVIEW;
-        }
-        if (order.status != BillingOrderEntity.Status.PENDING && order.status != BillingOrderEntity.Status.EXPIRED) {
-            review(
-                    order,
-                    "Wompi aprobó la transacción %s de una orden %s"
-                            .formatted(payment.providerTransactionId, order.status));
             return Outcome.REVIEW;
         }
         order.status = BillingOrderEntity.Status.PAID;
@@ -165,8 +173,14 @@ public class PaymentSettlement {
                         "transactionId", payment.providerTransactionId,
                         "paymentMethodType", payment.paymentMethodType,
                         "totalCents", order.totalCents));
-        orderPaid.fire(new OrderPaid(order.id, order.accountId));
+        orderPaid.fire(new OrderPaid(order.id, order.accountId, payment.providerTransactionId));
         return Outcome.PAID;
+    }
+
+    /** Gives the payment back through Wompi; one already given back is left as it is. */
+    private Outcome giveBack(BillingOrderEntity order, PaymentTransactionEntity payment, String reason) {
+        reversals.giveBack(order, payment.providerTransactionId, payment.amountCents, reason);
+        return Outcome.RETURNED;
     }
 
     /** The first reason stays: a later one is logged, and the person reviewing sees every transaction. */

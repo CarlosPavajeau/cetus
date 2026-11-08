@@ -4,6 +4,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.FakeWompiResource;
@@ -186,11 +187,13 @@ class PaymentMethodResourceTest {
                 .then()
                 .statusCode(409)
                 .body("code", equalTo("charge_in_progress"));
+        // The checkout waits for the card's answer, so the order is not paid twice.
         owner.request()
                 .get("/console/orders/" + orderId)
                 .then()
                 .statusCode(200)
-                .body("charge.status", equalTo("SUBMITTED"));
+                .body("charge.status", equalTo("SUBMITTED"))
+                .body("checkout", nullValue());
     }
 
     @Test

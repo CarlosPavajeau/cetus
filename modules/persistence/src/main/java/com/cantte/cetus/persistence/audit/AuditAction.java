@@ -60,6 +60,8 @@ public enum AuditAction {
     CREDITS_ADJUSTED,
     /** A document the worker gave up on, resolved by the Cetus team as not issued: its credit is given back. */
     DOCUMENT_CREDIT_RELEASED,
+    /** The DIAN accepted or rejected a document after Cetus gave up on it; recorded by Cetus itself. */
+    DOCUMENT_LATE_VERDICT,
     /** The account paid its first period and the subscription started; recorded by Cetus itself. */
     SUBSCRIPTION_STARTED,
     /** How much overage a period may run up before new documents are refused. */

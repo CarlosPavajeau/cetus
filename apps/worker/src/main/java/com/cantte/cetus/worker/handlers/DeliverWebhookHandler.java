@@ -7,6 +7,7 @@ import com.cantte.cetus.persistence.entity.WebhookEndpointEntity;
 import com.cantte.cetus.webhooks.WebhookSignature;
 import com.cantte.cetus.webhooks.WebhookTargets;
 import com.cantte.cetus.worker.runner.GiveUp;
+import com.cantte.cetus.worker.runner.JobContext;
 import com.cantte.cetus.worker.runner.JobHandler;
 import com.cantte.cetus.worker.support.WebhookClients;
 import com.cantte.cetus.worker.support.WebhookClients.BlockedTargetException;
@@ -42,6 +43,9 @@ public class DeliverWebhookHandler implements JobHandler {
 
     @Inject
     WebhookClients clients;
+
+    @Inject
+    JobContext jobContext;
 
     @Override
     public String type() {
@@ -80,6 +84,7 @@ public class DeliverWebhookHandler implements JobHandler {
                 .post(RequestBody.create(target.payload().getBytes(StandardCharsets.UTF_8), JSON))
                 .build();
 
+        jobContext.ensureOwned();
         deliveries.attempt(target.deliveryId());
         int status;
         String body;

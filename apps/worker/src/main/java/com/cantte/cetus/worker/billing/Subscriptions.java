@@ -29,6 +29,7 @@ import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -58,6 +59,9 @@ public class Subscriptions {
 
     @Inject
     AutoCharge autoCharge;
+
+    @Inject
+    Reversals reversals;
 
     /** How long a renewal waits to be paid before the subscription is canceled. */
     @ConfigProperty(name = "cetus.billing.subscription-grace")
@@ -91,22 +95,25 @@ public class Subscriptions {
                     PlanVersionEntity version = PlanVersionEntity.findById(item.planVersionId);
                     PlanEntity plan = PlanEntity.findById(version.planId);
                     if (plan.kind == PlanEntity.Kind.SUBSCRIPTION) {
-                        start(order, version, plan);
+                        start(order, paid.transactionId(), version, plan);
                     }
                 }
             }
             case RENEWAL ->
-                SubscriptionPeriodEntity.findByOpeningOrder(order.id).ifPresent(period -> renew(order, period));
+                SubscriptionPeriodEntity.findByOpeningOrder(order.id)
+                        .ifPresent(period -> renew(order, paid.transactionId(), period));
             case MANUAL, DEBT -> {}
         }
     }
 
-    private void start(BillingOrderEntity order, PlanVersionEntity version, PlanEntity plan) {
+    private void start(BillingOrderEntity order, String transactionId, PlanVersionEntity version, PlanEntity plan) {
         // Two subscriptions paid at once: the second waits here and finds the first instead of failing the payment.
         ledger.lock(order.accountId);
         if (SubscriptionEntity.lockCurrent(order.accountId).isPresent()) {
-            PaymentSettlement.review(
-                    order, "La cuenta ya tenía una suscripción al pagarse la orden de %s".formatted(plan.name));
+            reversals.refundUndelivered(
+                    order,
+                    transactionId,
+                    "La cuenta ya tenía una suscripción al pagarse la orden de %s".formatted(plan.name));
             return;
         }
         SubscriptionEntity subscription = new SubscriptionEntity();
@@ -130,14 +137,16 @@ public class Subscriptions {
                 Map.of("plan", plan.code, "version", version.version, "reference", order.reference));
     }
 
-    private void renew(BillingOrderEntity order, SubscriptionPeriodEntity period) {
+    private void renew(BillingOrderEntity order, String transactionId, SubscriptionPeriodEntity period) {
         ledger.lock(order.accountId);
         SubscriptionEntity subscription =
                 SubscriptionEntity.lock(period.subscriptionId).orElseThrow();
         SubscriptionPeriodEntity.getEntityManager().refresh(period, LockModeType.PESSIMISTIC_WRITE);
         if (subscription.status == SubscriptionEntity.Status.CANCELED) {
-            PaymentSettlement.review(
-                    order, "Se pagó la renovación de una suscripción ya cancelada; el periodo no se otorgó");
+            reversals.refundUndelivered(
+                    order,
+                    transactionId,
+                    "Se pagó la renovación de una suscripción ya cancelada; el periodo no se otorgó");
             return;
         }
         if (period.grantId != null) {
@@ -173,6 +182,8 @@ public class Subscriptions {
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public boolean close(UUID periodId, OffsetDateTime now) {
+        Optional<BillingOrderEntity> opening =
+                SubscriptionPeriodEntity.openingOrderOf(periodId).flatMap(BillingOrderEntity::lock);
         ledger.lock(SubscriptionPeriodEntity.accountOf(periodId));
         SubscriptionEntity subscription = SubscriptionEntity.lock(SubscriptionPeriodEntity.subscriptionOf(periodId))
                 .orElseThrow();
@@ -183,12 +194,12 @@ public class Subscriptions {
         }
         if (subscription.status == SubscriptionEntity.Status.PAST_DUE) {
             // The period ended with its own renewal unpaid: it is not renewed again over an unpaid one.
-            finish(subscription, period, now);
+            finish(subscription, period, opening, now);
             cancel(subscription, now, "UNPAID");
             return true;
         }
         if (subscription.cancelAtPeriodEnd) {
-            finish(subscription, period, now);
+            finish(subscription, period, opening, now);
             cancel(subscription, now, "REQUESTED");
             return true;
         }
@@ -248,6 +259,8 @@ public class Subscriptions {
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public boolean lapse(UUID subscriptionId, OffsetDateTime now) {
+        Optional<BillingOrderEntity> opening =
+                SubscriptionPeriodEntity.openingOrderOfOpen(subscriptionId).flatMap(BillingOrderEntity::lock);
         ledger.lock(SubscriptionEntity.accountOf(subscriptionId));
         SubscriptionEntity subscription =
                 SubscriptionEntity.lock(subscriptionId).orElseThrow();
@@ -259,7 +272,11 @@ public class Subscriptions {
                 .flatMap(open -> SubscriptionPeriodEntity.lock(open.id))
                 .orElseThrow(() -> new IllegalStateException(
                         "Subscription " + subscription.id + " is past due without an open period"));
-        finish(subscription, period, now);
+        if (!opens(opening, period)) {
+            // Another period opened before the locks: the next run lapses it, with its own order locked.
+            return false;
+        }
+        finish(subscription, period, opening, now);
         cancel(subscription, now, "UNPAID");
         return true;
     }
@@ -323,6 +340,8 @@ public class Subscriptions {
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public boolean end(UUID subscriptionId, OffsetDateTime now, String reason) {
+        Optional<BillingOrderEntity> opening =
+                SubscriptionPeriodEntity.openingOrderOfOpen(subscriptionId).flatMap(BillingOrderEntity::lock);
         ledger.lock(SubscriptionEntity.accountOf(subscriptionId));
         SubscriptionEntity subscription =
                 SubscriptionEntity.lock(subscriptionId).orElseThrow();
@@ -333,7 +352,11 @@ public class Subscriptions {
                 .flatMap(open -> SubscriptionPeriodEntity.lock(open.id))
                 .orElseThrow(() -> new IllegalStateException(
                         "Subscription " + subscription.id + " is not canceled and has no open period"));
-        finish(subscription, period, now);
+        if (!opens(opening, period)) {
+            throw new IllegalStateException("The open period of subscription " + subscription.id
+                    + " changed while its order was locked; the job retries");
+        }
+        finish(subscription, period, opening, now);
         cancel(subscription, now, reason);
         return true;
     }
@@ -343,16 +366,18 @@ public class Subscriptions {
      * were issued, and no later renewal will bill them. So is the overage of the period before, when the renewal
      * that billed it with this period's fee was never paid.
      */
-    private void finish(SubscriptionEntity subscription, SubscriptionPeriodEntity period, OffsetDateTime now) {
+    private void finish(
+            SubscriptionEntity subscription,
+            SubscriptionPeriodEntity period,
+            Optional<BillingOrderEntity> opening,
+            OffsetDateTime now) {
         int overage = bill(subscription, period, now);
-        Optional<BillingOrderEntity> renewal = Optional.ofNullable(period.openingOrderId)
-                .map(id -> BillingOrderEntity.<BillingOrderEntity>findById(id))
-                .filter(opening -> opening.status == BillingOrderEntity.Status.PENDING
-                        || opening.status == BillingOrderEntity.Status.EXPIRED);
-        List<BillingOrderItemEntity> unpaid = renewal.map(
-                        opening -> BillingOrderItemEntity.listByOrder(opening.id).stream()
-                                .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
-                                .toList())
+        // Locked before the ledger: a payment of the renewal settled meanwhile left it PAID, and its overage is paid.
+        Optional<BillingOrderEntity> renewal = opening.filter(order ->
+                order.status == BillingOrderEntity.Status.PENDING || order.status == BillingOrderEntity.Status.EXPIRED);
+        List<BillingOrderItemEntity> unpaid = renewal.map(order -> BillingOrderItemEntity.listByOrder(order.id).stream()
+                        .filter(item -> item.itemType == BillingOrderItemEntity.Type.OVERAGE)
+                        .toList())
                 .orElse(List.of());
         if (overage == 0 && unpaid.isEmpty()) {
             return;
@@ -364,7 +389,7 @@ public class Subscriptions {
         }
         if (!unpaid.isEmpty()) {
             // The debt bills that overage now: paying the renewal too would bill it twice.
-            renewal.get().status = BillingOrderEntity.Status.CANCELED;
+            renewal.get().cancel(BillingOrderEntity.Status.PENDING, BillingOrderEntity.Status.EXPIRED);
         }
         PlanVersionEntity version = PlanVersionEntity.findById(period.planVersionId);
         overageItem(order, period, version, overage);
@@ -406,6 +431,14 @@ public class Subscriptions {
                 "subscription_canceled:%s".formatted(subscription.id),
                 Map.of("plan", plan.name, "canceledAt", Dates.bogota(now), "reason", reason));
         LOG.infof("Subscription %s was canceled (%s)", subscription.id, reason);
+    }
+
+    /**
+     * Whether the order locked ahead of the ledger (the order {@link CreditLedger#lock} sets) is the one that opened
+     * the period, now that the period is locked too.
+     */
+    private static boolean opens(Optional<BillingOrderEntity> opening, SubscriptionPeriodEntity period) {
+        return Objects.equals(opening.map(order -> order.id).orElse(null), period.openingOrderId);
     }
 
     /** Closes the period, billing its accepted overage documents once. */

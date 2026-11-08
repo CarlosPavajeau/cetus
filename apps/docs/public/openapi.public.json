@@ -2793,7 +2793,7 @@
           "REJECTED",
           "FAILED"
         ],
-        "description": "Estado del documento ante la DIAN.\n\n- `RECEIVED`: Recibido y numerado; en cola.\n- `PROCESSING`: Cetus lo está generando, firmando o enviando.\n- `SUBMITTED`: Enviado; Cetus espera la respuesta de la DIAN.\n- `ACCEPTED`: La DIAN lo aceptó. Es definitivo.\n- `REJECTED`: La DIAN lo rechazó. Es definitivo: `dian.errors` dice por qué; corrige y emite un documento nuevo.\n- `FAILED`: Un intento falló. Si Cetus todavía reintenta, vuelve a `PROCESSING`; el webhook `*.failed` avisa cuando ya no hay más reintentos."
+        "description": "Estado del documento ante la DIAN.\n\n- `RECEIVED`: Recibido y numerado; en cola.\n- `PROCESSING`: Cetus lo está generando, firmando o enviando.\n- `SUBMITTED`: Enviado; Cetus espera la respuesta de la DIAN.\n- `ACCEPTED`: La DIAN lo aceptó. Es definitivo.\n- `REJECTED`: La DIAN lo rechazó. Es definitivo: `dian.errors` dice por qué; corrige y emite un documento nuevo.\n- `FAILED`: Cetus dejó de intentarlo y llegó el webhook `*.failed`. Mientras reintenta, el documento sigue en `PROCESSING`. Si la DIAN responde después, pasa a `ACCEPTED` o `REJECTED` y llega su webhook."
       },
       "Environment": {
         "type": "string",

@@ -176,6 +176,19 @@ public class BillingOrderEntity extends PanacheEntityBase {
                 .firstResultOptional();
     }
 
+    /**
+     * Never to be paid. Call it with the order locked.
+     *
+     * @throws IllegalStateException unless the order is in one of {@code from}
+     */
+    public void cancel(Status... from) {
+        if (!List.of(from).contains(status)) {
+            throw new IllegalStateException(
+                    "Order %s is %s, not %s: it cannot be canceled".formatted(id, status, List.of(from)));
+        }
+        status = Status.CANCELED;
+    }
+
     /** The order, locked until the transaction ends. */
     public static Optional<BillingOrderEntity> lock(UUID id) {
         return Optional.ofNullable(findById(id, LockModeType.PESSIMISTIC_WRITE));
@@ -202,7 +215,8 @@ public class BillingOrderEntity extends PanacheEntityBase {
                                 SELECT (SELECT coalesce(sum(total_cents), 0) FROM billing.billing_orders
                                         WHERE status IN ('PAID', 'REFUNDED') AND paid_at >= :from AND paid_at < :to)
                                      - (SELECT coalesce(sum(amount_cents), 0) FROM billing.payment_reversals
-                                        WHERE status = 'APPROVED' AND approved_at >= :from AND approved_at < :to)
+                                        WHERE status = 'APPROVED' AND kind <> 'RETURN'
+                                          AND approved_at >= :from AND approved_at < :to)
                                 """)
                         .setParameter("from", from)
                         .setParameter("to", to)

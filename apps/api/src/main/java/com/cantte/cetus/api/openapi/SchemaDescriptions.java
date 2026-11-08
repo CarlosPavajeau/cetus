@@ -42,8 +42,9 @@ final class SchemaDescriptions {
                                             "La DIAN lo rechazó. Es definitivo: `dian.errors` dice por qué; corrige y "
                                                     + "emite un documento nuevo.",
                                     "FAILED",
-                                            "Un intento falló. Si Cetus todavía reintenta, vuelve a `PROCESSING`; el "
-                                                    + "webhook `*.failed` avisa cuando ya no hay más reintentos."))),
+                                            "Cetus dejó de intentarlo y llegó el webhook `*.failed`. Mientras reintenta, "
+                                                    + "el documento sigue en `PROCESSING`. Si la DIAN responde "
+                                                    + "después, pasa a `ACCEPTED` o `REJECTED` y llega su webhook."))),
             Map.entry(
                     "PersonType",
                     new EnumDescription(

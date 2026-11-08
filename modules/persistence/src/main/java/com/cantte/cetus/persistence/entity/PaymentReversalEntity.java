@@ -17,14 +17,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Money that goes back from a paid order: a refund or a chargeback; see V41. */
+/** Money that goes back from a paid order, a refund or a chargeback (V41), or a payment it could not take (V50). */
 @Entity
 @Table(name = "payment_reversals")
 public class PaymentReversalEntity extends PanacheEntityBase {
 
     public enum Kind {
         REFUND,
-        CHARGEBACK
+        CHARGEBACK,
+        /**
+         * A payment the order could not take, given back through Wompi: the order was canceled, or another payment
+         * already paid it. It leaves the order and its credits alone.
+         */
+        RETURN
     }
 
     public enum Mode {
@@ -120,7 +125,7 @@ public class PaymentReversalEntity extends PanacheEntityBase {
         updatedAt = OffsetDateTime.now();
     }
 
-    /** The order's next reversal; the order must be locked and have no live one. */
+    /** The order's next reversal; the order must be locked and, unless it is a return, have no live one. */
     public static PaymentReversalEntity request(
             BillingOrderEntity order,
             Kind kind,
@@ -168,19 +173,30 @@ public class PaymentReversalEntity extends PanacheEntityBase {
         return orderIds.isEmpty() ? List.of() : list("orderId in ?1 order by number", orderIds);
     }
 
-    /** The order's reversal waiting to be sent or answered; there is one at most. */
+    /** The order's refund or chargeback waiting to be sent or answered; there is one at most. Returns aside. */
     public static Optional<PaymentReversalEntity> findLive(UUID orderId) {
-        return find("orderId = ?1 and status in ?2", orderId, List.of(Status.REQUESTED, Status.SUBMITTED))
+        return find(
+                        "orderId = ?1 and status in ?2 and kind <> ?3",
+                        orderId,
+                        List.of(Status.REQUESTED, Status.SUBMITTED),
+                        Kind.RETURN)
                 .firstResultOptional();
     }
 
-    /** What the order's approved reversals gave back. */
+    /** The return of the transaction, if it was given back already. */
+    public static Optional<PaymentReversalEntity> findReturn(String providerTransactionId) {
+        return find("kind = ?1 and providerTransactionId = ?2", Kind.RETURN, providerTransactionId)
+                .firstResultOptional();
+    }
+
+    /** What the order's approved refunds and chargebacks gave back of what it was paid. */
     public static long approvedCents(UUID orderId) {
         return ((Number) getEntityManager()
                         .createQuery("SELECT coalesce(sum(r.amountCents), 0) FROM PaymentReversalEntity r"
-                                + " WHERE r.orderId = :order AND r.status = :status")
+                                + " WHERE r.orderId = :order AND r.status = :status AND r.kind <> :returned")
                         .setParameter("order", orderId)
                         .setParameter("status", Status.APPROVED)
+                        .setParameter("returned", Kind.RETURN)
                         .getSingleResult())
                 .longValue();
     }

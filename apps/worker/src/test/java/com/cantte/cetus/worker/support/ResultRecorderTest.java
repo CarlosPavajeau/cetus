@@ -118,7 +118,7 @@ class ResultRecorderTest {
                 }));
         locked.await(5, TimeUnit.SECONDS);
 
-        CompletableFuture<Void> failure = CompletableFuture.runAsync(() -> recorder.failed(id, "Connection reset"));
+        CompletableFuture<Void> failure = CompletableFuture.runAsync(() -> recorder.gaveUp(id, "Connection reset"));
         Thread.sleep(300);
         assertThat(failure).isNotDone();
         release.countDown();

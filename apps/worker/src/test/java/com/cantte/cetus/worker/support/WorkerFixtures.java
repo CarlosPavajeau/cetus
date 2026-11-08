@@ -474,8 +474,10 @@ public class WorkerFixtures {
             job.jobType = JobTypes.PROCESS_DOCUMENT;
             job.referenceId = documentId;
             job.status = "RUNNING";
+            job.claimId = Ids.newId();
             job.attempts = attempts;
             job.runAt = OffsetDateTime.now();
+            job.lockedUntil = job.runAt.plusMinutes(5);
             job.updatedAt = job.runAt;
             job.persist();
             return job;

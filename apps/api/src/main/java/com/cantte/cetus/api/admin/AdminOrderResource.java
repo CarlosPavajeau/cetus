@@ -35,6 +35,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -276,7 +277,8 @@ public class AdminOrderResource {
 
     /**
      * Settles a Wompi refund that never got an answer, as a person found it in Wompi's dashboard: approved, it is
-     * applied like any other; otherwise it failed and the order can give money back again.
+     * applied like any other; otherwise it failed and the order can give money back again. A return Wompi refused is
+     * approved once a person gave the payment back elsewhere.
      */
     @POST
     @Path("/{orderId}/reversals/{reversalId}/resolution")
@@ -292,8 +294,13 @@ public class AdminOrderResource {
         PaymentReversalEntity reversal = PaymentReversalEntity.lock(reversalId)
                 .filter(found -> found.orderId.equals(order.id))
                 .orElseThrow(() -> new NotFoundException("Reversal not found"));
-        if (reversal.status != PaymentReversalEntity.Status.SUBMITTED) {
-            throw new DomainException("reversal_not_unresolved", "Only a refund Wompi has not answered is resolved");
+        boolean failedReturn = reversal.kind == PaymentReversalEntity.Kind.RETURN
+                && reversal.status == PaymentReversalEntity.Status.FAILED
+                && request.approved();
+        if (reversal.status != PaymentReversalEntity.Status.SUBMITTED && !failedReturn) {
+            throw new DomainException(
+                    "reversal_not_unresolved",
+                    "Only a refund Wompi has not answered, or a return it refused, is resolved");
         }
         String reason = request.reason().strip();
         if (request.approved()) {
@@ -330,7 +337,7 @@ public class AdminOrderResource {
         if (order.kind != BillingOrderEntity.Kind.DEBT || order.status != BillingOrderEntity.Status.PENDING) {
             throw new DomainException("order_not_debt", "Only a pending debt can be forgiven");
         }
-        order.status = BillingOrderEntity.Status.CANCELED;
+        order.cancel(BillingOrderEntity.Status.PENDING);
         String reason = request.reason().strip();
         auditLog.record(
                 order.accountId,
@@ -364,17 +371,22 @@ public class AdminOrderResource {
 
     private static Optional<PaymentTransactionEntity> approvedTransaction(UUID orderId) {
         BillingOrderEntity order = BillingOrderEntity.findById(orderId);
-        return paying(order, PaymentTransactionEntity.listByOrder(orderId));
+        return paying(order, PaymentTransactionEntity.listByOrder(orderId), PaymentReversalEntity.listByOrder(orderId));
     }
 
     /**
      * The approved transaction that paid the order: one of another amount only waited for review, so one of the
-     * order's own amount comes first.
+     * order's own amount comes first, and one given back never paid it.
      */
     private static Optional<PaymentTransactionEntity> paying(
-            BillingOrderEntity order, List<PaymentTransactionEntity> payments) {
+            BillingOrderEntity order, List<PaymentTransactionEntity> payments, List<PaymentReversalEntity> reversals) {
+        Set<String> returned = reversals.stream()
+                .filter(reversal -> reversal.kind == PaymentReversalEntity.Kind.RETURN)
+                .map(reversal -> reversal.providerTransactionId)
+                .collect(Collectors.toSet());
         List<PaymentTransactionEntity> approved = payments.stream()
-                .filter(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED)
+                .filter(payment -> payment.status == PaymentTransactionEntity.Status.APPROVED
+                        && !returned.contains(payment.providerTransactionId))
                 .toList();
         return approved.stream()
                 .filter(payment -> payment.amountCents == order.totalCents && order.currency.equals(payment.currency))
@@ -396,14 +408,15 @@ public class AdminOrderResource {
                 .map(order -> {
                     List<PaymentReversalEntity> own = reversals.getOrDefault(order.id, List.of());
                     long reversed = own.stream()
-                            .filter(reversal -> reversal.status == PaymentReversalEntity.Status.APPROVED)
+                            .filter(reversal -> reversal.status == PaymentReversalEntity.Status.APPROVED
+                                    && reversal.kind != PaymentReversalEntity.Kind.RETURN)
                             .mapToLong(reversal -> reversal.amountCents)
                             .sum();
                     boolean paid = order.paidAt != null;
                     long consumed = paid ? OrderLots.consumedCents(order.id) : 0;
                     long refundable = paid ? order.totalCents - reversed : 0;
                     Optional<PaymentTransactionEntity> payment =
-                            paying(order, payments.getOrDefault(order.id, List.of()));
+                            paying(order, payments.getOrDefault(order.id, List.of()), own);
                     return new AdminOrderView(
                             order.id,
                             order.kind,

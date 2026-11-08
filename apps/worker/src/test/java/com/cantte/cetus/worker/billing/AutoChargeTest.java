@@ -249,6 +249,73 @@ class AutoChargeTest {
     }
 
     @Test
+    void anAbandonedAttemptWompiApprovesLaterPaysTheOrder() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        JobEntity job = jobOf(chargesOf(renewal.id).getFirst().id);
+        wompi.down(true);
+        assertThatThrownBy(() -> charges.handle(job)).isInstanceOf(RetryLater.class);
+        wompi.down(false);
+        QuarkusTransaction.requiringNew().run(() -> JobEntity.<JobEntity>findById(job.id).status = "DEAD");
+        checks.handle(fixtures.pendingJob(JobTypes.CHECK_PAYMENT, renewal.id));
+        PaymentChargeEntity abandoned = chargesOf(renewal.id).getFirst();
+        assertThat(abandoned.status).isEqualTo(PaymentChargeEntity.Status.CANCELED);
+
+        wompi.put(Transaction.of("12239579-" + abandoned.id, abandoned.reference, "APPROVED", renewal.totalCents));
+        checks.handle(fixtures.pendingJob(JobTypes.CHECK_PAYMENT, renewal.id));
+
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.APPROVED);
+    }
+
+    @Test
+    void anAttemptWaitsWhileTheOrdersCheckoutIsPendingAndChargesTheCardIfItDoesNotPay() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        String checkout = "12239580-" + renewal.id;
+        wompi.put(Transaction.of(checkout, renewal.reference, "PENDING", renewal.totalCents));
+        JobEntity job = jobOf(chargesOf(renewal.id).getFirst().id);
+
+        assertThatThrownBy(() -> charges.handle(job)).isInstanceOf(RetryLater.class);
+
+        assertThat(wompi.charges()).isEmpty();
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.SCHEDULED);
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PENDING);
+
+        wompi.put(Transaction.of(checkout, renewal.reference, "DECLINED", renewal.totalCents));
+        charges.handle(job);
+
+        assertThat(wompi.charges())
+                .singleElement()
+                .satisfies(charge -> assertThat(charge.reference()).isEqualTo(renewal.reference + "-1"));
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.SUBMITTED);
+    }
+
+    @Test
+    void anAttemptLeavesTheCardAloneOnceTheOrdersCheckoutPaidIt() {
+        UUID accountId = subscribed();
+        fixtures.card(accountId, sourceId());
+        BillingOrderEntity renewal = close(accountId);
+        wompi.put(Transaction.of("12239581-" + renewal.id, renewal.reference, "APPROVED", renewal.totalCents));
+
+        charges.handle(jobOf(chargesOf(renewal.id).getFirst().id));
+
+        assertThat(wompi.charges()).isEmpty();
+        assertThat(chargesOf(renewal.id))
+                .extracting(charge -> charge.status)
+                .containsExactly(PaymentChargeEntity.Status.CANCELED);
+        assertThat(orderOf(renewal.id).status).isEqualTo(BillingOrderEntity.Status.PAID);
+    }
+
+    @Test
     void aChargeWompiRefusesFailsAndIsTriedAgain() {
         UUID accountId = subscribed();
         fixtures.card(accountId, sourceId());

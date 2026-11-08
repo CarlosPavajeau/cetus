@@ -190,7 +190,7 @@ class SandboxProcessingTest {
         for (int attempt = 0; attempt < 2; attempt++) {
             DianFaultException fault = catchThrowableOfType(DianFaultException.class, () -> process(id));
             assertThat(fault.retryable()).isTrue();
-            assertThat(document(id).status).isEqualTo(DocumentStatus.FAILED);
+            assertThat(document(id).status).isEqualTo(DocumentStatus.PROCESSING);
         }
         process(id);
 

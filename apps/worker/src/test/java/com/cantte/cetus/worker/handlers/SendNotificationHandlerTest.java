@@ -132,6 +132,37 @@ class SendNotificationHandlerTest {
     }
 
     @Test
+    void aReturnedPaymentNoticeSaysWhyAndThatTheOrderStays() {
+        UUID accountId = account();
+        fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");
+        UUID orderId = UUID.randomUUID();
+        UUID returned = request(
+                accountId,
+                NotificationKind.PAYMENT_RETURNED,
+                Map.of(
+                        "amount",
+                        "$24.900",
+                        "reference",
+                        "ORD-1",
+                        "orderStatus",
+                        "PAID",
+                        "orderId",
+                        orderId.toString()));
+
+        handler.handle(fixtures.notificationJob(returned));
+
+        assertThat(resend.requests()).singleElement().satisfies(sent -> {
+            assertThat(sent.body().get("subject").asText())
+                    .isEqualTo("[Cetus] Devolvimos un pago de $24.900 de tu orden ORD-1");
+            assertThat(sent.body().get("text").asText())
+                    .contains("para la orden ORD-1")
+                    .contains("que ya estaba pagada")
+                    .contains("La orden y tus documentos no cambian")
+                    .contains("/billing/orders/" + orderId);
+        });
+    }
+
+    @Test
     void aCourtesyNoticeSaysItHasNoGraceMargin() {
         UUID accountId = account();
         fixtures.contacts(accountId, "tech@cetus.test", "fiscal@cetus.test", "billing@cetus.test");

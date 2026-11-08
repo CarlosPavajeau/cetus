@@ -8,10 +8,8 @@ import com.cantte.cetus.api.support.ConsoleUser;
 import com.cantte.cetus.api.support.IssuedDocuments;
 import com.cantte.cetus.domain.Ids;
 import com.cantte.cetus.domain.model.DocumentStatus;
-import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.CreditReservationEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
-import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.persistence.entity.PlanEntity;
 import com.cantte.cetus.persistence.entity.PlanVersionEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
@@ -90,11 +88,8 @@ class AdminCreditResourceTest {
                 .statusCode(422)
                 .body("code", equalTo("document_not_dead"));
 
-        QuarkusTransaction.requiringNew().run(() -> {
-            DocumentEntity.<DocumentEntity>findById(documentId).status = DocumentStatus.FAILED;
-            JobEntity.update(
-                    "status = 'DEAD' where jobType = ?1 and referenceId = ?2", JobTypes.PROCESS_DOCUMENT, documentId);
-        });
+        QuarkusTransaction.requiringNew()
+                .run(() -> DocumentEntity.<DocumentEntity>findById(documentId).status = DocumentStatus.FAILED);
         SUPPORT.request()
                 .body(reason)
                 .post("/admin/documents/" + documentId + "/credit-release")

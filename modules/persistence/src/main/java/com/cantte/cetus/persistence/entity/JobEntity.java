@@ -41,12 +41,19 @@ public class JobEntity extends PanacheEntityBase {
     @Column(name = "locked_by")
     public String lockedBy;
 
+    /** Set by each claim; only the run holding it may write the job's outcome. */
+    @Column(name = "claim_id")
+    public UUID claimId;
+
     @Column(name = "last_error")
     public String lastError;
 
     /** W3C traceparent of the span that enqueued the job; null when none was recorded. */
     @Column(name = "trace_context")
     public String traceContext;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    public OffsetDateTime createdAt;
 
     @Column(name = "updated_at")
     public OffsetDateTime updatedAt;

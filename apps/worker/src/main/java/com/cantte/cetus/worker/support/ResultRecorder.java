@@ -17,6 +17,8 @@ import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.AfterCommit;
 import com.cantte.cetus.persistence.audit.Actor;
+import com.cantte.cetus.persistence.audit.AuditAction;
+import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.dian.DocumentDianRules;
 import com.cantte.cetus.persistence.entity.CreditReservationEntity;
 import com.cantte.cetus.persistence.entity.DianSubmissionEntity;
@@ -43,10 +45,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.jboss.logging.Logger;
 
 /** Short transactions that persist the outcome of each step. */
 @ApplicationScoped
 public class ResultRecorder {
+
+    private static final Logger LOG = Logger.getLogger(ResultRecorder.class);
 
     /** From creation to the DIAN's verdict: seconds usually, much longer while the DIAN is down. */
     private static final Duration[] VALIDATION_BUCKETS = {
@@ -82,6 +87,9 @@ public class ResultRecorder {
 
     @Inject
     CreditLedger credits;
+
+    @Inject
+    AuditLog auditLog;
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void artifact(UUID documentId, DocumentArtifactEntity.Kind kind, DocumentStorage.StoredObject stored) {
@@ -161,12 +169,31 @@ public class ResultRecorder {
     /**
      * The DIAN's verdict. Recorded once: a job whose lease expired can run again and get its own answer, and
      * the document must not be delivered, published or billed twice. See {@link DocumentEntity#lock}.
+     *
+     * <p>A verdict for a document Cetus gave up on is recorded too, since the DIAN holds the fiscal truth: the
+     * integrator gets the verdict's event after the failed one, a credit support gave back is charged again, and
+     * the change is audited for the Cetus team (alert DOCUMENT_LATE_VERDICT).
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void completed(UUID documentId, DianResponse response) {
         DocumentEntity doc = DocumentEntity.lock(documentId);
-        if (doc.status.isFinal()) {
+        if (doc.status.hasVerdict()) {
             return;
+        }
+        if (doc.status == DocumentStatus.FAILED) {
+            LOG.warnf(
+                    "Document %s %s by the DIAN after Cetus gave up on it",
+                    documentId, response.valid() ? "accepted" : "rejected");
+            auditLog.record(
+                    doc.accountId,
+                    Actor.system(),
+                    null,
+                    AuditAction.DOCUMENT_LATE_VERDICT,
+                    "document",
+                    doc.id,
+                    Map.of(
+                            "status",
+                            response.valid() ? DocumentStatus.ACCEPTED.name() : DocumentStatus.REJECTED.name()));
         }
         doc.status = response.valid() ? DocumentStatus.ACCEPTED : DocumentStatus.REJECTED;
         doc.dianStatusCode = response.statusCode();
@@ -293,19 +320,18 @@ public class ResultRecorder {
     }
 
     /**
-     * A failed attempt. The job may still retry it (and the document go back to PROCESSING), so integrators
-     * are not told yet: {@link #gaveUp} does that once nothing will run again.
+     * A failed attempt the job retries: the document keeps processing, with the reason in its message. Integrators
+     * are not told: {@link #gaveUp} does that once nothing will run again.
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void failed(UUID documentId, String message) {
+    public void attemptFailed(UUID documentId, String message) {
         DocumentEntity doc = DocumentEntity.lock(documentId);
         if (!doc.status.isFinal()) {
-            doc.status = DocumentStatus.FAILED;
             doc.dianStatusMessage = message;
         }
     }
 
-    /** The document stays FAILED for good: no job will process it again. Publishes the failed event once. */
+    /** No job will process the document again: it is FAILED, and the failed event is published. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void gaveUp(UUID documentId, String message) {
         DocumentEntity doc = DocumentEntity.lock(documentId);
@@ -314,12 +340,9 @@ public class ResultRecorder {
         }
         doc.status = DocumentStatus.FAILED;
         doc.dianStatusMessage = message;
-        // FAILED is not final (attempts that will be retried use it too), so two attempts can both give up on
-        // the document; the event is published only the first time, and so it is counted.
-        if (webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc)) {
-            DocumentType type = doc.documentType;
-            Environment environment = doc.environment;
-            afterCommit.run(() -> finalized(type, environment, "failed"));
-        }
+        webhooks.publish(WebhookEventType.forDocument(doc.documentType, Outcome.FAILED), doc);
+        DocumentType type = doc.documentType;
+        Environment environment = doc.environment;
+        afterCommit.run(() -> finalized(type, environment, "failed"));
     }
 }

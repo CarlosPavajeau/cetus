@@ -19,7 +19,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * pending after {@code cetus.billing.reconciliation-after}, and for each order that expired less than
  * {@code cetus.billing.reconciliation-expired-for} ago (a PSE payment may be approved after it). An order paid less
  * than {@code cetus.billing.reconciliation-paid-for} ago is checked once a day, for a void or a second charge whose
- * event was lost, and so is a pending debt, which never expires. An order with a check waiting gets no other. Safe on many replicas: a run holds a Postgres
+ * event was lost, and so are a pending debt, which never expires, and an order canceled within the expired window,
+ * whose checkout payment may have been approved after it (one with a pending payment is checked on every run). An
+ * order with a check waiting gets no other. Safe on many replicas: a run holds a Postgres
  * advisory lock.
  */
 @ApplicationScoped
@@ -67,14 +69,18 @@ public class PaymentReconciliation {
         List<UUID> orders = em.createNativeQuery("""
                         SELECT o.id FROM billing.billing_orders o
                         WHERE ((o.status = 'PENDING' AND o.kind <> 'DEBT' AND o.created_at < :createdBefore)
-                               OR (o.status = 'EXPIRED' AND o.expires_at > :expiredAfter))
+                               OR (o.status = 'EXPIRED' AND o.expires_at > :expiredAfter)
+                               OR (o.status = 'CANCELED' AND o.updated_at > :expiredAfter
+                                   AND EXISTS (SELECT 1 FROM billing.payment_transactions t
+                                               WHERE t.order_id = o.id AND t.status = 'PENDING')))
                           AND NOT EXISTS (SELECT 1 FROM billing.jobs j
                                           WHERE j.reference_id = o.id AND j.job_type = :type
                                             AND j.status IN ('PENDING', 'RUNNING'))
                         UNION
                         SELECT o.id FROM billing.billing_orders o
                         WHERE ((o.status = 'PAID' AND o.paid_at > :paidAfter)
-                               OR (o.status = 'PENDING' AND o.kind = 'DEBT'))
+                               OR (o.status = 'PENDING' AND o.kind = 'DEBT')
+                               OR (o.status = 'CANCELED' AND o.updated_at > :expiredAfter))
                           AND NOT EXISTS (SELECT 1 FROM billing.jobs j
                                           WHERE j.reference_id = o.id AND j.job_type = :type
                                             AND (j.status IN ('PENDING', 'RUNNING') OR j.created_at > :checkedAfter))
