@@ -43,6 +43,8 @@ public enum NotificationKind {
     PAYMENT_METHOD_EXPIRING(Set.of(Category.BILLING)),
     /** Money of a paid order went back to the customer; the order's unused documents were revoked. */
     ORDER_REFUNDED(Set.of(Category.BILLING)),
+    /** A payment the order could not take (it was paid already, refunded or canceled) went back; the order stays. */
+    PAYMENT_RETURNED(Set.of(Category.BILLING)),
     /** The account owes what it consumed and did not pay; new purchases wait until it is paid. */
     ACCOUNT_DEBT(Set.of(Category.BILLING));
 

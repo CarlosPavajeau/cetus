@@ -324,6 +324,20 @@ public record NotificationEmail(String subject, String html, String text) {
                         "Los documentos que la orden incluía y no se habían usado ya no están disponibles.",
                         "Ver la orden",
                         "/billing/orders/" + data.get("orderId"));
+            case PAYMENT_RETURNED ->
+                new Body(
+                        "Devolvimos un pago de %s de tu orden %s".formatted(data.get("amount"), data.get("reference")),
+                        "Recibimos un pago de %s para la orden %s de %s, que %s. Lo devolvimos al medio con el que se"
+                                        .formatted(
+                                                data.get("amount"),
+                                                data.get("reference"),
+                                                account,
+                                                orderReturnedBecause(data.get("orderStatus")))
+                                + " hizo.",
+                        "La orden y tus documentos no cambian. Según tu banco, el dinero puede tardar unos días en"
+                                + " verse.",
+                        "Ver la orden",
+                        "/billing/orders/" + data.get("orderId"));
             case ACCOUNT_DEBT ->
                 new Body(
                         "Tienes un saldo pendiente de %s".formatted(data.get("total")),
@@ -333,6 +347,14 @@ public record NotificationEmail(String subject, String html, String text) {
                                 + " emitiendo con lo que tengas disponible.",
                         "Pagar el saldo",
                         "/billing/orders/" + data.get("orderId"));
+        };
+    }
+
+    private static String orderReturnedBecause(String status) {
+        return switch (status) {
+            case "PAID" -> "ya estaba pagada";
+            case "REFUNDED" -> "ya se había reembolsado";
+            default -> "ya no se podía pagar";
         };
     }
 

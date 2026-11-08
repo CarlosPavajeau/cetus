@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.cantte.cetus.jobs.JobTypes;
+import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.payments.PaymentStatus;
 import com.cantte.cetus.payments.PaymentTransaction;
 import com.cantte.cetus.payments.PaymentTransientException;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
 import com.cantte.cetus.persistence.entity.InboundWebhookEventEntity;
 import com.cantte.cetus.persistence.entity.JobEntity;
+import com.cantte.cetus.persistence.entity.NotificationEntity;
 import com.cantte.cetus.persistence.entity.PaymentReversalEntity;
 import com.cantte.cetus.persistence.entity.PaymentTransactionEntity;
 import com.cantte.cetus.worker.billing.PaymentSettlement.Outcome;
@@ -212,6 +214,10 @@ class PaymentSettlementTest {
         assertThat(paid.status).isEqualTo(BillingOrderEntity.Status.PAID);
         assertThat(paid.reviewReason).isNull();
         assertThat(paidAudits(order.id)).isEqualTo(1);
+        assertThat(noticesOf(order.accountId)).singleElement().satisfies(notice -> {
+            assertThat(notice.kind).isEqualTo(NotificationKind.PAYMENT_RETURNED.name());
+            assertThat(notice.data).containsEntry("orderStatus", "PAID");
+        });
     }
 
     @Test
@@ -228,6 +234,11 @@ class PaymentSettlementTest {
         assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.CANCELED);
         assertThat(returnOf(id).status).isEqualTo(PaymentReversalEntity.Status.REQUESTED);
         assertThat(paidAudits(order.id)).isZero();
+    }
+
+    private static List<NotificationEntity> noticesOf(UUID accountId) {
+        return QuarkusTransaction.requiringNew()
+                .call(() -> NotificationEntity.<NotificationEntity>list("accountId", accountId));
     }
 
     private static PaymentReversalEntity returnOf(String transactionId) {

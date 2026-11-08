@@ -279,15 +279,27 @@ public class Reversals {
                 "billing_order",
                 order.id,
                 data);
-        if (reversal.kind != PaymentReversalEntity.Kind.CHARGEBACK) {
-            notifications.request(
-                    order.accountId,
-                    NotificationKind.ORDER_REFUNDED,
-                    "order_refunded:%s".formatted(reversal.id),
-                    Map.of(
-                            "amount", Numbers.cop(reversal.amountCents / 100),
-                            "reference", order.reference,
-                            "orderId", order.id.toString()));
+        switch (reversal.kind) {
+            case REFUND ->
+                notifications.request(
+                        order.accountId,
+                        NotificationKind.ORDER_REFUNDED,
+                        "order_refunded:%s".formatted(reversal.id),
+                        Map.of(
+                                "amount", Numbers.cop(reversal.amountCents / 100),
+                                "reference", order.reference,
+                                "orderId", order.id.toString()));
+            case RETURN ->
+                notifications.request(
+                        order.accountId,
+                        NotificationKind.PAYMENT_RETURNED,
+                        "payment_returned:%s".formatted(reversal.id),
+                        Map.of(
+                                "amount", Numbers.cop(reversal.amountCents / 100),
+                                "reference", order.reference,
+                                "orderStatus", order.status.name(),
+                                "orderId", order.id.toString()));
+            case CHARGEBACK -> {}
         }
     }
 }
