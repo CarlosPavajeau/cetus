@@ -62,8 +62,13 @@ public class NumberingRangeEntity extends PanacheEntityBase {
     @Column(name = "verification_status")
     public VerificationStatus verificationStatus;
 
+    /** When the DIAN last answered with VERIFIED or MISMATCH. */
     @Column(name = "verified_at")
     public OffsetDateTime verifiedAt;
+
+    /** When the verification being waited for was asked; the worker answers only that request. */
+    @Column(name = "verification_requested_at")
+    public OffsetDateTime verificationRequestedAt;
 
     @Column(name = "verification_error")
     public String verificationError;

@@ -15,6 +15,7 @@ import com.cantte.cetus.persistence.audit.AuditLog;
 import com.cantte.cetus.persistence.entity.StatusIncidentEntity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -154,7 +155,9 @@ public class AdminIncidentResource {
     }
 
     private static StatusIncidentEntity open(UUID id) {
-        StatusIncidentEntity incident = StatusIncidentEntity.<StatusIncidentEntity>findByIdOptional(id)
+        // Locked, so a resolution and an edit at once never both pass the check below.
+        StatusIncidentEntity incident = StatusIncidentEntity.<StatusIncidentEntity>findByIdOptional(
+                        id, LockModeType.PESSIMISTIC_WRITE)
                 .orElseThrow(() -> new NotFoundException("Incident not found"));
         if (incident.resolvedAt != null) {
             throw new DomainException("incident_resolved", "The incident is already resolved");

@@ -311,6 +311,8 @@ public class AdminOrderResource {
         } else {
             reversal.status = PaymentReversalEntity.Status.FAILED;
             reversal.failureMessage = reason;
+            // The worker applies the chargebacks that waited for this refund to end.
+            jobs.enqueue(JobTypes.APPLY_REVERSAL, reversal.id);
         }
         auditLog.record(
                 order.accountId,

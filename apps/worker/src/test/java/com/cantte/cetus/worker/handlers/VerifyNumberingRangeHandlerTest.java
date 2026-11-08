@@ -20,6 +20,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
@@ -137,6 +138,52 @@ class VerifyNumberingRangeHandlerTest {
         assertThat(load(rangeId).verificationStatus).isEqualTo(VerificationStatus.ERROR);
     }
 
+    @Test
+    void anAnswerToARequestReplacedSinceIsNotRecorded() {
+        UUID rangeId = range(r -> {});
+        dian.reply(OPERATION, Reply.fixture("get-numbering-range.xml"));
+        OffsetDateTime newer = OffsetDateTime.now().plusSeconds(1);
+        // The console asks again while the first run waits for the DIAN.
+        dian.onCall(
+                OPERATION,
+                () -> QuarkusTransaction.requiringNew()
+                        .run(() -> NumberingRangeEntity.update(
+                                "verificationRequestedAt = ?1 where id = ?2", newer, rangeId)));
+
+        handler.handle(job(rangeId));
+
+        NumberingRangeEntity range = load(rangeId);
+        assertThat(range.verificationStatus).isEqualTo(VerificationStatus.PENDING);
+        assertThat(range.verifiedAt).isNull();
+    }
+
+    @Test
+    void aDeadJobLeavesARequestWithAJobOfItsOwnWaiting() {
+        UUID rangeId = range(r -> {});
+        JobEntity dead = job(rangeId);
+        fixtures.pendingJob(JobTypes.VERIFY_NUMBERING_RANGE, rangeId);
+
+        handler.onDead(dead, "La DIAN no respondió");
+
+        assertThat(load(rangeId).verificationStatus).isEqualTo(VerificationStatus.PENDING);
+    }
+
+    @Test
+    void anErrorKeepsWhenTheRangeWasLastVerified() {
+        OffsetDateTime verified = OffsetDateTime.now().minusDays(3);
+        UUID rangeId = range(r -> r.verifiedAt = verified);
+        dian.reply(OPERATION, Reply.fault("fault-client.xml"));
+        JobEntity job = job(rangeId);
+
+        assertThatThrownBy(() -> handler.handle(job)).isInstanceOf(GiveUp.class);
+        handler.onDead(job, "La DIAN rechazó la consulta");
+
+        NumberingRangeEntity range = load(rangeId);
+        assertThat(range.verificationStatus).isEqualTo(VerificationStatus.ERROR);
+        assertThat(range.verifiedAt.toInstant())
+                .isEqualTo(verified.truncatedTo(ChronoUnit.MICROS).toInstant());
+    }
+
     /** A copy of the seeded invoice range, changed by {@code change}, so tests do not share a range. */
     private UUID range(Consumer<NumberingRangeEntity> change) {
         UUID invoiceId = fixtures.invoice();
@@ -158,6 +205,7 @@ class VerifyNumberingRangeHandlerTest {
             range.validTo = seeded.validTo;
             range.technicalKeySealed = seeded.technicalKeySealed;
             range.verificationStatus = VerificationStatus.PENDING;
+            range.verificationRequestedAt = OffsetDateTime.now();
             change.accept(range);
             range.persist();
             return range.id;

@@ -119,7 +119,9 @@ public class ApiKeyResource {
     @Transactional
     @APIResponse(responseCode = "204", description = "No Content")
     public void revoke(@PathParam("id") UUID id) {
-        ApiKeyEntity key = find(context.accountId(), id);
+        // Locked, so two revocations at once audit it once.
+        ApiKeyEntity key = ApiKeyEntity.findForAccountForUpdate(context.accountId(), id)
+                .orElseThrow(() -> new NotFoundException("API key not found"));
         if (key.revokedAt == null) {
             key.revokedAt = OffsetDateTime.now();
             access.revoked(key);

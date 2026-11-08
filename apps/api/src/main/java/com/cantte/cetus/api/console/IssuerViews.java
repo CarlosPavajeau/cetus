@@ -268,6 +268,9 @@ public final class IssuerViews {
 
             @Schema(nullable = true) OffsetDateTime verifiedAt,
 
+            @Schema(nullable = true, description = "When the verification being waited for, or the last one, was asked")
+            OffsetDateTime verificationRequestedAt,
+
             @Schema(nullable = true, description = "What differs from the DIAN, or why it could not be checked")
             String verificationError,
 
@@ -285,6 +288,7 @@ public final class IssuerViews {
                     range.status,
                     range.verificationStatus,
                     range.verifiedAt,
+                    range.verificationRequestedAt,
                     range.verificationError,
                     range.technicalKeySealed != null);
         }

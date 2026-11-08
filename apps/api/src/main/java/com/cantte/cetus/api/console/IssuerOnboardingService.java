@@ -31,8 +31,10 @@ import com.cantte.cetus.signing.Pkcs12Loader;
 import com.cantte.cetus.signing.SigningException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
@@ -51,6 +53,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @ApplicationScoped
 public class IssuerOnboardingService {
+
+    /** How long a range verification may wait for the worker before it can be asked for again. */
+    static final Duration VERIFICATION_STALE = Duration.ofMinutes(10);
 
     @Inject
     Entitlements entitlements;
@@ -375,12 +380,16 @@ public class IssuerOnboardingService {
     /**
      * Compares a production invoice range with the DIAN again (GetNumberingRange), e.g. after fixing its
      * technical key or the DIAN software. It is also requested on its own once a production issuer has
-     * software and certificate.
+     * software and certificate. A request still waiting is asked again only once it is {@link #VERIFICATION_STALE}
+     * old, in case its job was lost.
      */
     @Transactional
     public NumberingRangeEntity verifyRange(IssuerEntity issuer, UUID rangeId) {
         NumberingRangeEntity range = verifiableRange(issuer, rangeId);
-        if (range.verificationStatus != VerificationStatus.PENDING) {
+        boolean waiting = range.verificationStatus == VerificationStatus.PENDING
+                && range.verificationRequestedAt != null
+                && range.verificationRequestedAt.plus(VERIFICATION_STALE).isAfter(OffsetDateTime.now());
+        if (!waiting) {
             requestVerification(range);
         }
         return range;
@@ -390,6 +399,7 @@ public class IssuerOnboardingService {
         requireOwnSetup(issuer);
         NumberingRangeEntity range = NumberingRangeEntity.<NumberingRangeEntity>find(
                         "id = ?1 and issuerId = ?2", rangeId, issuer.id)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
                 .firstResultOptional()
                 .orElseThrow(() -> new NotFoundException("Numbering range not found"));
         if (range.documentType != DocumentType.INVOICE) {
@@ -442,6 +452,7 @@ public class IssuerOnboardingService {
     private void requestVerification(NumberingRangeEntity range) {
         range.verificationStatus = VerificationStatus.PENDING;
         range.verificationError = null;
+        range.verificationRequestedAt = OffsetDateTime.now();
         jobs.enqueue(JobTypes.VERIFY_NUMBERING_RANGE, range.id);
     }
 

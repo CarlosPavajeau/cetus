@@ -13,6 +13,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static com.cantte.cetus.api.support.ConsoleFixtures.rangeRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 import com.cantte.cetus.api.support.ConsoleFixtures.Onboarding;
 import com.cantte.cetus.api.support.ConsoleUser;
@@ -23,6 +24,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -205,6 +207,17 @@ class IssuerResourceTest {
                                 NumberingRangeEntity.VerificationStatus.MISMATCH);
         verify(user, issuerId, early).statusCode(200).body("verificationStatus", equalTo("PENDING"));
         assertThat(verificationJobs(early)).isEqualTo(2);
+
+        // A request left waiting too long, as if its job was lost, can be made again.
+        QuarkusTransaction.requiringNew()
+                .run(() -> NumberingRangeEntity.<NumberingRangeEntity>findById(UUID.fromString(early))
+                                .verificationRequestedAt =
+                        OffsetDateTime.now().minus(IssuerOnboardingService.VERIFICATION_STALE));
+        verify(user, issuerId, early)
+                .statusCode(200)
+                .body("verificationStatus", equalTo("PENDING"))
+                .body("verificationRequestedAt", notNullValue());
+        assertThat(verificationJobs(early)).isEqualTo(3);
 
         verify(user, issuerId, notes).statusCode(422).body("code", equalTo("range_not_verifiable"));
     }

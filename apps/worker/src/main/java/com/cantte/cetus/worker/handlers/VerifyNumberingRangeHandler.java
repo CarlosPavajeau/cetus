@@ -21,6 +21,7 @@ import com.cantte.cetus.worker.support.ProviderSettings;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -77,6 +78,7 @@ public class VerifyNumberingRangeHandler implements JobHandler {
                     job.referenceId, response.operationCode(), response.operationDescription());
             record(
                     job.referenceId,
+                    target.requestedAt(),
                     VerificationStatus.ERROR,
                     "La DIAN respondió %s: %s".formatted(response.operationCode(), response.operationDescription()),
                     null);
@@ -92,16 +94,36 @@ public class VerifyNumberingRangeHandler implements JobHandler {
         List<String> differences = differences(target, response);
         if (differences.isEmpty()) {
             LOG.infof("Numbering range %s matches the DIAN", job.referenceId);
-            record(job.referenceId, VerificationStatus.VERIFIED, null, technicalKeySealed);
+            record(job.referenceId, target.requestedAt(), VerificationStatus.VERIFIED, null, technicalKeySealed);
         } else {
             LOG.warnf("Numbering range %s differs from the DIAN: %s", job.referenceId, differences);
-            record(job.referenceId, VerificationStatus.MISMATCH, String.join("; ", differences), technicalKeySealed);
+            record(
+                    job.referenceId,
+                    target.requestedAt(),
+                    VerificationStatus.MISMATCH,
+                    String.join("; ", differences),
+                    technicalKeySealed);
         }
     }
 
+    /** Answers the request still waiting, unless a newer one has a job of its own on the way. */
     @Override
     public void onDead(JobEntity job, String reason) {
-        record(job.referenceId, VerificationStatus.ERROR, "No se pudo consultar a la DIAN: " + reason, null);
+        QuarkusTransaction.requiringNew().run(() -> {
+            NumberingRangeEntity range = NumberingRangeEntity.findById(job.referenceId, LockModeType.PESSIMISTIC_WRITE);
+            if (range == null || range.verificationStatus != VerificationStatus.PENDING) {
+                return;
+            }
+            long newer = JobEntity.count(
+                    "jobType = ?1 and referenceId = ?2 and id <> ?3 and status in ('PENDING', 'RUNNING')",
+                    JobTypes.VERIFY_NUMBERING_RANGE,
+                    job.referenceId,
+                    job.id);
+            if (newer == 0) {
+                range.verificationStatus = VerificationStatus.ERROR;
+                range.verificationError = "No se pudo consultar a la DIAN: " + reason;
+            }
+        });
     }
 
     private Target load(UUID rangeId) {
@@ -125,7 +147,8 @@ public class VerifyNumberingRangeHandler implements JobHandler {
                 range.rangeTo,
                 range.validFrom,
                 range.validTo,
-                range.technicalKeySealed == null ? null : cipher.openText(range.technicalKeySealed));
+                range.technicalKeySealed == null ? null : cipher.openText(range.technicalKeySealed),
+                range.verificationRequestedAt);
     }
 
     private static List<String> differences(Target target, NumberingRangeResponse response) {
@@ -178,10 +201,22 @@ public class VerifyNumberingRangeHandler implements JobHandler {
         }
     }
 
-    private static void record(UUID rangeId, VerificationStatus status, String error, byte[] technicalKeySealed) {
+    /**
+     * Answers the request the job read, if the range still waits for it: a newer request, or one another run
+     * already answered, is left alone.
+     */
+    private static void record(
+            UUID rangeId,
+            OffsetDateTime requestedAt,
+            VerificationStatus status,
+            String error,
+            byte[] technicalKeySealed) {
         QuarkusTransaction.requiringNew().run(() -> {
-            NumberingRangeEntity range = NumberingRangeEntity.findById(rangeId);
-            if (range == null) {
+            NumberingRangeEntity range = NumberingRangeEntity.findById(rangeId, LockModeType.PESSIMISTIC_WRITE);
+            if (range == null
+                    || range.verificationStatus != VerificationStatus.PENDING
+                    || !sameInstant(range.verificationRequestedAt, requestedAt)) {
+                LOG.warnf("Numbering range %s no longer waits for this verification; %s not recorded", rangeId, status);
                 return;
             }
             if (technicalKeySealed != null && range.technicalKeySealed == null) {
@@ -189,8 +224,14 @@ public class VerifyNumberingRangeHandler implements JobHandler {
             }
             range.verificationStatus = status;
             range.verificationError = error;
-            range.verifiedAt = OffsetDateTime.now();
+            if (status == VerificationStatus.VERIFIED || status == VerificationStatus.MISMATCH) {
+                range.verifiedAt = OffsetDateTime.now();
+            }
         });
+    }
+
+    private static boolean sameInstant(OffsetDateTime a, OffsetDateTime b) {
+        return a == null ? b == null : b != null && a.isEqual(b);
     }
 
     private record Target(
@@ -204,5 +245,6 @@ public class VerifyNumberingRangeHandler implements JobHandler {
             long to,
             LocalDate validFrom,
             LocalDate validTo,
-            String technicalKey) {}
+            String technicalKey,
+            OffsetDateTime requestedAt) {}
 }

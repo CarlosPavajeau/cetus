@@ -222,12 +222,13 @@ public class CreditLedger {
     }
 
     /**
-     * Gives back what the document reserved when it was not issued. A credit goes back to its lot, and expires at
-     * once if the lot already did (a lot past its date the daily expiry has not reached yet gets it back and
-     * expires with it); a grace or overage document is neither settled nor billed.
+     * Gives back what the document reserved when it was not issued. A credit goes back to its lot, and is lost at
+     * once if the lot expired or was revoked, even one past its date the daily expiry has not reached yet: such a
+     * lot never becomes active again. A grace or overage document is neither settled nor billed.
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void release(UUID documentId, Actor actor, String reason) {
+        OffsetDateTime now = OffsetDateTime.now();
         for (CreditReservationEntity reservation : reserved(documentId)) {
             reservation.status = CreditReservationEntity.Status.RELEASED;
             if (reservation.grantId == null) {
@@ -252,17 +253,17 @@ public class CreditLedger {
                     reservation.quantity,
                     actor,
                     reason);
-            switch (lot.status) {
-                case ACTIVE, EXHAUSTED -> {
-                    lot.remaining += reservation.quantity;
-                    lot.status = CreditGrantEntity.Status.ACTIVE;
-                }
-                case EXPIRED, REVOKED -> {
-                    CreditMovementEntity.Type gone = lot.status == CreditGrantEntity.Status.REVOKED
-                            ? CreditMovementEntity.Type.REVOKE
-                            : CreditMovementEntity.Type.EXPIRE;
-                    move(lot.accountId, lot.id, reservation.id, documentId, gone, -reservation.quantity, actor, reason);
-                }
+            boolean usable =
+                    (lot.status == CreditGrantEntity.Status.ACTIVE || lot.status == CreditGrantEntity.Status.EXHAUSTED)
+                            && lot.expiresAt.isAfter(now);
+            if (usable) {
+                lot.remaining += reservation.quantity;
+                lot.status = CreditGrantEntity.Status.ACTIVE;
+            } else {
+                CreditMovementEntity.Type gone = lot.status == CreditGrantEntity.Status.REVOKED
+                        ? CreditMovementEntity.Type.REVOKE
+                        : CreditMovementEntity.Type.EXPIRE;
+                move(lot.accountId, lot.id, reservation.id, documentId, gone, -reservation.quantity, actor, reason);
             }
         }
     }
@@ -292,7 +293,8 @@ public class CreditLedger {
 
     /**
      * Takes back a lot whose payment went back: what it has left is lost and it no longer counts as a product. A
-     * credit its documents still hold is revoked when they are released; what they used stays used.
+     * credit its documents still hold is revoked when they are released; what they used stays used. Only an active
+     * or exhausted lot is revoked: an expired one already lost what it had, and stays expired.
      *
      * @return credits revoked now
      */
@@ -302,7 +304,7 @@ public class CreditLedger {
                 .orElseThrow(() -> new IllegalArgumentException("No lot " + lotId));
         lock(lot.accountId);
         lot = CreditGrantEntity.lock(lotId).orElseThrow();
-        if (lot.status == CreditGrantEntity.Status.REVOKED) {
+        if (lot.status != CreditGrantEntity.Status.ACTIVE && lot.status != CreditGrantEntity.Status.EXHAUSTED) {
             return 0;
         }
         int revoked = lot.status == CreditGrantEntity.Status.ACTIVE ? lot.remaining : 0;

@@ -406,6 +406,61 @@ class ReversalsTest {
         assertThat(reversalOf(second).status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
     }
 
+    @Test
+    void aChargebackDuringARefundWaitsForItAndIsAppliedWhenItFails() {
+        BillingOrderEntity order = paid(account(), "EMPRENDEDOR");
+        UUID refund = request(order.id, 500_000);
+
+        assertThat(settlement.apply(transaction(order, PaymentStatus.VOIDED))).isEqualTo(Outcome.RECORDED);
+        assertThat(reversalsOf(order.id)).singleElement().extracting(r -> r.id).isEqualTo(refund);
+
+        wompi.refunding("DECLINED");
+        refunds.handle(fixtures.pendingJob(JobTypes.REFUND_ORDER, refund));
+
+        assertThat(reversalOf(refund).status).isEqualTo(PaymentReversalEntity.Status.FAILED);
+        assertThat(reversalsOf(order.id))
+                .filteredOn(r -> r.kind == PaymentReversalEntity.Kind.CHARGEBACK)
+                .singleElement()
+                .satisfies(chargeback -> {
+                    assertThat(chargeback.status).isEqualTo(PaymentReversalEntity.Status.APPROVED);
+                    assertThat(chargeback.amountCents).isEqualTo(order.totalCents);
+                    assertThat(chargeback.providerTransactionId).isEqualTo(transactionIdOf(order));
+                });
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
+    }
+
+    @Test
+    void aChargebackDuringARefundAPersonFoundFailedIsAppliedByItsJob() {
+        BillingOrderEntity order = paid(account(), "EMPRENDEDOR");
+        UUID refund = request(order.id, 500_000);
+        settlement.apply(transaction(order, PaymentStatus.VOIDED));
+        QuarkusTransaction.requiringNew()
+                .run(() -> PaymentReversalEntity.update(
+                        "status = ?1 where id = ?2", PaymentReversalEntity.Status.FAILED, refund));
+
+        assertThat(reversals.apply(refund)).isFalse();
+
+        assertThat(reversalsOf(order.id)).extracting(r -> r.kind).contains(PaymentReversalEntity.Kind.CHARGEBACK);
+        assertThat(orderOf(order.id).status).isEqualTo(BillingOrderEntity.Status.REFUNDED);
+    }
+
+    @Test
+    void aReversalThatIsNoLongerLiveCannotBeApproved() {
+        BillingOrderEntity order = paid(account(), "EMPRENDEDOR");
+        UUID refund = request(order.id, 500_000);
+        QuarkusTransaction.requiringNew()
+                .run(() -> PaymentReversalEntity.update(
+                        "status = ?1 where id = ?2", PaymentReversalEntity.Status.FAILED, refund));
+
+        assertThatThrownBy(() -> QuarkusTransaction.requiringNew()
+                        .run(() -> reversals.approve(
+                                BillingOrderEntity.lock(order.id).orElseThrow(),
+                                PaymentReversalEntity.lock(refund).orElseThrow(),
+                                OffsetDateTime.now())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(reversalOf(refund).status).isEqualTo(PaymentReversalEntity.Status.FAILED);
+    }
+
     private UUID account() {
         UUID accountId = QuarkusTransaction.requiringNew()
                 .call(() -> DocumentEntity.<DocumentEntity>findById(fixtures.invoice()).accountId);

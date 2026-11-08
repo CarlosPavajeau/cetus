@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -55,6 +56,12 @@ public class ApiKeyEntity extends PanacheEntityBase {
 
     public static Optional<ApiKeyEntity> findForAccount(UUID accountId, UUID id) {
         return find("id = ?1 and accountId = ?2", id, accountId).firstResultOptional();
+    }
+
+    public static Optional<ApiKeyEntity> findForAccountForUpdate(UUID accountId, UUID id) {
+        return find("id = ?1 and accountId = ?2", id, accountId)
+                .withLock(LockModeType.PESSIMISTIC_WRITE)
+                .firstResultOptional();
     }
 
     public static List<ApiKeyEntity> listByAccount(UUID accountId) {
