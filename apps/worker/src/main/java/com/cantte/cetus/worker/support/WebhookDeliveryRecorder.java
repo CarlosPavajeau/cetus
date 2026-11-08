@@ -92,18 +92,31 @@ public class WebhookDeliveryRecorder {
         delivery.lastAttemptAt = OffsetDateTime.now();
     }
 
+    /**
+     * Only a pending delivery moves: one canceled or failed meanwhile keeps its status, and a stale run does not
+     * clear the endpoint's streak.
+     *
+     * @return whether the delivery moved to SUCCEEDED
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void succeeded(UUID deliveryId, int responseStatus, String responseBody) {
-        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId);
+    public boolean succeeded(UUID deliveryId, int responseStatus, String responseBody) {
+        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId, LockModeType.PESSIMISTIC_WRITE);
+        if (delivery.status != Status.PENDING) {
+            LOG.warnf("Webhook delivery %s was already %s when the endpoint answered", deliveryId, delivery.status);
+            return false;
+        }
         delivery.status = Status.SUCCEEDED;
         delivery.lastResponseStatus = responseStatus;
         delivery.lastResponseBody = truncate(responseBody);
         delivery.lastError = null;
         delivery.deliveredAt = OffsetDateTime.now();
         // Only written when there is a streak to clear, so busy endpoints do not contend for the row.
+        // A disabled endpoint keeps the streak that disabled it until it is enabled.
         WebhookEndpointEntity.update(
-                "consecutiveFailures = 0, failingSince = null where id = ?1 and consecutiveFailures > 0",
-                delivery.endpointId);
+                "consecutiveFailures = 0, failingSince = null where id = ?1 and consecutiveFailures > 0 and status = ?2",
+                delivery.endpointId,
+                WebhookEndpointEntity.Status.ACTIVE);
+        return true;
     }
 
     /** Records why an attempt failed; the delivery stays pending for the job's next attempt. */
@@ -119,7 +132,7 @@ public class WebhookDeliveryRecorder {
     /** No more attempts. A delivery that already succeeded or was canceled keeps its status. */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void failed(UUID deliveryId, String error) {
-        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId);
+        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId, LockModeType.PESSIMISTIC_WRITE);
         if (delivery != null && delivery.status == Status.PENDING) {
             delivery.status = Status.FAILED;
             delivery.lastError = error;
@@ -135,11 +148,15 @@ public class WebhookDeliveryRecorder {
      */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public boolean canceled(UUID deliveryId) {
-        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId);
+        // The delivery before the endpoint, as succeeded() takes them.
+        WebhookDeliveryEntity delivery = WebhookDeliveryEntity.findById(deliveryId, LockModeType.PESSIMISTIC_WRITE);
         WebhookEndpointEntity endpoint =
                 WebhookEndpointEntity.findById(delivery.endpointId, LockModeType.PESSIMISTIC_READ);
         if (endpoint.status != WebhookEndpointEntity.Status.DISABLED) {
             return false;
+        }
+        if (delivery.status != Status.PENDING) {
+            return true;
         }
         delivery.status = Status.CANCELED;
         delivery.lastError = "The endpoint was disabled";

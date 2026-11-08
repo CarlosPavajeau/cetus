@@ -177,6 +177,8 @@ export function describeEntry(entry: Pick<AuditEntry, "action" | "data">): strin
     case "STATUS_INCIDENT_UPDATED":
     case "STATUS_INCIDENT_RESOLVED":
       return `${text(data.component)} · ${text(data.impact)} · ${text(data.title)}`;
+    case "INBOUND_EVENT_REQUEUED":
+      return `${text(data.provider)} · ${text(data.eventType)}`;
     case "BILLING_ORDER_DEBT_WAIVED":
       return `${text(data.reference)} · ${cents(data.totalCents)} · ${text(data.reason)}`;
     case "SUBSCRIPTION_CANCELED":

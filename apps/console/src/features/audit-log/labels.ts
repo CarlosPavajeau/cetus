@@ -59,6 +59,7 @@ export const actionLabel: Record<AuditAction, string> = {
   STATUS_INCIDENT_OPENED: "Incidente publicado",
   STATUS_INCIDENT_UPDATED: "Incidente editado",
   STATUS_INCIDENT_RESOLVED: "Incidente resuelto",
+  INBOUND_EVENT_REQUEUED: "Evento de proveedor reencolado",
 };
 
 export const actorTypeLabel: Record<AuditEntry["actorType"], string> = {

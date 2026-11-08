@@ -245,9 +245,10 @@ export const auditActions = [
   "STATUS_INCIDENT_OPENED",
   "STATUS_INCIDENT_UPDATED",
   "STATUS_INCIDENT_RESOLVED",
+  "INBOUND_EVENT_REQUEUED",
 ] as const satisfies readonly AuditAction[];
 
-/** Actions on a person, the plan catalog or the status page rather than an account: only the administration's log has them. */
+/** Actions on a person, the plan catalog, the status page or provider events rather than an account: only the administration's log has them. */
 export const userAuditActions = [
   "USER_BANNED",
   "USER_UNBANNED",
@@ -255,6 +256,7 @@ export const userAuditActions = [
   "STATUS_INCIDENT_OPENED",
   "STATUS_INCIDENT_UPDATED",
   "STATUS_INCIDENT_RESOLVED",
+  "INBOUND_EVENT_REQUEUED",
 ] as const satisfies readonly AuditAction[];
 
 // Fails to compile when the API adds an action that is missing above.

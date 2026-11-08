@@ -92,5 +92,7 @@ public enum AuditAction {
     /** An incident published on the status page and in the console, its changes, and its end. */
     STATUS_INCIDENT_OPENED,
     STATUS_INCIDENT_UPDATED,
-    STATUS_INCIDENT_RESOLVED
+    STATUS_INCIDENT_RESOLVED,
+    /** A provider event the worker gave up on, queued again by the Cetus team; recorded without an account. */
+    INBOUND_EVENT_REQUEUED
 }

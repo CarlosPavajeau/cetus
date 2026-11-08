@@ -26,14 +26,18 @@ public class EmailEvents {
     @Inject
     WebhookPublisher webhooks;
 
-    /**
-     * Applies the event to the delivery of its email.
-     *
-     * @return false when no delivery sent the email: another environment's, or one sent before the delivery was
-     *     recorded
-     */
+    /** What an event did to the deliveries. */
+    public enum Outcome {
+        APPLIED,
+        /** Not a delivery event, or one without an email. */
+        UNTRACKED,
+        /** No delivery has the email yet: another environment's, or one whose sending is still being recorded. */
+        NO_DELIVERY
+    }
+
+    /** Applies the event to the delivery of its email, locked so that two events of the same email take turns. */
     @Transactional
-    public boolean apply(String payload) throws IOException {
+    public Outcome apply(String payload) throws IOException {
         JsonNode event = json.readTree(payload);
         Status status = switch (event.path("type").asText()) {
             case "email.delivered" -> Status.DELIVERED;
@@ -44,11 +48,11 @@ public class EmailEvents {
         };
         String emailId = event.path("data").path("email_id").asText(null);
         if (status == null || emailId == null) {
-            return false;
+            return Outcome.UNTRACKED;
         }
-        Optional<DocumentDeliveryEntity> found = DocumentDeliveryEntity.findByProviderMessageId(emailId);
+        Optional<DocumentDeliveryEntity> found = DocumentDeliveryEntity.lockByProviderMessageId(emailId);
         if (found.isEmpty()) {
-            return false;
+            return Outcome.NO_DELIVERY;
         }
         DocumentDeliveryEntity delivery = found.get();
         String reason = reason(event);
@@ -77,7 +81,7 @@ public class EmailEvents {
         if (delivery.lastEventAt == null || at.isAfter(delivery.lastEventAt)) {
             delivery.lastEventAt = at;
         }
-        return true;
+        return Outcome.APPLIED;
     }
 
     private static String reason(JsonNode event) {
