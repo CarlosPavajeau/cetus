@@ -26,16 +26,14 @@ import org.hibernate.type.SqlTypes;
 public class IssuerEntity extends PanacheEntityBase {
 
     public enum OperationMode {
-        OWN_SOFTWARE,
-        TECHNOLOGY_PROVIDER
+        OWN_SOFTWARE
     }
 
     @Schema(name = "IssuerStatus")
     public enum Status {
         ONBOARDING,
         TESTING,
-        ENABLED,
-        DISABLED
+        ENABLED
     }
 
     @Id

@@ -19,6 +19,7 @@ import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -193,7 +194,7 @@ public class ConsoleMetrics {
                 environment == Environment.SANDBOX ? Map.of() : certificates(accountId, environment);
         return query("""
                         SELECT i.id FROM billing.issuers i
-                        WHERE i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'
+                        WHERE i.account_id = :account AND i.environment = :environment
                         ORDER BY i.legal_name
                         """, Map.of("account", accountId, "environment", environment.name()))
                 .map(row -> (UUID) row[0])
@@ -212,7 +213,7 @@ public class ConsoleMetrics {
                         SELECT c.issuer_id, c.valid_to, (c.valid_to AT TIME ZONE 'America/Bogota')::date
                         FROM billing.signing_certificates c
                         JOIN billing.issuers i ON i.id = c.issuer_id
-                        WHERE i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'
+                        WHERE i.account_id = :account AND i.environment = :environment
                           AND c.active
                         """, Map.of("account", accountId, "environment", environment.name()))
                 .forEach(row -> certificates.put(
@@ -231,7 +232,7 @@ public class ConsoleMetrics {
             return new AlertsView(List.of(), List.of());
         }
         LocalDate today = LocalDate.now(DianTime.ZONE);
-        String issuers = "i.account_id = :account AND i.environment = :environment AND i.status <> 'DISABLED'"
+        String issuers = "i.account_id = :account AND i.environment = :environment"
                 + (issuerId == null ? "" : " AND i.id = :issuer");
         Map<String, Object> parameters = new HashMap<>(Map.of("account", accountId, "environment", environment.name()));
         if (issuerId != null) {
@@ -253,16 +254,19 @@ public class ConsoleMetrics {
                         toOffsetDateTime(row[2]),
                         toLocalDate(row[3]).toEpochDay() - today.toEpochDay()))
                 .toList();
-        List<RangeAlertView> ranges = query("""
+        Map<String, Object> rangeParameters = new HashMap<>(parameters);
+        rangeParameters.put("today", today);
+        List<RangeAlertView> ranges = query(
+                        """
                         SELECT r.id, i.id, i.legal_name, r.document_type, r.prefix,
                                r.next_number - r.range_from, r.range_to - r.range_from + 1, r.valid_to,
                                r.range_from, r.range_to
                         FROM billing.numbering_ranges r
                         JOIN billing.issuers i ON i.id = r.issuer_id
                         WHERE %s
-                          AND r.status = 'ACTIVE'
+                          AND %s
                         ORDER BY i.legal_name, r.document_type, r.prefix
-                        """.formatted(issuers), parameters)
+                        """.formatted(issuers, NumberingRangeEntity.sqlUnreplaced("r", ":today")), rangeParameters)
                 .map(row -> {
                     long used = count(row[5]);
                     long total = count(row[6]);

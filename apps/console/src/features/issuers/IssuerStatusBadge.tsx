@@ -7,7 +7,6 @@ const badgeStatus: Record<Issuer["status"], BadgeStatus> = {
   ONBOARDING: "warning",
   TESTING: "info",
   ENABLED: "success",
-  DISABLED: "idle",
 };
 
 export function IssuerStatusBadge({ status }: { status: Issuer["status"] }) {

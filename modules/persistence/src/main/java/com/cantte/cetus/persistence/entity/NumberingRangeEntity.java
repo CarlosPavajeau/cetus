@@ -13,12 +13,16 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @Entity
 @Table(name = "numbering_ranges")
 public class NumberingRangeEntity extends PanacheEntityBase {
+
+    private static final String USABLE = "status = 'ACTIVE' and (validFrom is null or validFrom <= :today) "
+            + "and (validTo is null or validTo >= :today)";
 
     @Id
     public UUID id;
@@ -90,18 +94,47 @@ public class NumberingRangeEntity extends PanacheEntityBase {
      */
     public static Optional<NumberingRangeEntity> lockActive(UUID issuerId, DocumentType type, LocalDate date) {
         return find(
-                        "issuerId = ?1 and documentType = ?2 and status = 'ACTIVE' "
-                                + "and (validFrom is null or validFrom <= ?3) and (validTo is null or validTo >= ?3) "
-                                + "order by validFrom",
-                        issuerId,
-                        type,
-                        date)
+                        "issuerId = :issuer and documentType = :type and " + USABLE + " order by validFrom",
+                        Map.of("issuer", issuerId, "type", type, "today", date))
                 .withLock(LockModeType.PESSIMISTIC_WRITE)
                 .firstResultOptional();
     }
 
     public static List<NumberingRangeEntity> listByIssuer(UUID issuerId) {
         return list("issuerId", issuerId);
+    }
+
+    /** The issuer's ranges of the type that number on {@code today}. */
+    public static List<NumberingRangeEntity> listUsable(UUID issuerId, DocumentType type, LocalDate today) {
+        return list(
+                "issuerId = :issuer and documentType = :type and " + USABLE,
+                Map.of("issuer", issuerId, "type", type, "today", today));
+    }
+
+    /**
+     * SQL for the range {@code alias} numbering on the date {@code today} (a parameter or an SQL expression): active
+     * and within its resolution's dates. A range's expiry is never stored, so every query reads it from the dates.
+     */
+    public static String sqlUsable(String alias, String today) {
+        return ("%1$s.status = 'ACTIVE' AND (%1$s.valid_from IS NULL OR %1$s.valid_from <= %2$s)"
+                        + " AND (%1$s.valid_to IS NULL OR %1$s.valid_to >= %2$s)")
+                .formatted(alias, today);
+    }
+
+    /**
+     * SQL for the active range {@code alias} its issuer still stands on for its type on {@code today}: in force, or
+     * expired with no range of the type in force to take over, which is what the issuer has to renew.
+     */
+    public static String sqlUnreplaced(String alias, String today) {
+        return """
+                %1$s.status = 'ACTIVE' AND (%1$s.valid_to IS NULL OR %1$s.valid_to >= %2$s OR NOT EXISTS (
+                    SELECT 1 FROM billing.numbering_ranges u
+                    WHERE u.issuer_id = %1$s.issuer_id AND u.document_type = %1$s.document_type AND %3$s))""".formatted(alias, today, sqlUsable("u", today));
+    }
+
+    /** Past its resolution's last day, whether or not it still has numbers. */
+    public boolean expired(LocalDate today) {
+        return validTo != null && validTo.isBefore(today);
     }
 
     /** Returns the number to use and advances the counter. */

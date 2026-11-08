@@ -3056,10 +3056,9 @@
         "enum": [
           "ONBOARDING",
           "TESTING",
-          "ENABLED",
-          "DISABLED"
+          "ENABLED"
         ],
-        "description": "Estado de configuración del emisor ante la DIAN.\n\n- `ONBOARDING`: En configuración: todavía no emite.\n- `TESTING`: En el set de pruebas de habilitación: emite solo con llaves `test`.\n- `ENABLED`: Habilitado: emite en su ambiente.\n- `DISABLED`: Deshabilitado: no emite."
+        "description": "Estado de configuración del emisor ante la DIAN.\n\n- `ONBOARDING`: En configuración: todavía no emite.\n- `TESTING`: En el set de pruebas de habilitación: emite solo con llaves `test`.\n- `ENABLED`: Habilitado: emite en su ambiente."
       },
       "Line": {
         "type": "object",

@@ -7,6 +7,7 @@ import { expect, open as openPage, pickTaxLevel, test } from "../e2e/fixtures";
 import { grantPackage } from "../support/credits";
 import { markEmailVerified } from "../support/invitations";
 import {
+  acceptTestSet,
   createTestApiKey,
   issueInvoice,
   onboardIssuer,
@@ -114,6 +115,7 @@ test("the habilitación path, from the RUT to production", async ({ page, organi
     .poll(async () => acceptedInTestSet(organization, issuerId), { timeout: 60_000 })
     .toBe(3);
   await grantPackage(organization);
+  await acceptTestSet(issuerId);
   await page.context().addCookies(consoleCookies([{ name: "cetus-environment", value: "TEST" }]));
   await open(page, `/issuers/${issuerId}`);
   await page.getByTestId("test-set-progress").scrollIntoViewIfNeeded();

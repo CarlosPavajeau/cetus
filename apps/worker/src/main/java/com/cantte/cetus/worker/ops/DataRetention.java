@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.ops;
 
 import com.cantte.cetus.aws.DocumentStorage;
+import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -125,13 +126,17 @@ public class DataRetention {
         // a uuid so the lookup uses the primary key.
         deleted.put(
                 "notification_log",
-                deleteInBatches("notification_log", """
+                deleteInBatches(
+                        "notification_log",
+                        """
                 created_at < :before AND NOT (kind = 'RANGE_RUNNING_OUT' AND EXISTS (
                     SELECT 1 FROM billing.numbering_ranges r
                     WHERE r.id = CASE WHEN kind = 'RANGE_RUNNING_OUT'
                                       THEN CAST(split_part(dedup_key, ':', 2) AS uuid) END
-                      AND r.status = 'ACTIVE'))
-                """, now.minus(atLeastTheMinimum(notifications))));
+                      AND %s))
+                """.formatted(NumberingRangeEntity.sqlUsable(
+                                "r", "(now() AT TIME ZONE 'America/Bogota')::date")),
+                        now.minus(atLeastTheMinimum(notifications))));
         deleted.put(
                 "inbound_webhook_events",
                 deleteInBatches(

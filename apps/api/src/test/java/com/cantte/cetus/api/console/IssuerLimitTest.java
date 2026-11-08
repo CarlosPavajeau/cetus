@@ -3,8 +3,8 @@ package com.cantte.cetus.api.console;
 import static com.cantte.cetus.api.support.Concurrency.race;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
+import static com.cantte.cetus.api.support.ConsoleFixtures.habilitated;
 import static com.cantte.cetus.api.support.ConsoleFixtures.issuerRequest;
-import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -39,7 +39,7 @@ class IssuerLimitTest {
                 .then()
                 .statusCode(402)
                 .body("code", equalTo("issuer_limit_reached"));
-        String testId = onboard(user, "900333444").issuerId();
+        String testId = habilitated(user, "900333444").issuerId();
         user.request()
                 .post("/console/issuers/" + testId + "/promote")
                 .then()
@@ -55,7 +55,7 @@ class IssuerLimitTest {
         ConsoleUser user = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(bootstrap(user, "Sin Paquete SAS"));
         credits.grant(accountId, "CONTADOR", 3000, OffsetDateTime.now().minusMinutes(1));
-        String testId = onboard(user, "900333444").issuerId();
+        String testId = habilitated(user, "900333444").issuerId();
 
         user.request()
                 .body(issuerRequest("900111222", "LIVE"))
@@ -91,7 +91,7 @@ class IssuerLimitTest {
         ConsoleUser user = ConsoleUser.newOrganization();
         UUID accountId = UUID.fromString(bootstrap(user, "Carrera SAS"));
         credits.grant(accountId, "EMPRENDEDOR", 300, OffsetDateTime.now().plusMonths(12));
-        String testId = onboard(user, "900333444").issuerId();
+        String testId = habilitated(user, "900333444").issuerId();
         List<Callable<Response>> racers = List.of(
                 () -> user.request().body(issuerRequest("900444555", "LIVE")).post("/console/issuers"),
                 () -> user.request().body(issuerRequest("900666777", "LIVE")).post("/console/issuers"),

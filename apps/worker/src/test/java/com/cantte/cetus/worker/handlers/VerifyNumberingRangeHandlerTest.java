@@ -219,7 +219,7 @@ class VerifyNumberingRangeHandlerTest {
         return QuarkusTransaction.requiringNew().call(() -> {
             DocumentEntity invoice = DocumentEntity.findById(invoiceId);
             NumberingRangeEntity seeded = NumberingRangeEntity.findById(invoice.numberingRangeId);
-            seeded.status = "DISABLED";
+            seeded.status = "EXHAUSTED";
             NumberingRangeEntity range = new NumberingRangeEntity();
             range.id = Ids.newId();
             range.issuerId = seeded.issuerId;

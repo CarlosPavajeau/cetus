@@ -4,7 +4,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.addCreditNoteRange;
 import static com.cantte.cetus.api.support.ConsoleFixtures.addDebitNoteRange;
 import static com.cantte.cetus.api.support.ConsoleFixtures.addRange;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
-import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
+import static com.cantte.cetus.api.support.ConsoleFixtures.habilitated;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -271,7 +271,7 @@ class ConsoleIssuanceTest {
     }
 
     private static String liveIssuer(ConsoleUser user) {
-        String testId = onboard(user).issuerId();
+        String testId = habilitated(user).issuerId();
         Credits.ensurePackage(user);
         String liveId = user.request()
                 .post("/console/issuers/" + testId + "/promote")

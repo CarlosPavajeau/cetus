@@ -2,8 +2,8 @@ package com.cantte.cetus.api.credits;
 
 import static com.cantte.cetus.api.support.Concurrency.race;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
+import static com.cantte.cetus.api.support.ConsoleFixtures.habilitated;
 import static com.cantte.cetus.api.support.ConsoleFixtures.issuerRequest;
-import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -208,8 +208,8 @@ class CourtesyTest {
         bootstrap(first, "Carrera Uno SAS");
         ConsoleUser second = ConsoleUser.newOrganization();
         bootstrap(second, "Carrera Dos SAS");
-        String firstTestId = onboard(first, nit()).issuerId();
-        String secondTestId = onboard(second, nit()).issuerId();
+        String firstTestId = habilitated(first, nit()).issuerId();
+        String secondTestId = habilitated(second, nit()).issuerId();
         List<Callable<Response>> racers = List.of(
                 () -> first.request().post("/console/issuers/" + firstTestId + "/promote"),
                 () -> second.request().post("/console/issuers/" + secondTestId + "/promote"));
@@ -237,7 +237,7 @@ class CourtesyTest {
 
     /** Promotes a new test issuer in habilitación of the NIT, as the console's "Pasar a producción" does. */
     private static Response promote(ConsoleUser user, String nit) {
-        String testId = onboard(user, nit).issuerId();
+        String testId = habilitated(user, nit).issuerId();
         return user.request().post("/console/issuers/" + testId + "/promote");
     }
 

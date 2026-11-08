@@ -1,9 +1,6 @@
 import type { Environment, Issuer } from "~/lib/api/types";
 
-/** What the API lets issue: an enabled issuer, or one in habilitación with the TEST environment. */
+/** Whether the API takes the issuer's documents in the environment, by the API's own rule. */
 export function canIssue(issuer: Issuer, environment: Environment) {
-  return (
-    issuer.environment === environment &&
-    (issuer.status === "ENABLED" || (environment === "TEST" && issuer.status === "TESTING"))
-  );
+  return issuer.environment === environment && issuer.canIssue;
 }

@@ -4,6 +4,7 @@ import static com.cantte.cetus.api.support.ConsoleFixtures.SOFTWARE_ID;
 import static com.cantte.cetus.api.support.ConsoleFixtures.addRange;
 import static com.cantte.cetus.api.support.ConsoleFixtures.bootstrap;
 import static com.cantte.cetus.api.support.ConsoleFixtures.createIssuer;
+import static com.cantte.cetus.api.support.ConsoleFixtures.habilitated;
 import static com.cantte.cetus.api.support.ConsoleFixtures.onboard;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -22,7 +23,7 @@ class IssuerPromotionTest {
     void promotionStartsTheProductionIssuerWithTheSoftwareAndCertificate() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Promotion SAS");
-        String testId = onboard(user).issuerId();
+        String testId = habilitated(user).issuerId();
 
         JsonPath live = promote(user, testId).then().statusCode(200).extract().jsonPath();
         assertThat(live.getString("id")).isNotEqualTo(testId);
@@ -64,7 +65,7 @@ class IssuerPromotionTest {
     void aNitIsPromotedOnlyOnce() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Twice SAS");
-        String testId = onboard(user).issuerId();
+        String testId = habilitated(user).issuerId();
         promote(user, testId).then().statusCode(200);
 
         promote(user, testId).then().statusCode(422).body("code", equalTo("issuer_already_promoted"));
@@ -83,11 +84,20 @@ class IssuerPromotionTest {
     void anIssuerOfAnotherOrganizationIsNotFound() {
         ConsoleUser owner = ConsoleUser.newOrganization();
         bootstrap(owner, "Owner SAS");
-        String testId = onboard(owner).issuerId();
+        String testId = habilitated(owner).issuerId();
         ConsoleUser other = ConsoleUser.newOrganization();
         bootstrap(other, "Other SAS");
 
         promote(other, testId).then().statusCode(404);
+    }
+
+    @Test
+    void aTestSetTheDianHasNotAcceptedKeepsTheIssuerInHabilitacion() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Pending Set SAS");
+        String testId = onboard(user).issuerId();
+
+        promote(user, testId).then().statusCode(422).body("code", equalTo("test_set_not_accepted"));
     }
 
     private static io.restassured.response.Response promote(ConsoleUser user, String issuerId) {

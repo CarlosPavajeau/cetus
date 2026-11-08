@@ -2,6 +2,7 @@ package com.cantte.cetus.worker.ops;
 
 import com.cantte.cetus.domain.billing.VatThreshold;
 import com.cantte.cetus.persistence.entity.BillingOrderEntity;
+import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.worker.notifications.Dates;
 import com.cantte.cetus.worker.ops.OpsAlert.Category;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -124,13 +125,16 @@ public class OpsAlertChecks {
 
     /** Invoice ranges whose prefix, numbers or technical key differ from the DIAN's, or could not be checked. */
     List<OpsAlert> unverifiedRanges() {
-        return rows("""
+        return rows(
+                        """
                 SELECT r.id::text, i.environment, i.legal_name, i.nit, r.prefix, r.verification_status,
                        coalesce(r.verification_error, '')
                 FROM billing.numbering_ranges r
                 JOIN billing.issuers i ON i.id = r.issuer_id
-                WHERE r.status = 'ACTIVE' AND i.environment = 'LIVE' AND r.verification_status IN ('MISMATCH', 'ERROR')
-                """, Map.of()).stream()
+                WHERE %s AND i.environment = 'LIVE' AND r.verification_status IN ('MISMATCH', 'ERROR')
+                """.formatted(NumberingRangeEntity.sqlUsable("r", ":today")),
+                        Map.of("today", LocalDate.now(Dates.BOGOTA)))
+                .stream()
                 .map(r -> OpsAlert.of(
                         Category.RANGE_UNVERIFIED,
                         r[0],
@@ -146,7 +150,7 @@ public class OpsAlertChecks {
                        to_char(c.valid_to AT TIME ZONE 'America/Bogota', 'YYYY-MM-DD')
                 FROM billing.signing_certificates c
                 JOIN billing.issuers i ON i.id = c.issuer_id
-                WHERE c.active AND i.status <> 'DISABLED' AND c.valid_to < :until
+                WHERE c.active AND c.valid_to < :until
                 ORDER BY c.valid_to
                 """, Map.of("until", OffsetDateTime.now().plus(expiryWindow))).stream()
                 .map(r -> OpsAlert.of(
@@ -297,7 +301,10 @@ public class OpsAlertChecks {
                 .toList();
     }
 
-    /** Active ranges with less than {@code range-min-available} of their numbers left, or about to expire. */
+    /**
+     * Ranges in force with less than {@code range-min-available} of their numbers left, or about to expire; an
+     * expired one too until a range of its type takes over.
+     */
     List<OpsAlert> rangesRunningOut() {
         return rows(
                         """
@@ -306,16 +313,18 @@ public class OpsAlertChecks {
                        coalesce(', vigente hasta ' || to_char(r.valid_to, 'YYYY-MM-DD'), '')
                 FROM billing.numbering_ranges r
                 JOIN billing.issuers i ON i.id = r.issuer_id
-                WHERE r.status = 'ACTIVE' AND i.status <> 'DISABLED'
+                WHERE %s
                   AND ((r.range_to - r.next_number + 1) < :ratio * (r.range_to - r.range_from + 1)
                        OR r.valid_to < :until)
                 ORDER BY r.valid_to
-                """,
+                """.formatted(NumberingRangeEntity.sqlUnreplaced("r", ":today")),
                         Map.of(
                                 "ratio",
                                 rangeMinAvailable,
+                                "today",
+                                LocalDate.now(Dates.BOGOTA),
                                 "until",
-                                LocalDate.now().plusDays(expiryWindow.toDays())))
+                                LocalDate.now(Dates.BOGOTA).plusDays(expiryWindow.toDays())))
                 .stream()
                 .map(r -> OpsAlert.of(
                         Category.RANGE_RUNNING_OUT,

@@ -156,15 +156,6 @@ function OrderPage() {
           </AlertDescription>
         </Alert>
       )}
-      {order.status === "FAILED" && (
-        <Alert variant="destructive">
-          <AlertTitle>El pago no se completó</AlertTitle>
-          <AlertDescription>
-            Wompi rechazó o anuló el pago. No se hizo ningún cobro por esta orden; puedes comprar de
-            nuevo.
-          </AlertDescription>
-        </Alert>
-      )}
       {order.status === "PENDING" && !pending && (
         <Alert>
           <AlertTitle>Venció el plazo para pagar esta orden</AlertTitle>

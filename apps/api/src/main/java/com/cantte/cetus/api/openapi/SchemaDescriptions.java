@@ -92,8 +92,7 @@ final class SchemaDescriptions {
                             ordered(
                                     "ONBOARDING", "En configuración: todavía no emite.",
                                     "TESTING", "En el set de pruebas de habilitación: emite solo con llaves `test`.",
-                                    "ENABLED", "Habilitado: emite en su ambiente.",
-                                    "DISABLED", "Deshabilitado: no emite."))),
+                                    "ENABLED", "Habilitado: emite en su ambiente."))),
             Map.entry(
                     "DeliveryStatus",
                     new EnumDescription(

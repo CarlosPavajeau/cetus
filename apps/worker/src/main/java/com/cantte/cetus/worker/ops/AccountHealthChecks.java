@@ -1,6 +1,7 @@
 package com.cantte.cetus.worker.ops;
 
 import com.cantte.cetus.notifications.NotificationKind;
+import com.cantte.cetus.persistence.entity.NumberingRangeEntity;
 import com.cantte.cetus.worker.notifications.Dates;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -49,7 +50,7 @@ public class AccountHealthChecks {
     List<Notice> all(LocalDate today) {
         List<Supplier<List<Notice>>> checks = List.of(
                 () -> expiringCertificates(today),
-                this::rangesRunningOut,
+                () -> rangesRunningOut(today),
                 () -> expiringResolutions(today),
                 () -> rejectionSpikes(today));
         List<Notice> notices = new ArrayList<>();
@@ -70,8 +71,7 @@ public class AccountHealthChecks {
                        (c.valid_to AT TIME ZONE 'America/Bogota')::date
                 FROM billing.signing_certificates c
                 JOIN billing.issuers i ON i.id = c.issuer_id
-                JOIN billing.accounts a ON a.id = i.account_id
-                WHERE c.active AND i.status <> 'DISABLED' AND a.status <> 'CLOSED'
+                WHERE c.active
                   AND c.valid_to > now() AND (c.valid_to AT TIME ZONE 'America/Bogota')::date <= :until
                 """, Map.of("until", today.plusDays(CERTIFICATE_DAYS.getFirst()))).stream()
                 .map(r -> {
@@ -100,16 +100,18 @@ public class AccountHealthChecks {
     }
 
     /** Active LIVE ranges that used 80 % or more of their numbers. */
-    List<Notice> rangesRunningOut() {
-        return rows("""
+    List<Notice> rangesRunningOut(LocalDate today) {
+        return rows(
+                        """
                 SELECT i.account_id, r.id, i.id, i.legal_name, i.nit, r.prefix,
                        r.next_number - r.range_from, r.range_to - r.range_from + 1
                 FROM billing.numbering_ranges r
                 JOIN billing.issuers i ON i.id = r.issuer_id
-                JOIN billing.accounts a ON a.id = i.account_id
-                WHERE r.status = 'ACTIVE' AND i.environment = 'LIVE' AND i.status <> 'DISABLED' AND a.status <> 'CLOSED'
+                WHERE %s AND i.environment = 'LIVE'
                   AND (r.next_number - r.range_from) >= :share * (r.range_to - r.range_from + 1)
-                """, Map.of("share", RANGE_USAGE.getFirst() / 100.0)).stream()
+                """.formatted(NumberingRangeEntity.sqlUsable("r", ":today")),
+                        Map.of("share", RANGE_USAGE.getFirst() / 100.0, "today", today))
+                .stream()
                 .map(r -> {
                     long used = ((Number) r[6]).longValue();
                     long total = ((Number) r[7]).longValue();
@@ -142,14 +144,15 @@ public class AccountHealthChecks {
 
     /** Active LIVE ranges whose resolution ends within 30 days. */
     List<Notice> expiringResolutions(LocalDate today) {
-        return rows("""
+        return rows(
+                        """
                 SELECT i.account_id, r.id, i.id, i.legal_name, i.nit, r.prefix, r.resolution_number, r.valid_to
                 FROM billing.numbering_ranges r
                 JOIN billing.issuers i ON i.id = r.issuer_id
-                JOIN billing.accounts a ON a.id = i.account_id
-                WHERE r.status = 'ACTIVE' AND i.environment = 'LIVE' AND i.status <> 'DISABLED' AND a.status <> 'CLOSED'
-                  AND r.valid_to >= :today AND r.valid_to <= :until
-                """, Map.of("today", today, "until", today.plusDays(RESOLUTION_DAYS.getFirst()))).stream()
+                WHERE %s AND i.environment = 'LIVE' AND r.valid_to <= :until
+                """.formatted(NumberingRangeEntity.sqlUsable("r", ":today")),
+                        Map.of("today", today, "until", today.plusDays(RESOLUTION_DAYS.getFirst())))
+                .stream()
                 .map(r -> {
                     LocalDate validTo = date(r[7]);
                     long days = validTo.toEpochDay() - today.toEpochDay();
@@ -189,8 +192,7 @@ public class AccountHealthChecks {
                         """
                 SELECT d.account_id, count(*) FILTER (WHERE d.status = 'REJECTED'), count(*)
                 FROM billing.documents d
-                JOIN billing.accounts a ON a.id = d.account_id
-                WHERE d.environment = 'LIVE' AND d.status IN ('ACCEPTED', 'REJECTED') AND a.status <> 'CLOSED'
+                WHERE d.environment = 'LIVE' AND d.status IN ('ACCEPTED', 'REJECTED')
                   AND d.validated_at >= :from AND d.validated_at < :to
                 GROUP BY d.account_id
                 HAVING count(*) FILTER (WHERE d.status = 'REJECTED') >= :min

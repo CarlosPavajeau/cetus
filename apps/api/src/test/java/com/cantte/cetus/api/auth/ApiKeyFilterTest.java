@@ -92,16 +92,6 @@ class ApiKeyFilterTest {
         call(apiKey).statusCode(404);
     }
 
-    @Test
-    void closedAccountsCannotUseTheirKeys() {
-        ConsoleUser user = ConsoleUser.newOrganization();
-        bootstrap(user, "Closed SAS");
-        String apiKey = testKey(user);
-
-        setStatus(user, AccountEntity.Status.CLOSED);
-        call(apiKey).statusCode(403).body("code", equalTo("account_suspended"));
-    }
-
     private static ValidatableResponse call(String apiKey) {
         return given().header("Authorization", "Bearer " + apiKey)
                 .get("/v1/invoices/" + UUID.randomUUID())

@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 
 import { type } from "arktype";
+import { config } from "dotenv";
+import { Pool } from "pg";
 
 import type { TestOrganization } from "./organization";
 import { apiUrl, testCertificate } from "./stack";
@@ -19,6 +21,22 @@ export const testSoftware = {
   pin: "12345",
   testSetId: crypto.randomUUID(),
 };
+
+config({ quiet: true });
+
+/** Records that the DIAN accepted the issuer's test set, as the worker does when the DIAN reports it. */
+export async function acceptTestSet(issuerId: string) {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    await pool.query(
+      `UPDATE billing.issuer_software_credentials SET test_set_accepted_at = now()
+       WHERE issuer_id = $1 AND test_set_accepted_at IS NULL`,
+      [issuerId],
+    );
+  } finally {
+    await pool.end();
+  }
+}
 
 /** Creates an issuer through the API, as step 1 of the assistant would. */
 export async function createIssuer(

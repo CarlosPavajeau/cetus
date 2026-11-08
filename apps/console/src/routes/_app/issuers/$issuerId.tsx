@@ -75,7 +75,6 @@ const statusLead: Record<IssuerDetail["status"], string> = {
   ONBOARDING: "Le faltan pasos de configuración antes de poder facturar.",
   TESTING: "Listo para enviar facturas a la habilitación de la DIAN con una llave de pruebas.",
   ENABLED: "Habilitado para emitir facturas con validez fiscal con una llave de producción.",
-  DISABLED: "Deshabilitado: la API rechaza sus facturas.",
 };
 
 /** A LocalDate ("2026-10-18") read as a calendar day, not as midnight UTC. */
@@ -148,6 +147,7 @@ function IssuerDetailPage() {
           ) : (
             issuer.environment === "TEST" &&
             issuer.status === "TESTING" &&
+            (!issuer.testSet || issuer.testSet.acceptedAt) &&
             !counterpart && <PromoteIssuer issuer={issuer} />
           )
         }

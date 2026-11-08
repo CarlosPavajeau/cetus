@@ -39,10 +39,9 @@ export const Route = createFileRoute("/_admin/admin/organizations/")({
   component: Organizations,
 });
 
-const statusVariant: Record<AccountStatus, "secondary" | "destructive" | "outline"> = {
+const statusVariant: Record<AccountStatus, "secondary" | "destructive"> = {
   ACTIVE: "secondary",
   SUSPENDED: "destructive",
-  CLOSED: "outline",
 };
 
 function Organizations() {

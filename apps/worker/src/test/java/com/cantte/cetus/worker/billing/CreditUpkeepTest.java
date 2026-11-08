@@ -70,9 +70,7 @@ class CreditUpkeepTest {
         grant(accountId, "EMPRENDEDOR", 300);
         assertThat(upkeep.issuersOverLimit(OffsetDateTime.now())).doesNotContain(accountId);
         assertThat(notices(accountId)).hasSize(1);
-        assertThat(QuarkusTransaction.requiringNew()
-                        .call(() -> IssuerEntity.count(
-                                "accountId = ?1 and status <> ?2", accountId, IssuerEntity.Status.DISABLED)))
+        assertThat(QuarkusTransaction.requiringNew().call(() -> IssuerEntity.count("accountId", accountId)))
                 .isEqualTo(1);
     }
 

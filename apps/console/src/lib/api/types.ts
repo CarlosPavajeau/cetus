@@ -24,6 +24,8 @@ export type Issuer = Schemas["IssuerView"];
 
 export type IssuerDetail = Schemas["IssuerDetailView"];
 
+export type IssuerGap = Schemas["IssuerGap"];
+
 export type NumberingRange = Schemas["NumberingRangeView"];
 
 export type TestSetProgress = Schemas["TestSetProgressView"];
