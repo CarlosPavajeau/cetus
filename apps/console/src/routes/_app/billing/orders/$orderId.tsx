@@ -1,7 +1,7 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ReceiptIcon } from "lucide-react";
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { Entry, Section } from "~/components/DetailSection";
 import { PageHeader } from "~/components/PageHeader";
@@ -27,6 +27,9 @@ import type { Order } from "~/lib/api/types";
 import { cn, uuidPattern } from "~/lib/utils";
 
 const PENDING_REFRESH_MS = 3000;
+const EXPIRED_REFRESH_MS = 15_000;
+/** How long an expired order is still read: a PSE payment approved near its deadline can arrive minutes later. */
+const EXPIRED_WATCH_MS = 15 * 60 * 1000;
 
 /**
  * Where Wompi sends the customer back after paying. It only reads the order: Wompi confirms the payment to
@@ -58,13 +61,24 @@ function awaitingPayment(order: Order | null) {
   );
 }
 
+/** Reads the order again until the server says it is settled, whatever the browser's clock says. */
+function refreshInterval(order: Order | null, watchedSinceMs: number): number | false {
+  if (order?.status === "PENDING") {
+    return PENDING_REFRESH_MS;
+  }
+  if (order?.status === "EXPIRED" && Date.now() - watchedSinceMs < EXPIRED_WATCH_MS) {
+    return EXPIRED_REFRESH_MS;
+  }
+  return false;
+}
+
 function OrderPage() {
   const { orderId } = Route.useParams();
   const queryClient = useQueryClient();
+  const [watchedSinceMs] = useState(() => Date.now());
   const { data: order } = useSuspenseQuery({
     ...orderQuery(orderId),
-    refetchInterval: (query) =>
-      awaitingPayment(query.state.data ?? null) ? PENDING_REFRESH_MS : false,
+    refetchInterval: (query) => refreshInterval(query.state.data ?? null, watchedSinceMs),
   });
   const { data: paymentMethod } = useSuspenseQuery(paymentMethodQuery);
   const { session } = Route.useRouteContext();
@@ -156,7 +170,7 @@ function OrderPage() {
           </AlertDescription>
         </Alert>
       )}
-      {order.status === "PENDING" && !pending && (
+      {(order.status === "EXPIRED" || (order.status === "PENDING" && !pending)) && (
         <Alert>
           <AlertTitle>Venció el plazo para pagar esta orden</AlertTitle>
           <AlertDescription>

@@ -213,9 +213,10 @@ export const resendInvitation = createServerFn({ method: "POST" })
     // The claim: one atomic update restarts the invitation only if its last email is a minute old, so of
     // two requests at once (two admins, a double click) only one sends it.
     const now = Date.now();
+    const claimedExpiresAt = new Date(now + invitationSeconds * 1000);
     const claimed = await db
       .update(invitationTable)
-      .set({ expiresAt: new Date(now + invitationSeconds * 1000) })
+      .set({ expiresAt: claimedExpiresAt })
       .where(
         and(
           eq(invitationTable.id, pending.id),
@@ -238,6 +239,17 @@ export const resendInvitation = createServerFn({ method: "POST" })
         body: { email: pending.email, role, resend: true },
       });
     } catch (error) {
+      // Nothing was sent: give the invitation its validity back, and the next resend no wait.
+      await db
+        .update(invitationTable)
+        .set({ expiresAt: new Date(pending.expiresAt) })
+        .where(
+          and(
+            eq(invitationTable.id, pending.id),
+            eq(invitationTable.status, "pending"),
+            eq(invitationTable.expiresAt, claimedExpiresAt),
+          ),
+        );
       return refusal(error, "No pudimos reenviar la invitación.");
     }
     return { ok: true, emailed: await emailInvitation(headers, invitation) };
