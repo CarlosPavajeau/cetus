@@ -261,18 +261,6 @@ class IssuerResourceTest {
                 .body("code", equalTo("technical_key_required"));
     }
 
-    private static void postRange(
-            ConsoleUser user, String issuerId, Map<String, Object> request, int status, String code) {
-        ValidatableResponse response = user.request()
-                .body(request)
-                .post("/console/issuers/" + issuerId + "/numbering-ranges")
-                .then()
-                .statusCode(status);
-        if (code != null) {
-            response.body("code", equalTo(code));
-        }
-    }
-
     @Test
     void aRangeCannotRepeatTheNumbersOfAnother() {
         ConsoleUser user = ConsoleUser.newOrganization();
@@ -280,19 +268,32 @@ class IssuerResourceTest {
         String issuerId = createIssuer(user);
         addRange(user, issuerId, "SETP");
 
-        postRange(user, issuerId, rangeRequest("SETP"), 422, "range_overlap");
+        postRange(user, issuerId, rangeRequest("SETP")).statusCode(422).body("code", equalTo("range_overlap"));
 
         Map<String, Object> tail = rangeRequest("SETP");
         tail.put("from", 995000000);
         tail.put("to", 995000100);
-        postRange(user, issuerId, tail, 422, "range_overlap");
+        postRange(user, issuerId, tail).statusCode(422).body("code", equalTo("range_overlap"));
 
         Map<String, Object> adjacent = rangeRequest("SETP");
         adjacent.put("from", 995000001);
         adjacent.put("to", 995001000);
-        postRange(user, issuerId, adjacent, 200, null);
+        postRange(user, issuerId, adjacent).statusCode(200);
 
-        postRange(user, issuerId, rangeRequest("SETT"), 200, null);
+        postRange(user, issuerId, rangeRequest("SETT")).statusCode(200);
+    }
+
+    @Test
+    void aRangeWithoutPrefixOverlapsOneWithAnEmptyPrefix() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Sin prefijo SAS");
+        String issuerId = createIssuer(user);
+        postRange(user, issuerId, Map.of("documentType", "CREDIT_NOTE", "from", 1, "to", 1000))
+                .statusCode(200);
+
+        postRange(user, issuerId, Map.of("documentType", "CREDIT_NOTE", "prefix", "", "from", 500, "to", 600))
+                .statusCode(422)
+                .body("code", equalTo("range_overlap"));
     }
 
     @Test
@@ -303,10 +304,10 @@ class IssuerResourceTest {
         Map<String, Object> invoice = rangeRequest("NC");
         invoice.put("from", 1);
         invoice.put("to", 1000);
-        postRange(user, issuerId, invoice, 200, null);
+        postRange(user, issuerId, invoice).statusCode(200);
 
-        Map<String, Object> creditNote = Map.of("documentType", "CREDIT_NOTE", "prefix", "NC", "from", 1, "to", 1000);
-        postRange(user, issuerId, creditNote, 200, null);
+        postRange(user, issuerId, Map.of("documentType", "CREDIT_NOTE", "prefix", "NC", "from", 1, "to", 1000))
+                .statusCode(200);
     }
 
     @Test
@@ -318,7 +319,7 @@ class IssuerResourceTest {
         request.put("validFrom", "2027-01-01");
         request.put("validTo", "2026-12-31");
 
-        postRange(user, issuerId, request, 422, "range_invalid");
+        postRange(user, issuerId, request).statusCode(422).body("code", equalTo("range_invalid"));
     }
 
     @Test
@@ -364,6 +365,13 @@ class IssuerResourceTest {
         verify(user, onboarding.issuerId(), onboarding.rangeId())
                 .statusCode(422)
                 .body("code", equalTo("range_not_verifiable"));
+    }
+
+    private static ValidatableResponse postRange(ConsoleUser user, String issuerId, Map<String, Object> request) {
+        return user.request()
+                .body(request)
+                .post("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then();
     }
 
     private static ValidatableResponse verify(ConsoleUser user, String issuerId, String rangeId) {
