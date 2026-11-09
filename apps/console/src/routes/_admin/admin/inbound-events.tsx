@@ -24,6 +24,9 @@ export const Route = createFileRoute("/_admin/admin/inbound-events")({
   component: InboundEvents,
 });
 
+/** The page size of `GET /admin/inbound-events`, newest first. */
+const inboundEventsShown = 50;
+
 const providerLabel: Record<InboundEvent["provider"], string> = {
   WOMPI: "Wompi",
   RESEND: "Resend",
@@ -45,6 +48,11 @@ function InboundEvents() {
         title="Eventos fallidos"
         lead="Avisos de Wompi y Resend que el worker dejó de reintentar. Corrige la causa antes de volver a encolarlos: cada uno se procesa de nuevo desde el principio."
       />
+      {events.length >= inboundEventsShown && (
+        <p className="text-xs text-muted-foreground">
+          {`Se muestran los ${inboundEventsShown} más recientes. Vuelve a encolar o resuelve estos para ver los anteriores.`}
+        </p>
+      )}
       {events.length === 0 ? (
         <p className="text-xs text-muted-foreground">No hay eventos fallidos.</p>
       ) : (
@@ -72,7 +80,12 @@ function InboundEventRow({ event, admin }: { event: InboundEvent; admin: boolean
   const queryClient = useQueryClient();
   const requeue = useMutation({
     mutationFn: requeueInboundEvent,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminKey }),
+    onSuccess: () => {
+      queryClient.setQueryData(adminInboundEventsQuery.queryKey, (events) =>
+        events?.filter((each) => each.id !== event.id),
+      );
+      return queryClient.invalidateQueries({ queryKey: adminKey });
+    },
   });
 
   return (

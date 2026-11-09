@@ -222,6 +222,8 @@ export const resendInvitation = createServerFn({ method: "POST" })
           eq(invitationTable.id, pending.id),
           eq(invitationTable.organizationId, organization.id),
           eq(invitationTable.status, "pending"),
+          // Only from the expiry read above, so a failed send can put back exactly that one.
+          eq(invitationTable.expiresAt, new Date(pending.expiresAt)),
           lte(
             invitationTable.expiresAt,
             new Date(now + (invitationSeconds - resendIntervalSeconds) * 1000),
@@ -249,6 +251,9 @@ export const resendInvitation = createServerFn({ method: "POST" })
             eq(invitationTable.status, "pending"),
             eq(invitationTable.expiresAt, claimedExpiresAt),
           ),
+        )
+        .catch((rollbackError: unknown) =>
+          console.error(`Could not restore the expiry of invitation ${pending.id}`, rollbackError),
         );
       return refusal(error, "No pudimos reenviar la invitación.");
     }

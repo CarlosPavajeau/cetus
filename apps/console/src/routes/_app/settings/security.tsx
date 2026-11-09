@@ -162,6 +162,7 @@ function Security() {
   const navigate = useNavigate();
   const [view, dispatch] = useReducer(transition, { kind: "idle", returning: null });
   const [confirming, setConfirming] = useState<Confirming | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const leaving = useRef(false);
   const enabled = session.user.twoFactorEnabled;
   const unsaved = unsavedByView[view.kind] ?? null;
@@ -259,6 +260,8 @@ function Security() {
             <AuthenticatorApp
               focusTitle={returning === "app"}
               confirming={confirming === "replace"}
+              locked={submitting}
+              onSubmittingChange={setSubmitting}
               onConfirmingChange={(open) => setConfirming(open ? "replace" : null)}
               onStarted={(replacement) => {
                 setConfirming(null);
@@ -268,6 +271,8 @@ function Security() {
             <TwoFactorStatus
               focusTitle={returning === "codes"}
               confirming={confirming === "regenerate"}
+              locked={submitting}
+              onSubmittingChange={setSubmitting}
               onConfirmingChange={(open) => setConfirming(open ? "regenerate" : null)}
               onRegenerated={(codes) => {
                 setConfirming(null);
@@ -277,6 +282,8 @@ function Security() {
           </div>
           <DisableTwoFactor
             confirming={confirming === "disable"}
+            locked={submitting}
+            onSubmittingChange={setSubmitting}
             onConfirmingChange={(open) => setConfirming(open ? "disable" : null)}
             staff={session.user.platformRole !== null}
             onDisabled={() => {
@@ -513,7 +520,9 @@ function VerifyEnrollment({
 
   async function cancel() {
     setCanceling(true);
-    const message = await onCancel();
+    const message = await onCancel().catch(
+      () => "No pudimos cancelar. Revisa tu conexión e intenta de nuevo.",
+    );
     if (message !== null) {
       setCanceling(false);
       form.setError("root", { message });
@@ -783,11 +792,16 @@ function BackupCodes({
 function AuthenticatorApp({
   focusTitle,
   confirming,
+  locked,
+  onSubmittingChange,
   onConfirmingChange,
   onStarted,
 }: {
   focusTitle: boolean;
   confirming: boolean;
+  /** Another 2FA change is waiting for the server: none may start until it answers. */
+  locked: boolean;
+  onSubmittingChange: (submitting: boolean) => void;
   onConfirmingChange: (open: boolean) => void;
   onStarted: (replacement: Replacement) => void;
 }) {
@@ -808,6 +822,7 @@ function AuthenticatorApp({
       {confirming ? (
         <CardContent>
           <PasswordConfirm
+            onSubmittingChange={onSubmittingChange}
             id="replace-app-password"
             submitLabel="Continuar"
             onConfirm={async (password) => {
@@ -831,6 +846,7 @@ function AuthenticatorApp({
         <CardFooter className="mt-2">
           <Button
             ref={triggerRef}
+            disabled={locked}
             type="button"
             variant="outline"
             onClick={() => onConfirmingChange(true)}
@@ -898,11 +914,16 @@ function BackupCodesLeft() {
 function TwoFactorStatus({
   focusTitle,
   confirming,
+  locked,
+  onSubmittingChange,
   onConfirmingChange,
   onRegenerated,
 }: {
   focusTitle: boolean;
   confirming: boolean;
+  /** Another 2FA change is waiting for the server: none may start until it answers. */
+  locked: boolean;
+  onSubmittingChange: (submitting: boolean) => void;
   onConfirmingChange: (open: boolean) => void;
   onRegenerated: (codes: string[]) => void;
 }) {
@@ -928,6 +949,7 @@ function TwoFactorStatus({
             nuevos.
           </p>
           <PasswordConfirm
+            onSubmittingChange={onSubmittingChange}
             id="regenerate-codes-password"
             submitLabel="Generar códigos"
             onConfirm={async (password) => {
@@ -966,6 +988,7 @@ function TwoFactorStatus({
           <CardFooter className="mt-2">
             <Button
               ref={triggerRef}
+              disabled={locked}
               type="button"
               variant="outline"
               onClick={() => onConfirmingChange(true)}
@@ -982,11 +1005,16 @@ function TwoFactorStatus({
 
 function DisableTwoFactor({
   confirming,
+  locked,
+  onSubmittingChange,
   staff,
   onConfirmingChange,
   onDisabled,
 }: {
   confirming: boolean;
+  /** Another 2FA change is waiting for the server: none may start until it answers. */
+  locked: boolean;
+  onSubmittingChange: (submitting: boolean) => void;
   staff: boolean;
   onConfirmingChange: (open: boolean) => void;
   onDisabled: () => void;
@@ -1007,6 +1035,7 @@ function DisableTwoFactor({
       </div>
       {confirming ? (
         <PasswordConfirm
+          onSubmittingChange={onSubmittingChange}
           id="disable-2fa-password"
           submitLabel="Desactivar verificación"
           destructive
@@ -1031,6 +1060,7 @@ function DisableTwoFactor({
         <div>
           <Button
             ref={triggerRef}
+            disabled={locked}
             type="button"
             variant="outline"
             onClick={() => onConfirmingChange(true)}
@@ -1050,18 +1080,25 @@ function PasswordConfirm({
   destructive = false,
   onConfirm,
   onCancel,
+  onSubmittingChange,
 }: {
   id: string;
   submitLabel: string;
   destructive?: boolean;
   onConfirm: (password: string) => Promise<string | null>;
   onCancel: () => void;
+  onSubmittingChange: (submitting: boolean) => void;
 }) {
   const form = useForm({
     resolver: arktypeResolver(enableTwoFactorSchema),
     defaultValues: { password: "" },
   });
   const { errors, isSubmitting } = form.formState;
+
+  useEffect(() => {
+    onSubmittingChange(isSubmitting);
+    return () => onSubmittingChange(false);
+  }, [isSubmitting, onSubmittingChange]);
 
   useEffect(() => {
     form.setFocus("password");

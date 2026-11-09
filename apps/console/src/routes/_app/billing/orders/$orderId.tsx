@@ -177,8 +177,8 @@ function OrderPage() {
         <Alert>
           <AlertTitle>Venció el plazo para pagar esta orden</AlertTitle>
           <AlertDescription>
-            Si ya pagaste, espera la confirmación de Wompi: la orden se actualizará sola. Si no,
-            puedes comprar de nuevo.
+            Si ya pagaste, espera la confirmación de Wompi y recarga esta página si no cambia en
+            unos minutos. Si no, puedes comprar de nuevo.
           </AlertDescription>
         </Alert>
       )}
