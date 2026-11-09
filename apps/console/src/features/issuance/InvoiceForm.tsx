@@ -36,6 +36,8 @@ import { CustomerFields } from "./CustomerFields";
 import { CustomerSummary } from "./CustomerSummary";
 import { SelectField } from "./fields";
 import { LinesEditor, LinesTotals, emptyLine, useLinesPreview } from "./LinesEditor";
+import type { InvoiceDraft } from "./reissue";
+import { ReissueNotice } from "./ReissueNotice";
 import {
   type CustomerValues,
   type InvoiceHeaderValues,
@@ -88,12 +90,15 @@ export function InvoiceForm({
   environment,
   issuers,
   sample,
+  draft,
   blockedReason,
 }: {
   environment: Environment;
   /** The issuers that can issue in the environment. */
   issuers: Issuer[];
   sample: boolean;
+  /** A rejected or failed invoice, to issue again. */
+  draft: InvoiceDraft | null;
   /** The catalog of the environment, to fill in the customer and the lines. */
   /** Why the person cannot issue here, if they cannot. */
   blockedReason: string | null;
@@ -104,7 +109,7 @@ export function InvoiceForm({
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [saveCustomer, setSaveCustomer] = useState(false);
-  const [picked, setPicked] = useState<PickedCustomer | null>(null);
+  const [picked, setPicked] = useState<PickedCustomer | null>(draft?.customer?.picked ?? null);
   // A customer from the catalog, the final consumer or the sample shows in one line until edited; only the
   // sample, typed by no one, can still be saved from there.
   const [customerMode, setCustomerMode] = useState<"fields" | "summary" | "sample">(
@@ -122,17 +127,19 @@ export function InvoiceForm({
   const header = useForm<InvoiceHeaderValues>({
     resolver: arktypeResolver(invoiceHeaderSchema),
     defaultValues: {
-      issuerId: issuers.length === 1 || sample ? (issuers[0]?.id ?? "") : "",
-      payment: { method: "CASH", meansCode: "10", dueDate: "" },
+      issuerId: draft?.issuerId || (issuers.length === 1 || sample ? (issuers[0]?.id ?? "") : ""),
+      payment: draft?.payment ?? { method: "CASH", meansCode: "10", dueDate: "" },
     },
   });
   const customerForm = useForm<CustomerValues>({
     resolver: arktypeResolver(customerFormSchema),
-    defaultValues: sample ? sampleCustomer : emptyCustomer,
+    defaultValues: draft?.customer?.values ?? (sample ? sampleCustomer : emptyCustomer),
   });
   const lines = useForm<LinesFormValues>({
     resolver: arktypeResolver(linesFormSchema),
-    defaultValues: { lines: [sample ? sampleLine : emptyLine] },
+    defaultValues: {
+      lines: draft?.lines.length ? draft.lines : [sample ? sampleLine : emptyLine],
+    },
   });
   const preview = useLinesPreview(lines);
   const issue = useMutation({
@@ -278,6 +285,16 @@ export function InvoiceForm({
       }}
     >
       <div className="flex min-w-0 flex-col gap-8">
+        {draft && (
+          <ReissueNotice
+            documentId={draft.id}
+            noun="factura"
+            number={draft.number}
+            status={draft.status}
+            environment={environment}
+            gaps={draft.gaps}
+          />
+        )}
         {issuers.length > 1 && (
           <FieldSection title="Emisor">
             <FieldRow className="sm:grid-cols-2">

@@ -1,4 +1,10 @@
-import type { IdentificationType, LineTax, PersonType } from "~/lib/api/types";
+import type {
+  CreditNoteConcept,
+  DebitNoteConcept,
+  IdentificationType,
+  LineTax,
+  PersonType,
+} from "~/lib/api/types";
 
 export type TaxPreset = "IVA_19" | "IVA_5" | "EXEMPT" | "EXCLUDED" | "INC_8";
 
@@ -64,3 +70,19 @@ export const finalConsumer = {
   identificationNumber: "222222222222",
   legalName: "Consumidor final",
 } as const;
+
+// A full cancellation has its own dialog on the invoice, which credits every line at once.
+export const creditConcepts = [
+  "PARTIAL_RETURN",
+  "REBATE",
+  "PRICE_ADJUSTMENT",
+  "EARLY_PAYMENT_DISCOUNT",
+  "VOLUME_DISCOUNT",
+] as const satisfies readonly CreditNoteConcept[];
+
+export const debitConcepts = [
+  "INTEREST",
+  "EXPENSES",
+  "VALUE_CHANGE",
+  "OTHER",
+] as const satisfies readonly DebitNoteConcept[];

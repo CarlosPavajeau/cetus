@@ -5,7 +5,7 @@ export function Entry({ label, children }: { label: string; children: ReactNode 
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <dt className="text-2xs text-muted-foreground">{label}</dt>
-      <dd className="text-2xs break-words">{children}</dd>
+      <dd className="text-sm break-words">{children}</dd>
     </div>
   );
 }
