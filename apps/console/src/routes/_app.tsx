@@ -40,7 +40,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import { buttonVariants } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
   Sidebar,
@@ -59,6 +59,7 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { accountQuery } from "~/features/account/queries";
 import { ImpersonationBanner } from "~/features/admin/ImpersonationBanner";
 import { EnvironmentSelect } from "~/features/environment/EnvironmentSelect";
@@ -309,13 +310,22 @@ function AppLayout() {
               Documentación
               <ArrowUpRightIcon data-icon="inline-end" />
             </a>
-            <Link
-              to={helpPage.to}
-              className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-            >
-              <LifeBuoyIcon />
-              <span className="sr-only">{helpPage.label}</span>
-            </Link>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    nativeButton={false}
+                    render={<Link to={helpPage.to} />}
+                  />
+                }
+              >
+                <LifeBuoyIcon />
+                <span className="sr-only">{helpPage.label}</span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{helpPage.label}</TooltipContent>
+            </Tooltip>
           </div>
         </header>
         <div className="flex w-full flex-1 flex-col gap-7 p-4 md:px-10 md:pt-9.5 md:pb-6">
