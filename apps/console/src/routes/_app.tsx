@@ -40,7 +40,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
   Sidebar,
@@ -140,12 +140,17 @@ const navigation = [
   items: readonly NavigationItem[];
 }[];
 
-/** In the sidebar's footer and behind the header's help button, outside the groups. */
+/** Behind the header's help button, outside the sidebar groups. */
 const helpPage = {
   to: "/help",
   label: "Ayuda",
   icon: LifeBuoyIcon,
 } as const satisfies NavigationItem;
+
+// A plain link styled as a button: Button with nativeButton={false} would announce it as a button.
+const helpLink = (
+  <Link to={helpPage.to} className={buttonVariants({ variant: "ghost", size: "icon-sm" })} />
+);
 
 const pages = [
   ...navigation.flatMap((group) =>
@@ -311,16 +316,7 @@ function AppLayout() {
               <ArrowUpRightIcon data-icon="inline-end" />
             </a>
             <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    nativeButton={false}
-                    render={<Link to={helpPage.to} />}
-                  />
-                }
-              >
+              <TooltipTrigger render={helpLink}>
                 <LifeBuoyIcon />
                 <span className="sr-only">{helpPage.label}</span>
               </TooltipTrigger>
