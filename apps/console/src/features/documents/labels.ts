@@ -23,6 +23,13 @@ export const documentStatusLabel: Record<DocumentStatus, string> = {
   FAILED: "Fallido",
 };
 
+/** A status's name; in sandbox the simulator receives the document, not the DIAN. */
+export function documentStatusName(status: DocumentStatus, environment: Environment) {
+  return environment === "SANDBOX" && status === "SUBMITTED"
+    ? "Enviado al simulador"
+    : documentStatusLabel[status];
+}
+
 export const documentStatusLead: Record<DocumentStatus, string> = {
   RECEIVED: "Cetus lo recibió y lo va a firmar y enviar a la DIAN.",
   PROCESSING: "Cetus lo está firmando y enviando a la DIAN.",

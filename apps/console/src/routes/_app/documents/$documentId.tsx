@@ -17,6 +17,7 @@ import { CopyButton } from "~/components/CopyButton";
 import { Entry, Section } from "~/components/DetailSection";
 import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
+import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -117,7 +118,7 @@ function DocumentDetailPage() {
 
       <PageHeader
         title={`${documentTypeLabel[document.documentType]} ${document.number}`}
-        status={<DocumentStatusBadge status={document.status} />}
+        status={<DocumentStatusBadge status={document.status} environment={document.environment} />}
         lead={documentLead(document.status, document.environment)}
         action={
           <div className="flex flex-wrap items-start gap-2">
@@ -147,6 +148,7 @@ function DocumentDetailPage() {
                 {document.cufe ?? "Se calcula al firmar el documento"}
               </code>
               <EnvironmentBadge environment={document.environment} />
+              {document.cufe && unsent && <Badge variant="destructive">Sin validez</Badge>}
             </div>
           </div>
         </div>
@@ -585,7 +587,7 @@ function InvoiceNotes({ document }: { document: DocumentDetail }) {
                     {conceptLabel[note.concept] ?? note.concept}
                   </TableCell>
                   <TableCell className="text-sm">
-                    <DocumentStatusBadge status={note.status} />
+                    <DocumentStatusBadge status={note.status} environment={document.environment} />
                   </TableCell>
                   <TableCell className="pr-5 text-right text-sm tabular-nums">
                     {note.type === "CREDIT_NOTE" ? "−" : "+"}

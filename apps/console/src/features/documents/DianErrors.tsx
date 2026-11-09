@@ -1,4 +1,4 @@
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import type { DocumentDetail } from "~/lib/api/types";
@@ -55,7 +55,8 @@ export function DianErrors({ document }: { document: DocumentDetail }) {
   return (
     <>
       {document.status === "FAILED" && (
-        <Alert variant="destructive">
+        <Alert variant="warning">
+          <TriangleAlertIcon aria-hidden="true" />
           <AlertTitle>
             <h2>No se pudo enviar {sandbox ? "al simulador" : "a la DIAN"}</h2>
           </AlertTitle>
