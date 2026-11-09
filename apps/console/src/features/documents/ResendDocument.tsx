@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { type } from "arktype";
 import { MailIcon } from "lucide-react";
 import { useId, useState } from "react";
@@ -20,9 +21,53 @@ import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
 import { auditLogKey } from "~/features/audit-log/queries";
 import type { DocumentDetail } from "~/lib/api/types";
+import { entryOf } from "~/lib/utils";
 
 import { documentsKey } from "./queries";
 import { resendDocument, resendEmail } from "./server";
+
+type ConfigurationFailure = "EMAIL_UNCONFIGURED" | "TECHNICAL_CONTACT_UNVERIFIED";
+
+const configurationFailures: Record<string, ConfigurationFailure> = {
+  "Email delivery is not configured": "EMAIL_UNCONFIGURED",
+  "TEST documents are only emailed to CETUS_EMAIL_TEST_RECIPIENT, which is not set":
+    "EMAIL_UNCONFIGURED",
+  "SANDBOX documents go to the account's technical contact, which has no verified address":
+    "TECHNICAL_CONTACT_UNVERIFIED",
+};
+
+/** Why the last delivery failed, when another attempt would fail the same way until a setting changes. */
+function configurationFailure(document: DocumentDetail): ConfigurationFailure | null {
+  const error = document.deliveries.at(-1)?.error;
+  return error ? (entryOf(configurationFailures, error) ?? null) : null;
+}
+
+/** Says why a document has no "Reenviar correo", when its last delivery failed for configuration. */
+export function ResendUnavailable({ document }: { document: DocumentDetail }) {
+  const failure = document.status === "ACCEPTED" ? configurationFailure(document) : null;
+  if (failure === "TECHNICAL_CONTACT_UNVERIFIED") {
+    return (
+      <p className="text-2xs text-muted-foreground">
+        No se puede reenviar hasta que el contacto técnico tenga un correo verificado.{" "}
+        <Link to="/settings/contacts" className="text-foreground underline underline-offset-4">
+          Verificar el contacto técnico
+        </Link>
+      </p>
+    );
+  }
+  if (failure === "EMAIL_UNCONFIGURED") {
+    return (
+      <p className="text-2xs text-muted-foreground">
+        No se puede reenviar: el correo falló por la configuración de este ambiente, no por el
+        documento, y otro intento fallaría igual.{" "}
+        <Link to="/help" className="text-foreground underline underline-offset-4">
+          Escríbenos desde Ayuda
+        </Link>
+      </p>
+    );
+  }
+  return null;
+}
 
 /**
  * Emails an accepted document again, once its last delivery is over. A simulated document only ever goes
@@ -56,7 +101,11 @@ export function ResendDocument({ document }: { document: DocumentDetail }) {
         : null;
   const busy = document.deliveries.some((delivery) => delivery.status === "PENDING");
 
-  if (document.status !== "ACCEPTED" || document.deliveries.length === 0) {
+  if (
+    document.status !== "ACCEPTED" ||
+    document.deliveries.length === 0 ||
+    configurationFailure(document) !== null
+  ) {
     return null;
   }
 

@@ -61,7 +61,7 @@ import {
   isTechnicalEvent,
 } from "~/features/documents/labels";
 import { documentDetailQuery } from "~/features/documents/queries";
-import { ResendDocument } from "~/features/documents/ResendDocument";
+import { ResendDocument, ResendUnavailable } from "~/features/documents/ResendDocument";
 import { getDocumentFileUrl } from "~/features/documents/server";
 import { paymentMeans, paymentMethods } from "~/features/issuance/catalogs";
 import { reissueTarget } from "~/features/issuance/reissue";
@@ -201,7 +201,16 @@ function DocumentDetailPage() {
           {document.payment && (
             <RuledEntry label="Pago">{paymentLabel(document.payment)}</RuledEntry>
           )}
-          <RuledEntry label="Referencia externa">{document.externalReference ?? "—"}</RuledEntry>
+          <RuledEntry label="Referencia externa">
+            {document.externalReference ? (
+              <CopyableId value={document.externalReference} label="Copiar referencia externa" />
+            ) : (
+              "—"
+            )}
+          </RuledEntry>
+          <RuledEntry label="ID del documento">
+            <CopyableId value={document.id} label="Copiar ID del documento" />
+          </RuledEntry>
         </dl>
       </Section>
 
@@ -329,6 +338,7 @@ function DocumentDetailPage() {
               En sandbox el correo va al contacto técnico de la cuenta, nunca al cliente.
             </p>
           )}
+          <ResendUnavailable document={document} />
         </Section>
       )}
 

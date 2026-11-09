@@ -37,8 +37,9 @@ test("the documents page lists the invoices and opens their detail", async ({
   await expect(page.getByTestId("document-summary")).toContainText("Cliente Dos");
   await expect(page.getByText("Servicio de consultoría")).toBeVisible();
   await expect(page.getByText("Recibido por Cetus")).toBeVisible();
-  await page.getByRole("button", { name: "Descargar" }).click();
-  await expect(page.getByRole("menuitem", { name: "PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Descargar PDF" })).toBeVisible();
+  await page.getByRole("button", { name: "Otros archivos" }).click();
+  await expect(page.getByRole("menuitem", { name: "AttachedDocument" })).toBeVisible();
 });
 
 test("an unknown document shows a not found page", async ({ page, organization: _ }) => {

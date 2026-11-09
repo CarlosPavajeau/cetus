@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { ChevronDownIcon, DownloadIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { ButtonGroup } from "~/components/ui/button-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,15 +14,15 @@ import type { DocumentFile } from "~/lib/api/types";
 
 import type { DocumentFileUrl } from "./server";
 
-const files: { file: DocumentFile; label: string }[] = [
-  { file: "pdf", label: "PDF" },
+const technicalFiles: { file: DocumentFile; label: string }[] = [
   { file: "xml", label: "XML" },
   { file: "attached-document", label: "AttachedDocument" },
 ];
 
 /**
- * The document's files. Each click asks for a fresh presigned URL, which lives a few minutes and downloads
- * the file under its DIAN name.
+ * The document's files: the PDF most people want, and the XML files an integration or the DIAN asks for.
+ * Each click asks for a fresh presigned URL, which lives a few minutes and downloads the file under its DIAN
+ * name.
  */
 export function DocumentDownloads({
   getUrl,
@@ -42,32 +43,50 @@ export function DocumentDownloads({
       : download.isError
         ? "No se pudo obtener el archivo. Intenta de nuevo."
         : null;
+  const pdfPending = download.isPending && download.variables === "pdf";
 
   return (
     <div className="flex flex-col items-start gap-2 sm:items-end">
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="outline" className="group" disabled={download.isPending} />}
+      <ButtonGroup aria-label="Descargar archivos">
+        <Button
+          variant="outline"
+          disabled={download.isPending}
+          onClick={() => download.mutate("pdf")}
         >
-          {download.isPending ? (
+          {pdfPending ? (
             <Spinner data-icon="inline-start" />
           ) : (
             <DownloadIcon data-icon="inline-start" />
           )}
-          Descargar
-          <ChevronDownIcon
-            data-icon="inline-end"
-            className="transition-transform group-data-popup-open:rotate-180"
-          />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-auto">
-          {files.map(({ file, label }) => (
-            <DropdownMenuItem key={file} onClick={() => download.mutate(file)}>
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          Descargar PDF
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon"
+                className="group"
+                disabled={download.isPending}
+                aria-label="Otros archivos"
+              />
+            }
+          >
+            {download.isPending && !pdfPending ? (
+              <Spinner />
+            ) : (
+              <ChevronDownIcon className="transition-transform group-data-popup-open:rotate-180" />
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-auto">
+            {technicalFiles.map(({ file, label }) => (
+              <DropdownMenuItem key={file} onClick={() => download.mutate(file)}>
+                {label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </ButtonGroup>
       {message && <output className="text-2xs text-muted-foreground">{message}</output>}
     </div>
   );

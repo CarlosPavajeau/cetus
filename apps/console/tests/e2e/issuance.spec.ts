@@ -29,9 +29,10 @@ test("a new organization issues its first simulated invoice from the overview", 
   await expect(page.getByRole("heading", { name: /^Factura SIM\d+$/ })).toBeVisible();
   // The page refreshes itself until the simulator answers.
   await expect(page.getByText("El simulador de Cetus lo aceptó")).toBeVisible({ timeout: 20_000 });
-  await page.getByRole("button", { name: "Descargar" }).click();
-  await expect(page.getByRole("menuitem", { name: "PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Descargar PDF" })).toBeVisible();
+  await page.getByRole("button", { name: "Otros archivos" }).click();
   await expect(page.getByRole("menuitem", { name: "XML" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "AttachedDocument" })).toBeVisible();
 });
 
 test("an invoice is filled in by hand in habilitación", async ({ page, organization }) => {
@@ -139,7 +140,7 @@ test("an accepted invoice is corrected with a partial credit note", async ({
   await expect(page.getByText("Descuento acordado con el cliente")).toBeVisible();
 });
 
-test("an accepted invoice is emailed again at most once a minute", async ({
+test("an invoice whose email failed for configuration says why it cannot be resent", async ({
   page,
   organization,
 }) => {
@@ -155,19 +156,11 @@ test("an accepted invoice is emailed again at most once a minute", async ({
 
   await open(page, `/documents/${invoice.id}`);
   const deliveries = page.getByRole("region", { name: "Entrega al cliente" });
-  // Enabled once the first delivery is over; the page refreshes itself until then.
-  await deliveries.getByRole("button", { name: "Reenviar correo" }).click({ timeout: 20_000 });
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel("Enviar a").fill("contabilidad");
-  await dialog.getByRole("button", { name: "Reenviar" }).click();
-  await expect(dialog.getByText("Escribe un correo válido.")).toBeVisible();
-  await dialog.getByLabel("Enviar a").fill("contabilidad@cliente.test");
-  await dialog.getByRole("button", { name: "Reenviar" }).click();
-
-  // The first delivery just ended; the API and worker tests cover a resend that goes out.
-  await expect(
-    dialog.getByText("Acabamos de enviarlo. Espera un minuto antes de reenviarlo."),
-  ).toBeVisible();
+  // The e2e stack sends no email, so the delivery fails for configuration; the API and worker tests cover
+  // a resend that goes out.
+  await expect(deliveries.getByText("No se puede reenviar:")).toBeVisible({ timeout: 20_000 });
+  await expect(deliveries.getByRole("button", { name: "Reenviar correo" })).toHaveCount(0);
+  await expect(deliveries.getByRole("link", { name: "Escríbenos desde Ayuda" })).toBeVisible();
 });
 
 test("the customer's location is optional as a whole", async ({ page, organization: _ }) => {
