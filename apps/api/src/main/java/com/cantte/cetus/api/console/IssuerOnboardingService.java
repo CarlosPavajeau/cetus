@@ -346,6 +346,17 @@ public class IssuerOnboardingService {
         if (request.from() > request.to()) {
             throw new DomainException("range_invalid", "'from' must be lower than or equal to 'to'");
         }
+        if (request.validFrom() != null
+                && request.validTo() != null
+                && request.validFrom().isAfter(request.validTo())) {
+            throw new DomainException("range_invalid", "'validFrom' must be on or before 'validTo'");
+        }
+        String prefix = request.prefix() == null ? "" : request.prefix();
+        if (NumberingRangeEntity.overlaps(issuer.id, request.documentType(), prefix, request.from(), request.to())) {
+            throw new DomainException(
+                    "range_overlap",
+                    "The range overlaps numbers of another range of the issuer with the same type and prefix");
+        }
         // Production takes the key from GetNumberingRange when it comes empty; habilitación's test range has no
         // record there.
         if (request.documentType() == DocumentType.INVOICE
@@ -359,7 +370,7 @@ public class IssuerOnboardingService {
         range.documentType = request.documentType();
         range.resolutionNumber = request.resolutionNumber();
         range.resolutionDate = request.resolutionDate();
-        range.prefix = request.prefix() == null ? "" : request.prefix();
+        range.prefix = prefix;
         range.rangeFrom = request.from();
         range.rangeTo = request.to();
         range.nextNumber = request.from();

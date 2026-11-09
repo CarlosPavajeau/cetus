@@ -53,6 +53,12 @@ export const promoteIssuer = createServerFn({ method: "POST" })
     }
   });
 
+const noteRangeMessages: Record<string, string> = {
+  range_invalid: "El número inicial debe ser menor o igual al número final.",
+  range_overlap:
+    "Estos números ya están en otro rango del emisor con el mismo prefijo. Revisa el prefijo y los números inicial y final.",
+};
+
 /** Adds a range for credit or debit notes, which need no resolution. */
 export const addNoteRange = createServerFn({ method: "POST" })
   .validator(type({ id: "string.uuid", range: noteRangeSchema }))
@@ -70,9 +76,8 @@ export const addNoteRange = createServerFn({ method: "POST" })
     } catch (error) {
       if (error instanceof CetusApiError) {
         throw new Error(
-          error.code === "range_invalid"
-            ? "El número inicial debe ser menor o igual al número final."
-            : "No pudimos agregar el rango. Inténtalo de nuevo en unos minutos.",
+          noteRangeMessages[error.code] ??
+            "No pudimos agregar el rango. Inténtalo de nuevo en unos minutos.",
           { cause: error },
         );
       }

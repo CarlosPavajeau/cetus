@@ -121,6 +121,14 @@ public class NumberingRangeEntity extends PanacheEntityBase {
                 .formatted(alias, today);
     }
 
+    public static boolean overlaps(UUID issuerId, DocumentType type, String prefix, long from, long to) {
+        return count(
+                        "issuerId = :issuer and documentType = :type and prefix = :prefix "
+                                + "and rangeFrom <= :to and rangeTo >= :from",
+                        Map.of("issuer", issuerId, "type", type, "prefix", prefix, "from", from, "to", to))
+                > 0;
+    }
+
     /** Whether the issuer has an active range of the type that numbers on {@code today} or will later. */
     public static boolean existsUnexpired(UUID issuerId, DocumentType type, LocalDate today) {
         return count(

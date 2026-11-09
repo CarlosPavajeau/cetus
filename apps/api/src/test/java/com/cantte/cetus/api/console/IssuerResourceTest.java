@@ -262,6 +262,67 @@ class IssuerResourceTest {
     }
 
     @Test
+    void aRangeCannotRepeatTheNumbersOfAnother() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Rangos repetidos SAS");
+        String issuerId = createIssuer(user);
+        addRange(user, issuerId, "SETP");
+
+        postRange(user, issuerId, rangeRequest("SETP")).statusCode(422).body("code", equalTo("range_overlap"));
+
+        Map<String, Object> tail = rangeRequest("SETP");
+        tail.put("from", 995000000);
+        tail.put("to", 995000100);
+        postRange(user, issuerId, tail).statusCode(422).body("code", equalTo("range_overlap"));
+
+        Map<String, Object> adjacent = rangeRequest("SETP");
+        adjacent.put("from", 995000001);
+        adjacent.put("to", 995001000);
+        postRange(user, issuerId, adjacent).statusCode(200);
+
+        postRange(user, issuerId, rangeRequest("SETT")).statusCode(200);
+    }
+
+    @Test
+    void aRangeWithoutPrefixOverlapsOneWithAnEmptyPrefix() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Sin prefijo SAS");
+        String issuerId = createIssuer(user);
+        postRange(user, issuerId, Map.of("documentType", "CREDIT_NOTE", "from", 1, "to", 1000))
+                .statusCode(200);
+
+        postRange(user, issuerId, Map.of("documentType", "CREDIT_NOTE", "prefix", "", "from", 500, "to", 600))
+                .statusCode(422)
+                .body("code", equalTo("range_overlap"));
+    }
+
+    @Test
+    void aRangeOfAnotherDocumentTypeMayReuseTheNumbers() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Tipos distintos SAS");
+        String issuerId = createIssuer(user);
+        Map<String, Object> invoice = rangeRequest("NC");
+        invoice.put("from", 1);
+        invoice.put("to", 1000);
+        postRange(user, issuerId, invoice).statusCode(200);
+
+        postRange(user, issuerId, Map.of("documentType", "CREDIT_NOTE", "prefix", "NC", "from", 1, "to", 1000))
+                .statusCode(200);
+    }
+
+    @Test
+    void aRangeCannotEndBeforeItStarts() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Fechas invertidas SAS");
+        String issuerId = createIssuer(user);
+        Map<String, Object> request = rangeRequest("SETP");
+        request.put("validFrom", "2027-01-01");
+        request.put("validTo", "2026-12-31");
+
+        postRange(user, issuerId, request).statusCode(422).body("code", equalTo("range_invalid"));
+    }
+
+    @Test
     void aMismatchedTechnicalKeyIsReplacedWithTheDians() {
         ConsoleUser user = ConsoleUser.newOrganization();
         bootstrap(user, "Clave errada SAS");
@@ -304,6 +365,13 @@ class IssuerResourceTest {
         verify(user, onboarding.issuerId(), onboarding.rangeId())
                 .statusCode(422)
                 .body("code", equalTo("range_not_verifiable"));
+    }
+
+    private static ValidatableResponse postRange(ConsoleUser user, String issuerId, Map<String, Object> request) {
+        return user.request()
+                .body(request)
+                .post("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then();
     }
 
     private static ValidatableResponse verify(ConsoleUser user, String issuerId, String rangeId) {
