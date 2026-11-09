@@ -245,16 +245,6 @@ function AppLayout() {
           </div>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link to={helpPage.to} />}
-                isActive={Boolean(matchRoute({ to: helpPage.to, fuzzy: true }))}
-                tooltip={helpPage.label}
-              >
-                <helpPage.icon />
-                <span>{helpPage.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
               <SidebarMenuButton onClick={signOut} tooltip="Cerrar sesión">
                 <LogOutIcon />
                 <span>Cerrar sesión</span>
