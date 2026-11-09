@@ -6,7 +6,6 @@ import { orderStatusLabel } from "./labels";
 const badgeStatus: Record<OrderStatus, BadgeStatus> = {
   PENDING: "pending",
   PAID: "success",
-  FAILED: "error",
   EXPIRED: "idle",
   REFUNDED: "warning",
   CANCELED: "idle",

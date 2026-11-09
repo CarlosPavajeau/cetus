@@ -67,7 +67,7 @@ function AccountDetail() {
         }
         lead={`${productLabel(account.product)} · creada el ${dayFormat.format(new Date(account.createdAt))}`}
         action={
-          isAdmin && account.status !== "CLOSED" ? (
+          isAdmin ? (
             <AccountStatusDialog
               accountId={account.id}
               accountName={account.name}

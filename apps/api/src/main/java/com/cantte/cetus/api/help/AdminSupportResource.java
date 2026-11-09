@@ -133,7 +133,7 @@ public class AdminSupportResource {
                 .orElseThrow(() -> new NotFoundException("Ticket not found"));
         if (ticket.status != request.status()) {
             SupportTicketEntity.Status previous = ticket.status;
-            ticket.status = request.status();
+            ticket.moveTo(request.status());
             auditLog.record(
                     ticket.accountId,
                     context.platformActor(),
@@ -189,7 +189,8 @@ public class AdminSupportResource {
                 tickets.readSnapshot(ticket),
                 attachments,
                 ticket.createdAt,
-                ticket.updatedAt);
+                ticket.updatedAt,
+                ticket.resolvedAt);
     }
 
     private static Map<UUID, String> accountNames(Set<UUID> ids) {

@@ -4,7 +4,6 @@ export const statusLabel: Record<Issuer["status"], string> = {
   ONBOARDING: "Configuración pendiente",
   TESTING: "En habilitación",
   ENABLED: "Habilitado",
-  DISABLED: "Deshabilitado",
 };
 
 export const personTypeLabel: Record<IssuerDetail["personType"], string> = {

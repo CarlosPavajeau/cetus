@@ -40,7 +40,6 @@ public class BillingOrderEntity extends PanacheEntityBase {
     public enum Status {
         PENDING,
         PAID,
-        FAILED,
         EXPIRED,
         REFUNDED,
         /**

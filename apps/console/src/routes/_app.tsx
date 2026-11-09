@@ -331,9 +331,7 @@ function AppLayout() {
         <div className="flex w-full flex-1 flex-col gap-7 p-4 md:px-10 md:pt-9.5 md:pb-6">
           {account && account.status !== "ACTIVE" && (
             <Alert variant="destructive">
-              <AlertTitle>
-                Tu cuenta está {account.status === "CLOSED" ? "cerrada" : "suspendida"}
-              </AlertTitle>
+              <AlertTitle>Tu cuenta está suspendida</AlertTitle>
               <AlertDescription>
                 Puedes consultar tus documentos, pero no hacer cambios, y tus llaves de API no
                 funcionan.

@@ -2176,7 +2176,7 @@ export interface components {
             product: string | null;
         };
         /** @enum {string} */
-        AccountStatus: "ACTIVE" | "SUSPENDED" | "CLOSED";
+        AccountStatus: "ACTIVE" | "SUSPENDED";
         AccountSummaryView: {
             id: components["schemas"]["UUID"];
             /** @description Better Auth organization id */
@@ -2368,6 +2368,7 @@ export interface components {
             attachments: components["schemas"]["AdminAttachmentView"][];
             createdAt: components["schemas"]["OffsetDateTime"];
             updatedAt: components["schemas"]["OffsetDateTime"];
+            resolvedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
         AdminTicketPage: {
             items: components["schemas"]["AdminTicketSummaryView"][];
@@ -3489,6 +3490,9 @@ export interface components {
             legalName: string;
             tradeName: string | null;
             status: components["schemas"]["IssuerStatus"];
+            /** @description Whether its status lets it issue in its environment */
+            canIssue: boolean;
+            readiness: components["schemas"]["IssuerReadiness"];
             personType: components["schemas"]["PersonType"];
             taxLevelCodes: string[];
             responsibleForIva: boolean;
@@ -3500,6 +3504,8 @@ export interface components {
             ranges: components["schemas"]["NumberingRangeView"][];
             testSet: components["schemas"]["TestSetProgressView"] | null;
         };
+        /** @enum {string} */
+        IssuerGap: "SOFTWARE_MISSING" | "CERTIFICATE_MISSING" | "CERTIFICATE_EXPIRED" | "INVOICE_RANGE_MISSING" | "INVOICE_RANGE_UNVERIFIED";
         /** @description An issuer's documents issued in a period, and its active signing certificate */
         IssuerMetricsView: {
             issuerId: components["schemas"]["UUID"];
@@ -3508,16 +3514,21 @@ export interface components {
             /** @description None in the sandbox, which signs with Cetus' certificate */
             certificate: ((components["schemas"]["CertificateExpiryView"] | null) | null) | components["schemas"]["CertificateExpiryView"] | null;
         };
+        IssuerReadiness: {
+            /** @description Nothing is missing */
+            ready: boolean;
+            /** @description What is missing, in the order of the setup */
+            missing: components["schemas"]["IssuerGap"][];
+        };
         /**
          * @description Estado de configuración del emisor ante la DIAN.
          *
          *     - `ONBOARDING`: En configuración: todavía no emite.
          *     - `TESTING`: En el set de pruebas de habilitación: emite solo con llaves `test`.
          *     - `ENABLED`: Habilitado: emite en su ambiente.
-         *     - `DISABLED`: Deshabilitado: no emite.
          * @enum {string}
          */
-        IssuerStatus: "ONBOARDING" | "TESTING" | "ENABLED" | "DISABLED";
+        IssuerStatus: "ONBOARDING" | "TESTING" | "ENABLED";
         IssuerView: {
             id: components["schemas"]["UUID"];
             environment: components["schemas"]["Environment"];
@@ -3526,6 +3537,8 @@ export interface components {
             legalName: string;
             tradeName: string | null;
             status: components["schemas"]["IssuerStatus"];
+            /** @description Whether its status lets it issue in its environment */
+            canIssue: boolean;
         };
         /** @enum {string} */
         Kind: "PURCHASE" | "RENEWAL" | "MANUAL" | "DEBT";
@@ -3636,6 +3649,8 @@ export interface components {
             validTo?: components["schemas"]["LocalDate"];
             technicalKey?: string;
         };
+        /** @enum {string} */
+        NumberingRangeStatus: "ACTIVE" | "EXHAUSTED" | "EXPIRED";
         NumberingRangeView: {
             id: components["schemas"]["UUID"];
             documentType: components["schemas"]["DocumentType"];
@@ -3648,7 +3663,7 @@ export interface components {
             nextNumber: number;
             /** @example 2022-03-10 */
             validTo: ((string | components["schemas"]["LocalDate"] | null) | null) | components["schemas"]["LocalDate"] | null;
-            status: string;
+            status: components["schemas"]["NumberingRangeStatus"];
             /** @description GetNumberingRange outcome; invoice ranges only */
             verificationStatus: ((string | components["schemas"]["VerificationStatus"] | null) | null) | components["schemas"]["VerificationStatus"] | null;
             verifiedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
@@ -4253,7 +4268,7 @@ export interface components {
         /** @enum {string} */
         SourceType: "ORDER_ITEM" | "SUBSCRIPTION_PERIOD" | "PROMO" | "ADJUSTMENT";
         /** @enum {string} */
-        Status: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED" | "CANCELED";
+        Status: "PENDING" | "PAID" | "EXPIRED" | "REFUNDED" | "CANCELED";
         /** @enum {string} */
         Status1: "REQUESTED" | "SUBMITTED" | "APPROVED" | "FAILED";
         /** @enum {string} */
@@ -4350,6 +4365,8 @@ export interface components {
             pastDueAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             /** @description When an unpaid renewal cancels the subscription */
             payBy: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
+            /** @description When the saved card is charged for the unpaid renewal, by the attempt that waits to run or for Wompi's answer; null without one */
+            chargeAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
             period: components["schemas"]["SubscriptionPeriodView"];
         };
         SupportSnapshot: {
@@ -4382,6 +4399,7 @@ export interface components {
             attachments: components["schemas"]["AttachmentView"][];
             createdAt: components["schemas"]["OffsetDateTime"];
             updatedAt: components["schemas"]["OffsetDateTime"];
+            resolvedAt: ((string | components["schemas"]["OffsetDateTime"] | null) | null) | components["schemas"]["OffsetDateTime"] | null;
         };
         /**
          * @description Impuesto.

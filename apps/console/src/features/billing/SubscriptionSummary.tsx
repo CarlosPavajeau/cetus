@@ -32,7 +32,11 @@ export function SubscriptionSummary({ subscription }: { subscription: Subscripti
             {`${formatCents(subscription.version.totalCents)} al mes · ${documentsLabel(period.documentsIncluded)}`}
           </span>
         </Entry>
-        <Entry label="Estado">{subscriptionStatusLabel[subscription.status]}</Entry>
+        <Entry label="Estado">
+          {subscription.status === "PAST_DUE" && subscription.chargeAt
+            ? "Renovación por cobrar a tu tarjeta"
+            : subscriptionStatusLabel[subscription.status]}
+        </Entry>
         <Entry label="Periodo">
           {`${dateFormat.format(new Date(period.startsAt))} al ${until}`}
         </Entry>

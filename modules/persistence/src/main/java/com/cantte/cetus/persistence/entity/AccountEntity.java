@@ -19,8 +19,7 @@ public class AccountEntity extends PanacheEntityBase {
     @Schema(name = "AccountStatus")
     public enum Status {
         ACTIVE,
-        SUSPENDED,
-        CLOSED
+        SUSPENDED
     }
 
     @Id

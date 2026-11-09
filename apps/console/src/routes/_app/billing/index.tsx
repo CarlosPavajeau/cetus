@@ -112,10 +112,14 @@ function Billing() {
       )}
 
       {subscription?.payBy && subscription.period.renewalOrderId && (
-        <Alert variant="destructive">
-          <AlertTitle>La renovación de tu suscripción está pendiente de pago</AlertTitle>
+        <Alert variant={subscription.chargeAt ? "default" : "destructive"}>
+          <AlertTitle>
+            {subscription.chargeAt
+              ? "La renovación se cobra a tu tarjeta"
+              : "La renovación de tu suscripción está pendiente de pago"}
+          </AlertTitle>
           <AlertDescription>
-            {`Págala antes del ${formatDateTime(new Date(subscription.payBy))}. Mientras tanto puedes seguir emitiendo; si no se paga, la suscripción se cancela.`}
+            {renewalNotice(subscription.payBy, subscription.chargeAt)}
           </AlertDescription>
           <AlertAction>
             <Link
@@ -326,4 +330,15 @@ function Billing() {
       </Section>
     </>
   );
+}
+
+/** What an unpaid renewal asks of the customer, depending on whether the saved card is being charged. */
+function renewalNotice(payBy: string, chargeAt: string | null) {
+  const deadline = formatDateTime(new Date(payBy));
+  if (chargeAt === null) {
+    return `Págala antes del ${deadline}. Mientras tanto puedes seguir emitiendo; si no se paga, la suscripción se cancela.`;
+  }
+  const charge = new Date(chargeAt);
+  const when = charge > new Date() ? `El cobro se intenta el ${formatDateTime(charge)}. ` : "";
+  return `${when}Puedes seguir emitiendo; si el cobro no pasa, págala antes del ${deadline} o la suscripción se cancela.`;
 }

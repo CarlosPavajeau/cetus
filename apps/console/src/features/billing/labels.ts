@@ -48,7 +48,6 @@ export function creditsProductLabel(
 export const orderStatusLabel: Record<OrderStatus, string> = {
   PENDING: "Pendiente de pago",
   PAID: "Pagada",
-  FAILED: "Pago rechazado",
   EXPIRED: "Vencida",
   REFUNDED: "Reembolsada",
   CANCELED: "Anulada",

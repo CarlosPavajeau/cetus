@@ -1,6 +1,8 @@
 package com.cantte.cetus.api.console;
 
+import com.cantte.cetus.api.documents.DocumentDrafts;
 import com.cantte.cetus.api.invoices.InvoiceRequest;
+import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
@@ -116,7 +118,10 @@ public final class IssuerViews {
             String checkDigit,
             String legalName,
             @Schema(nullable = true) String tradeName,
-            IssuerEntity.Status status) {
+            IssuerEntity.Status status,
+
+            @Schema(description = "Whether its status lets it issue in its environment")
+            boolean canIssue) {
         public static IssuerView from(IssuerEntity issuer) {
             return new IssuerView(
                     issuer.id,
@@ -125,7 +130,8 @@ public final class IssuerViews {
                     issuer.checkDigit,
                     issuer.legalName,
                     issuer.tradeName,
-                    issuer.status);
+                    issuer.status,
+                    DocumentDrafts.canIssue(issuer, issuer.environment));
         }
     }
 
@@ -141,6 +147,11 @@ public final class IssuerViews {
             String legalName,
             @Schema(nullable = true) String tradeName,
             IssuerEntity.Status status,
+
+            @Schema(description = "Whether its status lets it issue in its environment")
+            boolean canIssue,
+
+            IssuerReadiness readiness,
             PersonType personType,
             List<String> taxLevelCodes,
             boolean responsibleForIva,
@@ -165,6 +176,8 @@ public final class IssuerViews {
                     issuer.legalName,
                     issuer.tradeName,
                     issuer.status,
+                    DocumentDrafts.canIssue(issuer, issuer.environment),
+                    IssuerReadiness.of(issuer),
                     issuer.personType,
                     taxLevelCodes,
                     "01".equals(issuer.taxSchemeId),
@@ -253,6 +266,22 @@ public final class IssuerViews {
         }
     }
 
+    @Schema(name = "NumberingRangeStatus")
+    public enum RangeStatus {
+        ACTIVE,
+        /** Every number was used. */
+        EXHAUSTED,
+        /** Past its resolution's last day. */
+        EXPIRED;
+
+        static RangeStatus of(NumberingRangeEntity range, LocalDate today) {
+            if ("EXHAUSTED".equals(range.status)) {
+                return EXHAUSTED;
+            }
+            return range.expired(today) ? EXPIRED : ACTIVE;
+        }
+    }
+
     public record NumberingRangeView(
             UUID id,
             DocumentType documentType,
@@ -261,7 +290,7 @@ public final class IssuerViews {
             long to,
             long nextNumber,
             @Schema(nullable = true) LocalDate validTo,
-            String status,
+            RangeStatus status,
 
             @Schema(nullable = true, description = "GetNumberingRange outcome; invoice ranges only")
             NumberingRangeEntity.VerificationStatus verificationStatus,
@@ -285,7 +314,7 @@ public final class IssuerViews {
                     range.rangeTo,
                     range.nextNumber,
                     range.validTo,
-                    range.status,
+                    RangeStatus.of(range, LocalDate.now(DianTime.ZONE)),
                     range.verificationStatus,
                     range.verifiedAt,
                     range.verificationRequestedAt,

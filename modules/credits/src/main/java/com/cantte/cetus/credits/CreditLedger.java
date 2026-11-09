@@ -227,7 +227,8 @@ public class CreditLedger {
     /**
      * Gives back what the document reserved when it was not issued. A credit goes back to its lot, and is lost at
      * once if the lot expired or was revoked, even one past its date the daily expiry has not reached yet: such a
-     * lot never becomes active again. A grace or overage document is neither settled nor billed.
+     * lot never becomes active again. It is lost too if the carry-over cap trimmed the lot while the document held
+     * it: the cap counted only what the lot had left, so giving it back would carry more than the cap. A grace or overage document is neither settled nor billed.
      */
     @Transactional(Transactional.TxType.MANDATORY)
     public void release(UUID documentId, Actor actor, String reason) {
@@ -258,7 +259,8 @@ public class CreditLedger {
             // Read once the lot is locked: waiting for the lock may have taken it past its date.
             boolean usable =
                     (lot.status == CreditGrantEntity.Status.ACTIVE || lot.status == CreditGrantEntity.Status.EXHAUSTED)
-                            && lot.expiresAt.isAfter(OffsetDateTime.now());
+                            && lot.expiresAt.isAfter(OffsetDateTime.now())
+                            && (lot.cappedAt == null || reservation.createdAt.isAfter(lot.cappedAt));
             if (usable) {
                 lot.remaining += reservation.quantity;
                 lot.status = CreditGrantEntity.Status.ACTIVE;
@@ -404,6 +406,7 @@ public class CreditLedger {
             }
             int taken = Math.min(pending, lot.remaining);
             lot.remaining -= taken;
+            lot.cappedAt = now;
             if (lot.remaining == 0) {
                 lot.status = CreditGrantEntity.Status.EXHAUSTED;
             }

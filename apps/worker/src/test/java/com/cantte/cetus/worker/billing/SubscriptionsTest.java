@@ -288,6 +288,31 @@ class SubscriptionsTest {
     }
 
     @Test
+    void aCreditHeldWhileTheCapTrimmedItsLotIsLostWhenReleased() {
+        UUID accountId = subscribed("INICIAL");
+        SubscriptionEntity subscription = subscriptionOf(accountId);
+        CreditGrantEntity firstLot = lotOf(openPeriod(subscription.id));
+        UUID held = fixtures.invoiceFor(accountId);
+        QuarkusTransaction.requiringNew()
+                .run(() -> ledger.reserve(accountId, held, DocumentType.INVOICE, OffsetDateTime.now()));
+
+        for (int month = 0; month < 2; month++) {
+            SubscriptionPeriodEntity open = openPeriod(subscription.id);
+            close(open.id, open.endsAt.plusMinutes(1));
+            assertThat(settlement.apply(approved(renewalsOf(accountId).getLast())))
+                    .isEqualTo(Outcome.PAID);
+        }
+        QuarkusTransaction.requiringNew().run(() -> ledger.release(held, Actor.system(), "Resuelto como no emitido"));
+
+        CreditGrantEntity capped =
+                QuarkusTransaction.requiringNew().call(() -> CreditGrantEntity.findById(firstLot.id));
+        assertThat(capped.remaining).isZero();
+        assertThat(capped.cappedAt).isNotNull();
+        assertThat(lotsOf(accountId).stream().mapToInt(lot -> lot.remaining).sum())
+                .isEqualTo(400);
+    }
+
+    @Test
     void theNextPeriodTakesTheScheduledPlanAndACancellationEndsItWithoutAnotherOrder() {
         UUID accountId = subscribed("INICIAL");
         SubscriptionEntity subscription = subscriptionOf(accountId);

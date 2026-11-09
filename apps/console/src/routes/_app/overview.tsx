@@ -320,9 +320,7 @@ const resumeShownMax = 3;
  * the overview breaks the period down by issuer: with several and none picked.
  */
 function issuerFilter(issuers: Issuer[], environment: Environment, asked: string | undefined) {
-  const options = issuers.filter(
-    (issuer) => issuer.environment === environment && issuer.status !== "DISABLED",
-  );
+  const options = issuers.filter((issuer) => issuer.environment === environment);
   const issuerId = options.find((issuer) => issuer.id === asked)?.id;
   return { options, issuerId, breakdown: issuerId === undefined && options.length > 1 };
 }

@@ -197,7 +197,8 @@ public class PaymentSettlement {
 
     /**
      * Stores the transaction, or what changed of it. A PENDING never replaces a final status, and a final one
-     * only changes from APPROVED to VOIDED: events arrive out of order.
+     * only changes from APPROVED to VOIDED: events arrive out of order. The same status again keeps what was stored
+     * first.
      */
     private static PaymentTransactionEntity record(BillingOrderEntity order, PaymentTransaction transaction) {
         PaymentTransactionEntity stored = PaymentTransactionEntity.findByProviderId(
@@ -216,7 +217,10 @@ public class PaymentSettlement {
         boolean storedFinal = known && stored.status != PaymentTransactionEntity.Status.PENDING;
         boolean voidsApproval = stored.status == PaymentTransactionEntity.Status.APPROVED
                 && transaction.status() == PaymentStatus.VOIDED;
-        if (known && stored.status != status && storedFinal && !voidsApproval) {
+        if (known && stored.status == status) {
+            return stored;
+        }
+        if (storedFinal && !voidsApproval) {
             LOG.infof(
                     "Wompi transaction %s stays %s; %s arrived late",
                     transaction.id(), stored.status, transaction.status());

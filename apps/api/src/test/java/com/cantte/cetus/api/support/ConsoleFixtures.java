@@ -1,7 +1,10 @@
 package com.cantte.cetus.api.support;
 
+import com.cantte.cetus.persistence.entity.SoftwareCredentialEntity;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +29,21 @@ public final class ConsoleFixtures {
 
     public static Onboarding onboard(ConsoleUser user, String nit) {
         return completeSetup(user, createIssuer(user, nit));
+    }
+
+    /** An onboarded test issuer whose test set the DIAN accepted, as the worker records it: it can be promoted. */
+    public static Onboarding habilitated(ConsoleUser user, String nit) {
+        Onboarding onboarding = onboard(user, nit);
+        QuarkusTransaction.requiringNew()
+                .run(() -> SoftwareCredentialEntity.update(
+                        "testSetAcceptedAt = ?1 where issuerId = ?2",
+                        OffsetDateTime.now(),
+                        UUID.fromString(onboarding.issuerId())));
+        return onboarding;
+    }
+
+    public static Onboarding habilitated(ConsoleUser user) {
+        return habilitated(user, "900123456");
     }
 
     /** Software, certificate and an invoice range for an issuer that already exists. */

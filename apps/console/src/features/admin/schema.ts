@@ -4,11 +4,7 @@ import type { AccountStatus } from "~/lib/api/types";
 
 export type { AccountStatus };
 
-export const accountStatuses = [
-  "ACTIVE",
-  "SUSPENDED",
-  "CLOSED",
-] as const satisfies readonly AccountStatus[];
+export const accountStatuses = ["ACTIVE", "SUSPENDED"] as const satisfies readonly AccountStatus[];
 
 /** Suspending or reactivating says why; the account's members read the reason in their console. */
 export const statusChangeSchema = type({

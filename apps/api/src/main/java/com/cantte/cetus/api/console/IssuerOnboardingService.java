@@ -8,6 +8,7 @@ import com.cantte.cetus.credits.CreditRefused;
 import com.cantte.cetus.credits.Entitlements;
 import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.Ids;
+import com.cantte.cetus.domain.dian.DianTime;
 import com.cantte.cetus.domain.dian.Hashing;
 import com.cantte.cetus.domain.dian.NitCheckDigit;
 import com.cantte.cetus.domain.model.DocumentType;
@@ -35,6 +36,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
@@ -252,6 +254,7 @@ public class IssuerOnboardingService {
     public void setSoftware(
             IssuerEntity issuer, IssuerViews.SoftwareRequest request, Actor actor, RequestOrigin origin) {
         requireOwnSetup(issuer);
+        lock(issuer);
         SoftwareCredentialEntity.deactivateAll(issuer.id);
         SoftwareCredentialEntity credential = new SoftwareCredentialEntity();
         credential.id = Ids.newId();
@@ -278,6 +281,7 @@ public class IssuerOnboardingService {
     public SigningCertificateEntity setCertificate(
             IssuerEntity issuer, IssuerViews.CertificateRequest request, Actor actor, RequestOrigin origin) {
         requireOwnSetup(issuer);
+        lock(issuer);
         byte[] pkcs12;
         try {
             pkcs12 = Base64.getDecoder().decode(request.pkcs12Base64());
@@ -338,6 +342,7 @@ public class IssuerOnboardingService {
     public NumberingRangeEntity addRange(
             IssuerEntity issuer, IssuerViews.NumberingRangeRequest request, Actor actor, RequestOrigin origin) {
         requireOwnSetup(issuer);
+        lock(issuer);
         if (request.from() > request.to()) {
             throw new DomainException("range_invalid", "'from' must be lower than or equal to 'to'");
         }
@@ -435,6 +440,14 @@ public class IssuerOnboardingService {
         return range;
     }
 
+    /**
+     * Holds the issuer, read again, until the transaction ends: its pieces and the status they lead to change one
+     * request at a time.
+     */
+    private static void lock(IssuerEntity issuer) {
+        IssuerEntity.getEntityManager().refresh(issuer, LockModeType.PESSIMISTIC_WRITE);
+    }
+
     /** Sandbox issuers sign and number with what Cetus gives them, so their setup never changes. */
     private static void requireOwnSetup(IssuerEntity issuer) {
         if (issuer.environment == Environment.SANDBOX) {
@@ -457,17 +470,28 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * Starts the production issuer of a test issuer that finished habilitación: same NIT and tax
-     * data, the same DIAN software (production keeps its ID and PIN, without a test set) and, when it
-     * has one, a copy of its certificate. Only the production numbering is left, so the new issuer
-     * stays in setup. Habilitación itself happens in the DIAN portal; Cetus cannot verify it.
+     * Starts the production issuer of a test issuer that finished habilitación (the DIAN accepted its test set,
+     * when Cetus knows it): same NIT and tax data, the same DIAN software (production keeps its ID and PIN, without
+     * a test set) and, when it has one, a copy of its certificate. Only the production numbering is left, so the
+     * new issuer stays in setup.
      */
     @Transactional
     public IssuerEntity promote(IssuerEntity test, Actor actor, RequestOrigin origin) {
         requireOwnSetup(test);
+        lock(test);
         if (test.environment != Environment.TEST || test.status != IssuerEntity.Status.TESTING) {
             throw new DomainException(
                     "issuer_not_promotable", "Only a test issuer in habilitación can be promoted to production");
+        }
+        // Without a TestSetId Cetus never sees the set, so the person's word that habilitación is done stands.
+        boolean waiting = SoftwareCredentialEntity.findActive(test.id)
+                .filter(software -> software.testSetId != null && !software.testSetId.isBlank())
+                .map(software -> SoftwareCredentialEntity.testSetAcceptedAt(test.id, software.testSetId) == null)
+                .orElse(false);
+        if (waiting) {
+            throw new DomainException(
+                    "test_set_not_accepted",
+                    "The DIAN has not accepted the issuer's test set: habilitación is not done");
         }
         boolean promoted = IssuerEntity.count(
                         "accountId = ?1 and environment = ?2 and nit = ?3", test.accountId, Environment.LIVE, test.nit)
@@ -541,13 +565,15 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * An issuer with software, certificate and an active range is ready: TESTING in the test
-     * environment (habilitación) or ENABLED in production. Habilitación itself happens in the
-     * DIAN portal; mark LIVE issuers carefully. A status change is audited.
+     * An issuer with software, certificate and an invoice range in force or yet to start is ready: TESTING in the test
+     * environment (habilitación) or ENABLED in production. The status only moves forward; what the issuer
+     * lacks later (an expired certificate or resolution) is its {@link IssuerReadiness}. A status change is
+     * audited.
      */
     private void refreshStatus(IssuerEntity issuer, Actor actor, RequestOrigin origin) {
         boolean canSign = canSign(issuer);
-        boolean ready = canSign && NumberingRangeEntity.count("issuerId = ?1 and status = 'ACTIVE'", issuer.id) > 0;
+        boolean ready = canSign
+                && NumberingRangeEntity.existsUnexpired(issuer.id, DocumentType.INVOICE, LocalDate.now(DianTime.ZONE));
         // Habilitación numbers from a shared test range (SETP) the DIAN does not register per NIT, so
         // GetNumberingRange only answers for production resolutions.
         if (canSign && issuer.environment == Environment.LIVE) {

@@ -17,7 +17,6 @@ import com.cantte.cetus.api.support.Subscriptions;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.usage.UsagePeriod;
-import com.cantte.cetus.persistence.entity.AccountEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.NotificationEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
@@ -267,24 +266,6 @@ class AdminAccountResourceTest {
                 .body("items[0].product", equalTo("Inicial"))
                 .body("items[0].liveDocumentsThisMonth", equalTo(203));
         customer.request().get("/console/account").then().body("product", equalTo("Inicial"));
-    }
-
-    @Test
-    void closedAccountsAreNotReactivated() {
-        ConsoleUser customer = ConsoleUser.newOrganization();
-        String accountId = bootstrap(customer, "Cerrada SAS");
-        QuarkusTransaction.requiringNew()
-                .run(() -> AccountEntity.findByOrganization(customer.organizationId())
-                                .orElseThrow()
-                                .status =
-                        AccountEntity.Status.CLOSED);
-
-        ADMIN.request()
-                .body(Map.of("reason", "Volvió"))
-                .post("/admin/accounts/" + accountId + "/reactivation")
-                .then()
-                .statusCode(422)
-                .body("code", equalTo("account_not_suspended"));
     }
 
     @Test

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie, setCookie } from "@tanstack/react-start/server";
 import { type } from "arktype";
 
+import { canIssue } from "~/features/issuers/issuing";
 import { api } from "~/lib/api/client";
 import type { Environment, Issuer } from "~/lib/api/types";
 import { env } from "~/lib/env";
@@ -30,12 +31,7 @@ export const getActiveEnvironment = createServerFn({ method: "GET" }).handler(
       return stored;
     }
     const issuers: Issuer[] = await api.get("/console/issuers");
-    const issuing = (wanted: Environment) =>
-      issuers.some(
-        (issuer) =>
-          issuer.environment === wanted &&
-          (issuer.status === "ENABLED" || (wanted === "TEST" && issuer.status === "TESTING")),
-      );
+    const issuing = (wanted: Environment) => issuers.some((issuer) => canIssue(issuer, wanted));
     const initial = issuing("LIVE") ? "LIVE" : issuing("TEST") ? "TEST" : "SANDBOX";
     remember(initial);
     return initial;

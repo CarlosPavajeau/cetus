@@ -1,5 +1,11 @@
 import { grantPackage } from "../support/credits";
-import { addRange, createIssuer, onboardIssuer, testSoftware } from "../support/issuers";
+import {
+  acceptTestSet,
+  addRange,
+  createIssuer,
+  onboardIssuer,
+  testSoftware,
+} from "../support/issuers";
 import { expect, open, pickTaxLevel, test } from "./fixtures";
 
 test("the issuers page shows each issuer's ID for the API", async ({ page, organization }) => {
@@ -76,6 +82,11 @@ test("an issuer of another organization is not found", async ({ page, organizati
 test("a test issuer in habilitación is promoted to production", async ({ page, organization }) => {
   const testId = await onboardIssuer(organization, "900123456", "Produccion SAS");
   await grantPackage(organization);
+  await open(page, `/issuers/${testId}`);
+  await expect(page.getByTestId("test-set-progress")).toBeVisible();
+  // The DIAN has not accepted the set yet: habilitación is not done.
+  await expect(page.getByRole("button", { name: "Pasar a producción" })).toHaveCount(0);
+  await acceptTestSet(testId);
 
   await open(page, `/issuers/${testId}`);
   await page.getByRole("button", { name: "Pasar a producción" }).click();
