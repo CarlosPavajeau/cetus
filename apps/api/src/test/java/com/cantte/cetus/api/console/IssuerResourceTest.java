@@ -261,6 +261,66 @@ class IssuerResourceTest {
                 .body("code", equalTo("technical_key_required"));
     }
 
+    private static void postRange(
+            ConsoleUser user, String issuerId, Map<String, Object> request, int status, String code) {
+        ValidatableResponse response = user.request()
+                .body(request)
+                .post("/console/issuers/" + issuerId + "/numbering-ranges")
+                .then()
+                .statusCode(status);
+        if (code != null) {
+            response.body("code", equalTo(code));
+        }
+    }
+
+    @Test
+    void aRangeCannotRepeatTheNumbersOfAnother() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Rangos repetidos SAS");
+        String issuerId = createIssuer(user);
+        addRange(user, issuerId, "SETP");
+
+        postRange(user, issuerId, rangeRequest("SETP"), 422, "range_overlap");
+
+        Map<String, Object> tail = rangeRequest("SETP");
+        tail.put("from", 995000000);
+        tail.put("to", 995000100);
+        postRange(user, issuerId, tail, 422, "range_overlap");
+
+        Map<String, Object> adjacent = rangeRequest("SETP");
+        adjacent.put("from", 995000001);
+        adjacent.put("to", 995001000);
+        postRange(user, issuerId, adjacent, 200, null);
+
+        postRange(user, issuerId, rangeRequest("SETT"), 200, null);
+    }
+
+    @Test
+    void aRangeOfAnotherDocumentTypeMayReuseTheNumbers() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Tipos distintos SAS");
+        String issuerId = createIssuer(user);
+        Map<String, Object> invoice = rangeRequest("NC");
+        invoice.put("from", 1);
+        invoice.put("to", 1000);
+        postRange(user, issuerId, invoice, 200, null);
+
+        Map<String, Object> creditNote = Map.of("documentType", "CREDIT_NOTE", "prefix", "NC", "from", 1, "to", 1000);
+        postRange(user, issuerId, creditNote, 200, null);
+    }
+
+    @Test
+    void aRangeCannotEndBeforeItStarts() {
+        ConsoleUser user = ConsoleUser.newOrganization();
+        bootstrap(user, "Fechas invertidas SAS");
+        String issuerId = createIssuer(user);
+        Map<String, Object> request = rangeRequest("SETP");
+        request.put("validFrom", "2027-01-01");
+        request.put("validTo", "2026-12-31");
+
+        postRange(user, issuerId, request, 422, "range_invalid");
+    }
+
     @Test
     void aMismatchedTechnicalKeyIsReplacedWithTheDians() {
         ConsoleUser user = ConsoleUser.newOrganization();
