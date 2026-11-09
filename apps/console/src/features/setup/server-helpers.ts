@@ -9,7 +9,10 @@ const messages: Record<string, string> = {
   certificate_invalid:
     "No pudimos abrir el certificado: revisa que el archivo sea el .p12 original y que la contraseña sea correcta.",
   certificate_expired: "El certificado está vencido. Solicita uno vigente a tu proveedor.",
-  range_invalid: "El número inicial debe ser menor o igual al número final.",
+  range_invalid:
+    "Revisa el rango: el número inicial no puede ser mayor que el final, ni la vigencia empezar después de terminar.",
+  range_overlap:
+    "Estos números ya están en otro rango del emisor con el mismo prefijo. Revisa el prefijo y los números inicial y final.",
   person_type_locked:
     "El tipo de persona viene con el NIT: no cambia una vez configurado el emisor.",
   issuer_already_exists:
