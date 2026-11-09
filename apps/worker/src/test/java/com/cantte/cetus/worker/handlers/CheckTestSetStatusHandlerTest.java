@@ -75,6 +75,19 @@ class CheckTestSetStatusHandlerTest {
     }
 
     @Test
+    void aTrackIdTheDianDoesNotKnowYetIsAskedAgainLater() {
+        dian.reply(STATUS_ZIP, Reply.fixture("get-status-zip-track-id-unknown.xml"));
+        UUID id = fixtures.invoice();
+        submitted(id, "zip-" + UUID.randomUUID());
+
+        RetryLater retry = catchThrowableOfType(RetryLater.class, () -> check(id));
+
+        assertThat(retry).isNotNull();
+        assertThat(document(id).status).isEqualTo(DocumentStatus.SUBMITTED);
+        assertThat(artifacts(id)).isEmpty();
+    }
+
+    @Test
     void anEmptyListIsAskedAgainLater() {
         dian.reply(STATUS_ZIP, Reply.fixture("get-status-zip-empty.xml"));
         UUID id = fixtures.invoice();
