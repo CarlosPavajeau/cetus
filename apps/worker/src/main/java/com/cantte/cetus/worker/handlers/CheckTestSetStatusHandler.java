@@ -20,10 +20,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 
 /** Polls GetStatusZip until the DIAN finishes validating a test set document. */
 @ApplicationScoped
 public class CheckTestSetStatusHandler implements JobHandler {
+
+    private static final String TRACK_ID_UNKNOWN = "66";
 
     @Inject
     ContextLoader loader;
@@ -92,14 +95,17 @@ public class CheckTestSetStatusHandler implements JobHandler {
     /**
      * Heuristic until the codes are confirmed with real habilitación responses: a response with
      * no status code, or a description saying the batch is in process, means "try again later".
+     * Status 66 is retried too: right after an upload the DIAN may not know the ZipKey yet, and
+     * the job type's deadline turns a ZipKey that never appears into a FAILED document, which is
+     * better than a REJECTED one the DIAN never issued.
      */
     private static boolean stillProcessing(DianResponse response) {
-        if (response.statusCode() == null) {
+        if (response.statusCode() == null || TRACK_ID_UNKNOWN.equals(response.statusCode())) {
             return true;
         }
         String description = response.statusDescription() == null
                 ? ""
-                : response.statusDescription().toLowerCase();
+                : response.statusDescription().toLowerCase(Locale.ROOT);
         return description.contains("en proceso") || description.contains("procesamiento");
     }
 }
