@@ -34,7 +34,7 @@ export function SubscriptionSummary({ subscription }: { subscription: Subscripti
         </Entry>
         <Entry label="Estado">
           {subscription.status === "PAST_DUE" && subscription.chargeAt
-            ? "Cobrando la renovación a tu tarjeta"
+            ? "Renovación por cobrar a tu tarjeta"
             : subscriptionStatusLabel[subscription.status]}
         </Entry>
         <Entry label="Periodo">

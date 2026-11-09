@@ -82,7 +82,6 @@ public class SupportTicketEntity extends PanacheEntityBase {
         updatedAt = OffsetDateTime.now();
     }
 
-    /** Moves it to the status; resolving stamps when, and reopening clears it. */
     public void moveTo(Status target) {
         status = target;
         resolvedAt = target == Status.RESOLVED ? OffsetDateTime.now() : null;

@@ -132,7 +132,7 @@ public class OpsAlertChecks {
                 FROM billing.numbering_ranges r
                 JOIN billing.issuers i ON i.id = r.issuer_id
                 WHERE %s AND i.environment = 'LIVE' AND r.verification_status IN ('MISMATCH', 'ERROR')
-                """.formatted(NumberingRangeEntity.sqlUsable("r", ":today")),
+                """.formatted(NumberingRangeEntity.sqlUnexpired("r", ":today")),
                         Map.of("today", LocalDate.now(Dates.BOGOTA)))
                 .stream()
                 .map(r -> OpsAlert.of(

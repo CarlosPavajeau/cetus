@@ -32,7 +32,7 @@ public record IssuerReadiness(
         CERTIFICATE_EXPIRED,
         /** No invoice range in force today: none added, all used up, or past their resolution. */
         INVOICE_RANGE_MISSING,
-        /** In production, no invoice range in force that the DIAN confirmed (GetNumberingRange). */
+        /** In production, the invoice range issuance takes is not one the DIAN confirmed (GetNumberingRange). */
         INVOICE_RANGE_UNVERIFIED
     }
 
@@ -56,7 +56,7 @@ public record IssuerReadiness(
         if (ranges.isEmpty()) {
             missing.add(Gap.INVOICE_RANGE_MISSING);
         } else if (issuer.environment == Environment.LIVE
-                && ranges.stream().noneMatch(range -> range.verificationStatus == VerificationStatus.VERIFIED)) {
+                && ranges.getFirst().verificationStatus != VerificationStatus.VERIFIED) {
             missing.add(Gap.INVOICE_RANGE_UNVERIFIED);
         }
         return new IssuerReadiness(missing.isEmpty(), List.copyOf(missing));

@@ -254,7 +254,11 @@ class SupportTicketResourceTest {
                 .statusCode(200)
                 .body("status", equalTo("RESOLVED"))
                 .body("resolvedAt", notNullValue());
-        owner.request().get("/console/support-tickets").then().body("items[0].status", equalTo("RESOLVED"));
+        owner.request()
+                .get("/console/support-tickets")
+                .then()
+                .body("items[0].status", equalTo("RESOLVED"))
+                .body("items[0].resolvedAt", notNullValue());
         SUPPORT.request()
                 .body(new ChangeTicketStatusRequest(Status.IN_PROGRESS))
                 .put("/admin/support-tickets/" + ticketId + "/status")

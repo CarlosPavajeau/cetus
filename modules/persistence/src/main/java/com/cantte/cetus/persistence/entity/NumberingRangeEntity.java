@@ -104,10 +104,10 @@ public class NumberingRangeEntity extends PanacheEntityBase {
         return list("issuerId", issuerId);
     }
 
-    /** The issuer's ranges of the type that number on {@code today}. */
+    /** The issuer's ranges of the type that number on {@code today}, first the one issuance takes. */
     public static List<NumberingRangeEntity> listUsable(UUID issuerId, DocumentType type, LocalDate today) {
         return list(
-                "issuerId = :issuer and documentType = :type and " + USABLE,
+                "issuerId = :issuer and documentType = :type and " + USABLE + " order by validFrom",
                 Map.of("issuer", issuerId, "type", type, "today", today));
     }
 
@@ -121,13 +121,28 @@ public class NumberingRangeEntity extends PanacheEntityBase {
                 .formatted(alias, today);
     }
 
+    /** Whether the issuer has an active range of the type that numbers on {@code today} or will later. */
+    public static boolean existsUnexpired(UUID issuerId, DocumentType type, LocalDate today) {
+        return count(
+                        "issuerId = :issuer and documentType = :type and status = 'ACTIVE' "
+                                + "and (validTo is null or validTo >= :today)",
+                        Map.of("issuer", issuerId, "type", type, "today", today))
+                > 0;
+    }
+
+    /** SQL for the active range {@code alias} that numbers on {@code today} or will later. */
+    public static String sqlUnexpired(String alias, String today) {
+        return "%1$s.status = 'ACTIVE' AND (%1$s.valid_to IS NULL OR %1$s.valid_to >= %2$s)".formatted(alias, today);
+    }
+
     /**
      * SQL for the active range {@code alias} its issuer still stands on for its type on {@code today}: in force, or
      * expired with no range of the type in force to take over, which is what the issuer has to renew.
      */
     public static String sqlUnreplaced(String alias, String today) {
         return """
-                %1$s.status = 'ACTIVE' AND (%1$s.valid_to IS NULL OR %1$s.valid_to >= %2$s OR NOT EXISTS (
+                %1$s.status = 'ACTIVE' AND (%1$s.valid_from IS NULL OR %1$s.valid_from <= %2$s)
+                AND (%1$s.valid_to IS NULL OR %1$s.valid_to >= %2$s OR NOT EXISTS (
                     SELECT 1 FROM billing.numbering_ranges u
                     WHERE u.issuer_id = %1$s.issuer_id AND u.document_type = %1$s.document_type AND %3$s))""".formatted(alias, today, sqlUsable("u", today));
     }

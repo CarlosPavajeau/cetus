@@ -565,7 +565,7 @@ public class IssuerOnboardingService {
     }
 
     /**
-     * An issuer with software, certificate and an invoice range in force is ready: TESTING in the test
+     * An issuer with software, certificate and an invoice range in force or yet to start is ready: TESTING in the test
      * environment (habilitación) or ENABLED in production. The status only moves forward; what the issuer
      * lacks later (an expired certificate or resolution) is its {@link IssuerReadiness}. A status change is
      * audited.
@@ -573,8 +573,7 @@ public class IssuerOnboardingService {
     private void refreshStatus(IssuerEntity issuer, Actor actor, RequestOrigin origin) {
         boolean canSign = canSign(issuer);
         boolean ready = canSign
-                && !NumberingRangeEntity.listUsable(issuer.id, DocumentType.INVOICE, LocalDate.now(DianTime.ZONE))
-                        .isEmpty();
+                && NumberingRangeEntity.existsUnexpired(issuer.id, DocumentType.INVOICE, LocalDate.now(DianTime.ZONE));
         // Habilitación numbers from a shared test range (SETP) the DIAN does not register per NIT, so
         // GetNumberingRange only answers for production resolutions.
         if (canSign && issuer.environment == Environment.LIVE) {

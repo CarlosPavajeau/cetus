@@ -115,7 +115,7 @@ function Billing() {
         <Alert variant={subscription.chargeAt ? "default" : "destructive"}>
           <AlertTitle>
             {subscription.chargeAt
-              ? "Estamos cobrando la renovación a tu tarjeta"
+              ? "La renovación se cobra a tu tarjeta"
               : "La renovación de tu suscripción está pendiente de pago"}
           </AlertTitle>
           <AlertDescription>
