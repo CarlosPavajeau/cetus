@@ -94,7 +94,7 @@ public class NumberingRangeEntity extends PanacheEntityBase {
      */
     public static Optional<NumberingRangeEntity> lockActive(UUID issuerId, DocumentType type, LocalDate date) {
         return find(
-                        "issuerId = :issuer and documentType = :type and " + USABLE + " order by validFrom",
+                        "issuerId = :issuer and documentType = :type and " + USABLE + " order by validFrom, id",
                         Map.of("issuer", issuerId, "type", type, "today", date))
                 .withLock(LockModeType.PESSIMISTIC_WRITE)
                 .firstResultOptional();
@@ -107,7 +107,7 @@ public class NumberingRangeEntity extends PanacheEntityBase {
     /** The issuer's ranges of the type that number on {@code today}, first the one issuance takes. */
     public static List<NumberingRangeEntity> listUsable(UUID issuerId, DocumentType type, LocalDate today) {
         return list(
-                "issuerId = :issuer and documentType = :type and " + USABLE + " order by validFrom",
+                "issuerId = :issuer and documentType = :type and " + USABLE + " order by validFrom, id",
                 Map.of("issuer", issuerId, "type", type, "today", today));
     }
 
