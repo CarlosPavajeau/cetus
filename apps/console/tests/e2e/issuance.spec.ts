@@ -70,7 +70,8 @@ test("an invoice is filled in by hand in habilitación", async ({ page, organiza
   await page.getByRole("button", { name: "Emitir factura" }).click();
 
   await expect(page.getByRole("heading", { name: /^Factura SETP\d+$/ })).toBeVisible();
-  await expect(page.getByText("Comprador SAS")).toBeVisible();
+  await expect(page.getByTestId("document-summary")).toContainText("Comprador SAS");
+  await expect(page.getByText("De contado · Efectivo")).toBeVisible();
   await expect(page.getByText("La DIAN de pruebas lo validó")).toBeVisible({ timeout: 20_000 });
 });
 

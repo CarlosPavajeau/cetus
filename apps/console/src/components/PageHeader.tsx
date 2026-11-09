@@ -6,6 +6,7 @@ export function PageHeader({
   title,
   count,
   status,
+  summary,
   lead,
   action,
 }: {
@@ -13,6 +14,8 @@ export function PageHeader({
   count?: number;
   /** Shown next to the title, e.g. the state of the resource. */
   status?: ReactNode;
+  /** The resource's key facts, on one line under the title. */
+  summary?: ReactNode;
   lead?: ReactNode;
   action?: ReactNode;
 }) {
@@ -27,6 +30,7 @@ export function PageHeader({
             {status}
           </div>
         </div>
+        {summary}
         {lead && <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{lead}</p>}
       </div>
       {action}

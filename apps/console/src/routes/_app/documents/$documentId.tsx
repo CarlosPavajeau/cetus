@@ -14,8 +14,8 @@ import {
 import { useId, useState } from "react";
 
 import { CopyButton } from "~/components/CopyButton";
-import { Entry, Section } from "~/components/DetailSection";
-import { EnvironmentBadge } from "~/components/EnvironmentBadge";
+import { Entry, RuledEntry, Section } from "~/components/DetailSection";
+import { EnvironmentBadge, environmentLabel } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
 import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
@@ -63,6 +63,7 @@ import {
 import { documentDetailQuery } from "~/features/documents/queries";
 import { ResendDocument } from "~/features/documents/ResendDocument";
 import { getDocumentFileUrl } from "~/features/documents/server";
+import { paymentMeans, paymentMethods } from "~/features/issuance/catalogs";
 import { reissueTarget } from "~/features/issuance/reissue";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import type { DocumentDetail } from "~/lib/api/types";
@@ -119,6 +120,7 @@ function DocumentDetailPage() {
       <PageHeader
         title={`${documentTypeLabel[document.documentType]} ${document.number}`}
         status={<DocumentStatusBadge status={document.status} environment={document.environment} />}
+        summary={<DocumentSummary document={document} />}
         lead={documentLead(document.status, document.environment)}
         action={
           <div className="flex flex-wrap items-start gap-2">
@@ -161,53 +163,47 @@ function DocumentDetailPage() {
         <CorrectedInvoice document={document} invoice={document.invoice} />
       )}
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Section id="issuer" title="Emisor">
-          <dl className="flex flex-col gap-3.25">
-            <Entry label="Razón social">
-              <Link
-                to="/issuers/$issuerId"
-                params={{ issuerId: document.issuer.id }}
-                className="underline-offset-4 hover:underline"
-              >
-                {document.issuer.legalName}
-              </Link>
-            </Entry>
-            <Entry label="NIT">
-              <CopyableId
-                value={withCheckDigit(document.issuer.nit, document.issuer.checkDigit)}
-                label="Copiar NIT del emisor"
-              />
-            </Entry>
-          </dl>
-        </Section>
-        <Section id="customer" title="Cliente">
-          <dl className="flex flex-col gap-3.25">
-            <Entry label="Nombre">{document.customer.legalName}</Entry>
-            <Entry label="Identificación">
-              <CopyableId
-                prefix={
-                  identificationTypeLabel[document.customer.identificationType] ??
-                  document.customer.identificationType
-                }
-                value={withCheckDigit(
-                  document.customer.identificationNumber,
-                  document.customer.checkDigit,
-                )}
-                label="Copiar identificación del cliente"
-              />
-            </Entry>
-            <Entry label="Correo">{document.customer.email ?? "—"}</Entry>
-          </dl>
-        </Section>
-        <Section id="document-dates" title="Documento">
-          <dl className="flex flex-col gap-3.25">
-            <Entry label="Fecha de emisión">{formatDay(document.issueDate)}</Entry>
-            {document.dueDate && <Entry label="Vencimiento">{formatDay(document.dueDate)}</Entry>}
-            <Entry label="Referencia externa">{document.externalReference ?? "—"}</Entry>
-          </dl>
-        </Section>
-      </div>
+      <Section id="document-data" title="Datos">
+        <dl className="flex flex-col divide-y">
+          <RuledEntry label="Emisor">
+            <Link
+              to="/issuers/$issuerId"
+              params={{ issuerId: document.issuer.id }}
+              className="w-fit underline-offset-4 hover:underline"
+            >
+              {document.issuer.legalName}
+            </Link>
+            <CopyableId
+              prefix="NIT"
+              value={withCheckDigit(document.issuer.nit, document.issuer.checkDigit)}
+              label="Copiar NIT del emisor"
+            />
+          </RuledEntry>
+          <RuledEntry label="Cliente">
+            <span>{document.customer.legalName}</span>
+            <CopyableId
+              prefix={
+                identificationTypeLabel[document.customer.identificationType] ??
+                document.customer.identificationType
+              }
+              value={withCheckDigit(
+                document.customer.identificationNumber,
+                document.customer.checkDigit,
+              )}
+              label="Copiar identificación del cliente"
+            />
+            <span className="text-muted-foreground">{document.customer.email ?? "Sin correo"}</span>
+          </RuledEntry>
+          <RuledEntry label="Fecha de emisión">{formatDay(document.issueDate)}</RuledEntry>
+          {document.dueDate && (
+            <RuledEntry label="Vencimiento">{formatDay(document.dueDate)}</RuledEntry>
+          )}
+          {document.payment && (
+            <RuledEntry label="Pago">{paymentLabel(document.payment)}</RuledEntry>
+          )}
+          <RuledEntry label="Referencia externa">{document.externalReference ?? "—"}</RuledEntry>
+        </dl>
+      </Section>
 
       <Section id="lines" title="Detalle">
         <div className="-mx-5 -mb-5 overflow-hidden rounded-b-lg">
@@ -215,8 +211,12 @@ function DocumentDetailPage() {
             <TableHeader className="[&_th]:h-8.75">
               <TableRow>
                 <TableHead className="pl-5">Descripción</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead className="text-right">Precio unitario</TableHead>
+                <TableHead className="text-right max-sm:p-0">
+                  <span className="max-sm:sr-only">Cantidad</span>
+                </TableHead>
+                <TableHead className="text-right max-sm:p-0">
+                  <span className="max-sm:sr-only">Precio unitario</span>
+                </TableHead>
                 <TableHead className="pr-5 text-right">Subtotal</TableHead>
               </TableRow>
             </TableHeader>
@@ -228,12 +228,19 @@ function DocumentDetailPage() {
                     {line.itemCode && (
                       <span className="text-muted-foreground"> · {line.itemCode}</span>
                     )}
+                    {/* Screen readers get the quantity and price from their own cells. */}
+                    <span
+                      className="block text-muted-foreground tabular-nums sm:hidden"
+                      aria-hidden="true"
+                    >
+                      {quantityFormat.format(line.quantity)} × {money(line.unitPrice)}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">
-                    {quantityFormat.format(line.quantity)}
+                  <TableCell className="text-right text-sm tabular-nums max-sm:p-0">
+                    <span className="max-sm:sr-only">{quantityFormat.format(line.quantity)}</span>
                   </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">
-                    {money(line.unitPrice)}
+                  <TableCell className="text-right text-sm tabular-nums max-sm:p-0">
+                    <span className="max-sm:sr-only">{money(line.unitPrice)}</span>
                   </TableCell>
                   <TableCell className="pr-5 text-right text-sm tabular-nums">
                     {money(line.lineExtension)}
@@ -252,7 +259,7 @@ function DocumentDetailPage() {
               </TableRow>
               {document.taxes.map((tax) => (
                 <TableRow key={`${tax.type}-${tax.percent}`}>
-                  <TableCell colSpan={3} className="pl-5 text-right">
+                  <TableCell colSpan={3} className="pl-5 text-right whitespace-normal">
                     {tax.type} {percentFormat.format(tax.percent)} % sobre {money(tax.taxable)}
                   </TableCell>
                   <TableCell className="pr-5 text-right tabular-nums">
@@ -380,6 +387,34 @@ function DocumentTimeline({ document }: { document: DocumentDetail }) {
       <p className="text-2xs text-muted-foreground">Horarios de Colombia (UTC−5)</p>
     </Section>
   );
+}
+
+function DocumentSummary({ document }: { document: DocumentDetail }) {
+  const facts = [
+    `${document.issuer.legalName}, NIT ${withCheckDigit(document.issuer.nit, document.issuer.checkDigit)}`,
+    document.customer.legalName,
+    formatMoney(document.totals.payable, document.currency),
+    environmentLabel(document.environment),
+  ];
+  return (
+    <p className="text-sm text-muted-foreground" data-testid="document-summary">
+      {facts.map((fact, index) => (
+        <span key={fact}>
+          {index > 0 && <span aria-hidden="true"> · </span>}
+          <span className={cn(index === 2 && "text-foreground tabular-nums")}>{fact}</span>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function paymentLabel(payment: NonNullable<DocumentDetail["payment"]>) {
+  const method =
+    paymentMethods.find((option) => option.value === payment.method)?.label ?? payment.method;
+  const means =
+    paymentMeans.find((option) => option.code === payment.meansCode)?.label ??
+    `Medio ${payment.meansCode}`;
+  return `${method} · ${means}`;
 }
 
 function hasNotes(invoice: DocumentDetail) {

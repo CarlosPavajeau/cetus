@@ -271,11 +271,11 @@ function AppLayout() {
         <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-10">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
-          <Breadcrumb>
-            <BreadcrumbList>
+          <Breadcrumb className="min-w-0">
+            <BreadcrumbList className="flex-nowrap">
               {current?.section && (
                 <>
-                  <BreadcrumbItem className={cn(crumb && "max-sm:hidden")}>
+                  <BreadcrumbItem className={cn("shrink-0", crumb && "max-sm:hidden")}>
                     {current.section}
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className={cn(crumb && "max-sm:hidden")}>
@@ -285,18 +285,19 @@ function AppLayout() {
               )}
               {current && crumb ? (
                 <>
-                  <BreadcrumbItem>
+                  {/* On a phone the page's own back link leads to the list. */}
+                  <BreadcrumbItem className="shrink-0 max-sm:hidden">
                     <BreadcrumbLink render={<Link to={current.to} />}>
                       {current.label}
                     </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator>/</BreadcrumbSeparator>
-                  <BreadcrumbItem>
+                  <BreadcrumbSeparator className="max-sm:hidden">/</BreadcrumbSeparator>
+                  <BreadcrumbItem className="min-w-0">
                     <BreadcrumbPage>{crumb}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               ) : (
-                <BreadcrumbItem>
+                <BreadcrumbItem className="min-w-0">
                   <BreadcrumbPage>{current?.label ?? "Consola"}</BreadcrumbPage>
                 </BreadcrumbItem>
               )}

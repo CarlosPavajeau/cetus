@@ -34,7 +34,7 @@ test("the documents page lists the invoices and opens their detail", async ({
   await page.getByRole("link", { name: second.number }).click();
   await expect(page).toHaveURL(new RegExp(`/documents/${second.id}$`));
   await expect(page.getByRole("heading", { name: `Factura ${second.number}` })).toBeVisible();
-  await expect(page.getByText("Cliente Dos")).toBeVisible();
+  await expect(page.getByTestId("document-summary")).toContainText("Cliente Dos");
   await expect(page.getByText("Servicio de consultoría")).toBeVisible();
   await expect(page.getByText("Recibido por Cetus")).toBeVisible();
   await page.getByRole("button", { name: "Descargar" }).click();

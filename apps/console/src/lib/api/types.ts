@@ -148,6 +148,7 @@ export type Subscription = Schemas["SubscriptionView"];
 export type SubscriptionStatus = Subscription["status"];
 
 export type PaymentMethod = Schemas["PaymentMethodView"];
+export type DocumentPaymentMethod = Schemas["PaymentMethod"];
 
 export type CardSetup = Schemas["CardSetupView"];
 

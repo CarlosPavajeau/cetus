@@ -1,6 +1,7 @@
 import type {
   CreditNoteConcept,
   DebitNoteConcept,
+  DocumentPaymentMethod,
   IdentificationType,
   LineTax,
   PersonType,
@@ -27,6 +28,11 @@ export const taxPresetIds = [
   "EXCLUDED",
   "INC_8",
 ] as const satisfies readonly TaxPreset[];
+
+export const paymentMethods = [
+  { value: "CASH", label: "De contado" },
+  { value: "CREDIT", label: "A crédito" },
+] as const satisfies readonly { value: DocumentPaymentMethod; label: string }[];
 
 /** The usual payment means (annex table 13.3.4.2); "ZZZ" covers the rest. */
 export const paymentMeans = [

@@ -31,7 +31,7 @@ import { DateField } from "~/features/setup/fields";
 import { FieldRow, FieldSection } from "~/features/setup/StepLayout";
 import type { DocumentPreview, Environment, Issuer } from "~/lib/api/types";
 
-import { finalConsumer, paymentMeans } from "./catalogs";
+import { finalConsumer, paymentMeans, paymentMethods } from "./catalogs";
 import { CustomerFields } from "./CustomerFields";
 import { CustomerSummary } from "./CustomerSummary";
 import { SelectField } from "./fields";
@@ -71,11 +71,6 @@ const sampleLine = {
   tax: "IVA_19",
   unitCode: "94",
 } as const;
-
-const paymentMethodItems = [
-  { value: "CASH", label: "De contado" },
-  { value: "CREDIT", label: "A crédito" },
-];
 
 const paymentMeansItems = paymentMeans.map((means) => ({ value: means.code, label: means.label }));
 
@@ -405,7 +400,7 @@ export function InvoiceForm({
               control={header.control}
               name="payment.method"
               label="Forma de pago"
-              items={paymentMethodItems}
+              items={paymentMethods}
             />
             <SelectField
               control={header.control}
