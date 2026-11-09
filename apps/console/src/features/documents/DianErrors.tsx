@@ -1,36 +1,97 @@
+import { Link } from "@tanstack/react-router";
 import { InfoIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import type { DocumentDetail } from "~/lib/api/types";
+import { cn } from "~/lib/utils";
 
-import { type DianError, dianRuleDocsUrl, parseDianError } from "./dian-errors";
+import { type DianError, type DianRuleFix, dianRuleDocsUrl, parseDianError } from "./dian-errors";
 
-function DianErrorItem({ error, source }: { error: DianError; source: string }) {
+const linkClassName = "w-fit underline underline-offset-4 hover:text-foreground";
+
+const fixLabel: Record<DianRuleFix, string> = {
+  ISSUER: "Ver los datos tributarios del emisor",
+  NUMBERING: "Ver los rangos de numeración del emisor",
+  CUSTOMER: "Buscar el cliente en el catálogo",
+};
+
+function FixLink({ fix, document }: { fix: DianRuleFix; document: DocumentDetail }) {
+  return fix === "CUSTOMER" ? (
+    <Link
+      to="/catalog/customers"
+      search={{ q: document.customer.identificationNumber }}
+      className={linkClassName}
+    >
+      {fixLabel[fix]}
+    </Link>
+  ) : (
+    <Link
+      to="/issuers/$issuerId"
+      params={{ issuerId: document.issuer.id }}
+      hash={fix === "ISSUER" ? "tax-data" : "dian"}
+      className={linkClassName}
+    >
+      {fixLabel[fix]}
+    </Link>
+  );
+}
+
+function DianErrorItem({
+  error,
+  document,
+  source,
+  validator,
+  rejection,
+}: {
+  error: DianError;
+  document: DocumentDetail;
+  source: string;
+  validator: string;
+  rejection: boolean;
+}) {
+  // Gray secondary text falls under 4.5:1 on the rejection's red tint; there it takes the alert's own color.
+  const secondaryClassName = rejection ? undefined : "text-muted-foreground";
   return (
     <li className="flex flex-col gap-1 text-pretty">
       <span className="font-medium">
         {error.explanation?.title ?? error.message}
         {error.rule && (
-          <span className="ml-1.5 font-normal text-muted-foreground">Regla {error.rule}</span>
+          <span className={cn("font-normal", secondaryClassName)}> · Regla {error.rule}</span>
         )}
       </span>
-      {error.explanation && (
+      {error.explanation ? (
         <>
           <span>{error.explanation.action}</span>
-          <span className="text-muted-foreground">
+          <span className={secondaryClassName}>
             {source}: {error.message}
           </span>
+        </>
+      ) : (
+        error.rule && (
+          <span>
+            Cetus todavía no explica esta regla. El mensaje de {validator} dice qué revisar; si no
+            queda claro,{" "}
+            <Link to="/help" className={linkClassName}>
+              escríbenos desde Ayuda
+            </Link>{" "}
+            con el número del documento.
+          </span>
+        )
+      )}
+      {(error.explanation?.fix || error.rule) && (
+        <span className="flex flex-wrap gap-x-4 gap-y-1">
+          {error.explanation?.fix && <FixLink fix={error.explanation.fix} document={document} />}
           {error.rule && (
             <a
               href={dianRuleDocsUrl(error.rule)}
               target="_blank"
               rel="noreferrer"
-              className="w-fit underline underline-offset-4 hover:text-foreground"
+              className={linkClassName}
             >
               Ver en la documentación ↗
             </a>
           )}
-        </>
+        </span>
       )}
     </li>
   );
@@ -87,7 +148,10 @@ export function DianErrors({ document }: { document: DocumentDetail }) {
                   <DianErrorItem
                     key={`${error.rule}-${error.message}`}
                     error={error}
+                    document={document}
                     source={source}
+                    validator={validator}
+                    rejection
                   />
                 ))}
               </ul>
@@ -113,7 +177,10 @@ export function DianErrors({ document }: { document: DocumentDetail }) {
                 <DianErrorItem
                   key={`${error.rule}-${error.message}`}
                   error={error}
+                  document={document}
                   source={source}
+                  validator={validator}
+                  rejection={false}
                 />
               ))}
             </ul>

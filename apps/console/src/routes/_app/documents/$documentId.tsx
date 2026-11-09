@@ -226,7 +226,7 @@ function DocumentDetailPage() {
                   <TableCell className="pl-5 text-sm whitespace-normal">
                     {line.description}
                     {line.itemCode && (
-                      <span className="ml-1.5 text-muted-foreground">{line.itemCode}</span>
+                      <span className="text-muted-foreground"> · {line.itemCode}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right text-sm tabular-nums">

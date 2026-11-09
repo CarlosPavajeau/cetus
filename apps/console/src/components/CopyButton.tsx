@@ -1,9 +1,16 @@
-import { CheckIcon, CopyIcon } from "lucide-react";
-import { useState } from "react";
+import { CheckIcon, CopyIcon, XIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 
-/** Copies a value to the clipboard and says so for a moment. */
+type CopyOutcome = "COPIED" | "FAILED";
+
+const outcomeLabel: Record<CopyOutcome, string> = {
+  COPIED: "Copiado",
+  FAILED: "No se pudo copiar",
+};
+
+/** Copies a value to the clipboard and says so for a moment, or says that the browser refused. */
 export function CopyButton({
   value,
   label,
@@ -16,28 +23,45 @@ export function CopyButton({
   iconOnly?: boolean;
   onCopy?: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const [outcome, setOutcome] = useState<CopyOutcome | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   async function copy() {
-    await navigator.clipboard.writeText(value);
-    onCopy?.();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    clearTimeout(timer.current);
+    const next = await navigator.clipboard.writeText(value).then(
+      (): CopyOutcome => "COPIED",
+      (): CopyOutcome => "FAILED",
+    );
+    if (next === "COPIED") {
+      onCopy?.();
+    }
+    setOutcome(next);
+    timer.current = setTimeout(() => setOutcome(null), next === "FAILED" ? 4000 : 2000);
   }
 
-  const icon = copied ? (
-    <CheckIcon data-icon="inline-start" />
-  ) : (
-    <CopyIcon data-icon="inline-start" />
-  );
+  const Icon = outcome === "COPIED" ? CheckIcon : outcome === "FAILED" ? XIcon : CopyIcon;
+  const status = <output className="sr-only">{outcome && outcomeLabel[outcome]}</output>;
   return iconOnly ? (
-    <Button variant="ghost" size="icon-xs" onClick={copy} aria-label={label} title={label}>
-      {copied ? <CheckIcon /> : <CopyIcon />}
-    </Button>
+    <>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        onClick={copy}
+        aria-label={label}
+        title={outcome ? outcomeLabel[outcome] : label}
+      >
+        <Icon />
+      </Button>
+      {status}
+    </>
   ) : (
-    <Button variant="outline" size="sm" onClick={copy} aria-label={label}>
-      {icon}
-      {copied ? "Copiado" : "Copiar"}
-    </Button>
+    <>
+      <Button variant="outline" size="sm" onClick={copy} aria-label={label}>
+        <Icon data-icon="inline-start" />
+        {outcome ? outcomeLabel[outcome] : "Copiar"}
+      </Button>
+      {status}
+    </>
   );
 }

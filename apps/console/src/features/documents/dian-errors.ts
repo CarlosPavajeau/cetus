@@ -20,7 +20,11 @@ export type DianRuleExplanation = {
   title: string;
   /** What to do about it. */
   action: string;
+  /** Where in the console the data to correct lives, when it is the issuer's or the customer's. */
+  fix?: DianRuleFix;
 };
+
+export type DianRuleFix = "ISSUER" | "NUMBERING" | "CUSTOMER";
 
 const pattern = /^Regla:\s*([^,]+?)\s*,\s*(Rechazo|Notificaci[oó]n)\s*:\s*([\s\S]*)$/i;
 
@@ -38,11 +42,13 @@ export const explanations: Record<string, DianRuleExplanation> = {
     title: "El nombre del emisor no coincide con el del RUT.",
     action:
       "Edita los datos tributarios del emisor y copia la razón social exactamente como aparece en el RUT.",
+    fix: "ISSUER",
   },
   DAJ39: {
     title: "El emisor no figura como responsable de IVA.",
     action:
       "La DIAN espera el tributo 01 (IVA). Si el emisor sí es responsable de IVA, actualízalo en sus datos tributarios; si no lo es, puedes ignorar este aviso.",
+    fix: "ISSUER",
   },
   CBF04: {
     title: "La descripción de la corrección no es la del concepto.",
@@ -58,6 +64,7 @@ export const explanations: Record<string, DianRuleExplanation> = {
     title: "El cliente no tiene correo electrónico.",
     action:
       "La DIAN acepta el documento, pero espera el correo del adquiriente. Agrégalo al cliente: sin correo, Cetus tampoco puede enviarle el documento.",
+    fix: "CUSTOMER",
   },
   RUT01: {
     title: "La DIAN todavía no valida el estado del RUT.",
@@ -67,16 +74,19 @@ export const explanations: Record<string, DianRuleExplanation> = {
     title: "Una responsabilidad tributaria del cliente no está en la lista de la DIAN.",
     action:
       "Revisa las responsabilidades del cliente contra su RUT. Si no las conoces, deja solo R-99-PN (no responsable).",
+    fix: "CUSTOMER",
   },
   FAB10a: {
     title: "El prefijo no corresponde a la resolución de numeración.",
     action:
       "Revisa en la página del emisor que el prefijo del rango sea el mismo de la resolución que muestra el portal de la DIAN.",
+    fix: "NUMBERING",
   },
   FAD06: {
     title: "El CUFE no corresponde a los datos de la factura.",
     action:
       "Suele deberse a una clave técnica mal registrada en el rango de numeración. Compárala con la que muestra el portal de la DIAN para la resolución.",
+    fix: "NUMBERING",
   },
 };
 
@@ -90,11 +100,14 @@ export function parseDianError(text: string): DianError {
     rule,
     kind: kind.toLowerCase() === "rechazo" ? "REJECTION" : "NOTIFICATION",
     message: message.trim(),
-    explanation: explanations[rule] ?? null,
+    explanation: Object.hasOwn(explanations, rule) ? (explanations[rule] ?? null) : null,
   };
 }
 
-/** The rule's entry in the error catalog of the documentation site; only rules with an explanation have one. */
+/**
+ * The rule's entry in the error catalog of the documentation site. Only rules with an explanation have one;
+ * any other rule points at the catalog's section on the DIAN's rules.
+ */
 export function dianRuleDocsUrl(rule: string): string {
-  return `${docsUrl}/errores#${rule.toLowerCase()}`;
+  return `${docsUrl}/errores#${Object.hasOwn(explanations, rule) ? rule.toLowerCase() : "reglas-de-la-dian"}`;
 }

@@ -29,10 +29,16 @@ import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environ
 import { useSettled } from "~/lib/useSettled";
 
 export const Route = createFileRoute("/_app/catalog/customers")({
-  loader: async ({ context: { queryClient } }) => {
+  validateSearch: (search): { q?: string } => {
+    // The router parses "?q=123" as a number.
+    const q = typeof search.q === "number" ? String(search.q) : search.q;
+    return typeof q === "string" && q.trim() ? { q: q.trim() } : {};
+  },
+  loaderDeps: ({ search }) => ({ q: search.q ?? "" }),
+  loader: async ({ context: { queryClient }, deps }) => {
     const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
     await queryClient.infiniteQuery({
-      ...customerPagesQuery(environment, ""),
+      ...customerPagesQuery(environment, deps.q),
       staleTime: "static",
     });
   },
@@ -41,7 +47,7 @@ export const Route = createFileRoute("/_app/catalog/customers")({
 
 function Customers() {
   const environment = useActiveEnvironment();
-  const [text, setText] = useState("");
+  const [text, setText] = useState(Route.useSearch().q ?? "");
   const q = useSettled(text.trim(), 300);
   const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...customerPagesQuery(environment, q),
