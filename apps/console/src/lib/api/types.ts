@@ -315,6 +315,8 @@ export type IncidentImpact = Schemas["IncidentImpact"];
 
 export type IncidentRequest = Schemas["IncidentRequest"];
 
+export type InboundEvent = Schemas["InboundEventView"];
+
 export type LandingFigures = Schemas["LandingView"];
 
 export type ObligationCap = Schemas["ObligationCapView"];

@@ -1,10 +1,33 @@
 import { devices } from "@playwright/test";
 import { type } from "arktype";
+import { config } from "dotenv";
+import { Pool } from "pg";
 
 import { latestEmailTo } from "../support/outbox";
 import { createPlatformStaff, totp } from "../support/platform-staff";
 import { consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
+
+config({ quiet: true });
+
+/** What the security page left in the database for this person: the 2FA secret and a pending replacement. */
+async function storedTwoFactor(email: string) {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    const { rows } = await pool.query(
+      `SELECT (SELECT count(*) FROM auth.two_factor t WHERE t.user_id = u.id) AS secrets,
+              (SELECT count(*) FROM auth.verification v WHERE v.identifier = 'replace-totp-' || u.id)
+                AS replacements
+         FROM auth."user" u WHERE u.email = $1`,
+      [email],
+    );
+    return type({ secrets: "string.integer.parse", replacements: "string.integer.parse" }).assert(
+      rows[0],
+    );
+  } finally {
+    await pool.end();
+  }
+}
 
 test("2FA is enabled from the security page and then asked at sign-in", async ({
   page,
@@ -81,7 +104,11 @@ test("with 2FA on, backup codes are replaced and 2FA is turned off, each behind 
   await open(page, "/settings/security");
   await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
   await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
+  await expect(page.getByLabel("Código de verificación")).toBeVisible();
+  expect(await storedTwoFactor(organization.email)).toEqual({ secrets: 1, replacements: 0 });
   await page.getByRole("button", { name: "Cancelar" }).click();
+  await expect(page.getByRole("heading", { name: "Verificación en dos pasos" })).toBeFocused();
+  expect(await storedTwoFactor(organization.email)).toEqual({ secrets: 0, replacements: 0 });
   await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
   await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
   const secret = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
@@ -226,6 +253,30 @@ test("a new authenticator app replaces the old one only once its code is right, 
 
   await page.reload();
   await expect(page.getByText("Te quedan 9 de 10 códigos")).toBeVisible();
+});
+
+test("canceling a new authenticator app drops it and keeps the active one", async ({
+  page,
+  organization,
+}) => {
+  await open(page, "/settings/security");
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Activar verificación en dos pasos" }).click();
+  const secret = ((await page.locator("code").first().textContent()) ?? "").replace(/\s/g, "");
+  await page.getByLabel("Código de verificación").fill(totp(secret));
+  await page.getByRole("button", { name: "Ya guardé mis códigos" }).click();
+  await page.getByRole("button", { name: "Cambiar de aplicación" }).click();
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    page.getByText(/Tienes hasta las \d{2}:\d{2} para terminar el cambio/),
+  ).toBeVisible();
+  expect(await storedTwoFactor(organization.email)).toEqual({ secrets: 1, replacements: 1 });
+
+  await page.getByRole("button", { name: "Cancelar" }).click();
+  await expect(page.getByRole("heading", { name: "Aplicación de autenticación" })).toBeFocused();
+  expect(await storedTwoFactor(organization.email)).toEqual({ secrets: 1, replacements: 0 });
+  await expect(page.getByText("Verificación activa")).toBeVisible();
 });
 
 test("a backup code typed as shown, dash included, signs in", async ({ browser, organization }) => {

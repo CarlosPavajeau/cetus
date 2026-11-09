@@ -38,6 +38,7 @@ import { Route as LegalTerminosRouteImport } from './routes/legal.terminos'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AdminAdminAuditLogRouteImport } from './routes/_admin/admin/audit-log'
 import { Route as AdminAdminBillingRouteImport } from './routes/_admin/admin/billing'
+import { Route as AdminAdminInboundEventsRouteImport } from './routes/_admin/admin/inbound-events'
 import { Route as AdminAdminIncidentsRouteImport } from './routes/_admin/admin/incidents'
 import { Route as AppActivityIndexRouteImport } from './routes/_app/activity/index'
 import { Route as AppActivityEventIdRouteImport } from './routes/_app/activity/$eventId'
@@ -215,6 +216,11 @@ const AdminAdminAuditLogRoute = AdminAdminAuditLogRouteImport.update({
 const AdminAdminBillingRoute = AdminAdminBillingRouteImport.update({
   id: '/admin/billing',
   path: '/admin/billing',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminInboundEventsRoute = AdminAdminInboundEventsRouteImport.update({
+  id: '/admin/inbound-events',
+  path: '/admin/inbound-events',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAdminIncidentsRoute = AdminAdminIncidentsRouteImport.update({
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/admin/billing': typeof AdminAdminBillingRoute
+  '/admin/inbound-events': typeof AdminAdminInboundEventsRoute
   '/admin/incidents': typeof AdminAdminIncidentsRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/billing/products': typeof AppBillingProductsRoute
@@ -485,6 +492,7 @@ export interface FileRoutesByTo {
   '/legal/terminos': typeof LegalTerminosRoute
   '/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/admin/billing': typeof AdminAdminBillingRoute
+  '/admin/inbound-events': typeof AdminAdminInboundEventsRoute
   '/admin/incidents': typeof AdminAdminIncidentsRoute
   '/activity/$eventId': typeof AppActivityEventIdRoute
   '/billing/products': typeof AppBillingProductsRoute
@@ -551,6 +559,7 @@ export interface FileRoutesById {
   '/_marketing/': typeof MarketingIndexRoute
   '/_admin/admin/audit-log': typeof AdminAdminAuditLogRoute
   '/_admin/admin/billing': typeof AdminAdminBillingRoute
+  '/_admin/admin/inbound-events': typeof AdminAdminInboundEventsRoute
   '/_admin/admin/incidents': typeof AdminAdminIncidentsRoute
   '/_app/activity/$eventId': typeof AppActivityEventIdRoute
   '/_app/billing/products': typeof AppBillingProductsRoute
@@ -615,6 +624,7 @@ export interface FileRouteTypes {
     | '/legal/terminos'
     | '/admin/audit-log'
     | '/admin/billing'
+    | '/admin/inbound-events'
     | '/admin/incidents'
     | '/activity/$eventId'
     | '/billing/products'
@@ -677,6 +687,7 @@ export interface FileRouteTypes {
     | '/legal/terminos'
     | '/admin/audit-log'
     | '/admin/billing'
+    | '/admin/inbound-events'
     | '/admin/incidents'
     | '/activity/$eventId'
     | '/billing/products'
@@ -742,6 +753,7 @@ export interface FileRouteTypes {
     | '/_marketing/'
     | '/_admin/admin/audit-log'
     | '/_admin/admin/billing'
+    | '/_admin/admin/inbound-events'
     | '/_admin/admin/incidents'
     | '/_app/activity/$eventId'
     | '/_app/billing/products'
@@ -1009,6 +1021,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminBillingRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/inbound-events': {
+      id: '/_admin/admin/inbound-events'
+      path: '/admin/inbound-events'
+      fullPath: '/admin/inbound-events'
+      preLoaderRoute: typeof AdminAdminInboundEventsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/incidents': {
       id: '/_admin/admin/incidents'
       path: '/admin/incidents'
@@ -1253,6 +1272,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAdminAuditLogRoute: typeof AdminAdminAuditLogRoute
   AdminAdminBillingRoute: typeof AdminAdminBillingRoute
+  AdminAdminInboundEventsRoute: typeof AdminAdminInboundEventsRoute
   AdminAdminIncidentsRoute: typeof AdminAdminIncidentsRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminOrganizationsAccountIdRoute: typeof AdminAdminOrganizationsAccountIdRoute
@@ -1267,6 +1287,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminAuditLogRoute: AdminAdminAuditLogRoute,
   AdminAdminBillingRoute: AdminAdminBillingRoute,
+  AdminAdminInboundEventsRoute: AdminAdminInboundEventsRoute,
   AdminAdminIncidentsRoute: AdminAdminIncidentsRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminOrganizationsAccountIdRoute: AdminAdminOrganizationsAccountIdRoute,

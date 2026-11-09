@@ -1,9 +1,10 @@
 import { type BrowserContext } from "@playwright/test";
+import { type } from "arktype";
 
 import { createTestApiKey } from "../support/issuers";
 import { type TestOrganization, createOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
-import { apiUrl, consoleCookies } from "../support/stack";
+import { apiUrl, billingPool, consoleCookies } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 async function signIn(context: BrowserContext, who: TestOrganization) {
@@ -84,4 +85,45 @@ test("staff without 2FA are sent to enable it, and customers never see the admin
   await open(page, "/admin/organizations");
   await expect(page).not.toHaveURL(/\/admin/);
   await expect(page.getByRole("link", { name: "Administración" })).toHaveCount(0);
+});
+
+test("an admin queues a failed provider event again and it leaves the list", async ({
+  page,
+  context,
+}) => {
+  const error = `Resend no respondió ${crypto.randomUUID()}`;
+  const pool = billingPool();
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO billing.inbound_webhook_events (provider, event_id, event_type, payload, status, attempts, error)
+       VALUES ('RESEND', $1, 'email.bounced', $2, 'FAILED', 5, $3) RETURNING id`,
+      [crypto.randomUUID(), JSON.stringify({}), error],
+    );
+    const { id } = type({ id: "string" }).assert(rows[0]);
+    await signIn(context, await createPlatformStaff("admin"));
+
+    await open(page, "/admin/inbound-events");
+    const row = page.getByRole("row").filter({ hasText: error });
+    await expect(row.getByText("Resend · email.bounced")).toBeVisible();
+    await row.getByRole("button", { name: "Volver a encolar" }).click();
+    await expect(row).toHaveCount(0);
+
+    const requeued = await pool.query(
+      `SELECT status FROM billing.inbound_webhook_events WHERE id = $1`,
+      [id],
+    );
+    expect(type({ status: "string" }).assert(requeued.rows[0]).status).not.toBe("FAILED");
+  } finally {
+    await pool.end();
+  }
+});
+
+test("support sees failed provider events but cannot queue them again", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, await createPlatformStaff("support"));
+  await open(page, "/admin/inbound-events");
+  await expect(page.getByRole("heading", { name: "Eventos fallidos" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Volver a encolar" })).toHaveCount(0);
 });

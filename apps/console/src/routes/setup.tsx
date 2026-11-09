@@ -57,10 +57,7 @@ export const Route = createFileRoute("/setup")({
   loaderDeps: ({ search }) => ({ issuerId: search.issuerId, new: search.new }),
   loader: async ({ context: { queryClient }, deps }) => {
     if (deps.issuerId) {
-      const issuer = await queryClient.query({
-        ...issuerDetailQuery(deps.issuerId),
-        staleTime: "static",
-      });
+      const issuer = await queryClient.query({ ...issuerDetailQuery(deps.issuerId), staleTime: 0 });
       if (!issuer) {
         throw redirect({ to: "/issuers" });
       }
@@ -80,7 +77,7 @@ export const Route = createFileRoute("/setup")({
       throw redirect({ to: "/issuers" });
     }
     if (pending) {
-      await queryClient.query({ ...issuerDetailQuery(pending.id), staleTime: "static" });
+      await queryClient.query({ ...issuerDetailQuery(pending.id), staleTime: 0 });
     }
   },
   component: Setup,

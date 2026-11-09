@@ -27,6 +27,9 @@ import type { Order } from "~/lib/api/types";
 import { cn, uuidPattern } from "~/lib/utils";
 
 const PENDING_REFRESH_MS = 3000;
+const EXPIRED_REFRESH_MS = 15_000;
+/** How long past its deadline an expired order is still read: a PSE payment approved near it can arrive later. */
+const EXPIRED_WATCH_MS = 30 * 60 * 1000;
 
 /**
  * Where Wompi sends the customer back after paying. It only reads the order: Wompi confirms the payment to
@@ -58,13 +61,27 @@ function awaitingPayment(order: Order | null) {
   );
 }
 
+/** Reads the order again until the server says it is settled, whatever the browser's clock says. */
+function refreshInterval(order: Order | null): number | false {
+  if (order?.status === "PENDING") {
+    return PENDING_REFRESH_MS;
+  }
+  if (
+    order?.status === "EXPIRED" &&
+    order.expiresAt !== null &&
+    Date.now() < new Date(order.expiresAt).getTime() + EXPIRED_WATCH_MS
+  ) {
+    return EXPIRED_REFRESH_MS;
+  }
+  return false;
+}
+
 function OrderPage() {
   const { orderId } = Route.useParams();
   const queryClient = useQueryClient();
   const { data: order } = useSuspenseQuery({
     ...orderQuery(orderId),
-    refetchInterval: (query) =>
-      awaitingPayment(query.state.data ?? null) ? PENDING_REFRESH_MS : false,
+    refetchInterval: (query) => refreshInterval(query.state.data ?? null),
   });
   const { data: paymentMethod } = useSuspenseQuery(paymentMethodQuery);
   const { session } = Route.useRouteContext();
@@ -156,12 +173,12 @@ function OrderPage() {
           </AlertDescription>
         </Alert>
       )}
-      {order.status === "PENDING" && !pending && (
+      {(order.status === "EXPIRED" || (order.status === "PENDING" && !pending)) && (
         <Alert>
           <AlertTitle>Venció el plazo para pagar esta orden</AlertTitle>
           <AlertDescription>
-            Si ya pagaste, espera la confirmación de Wompi: la orden se actualizará sola. Si no,
-            puedes comprar de nuevo.
+            Si ya pagaste, espera la confirmación de Wompi y recarga esta página si no cambia en
+            unos minutos. Si no, puedes comprar de nuevo.
           </AlertDescription>
         </Alert>
       )}

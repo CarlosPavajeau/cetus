@@ -18,6 +18,7 @@ import { db } from "../db";
 import { emailSender } from "../email";
 import { env } from "../env";
 import { backupCodeCount } from "./backup-code-count";
+import { cancelTotpEnrollment } from "./cancel-totp-enrollment";
 import {
   ac,
   impersonationSeconds,
@@ -66,6 +67,8 @@ const forbiddenWhileImpersonating = new Set([
   "/two-factor/generate-backup-codes",
   "/two-factor/replace-totp/start",
   "/two-factor/replace-totp/confirm",
+  "/two-factor/replace-totp/cancel",
+  "/two-factor/cancel-enrollment",
   "/organization/update",
   "/organization/delete",
   "/organization/leave",
@@ -244,6 +247,7 @@ export const auth = betterAuth({
     }),
     twoFactor({ issuer: "Cetus", backupCodeOptions: { amount: backupCodeTotal } }),
     backupCodeCount({ total: backupCodeTotal }),
+    cancelTotpEnrollment(),
     replaceTotp({
       issuer: "Cetus",
       onReplaced: (user) => {

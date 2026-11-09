@@ -11,6 +11,7 @@ import {
   ArrowLeftIcon,
   BuildingIcon,
   HistoryIcon,
+  InboxIcon,
   LifeBuoyIcon,
   LogOutIcon,
   ScaleIcon,
@@ -58,6 +59,7 @@ const navigation = [
   { to: "/admin/support", label: "Soporte", icon: LifeBuoyIcon },
   { to: "/admin/billing", label: "Conciliación", icon: ScaleIcon },
   { to: "/admin/incidents", label: "Incidentes", icon: SirenIcon },
+  { to: "/admin/inbound-events", label: "Eventos fallidos", icon: InboxIcon },
   { to: "/admin/audit-log", label: "Auditoría", icon: HistoryIcon },
 ] as const;
 

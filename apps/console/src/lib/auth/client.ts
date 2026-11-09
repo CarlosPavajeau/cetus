@@ -2,15 +2,18 @@ import { adminClient, organizationClient, twoFactorClient } from "better-auth/cl
 import { createAuthClient } from "better-auth/react";
 
 import type { backupCodeCount } from "./backup-code-count";
+import type { cancelTotpEnrollment } from "./cancel-totp-enrollment";
 import { ac, organizationAc, organizationRoles, roles } from "./permissions";
 import type { replaceTotp } from "./replace-totp";
 
-/** Types `authClient.twoFactor.replaceTotp` from the server plugin; the client adds nothing at runtime. */
+/** Types `authClient.twoFactor.replaceTotp` from the server plugin. */
 function replaceTotpClient(): {
   id: "replace-totp";
   $InferServerPlugin?: ReturnType<typeof replaceTotp>;
+  pathMethods: Record<string, "POST">;
 } {
-  return { id: "replace-totp" };
+  // Without a body the client would send GET.
+  return { id: "replace-totp", pathMethods: { "/two-factor/replace-totp/cancel": "POST" } };
 }
 
 /** Types `authClient.twoFactor.backupCodes.count` from the server plugin. */
@@ -21,6 +24,15 @@ function backupCodeCountClient(): {
   return { id: "backup-code-count" };
 }
 
+/** Types `authClient.twoFactor.cancelEnrollment` from the server plugin. */
+function cancelTotpEnrollmentClient(): {
+  id: "cancel-totp-enrollment";
+  $InferServerPlugin?: ReturnType<typeof cancelTotpEnrollment>;
+  pathMethods: Record<string, "POST">;
+} {
+  return { id: "cancel-totp-enrollment", pathMethods: { "/two-factor/cancel-enrollment": "POST" } };
+}
+
 export const authClient = createAuthClient({
   plugins: [
     organizationClient({ ac: organizationAc, roles: organizationRoles }),
@@ -29,5 +41,6 @@ export const authClient = createAuthClient({
     twoFactorClient(),
     replaceTotpClient(),
     backupCodeCountClient(),
+    cancelTotpEnrollmentClient(),
   ],
 });
