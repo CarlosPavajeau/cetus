@@ -9,7 +9,7 @@ import {
   ShieldCheckIcon,
   SmartphoneIcon,
 } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Controller, useForm } from "react-hook-form";
 import { QRCode } from "react-qr-code";
@@ -40,6 +40,7 @@ import {
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Spinner } from "~/components/ui/spinner";
+import { timeFormat } from "~/features/api-keys/formats";
 import { TotpCodeInput } from "~/features/auth/CodeInput";
 import { type AuthError, tooManyAttemptsMessage } from "~/features/auth/errors";
 import { PasswordInput } from "~/features/auth/PasswordInput";
@@ -68,6 +69,9 @@ type Enrollment = { totpURI: string; backupCodes: string[] };
 /** Backup codes on screen: the first set, from enrolling, or a replacement for the previous set. */
 type IssuedCodes = { codes: string[]; origin: "enrollment" | "regeneration" };
 
+/** A new authenticator app waiting for its first code; the server drops it at `expiresAt`. */
+type Replacement = { totpURI: string; expiresAt: Date };
+
 /** What leaving the page now would throw away. */
 type Unsaved = "enrollment" | "replacement" | "codes";
 
@@ -76,26 +80,92 @@ type Confirming = "replace" | "regenerate" | "disable";
 /** The part of the page that takes focus after a step gave the view back to it. */
 type Returning = "enable" | "app" | "codes";
 
+/**
+ * Where the page stands. `replaced` and `turnedOff` are the resting view with the outcome of the step
+ * that just ended on top of it.
+ */
+type View =
+  | { kind: "idle"; returning: Returning | null }
+  | { kind: "enrolling"; enrollment: Enrollment }
+  | { kind: "issued"; issued: IssuedCodes }
+  | { kind: "replacing"; replacement: Replacement }
+  | { kind: "replaced" }
+  | { kind: "turnedOff" };
+
+type Action =
+  | { type: "enrolled"; enrollment: Enrollment }
+  | { type: "enrollmentVerified" }
+  | { type: "enrollmentCanceled" }
+  | { type: "codesSaved" }
+  | { type: "replacementStarted"; replacement: Replacement }
+  | { type: "replacementVerified" }
+  | { type: "replacementCanceled" }
+  | { type: "regenerated"; codes: string[] }
+  | { type: "turnedOff" };
+
+function impossible(view: View, action: Action): never {
+  throw new Error(`The security page cannot take ${action.type} while ${view.kind}`);
+}
+
+function transition(view: View, action: Action): View {
+  const resting = view.kind === "idle" || view.kind === "replaced" || view.kind === "turnedOff";
+  switch (action.type) {
+    case "enrolled":
+      return resting
+        ? { kind: "enrolling", enrollment: action.enrollment }
+        : impossible(view, action);
+    case "enrollmentVerified":
+      return view.kind === "enrolling"
+        ? {
+            kind: "issued",
+            issued: { codes: view.enrollment.backupCodes, origin: "enrollment" },
+          }
+        : impossible(view, action);
+    case "enrollmentCanceled":
+      return view.kind === "enrolling"
+        ? { kind: "idle", returning: "enable" }
+        : impossible(view, action);
+    case "codesSaved":
+      return view.kind === "issued"
+        ? { kind: "idle", returning: "codes" }
+        : impossible(view, action);
+    case "replacementStarted":
+      return resting
+        ? { kind: "replacing", replacement: action.replacement }
+        : impossible(view, action);
+    case "replacementVerified":
+      return view.kind === "replacing" ? { kind: "replaced" } : impossible(view, action);
+    case "replacementCanceled":
+      return view.kind === "replacing"
+        ? { kind: "idle", returning: "app" }
+        : impossible(view, action);
+    case "regenerated":
+      return resting
+        ? { kind: "issued", issued: { codes: action.codes, origin: "regeneration" } }
+        : impossible(view, action);
+    case "turnedOff":
+      return resting ? { kind: "turnedOff" } : impossible(view, action);
+    default:
+      return impossible(view, action satisfies never);
+  }
+}
+
+const unsavedByView: Partial<Record<View["kind"], Unsaved>> = {
+  enrolling: "enrollment",
+  issued: "codes",
+  replacing: "replacement",
+};
+
 function Security() {
   const { session } = Route.useRouteContext();
   const { required, redirect } = Route.useSearch();
   const navigate = useNavigate();
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
-  const [issued, setIssued] = useState<IssuedCodes | null>(null);
-  const [turnedOff, setTurnedOff] = useState(false);
-  const [replacement, setReplacement] = useState<string | null>(null);
-  const [replaced, setReplaced] = useState(false);
+  const [view, dispatch] = useReducer(transition, { kind: "idle", returning: null });
   const [confirming, setConfirming] = useState<Confirming | null>(null);
-  const [returning, setReturning] = useState<Returning | null>(null);
   const leaving = useRef(false);
   const enabled = session.user.twoFactorEnabled;
-  const unsaved: Unsaved | null = issued
-    ? "codes"
-    : enrollment
-      ? "enrollment"
-      : replacement
-        ? "replacement"
-        : null;
+  const unsaved = unsavedByView[view.kind] ?? null;
+  const returning = view.kind === "idle" ? view.returning : null;
   const blocker = useBlocker({
     shouldBlockFn: () => !leaving.current,
     enableBeforeUnload: () => !leaving.current,
@@ -137,51 +207,51 @@ function Security() {
             La verificación en dos pasos solo la cambia la persona dueña de la cuenta.
           </AlertDescription>
         </Alert>
-      ) : issued ? (
+      ) : view.kind === "issued" ? (
         <BackupCodes
-          issued={issued}
+          issued={view.issued}
           email={session.user.email}
           required={required === true}
           onDone={() => {
-            setReturning("codes");
-            if (required && issued.origin === "enrollment") {
+            if (required && view.issued.origin === "enrollment") {
               leaving.current = true;
               void navigate({ href: redirect ?? "/admin/organizations" });
             } else {
-              setIssued(null);
+              dispatch({ type: "codesSaved" });
             }
           }}
         />
-      ) : enrollment ? (
+      ) : view.kind === "enrolling" ? (
         <VerifyEnrollment
-          totpURI={enrollment.totpURI}
-          onCancel={() => {
-            setReturning("enable");
-            setEnrollment(null);
+          totpURI={view.enrollment.totpURI}
+          onCancel={async () => {
+            const { error } = await authClient.twoFactor.cancelEnrollment();
+            if (error) {
+              return `No pudimos cancelar la activación. Intenta de nuevo; si sigue fallando, escríbenos a ${supportEmail}.`;
+            }
+            dispatch({ type: "enrollmentCanceled" });
+            return null;
           }}
-          onVerified={() => {
-            setIssued({ codes: enrollment.backupCodes, origin: "enrollment" });
-            setEnrollment(null);
-          }}
+          onVerified={() => dispatch({ type: "enrollmentVerified" })}
         />
-      ) : replacement ? (
+      ) : view.kind === "replacing" ? (
         <VerifyEnrollment
-          totpURI={replacement}
-          replacing
-          onCancel={() => {
-            setReturning("app");
-            setReplacement(null);
+          totpURI={view.replacement.totpURI}
+          replacingUntil={view.replacement.expiresAt}
+          onCancel={async () => {
+            const { error } = await authClient.twoFactor.replaceTotp.cancel();
+            if (error) {
+              return "No pudimos cancelar el cambio de aplicación. Intenta de nuevo.";
+            }
+            dispatch({ type: "replacementCanceled" });
+            return null;
           }}
-          onVerified={() => {
-            setReturning(null);
-            setReplaced(true);
-            setReplacement(null);
-          }}
+          onVerified={() => dispatch({ type: "replacementVerified" })}
         />
       ) : enabled ? (
         <div className="flex max-w-xl flex-col gap-10">
           <div className="flex flex-col gap-6">
-            {replaced && (
+            {view.kind === "replaced" && (
               <Notice title="Cambiaste tu aplicación de autenticación">
                 Los códigos de la anterior ya no sirven. Tus códigos de respaldo siguen funcionando.
               </Notice>
@@ -190,10 +260,9 @@ function Security() {
               focusTitle={returning === "app"}
               confirming={confirming === "replace"}
               onConfirmingChange={(open) => setConfirming(open ? "replace" : null)}
-              onStarted={(totpURI) => {
+              onStarted={(replacement) => {
                 setConfirming(null);
-                setReplaced(false);
-                setReplacement(totpURI);
+                dispatch({ type: "replacementStarted", replacement });
               }}
             />
             <TwoFactorStatus
@@ -202,8 +271,7 @@ function Security() {
               onConfirmingChange={(open) => setConfirming(open ? "regenerate" : null)}
               onRegenerated={(codes) => {
                 setConfirming(null);
-                setReplaced(false);
-                setIssued({ codes, origin: "regeneration" });
+                dispatch({ type: "regenerated", codes });
               }}
             />
           </div>
@@ -213,25 +281,21 @@ function Security() {
             staff={session.user.platformRole !== null}
             onDisabled={() => {
               setConfirming(null);
-              setReplaced(false);
-              setTurnedOff(true);
+              dispatch({ type: "turnedOff" });
             }}
           />
         </div>
       ) : (
         <>
-          {turnedOff && (
+          {view.kind === "turnedOff" && (
             <Notice title="Verificación en dos pasos desactivada">
               Tu cuenta ya no pide un código al iniciar sesión. Puedes volver a activarla aquí
               mismo.
             </Notice>
           )}
           <EnableTwoFactor
-            focusTitle={returning === "enable" && !turnedOff}
-            onEnrolled={(started) => {
-              setTurnedOff(false);
-              setEnrollment(started);
-            }}
+            focusTitle={returning === "enable"}
+            onEnrolled={(enrollment) => dispatch({ type: "enrolled", enrollment })}
           />
         </>
       )}
@@ -419,15 +483,18 @@ function EnableTwoFactor({
 /** Links an authenticator app: the first one when enrolling, or a new one in place of the active one. */
 function VerifyEnrollment({
   totpURI,
-  replacing = false,
+  replacingUntil,
   onVerified,
   onCancel,
 }: {
   totpURI: string;
-  replacing?: boolean;
+  /** Set when replacing the active app: when the new secret stops waiting for its first code. */
+  replacingUntil?: Date;
   onVerified: () => void;
-  onCancel: () => void;
+  /** Drops the unverified secret; returns the message to show if that failed. */
+  onCancel: () => Promise<string | null>;
 }) {
+  const replacing = replacingUntil !== undefined;
   const router = useRouter();
   const titleRef = useRef<HTMLHeadingElement>(null);
   // A touch screen is usually the phone that holds the authenticator, so it cannot scan its own screen.
@@ -442,6 +509,16 @@ function VerifyEnrollment({
     defaultValues: { code: "" },
   });
   const { errors, isSubmitting } = form.formState;
+  const [canceling, setCanceling] = useState(false);
+
+  async function cancel() {
+    setCanceling(true);
+    const message = await onCancel();
+    if (message !== null) {
+      setCanceling(false);
+      form.setError("root", { message });
+    }
+  }
 
   useEffect(() => {
     // On a touch screen the keyboard would cover the link to the app.
@@ -488,8 +565,8 @@ function VerifyEnrollment({
           {replacing ? "Conecta tu nueva aplicación" : "Conecta tu aplicación de autenticación"}
         </CardTitle>
         <CardDescription>
-          {replacing
-            ? "Tu aplicación actual sigue funcionando hasta que confirmes un código de la nueva."
+          {replacingUntil
+            ? `Tu aplicación actual sigue funcionando hasta que confirmes un código de la nueva. Tienes hasta las ${timeFormat.format(replacingUntil)} para terminar el cambio.`
             : "Agrega Cetus a tu aplicación y confirma con el código que te muestra. Al terminar te damos tus códigos de respaldo."}
         </CardDescription>
       </CardHeader>
@@ -581,7 +658,7 @@ function VerifyEnrollment({
         </CardContent>
         <CardFooter className="mt-6">
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || canceling}>
               {isSubmitting && <Spinner data-icon="inline-start" />}
               {isSubmitting
                 ? "Verificando…"
@@ -589,7 +666,13 @@ function VerifyEnrollment({
                   ? "Verificar y cambiar"
                   : "Verificar y activar"}
             </Button>
-            <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => void cancel()}
+              disabled={isSubmitting || canceling}
+            >
+              {canceling && <Spinner data-icon="inline-start" />}
               Cancelar
             </Button>
           </div>
@@ -706,7 +789,7 @@ function AuthenticatorApp({
   focusTitle: boolean;
   confirming: boolean;
   onConfirmingChange: (open: boolean) => void;
-  onStarted: (totpURI: string) => void;
+  onStarted: (replacement: Replacement) => void;
 }) {
   const titleRef = useFocusOnMount<HTMLHeadingElement>(focusTitle);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -735,7 +818,7 @@ function AuthenticatorApp({
                   "No pudimos empezar el cambio de aplicación. Intenta de nuevo.",
                 );
               }
-              onStarted(data.totpURI);
+              onStarted({ totpURI: data.totpURI, expiresAt: new Date(data.expiresAt) });
               return null;
             }}
             onCancel={() => {

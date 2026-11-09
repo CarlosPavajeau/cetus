@@ -67,13 +67,27 @@ export function replaceTotp(options: { issuer: string; onReplaced: (user: User) 
           }
           const identifier = pendingIdentifier(user.id);
           const secret = generateRandomString(32);
+          const expiresAt = new Date(Date.now() + pendingSeconds * 1000);
           await ctx.context.internalAdapter.deleteVerificationByIdentifier(identifier);
           await ctx.context.internalAdapter.createVerificationValue({
             identifier,
             value: await symmetricEncrypt({ key: ctx.context.secretConfig, data: secret }),
-            expiresAt: new Date(Date.now() + pendingSeconds * 1000),
+            expiresAt,
           });
-          return ctx.json({ totpURI: createOTP(secret).url(options.issuer, user.email) });
+          return ctx.json({
+            totpURI: createOTP(secret).url(options.issuer, user.email),
+            expiresAt: expiresAt.toISOString(),
+          });
+        },
+      ),
+      cancelTotpReplacement: createAuthEndpoint(
+        "/two-factor/replace-totp/cancel",
+        { method: "POST", use: [sensitiveSessionMiddleware] },
+        async (ctx) => {
+          await ctx.context.internalAdapter.deleteVerificationByIdentifier(
+            pendingIdentifier(ctx.context.session.user.id),
+          );
+          return ctx.json({ status: true });
         },
       ),
       confirmTotpReplacement: createAuthEndpoint(
