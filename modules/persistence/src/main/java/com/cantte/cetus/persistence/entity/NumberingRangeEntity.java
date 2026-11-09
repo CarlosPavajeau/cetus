@@ -121,7 +121,6 @@ public class NumberingRangeEntity extends PanacheEntityBase {
                 .formatted(alias, today);
     }
 
-    /** Whether a range of the issuer for the type and prefix already covers any number of {@code from}..{@code to}. */
     public static boolean overlaps(UUID issuerId, DocumentType type, String prefix, long from, long to) {
         return count(
                         "issuerId = :issuer and documentType = :type and prefix = :prefix "
