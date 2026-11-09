@@ -632,7 +632,7 @@ function VerifyEnrollment({
                         boxed
                         aria-invalid={fieldState.invalid}
                         onComplete={() => {
-                          if (!form.formState.isSubmitting) {
+                          if (!form.formState.isSubmitting && !canceling) {
                             void onSubmit();
                           }
                         }}

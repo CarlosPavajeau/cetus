@@ -23,7 +23,7 @@ export const requeueInboundEvent = createServerFn({ method: "POST" })
     } catch (error) {
       if (error instanceof CetusApiError) {
         throw new Error(
-          error.code === "event_not_failed" || error.status === 404
+          error.code === "event_not_failed"
             ? "Alguien ya volvió a encolar este evento. Recarga la página."
             : "No pudimos volver a encolar el evento. Recarga la página e inténtalo de nuevo.",
           { cause: error },
