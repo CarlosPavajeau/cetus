@@ -50,3 +50,6 @@ apps/docs/public/cetus.postman_collection.json
 
 # Each developer's own mise settings, such as CETUS_TUNNEL.
 mise.local.toml
+
+# Plans folder
+plans/
