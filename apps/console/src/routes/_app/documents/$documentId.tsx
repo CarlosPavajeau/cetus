@@ -3,6 +3,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
   ChevronDownIcon,
+  CircleCheckIcon,
   FileMinusIcon,
   FilePenLineIcon,
   FilePlusIcon,
@@ -61,12 +62,12 @@ import {
   isTechnicalEvent,
 } from "~/features/documents/labels";
 import { documentDetailQuery } from "~/features/documents/queries";
-import { ResendDocument, ResendUnavailable } from "~/features/documents/ResendDocument";
+import { ResendDocument, resendUnavailableNotice } from "~/features/documents/ResendDocument";
 import { getDocumentFileUrl } from "~/features/documents/server";
 import { paymentMeans, paymentMethods } from "~/features/issuance/catalogs";
 import { reissueTarget } from "~/features/issuance/reissue";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
-import type { DocumentDetail } from "~/lib/api/types";
+import type { Delivery, DocumentDetail } from "~/lib/api/types";
 import { cn, uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/documents/$documentId")({
@@ -89,6 +90,13 @@ export const Route = createFileRoute("/_app/documents/$documentId")({
 
 const quantityFormat = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 6 });
 const percentFormat = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
+
+const undeliveredStatuses: ReadonlySet<Delivery["status"]> = new Set([
+  "SKIPPED",
+  "BOUNCED",
+  "COMPLAINED",
+  "FAILED",
+]);
 
 function BackToDocuments() {
   return (
@@ -289,9 +297,7 @@ function DocumentDetailPage() {
         </div>
       </Section>
 
-      {isInvoice && (document.status === "ACCEPTED" || hasNotes(document)) && (
-        <InvoiceNotes document={document} />
-      )}
+      {isInvoice && hasNotes(document) && <InvoiceNotes document={document} />}
 
       {(document.deliveries.length > 0 || !unsent) && (
         <Section
@@ -308,37 +314,48 @@ function DocumentDetailPage() {
                   : "Se envía por correo al cliente cuando la DIAN acepta el documento."}
             </p>
           ) : (
-            <ul className="flex flex-col gap-2">
-              {document.deliveries.map((delivery) => (
-                <li key={delivery.id} className="flex flex-col gap-0.5 text-2xs">
-                  <span>
-                    <span className="font-medium">{deliveryStatusLabel[delivery.status]}</span>
-                    {" · "}
-                    {delivery.recipient ?? "Sin destinatario"}
-                    {delivery.sentAt && ` · ${formatDateTime(new Date(delivery.sentAt))}`}
-                  </span>
-                  {delivery.error && (
-                    <span className="text-muted-foreground">
-                      {describeDeliveryError(delivery.error)}
-                    </span>
-                  )}
-                  {!sandbox &&
-                    ["SKIPPED", "BOUNCED", "COMPLAINED", "FAILED"].includes(delivery.status) && (
-                      <span className="text-muted-foreground">
-                        El cliente no lo recibió por correo: entrégale el PDF y el AttachedDocument
-                        por tu cuenta.
+            <ul className="flex flex-col divide-y">
+              {document.deliveries.map((delivery, index) => {
+                const explanation = [
+                  delivery.error && describeDeliveryError(delivery.error),
+                  !sandbox &&
+                    undeliveredStatuses.has(delivery.status) &&
+                    "El cliente no lo recibió por correo: entrégale el PDF y el AttachedDocument por tu cuenta.",
+                ].filter((text) => typeof text === "string");
+                const notice =
+                  index === document.deliveries.length - 1
+                    ? resendUnavailableNotice(document)
+                    : null;
+                return (
+                  <li key={delivery.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                      <span className="min-w-0 text-sm break-words">
+                        <span className="font-medium">{deliveryStatusLabel[delivery.status]}</span>
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {sandbox
+                            ? `Contacto técnico${delivery.recipient ? `, ${delivery.recipient}` : ""}`
+                            : (delivery.recipient ?? "Sin destinatario")}
+                        </span>
                       </span>
+                      {delivery.sentAt && (
+                        <span className="text-2xs text-muted-foreground tabular-nums">
+                          {formatDateTime(new Date(delivery.sentAt))}
+                        </span>
+                      )}
+                    </div>
+                    {(explanation.length > 0 || notice) && (
+                      <p className="max-w-prose text-2xs text-muted-foreground">
+                        {explanation.join(" ")}
+                        {explanation.length > 0 && notice && " "}
+                        {notice}
+                      </p>
                     )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
-          {sandbox && document.deliveries.length > 0 && (
-            <p className="text-2xs text-muted-foreground">
-              En sandbox el correo va al contacto técnico de la cuenta, nunca al cliente.
-            </p>
-          )}
-          <ResendUnavailable document={document} />
         </Section>
       )}
 
@@ -353,6 +370,7 @@ function DocumentTimeline({ document }: { document: DocumentDetail }) {
   const events = technicalShown
     ? document.events
     : document.events.filter((event) => !isTechnicalEvent(event));
+  const finished = isFinished(document);
 
   return (
     <Section
@@ -393,6 +411,20 @@ function DocumentTimeline({ document }: { document: DocumentDetail }) {
             </li>
           );
         })}
+        {finished && (
+          <li className="relative flex flex-col gap-0.5 text-2xs before:absolute before:top-3.5 before:-bottom-px before:-left-4.25 before:w-px before:bg-background">
+            <CircleCheckIcon
+              className="absolute top-0 -left-[1.54rem] size-3.5 bg-background text-success"
+              aria-hidden
+            />
+            <span className="font-medium text-success-foreground">Proceso terminado</span>
+            <span className="text-muted-foreground">
+              {document.balance === 0
+                ? "Las notas crédito ya acreditan todo su valor."
+                : "Si necesitas corregirla, emite una nota desde Corregir factura."}
+            </span>
+          </li>
+        )}
       </ol>
       <p className="text-2xs text-muted-foreground">Horarios de Colombia (UTC−5)</p>
     </Section>
@@ -425,6 +457,21 @@ function paymentLabel(payment: NonNullable<DocumentDetail["payment"]>) {
     paymentMeans.find((option) => option.code === payment.meansCode)?.label ??
     `Medio ${payment.meansCode}`;
   return `${method} · ${means}`;
+}
+
+/**
+ * An accepted invoice whose email is over and asks nothing more of the issuer. Outside sandbox, an email the
+ * customer never got leaves the issuer to deliver the files.
+ */
+function isFinished(document: DocumentDetail) {
+  const delivery = document.deliveries.at(-1);
+  return (
+    document.documentType === "INVOICE" &&
+    document.status === "ACCEPTED" &&
+    delivery !== undefined &&
+    delivery.status !== "PENDING" &&
+    (document.environment === "SANDBOX" || !undeliveredStatuses.has(delivery.status))
+  );
 }
 
 function hasNotes(invoice: DocumentDetail) {
@@ -600,50 +647,46 @@ function InvoiceNotes({ document }: { document: DocumentDetail }) {
 
   return (
     <Section id="notes" title="Notas asociadas">
-      {notes.length === 0 ? (
-        <p className="text-2xs text-muted-foreground">Esta factura no tiene notas.</p>
-      ) : (
-        <div className="-mx-5">
-          <Table>
-            <TableHeader className="[&_th]:h-8.75">
-              <TableRow>
-                <TableHead className="pl-5">Nota</TableHead>
-                <TableHead>Concepto</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="pr-5 text-right">Valor</TableHead>
+      <div className="-mx-5">
+        <Table>
+          <TableHeader className="[&_th]:h-8.75">
+            <TableRow>
+              <TableHead className="pl-5">Nota</TableHead>
+              <TableHead>Concepto</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="pr-5 text-right">Valor</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {notes.map((note) => (
+              <TableRow key={note.id}>
+                <TableCell className="pl-5 text-sm">
+                  <Link
+                    to="/documents/$documentId"
+                    params={{ documentId: note.id }}
+                    className="font-medium underline-offset-4 hover:underline"
+                  >
+                    {note.number}
+                  </Link>
+                  <span className="ml-1.5 text-muted-foreground">
+                    {documentTypeLabel[note.type]}
+                  </span>
+                </TableCell>
+                <TableCell className="text-sm">
+                  {conceptLabel[note.concept] ?? note.concept}
+                </TableCell>
+                <TableCell className="text-sm">
+                  <DocumentStatusBadge status={note.status} environment={document.environment} />
+                </TableCell>
+                <TableCell className="pr-5 text-right text-sm tabular-nums">
+                  {note.type === "CREDIT_NOTE" ? "−" : "+"}
+                  {money(note.payable)}
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {notes.map((note) => (
-                <TableRow key={note.id}>
-                  <TableCell className="pl-5 text-sm">
-                    <Link
-                      to="/documents/$documentId"
-                      params={{ documentId: note.id }}
-                      className="font-medium underline-offset-4 hover:underline"
-                    >
-                      {note.number}
-                    </Link>
-                    <span className="ml-1.5 text-muted-foreground">
-                      {documentTypeLabel[note.type]}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {conceptLabel[note.concept] ?? note.concept}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <DocumentStatusBadge status={note.status} environment={document.environment} />
-                  </TableCell>
-                  <TableCell className="pr-5 text-right text-sm tabular-nums">
-                    {note.type === "CREDIT_NOTE" ? "−" : "+"}
-                    {money(note.payable)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       {document.balance !== null && (
         <p className="text-2xs text-muted-foreground">
           Saldo que aún pueden acreditar las notas crédito:{" "}

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type } from "arktype";
 import { MailIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
@@ -42,28 +42,31 @@ function configurationFailure(document: DocumentDetail): ConfigurationFailure | 
   return error ? (entryOf(configurationFailures, error) ?? null) : null;
 }
 
-/** Says why a document has no "Reenviar correo", when its last delivery failed for configuration. */
-export function ResendUnavailable({ document }: { document: DocumentDetail }) {
+/**
+ * Why a document has no "Reenviar correo", when its last delivery failed for configuration. It reads as the
+ * end of that delivery's explanation.
+ */
+export function resendUnavailableNotice(document: DocumentDetail): ReactNode {
   const failure = document.status === "ACCEPTED" ? configurationFailure(document) : null;
   if (failure === "TECHNICAL_CONTACT_UNVERIFIED") {
     return (
-      <p className="text-2xs text-muted-foreground">
-        No se puede reenviar hasta que el contacto técnico tenga un correo verificado.{" "}
+      <>
+        No se puede reenviar hasta verificarlo.{" "}
         <Link to="/settings/contacts" className="text-foreground underline underline-offset-4">
           Verificar el contacto técnico
         </Link>
-      </p>
+      </>
     );
   }
   if (failure === "EMAIL_UNCONFIGURED") {
     return (
-      <p className="text-2xs text-muted-foreground">
-        No se puede reenviar: el correo falló por la configuración de este ambiente, no por el
-        documento, y otro intento fallaría igual.{" "}
+      <>
+        No se puede reenviar: otro intento fallaría igual, porque falla el ambiente y no el
+        documento.{" "}
         <Link to="/help" className="text-foreground underline underline-offset-4">
           Escríbenos desde Ayuda
         </Link>
-      </p>
+      </>
     );
   }
   return null;

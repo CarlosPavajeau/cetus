@@ -1,4 +1,4 @@
-import { dateFormat } from "~/features/api-keys/formats";
+import { formatDate } from "~/features/api-keys/formats";
 import type {
   Delivery,
   DocumentEvent,
@@ -199,7 +199,7 @@ export function describeDeliveryError(error: string) {
 
 /** A LocalDate ("2026-10-18") read as a calendar day, not as midnight UTC. */
 export function formatDay(day: string) {
-  return dateFormat.format(new Date(`${day}T12:00:00-05:00`));
+  return formatDate(new Date(`${day}T12:00:00-05:00`));
 }
 
 export function formatMoney(amount: number, currency: string) {

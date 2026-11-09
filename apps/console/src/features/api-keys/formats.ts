@@ -37,12 +37,17 @@ export function isToday(date: Date) {
   return dateFormat.format(date) === dateFormat.format(new Date());
 }
 
-/** "01 oct 2026, 10:15". Built from parts, since es-CO formats it as "01 de oct de 2026". */
-export function formatDateTime(date: Date) {
+/** "01 oct 2026". Built from parts, since es-CO formats it as "01 de oct de 2026". */
+export function formatDate(date: Date) {
   const parts = Object.fromEntries(
     dayMonthYearFormat.formatToParts(date).map((part) => [part.type, part.value]),
   );
-  return `${parts.day} ${parts.month?.replace(".", "")} ${parts.year}, ${timeFormat.format(date)}`;
+  return `${parts.day} ${parts.month?.replace(".", "")} ${parts.year}`;
+}
+
+/** "01 oct 2026, 10:15". */
+export function formatDateTime(date: Date) {
+  return `${formatDate(date)}, ${timeFormat.format(date)}`;
 }
 
 /** "Hoy, 09:42" for today, "01 oct 2026, 10:15" otherwise. */
