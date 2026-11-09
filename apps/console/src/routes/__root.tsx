@@ -52,7 +52,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body>
         <TooltipProvider>{children}</TooltipProvider>
         <Suspense>
-          <ReactQueryDevtools buttonPosition="bottom-left" />
+          <ReactQueryDevtools buttonPosition="bottom-right" />
         </Suspense>
         <Scripts />
       </body>
