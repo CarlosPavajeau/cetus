@@ -32,6 +32,10 @@ describe("parseDianError", () => {
     expect(error.explanation).toBeNull();
   });
 
+  it("finds no explanation in the object prototype", () => {
+    expect(parseDianError("Regla: toString, Rechazo: Algo distinto.").explanation).toBeNull();
+  });
+
   it("returns text in another format as is", () => {
     expect(parseDianError("  Error inesperado del servicio ")).toEqual({
       rule: null,
@@ -45,6 +49,15 @@ describe("parseDianError", () => {
 describe("dianRuleDocsUrl", () => {
   it("links to the rule's anchor, which the docs site lowercases", () => {
     expect(dianRuleDocsUrl("FAJ43b")).toBe("https://cetus-docs.cantte.com/errores#faj43b");
+  });
+
+  it("links a rule without explanation to the catalog's section on the DIAN's rules", () => {
+    expect(dianRuleDocsUrl("ZZZ99")).toBe(
+      "https://cetus-docs.cantte.com/errores#reglas-de-la-dian",
+    );
+    expect(dianRuleDocsUrl("constructor")).toBe(
+      "https://cetus-docs.cantte.com/errores#reglas-de-la-dian",
+    );
   });
 
   it("has a catalog entry for every explained rule", () => {

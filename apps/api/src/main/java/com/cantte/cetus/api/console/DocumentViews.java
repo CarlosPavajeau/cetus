@@ -1,16 +1,22 @@
 package com.cantte.cetus.api.console;
 
 import com.cantte.cetus.api.documents.DeliveryView;
+import com.cantte.cetus.api.invoices.InvoiceRequest;
 import com.cantte.cetus.api.invoices.InvoiceResponse;
 import com.cantte.cetus.domain.calc.Amounts;
 import com.cantte.cetus.domain.calc.CalculatedLine;
 import com.cantte.cetus.domain.calc.CalculationResult;
 import com.cantte.cetus.domain.calc.MonetaryTotals;
 import com.cantte.cetus.domain.calc.TaxAmount;
+import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.domain.model.DocumentType;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.Party;
+import com.cantte.cetus.domain.model.PaymentInfo;
+import com.cantte.cetus.domain.model.PersonType;
+import com.cantte.cetus.domain.model.TaxType;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import com.cantte.cetus.persistence.entity.DocumentLineEntity;
 import com.cantte.cetus.persistence.entity.DocumentTaxEntity;
@@ -83,6 +89,10 @@ public final class DocumentViews {
             String currency,
             DocumentIssuer issuer,
             DocumentCustomer customer,
+
+            @Schema(nullable = true, description = "How the invoice is paid; null for a note")
+            DocumentPayment payment,
+
             List<DocumentLine> lines,
 
             @Schema(description = "Document-level subtotals by tax")
@@ -131,7 +141,10 @@ public final class DocumentViews {
                     doc.currency,
                     new DocumentIssuer(issuer.id, issuer.legalName, issuer.nit, issuer.checkDigit),
                     DocumentCustomer.from(doc.customer),
-                    doc.lines.stream().map(DocumentLine::from).toList(),
+                    invoice && doc.payment != null ? DocumentPayment.from(doc.payment) : null,
+                    doc.lines.stream()
+                            .map(line -> DocumentLine.from(line, doc.taxes))
+                            .toList(),
                     doc.taxes.stream()
                             .filter(t -> t.line == null)
                             .map(DocumentTax::from)
@@ -205,19 +218,48 @@ public final class DocumentViews {
             @Schema(nullable = true) String checkDigit) {}
 
     public record DocumentCustomer(
-            String identificationType,
+            PersonType personType,
+            IdentificationType identificationType,
             String identificationNumber,
             @Schema(nullable = true) String checkDigit,
             String legalName,
-            @Schema(nullable = true) String email) {
+            @Schema(nullable = true) String tradeName,
+            List<String> taxLevelCodes,
+            InvoiceRequest.CustomerTaxScheme taxScheme,
+            @Schema(nullable = true) Address address,
+            @Schema(nullable = true) String email,
+            @Schema(nullable = true) String phone) {
 
         static DocumentCustomer from(Party party) {
             return new DocumentCustomer(
-                    party.identificationType().name(),
+                    party.personType(),
+                    party.identificationType(),
                     party.identificationNumber(),
                     party.checkDigit(),
                     party.legalName(),
-                    party.email());
+                    party.tradeName(),
+                    party.taxLevelCodes(),
+                    "01".equals(party.taxSchemeId())
+                            ? InvoiceRequest.CustomerTaxScheme.IVA
+                            : InvoiceRequest.CustomerTaxScheme.NOT_APPLICABLE,
+                    party.address(),
+                    party.email(),
+                    party.phone());
+        }
+    }
+
+    public record DocumentPayment(
+            InvoiceRequest.PaymentMethod method,
+            String meansCode,
+            @Schema(nullable = true) LocalDate dueDate) {
+
+        static DocumentPayment from(PaymentInfo payment) {
+            return new DocumentPayment(
+                    "2".equals(payment.methodId())
+                            ? InvoiceRequest.PaymentMethod.CREDIT
+                            : InvoiceRequest.PaymentMethod.CASH,
+                    payment.meansCode(),
+                    payment.dueDate());
         }
     }
 
@@ -226,21 +268,31 @@ public final class DocumentViews {
             @Schema(nullable = true) String itemCode,
             String description,
             BigDecimal quantity,
+            String unitCode,
             BigDecimal unitPrice,
 
             @Schema(description = "Quantity times unit price, before taxes")
-            BigDecimal lineExtension) {
+            BigDecimal lineExtension,
 
-        static DocumentLine from(DocumentLineEntity line) {
+            List<DocumentLineTax> taxes) {
+
+        static DocumentLine from(DocumentLineEntity line, List<DocumentTaxEntity> taxes) {
             return new DocumentLine(
                     line.lineNumber,
                     line.itemCode,
                     line.description,
                     line.quantity,
+                    line.unitCode,
                     line.unitPrice,
-                    line.lineExtensionAmount);
+                    line.lineExtensionAmount,
+                    taxes.stream()
+                            .filter(tax -> tax.line == line)
+                            .map(tax -> new DocumentLineTax(tax.taxType, tax.percent))
+                            .toList());
         }
     }
+
+    public record DocumentLineTax(TaxType type, BigDecimal percent) {}
 
     public record DocumentTax(String type, BigDecimal percent, BigDecimal taxable, BigDecimal amount) {
 

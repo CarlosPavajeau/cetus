@@ -34,11 +34,12 @@ test("the documents page lists the invoices and opens their detail", async ({
   await page.getByRole("link", { name: second.number }).click();
   await expect(page).toHaveURL(new RegExp(`/documents/${second.id}$`));
   await expect(page.getByRole("heading", { name: `Factura ${second.number}` })).toBeVisible();
-  await expect(page.getByText("Cliente Dos")).toBeVisible();
+  await expect(page.getByTestId("document-summary")).toContainText("Cliente Dos");
   await expect(page.getByText("Servicio de consultoría")).toBeVisible();
   await expect(page.getByText("Recibido por Cetus")).toBeVisible();
-  await page.getByRole("button", { name: "Descargar" }).click();
-  await expect(page.getByRole("menuitem", { name: "PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Descargar PDF" })).toBeVisible();
+  await page.getByRole("button", { name: "Otros archivos" }).click();
+  await expect(page.getByRole("menuitem", { name: "AttachedDocument" })).toBeVisible();
 });
 
 test("an unknown document shows a not found page", async ({ page, organization: _ }) => {

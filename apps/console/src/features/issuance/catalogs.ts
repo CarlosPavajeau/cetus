@@ -1,4 +1,11 @@
-import type { IdentificationType, LineTax, PersonType } from "~/lib/api/types";
+import type {
+  CreditNoteConcept,
+  DebitNoteConcept,
+  DocumentPaymentMethod,
+  IdentificationType,
+  LineTax,
+  PersonType,
+} from "~/lib/api/types";
 
 export type TaxPreset = "IVA_19" | "IVA_5" | "EXEMPT" | "EXCLUDED" | "INC_8";
 
@@ -21,6 +28,11 @@ export const taxPresetIds = [
   "EXCLUDED",
   "INC_8",
 ] as const satisfies readonly TaxPreset[];
+
+export const paymentMethods = [
+  { value: "CASH", label: "De contado" },
+  { value: "CREDIT", label: "A crédito" },
+] as const satisfies readonly { value: DocumentPaymentMethod; label: string }[];
 
 /** The usual payment means (annex table 13.3.4.2); "ZZZ" covers the rest. */
 export const paymentMeans = [
@@ -64,3 +76,19 @@ export const finalConsumer = {
   identificationNumber: "222222222222",
   legalName: "Consumidor final",
 } as const;
+
+// A full cancellation has its own dialog on the invoice, which credits every line at once.
+export const creditConcepts = [
+  "PARTIAL_RETURN",
+  "REBATE",
+  "PRICE_ADJUSTMENT",
+  "EARLY_PAYMENT_DISCOUNT",
+  "VOLUME_DISCOUNT",
+] as const satisfies readonly CreditNoteConcept[];
+
+export const debitConcepts = [
+  "INTEREST",
+  "EXPENSES",
+  "VALUE_CHANGE",
+  "OTHER",
+] as const satisfies readonly DebitNoteConcept[];

@@ -35,7 +35,7 @@ import {
 import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
 import { IssueDateFilter } from "~/features/documents/IssueDateFilter";
 import {
-  documentStatusLabel,
+  documentStatusName,
   documentTypeLabel,
   formatDay,
   formatMoney,
@@ -95,10 +95,12 @@ const typeItems: Option[] = [
   ...documentTypes.map((value) => ({ label: documentTypeLabel[value], value })),
 ];
 
-const statusItems: Option[] = [
-  { label: "Todos los estados", value: "ALL" },
-  ...documentStatuses.map((value) => ({ label: documentStatusLabel[value], value })),
-];
+function statusItems(environment: Environment): Option[] {
+  return [
+    { label: "Todos los estados", value: "ALL" },
+    ...documentStatuses.map((value) => ({ label: documentStatusName(value, environment), value })),
+  ];
+}
 
 function FilterSelect({
   items,
@@ -216,7 +218,7 @@ function Documents() {
               onChange={(value) => update({ type: documentTypes.find((each) => each === value) })}
             />
             <FilterSelect
-              items={statusItems}
+              items={statusItems(environment)}
               value={filters.status}
               label="Estado"
               onChange={(value) =>
@@ -328,7 +330,7 @@ function DocumentRow({ document }: { document: DocumentSummary }) {
         {formatMoney(document.payable, document.currency)}
       </TableCell>
       <TableCell>
-        <DocumentStatusBadge status={document.status} />
+        <DocumentStatusBadge status={document.status} environment={document.environment} />
       </TableCell>
       <TableCell className="pr-5">
         <EnvironmentBadge environment={document.environment} />

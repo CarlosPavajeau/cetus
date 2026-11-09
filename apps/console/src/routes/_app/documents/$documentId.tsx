@@ -3,19 +3,22 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
   ChevronDownIcon,
+  CircleCheckIcon,
   FileMinusIcon,
   FilePenLineIcon,
   FilePlusIcon,
   FileTextIcon,
   FileXIcon,
   FingerprintIcon,
+  RotateCcwIcon,
 } from "lucide-react";
 import { useId, useState } from "react";
 
 import { CopyButton } from "~/components/CopyButton";
-import { Entry, Section } from "~/components/DetailSection";
-import { EnvironmentBadge } from "~/components/EnvironmentBadge";
+import { Entry, RuledEntry, Section } from "~/components/DetailSection";
+import { EnvironmentBadge, environmentLabel } from "~/components/EnvironmentBadge";
 import { PageHeader } from "~/components/PageHeader";
+import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -49,18 +52,22 @@ import { DocumentStatusBadge } from "~/features/documents/DocumentStatusBadge";
 import {
   conceptLabel,
   deliveryStatusLabel,
+  describeDeliveryError,
   describeEvent,
   documentLead,
   documentTypeLabel,
   formatDay,
   formatMoney,
   identificationTypeLabel,
+  isTechnicalEvent,
 } from "~/features/documents/labels";
 import { documentDetailQuery } from "~/features/documents/queries";
-import { ResendDocument } from "~/features/documents/ResendDocument";
+import { ResendDocument, resendUnavailableNotice } from "~/features/documents/ResendDocument";
 import { getDocumentFileUrl } from "~/features/documents/server";
+import { paymentMeans, paymentMethods } from "~/features/issuance/catalogs";
+import { reissueTarget } from "~/features/issuance/reissue";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
-import type { DocumentDetail } from "~/lib/api/types";
+import type { Delivery, DocumentDetail } from "~/lib/api/types";
 import { cn, uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/documents/$documentId")({
@@ -84,6 +91,13 @@ export const Route = createFileRoute("/_app/documents/$documentId")({
 const quantityFormat = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 6 });
 const percentFormat = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
 
+const undeliveredStatuses: ReadonlySet<Delivery["status"]> = new Set([
+  "SKIPPED",
+  "BOUNCED",
+  "COMPLAINED",
+  "FAILED",
+]);
+
 function BackToDocuments() {
   return (
     <Link
@@ -104,6 +118,8 @@ function DocumentDetailPage() {
   }
   const money = (amount: number) => formatMoney(amount, document.currency);
   const isInvoice = document.documentType === "INVOICE";
+  const sandbox = document.environment === "SANDBOX";
+  const unsent = document.status === "REJECTED" || document.status === "FAILED";
 
   return (
     <div className="flex flex-1 flex-col gap-5">
@@ -111,13 +127,15 @@ function DocumentDetailPage() {
 
       <PageHeader
         title={`${documentTypeLabel[document.documentType]} ${document.number}`}
-        status={<DocumentStatusBadge status={document.status} />}
+        status={<DocumentStatusBadge status={document.status} environment={document.environment} />}
+        summary={<DocumentSummary document={document} />}
         lead={documentLead(document.status, document.environment)}
         action={
           <div className="flex flex-wrap items-start gap-2">
             {isInvoice && document.status === "ACCEPTED" && (
               <InvoiceCorrections invoice={document} />
             )}
+            <ReissueAction document={document} />
             <DocumentDownloads
               getUrl={(file) => getDocumentFileUrl({ data: { id: document.id, file } })}
             />
@@ -128,18 +146,19 @@ function DocumentDetailPage() {
       <DianErrors document={document} />
 
       <section
-        className="flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-md border bg-card px-5 py-3"
+        className="flex min-h-16 flex-wrap items-start justify-between gap-x-6 gap-y-2 rounded-md border bg-card px-5 py-3 sm:items-center"
         aria-label={isInvoice ? "CUFE" : "CUDE"}
       >
-        <div className="flex min-w-0 items-center gap-3.5">
-          <FingerprintIcon className="size-4 shrink-0" />
+        <div className="flex min-w-0 items-start gap-3.5 sm:items-center">
+          <FingerprintIcon className="mt-0.5 size-4 shrink-0 sm:mt-0" aria-hidden="true" />
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-2xs text-muted-foreground">{isInvoice ? "CUFE" : "CUDE"}</span>
-            <div className="flex min-w-0 items-center gap-2">
-              <code className="truncate text-sm" data-testid="document-cufe">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <code className="min-w-0 text-sm break-all sm:truncate" data-testid="document-cufe">
                 {document.cufe ?? "Se calcula al firmar el documento"}
               </code>
               <EnvironmentBadge environment={document.environment} />
+              {document.cufe && unsent && <Badge variant="destructive">Sin validez</Badge>}
             </div>
           </div>
         </div>
@@ -152,91 +171,124 @@ function DocumentDetailPage() {
         <CorrectedInvoice document={document} invoice={document.invoice} />
       )}
 
-      <Section id="parties" title="Emisor y cliente">
-        <dl className="grid gap-x-10 gap-y-3.25 sm:grid-cols-2 lg:grid-cols-4">
-          <Entry label="Emisor">
+      <Section id="document-data" title="Datos">
+        <dl className="flex flex-col divide-y">
+          <RuledEntry label="Emisor">
             <Link
               to="/issuers/$issuerId"
               params={{ issuerId: document.issuer.id }}
-              className="underline-offset-4 hover:underline"
+              className="w-fit underline-offset-4 hover:underline"
             >
               {document.issuer.legalName}
             </Link>
-          </Entry>
-          <Entry label="NIT del emisor">
-            {document.issuer.nit}
-            {document.issuer.checkDigit && `-${document.issuer.checkDigit}`}
-          </Entry>
-          <Entry label="Cliente">{document.customer.legalName}</Entry>
-          <Entry label="Identificación del cliente">
-            {identificationTypeLabel[document.customer.identificationType] ??
-              document.customer.identificationType}{" "}
-            {document.customer.identificationNumber}
-            {document.customer.checkDigit && `-${document.customer.checkDigit}`}
-          </Entry>
-          <Entry label="Correo del cliente">{document.customer.email ?? "—"}</Entry>
-          <Entry label="Fecha de emisión">{formatDay(document.issueDate)}</Entry>
-          {document.dueDate && <Entry label="Vencimiento">{formatDay(document.dueDate)}</Entry>}
-          <Entry label="Referencia externa">{document.externalReference ?? "—"}</Entry>
+            <CopyableId
+              prefix="NIT"
+              value={withCheckDigit(document.issuer.nit, document.issuer.checkDigit)}
+              label="Copiar NIT del emisor"
+            />
+          </RuledEntry>
+          <RuledEntry label="Cliente">
+            <span>{document.customer.legalName}</span>
+            <CopyableId
+              prefix={
+                identificationTypeLabel[document.customer.identificationType] ??
+                document.customer.identificationType
+              }
+              value={withCheckDigit(
+                document.customer.identificationNumber,
+                document.customer.checkDigit,
+              )}
+              label="Copiar identificación del cliente"
+            />
+            <span className="text-muted-foreground">{document.customer.email ?? "Sin correo"}</span>
+          </RuledEntry>
+          <RuledEntry label="Fecha de emisión">{formatDay(document.issueDate)}</RuledEntry>
+          {document.dueDate && (
+            <RuledEntry label="Vencimiento">{formatDay(document.dueDate)}</RuledEntry>
+          )}
+          {document.payment && (
+            <RuledEntry label="Pago">{paymentLabel(document.payment)}</RuledEntry>
+          )}
+          <RuledEntry label="Referencia externa">
+            {document.externalReference ? (
+              <CopyableId value={document.externalReference} label="Copiar referencia externa" />
+            ) : (
+              "—"
+            )}
+          </RuledEntry>
+          <RuledEntry label="ID del documento">
+            <CopyableId value={document.id} label="Copiar ID del documento" />
+          </RuledEntry>
         </dl>
       </Section>
 
       <Section id="lines" title="Detalle">
-        <div className="overflow-hidden rounded-lg border">
+        <div className="-mx-5 -mb-5 overflow-hidden rounded-b-lg">
           <Table>
-            <TableHeader className="bg-sidebar [&_th]:h-8.75">
+            <TableHeader className="[&_th]:h-8.75">
               <TableRow>
-                <TableHead className="pl-4">Descripción</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead className="text-right">Precio unitario</TableHead>
-                <TableHead className="pr-4 text-right">Subtotal</TableHead>
+                <TableHead className="pl-5">Descripción</TableHead>
+                <TableHead className="text-right max-sm:p-0">
+                  <span className="max-sm:sr-only">Cantidad</span>
+                </TableHead>
+                <TableHead className="text-right max-sm:p-0">
+                  <span className="max-sm:sr-only">Precio unitario</span>
+                </TableHead>
+                <TableHead className="pr-5 text-right">Subtotal</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {document.lines.map((line) => (
                 <TableRow key={line.lineNumber}>
-                  <TableCell className="pl-4 text-2xs whitespace-normal">
+                  <TableCell className="pl-5 text-sm whitespace-normal">
                     {line.description}
                     {line.itemCode && (
-                      <span className="ml-1.5 text-muted-foreground">{line.itemCode}</span>
+                      <span className="text-muted-foreground"> · {line.itemCode}</span>
                     )}
+                    {/* Screen readers get the quantity and price from their own cells. */}
+                    <span
+                      className="block text-muted-foreground tabular-nums sm:hidden"
+                      aria-hidden="true"
+                    >
+                      {quantityFormat.format(line.quantity)} × {money(line.unitPrice)}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-right text-2xs tabular-nums">
-                    {quantityFormat.format(line.quantity)}
+                  <TableCell className="text-right text-sm tabular-nums max-sm:p-0">
+                    <span className="max-sm:sr-only">{quantityFormat.format(line.quantity)}</span>
                   </TableCell>
-                  <TableCell className="text-right text-2xs tabular-nums">
-                    {money(line.unitPrice)}
+                  <TableCell className="text-right text-sm tabular-nums max-sm:p-0">
+                    <span className="max-sm:sr-only">{money(line.unitPrice)}</span>
                   </TableCell>
-                  <TableCell className="pr-4 text-right text-2xs tabular-nums">
+                  <TableCell className="pr-5 text-right text-sm tabular-nums">
                     {money(line.lineExtension)}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
-            <TableFooter className="text-2xs">
+            <TableFooter className="text-sm">
               <TableRow>
-                <TableCell colSpan={3} className="pl-4 text-right">
+                <TableCell colSpan={3} className="pl-5 text-right">
                   Subtotal
                 </TableCell>
-                <TableCell className="pr-4 text-right tabular-nums">
+                <TableCell className="pr-5 text-right tabular-nums">
                   {money(document.totals.lineExtension)}
                 </TableCell>
               </TableRow>
               {document.taxes.map((tax) => (
                 <TableRow key={`${tax.type}-${tax.percent}`}>
-                  <TableCell colSpan={3} className="pl-4 text-right">
+                  <TableCell colSpan={3} className="pl-5 text-right whitespace-normal">
                     {tax.type} {percentFormat.format(tax.percent)} % sobre {money(tax.taxable)}
                   </TableCell>
-                  <TableCell className="pr-4 text-right tabular-nums">
+                  <TableCell className="pr-5 text-right tabular-nums">
                     {money(tax.amount)}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={3} className="pl-4 text-right font-medium">
+                <TableCell colSpan={3} className="pl-5 text-right text-md font-medium">
                   Total
                 </TableCell>
-                <TableCell className="pr-4 text-right font-medium tabular-nums">
+                <TableCell className="pr-5 text-right text-md font-medium tabular-nums">
                   {money(document.totals.payable)}
                 </TableCell>
               </TableRow>
@@ -245,67 +297,199 @@ function DocumentDetailPage() {
         </div>
       </Section>
 
-      {isInvoice && <InvoiceNotes document={document} />}
+      {isInvoice && hasNotes(document) && <InvoiceNotes document={document} />}
 
-      <Section
-        id="deliveries"
-        title="Entrega al cliente"
-        action={<ResendDocument document={document} />}
-      >
-        {document.deliveries.length === 0 ? (
-          <p className="text-2xs text-muted-foreground">
-            {document.status === "ACCEPTED"
-              ? "Cetus está preparando el correo con el PDF y el AttachedDocument."
-              : "Se envía por correo al cliente cuando la DIAN acepta el documento."}
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {document.deliveries.map((delivery) => (
-              <li key={delivery.id} className="flex flex-col gap-0.5 text-2xs">
-                <span>
-                  <span className="font-medium">{deliveryStatusLabel[delivery.status]}</span>
-                  {" · "}
-                  {delivery.recipient ?? "Sin destinatario"}
-                  {delivery.sentAt && ` · ${formatDateTime(new Date(delivery.sentAt))}`}
-                </span>
-                {delivery.error && <span className="text-muted-foreground">{delivery.error}</span>}
-                {["SKIPPED", "BOUNCED", "COMPLAINED", "FAILED"].includes(delivery.status) && (
-                  <span className="text-muted-foreground">
-                    El cliente no lo recibió por correo: entrégale el PDF y el AttachedDocument por
-                    tu cuenta.
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+      {(document.deliveries.length > 0 || !unsent) && (
+        <Section
+          id="deliveries"
+          title="Entrega al cliente"
+          action={<ResendDocument document={document} />}
+        >
+          {document.deliveries.length === 0 ? (
+            <p className="text-2xs text-muted-foreground">
+              {document.status === "ACCEPTED"
+                ? "Cetus está preparando el correo con el PDF y el AttachedDocument."
+                : sandbox
+                  ? "Cuando el simulador lo acepte, Cetus lo envía por correo al contacto técnico de la cuenta, nunca al cliente."
+                  : "Se envía por correo al cliente cuando la DIAN acepta el documento."}
+            </p>
+          ) : (
+            <ul className="flex flex-col divide-y">
+              {document.deliveries.map((delivery, index) => {
+                const explanation = [
+                  delivery.error && describeDeliveryError(delivery.error),
+                  !sandbox &&
+                    undeliveredStatuses.has(delivery.status) &&
+                    "El cliente no lo recibió por correo: entrégale el PDF y el AttachedDocument por tu cuenta.",
+                ].filter((text) => typeof text === "string");
+                const notice =
+                  index === document.deliveries.length - 1
+                    ? resendUnavailableNotice(document)
+                    : null;
+                return (
+                  <li key={delivery.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                      <span className="min-w-0 text-sm break-words">
+                        <span className="font-medium">{deliveryStatusLabel[delivery.status]}</span>
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {sandbox
+                            ? `Contacto técnico${delivery.recipient ? `, ${delivery.recipient}` : ""}`
+                            : (delivery.recipient ?? "Sin destinatario")}
+                        </span>
+                      </span>
+                      {delivery.sentAt && (
+                        <span className="text-2xs text-muted-foreground tabular-nums">
+                          {formatDateTime(new Date(delivery.sentAt))}
+                        </span>
+                      )}
+                    </div>
+                    {(explanation.length > 0 || notice) && (
+                      <p className="max-w-prose text-2xs text-muted-foreground">
+                        {explanation.join(" ")}
+                        {explanation.length > 0 && notice && " "}
+                        {notice}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Section>
+      )}
 
-      <Section id="timeline" title="Historial">
-        <ol className="flex flex-col gap-3 border-l pl-4">
-          {document.events.map((event) => {
-            const { title, detail } = describeEvent(event);
-            return (
-              <li
-                key={`${event.at}-${event.kind}-${event.status}-${event.message}`}
-                className="relative flex flex-col gap-0.5 text-2xs"
-              >
-                <span
-                  className="absolute top-1.5 -left-[1.29rem] size-1.5 rounded-full bg-muted-foreground"
-                  aria-hidden
-                />
-                <span className="font-medium">{title}</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {formatDateTime(new Date(event.at))}
-                </span>
-                {detail && <span className="break-words text-muted-foreground">{detail}</span>}
-              </li>
-            );
-          })}
-        </ol>
-        <p className="text-2xs text-muted-foreground">Horarios de Colombia (UTC−5)</p>
-      </Section>
+      <DocumentTimeline document={document} />
     </div>
+  );
+}
+
+function DocumentTimeline({ document }: { document: DocumentDetail }) {
+  const [technicalShown, setTechnicalShown] = useState(false);
+  const technicalCount = document.events.filter(isTechnicalEvent).length;
+  const events = technicalShown
+    ? document.events
+    : document.events.filter((event) => !isTechnicalEvent(event));
+  const finished = isFinished(document);
+
+  return (
+    <Section
+      id="timeline"
+      title="Historial"
+      action={
+        technicalCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-pressed={technicalShown}
+            onClick={() => setTechnicalShown(!technicalShown)}
+          >
+            {technicalShown
+              ? "Ocultar eventos técnicos"
+              : `Mostrar eventos técnicos (${technicalCount})`}
+          </Button>
+        )
+      }
+    >
+      <ol className="flex flex-col gap-3 border-l pl-4">
+        {events.map((event) => {
+          const { title, detail } = describeEvent(event, document.environment);
+          return (
+            <li
+              key={`${event.at}-${event.kind}-${event.status}-${event.message}`}
+              className="relative flex flex-col gap-0.5 text-2xs"
+            >
+              <span
+                className="absolute top-1.5 -left-[1.29rem] size-1.5 rounded-full bg-muted-foreground"
+                aria-hidden
+              />
+              <span className="font-medium">{title}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {formatDateTime(new Date(event.at))}
+              </span>
+              {detail && <span className="break-words text-muted-foreground">{detail}</span>}
+            </li>
+          );
+        })}
+        {finished && (
+          <li className="relative flex flex-col gap-0.5 text-2xs before:absolute before:top-3.5 before:-bottom-px before:-left-4.25 before:w-px before:bg-background">
+            <CircleCheckIcon
+              className="absolute top-0 -left-[1.54rem] size-3.5 bg-background text-success"
+              aria-hidden
+            />
+            <span className="font-medium text-success-foreground">Proceso terminado</span>
+            <span className="text-muted-foreground">
+              {document.balance === 0
+                ? "Las notas crédito ya acreditan todo su valor."
+                : "Si necesitas corregirla, emite una nota desde Corregir factura."}
+            </span>
+          </li>
+        )}
+      </ol>
+      <p className="text-2xs text-muted-foreground">Horarios de Colombia (UTC−5)</p>
+    </Section>
+  );
+}
+
+function DocumentSummary({ document }: { document: DocumentDetail }) {
+  const facts = [
+    `${document.issuer.legalName}, NIT ${withCheckDigit(document.issuer.nit, document.issuer.checkDigit)}`,
+    document.customer.legalName,
+    formatMoney(document.totals.payable, document.currency),
+    environmentLabel(document.environment),
+  ];
+  return (
+    <p className="text-sm text-muted-foreground" data-testid="document-summary">
+      {facts.map((fact, index) => (
+        <span key={fact}>
+          {index > 0 && <span aria-hidden="true"> · </span>}
+          <span className={cn(index === 2 && "text-foreground tabular-nums")}>{fact}</span>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function paymentLabel(payment: NonNullable<DocumentDetail["payment"]>) {
+  const method =
+    paymentMethods.find((option) => option.value === payment.method)?.label ?? payment.method;
+  const means =
+    paymentMeans.find((option) => option.code === payment.meansCode)?.label ??
+    `Medio ${payment.meansCode}`;
+  return `${method} · ${means}`;
+}
+
+/**
+ * An accepted invoice whose email is over and asks nothing more of the issuer. Outside sandbox, an email the
+ * customer never got leaves the issuer to deliver the files.
+ */
+function isFinished(document: DocumentDetail) {
+  const delivery = document.deliveries.at(-1);
+  return (
+    document.documentType === "INVOICE" &&
+    document.status === "ACCEPTED" &&
+    delivery !== undefined &&
+    delivery.status !== "PENDING" &&
+    (document.environment === "SANDBOX" || !undeliveredStatuses.has(delivery.status))
+  );
+}
+
+function hasNotes(invoice: DocumentDetail) {
+  return invoice.creditNotes.length > 0 || invoice.debitNotes.length > 0;
+}
+
+function withCheckDigit(number: string, checkDigit: string | null) {
+  return checkDigit ? `${number}-${checkDigit}` : number;
+}
+
+/** An identification number to paste elsewhere, after an optional type such as "CC". */
+function CopyableId({ prefix, value, label }: { prefix?: string; value: string; label: string }) {
+  return (
+    <span className="-my-1 flex items-center gap-1.5">
+      {prefix && <span>{prefix}</span>}
+      <code className="min-w-0 text-sm break-all">{value}</code>
+      <CopyButton value={value} label={label} iconOnly />
+    </span>
   );
 }
 
@@ -383,6 +567,48 @@ function InvoiceCorrections({ invoice }: { invoice: DocumentDetail }) {
   );
 }
 
+/**
+ * Opens the form of a rejected or failed document filled with its data. The copy is issued in the
+ * document's environment, so in LIVE it follows who may issue there.
+ */
+function ReissueAction({ document }: { document: DocumentDetail }) {
+  const blockedReason = useBlockedReason(document.environment);
+  const target = reissueTarget(document);
+  if (!target) {
+    return null;
+  }
+  const label = (
+    <>
+      <RotateCcwIcon data-icon="inline-start" />
+      Emitir de nuevo
+    </>
+  );
+
+  return (
+    <div className="flex flex-col items-start gap-2 sm:items-end">
+      {blockedReason ? (
+        <Button disabled>{label}</Button>
+      ) : target.kind === "invoice" ? (
+        <Link to="/documents/new" search={{ from: target.from }} className={cn(buttonVariants())}>
+          {label}
+        </Link>
+      ) : (
+        <Link
+          to="/documents/$documentId/notes/new"
+          params={{ documentId: target.invoiceId }}
+          search={{ type: target.type, from: target.from }}
+          className={cn(buttonVariants())}
+        >
+          {label}
+        </Link>
+      )}
+      {blockedReason && (
+        <p className="max-w-64 text-2xs text-muted-foreground sm:text-right">{blockedReason}</p>
+      )}
+    </div>
+  );
+}
+
 function CorrectedInvoice({
   document,
   invoice,
@@ -421,50 +647,46 @@ function InvoiceNotes({ document }: { document: DocumentDetail }) {
 
   return (
     <Section id="notes" title="Notas asociadas">
-      {notes.length === 0 ? (
-        <p className="text-2xs text-muted-foreground">Esta factura no tiene notas.</p>
-      ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <Table>
-            <TableHeader className="bg-sidebar [&_th]:h-8.75">
-              <TableRow>
-                <TableHead className="pl-4">Nota</TableHead>
-                <TableHead>Concepto</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="pr-4 text-right">Valor</TableHead>
+      <div className="-mx-5">
+        <Table>
+          <TableHeader className="[&_th]:h-8.75">
+            <TableRow>
+              <TableHead className="pl-5">Nota</TableHead>
+              <TableHead>Concepto</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="pr-5 text-right">Valor</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {notes.map((note) => (
+              <TableRow key={note.id}>
+                <TableCell className="pl-5 text-sm">
+                  <Link
+                    to="/documents/$documentId"
+                    params={{ documentId: note.id }}
+                    className="font-medium underline-offset-4 hover:underline"
+                  >
+                    {note.number}
+                  </Link>
+                  <span className="ml-1.5 text-muted-foreground">
+                    {documentTypeLabel[note.type]}
+                  </span>
+                </TableCell>
+                <TableCell className="text-sm">
+                  {conceptLabel[note.concept] ?? note.concept}
+                </TableCell>
+                <TableCell className="text-sm">
+                  <DocumentStatusBadge status={note.status} environment={document.environment} />
+                </TableCell>
+                <TableCell className="pr-5 text-right text-sm tabular-nums">
+                  {note.type === "CREDIT_NOTE" ? "−" : "+"}
+                  {money(note.payable)}
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {notes.map((note) => (
-                <TableRow key={note.id}>
-                  <TableCell className="pl-4 text-2xs">
-                    <Link
-                      to="/documents/$documentId"
-                      params={{ documentId: note.id }}
-                      className="font-medium underline-offset-4 hover:underline"
-                    >
-                      {note.number}
-                    </Link>
-                    <span className="ml-1.5 text-muted-foreground">
-                      {documentTypeLabel[note.type]}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-2xs">
-                    {conceptLabel[note.concept] ?? note.concept}
-                  </TableCell>
-                  <TableCell className="text-2xs">
-                    <DocumentStatusBadge status={note.status} />
-                  </TableCell>
-                  <TableCell className="pr-4 text-right text-2xs tabular-nums">
-                    {note.type === "CREDIT_NOTE" ? "−" : "+"}
-                    {money(note.payable)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       {document.balance !== null && (
         <p className="text-2xs text-muted-foreground">
           Saldo que aún pueden acreditar las notas crédito:{" "}

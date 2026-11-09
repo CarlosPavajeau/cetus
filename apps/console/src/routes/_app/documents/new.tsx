@@ -12,24 +12,36 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "~/components/ui/empty";
-import { documentsQuery } from "~/features/documents/queries";
+import { documentDetailQuery, documentsQuery } from "~/features/documents/queries";
 import { environmentLabel } from "~/features/environment/EnvironmentSelect";
 import { activeEnvironmentQuery, useActiveEnvironment } from "~/features/environment/queries";
 import { InvoiceForm } from "~/features/issuance/InvoiceForm";
+import { invoiceDraft, reissueTarget } from "~/features/issuance/reissue";
 import { useBlockedReason } from "~/features/issuance/useBlockedReason";
 import { canIssue } from "~/features/issuers/issuing";
 import { issuersQuery } from "~/features/issuers/queries";
 import type { Environment } from "~/lib/api/types";
-import { cn } from "~/lib/utils";
+import { cn, uuidPattern } from "~/lib/utils";
 
 export const Route = createFileRoute("/_app/documents/new")({
-  loader: async ({ context: { queryClient } }) => {
-    const environment = await queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" });
-    await Promise.all([
+  validateSearch: (search: Record<string, unknown>): { from?: string } =>
+    typeof search.from === "string" && uuidPattern.test(search.from) ? { from: search.from } : {},
+  loaderDeps: ({ search }) => ({ from: search.from }),
+  loader: async ({ context: { queryClient }, deps }) => {
+    const [active, source] = await Promise.all([
+      queryClient.query({ ...activeEnvironmentQuery, staleTime: "static" }),
+      deps.from
+        ? queryClient.query({ ...documentDetailQuery(deps.from), staleTime: "static" })
+        : null,
       queryClient.query({ ...issuersQuery, staleTime: "static" }),
-      queryClient.infiniteQuery({ ...documentsQuery({ environment }), staleTime: "static" }),
     ]);
-    return { crumb: "Emitir factura" };
+    // A copy is issued in the environment of the invoice it comes from, whatever the selector says.
+    const reissued = source && reissueTarget(source)?.kind === "invoice" ? source : null;
+    const environment = reissued?.environment ?? active;
+    await queryClient.infiniteQuery({ ...documentsQuery({ environment }), staleTime: "static" });
+    return reissued
+      ? { crumb: "Emitir de nuevo", environment, source: reissued }
+      : { crumb: "Emitir factura", source: null };
   },
   component: NewInvoice,
 });
@@ -42,17 +54,28 @@ const leads: Record<Environment, string> = {
 };
 
 function NewInvoice() {
-  const environment = useActiveEnvironment();
+  const { source } = Route.useLoaderData();
+  const active = useActiveEnvironment();
+  const environment = source?.environment ?? active;
   const { data: issuers } = useSuspenseQuery(issuersQuery);
   const { data: documents } = useSuspenseInfiniteQuery(documentsQuery({ environment }));
   const blockedReason = useBlockedReason(environment);
   const usable = issuers.filter((issuer) => canIssue(issuer, environment));
+  const draft =
+    source &&
+    invoiceDraft(
+      source,
+      usable.map((issuer) => issuer.id),
+    );
   const firstSandboxInvoice =
-    environment === "SANDBOX" && documents.pages.every((page) => page.items.length === 0);
+    !draft && environment === "SANDBOX" && documents.pages.every((page) => page.items.length === 0);
 
   return (
     <>
-      <PageHeader title="Emitir factura" lead={leads[environment]} />
+      <PageHeader
+        title={draft ? "Emitir factura de nuevo" : "Emitir factura"}
+        lead={leads[environment]}
+      />
       {usable.length === 0 ? (
         <Empty>
           <EmptyHeader>
@@ -73,12 +96,13 @@ function NewInvoice() {
           </EmptyContent>
         </Empty>
       ) : (
-        // Remounted per environment, so the issuer and the key never carry over.
+        // Remounted per environment and per copied invoice, so the issuer and the key never carry over.
         <InvoiceForm
-          key={environment}
+          key={`${environment}-${draft?.id ?? "new"}`}
           environment={environment}
           issuers={usable}
           sample={firstSandboxInvoice}
+          draft={draft}
           blockedReason={blockedReason}
         />
       )}

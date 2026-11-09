@@ -7,6 +7,10 @@ const badges = {
   SANDBOX: { label: "Simulación", variant: "outline" },
 } as const satisfies Record<Environment, { label: string; variant: string }>;
 
+export function environmentLabel(environment: Environment) {
+  return badges[environment].label;
+}
+
 export function EnvironmentBadge({ environment }: { environment: Environment }) {
   const { label, variant } = badges[environment];
   return <Badge variant={variant}>{label}</Badge>;

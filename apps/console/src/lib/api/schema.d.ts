@@ -3116,11 +3116,17 @@ export interface components {
             count: number;
         };
         DocumentCustomer: {
-            identificationType: string;
+            personType: components["schemas"]["PersonType"];
+            identificationType: components["schemas"]["IdentificationType"];
             identificationNumber: string;
             checkDigit: string | null;
             legalName: string;
+            tradeName: string | null;
+            taxLevelCodes: string[];
+            taxScheme: components["schemas"]["CustomerTaxScheme"];
+            address: components["schemas"]["Address"] | null;
             email: string | null;
+            phone: string | null;
         };
         DocumentDetail: {
             id: components["schemas"]["UUID"];
@@ -3136,6 +3142,8 @@ export interface components {
             currency: string;
             issuer: components["schemas"]["DocumentIssuer"];
             customer: components["schemas"]["DocumentCustomer"];
+            /** @description How the invoice is paid; null for a note */
+            payment: ((components["schemas"]["DocumentPayment"] | null) | null) | components["schemas"]["DocumentPayment"] | null;
             lines: components["schemas"]["DocumentLine"][];
             /** @description Document-level subtotals by tax */
             taxes: components["schemas"]["DocumentTax"][];
@@ -3197,9 +3205,15 @@ export interface components {
             itemCode: string | null;
             description: string;
             quantity: number;
+            unitCode: string;
             unitPrice: number;
             /** @description Quantity times unit price, before taxes */
             lineExtension: number;
+            taxes: components["schemas"]["DocumentLineTax"][];
+        };
+        DocumentLineTax: {
+            type: components["schemas"]["TaxType"];
+            percent: number;
         };
         DocumentNote: {
             id: components["schemas"]["UUID"];
@@ -3214,6 +3228,12 @@ export interface components {
             items: components["schemas"]["DocumentSummary"][];
             /** @description Pass as before to get the next page */
             nextCursor: ((string | components["schemas"]["UUID"] | null) | null) | components["schemas"]["UUID"] | null;
+        };
+        DocumentPayment: {
+            method: components["schemas"]["PaymentMethod"];
+            meansCode: string;
+            /** @example 2022-03-10 */
+            dueDate: ((string | components["schemas"]["LocalDate"] | null) | null) | components["schemas"]["LocalDate"] | null;
         };
         DocumentPreview: {
             lines: components["schemas"]["PreviewLine"][];

@@ -40,7 +40,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { buttonVariants } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
   Sidebar,
@@ -140,12 +140,17 @@ const navigation = [
   items: readonly NavigationItem[];
 }[];
 
-/** In the sidebar's footer and behind the header's help button, outside the groups. */
+/** Behind the header's help button, outside the sidebar groups. */
 const helpPage = {
   to: "/help",
   label: "Ayuda",
   icon: LifeBuoyIcon,
 } as const satisfies NavigationItem;
+
+// A plain link styled as a button: Button with nativeButton={false} would announce it as a button.
+const helpLink = (
+  <Link to={helpPage.to} className={buttonVariants({ variant: "ghost", size: "icon-sm" })} />
+);
 
 const pages = [
   ...navigation.flatMap((group) =>
@@ -266,11 +271,11 @@ function AppLayout() {
         <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-10">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4 data-vertical:self-center" />
-          <Breadcrumb>
-            <BreadcrumbList>
+          <Breadcrumb className="min-w-0">
+            <BreadcrumbList className="flex-nowrap">
               {current?.section && (
                 <>
-                  <BreadcrumbItem className={cn(crumb && "max-sm:hidden")}>
+                  <BreadcrumbItem className={cn("shrink-0", crumb && "max-sm:hidden")}>
                     {current.section}
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className={cn(crumb && "max-sm:hidden")}>
@@ -280,18 +285,19 @@ function AppLayout() {
               )}
               {current && crumb ? (
                 <>
-                  <BreadcrumbItem>
+                  {/* On a phone the page's own back link leads to the list. */}
+                  <BreadcrumbItem className="shrink-0 max-sm:hidden">
                     <BreadcrumbLink render={<Link to={current.to} />}>
                       {current.label}
                     </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator>/</BreadcrumbSeparator>
-                  <BreadcrumbItem>
+                  <BreadcrumbSeparator className="max-sm:hidden">/</BreadcrumbSeparator>
+                  <BreadcrumbItem className="min-w-0">
                     <BreadcrumbPage>{crumb}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               ) : (
-                <BreadcrumbItem>
+                <BreadcrumbItem className="min-w-0">
                   <BreadcrumbPage>{current?.label ?? "Consola"}</BreadcrumbPage>
                 </BreadcrumbItem>
               )}
@@ -311,16 +317,7 @@ function AppLayout() {
               <ArrowUpRightIcon data-icon="inline-end" />
             </a>
             <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    nativeButton={false}
-                    render={<Link to={helpPage.to} />}
-                  />
-                }
-              >
+              <TooltipTrigger render={helpLink}>
                 <LifeBuoyIcon />
                 <span className="sr-only">{helpPage.label}</span>
               </TooltipTrigger>

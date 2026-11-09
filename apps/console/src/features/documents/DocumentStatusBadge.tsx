@@ -1,7 +1,7 @@
 import { type BadgeStatus, StatusBadge } from "~/components/ui/badge";
-import type { DocumentStatus } from "~/lib/api/types";
+import type { DocumentStatus, Environment } from "~/lib/api/types";
 
-import { documentStatusLabel } from "./labels";
+import { documentStatusName } from "./labels";
 
 const badgeStatus: Record<DocumentStatus, BadgeStatus> = {
   RECEIVED: "idle",
@@ -12,6 +12,16 @@ const badgeStatus: Record<DocumentStatus, BadgeStatus> = {
   FAILED: "warning",
 };
 
-export function DocumentStatusBadge({ status }: { status: DocumentStatus }) {
-  return <StatusBadge status={badgeStatus[status]}>{documentStatusLabel[status]}</StatusBadge>;
+export function DocumentStatusBadge({
+  status,
+  environment,
+}: {
+  status: DocumentStatus;
+  environment: Environment;
+}) {
+  return (
+    <StatusBadge status={badgeStatus[status]}>
+      {documentStatusName(status, environment)}
+    </StatusBadge>
+  );
 }

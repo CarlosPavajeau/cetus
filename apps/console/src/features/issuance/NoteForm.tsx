@@ -23,15 +23,13 @@ import { auditLogKey } from "~/features/audit-log/queries";
 import { conceptLabel, formatMoney } from "~/features/documents/labels";
 import { documentsKey } from "~/features/documents/queries";
 import { FieldRow, FieldSection } from "~/features/setup/StepLayout";
-import type {
-  CreditNoteConcept,
-  DebitNoteConcept,
-  DocumentDetail,
-  DocumentPreview,
-} from "~/lib/api/types";
+import type { DocumentDetail, DocumentPreview } from "~/lib/api/types";
 
+import { creditConcepts, debitConcepts } from "./catalogs";
 import { SelectField } from "./fields";
 import { LinesEditor, LinesTotals, emptyLine, useLinesPreview } from "./LinesEditor";
+import type { NoteDraft } from "./reissue";
+import { ReissueNotice } from "./ReissueNotice";
 import { type LinesFormValues, linesFormSchema } from "./schema";
 import {
   type IssueResult,
@@ -45,22 +43,6 @@ import {
 } from "./server";
 
 export type NoteType = "CREDIT_NOTE" | "DEBIT_NOTE";
-
-// A full cancellation has its own dialog on the invoice, which credits every line at once.
-const creditConcepts = [
-  "PARTIAL_RETURN",
-  "REBATE",
-  "PRICE_ADJUSTMENT",
-  "EARLY_PAYMENT_DISCOUNT",
-  "VOLUME_DISCOUNT",
-] as const satisfies readonly CreditNoteConcept[];
-
-const debitConcepts = [
-  "INTEREST",
-  "EXPENSES",
-  "VALUE_CHANGE",
-  "OTHER",
-] as const satisfies readonly DebitNoteConcept[];
 
 const copy = {
   CREDIT_NOTE: {
@@ -86,10 +68,13 @@ type Confirmation = { note: NoteValues; total: number };
 export function NoteForm({
   invoice,
   noteType,
+  draft,
   blockedReason,
 }: {
   invoice: DocumentDetail;
   noteType: NoteType;
+  /** A rejected or failed note of this type, to issue again. */
+  draft: NoteDraft | null;
   blockedReason: string | null;
 }) {
   const navigate = useNavigate();
@@ -101,11 +86,11 @@ export function NoteForm({
   const concepts = noteType === "CREDIT_NOTE" ? creditConcepts : debitConcepts;
   const header = useForm<NoteHeaderValues>({
     resolver: arktypeResolver(noteHeaderSchema),
-    defaultValues: { concept: concepts[0], description: "" },
+    defaultValues: draft?.header ?? { concept: concepts[0], description: "" },
   });
   const lines = useForm<LinesFormValues>({
     resolver: arktypeResolver(linesFormSchema),
-    defaultValues: { lines: [emptyLine] },
+    defaultValues: { lines: draft?.lines.length ? draft.lines : [emptyLine] },
   });
   const linesPreview = useLinesPreview(lines);
   const issue = useMutation({
@@ -186,6 +171,16 @@ export function NoteForm({
         void submit();
       }}
     >
+      {draft && (
+        <ReissueNotice
+          documentId={draft.id}
+          noun={copy[noteType].title}
+          number={draft.number}
+          status={draft.status}
+          environment={invoice.environment}
+          gaps={draft.gaps}
+        />
+      )}
       <FieldSection title="Motivo">
         <FieldRow className="sm:grid-cols-2">
           <SelectField

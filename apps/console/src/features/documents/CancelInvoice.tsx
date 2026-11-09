@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useId, useState } from "react";
 
+import { EnvironmentBadge } from "~/components/EnvironmentBadge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import {
   AlertDialog,
@@ -62,6 +63,7 @@ export function CancelInvoice({
     },
   });
   const pending = cancel.isPending;
+  const sandbox = invoice.environment === "SANDBOX";
   const failure = cancel.data && !cancel.data.ok ? cancel.data : null;
 
   return (
@@ -88,11 +90,17 @@ export function CancelInvoice({
           }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Anular la factura {invoice.number}?</AlertDialogTitle>
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <AlertDialogTitle>¿Anular la factura {invoice.number}?</AlertDialogTitle>
+              <EnvironmentBadge environment={invoice.environment} />
+            </div>
             <AlertDialogDescription>
               Una factura aceptada no se puede borrar. Emitiremos una nota crédito de anulación por
               su valor total, {formatMoney(invoice.totals.payable, invoice.currency)}, y la
-              enviaremos a la DIAN. Se entregará al cliente por correo cuando la DIAN la acepte.
+              enviaremos {sandbox ? "al simulador" : "a la DIAN"}.{" "}
+              {sandbox
+                ? "Cuando el simulador la acepte, Cetus la envía por correo al contacto técnico de la cuenta, nunca al cliente."
+                : "Se entregará al cliente por correo cuando la DIAN la acepte."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Field>
