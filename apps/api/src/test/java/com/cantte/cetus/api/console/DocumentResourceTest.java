@@ -138,6 +138,12 @@ class DocumentResourceTest {
         assertThat(invoice.getString("issuer.id")).isEqualTo(issuer.id());
         assertThat(invoice.getString("customer.legalName")).isEqualTo("Consumidor Final");
         assertThat(invoice.getList("lines")).hasSize(1);
+        assertThat(invoice.getString("customer.taxScheme")).isNotBlank();
+        assertThat(invoice.getList("customer.taxLevelCodes")).isNotEmpty();
+        assertThat(invoice.getString("payment.method")).isEqualTo("CASH");
+        assertThat(invoice.getString("lines[0].unitCode")).isNotBlank();
+        assertThat(invoice.getString("lines[0].taxes[0].type")).isEqualTo("IVA");
+        assertThat(invoice.getDouble("lines[0].taxes[0].percent")).isEqualTo(19.0);
         assertThat(invoice.getString("taxes[0].type")).isEqualTo("IVA");
         assertThat(invoice.getDouble("totals.payable")).isEqualTo(119000.0);
         assertThat(invoice.getList("dian.errors")).hasSize(1);
@@ -161,6 +167,7 @@ class DocumentResourceTest {
         assertThat(note.getString("description")).isEqualTo("Error");
         assertThat(note.getList("creditNotes")).isEmpty();
         assertThat(note.getString("balance")).isNull();
+        assertThat(note.getString("payment")).isNull();
     }
 
     @Test
