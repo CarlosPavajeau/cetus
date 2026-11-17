@@ -1,7 +1,7 @@
 # Benchmark de capacidad
 
-Mide cuánto aguanta Cetus con los recursos que tiene en Railway (`.railway/railway.ts`): el API y el worker con
-1 vCPU / 1 GB cada uno y la consola con 1 vCPU / 512 MB. Corre las imágenes de producción (no `quarkusDev`) con
+Mide cuánto aguanta Cetus con los recursos que tiene en Railway (`.railway/railway.ts`): el API nativo con
+1 vCPU / 512 MB, el worker con 1 vCPU / 1 GB y la consola con 1 vCPU / 512 MB. Corre las imágenes de producción (no `quarkusDev`) con
 esos límites, contra el mock de la DIAN, y genera la carga con [k6](https://k6.io).
 
 ## Uso
@@ -95,6 +95,11 @@ Variables leídas por `bench/docker-compose.yml`, que se aplican con `bench/benc
 `BENCH_JOBS_CONCURRENCY` (12), `BENCH_JOBS_LIMIT_PROCESS_DOCUMENT` (8), `BENCH_JOBS_POLL_INTERVAL` (2s), `BENCH_DB_POOL_SIZE` (20), `BENCH_JAVA_OPTS`,
 `BENCH_RATE_LIMIT_RPS`/`BENCH_RATE_LIMIT_BURST` (el límite por API key está desactivado por defecto para medir el
 servidor; en producción es 10/s con ráfaga de 20) y `BENCH_POSTGRES_CPUS` (2).
+
+El API corre la imagen nativa. `BENCH_NATIVE_OPTS` cambia su heap (`-Xmx384m -Xmn256m`) y `BENCH_API_MEMORY` su
+límite (512m). Para medirlo en la JVM: `BENCH_API_DOCKERFILE=apps/api/Dockerfile.jvm BENCH_API_MEMORY=1g` con
+`bench/bench.sh up` (reconstruye la imagen). `bench/certificate-peak.sh` mide la memoria del API mientras valida la
+matriz de `.p12`. La comparación de memoria entre ambas está en `evidence/2026-11-17-api-memory/`.
 
 ## Supuestos y límites
 

@@ -1,0 +1,19 @@
+smoke=0
+idle-after-smoke container=244MiB rss=177MiB
+certificate before=238MiB peak=239MiB after=238MiB
+idle-after-certificates container=238MiB rss=176MiB
+load-public=99
+after-load-public container=308MiB rss=242MiB
+load-console=99
+after-load-console container=310MiB rss=247MiB
+soak=0
+end-of-soak container=258MiB rss=199MiB
+idle-after-soak container=256MiB rss=198MiB
+ready_after_restart=0s
+idle-fresh container=47MiB rss=145MiB
+image_size=266286053
+bench/results/20261117-114615-public-api-load
+bench/results/20261117-115403-console-api-load
+bench/results/20261117-120150-public-api-soak
+bench/results/memory-jvm.txt
+bench/results/memory-native.txt

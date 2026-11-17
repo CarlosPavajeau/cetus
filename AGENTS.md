@@ -79,6 +79,11 @@ mise exec -- ./gradlew build
 mise exec -- ./gradlew :modules:domain:test
 mise exec -- ./gradlew :apps:api:test --tests '*InvoiceResourceTest'
 
+# The API ships as a native binary (apps/api/Dockerfile, Mandrel); develop and test it on the JVM.
+# apps/api/Dockerfile.jvm is the JVM image, kept for the rollback.
+mise run api-native        # build the native binary in a container (~7 GB of Docker memory)
+mise run api-native-test   # src/native-test against the binary; Linux only (CI), macOS cannot run it
+
 # Format Java (palantir-java-format) and the console (oxfmt); fmt-check only checks
 mise run fmt
 mise run fmt-check
@@ -203,6 +208,10 @@ mise run migrate       # console "auth" schema; Flyway migrates "billing" when t
   `maxFreq`. Follow this even when nearby code does not.
 - Handle every error. If a state is impossible, assert it rather than ignoring
   it.
+- The API compiles to native: a static `SecureRandom` needs its class in
+  `--initialize-at-run-time` (API `application.properties`), and a domain type that
+  Jackson reads by reflection (a JSON column) needs registering in `JsonColumnTypes`.
+  `mise run api-native-test` or the CI job catches what the JVM suite cannot.
 - Do not write raw JSON strings in tests. Encode and decode typed records or objects.
 - Do not hardcode IDs in tests.
 
