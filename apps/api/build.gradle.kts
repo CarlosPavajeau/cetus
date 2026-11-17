@@ -38,4 +38,12 @@ dependencies {
     testImplementation(libs.quarkus.smallrye.jwt.build)
     testImplementation(libs.rest.assured)
     testImplementation(libs.assertj)
+
+    nativeTestImplementation(libs.testcontainers.postgresql)
+    nativeTestImplementation(libs.testcontainers.localstack)
+}
+
+// The native suite brings its own Postgres (NativeStack); the test profile's Dev Services would replace its URL.
+tasks.named<Test>("testNative") {
+    systemProperty("%test.quarkus.datasource.devservices.enabled", "false")
 }

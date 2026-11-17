@@ -122,6 +122,8 @@ export default defineRailway((ctx) => {
     deploy: {
       healthcheckPath: "/q/health/ready",
       healthcheckTimeout: 300,
+      // The native binary was calibrated for 512 MB (bench/evidence/2026-11-17-api-memory); 1024 stays until
+      // production confirms it.
       limitOverride: limits(1, 1024),
     },
     replicas,

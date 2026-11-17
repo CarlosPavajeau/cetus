@@ -8,6 +8,7 @@ dependencies {
     implementation(platform(libs.awssdk.bom))
     implementation(libs.quarkus.arc)
     api(libs.bundles.aws)
+    compileOnly(libs.graalvm.nativeimage)
 
     // Object Lock is checked against a real S3 API (LocalStack), not a fake.
     testImplementation(platform(libs.junit.bom))

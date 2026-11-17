@@ -220,7 +220,7 @@
             "type": "prometheus",
             "uid": "${prometheus}"
           },
-          "expr": "sum by (job) (jvm_memory_max_bytes{job=~\"$service\", area=\"heap\"})",
+          "expr": "sum by (job) (jvm_memory_max_bytes{job=~\"$service\", area=\"heap\"} > 0)",
           "legendFormat": "{{job}} máximo",
           "range": true,
           "instant": false
@@ -312,7 +312,7 @@
           "sort": "desc"
         }
       },
-      "description": "Duración promedio de las pausas."
+      "description": "Duración promedio de las pausas. El API nativo no publica sus pausas: solo aparece el worker."
     },
     {
       "id": 4,

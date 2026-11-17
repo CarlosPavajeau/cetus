@@ -1,0 +1,12 @@
+== 20261117-142633-public-api-load
+api                    59%      99%     101%   372 MiB (512MiB)
+    ✓ 'p(95)<500' p(95)=378.94ms
+    dropped_iterations.............: 8014   19.070192/s
+== 20261117-143420-console-api-load
+api                    42%      59%      63%   229 MiB (512MiB)
+    ✓ 'p(95)<500' p(95)=6.23ms
+    dropped_iterations.............: 0      0/s
+== 20261117-144207-public-api-soak
+api                    57%      63%     100%   129 MiB (512MiB)
+    ✓ 'p(95)<500' p(95)=3.74ms
+    dropped_iterations.............: 319     0.177221/s

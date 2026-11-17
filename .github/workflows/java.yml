@@ -24,6 +24,7 @@ jobs:
       pull-requests: read
     outputs:
       java: ${{ github.event_name == 'push' || steps.filter.outputs.java == 'true' }}
+      native: ${{ github.event_name == 'push' || steps.filter.outputs.native == 'true' }}
     steps:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
@@ -41,6 +42,18 @@ jobs:
               - "*.gradle.kts"
               - "gradle.properties"
               - "mise.toml"
+              - ".github/workflows/java.yml"
+            native:
+              - "apps/api/**"
+              - "modules/**"
+              - "build-logic/**"
+              - "gradle/**"
+              - "gradlew"
+              - "*.gradle.kts"
+              - "gradle.properties"
+              - "mise.toml"
+              - "infra/postgres/**"
+              - "infra/localstack/**"
               - ".github/workflows/java.yml"
 
   test:
@@ -64,4 +77,28 @@ jobs:
         with:
           name: test-reports
           path: "**/build/reports/tests/"
+          retention-days: 7
+
+  # The API ships as a native binary: src/native-test runs against it, with Postgres and LocalStack in containers.
+  native:
+    needs: changes
+    if: needs.changes.outputs.native == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Build the native API and test it
+        run: mise run api-native-test
+
+      - name: Upload the test reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-test-reports
+          path: apps/api/build/reports/tests/
           retention-days: 7

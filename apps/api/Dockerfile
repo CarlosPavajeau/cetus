@@ -1,16 +1,20 @@
 # syntax=docker/dockerfile:1
-# Build from the repository root: docker build -f apps/api/Dockerfile .
+# The API as a native binary (Mandrel). Build from the repository root: docker build -f apps/api/Dockerfile .
+# Rollback: apps/api/Dockerfile.jvm, the same API on the JVM.
 #
 # Layers go from what changes least to what changes most, so a build only redoes what changed:
 #   1. Gradle wrapper  2. dependencies (build scripts)  3. sources.
 # A change to the console or to another app's sources does not touch any of them.
 
-# Every Gradle build script, with the wrapper and the convention plugins, in the same directory layout.
-# This stage reruns on any change, but its output only changes with the build scripts.
-FROM eclipse-temurin:25.0.4_7-jdk AS java-build-base
+# Mandrel's JDK runs Gradle and native-image. The binary bakes in this JDK's cacerts when it is built, so the
+# CAs update-trust.sh removes are removed here, before the build.
+FROM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:25.0.5.0-Final-java25-2026-11-08 AS java-build-base
+USER root
 COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
 RUN sh /usr/local/bin/cetus-update-trust
 
+# Every Gradle build script, with the wrapper and the convention plugins, in the same directory layout.
+# This stage reruns on any change, but its output only changes with the build scripts.
 FROM java-build-base AS gradle-files
 WORKDIR /src
 COPY . .
@@ -29,31 +33,22 @@ COPY --from=gradle-files /out ./
 RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,target=/root/.gradle ./gradlew :apps:api:resolveDependencies --no-daemon
 COPY modules modules
 COPY apps/api apps/api
-# AOT enabled: packages an aot-jar (every class on the JDK's class loader, which the AOT cache needs) and makes
-# the app stop after static init when quarkus.appcds.generate is set. The cache Quarkus makes here, with the
-# JDK, is dropped: the one that counts is made below with the runtime JVM.
+# Uncapped, native-image takes ~7 GB; with a 4 GB heap the build peaks at ~5.7 GB and takes a little longer.
 RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,target=/root/.gradle ./gradlew :apps:api:build -x test --no-daemon \
-    -Dquarkus.package.jar.aot.enabled=true -Dquarkus.package.jar.aot.phase=build \
-    && rm -f apps/api/build/quarkus-app/app.aot
+    -Dorg.gradle.jvmargs=-Xmx1g \
+    -Dquarkus.native.enabled=true -Dquarkus.package.jar.enabled=false -Dquarkus.native.container-build=false \
+    -Dquarkus.native.native-image-xmx=4g \
+    && cp apps/api/build/*-runner /workspace/cetus-api
 
-FROM eclipse-temurin:25.0.4_7-jre
-COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
-RUN sh /usr/local/bin/cetus-update-trust
+FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0-2026-11-08
 WORKDIR /app
-COPY --from=build /workspace/apps/api/build/quarkus-app/ ./
-# AOT cache (JEP 483/514): the classes the app loads, already parsed and linked, so it starts and warms up faster.
-# Quarkus stops right after static init when quarkus.appcds.generate is set, before it opens the database or
-# AWS, so this runs without them. It runs in this image because the cache only works with the exact JVM that
-# made it, and with SerialGC, the collector the service runs with.
-RUN java -XX:+UseSerialGC -XX:AOTCacheOutput=app.aot -Dquarkus.appcds.generate=true -jar quarkus-run.jar
-# The heap gets 40% of the container (410 MB of 1 GB): the JVM takes ~500 MB more outside it (metaspace, JIT
-# code, threads, malloc), and on Java 25 SerialGC grows the heap up to its maximum, so 75% filled the container.
-# SerialGC is what the JVM picks with one vCPU; it is explicit because the AOT cache was made with it.
-# Without -XX:AOTCache the service runs as before, only without the cache.
-ENV JAVA_OPTS="-XX:AOTCache=app.aot -XX:+UseSerialGC -XX:MaxRAMPercentage=40 -Duser.timezone=America/Bogota"
-RUN groupadd --gid 10001 cetus && useradd --uid 10001 --gid cetus --no-create-home cetus
+COPY --from=build /workspace/cetus-api ./
+# Calibrated for a 512 MB container (bench/evidence/2026-11-17-api-memory). The native image only has Serial GC: a
+# young generation this large keeps it from collecting on every few requests, which a smaller heap made the
+# bottleneck under load. Above what it uses, the binary returns memory, so the container stays well below this.
+ENV NATIVE_OPTS="-Xmx384m -Xmn256m -Duser.timezone=America/Bogota"
 USER 10001:10001
 EXPOSE 8080
-# exec: java replaces the shell as PID 1 and gets the SIGTERM of a deploy, so Quarkus shuts down cleanly
+# exec: the binary replaces the shell as PID 1 and gets the SIGTERM of a deploy, so Quarkus shuts down cleanly
 # instead of being killed when the stop timeout runs out.
-CMD ["sh", "-c", "exec java $JAVA_OPTS -jar quarkus-run.jar"]
+CMD ["sh", "-c", "exec ./cetus-api $NATIVE_OPTS"]
