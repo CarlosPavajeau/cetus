@@ -43,9 +43,10 @@ RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,t
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0-2026-11-08
 WORKDIR /app
 COPY --from=build /workspace/cetus-api ./
-# The heap is fixed instead of a share of the container: a native binary has no metaspace nor JIT, so almost
-# all it takes beyond the heap is its threads and image heap. Calibrated with bench/ (see bench/README.md).
-ENV NATIVE_OPTS="-Xmx128m -Duser.timezone=America/Bogota"
+# Sized for a 512 MB container (bench/evidence/2026-11-17-api-memory). The native image only has Serial GC: a
+# young generation this large keeps it from collecting on every few requests, which a smaller heap made the
+# bottleneck under load. Above what it uses, the binary returns memory, so the container stays well below this.
+ENV NATIVE_OPTS="-Xmx384m -Xmn256m -Duser.timezone=America/Bogota"
 USER 10001:10001
 EXPOSE 8080
 # exec: the binary replaces the shell as PID 1 and gets the SIGTERM of a deploy, so Quarkus shuts down cleanly

@@ -122,7 +122,8 @@ export default defineRailway((ctx) => {
     deploy: {
       healthcheckPath: "/q/health/ready",
       healthcheckTimeout: 300,
-      limitOverride: limits(1, 1024),
+      // The native binary's heap (-Xmx384m in its Dockerfile) fits here; on the JVM it needed 1024.
+      limitOverride: limits(1, 512),
     },
     replicas,
     env: {

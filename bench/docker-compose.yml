@@ -131,7 +131,7 @@ services:
     environment:
       <<: [*aws, *java]
       # The native image's flags, as in its Dockerfile; the JVM image reads JAVA_OPTS instead.
-      NATIVE_OPTS: ${BENCH_NATIVE_OPTS:--Xmx128m -Duser.timezone=America/Bogota}
+      NATIVE_OPTS: ${BENCH_NATIVE_OPTS:--Xmx384m -Xmn256m -Duser.timezone=America/Bogota}
       CETUS_AUTH_JWKS_URL: http://console.railway.internal:3000/.well-known/jwks.json
       CETUS_AUTH_ISSUER: http://localhost:3100
       # The console reaches the API as http://api:8080, which plays the role of *.railway.internal.
@@ -143,7 +143,7 @@ services:
     ports:
       - "8180:8080"
     cpus: 1
-    mem_limit: ${BENCH_API_MEMORY:-1g}
+    mem_limit: ${BENCH_API_MEMORY:-512m}
     depends_on:
       postgres:
         condition: service_healthy
