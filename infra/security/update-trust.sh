@@ -1,10 +1,13 @@
 #!/bin/sh
 set -eu
 
-apt-get update
-apt-get install -y --no-install-recommends ca-certificates
-rm -rf /var/lib/apt/lists/*
-update-ca-certificates
+# The Mandrel builder (UBI, no apt) only needs the JDK's cacerts below: the native binary bakes it in.
+if command -v apt-get >/dev/null 2>&1; then
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates
+    rm -rf /var/lib/apt/lists/*
+    update-ca-certificates
+fi
 
 if command -v keytool >/dev/null 2>&1; then
     keytool -list -v -cacerts -storepass changeit > /tmp/cetus-ca-list
