@@ -6,8 +6,8 @@ FROM eclipse-temurin:25.0.4_7-jdk AS gradle-files
 WORKDIR /src
 COPY . .
 RUN mkdir /out \
-    && cp -r gradlew gradle build-logic settings.gradle.kts build.gradle.kts gradle.properties /out/ \
-    && find modules apps -name build.gradle.kts -exec cp --parents {} /out/ \;
+    && cp -r gradlew gradle build-logic settings.gradle.kts build.gradle.kts gradle.properties *gradle.lockfile /out/ \
+    && find modules apps \( -name build.gradle.kts -o -name gradle.lockfile \) -exec cp --parents {} /out/ \;
 
 FROM eclipse-temurin:25.0.4_7-jdk AS build
 WORKDIR /workspace

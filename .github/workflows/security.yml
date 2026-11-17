@@ -1,0 +1,129 @@
+# Trivy, through scripts/security-scan.sh (the same as `mise run security-scan` locally). Trivy comes from
+# mise.toml, which checks its checksum: aquasecurity/trivy-action and setup-trivy had their tags hijacked in
+# March 2026. Findings also go to GitHub code scanning.
+name: Security
+
+# The schedule and main catch vulnerabilities published after a merge, when the code has not changed.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Blocking on pull requests: HIGH and CRITICAL vulnerabilities with a fix, secrets and Dockerfile
+  # misconfigurations. No path filter, so it always reports and can be a required check.
+  repo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+
+      # Trivy's vulnerability database, once a day: faster runs and fewer pulls from its registry's rate limit.
+      - name: Date for the Trivy cache
+        id: date
+        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: trivy-cache
+        with:
+          path: ~/.cache/trivy
+          key: trivy-repo-${{ runner.os }}-${{ steps.date.outputs.date }}
+          restore-keys: trivy-repo-${{ runner.os }}-
+
+      - name: Scan the repository
+        env:
+          SARIF_DIR: sarif
+          TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-hit == 'true' }}
+          TRIVY_SKIP_CHECK_UPDATE: ${{ steps.trivy-cache.outputs.cache-hit == 'true' }}
+        run: mise run security-scan
+
+      # Saved even when the scan fails, which actions/cache would skip.
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: always() && steps.trivy-cache.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cache/trivy
+          key: trivy-repo-${{ runner.os }}-${{ steps.date.outputs.date }}
+
+      # Pull requests from forks get a read-only token: they are still scanned, only not uploaded.
+      - name: Upload to code scanning
+        if: always() && hashFiles('sarif/repo.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: sarif/repo.sarif
+          category: trivy-repo
+
+      - name: Upload the secrets to code scanning
+        if: always() && hashFiles('sarif/repo-secrets.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: sarif/repo-secrets.sarif
+          category: trivy-repo-secrets
+
+  # Informative: the images Railway deploys, for OS and runtime vulnerabilities. Separate from deploy.yml, so
+  # a vulnerability published today never holds back a fix. Not on pull requests: the native API build is heavy.
+  images:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [api, worker, console]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+
+      - name: Date for the Trivy cache
+        id: date
+        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      # Its own key: image scans also need Trivy's Java database, which the repository scan does not download.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: trivy-cache
+        with:
+          path: ~/.cache/trivy
+          key: trivy-image-${{ matrix.app }}-${{ runner.os }}-${{ steps.date.outputs.date }}
+          restore-keys: trivy-image-${{ matrix.app }}-${{ runner.os }}-
+
+      - name: Build and scan the image
+        env:
+          SARIF_DIR: sarif
+          TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-hit == 'true' }}
+          TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-hit == 'true' }}
+          TRIVY_SKIP_CHECK_UPDATE: ${{ steps.trivy-cache.outputs.cache-hit == 'true' }}
+        run: mise run security-scan-images ${{ matrix.app }}
+
+      # Saved even when the scan fails, which actions/cache would skip.
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: always() && steps.trivy-cache.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cache/trivy
+          key: trivy-image-${{ matrix.app }}-${{ runner.os }}-${{ steps.date.outputs.date }}
+
+      - name: Upload to code scanning
+        if: always() && hashFiles(format('sarif/image-{0}.sarif', matrix.app)) != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: sarif/image-${{ matrix.app }}.sarif
+          category: trivy-image-${{ matrix.app }}

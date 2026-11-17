@@ -1,0 +1,25 @@
+# Trivy settings for scripts/security-scan.sh (`mise run security-scan`, `mise run security-scan-images`).
+# The script scans secrets in a separate pass, at every severity and without the skipped directories.
+# Accepted findings go in .trivyignore.yaml, each with a reason and an expiry date.
+severity:
+  - HIGH
+  - CRITICAL
+exit-code: 1
+ignorefile: .trivyignore.yaml
+scan:
+  scanners:
+    - vuln
+    - misconfig
+  skip-dirs:
+    - "**/node_modules"
+    - "**/build"
+    - bench
+    - apps/dian-mock
+  # The modules resolve without the apps' Quarkus BOM, so their lockfiles list versions that never ship: the
+  # apps' lockfiles hold what goes into the images. The buildscript classpath is Gradle plugins, never shipped.
+  skip-files:
+    - "modules/*/gradle.lockfile"
+    - buildscript-gradle.lockfile
+    - settings-gradle.lockfile
+vulnerability:
+  ignore-unfixed: true

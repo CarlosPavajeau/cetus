@@ -11,6 +11,9 @@ k6 = "2.3.0"
 # Public tunnel to the local API, for Wompi's events (mise run tunnel). Taken before its 7 days by choice: the
 # tunnel warns that older releases are outdated.
 cloudflared = "2026.10.7"
+# Security scanner (mise run security-scan). Installed through mise, which checks its checksum, rather than
+# aquasecurity/trivy-action or setup-trivy: their tags were hijacked in March 2026.
+"aqua:aquasecurity/trivy" = "0.76.2"
 
 [tasks.setup]
 description = "First-time setup: pnpm install, containers, auth migrations, Java build"
@@ -107,6 +110,19 @@ run = "pnpm --filter @cetus/docs dev"
 [tasks.docs-spec]
 description = "Build the API's OpenAPI spec and write its public part (/v1) for the docs site"
 run = ["./gradlew :apps:api:build -x test --console=plain", "node scripts/openapi-public.mjs"]
+
+[tasks.security-scan]
+description = "Scan dependencies, secrets and Dockerfiles with Trivy, as the Security check does on every PR"
+run = "scripts/security-scan.sh repo"
+
+[tasks.security-scan-images]
+description = "Build the production images and scan them with Trivy, e.g. mise run security-scan-images worker; the API's native build takes ~8 GB of Docker memory"
+usage = 'arg "[app]" help="api, worker or console; all three when omitted"'
+run = 'scripts/security-scan.sh images ${usage_app:-}'
+
+[tasks.gradle-locks]
+description = "Rewrite the Gradle lockfiles after changing a Java dependency"
+run = "./gradlew resolveDependencies --write-locks --console=plain"
 
 [tasks.test-console]
 description = "Console integration (Vitest) and e2e (Playwright) tests; needs `mise run dev-mock` running"

@@ -13,14 +13,14 @@ USER root
 COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
 RUN sh /usr/local/bin/cetus-update-trust
 
-# Every Gradle build script, with the wrapper and the convention plugins, in the same directory layout.
-# This stage reruns on any change, but its output only changes with the build scripts.
+# Every Gradle build script and lockfile, with the wrapper and the convention plugins, in the same directory layout.
+# This stage reruns on any change, but its output only changes with the build scripts and lockfiles.
 FROM java-build-base AS gradle-files
 WORKDIR /src
 COPY . .
 RUN mkdir /out \
-    && cp -r gradlew gradle build-logic settings.gradle.kts build.gradle.kts gradle.properties /out/ \
-    && find modules apps -name build.gradle.kts -exec cp --parents {} /out/ \;
+    && cp -r gradlew gradle build-logic settings.gradle.kts build.gradle.kts gradle.properties *gradle.lockfile /out/ \
+    && find modules apps \( -name build.gradle.kts -o -name gradle.lockfile \) -exec cp --parents {} /out/ \;
 
 FROM java-build-base AS build
 WORKDIR /workspace
