@@ -22,10 +22,11 @@ current() { docker exec "$api" cat /sys/fs/cgroup/memory.current; }
 mib() { echo $(($1 / 1048576)); }
 
 samples=$(mktemp)
-trap 'rm -f "$samples"' EXIT
 before=$(current)
-docker exec "$api" sh -c 'while :; do cat /sys/fs/cgroup/memory.current; sleep 0.1; done' >"$samples" &
+# Sampled from the host, so stopping this loop stops the sampling: a loop inside the container would outlive it.
+while :; do current; sleep 0.1; done >"$samples" 2>/dev/null &
 sampler=$!
+trap 'kill "$sampler" 2>/dev/null || true; rm -f "$samples"' EXIT
 
 for _ in $(seq "${ROUNDS:-5}"); do
   for file in openssl-default openssl-3des openssl-legacy-rc2 openssl-1m; do
@@ -35,11 +36,11 @@ for _ in $(seq "${ROUNDS:-5}"); do
     echo "$file: $status"
     expected=200
     [ "$file" = openssl-1m ] && expected=422
-    [ "$status" = "$expected" ] || { kill "$sampler"; echo "$file: expected $expected" >&2; exit 1; }
+    [ "$status" = "$expected" ] || { echo "$file: expected $expected" >&2; exit 1; }
   done
 done
 
 sleep 1
-kill "$sampler" 2>/dev/null || true
+kill "$sampler"
 peak=$(sort -n "$samples" | tail -1)
 echo "before=$(mib "$before")MiB peak=$(mib "$peak")MiB after=$(mib "$(current)")MiB"
