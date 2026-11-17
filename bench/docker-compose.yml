@@ -127,6 +127,8 @@ services:
     build:
       context: ..
       dockerfile: ${BENCH_API_DOCKERFILE:-apps/api/Dockerfile}
+      args:
+        NATIVE_IMAGE_XMX: ${BENCH_NATIVE_IMAGE_XMX:-4g}
     environment:
       <<: [*aws, *java]
       # The native image's flags, as in its Dockerfile; the JVM image reads JAVA_OPTS instead.
