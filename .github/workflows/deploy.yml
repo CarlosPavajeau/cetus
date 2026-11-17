@@ -45,6 +45,7 @@ jobs:
               - gradle/**
               - gradlew
               - "*.gradle.kts"
+              - "*gradle.lockfile"
               - gradle.properties
             api:
               - *java

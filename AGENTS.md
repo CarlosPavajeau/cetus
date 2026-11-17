@@ -149,8 +149,8 @@ mise run gradle-locks                   # rewrite the Gradle lockfiles after cha
   security fix affects the project. pnpm enforces this with
   `minimumReleaseAge`; check Maven Central release dates for Gradle.
 - Gradle locks every configuration (`gradle.lockfile` per project, committed). After adding or bumping a
-  Java dependency, run `mise run gradle-locks` and commit the lockfiles; the build fails on a version the
-  locks do not hold. They are also what Trivy scans for Java, since the native API binary hides its JARs.
+  Java dependency, run `mise run gradle-locks` and commit the lockfiles; a version above the locked one
+  fails the build, and one below it resolves to the locked version. They are also what Trivy scans for Java, since the native API binary hides its JARs.
 - `mise run security-scan` fails on HIGH/CRITICAL vulnerabilities with a fix, on any secret and on
   HIGH/CRITICAL Dockerfile misconfigurations (`trivy.yaml`). Fix the finding; accept one only after
   analysing it, in `.trivyignore.yaml` with a `statement` and an `expired_at` at most a few weeks out.

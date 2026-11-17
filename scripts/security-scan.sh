@@ -11,7 +11,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-sarif() {
+write_sarif() {
   local name=$1
   shift
   [ -n "${SARIF_DIR:-}" ] || return 0
@@ -33,7 +33,7 @@ scan_repo() {
 
   local status=0
   trivy fs --config trivy.yaml "$snapshot" || status=$?
-  sarif repo fs "$snapshot"
+  write_sarif repo fs "$snapshot"
   return "$status"
 }
 
@@ -50,7 +50,7 @@ scan_images() {
     image="cetus-$app:security-scan"
     docker build --file "apps/$app/Dockerfile" --tag "$image" .
     trivy image --config trivy.yaml "$image" || status=$?
-    sarif "image-$app" image "$image"
+    write_sarif "image-$app" image "$image"
   done
   return "$status"
 }
