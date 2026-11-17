@@ -39,7 +39,6 @@ dependencies {
     testImplementation(libs.rest.assured)
     testImplementation(libs.assertj)
 
-    // src/native-test: a reduced suite against the native binary (mise run api-native-test).
     nativeTestImplementation(libs.testcontainers.postgresql)
     nativeTestImplementation(libs.testcontainers.localstack)
 }

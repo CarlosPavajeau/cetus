@@ -126,7 +126,6 @@ services:
     image: ${BENCH_API_IMAGE:-cetus-bench-api:latest}
     build:
       context: ..
-      # apps/api/Dockerfile.jvm measures the API on the JVM.
       dockerfile: ${BENCH_API_DOCKERFILE:-apps/api/Dockerfile}
     environment:
       <<: [*aws, *java]

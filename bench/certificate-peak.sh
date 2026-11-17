@@ -33,6 +33,9 @@ for _ in $(seq "${ROUNDS:-5}"); do
     status=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$API_URL/console/issuers/$issuer/certificate" \
       -H "Host: localhost" -H "Authorization: Bearer $token" -H "Content-Type: application/json" --data "$body")
     echo "$file: $status"
+    expected=200
+    [ "$file" = openssl-1m ] && expected=422
+    [ "$status" = "$expected" ] || { kill "$sampler"; echo "$file: expected $expected" >&2; exit 1; }
   done
 done
 

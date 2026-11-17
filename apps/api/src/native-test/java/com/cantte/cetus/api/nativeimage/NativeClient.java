@@ -38,7 +38,6 @@ final class NativeClient {
             return request(token(signingKey()));
         }
 
-        /** A token the binary must refuse: same claims, signed with a key it does not trust. */
         RequestSpecification requestSignedByAnotherKey() {
             try {
                 KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
@@ -113,7 +112,6 @@ final class NativeClient {
                 .body(Map.of("pkcs12Base64", Base64.getEncoder().encodeToString(pkcs12), "password", password));
     }
 
-    /** A PKCS#12 of the matrix in modules/signing, or the API's own test signer. */
     static byte[] pkcs12(String name) {
         Path file = name.equals("test-signer")
                 ? Path.of("src/test/resources/test-signer.p12")

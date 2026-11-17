@@ -51,6 +51,7 @@ jobs:
               - "gradlew"
               - "*.gradle.kts"
               - "gradle.properties"
+              - "mise.toml"
               - "infra/postgres/**"
               - "infra/localstack/**"
               - ".github/workflows/java.yml"
