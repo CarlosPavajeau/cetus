@@ -1,0 +1,18 @@
+# Findings accepted after analysis. Every entry says why and expires: once past expired_at, the finding fails
+# the scan again and has to be fixed or re-analysed. Paths are relative to the repository root.
+vulnerabilities:
+  - id: CVE-2026-102554
+    paths:
+      - apps/api/gradle.lockfile
+      - apps/worker/gradle.lockfile
+    statement: >-
+      Guava 33.6.0-jre comes with Quarkus. The DoS needs Guava to deserialize attacker-controlled data, which
+      neither service does. Fixed in 33.7.2: move to it with the next Quarkus upgrade.
+    expired_at: 2026-12-17
+  - id: CVE-2026-116576
+    paths:
+      - pnpm-lock.yaml
+    statement: >-
+      systeminformation comes with the shadcn CLI (via @dotenvx/dotenvx), which the console lists as a
+      dependency for its stylesheet and never runs in production. Fixed in 5.33.16: take it once it is 7 days old.
+    expired_at: 2026-12-17

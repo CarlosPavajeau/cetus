@@ -14,6 +14,12 @@ configurations.configureEach {
     resolutionStrategy.force("org.postgresql:postgresql:42.7.14")
 }
 
+// gradle.lockfile pins every resolved dependency: the build is reproducible and Trivy can see the Java
+// dependencies, which the native API binary no longer exposes. Refresh with `mise run gradle-locks`.
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.release = 25
