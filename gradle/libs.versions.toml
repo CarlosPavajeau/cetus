@@ -54,6 +54,8 @@ testcontainers-localstack = { module = "org.testcontainers:testcontainers-locals
 awssdk-kms = { module = "software.amazon.awssdk:kms" }
 awssdk-s3 = { module = "software.amazon.awssdk:s3" }
 awssdk-url-connection = { module = "software.amazon.awssdk:url-connection-client" }
+# Substitutions for the native API (version managed by the Quarkus BOM)
+graalvm-nativeimage = { module = "org.graalvm.sdk:nativeimage" }
 
 # Email delivery (official Resend SDK), PDF rendering and QR codes
 resend-java = { module = "com.resend:resend-java", version.ref = "resend" }
