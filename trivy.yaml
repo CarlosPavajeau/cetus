@@ -1,6 +1,6 @@
 # Trivy settings for scripts/security-scan.sh (`mise run security-scan`, `mise run security-scan-images`).
-# Fails on HIGH and CRITICAL vulnerabilities that have a fixed version, on any secret and on HIGH and CRITICAL
-# misconfigurations. Accepted findings go in .trivyignore.yaml, each with a reason and an expiry date.
+# The script scans secrets in a separate pass, at every severity and without the skipped directories.
+# Accepted findings go in .trivyignore.yaml, each with a reason and an expiry date.
 severity:
   - HIGH
   - CRITICAL
@@ -9,7 +9,6 @@ ignorefile: .trivyignore.yaml
 scan:
   scanners:
     - vuln
-    - secret
     - misconfig
   skip-dirs:
     - "**/node_modules"

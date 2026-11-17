@@ -68,6 +68,14 @@ jobs:
           sarif_file: sarif/repo.sarif
           category: trivy-repo
 
+      - name: Upload the secrets to code scanning
+        if: always() && hashFiles('sarif/repo-secrets.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: sarif/repo-secrets.sarif
+          category: trivy-repo-secrets
+
   # Informative: the images Railway deploys, for OS and runtime vulnerabilities. Separate from deploy.yml, so
   # a vulnerability published today never holds back a fix. Not on pull requests: the native API build is heavy.
   images:
@@ -98,9 +106,7 @@ jobs:
           key: trivy-image-${{ matrix.app }}-${{ runner.os }}-${{ steps.date.outputs.date }}
           restore-keys: trivy-image-${{ matrix.app }}-${{ runner.os }}-
 
-      # Findings go to code scanning instead of failing the run: the base images often wait days for a fix.
       - name: Build and scan the image
-        continue-on-error: true
         env:
           SARIF_DIR: sarif
           TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-hit == 'true' }}
