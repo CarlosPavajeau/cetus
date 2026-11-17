@@ -142,7 +142,7 @@ services:
     ports:
       - "8180:8080"
     cpus: 1
-    mem_limit: ${BENCH_API_MEMORY:-512m}
+    mem_limit: ${BENCH_API_MEMORY:-1g}
     depends_on:
       postgres:
         condition: service_healthy

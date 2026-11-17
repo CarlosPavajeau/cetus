@@ -98,7 +98,7 @@
       "condition": { "type": "gt", "value": 0.85 },
       "noData": "OK",
       "summary": "El API lleva 10 minutos con más del 85 % de su heap (384 MB) ocupado.",
-      "description": "El binario nativo tiene el heap fijo (-Xmx384m en apps/api/Dockerfile) dentro de un contenedor de 512 MB: si sigue subiendo, el API se queda sin memoria. Revisa el panel de heap y el tráfico; para subirlo, cambia -Xmx y el límite de .railway/railway.ts juntos.",
+      "description": "El binario nativo tiene el heap fijo (-Xmx384m en apps/api/Dockerfile): si sigue subiendo, el API se queda sin memoria. Revisa el panel de heap y el tráfico; para subirlo, cambia -Xmx y el límite de .railway/railway.ts juntos.",
       "dashboard": "cetus-runtime",
       "panel": 2
     }
