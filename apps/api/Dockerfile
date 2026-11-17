@@ -33,11 +33,13 @@ COPY --from=gradle-files /out ./
 RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,target=/root/.gradle ./gradlew :apps:api:resolveDependencies --no-daemon
 COPY modules modules
 COPY apps/api apps/api
-# Uncapped, native-image takes ~7 GB; with a 4 GB heap the build peaks at ~5.7 GB and takes a little longer.
+# native-image's heap. With 4 GB on Railway's builder (4 cores) it spent 83% of the analysis in GC; bench/
+# passes 4g, since Docker on a laptop has less memory than Railway's builder.
+ARG NATIVE_IMAGE_XMX=8g
 RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,target=/root/.gradle ./gradlew :apps:api:build -x test --no-daemon \
     -Dorg.gradle.jvmargs=-Xmx1g \
     -Dquarkus.native.enabled=true -Dquarkus.package.jar.enabled=false -Dquarkus.native.container-build=false \
-    -Dquarkus.native.native-image-xmx=4g \
+    -Dquarkus.native.native-image-xmx=${NATIVE_IMAGE_XMX} \
     && cp apps/api/build/*-runner /workspace/cetus-api
 
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0-2026-11-08
