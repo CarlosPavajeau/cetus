@@ -11,6 +11,8 @@ import { Button, buttonVariants } from "~/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { useCaptcha } from "~/features/auth/Captcha";
+import { captchaErrorMessage } from "~/features/auth/errors";
 import { forgotPasswordSchema } from "~/features/auth/schema";
 import { authClient } from "~/lib/auth/client";
 import { cn } from "~/lib/utils";
@@ -19,22 +21,43 @@ export const Route = createFileRoute("/forgot-password")({
   component: ForgotPassword,
 });
 
+/** `unverified`: nothing was sent; the widget itself asks to complete the verification. */
+type ResetRequest = { kind: "sent" } | { kind: "unverified" } | { kind: "failed"; message: string };
+
 /** The same answer whether or not the address has an account: the page reveals none. */
-async function requestResetLink(email: string) {
-  const { error } = await authClient.requestPasswordReset({
-    email,
-    redirectTo: "/reset-password",
-  });
-  if (!error) {
-    return null;
+async function requestResetLink(
+  email: string,
+  captcha: ReturnType<typeof useCaptcha>,
+): Promise<ResetRequest> {
+  const headers = captcha.headers();
+  if (!headers) {
+    return { kind: "unverified" };
   }
-  return error.status === 429
-    ? "Ya pediste varios enlaces. Espera unos minutos antes de pedir otro."
-    : "No pudimos enviar el enlace. Inténtalo de nuevo en un momento.";
+  const { error } = await authClient.requestPasswordReset(
+    { email, redirectTo: "/reset-password" },
+    { headers },
+  );
+  captcha.settle(error);
+  if (!error) {
+    return { kind: "sent" };
+  }
+  if (error.status === 429) {
+    return {
+      kind: "failed",
+      message: "Ya pediste varios enlaces. Espera unos minutos antes de pedir otro.",
+    };
+  }
+  return {
+    kind: "failed",
+    message:
+      captchaErrorMessage(error) ??
+      "No pudimos enviar el enlace. Inténtalo de nuevo en un momento.",
+  };
 }
 
 function ForgotPassword() {
   const [sentTo, setSentTo] = useState<string>();
+  const captcha = useCaptcha();
   const form = useForm({
     resolver: arktypeResolver(forgotPasswordSchema),
     defaultValues: { email: "" },
@@ -48,12 +71,13 @@ function ForgotPassword() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ email }) => {
-    const message = await requestResetLink(email);
-    if (message) {
-      form.setError("root", { message });
-      return;
+    const request = await requestResetLink(email, captcha);
+    if (request.kind === "failed") {
+      form.setError("root", { message: request.message });
     }
-    setSentTo(email);
+    if (request.kind === "sent") {
+      setSentTo(email);
+    }
   });
 
   if (sentTo) {
@@ -86,6 +110,7 @@ function ForgotPassword() {
               </Field>
             )}
           />
+          {captcha.widget}
           {errors.root && (
             <Alert variant="destructive">
               <AlertDescription>{errors.root.message}</AlertDescription>
@@ -111,12 +136,14 @@ function ForgotPassword() {
 }
 
 function LinkSent({ email, onChangeEmail }: { email: string; onChangeEmail: () => void }) {
+  const captcha = useCaptcha();
   const resend = useMutation({
     mutationFn: async () => {
-      const message = await requestResetLink(email);
-      if (message) {
-        throw new Error(message);
+      const request = await requestResetLink(email, captcha);
+      if (request.kind === "failed") {
+        throw new Error(request.message);
       }
+      return request.kind;
     },
   });
 
@@ -137,6 +164,7 @@ function LinkSent({ email, onChangeEmail }: { email: string; onChangeEmail: () =
         </Link>
         <div className="flex flex-col gap-1 text-center text-sm text-muted-foreground">
           <p>¿No llegó? Revisa la carpeta de spam.</p>
+          {captcha.widget}
           <div className="flex flex-wrap items-center justify-center gap-x-2">
             <Button variant="link" disabled={resend.isPending} onClick={() => resend.mutate()}>
               {resend.isPending && <Spinner data-icon="inline-start" />}
@@ -147,7 +175,7 @@ function LinkSent({ email, onChangeEmail }: { email: string; onChangeEmail: () =
             </Button>
           </div>
           <output className="text-xs">
-            {resend.isSuccess && !resend.isPending ? "Te enviamos otro enlace." : ""}
+            {resend.data === "sent" && !resend.isPending ? "Te enviamos otro enlace." : ""}
           </output>
         </div>
       </div>

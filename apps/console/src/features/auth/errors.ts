@@ -6,9 +6,26 @@ export type AuthError = { status: number; code?: string; message?: string };
 export const tooManyAttemptsMessage =
   "Demasiados intentos seguidos. Espera unos minutos antes de volver a intentarlo.";
 
+/** Better Auth's captcha plugin answers before the endpoint runs; `null` for any other error. */
+export function captchaErrorMessage(error: AuthError): string | null {
+  switch (error.code) {
+    case "MISSING_RESPONSE":
+    case "VERIFICATION_FAILED":
+      return "No pudimos confirmar la verificación de seguridad. Complétala de nuevo e inténtalo otra vez.";
+    case "UNKNOWN_ERROR":
+      return "La verificación de seguridad no respondió. Inténtalo de nuevo en un momento.";
+    default:
+      return null;
+  }
+}
+
 export function signInErrorMessage(error: AuthError): string {
   if (error.status === 429) {
     return tooManyAttemptsMessage;
+  }
+  const captchaMessage = captchaErrorMessage(error);
+  if (captchaMessage) {
+    return captchaMessage;
   }
   switch (error.code) {
     case "INVALID_EMAIL_OR_PASSWORD":
@@ -25,6 +42,10 @@ export type SignUpErrorField = "email" | "password" | "acceptedLegal" | "root";
 export function signUpError(error: AuthError): { field: SignUpErrorField; message: string } {
   if (error.status === 429) {
     return { field: "root", message: tooManyAttemptsMessage };
+  }
+  const captchaMessage = captchaErrorMessage(error);
+  if (captchaMessage) {
+    return { field: "root", message: captchaMessage };
   }
   switch (error.code) {
     case "USER_ALREADY_EXISTS":

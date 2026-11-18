@@ -11,6 +11,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { useCaptcha } from "~/features/auth/Captcha";
 import { signUpError } from "~/features/auth/errors";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signUpSchema } from "~/features/auth/schema";
@@ -41,6 +42,7 @@ function SignUp() {
   useAnalytics();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const captcha = useCaptcha();
   const form = useForm({
     resolver: arktypeResolver(signUpSchema),
     defaultValues: { name: "", email: "", password: "", confirmPassword: "", acceptedLegal: false },
@@ -52,10 +54,15 @@ function SignUp() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ name, email, password }) => {
+    const headers = captcha.headers();
+    if (!headers) {
+      return;
+    }
     const { error: failure } = await authClient.signUp.email(
       { name, email, password },
-      { headers: { [legalAcceptanceHeader]: legalAcceptance } },
+      { headers: { ...headers, [legalAcceptanceHeader]: legalAcceptance } },
     );
+    captcha.settle(failure);
     if (failure) {
       const { field, message } = signUpError(failure);
       form.setError(field, { message }, { shouldFocus: field !== "root" });
@@ -209,6 +216,7 @@ function SignUp() {
               </Field>
             )}
           />
+          {captcha.widget}
           {errors.root && (
             <Alert variant="destructive">
               <AlertDescription>{errors.root.message}</AlertDescription>
