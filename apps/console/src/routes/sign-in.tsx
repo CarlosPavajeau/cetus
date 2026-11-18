@@ -55,12 +55,11 @@ function SignIn() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const headers = captcha.headers();
-    if (!headers) {
+    const response = await captcha.run((headers) => authClient.signIn.email(values, { headers }));
+    if (!response) {
       return;
     }
-    const { data, error: signInError } = await authClient.signIn.email(values, { headers });
-    captcha.settle(signInError);
+    const { data, error: signInError } = response;
     if (signInError) {
       form.setError("root", { message: signInErrorMessage(signInError) });
       return;

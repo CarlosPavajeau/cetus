@@ -11,7 +11,7 @@ import { Button, buttonVariants } from "~/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
-import { useCaptcha } from "~/features/auth/Captcha";
+import { type CaptchaRun, useCaptcha } from "~/features/auth/Captcha";
 import { captchaErrorMessage } from "~/features/auth/errors";
 import { forgotPasswordSchema } from "~/features/auth/schema";
 import { authClient } from "~/lib/auth/client";
@@ -25,19 +25,14 @@ export const Route = createFileRoute("/forgot-password")({
 type ResetRequest = { kind: "sent" } | { kind: "unverified" } | { kind: "failed"; message: string };
 
 /** The same answer whether or not the address has an account: the page reveals none. */
-async function requestResetLink(
-  email: string,
-  captcha: ReturnType<typeof useCaptcha>,
-): Promise<ResetRequest> {
-  const headers = captcha.headers();
-  if (!headers) {
+async function requestResetLink(email: string, run: CaptchaRun): Promise<ResetRequest> {
+  const response = await run((headers) =>
+    authClient.requestPasswordReset({ email, redirectTo: "/reset-password" }, { headers }),
+  );
+  if (!response) {
     return { kind: "unverified" };
   }
-  const { error } = await authClient.requestPasswordReset(
-    { email, redirectTo: "/reset-password" },
-    { headers },
-  );
-  captcha.settle(error);
+  const { error } = response;
   if (!error) {
     return { kind: "sent" };
   }
@@ -71,7 +66,7 @@ function ForgotPassword() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ email }) => {
-    const request = await requestResetLink(email, captcha);
+    const request = await requestResetLink(email, captcha.run);
     if (request.kind === "failed") {
       form.setError("root", { message: request.message });
     }
@@ -139,7 +134,7 @@ function LinkSent({ email, onChangeEmail }: { email: string; onChangeEmail: () =
   const captcha = useCaptcha();
   const resend = useMutation({
     mutationFn: async () => {
-      const request = await requestResetLink(email, captcha);
+      const request = await requestResetLink(email, captcha.run);
       if (request.kind === "failed") {
         throw new Error(request.message);
       }

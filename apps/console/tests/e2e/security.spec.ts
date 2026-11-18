@@ -327,5 +327,5 @@ test("Better Auth refuses a sign-in without a Turnstile token", async ({ organiz
     body: JSON.stringify({ email: organization.email, password: organization.password }),
   });
   expect(response.status).toBe(400);
-  expect(await response.json()).toMatchObject({ code: "MISSING_RESPONSE" });
+  expect(type({ code: "string" }).assert(await response.json()).code).toBe("MISSING_RESPONSE");
 });

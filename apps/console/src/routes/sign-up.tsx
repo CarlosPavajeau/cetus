@@ -54,15 +54,16 @@ function SignUp() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async ({ name, email, password }) => {
-    const headers = captcha.headers();
-    if (!headers) {
+    const response = await captcha.run((headers) =>
+      authClient.signUp.email(
+        { name, email, password },
+        { headers: { ...headers, [legalAcceptanceHeader]: legalAcceptance } },
+      ),
+    );
+    if (!response) {
       return;
     }
-    const { error: failure } = await authClient.signUp.email(
-      { name, email, password },
-      { headers: { ...headers, [legalAcceptanceHeader]: legalAcceptance } },
-    );
-    captcha.settle(failure);
+    const { error: failure } = response;
     if (failure) {
       const { field, message } = signUpError(failure);
       form.setError(field, { message }, { shouldFocus: field !== "root" });

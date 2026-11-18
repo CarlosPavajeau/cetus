@@ -4,7 +4,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Field, FieldError } from "~/components/ui/field";
-import { useTheme } from "~/features/theme/theme";
+import { type Theme, useTheme } from "~/features/theme/theme";
 
 import type { AuthError } from "./errors";
 import { getCaptchaSiteKey } from "./server";
@@ -14,7 +14,7 @@ type TurnstileOptions = {
   callback: (token: string) => void;
   "expired-callback": () => void;
   "error-callback": () => void;
-  theme: "light" | "dark";
+  theme: Theme;
   language: string;
   size: "flexible";
   "response-field": false;
@@ -33,13 +33,12 @@ declare global {
 
 const scriptUrl = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
-/** The header Better Auth's captcha plugin reads. */
 const captchaHeader = "x-captcha-response";
 
-let turnstileLoading: Promise<TurnstileApi> | null = null;
+let turnstilePromise: Promise<TurnstileApi> | null = null;
 
 function loadTurnstile(): Promise<TurnstileApi> {
-  turnstileLoading ??= new Promise((resolve, reject) => {
+  turnstilePromise ??= new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = scriptUrl;
     script.async = true;
@@ -50,12 +49,12 @@ function loadTurnstile(): Promise<TurnstileApi> {
     );
     script.addEventListener("error", () => {
       script.remove();
-      turnstileLoading = null;
+      turnstilePromise = null;
       reject(new Error("Could not load Turnstile's script"));
     });
     document.head.append(script);
   });
-  return turnstileLoading;
+  return turnstilePromise;
 }
 
 const captchaSiteKeyQuery = queryOptions({
@@ -64,71 +63,91 @@ const captchaSiteKeyQuery = queryOptions({
   staleTime: Infinity,
 });
 
+/** Sends a request guarded by Better Auth's captcha plugin; `null` when there was no token to send. */
+export type CaptchaRun = <T extends { error: AuthError | null }>(
+  request: (headers: Record<string, string>) => Promise<T>,
+) => Promise<T | null>;
+
 /**
  * Cloudflare Turnstile for the forms Better Auth's captcha plugin guards. A token is good for one request,
- * so every attempt, whatever its answer, ends with `settle` and the widget starts over.
+ * so every attempt, whatever its answer, starts the widget over.
  */
-export function useCaptcha(): {
-  widget: ReactNode;
-  /** The request's headers, or `null` (and a prompt under the widget) while there is no token yet. */
-  headers: () => Record<string, string> | null;
-  settle: (error?: AuthError | null) => void;
-} {
+export function useCaptcha(): { widget: ReactNode; run: CaptchaRun } {
   const siteKeyQuery = useQuery(captchaSiteKeyQuery);
   const siteKey = siteKeyQuery.data;
   const theme = useTheme();
   const [token, setToken] = useState<string | null>(null);
-  const [round, setRound] = useState(0);
-  const [missing, setMissing] = useState(false);
+  const [widgetGeneration, setWidgetGeneration] = useState(0);
+  const [tokenMissing, setTokenMissing] = useState(false);
+  const [scriptFailed, setScriptFailed] = useState(false);
+
+  function restartWidget() {
+    setToken(null);
+    setTokenMissing(false);
+    setWidgetGeneration((current) => current + 1);
+  }
 
   const widget = (
-    <Field data-invalid={missing && !token}>
+    <Field data-invalid={tokenMissing && !token}>
       {siteKeyQuery.isError && (
-        <FieldError>
-          No pudimos cargar la verificación de seguridad.{" "}
-          <Button
-            type="button"
-            variant="link"
-            // oxlint-disable-next-line shadcn/no-restyle -- a text link inside the message, without a button's box
-            className="h-auto p-0"
-            disabled={siteKeyQuery.isFetching}
-            onClick={() => void siteKeyQuery.refetch()}
-          >
-            Reintentar
-          </Button>
-        </FieldError>
+        <LoadError retrying={siteKeyQuery.isFetching} onRetry={() => void siteKeyQuery.refetch()} />
       )}
-      {siteKey && theme && (
+      {scriptFailed && (
+        <LoadError
+          retrying={false}
+          onRetry={() => {
+            setScriptFailed(false);
+            restartWidget();
+          }}
+        />
+      )}
+      {siteKey && theme && !scriptFailed && (
         <TurnstileWidget
-          key={`${round}-${theme}`}
+          key={`${widgetGeneration}-${theme}`}
           siteKey={siteKey}
           theme={theme}
           solved={token !== null}
           onToken={setToken}
+          onScriptFailed={setScriptFailed}
         />
       )}
-      {missing && !token && <FieldError>Completa la verificación para continuar.</FieldError>}
+      {tokenMissing && !token && <FieldError>Completa la verificación para continuar.</FieldError>}
     </Field>
   );
 
-  return {
-    widget,
-    headers: () => {
-      if (!token) {
-        setMissing(true);
-        return null;
-      }
-      return { [captchaHeader]: token };
-    },
-    settle: (error) => {
-      if (error?.code === "UNKNOWN_ERROR") {
-        Sentry.captureMessage("Turnstile could not verify a token", "error");
-      }
-      setToken(null);
-      setMissing(false);
-      setRound((current) => current + 1);
-    },
+  const run: CaptchaRun = async (request) => {
+    if (!token) {
+      setTokenMissing(true);
+      return null;
+    }
+    const response = await request({ [captchaHeader]: token });
+    if (response.error?.code === "UNKNOWN_ERROR") {
+      Sentry.captureMessage("Turnstile could not verify a token", "error");
+    }
+    restartWidget();
+    return response;
   };
+
+  return { widget, run };
+}
+
+function LoadError({ retrying, onRetry }: { retrying: boolean; onRetry: () => void }) {
+  return (
+    <FieldError>
+      No pudimos cargar la verificación de seguridad. Revisa tu conexión o el bloqueador de
+      contenido.{" "}
+      <Button
+        type="button"
+        variant="link"
+        // oxlint-disable-next-line shadcn/no-restyle -- a text link inside the message, without a button's box
+        className="h-auto p-0"
+        disabled={retrying}
+        onClick={onRetry}
+      >
+        Reintentar
+      </Button>
+    </FieldError>
+  );
 }
 
 function TurnstileWidget({
@@ -136,14 +155,15 @@ function TurnstileWidget({
   theme,
   solved,
   onToken,
+  onScriptFailed,
 }: {
   siteKey: string;
-  theme: "light" | "dark";
+  theme: Theme;
   solved: boolean;
   onToken: (token: string | null) => void;
+  onScriptFailed: (failed: boolean) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
-  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -155,7 +175,7 @@ function TurnstileWidget({
       } catch (error) {
         console.warn("Turnstile is unavailable", error);
         if (active) {
-          setUnavailable(true);
+          onScriptFailed(true);
         }
         return;
       }
@@ -180,16 +200,8 @@ function TurnstileWidget({
         window.turnstile?.remove(widgetId);
       }
     };
-  }, [siteKey, theme, onToken]);
+  }, [siteKey, theme, onToken, onScriptFailed]);
 
-  if (unavailable) {
-    return (
-      <FieldError>
-        No pudimos cargar la verificación de seguridad. Revisa tu conexión o desactiva el bloqueador
-        de contenido y recarga la página.
-      </FieldError>
-    );
-  }
   return (
     <div ref={container} data-captcha={solved ? "solved" : "pending"} className="min-h-16.25" />
   );

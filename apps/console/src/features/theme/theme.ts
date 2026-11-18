@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 
 const THEME_STORAGE_KEY = "theme";
 
