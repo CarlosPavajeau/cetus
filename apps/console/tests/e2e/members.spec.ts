@@ -1,5 +1,6 @@
 import { type } from "arktype";
 
+import { captchaSolved } from "../support/captcha";
 import { grantPackage } from "../support/credits";
 import { ageInvitation, invitationExpiry, markEmailVerified } from "../support/invitations";
 import { addRange, onboardIssuer, uniqueNit } from "../support/issuers";
@@ -65,6 +66,7 @@ test("a biller is invited by link, issues in production and is removed", async (
   await invited.getByLabel("Contraseña", { exact: true }).fill("clave-facturadora-segura");
   await invited.getByLabel("Confirmar contraseña").fill("clave-facturadora-segura");
   await invited.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await captchaSolved(invited);
   await invited.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(invited.getByRole("heading", { name: "Confirma tu correo" })).toBeVisible();
   await expect(invited.getByText(`Te enviamos el enlace a ${email}`)).toBeVisible();
@@ -165,6 +167,7 @@ test("someone with 2FA comes back to the invitation after the second step", asyn
   await expect(page.getByText("Pruebas SAS te espera. Inicia sesión para unirte.")).toBeVisible();
   await page.getByLabel("Correo electrónico").fill(invited.email);
   await page.getByRole("textbox", { name: "Contraseña" }).fill(invited.password);
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
   await page.waitForURL("**/two-factor**");
   await page.getByLabel("Código de verificación").fill(totp(secret));
@@ -196,6 +199,7 @@ test("whoever gets an invitation's link cannot join with its address without own
   await page.getByLabel("Contraseña", { exact: true }).fill("clave-ajena-muy-segura");
   await page.getByLabel("Confirmar contraseña").fill("clave-ajena-muy-segura");
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(page.getByRole("heading", { name: "Confirma tu correo" })).toBeVisible();
 

@@ -23,13 +23,13 @@ export { expect } from "@playwright/test";
 
 /**
  * Opens a page and waits until the app has hydrated: before that, buttons that are not plain form
- * submits do nothing and forms submit natively. The network going idle is not enough: React hydrates in a
- * transition, a Suspense boundary at a time, and on a busy CI runner it finishes seconds later. React marks
- * each element it hydrates with a `__reactProps$` key, so this waits until every control has one, except the
- * development-only query devtools, which React does not render.
+ * submits do nothing and forms submit natively. Not on the network going idle: Turnstile's worker keeps a
+ * request open, and React hydrates in a transition, a Suspense boundary at a time, which on a busy CI runner
+ * finishes seconds later anyway. React marks each element it hydrates with a `__reactProps$` key, so this
+ * waits until every control has one, except the development-only query devtools, which React does not render.
  */
 export async function open(page: Page, path: string) {
-  await page.goto(path, { waitUntil: "networkidle" });
+  await page.goto(path, { waitUntil: "load" });
   await page.waitForFunction(() =>
     Array.from(document.querySelectorAll("button, a[href], input, select, textarea"))
       .filter((element) => !element.closest('[class*="tsqd"]'))

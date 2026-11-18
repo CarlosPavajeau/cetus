@@ -3,9 +3,10 @@ import { type } from "arktype";
 import { config } from "dotenv";
 import { Pool } from "pg";
 
+import { captchaSolved } from "../support/captcha";
 import { latestEmailTo } from "../support/outbox";
 import { createPlatformStaff, totp } from "../support/platform-staff";
-import { consoleCookies } from "../support/stack";
+import { consoleCookies, consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
 
 config({ quiet: true });
@@ -55,6 +56,7 @@ test("2FA is enabled from the security page and then asked at sign-in", async ({
   await page.waitForURL("**/sign-in");
   await page.getByLabel("Correo electrónico").fill(organization.email);
   await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
   await page.waitForURL("**/two-factor");
@@ -229,6 +231,7 @@ test("a new authenticator app replaces the old one only once its code is right, 
     await open(visitorPage, "/sign-in");
     await visitorPage.getByLabel("Correo electrónico").fill(organization.email);
     await visitorPage.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+    await captchaSolved(visitorPage);
     await visitorPage.getByRole("button", { name: "Iniciar sesión" }).click();
     await visitorPage.waitForURL("**/two-factor");
     return { visitor, visitorPage };
@@ -293,6 +296,7 @@ test("a backup code typed as shown, dash included, signs in", async ({ browser, 
   await open(page, "/sign-in");
   await page.getByLabel("Correo electrónico").fill(organization.email);
   await page.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
   await page.waitForURL("**/two-factor");
 
@@ -314,4 +318,14 @@ test("the second step without a pending sign-in sends the person back, invitatio
   await page.waitForURL(`**/sign-in?invitation=${invitation}&expired=true`);
   await expect(page.getByText("La verificación venció")).toBeVisible();
   await visitor.close();
+});
+
+test("Better Auth refuses a sign-in without a Turnstile token", async ({ organization }) => {
+  const response = await fetch(`${consoleUrl}/api/auth/sign-in/email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: consoleUrl },
+    body: JSON.stringify({ email: organization.email, password: organization.password }),
+  });
+  expect(response.status).toBe(400);
+  expect(await response.json()).toMatchObject({ code: "MISSING_RESPONSE" });
 });

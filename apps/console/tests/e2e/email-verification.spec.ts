@@ -1,3 +1,4 @@
+import { captchaSolved } from "../support/captcha";
 import { latestEmailTo, linkTo } from "../support/outbox";
 import { expect, open, test } from "./fixtures";
 
@@ -11,8 +12,9 @@ test("signing up asks to confirm the address until its link is opened", async ({
   await page.getByLabel("Contraseña", { exact: true }).fill(password);
   await page.getByLabel("Confirmar contraseña").fill(password);
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await page.waitForURL("**/overview", { waitUntil: "networkidle" });
+  await page.waitForURL("**/overview");
 
   const banner = page.getByRole("complementary", { name: "Correo sin confirmar" });
   await expect(banner).toContainText(email);

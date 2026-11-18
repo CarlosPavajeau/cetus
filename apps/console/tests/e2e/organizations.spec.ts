@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 
+import { captchaSolved } from "../support/captcha";
 import { forgetLastOrganization, inviteMember } from "../support/organization";
 import { expect, open, test } from "./fixtures";
 
@@ -7,6 +8,7 @@ async function signIn(page: Page, email: string, password: string) {
   await open(page, "/sign-in");
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByRole("textbox", { name: "Contraseña" }).fill(password);
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
 }
 

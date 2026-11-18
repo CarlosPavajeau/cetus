@@ -1,5 +1,6 @@
 import { legalDocuments } from "~/features/legal/documents";
 
+import { captchaHeaders, captchaSolved } from "../support/captcha";
 import { consentsOf, forgetConsents } from "../support/consents";
 import { consoleUrl } from "../support/stack";
 import { expect, open, test } from "./fixtures";
@@ -30,6 +31,7 @@ test("signing up takes accepting the terms, and records the versions accepted", 
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(`clave-${id}-segura`);
   await page.getByLabel("Confirmar contraseña").fill(`clave-${id}-segura`);
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(
     page.getByText("Acepta los términos y la política de datos para continuar."),
@@ -37,8 +39,9 @@ test("signing up takes accepting the terms, and records the versions accepted", 
   expect(await consentsOf(email)).toEqual([]);
 
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await page.waitForURL("**/overview", { waitUntil: "networkidle" });
+  await page.waitForURL("**/overview");
   expect(await consentsOf(email)).toEqual(currentConsents);
 });
 
@@ -46,7 +49,7 @@ test("Better Auth refuses a sign-up that does not name the current documents", a
   const id = crypto.randomUUID().slice(0, 8);
   const response = await fetch(`${consoleUrl}/api/auth/sign-up/email`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Origin: consoleUrl },
+    headers: { "Content-Type": "application/json", Origin: consoleUrl, ...captchaHeaders },
     body: JSON.stringify({
       name: "Persona de pruebas",
       email: `e2e-legal-api-${id}@cetus.test`,
@@ -90,6 +93,7 @@ test("signing up with a registered address points to the sign-in", async ({
   await page.getByLabel("Contraseña", { exact: true }).fill(`clave-${id}-segura`);
   await page.getByLabel("Confirmar contraseña").fill(`clave-${id}-segura`);
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(page.getByText("Ya hay una cuenta con este correo.")).toBeVisible();
 });

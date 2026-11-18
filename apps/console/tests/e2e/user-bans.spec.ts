@@ -1,3 +1,4 @@
+import { captchaSolved } from "../support/captcha";
 import { createOrganization } from "../support/organization";
 import { createPlatformStaff } from "../support/platform-staff";
 import { consoleCookies } from "../support/stack";
@@ -32,7 +33,8 @@ test("an admin bans a person: they lose their session at once and cannot sign in
   // Their next request has no session.
   await customerPage.reload();
   await customerPage.waitForURL("**/sign-in");
-  await customerPage.waitForLoadState("networkidle");
+  // The widget renders once the page has hydrated, so typing after it is not wiped.
+  await captchaSolved(customerPage);
   await customerPage.getByLabel("Correo electrónico").fill(customer.email);
   await customerPage.getByRole("textbox", { name: "Contraseña" }).fill(customer.password);
   await customerPage.getByRole("button", { name: "Iniciar sesión" }).click();
@@ -49,6 +51,8 @@ test("an admin bans a person: they lose their session at once and cannot sign in
   await page.getByRole("dialog").getByLabel("Motivo").fill("Verificado con el cliente");
   await page.getByRole("dialog").getByRole("button", { name: "Desbloquear" }).click();
   await expect(page.getByRole("button", { name: "Bloquear usuario" })).toBeVisible();
+
+  await captchaSolved(customerPage);
 
   await customerPage.getByRole("button", { name: "Iniciar sesión" }).click();
   await customerPage.waitForURL((url) => !url.pathname.startsWith("/sign-in"));

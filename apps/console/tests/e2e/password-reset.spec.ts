@@ -1,5 +1,6 @@
 import { type } from "arktype";
 
+import { captchaSolved } from "../support/captcha";
 import { latestEmailTo, linkUnder } from "../support/outbox";
 import { expect, open, test } from "./fixtures";
 
@@ -18,6 +19,7 @@ test("a forgotten password is changed from the emailed link, which works once", 
   );
   await open(visitor, "/forgot-password");
   await visitor.getByLabel("Correo electrónico").fill(organization.email);
+  await captchaSolved(visitor);
   await visitor.getByRole("button", { name: "Enviar enlace" }).click();
   await expect(visitor.getByText(`Si hay una cuenta con ${organization.email}`)).toBeVisible();
 
@@ -43,9 +45,11 @@ test("a forgotten password is changed from the emailed link, which works once", 
 
   await visitor.getByLabel("Correo electrónico").fill(organization.email);
   await visitor.getByRole("textbox", { name: "Contraseña" }).fill(organization.password);
+  await captchaSolved(visitor);
   await visitor.getByRole("button", { name: "Iniciar sesión" }).click();
   await expect(visitor.getByText("El correo o la contraseña no coinciden")).toBeVisible();
   await visitor.getByRole("textbox", { name: "Contraseña" }).fill(password);
+  await captchaSolved(visitor);
   await visitor.getByRole("button", { name: "Iniciar sesión" }).click();
   await visitor.waitForURL("**/overview");
   // Following the emailed link confirmed the address.
@@ -61,6 +65,7 @@ test("an address without an account gets the same answer and no email", async ({
   const address = `e2e-nadie-${crypto.randomUUID().slice(0, 8)}@cetus.test`;
   await open(page, "/forgot-password");
   await page.getByLabel("Correo electrónico").fill(address);
+  await captchaSolved(page);
   await page.getByRole("button", { name: "Enviar enlace" }).click();
   await expect(page.getByText(`Si hay una cuenta con ${address}`)).toBeVisible();
   await page.getByRole("button", { name: "Usar otro correo" }).click();
