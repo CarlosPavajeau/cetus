@@ -37,6 +37,7 @@ jobs:
               - "build.gradle.kts"
               - "settings.gradle.kts"
               - "gradle/**"
+              - "gradle.properties"
               - "build-logic/**"
               - "package.json"
               - "pnpm-lock.yaml"
@@ -51,6 +52,11 @@ jobs:
     if: needs.changes.outputs.stack == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # setup-gradle saves only on main, where this workflow never runs, so it restores the Gradle home of Java's test
+    # job instead of whichever job matched the prefix (the native one has no worker dependencies). Without it the
+    # worker's dependencies came from Maven Central on every run, which answers shared runners with 429.
+    env:
+      GRADLE_BUILD_ACTION_CACHE_KEY_JOB: test
     strategy:
       fail-fast: false
       matrix:
@@ -85,6 +91,18 @@ jobs:
 
       - name: Migrate the auth schema
         run: pnpm --filter @cetus/console db:migrate
+
+      # Resolves and compiles what dev.sh would, but in the foreground and with retries: a resolution failure inside
+      # dev.sh only shows up as a stack that never answers.
+      - name: Compile the Java apps
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew --console=plain :apps:api:classes :apps:worker:classes :apps:dian-mock:classes \
+              :apps:api:quarkusGenerateDevAppModel :apps:worker:quarkusGenerateDevAppModel && exit 0
+            echo "::warning::Compiling the Java apps failed (attempt $attempt of 3)"
+            sleep $((attempt * 30))
+          done
+          exit 1
 
       - name: Start the console, API, worker and DIAN mock
         run: |
