@@ -1,5 +1,5 @@
 # Build from the repository root: docker build -f apps/console/Dockerfile .
-FROM node:24.22.1-slim AS build
+FROM node:24.22.1-trixie-slim AS build
 COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
 RUN sh /usr/local/bin/cetus-update-trust
 WORKDIR /app
@@ -17,7 +17,9 @@ ARG SENTRY_AUTH_TOKEN
 ARG CETUS_COMMIT_SHA
 RUN pnpm --filter @cetus/console build
 
-FROM node:24.22.1-slim
+FROM node:24.22.1-trixie-slim
+# Security fixes Debian published after the base image was built.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
 COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
 RUN sh /usr/local/bin/cetus-update-trust
 WORKDIR /app

@@ -8,7 +8,7 @@
 
 # Every Gradle build script and lockfile, with the wrapper and the convention plugins, in the same directory layout.
 # This stage reruns on any change, but its output only changes with the build scripts and lockfiles.
-FROM eclipse-temurin:25.0.4_7-jdk AS java-build-base
+FROM eclipse-temurin:25.0.5_8-jdk AS java-build-base
 COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
 RUN sh /usr/local/bin/cetus-update-trust
 
@@ -37,7 +37,7 @@ RUN --mount=type=cache,id=s/f78bcbc5-5ea7-4a62-a6bb-812ac9c32864-/root/.gradle,t
     -Dquarkus.package.jar.aot.enabled=true -Dquarkus.package.jar.aot.phase=build \
     && rm -f apps/api/build/quarkus-app/app.aot
 
-FROM eclipse-temurin:25.0.4_7-jre
+FROM eclipse-temurin:25.0.5_8-jre
 COPY infra/security/update-trust.sh /usr/local/bin/cetus-update-trust
 RUN sh /usr/local/bin/cetus-update-trust
 WORKDIR /app
