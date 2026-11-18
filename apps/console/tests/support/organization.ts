@@ -3,6 +3,7 @@ import { Pool } from "pg";
 
 import { legalAcceptance, legalAcceptanceHeader } from "~/features/legal/documents";
 
+import { captchaHeaders } from "./captcha";
 import { markEmailVerified } from "./invitations";
 import { apiUrl, consoleUrl } from "./stack";
 
@@ -64,7 +65,7 @@ export async function createOrganization(name = "Pruebas SAS"): Promise<TestOrga
   const signUp = await authResponse(
     "/sign-up/email",
     { name: "Persona de pruebas", email, password },
-    { [legalAcceptanceHeader]: legalAcceptance },
+    { ...captchaHeaders, [legalAcceptanceHeader]: legalAcceptance },
   );
   if (!signUp.ok) {
     throw new Error(`/sign-up/email answered ${signUp.status}: ${await signUp.text()}`);

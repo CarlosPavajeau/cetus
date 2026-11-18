@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { type } from "arktype";
 
+import { captchaSolved } from "../support/captcha";
 import { createIssuer, testSoftware, uniqueNit } from "../support/issuers";
 import { testCertificate } from "../support/stack";
 import { expect, fillIssuer, open, test } from "./fixtures";
@@ -28,6 +29,7 @@ test("signing up opens the console in the sandbox, with the assistant one click 
   await page.getByLabel("Contraseña", { exact: true }).fill(`clave-${id}-segura`);
   await page.getByLabel("Confirmar contraseña").fill(`clave-${id}-segura`);
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await captchaSolved(page);
   await page.getByRole("button", { name: /crear/i }).click();
 
   await expect(page).toHaveURL(/\/overview$/);

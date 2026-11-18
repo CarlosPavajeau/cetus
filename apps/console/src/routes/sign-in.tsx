@@ -11,6 +11,7 @@ import { Button } from "~/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Spinner } from "~/components/ui/spinner";
+import { useCaptcha } from "~/features/auth/Captcha";
 import { signInErrorMessage } from "~/features/auth/errors";
 import { PasswordInput } from "~/features/auth/PasswordInput";
 import { signInSchema } from "~/features/auth/schema";
@@ -42,6 +43,7 @@ function SignIn() {
   const organizationName = Route.useLoaderData();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const captcha = useCaptcha();
   const form = useForm({
     resolver: arktypeResolver(signInSchema),
     defaultValues: { email: "", password: "" },
@@ -53,7 +55,11 @@ function SignIn() {
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const { data, error: signInError } = await authClient.signIn.email(values);
+    const response = await captcha.run((headers) => authClient.signIn.email(values, { headers }));
+    if (!response) {
+      return;
+    }
+    const { data, error: signInError } = response;
     if (signInError) {
       form.setError("root", { message: signInErrorMessage(signInError) });
       return;
@@ -148,6 +154,7 @@ function SignIn() {
           >
             ¿Olvidaste tu contraseña?
           </Link>
+          {captcha.widget}
           {errors.root && (
             <Alert variant="destructive">
               <AlertDescription>{errors.root.message}</AlertDescription>

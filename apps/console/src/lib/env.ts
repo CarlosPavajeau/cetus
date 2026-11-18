@@ -7,6 +7,9 @@ const schema = type({
   BETTER_AUTH_SECRET: "string >= 16",
   BETTER_AUTH_URL: "string.url",
   CETUS_API_URL: "string.url",
+  // Cloudflare's test keys outside production, so local and CI run the same verification.
+  TURNSTILE_SITE_KEY: "string > 0",
+  TURNSTILE_SECRET_KEY: "string > 0",
   // Read by the edge middleware (start.ts); listed so a short secret fails at startup.
   "CETUS_EDGE_SECRET?": "string >= 32",
   // Resend for the account emails (invitations); a send-only key, apart from the worker's.
