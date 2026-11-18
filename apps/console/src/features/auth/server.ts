@@ -3,6 +3,12 @@ import { getCookie } from "@tanstack/react-start/server";
 import { type } from "arktype";
 
 import { auth } from "~/lib/auth/server";
+import { env } from "~/lib/env";
+
+/** Public: the widget shows it to every visitor. */
+export const getCaptchaSiteKey = createServerFn({ method: "GET" }).handler(
+  () => env.TURNSTILE_SITE_KEY,
+);
 
 /**
  * Whether a sign-in is waiting for its second factor. Better Auth keeps it in an httpOnly cookie that lives

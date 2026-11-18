@@ -3,7 +3,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { type } from "arktype";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
-import { admin, jwt, organization, twoFactor } from "better-auth/plugins";
+import { admin, captcha, jwt, organization, twoFactor } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { and, eq } from "drizzle-orm";
 
@@ -33,6 +33,9 @@ import { replaceTotp } from "./replace-totp";
 import * as schema from "./schema";
 
 const backupCodeTotal = 10;
+
+/** What an anonymous visitor can call at scale: guessing passwords, creating accounts, flooding mailboxes. */
+const captchaEndpoints = ["/sign-in/email", "/sign-up/email", "/request-password-reset"];
 
 const sessionFields = type({
   "activeOrganizationId?": "string | null",
@@ -229,6 +232,11 @@ export const auth = betterAuth({
     }),
   },
   plugins: [
+    captcha({
+      provider: "cloudflare-turnstile",
+      secretKey: env.TURNSTILE_SECRET_KEY,
+      endpoints: captchaEndpoints,
+    }),
     organization({
       ac: organizationAc,
       roles: organizationRoles,
