@@ -93,15 +93,19 @@ jobs:
             printf "%4ds %s\n" "$SECONDS" "$line"
           done' > .logs/dev.log 2>&1 &
 
+      - name: Read the Playwright version
+        run: echo "PLAYWRIGHT_VERSION=$(jq -r '.devDependencies["@playwright/test"]' apps/console/package.json)" >> "$GITHUB_ENV"
+
       - name: Cache the Playwright browser
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
 
-      # While the Java apps compile and start.
+      # While the Java apps compile and start. No --with-deps: the runner image already has Chromium's
+      # libraries, and apt only added fonts while its mirrors sometimes took minutes.
       - name: Install the Playwright browser
-        run: pnpm --filter @cetus/console exec playwright install --with-deps chromium
+        run: pnpm --filter @cetus/console exec playwright install --only-shell chromium
 
       - name: Wait for the stack
         run: |
