@@ -97,6 +97,9 @@ export default defineRailway((ctx) => {
       // Account emails (invitations); a send-only Resend key of its own.
       RESEND_API_KEY: preserve(),
       CETUS_AUTH_EMAIL_FROM: "Cetus <cuentas@cetus.cantte.com>",
+      // Cloudflare Turnstile on sign-in, sign-up and password reset; the console does not start without them.
+      TURNSTILE_SITE_KEY: preserve(),
+      TURNSTILE_SECRET_KEY: preserve(),
       // Sentry: SENTRY_DSN for the server, VITE_SENTRY_DSN (the same value) built into the browser bundle, and
       // a token that uploads source maps during the Docker build.
       CETUS_DEPLOYMENT_ENV: "production",

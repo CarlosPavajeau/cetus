@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
+import { Button } from "~/components/ui/button";
 import { Field, FieldError } from "~/components/ui/field";
 import { useTheme } from "~/features/theme/theme";
 
@@ -73,7 +74,8 @@ export function useCaptcha(): {
   headers: () => Record<string, string> | null;
   settle: (error?: AuthError | null) => void;
 } {
-  const { data: siteKey } = useQuery(captchaSiteKeyQuery);
+  const siteKeyQuery = useQuery(captchaSiteKeyQuery);
+  const siteKey = siteKeyQuery.data;
   const theme = useTheme();
   const [token, setToken] = useState<string | null>(null);
   const [round, setRound] = useState(0);
@@ -81,6 +83,21 @@ export function useCaptcha(): {
 
   const widget = (
     <Field data-invalid={missing && !token}>
+      {siteKeyQuery.isError && (
+        <FieldError>
+          No pudimos cargar la verificación de seguridad.{" "}
+          <Button
+            type="button"
+            variant="link"
+            // oxlint-disable-next-line shadcn/no-restyle -- a text link inside the message, without a button's box
+            className="h-auto p-0"
+            disabled={siteKeyQuery.isFetching}
+            onClick={() => void siteKeyQuery.refetch()}
+          >
+            Reintentar
+          </Button>
+        </FieldError>
+      )}
       {siteKey && theme && (
         <TurnstileWidget
           key={`${round}-${theme}`}
