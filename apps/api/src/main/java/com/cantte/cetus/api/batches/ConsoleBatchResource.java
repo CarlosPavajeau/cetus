@@ -149,10 +149,7 @@ public class ConsoleBatchResource {
         List<DocumentBatchEntity> page = rows.subList(0, Math.min(size, rows.size()));
         Map<UUID, String> issuerNames = issuerNames(page);
         List<BatchView> items = page.stream()
-                .map(batch -> BatchView.from(
-                        batch,
-                        issuerNames.getOrDefault(batch.issuerId, ""),
-                        DocumentBatchEntity.documentCounts(batch.id)))
+                .map(batch -> BatchView.from(batch, issuerNames.getOrDefault(batch.issuerId, "")))
                 .toList();
         return new BatchPage(items, rows.size() > size ? page.getLast().id : null);
     }
@@ -187,7 +184,7 @@ public class ConsoleBatchResource {
     public BatchView get(@PathParam("id") UUID id) {
         DocumentBatchEntity batch = find(id);
         IssuerEntity issuer = IssuerEntity.findById(batch.issuerId);
-        return BatchView.from(batch, issuer.legalName, DocumentBatchEntity.documentCounts(batch.id));
+        return BatchView.from(batch, issuer.legalName);
     }
 
     /** By position: pass the previous page's {@code nextCursor} as {@code after}. */

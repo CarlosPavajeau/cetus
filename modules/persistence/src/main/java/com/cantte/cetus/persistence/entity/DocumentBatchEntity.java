@@ -12,6 +12,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +41,6 @@ public class DocumentBatchEntity extends PanacheEntityBase {
         FAILED;
 
         public static final Set<Status> OPEN = Set.of(RECEIVED, EXPANDING, PROCESSING);
-
-        public boolean isFinal() {
-            return !OPEN.contains(this);
-        }
     }
 
     public enum Source {
@@ -51,8 +48,20 @@ public class DocumentBatchEntity extends PanacheEntityBase {
         API
     }
 
-    private static final List<DocumentStatus> FINAL_DOCUMENT_STATUSES =
-            List.of(DocumentStatus.ACCEPTED, DocumentStatus.REJECTED, DocumentStatus.FAILED);
+    private static final List<DocumentStatus> FINAL_DOCUMENT_STATUSES = Arrays.stream(DocumentStatus.values())
+            .filter(DocumentStatus::isFinal)
+            .toList();
+
+    /**
+     * The batch's documents by status. {@code pending} have not reached a final status yet; {@code notCreated} are
+     * items the expansion has not turned into documents, either yet or ever, when it stopped.
+     */
+    public record Counts(long accepted, long rejected, long failed, long pending, long notCreated) {
+
+        public long created() {
+            return accepted + rejected + failed + pending;
+        }
+    }
 
     @Id
     public UUID id;
@@ -159,7 +168,7 @@ public class DocumentBatchEntity extends PanacheEntityBase {
                                 JOIN billing.document_batches b ON b.id = i.batch_id
                                 WHERE b.account_id = :account AND b.environment = :environment
                                   AND (CAST(:issuer AS uuid) IS NULL OR b.issuer_id = CAST(:issuer AS uuid))
-                                  AND b.status IN ('RECEIVED', 'EXPANDING') AND i.payload IS NOT NULL
+                                  AND i.payload IS NOT NULL
                                 """)
                         .setParameter("account", accountId)
                         .setParameter("environment", environment.name())
@@ -168,20 +177,23 @@ public class DocumentBatchEntity extends PanacheEntityBase {
                 .longValue();
     }
 
-    /** The batch's documents counted by status. */
-    public static Map<DocumentStatus, Long> documentCounts(UUID batchId) {
-        Map<DocumentStatus, Long> counts = new EnumMap<>(DocumentStatus.class);
+    public Counts counts() {
+        Map<DocumentStatus, Long> byStatus = new EnumMap<>(DocumentStatus.class);
         getEntityManager()
                 .createQuery(
                         "select d.status, count(d) from DocumentEntity d where d.batchId = :batch group by d.status",
                         Object[].class)
-                .setParameter("batch", batchId)
+                .setParameter("batch", id)
                 .getResultList()
-                .forEach(row -> counts.put((DocumentStatus) row[0], (Long) row[1]));
-        return counts;
+                .forEach(row -> byStatus.put((DocumentStatus) row[0], (Long) row[1]));
+        long accepted = byStatus.getOrDefault(DocumentStatus.ACCEPTED, 0L);
+        long rejected = byStatus.getOrDefault(DocumentStatus.REJECTED, 0L);
+        long failed = byStatus.getOrDefault(DocumentStatus.FAILED, 0L);
+        long created = byStatus.values().stream().mapToLong(Long::longValue).sum();
+        return new Counts(
+                accepted, rejected, failed, created - accepted - rejected - failed, Math.max(0, items - created));
     }
 
-    /** Whether one of the batch's documents still waits for a final status. */
     public static boolean hasUnfinishedDocuments(UUID batchId) {
         return DocumentEntity.count("batchId = ?1 and status not in ?2", batchId, FINAL_DOCUMENT_STATUSES) > 0;
     }

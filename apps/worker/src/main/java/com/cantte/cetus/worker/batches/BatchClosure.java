@@ -1,6 +1,5 @@
 package com.cantte.cetus.worker.batches;
 
-import com.cantte.cetus.domain.model.DocumentStatus;
 import com.cantte.cetus.notifications.NotificationKind;
 import com.cantte.cetus.notifications.Notifications;
 import com.cantte.cetus.persistence.AfterCommit;
@@ -53,11 +52,11 @@ public class BatchClosure {
         if (batch.status != Status.PROCESSING || DocumentBatchEntity.hasUnfinishedDocuments(batch.id)) {
             return false;
         }
-        Map<DocumentStatus, Long> counts = DocumentBatchEntity.documentCounts(batch.id);
-        long created = counts.values().stream().mapToLong(Long::longValue).sum();
-        batch.status = batch.stopReason == null ? Status.COMPLETED : created == 0 ? Status.FAILED : Status.PARTIAL;
+        DocumentBatchEntity.Counts counts = batch.counts();
+        batch.status =
+                batch.stopReason == null ? Status.COMPLETED : counts.created() == 0 ? Status.FAILED : Status.PARTIAL;
         batch.completedAt = OffsetDateTime.now();
-        notice(batch, counts, created);
+        notice(batch, counts);
         LOG.infof("Batch %s closed as %s", batch.id, batch.status);
         String environment = batch.environment.name();
         String outcome = batch.status.name().toLowerCase();
@@ -66,7 +65,7 @@ public class BatchClosure {
         return true;
     }
 
-    private void notice(DocumentBatchEntity batch, Map<DocumentStatus, Long> counts, long created) {
+    private void notice(DocumentBatchEntity batch, DocumentBatchEntity.Counts counts) {
         if (batch.createdByEmail == null) {
             return;
         }
@@ -76,10 +75,10 @@ public class BatchClosure {
         data.put("environment", batch.environment.name());
         data.put("status", batch.status.name());
         data.put("items", Integer.toString(batch.items));
-        data.put("accepted", Long.toString(counts.getOrDefault(DocumentStatus.ACCEPTED, 0L)));
-        data.put("rejected", Long.toString(counts.getOrDefault(DocumentStatus.REJECTED, 0L)));
-        data.put("failed", Long.toString(counts.getOrDefault(DocumentStatus.FAILED, 0L)));
-        data.put("notCreated", Long.toString(Math.max(0, batch.items - created)));
+        data.put("accepted", Long.toString(counts.accepted()));
+        data.put("rejected", Long.toString(counts.rejected()));
+        data.put("failed", Long.toString(counts.failed()));
+        data.put("notCreated", Long.toString(counts.notCreated()));
         if (batch.fileName != null) {
             data.put("fileName", batch.fileName);
         }

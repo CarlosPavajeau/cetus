@@ -7,6 +7,7 @@ import com.cantte.cetus.domain.DomainException;
 import com.cantte.cetus.domain.calc.InvoiceCalculator;
 import com.cantte.cetus.domain.model.Address;
 import com.cantte.cetus.domain.model.Environment;
+import com.cantte.cetus.domain.model.IdentificationType;
 import com.cantte.cetus.domain.model.LineInput;
 import com.cantte.cetus.domain.model.Party;
 import com.cantte.cetus.domain.model.PaymentInfo;
@@ -113,11 +114,10 @@ public class BatchItems {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    /** The invoice of the item, with the catalogs' values where the item has none. */
     private static InvoiceRequest invoice(
             UUID issuerId, BatchRequest.Item item, Map<String, Party> customers, Map<String, ProductEntity> products) {
         BatchRequest.Customer customer = item.customer();
-        Party saved = customers.get(customerKey(customer));
+        Party saved = customers.get(customerKey(customer.identificationType(), customer.identificationNumber()));
         List<InvoiceRequest.Line> lines = IntStream.range(0, item.lines().size())
                 .mapToObj(position ->
                         line(item.reference(), position, item.lines().get(position), products))
@@ -212,7 +212,7 @@ public class BatchItems {
                 taxes);
     }
 
-    /** The catalog's customers the items name, in one query. */
+    /** In one query, not one per item. */
     private static Map<String, Party> customers(
             UUID accountId, Environment environment, List<BatchRequest.Item> items) {
         List<String> numbers = items.stream()
@@ -231,16 +231,16 @@ public class BatchItems {
                         numbers)
                 .stream()
                 .collect(Collectors.toMap(
-                        saved -> saved.identificationType + ":" + saved.identificationNumber,
+                        saved -> customerKey(saved.identificationType, saved.identificationNumber),
                         saved -> saved.party,
                         (first, second) -> first));
     }
 
-    private static String customerKey(BatchRequest.Customer customer) {
-        return customer.identificationType() + ":" + customer.identificationNumber();
+    private static String customerKey(IdentificationType type, String number) {
+        return type + ":" + number;
     }
 
-    /** The catalog's products the items' lines name, in one query. */
+    /** In one query, not one per item. */
     private static Map<String, ProductEntity> products(
             UUID accountId, Environment environment, List<BatchRequest.Item> items) {
         List<String> codes = items.stream()

@@ -694,8 +694,8 @@
             "type": "prometheus",
             "uid": "${prometheus}"
           },
-          "expr": "max by (environment, outcome) (cetus_batches_open)",
-          "legendFormat": "{{environment}} {{outcome}}",
+          "expr": "max by (environment) (cetus_batches_open) or label_replace(max by (environment) (cetus_batches_stuck), \"environment\", \"$1 atascados\", \"environment\", \"(.*)\")",
+          "legendFormat": "{{environment}}",
           "range": true,
           "instant": false
         }

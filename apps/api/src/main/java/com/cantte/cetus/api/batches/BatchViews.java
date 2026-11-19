@@ -6,7 +6,6 @@ import com.cantte.cetus.persistence.entity.DocumentBatchEntity;
 import com.cantte.cetus.persistence.entity.DocumentEntity;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -42,13 +41,9 @@ public final class BatchViews {
      */
     public record BatchCounts(long accepted, long rejected, long failed, long pending, long notCreated) {
 
-        static BatchCounts of(int items, Map<DocumentStatus, Long> byStatus) {
-            long accepted = byStatus.getOrDefault(DocumentStatus.ACCEPTED, 0L);
-            long rejected = byStatus.getOrDefault(DocumentStatus.REJECTED, 0L);
-            long failed = byStatus.getOrDefault(DocumentStatus.FAILED, 0L);
-            long created = byStatus.values().stream().mapToLong(Long::longValue).sum();
+        static BatchCounts of(DocumentBatchEntity.Counts counts) {
             return new BatchCounts(
-                    accepted, rejected, failed, created - accepted - rejected - failed, Math.max(0, items - created));
+                    counts.accepted(), counts.rejected(), counts.failed(), counts.pending(), counts.notCreated());
         }
     }
 
@@ -70,7 +65,7 @@ public final class BatchViews {
             @Schema(nullable = true) OffsetDateTime expandedAt,
             @Schema(nullable = true) OffsetDateTime completedAt) {
 
-        static BatchView from(DocumentBatchEntity batch, String issuerName, Map<DocumentStatus, Long> byStatus) {
+        static BatchView from(DocumentBatchEntity batch, String issuerName) {
             return new BatchView(
                     batch.id,
                     batch.issuerId,
@@ -79,7 +74,7 @@ public final class BatchViews {
                     Status.of(batch.status),
                     Source.valueOf(batch.source.name()),
                     batch.items,
-                    BatchCounts.of(batch.items, byStatus),
+                    BatchCounts.of(batch.counts()),
                     batch.fileName,
                     batch.stopReason,
                     batch.createdAt,
@@ -94,7 +89,6 @@ public final class BatchViews {
             @Schema(nullable = true, description = "Pass as before to get the next page")
             UUID nextCursor) {}
 
-    /** A document of the batch, at its position. */
     public record BatchDocument(
             UUID id,
             int position,

@@ -108,7 +108,7 @@
       "severity": "high",
       "for": "0s",
       "window": "15m",
-      "expr": "max(cetus_batches_open{outcome=\"stuck\"})",
+      "expr": "max(cetus_batches_stuck)",
       "condition": { "type": "gt", "value": 0 },
       "noData": "OK",
       "summary": "Hay lotes de facturas que llevan más de una hora sin avanzar.",

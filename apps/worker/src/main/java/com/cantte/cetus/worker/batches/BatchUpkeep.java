@@ -4,11 +4,11 @@ import com.cantte.cetus.domain.model.Environment;
 import com.cantte.cetus.persistence.entity.DocumentBatchEntity;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.EnumMap;
@@ -21,15 +21,13 @@ import org.jboss.logging.Logger;
 
 /**
  * CHECK_OPEN_BATCHES: closes the batches whose documents all reached a final status but whose closing check was lost,
- * and measures the open batches and those that stopped moving. Safe on many replicas: closing holds a Postgres
- * advisory lock, and a replica that does not get it only measures.
+ * and measures the open batches and those that stopped moving. Each batch is closed in its own short transaction under
+ * its lock, so replicas running it at once agree and the documents finishing meanwhile wait for one batch at most.
  */
 @ApplicationScoped
 public class BatchUpkeep {
 
     private static final Logger LOG = Logger.getLogger(BatchUpkeep.class);
-    /** Advisory lock id shared by every replica ("cetusbch" in ASCII). */
-    private static final long LOCK_ID = 0x6365747573_626368L;
 
     private final Map<Environment, AtomicLong> open = new EnumMap<>(Environment.class);
     private final Map<Environment, AtomicLong> stuck = new EnumMap<>(Environment.class);
@@ -45,16 +43,15 @@ public class BatchUpkeep {
 
     BatchUpkeep(MeterRegistry meters) {
         for (Environment environment : Environment.values()) {
-            open.put(environment, gauge(meters, environment, "open"));
-            stuck.put(environment, gauge(meters, environment, "stuck"));
+            open.put(environment, gauge(meters, "cetus.batches.open", environment));
+            stuck.put(environment, gauge(meters, "cetus.batches.stuck", environment));
         }
     }
 
-    private static AtomicLong gauge(MeterRegistry meters, Environment environment, String outcome) {
+    private static AtomicLong gauge(MeterRegistry meters, String name, Environment environment) {
         AtomicLong value = new AtomicLong();
-        Gauge.builder("cetus.batches.open", value, AtomicLong::get)
+        Gauge.builder(name, value, AtomicLong::get)
                 .tag("environment", environment.name())
-                .tag("outcome", outcome)
                 .register(meters);
         return value;
     }
@@ -68,24 +65,26 @@ public class BatchUpkeep {
     }
 
     /** @return the batches it closed */
-    @Transactional
     public List<UUID> check() {
-        measure();
-        if (!Boolean.TRUE.equals(em.createNativeQuery("SELECT pg_try_advisory_xact_lock(:id)")
-                .setParameter("id", LOCK_ID)
-                .getSingleResult())) {
-            return List.of();
-        }
-        List<UUID> closed = DocumentBatchEntity.listOpen().stream()
-                .filter(batch -> batch.status == DocumentBatchEntity.Status.PROCESSING)
-                .map(batch -> DocumentBatchEntity.lock(batch.id).orElseThrow())
-                .filter(closure::closeIfDone)
-                .map(batch -> batch.id)
+        QuarkusTransaction.requiringNew().run(this::measure);
+        List<UUID> closed = QuarkusTransaction.requiringNew().call(BatchUpkeep::closable).stream()
+                .filter(id -> QuarkusTransaction.requiringNew()
+                        .call(() -> DocumentBatchEntity.lock(id)
+                                .map(closure::closeIfDone)
+                                .orElse(false)))
                 .toList();
         if (!closed.isEmpty()) {
             LOG.warnf("Closed %d batches whose closing check was lost: %s", closed.size(), closed);
         }
         return closed;
+    }
+
+    /** Batches whose expansion ended and whose documents all have a final status. */
+    private static List<UUID> closable() {
+        return DocumentBatchEntity.<DocumentBatchEntity>list("status", DocumentBatchEntity.Status.PROCESSING).stream()
+                .filter(batch -> !DocumentBatchEntity.hasUnfinishedDocuments(batch.id))
+                .map(batch -> batch.id)
+                .toList();
     }
 
     /**
@@ -99,10 +98,13 @@ public class BatchUpkeep {
                                count(*) FILTER (WHERE greatest(b.updated_at,
                                    (SELECT max(d.updated_at) FROM billing.documents d WHERE d.batch_id = b.id)) < :since)
                         FROM billing.document_batches b
-                        WHERE b.status IN ('RECEIVED', 'EXPANDING', 'PROCESSING')
+                        WHERE b.status IN (:open)
                         GROUP BY b.environment
                         """)
                 .setParameter("since", OffsetDateTime.now().minus(stuckAfter))
+                .setParameter(
+                        "open",
+                        DocumentBatchEntity.Status.OPEN.stream().map(Enum::name).toList())
                 .getResultList();
         open.values().forEach(value -> value.set(0));
         stuck.values().forEach(value -> value.set(0));

@@ -6,7 +6,6 @@ import com.cantte.cetus.jobs.JobTypes;
 import com.cantte.cetus.persistence.entity.JobEntity;
 import com.cantte.cetus.worker.runner.JobContext;
 import com.cantte.cetus.worker.runner.JobHandler;
-import io.opentelemetry.api.trace.Span;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -33,7 +32,6 @@ public class ExpandBatchHandler implements JobHandler {
 
     @Override
     public void handle(JobEntity job) {
-        Span.current().setAttribute("cetus.batch.id", job.referenceId.toString());
         if (!expansion.start(job.referenceId)) {
             return;
         }
